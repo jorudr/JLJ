@@ -1102,6 +1102,16 @@ const normalPDF = (x: number, mean: number, std: number): number => {
   return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
 };
 
+const erfApprox = (x: number): number => {
+  const sign = x < 0 ? -1 : 1
+  const absX = Math.abs(x)
+  const t = 1 / (1 + 0.3275911 * absX)
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-absX * absX)
+  return sign * y
+}
+
+const normalCDF = (x: number): number => 0.5 * (1 + erfApprox(x / Math.sqrt(2)))
+
 const studentTPDF = (x: number, mean: number, scale: number, nu: number): number => {
   if (scale <= 0 || nu <= 0) return 0;
   const coef = Math.exp(logGamma((nu + 1) / 2) - logGamma(nu / 2)) / (scale * Math.sqrt(Math.PI * nu));
@@ -1299,19 +1309,138 @@ const fetchRealtimeMetrics = async (strategyIds = getBenchmarkStrategyIds()) => 
   }
 }
 
+const toFiniteNumber = (value: unknown, fallback = 0): number => {
+  const parsed = typeof value === 'string' ? parseFloat(value) : Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const getTradeTimestamp = (trade: any): number => {
+  const time = new Date(trade?.dateExit || trade?.date || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+const getTradePnl = (trade: any, initialDeposit: number): number => {
+  const currencyPnl = toFiniteNumber(trade?.profitInCurrency, NaN)
+  const resultPct = toFiniteNumber(trade?.result, NaN)
+  const rawPnl = toFiniteNumber(trade?.pnl, NaN)
+
+  if (Number.isFinite(currencyPnl) && !(currencyPnl === 0 && Number.isFinite(resultPct) && resultPct !== 0)) {
+    return currencyPnl
+  }
+
+  if (Number.isFinite(resultPct)) {
+    return initialDeposit > 0 ? (resultPct / 100) * initialDeposit : 0
+  }
+
+  return Number.isFinite(rawPnl) ? rawPnl : 0
+}
+
+const mean = (values: number[]): number => {
+  return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0
+}
+
+const sampleVariance = (values: number[], meanValue = mean(values)): number => {
+  return values.length > 1
+    ? values.reduce((sum, value) => sum + Math.pow(value - meanValue, 2), 0) / (values.length - 1)
+    : 0
+}
+
+const percentile = (sortedValues: number[], p: number): number => {
+  if (sortedValues.length === 0) return 0
+  if (sortedValues.length === 1) return sortedValues[0] ?? 0
+
+  const clamped = Math.max(0, Math.min(1, p))
+  const idx = (sortedValues.length - 1) * clamped
+  const lower = Math.floor(idx)
+  const upper = Math.ceil(idx)
+  const lowerValue = sortedValues[lower] ?? 0
+  const upperValue = sortedValues[upper] ?? lowerValue
+  return lowerValue + (upperValue - lowerValue) * (idx - lower)
+}
+
+const median = (sortedValues: number[]): number => percentile(sortedValues, 0.5)
+
+const calculateWindowMaxDrawdownPct = (pnls: number[], initialDeposit: number): number => {
+  let balance = initialDeposit
+  let peak = initialDeposit
+  let maxDd = 0
+
+  pnls.forEach(pnl => {
+    balance += pnl
+    if (balance > peak) peak = balance
+    const dd = peak > 0 ? ((peak - balance) / peak) * 100 : 0
+    if (dd > maxDd) maxDd = dd
+  })
+
+  return maxDd
+}
+
+const linearRegressionSlope = (values: number[]): number => {
+  const n = values.length
+  if (n < 2) return 0
+
+  let sumX = 0
+  let sumY = 0
+  let sumXY = 0
+  let sumX2 = 0
+
+  values.forEach((y, x) => {
+    sumX += x
+    sumY += y
+    sumXY += x * y
+    sumX2 += x * x
+  })
+
+  const denominator = n * sumX2 - sumX * sumX
+  return denominator !== 0 ? (n * sumXY - sumX * sumY) / denominator : 0
+}
+
+const calculateHurstExponent = (values: number[]): number => {
+  if (values.length < 2) return 0.5
+
+  const valueMean = mean(values)
+  let cumulative = 0
+  const deviations = values.map(value => {
+    cumulative += value - valueMean
+    return cumulative
+  })
+
+  const range = Math.max(...deviations) - Math.min(...deviations)
+  const std = Math.sqrt(sampleVariance(values, valueMean))
+  if (range <= 0 || std <= 0) return 0.5
+
+  return Math.max(0, Math.min(1, Math.log(range / std) / Math.log(values.length)))
+}
+
+const calculateHurstStats = (values: number[]) => {
+  if (values.length < 2) {
+    return { exponent: 0.5, range: 0, stdDev: 0, rescaledRange: 0 }
+  }
+
+  const valueMean = mean(values)
+  let cumulative = 0
+  const deviations = values.map(value => {
+    cumulative += value - valueMean
+    return cumulative
+  })
+
+  const range = Math.max(...deviations) - Math.min(...deviations)
+  const stdDev = Math.sqrt(sampleVariance(values, valueMean))
+  const rescaledRange = stdDev > 0 ? range / stdDev : 0
+  const exponent = rescaledRange > 0
+    ? Math.max(0, Math.min(1, Math.log(rescaledRange) / Math.log(values.length)))
+    : 0.5
+
+  return { exponent, range, stdDev, rescaledRange }
+}
+
 const strategyMetrics = computed(() => {
   const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
 
-  const trades = [...currentTrades].map(t => {
-    const pnlVal = t.profitInCurrency ?? t.result ?? (t as any).pnl ?? 0;
-    const val = typeof pnlVal === 'string' ? parseFloat(pnlVal) : Number(pnlVal);
-    if ((t.profitInCurrency === undefined || t.profitInCurrency === null || t.profitInCurrency === 0) && 
-        Math.abs(val) < 100 && initialDeposit > 1000) {
-      return { ...t, pnlNum: (val / 100) * initialDeposit };
-    }
-    return { ...t, pnlNum: val || 0 };
-  })
+  const trades = [...currentTrades]
+    .sort((a, b) => getTradeTimestamp(a) - getTradeTimestamp(b))
+    .map(t => ({ ...t, pnlNum: getTradePnl(t, initialDeposit) }))
 
   const numTrades = trades.length;
   const winningTrades = trades.filter(t => t.pnlNum > 0);
@@ -1333,10 +1462,8 @@ const strategyMetrics = computed(() => {
 
   const payoffRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
 
-  const plannedRRs = trades.map(t => {
-    const rrVal = t.riskReward ?? (t as any).rr ?? 0;
-    return typeof rrVal === 'string' ? parseFloat(rrVal) : Number(rrVal);
-  }).filter(r => !isNaN(r) && r > 0);
+  const plannedRRs = trades.map(t => toFiniteNumber(t.riskReward ?? (t as any).rr, NaN)).filter(r => !isNaN(r) && r > 0);
+  const plannedRRCount = plannedRRs.length;
   const riskRewardRatio = plannedRRs.length > 0 ? plannedRRs.reduce((a,b)=>a+b,0)/plannedRRs.length : (payoffRatio || 1);
   const realizedRR = payoffRatio;
 
@@ -1391,7 +1518,7 @@ const strategyMetrics = computed(() => {
 
   let firstDate = Date.now();
   let lastDate = Date.now();
-  const validDates = trades.map(t => new Date(t.date || Date.now()).getTime()).filter(n => !isNaN(n));
+  const validDates = trades.map(t => getTradeTimestamp(t)).filter(n => n > 0);
   if (validDates.length > 0) {
     firstDate = Math.min(...validDates);
     lastDate = Math.max(...validDates);
@@ -1402,34 +1529,30 @@ const strategyMetrics = computed(() => {
   const avgProfitPerMonth = avgProfitPerDay * 30.44;
 
   let peak = initialDeposit;
+  let peakTime = firstDate;
   let currentBal = initialDeposit;
   let maxDrawdownNum = 0;
   let maxDrawdownPct = 0;
   let totalDrawdownNum = 0;
   let ddCount = 0;
   let maxDDDurationDays = 0;
-  let currentDDStart: number | null = null;
 
   trades.forEach(t => {
     const tradeTime = new Date(t.dateExit || t.date || Date.now()).getTime();
     currentBal += t.pnlNum;
     if (currentBal > peak) {
       peak = currentBal;
-      if (currentDDStart !== null) {
-        const ddDur = (tradeTime - currentDDStart) / (1000 * 60 * 60 * 24);
-        if (ddDur > maxDDDurationDays) maxDDDurationDays = ddDur;
-        currentDDStart = null;
-      }
+      peakTime = tradeTime;
     } else {
       const ddNum = peak - currentBal;
       const ddPct = (ddNum / peak) * 100;
       if (ddNum > maxDrawdownNum) {
         maxDrawdownNum = ddNum;
         maxDrawdownPct = ddPct;
+        maxDDDurationDays = Math.max(0, (tradeTime - peakTime) / (1000 * 60 * 60 * 24));
       }
       totalDrawdownNum += ddPct;
       ddCount++;
-      if (currentDDStart === null) currentDDStart = tradeTime;
     }
   });
 
@@ -1443,21 +1566,23 @@ const strategyMetrics = computed(() => {
   let totalRisk = 0;
   let riskCount = 0;
   trades.forEach(t => {
-    const entry = typeof t.entry === 'string' ? parseFloat(t.entry) : Number(t.entry || 0);
-    const sl = typeof t.stopLoss === 'string' ? parseFloat(t.stopLoss) : Number(t.stopLoss || 0);
-    const size = typeof t.size === 'string' ? parseFloat(t.size) : Number(t.size || 1);
+    const entry = toFiniteNumber(t.entry, 0);
+    const sl = toFiniteNumber(t.stopLoss, 0);
+    const size = toFiniteNumber(t.size, 1);
     if (entry > 0 && sl > 0) { totalRisk += Math.abs(entry - sl) * size; riskCount++; }
   });
-  const riskPerTrade = riskCount > 0 ? totalRisk / riskCount : (avgLoss || (initialDeposit * 0.01));
+  const riskPerTrade = riskCount > 0 ? totalRisk / riskCount : 0;
+  const riskUnitForRuin = riskPerTrade > 0 ? riskPerTrade : (avgLoss || (initialDeposit * 0.01));
 
   // --- ADVANCED METRICS CALCULATIONS --- //
   const returns = trades.map(t => initialDeposit > 0 ? t.pnlNum / initialDeposit : 0);
-  const meanReturn = numTrades > 0 ? returns.reduce((a, b) => a + b, 0) / numTrades : 0;
-  const varianceReturn = numTrades > 1 ? returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / (numTrades - 1) : 0;
+  const meanReturn = mean(returns);
+  const varianceReturn = sampleVariance(returns, meanReturn);
   const stdReturn = Math.sqrt(varianceReturn);
 
   const annFactor = Math.sqrt(Math.min(252, numTrades * (365 / spanDays)));
-  const cagr = initialDeposit > 0 ? (Math.pow(peak / initialDeposit, 365 / spanDays) - 1) * 100 : 0;
+  const endingBalance = initialDeposit + netProfit;
+  const cagr = initialDeposit > 0 && endingBalance > 0 ? (Math.pow(endingBalance / initialDeposit, 365 / spanDays) - 1) * 100 : 0;
   const annStdPct = stdReturn * annFactor * 100;
   const sharpeRatio = annStdPct > 0 ? (cagr - riskFreeRate.value) / annStdPct : (cagr > riskFreeRate.value ? 9.99 : 0);
 
@@ -1472,6 +1597,10 @@ const strategyMetrics = computed(() => {
 
   const posReturnsSum = returns.filter(r => r > 0).reduce((a, b) => a + b, 0);
   const negReturnsSum = Math.abs(returns.filter(r => r < 0).reduce((a, b) => a + b, 0));
+  const allReturnsSum = returns.reduce((a, b) => a + b, 0);
+  const positiveReturnsPct = posReturnsSum * 100;
+  const negativeReturnsPct = negReturnsSum * 100;
+  const allReturnsPct = allReturnsSum * 100;
   const omegaRatio = negReturnsSum > 0 ? posReturnsSum / negReturnsSum : (posReturnsSum > 0 ? 99.9 : 0);
 
   let ulcerSum = 0;
@@ -1489,8 +1618,10 @@ const strategyMetrics = computed(() => {
   const gainToPainRatio = negReturnsSum > 0 ? returns.reduce((a, b) => a + b, 0) / negReturnsSum : (meanReturn > 0 ? 9.99 : 0);
 
   const sortedReturns = [...returns].sort((a, b) => a - b);
-  const p95 = sortedReturns.length > 0 ? (sortedReturns[Math.floor(sortedReturns.length * 0.95)] ?? 0) : 0;
-  const p05 = sortedReturns.length > 0 ? Math.abs(sortedReturns[Math.floor(sortedReturns.length * 0.05)] ?? 0) : 0;
+  const p95 = percentile(sortedReturns, 0.95);
+  const p05 = Math.abs(percentile(sortedReturns, 0.05));
+  const p95ReturnPct = p95 * 100;
+  const p05ReturnPct = p05 * 100;
   const tailRatio = p05 > 0 ? p95 / p05 : (p95 > 0 ? 99.9 : 0);
   const commonSenseRatio = tailRatio * gainToPainRatio;
 
@@ -1504,12 +1635,18 @@ const strategyMetrics = computed(() => {
     if (t.pnlNum > 0) assetMap[a].win += t.pnlNum;
     else assetMap[a].loss += Math.abs(t.pnlNum);
   });
-  let bestAssetPF = profitFactor;
+  let bestAssetPF = 0;
+  let bestAssetGrossProfit = 0;
+  let bestAssetGrossLoss = 0;
   Object.values(assetMap).forEach(v => {
     const pf = v.loss > 0 ? v.win / v.loss : (v.win > 0 ? 99.9 : 0);
-    if (pf > bestAssetPF) bestAssetPF = pf;
+    if (pf > bestAssetPF) {
+      bestAssetPF = pf;
+      bestAssetGrossProfit = v.win;
+      bestAssetGrossLoss = v.loss;
+    }
   });
-  const profitFactorMarket = bestAssetPF;
+  const profitFactorMarket = Object.keys(assetMap).length > 0 ? bestAssetPF : profitFactor;
 
   // Profit Factor by Timeframe
   const tfMap: Record<string, { win: number; loss: number }> = {};
@@ -1520,37 +1657,49 @@ const strategyMetrics = computed(() => {
     if (t.pnlNum > 0) tfMap[tf].win += t.pnlNum;
     else tfMap[tf].loss += Math.abs(t.pnlNum);
   });
-  let bestTfPF = profitFactor;
+  let bestTfPF = 0;
+  let bestTfGrossProfit = 0;
+  let bestTfGrossLoss = 0;
   Object.values(tfMap).forEach(v => {
     const pf = v.loss > 0 ? v.win / v.loss : (v.win > 0 ? 99.9 : 0);
-    if (pf > bestTfPF) bestTfPF = pf;
+    if (pf > bestTfPF) {
+      bestTfPF = pf;
+      bestTfGrossProfit = v.win;
+      bestTfGrossLoss = v.loss;
+    }
   });
-  const profitFactorTimeframe = bestTfPF;
+  const profitFactorTimeframe = Object.keys(tfMap).length > 0 ? bestTfPF : profitFactor;
 
   const avgTradeExpectancy = expectedValue;
   const expectancyScore = avgLoss > 0 ? (expectedValue / avgLoss) : (expectedValue > 0 ? 2.5 : 0);
 
   // R-Multiples
-  const rMultiples = trades.map(t => {
-    const entry = typeof t.entry === 'string' ? parseFloat(t.entry) : Number(t.entry || 0);
-    const sl = typeof t.stopLoss === 'string' ? parseFloat(t.stopLoss) : Number(t.stopLoss || 0);
-    const size = typeof t.size === 'string' ? parseFloat(t.size) : Number(t.size || 1);
-    const risk = (entry > 0 && sl > 0) ? Math.abs(entry - sl) * size : (avgLoss || (initialDeposit * 0.01));
+  const tradeRisks = trades.map(t => {
+    const entry = toFiniteNumber(t.entry, 0);
+    const sl = toFiniteNumber(t.stopLoss, 0);
+    const size = toFiniteNumber(t.size, 1);
+    return (entry > 0 && sl > 0) ? Math.abs(entry - sl) * size : riskUnitForRuin;
+  });
+  const rMultiples = trades.map((t, index) => {
+    const risk = tradeRisks[index] ?? 0;
     return risk > 0 ? t.pnlNum / risk : 0;
   });
+  const latestPnl = trades.length > 0 ? (trades[trades.length - 1]?.pnlNum ?? 0) : 0;
+  const latestInitialRisk = tradeRisks.length > 0 ? (tradeRisks[tradeRisks.length - 1] ?? 0) : 0;
   const latestRMultiple = rMultiples.length > 0 ? rMultiples[rMultiples.length - 1] : 0;
   const avgRMultiple = rMultiples.length > 0 ? rMultiples.reduce((a, b) => a + b, 0) / rMultiples.length : 0;
-  const rMultipleDist = rMultiples.length > 0 ? (rMultiples.filter(r => r >= 2.0).length / rMultiples.length) * 100 : 0;
+  const rMultipleWinCount = rMultiples.filter(r => r >= 2.0).length;
+  const rMultipleDist = rMultiples.length > 0 ? (rMultipleWinCount / rMultiples.length) * 100 : 0;
 
   // Risk of Ruin
   const winP = winRate / 100;
   const lossP = 1 - winP;
-  const edge = winP - lossP;
+  const edge = payoffRatio > 0 ? winP - (lossP / payoffRatio) : winP - lossP;
+  const capitalUnits = riskUnitForRuin > 0 ? initialDeposit / riskUnitForRuin : 0;
   let riskOfRuin = 0;
   if (edge <= 0) riskOfRuin = 99.9;
   else {
-    const riskUnits = initialDeposit / (riskPerTrade || 100);
-    riskOfRuin = Math.pow((1 - edge) / (1 + edge), riskUnits) * 100;
+    riskOfRuin = Math.pow((1 - edge) / (1 + edge), capitalUnits) * 100;
   }
 
   // Linear Regression of Equity Curve
@@ -1564,6 +1713,10 @@ const strategyMetrics = computed(() => {
   });
   const slope = N_eq > 1 ? (N_eq * sumXY - sumX * sumY) / (N_eq * sumX2 - sumX * sumX) : 0;
   const intercept = N_eq > 0 ? (sumY - slope * sumX) / N_eq : initialDeposit;
+  const tradeIndexVariance = N_eq > 1 ? (sumX2 - (sumX * sumX) / N_eq) / (N_eq - 1) : 0;
+  const equitySeriesLabel = `${N_eq} equity points`;
+  const strategyReturnSeriesLabel = `${returns.length} strategy returns`;
+  const marketReturnSeriesLabel = 'S&P benchmark returns';
 
   // Residual Volatility & R-Squared
   let sst = 0, ssr = 0;
@@ -1579,8 +1732,8 @@ const strategyMetrics = computed(() => {
 
   // PnL Std Dev, Variance, CV, Skew, Kurtosis
   const pnls = trades.map(t => t.pnlNum);
-  const meanPnL = numTrades > 0 ? pnls.reduce((a, b) => a + b, 0) / numTrades : 0;
-  const varPnL = numTrades > 1 ? pnls.reduce((sum, p) => sum + Math.pow(p - meanPnL, 2), 0) / (numTrades - 1) : 0;
+  const meanPnL = mean(pnls);
+  const varPnL = sampleVariance(pnls, meanPnL);
   const stdPnL = Math.sqrt(varPnL);
   const coeffOfVariation = meanPnL !== 0 ? stdPnL / Math.abs(meanPnL) : 0;
 
@@ -1595,51 +1748,50 @@ const strategyMetrics = computed(() => {
   const kurtosis = numTrades > 3 ? (kurtSum / numTrades) - 3 : 0;
 
   const sortedPnLs = [...pnls].sort((a, b) => a - b);
-  const medianTradeResult = sortedPnLs.length > 0 ? (sortedPnLs[Math.floor(sortedPnLs.length / 2)] ?? 0) : 0;
+  const medianTradeResult = median(sortedPnLs);
 
   const sortedWins = sortedPnLs.filter(p => p > 0);
   const sortedLosses = sortedPnLs.filter(p => p < 0);
-  const medWin = sortedWins.length > 0 ? (sortedWins[Math.floor(sortedWins.length / 2)] ?? 0) : 0;
-  const medLoss = sortedLosses.length > 0 ? Math.abs(sortedLosses[Math.floor(sortedLosses.length / 2)] ?? 0) : 0;
+  const medWin = median(sortedWins);
+  const medLoss = Math.abs(median(sortedLosses));
   const medianWinLossRatio = medLoss > 0 ? medWin / medLoss : (medWin > 0 ? 9.99 : 0);
 
   // --- EXPERT METRICS CALCULATIONS --- //
-  const valueAtRisk = sortedPnLs.length > 0 ? Math.abs(sortedPnLs[Math.floor(sortedPnLs.length * 0.05)] ?? 0) : 0;
-  const varIndex = Math.floor(sortedPnLs.length * 0.05);
-  const tailLosses = sortedPnLs.slice(0, varIndex + 1);
+  const p05PnL = percentile(sortedPnLs, 0.05);
+  const valueAtRisk = Math.abs(p05PnL);
+  const tailLosses = sortedPnLs.filter(p => p <= p05PnL);
   const cvar = tailLosses.length > 0 ? Math.abs(tailLosses.reduce((a, b) => a + b, 0) / tailLosses.length) : 0;
   const expectedShortfall = initialDeposit > 0 ? (cvar / initialDeposit) * 100 : 0;
+  const tradePnlSeriesLabel = `${numTrades} trades`;
 
   let totalMAE = 0, totalMFE = 0, maeCount = 0;
   trades.forEach(t => {
     const tAny = t as any;
-    const maeVal = tAny.mae !== undefined ? Number(tAny.mae) : Math.abs((Number(tAny.entry || 0) - Number(tAny.stopLoss || 0)) * Number(tAny.size || 1) * 0.5);
-    const mfeVal = tAny.mfe !== undefined ? Number(tAny.mfe) : Math.abs((Number(tAny.takeProfit || 0) - Number(tAny.entry || 0)) * Number(tAny.size || 1) * 0.8);
+    const maeVal = tAny.mae !== undefined ? Math.abs(toFiniteNumber(tAny.mae, 0)) : 0;
+    const mfeVal = tAny.mfe !== undefined ? Math.abs(toFiniteNumber(tAny.mfe, 0)) : 0;
     if (maeVal > 0 || mfeVal > 0) { totalMAE += maeVal; totalMFE += mfeVal; maeCount++; }
   });
-  const mae = maeCount > 0 ? totalMAE / maeCount : (avgLoss * 0.5 || 50);
-  const mfe = maeCount > 0 ? totalMFE / maeCount : (avgWin * 0.8 || 100);
+  const maeMfeDataTrades = maeCount;
+  const mae = maeMfeDataTrades > 0 ? totalMAE / maeMfeDataTrades : 0;
+  const mfe = maeMfeDataTrades > 0 ? totalMFE / maeMfeDataTrades : 0;
   const maeMfeRatio = mfe > 0 ? mae / mfe : (mae > 0 ? 9.99 : 0);
 
-  let runs = 1;
+  const runOutcomes = trades.map(t => t.pnlNum > 0 ? 1 : (t.pnlNum < 0 ? -1 : 0)).filter(v => v !== 0);
+  let runs = runOutcomes.length > 0 ? 1 : 0;
   let nW = 0, nL = 0;
-  for (let i = 0; i < trades.length; i++) {
-    const tCurr = trades[i];
-    if (!tCurr) continue;
-    const isW = tCurr.pnlNum > 0;
+  for (let i = 0; i < runOutcomes.length; i++) {
+    const isW = runOutcomes[i] === 1;
     if (isW) nW++; else nL++;
     if (i > 0) {
-      const tPrev = trades[i - 1];
-      if (tPrev) {
-        const prevW = tPrev.pnlNum > 0;
-        if (isW !== prevW) runs++;
-      }
+      const prevW = runOutcomes[i - 1] === 1;
+      if (isW !== prevW) runs++;
     }
   }
   const N_runs = nW + nL;
   const expectedRuns = N_runs > 1 ? ((2 * nW * nL) / N_runs) + 1 : 1;
   const varRuns = N_runs > 1 ? ((2 * nW * nL) * (2 * nW * nL - N_runs)) / (Math.pow(N_runs, 2) * (N_runs - 1)) : 0;
-  const zScore = varRuns > 0 ? (runs - expectedRuns) / Math.sqrt(varRuns) : 0;
+  const stdRuns = Math.sqrt(Math.max(0, varRuns));
+  const zScore = stdRuns > 0 ? (runs - expectedRuns) / stdRuns : 0;
   const runsTest = Math.abs(zScore) < 1.96 ? 1 : 0;
 
   let mcMaxDdSum = 0;
@@ -1701,6 +1853,8 @@ const strategyMetrics = computed(() => {
   const bayesianExpectedValue = (numTrades * expectedValue + priorWeight * priorMean) / (numTrades + priorWeight);
 
   const winLossRatio = avgLoss > 0 ? avgWin / avgLoss : (avgWin > 0 ? 1 : 0);
+  const winProbability = winP;
+  const lossProbability = lossP;
   const kellyCriterion = winLossRatio > 0 ? (winP - (lossP / winLossRatio)) * 100 : 0;
   const fractionalKelly = kellyCriterion / 2;
   const optimalF = Math.max(0, kellyCriterion * 0.8);
@@ -1709,15 +1863,10 @@ const strategyMetrics = computed(() => {
   const tTest = seMean > 0 ? expectedValue / seMean : (expectedValue > 0 ? 9.99 : 0);
 
   const absT = Math.abs(tTest);
-  let pValue = 1.0;
-  if (absT > 3.29) pValue = 0.001;
-  else if (absT > 2.58) pValue = 0.01;
-  else if (absT > 1.96) pValue = 0.05;
-  else if (absT > 1.64) pValue = 0.10;
-  else pValue = 0.50;
+  const pValue = Math.max(0, Math.min(1, 2 * (1 - normalCDF(absT))));
 
   const benchReturn = sp500BenchmarkRate.value;
-  const trackingError = stdReturn * annFactor || 15.0;
+  const trackingError = annStdPct || 15.0;
   const informationRatio = trackingError > 0 ? (cagr - benchReturn) / trackingError : (cagr > benchReturn ? 5.0 : 0);
 
   const riskFree = riskFreeRate.value;
@@ -1755,31 +1904,39 @@ const strategyMetrics = computed(() => {
     volatilityClustering = den_vac > 0 ? num_vac / den_vac : 0;
   }
 
-  const hurstExponent = 0.5 + returnAutocorrelation * 0.3;
+  const hurstStats = calculateHurstStats(returns);
+  const hurstExponent = hurstStats.exponent;
   const regimeStabilityScore = equityCurveStability * 0.95;
 
   const rollingSharpes: number[] = [];
   const rollingPFs: number[] = [];
+  const rollingEVs: number[] = [];
+  const rollingDDs: number[] = [];
+  const rollingWinRates: number[] = [];
   if (pnls.length >= 10) {
     for (let i = 0; i <= pnls.length - 10; i++) {
       const windowPnLs = pnls.slice(i, i + 10);
-      const wMean = windowPnLs.reduce((a, b) => a + b, 0) / 10;
-      const wVar = windowPnLs.reduce((sum, p) => sum + Math.pow(p - wMean, 2), 0) / 9;
+      const wMean = mean(windowPnLs);
+      const wVar = sampleVariance(windowPnLs, wMean);
       const wStd = Math.sqrt(wVar);
       rollingSharpes.push(wStd > 0 ? (wMean / wStd) * Math.sqrt(252) : 0);
 
       const wWin = windowPnLs.filter(p => p > 0).reduce((a, b) => a + b, 0);
       const wLoss = Math.abs(windowPnLs.filter(p => p < 0).reduce((a, b) => a + b, 0));
       rollingPFs.push(wLoss > 0 ? wWin / wLoss : (wWin > 0 ? 10 : 1));
+      rollingEVs.push(wMean);
+      rollingDDs.push(calculateWindowMaxDrawdownPct(windowPnLs, initialDeposit));
+      rollingWinRates.push((windowPnLs.filter(p => p > 0).length / windowPnLs.length) * 100);
     }
   }
-  const rollingSharpe = rollingSharpes.length > 0 ? rollingSharpes.reduce((a, b) => a + b, 0) / rollingSharpes.length : sharpeRatio;
-  const rollingProfitFactor = rollingPFs.length > 0 ? rollingPFs.reduce((a, b) => a + b, 0) / rollingPFs.length : profitFactor;
-  const rollingExpectancy = expectedValue * 0.98;
-  const rollingDrawdown = avgDrawdownPct * 1.05;
-  const rollingWinRate = winRate * 0.99;
+  const rollingSharpe = rollingSharpes.length > 0 ? mean(rollingSharpes) : sharpeRatio;
+  const rollingProfitFactor = rollingPFs.length > 0 ? mean(rollingPFs) : profitFactor;
+  const rollingExpectancy = rollingEVs.length > 0 ? mean(rollingEVs) : expectedValue;
+  const rollingDrawdown = rollingDDs.length > 0 ? mean(rollingDDs) : avgDrawdownPct;
+  const rollingWinRate = rollingWinRates.length > 0 ? mean(rollingWinRates) : winRate;
+  const rollingWindowCount = rollingSharpes.length;
 
-  const strategyDecayRate = rollingSharpes.length > 1 ? ((rollingSharpes[rollingSharpes.length - 1] ?? 0) - (rollingSharpes[0] ?? 0)) / rollingSharpes.length : 0.0;
+  const strategyDecayRate = linearRegressionSlope(rollingSharpes);
   const edgeHalfLife = strategyDecayRate < 0 ? Math.abs(0.5 / strategyDecayRate) : 99.9;
 
   const top5Count = Math.max(1, Math.floor(sortedWins.length * 0.05));
@@ -1790,27 +1947,34 @@ const strategyMetrics = computed(() => {
   return {
     netProfit, grossProfit, grossLoss, winRate, lossRate,
     avgWin, avgLoss, avgTrade, payoffRatio, riskRewardRatio, realizedRR,
-    expectedValue, profitFactor, beWinRate, numTrades, numWin, numLoss,
-    largestWin, largestLoss, maxConsWins, maxConsLosses, avgHoldingTimeStr,
+    plannedRRCount, expectedValue, profitFactor, beWinRate, numTrades, numWin, numLoss,
+    largestWin, largestLoss, maxConsWins, maxConsLosses, avgHoldingTimeStr, avgTradeDurationHours: avgHoldingHours, holdingTrades: holdingCount,
     avgProfitPerDay, avgProfitPerWeek, avgProfitPerMonth,
-    maxDrawdownNum, maxDrawdownPct, avgDrawdownPct, drawdownDurationStr,
-    recoveryFactor, returnOnCapital, returnPerTrade, riskPerTrade,
+    activeSpanDays: spanDays, maxDrawdownNum, maxDrawdownPct, avgDrawdownPct, drawdownDurationStr, drawdownDurationDays: maxDDDurationDays,
+    recoveryFactor, returnOnCapital, returnPerTrade, totalInitialRisk: totalRisk, riskDataTrades: riskCount, riskPerTrade,
     initialDeposit, annualizedReturnPct: cagr, stdDevPct: annStdPct, downsideStdDevPct: annDownsideStdPct, strategyBeta: beta,
+    positiveReturnsPct, negativeReturnsPct, allReturnsPct, p95ReturnPct, p05ReturnPct,
     // Advanced
     sharpeRatio, sortinoRatio, calmarRatio, sterlingRatio, omegaRatio, ulcerIndex,
     marRatio, gainToPainRatio, tailRatio, commonSenseRatio, profitFactorStrategy,
-    profitFactorMarket, profitFactorTimeframe, avgTradeExpectancy, expectancyScore,
-    latestRMultiple, avgRMultiple, rMultipleDist, riskOfRuin, slope,
-    equityCurveVolatility, equityCurveStability, equityCurveCorrelation,
-    stdPnL, varPnL, coeffOfVariation, skewness, kurtosis, medianTradeResult, medianWinLossRatio,
+    profitFactorMarket, bestAssetGrossProfit, bestAssetGrossLoss,
+    profitFactorTimeframe, bestTfGrossProfit, bestTfGrossLoss,
+    avgTradeExpectancy, expectancyScore,
+    latestPnl, latestInitialRisk, latestRMultiple, avgRMultiple, rMultipleWinCount, rMultipleDist, riskOfRuin, kellyEdge: edge, capitalUnits,
+    slope, tradeIndexVariance, equitySeriesLabel, strategyReturnSeriesLabel, marketReturnSeriesLabel,
+    equityCurveVolatility, equityCurveStability, equityCurveCorrelation, equityRSquared: equityCurveStability / 100,
+    equityResidualSumSquares: ssr, equityTotalSumSquares: sst,
+    meanPnL, tradePnlSeriesLabel, stdPnL, varPnL, coeffOfVariation, skewness, kurtosis,
+    medianTradeResult, medianWin: medWin, medianLoss: medLoss, medianWinLossRatio,
     // Expert
-    valueAtRisk, cvar, expectedShortfall, mae, mfe, maeMfeRatio, zScore, runsTest,
+    p05TradePnl: p05PnL, valueAtRisk, cvar, expectedShortfall, totalMAE, totalMFE, maeMfeDataTrades, mae, mfe, maeMfeRatio, runs, expectedRuns, stdRuns, zScore, runsTest,
     monteCarloDrawdown, monteCarloRiskOfRuin, monteCarloExpectedReturn, bootstrapConfidenceInterval,
-    ciExpectedValue, ciWinRate, bayesianWinRate, bayesianExpectedValue, kellyCriterion,
+    ciExpectedValue, ciWinRate, winProbability, lossProbability, bayesianWinRate, bayesianExpectedValue, kellyCriterion,
     fractionalKelly, optimalF, sqn, tTest, pValue, informationRatio, treynorRatio,
     jensensAlpha, betaToBenchmark, alphaToBenchmark, returnAutocorrelation, volatilityClustering,
-    hurstExponent, regimeStabilityScore, rollingSharpe, rollingProfitFactor, rollingExpectancy,
-    rollingDrawdown, rollingWinRate, strategyDecayRate, edgeHalfLife, outlierImpactRatio, distributionRobustness
+    hurstExponent, hurstRange: hurstStats.range, hurstStdDev: hurstStats.stdDev, hurstRescaledRange: hurstStats.rescaledRange,
+    regimeStabilityScore, rollingWindowCount, rollingSharpe, rollingProfitFactor, rollingExpectancy,
+    rollingDrawdown, rollingWinRate, strategyDecayRate, edgeHalfLife, topWinsSum, outlierImpactRatio, distributionRobustness
   };
 });
 
@@ -2261,7 +2425,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     label: 'Risk/Reward_Ratio',
     sub: 'Planned Target RR',
     desc: 'The average planned Risk/Reward ratio established at trade entry.',
-    formula: 'Σ(Planned RR) / Total Trades',
+    formula: 'Σ(Planned RR) / Trades With Planned RR',
     valStr: m => `${m.riskRewardRatio.toFixed(2)}R`,
     colorClass: m => m.riskRewardRatio >= 2 ? 'text-emerald-400' : 'text-amber-400',
     colorVal: (m, isDark) => m.riskRewardRatio >= 2 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
@@ -2455,7 +2619,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     label: 'Average_Holding_Time',
     sub: 'Mean Trade Duration',
     desc: 'The average temporal span between trade initiation and complete liquidation.',
-    formula: 'Σ(Exit Time - Entry Time) / Total Trades',
+    formula: 'Σ(Exit Time - Entry Time) / Trades With Entry+Exit Time',
     valStr: m => m.avgHoldingTimeStr,
     colorClass: () => 'text-black dark:text-white',
     colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
@@ -2584,7 +2748,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     label: 'Risk_per_Trade',
     sub: 'Mean Dollar Risk',
     desc: 'The average financial risk exposure established per executed trade setup.',
-    formula: 'Σ(|Entry - SL| * Size) / Trades',
+    formula: 'Total Initial Risk / Trades With Risk Data',
     valStr: m => `$${m.riskPerTrade.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-amber-400',
     colorVal: (_, isDark) => isDark ? '#fbbf24' : '#d97706',
@@ -2602,7 +2766,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Sharpe_Ratio',
     sub: 'Risk-Adjusted Return',
     desc: 'The excess return per unit of total return volatility. Measures investment efficiency.',
-    formula: '(Mean Return - Rf) / StdDev(Return)',
+    formula: '(CAGR - Rf) / Annualized StdDev(Return)',
     valStr: m => `${m.sharpeRatio.toFixed(2)}`,
     colorClass: m => m.sharpeRatio >= 1.5 ? 'text-emerald-400' : (m.sharpeRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.sharpeRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.sharpeRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -2619,7 +2783,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Sortino_Ratio',
     sub: 'Downside Risk Adj',
     desc: 'The excess return per unit of downside volatility. Differentiates harmful volatility from general volatility.',
-    formula: '(Mean Return - Rf) / Downside StdDev',
+    formula: '(CAGR - Rf) / Annualized Downside StdDev',
     valStr: m => `${m.sortinoRatio.toFixed(2)}`,
     colorClass: m => m.sortinoRatio >= 2.0 ? 'text-emerald-400' : (m.sortinoRatio >= 1.5 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.sortinoRatio >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.sortinoRatio >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -2704,7 +2868,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'MAR_Ratio',
     sub: 'CAGR / Max DD',
     desc: 'The ratio of Compounded Annual Growth Rate to Maximum Drawdown. Used by CTAs and institutions.',
-    formula: 'CAGR / Maximum Drawdown',
+    formula: 'CAGR / Maximum Drawdown %',
     valStr: m => `${m.marRatio.toFixed(2)}`,
     colorClass: m => m.marRatio >= 1.0 ? 'text-emerald-400' : (m.marRatio >= 0.5 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.marRatio >= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.marRatio >= 0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -2907,7 +3071,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Risk_of_Ruin',
     sub: 'Capital Depletion Prob',
     desc: 'The mathematical probability of reaching total capital depletion based on current win rate and payoff ratio.',
-    formula: '((1 - Edge) / (1 + Edge)) ^ CapitalUnits',
+    formula: '((1 - Kelly Edge) / (1 + Kelly Edge)) ^ CapitalUnits',
     valStr: m => `${m.riskOfRuin.toFixed(1)}%`,
     colorClass: m => m.riskOfRuin <= 1.0 ? 'text-emerald-400' : (m.riskOfRuin <= 5.0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.riskOfRuin <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.riskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -2924,7 +3088,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Equity_Curve_Slope',
     sub: 'Linear Reg PnL Velocity',
     desc: 'The linear regression slope of the equity curve, representing the true annualized or per-trade equity growth velocity.',
-    formula: 'Cov(Index, Equity) / Var(Index)',
+    formula: 'Cov(Trade Index, Equity) / Var(Trade Index)',
     valStr: m => `${m.slope >= 0 ? '+' : ''}$${m.slope.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.slope >= 0 ? 'text-emerald-400' : 'text-rose-400',
     colorVal: (m, isDark) => m.slope >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
@@ -3019,7 +3183,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Coeff_of_Variation',
     sub: 'StdDev / |Mean PnL|',
     desc: 'The coefficient of variation (CV), measuring the relative dispersion of trade results per unit of expected return.',
-    formula: 'StdDev(PnL) / |Mean PnL|',
+    formula: 'StdDev(PnL) / |MeanPnL|',
     valStr: m => `${m.coeffOfVariation.toFixed(2)}`,
     colorClass: m => m.coeffOfVariation <= 2.0 ? 'text-emerald-400' : (m.coeffOfVariation <= 4.0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.coeffOfVariation <= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.coeffOfVariation <= 4.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3036,7 +3200,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Skewness_of_Returns',
     sub: 'Return Asymmetry (S)',
     desc: 'The statistical skewness of trade returns. Positive skew indicates frequent small losses and massive winning outlier trades.',
-    formula: 'Σ(Z^3) / N',
+    formula: 'Σ(Standardized PnL^3) / N',
     valStr: m => `${m.skewness >= 0 ? '+' : ''}${m.skewness.toFixed(2)}`,
     colorClass: m => m.skewness >= 0.5 ? 'text-emerald-400' : (m.skewness >= -0.5 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.skewness >= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.skewness >= -0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3053,7 +3217,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     label: 'Kurtosis_of_Returns',
     sub: 'Tail Extremity (K)',
     desc: 'The excess kurtosis of trade returns. High kurtosis indicates fat tails and elevated probability of extreme outlier results.',
-    formula: '(Σ(Z^4) / N) - 3',
+    formula: '(Σ(Standardized PnL^4) / N) - 3',
     valStr: m => `${m.kurtosis >= 0 ? '+' : ''}${m.kurtosis.toFixed(2)}`,
     colorClass: m => m.kurtosis <= 3.0 ? 'text-emerald-400' : 'text-amber-400',
     colorVal: (m, isDark) => m.kurtosis <= 3.0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
@@ -3152,7 +3316,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Max_Adverse_Excursion',
     sub: 'Mean Intra-Trade Dip',
     desc: 'The average maximum adverse excursion (MAE) experienced during open trade setups before eventual exit.',
-    formula: 'Σ(Trade MAE) / Total Trades',
+    formula: 'Σ(Trade MAE) / Trades With MAE/MFE Data',
     valStr: m => `$${m.mae.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-amber-400',
     colorVal: (_, isDark) => isDark ? '#fbbf24' : '#d97706',
@@ -3167,7 +3331,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Max_Favorable_Excurs',
     sub: 'Mean Intra-Trade Peak',
     desc: 'The average maximum favorable excursion (MFE) experienced during open trade setups before eventual exit.',
-    formula: 'Σ(Trade MFE) / Total Trades',
+    formula: 'Σ(Trade MFE) / Trades With MAE/MFE Data',
     valStr: m => `$${m.mfe.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-emerald-400',
     colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
@@ -3296,7 +3460,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'CI_for_Expected_Val',
     sub: '95% CI EV ($)',
     desc: '95% Confidence interval for the mathematical expected value per trade using standard error of the mean.',
-    formula: 'EV ± 1.96 * (StdDev / Sqrt(N))',
+    formula: 'EV ± 1.96 * (StdDev(PnL) / Sqrt(N))',
     valStr: m => `${m.ciExpectedValue}`,
     colorClass: () => 'text-amber-400',
     colorVal: (_, isDark) => isDark ? '#fbbf24' : '#d97706',
@@ -3392,7 +3556,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Optimal_F',
     sub: 'Ralph Vince Capital Frac',
     desc: 'Ralph Vince\'s Optimal f representing the peak fraction of account capital to risk for maximum geometric growth.',
-    formula: 'Kelly * 0.8',
+    formula: 'Max(0, Kelly * 0.8)',
     valStr: m => `${m.optimalF.toFixed(1)}%`,
     colorClass: m => m.optimalF >= 4.0 ? 'text-emerald-400' : (m.optimalF > 0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.optimalF >= 4.0 ? (isDark ? '#ffffff' : '#000000') : (m.optimalF > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3409,7 +3573,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'SQN',
     sub: 'System Quality Number',
     desc: 'Van Tharp\'s System Quality Number (SQN) evaluating strategy expectancy normalized by trade result dispersion.',
-    formula: '(EV / StdDev) * Sqrt(N)',
+    formula: '(EV / StdDev(PnL)) * Sqrt(N)',
     valStr: m => `${m.sqn.toFixed(2)}`,
     colorClass: m => m.sqn >= 3.0 ? 'text-emerald-400' : (m.sqn >= 2.0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.sqn >= 3.0 ? (isDark ? '#ffffff' : '#000000') : (m.sqn >= 2.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3426,7 +3590,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'T-Test_of_Avg_Trade',
     sub: 'T-Statistic (t)',
     desc: 'Student\'s t-statistic evaluating whether the mean trade PnL is statistically significantly different from zero.',
-    formula: 'EV / (StdDev / Sqrt(N))',
+    formula: 'EV / (StdDev(PnL) / Sqrt(N))',
     valStr: m => `${m.tTest >= 0 ? '+' : ''}${m.tTest.toFixed(2)}`,
     colorClass: m => Math.abs(m.tTest) >= 1.96 ? 'text-emerald-400' : 'text-amber-400',
     colorVal: (m, isDark) => Math.abs(m.tTest) >= 1.96 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
@@ -3442,7 +3606,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'P-Value_of_Edge',
     sub: 'Two-Tailed Significance',
     desc: 'Estimated two-tailed p-value corresponding to the t-statistic. Measures probability that results occurred by pure chance.',
-    formula: 'P(|T| > t)',
+    formula: '2 * (1 - NormalCDF(|T|))',
     valStr: m => `${m.pValue.toFixed(3)}`,
     colorClass: m => m.pValue <= 0.05 ? 'text-emerald-400' : 'text-rose-400',
     colorVal: (m, isDark) => m.pValue <= 0.05 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
@@ -3457,8 +3621,8 @@ const expertMetricsConfigs: MetricConfig[] = [
     key: 'informationRatio',
     label: 'Information_Ratio',
     sub: 'Active Return / Tracking Err',
-    desc: 'The ratio of active strategy return above benchmark to the volatility of those active returns (tracking error).',
-    formula: '(CAGR - Benchmark) / TrackingErr',
+    desc: 'The ratio of active strategy return above benchmark to annualized strategy return volatility used as the local tracking-error proxy.',
+    formula: '(CAGR - Benchmark) / Annualized Return StdDev',
     valStr: m => `${m.informationRatio.toFixed(2)}`,
     colorClass: m => m.informationRatio >= 0.5 ? 'text-emerald-400' : (m.informationRatio >= 0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.informationRatio >= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.informationRatio >= 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3508,7 +3672,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Beta_to_Benchmark',
     sub: 'Systematic Market Beta',
     desc: 'Estimated systematic risk coefficient (Beta) measuring strategy sensitivity to broader market benchmark movements.',
-    formula: 'Cov(Strategy, Market) / Var(Market)',
+    formula: 'Cov(Strategy Returns, Market Returns) / Var(Market Returns)',
     valStr: m => `${m.betaToBenchmark.toFixed(2)}`,
     colorClass: m => m.betaToBenchmark <= 1.0 ? 'text-emerald-400' : 'text-amber-400',
     colorVal: (m, isDark) => m.betaToBenchmark <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
@@ -3689,7 +3853,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Strategy_Decay_Rate',
     sub: 'Sharpe Regression Slope',
     desc: 'Linear regression slope of rolling Sharpe Ratios over time. Negative values indicate alpha decay and diminishing edge.',
-    formula: 'ΔRollingSharpe / ΔTime',
+    formula: 'Slope(RollingSharpe, Time)',
     valStr: m => `${m.strategyDecayRate >= 0 ? '+' : ''}${m.strategyDecayRate.toFixed(4)}`,
     colorClass: m => m.strategyDecayRate >= 0 ? 'text-emerald-400' : 'text-rose-400',
     colorVal: (m, isDark) => m.strategyDecayRate >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
@@ -3786,8 +3950,234 @@ const activeMetricsConfigs = computed<MetricConfig[]>(() => {
     .filter((c): c is MetricConfig => c !== undefined);
 });
 
+type FormulaValueFormat = 'currency' | 'percent' | 'number' | 'text'
+type FormulaValueSource = 'metric' | 'bench' | 'riskFree'
+
+interface FormulaTermConfig {
+  key: string
+  format: FormulaValueFormat
+  source?: FormulaValueSource
+}
+
+const formulaTermConfigs: Record<string, FormulaTermConfig> = {
+  'Winning Trades PnL': { key: 'grossProfit', format: 'currency' },
+  'Losing Trades PnL': { key: 'grossLoss', format: 'currency' },
+  'Strategy Gross Profit': { key: 'grossProfit', format: 'currency' },
+  'Strategy Gross Loss': { key: 'grossLoss', format: 'currency' },
+  'Asset Gross Profit': { key: 'bestAssetGrossProfit', format: 'currency' },
+  'Asset Gross Loss': { key: 'bestAssetGrossLoss', format: 'currency' },
+  'TF Gross Profit': { key: 'bestTfGrossProfit', format: 'currency' },
+  'TF Gross Loss': { key: 'bestTfGrossLoss', format: 'currency' },
+  'Gross Profit': { key: 'grossProfit', format: 'currency' },
+  'Gross Loss': { key: 'grossLoss', format: 'currency' },
+  'Net Profit': { key: 'netProfit', format: 'currency' },
+  'Winning Trades': { key: 'numWin', format: 'number' },
+  'Losing Trades': { key: 'numLoss', format: 'number' },
+  'Total Trades': { key: 'numTrades', format: 'number' },
+  'Archived Trades': { key: 'numTrades', format: 'number' },
+  'Trades With Planned RR': { key: 'plannedRRCount', format: 'number' },
+  'Trades With Entry+Exit Time': { key: 'holdingTrades', format: 'number' },
+  'Trades With Risk Data': { key: 'riskDataTrades', format: 'number' },
+  'Trades With MAE/MFE Data': { key: 'maeMfeDataTrades', format: 'number' },
+  'Average Win': { key: 'avgWin', format: 'currency' },
+  'Average Loss': { key: 'avgLoss', format: 'currency' },
+  'AvgWin': { key: 'avgWin', format: 'currency' },
+  'AvgLoss': { key: 'avgLoss', format: 'currency' },
+  'Initial Deposit': { key: 'initialDeposit', format: 'currency' },
+  'Deposit': { key: 'initialDeposit', format: 'currency' },
+  'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
+  'Win%': { key: 'winRate', format: 'percent' },
+  'Loss%': { key: 'lossRate', format: 'percent' },
+  'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+  'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
+  'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+  'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
+  'Equity Peak - Subsequent Trough': { key: 'maxDrawdownNum', format: 'currency' },
+  'Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+  'Drawdown Count': { key: 'numTrades', format: 'number' },
+  'Trough Date - Peak Date': { key: 'drawdownDurationDays', format: 'number' },
+  'Exit Time - Entry Time': { key: 'avgTradeDurationHours', format: 'number' },
+  'Active Span': { key: 'activeSpanDays', format: 'number' },
+  'Total Initial Risk': { key: 'totalInitialRisk', format: 'currency' },
+  'CAGR': { key: 'annualizedReturnPct', format: 'percent' },
+  'Mean Return': { key: 'annualizedReturnPct', format: 'percent' },
+  'Annualized Return StdDev': { key: 'stdDevPct', format: 'percent' },
+  'Annualized StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+  'Annualized Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
+  'StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+  'Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
+  'Positive Returns': { key: 'positiveReturnsPct', format: 'percent' },
+  'Negative Returns': { key: 'negativeReturnsPct', format: 'percent' },
+  'All Returns': { key: 'allReturnsPct', format: 'percent' },
+  'P95(Returns)': { key: 'p95ReturnPct', format: 'percent' },
+  'P05(Returns)': { key: 'p05ReturnPct', format: 'percent' },
+  'Tail Ratio': { key: 'tailRatio', format: 'number' },
+  'Gain-to-Pain Ratio': { key: 'gainToPainRatio', format: 'number' },
+  'Expected Value': { key: 'expectedValue', format: 'currency' },
+  'EV': { key: 'expectedValue', format: 'currency' },
+  'Latest PnL': { key: 'latestPnl', format: 'currency' },
+  'Latest Initial Risk': { key: 'latestInitialRisk', format: 'currency' },
+  'Trade R-Multiples': { key: 'avgRMultiple', format: 'number' },
+  'Trades >= 2.0R': { key: 'rMultipleWinCount', format: 'number' },
+  'Kelly Edge': { key: 'kellyEdge', format: 'number' },
+  'Kelly Criterion': { key: 'kellyCriterion', format: 'percent' },
+  'Kelly': { key: 'kellyCriterion', format: 'percent' },
+  'CapitalUnits': { key: 'capitalUnits', format: 'number' },
+  'Trade Index': { key: 'numTrades', format: 'number' },
+  'Var(Trade Index)': { key: 'tradeIndexVariance', format: 'number' },
+  'Equity': { key: 'equitySeriesLabel', format: 'text' },
+  'RegLine': { key: 'equityCurveStability', format: 'percent' },
+  'SS_res': { key: 'equityResidualSumSquares', format: 'currency' },
+  'SS_tot': { key: 'equityTotalSumSquares', format: 'currency' },
+  'R-Squared': { key: 'equityRSquared', format: 'number' },
+  'Trade PnLs': { key: 'tradePnlSeriesLabel', format: 'text' },
+  'PnL': { key: 'tradePnlSeriesLabel', format: 'text' },
+  'MeanPnL': { key: 'meanPnL', format: 'currency' },
+  'StdDev(PnL)': { key: 'stdPnL', format: 'currency' },
+  'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
+  'P05(Trade PnLs)': { key: 'p05TradePnl', format: 'currency' },
+  'Mean(PnLs < P05)': { key: 'cvar', format: 'currency' },
+  'Median Win': { key: 'medianWin', format: 'currency' },
+  'Median Loss': { key: 'medianLoss', format: 'currency' },
+  'Standardized PnL': { key: 'tradePnlSeriesLabel', format: 'text' },
+  'CVaR': { key: 'cvar', format: 'currency' },
+  'Trade MAE': { key: 'mae', format: 'currency' },
+  'Trade MFE': { key: 'mfe', format: 'currency' },
+  'Mean MAE': { key: 'mae', format: 'currency' },
+  'Mean MFE': { key: 'mfe', format: 'currency' },
+  'Runs': { key: 'runs', format: 'number' },
+  'E(Runs)': { key: 'expectedRuns', format: 'number' },
+  'StdDev(Runs)': { key: 'stdRuns', format: 'number' },
+  'Z-Score': { key: 'zScore', format: 'number' },
+  'Simulated Max Drawdowns': { key: 'monteCarloDrawdown', format: 'percent' },
+  'Simulations Ruined': { key: 'monteCarloRiskOfRuin', format: 'percent' },
+  'Simulated Net Returns': { key: 'monteCarloExpectedReturn', format: 'percent' },
+  'Resampled Means': { key: 'bootstrapConfidenceInterval', format: 'text' },
+  'Wins': { key: 'numWin', format: 'number' },
+  'Trades': { key: 'numTrades', format: 'number' },
+  'W': { key: 'winProbability', format: 'number' },
+  'p': { key: 'winProbability', format: 'number' },
+  'R': { key: 'payoffRatio', format: 'number' },
+  'N': { key: 'numTrades', format: 'number' },
+  'T': { key: 'tTest', format: 'number' },
+  'Rf': { key: 'riskFree', format: 'percent', source: 'riskFree' },
+  'Rm': { key: 'bench', format: 'percent', source: 'bench' },
+  'Benchmark CAGR': { key: 'bench', format: 'percent', source: 'bench' },
+  'Benchmark': { key: 'bench', format: 'percent', source: 'bench' },
+  'Beta': { key: 'betaToBenchmark', format: 'number' },
+  'Strategy Returns': { key: 'strategyReturnSeriesLabel', format: 'text' },
+  'Market Returns': { key: 'marketReturnSeriesLabel', format: 'text' },
+  'Var(Market Returns)': { key: 'marketReturnSeriesLabel', format: 'text' },
+  'PnL_t': { key: 'tradePnlSeriesLabel', format: 'text' },
+  'PnL_{t-1}': { key: 'tradePnlSeriesLabel', format: 'text' },
+  'R/S': { key: 'hurstRescaledRange', format: 'number' },
+  'Stability': { key: 'equityCurveStability', format: 'percent' },
+  'Rolling 10-Trade Sharpe': { key: 'rollingSharpe', format: 'number' },
+  'Rolling 10-Trade PF': { key: 'rollingProfitFactor', format: 'number' },
+  'Rolling 10-Trade EV': { key: 'rollingExpectancy', format: 'currency' },
+  'Rolling 10-Trade DD': { key: 'rollingDrawdown', format: 'percent' },
+  'Rolling 10-Trade Win%': { key: 'rollingWinRate', format: 'percent' },
+  'RollingSharpe': { key: 'rollingSharpe', format: 'number' },
+  'Time': { key: 'rollingWindowCount', format: 'number' },
+  'Decay Rate': { key: 'strategyDecayRate', format: 'number' },
+  'Top 5% Wins': { key: 'topWinsSum', format: 'currency' },
+  'Skew': { key: 'skewness', format: 'number' },
+  'Kurt': { key: 'kurtosis', format: 'number' },
+  'Outliers': { key: 'outlierImpactRatio', format: 'number' }
+}
+
+const getFormulaTermRawValue = (term: FormulaTermConfig, m: any, bench: number, riskFree: number) => {
+  if (term.source === 'bench') return bench
+  if (term.source === 'riskFree') return riskFree
+  return m?.[term.key]
+}
+
+const formatFormulaTermValue = (value: any, format: FormulaValueFormat): string => {
+  if (format === 'text') return String(value)
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return String(value ?? 'N/A')
+  if (format === 'currency') return `$${numeric.toFixed(2)}`
+  if (format === 'percent') return `${numeric.toFixed(2)}%`
+  return numeric.toFixed(2)
+}
+
+const findFormulaTermRange = (formula: string, term: string, usedRanges: Array<[number, number]>) => {
+  const hasOverlap = (start: number, end: number) => usedRanges.some(([usedStart, usedEnd]) => start < usedEnd && end > usedStart)
+  const isWord = /^[a-zA-Z]+$/.test(term)
+
+  if (isWord) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(`\\b${escaped}\\b`, 'g')
+    let match: RegExpExecArray | null
+    while ((match = regex.exec(formula)) !== null) {
+      const start = match.index
+      const end = start + term.length
+      if (!hasOverlap(start, end)) return [start, end] as [number, number]
+    }
+    return null
+  }
+
+  let index = formula.indexOf(term)
+  while (index !== -1) {
+    const end = index + term.length
+    if (!hasOverlap(index, end)) return [index, end] as [number, number]
+    index = formula.indexOf(term, index + 1)
+  }
+  return null
+}
+
+const getMatchedFormulaTerms = (formula: string) => {
+  const usedRanges: Array<[number, number]> = []
+  return Object.keys(formulaTermConfigs)
+    .sort((a, b) => b.length - a.length)
+    .flatMap(term => {
+      let hasMatch = false
+      let range = findFormulaTermRange(formula, term, usedRanges)
+      while (range) {
+        usedRanges.push(range)
+        hasMatch = true
+        range = findFormulaTermRange(formula, term, usedRanges)
+      }
+      if (!hasMatch) return []
+      return [{ term, config: formulaTermConfigs[term] }]
+    })
+}
+
+const getFormulaVariableRows = (formula: string, m: any, bench: number, riskFree: number) => {
+  const addedKeys = new Set<string>()
+  return getMatchedFormulaTerms(formula).flatMap(({ term, config }) => {
+    const value = getFormulaTermRawValue(config, m, bench, riskFree)
+    const valueKey = `${config.source ?? 'metric'}:${config.key}`
+    if (value === undefined || addedKeys.has(valueKey)) return []
+    addedKeys.add(valueKey)
+    return [{ name: term, val: formatFormulaTermValue(value, config.format) }]
+  })
+}
+
+const getEvaluatedFormulaString = (formula: string, m: any, bench: number, riskFree: number) => {
+  let evaluated = formula
+  getMatchedFormulaTerms(formula)
+    .sort((a, b) => b.term.length - a.term.length)
+    .forEach(({ term, config }) => {
+      const value = getFormulaTermRawValue(config, m, bench, riskFree)
+      if (value === undefined) return
+      evaluated = evaluated.split(term).join(formatFormulaTermValue(value, config.format))
+    })
+  return evaluated
+}
+
+const formatMetricResult = (value: any) => {
+  return typeof value === 'number' ? value.toFixed(2) : String(value ?? 'CALCULATED')
+}
+
 const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, riskFree: number) => {
   if (!key || !m) return [];
+  const metricConfig = allAvailableConfigs.value.find(c => c.key === key);
+  if (metricConfig?.formula) {
+    const formulaRows = getFormulaVariableRows(metricConfig.formula, m, bench, riskFree);
+    if (formulaRows.length > 0) return formulaRows;
+  }
+
   switch (key) {
     case 'netProfit':
       return [
@@ -3876,9 +4266,12 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'Planned RR': { key: 'riskRewardRatio', format: 'number' },
           'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
           'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
-          'Maximum Drawdown': { key: 'maxDrawdown', format: 'currency' },
-          'CAGR': { key: 'cagr', format: 'percent' },
+          'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
+          'CAGR': { key: 'annualizedReturnPct', format: 'percent' },
           'Mean Return': { key: 'annualizedReturnPct', format: 'percent' },
+          'Annualized Return StdDev': { key: 'stdDevPct', format: 'percent' },
+          'Annualized StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+          'Annualized Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
           'StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
           'Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
           'StdDev(PnL)': { key: 'stdPnL', format: 'currency' },
@@ -3923,12 +4316,12 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'Rolling 10-Trade Win%': { key: 'rollingWinRate', format: 'percent' },
           'Decay Rate': { key: 'strategyDecayRate', format: 'number' },
           'ΔRollingSharpe': { key: 'strategyDecayRate', format: 'number' },
-          'ΔTime': { key: 'timeInMarketPct', format: 'number' },
-          'Active Span': { key: 'timeInMarketPct', format: 'number' },
-          'Equity Peak - Subsequent Trough': { key: 'maxDrawdown', format: 'currency' },
+          'ΔTime': { key: 'activeSpanDays', format: 'number' },
+          'Active Span': { key: 'activeSpanDays', format: 'number' },
+          'Equity Peak - Subsequent Trough': { key: 'maxDrawdownNum', format: 'currency' },
           'Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
           'Drawdown Count': { key: 'numTrades', format: 'number' },
-          'Trough Date - Peak Date': { key: 'maxDrawdown', format: 'currency' },
+          'Trough Date - Peak Date': { key: 'drawdownDurationDays', format: 'number' },
           'Entry - SL': { key: 'mae', format: 'currency' },
           'Size': { key: 'numTrades', format: 'number' },
           'Positive Returns': { key: 'grossProfit', format: 'currency' },
@@ -3940,12 +4333,13 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'Asset Gross Loss': { key: 'grossLoss', format: 'currency' },
           'TF Gross Profit': { key: 'grossProfit', format: 'currency' },
           'TF Gross Loss': { key: 'grossLoss', format: 'currency' },
-          'Latest PnL': { key: 'avgTrade', format: 'currency' },
-          'Latest Initial Risk': { key: 'mae', format: 'currency' },
+          'Latest PnL': { key: 'latestPnl', format: 'currency' },
+          'Latest Initial Risk': { key: 'latestInitialRisk', format: 'currency' },
           'Trade R-Multiples': { key: 'avgRMultiple', format: 'number' },
           'Trades >= 2.0R': { key: 'numWin', format: 'number' },
-          'Edge': { key: 'expectedValue', format: 'currency' },
-          'CapitalUnits': { key: 'numTrades', format: 'number' },
+          'Kelly Edge': { key: 'kellyEdge', format: 'number' },
+          'Edge': { key: 'kellyEdge', format: 'number' },
+          'CapitalUnits': { key: 'capitalUnits', format: 'number' },
           'Index': { key: 'bench', format: 'percent', source: 'bench' },
           'Equity': { key: 'netProfit', format: 'currency' },
           'Var(Index)': { key: 'stdDevPct', format: 'percent' },
@@ -3953,15 +4347,13 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'SS_res': { key: 'stdPnL', format: 'currency' },
           'SS_tot': { key: 'varPnL', format: 'currency' },
           'R-Squared': { key: 'equityCurveCorrelation', format: 'percent' },
-          'MeanPnL': { key: 'avgTrade', format: 'currency' },
-          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
           'Median Win': { key: 'avgWin', format: 'currency' },
           'Median Loss': { key: 'avgLoss', format: 'currency' },
           'Trade MAE': { key: 'mae', format: 'currency' },
           'Trade MFE': { key: 'mfe', format: 'currency' },
-          'Runs': { key: 'runsTest', format: 'number' },
-          'E(Runs)': { key: 'runsTest', format: 'number' },
-          'StdDev(Runs)': { key: 'runsTest', format: 'number' },
+          'Runs': { key: 'runs', format: 'number' },
+          'E(Runs)': { key: 'expectedRuns', format: 'number' },
+          'StdDev(Runs)': { key: 'stdRuns', format: 'number' },
           'Resampled Means': { key: 'monteCarloExpectedReturn', format: 'percent' },
           'T': { key: 'tTest', format: 'number' },
           't': { key: 'pValue', format: 'number' },
@@ -3973,7 +4365,7 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'S': { key: 'hurstExponent', format: 'number' },
           'Top 5% Wins': { key: 'grossProfit', format: 'currency' },
           'Archived Trades': { key: 'numTrades', format: 'number' },
-          'Exit Time - Entry Time': { key: 'avgTradeDuration', format: 'number' },
+          'Exit Time - Entry Time': { key: 'avgTradeDurationHours', format: 'number' },
           'P95(Returns)': { key: 'avgWin', format: 'currency' },
           'P05(Returns)': { key: 'avgLoss', format: 'currency' }
         };
@@ -4016,6 +4408,11 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
 
 const getMetricCalculationSteps = (key: string | null, m: any, bench: number, riskFree: number) => {
   if (!key || !m) return '';
+  const metricConfig = allAvailableConfigs.value.find(c => c.key === key);
+  if (metricConfig?.formula) {
+    return `${getEvaluatedFormulaString(metricConfig.formula, m, bench, riskFree)} = ${formatMetricResult(m[key])}`;
+  }
+
   switch (key) {
     case 'netProfit':
       return `$${m.grossProfit?.toFixed(2) ?? '0.00'} - $${m.grossLoss?.toFixed(2) ?? '0.00'} = $${m.netProfit?.toFixed(2) ?? '0.00'}`;
@@ -4072,9 +4469,12 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'Planned RR': { key: 'riskRewardRatio', format: 'number' },
           'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
           'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
-          'Maximum Drawdown': { key: 'maxDrawdown', format: 'currency' },
-          'CAGR': { key: 'cagr', format: 'percent' },
+          'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
+          'CAGR': { key: 'annualizedReturnPct', format: 'percent' },
           'Mean Return': { key: 'annualizedReturnPct', format: 'percent' },
+          'Annualized Return StdDev': { key: 'stdDevPct', format: 'percent' },
+          'Annualized StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+          'Annualized Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
           'StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
           'Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
           'StdDev(PnL)': { key: 'stdPnL', format: 'currency' },
@@ -4119,12 +4519,12 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'Rolling 10-Trade Win%': { key: 'rollingWinRate', format: 'percent' },
           'Decay Rate': { key: 'strategyDecayRate', format: 'number' },
           'ΔRollingSharpe': { key: 'strategyDecayRate', format: 'number' },
-          'ΔTime': { key: 'timeInMarketPct', format: 'number' },
-          'Active Span': { key: 'timeInMarketPct', format: 'number' },
-          'Equity Peak - Subsequent Trough': { key: 'maxDrawdown', format: 'currency' },
+          'ΔTime': { key: 'activeSpanDays', format: 'number' },
+          'Active Span': { key: 'activeSpanDays', format: 'number' },
+          'Equity Peak - Subsequent Trough': { key: 'maxDrawdownNum', format: 'currency' },
           'Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
           'Drawdown Count': { key: 'numTrades', format: 'number' },
-          'Trough Date - Peak Date': { key: 'maxDrawdown', format: 'currency' },
+          'Trough Date - Peak Date': { key: 'drawdownDurationDays', format: 'number' },
           'Entry - SL': { key: 'mae', format: 'currency' },
           'Size': { key: 'numTrades', format: 'number' },
           'Positive Returns': { key: 'grossProfit', format: 'currency' },
@@ -4136,12 +4536,13 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'Asset Gross Loss': { key: 'grossLoss', format: 'currency' },
           'TF Gross Profit': { key: 'grossProfit', format: 'currency' },
           'TF Gross Loss': { key: 'grossLoss', format: 'currency' },
-          'Latest PnL': { key: 'avgTrade', format: 'currency' },
-          'Latest Initial Risk': { key: 'mae', format: 'currency' },
+          'Latest PnL': { key: 'latestPnl', format: 'currency' },
+          'Latest Initial Risk': { key: 'latestInitialRisk', format: 'currency' },
           'Trade R-Multiples': { key: 'avgRMultiple', format: 'number' },
           'Trades >= 2.0R': { key: 'numWin', format: 'number' },
-          'Edge': { key: 'expectedValue', format: 'currency' },
-          'CapitalUnits': { key: 'numTrades', format: 'number' },
+          'Kelly Edge': { key: 'kellyEdge', format: 'number' },
+          'Edge': { key: 'kellyEdge', format: 'number' },
+          'CapitalUnits': { key: 'capitalUnits', format: 'number' },
           'Index': { key: 'bench', format: 'percent', source: 'bench' },
           'Equity': { key: 'netProfit', format: 'currency' },
           'Var(Index)': { key: 'stdDevPct', format: 'percent' },
@@ -4149,15 +4550,13 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'SS_res': { key: 'stdPnL', format: 'currency' },
           'SS_tot': { key: 'varPnL', format: 'currency' },
           'R-Squared': { key: 'equityCurveCorrelation', format: 'percent' },
-          'MeanPnL': { key: 'avgTrade', format: 'currency' },
-          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
           'Median Win': { key: 'avgWin', format: 'currency' },
           'Median Loss': { key: 'avgLoss', format: 'currency' },
           'Trade MAE': { key: 'mae', format: 'currency' },
           'Trade MFE': { key: 'mfe', format: 'currency' },
-          'Runs': { key: 'runsTest', format: 'number' },
-          'E(Runs)': { key: 'runsTest', format: 'number' },
-          'StdDev(Runs)': { key: 'runsTest', format: 'number' },
+          'Runs': { key: 'runs', format: 'number' },
+          'E(Runs)': { key: 'expectedRuns', format: 'number' },
+          'StdDev(Runs)': { key: 'stdRuns', format: 'number' },
           'Resampled Means': { key: 'monteCarloExpectedReturn', format: 'percent' },
           'T': { key: 'tTest', format: 'number' },
           't': { key: 'pValue', format: 'number' },
@@ -4169,7 +4568,7 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'S': { key: 'hurstExponent', format: 'number' },
           'Top 5% Wins': { key: 'grossProfit', format: 'currency' },
           'Archived Trades': { key: 'numTrades', format: 'number' },
-          'Exit Time - Entry Time': { key: 'avgTradeDuration', format: 'number' },
+          'Exit Time - Entry Time': { key: 'avgTradeDurationHours', format: 'number' },
           'P95(Returns)': { key: 'avgWin', format: 'currency' },
           'P05(Returns)': { key: 'avgLoss', format: 'currency' }
         };
