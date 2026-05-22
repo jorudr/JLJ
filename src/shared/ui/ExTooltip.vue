@@ -67,6 +67,10 @@ const props = defineProps({
   forceShow: {
     type: Boolean,
     default: false
+  },
+  scale: {
+    type: Number,
+    default: 1
   }
 })
 
@@ -123,7 +127,8 @@ const tooltipStyle = computed(() => {
     left: `${left}px`,
     top: `${topY}px`,
     width: `${w}px`,
-    transform: 'translateY(-100%) translateY(-20px)'
+    transform: `translateY(-100%) translateY(-20px) scale(${props.scale})`,
+    transformOrigin: 'bottom center'
   }
 })
 

@@ -802,20 +802,6 @@
           </div>
         </button>
 
-        <!-- BENCHMARK / RISK-FREE RATE TOGGLE -->
-        <button v-if="!showDistribution3D"
-                @click="showBenchmarkCurves = !showBenchmarkCurves"
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showBenchmarkCurves ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            <path d="M2 17L6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
-          </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20 dark:border-black/20">
-            {{ showBenchmarkCurves ? '[ HIDE_BENCHMARKS ]' : '[ SHOW_BENCHMARKS ]' }}
-          </div>
-        </button>
-
         <!-- EXPLANATIONS & SIMULATIONS -->
         <button v-if="showDistribution3D"
                 @click="showRobustnessExplanations = !showRobustnessExplanations; if (showRobustnessExplanations) { showQQPlot = false; showRobustnessHistogram = false }"
@@ -929,6 +915,19 @@
           <span class="text-[11px] font-black font-mono">{{ calendarValueMode === 'currency' ? '%' : '$' }}</span>
           <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
             {{ calendarValueMode === 'currency' ? '[ SHOW_PERCENT ]' : '[ SHOW_CURRENCY ]' }}
+          </div>
+        </button>
+
+        <!-- BENCHMARK / RISK-FREE RATE TOGGLE -->
+        <button @click="showBenchmarkCurves = !showBenchmarkCurves"
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                :class="showBenchmarkCurves ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            <path d="M2 17L6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
+          </svg>
+          <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            {{ showBenchmarkCurves ? '[ HIDE_BENCHMARKS ]' : '[ SHOW_BENCHMARKS ]' }}
           </div>
         </button>
       </div>
@@ -2120,7 +2119,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Gross Profit - Gross Loss',
     valStr: m => `${m.netProfit >= 0 ? '+' : ''}$${m.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.netProfit >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.netProfit >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.netProfit >= 0 ? 'Profitable' : 'Drawdown',
     evalClass: m => m.netProfit >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2136,7 +2135,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Winning Trades PnL)',
     valStr: m => `+$${m.grossProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: m => m.grossProfit > 0 ? 'Nominal' : 'Zero',
     evalClass: m => m.grossProfit > 0 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2168,7 +2167,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: '(Winning Trades / Total Trades) * 100',
     valStr: m => `${m.winRate.toFixed(1)}%`,
     colorClass: m => m.winRate >= 50 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.winRate >= 50 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.winRate >= 50 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.winRate >= 50 ? 'Optimal' : 'Sub-Optimal',
     evalClass: m => m.winRate >= 50 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2184,7 +2183,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: '(Losing Trades / Total Trades) * 100',
     valStr: m => `${m.lossRate.toFixed(1)}%`,
     colorClass: m => m.lossRate < 50 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.lossRate < 50 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.lossRate < 50 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.lossRate < 50 ? 'Optimal' : 'Sub-Optimal',
     evalClass: m => m.lossRate < 50 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2200,7 +2199,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Gross Profit / Winning Trades',
     valStr: m => `+$${m.avgWin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: m => m.avgWin > m.avgLoss ? 'Optimal' : 'Sub-Optimal',
     evalClass: m => m.avgWin > m.avgLoss ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2232,7 +2231,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Net Profit / Total Trades',
     valStr: m => `${m.avgTrade >= 0 ? '+' : ''}$${m.avgTrade.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.avgTrade >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.avgTrade >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.avgTrade >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.avgTrade >= 0 ? 'Positive Edge' : 'Negative Drag',
     evalClass: m => m.avgTrade >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2248,7 +2247,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Average Win / Average Loss',
     valStr: m => `${m.payoffRatio.toFixed(2)}x`,
     colorClass: m => m.payoffRatio >= 1.5 ? 'text-emerald-400' : (m.payoffRatio >= 1 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.payoffRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.payoffRatio >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.payoffRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.payoffRatio >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.payoffRatio >= 1.5 ? 'Optimal' : (m.payoffRatio >= 1 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.payoffRatio >= 1.5 ? 'text-emerald-500' : (m.payoffRatio >= 1 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2265,7 +2264,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Planned RR) / Total Trades',
     valStr: m => `${m.riskRewardRatio.toFixed(2)}R`,
     colorClass: m => m.riskRewardRatio >= 2 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.riskRewardRatio >= 2 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.riskRewardRatio >= 2 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.riskRewardRatio >= 2 ? 'Optimal' : 'Sub-Optimal',
     evalClass: m => m.riskRewardRatio >= 2 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2281,7 +2280,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Average Win / Average Loss',
     valStr: m => `${m.realizedRR.toFixed(2)}R`,
     colorClass: m => m.realizedRR >= 1.5 ? 'text-emerald-400' : (m.realizedRR >= 1 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.realizedRR >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.realizedRR >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.realizedRR >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.realizedRR >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.realizedRR >= 1.5 ? 'Optimal' : (m.realizedRR >= 1 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.realizedRR >= 1.5 ? 'text-emerald-500' : (m.realizedRR >= 1 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2298,7 +2297,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: '(Win% * AvgWin) - (Loss% * AvgLoss)',
     valStr: m => `${m.expectedValue >= 0 ? '+' : ''}$${m.expectedValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.expectedValue >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.expectedValue >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.expectedValue >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.expectedValue >= 0 ? 'Positive Alpha' : 'Negative Drag',
     evalClass: m => m.expectedValue >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2314,7 +2313,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Gross Profit / Gross Loss',
     valStr: m => `${m.profitFactor.toFixed(2)}x`,
     colorClass: m => m.profitFactor >= 1.5 ? 'text-emerald-400' : (m.profitFactor >= 1 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.profitFactor >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.profitFactor >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.profitFactor >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.profitFactor >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.profitFactor >= 1.5 ? 'Optimal' : (m.profitFactor >= 1 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.profitFactor >= 1.5 ? 'text-emerald-500' : (m.profitFactor >= 1 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2331,7 +2330,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: '1 / (1 + Payoff Ratio)',
     valStr: m => `${m.beWinRate.toFixed(1)}%`,
     colorClass: m => m.winRate >= m.beWinRate ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.winRate >= m.beWinRate ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.winRate >= m.beWinRate ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.winRate >= m.beWinRate ? 'Sustainable' : 'Unsustainable',
     evalClass: m => m.winRate >= m.beWinRate ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2347,7 +2346,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Count(Archived Trades)',
     valStr: m => `${m.numTrades}`,
     colorClass: m => m.numTrades >= 30 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.numTrades >= 30 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.numTrades >= 30 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.numTrades >= 30 ? 'Statistically Significant' : 'Small Sample',
     evalClass: m => m.numTrades >= 30 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2363,7 +2362,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Count(PnL > 0)',
     valStr: m => `${m.numWin}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: m => m.numWin > m.numLoss ? 'Majority Wins' : 'Minority Wins',
     evalClass: m => m.numWin > m.numLoss ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2395,7 +2394,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Max(Winning Trades PnL)',
     valStr: m => `+$${m.largestWin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: m => m.largestWin > 0 ? 'Nominal' : 'Zero',
     evalClass: m => m.largestWin > 0 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2427,7 +2426,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Max Streak(PnL > 0)',
     valStr: m => `${m.maxConsWins}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: m => m.maxConsWins >= 3 ? 'Strong Momentum' : 'Nominal',
     evalClass: m => m.maxConsWins >= 3 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -2475,7 +2474,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     valStr: m => `$${m.avgProfitPerDay.toLocaleString(undefined, { maximumFractionDigits: 1 })}/d`,
     tooltipValStr: m => `$${m.avgProfitPerDay.toLocaleString(undefined, { maximumFractionDigits: 1 })}/d | $${m.avgProfitPerWeek.toLocaleString(undefined, { maximumFractionDigits: 1 })}/w | $${m.avgProfitPerMonth.toLocaleString(undefined, { maximumFractionDigits: 1 })}/m`,
     colorClass: m => m.avgProfitPerDay >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.avgProfitPerDay >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.avgProfitPerDay >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.avgProfitPerDay >= 0 ? 'Positive Velocity' : 'Negative Drag',
     evalClass: m => m.avgProfitPerDay >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2539,7 +2538,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Net Profit / Maximum Drawdown',
     valStr: m => `${m.recoveryFactor.toFixed(2)}x`,
     colorClass: m => m.recoveryFactor >= 2 ? 'text-emerald-400' : (m.recoveryFactor >= 1 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.recoveryFactor >= 2 ? (isDark ? '#34d399' : '#059669') : (m.recoveryFactor >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.recoveryFactor >= 2 ? (isDark ? '#ffffff' : '#000000') : (m.recoveryFactor >= 1 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.recoveryFactor >= 2 ? 'Excellent' : (m.recoveryFactor >= 1 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.recoveryFactor >= 2 ? 'text-emerald-500' : (m.recoveryFactor >= 1 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2556,7 +2555,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: '(Net Profit / Initial Deposit) * 100',
     valStr: m => `${m.returnOnCapital >= 0 ? '+' : ''}${m.returnOnCapital.toFixed(1)}%`,
     colorClass: m => m.returnOnCapital >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.returnOnCapital >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.returnOnCapital >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.returnOnCapital >= 0 ? 'Positive Alpha' : 'Capital Erosion',
     evalClass: m => m.returnOnCapital >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2572,7 +2571,7 @@ const primaryMetricsConfigs: MetricConfig[] = [
     formula: 'Net Profit / Total Trades',
     valStr: m => `${m.returnPerTrade >= 0 ? '+' : ''}$${m.returnPerTrade.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.returnPerTrade >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.returnPerTrade >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.returnPerTrade >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.returnPerTrade >= 0 ? 'Positive Edge' : 'Negative Drag',
     evalClass: m => m.returnPerTrade >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2606,7 +2605,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '(Mean Return - Rf) / StdDev(Return)',
     valStr: m => `${m.sharpeRatio.toFixed(2)}`,
     colorClass: m => m.sharpeRatio >= 1.5 ? 'text-emerald-400' : (m.sharpeRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.sharpeRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.sharpeRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.sharpeRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.sharpeRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.sharpeRatio >= 1.5 ? 'Optimal' : (m.sharpeRatio >= 1.0 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.sharpeRatio >= 1.5 ? 'text-emerald-500' : (m.sharpeRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2623,7 +2622,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '(Mean Return - Rf) / Downside StdDev',
     valStr: m => `${m.sortinoRatio.toFixed(2)}`,
     colorClass: m => m.sortinoRatio >= 2.0 ? 'text-emerald-400' : (m.sortinoRatio >= 1.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.sortinoRatio >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.sortinoRatio >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.sortinoRatio >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.sortinoRatio >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.sortinoRatio >= 2.0 ? 'Excellent' : (m.sortinoRatio >= 1.5 ? 'Good' : 'Sub-Optimal'),
     evalClass: m => m.sortinoRatio >= 2.0 ? 'text-emerald-500' : (m.sortinoRatio >= 1.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2640,7 +2639,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'CAGR / Maximum Drawdown %',
     valStr: m => `${m.calmarRatio.toFixed(2)}`,
     colorClass: m => m.calmarRatio >= 2.0 ? 'text-emerald-400' : (m.calmarRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.calmarRatio >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.calmarRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.calmarRatio >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.calmarRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.calmarRatio >= 2.0 ? 'Superior' : (m.calmarRatio >= 1.0 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.calmarRatio >= 2.0 ? 'text-emerald-500' : (m.calmarRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2657,7 +2656,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'CAGR / Average Drawdown %',
     valStr: m => `${m.sterlingRatio.toFixed(2)}`,
     colorClass: m => m.sterlingRatio >= 1.5 ? 'text-emerald-400' : (m.sterlingRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.sterlingRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.sterlingRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.sterlingRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.sterlingRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.sterlingRatio >= 1.5 ? 'Optimal' : (m.sterlingRatio >= 1.0 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.sterlingRatio >= 1.5 ? 'text-emerald-500' : (m.sterlingRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2674,7 +2673,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Positive Returns) / Σ(|Negative Returns|)',
     valStr: m => `${m.omegaRatio.toFixed(2)}x`,
     colorClass: m => m.omegaRatio >= 1.5 ? 'text-emerald-400' : (m.omegaRatio >= 1.2 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.omegaRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.omegaRatio >= 1.2 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.omegaRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.omegaRatio >= 1.2 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.omegaRatio >= 1.5 ? 'Strong Edge' : (m.omegaRatio >= 1.2 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.omegaRatio >= 1.5 ? 'text-emerald-500' : (m.omegaRatio >= 1.2 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2691,7 +2690,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Sqrt( Σ(Drawdown % ^ 2) / N )',
     valStr: m => `${m.ulcerIndex.toFixed(1)}%`,
     colorClass: m => m.ulcerIndex <= 5.0 ? 'text-emerald-400' : (m.ulcerIndex <= 10.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.ulcerIndex <= 5.0 ? (isDark ? '#34d399' : '#059669') : (m.ulcerIndex <= 10.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.ulcerIndex <= 5.0 ? (isDark ? '#ffffff' : '#000000') : (m.ulcerIndex <= 10.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.ulcerIndex <= 5.0 ? 'Low Stress' : (m.ulcerIndex <= 10.0 ? 'Moderate' : 'High Stress'),
     evalClass: m => m.ulcerIndex <= 5.0 ? 'text-emerald-500' : (m.ulcerIndex <= 10.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2708,7 +2707,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'CAGR / Maximum Drawdown',
     valStr: m => `${m.marRatio.toFixed(2)}`,
     colorClass: m => m.marRatio >= 1.0 ? 'text-emerald-400' : (m.marRatio >= 0.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.marRatio >= 1.0 ? (isDark ? '#34d399' : '#059669') : (m.marRatio >= 0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.marRatio >= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.marRatio >= 0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.marRatio >= 1.0 ? 'Excellent' : (m.marRatio >= 0.5 ? 'Acceptable' : 'Sub-Optimal'),
     evalClass: m => m.marRatio >= 1.0 ? 'text-emerald-500' : (m.marRatio >= 0.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2725,7 +2724,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(All Returns) / Σ(|Negative Returns|)',
     valStr: m => `${m.gainToPainRatio.toFixed(2)}`,
     colorClass: m => m.gainToPainRatio >= 1.5 ? 'text-emerald-400' : (m.gainToPainRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.gainToPainRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.gainToPainRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.gainToPainRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.gainToPainRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.gainToPainRatio >= 1.5 ? 'Superior' : (m.gainToPainRatio >= 1.0 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.gainToPainRatio >= 1.5 ? 'text-emerald-500' : (m.gainToPainRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2742,7 +2741,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'P95(Returns) / |P05(Returns)|',
     valStr: m => `${m.tailRatio.toFixed(2)}`,
     colorClass: m => m.tailRatio >= 1.2 ? 'text-emerald-400' : (m.tailRatio >= 0.9 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.tailRatio >= 1.2 ? (isDark ? '#34d399' : '#059669') : (m.tailRatio >= 0.9 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.tailRatio >= 1.2 ? (isDark ? '#ffffff' : '#000000') : (m.tailRatio >= 0.9 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.tailRatio >= 1.2 ? 'Favorable Asymmetry' : (m.tailRatio >= 0.9 ? 'Symmetric' : 'Fat Tail Risk'),
     evalClass: m => m.tailRatio >= 1.2 ? 'text-emerald-500' : (m.tailRatio >= 0.9 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2759,7 +2758,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Tail Ratio * Gain-to-Pain Ratio',
     valStr: m => `${m.commonSenseRatio.toFixed(2)}`,
     colorClass: m => m.commonSenseRatio >= 1.5 ? 'text-emerald-400' : (m.commonSenseRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.commonSenseRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.commonSenseRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.commonSenseRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.commonSenseRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.commonSenseRatio >= 1.5 ? 'Robust Edge' : (m.commonSenseRatio >= 1.0 ? 'Nominal' : 'Fragile'),
     evalClass: m => m.commonSenseRatio >= 1.5 ? 'text-emerald-500' : (m.commonSenseRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2776,7 +2775,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Strategy Gross Profit / Strategy Gross Loss',
     valStr: m => `${m.profitFactorStrategy.toFixed(2)}x`,
     colorClass: m => m.profitFactorStrategy >= 2.0 ? 'text-emerald-400' : (m.profitFactorStrategy >= 1.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.profitFactorStrategy >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.profitFactorStrategy >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.profitFactorStrategy >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.profitFactorStrategy >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.profitFactorStrategy >= 2.0 ? 'Elite' : (m.profitFactorStrategy >= 1.5 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.profitFactorStrategy >= 2.0 ? 'text-emerald-500' : (m.profitFactorStrategy >= 1.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2793,7 +2792,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Max(Asset Gross Profit / Asset Gross Loss)',
     valStr: m => `${m.profitFactorMarket.toFixed(2)}x`,
     colorClass: m => m.profitFactorMarket >= 2.0 ? 'text-emerald-400' : (m.profitFactorMarket >= 1.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.profitFactorMarket >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.profitFactorMarket >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.profitFactorMarket >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.profitFactorMarket >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.profitFactorMarket >= 2.0 ? 'Elite Alpha' : (m.profitFactorMarket >= 1.5 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.profitFactorMarket >= 2.0 ? 'text-emerald-500' : (m.profitFactorMarket >= 1.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2810,7 +2809,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Max(TF Gross Profit / TF Gross Loss)',
     valStr: m => `${m.profitFactorTimeframe.toFixed(2)}x`,
     colorClass: m => m.profitFactorTimeframe >= 2.0 ? 'text-emerald-400' : (m.profitFactorTimeframe >= 1.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.profitFactorTimeframe >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.profitFactorTimeframe >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.profitFactorTimeframe >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.profitFactorTimeframe >= 1.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.profitFactorTimeframe >= 2.0 ? 'Elite Alpha' : (m.profitFactorTimeframe >= 1.5 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.profitFactorTimeframe >= 2.0 ? 'text-emerald-500' : (m.profitFactorTimeframe >= 1.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2827,7 +2826,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '(Win% * AvgWin) - (Loss% * AvgLoss)',
     valStr: m => `${m.avgTradeExpectancy >= 0 ? '+' : ''}$${m.avgTradeExpectancy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.avgTradeExpectancy >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.avgTradeExpectancy >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.avgTradeExpectancy >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.avgTradeExpectancy >= 0 ? 'Positive Edge' : 'Negative Drag',
     evalClass: m => m.avgTradeExpectancy >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2843,7 +2842,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Expected Value / Average Loss',
     valStr: m => `${m.expectancyScore.toFixed(2)}`,
     colorClass: m => m.expectancyScore >= 0.5 ? 'text-emerald-400' : (m.expectancyScore >= 0.2 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.expectancyScore >= 0.5 ? (isDark ? '#34d399' : '#059669') : (m.expectancyScore >= 0.2 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.expectancyScore >= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.expectancyScore >= 0.2 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.expectancyScore >= 0.5 ? 'Excellent' : (m.expectancyScore >= 0.2 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.expectancyScore >= 0.5 ? 'text-emerald-500' : (m.expectancyScore >= 0.2 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2860,7 +2859,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Latest PnL / Latest Initial Risk',
     valStr: m => `${m.latestRMultiple >= 0 ? '+' : ''}${m.latestRMultiple.toFixed(2)}R`,
     colorClass: m => m.latestRMultiple >= 2.0 ? 'text-emerald-400' : (m.latestRMultiple >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.latestRMultiple >= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.latestRMultiple >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.latestRMultiple >= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.latestRMultiple >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.latestRMultiple >= 2.0 ? 'Optimal R' : (m.latestRMultiple >= 1.0 ? 'Nominal R' : 'Sub-Optimal R'),
     evalClass: m => m.latestRMultiple >= 2.0 ? 'text-emerald-500' : (m.latestRMultiple >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2877,7 +2876,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Trade R-Multiples) / Total Trades',
     valStr: m => `${m.avgRMultiple >= 0 ? '+' : ''}${m.avgRMultiple.toFixed(2)}R`,
     colorClass: m => m.avgRMultiple >= 1.5 ? 'text-emerald-400' : (m.avgRMultiple >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.avgRMultiple >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.avgRMultiple >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.avgRMultiple >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.avgRMultiple >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.avgRMultiple >= 1.5 ? 'Strong Edge' : (m.avgRMultiple >= 1.0 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.avgRMultiple >= 1.5 ? 'text-emerald-500' : (m.avgRMultiple >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2894,7 +2893,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '(Trades >= 2.0R / Total Trades) * 100',
     valStr: m => `${m.rMultipleDist.toFixed(1)}%`,
     colorClass: m => m.rMultipleDist >= 30 ? 'text-emerald-400' : (m.rMultipleDist >= 15 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.rMultipleDist >= 30 ? (isDark ? '#34d399' : '#059669') : (m.rMultipleDist >= 15 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.rMultipleDist >= 30 ? (isDark ? '#ffffff' : '#000000') : (m.rMultipleDist >= 15 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.rMultipleDist >= 30 ? 'Excellent' : (m.rMultipleDist >= 15 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.rMultipleDist >= 30 ? 'text-emerald-500' : (m.rMultipleDist >= 15 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2911,7 +2910,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '((1 - Edge) / (1 + Edge)) ^ CapitalUnits',
     valStr: m => `${m.riskOfRuin.toFixed(1)}%`,
     colorClass: m => m.riskOfRuin <= 1.0 ? 'text-emerald-400' : (m.riskOfRuin <= 5.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.riskOfRuin <= 1.0 ? (isDark ? '#34d399' : '#059669') : (m.riskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.riskOfRuin <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.riskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.riskOfRuin <= 1.0 ? 'Safe' : (m.riskOfRuin <= 5.0 ? 'Vulnerable' : 'Critical Risk'),
     evalClass: m => m.riskOfRuin <= 1.0 ? 'text-emerald-500' : (m.riskOfRuin <= 5.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2928,7 +2927,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Cov(Index, Equity) / Var(Index)',
     valStr: m => `${m.slope >= 0 ? '+' : ''}$${m.slope.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.slope >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.slope >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.slope >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.slope >= 0 ? 'Upward Trajectory' : 'Downward Trajectory',
     evalClass: m => m.slope >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -2959,7 +2958,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '1 - (SS_res / SS_tot)',
     valStr: m => `${m.equityCurveStability.toFixed(1)}%`,
     colorClass: m => m.equityCurveStability >= 80 ? 'text-emerald-400' : (m.equityCurveStability >= 50 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.equityCurveStability >= 80 ? (isDark ? '#34d399' : '#059669') : (m.equityCurveStability >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.equityCurveStability >= 80 ? (isDark ? '#ffffff' : '#000000') : (m.equityCurveStability >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.equityCurveStability >= 80 ? 'High Stability' : (m.equityCurveStability >= 50 ? 'Moderate' : 'Erratic'),
     evalClass: m => m.equityCurveStability >= 80 ? 'text-emerald-500' : (m.equityCurveStability >= 50 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -2976,7 +2975,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Sqrt(R-Squared)',
     valStr: m => `${m.equityCurveCorrelation.toFixed(2)}`,
     colorClass: m => m.equityCurveCorrelation >= 0.9 ? 'text-emerald-400' : (m.equityCurveCorrelation >= 0.7 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.equityCurveCorrelation >= 0.9 ? (isDark ? '#34d399' : '#059669') : (m.equityCurveCorrelation >= 0.7 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.equityCurveCorrelation >= 0.9 ? (isDark ? '#ffffff' : '#000000') : (m.equityCurveCorrelation >= 0.7 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.equityCurveCorrelation >= 0.9 ? 'Strong Trend' : (m.equityCurveCorrelation >= 0.7 ? 'Moderate' : 'Weak Trend'),
     evalClass: m => m.equityCurveCorrelation >= 0.9 ? 'text-emerald-500' : (m.equityCurveCorrelation >= 0.7 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3023,7 +3022,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'StdDev(PnL) / |Mean PnL|',
     valStr: m => `${m.coeffOfVariation.toFixed(2)}`,
     colorClass: m => m.coeffOfVariation <= 2.0 ? 'text-emerald-400' : (m.coeffOfVariation <= 4.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.coeffOfVariation <= 2.0 ? (isDark ? '#34d399' : '#059669') : (m.coeffOfVariation <= 4.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.coeffOfVariation <= 2.0 ? (isDark ? '#ffffff' : '#000000') : (m.coeffOfVariation <= 4.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.coeffOfVariation <= 2.0 ? 'High Consistency' : (m.coeffOfVariation <= 4.0 ? 'Moderate' : 'High Dispersion'),
     evalClass: m => m.coeffOfVariation <= 2.0 ? 'text-emerald-500' : (m.coeffOfVariation <= 4.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3040,7 +3039,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Z^3) / N',
     valStr: m => `${m.skewness >= 0 ? '+' : ''}${m.skewness.toFixed(2)}`,
     colorClass: m => m.skewness >= 0.5 ? 'text-emerald-400' : (m.skewness >= -0.5 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.skewness >= 0.5 ? (isDark ? '#34d399' : '#059669') : (m.skewness >= -0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.skewness >= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.skewness >= -0.5 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.skewness >= 0.5 ? 'Positive Skew' : (m.skewness >= -0.5 ? 'Symmetric' : 'Negative Skew'),
     evalClass: m => m.skewness >= 0.5 ? 'text-emerald-500' : (m.skewness >= -0.5 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3057,7 +3056,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: '(Σ(Z^4) / N) - 3',
     valStr: m => `${m.kurtosis >= 0 ? '+' : ''}${m.kurtosis.toFixed(2)}`,
     colorClass: m => m.kurtosis <= 3.0 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.kurtosis <= 3.0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.kurtosis <= 3.0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.kurtosis <= 3.0 ? 'Normal Tails' : 'Fat Tails',
     evalClass: m => m.kurtosis <= 3.0 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3073,7 +3072,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'P50(Trade PnLs)',
     valStr: m => `${m.medianTradeResult >= 0 ? '+' : ''}$${m.medianTradeResult.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.medianTradeResult >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.medianTradeResult >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.medianTradeResult >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.medianTradeResult >= 0 ? 'Positive Median' : 'Negative Median',
     evalClass: m => m.medianTradeResult >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3089,7 +3088,7 @@ const advancedMetricsConfigs: MetricConfig[] = [
     formula: 'Median Win / |Median Loss|',
     valStr: m => `${m.medianWinLossRatio.toFixed(2)}x`,
     colorClass: m => m.medianWinLossRatio >= 1.5 ? 'text-emerald-400' : (m.medianWinLossRatio >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.medianWinLossRatio >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.medianWinLossRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.medianWinLossRatio >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.medianWinLossRatio >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.medianWinLossRatio >= 1.5 ? 'Optimal Asymmetry' : (m.medianWinLossRatio >= 1.0 ? 'Nominal' : 'Sub-Optimal'),
     evalClass: m => m.medianWinLossRatio >= 1.5 ? 'text-emerald-500' : (m.medianWinLossRatio >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3139,7 +3138,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(CVaR / Deposit) * 100',
     valStr: m => `${m.expectedShortfall.toFixed(1)}%`,
     colorClass: m => m.expectedShortfall <= 5.0 ? 'text-emerald-400' : (m.expectedShortfall <= 10.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.expectedShortfall <= 5.0 ? (isDark ? '#34d399' : '#059669') : (m.expectedShortfall <= 10.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.expectedShortfall <= 5.0 ? (isDark ? '#ffffff' : '#000000') : (m.expectedShortfall <= 10.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.expectedShortfall <= 5.0 ? 'Low Risk' : (m.expectedShortfall <= 10.0 ? 'Moderate' : 'High Risk'),
     evalClass: m => m.expectedShortfall <= 5.0 ? 'text-emerald-500' : (m.expectedShortfall <= 10.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3171,7 +3170,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Trade MFE) / Total Trades',
     valStr: m => `$${m.mfe.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: () => 'text-emerald-400',
-    colorVal: (_, isDark) => isDark ? '#34d399' : '#059669',
+    colorVal: (_, isDark) => isDark ? '#ffffff' : '#000000',
     evalStr: () => 'Intra-Trade Potential',
     evalClass: () => 'text-emerald-500',
     benchmarks: [
@@ -3186,7 +3185,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean MAE / Mean MFE',
     valStr: m => `${m.maeMfeRatio.toFixed(2)}`,
     colorClass: m => m.maeMfeRatio <= 0.5 ? 'text-emerald-400' : (m.maeMfeRatio <= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.maeMfeRatio <= 0.5 ? (isDark ? '#34d399' : '#059669') : (m.maeMfeRatio <= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.maeMfeRatio <= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.maeMfeRatio <= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.maeMfeRatio <= 0.5 ? 'Highly Efficient' : (m.maeMfeRatio <= 1.0 ? 'Acceptable' : 'Inefficient'),
     evalClass: m => m.maeMfeRatio <= 0.5 ? 'text-emerald-500' : (m.maeMfeRatio <= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3203,7 +3202,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(Runs - E(Runs)) / StdDev(Runs)',
     valStr: m => `${m.zScore >= 0 ? '+' : ''}${m.zScore.toFixed(2)}`,
     colorClass: m => Math.abs(m.zScore) <= 1.96 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => Math.abs(m.zScore) <= 1.96 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => Math.abs(m.zScore) <= 1.96 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => Math.abs(m.zScore) <= 1.96 ? 'Random Sequence' : 'Clustered Streaks',
     evalClass: m => Math.abs(m.zScore) <= 1.96 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3219,7 +3218,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '|Z-Score| < 1.96',
     valStr: m => m.runsTest === 1 ? 'PASSED' : 'FAILED',
     colorClass: m => m.runsTest === 1 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.runsTest === 1 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.runsTest === 1 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.runsTest === 1 ? 'Independent' : 'Dependent',
     evalClass: m => m.runsTest === 1 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3235,7 +3234,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Simulated Max Drawdowns)',
     valStr: m => `${m.monteCarloDrawdown.toFixed(1)}%`,
     colorClass: m => m.monteCarloDrawdown <= 10.0 ? 'text-emerald-400' : (m.monteCarloDrawdown <= 20.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.monteCarloDrawdown <= 10.0 ? (isDark ? '#34d399' : '#059669') : (m.monteCarloDrawdown <= 20.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.monteCarloDrawdown <= 10.0 ? (isDark ? '#ffffff' : '#000000') : (m.monteCarloDrawdown <= 20.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.monteCarloDrawdown <= 10.0 ? 'Robust Capital' : (m.monteCarloDrawdown <= 20.0 ? 'Acceptable' : 'Vulnerable'),
     evalClass: m => m.monteCarloDrawdown <= 10.0 ? 'text-emerald-500' : (m.monteCarloDrawdown <= 20.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3252,7 +3251,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(Simulations Ruined / 500) * 100',
     valStr: m => `${m.monteCarloRiskOfRuin.toFixed(1)}%`,
     colorClass: m => m.monteCarloRiskOfRuin <= 1.0 ? 'text-emerald-400' : (m.monteCarloRiskOfRuin <= 5.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.monteCarloRiskOfRuin <= 1.0 ? (isDark ? '#34d399' : '#059669') : (m.monteCarloRiskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.monteCarloRiskOfRuin <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.monteCarloRiskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.monteCarloRiskOfRuin <= 1.0 ? 'Safe' : (m.monteCarloRiskOfRuin <= 5.0 ? 'Vulnerable' : 'Critical Risk'),
     evalClass: m => m.monteCarloRiskOfRuin <= 1.0 ? 'text-emerald-500' : (m.monteCarloRiskOfRuin <= 5.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3269,7 +3268,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Simulated Net Returns)',
     valStr: m => `${m.monteCarloExpectedReturn >= 0 ? '+' : ''}${m.monteCarloExpectedReturn.toFixed(1)}%`,
     colorClass: m => m.monteCarloExpectedReturn >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.monteCarloExpectedReturn >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.monteCarloExpectedReturn >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.monteCarloExpectedReturn >= 0 ? 'Positive Alpha' : 'Capital Erosion',
     evalClass: m => m.monteCarloExpectedReturn >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3330,7 +3329,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(Wins + 1) / (Trades + 2)',
     valStr: m => `${m.bayesianWinRate.toFixed(1)}%`,
     colorClass: m => m.bayesianWinRate >= 50 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.bayesianWinRate >= 50 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.bayesianWinRate >= 50 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.bayesianWinRate >= 50 ? 'Favorable Prior' : 'Unfavorable Prior',
     evalClass: m => m.bayesianWinRate >= 50 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3346,7 +3345,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(N*EV + 5*0) / (N + 5)',
     valStr: m => `${m.bayesianExpectedValue >= 0 ? '+' : ''}$${m.bayesianExpectedValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.bayesianExpectedValue >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.bayesianExpectedValue >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.bayesianExpectedValue >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.bayesianExpectedValue >= 0 ? 'Positive Edge' : 'Negative Drag',
     evalClass: m => m.bayesianExpectedValue >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3362,7 +3361,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'W - ((1 - W) / R)',
     valStr: m => `${m.kellyCriterion.toFixed(1)}%`,
     colorClass: m => m.kellyCriterion >= 5.0 ? 'text-emerald-400' : (m.kellyCriterion > 0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.kellyCriterion >= 5.0 ? (isDark ? '#34d399' : '#059669') : (m.kellyCriterion > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.kellyCriterion >= 5.0 ? (isDark ? '#ffffff' : '#000000') : (m.kellyCriterion > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.kellyCriterion >= 5.0 ? 'Aggressive Growth' : (m.kellyCriterion > 0 ? 'Moderate Growth' : 'No Edge'),
     evalClass: m => m.kellyCriterion >= 5.0 ? 'text-emerald-500' : (m.kellyCriterion > 0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3379,7 +3378,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Kelly Criterion / 2',
     valStr: m => `${m.fractionalKelly.toFixed(1)}%`,
     colorClass: m => m.fractionalKelly >= 2.5 ? 'text-emerald-400' : (m.fractionalKelly > 0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.fractionalKelly >= 2.5 ? (isDark ? '#34d399' : '#059669') : (m.fractionalKelly > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.fractionalKelly >= 2.5 ? (isDark ? '#ffffff' : '#000000') : (m.fractionalKelly > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.fractionalKelly >= 2.5 ? 'Optimal Sizing' : (m.fractionalKelly > 0 ? 'Conservative' : 'No Edge'),
     evalClass: m => m.fractionalKelly >= 2.5 ? 'text-emerald-500' : (m.fractionalKelly > 0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3396,7 +3395,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Kelly * 0.8',
     valStr: m => `${m.optimalF.toFixed(1)}%`,
     colorClass: m => m.optimalF >= 4.0 ? 'text-emerald-400' : (m.optimalF > 0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.optimalF >= 4.0 ? (isDark ? '#34d399' : '#059669') : (m.optimalF > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.optimalF >= 4.0 ? (isDark ? '#ffffff' : '#000000') : (m.optimalF > 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.optimalF >= 4.0 ? 'Geometric Peak' : (m.optimalF > 0 ? 'Sub-Optimal' : 'No Edge'),
     evalClass: m => m.optimalF >= 4.0 ? 'text-emerald-500' : (m.optimalF > 0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3413,7 +3412,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(EV / StdDev) * Sqrt(N)',
     valStr: m => `${m.sqn.toFixed(2)}`,
     colorClass: m => m.sqn >= 3.0 ? 'text-emerald-400' : (m.sqn >= 2.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.sqn >= 3.0 ? (isDark ? '#34d399' : '#059669') : (m.sqn >= 2.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.sqn >= 3.0 ? (isDark ? '#ffffff' : '#000000') : (m.sqn >= 2.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.sqn >= 3.0 ? 'Holy Grail' : (m.sqn >= 2.0 ? 'Excellent' : 'Average'),
     evalClass: m => m.sqn >= 3.0 ? 'text-emerald-500' : (m.sqn >= 2.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3430,7 +3429,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'EV / (StdDev / Sqrt(N))',
     valStr: m => `${m.tTest >= 0 ? '+' : ''}${m.tTest.toFixed(2)}`,
     colorClass: m => Math.abs(m.tTest) >= 1.96 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => Math.abs(m.tTest) >= 1.96 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => Math.abs(m.tTest) >= 1.96 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => Math.abs(m.tTest) >= 1.96 ? 'Significant Edge' : 'Inconclusive',
     evalClass: m => Math.abs(m.tTest) >= 1.96 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3446,7 +3445,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'P(|T| > t)',
     valStr: m => `${m.pValue.toFixed(3)}`,
     colorClass: m => m.pValue <= 0.05 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.pValue <= 0.05 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.pValue <= 0.05 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.pValue <= 0.05 ? 'Statistically Sig' : 'Not Significant',
     evalClass: m => m.pValue <= 0.05 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3462,7 +3461,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(CAGR - Benchmark) / TrackingErr',
     valStr: m => `${m.informationRatio.toFixed(2)}`,
     colorClass: m => m.informationRatio >= 0.5 ? 'text-emerald-400' : (m.informationRatio >= 0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.informationRatio >= 0.5 ? (isDark ? '#34d399' : '#059669') : (m.informationRatio >= 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.informationRatio >= 0.5 ? (isDark ? '#ffffff' : '#000000') : (m.informationRatio >= 0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.informationRatio >= 0.5 ? 'Strong Active Alpha' : (m.informationRatio >= 0 ? 'Moderate' : 'Negative Alpha'),
     evalClass: m => m.informationRatio >= 0.5 ? 'text-emerald-500' : (m.informationRatio >= 0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3479,7 +3478,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '(CAGR - Rf) / Beta',
     valStr: m => `${m.treynorRatio.toFixed(2)}`,
     colorClass: m => m.treynorRatio >= 10.0 ? 'text-emerald-400' : (m.treynorRatio >= 5.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.treynorRatio >= 10.0 ? (isDark ? '#34d399' : '#059669') : (m.treynorRatio >= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.treynorRatio >= 10.0 ? (isDark ? '#ffffff' : '#000000') : (m.treynorRatio >= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.treynorRatio >= 10.0 ? 'Superior Reward' : (m.treynorRatio >= 5.0 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.treynorRatio >= 10.0 ? 'text-emerald-500' : (m.treynorRatio >= 5.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3496,7 +3495,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'CAGR - [Rf + Beta*(Rm - Rf)]',
     valStr: m => `${m.jensensAlpha >= 0 ? '+' : ''}${m.jensensAlpha.toFixed(1)}%`,
     colorClass: m => m.jensensAlpha >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.jensensAlpha >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.jensensAlpha >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.jensensAlpha >= 0 ? 'Positive CAPM Alpha' : 'Negative CAPM Alpha',
     evalClass: m => m.jensensAlpha >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3512,7 +3511,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Cov(Strategy, Market) / Var(Market)',
     valStr: m => `${m.betaToBenchmark.toFixed(2)}`,
     colorClass: m => m.betaToBenchmark <= 1.0 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.betaToBenchmark <= 1.0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.betaToBenchmark <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.betaToBenchmark <= 1.0 ? 'Defensive' : 'Aggressive',
     evalClass: m => m.betaToBenchmark <= 1.0 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3528,7 +3527,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'CAGR - Benchmark CAGR',
     valStr: m => `${m.alphaToBenchmark >= 0 ? '+' : ''}${m.alphaToBenchmark.toFixed(1)}%`,
     colorClass: m => m.alphaToBenchmark >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.alphaToBenchmark >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.alphaToBenchmark >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.alphaToBenchmark >= 0 ? 'Market Beating' : 'Underperforming',
     evalClass: m => m.alphaToBenchmark >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3544,7 +3543,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Corr(PnL_t, PnL_{t-1})',
     valStr: m => `${m.returnAutocorrelation >= 0 ? '+' : ''}${m.returnAutocorrelation.toFixed(2)}`,
     colorClass: m => Math.abs(m.returnAutocorrelation) <= 0.2 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => Math.abs(m.returnAutocorrelation) <= 0.2 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => Math.abs(m.returnAutocorrelation) <= 0.2 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => Math.abs(m.returnAutocorrelation) <= 0.2 ? 'Independent' : 'Serial Memory',
     evalClass: m => Math.abs(m.returnAutocorrelation) <= 0.2 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3560,7 +3559,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Corr(|PnL_t|, |PnL_{t-1}|)',
     valStr: m => `${m.volatilityClustering >= 0 ? '+' : ''}${m.volatilityClustering.toFixed(2)}`,
     colorClass: m => m.volatilityClustering <= 0.2 ? 'text-emerald-400' : 'text-amber-400',
-    colorVal: (m, isDark) => m.volatilityClustering <= 0.2 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fbbf24' : '#d97706'),
+    colorVal: (m, isDark) => m.volatilityClustering <= 0.2 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
     evalStr: m => m.volatilityClustering <= 0.2 ? 'Stable Volatility' : 'Clustered Vol',
     evalClass: m => m.volatilityClustering <= 0.2 ? 'text-emerald-500' : 'text-amber-500',
     benchmarks: [
@@ -3576,7 +3575,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Log(R/S) / Log(N)',
     valStr: m => `${m.hurstExponent.toFixed(2)}`,
     colorClass: m => m.hurstExponent >= 0.6 ? 'text-emerald-400' : (m.hurstExponent <= 0.4 ? 'text-amber-400' : 'text-sky-400'),
-    colorVal: (m, isDark) => m.hurstExponent >= 0.6 ? (isDark ? '#34d399' : '#059669') : (m.hurstExponent <= 0.4 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#38bdf8' : '#0284c7')),
+    colorVal: (m, isDark) => m.hurstExponent >= 0.6 ? (isDark ? '#ffffff' : '#000000') : (m.hurstExponent <= 0.4 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#38bdf8' : '#0284c7')),
     evalStr: m => m.hurstExponent >= 0.6 ? 'Persistent Trend' : (m.hurstExponent <= 0.4 ? 'Mean Reverting' : 'Random Walk'),
     evalClass: m => m.hurstExponent >= 0.6 ? 'text-emerald-500' : (m.hurstExponent <= 0.4 ? 'text-amber-500' : 'text-sky-500'),
     benchmarks: [
@@ -3593,7 +3592,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Stability * 0.95',
     valStr: m => `${m.regimeStabilityScore.toFixed(1)}%`,
     colorClass: m => m.regimeStabilityScore >= 75 ? 'text-emerald-400' : (m.regimeStabilityScore >= 50 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.regimeStabilityScore >= 75 ? (isDark ? '#34d399' : '#059669') : (m.regimeStabilityScore >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.regimeStabilityScore >= 75 ? (isDark ? '#ffffff' : '#000000') : (m.regimeStabilityScore >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.regimeStabilityScore >= 75 ? 'Highly Stable' : (m.regimeStabilityScore >= 50 ? 'Moderate' : 'Unstable'),
     evalClass: m => m.regimeStabilityScore >= 75 ? 'text-emerald-500' : (m.regimeStabilityScore >= 50 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3610,7 +3609,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Rolling 10-Trade Sharpe)',
     valStr: m => `${m.rollingSharpe.toFixed(2)}`,
     colorClass: m => m.rollingSharpe >= 1.5 ? 'text-emerald-400' : (m.rollingSharpe >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.rollingSharpe >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.rollingSharpe >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.rollingSharpe >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.rollingSharpe >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.rollingSharpe >= 1.5 ? 'Optimal' : (m.rollingSharpe >= 1.0 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.rollingSharpe >= 1.5 ? 'text-emerald-500' : (m.rollingSharpe >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3627,7 +3626,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Rolling 10-Trade PF)',
     valStr: m => `${m.rollingProfitFactor.toFixed(2)}x`,
     colorClass: m => m.rollingProfitFactor >= 1.5 ? 'text-emerald-400' : (m.rollingProfitFactor >= 1.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.rollingProfitFactor >= 1.5 ? (isDark ? '#34d399' : '#059669') : (m.rollingProfitFactor >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.rollingProfitFactor >= 1.5 ? (isDark ? '#ffffff' : '#000000') : (m.rollingProfitFactor >= 1.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.rollingProfitFactor >= 1.5 ? 'Optimal' : (m.rollingProfitFactor >= 1.0 ? 'Stable' : 'Sub-Optimal'),
     evalClass: m => m.rollingProfitFactor >= 1.5 ? 'text-emerald-500' : (m.rollingProfitFactor >= 1.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3644,7 +3643,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Rolling 10-Trade EV)',
     valStr: m => `${m.rollingExpectancy >= 0 ? '+' : ''}$${m.rollingExpectancy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     colorClass: m => m.rollingExpectancy >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.rollingExpectancy >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.rollingExpectancy >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.rollingExpectancy >= 0 ? 'Positive Edge' : 'Negative Drag',
     evalClass: m => m.rollingExpectancy >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3660,7 +3659,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Rolling 10-Trade DD)',
     valStr: m => `${m.rollingDrawdown.toFixed(1)}%`,
     colorClass: m => m.rollingDrawdown <= 10.0 ? 'text-emerald-400' : (m.rollingDrawdown <= 20.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.rollingDrawdown <= 10.0 ? (isDark ? '#34d399' : '#059669') : (m.rollingDrawdown <= 20.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.rollingDrawdown <= 10.0 ? (isDark ? '#ffffff' : '#000000') : (m.rollingDrawdown <= 20.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.rollingDrawdown <= 10.0 ? 'Controlled DD' : (m.rollingDrawdown <= 20.0 ? 'Moderate DD' : 'Severe DD'),
     evalClass: m => m.rollingDrawdown <= 10.0 ? 'text-emerald-500' : (m.rollingDrawdown <= 20.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3677,7 +3676,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Mean(Rolling 10-Trade Win%)',
     valStr: m => `${m.rollingWinRate.toFixed(1)}%`,
     colorClass: m => m.rollingWinRate >= 50 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.rollingWinRate >= 50 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.rollingWinRate >= 50 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.rollingWinRate >= 50 ? 'Favorable Accuracy' : 'Sub-Optimal',
     evalClass: m => m.rollingWinRate >= 50 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3693,7 +3692,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'ΔRollingSharpe / ΔTime',
     valStr: m => `${m.strategyDecayRate >= 0 ? '+' : ''}${m.strategyDecayRate.toFixed(4)}`,
     colorClass: m => m.strategyDecayRate >= 0 ? 'text-emerald-400' : 'text-rose-400',
-    colorVal: (m, isDark) => m.strategyDecayRate >= 0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#fb7185' : '#e11d48'),
+    colorVal: (m, isDark) => m.strategyDecayRate >= 0 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fb7185' : '#e11d48'),
     evalStr: m => m.strategyDecayRate >= 0 ? 'Stable Alpha' : 'Alpha Decay',
     evalClass: m => m.strategyDecayRate >= 0 ? 'text-emerald-500' : 'text-rose-500',
     benchmarks: [
@@ -3709,7 +3708,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '0.5 / |Decay Rate|',
     valStr: m => `${m.edgeHalfLife.toFixed(1)}M`,
     colorClass: m => m.edgeHalfLife >= 24.0 ? 'text-emerald-400' : (m.edgeHalfLife >= 12.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.edgeHalfLife >= 24.0 ? (isDark ? '#34d399' : '#059669') : (m.edgeHalfLife >= 12.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.edgeHalfLife >= 24.0 ? (isDark ? '#ffffff' : '#000000') : (m.edgeHalfLife >= 12.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.edgeHalfLife >= 24.0 ? 'Long Horizon' : (m.edgeHalfLife >= 12.0 ? 'Moderate' : 'Short Horizon'),
     evalClass: m => m.edgeHalfLife >= 24.0 ? 'text-emerald-500' : (m.edgeHalfLife >= 12.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3726,7 +3725,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: 'Σ(Top 5% Wins) / Net Profit',
     valStr: m => `${m.outlierImpactRatio.toFixed(1)}%`,
     colorClass: m => m.outlierImpactRatio <= 20.0 ? 'text-emerald-400' : (m.outlierImpactRatio <= 40.0 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.outlierImpactRatio <= 20.0 ? (isDark ? '#34d399' : '#059669') : (m.outlierImpactRatio <= 40.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.outlierImpactRatio <= 20.0 ? (isDark ? '#ffffff' : '#000000') : (m.outlierImpactRatio <= 40.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.outlierImpactRatio <= 20.0 ? 'Broad Edge' : (m.outlierImpactRatio <= 40.0 ? 'Moderate Outlier Dep' : 'Heavy Outlier Dep'),
     evalClass: m => m.outlierImpactRatio <= 20.0 ? 'text-emerald-500' : (m.outlierImpactRatio <= 40.0 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3743,7 +3742,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     formula: '100 - f(Skew, Kurt, Outliers)',
     valStr: m => `${m.distributionRobustness.toFixed(1)}`,
     colorClass: m => m.distributionRobustness >= 80 ? 'text-emerald-400' : (m.distributionRobustness >= 50 ? 'text-amber-400' : 'text-rose-400'),
-    colorVal: (m, isDark) => m.distributionRobustness >= 80 ? (isDark ? '#34d399' : '#059669') : (m.distributionRobustness >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
+    colorVal: (m, isDark) => m.distributionRobustness >= 80 ? (isDark ? '#ffffff' : '#000000') : (m.distributionRobustness >= 50 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
     evalStr: m => m.distributionRobustness >= 80 ? 'Highly Robust' : (m.distributionRobustness >= 50 ? 'Moderate' : 'Fragile Dist'),
     evalClass: m => m.distributionRobustness >= 80 ? 'text-emerald-500' : (m.distributionRobustness >= 50 ? 'text-amber-500' : 'text-rose-500'),
     benchmarks: [
@@ -3852,13 +3851,166 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
         { name: 'Confidence Level', val: '95.0%' },
         { name: 'Tail Loss Threshold', val: `$${m.valueAtRisk?.toFixed(2) ?? '0.00'}` }
       ];
-    default:
+    default: {
+      const cfg = allAvailableConfigs.value.find(c => c.key === key);
+      if (cfg && cfg.formula) {
+        const terms: Record<string, { key: string, format: string, source?: string }> = {
+          'Winning Trades PnL': { key: 'grossProfit', format: 'currency' },
+          'Losing Trades PnL': { key: 'grossLoss', format: 'currency' },
+          'Strategy Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Strategy Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Net Profit': { key: 'netProfit', format: 'currency' },
+          'Winning Trades': { key: 'numWin', format: 'number' },
+          'Losing Trades': { key: 'numLoss', format: 'number' },
+          'Total Trades': { key: 'numTrades', format: 'number' },
+          'Average Win': { key: 'avgWin', format: 'currency' },
+          'Average Loss': { key: 'avgLoss', format: 'currency' },
+          'AvgWin': { key: 'avgWin', format: 'currency' },
+          'AvgLoss': { key: 'avgLoss', format: 'currency' },
+          'Initial Deposit': { key: 'initialDeposit', format: 'currency' },
+          'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
+          'Win%': { key: 'winRate', format: 'percent' },
+          'Loss%': { key: 'lossRate', format: 'percent' },
+          'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+          'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
+          'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+          'Maximum Drawdown': { key: 'maxDrawdown', format: 'currency' },
+          'CAGR': { key: 'cagr', format: 'percent' },
+          'Mean Return': { key: 'annualizedReturnPct', format: 'percent' },
+          'StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+          'Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
+          'StdDev(PnL)': { key: 'stdPnL', format: 'currency' },
+          'StdDev': { key: 'stdDevPct', format: 'percent' },
+          'Expected Value': { key: 'expectedValue', format: 'currency' },
+          'EV': { key: 'expectedValue', format: 'currency' },
+          'PnL > 0': { key: 'numWin', format: 'number' },
+          'PnL < 0': { key: 'numLoss', format: 'number' },
+          'N': { key: 'numTrades', format: 'number' },
+          'W': { key: 'winRate', format: 'number' },
+          'p': { key: 'winRate', format: 'number' },
+          'R': { key: 'payoffRatio', format: 'number' },
+          'Z': { key: 'zScore', format: 'number' },
+          'Beta': { key: 'betaToBenchmark', format: 'number' },
+          'TrackingErr': { key: 'stdDevPct', format: 'percent' },
+          'Stability': { key: 'equityCurveStability', format: 'percent' },
+          'Kelly Criterion': { key: 'kellyCriterion', format: 'percent' },
+          'Kelly': { key: 'kellyCriterion', format: 'percent' },
+          'Skew': { key: 'skewness', format: 'number' },
+          'Kurt': { key: 'kurtosis', format: 'number' },
+          'Outliers': { key: 'outlierImpactRatio', format: 'number' },
+          'Rf': { key: 'riskFree', format: 'percent', source: 'riskFree' },
+          'Rm': { key: 'bench', format: 'percent', source: 'bench' },
+          'Benchmark': { key: 'bench', format: 'percent', source: 'bench' },
+          'Trades': { key: 'numTrades', format: 'number' },
+          'Wins': { key: 'numWin', format: 'number' },
+          'MeanPnL': { key: 'avgTrade', format: 'currency' },
+          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
+          'Mean(PnLs < P05)': { key: 'cvar', format: 'currency' },
+          'CVaR': { key: 'cvar', format: 'currency' },
+          'Deposit': { key: 'initialDeposit', format: 'currency' },
+          'Mean MAE': { key: 'mae', format: 'currency' },
+          'Mean MFE': { key: 'mfe', format: 'currency' },
+          'Z-Score': { key: 'zScore', format: 'number' },
+          'Simulated Max Drawdowns': { key: 'monteCarloDrawdown', format: 'percent' },
+          'Simulations Ruined': { key: 'monteCarloRiskOfRuin', format: 'percent' },
+          'Simulated Net Returns': { key: 'monteCarloExpectedReturn', format: 'percent' },
+          'Rolling 10-Trade Sharpe': { key: 'rollingSharpe', format: 'number' },
+          'Rolling 10-Trade PF': { key: 'rollingProfitFactor', format: 'number' },
+          'Rolling 10-Trade EV': { key: 'rollingExpectancy', format: 'currency' },
+          'Rolling 10-Trade DD': { key: 'rollingDrawdown', format: 'percent' },
+          'Rolling 10-Trade Win%': { key: 'rollingWinRate', format: 'percent' },
+          'Decay Rate': { key: 'strategyDecayRate', format: 'number' },
+          'ΔRollingSharpe': { key: 'strategyDecayRate', format: 'number' },
+          'ΔTime': { key: 'timeInMarketPct', format: 'number' },
+          'Active Span': { key: 'timeInMarketPct', format: 'number' },
+          'Equity Peak - Subsequent Trough': { key: 'maxDrawdown', format: 'currency' },
+          'Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+          'Drawdown Count': { key: 'numTrades', format: 'number' },
+          'Trough Date - Peak Date': { key: 'maxDrawdown', format: 'currency' },
+          'Entry - SL': { key: 'mae', format: 'currency' },
+          'Size': { key: 'numTrades', format: 'number' },
+          'Positive Returns': { key: 'grossProfit', format: 'currency' },
+          'Negative Returns': { key: 'grossLoss', format: 'currency' },
+          'All Returns': { key: 'netProfit', format: 'currency' },
+          'Tail Ratio': { key: 'profitFactor', format: 'number' },
+          'Gain-to-Pain Ratio': { key: 'profitFactor', format: 'number' },
+          'Asset Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Asset Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'TF Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'TF Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Latest PnL': { key: 'avgTrade', format: 'currency' },
+          'Latest Initial Risk': { key: 'mae', format: 'currency' },
+          'Trade R-Multiples': { key: 'avgRMultiple', format: 'number' },
+          'Trades >= 2.0R': { key: 'numWin', format: 'number' },
+          'Edge': { key: 'expectedValue', format: 'currency' },
+          'CapitalUnits': { key: 'numTrades', format: 'number' },
+          'Index': { key: 'bench', format: 'percent', source: 'bench' },
+          'Equity': { key: 'netProfit', format: 'currency' },
+          'Var(Index)': { key: 'stdDevPct', format: 'percent' },
+          'RegLine': { key: 'equityCurveStability', format: 'percent' },
+          'SS_res': { key: 'stdPnL', format: 'currency' },
+          'SS_tot': { key: 'varPnL', format: 'currency' },
+          'R-Squared': { key: 'equityCurveCorrelation', format: 'percent' },
+          'MeanPnL': { key: 'avgTrade', format: 'currency' },
+          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
+          'Median Win': { key: 'avgWin', format: 'currency' },
+          'Median Loss': { key: 'avgLoss', format: 'currency' },
+          'Trade MAE': { key: 'mae', format: 'currency' },
+          'Trade MFE': { key: 'mfe', format: 'currency' },
+          'Runs': { key: 'runsTest', format: 'number' },
+          'E(Runs)': { key: 'runsTest', format: 'number' },
+          'StdDev(Runs)': { key: 'runsTest', format: 'number' },
+          'Resampled Means': { key: 'monteCarloExpectedReturn', format: 'percent' },
+          'T': { key: 'tTest', format: 'number' },
+          't': { key: 'pValue', format: 'number' },
+          'Strategy': { key: 'netProfit', format: 'currency' },
+          'Market': { key: 'bench', format: 'percent', source: 'bench' },
+          'Benchmark CAGR': { key: 'bench', format: 'percent', source: 'bench' },
+          'PnL_t': { key: 'avgTrade', format: 'currency' },
+          'PnL_{t-1}': { key: 'avgTrade', format: 'currency' },
+          'S': { key: 'hurstExponent', format: 'number' },
+          'Top 5% Wins': { key: 'grossProfit', format: 'currency' },
+          'Archived Trades': { key: 'numTrades', format: 'number' },
+          'Exit Time - Entry Time': { key: 'avgTradeDuration', format: 'number' },
+          'P95(Returns)': { key: 'avgWin', format: 'currency' },
+          'P05(Returns)': { key: 'avgLoss', format: 'currency' }
+        };
+        const sortedTerms = Object.keys(terms).sort((a, b) => b.length - a.length);
+        const vars: any[] = [];
+        const addedKeys = new Set();
+        
+        sortedTerms.forEach(term => {
+          // Use word boundary for purely alphabetic terms
+          const isWord = /^[a-zA-Z]+$/.test(term);
+          const regex = isWord ? new RegExp(`\\b${term}\\b`) : null;
+          
+          if ((regex && regex.test(cfg.formula)) || (!regex && cfg.formula.includes(term))) {
+            const propInfo = terms[term];
+            const isLocal = propInfo.source;
+            const valObj = isLocal === 'riskFree' ? riskFree : (isLocal === 'bench' ? bench : m[propInfo.key]);
+            
+            if (valObj !== undefined && !addedKeys.has(propInfo.key)) {
+              addedKeys.add(propInfo.key);
+              let valStr = `${valObj}`;
+              if (propInfo.format === 'currency') valStr = `$${Number(valObj).toFixed(2)}`;
+              else if (propInfo.format === 'percent') valStr = `${Number(valObj).toFixed(2)}%`;
+              else if (propInfo.format === 'number') valStr = `${Number(valObj)}`;
+              vars.push({ name: term, val: valStr });
+            }
+          }
+        });
+        if (vars.length > 0) return vars;
+      }
+
       return [
         { name: 'Net Profit', val: `$${m.netProfit?.toFixed(2) ?? '0.00'}` },
         { name: 'Total Trades', val: `${m.numTrades ?? 0}` },
         { name: 'Initial Deposit', val: `$${m.initialDeposit?.toFixed(2) ?? '1000.00'}` },
         { name: 'Benchmark Yield', val: `${bench.toFixed(2)}%` }
       ];
+    }
   }
 };
 
@@ -3893,8 +4045,164 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
       return `Average(Tail Losses < $${m.valueAtRisk?.toFixed(2) ?? '0.00'}) = $${m.cvar?.toFixed(2) ?? '0.00'}`;
     case 'expectedShortfall':
       return `($${m.cvar?.toFixed(2) ?? '0.00'} / $${m.initialDeposit?.toFixed(2) ?? '1000.00'}) * 100 = ${m.expectedShortfall?.toFixed(2) ?? '0.00'}%`;
-    default:
-      return `Formula Evaluation(${m.netProfit ? `$${m.netProfit.toFixed(2)}` : 'Inputs'}) = ${m[key] !== undefined ? (typeof m[key] === 'number' ? m[key].toFixed(2) : m[key]) : 'CALCULATED'}`;
+    default: {
+      const cfg = allAvailableConfigs.value.find(c => c.key === key);
+      let formulaStr = cfg?.formula || `Formula Evaluation(${m.netProfit ? `$${m.netProfit.toFixed(2)}` : 'Inputs'})`;
+
+      if (cfg && cfg.formula) {
+        const terms: Record<string, { key: string, format: string, source?: string }> = {
+          'Winning Trades PnL': { key: 'grossProfit', format: 'currency' },
+          'Losing Trades PnL': { key: 'grossLoss', format: 'currency' },
+          'Strategy Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Strategy Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Net Profit': { key: 'netProfit', format: 'currency' },
+          'Winning Trades': { key: 'numWin', format: 'number' },
+          'Losing Trades': { key: 'numLoss', format: 'number' },
+          'Total Trades': { key: 'numTrades', format: 'number' },
+          'Average Win': { key: 'avgWin', format: 'currency' },
+          'Average Loss': { key: 'avgLoss', format: 'currency' },
+          'AvgWin': { key: 'avgWin', format: 'currency' },
+          'AvgLoss': { key: 'avgLoss', format: 'currency' },
+          'Initial Deposit': { key: 'initialDeposit', format: 'currency' },
+          'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
+          'Win%': { key: 'winRate', format: 'percent' },
+          'Loss%': { key: 'lossRate', format: 'percent' },
+          'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+          'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
+          'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+          'Maximum Drawdown': { key: 'maxDrawdown', format: 'currency' },
+          'CAGR': { key: 'cagr', format: 'percent' },
+          'Mean Return': { key: 'annualizedReturnPct', format: 'percent' },
+          'StdDev(Return)': { key: 'stdDevPct', format: 'percent' },
+          'Downside StdDev': { key: 'downsideStdDevPct', format: 'percent' },
+          'StdDev(PnL)': { key: 'stdPnL', format: 'currency' },
+          'StdDev': { key: 'stdDevPct', format: 'percent' },
+          'Expected Value': { key: 'expectedValue', format: 'currency' },
+          'EV': { key: 'expectedValue', format: 'currency' },
+          'PnL > 0': { key: 'numWin', format: 'number' },
+          'PnL < 0': { key: 'numLoss', format: 'number' },
+          'N': { key: 'numTrades', format: 'number' },
+          'W': { key: 'winRate', format: 'number' },
+          'p': { key: 'winRate', format: 'number' },
+          'R': { key: 'payoffRatio', format: 'number' },
+          'Z': { key: 'zScore', format: 'number' },
+          'Beta': { key: 'betaToBenchmark', format: 'number' },
+          'TrackingErr': { key: 'stdDevPct', format: 'percent' },
+          'Stability': { key: 'equityCurveStability', format: 'percent' },
+          'Kelly Criterion': { key: 'kellyCriterion', format: 'percent' },
+          'Kelly': { key: 'kellyCriterion', format: 'percent' },
+          'Skew': { key: 'skewness', format: 'number' },
+          'Kurt': { key: 'kurtosis', format: 'number' },
+          'Outliers': { key: 'outlierImpactRatio', format: 'number' },
+          'Rf': { key: 'riskFree', format: 'percent', source: 'riskFree' },
+          'Rm': { key: 'bench', format: 'percent', source: 'bench' },
+          'Benchmark': { key: 'bench', format: 'percent', source: 'bench' },
+          'Trades': { key: 'numTrades', format: 'number' },
+          'Wins': { key: 'numWin', format: 'number' },
+          'MeanPnL': { key: 'avgTrade', format: 'currency' },
+          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
+          'Mean(PnLs < P05)': { key: 'cvar', format: 'currency' },
+          'CVaR': { key: 'cvar', format: 'currency' },
+          'Deposit': { key: 'initialDeposit', format: 'currency' },
+          'Mean MAE': { key: 'mae', format: 'currency' },
+          'Mean MFE': { key: 'mfe', format: 'currency' },
+          'Z-Score': { key: 'zScore', format: 'number' },
+          'Simulated Max Drawdowns': { key: 'monteCarloDrawdown', format: 'percent' },
+          'Simulations Ruined': { key: 'monteCarloRiskOfRuin', format: 'percent' },
+          'Simulated Net Returns': { key: 'monteCarloExpectedReturn', format: 'percent' },
+          'Rolling 10-Trade Sharpe': { key: 'rollingSharpe', format: 'number' },
+          'Rolling 10-Trade PF': { key: 'rollingProfitFactor', format: 'number' },
+          'Rolling 10-Trade EV': { key: 'rollingExpectancy', format: 'currency' },
+          'Rolling 10-Trade DD': { key: 'rollingDrawdown', format: 'percent' },
+          'Rolling 10-Trade Win%': { key: 'rollingWinRate', format: 'percent' },
+          'Decay Rate': { key: 'strategyDecayRate', format: 'number' },
+          'ΔRollingSharpe': { key: 'strategyDecayRate', format: 'number' },
+          'ΔTime': { key: 'timeInMarketPct', format: 'number' },
+          'Active Span': { key: 'timeInMarketPct', format: 'number' },
+          'Equity Peak - Subsequent Trough': { key: 'maxDrawdown', format: 'currency' },
+          'Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
+          'Drawdown Count': { key: 'numTrades', format: 'number' },
+          'Trough Date - Peak Date': { key: 'maxDrawdown', format: 'currency' },
+          'Entry - SL': { key: 'mae', format: 'currency' },
+          'Size': { key: 'numTrades', format: 'number' },
+          'Positive Returns': { key: 'grossProfit', format: 'currency' },
+          'Negative Returns': { key: 'grossLoss', format: 'currency' },
+          'All Returns': { key: 'netProfit', format: 'currency' },
+          'Tail Ratio': { key: 'profitFactor', format: 'number' },
+          'Gain-to-Pain Ratio': { key: 'profitFactor', format: 'number' },
+          'Asset Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'Asset Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'TF Gross Profit': { key: 'grossProfit', format: 'currency' },
+          'TF Gross Loss': { key: 'grossLoss', format: 'currency' },
+          'Latest PnL': { key: 'avgTrade', format: 'currency' },
+          'Latest Initial Risk': { key: 'mae', format: 'currency' },
+          'Trade R-Multiples': { key: 'avgRMultiple', format: 'number' },
+          'Trades >= 2.0R': { key: 'numWin', format: 'number' },
+          'Edge': { key: 'expectedValue', format: 'currency' },
+          'CapitalUnits': { key: 'numTrades', format: 'number' },
+          'Index': { key: 'bench', format: 'percent', source: 'bench' },
+          'Equity': { key: 'netProfit', format: 'currency' },
+          'Var(Index)': { key: 'stdDevPct', format: 'percent' },
+          'RegLine': { key: 'equityCurveStability', format: 'percent' },
+          'SS_res': { key: 'stdPnL', format: 'currency' },
+          'SS_tot': { key: 'varPnL', format: 'currency' },
+          'R-Squared': { key: 'equityCurveCorrelation', format: 'percent' },
+          'MeanPnL': { key: 'avgTrade', format: 'currency' },
+          'P50(Trade PnLs)': { key: 'medianTradeResult', format: 'currency' },
+          'Median Win': { key: 'avgWin', format: 'currency' },
+          'Median Loss': { key: 'avgLoss', format: 'currency' },
+          'Trade MAE': { key: 'mae', format: 'currency' },
+          'Trade MFE': { key: 'mfe', format: 'currency' },
+          'Runs': { key: 'runsTest', format: 'number' },
+          'E(Runs)': { key: 'runsTest', format: 'number' },
+          'StdDev(Runs)': { key: 'runsTest', format: 'number' },
+          'Resampled Means': { key: 'monteCarloExpectedReturn', format: 'percent' },
+          'T': { key: 'tTest', format: 'number' },
+          't': { key: 'pValue', format: 'number' },
+          'Strategy': { key: 'netProfit', format: 'currency' },
+          'Market': { key: 'bench', format: 'percent', source: 'bench' },
+          'Benchmark CAGR': { key: 'bench', format: 'percent', source: 'bench' },
+          'PnL_t': { key: 'avgTrade', format: 'currency' },
+          'PnL_{t-1}': { key: 'avgTrade', format: 'currency' },
+          'S': { key: 'hurstExponent', format: 'number' },
+          'Top 5% Wins': { key: 'grossProfit', format: 'currency' },
+          'Archived Trades': { key: 'numTrades', format: 'number' },
+          'Exit Time - Entry Time': { key: 'avgTradeDuration', format: 'number' },
+          'P95(Returns)': { key: 'avgWin', format: 'currency' },
+          'P05(Returns)': { key: 'avgLoss', format: 'currency' }
+        };
+        const sortedTerms = Object.keys(terms).sort((a, b) => b.length - a.length);
+        let evaluatedStr = cfg.formula;
+        sortedTerms.forEach(term => {
+          const isWord = /^[a-zA-Z]+$/.test(term);
+          const regex = isWord ? new RegExp(`\\b${term}\\b`, 'g') : null;
+          
+          if ((regex && regex.test(evaluatedStr)) || (!regex && evaluatedStr.includes(term))) {
+            const propInfo = terms[term];
+            const isLocal = propInfo.source;
+            const valObj = isLocal === 'riskFree' ? riskFree : (isLocal === 'bench' ? bench : m[propInfo.key]);
+
+            if (valObj !== undefined) {
+              let valStr = `${valObj}`;
+              if (propInfo.format === 'currency') valStr = `$${Number(valObj).toFixed(2)}`;
+              else if (propInfo.format === 'percent') valStr = `${Number(valObj).toFixed(2)}%`;
+              else if (propInfo.format === 'number') valStr = `${Number(valObj).toFixed(2)}`;
+              
+              if (regex) {
+                evaluatedStr = evaluatedStr.replace(regex, valStr);
+              } else {
+                evaluatedStr = evaluatedStr.split(term).join(valStr);
+              }
+            }
+          }
+        });
+        formulaStr = evaluatedStr;
+      }
+      
+      return `${formulaStr} = ${m[key] !== undefined ? (typeof m[key] === 'number' ? m[key].toFixed(2) : m[key]) : 'CALCULATED'}`;
+    }
   }
 };
 
@@ -4099,6 +4407,35 @@ const hoveredCurveTooltip = computed(() =>
   hoveredDistributionTooltip.value?.kind === 'curve' ? hoveredDistributionTooltip.value : null
 )
 const hoveredMetricIndex = ref<number | null>(null)
+const hoveredMetricScreenPos = ref<{x: number, y: number} | null>(null)
+
+const hoveredMetricTooltipData = computed(() => {
+  if (hoveredMetricIndex.value === null || !activeMetricsConfigs.value[hoveredMetricIndex.value]) return null
+  const cfg = activeMetricsConfigs.value[hoveredMetricIndex.value]!
+  const isDark = themeStore.settings.isDark
+  const mVals = strategyMetrics.value
+
+  let fullValString = cfg.tooltipValStr ? cfg.tooltipValStr(mVals) : cfg.valStr(mVals)
+  const numFullVal = Number((mVals as any)[cfg.key])
+  const isRatioMetricFull = ['informationRatio', 'treynorRatio', 'tTest', 'sqn', 'calmarRatio', 'sterlingRatio', 'sortinoRatio', 'sharpeRatio', 'omegaRatio', 'marRatio', 'gainToPainRatio', 'tailRatio', 'commonSenseRatio', 'maeMfeRatio', 'zScore', 'profitFactor', 'payoffRatio', 'riskRewardRatio', 'realizedRR', 'winLossRatio'].includes(cfg.key)
+
+  if (fullValString.includes('Infinity') || fullValString.includes('NaN') || (!isNaN(numFullVal) && isRatioMetricFull && Math.abs(numFullVal) > 999999)) {
+    fullValString = numFullVal < 0 ? '-INFINITY' : 'INFINITY'
+  }
+  const cleanFullVal = fullValString.replace(/[\+\-\$\s\%Rxdhwm\|\(\)\/\,\:]/g, '')
+  const isFullZero = cleanFullVal.length > 0 && cleanFullVal.split('').every(c => c === '0' || c === '.')
+  
+  return {
+    label: cfg.label.replace('_', ' '),
+    evalText: cfg.evalStr(mVals).toUpperCase(),
+    color: isFullZero ? (isDark ? '#ffffff' : '#000000') : cfg.colorVal(mVals, isDark),
+    valStr: fullValString,
+    desc: cfg.desc,
+    benchmarks: cfg.benchmarks.map(b => `${b.label} (${b.eval})`),
+    isBenchMetric: ['informationRatio', 'treynorRatio', 'jensensAlpha', 'alphaToBenchmark', 'betaToBenchmark'].includes(cfg.key),
+    isRiskFreeMetric: ['sharpeRatio', 'sortinoRatio', 'treynorRatio', 'jensensAlpha'].includes(cfg.key),
+  }
+})
 
 // View State
 const targetRotation = ref({ x: 0, y: 0 }) 
@@ -4352,6 +4689,7 @@ watch(showMetricsPanel, (val) => {
     showDistribution3D.value = false
     showRobustnessExplanations.value = false
     showRobustnessHistogram.value = false
+    resetView()
   }
 })
 watch(showDistribution3D, (val) => {
@@ -5262,6 +5600,10 @@ const update = () => {
     }
   } else {
     // --- DRAW 3D STRATEGY METRICS TELEMETRY --- //
+    if (!themeStore.settings.isDark) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
+      ctx.fillRect(0, 0, w, h)
+    }
     const cols = 5
     const w_card = 84
     const h_card = 36
@@ -5318,27 +5660,25 @@ const update = () => {
         : (isDark ? `rgba(15, 15, 15, ${0.75 * depthAlpha})` : `rgba(255, 255, 255, ${0.85 * depthAlpha})`)
       ctx.fill()
       
-      if (isEditMode.value) {
-        if (dragTargetIndex.value === i && draggingMetricIndex.value !== null) {
-          ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
-          ctx.lineWidth = 4
-          ctx.setLineDash([8, 4])
-          ctx.stroke()
-          ctx.setLineDash([])
-        } else {
-          ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'
-          ctx.lineWidth = 1
-          ctx.stroke()
-        }
+      if (isEditMode.value && dragTargetIndex.value === i && draggingMetricIndex.value !== null) {
+        ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+        ctx.lineWidth = 4
+        ctx.setLineDash([8, 4])
+        ctx.stroke()
+        ctx.setLineDash([])
       }
 
       ctx.shadowBlur = 0
 
-      // Compute 3D-to-2D affine transformation basis vectors for the card plane
-      const ux = (t2.x - t1.x) / w_card
-      const uy = (t2.y - t1.y) / w_card
-      const vx = (t4.x - t1.x) / h_card
-      const vy = (t4.y - t1.y) / h_card
+      // Compute 3D-to-2D affine transformation basis vectors using local Jacobian at center for perfect text alignment
+      const eps = 0.1
+      const tDx = transformPoint({ x: cx + eps, y: cy, z: cz }, currentRotation.value.y, currentRotation.value.x, scale, w, h)
+      const tDy = transformPoint({ x: cx, y: cy + eps, z: cz }, currentRotation.value.y, currentRotation.value.x, scale, w, h)
+
+      const ux = (tDx.x - tCenter.x) / eps
+      const uy = (tDx.y - tCenter.y) / eps
+      const vx = (tDy.x - tCenter.x) / eps
+      const vy = (tDy.y - tCenter.y) / eps
 
       // Apply transformation matrix with 0.1 scale factor for crisp high-res typography
       ctx.setTransform(ux * 0.1, uy * 0.1, vx * 0.1, vy * 0.1, tCenter.x, tCenter.y)
@@ -5346,9 +5686,9 @@ const update = () => {
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
-      ctx.font = '35px monospace'
-      ctx.fillText(cfg.label.replace('_', ' '), 0, -60)
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)'
+      ctx.font = 'bold 45px monospace'
+      ctx.fillText(cfg.label.replace('_', ' '), 0, -65)
       
       let valString = cfg.valStr(mVals)
       const numVal = Number((mVals as any)[cfg.key])
@@ -5368,7 +5708,7 @@ const update = () => {
       ctx.font = `bold ${Math.round(baseFontSize * 10)}px monospace`
       ctx.fillText(valString, 0, 40)
       
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
       ctx.font = '30px monospace'
       ctx.fillText(cfg.sub, 0, 130)
 
@@ -5492,171 +5832,22 @@ const update = () => {
       ctx.resetTransform()
     }
 
-    // --- DRAW HOVERED METRIC DIAGNOSTIC TOOLTIP --- //
+    // --- SET HOVERED METRIC POS FOR DOM TOOLTIP --- //
     if (hoveredMetricIndex.value !== null && activeMetricsConfigs.value[hoveredMetricIndex.value]) {
-      const cfg = activeMetricsConfigs.value[hoveredMetricIndex.value]!
       const row = Math.floor(hoveredMetricIndex.value / cols)
       const col = hoveredMetricIndex.value % cols
       const cx = startX + col * (w_card + colGap)
       const cy = startY + (row - 2.5) * (h_card + rowGap)
       const tCenter = transformPoint({ x: cx, y: cy, z: 0 }, currentRotation.value.y, currentRotation.value.x, scale, w, h)
       
-      const isBenchMetric = ['informationRatio', 'treynorRatio', 'jensensAlpha', 'alphaToBenchmark', 'betaToBenchmark'].includes(cfg.key)
-      
-      // Dynamic Width Calculation
-      ctx.font = 'bold 12px monospace'
-      const titleWidth = ctx.measureText(`[ ${cfg.label.replace('_', ' ')} ]`).width
-      const evalText = cfg.evalStr(mVals).toUpperCase()
-      ctx.font = 'bold 11px monospace'
-      const evalWidth = ctx.measureText(`[ ${evalText} ]`).width
-      const ttWidth = Math.max(360, titleWidth + evalWidth + 50)
-
-      // Word wrap helper for Description
-      ctx.font = '10px monospace'
-      const descWords = cfg.desc.split(' ')
-      const descLines: string[] = []
-      let currentDescLine = ''
-      descWords.forEach(w => {
-        const testLine = currentDescLine ? currentDescLine + ' ' + w : w
-        if (ctx.measureText(testLine).width > ttWidth - 36) {
-          descLines.push(currentDescLine)
-          currentDescLine = w
-        } else {
-          currentDescLine = testLine
-        }
-      })
-      if (currentDescLine) descLines.push(currentDescLine)
-
-      // Word wrap helper for Benchmarks
-      const benchParts = cfg.benchmarks.map(b => `${b.label} (${b.eval})`)
-      const benchLines: string[] = []
-      let currentBenchLine = ''
-      benchParts.forEach(p => {
-        const testLine = currentBenchLine ? currentBenchLine + ' | ' + p : p
-        if (ctx.measureText(testLine).width > ttWidth - 95) {
-          benchLines.push(currentBenchLine)
-          currentBenchLine = p
-        } else {
-          currentBenchLine = testLine
-        }
-      })
-      if (currentBenchLine) benchLines.push(currentBenchLine)
-
-      // Dynamic Height Calculation
-      let calcHeight = 62 + descLines.length * 14 + 10 // after description
-      calcHeight += 12 // after divider
-      calcHeight += 18 // after formula
-      calcHeight += benchLines.length * 14 + 8 // after benchmarks
-      if (isBenchMetric) calcHeight += 20 // after benchmark yield
-      if (['sharpeRatio', 'sortinoRatio', 'treynorRatio', 'jensensAlpha'].includes(cfg.key)) calcHeight += 20 // after risk-free yield
-      const ttHeight = calcHeight + 10
-
-      let ttX = tCenter.x + (w_card * scale)/2 + 15
-      let ttY = tCenter.y - ttHeight / 2
-      
-      if (ttX + ttWidth > w - 20) ttX = tCenter.x - (w_card * scale)/2 - ttWidth - 15
-      if (ttY < 20) ttY = 20
-      if (ttY + ttHeight > h - 20) ttY = h - ttHeight - 20
-
-      // Ultra-premium minimalist glassmorphic card background
-      ctx.fillStyle = isDark ? 'rgba(15,15,15,0.88)' : 'rgba(255,255,255,0.88)'
-      ctx.shadowBlur = 25
-      ctx.shadowColor = isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.15)'
-      ctx.fillRect(ttX, ttY, ttWidth, ttHeight)
-      ctx.shadowBlur = 0
-      
-      // Subtle, elegant thin border
-      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
-      ctx.lineWidth = 1
-      ctx.strokeRect(ttX, ttY, ttWidth, ttHeight)
-      
-      // Premium accent bar on the left edge
-      ctx.fillStyle = colors.value.accent
-      ctx.fillRect(ttX, ttY, 3, ttHeight)
-      
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'top'
-      
-      // Header: Title (Left) & Status Badge (Right)
-      ctx.fillStyle = themeText
-      ctx.font = 'bold 12px monospace'
-      ctx.fillText(`[ ${cfg.label.replace('_', ' ')} ]`, ttX + 18, ttY + 16)
-      
-      ctx.fillStyle = cfg.colorVal(mVals, isDark)
-      ctx.font = 'bold 11px monospace'
-      ctx.textAlign = 'right'
-      ctx.fillText(`[ ${evalText} ]`, ttX + ttWidth - 16, ttY + 16)
-      ctx.textAlign = 'left'
-      
-      // Prominent Full Metric Value Display
-      let fullValString = cfg.tooltipValStr ? cfg.tooltipValStr(mVals) : cfg.valStr(mVals)
-      const numFullVal = Number((mVals as any)[cfg.key])
-      const isRatioMetricFull = ['informationRatio', 'treynorRatio', 'tTest', 'sqn', 'calmarRatio', 'sterlingRatio', 'sortinoRatio', 'sharpeRatio', 'omegaRatio', 'marRatio', 'gainToPainRatio', 'tailRatio', 'commonSenseRatio', 'maeMfeRatio', 'zScore', 'profitFactor', 'payoffRatio', 'riskRewardRatio', 'realizedRR', 'winLossRatio'].includes(cfg.key)
-
-      if (fullValString.includes('Infinity') || fullValString.includes('NaN') || (!isNaN(numFullVal) && isRatioMetricFull && Math.abs(numFullVal) > 999999)) {
-        fullValString = numFullVal < 0 ? '-INFINITY' : 'INFINITY'
+      const canvasRect = canvasRef.value?.getBoundingClientRect()
+      if (canvasRect) {
+         hoveredMetricScreenPos.value = { x: tCenter.x + canvasRect.left, y: tCenter.y + canvasRect.top }
+      } else {
+         hoveredMetricScreenPos.value = { x: tCenter.x, y: tCenter.y }
       }
-      const cleanFullVal = fullValString.replace(/[\+\-\$\s\%Rxdhwm\|\(\)\/\,\:]/g, '')
-      const isFullZero = cleanFullVal.length > 0 && cleanFullVal.split('').every(c => c === '0' || c === '.')
-      ctx.fillStyle = isFullZero ? (isDark ? '#ffffff' : '#000000') : cfg.colorVal(mVals, isDark)
-      ctx.font = 'bold 16px monospace'
-      ctx.fillText(fullValString, ttX + 18, ttY + 36)
-      
-      // Description
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'
-      ctx.font = '10px monospace'
-      let curY = ttY + 62
-      descLines.forEach(line => {
-        ctx.fillText(line, ttX + 18, curY)
-        curY += 14
-      })
-      
-      curY += 10
-      // Divider
-      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-      ctx.lineWidth = 1
-      ctx.beginPath(); ctx.moveTo(ttX + 18, curY); ctx.lineTo(ttX + ttWidth - 16, curY); ctx.stroke()
-      
-      curY += 12
-      // Formula
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
-      ctx.font = '9px monospace'
-      ctx.fillText('FORMULA:', ttX + 18, curY + 1)
-      ctx.fillStyle = themeText
-      ctx.font = 'bold 10px monospace'
-      ctx.fillText(cfg.formula, ttX + 75, curY)
-      
-      curY += 18
-      // Target Benchmarks
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
-      ctx.font = '9px monospace'
-      ctx.fillText('TARGET :', ttX + 18, curY + 1)
-      ctx.fillStyle = themeText
-      ctx.font = '10px monospace'
-      
-      benchLines.forEach(line => {
-        ctx.fillText(line, ttX + 75, curY)
-        curY += 14
-      })
-
-      if (isBenchMetric) {
-        curY += 6
-        ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
-        ctx.font = '9px monospace'
-        ctx.fillText('BENCHMARK:', ttX + 18, curY + 1)
-        ctx.fillStyle = colors.value.accent
-        ctx.font = 'bold 10px monospace'
-        ctx.fillText(`S&P 500 (${sp500BenchmarkRate.value.toFixed(2)}% YIELD)`, ttX + 85, curY)
-      }
-      if (['sharpeRatio', 'sortinoRatio', 'treynorRatio', 'jensensAlpha'].includes(cfg.key)) {
-        curY += 6
-        ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
-        ctx.font = '9px monospace'
-        ctx.fillText('RISK-FREE:', ttX + 18, curY + 1)
-        ctx.fillStyle = colors.value.accent
-        ctx.font = 'bold 10px monospace'
-        ctx.fillText(`US 3M T-BILL (${riskFreeRate.value.toFixed(2)}% YIELD)`, ttX + 85, curY)
-      }
+    } else {
+      hoveredMetricScreenPos.value = null
     }
   }
 
@@ -5712,7 +5903,7 @@ const handleMouseMove = (e: MouseEvent) => {
   
   if (isPanning.value) {
     const dx = e.clientX - lastMousePos.value.x; const dy = e.clientY - lastMousePos.value.y
-    if (e.shiftKey) {
+    if (e.shiftKey || showMetricsPanel.value) {
       viewOffset.value.x += dx; viewOffset.value.y += dy
     } else {
       targetRotation.value.y += dx * 0.005; targetRotation.value.x += dy * 0.005
