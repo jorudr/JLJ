@@ -1,0 +1,1242 @@
+<template>
+  <div class="ethereal-void h-screen relative overflow-y-auto transition-all duration-1000"
+       :class="[isDark ? 'is-dark dark theme-dark' : 'theme-light']">
+    
+    <!-- SYSTEM BACKGROUNDS -->
+    <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    <DesignVignette :is-dark="isDark" />
+    <button @click="isDark = !isDark" 
+            class="fixed top-12 right-12 z-[5000] px-6 py-2 border-2 border-theme-border bg-theme-bg text-theme-text hover:bg-theme-text hover:text-theme-bg transition-all duration-500 group flex items-center space-x-4">
+      <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ isDark ? 'SWT_LIGHT_MODE' : 'SWT_DARK_MODE' }}</span>
+      <div class="w-2 h-2 border border-current rotate-45 transition-transform group-hover:rotate-[135deg]" :class="isDark ? 'bg-white' : 'bg-black'"></div>
+    </button>
+
+    <div class="p-16 bg-theme-bg text-theme-text min-h-screen">
+      <!-- HEADER -->
+      <header class="mb-24 flex flex-col items-start text-theme-text">
+        <div class="flex items-center space-x-4 mb-4">
+          <div class="w-3 h-3 bg-theme-text rotate-45"></div>
+          <h1 class="text-[10px] font-mono tracking-[0.8em] uppercase font-black opacity-40 text-theme-text">System_Design_Laboratory</h1>
+        </div>
+        <p class="text-4xl font-mono font-black uppercase tracking-tighter text-theme-text">Archival_Core_v1.0</p>
+        <div class="h-px w-64 bg-theme-border mt-8"></div>
+      </header>
+
+      <div class="grid grid-cols-1 gap-24 max-w-6xl">
+        
+        <!-- SECTION 1: DESIGN TOKENS -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">01 // DNA_Tokens</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div v-for="token in colorTokens" :key="token.name" class="flex flex-col space-y-3">
+               <div class="h-24 w-full border border-theme-border relative overflow-hidden" :style="{ backgroundColor: token.value }">
+                  <div class="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent"></div>
+               </div>
+               <span class="text-[9px] font-mono tracking-widest uppercase opacity-40">{{ token.name }}</span>
+               <span class="text-[11px] font-mono uppercase">{{ token.value }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 2: TYPOGRAPHY -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">02 // Typography_Scale</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="space-y-12 border-l border-theme-border pl-12">
+            <div class="flex flex-col space-y-2">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">H1 // Cinematic_Header</span>
+              <h2 class="text-6xl font-light font-serif tracking-[0.4em] dark:opacity-100 uppercase drop-shadow-sm leading-relaxed text-theme-text">Strategic_Protocol</h2>
+            </div>
+            
+            <div class="flex flex-col space-y-2">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">H2 // Technical_Module</span>
+              <h3 class="text-2xl font-mono font-black uppercase tracking-[0.2em] text-theme-text">Archival_Node_042</h3>
+            </div>
+
+            <div class="flex flex-col space-y-2">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Body // Narrative_Data</span>
+              <p class="max-w-xl text-sm font-mono leading-relaxed opacity-70 text-theme-text">
+                The Genesis Matrix facilitates high-frequency tactical execution by decoupling neural processing from market volatility. 
+                Protocols are enforced through a rigid archival hierarchy.
+              </p>
+            </div>
+
+            <div class="flex flex-col space-y-2">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Small // System_Telemetry</span>
+              <p class="text-[9px] font-mono uppercase tracking-[0.4em] font-black opacity-40 text-theme-text">
+                Session_Time: 04:22:19 // Link_Status: OPTIMAL
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: EXBUTTON_MATRIX -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">03 // ExButton_Matrix</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            
+            <!-- GHOST VARIANT -->
+            <div class="flex flex-col space-y-6">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Variant // Ghost</span>
+              <ExButton variant="ghost">Execute_Ghost</ExButton>
+            </div>
+
+            <!-- SOLID VARIANT -->
+            <div class="flex flex-col space-y-6">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Variant // Solid</span>
+              <ExButton variant="solid">Commit_Solid</ExButton>
+            </div>
+
+            <!-- TACTICAL VARIANT -->
+            <div class="flex flex-col space-y-6">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Variant // Tactical</span>
+              <ExButton variant="tactical">Link_Tactical</ExButton>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECTION 4: EXPANEL_ARCHIVE -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">04 // ExPanel_Archive</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- STANDARD VARIANT -->
+            <div class="flex flex-col space-y-6">
+              <span class="text-[9px] font-mono tracking-[0.4em] opacity-40 uppercase">Variant: Standard (Heavy)</span>
+              <ExPanel title="ARCHIVAL_REGISTRY_v1.1" telemetry="0x4F92" variant="standard">
+                <div class="space-y-4 font-mono text-[11px] leading-relaxed opacity-80 uppercase tracking-widest text-black dark:text-white">
+                  <p>Establishing secure connection to tactical node...</p>
+                  <p class="text-blue-500">>> Authenticated: [REDACTED]</p>
+                  <div class="h-1 bg-black/10 dark:bg-white/10 w-full overflow-hidden">
+                    <div class="h-full bg-blue-500 w-2/3 animate-pulse"></div>
+                  </div>
+                </div>
+              </ExPanel>
+            </div>
+
+            <!-- LIGHT VARIANT -->
+            <div class="flex flex-col space-y-6">
+              <span class="text-[9px] font-mono tracking-[0.4em] opacity-40 uppercase">Variant: Light (Minimalist)</span>
+              <ExPanel title="TELEMETRY_FEED_SUB" telemetry="LIVE_STREAM" variant="light">
+                <div class="space-y-4 font-mono text-[11px] leading-relaxed opacity-80 uppercase tracking-widest text-black dark:text-white">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="border border-black/10 dark:border-white/10 p-4">
+                      <span class="block opacity-40 text-[8px] mb-2">Sync_Rate</span>
+                      <span class="text-lg font-black">98.2%</span>
+                    </div>
+                    <div class="border border-black/10 dark:border-white/10 p-4">
+                      <span class="block opacity-40 text-[8px] mb-2">Latency</span>
+                      <span class="text-lg font-black">42ms</span>
+                    </div>
+                  </div>
+                </div>
+              </ExPanel>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 5: EXINPUT_REGISTRY -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">05 // ExInput_Registry</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl">
+            <!-- Standard Input -->
+            <div class="flex flex-col space-y-4">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Type // Standard_Registry</span>
+              <div class="relative group">
+                <span class="absolute left-0 top-1/2 -translate-y-1/2 text-[9px] font-mono opacity-30 group-focus-within:opacity-100 transition-opacity uppercase tracking-widest px-4">Search_</span>
+                <input type="text" placeholder="INDEX_KEYWORD" 
+                       class="w-full bg-theme-bg border border-theme-border py-4 pl-24 pr-4 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20 uppercase" />
+              </div>
+            </div>
+
+            <!-- Tactical Input (Underlined) -->
+            <div class="flex flex-col space-y-4">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Type // Tactical_Terminal</span>
+              <div class="relative group border-b border-theme-border focus-within:border-theme-text transition-colors duration-500">
+                <input type="text" placeholder="ENTER_PROTOCOL_COMMAND" 
+                       class="w-full bg-transparent py-4 px-2 text-[11px] font-mono tracking-[0.4em] focus:outline-none text-theme-text placeholder:opacity-20 uppercase" />
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 bg-theme-text group-focus-within:w-full transition-all duration-700 ease-[var(--nier-ease)]"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 6: EXDIVIDER_LATTICE -->
+        <section class="flex flex-col space-y-12 pb-24">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">06 // ExDivider_Lattice</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="space-y-12">
+            <!-- Simple Divider -->
+            <div class="flex flex-col space-y-4">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Style // Linear_Archive</span>
+              <div class="h-px w-full bg-theme-border"></div>
+            </div>
+
+            <!-- Tactical Divider -->
+            <div class="flex flex-col space-y-4">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Style // Tactical_Bracing</span>
+              <div class="flex items-center">
+                <div class="h-px flex-grow bg-theme-border"></div>
+                <div class="px-6 flex items-center space-x-2">
+                  <div class="w-1 h-1 bg-theme-text rotate-45 opacity-20"></div>
+                  <div class="w-1.5 h-1.5 bg-theme-text rotate-45"></div>
+                  <div class="w-1 h-1 bg-theme-text rotate-45 opacity-20"></div>
+                </div>
+                <div class="h-px flex-grow bg-theme-border"></div>
+              </div>
+            </div>
+
+            <!-- Double "Newspaper" Divider -->
+            <div class="flex flex-col space-y-4">
+              <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] text-theme-text">Style // Masterclass_Double</span>
+              <div class="border-t-4 border-double border-theme-border py-1"></div>
+            </div>
+          </div>
+        </section>
+        <!-- SECTION 7: EXTAG_METADATA -->
+        <section class="flex flex-col space-y-12">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">07 // ExTag_Metadata</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-6">
+            <!-- Ghost Tag -->
+            <div class="px-3 py-1 border border-theme-border flex items-center space-x-3">
+              <div class="w-1 h-1 bg-theme-accent"></div>
+              <span class="text-[9px] font-mono uppercase tracking-[0.2em] text-theme-text">Protocol</span>
+            </div>
+
+            <!-- Solid Tag -->
+            <div class="px-3 py-1 bg-theme-text text-theme-bg flex items-center space-x-3">
+              <span class="text-[9px] font-mono uppercase tracking-[0.2em] font-black">Setups</span>
+            </div>
+
+            <!-- Outline Tag -->
+            <div class="px-3 py-1 border border-theme-text/40 flex items-center space-x-3 group hover:border-theme-text transition-colors duration-300 cursor-default">
+              <span class="text-[9px] font-mono uppercase tracking-[0.2em] text-theme-text opacity-60 group-hover:opacity-100 transition-opacity">Research</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 8: EXIDENTITY_REGISTRY -->
+        <section class="flex flex-col space-y-12 pb-32">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">08 // ExIdentity_Registry</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-2xl">
+            <!-- Basic Identity -->
+            <div class="flex items-center space-x-4 group cursor-default">
+              <div class="w-10 h-10 border border-theme-border relative overflow-hidden flex items-center justify-center bg-theme-text/5">
+                <div class="w-4 h-4 border border-theme-text opacity-20 rotate-45 group-hover:rotate-[135deg] transition-transform duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-tr from-theme-text/10 to-transparent"></div>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-[11px] font-mono uppercase tracking-widest text-theme-text font-black">Operator_0x4F</span>
+                <span class="text-[8px] font-mono uppercase tracking-[0.3em] opacity-30 text-theme-text">Rank: Architect</span>
+              </div>
+            </div>
+
+            <!-- Detailed Identity -->
+            <div class="flex items-center space-x-4 p-4 border border-theme-border bg-theme-text/[0.02]">
+              <div class="w-12 h-12 bg-theme-text flex items-center justify-center">
+                 <span class="text-theme-bg font-mono font-black text-xl">E</span>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center space-x-2">
+                  <span class="text-[11px] font-mono uppercase tracking-widest text-theme-text">Eve_System</span>
+                  <div class="w-1.5 h-1.5 bg-theme-accent rounded-full animate-pulse"></div>
+                </div>
+                <span class="text-[8px] font-mono uppercase tracking-[0.3em] opacity-40 text-theme-text">Master_Core // Reified</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 9: EXTOOLTIP_DIAGNOSTIC -->
+        <section class="flex flex-col space-y-12 pb-48">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">09 // ExTooltip_Diagnostic</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-24">
+            <!-- Basic Tooltip -->
+            <div class="relative group">
+              <div class="px-6 py-2 border border-theme-border text-[10px] font-mono uppercase tracking-[0.4em] text-theme-text cursor-default">
+                Hover_Trigger
+              </div>
+              
+              <!-- THE TOOLTIP -->
+              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 pointer-events-none z-50">
+                <div class="bg-theme-bg border border-theme-text/20 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] min-w-[200px] flex flex-col space-y-2 text-theme-text">
+                  <div class="flex items-center justify-between border-b border-theme-border pb-2">
+                    <span class="text-[8px] font-mono uppercase tracking-[0.3em] font-black">Registry_Info</span>
+                    <div class="w-1.5 h-1.5 bg-theme-accent rotate-45"></div>
+                  </div>
+                  <p class="text-[10px] font-mono leading-relaxed opacity-70">
+                    Tactical data node reified at current cursor coordinates.
+                  </p>
+                </div>
+                <!-- Tooltip Stem -->
+                <div class="w-2 h-2 bg-theme-bg border-r border-b border-theme-text/20 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+              </div>
+            </div>
+
+            <!-- Tactical Tooltip (Nier Style) -->
+            <div class="relative group">
+              <div class="px-6 py-2 bg-theme-text text-theme-bg text-[10px] font-mono uppercase tracking-[0.4em] font-black cursor-default">
+                Protocol_Link
+              </div>
+              
+              <!-- THE TOOLTIP -->
+              <div class="absolute bottom-full left-0 mb-4 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-700 pointer-events-none z-50">
+                <div class="bg-theme-bg border-2 border-theme-text p-6 shadow-[20px_20px_0_rgba(0,0,0,0.1)] min-w-[260px] relative text-theme-text">
+                  <!-- Corner Brackets -->
+                  <div class="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 border-theme-text"></div>
+                  <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 border-theme-text"></div>
+                  
+                  <div class="flex flex-col space-y-4">
+                    <h4 class="text-[11px] font-mono font-black uppercase tracking-[0.5em] text-theme-text">Link_Status: Alpha</h4>
+                    <div class="h-px w-full bg-theme-border"></div>
+                    <p class="text-[9px] font-mono leading-loose uppercase tracking-widest opacity-60">
+                      Warning: Structural integrity of current node is at 84%. 
+                      Immediate reification required.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+        <!-- SECTION 10: EXACTIVITY_PROTOTYPE -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">10 // ExActivity_Log_Reified</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <ExPanel class="max-w-4xl" noPadding>
+            <template #header>
+               Session_Activity_Monitor
+            </template>
+
+            <!-- 1. Header Section -->
+            <div class="p-12 border-b border-theme-border flex items-start justify-between">
+              <div class="flex flex-col space-y-2">
+                <ExHeading level="h2" variant="cinematic" class="!text-3xl lowercase leading-none">
+                  Log of <br /> Temporal Existence
+                </ExHeading>
+                <ExText variant="body" class="opacity-60">Session Consistency & Focus Registry</ExText>
+              </div>
+
+              <!-- Streak Counter -->
+              <div class="flex flex-col items-end">
+                <ExText variant="telemetry" class="opacity-30">Active_Streak</ExText>
+                <div class="flex items-center space-x-4">
+                  <span class="text-4xl font-serif italic text-theme-text">14</span>
+                  <div class="w-6 h-6 text-theme-accent opacity-50">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.41-1.09-2.12-1.61.12-.07.26-.14.37-.24.58-.51.85-1.29.58-2.03-.1-.31-.24-.59-.47-.83-.84-.9-2.28-1-3.37-.36-.4.23-.74.55-.99.94C10.15 7.42 10.02 8.7 10.3 9.6c.03.11.05.21.05.33 0 .22-.19.43-.45.43-.13 0-.27-.06-.34-.14-.23-.27-.33-.63-.44-.98-.18-.58-.3-1.15-.36-1.74 0-.17-.02-.34-.14-.46-.07-.07-.12-.13-.19-.13-.08 0-.15.06-.21.12-.47.45-.8 1.01-1.01 1.62-.25.7-.35 1.5-.08 2.22.06.18.15.36.26.52.27.42.59.81.95 1.14.73.66 1.57 1.2 2.3 1.89.7.67 1.34 1.45 1.57 2.4.08.33.12.68.12 1.02 0 .61-.13 1.23-.41 1.77-.32.61-.83 1.1-1.4 1.44-.09.05-.18.1-.25.17-.14.12-.11.23-.05.33.26.43.68.74 1.14.88.59.18 1.23.16 1.83.02.6-.14 1.18-.46 1.62-.91.49-.49.88-1.06 1.13-1.7.27-.68.32-1.44.25-2.18-.04-.61-.19-1.22-.49-1.76-.3-.54-.69-1.02-1.12-1.46-.37-.4-.78-.77-1.18-1.14-.14-.14-.26-.29-.41-.42-.07-.07-.1-.13-.05-.22.12-.22.42-.25.56-.05.81.82 1.65 1.62 2.29 2.58.11.17.38.2.53.07.13-.1.17-.25.16-.4-.05-.44-.31-.83-.54-1.21z" /></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Heatmap Section -->
+            <div class="p-12 border-b border-theme-border">
+               <div class="flex items-center justify-between mb-8">
+                  <ExText variant="telemetry" class="!opacity-70">Historical_Consistency_Matrix</ExText>
+                  <ExText variant="small">Scale: 0 - 100% Reification</ExText>
+               </div>
+
+               <!-- Heatmap Grid Mockup -->
+               <div class="grid grid-flow-col grid-rows-7 gap-2 overflow-x-auto pb-4 scroll-minimal">
+                  <ExTooltip v-for="n in 364" :key="n" position="top" :is-dark="isDark">
+                    <template #trigger>
+                      <div 
+                        class="w-3.5 h-3.5 border transition-all duration-700"
+                        :class="Math.random() > 0.8 ? 'bg-theme-text border-theme-text' : 'bg-theme-text/5 border-theme-border hover:bg-theme-text/20'"
+                      ></div>
+                    </template>
+                    <template #default>
+                      <div class="flex flex-col space-y-1">
+                        <span class="font-black">Activity_Level: {{ Math.floor(Math.random() * 100) }}%</span>
+                        <span class="opacity-50">Archive_Date: 24.04.2026</span>
+                      </div>
+                    </template>
+                  </ExTooltip>
+               </div>
+            </div>
+
+            <!-- 3. Action Section -->
+            <div class="p-12 flex flex-col md:flex-row md:items-end md:space-x-12 space-y-8 md:space-y-0">
+               <div class="flex-grow flex flex-col space-y-6">
+                  <ExInput 
+                    variant="terminal" 
+                    placeholder="scribe today's objective into the void..."
+                    class="italic font-serif"
+                  />
+                  <div class="flex items-center space-x-3 opacity-30">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-theme-text"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zM9 7c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm11 13H4v-8h16v8zm-8-5a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                    <ExText variant="telemetry">REIFICATION_LOG // ENCRYPTION: ACTIVE</ExText>
+                  </div>
+               </div>
+              <div class="shrink-0">
+                  <ExButton variant="tactical">Initiate_Session</ExButton>
+               </div>
+            </div>
+
+          </ExPanel>
+        </section>
+        <!-- SECTION 11: EXGENESIS_MENU_LATTICE -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">11 // ExGenesis_Menu_Lattice</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="h-[600px] border border-theme-border relative overflow-hidden bg-theme-text/[0.01]">
+            <ExGenesisMenu />
+          </div>
+        </section>
+        <!-- SECTION 12: EXINITIALIZATION_SEQUENCE -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">12 // ExInitialization_Sequence</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col items-start space-y-6">
+            <ExText variant="body">
+              The initialization sequence provides a high-fidelity atmospheric entry point for the application. 
+              It features simulated boot telemetry and rigid assembly animations.
+            </ExText>
+            <ExButton variant="solid" @click="showInitPreview = true">
+              Preview_Sequence
+            </ExButton>
+          </div>
+
+          <!-- The Overlay (Only visible during preview) -->
+          <ExInitialization v-if="showInitPreview" @initiate="showInitPreview = false" />
+        </section>
+        <!-- SECTION 14: EXCONDITION_CREATOR_SYSTEM -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">14 // ExCondition_Creator_System</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col lg:flex-row gap-16 items-start">
+             <!-- EDITOR PANEL -->
+             <ExPanel class="w-full max-w-xl" noPadding variant="light">
+                <template #header>
+                   IDENTIFY_NEW_PROTOCOL // CONDITION_CREATOR
+                </template>
+
+                <div class="p-10 flex flex-col space-y-10">
+                   <!-- Field: Name -->
+                   <div class="flex flex-col space-y-4">
+                      <div class="flex items-center justify-between">
+                         <ExText variant="telemetry" class="opacity-40">Protocol_Identity</ExText>
+                         <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">REQ_001</span>
+                      </div>
+                      <ExInput v-model="customCondition.name" placeholder="ENTER_CONDITION_NAME..." variant="standard" class="!py-5 !pl-6 !text-lg" />
+                   </div>
+
+                   <!-- Field: Description -->
+                   <div class="flex flex-col space-y-4">
+                      <div class="flex items-center justify-between">
+                         <ExText variant="telemetry" class="opacity-40">Narrative_Registry</ExText>
+                         <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">REQ_002</span>
+                      </div>
+                      <div class="relative group">
+                         <textarea 
+                           v-model="customCondition.description"
+                           placeholder="DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION..."
+                           class="w-full h-32 bg-theme-bg border border-theme-border p-6 text-xs font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20 uppercase resize-none leading-relaxed"
+                         ></textarea>
+                         <!-- Gothic Corners for Textarea -->
+                         <ExGothicCorners variant="light" :opacity="0.2" class="group-focus-within:opacity-80 transition-opacity duration-500" />
+                      </div>
+                   </div>
+
+                   <!-- Field: Color Swatch -->
+                   <div class="flex flex-col space-y-4">
+                      <ExText variant="telemetry" class="opacity-40 mb-2">Chromatic_Index</ExText>
+                      <div class="flex flex-wrap gap-4">
+                         <button v-for="color in ['#ffffff', '#fb7185', '#38bdf8', '#10b981', '#f59e0b', '#a78bfa']" 
+                                 :key="color"
+                                 @click="customCondition.color = color"
+                                 class="w-10 h-10 border relative group transition-all hover:scale-110"
+                                 :class="customCondition.color === color ? 'border-theme-text scale-110' : 'border-theme-border'"
+                                 :style="{ backgroundColor: color }">
+                            <div class="absolute inset-0 border-2 border-theme-bg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="absolute -inset-1 border border-theme-text opacity-0 group-hover:opacity-100 transition-opacity"
+                                 :class="{ 'opacity-100': customCondition.color === color }"></div>
+                         </button>
+                      </div>
+                   </div>
+
+                   <!-- Footer Actions -->
+                   <div class="pt-10 border-t border-theme-border flex items-center justify-between">
+                      <div class="flex items-center space-x-3 opacity-20 group cursor-pointer hover:opacity-100 transition-opacity">
+                         <div class="w-1.5 h-1.5 border border-theme-text rotate-45"></div>
+                         <span class="text-[9px] font-mono uppercase tracking-[0.3em]">Discard_Draft</span>
+                      </div>
+                      <ExButton variant="tactical">Initialize_Protocol</ExButton>
+                   </div>
+                </div>
+             </ExPanel>
+
+             <!-- INFORMATIONAL ASIDE & PREVIEW -->
+             <div class="flex flex-col space-y-12 max-w-sm pt-8">
+                <!-- LIVE PREVIEW SECTION -->
+                <div class="flex flex-col space-y-6">
+                   <ExText variant="telemetry" class="opacity-40">Protocol_Visualization_Preview</ExText>
+                   <div class="relative w-48 h-48 border border-theme-border bg-theme-text/[0.01] flex items-center justify-center overflow-hidden group">
+                      <!-- Grid hint -->
+                      <div class="absolute inset-0 opacity-10 pointer-events-none" 
+                           style="background-image: radial-gradient(circle, var(--theme-text) 1px, transparent 1px); background-size: 20px 20px;"></div>
+                      
+                      <!-- THE NODE PREVIEW -->
+                      <div class="relative w-16 h-16 border-[2px] flex items-center justify-center bg-theme-bg transition-all duration-700 group-hover:scale-110"
+                           :style="{ borderColor: customCondition.color, boxShadow: `0 0 30px ${customCondition.color}20` }">
+                         <div class="absolute inset-0 opacity-[0.03]" :style="{ backgroundColor: customCondition.color }"></div>
+                         <!-- Dynamic Text Identification -->
+                         <div class="flex flex-col items-center">
+                            <span class="text-[20px] font-mono font-black tracking-tighter uppercase transition-all duration-500"
+                                  :style="{ color: customCondition.color }">
+                               {{ customCondition.name.slice(0, 3) || 'IDN' }}
+                            </span>
+                         </div>
+
+                         <!-- Connection points -->
+                         <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 border-2 bg-theme-bg rotate-45 transition-colors duration-500"
+                              :style="{ borderColor: customCondition.color }"></div>
+                         <div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 border-2 bg-theme-bg rotate-45 transition-colors duration-500"
+                              :style="{ borderColor: customCondition.color }"></div>
+
+                         <!-- Subtle Glow layer based on picked color -->
+                         <div class="absolute -inset-2 border opacity-10 transition-colors duration-500" :style="{ borderColor: customCondition.color }"></div>
+                      </div>
+
+                      <div class="absolute bottom-4 left-0 w-full flex justify-center">
+                         <span class="text-[7px] font-mono uppercase tracking-[0.4em] opacity-30">Render_Matrix_v1.0</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                   <div class="w-px h-12 bg-theme-text"></div>
+                   <ExText variant="body" class="italic opacity-80 leading-relaxed">
+                      "Each custom condition is a reified sequence within the Genesis Matrix. Precision in nomenclature ensures structural integrity."
+                   </ExText>
+                </div>
+                
+                <div class="p-6 border border-theme-border bg-theme-text/[0.02] flex flex-col space-y-4">
+                   <span class="text-[9px] font-mono uppercase tracking-widest font-black opacity-50">System_Requirements</span>
+                   <ul class="space-y-2">
+                      <li v-for="req in ['Unique Identifier', 'Valid Telemetry Link', 'Archive Priority']" :key="req" class="flex items-center space-x-3">
+                         <div class="w-1 h-1 bg-theme-text opacity-40"></div>
+                         <span class="text-[8px] font-mono uppercase tracking-widest opacity-40">{{ req }}</span>
+                      </li>
+                   </ul>
+                </div>
+             </div>
+          </div>
+        </section>
+
+        <!-- SECTION 15: EXTRADE_ANALYSIS_DASHBOARD -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">15 // ExTrade_Analysis_Dashboard</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col space-y-8">
+            <ExText variant="body" class="max-w-2xl">
+              The Trade Analysis Dashboard provides a high-fidelity diagnostic breakdown of execution performance. 
+              It synthesizes temporal data, strategic compliance, and historical percentile ranking into a single tactical interface.
+            </ExText>
+            
+            <ExTradeAnalysisPanel />
+          </div>
+        </section>
+
+        <!-- SECTION 16: EXTRADE_SHARE_CARD_PREVIEW -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">16 // ExTrade_Share_Card_Preview</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col space-y-8">
+            <ExText variant="body" class="max-w-2xl">
+              The Share Card is a high-fidelity visual export designed for rapid tactical dissemination. 
+              It synthesizes core metrics into a cinematic 16:9 archival template.
+            </ExText>
+            
+            <!-- THE CARD DESIGN (TRUE 1200x675 RESOLUTION) -->
+            <div class="overflow-x-auto pb-8 custom-scrollbar">
+               <div class="relative w-[1200px] h-[675px] bg-[#0a0a0a] border border-theme-border shadow-2xl overflow-hidden group mx-auto shrink-0">
+               <!-- Decorative Mesh Pattern -->
+               <div class="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                    style="background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px); background-size: 40px 40px;"></div>
+               
+               <!-- Gradient Overlay -->
+               <div class="absolute inset-0 bg-gradient-to-tr from-black to-transparent opacity-60"></div>
+
+               <!-- Header: Proportional to 60px at 1200px width (5%) -->
+               <div class="absolute top-[5%] left-[5%] flex flex-col space-y-1">
+                  <span class="text-[10px] md:text-[13px] font-mono font-black uppercase tracking-[0.4em] text-white">Genesis // Tactical_Archive</span>
+                  <span class="text-[8px] md:text-[10px] font-mono opacity-30 uppercase tracking-widest text-white">ID: TRD-08X-42 // 06.05.2026</span>
+               </div>
+
+               <!-- Primary Metric: Center Aligned (matching 600, 320 on 1200x675) -->
+               <div class="absolute inset-0 flex flex-col items-center justify-center -translate-y-[8%]">
+                  <span class="text-[120px] md:text-[200px] font-serif italic text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]">78%</span>
+                  <div class="flex flex-col items-center mt-2 md:mt-4">
+                     <span class="text-[10px] md:text-[15px] font-mono font-black uppercase tracking-[0.6em] text-white opacity-40">Percentile_Efficiency</span>
+                     <div class="h-px w-24 bg-white/20 mt-4"></div>
+                  </div>
+               </div>
+
+               <!-- Secure Code Block: Proportional to Top-Right -->
+               <div class="absolute top-[5%] right-[5%] grid grid-cols-4 gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity duration-1000">
+                  <div v-for="n in 16" :key="n" 
+                       class="w-2 md:w-3 h-2 md:h-3" 
+                       :class="Math.random() > 0.5 ? 'bg-white' : 'bg-white/5'"></div>
+               </div>
+
+               <!-- Bottom Telemetry Grid: Proportional to y=480 (71%) -->
+               <div class="absolute top-[71%] left-[5%] right-[5%]">
+                  <div class="h-px w-full bg-white/10 mb-6 md:mb-10"></div>
+                  <div class="grid grid-cols-4 gap-4 md:gap-8">
+                     <div v-for="metric in [
+                        { label: 'Protocol', value: 'Day Trading' },
+                        { label: 'Duration', value: '56.5 Hours' },
+                        { label: 'Stability', value: '84%' },
+                        { label: 'Net_Result', value: '+1,250.00' }
+                     ]" :key="metric.label" class="flex flex-col space-y-1 md:space-y-3">
+                        <span class="text-[7px] md:text-[9px] font-mono font-black uppercase tracking-widest text-white/30">{{ metric.label }}</span>
+                        <span class="text-[10px] md:text-[20px] font-mono font-black text-white uppercase truncate">{{ metric.value }}</span>
+                     </div>
+                  </div>
+               </div>
+
+               <!-- HUD Corner Bracket -->
+               <div class="absolute bottom-[5%] right-[5%] w-8 md:w-12 h-8 md:h-12 border-r border-b border-white/20"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+        <!-- SECTION 17: EXIMAGEARCHIVE_SYSTEM -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">17 // ExImageArchive_System</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+             <div class="flex flex-col space-y-8">
+                <ExText variant="body">
+                  The Image Archive System provides high-fidelity storage and tactical manipulation of visual evidence. 
+                  Each slot features scanning animations and rigid action triggers.
+                </ExText>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <ExImageArchiveSlot 
+                    id="0x4F"
+                    :image-url="demoImageUrl"
+                    timestamp="09.05.2026 // 19:58"
+                    @edit="isEditorOpen = true; isPreviewMode = false"
+                    @fullscreen="isEditorOpen = true; isPreviewMode = true"
+                    @remove="() => {}"
+                  />
+                  <div class="border-2 border-dashed border-theme-border flex flex-col items-center justify-center p-12 space-y-4 opacity-40 hover:opacity-100 transition-opacity cursor-pointer group">
+                     <div class="w-12 h-12 border border-theme-text flex items-center justify-center rotate-45 group-hover:rotate-[135deg] transition-transform duration-700">
+                        <span class="rotate-[-45deg] group-hover:rotate-[-135deg] transition-transform duration-700 text-2xl">+</span>
+                     </div>
+                     <span class="text-[9px] font-mono uppercase tracking-[0.4em] font-black">Allocate_Slot</span>
+                  </div>
+                </div>
+             </div>
+
+             <div class="flex flex-col space-y-8 p-8 border border-theme-border bg-theme-text/[0.02]">
+                <div class="flex items-center space-x-4">
+                  <div class="w-1 h-12 bg-theme-accent"></div>
+                  <div class="flex flex-col">
+                    <span class="text-[11px] font-mono font-black uppercase tracking-widest">Reification_Protocol</span>
+                    <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest">Status: Operational</span>
+                  </div>
+                </div>
+                <ExText variant="small" class="leading-relaxed opacity-60">
+                  Visual data is reified into the Genesis Matrix using high-frequency temporal markers. 
+                  The editor allows for tactical annotation and structural highlighting.
+                </ExText>
+                <ExButton variant="tactical" @click="isEditorOpen = true; isPreviewMode = false">
+                   Initialize_Editor
+                </ExButton>
+             </div>
+          </div>
+
+          <!-- FULLSCREEN EDITOR OVERLAY -->
+          <ExImageEditor 
+            :key="isEditorOpen ? (isPreviewMode ? 'preview' : 'edit') : 'closed'"
+            :is-open="isEditorOpen"
+            :image-url="demoImageUrl"
+            :preview-mode="isPreviewMode"
+            @close="isEditorOpen = false"
+          />
+        </section>
+
+        <!-- SECTION 19: EXTACTICAL_NODE_MAP -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">19 // ExTactical_Node_Map_System</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col items-center justify-center p-24 border border-dashed border-theme-border bg-theme-text/[0.02] space-y-8 text-theme-text">
+            <div class="relative w-24 h-24 flex items-center justify-center">
+               <div class="absolute inset-0 border border-theme-text opacity-20 rotate-45 animate-spin-slow"></div>
+               <div class="absolute inset-2 border border-theme-text opacity-40 rotate-[15deg] animate-spin-slow-reverse"></div>
+               <div class="w-2 h-2 bg-theme-text"></div>
+            </div>
+            
+            <div class="flex flex-col items-center text-center space-y-4 max-w-md">
+              <ExHeading level="h3" class="tracking-[0.4em]">NODE_MAP_VISUALIZATION</ExHeading>
+              <ExText variant="body" class="opacity-60 text-sm">
+                A high-fidelity mapping system for tactical scenarios. Visualizes the interconnected relationship between entry/exit protocols and their constituent conditions.
+              </ExText>
+            </div>
+
+            <ExButton variant="tactical" @click="showNodeMap = true" class="!px-12 !py-4">
+              Launch_Node_Map_Fullscreen
+            </ExButton>
+          </div>
+        </section>
+
+        <!-- SECTION 20: EXTACTICAL_STABILITY_INDEX -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">20 // ExTactical_Stability_Index</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col lg:flex-row gap-24 items-center">
+            <!-- THE CIRCULAR GAUGE -->
+            <div class="relative w-64 h-64 flex items-center justify-center shrink-0">
+               <!-- Atmosphere Glow -->
+               <div class="absolute inset-0 rounded-full transition-all duration-1000 opacity-20 blur-3xl scale-150" :class="emotionalStatus.color"></div>
+               
+               <!-- Rotating Outer Ring -->
+               <div class="absolute inset-0 rounded-full border border-theme-border-strong border-dashed animate-[spin_30s_linear_infinite]"></div>
+               <div class="absolute inset-8 rounded-full border border-theme-border opacity-40 -rotate-45"></div>
+               
+               <!-- The Core Gauge -->
+               <div class="relative w-44 h-44 rounded-full flex flex-col items-center justify-center overflow-hidden transition-all duration-700 hover:scale-110 shadow-2xl z-10"
+                    :class="emotionalStatus.color">
+                  <!-- Noise Overlay -->
+                  <div class="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+                  
+                  <span class="text-6xl font-serif italic text-white dark:text-black leading-none drop-shadow-md">{{ testEmotionalRank }}</span>
+                  <span class="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-white dark:text-black mt-2 opacity-80">{{ emotionalStatus.label }}</span>
+                  
+                  <!-- Scanning effect -->
+                  <div class="absolute inset-0 bg-white/10 animate-[scan_4s_linear_infinite] pointer-events-none"></div>
+               </div>
+
+               <!-- HUD Brackets around the gauge -->
+               <div class="absolute -inset-4 border-l border-t border-theme-border w-12 h-12"></div>
+               <div class="absolute -inset-4 bottom-auto left-auto border-r border-t border-theme-border w-12 h-12"></div>
+               <div class="absolute -inset-4 top-auto right-auto border-l border-b border-theme-border w-12 h-12"></div>
+               <div class="absolute -inset-4 top-auto left-auto border-r border-b border-theme-border w-12 h-12"></div>
+            </div>
+
+            <div class="flex flex-col space-y-8 max-w-sm">
+              <div class="flex flex-col space-y-2">
+                 <ExHeading level="h3" variant="module">Neural_Equilibrium_Metric</ExHeading>
+                 <ExText variant="body" class="opacity-60">
+                   A high-fidelity circular diagnostic that synthesizes tactical efficiency, strategic adherence, and cognitive stability into a single unified index.
+                 </ExText>
+              </div>
+
+              <!-- Testing Slider -->
+              <div class="pt-8 flex flex-col space-y-4 border-t border-theme-border">
+                 <div class="flex justify-between items-center">
+                    <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em]">Simulation_Control</span>
+                    <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.5em] font-black text-theme-text">{{ testEmotionalRank }}%</span>
+                 </div>
+                 <input type="range" v-model="testEmotionalRank" min="0" max="100" class="w-full accent-theme-text opacity-40 hover:opacity-100 transition-opacity cursor-pointer" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 21: EXVERTICAL_TRADE_LIST_SYSTEM -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">21 // ExVertical_Trade_List_System</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col space-y-8">
+            <ExText variant="body" class="max-w-2xl">
+              The Vertical Trade List System provides a high-fidelity archival registry of tactical executions paired with an expandable, fully custom multi-dimensional filtering console.
+            </ExText>
+            
+            <ExVerticalTradeList />
+          </div>
+        </section>
+
+        <!-- SECTION 22: EXTACTICAL_HEATMAP_SYSTEM -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">22 // ExTactical_Heatmap_System</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col space-y-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <ExText variant="body" class="max-w-2xl">
+                A classic financial treemap visualization representing the active trades in the Main Diary. Each node's physical dimensions scale dynamically according to position size, while chromatic intensity reflects net profitability.
+              </ExText>
+              <div class="flex items-center space-x-4 shrink-0 font-mono text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 bg-green-500/80 border border-green-400 inline-block"></span>
+                  <span class="opacity-60 text-[10px] uppercase tracking-widest">Profit</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 bg-red-500/80 border border-red-400 inline-block"></span>
+                  <span class="opacity-60 text-[10px] uppercase tracking-widest">Loss</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- THE CLASSIC HEATMAP CONTAINER -->
+            <ExPanel title="CLASSIC_DIARY_HEATMAP // TREEMAP_V1.0" telemetry="POS_SIZE_SCALING" variant="standard" class="w-full">
+              <div class="p-6 bg-black/40 border border-theme-border flex flex-wrap gap-3 content-stretch items-stretch justify-start min-h-[500px] relative overflow-hidden select-none">
+                <!-- Grid background hint -->
+                <div class="absolute inset-0 opacity-[0.02] pointer-events-none" style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 24px 24px;"></div>
+                
+                <div
+                  v-for="trade in diaryHeatmapTrades"
+                  :key="trade.id"
+                  :style="getDiaryHeatmapBoxStyle(trade)"
+                  class="p-5 flex flex-col justify-between border transition-all duration-500 hover:scale-[1.02] hover:z-10 cursor-pointer overflow-hidden group shadow-xl relative backdrop-blur-sm"
+                  :class="getDiaryHeatmapBoxClass(trade)"
+                  @click="selectedDiaryTrade = selectedDiaryTrade?.id === trade.id ? null : trade"
+                >
+                  <!-- Top Bar: Asset & Size Badge (For Medium/Large trades) -->
+                  <div v-if="!isSmallTrade(trade)" class="flex items-start justify-between space-x-3 relative z-10">
+                    <div class="flex flex-col truncate">
+                      <div class="flex items-center space-x-2">
+                        <span class="uppercase tracking-wider truncate group-hover:underline" :class="getDiaryHeatmapFontClasses(trade).asset">{{ trade.asset }}</span>
+                        <span class="bg-black/20 dark:bg-white/20 rounded font-mono" :class="getDiaryHeatmapFontClasses(trade).side">{{ trade.side }}</span>
+                      </div>
+                      <span class="opacity-70 uppercase tracking-widest mt-1" :class="getDiaryHeatmapFontClasses(trade).date">{{ trade.dateStr }}</span>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0">
+                      <span class="bg-black/30 dark:bg-black/40 border border-white/30 text-white font-mono font-black tracking-widest uppercase shadow-inner" :class="getDiaryHeatmapFontClasses(trade).sizeBadge">
+                        SIZE: {{ trade.size }}
+                      </span>
+                      <span class="opacity-60 uppercase tracking-widest mt-1" :class="getDiaryHeatmapFontClasses(trade).sizeLabel">Weight Factor</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Center/Bottom Bar: PnL Display (For Medium/Large trades) -->
+                  <div v-if="!isSmallTrade(trade)" class="flex flex-col items-end pt-4 mt-auto relative z-10">
+                    <span class="font-mono tracking-tight" :class="getDiaryHeatmapFontClasses(trade).pnl">
+                      {{ trade.profitInCurrency > 0 ? '+' : '' }}${{ trade.profitInCurrency.toLocaleString() }}
+                    </span>
+                    <span class="opacity-90 font-mono font-bold mt-0.5 tracking-wider" :class="getDiaryHeatmapFontClasses(trade).percent">
+                      ({{ trade.profitPercent > 0 ? '+' : '' }}{{ trade.profitPercent }}%)
+                    </span>
+                  </div>
+
+                  <!-- CENTERED LAYOUT FOR SMALLER TRADES -->
+                  <div v-else class="flex flex-col items-center justify-center my-auto relative z-10 text-center w-full h-full space-y-0.5 select-none overflow-hidden">
+                    <span class="text-xs md:text-sm font-bold uppercase tracking-wider truncate max-w-full group-hover:underline">
+                      {{ trade.asset }}
+                    </span>
+                    <div class="flex flex-col items-center">
+                      <span class="text-xs md:text-sm font-black font-mono tracking-tight">
+                        {{ trade.profitInCurrency > 0 ? '+' : '' }}${{ Math.round(trade.profitInCurrency).toLocaleString() }}
+                      </span>
+                      <span class="text-[9px] md:text-[10px] opacity-85 font-mono font-bold tracking-wider">
+                        ({{ trade.profitPercent > 0 ? '+' : '' }}{{ trade.profitPercent }}%)
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Subtle background glow/accent on hover -->
+                  <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  <!-- Corner accent brackets -->
+                  <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-current opacity-40 group-hover:opacity-100 transition-opacity"></div>
+                  <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-current opacity-40 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+
+                <div v-if="diaryHeatmapTrades.length === 0" class="absolute inset-0 flex items-center justify-center text-xs font-mono uppercase tracking-widest opacity-40">
+                  No trades found in Main Diary registry.
+                </div>
+              </div>
+
+              <!-- SELECTED TRADE DETAILS FOOTER -->
+              <div v-if="selectedDiaryTrade" class="mt-6 p-6 bg-theme-text/[0.03] border border-theme-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 animate-[fadeIn_0.3s_ease-out]">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 bg-theme-text text-theme-bg flex items-center justify-center font-mono font-black text-xl shrink-0 shadow-lg">
+                    {{ selectedDiaryTrade.asset.slice(0, 2) }}
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center space-x-3">
+                      <span class="text-sm font-mono font-black uppercase tracking-widest">{{ selectedDiaryTrade.asset }} // {{ selectedDiaryTrade.side }}</span>
+                      <span class="text-[10px] font-mono px-2 py-0.5 border border-theme-border uppercase tracking-widest">SZ: {{ selectedDiaryTrade.size }}</span>
+                    </div>
+                    <span class="text-xs font-mono opacity-60 uppercase tracking-widest mt-1">Recorded: {{ selectedDiaryTrade.dateStr }} // ID: {{ selectedDiaryTrade.id }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-6 shrink-0">
+                  <div class="flex flex-col items-end font-mono">
+                    <span class="text-[10px] opacity-60 uppercase tracking-widest">Net Realized PnL</span>
+                    <span class="text-lg font-black" :class="selectedDiaryTrade.profitInCurrency > 0 ? 'text-green-500' : 'text-red-500'">
+                      {{ selectedDiaryTrade.profitInCurrency > 0 ? '+' : '' }}${{ selectedDiaryTrade.profitInCurrency.toLocaleString() }} ({{ selectedDiaryTrade.profitPercent > 0 ? '+' : '' }}{{ selectedDiaryTrade.profitPercent }}%)
+                    </span>
+                  </div>
+                  <ExButton variant="ghost" @click="selectedDiaryTrade = null" class="!px-4 !py-2 text-xs">Deselect</ExButton>
+                </div>
+              </div>
+            </ExPanel>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- FULLSCREEN NODE MAP OVERLAY -->
+    <ExTacticalNodeMap 
+      :is-open="showNodeMap"
+      :is-dark="isDark"
+      :entry-scenario="mockScenarioData.entry"
+      :exit-scenario="mockScenarioData.exit"
+      @close="showNodeMap = false"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
+import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExButton from '~/shared/ui/ExButton.vue'
+import ExHeading from '~/shared/ui/ExHeading.vue'
+import ExText from '~/shared/ui/ExText.vue'
+import ExInput from '~/shared/ui/ExInput.vue'
+import ExTooltip from '~/shared/ui/ExTooltip.vue'
+import ExGenesisMenu from '~/shared/ui/components/ExGenesisMenu.vue'
+import ExInitialization from '~/shared/ui/components/ExInitialization.vue'
+import ExDashboard from '~/shared/ui/components/ExDashboard.vue'
+import ExTradeAnalysisPanel from '~/shared/ui/components/ExTradeAnalysisPanel.vue'
+import ExImageArchiveSlot from '~/shared/ui/components/ExImageArchiveSlot.vue'
+import ExImageEditor from '~/shared/ui/components/ExImageEditor.vue'
+import ExTacticalNodeMap from '~/shared/ui/components/ExTacticalNodeMap.vue'
+import ExVerticalTradeList from '~/shared/ui/components/ExVerticalTradeList.vue'
+
+const isDark = ref(true)
+const showInitPreview = ref(false)
+const isEditorOpen = ref(false)
+const isPreviewMode = ref(false)
+const showNodeMap = ref(false)
+const demoImageUrl = '/assets/ui/tactical_chart_preview.png'
+
+const customCondition = ref({
+  name: 'Protocol_ID',
+  description: '',
+  color: '#ffffff'
+})
+
+const mockScenarioData = {
+  entry: {
+    id: 'entry_alpha',
+    name: 'Tactical_Entry_Scenario',
+    conditions: [
+      { id: 'c1', name: 'Market_Structure_Break', active: true },
+      { id: 'c2', name: 'VWAP_Reclamation', active: true },
+      { id: 'c3', name: 'Delta_Divergence_Confirmed', active: true },
+      { id: 'c4', name: 'Higher_Timeframe_Alignment', active: true },
+      { id: 'c5', name: 'Liquidity_Grab_Detected', active: true },
+      { id: 'c6', name: 'Volume_Profile_POC_Test', active: true },
+      { id: 'c7', name: 'Orderflow_Imbalance', active: true },
+      { id: 'c8', name: 'Session_High_Rejection', active: true }
+    ]
+  },
+  exit: {
+    id: 'exit_omega',
+    name: 'Profit_Target_Omega',
+    conditions: [
+      { id: 'e1', name: 'Take_Profit_Hit', active: true },
+      { id: 'e2', name: 'Momentum_Stalling', active: true },
+      { id: 'e3', name: 'Counter_Trend_Absorption', active: true },
+      { id: 'e4', name: 'Time_Stop_Reached', active: true }
+    ]
+  }
+}
+
+const colorTokens = [
+  { name: 'Nier_Black', value: '#0a0a0a' },
+  { name: 'Nier_White', value: '#ffffff' },
+  { name: 'Accent_Sky', value: '#38bdf8' },
+  { name: 'Accent_Emerald', value: '#10b981' },
+  { name: 'Accent_Amber', value: '#f59e0b' },
+  { name: 'Accent_Rose', value: '#fb7185' },
+]
+
+const testEmotionalRank = ref(78)
+
+const emotionalStatus = computed(() => {
+  const s = testEmotionalRank.value;
+  if (s > 80) return { label: 'OPTIMAL', color: 'bg-emerald-400' };
+  if (s > 60) return { label: 'STABLE', color: 'bg-green-300' };
+  if (s > 40) return { label: 'NEUTRAL', color: 'bg-yellow-200' };
+  if (s > 20) return { label: 'UNSTABLE', color: 'bg-orange-400' };
+  return { label: 'CRITICAL', color: 'bg-red-500' };
+})
+
+const strategyStore = useStrategyTradesStore()
+
+onMounted(async () => {
+  await strategyStore.init()
+})
+
+const diaryHeatmapTrades = computed(() => {
+  // Force mock data for testing 30 trades layout
+  const useMockData = true 
+  let trades: any[] = useMockData ? [] : (strategyStore.tradesByStrategy['MAIN_DIARY'] || [])
+  
+  if (trades.length === 0) {
+    const assets = ['NVDA', 'SOL/USD', 'MSFT', 'GOLD', 'AAPL', 'BTC/USD', 'EUR/USD', 'ETH/USD', 'TSLA', 'AMZN', 'NQ1!', 'ES1!', 'GBP/JPY', 'XRP/USD', 'META', 'NFLX', 'AMD', 'SPY', 'QQQ', 'DOGE/USD']
+    trades = Array.from({ length: 30 }).map((_, i) => {
+      const isWin = Math.random() > 0.45
+      const baseSize = Math.floor(Math.random() * 5) + 1
+      const size = Math.random() > 0.85 ? baseSize * 4 : baseSize // occasional whales
+      const pnl = isWin ? Math.floor(Math.random() * 8000 * size) + 200 : -Math.floor(Math.random() * 5000 * size) - 100
+      
+      return {
+        id: `MOCK-${i+1}`,
+        asset: assets[Math.floor(Math.random() * assets.length)],
+        side: Math.random() > 0.5 ? 'LONG' : 'SHORT',
+        size: size,
+        profitInCurrency: pnl,
+        date: new Date(2026, 4, 1 + i).toISOString()
+      }
+    })
+  }
+
+  let runningCapital = 10000
+  return trades.map((t: any) => {
+    const profitInCurrency = t.profitInCurrency !== undefined ? t.profitInCurrency : (t.pnl !== undefined ? t.pnl : (t.result || 0))
+    const capAtTrade = runningCapital > 0 ? runningCapital : 1000
+    const profitPercent = Math.round((profitInCurrency / capAtTrade) * 10000) / 100
+    runningCapital += profitInCurrency
+
+    return {
+      id: t.id || Math.random().toString(),
+      asset: t.asset || 'UNKNOWN',
+      side: t.side ? t.side.toUpperCase() : (t.direction ? t.direction.toUpperCase() : 'LONG'),
+      size: t.size !== undefined ? t.size : (t.positionSize || 1),
+      profitInCurrency,
+      profitPercent,
+      dateStr: t.date ? new Date(t.date).toLocaleDateString() : '18.04.2026'
+    }
+  })
+})
+
+const maxDiarySize = computed(() => {
+  if (diaryHeatmapTrades.value.length === 0) return 1
+  const sizes = diaryHeatmapTrades.value.map(t => t.size || 1)
+  return Math.max(...sizes, 1)
+})
+
+const getDiaryHeatmapBoxClass = (trade: any) => {
+  const pnl = trade.profitInCurrency || 0
+  if (pnl > 10000) {
+    return 'bg-green-600/90 dark:bg-green-500/85 border-green-700 dark:border-green-400 text-white dark:text-black font-bold shadow-lg'
+  } else if (pnl > 0) {
+    return 'bg-green-500/30 dark:bg-green-500/25 border-green-500/50 dark:border-green-400/40 text-green-800 dark:text-green-300'
+  } else if (pnl < -10000) {
+    return 'bg-red-600/90 dark:bg-red-500/85 border-red-700 dark:border-red-400 text-white dark:text-black font-bold shadow-lg'
+  } else if (pnl < 0) {
+    return 'bg-red-500/30 dark:bg-red-500/25 border-red-500/50 dark:border-red-400/40 text-red-800 dark:text-red-300'
+  } else {
+    return 'bg-black/10 dark:bg-white/10 border-black/20 dark:border-white/20 text-black dark:text-white opacity-70'
+  }
+}
+
+const getDiaryHeatmapBoxStyle = (trade: any) => {
+  const count = diaryHeatmapTrades.value.length
+  if (count === 0) return {}
+
+  const cols = Math.ceil(Math.sqrt(count * (1000 / 600)))
+  const basePercent = 100 / cols
+
+  const maxSz = maxDiarySize.value
+  const sz = trade.size || 1
+  
+  const widthFactor = 0.4 + (sz / maxSz) * 1.2
+  const flexBasis = `calc(${Math.min(95, basePercent * widthFactor)}% - 12px)`
+
+  return {
+    flexGrow: sz,
+    flexBasis,
+    minHeight: count <= 6 ? '180px' : count <= 15 ? '130px' : count <= 30 ? '90px' : '65px'
+  }
+}
+
+const selectedDiaryTrade = ref<any | null>(null)
+
+const isSmallTrade = (trade: any) => {
+  const maxSz = maxDiarySize.value
+  const sz = trade.size || 1
+  return (sz / maxSz) <= 0.35 || sz <= 3
+}
+
+const getDiaryHeatmapFontClasses = (trade: any) => {
+  const maxSz = maxDiarySize.value
+  const sz = trade.size || 1
+  const ratio = sz / maxSz
+
+  if (ratio <= 0.12 || sz <= 1) {
+    // Micro trades: remove all data completely, leave only the block
+    return {
+      asset: 'hidden',
+      side: 'hidden',
+      date: 'hidden',
+      sizeBadge: 'hidden',
+      sizeLabel: 'hidden',
+      pnl: 'hidden',
+      percent: 'hidden'
+    }
+  } else if (ratio <= 0.25 || sz <= 2) {
+    // Small trades: leave ONLY the name of the asset
+    return {
+      asset: 'text-xs font-bold truncate block w-full text-center',
+      side: 'hidden',
+      date: 'hidden',
+      sizeBadge: 'hidden',
+      sizeLabel: 'hidden',
+      pnl: 'hidden',
+      percent: 'hidden'
+    }
+  } else if (ratio <= 0.6 || sz <= 5) {
+    return {
+      asset: 'text-sm font-black',
+      side: 'text-[9px] px-1.5 py-0.5',
+      date: 'text-[10px]',
+      sizeBadge: 'text-[10px] px-2 py-0.5',
+      sizeLabel: 'text-[8px]',
+      pnl: 'text-lg md:text-xl font-black',
+      percent: 'text-xs'
+    }
+  } else {
+    return {
+      asset: 'text-base font-black',
+      side: 'text-[10px] px-2 py-0.5',
+      date: 'text-[10px]',
+      sizeBadge: 'text-[11px] px-2.5 py-1',
+      sizeLabel: 'text-[8px]',
+      pnl: 'text-xl md:text-2xl font-black',
+      percent: 'text-xs'
+    }
+  }
+}
+
+</script>
+
+<style>
+/* THEME DEFINITIONS */
+.theme-dark {
+  --theme-bg: #0a0a0a;
+  --theme-text: #ffffff;
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-border-strong: rgba(255, 255, 255, 0.3);
+}
+
+.theme-light {
+  --theme-bg: #f4f4f2; /* Nier-style aged paper/light gray */
+  --theme-text: #2c2c2a;
+  --theme-border: rgba(0, 0, 0, 0.1);
+  --theme-border-strong: rgba(0, 0, 0, 0.25);
+}
+
+.ethereal-void {
+  --bg-primary: #FFFFFF;
+  --text-primary: #2C3E50;
+  --text-secondary: rgba(44, 62, 80, 0.3);
+  --border-primary: rgba(44, 62, 80, 0.1);
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.ethereal-void.is-dark {
+  --bg-primary: #000000;
+  --text-primary: rgba(255, 255, 255, 0.5);
+  --border-primary: rgba(255, 255, 255, 0.1);
+}
+
+/* Base resets using theme tokens */
+body {
+  background-color: var(--theme-bg);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bg-theme-bg { background-color: var(--theme-bg); }
+.bg-theme-text { background-color: var(--theme-text); }
+.text-theme-text { color: var(--theme-text); }
+.border-theme-border { border-color: var(--theme-border); }
+.border-theme-text { border-color: var(--theme-text); }
+
+@keyframes scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--theme-border-strong); }
+</style>
