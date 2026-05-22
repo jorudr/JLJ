@@ -1360,6 +1360,23 @@ const percentile = (sortedValues: number[], p: number): number => {
 
 const median = (sortedValues: number[]): number => percentile(sortedValues, 0.5)
 
+const createSeededRandom = (seed: number): () => number => {
+  let state = seed >>> 0
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+    return state / 4294967296
+  }
+}
+
+const createNumberSeriesSeed = (values: number[], salt: number): number => {
+  let seed = (2166136261 ^ salt) >>> 0
+  values.forEach(value => {
+    seed ^= Math.round(value * 100)
+    seed = Math.imul(seed, 16777619) >>> 0
+  })
+  return seed || 1
+}
+
 const calculateWindowMaxDrawdownPct = (pnls: number[], initialDeposit: number): number => {
   let balance = initialDeposit
   let peak = initialDeposit
@@ -1794,46 +1811,53 @@ const strategyMetrics = computed(() => {
   const zScore = stdRuns > 0 ? (runs - expectedRuns) / stdRuns : 0;
   const runsTest = Math.abs(zScore) < 1.96 ? 1 : 0;
 
-  let mcMaxDdSum = 0;
+  const monteCarloSimulationCount = 500;
+  const mcRandom = createSeededRandom(createNumberSeriesSeed(pnls, Math.round(initialDeposit * 100) ^ 0x4d43));
+  const mcMaxDrawdowns: number[] = [];
+  const mcNetReturns: number[] = [];
   let mcRuinCount = 0;
-  let mcReturnSum = 0;
-  const mcSims = 500;
   if (trades.length > 0) {
-    for (let s = 0; s < mcSims; s++) {
+    for (let s = 0; s < monteCarloSimulationCount; s++) {
       let simBal = initialDeposit;
       let simPeak = initialDeposit;
       let simMaxDd = 0;
       for (let i = 0; i < trades.length; i++) {
-        const randTrade = trades[Math.floor(Math.random() * trades.length)] || trades[0];
+        const randTrade = trades[Math.floor(mcRandom() * trades.length)] || trades[0];
         simBal += randTrade ? randTrade.pnlNum : 0;
         if (simBal > simPeak) simPeak = simBal;
         const dd = simPeak > 0 ? ((simPeak - simBal) / simPeak) * 100 : 0;
         if (dd > simMaxDd) simMaxDd = dd;
         if (simBal <= initialDeposit * 0.1) { mcRuinCount++; break; }
       }
-      mcMaxDdSum += simMaxDd;
-      mcReturnSum += initialDeposit > 0 ? ((simBal - initialDeposit) / initialDeposit) * 100 : 0;
+      mcMaxDrawdowns.push(simMaxDd);
+      mcNetReturns.push(initialDeposit > 0 ? ((simBal - initialDeposit) / initialDeposit) * 100 : 0);
     }
   }
-  const monteCarloDrawdown = trades.length > 0 ? mcMaxDdSum / mcSims : maxDrawdownPct;
-  const monteCarloRiskOfRuin = trades.length > 0 ? (mcRuinCount / mcSims) * 100 : riskOfRuin;
-  const monteCarloExpectedReturn = trades.length > 0 ? mcReturnSum / mcSims : returnOnCapital;
+  const monteCarloDrawdown = mcMaxDrawdowns.length > 0 ? mean(mcMaxDrawdowns) : maxDrawdownPct;
+  const monteCarloRiskOfRuin = mcMaxDrawdowns.length > 0 ? (mcRuinCount / monteCarloSimulationCount) * 100 : riskOfRuin;
+  const monteCarloExpectedReturn = mcNetReturns.length > 0 ? mean(mcNetReturns) : returnOnCapital;
+  const monteCarloMaxDrawdownSeriesLabel = `${mcMaxDrawdowns.length} simulated max drawdowns`;
+  const monteCarloNetReturnSeriesLabel = `${mcNetReturns.length} simulated net returns`;
 
   const bsMeans: number[] = [];
-  const bsSims = 500;
+  const bootstrapSimulationCount = 500;
+  const bsRandom = createSeededRandom(createNumberSeriesSeed(pnls, Math.round(initialDeposit * 100) ^ 0x4253));
   if (trades.length > 0) {
-    for (let s = 0; s < bsSims; s++) {
+    for (let s = 0; s < bootstrapSimulationCount; s++) {
       let sum = 0;
       for (let i = 0; i < trades.length; i++) {
-        const randTrade = trades[Math.floor(Math.random() * trades.length)] || trades[0];
+        const randTrade = trades[Math.floor(bsRandom() * trades.length)] || trades[0];
         sum += randTrade ? randTrade.pnlNum : 0;
       }
       bsMeans.push(sum / trades.length);
     }
     bsMeans.sort((a, b) => a - b);
   }
-  const ciLower = bsMeans.length > 0 ? (bsMeans[Math.floor(bsMeans.length * 0.025)] ?? 0) : 0;
-  const ciUpper = bsMeans.length > 0 ? (bsMeans[Math.floor(bsMeans.length * 0.975)] ?? 0) : 0;
+  const ciLower = bsMeans.length > 0 ? percentile(bsMeans, 0.025) : 0;
+  const ciUpper = bsMeans.length > 0 ? percentile(bsMeans, 0.975) : 0;
+  const bootstrapResampledMeansLabel = `${bsMeans.length} resampled means`;
+  const bootstrapMeanLower = ciLower;
+  const bootstrapMeanUpper = ciUpper;
   const bootstrapConfidenceInterval = bsMeans.length > 0 ? `${ciLower >= 0 ? '+' : ''}$${Math.round(ciLower)} / ${ciUpper >= 0 ? '+' : ''}$${Math.round(ciUpper)}` : '$0 / $0';
 
   const seMean = numTrades > 1 ? stdPnL / Math.sqrt(numTrades) : 0;
@@ -1968,7 +1992,10 @@ const strategyMetrics = computed(() => {
     medianTradeResult, medianWin: medWin, medianLoss: medLoss, medianWinLossRatio,
     // Expert
     p05TradePnl: p05PnL, valueAtRisk, cvar, expectedShortfall, totalMAE, totalMFE, maeMfeDataTrades, mae, mfe, maeMfeRatio, runs, expectedRuns, stdRuns, zScore, runsTest,
-    monteCarloDrawdown, monteCarloRiskOfRuin, monteCarloExpectedReturn, bootstrapConfidenceInterval,
+    monteCarloSimulationCount, monteCarloRuinCount: mcRuinCount,
+    monteCarloMaxDrawdownSeriesLabel, monteCarloNetReturnSeriesLabel,
+    monteCarloDrawdown, monteCarloRiskOfRuin, monteCarloExpectedReturn,
+    bootstrapSimulationCount, bootstrapResampledMeansLabel, bootstrapMeanLower, bootstrapMeanUpper, bootstrapConfidenceInterval,
     ciExpectedValue, ciWinRate, winProbability, lossProbability, bayesianWinRate, bayesianExpectedValue, kellyCriterion,
     fractionalKelly, optimalF, sqn, tTest, pValue, informationRatio, treynorRatio,
     jensensAlpha, betaToBenchmark, alphaToBenchmark, returnAutocorrelation, volatilityClustering,
@@ -1981,10 +2008,8 @@ const strategyMetrics = computed(() => {
 // --- ROBUSTNESS DIAGNOSTICS COMPUTED PROPERTIES --- //
 const diagnosticStats = computed(() => {
   const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value) || [];
-  const pnls = currentTrades.map(t => {
-    const pnlVal = t.profitInCurrency ?? t.result ?? (t as any).pnl ?? 0;
-    return typeof pnlVal === 'string' ? parseFloat(pnlVal) : Number(pnlVal);
-  });
+  const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
+  const pnls = currentTrades.map(t => getTradePnl(t, initialDeposit));
   
   const N = pnls.length;
   if (N === 0) {
@@ -2116,10 +2141,11 @@ const diagnosticStats = computed(() => {
 
   const bootstrapSims = 500;
   const bsMeans: number[] = [];
+  const bsRandom = createSeededRandom(createNumberSeriesSeed(pnls, Math.round(initialDeposit * 100) ^ 0x4442));
   for (let s = 0; s < bootstrapSims; s++) {
     let sum = 0;
     for (let i = 0; i < N; i++) {
-      const randIdx = Math.floor(Math.random() * N);
+      const randIdx = Math.floor(bsRandom() * N);
       const val = pnls[randIdx];
       if (val !== undefined) {
         sum += val;
@@ -2128,8 +2154,8 @@ const diagnosticStats = computed(() => {
     bsMeans.push(sum / N);
   }
   bsMeans.sort((a, b) => a - b);
-  const bsLower = bsMeans[Math.floor(bootstrapSims * 0.025)] ?? mean;
-  const bsUpper = bsMeans[Math.floor(bootstrapSims * 0.975)] ?? mean;
+  const bsLower = bsMeans.length > 0 ? percentile(bsMeans, 0.025) : mean;
+  const bsUpper = bsMeans.length > 0 ? percentile(bsMeans, 0.975) : mean;
   const stdErr = N > 1 ? std / Math.sqrt(N) : 0;
 
   const bsMin = bsMeans[0] ?? 0;
@@ -3412,7 +3438,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'MC_Risk_of_Ruin',
     sub: '500-Sim Depletion Prob',
     desc: 'Probability of reaching 90% capital depletion across 500 Monte Carlo trade resampling simulations.',
-    formula: '(Simulations Ruined / 500) * 100',
+    formula: '(Simulations Ruined / Monte Carlo Simulations) * 100',
     valStr: m => `${m.monteCarloRiskOfRuin.toFixed(1)}%`,
     colorClass: m => m.monteCarloRiskOfRuin <= 1.0 ? 'text-emerald-400' : (m.monteCarloRiskOfRuin <= 5.0 ? 'text-amber-400' : 'text-rose-400'),
     colorVal: (m, isDark) => m.monteCarloRiskOfRuin <= 1.0 ? (isDark ? '#ffffff' : '#000000') : (m.monteCarloRiskOfRuin <= 5.0 ? (isDark ? '#fbbf24' : '#d97706') : (isDark ? '#fb7185' : '#e11d48')),
@@ -3445,7 +3471,7 @@ const expertMetricsConfigs: MetricConfig[] = [
     label: 'Bootstrap_CI',
     sub: '95% CI Mean PnL ($)',
     desc: '95% Bootstrap confidence interval for the mean trade PnL generated from 500 resampled simulation paths.',
-    formula: 'P02.5 to P97.5 of Resampled Means',
+    formula: 'P02.5(Resampled Means) to P97.5(Resampled Means)',
     valStr: m => `${m.bootstrapConfidenceInterval}`,
     colorClass: () => 'text-amber-400',
     colorVal: (_, isDark) => isDark ? '#fbbf24' : '#d97706',
@@ -4049,10 +4075,13 @@ const formulaTermConfigs: Record<string, FormulaTermConfig> = {
   'E(Runs)': { key: 'expectedRuns', format: 'number' },
   'StdDev(Runs)': { key: 'stdRuns', format: 'number' },
   'Z-Score': { key: 'zScore', format: 'number' },
-  'Simulated Max Drawdowns': { key: 'monteCarloDrawdown', format: 'percent' },
-  'Simulations Ruined': { key: 'monteCarloRiskOfRuin', format: 'percent' },
-  'Simulated Net Returns': { key: 'monteCarloExpectedReturn', format: 'percent' },
-  'Resampled Means': { key: 'bootstrapConfidenceInterval', format: 'text' },
+  'Simulated Max Drawdowns': { key: 'monteCarloMaxDrawdownSeriesLabel', format: 'text' },
+  'Simulations Ruined': { key: 'monteCarloRuinCount', format: 'number' },
+  'Monte Carlo Simulations': { key: 'monteCarloSimulationCount', format: 'number' },
+  'Simulated Net Returns': { key: 'monteCarloNetReturnSeriesLabel', format: 'text' },
+  'P02.5(Resampled Means)': { key: 'bootstrapMeanLower', format: 'currency' },
+  'P97.5(Resampled Means)': { key: 'bootstrapMeanUpper', format: 'currency' },
+  'Resampled Means': { key: 'bootstrapResampledMeansLabel', format: 'text' },
   'Wins': { key: 'numWin', format: 'number' },
   'Trades': { key: 'numTrades', format: 'number' },
   'W': { key: 'winProbability', format: 'number' },

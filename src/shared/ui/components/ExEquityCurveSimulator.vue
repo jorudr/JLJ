@@ -191,16 +191,34 @@ const emit = defineEmits<{
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
+const finiteOr = (value: unknown, fallback: number): number => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.min(max, Math.max(min, value));
+}
+
+const getNormalizedParams = () => ({
+  initialEquity: Math.max(0, finiteOr(params.initialEquity, 10000)),
+  winRate: clamp(finiteOr(params.winRate, 50), 0, 100),
+  rewardRisk: Math.max(0, finiteOr(params.rewardRisk, 0)),
+  riskPerTrade: clamp(finiteOr(params.riskPerTrade, 0), 0, 100),
+  numTrades: Math.max(0, Math.floor(finiteOr(params.numTrades, 0))),
+  numLines: Math.max(1, Math.floor(finiteOr(params.numLines, 1))),
+})
+
 const showParams = ref(true);
 const hasRun = ref(false);
 const showToast = ref(false);
 let toastTimeout: number | null = null;
 
 const params = reactive({
-  initialEquity: props.initialEquity || 10000,
-  winRate: props.defaultWinRate || 50,
-  rewardRisk: props.defaultRR || 1.5,
-  riskPerTrade: props.defaultRiskPerTrade || 1.0,
+  initialEquity: finiteOr(props.initialEquity, 10000),
+  winRate: finiteOr(props.defaultWinRate, 50),
+  rewardRisk: finiteOr(props.defaultRR, 1.5),
+  riskPerTrade: finiteOr(props.defaultRiskPerTrade, 0),
   numTrades: 100,
   numLines: 500,
 });
@@ -288,21 +306,24 @@ const handleWheel = (e: WheelEvent) => {
 }
 
 function runSimulation() {
-  const wr = params.winRate / 100;
-  const rr = params.rewardRisk;
-  const rpt = params.riskPerTrade / 100;
-  const initEq = params.initialEquity;
-  const nTrades = params.numTrades;
-  const nLines = params.numLines;
+  const normalized = getNormalizedParams();
+  Object.assign(params, normalized);
 
-  metrics.kelly = wr - ((1 - wr) / rr);
-  metrics.kelly *= 100; 
+  const wr = normalized.winRate / 100;
+  const rr = normalized.rewardRisk;
+  const rpt = normalized.riskPerTrade / 100;
+  const initEq = normalized.initialEquity;
+  const nTrades = normalized.numTrades;
+  const nLines = normalized.numLines;
+
+  const kellyFraction = rr > 0 ? wr - ((1 - wr) / rr) : 0;
+  metrics.kelly = Number.isFinite(kellyFraction) ? kellyFraction * 100 : 0;
   
   metrics.expectation = (wr * rr) - (1 - wr);
 
   simulations = [];
-  gMin = Infinity;
-  gMax = -Infinity;
+  gMin = initEq;
+  gMax = initEq;
   let sumMaxDD = 0;
   let biggestMaxDD = 0;
   let sumPerf = 0;
@@ -337,7 +358,7 @@ function runSimulation() {
         if (consLoss > maxConsLoss) maxConsLoss = consLoss;
       }
 
-      const dd = (peak - eq) / peak;
+      const dd = peak > 0 ? (peak - eq) / peak : 0;
       if (dd > maxDD) maxDD = dd;
       
       path[j] = eq;
@@ -349,7 +370,7 @@ function runSimulation() {
     simulations.push(path);
     sumMaxDD += maxDD;
     if (maxDD > biggestMaxDD) biggestMaxDD = maxDD;
-    sumPerf += ((eq - initEq) / initEq);
+    sumPerf += initEq > 0 ? ((eq - initEq) / initEq) : 0;
 
     if (maxConsWin > globalMaxConsWin) globalMaxConsWin = maxConsWin;
     if (maxConsLoss > globalMaxConsLoss) globalMaxConsLoss = maxConsLoss;
@@ -394,7 +415,7 @@ function runSimulation() {
     const pts = new Float32Array(path.length * 3);
     for (let j = 0; j < path.length; j++) {
       // X: -200 to +200
-      pts[j * 3] = -200 + (j / nTrades) * 400;
+      pts[j * 3] = -200 + (nTrades > 0 ? (j / nTrades) : 0) * 400;
       // Y: 100 (bottom) to -100 (top)
       const eqVal = path[j] as number;
       const normalizedEq = range === 0 ? 0.5 : (eqVal - gMin) / range;
@@ -415,7 +436,7 @@ function runSimulation() {
   
   const avgP = (sumPerf / nLines) * 100;
   metrics.avgPerformance = avgP;
-  metrics.romad = metrics.avgMaxDrawdown === 0 ? 0 : (avgP / metrics.avgMaxDrawdown);
+  metrics.romad = metrics.avgMaxDrawdown > 0 ? (avgP / metrics.avgMaxDrawdown) : (avgP > 0 ? 99.99 : 0);
   metrics.maxConsecutiveWinner = globalMaxConsWin;
   metrics.maxConsecutiveLoser = globalMaxConsLoss;
 
