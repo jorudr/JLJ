@@ -2062,8 +2062,11 @@ function goBack() {
 }
 
 function jumpTo(index: number | null) {
-  if (index === null) return
-  const target = navigationStack.value[index]
+  if (index === null) {
+    navigationStack.value = []
+    resetView()
+    return
+  }
   navigationStack.value = navigationStack.value.slice(0, index + 1)
   resetView()
 }

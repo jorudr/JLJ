@@ -98,6 +98,7 @@
                   </div>
                 </div>
               </div>
+              <p class="mt-8 opacity-60 leading-loose border-l border-black/20 dark:border-white/20 pl-6">{{ robustnessDistributionComparison }}</p>
             </section>
 
             <!-- NORMALITY TESTS -->
@@ -129,6 +130,20 @@
                   <span class="font-bold text-sm">{{ item.val }}</span>
                 </div>
               </div>
+            </section>
+
+            <!-- ACTION -->
+            <section>
+              <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b border-black/10 dark:border-white/10">VI. ROBUSTNESS_ACTION</h2>
+              <div class="p-6 border border-black/15 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.03]">
+                <p class="leading-loose font-bold" :style="{ color: robustnessExplanation.tone }">> {{ robustnessExplanation.action }}</p>
+              </div>
+            </section>
+
+            <!-- TRACE -->
+            <section>
+              <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b border-black/10 dark:border-white/10">VII. DIAGNOSTIC_TRACE</h2>
+              <pre class="whitespace-pre-wrap normal-case tracking-normal leading-loose opacity-60 border-l border-black/20 dark:border-white/20 pl-6">{{ robustnessExplanationSequence }}</pre>
             </section>
 
           </div>
@@ -622,6 +637,10 @@
                 <input v-model="searchQuery" 
                        type="text" 
                        placeholder="SEARCH_METRICS_ARCHIVE..." 
+                       autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       spellcheck="false"
                        class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 pl-10 pr-4 py-2.5 text-xs font-mono text-black dark:text-white placeholder:text-black/30 dark:placeholder:text-white/30 focus:outline-none focus:border-black/30 dark:focus:border-white/30 transition-all" />
               </div>
               
@@ -785,6 +804,8 @@
           </div>
         </button>
 
+
+
         <!-- QQ PLOT TOGGLE (Only when Robustness Diagnostics is active) -->
         <button v-if="showDistribution3D"
                 @click="showQQPlot = !showQQPlot; if (showQQPlot) { showRobustnessExplanations = false; showRobustnessHistogram = false }"
@@ -886,50 +907,78 @@
     </div>
 
     <!-- RIGHT PANEL -->
-    <div v-if="!showMetricsPanel && !showDistribution3D && !showRobustnessExplanations"
+    <div v-if="!showMetricsPanel && !showRobustnessExplanations"
          class="absolute right-12 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center justify-center pointer-events-none">
       <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-black/10 dark:border-white/10 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] relative">
         <!-- Corner Accents -->
         <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
         <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>
         
-        <!-- CALENDAR MODE TOGGLE -->
-        <button @click="showCalendarMode = !showCalendarMode" 
-                class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showCalendarMode ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            {{ showCalendarMode ? '[ VIEW_EQUITY_CURVE ]' : '[ VIEW_CALENDAR_MODE ]' }}
-          </div>
-        </button>
+        <template v-if="!showDistribution3D">
+          <!-- CALENDAR MODE TOGGLE -->
+          <button @click="showCalendarMode = !showCalendarMode" 
+                  class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                  :class="showCalendarMode ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ showCalendarMode ? '[ VIEW_EQUITY_CURVE ]' : '[ VIEW_CALENDAR_MODE ]' }}
+            </div>
+          </button>
 
-        <!-- VALUE MODE TOGGLE (only in calendar mode) -->
-        <button v-if="showCalendarMode"
-                @click="calendarValueMode = calendarValueMode === 'currency' ? 'percentage' : 'currency'"
-                class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border border-transparent opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5">
-          <span class="text-[11px] font-black font-mono">{{ calendarValueMode === 'currency' ? '%' : '$' }}</span>
-          <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            {{ calendarValueMode === 'currency' ? '[ SHOW_PERCENT ]' : '[ SHOW_CURRENCY ]' }}
-          </div>
-        </button>
+          <!-- VALUE MODE TOGGLE (only in calendar mode) -->
+          <button v-if="showCalendarMode"
+                  @click="calendarValueMode = calendarValueMode === 'currency' ? 'percentage' : 'currency'"
+                  class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border border-transparent opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5">
+            <span class="text-[11px] font-black font-mono">{{ calendarValueMode === 'currency' ? '%' : '$' }}</span>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ calendarValueMode === 'currency' ? '[ SHOW_PERCENT ]' : '[ SHOW_CURRENCY ]' }}
+            </div>
+          </button>
 
-        <!-- BENCHMARK / RISK-FREE RATE TOGGLE -->
-        <button @click="showBenchmarkCurves = !showBenchmarkCurves"
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showBenchmarkCurves ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            <path d="M2 17L6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
-          </svg>
-          <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            {{ showBenchmarkCurves ? '[ HIDE_BENCHMARKS ]' : '[ SHOW_BENCHMARKS ]' }}
-          </div>
-        </button>
+          <!-- BENCHMARK / RISK-FREE RATE TOGGLE -->
+          <button @click="showBenchmarkCurves = !showBenchmarkCurves"
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                  :class="showBenchmarkCurves ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              <path d="M2 17L6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
+            </svg>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ showBenchmarkCurves ? '[ HIDE_BENCHMARKS ]' : '[ SHOW_BENCHMARKS ]' }}
+            </div>
+          </button>
+        </template>
+
+        <template v-else-if="showDistribution3D && !showRobustnessHistogram && !showQQPlot">
+          <!-- NORMAL DIST TOGGLE -->
+          <button @click="showRobustnessNormalDist = !showRobustnessNormalDist; if (showRobustnessNormalDist) showRobustnessTDist = false"
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                  :class="showRobustnessNormalDist ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+              <path d="M4 16c2-4 4-8 8-8s6 4 8 8" stroke-dasharray="3,3" />
+            </svg>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ showRobustnessNormalDist ? '[ HIDE_NORMAL_DIST ]' : '[ SHOW_NORMAL_DIST ]' }}
+            </div>
+          </button>
+
+          <!-- T DIST TOGGLE -->
+          <button @click="showRobustnessTDist = !showRobustnessTDist; if (showRobustnessTDist) showRobustnessNormalDist = false"
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                  :class="showRobustnessTDist ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+              <path d="M4 16c2-6 4-10 8-10s6 4 8 10" />
+            </svg>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ showRobustnessTDist ? '[ HIDE_STUDENT_T_DIST ]' : '[ SHOW_STUDENT_T_DIST ]' }}
+            </div>
+          </button>
+        </template>
       </div>
     </div>
 
@@ -1155,9 +1204,11 @@ const showDistribution3D = ref(false)
 const showBenchmarkCurves = ref(false)
 const showQQPlot = ref(false)
 const showRobustnessExplanations = ref(false)
-const showSimulator = ref(false)
+const showRobustnessNormalDist = ref(false)
+const showRobustnessTDist = ref(true)
 const showRobustnessHistogram = ref(false)
 const showRobustnessWarning = ref(false)
+const showSimulator = ref(false)
 const showCalendarMode = ref(false)
 const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
 const calendarValueMode = ref<'currency' | 'percentage'>('currency')
@@ -2025,8 +2076,22 @@ const diagnosticStats = computed(() => {
       bins: [],
       normalCurve: [],
       tCurve: [],
+      curveDomain: { min: 0, max: 0 },
       qqPoints: [],
-      bootstrapCI: { lower: 0, upper: 0, mean: 0, stdErr: 0, distribution: [] }
+      bootstrapCI: { lower: 0, upper: 0, mean: 0, stdErr: 0, distribution: [] },
+      minPnl: 0,
+      maxPnl: 0,
+      q1: 0,
+      q3: 0,
+      iqr: 0,
+      tailOutlierCount: 0,
+      lowerFence: 0,
+      upperFence: 0,
+      largestTailSigma: 0,
+      stopLossCoveragePct: 0,
+      takeProfitCoveragePct: 0,
+      riskManagedCount: 0,
+      unmanagedRiskCount: 0
     };
   }
 
@@ -2071,8 +2136,26 @@ const diagnosticStats = computed(() => {
     preferredModel = "Student's t";
   }
 
-  const minP = Math.min(...pnls);
-  const maxP = Math.max(...pnls);
+  const sortedPnls = [...pnls].sort((a, b) => a - b);
+  const minP = sortedPnls[0] ?? 0;
+  const maxP = sortedPnls[sortedPnls.length - 1] ?? 0;
+  const q1 = percentile(sortedPnls, 0.25);
+  const q3 = percentile(sortedPnls, 0.75);
+  const iqr = q3 - q1;
+  const lowerFence = q1 - 1.5 * iqr;
+  const upperFence = q3 + 1.5 * iqr;
+  const tailOutlierCount = sortedPnls.filter(x => x < lowerFence || x > upperFence).length;
+  const largestTailSigma = normalStd > 0
+    ? Math.max(Math.abs(minP - mean), Math.abs(maxP - mean)) / normalStd
+    : 0;
+  const stopLossCount = currentTrades.filter(t => toFiniteNumber(t?.stopLoss, 0) > 0).length;
+  const takeProfitCount = currentTrades.filter(t => toFiniteNumber(t?.takeProfit, 0) > 0).length;
+  const riskManagedCount = currentTrades.filter(t => toFiniteNumber(t?.entry, 0) > 0 && toFiniteNumber(t?.stopLoss, 0) > 0).length;
+  const unmanagedRiskCount = currentTrades.filter(t =>
+    toFiniteNumber(t?.stopLoss, 0) <= 0 && toFiniteNumber(t?.takeProfit, 0) <= 0
+  ).length;
+  const stopLossCoveragePct = N > 0 ? (stopLossCount / N) * 100 : 0;
+  const takeProfitCoveragePct = N > 0 ? (takeProfitCount / N) * 100 : 0;
   const range = maxP - minP;
   const numBins = Math.max(5, Math.min(15, Math.ceil(Math.sqrt(N))));
   const binWidth = range > 0 ? range / numBins : 1.0;
@@ -2114,9 +2197,12 @@ const diagnosticStats = computed(() => {
     b.density = b.count / (N * binWidth);
   });
 
-  const curvePointsCount = 60;
-  const curveMin = mean - 3 * normalStd;
-  const curveMax = mean + 3 * normalStd;
+  const curvePointsCount = 90;
+  const domainBaseMin = Math.min(minP, mean - 3 * normalStd);
+  const domainBaseMax = Math.max(maxP, mean + 3 * normalStd);
+  const domainPadding = Math.max(1, normalStd * 0.25, (domainBaseMax - domainBaseMin) * 0.06);
+  const curveMin = domainBaseMin - domainPadding;
+  const curveMax = domainBaseMax + domainPadding;
   const curveStep = (curveMax - curveMin) / curvePointsCount;
 
   const normalCurve: { x: number; y: number }[] = [];
@@ -2127,7 +2213,6 @@ const diagnosticStats = computed(() => {
     tCurve.push({ x, y: studentTPDF(x, mean, tScale, tNu) });
   }
 
-  const sortedPnls = [...pnls].sort((a, b) => a - b);
   const qqPoints = sortedPnls.map((x, idx) => {
     const p = (idx + 1 - 0.375) / (N + 0.25);
     const z = normalQuantile(p);
@@ -2201,6 +2286,7 @@ const diagnosticStats = computed(() => {
     bins,
     normalCurve,
     tCurve,
+    curveDomain: { min: curveMin, max: curveMax },
     qqPoints,
     bootstrapCI: {
       lower: bsLower,
@@ -2208,7 +2294,20 @@ const diagnosticStats = computed(() => {
       mean,
       stdErr,
       distribution: bsBins
-    }
+    },
+    minPnl: minP,
+    maxPnl: maxP,
+    q1,
+    q3,
+    iqr,
+    tailOutlierCount,
+    lowerFence,
+    upperFence,
+    largestTailSigma,
+    stopLossCoveragePct,
+    takeProfitCoveragePct,
+    riskManagedCount,
+    unmanagedRiskCount
   };
 });
 
@@ -2221,6 +2320,8 @@ const distributionPoints3D = computed(() => {
   const normalStd = stats.normalParams.std;
   const tScale = stats.tParams.scale;
   const tNu = stats.tParams.nu;
+  const curveDomain = stats.curveDomain || { min: mean - 3 * normalStd, max: mean + 3 * normalStd };
+  const curveRange = Math.max(1, curveDomain.max - curveDomain.min);
 
   const pointsCount = 100;
   const step = 400 / pointsCount;
@@ -2233,7 +2334,7 @@ const distributionPoints3D = computed(() => {
 
   for (let i = 0; i <= pointsCount; i++) {
     const xCoord = -200 + i * step;
-    const returnVal = mean - 3 * normalStd + (i / pointsCount) * (6 * normalStd);
+    const returnVal = curveDomain.min + (i / pointsCount) * curveRange;
     
     const valNormal = normalPDF(returnVal, mean, normalStd);
     const valT = studentTPDF(returnVal, mean, tScale, tNu);
@@ -5213,6 +5314,20 @@ const getRobustnessExplanation = (stats: any) => {
   const kurt = stats.kurtosis || 0
   const isFatTailed = stats.preferredModel === "Student's t" || kurt > 1.5
   const distribution = isFatTailed ? "Student's t / fat-tailed" : 'Normal-like'
+  const sampleSize = stats.pnls?.length || 0
+  const unmanagedRatio = sampleSize > 0 ? (stats.unmanagedRiskCount || 0) / sampleSize : 0
+  const hasNoRiskModel = unmanagedRatio >= 0.5 || (stats.stopLossCoveragePct || 0) < 50
+  const hasTailOutliers = (stats.tailOutlierCount || 0) > 0 || (stats.largestTailSigma || 0) >= 3
+
+  if (hasNoRiskModel && (isFatTailed || hasTailOutliers)) {
+    return {
+      distribution,
+      verdict: 'Unmanaged fat-tail profile',
+      diagnosis: 'The return stream has large tail events while most trades lack protective stop or target data. A positive average can be dominated by a few outliers, so the curve is not robust without explicit loss limits.',
+      action: 'Recommended action: add stop-loss data before trusting expectancy, cap position size by worst-tail loss, test the strategy after removing the largest winner, and pause scale-up until risk coverage is above 90%.',
+      tone: '#fb7185'
+    }
+  }
 
   if (skew < -0.5) {
     return {
@@ -5224,13 +5339,23 @@ const getRobustnessExplanation = (stats: any) => {
     }
   }
 
+  if (isFatTailed && skew > 0.5) {
+    return {
+      distribution,
+      verdict: 'Right-skewed tail dependency',
+      diagnosis: 'The right tail is profitable, but the distribution is still fat-tailed. The strategy may look attractive because of rare oversized winners rather than stable repeatable expectancy.',
+      action: 'Recommended action: evaluate results with the largest winner removed, keep per-trade risk fixed, and require a wider sample before increasing exposure.',
+      tone: stats.mean < 0 ? '#fb7185' : '#fbbf24'
+    }
+  }
+
   if (skew > 0.5) {
     return {
       distribution,
       verdict: 'Positive skew profile',
       diagnosis: 'The right tail is dominant. This usually fits trend-following or breakout logic where many small losses can be paid by a few large winners.',
       action: 'Recommended action: keep risk per trade stable, avoid cutting winners early, and judge the system over a larger sample instead of single-trade comfort.',
-      tone: '#34d399'
+      tone: stats.mean < 0 ? '#fb7185' : '#34d399'
     }
   }
 
@@ -5263,6 +5388,12 @@ const robustnessExplanationVariables = computed(() => {
     { name: 'Standard Deviation', val: `$${stats.std.toFixed(2)}` },
     { name: 'Skewness', val: `${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)}` },
     { name: 'Excess Kurtosis', val: `${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}` },
+    { name: 'PnL Range', val: `$${stats.minPnl.toFixed(0)} / $${stats.maxPnl.toFixed(0)}` },
+    { name: 'IQR Tail Outliers', val: `${stats.tailOutlierCount}` },
+    { name: 'Largest Tail Distance', val: `${stats.largestTailSigma.toFixed(2)}σ` },
+    { name: 'Stop-Loss Coverage', val: `${stats.stopLossCoveragePct.toFixed(0)}%` },
+    { name: 'Take-Profit Coverage', val: `${stats.takeProfitCoveragePct.toFixed(0)}%` },
+    { name: 'Unmanaged Trades', val: `${stats.unmanagedRiskCount}` },
     { name: 'Sample Size', val: `${stats.pnls.length} trades` }
   ]
 })
@@ -5320,6 +5451,8 @@ const robustnessNormalityTests = computed(() => {
   const skewPass = Math.abs(stats.skewness) < 0.5
   const kurtPass = Math.abs(stats.kurtosis) < 1.5
   const qqPass = stats.qqPoints.length > 0 && Math.abs(stats.skewness) < 0.75 && stats.kurtosis < 2
+  const outlierPass = (stats.tailOutlierCount || 0) === 0 && (stats.largestTailSigma || 0) < 3
+  const riskPass = (stats.stopLossCoveragePct || 0) >= 90
 
   return [
     {
@@ -5345,6 +5478,18 @@ const robustnessNormalityTests = computed(() => {
       result: qqPass ? 'ALIGNED' : 'TAIL_DEVIATION',
       note: 'Uses the same quantile source as the QQ projection view.',
       pass: qqPass
+    },
+    {
+      name: 'IQR Tail Outlier Check',
+      result: `${stats.tailOutlierCount || 0} ${outlierPass ? 'PASS' : 'OUTLIER_RISK'}`,
+      note: 'Flags trades outside the interquartile tail fence and beyond the visible fitted domain.',
+      pass: outlierPass
+    },
+    {
+      name: 'Risk Management Coverage Check',
+      result: `${(stats.stopLossCoveragePct || 0).toFixed(0)}% ${riskPass ? 'PASS' : 'NO_RISK_MODEL'}`,
+      note: 'Robustness requires explicit stop-loss coverage, especially when tail events dominate expectancy.',
+      pass: riskPass
     }
   ]
 })
@@ -5353,9 +5498,52 @@ const robustnessHypothesisSummary = computed(() => {
   const tests = robustnessNormalityTests.value
   const failed = tests.filter(t => !t.pass)
   if (failed.length === 0) {
-    return 'Hypothesis verdict: normality is not strongly rejected by the current diagnostics. Continue using normal-fit views, but keep monitoring skew and tail risk as the sample grows.'
+    return 'Hypothesis verdict: no major distribution break is visible yet. Normal-fit views are usable, but keep monitoring tails as the sample grows.'
   }
-  return `Hypothesis verdict: ${failed.map(t => t.name).join(', ')} flagged risk. Do not rely on average return alone; apply the recommended controls from the verdict page.`
+
+  const stats = diagnosticStats.value
+  const hasNormalityFailure = failed.some(t => t.name === 'Jarque-Bera Normality Proxy')
+  const hasRiskModelFailure = failed.some(t => t.name === 'Risk Management Coverage Check')
+  const hasTailFailure = failed.some(t =>
+    t.name === 'Excess Kurtosis Tail Check' ||
+    t.name === 'IQR Tail Outlier Check' ||
+    t.name === 'QQ-Plot Alignment Check'
+  )
+  const hasShapeFailure = failed.some(t => t.name === 'Skewness Symmetry Check')
+
+  if (hasRiskModelFailure && hasTailFailure && hasShapeFailure) {
+    return `Hypothesis verdict: fragile profile. Tails, skew, and weak risk controls are all active, so average PnL is misleading. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+  }
+
+  if (hasRiskModelFailure && hasTailFailure) {
+    return `Hypothesis verdict: unmanaged tail risk. Outliers are present and risk coverage is weak, so the strategy needs controls before the average trade means much. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+  }
+
+  if (hasRiskModelFailure && hasShapeFailure) {
+    return `Hypothesis verdict: asymmetric and under-controlled. The return shape is tilted, but the risk model is too thin to trust the edge. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+  }
+
+  if (hasRiskModelFailure) {
+    return `Hypothesis verdict: risk model missing. The distribution may look acceptable, but robustness is limited until stop-loss coverage improves from ${stats.stopLossCoveragePct.toFixed(0)}%.`
+  }
+
+  if (hasTailFailure && hasShapeFailure) {
+    return 'Hypothesis verdict: non-normal profile. Outliers and skew are both visible, so evaluate the strategy by tail behavior, not by average return.'
+  }
+
+  if (hasTailFailure) {
+    return 'Hypothesis verdict: fat-tail behavior. A few extreme trades are shaping the result, so stress-test the tails before trusting expectancy.'
+  }
+
+  if (hasShapeFailure) {
+    return 'Hypothesis verdict: asymmetric returns. The edge may depend on one side of the curve, so validate skew before increasing size.'
+  }
+
+  if (hasNormalityFailure) {
+    return 'Hypothesis verdict: normality is statistically weak. Keep the normal curve as a reference only, and confirm the edge with more trades.'
+  }
+
+  return 'Hypothesis verdict: mixed warning. The sample is not clean enough for high confidence, so treat the edge as provisional.'
 })
 
 const robustnessBootstrapSummary = computed(() => {
@@ -5383,11 +5571,15 @@ const robustnessBootstrapInterpretation = computed(() => {
 
 const robustnessUiLayerSummary = computed(() => {
   const m = strategyMetrics.value
+  const stats = diagnosticStats.value
   return [
     { name: 'Rolling Sharpe', val: `${m.rollingSharpe.toFixed(2)}` },
     { name: 'Rolling Sigma', val: `${m.stdDevPct.toFixed(2)}%` },
     { name: 'Rolling Drawdown', val: `${m.rollingDrawdown.toFixed(1)}%` },
     { name: 'Rolling Win Rate', val: `${m.rollingWinRate.toFixed(1)}%` },
+    { name: 'Distribution Robustness', val: `${m.distributionRobustness.toFixed(1)}` },
+    { name: 'Outlier Impact', val: `${m.outlierImpactRatio.toFixed(1)}%` },
+    { name: 'Risk Coverage', val: `${stats.stopLossCoveragePct.toFixed(0)}% SL / ${stats.takeProfitCoveragePct.toFixed(0)}% TP` },
     { name: 'Heatmap Cells', val: `${robustnessReturnHeatmap.value.length}` }
   ]
 })
@@ -5431,10 +5623,12 @@ const robustnessExplanationSequence = computed(() => {
 
   return [
     `1. Fit check: ${modelReason}`,
-    `2. Dispersion check: standard deviation is $${stats.std.toFixed(2)}, so average trade expectations should be judged against this volatility band.`,
-    `3. Shape check: skewness is ${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)} and excess kurtosis is ${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}.`,
-    `4. Verdict: ${robustnessExplanation.value.verdict}.`,
-    `5. Action: ${robustnessExplanation.value.action}`
+    `2. Curve domain: fitted PDFs span $${stats.curveDomain.min.toFixed(0)} to $${stats.curveDomain.max.toFixed(0)}, covering observed PnL from $${stats.minPnl.toFixed(0)} to $${stats.maxPnl.toFixed(0)}.`,
+    `3. Dispersion check: standard deviation is $${stats.std.toFixed(2)}, so average trade expectations should be judged against this volatility band.`,
+    `4. Shape check: skewness is ${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)} and excess kurtosis is ${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}.`,
+    `5. Risk check: stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%, take-profit coverage is ${stats.takeProfitCoveragePct.toFixed(0)}%, and ${stats.unmanagedRiskCount} trades are unmanaged.`,
+    `6. Verdict: ${robustnessExplanation.value.verdict}.`,
+    `7. Action: ${robustnessExplanation.value.action}`
   ].join('\n')
 })
 
@@ -5503,15 +5697,18 @@ const update = () => {
       ctx.beginPath(); ctx.moveTo(tStart.x, tStart.y); ctx.lineTo(tEnd.x, tEnd.y); ctx.stroke()
       ctx.globalAlpha = 1
 
-      // Return ticks on the axis: Mean, -2σ, +2σ
+      // Return ticks on the axis: main sigma landmarks.
       const stats = diagnosticStats.value;
       if (stats.pnls.length > 0) {
         const mean = stats.mean;
         const normalStd = stats.normalParams.std || 1.0;
+        const curveDomain = stats.curveDomain || { min: mean - 3 * normalStd, max: mean + 3 * normalStd };
+        const curveRange = Math.max(1, curveDomain.max - curveDomain.min);
+        const domainPct = (value: number) => Math.max(0, Math.min(1, (value - curveDomain.min) / curveRange));
         const labels = [
-          { val: mean - 2 * normalStd, label: `-2σ ($${(mean - 2 * normalStd).toFixed(0)})`, xPct: 0.16 },
-          { val: mean, label: `Mean ($${mean.toFixed(0)})`, xPct: 0.5 },
-          { val: mean + 2 * normalStd, label: `+2σ ($${(mean + 2 * normalStd).toFixed(0)})`, xPct: 0.84 }
+          { label: `-2σ ($${(mean - 2 * normalStd).toFixed(0)})`, xPct: domainPct(mean - 2 * normalStd) },
+          { label: `Mean ($${mean.toFixed(0)})`, xPct: domainPct(mean) },
+          { label: `+2σ ($${(mean + 2 * normalStd).toFixed(0)})`, xPct: domainPct(mean + 2 * normalStd) }
         ];
         labels.forEach(lbl => {
           const xPos = -200 + lbl.xPct * 400;
@@ -5756,7 +5953,7 @@ const update = () => {
           })
 
           // Draw white area under Student's t curve
-          if (transformedT.length > 0) {
+          if (showRobustnessTDist.value && transformedT.length > 0) {
             const baseline3D = curves.tCurve.map(v => ({ x: v.x, y: 80, z: 0 }))
             const transformedBaseline = baseline3D.map(v => {
               let p = rotateY(v, currentRotation.value.y)
@@ -5802,31 +5999,35 @@ const update = () => {
           }
 
           // Draw Normal theoretical curve (dashed, lower opacity)
-          ctx.lineWidth = 1.5
-          ctx.strokeStyle = themeText
-          ctx.globalAlpha = 0.25
-          ctx.setLineDash([5, 5])
-          ctx.beginPath()
-          transformedNormal.forEach((p, idx) => {
-            if (idx === 0) ctx.moveTo(p.x, p.y)
-            else ctx.lineTo(p.x, p.y)
-          })
-          ctx.stroke()
-          ctx.setLineDash([])
-          ctx.globalAlpha = 1
+          if (showRobustnessNormalDist.value) {
+            ctx.lineWidth = 1.5
+            ctx.strokeStyle = themeText
+            ctx.globalAlpha = 0.25
+            ctx.setLineDash([5, 5])
+            ctx.beginPath()
+            transformedNormal.forEach((p, idx) => {
+              if (idx === 0) ctx.moveTo(p.x, p.y)
+              else ctx.lineTo(p.x, p.y)
+            })
+            ctx.stroke()
+            ctx.setLineDash([])
+            ctx.globalAlpha = 1
+          }
 
           // Draw Student's t curve (solid, bold, glowing pure line)
-          ctx.lineWidth = 3
-          ctx.strokeStyle = themeText
-          ctx.shadowBlur = 15
-          ctx.shadowColor = themeText
-          ctx.beginPath()
-          transformedT.forEach((p, idx) => {
-            if (idx === 0) ctx.moveTo(p.x, p.y)
-            else ctx.lineTo(p.x, p.y)
-          })
-          ctx.stroke()
-          ctx.shadowBlur = 0
+          if (showRobustnessTDist.value) {
+            ctx.lineWidth = 3
+            ctx.strokeStyle = themeText
+            ctx.shadowBlur = 15
+            ctx.shadowColor = themeText
+            ctx.beginPath()
+            transformedT.forEach((p, idx) => {
+              if (idx === 0) ctx.moveTo(p.x, p.y)
+              else ctx.lineTo(p.x, p.y)
+            })
+            ctx.stroke()
+            ctx.shadowBlur = 0
+          }
         }
       }
     } else {
@@ -5864,6 +6065,55 @@ const update = () => {
 
       // --- DRAW BENCHMARK & RISK-FREE CURVES --- //
       if (showBenchmarkCurves.value) {
+        const benchmarkLabelBoxes: Array<{ x: number; y: number; width: number; height: number }> = []
+        const placeBenchmarkLabel = (x: number, y: number, text: string) => {
+          ctx.font = 'bold 14px monospace'
+          const paddingX = 7
+          const paddingY = 4
+          const width = ctx.measureText(text).width + paddingX * 2
+          const height = 22
+          const maxX = w - width - 12
+          const maxY = h - height - 12
+          const baseX = Math.max(12, Math.min(maxX, x + 10))
+          const baseTop = y - height + 8
+          const candidateOffsets = [0, -28, 28, -56, 56, -84, 84]
+          const overlaps = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
+            a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+
+          let rect = {
+            x: baseX,
+            y: Math.max(12, Math.min(maxY, baseTop)),
+            width,
+            height
+          }
+
+          for (const offset of candidateOffsets) {
+            const candidate = {
+              x: baseX,
+              y: Math.max(12, Math.min(maxY, baseTop + offset)),
+              width,
+              height
+            }
+
+            if (!benchmarkLabelBoxes.some(box => overlaps(candidate, box))) {
+              rect = candidate
+              break
+            }
+          }
+
+          benchmarkLabelBoxes.push(rect)
+          return {
+            x: rect.x + paddingX,
+            y: rect.y + height - paddingY - 2,
+            rectX: rect.x,
+            rectY: rect.y,
+            width,
+            height,
+            paddingX,
+            paddingY
+          }
+        }
+
         const drawExtraCurve = (points: CurvePoint[], color: string, label: string) => {
           if (points.length === 0) return
           const transformed = points.map(v => {
@@ -5891,18 +6141,44 @@ const update = () => {
           ctx.globalAlpha = 1
           
           // Draw Label at the end
+          const drawEndpointLabel = (pointIndex: number) => {
+            const lastP = transformed[pointIndex]
+            const valuePoint = points[pointIndex]
+            if (!lastP || !valuePoint) return
+
+            const val = valuePoint.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+            const text = `${label} ${val}`
+            const labelBox = placeBenchmarkLabel(lastP.x, lastP.y, text)
+            const isDark = themeStore.settings.isDark
+
+            ctx.save()
+            ctx.fillStyle = isDark ? 'rgba(10, 10, 10, 0.86)' : 'rgba(255, 255, 255, 0.88)'
+            ctx.strokeStyle = color
+            ctx.globalAlpha = 0.96
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.rect(labelBox.rectX, labelBox.rectY, labelBox.width, labelBox.height)
+            ctx.fill()
+            ctx.stroke()
+
+            ctx.strokeStyle = color
+            ctx.globalAlpha = 0.55
+            ctx.beginPath()
+            ctx.moveTo(lastP.x, lastP.y)
+            ctx.lineTo(labelBox.rectX, labelBox.rectY + labelBox.height / 2)
+            ctx.stroke()
+
+            ctx.fillStyle = color
+            ctx.globalAlpha = 1
+            ctx.font = 'bold 14px monospace'
+            ctx.fillText(text, labelBox.x, labelBox.y)
+            ctx.restore()
+          }
+
           if (limitIdx > 0 && limitIdx < transformed.length) {
-             const lastP = transformed[limitIdx]!
-             ctx.fillStyle = color
-             ctx.font = 'bold 14px monospace'
-             const val = points[limitIdx]!.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-             ctx.fillText(`${label} ${val}`, lastP.x + 8, lastP.y + 3)
+             drawEndpointLabel(limitIdx)
           } else if (limitIdx >= transformed.length - 1 && transformed.length > 0) {
-             const lastP = transformed[transformed.length - 1]!
-             ctx.fillStyle = color
-             ctx.font = 'bold 14px monospace'
-             const val = points[points.length - 1]!.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-             ctx.fillText(`${label} ${val}`, lastP.x + 8, lastP.y + 3)
+             drawEndpointLabel(transformed.length - 1)
           }
         }
 
@@ -6460,19 +6736,32 @@ const handleMouseMove = (e: MouseEvent) => {
         const normalStd = stats.normalParams?.std || 1
         const tScale = stats.tParams?.scale || normalStd
         const tNu = stats.tParams?.nu || 30
+        const curveDomain = stats.curveDomain || { min: stats.mean - 3 * normalStd, max: stats.mean + 3 * normalStd }
+        const curveRange = Math.max(1, curveDomain.max - curveDomain.min)
         let nearestCurveTooltip: DistributionTooltip | null = null
         let nearestDistance = 14
 
-        const curveModels = [
-          {
+        const curveModels = []
+        if (showRobustnessNormalDist.value) {
+          curveModels.push({
             label: 'NORMAL_FIT',
             model: 'Normal distribution',
             points: curves.normalCurve,
             aic: Number(stats.normalParams?.aic ?? 0),
             bic: Number(stats.normalParams?.bic ?? 0),
             density: (returnValue: number) => normalPDF(returnValue, stats.normalParams?.mean ?? stats.mean, normalStd)
-          },
-        ]
+          })
+        }
+        if (showRobustnessTDist.value) {
+          curveModels.push({
+            label: 'STUDENT_T_FIT',
+            model: "Student's t distribution",
+            points: curves.tCurve,
+            aic: Number(stats.tParams?.aic ?? 0),
+            bic: Number(stats.tParams?.bic ?? 0),
+            density: (returnValue: number) => studentTPDF(returnValue, stats.tParams?.mean ?? stats.mean, tScale, tNu)
+          })
+        }
 
         curveModels.forEach(modelConfig => {
           if (modelConfig.points.length < 2) return
@@ -6491,7 +6780,7 @@ const handleMouseMove = (e: MouseEvent) => {
 
             nearestDistance = hit.distance
             const curvePosition = (idx + hit.t) / Math.max(1, modelConfig.points.length - 1)
-            const returnValue = stats.mean - 3 * normalStd + curvePosition * (6 * normalStd)
+            const returnValue = curveDomain.min + curvePosition * curveRange
             const anchorX = a.x + (b.x - a.x) * hit.t
             const anchorY = a.y + (b.y - a.y) * hit.t
 

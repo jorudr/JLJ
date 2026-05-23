@@ -816,125 +816,30 @@
           </div>
         </section>
 
-        <!-- SECTION 22: EXTACTICAL_HEATMAP_SYSTEM -->
+        <!-- SECTION 22: OPEN_STRATEGY_METRICS -->
         <section class="flex flex-col space-y-12 pb-64">
           <div class="flex items-center space-x-6 text-theme-text">
-            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">22 // ExTactical_Heatmap_System</span>
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">22 // Open_Strategy_Metrics</span>
             <div class="flex-grow h-px bg-theme-border"></div>
           </div>
 
           <div class="flex flex-col space-y-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <ExText variant="body" class="max-w-2xl">
-                A classic financial treemap visualization representing the active trades in the Main Diary. Each node's physical dimensions scale dynamically according to position size, while chromatic intensity reflects net profitability.
-              </ExText>
-              <div class="flex items-center space-x-4 shrink-0 font-mono text-xs">
-                <div class="flex items-center space-x-2">
-                  <span class="w-3 h-3 bg-green-500/80 border border-green-400 inline-block"></span>
-                  <span class="opacity-60 text-[10px] uppercase tracking-widest">Profit</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-3 h-3 bg-red-500/80 border border-red-400 inline-block"></span>
-                  <span class="opacity-60 text-[10px] uppercase tracking-widest">Loss</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- THE CLASSIC HEATMAP CONTAINER -->
-            <ExPanel title="CLASSIC_DIARY_HEATMAP // TREEMAP_V1.0" telemetry="POS_SIZE_SCALING" variant="standard" class="w-full">
-              <div class="p-6 bg-black/40 border border-theme-border flex flex-wrap gap-3 content-stretch items-stretch justify-start min-h-[500px] relative overflow-hidden select-none">
-                <!-- Grid background hint -->
-                <div class="absolute inset-0 opacity-[0.02] pointer-events-none" style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 24px 24px;"></div>
-                
-                <div
-                  v-for="trade in diaryHeatmapTrades"
-                  :key="trade.id"
-                  :style="getDiaryHeatmapBoxStyle(trade)"
-                  class="p-5 flex flex-col justify-between border transition-all duration-500 hover:scale-[1.02] hover:z-10 cursor-pointer overflow-hidden group shadow-xl relative backdrop-blur-sm"
-                  :class="getDiaryHeatmapBoxClass(trade)"
-                  @click="selectedDiaryTrade = selectedDiaryTrade?.id === trade.id ? null : trade"
-                >
-                  <!-- Top Bar: Asset & Size Badge (For Medium/Large trades) -->
-                  <div v-if="!isSmallTrade(trade)" class="flex items-start justify-between space-x-3 relative z-10">
-                    <div class="flex flex-col truncate">
-                      <div class="flex items-center space-x-2">
-                        <span class="uppercase tracking-wider truncate group-hover:underline" :class="getDiaryHeatmapFontClasses(trade).asset">{{ trade.asset }}</span>
-                        <span class="bg-black/20 dark:bg-white/20 rounded font-mono" :class="getDiaryHeatmapFontClasses(trade).side">{{ trade.side }}</span>
-                      </div>
-                      <span class="opacity-70 uppercase tracking-widest mt-1" :class="getDiaryHeatmapFontClasses(trade).date">{{ trade.dateStr }}</span>
-                    </div>
-                    <div class="flex flex-col items-end shrink-0">
-                      <span class="bg-black/30 dark:bg-black/40 border border-white/30 text-white font-mono font-black tracking-widest uppercase shadow-inner" :class="getDiaryHeatmapFontClasses(trade).sizeBadge">
-                        SIZE: {{ trade.size }}
-                      </span>
-                      <span class="opacity-60 uppercase tracking-widest mt-1" :class="getDiaryHeatmapFontClasses(trade).sizeLabel">Weight Factor</span>
-                    </div>
-                  </div>
-                  
-                  <!-- Center/Bottom Bar: PnL Display (For Medium/Large trades) -->
-                  <div v-if="!isSmallTrade(trade)" class="flex flex-col items-end pt-4 mt-auto relative z-10">
-                    <span class="font-mono tracking-tight" :class="getDiaryHeatmapFontClasses(trade).pnl">
-                      {{ trade.profitInCurrency > 0 ? '+' : '' }}${{ trade.profitInCurrency.toLocaleString() }}
-                    </span>
-                    <span class="opacity-90 font-mono font-bold mt-0.5 tracking-wider" :class="getDiaryHeatmapFontClasses(trade).percent">
-                      ({{ trade.profitPercent > 0 ? '+' : '' }}{{ trade.profitPercent }}%)
-                    </span>
-                  </div>
+            <ExText variant="body" class="max-w-2xl">
+              A high-fidelity strategy diagnostics panel for the ExEquityCurve3D viewer. 
+              Surfaces all critical performance, risk, and ratio metrics in a structured, scannable layout with live color-coded evaluations.
+            </ExText>
 
-                  <!-- CENTERED LAYOUT FOR SMALLER TRADES -->
-                  <div v-else class="flex flex-col items-center justify-center my-auto relative z-10 text-center w-full h-full space-y-0.5 select-none overflow-hidden">
-                    <span class="text-xs md:text-sm font-bold uppercase tracking-wider truncate max-w-full group-hover:underline">
-                      {{ trade.asset }}
-                    </span>
-                    <div class="flex flex-col items-center">
-                      <span class="text-xs md:text-sm font-black font-mono tracking-tight">
-                        {{ trade.profitInCurrency > 0 ? '+' : '' }}${{ Math.round(trade.profitInCurrency).toLocaleString() }}
-                      </span>
-                      <span class="text-[9px] md:text-[10px] opacity-85 font-mono font-bold tracking-wider">
-                        ({{ trade.profitPercent > 0 ? '+' : '' }}{{ trade.profitPercent }}%)
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Subtle background glow/accent on hover -->
-                  <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                  <!-- Corner accent brackets -->
-                  <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-current opacity-40 group-hover:opacity-100 transition-opacity"></div>
-                  <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-current opacity-40 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-
-                <div v-if="diaryHeatmapTrades.length === 0" class="absolute inset-0 flex items-center justify-center text-xs font-mono uppercase tracking-widest opacity-40">
-                  No trades found in Main Diary registry.
-                </div>
-              </div>
-
-              <!-- SELECTED TRADE DETAILS FOOTER -->
-              <div v-if="selectedDiaryTrade" class="mt-6 p-6 bg-theme-text/[0.03] border border-theme-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 animate-[fadeIn_0.3s_ease-out]">
-                <div class="flex items-center space-x-4">
-                  <div class="w-12 h-12 bg-theme-text text-theme-bg flex items-center justify-center font-mono font-black text-xl shrink-0 shadow-lg">
-                    {{ selectedDiaryTrade.asset.slice(0, 2) }}
-                  </div>
-                  <div class="flex flex-col">
-                    <div class="flex items-center space-x-3">
-                      <span class="text-sm font-mono font-black uppercase tracking-widest">{{ selectedDiaryTrade.asset }} // {{ selectedDiaryTrade.side }}</span>
-                      <span class="text-[10px] font-mono px-2 py-0.5 border border-theme-border uppercase tracking-widest">SZ: {{ selectedDiaryTrade.size }}</span>
-                    </div>
-                    <span class="text-xs font-mono opacity-60 uppercase tracking-widest mt-1">Recorded: {{ selectedDiaryTrade.dateStr }} // ID: {{ selectedDiaryTrade.id }}</span>
-                  </div>
-                </div>
-                <div class="flex items-center space-x-6 shrink-0">
-                  <div class="flex flex-col items-end font-mono">
-                    <span class="text-[10px] opacity-60 uppercase tracking-widest">Net Realized PnL</span>
-                    <span class="text-lg font-black" :class="selectedDiaryTrade.profitInCurrency > 0 ? 'text-green-500' : 'text-red-500'">
-                      {{ selectedDiaryTrade.profitInCurrency > 0 ? '+' : '' }}${{ selectedDiaryTrade.profitInCurrency.toLocaleString() }} ({{ selectedDiaryTrade.profitPercent > 0 ? '+' : '' }}{{ selectedDiaryTrade.profitPercent }}%)
-                    </span>
-                  </div>
-                  <ExButton variant="ghost" @click="selectedDiaryTrade = null" class="!px-4 !py-2 text-xs">Deselect</ExButton>
-                </div>
-              </div>
-            </ExPanel>
+            <OpenStrategyMetrics
+              :is-dark="isDark"
+              strategy-name="Genesis_Protocol_Alpha"
+              :is-live="true"
+              :metrics="mockMetricsConfigs"
+              :values="mockMetricsValues"
+              @edit="handleEditMetrics"
+            />
           </div>
         </section>
+
       </div>
     </div>
 
@@ -968,6 +873,7 @@ import ExImageArchiveSlot from '~/shared/ui/components/ExImageArchiveSlot.vue'
 import ExImageEditor from '~/shared/ui/components/ExImageEditor.vue'
 import ExTacticalNodeMap from '~/shared/ui/components/ExTacticalNodeMap.vue'
 import ExVerticalTradeList from '~/shared/ui/components/ExVerticalTradeList.vue'
+import OpenStrategyMetrics from '~/shared/ui/components/Open_Strategy_Metrics.vue'
 
 const isDark = ref(true)
 const showInitPreview = ref(false)
@@ -975,6 +881,78 @@ const isEditorOpen = ref(false)
 const isPreviewMode = ref(false)
 const showNodeMap = ref(false)
 const demoImageUrl = '/assets/ui/tactical_chart_preview.png'
+
+const handleEditMetrics = () => {
+  console.log('Edit metrics triggered in design preview')
+}
+
+import type { MetricConfig } from '~/shared/ui/components/Open_Strategy_Metrics.vue'
+
+const mockMetricsConfigs: MetricConfig[] = [
+  {
+    key: 'winRate',
+    label: 'Win_Rate',
+    sub: 'Total win %',
+    desc: 'Percentage of winning trades.',
+    formula: 'wins / total',
+    valStr: (m) => `${m.winRate}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.winRate >= 50 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.winRate >= 50 ? 'Passing' : 'Failing',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Primary'
+  },
+  {
+    key: 'profitFactor',
+    label: 'Profit_Factor',
+    sub: 'Gross Win / Gross Loss',
+    desc: 'Ratio of gross profit to gross loss.',
+    formula: 'profit / loss',
+    valStr: (m) => `${m.profitFactor}`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.profitFactor >= 1.5 ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#ffffff' : '#000000'),
+    evalStr: (m) => m.profitFactor >= 1.5 ? 'Elite' : 'Average',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Primary'
+  },
+  {
+    key: 'maxDrawdown',
+    label: 'Max_Drawdown',
+    sub: 'Peak to Valley',
+    desc: 'Maximum percentage drop from peak equity.',
+    formula: 'max drop',
+    valStr: (m) => `${m.maxDrawdown}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => isDark ? '#f87171' : '#dc2626',
+    evalStr: (m) => 'Risk',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Advanced'
+  },
+  {
+    key: 'sharpeRatio',
+    label: 'Sharpe_Ratio',
+    sub: 'Risk Adjusted Return',
+    desc: 'Return per unit of risk.',
+    formula: 'return / risk',
+    valStr: (m) => `${m.sharpeRatio}`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.sharpeRatio >= 1.0 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#ffffff' : '#000000'),
+    evalStr: (m) => m.sharpeRatio >= 1.0 ? 'Good' : 'Poor',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Expert'
+  }
+]
+
+const mockMetricsValues = {
+  winRate: 64.3,
+  profitFactor: 2.56,
+  maxDrawdown: -8.4,
+  sharpeRatio: 1.82
+}
 
 const customCondition = ref({
   name: 'Protocol_ID',
