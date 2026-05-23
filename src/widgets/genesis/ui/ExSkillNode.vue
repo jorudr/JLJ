@@ -4,8 +4,8 @@
          left: (node.x) + 'px', 
          top: (node.y) + 'px',
          zIndex: isSelected ? 1000 : 1,
-         width: node.type === 'image' ? (node.params?.width || 300) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px'),
-         height: node.type === 'image' ? (node.params?.height || 200) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px')
+         width: node.type === 'image' ? (node.params?.width || 300) + 'px' : (isScenarioPanel ? (node.params?.width || scenarioPanelSize.width) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px')),
+         height: node.type === 'image' ? (node.params?.height || 200) + 'px' : (isScenarioPanel ? (node.params?.height || scenarioPanelSize.height) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px'))
        }"
        @mousedown.stop="startDrag"
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
@@ -95,6 +95,52 @@
                <div class="absolute -inset-4 border border-nier-border-light dark:border-nier-border-dark opacity-20 pointer-events-none"></div>
             </div>
 
+           <!-- Scenario documentation panels -->
+            <div v-if="isScenarioPanel"
+                 class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
+               <div class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
+                  <span class="text-[8px] font-mono tracking-[0.35em] uppercase font-black opacity-60">{{ node.params?.menuLabel || node.label }}</span>
+                  <span class="text-[8px] font-mono tracking-widest uppercase opacity-30">{{ node.params?.shortCode || node.type.slice(0, 3) }}</span>
+               </div>
+
+               <div v-if="isVisualScenarioPanel"
+                    class="relative flex-1 m-3 border border-dashed border-nier-border-light dark:border-nier-border-dark bg-[linear-gradient(90deg,currentColor_1px,transparent_1px),linear-gradient(currentColor_1px,transparent_1px)] bg-[size:20px_20px] text-nier-text-light/10 dark:text-nier-text-dark/10 cursor-crosshair overflow-hidden"
+                    @mousedown.stop.prevent="startScenarioDrawing"
+                    @mousemove.stop.prevent="moveScenarioDrawing"
+                    @mouseup.stop.prevent="finishScenarioDrawing"
+                    @mouseleave.stop.prevent="finishScenarioDrawing">
+                  <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+                     <polyline v-for="stroke in node.params?.strokes || []"
+                               :key="stroke.id"
+                               :points="formatScenarioStroke(stroke)"
+                               fill="none"
+                               stroke="currentColor"
+                               stroke-width="1.4"
+                               stroke-linecap="round"
+                               stroke-linejoin="round"
+                               class="text-nier-text-light dark:text-nier-text-dark opacity-70" />
+                  </svg>
+                  <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                     <span class="text-[9px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">{{ node.params?.protocol || 'VISUAL_PANEL' }}</span>
+                  </div>
+                  <div class="absolute top-2 left-2 w-6 h-6 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                  <div class="absolute bottom-2 right-2 w-6 h-6 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                  <button v-if="node.params?.strokes?.length"
+                          @mousedown.stop
+                          @click.stop="node.params.strokes = []"
+                          class="absolute right-2 top-2 px-2 py-1 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 text-[7px] font-mono tracking-widest uppercase text-nier-text-light dark:text-nier-text-dark opacity-0 group-hover:opacity-80 hover:opacity-100 transition-opacity">
+                     CLR
+                  </button>
+               </div>
+
+               <textarea v-else
+                         v-model="node.params.value"
+                         @mousedown.stop
+                         @click.stop
+                         placeholder="ENTER_SCENARIO_DETAILS..."
+                         class="flex-1 w-full min-h-0 resize-none bg-transparent px-3 py-2 text-[10px] leading-relaxed font-mono uppercase tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar"></textarea>
+            </div>
+
            <!-- Connection Points -->
             <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', node)" @mouseup.stop="$emit('drop', node)" 
                  @dblclick.stop="$emit('clear-input', node)"
@@ -116,7 +162,7 @@
             </div>
 
            <!-- Default SVGs for other types -->
-           <svg v-if="!['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image'].includes(node.type)" 
+           <svg v-if="!isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image'].includes(node.type)"
                class="w-[60%] h-[60%] opacity-60 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark" 
                :class="{ 'opacity-100': isSelected }"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -453,6 +499,62 @@ interface Comment { id: string, text: string, x: number, y: number, isEditing: b
 
 const isDragging = ref(false)
 const imageError = ref(false)
+const scenarioPanelTypes = [
+  'text-panel',
+  'rules-panel',
+  'checklist-panel',
+  'drawing-panel',
+  'markup-panel',
+  'variant-panel',
+  'failure-panel',
+  'invalidation-panel',
+  'decision-gate',
+  'playbook-step',
+  'review-panel'
+]
+const visualScenarioPanelTypes = ['drawing-panel', 'markup-panel']
+const isScenarioPanel = computed(() => scenarioPanelTypes.includes(props.node.type))
+const isVisualScenarioPanel = computed(() => visualScenarioPanelTypes.includes(props.node.type))
+const scenarioPanelSize = computed(() => (
+  isVisualScenarioPanel.value
+    ? { width: 300, height: 190 }
+    : { width: 260, height: 180 }
+))
+const activeScenarioStrokeId = ref<string | null>(null)
+
+function getScenarioDrawPoint(e: MouseEvent) {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  return {
+    x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
+    y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100))
+  }
+}
+
+function startScenarioDrawing(e: MouseEvent) {
+  if (!isVisualScenarioPanel.value) return
+  if (!props.node.params.strokes) props.node.params.strokes = []
+  const stroke = {
+    id: 's' + Date.now().toString(36),
+    points: [getScenarioDrawPoint(e)]
+  }
+  props.node.params.strokes.push(stroke)
+  activeScenarioStrokeId.value = stroke.id
+}
+
+function moveScenarioDrawing(e: MouseEvent) {
+  if (!activeScenarioStrokeId.value || !props.node.params?.strokes) return
+  const stroke = props.node.params.strokes.find((item: any) => item.id === activeScenarioStrokeId.value)
+  if (!stroke) return
+  stroke.points.push(getScenarioDrawPoint(e))
+}
+
+function finishScenarioDrawing() {
+  activeScenarioStrokeId.value = null
+}
+
+function formatScenarioStroke(stroke: any) {
+  return (stroke.points || []).map((point: any) => `${point.x},${point.y}`).join(' ')
+}
 
 const startDrag = (e: MouseEvent) => {
   if (isResizing.value) return

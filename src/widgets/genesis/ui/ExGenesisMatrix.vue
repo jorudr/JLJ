@@ -447,7 +447,7 @@
                 <div v-if="activeMenuCategory" class="w-full flex justify-center">
 
                 <!-- INDICATORS TOOLS (Universal Library) -->
-                  <div v-if="activeMenuCategory === 'INDICATORS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                  <div v-if="activeMenuCategory === 'INDICATORS' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                      
                       <!-- Indicator Categories -->
                       <div v-if="!indicatorSearchQuery" class="flex space-x-4 mb-3 border-b border-current/10 pb-2 w-full justify-center">
@@ -511,7 +511,7 @@
                    </div>
  
                  <!-- CONFIG TOOLS -->
-                   <div v-if="activeMenuCategory === 'CONFIG'" class="flex flex-col items-center pointer-events-auto px-4 w-full pt-4 pb-4">
+                   <div v-if="activeMenuCategory === 'CONFIG' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full pt-4 pb-4">
                       <div class="flex flex-col items-center space-y-4">
                          <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Configuration_Protocol_Required</span>
                          <div class="w-12 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
@@ -531,7 +531,7 @@
                    </div>
  
                 <!-- EMOTIONS TOOLS -->
-                  <div v-if="activeMenuCategory === 'EMOTIONS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                  <div v-if="activeMenuCategory === 'EMOTIONS' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                     
                     <!-- Mode B: Emotion Selection -->
                     <div class="flex flex-col items-center w-full relative">
@@ -581,7 +581,7 @@
                   </div>
                
                <!-- STEPS TOOLS -->
-                   <div v-if="activeMenuCategory === 'STEPS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                   <div v-if="activeMenuCategory === 'STEPS' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                      
                      <!-- Pagination Wrapper -->
                      <div class="flex items-center space-x-12 mb-8 w-full justify-center">
@@ -679,7 +679,7 @@
                   </div>
                
                <!-- LOGIC TOOLS -->
-                  <div v-if="activeMenuCategory === 'LOGIC'" class="flex space-x-6 pointer-events-auto">
+                  <div v-if="activeMenuCategory === 'LOGIC' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
                     <ExNTtooltip v-for="type in skillTypes" :key="type.label" :title="type.label">
                       <template #trigger>
                         <button @click="addNode(type)"
@@ -706,10 +706,114 @@
                         <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Establish high-level tactical logic node for strategic branch validation.</p>
                       </div>
                     </ExNTtooltip>
-                 </div>
+	                 </div>
+
+               <!-- SCENARIO DOCUMENTATION TOOLS -->
+                  <div v-if="activeMenuCategory === 'SCENARIO_DOCS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 mb-5">
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Scenario_Explanation_Layer</span>
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                    </div>
+                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                      <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="type.label">
+                        <template #trigger>
+                          <button @click="addNode(type)"
+                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
+                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                          </button>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-[220px]">
+                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </div>
+
+               <!-- SCENARIO VISUAL TOOLS -->
+                  <div v-if="activeMenuCategory === 'SCENARIO_VISUALS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 mb-5">
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Evidence_And_Markup_Layer</span>
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                    </div>
+                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                      <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="type.label">
+                        <template #trigger>
+                          <button @click="addNode(type)"
+                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
+                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                          </button>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-[220px]">
+                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </div>
+
+               <!-- SCENARIO VARIANT TOOLS -->
+                  <div v-if="activeMenuCategory === 'SCENARIO_VARIANTS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 mb-5">
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Branch_And_Exception_Layer</span>
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                    </div>
+                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                      <ExNTtooltip v-for="type in scenarioVariantTypes" :key="type.label" :title="type.label">
+                        <template #trigger>
+                          <button @click="addNode(type)"
+                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
+                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                          </button>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-[220px]">
+                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </div>
+
+               <!-- SCENARIO REVIEW TOOLS -->
+                  <div v-if="activeMenuCategory === 'SCENARIO_REVIEW'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 mb-5">
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Validation_And_Playbook_Layer</span>
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                    </div>
+                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                      <ExNTtooltip v-for="type in scenarioReviewTypes" :key="type.label" :title="type.label">
+                        <template #trigger>
+                          <button @click="addNode(type)"
+                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
+                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                          </button>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-[220px]">
+                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </div>
 
                <!-- DOMAINS TOOLS -->
-                   <div v-if="activeMenuCategory === 'DOMAINS'" class="flex space-x-6 pointer-events-auto">
+                   <div v-if="activeMenuCategory === 'DOMAINS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
                     <ExNTtooltip v-for="zoneType in (['entry', 'in-trade', 'exit'] as const)" :key="zoneType" :title="`${zoneType.toUpperCase()}_ZONE`">
                       <template #trigger>
                         <button @click="activateZoneTool(zoneType)"
@@ -746,7 +850,7 @@
                   </div>
 
                <!-- METHODS TOOLS -->
-                  <div v-if="activeMenuCategory === 'METHODS'" class="flex space-x-6 pointer-events-auto">
+                  <div v-if="activeMenuCategory === 'METHODS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
                     <ExNTtooltip v-for="type in methodTypes" :key="type.label" :title="type.label">
                       <template #trigger>
                         <button @click="addNode(type)"
@@ -773,7 +877,7 @@
                  </div>
 
                <!-- SCALING TOOLS ( Entry Configuration ) -->
-                  <div v-if="activeMenuCategory === 'SCALING'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                  <div v-if="activeMenuCategory === 'SCALING' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                     <div class="flex flex-col items-center w-full space-y-3">
                        <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40">Configure_Scaling_Entry</span>
                        <div class="flex items-end space-x-3">
@@ -811,7 +915,7 @@
                  </div>
 
                <!-- RISK TOOLS ( Strategic Parameters ) -->
-                  <div v-if="activeMenuCategory === 'RISK'" class="flex flex-col items-center pointer-events-auto max-w-2xl px-4 w-full">
+                  <div v-if="activeMenuCategory === 'RISK' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto max-w-2xl px-4 w-full">
                     <div class="flex flex-col items-center w-full space-y-3">
                         <div class="flex items-center relative w-full px-16">
                            <!-- Left Navigation -->
@@ -917,7 +1021,7 @@
                  </div>
 
                <!-- DATA TOOLS (Instrument Search) -->
-                  <div v-if="activeMenuCategory === 'DATA'" class="flex flex-col items-center pointer-events-auto max-w-lg w-full">
+                  <div v-if="activeMenuCategory === 'DATA' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto max-w-lg w-full">
                     
                     <!-- Search Results -->
                     <div v-if="assetResults.length > 0" class="flex space-x-4 mb-4 overflow-x-auto pb-2 w-full max-w-full justify-start px-4 no-scrollbar">
@@ -955,7 +1059,7 @@
                   </div>
 
                 <!-- SYSTEM TOOLS -->
-                <div v-if="activeMenuCategory === 'SYSTEM'" class="flex flex-col items-center justify-center pointer-events-auto px-4 w-full pt-6 pb-6">
+                <div v-if="activeMenuCategory === 'SYSTEM' && !isScenarioContext" class="flex flex-col items-center justify-center pointer-events-auto px-4 w-full pt-6 pb-6">
                    <div class="flex flex-col items-center justify-center space-y-6">
                       <div class="flex flex-col items-center">
                          <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60 mb-2">Registry_Maintenance</span>
@@ -979,20 +1083,15 @@
             </div>
 
             <div class="w-full flex items-center justify-center space-x-8 px-6 py-4 border-t border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.02] dark:bg-nier-dark/[0.02]">
-               <button v-for="cat in ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG']" :key="cat"
-                       v-show="(cat !== 'INDICATORS' && cat !== 'EMOTIONS' && cat !== 'SCALING' && cat !== 'RISK' && cat !== 'CONFIG') ||
-                              (effectiveSelectedNode && (['condition', 'indicator', 'pattern', 'smc'].includes(effectiveSelectedNode.type || '')) && cat === 'INDICATORS' && !effectiveSelectedNode.params?.needsConfig) ||
-                              (effectiveSelectedNode && effectiveSelectedNode.params?.needsConfig && cat === 'CONFIG') ||
-                              (effectiveSelectedNode && (effectiveSelectedNode.type === 'emotion' || effectiveSelectedNode.type === 'emotion-state') && cat === 'EMOTIONS') ||
-                              (effectiveSelectedNode && (effectiveSelectedNode.type === 'pyramiding' || effectiveSelectedNode.type === 'averaging') && cat === 'SCALING') ||
-                              (effectiveSelectedNode && effectiveSelectedNode.type === 'risk' && cat === 'RISK')"
-                       @click="toggleMenuCategory(cat as any)"
+               <button v-for="cat in commandLinkCategories" :key="cat"
+                       v-show="shouldShowCommandCategory(cat)"
+                       @click="toggleMenuCategory(cat)"
                        class="group relative flex flex-col items-center transition-all duration-300"
                        :class="activeMenuCategory === cat ? 'opacity-100' : 'opacity-30 hover:opacity-100'">
                   
                   <span class="text-[10px] font-mono tracking-[0.4em] uppercase font-black transition-all group-hover:tracking-[0.6em]"
                         :class="{ 'text-nier-text-light dark:text-nier-text-dark': activeMenuCategory === cat }">
-                    {{ cat }}
+                    {{ getCommandCategoryLabel(cat) }}
                   </span>
                   
                   <div class="h-0.5 mt-1 bg-nier-text-light dark:bg-nier-text-dark transition-all duration-500"
@@ -1177,6 +1276,23 @@ interface Zone {
   label: string
 }
 
+type MenuCategory =
+  | 'LOGIC'
+  | 'METHODS'
+  | 'DATA'
+  | 'DOMAINS'
+  | 'INDICATORS'
+  | 'EMOTIONS'
+  | 'STEPS'
+  | 'SCALING'
+  | 'RISK'
+  | 'SYSTEM'
+  | 'CONFIG'
+  | 'SCENARIO_DOCS'
+  | 'SCENARIO_VISUALS'
+  | 'SCENARIO_VARIANTS'
+  | 'SCENARIO_REVIEW'
+
 // --- SYSTEM STATE --- //
 
 const canvasWrapper = ref<HTMLElement | null>(null)
@@ -1216,6 +1332,7 @@ const activeContextNode = computed(() => {
   if (!activeContextId.value) return null
   return findNodeById(rootNodes.value, activeContextId.value)
 })
+const isScenarioContext = computed(() => activeContextNode.value?.type === 'scenario')
 
 // Current Reactive Viewport Data
 const nodes = computed<Node[]>({
@@ -1346,6 +1463,174 @@ const methodTypes = computed(() => [
   { label: 'Averaging', type: 'averaging', color: 'currentColor', description: 'Strategic entry distribution to optimize the aggregate cost basis.' }
 ])
 
+const scenarioDocumentationTypes = [
+  {
+    label: 'TEXT_PANEL',
+    type: 'text-panel',
+    color: 'currentColor',
+    description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
+    params: {
+      shortCode: 'TXT',
+      menuLabel: 'TEXT',
+      protocol: 'TEXT_INPUT_PANEL',
+      description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
+      value: 'Scenario thesis:\nTrigger:\nExecution notes:'
+    }
+  },
+  {
+    label: 'RULES_PANEL',
+    type: 'rules-panel',
+    color: 'currentColor',
+    description: 'Structured rule block for entry filters, confirmations, and invalidation logic.',
+    params: {
+      shortCode: 'RUL',
+      menuLabel: 'RULES',
+      protocol: 'RULE_SET_PANEL',
+      description: 'Structured rule block for entry filters, confirmations, and invalidation logic.',
+      value: 'Entry rules:\nConfirmations:\nInvalidation:'
+    }
+  },
+  {
+    label: 'CHECKLIST_PANEL',
+    type: 'checklist-panel',
+    color: 'currentColor',
+    description: 'Checklist node for required preconditions before scenario activation.',
+    params: {
+      shortCode: 'CHK',
+      menuLabel: 'CHECK',
+      protocol: 'PRE_FLIGHT_CHECKLIST',
+      description: 'Checklist node for required preconditions before scenario activation.',
+      value: '[ ] Market structure\n[ ] Liquidity condition\n[ ] Risk limit'
+    }
+  }
+]
+
+const scenarioVisualTypes = [
+  {
+    label: 'SCREENSHOT',
+    type: 'image',
+    color: 'currentColor',
+    description: 'Screenshot evidence node for chart states, execution examples, and annotations.',
+    params: {
+      shortCode: 'IMG',
+      menuLabel: 'SHOT',
+      protocol: 'SCREENSHOT_EVIDENCE',
+      description: 'Screenshot evidence node for chart states, execution examples, and annotations.',
+      value: 'Attach screenshot evidence.'
+    }
+  },
+  {
+    label: 'DRAWING_PANEL',
+    type: 'drawing-panel',
+    color: 'currentColor',
+    description: 'Drawing board placeholder for manual markup, zones, arrows, and scenario maps.',
+    params: {
+      shortCode: 'DRW',
+      menuLabel: 'DRAW',
+      protocol: 'DRAWING_BOARD',
+      description: 'Drawing board placeholder for manual markup, zones, arrows, and scenario maps.',
+      value: 'Drawing board: mark zones, arrows, and decision areas.'
+    }
+  },
+  {
+    label: 'MARKUP_PANEL',
+    type: 'markup-panel',
+    color: 'currentColor',
+    description: 'Visual markup panel for explaining chart areas, liquidity pools, and reaction points.',
+    params: {
+      shortCode: 'MRK',
+      menuLabel: 'MARKUP',
+      protocol: 'CHART_MARKUP_PANEL',
+      description: 'Visual markup panel for explaining chart areas, liquidity pools, and reaction points.',
+      value: 'Markup notes:\nKey area:\nExpected reaction:'
+    }
+  }
+]
+
+const scenarioVariantTypes = [
+  {
+    label: 'VARIANT_PATH',
+    type: 'variant-panel',
+    color: 'currentColor',
+    description: 'Alternative scenario branch describing what changes when the market chooses another path.',
+    params: {
+      shortCode: 'VAR',
+      menuLabel: 'VARIANT',
+      protocol: 'SCENARIO_VARIANT_PATH',
+      description: 'Alternative scenario branch describing what changes when the market chooses another path.',
+      value: 'Variant:\nCondition shift:\nResponse:'
+    }
+  },
+  {
+    label: 'FAILURE_CASE',
+    type: 'failure-panel',
+    color: 'currentColor',
+    description: 'Failure-mode panel for common false signals, traps, and execution mistakes.',
+    params: {
+      shortCode: 'FLR',
+      menuLabel: 'FAIL',
+      protocol: 'FAILURE_CASE_ARCHIVE',
+      description: 'Failure-mode panel for common false signals, traps, and execution mistakes.',
+      value: 'Failure case:\nWarning sign:\nAvoidance rule:'
+    }
+  },
+  {
+    label: 'INVALIDATION',
+    type: 'invalidation-panel',
+    color: 'currentColor',
+    description: 'Invalidation panel defining when the scenario is no longer tradable.',
+    params: {
+      shortCode: 'INV',
+      menuLabel: 'INVALID',
+      protocol: 'INVALIDATION_PROTOCOL',
+      description: 'Invalidation panel defining when the scenario is no longer tradable.',
+      value: 'Invalid if:\nRequired exit:\nRe-entry condition:'
+    }
+  }
+]
+
+const scenarioReviewTypes = [
+  {
+    label: 'DECISION_GATE',
+    type: 'decision-gate',
+    color: 'currentColor',
+    description: 'Decision gate for go/no-go criteria before moving to execution.',
+    params: {
+      shortCode: 'GTE',
+      menuLabel: 'GATE',
+      protocol: 'DECISION_GATE',
+      description: 'Decision gate for go/no-go criteria before moving to execution.',
+      value: 'Go if:\nNo-go if:\nEscalate if:'
+    }
+  },
+  {
+    label: 'PLAYBOOK_STEP',
+    type: 'playbook-step',
+    color: 'currentColor',
+    description: 'Playbook step for sequencing scenario preparation, entry, management, and review.',
+    params: {
+      shortCode: 'PBK',
+      menuLabel: 'PLAY',
+      protocol: 'PLAYBOOK_SEQUENCE',
+      description: 'Playbook step for sequencing scenario preparation, entry, management, and review.',
+      value: 'Step:\nAction:\nExpected result:'
+    }
+  },
+  {
+    label: 'POST_TRADE_NOTE',
+    type: 'review-panel',
+    color: 'currentColor',
+    description: 'Post-trade review panel for lessons, screenshots to revisit, and improvement notes.',
+    params: {
+      shortCode: 'REV',
+      menuLabel: 'REVIEW',
+      protocol: 'POST_TRADE_REVIEW',
+      description: 'Post-trade review panel for lessons, screenshots to revisit, and improvement notes.',
+      value: 'Observed result:\nLesson:\nNext adjustment:'
+    }
+  }
+]
+
 function getNode(id: string) {
   return nodes.value.find((n: Node) => n.id === id)
 }
@@ -1362,7 +1647,15 @@ const effectiveSelectedNode = computed(() => {
 })
 
 // --- MENU STATE --- //
-const activeMenuCategory = ref<'LOGIC' | 'METHODS' | 'DATA' | 'DOMAINS' | 'INDICATORS' | 'EMOTIONS' | 'STEPS' | 'SCALING' | 'RISK' | 'SYSTEM' | 'CONFIG' | null>('LOGIC')
+const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG']
+const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_VARIANTS', 'SCENARIO_REVIEW']
+const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
+  SCENARIO_DOCS: 'DOCS',
+  SCENARIO_VISUALS: 'VISUALS',
+  SCENARIO_VARIANTS: 'VARIANTS',
+  SCENARIO_REVIEW: 'REVIEW'
+}
+const activeMenuCategory = ref<MenuCategory | null>('LOGIC')
 const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
 const customStepInput = ref('')
 const currentStepPage = ref(0)
@@ -1375,6 +1668,35 @@ const riskLossTradeUnit = ref<'%' | '$'>('%')
 const riskLossDayUnit = ref<'%' | '$'>('$')
 const riskLossDay = ref(5)
 const riskRR = ref(3)
+
+const commandLinkCategories = computed(() => (
+  isScenarioContext.value ? scenarioCommandCategories : defaultCommandCategories
+))
+
+function getCommandCategoryLabel(category: MenuCategory) {
+  return commandCategoryLabels[category] || category
+}
+
+function shouldShowCommandCategory(category: MenuCategory) {
+  if (isScenarioContext.value) return scenarioCommandCategories.includes(category)
+  const selected = effectiveSelectedNode.value
+  return (
+    (category !== 'INDICATORS' && category !== 'EMOTIONS' && category !== 'SCALING' && category !== 'RISK' && category !== 'CONFIG') ||
+    (!!selected && ['condition', 'indicator', 'pattern', 'smc'].includes(selected.type || '') && category === 'INDICATORS' && !selected.params?.needsConfig) ||
+    (!!selected && selected.params?.needsConfig && category === 'CONFIG') ||
+    (!!selected && (selected.type === 'emotion' || selected.type === 'emotion-state') && category === 'EMOTIONS') ||
+    (!!selected && (selected.type === 'pyramiding' || selected.type === 'averaging') && category === 'SCALING') ||
+    (!!selected && selected.type === 'risk' && category === 'RISK')
+  )
+}
+
+watch(isScenarioContext, (insideScenario) => {
+  if (insideScenario && !scenarioCommandCategories.includes(activeMenuCategory.value as MenuCategory)) {
+    activeMenuCategory.value = 'SCENARIO_DOCS'
+  } else if (!insideScenario && activeMenuCategory.value && scenarioCommandCategories.includes(activeMenuCategory.value)) {
+    activeMenuCategory.value = 'LOGIC'
+  }
+}, { immediate: true })
 
 // Sync Selected Node to Risk refs (Read-only initialization for menu)
 watch(lastSelectedId, (newId) => {
@@ -1437,7 +1759,7 @@ const tooltipStyles = computed(() => {
   }
 })
 
-function toggleMenuCategory(category: 'LOGIC' | 'METHODS' | 'DATA' | 'DOMAINS' | 'INDICATORS' | 'EMOTIONS' | 'STEPS' | 'SCALING' | 'RISK' | 'SYSTEM' | 'CONFIG') {
+function toggleMenuCategory(category: MenuCategory) {
   if (activeMenuCategory.value === category) {
     activeMenuCategory.value = null
   } else {
@@ -2115,7 +2437,7 @@ function addNode(type: any) {
          'averaging': 'Strategic cost-basis optimization through distributed entry execution.',
          'image': 'Visual documentation of market structure for archival verification.'
        }[type.type as string] || 'Standard tactical protocol for Matrix operations.'),
-       value: type.description || type.params?.info || ('0x' + lastSelected.id.slice(-4)),
+       value: type.params?.value || type.description || type.params?.info || ('0x' + lastSelected.id.slice(-4)),
        ...( (type.type === 'pyramiding' || type.type === 'averaging') ? {
          scalingProtocol: [
            { id: 'p1', value: 5, unit: '%', size: 1 },
@@ -2159,7 +2481,7 @@ function addNode(type: any) {
         'averaging': 'Strategic cost-basis optimization through distributed entry execution.',
         'image': 'Visual documentation of market structure for archival verification.'
       }[type.type as string] || 'Standard tactical protocol for Matrix operations.'),
-      value: type.description || type.params?.info || ('0x' + id.slice(-4)),
+      value: type.params?.value || type.description || type.params?.info || ('0x' + id.slice(-4)),
       ...( (type.type === 'pyramiding' || type.type === 'averaging') ? {
         scalingProtocol: [
           { id: 'p1', value: 5, unit: '%', size: 1 },
@@ -2213,8 +2535,14 @@ function handleImageUpload(e: Event) {
   reader.readAsDataURL(file)
 }
 
-function getMenuCategoryForNode(node: Node | null): "LOGIC" | "METHODS" | "DATA" | "DOMAINS" | "INDICATORS" | "EMOTIONS" | "STEPS" | "SCALING" | "RISK" | "SYSTEM" | "CONFIG" | null {
+function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
   if (!node) return null
+  if (isScenarioContext.value) {
+    if (['image', 'drawing-panel', 'markup-panel'].includes(node.type)) return 'SCENARIO_VISUALS'
+    if (['variant-panel', 'failure-panel', 'invalidation-panel'].includes(node.type)) return 'SCENARIO_VARIANTS'
+    if (['decision-gate', 'playbook-step', 'review-panel'].includes(node.type)) return 'SCENARIO_REVIEW'
+    return 'SCENARIO_DOCS'
+  }
   if (node.params?.needsConfig) return 'CONFIG'
   if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
     return 'INDICATORS'
