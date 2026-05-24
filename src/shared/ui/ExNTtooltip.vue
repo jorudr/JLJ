@@ -41,6 +41,7 @@ import { ref, computed, nextTick, watch } from 'vue'
 
 const props = defineProps<{
   title?: string
+  disabled?: boolean
 }>()
 
 const isVisible = ref(false)
@@ -50,6 +51,7 @@ const tooltipRef = ref<HTMLElement | null>(null)
 const horizontalOffset = ref(0)
 
 const handleMouseEnter = () => {
+  if (props.disabled) return
   isVisible.value = true
   horizontalOffset.value = 0
 }
@@ -58,7 +60,15 @@ const handleMouseLeave = () => {
   isVisible.value = false
 }
 
+watch(() => props.disabled, (disabled) => {
+  if (disabled) isVisible.value = false
+})
+
 const handleMouseMove = (e: MouseEvent) => {
+  if (props.disabled) {
+    isVisible.value = false
+    return
+  }
   mousePos.value = { x: e.clientX, y: e.clientY }
   
   if (isVisible.value) {

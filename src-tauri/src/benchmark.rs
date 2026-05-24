@@ -1,7 +1,7 @@
+use reqwest::header::USER_AGENT;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use reqwest::header::USER_AGENT;
 use tauri::Manager;
 
 pub struct BenchmarkState(pub Mutex<BenchmarkStateInner>);
@@ -136,39 +136,45 @@ pub async fn get_benchmark_and_beta(
         None
     };
 
-    let save_strategy_cache = |path: &std::path::PathBuf, strategy: &str, rate: f64, beta: f64, risk_free: f64| {
-        let mut cache = load_strategy_cache(path).unwrap_or(StrategyCacheData {
-            benchmark_rate: rate,
-            risk_free_rate: risk_free,
-            strategies: HashMap::new(),
-        });
-        cache.benchmark_rate = rate;
-        cache.risk_free_rate = risk_free;
-        cache
-            .strategies
-            .insert(strategy.to_string(), StrategyBenchmarkCache { beta });
+    let save_strategy_cache =
+        |path: &std::path::PathBuf, strategy: &str, rate: f64, beta: f64, risk_free: f64| {
+            let mut cache = load_strategy_cache(path).unwrap_or(StrategyCacheData {
+                benchmark_rate: rate,
+                risk_free_rate: risk_free,
+                strategies: HashMap::new(),
+            });
+            cache.benchmark_rate = rate;
+            cache.risk_free_rate = risk_free;
+            cache
+                .strategies
+                .insert(strategy.to_string(), StrategyBenchmarkCache { beta });
 
-        if let Ok(json_str) = serde_json::to_string_pretty(&cache) {
-            let _ = std::fs::write(path, json_str);
-        }
-    };
+            if let Ok(json_str) = serde_json::to_string_pretty(&cache) {
+                let _ = std::fs::write(path, json_str);
+            }
+        };
 
-    let load_cached_strategy = |path: &std::path::PathBuf, strategy: &str| -> Option<BenchmarkResponse> {
-        let cache = load_strategy_cache(path)?;
-        cache.strategies.get(strategy).map(|entry| BenchmarkResponse {
-            benchmark_rate: cache.benchmark_rate,
-            beta: entry.beta,
-            risk_free_rate: cache.risk_free_rate,
-            is_fallback: true,
-        })
-    };
+    let load_cached_strategy =
+        |path: &std::path::PathBuf, strategy: &str| -> Option<BenchmarkResponse> {
+            let cache = load_strategy_cache(path)?;
+            cache
+                .strategies
+                .get(strategy)
+                .map(|entry| BenchmarkResponse {
+                    benchmark_rate: cache.benchmark_rate,
+                    beta: entry.beta,
+                    risk_free_rate: cache.risk_free_rate,
+                    is_fallback: true,
+                })
+        };
 
     let cache_response_in_memory = |response: &BenchmarkResponse, strategy: &str| {
         let mut lock = state.0.lock().unwrap();
         lock.has_fetched = true;
         lock.cached_rate = response.benchmark_rate;
         lock.cached_risk_free = response.risk_free_rate;
-        lock.cached_betas.insert(strategy.to_string(), response.beta);
+        lock.cached_betas
+            .insert(strategy.to_string(), response.beta);
     };
 
     // Helper to get cache file path
@@ -199,7 +205,7 @@ pub async fn get_benchmark_and_beta(
         Ok((rate, beta)) => {
             let risk_free = risk_free_res.unwrap_or(5.00);
             log::info!("[benchmark] Successfully fetched live benchmark data for strategy {} -> rate: {:.2}%, beta: {:.2}, risk_free: {:.2}%", strategy_key, rate, beta, risk_free);
-            
+
             if let Ok(cache_path) = get_cache_path() {
                 save_strategy_cache(&cache_path, &strategy_key, rate, beta, risk_free);
             }
@@ -215,7 +221,7 @@ pub async fn get_benchmark_and_beta(
         }
         Err(e) => {
             log::warn!("[benchmark] Live fetch failed for strategy {}: {}, attempting to load from local JSON cache...", strategy_key, e);
-            
+
             if let Ok(cache_path) = get_cache_path() {
                 if let Some(response) = load_cached_strategy(&cache_path, &strategy_key) {
                     log::info!("[benchmark] Successfully loaded cached benchmark data for strategy {} -> rate: {:.2}%, beta: {:.2}, risk_free: {:.2}%", strategy_key, response.benchmark_rate, response.beta, response.risk_free_rate);
@@ -240,16 +246,22 @@ pub async fn get_benchmark_and_beta(
 async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64, f64), String> {
     let url = "https://query2.finance.yahoo.com/v8/finance/chart/^GSPC?interval=1d&range=1y";
     let client = reqwest::Client::new();
-    let res = client.get(url)
+    let res = client
+        .get(url)
         .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;
 
-    let data = res.json::<YahooChartResponse>().await
+    let data = res
+        .json::<YahooChartResponse>()
+        .await
         .map_err(|e| format!("JSON parse failed: {}", e))?;
 
-    let result = data.chart.and_then(|c| c.result).and_then(|mut r| r.pop())
+    let result = data
+        .chart
+        .and_then(|c| c.result)
+        .and_then(|mut r| r.pop())
         .ok_or_else(|| "No chart result found".to_string())?;
 
     let mut benchmark_rate = 25.21;
@@ -268,10 +280,17 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64,
                 if let Some(closes) = quote.close {
                     let valid_prices: Vec<f64> = closes.into_iter().filter_map(|p| p).collect();
                     let timestamps = result.timestamp.unwrap_or_default();
-                    
-                    log::info!("[benchmark_diagnostic] Parsed {} valid close prices from Yahoo Finance.", valid_prices.len());
+
+                    log::info!(
+                        "[benchmark_diagnostic] Parsed {} valid close prices from Yahoo Finance.",
+                        valid_prices.len()
+                    );
                     if !timestamps.is_empty() && timestamps.len() == valid_prices.len() {
-                        log::info!("[benchmark_diagnostic] Time range: First TS={}, Last TS={}", timestamps.first().unwrap(), timestamps.last().unwrap());
+                        log::info!(
+                            "[benchmark_diagnostic] Time range: First TS={}, Last TS={}",
+                            timestamps.first().unwrap(),
+                            timestamps.last().unwrap()
+                        );
                     }
 
                     if let Some(&last_close) = valid_prices.last() {
@@ -329,13 +348,19 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64,
 
                             let denom = (n_take - 1) as f64;
                             log::info!("[benchmark_diagnostic] Sum Covariance: {}, Sum Variance (Market): {}", cov, var_m);
-                            
+
                             if denom > 0.0 && var_m > 0.0 {
                                 let calc_beta = (cov / denom) / (var_m / denom);
-                                log::info!("[benchmark_diagnostic] Calculated raw beta: {}", calc_beta);
+                                log::info!(
+                                    "[benchmark_diagnostic] Calculated raw beta: {}",
+                                    calc_beta
+                                );
                                 if !calc_beta.is_nan() && calc_beta.is_finite() {
                                     beta = calc_beta.clamp(-3.0, 5.0);
-                                    log::info!("[benchmark_diagnostic] Final clamped Beta: {}", beta);
+                                    log::info!(
+                                        "[benchmark_diagnostic] Final clamped Beta: {}",
+                                        beta
+                                    );
                                 } else {
                                     log::warn!("[benchmark_diagnostic] Calculated beta was NaN or infinite.");
                                 }
@@ -367,22 +392,31 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64,
 async fn fetch_live_risk_free_rate() -> Result<f64, String> {
     let url = "https://query2.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&range=5d";
     let client = reqwest::Client::new();
-    let res = client.get(url)
+    let res = client
+        .get(url)
         .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;
 
-    let data = res.json::<YahooChartResponse>().await
+    let data = res
+        .json::<YahooChartResponse>()
+        .await
         .map_err(|e| format!("JSON parse failed: {}", e))?;
 
-    let result = data.chart.and_then(|c| c.result).and_then(|mut r| r.pop())
+    let result = data
+        .chart
+        .and_then(|c| c.result)
+        .and_then(|mut r| r.pop())
         .ok_or_else(|| "No chart result found".to_string())?;
 
     if let Some(meta) = &result.meta {
         if let Some(price) = meta.regular_market_price {
             if price > 0.0 {
-                log::info!("[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX): {:.2}%", price);
+                log::info!(
+                    "[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX): {:.2}%",
+                    price
+                );
                 return Ok(price);
             }
         }
@@ -439,16 +473,30 @@ pub async fn get_historical_curves(
     // Try reading cache
     if let Ok(json_str) = std::fs::read_to_string(&cache_path) {
         if let Ok(cached) = serde_json::from_str::<HistoricalCurves>(&json_str) {
-            let has_start = cached.benchmark.first().map_or(false, |p| p.timestamp <= start_ts + 86400);
-            let has_end = cached.benchmark.last().map_or(false, |p| p.timestamp >= end_ts - 86400);
+            let has_start = cached
+                .benchmark
+                .first()
+                .map_or(false, |p| p.timestamp <= start_ts + 86400);
+            let has_end = cached
+                .benchmark
+                .last()
+                .map_or(false, |p| p.timestamp >= end_ts - 86400);
             if has_start && has_end {
-                log::info!("[benchmark] Serving historical curves from cache for strategy {}", strategy_key);
+                log::info!(
+                    "[benchmark] Serving historical curves from cache for strategy {}",
+                    strategy_key
+                );
                 return Ok(cached);
             }
         }
     }
 
-    log::info!("[benchmark] Fetching live historical curves for strategy {} from {} to {}", strategy_key, start_ts, end_ts);
+    log::info!(
+        "[benchmark] Fetching live historical curves for strategy {} from {} to {}",
+        strategy_key,
+        start_ts,
+        end_ts
+    );
 
     let fetch_curve = |symbol: String| async move {
         // Yahoo expects timestamps in seconds.
@@ -457,18 +505,27 @@ pub async fn get_historical_curves(
             symbol, start_ts - (7 * 86400), end_ts + (7 * 86400) // add padding
         );
         let client = reqwest::Client::new();
-        let res = client.get(&url)
-            .header(reqwest::header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+        let res = client
+            .get(&url)
+            .header(
+                reqwest::header::USER_AGENT,
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            )
             .send()
             .await
             .map_err(|e| format!("Request failed: {}", e))?;
-            
-        let data = res.json::<YahooChartResponse>().await
+
+        let data = res
+            .json::<YahooChartResponse>()
+            .await
             .map_err(|e| format!("JSON parse failed: {}", e))?;
-            
-        let result = data.chart.and_then(|c| c.result).and_then(|mut r| r.pop())
+
+        let result = data
+            .chart
+            .and_then(|c| c.result)
+            .and_then(|mut r| r.pop())
             .ok_or_else(|| "No chart result found".to_string())?;
-            
+
         let mut points = Vec::new();
         if let (Some(timestamps), Some(indicators)) = (result.timestamp, result.indicators) {
             if let Some(mut quotes) = indicators.quote {

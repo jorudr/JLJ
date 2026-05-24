@@ -68,6 +68,7 @@
               </div>
            </div>
            <input type="file" ref="imageInput" class="hidden" accept="image/*" @change="handleImageUpload" />
+           <input type="file" ref="fileInput" class="hidden" @change="handleGenericFileUpload" />
         </div>
 
         <!-- SVG CONNECTIONS (THE ROOTS) -->
@@ -155,7 +156,7 @@
 
         <!-- SKILL NODES -->
         <div class="absolute inset-0 z-10 pointer-events-none">
-          <ExSkillNode v-for="node in nodes" :key="node.id" 
+          <ExSkillNode v-for="node in nodes" :key="node.id"
                        :node="node" 
                        :scale="viewState.scale"
                        :is-selected="lastSelectedId === node.id"
@@ -314,7 +315,7 @@
       </Teleport>
 
       <!-- SEQUENTIAL PROMPT (Nier Style) -->
-      <div v-if="nodes.length === 1" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
+      <div v-if="shouldShowInitializePrompt" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
          <div class="flex flex-col items-center space-y-4">
             <span class="text-[10px] font-mono tracking-[1em] uppercase">Initialize_First_Step</span>
             <div class="w-1 h-32 bg-current animate-pulse"></div>
@@ -346,7 +347,7 @@
       <Transition name="hud-pop">
          <div v-if="navigationStack.length > 0" 
               class="absolute top-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center pointer-events-auto">
-            <div class="flex items-center space-x-8 bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-nier-border-light dark:border-nier-border-dark px-10 py-3 shadow-2xl relative">
+            <div class="flex items-center space-x-8 bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark px-10 py-3 shadow-2xl relative">
                <!-- Decor Corners -->
                <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-nier-text-light/30 dark:border-nier-text-dark/30"></div>
                <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-nier-text-light/30 dark:border-nier-text-dark/30"></div>
@@ -442,8 +443,8 @@
             </div>
 
             <!-- Tier 2: Expansion Layer -->
-            <div class="relative w-full flex px-6 transition-all duration-500 overflow-hidden"
-                 :class="activeMenuCategory ? 'pt-6 pb-6' : 'pt-0 pb-0'">
+            <div class="relative w-full flex px-6 transition-all duration-500"
+                 :class="[activeMenuCategory ? 'pt-6 pb-6' : 'pt-0 pb-0', isScenarioContext ? 'overflow-visible' : 'overflow-hidden']">
                 <div v-if="activeMenuCategory" class="w-full flex justify-center">
 
                 <!-- INDICATORS TOOLS (Universal Library) -->
@@ -715,7 +716,7 @@
                       <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Scenario_Explanation_Layer</span>
                       <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
                     </div>
-                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                    <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
                       <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="type.label">
                         <template #trigger>
                           <button @click="addNode(type)"
@@ -741,7 +742,7 @@
                       <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Evidence_And_Markup_Layer</span>
                       <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
                     </div>
-                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
+                    <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
                       <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="type.label">
                         <template #trigger>
                           <button @click="addNode(type)"
@@ -760,55 +761,43 @@
                     </div>
                   </div>
 
-               <!-- SCENARIO VARIANT TOOLS -->
-                  <div v-if="activeMenuCategory === 'SCENARIO_VARIANTS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+               <!-- SCENARIO AUDIO TOOLS -->
+                  <div v-if="activeMenuCategory === 'SCENARIO_AUDIO'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                     <div class="flex items-center gap-3 mb-5">
                       <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Branch_And_Exception_Layer</span>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Audio_Note_Layer</span>
                       <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
                     </div>
-                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
-                      <ExNTtooltip v-for="type in scenarioVariantTypes" :key="type.label" :title="type.label">
-                        <template #trigger>
-                          <button @click="addNode(type)"
-                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
-                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
-                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
-                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                          </button>
-                        </template>
-                        <div class="flex flex-col gap-1 min-w-[220px]">
-                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
-                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
-                        </div>
-                      </ExNTtooltip>
-                    </div>
-                  </div>
-
-               <!-- SCENARIO REVIEW TOOLS -->
-                  <div v-if="activeMenuCategory === 'SCENARIO_REVIEW'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
-                    <div class="flex items-center gap-3 mb-5">
-                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Validation_And_Playbook_Layer</span>
-                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-                    </div>
-                    <div class="flex space-x-4 overflow-x-auto pb-2 max-w-full no-scrollbar">
-                      <ExNTtooltip v-for="type in scenarioReviewTypes" :key="type.label" :title="type.label">
-                        <template #trigger>
-                          <button @click="addNode(type)"
-                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
-                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
-                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
-                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                          </button>
-                        </template>
-                        <div class="flex flex-col gap-1 min-w-[220px]">
-                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
-                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
-                        </div>
-                      </ExNTtooltip>
+                    <div class="flex items-center gap-3 overflow-visible px-2 py-2 max-w-full">
+                      <div v-if="matrixAudioErrorLabel" class="min-w-[180px] h-14 border border-red-500/40 bg-red-500/5 backdrop-blur-md flex flex-col justify-center px-4">
+                        <span class="text-[7px] font-mono tracking-[0.12em] uppercase text-red-500 truncate">{{ matrixAudioErrorLabel }}</span>
+                      </div>
+                      <button v-if="matrixAudioRecordingState === 'idle'"
+                              @click="startMatrixAudioRecording"
+                              class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">START</span>
+                        <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                        <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                      </button>
+                      <button v-if="matrixAudioRecordingState === 'recording'"
+                              @click="pauseMatrixAudioRecording"
+                              class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                        <span class="w-4 h-4 border-x-4 border-nier-text-light dark:border-nier-text-dark"></span>
+                        <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">PAUSE</span>
+                      </button>
+                      <button v-if="matrixAudioRecordingState === 'paused'"
+                              @click="resumeMatrixAudioRecording"
+                              class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                        <span class="w-0 h-0 border-y-[7px] border-y-transparent border-l-[12px] border-l-nier-text-light dark:border-l-nier-text-dark ml-1"></span>
+                        <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">RESUME</span>
+                      </button>
+                      <button v-if="matrixAudioRecordingState !== 'idle'"
+                              @click="finishMatrixAudioRecording"
+                              class="group relative min-w-[64px] h-14 border border-red-500/50 flex flex-col items-center justify-center transition-all hover:border-red-500 hover:scale-105 bg-red-500/5 backdrop-blur-md px-3">
+                        <span class="w-3 h-3 bg-red-500"></span>
+                        <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-55 group-hover:opacity-90 transition-opacity whitespace-nowrap">FINISH</span>
+                      </button>
                     </div>
                   </div>
 
@@ -1141,6 +1130,125 @@
         </Transition>
       </Teleport>
 
+      <!-- FULLSCREEN DRAWING PANEL -->
+      <Teleport to="body">
+        <Transition name="fade">
+          <div v-if="activeDrawingNode"
+               class="fixed inset-0 z-[2147483000] bg-nier-white dark:bg-nier-black text-nier-text-light dark:text-nier-text-dark p-8 pb-32 flex flex-col pointer-events-auto"
+               @mousedown.stop
+               @click.stop>
+            <div ref="fullscreenDrawingBoard"
+                 class="relative flex-1 border border-nier-border-light dark:border-nier-border-dark cursor-none overflow-hidden bg-[linear-gradient(90deg,currentColor_1px,transparent_1px),linear-gradient(currentColor_1px,transparent_1px)] bg-[size:48px_48px] text-nier-text-light/[0.04] dark:text-nier-text-dark/[0.04]"
+                 @mousedown.stop.prevent="startFullscreenDrawing"
+                 @mousemove.stop.prevent="moveFullscreenDrawing"
+                 @mouseup.stop.prevent="finishFullscreenDrawing"
+                 @mouseenter.stop="isDrawingCursorVisible = true"
+                 @mouseleave.stop.prevent="finishFullscreenDrawing">
+              <svg class="absolute inset-0 w-full h-full pointer-events-none text-nier-text-light dark:text-nier-text-dark"
+                   viewBox="0 0 100 100"
+                   preserveAspectRatio="none">
+                <polyline v-for="stroke in activeDrawingNode.params?.strokes || []"
+                          :key="stroke.id"
+                          :points="formatDrawingStroke(stroke)"
+                          fill="none"
+                          :stroke="stroke.color || 'currentColor'"
+                          :stroke-width="stroke.size || 2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          vector-effect="non-scaling-stroke"
+                          class="opacity-90" />
+              </svg>
+              <div v-if="!activeDrawingNode.params?.strokes?.length"
+                   class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">Press_And_Draw</span>
+              </div>
+              <div v-if="isDrawingCursorVisible"
+                   class="absolute rounded-full border pointer-events-none z-20"
+                   :class="drawingTool === 'eraser' ? 'border-red-500/80 bg-red-500/5' : 'border-nier-text-light/80 dark:border-nier-text-dark/80 bg-transparent'"
+                   :style="drawingCursorStyle"></div>
+              <div class="absolute top-4 left-4 w-10 h-10 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20 pointer-events-none"></div>
+              <div class="absolute bottom-4 right-4 w-10 h-10 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20 pointer-events-none"></div>
+            </div>
+
+            <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[2147483001] w-[calc(100%-4rem)] max-w-5xl bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_30px_60px_rgba(0,0,0,0.4)]">
+              <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-nier-text-light dark:border-nier-text-dark opacity-40 pointer-events-none"></div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark opacity-40 pointer-events-none"></div>
+              <div class="flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
+                <div class="flex items-center gap-3">
+                  <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
+                  <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Matrix_Command_Link</span>
+                </div>
+                <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">{{ activeDrawingNode.label }}</span>
+              </div>
+              <div class="flex flex-wrap items-center justify-center gap-4 px-6 py-4">
+                <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
+                  <button @mousedown.stop
+                          @click.stop="drawingTool = 'brush'"
+                          class="h-9 w-11 flex items-center justify-center transition-all"
+                          :class="drawingTool === 'brush' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'opacity-55 hover:opacity-100'">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M15.2 5.2l3.6 3.6" />
+                      <path d="M4 20l4.2-1 10.1-10.1a2.5 2.5 0 0 0-3.5-3.5L4.7 15.5 4 20z" />
+                    </svg>
+                  </button>
+                  <button @mousedown.stop
+                          @click.stop="drawingTool = 'eraser'"
+                          class="h-9 w-11 border-l border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all"
+                          :class="drawingTool === 'eraser' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'opacity-55 hover:opacity-100'">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M7 21h10" />
+                      <path d="M20.5 8.5l-5-5a2.1 2.1 0 0 0-3 0L3.8 12.2a2.1 2.1 0 0 0 0 3l3.3 3.3h5.4l8-8a2.1 2.1 0 0 0 0-3z" />
+                      <path d="M6.5 9.5l8 8" />
+                    </svg>
+                  </button>
+                </div>
+                <label v-if="drawingTool === 'brush'" class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center cursor-pointer relative overflow-hidden">
+                  <span class="w-5 h-5 border border-nier-border-light dark:border-nier-border-dark"
+                        :style="{ backgroundColor: drawingColor }"></span>
+                  <input v-model="drawingColor"
+                         type="color"
+                         class="absolute inset-0 opacity-0 cursor-pointer" />
+                </label>
+                <div class="h-9 px-3 border border-nier-border-light dark:border-nier-border-dark flex items-center gap-3">
+                  <div class="w-5 h-5 flex items-center justify-center">
+                    <div class="rounded-full border border-nier-text-light dark:border-nier-text-dark"
+                         :style="{ width: `${Math.min(18, Math.max(5, drawingSize))}px`, height: `${Math.min(18, Math.max(5, drawingSize))}px` }"></div>
+                  </div>
+                  <div class="relative w-14 h-4 flex items-center cursor-pointer"
+                       @mousedown.stop.prevent="startDrawingSizeDrag">
+                    <div class="w-full h-px bg-nier-text-light/20 dark:bg-nier-text-dark/20"></div>
+                    <div class="absolute left-0 h-px bg-nier-text-light dark:bg-nier-text-dark"
+                         :style="{ width: `${drawingSizePercent}%` }"></div>
+                    <div class="absolute top-1/2 w-2.5 h-2.5 -translate-y-1/2 -translate-x-1/2 rotate-45 border border-nier-text-light dark:border-nier-text-dark bg-nier-white dark:bg-nier-black"
+                         :style="{ left: `${drawingSizePercent}%` }"></div>
+                  </div>
+                  <span class="text-[9px] font-mono font-black w-5 text-right">{{ drawingSize }}</span>
+                </div>
+                <button @mousedown.stop
+                        @click.stop="clearDrawingFullscreen"
+                        class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 hover:border-nier-text-light dark:hover:border-nier-text-dark transition-all">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 15H6L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                  </svg>
+                </button>
+                <button @mousedown.stop
+                        @click.stop="closeDrawingFullscreen"
+                        class="h-9 w-11 border border-nier-text-light dark:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black flex items-center justify-center hover:opacity-80 transition-all">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 6H6v12h4" />
+                    <path d="M14 8l4 4-4 4" />
+                    <path d="M8 12h10" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+
 
         <!-- MONOCHROMATIC NIER:AUTOMATA STYLE FLOATING TOOLTIP -->
          <Teleport to="body">
@@ -1225,6 +1333,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 import ExSkillNode from './ExSkillNode.vue'
 import ExZone from './ExZone.vue'
 import { initAssetService, searchAssets, type AssetInfo } from '@/shared/api/asset.service'
@@ -1290,8 +1399,7 @@ type MenuCategory =
   | 'CONFIG'
   | 'SCENARIO_DOCS'
   | 'SCENARIO_VISUALS'
-  | 'SCENARIO_VARIANTS'
-  | 'SCENARIO_REVIEW'
+  | 'SCENARIO_AUDIO'
 
 // --- SYSTEM STATE --- //
 
@@ -1368,6 +1476,10 @@ const connections = computed<Connection[]>({
     }
   }
 })
+
+const shouldShowInitializePrompt = computed(() => (
+  isScenarioContext.value ? nodes.value.length === 0 : nodes.value.length === 1
+))
 
 const bundleGroups = computed(() => {
   const groups: any[] = []
@@ -1478,29 +1590,51 @@ const scenarioDocumentationTypes = [
     }
   },
   {
-    label: 'RULES_PANEL',
-    type: 'rules-panel',
-    color: 'currentColor',
-    description: 'Structured rule block for entry filters, confirmations, and invalidation logic.',
-    params: {
-      shortCode: 'RUL',
-      menuLabel: 'RULES',
-      protocol: 'RULE_SET_PANEL',
-      description: 'Structured rule block for entry filters, confirmations, and invalidation logic.',
-      value: 'Entry rules:\nConfirmations:\nInvalidation:'
-    }
-  },
-  {
     label: 'CHECKLIST_PANEL',
     type: 'checklist-panel',
     color: 'currentColor',
-    description: 'Checklist node for required preconditions before scenario activation.',
+    description: 'Interactive checklist panel for scenario tasks and validation points.',
     params: {
       shortCode: 'CHK',
       menuLabel: 'CHECK',
-      protocol: 'PRE_FLIGHT_CHECKLIST',
-      description: 'Checklist node for required preconditions before scenario activation.',
-      value: '[ ] Market structure\n[ ] Liquidity condition\n[ ] Risk limit'
+      protocol: 'CHECKLIST_PANEL',
+      description: 'Interactive checklist panel for scenario tasks and validation points.',
+      items: [
+        { id: 'c1', text: 'FIRST_CHECK', done: false },
+        { id: 'c2', text: 'SECOND_CHECK', done: false }
+      ]
+    }
+  },
+  {
+    label: 'TABLE_PANEL',
+    type: 'table-panel',
+    color: 'currentColor',
+    description: 'Custom table panel with adjustable row and column count.',
+    params: {
+      shortCode: 'TBL',
+      menuLabel: 'TABLE',
+      protocol: 'CUSTOM_TABLE_PANEL',
+      description: 'Custom table panel with adjustable row and column count.',
+      rows: 3,
+      cols: 3,
+      table: [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', '']
+      ]
+    }
+  },
+  {
+    label: 'EMBED_PANEL',
+    type: 'embed-panel',
+    color: 'currentColor',
+    description: 'Embed panel for external URLs, references, and media links.',
+    params: {
+      shortCode: 'EMB',
+      menuLabel: 'EMBED',
+      protocol: 'EMBED_PANEL',
+      description: 'Embed panel for external URLs, references, and media links.',
+      embedUrl: ''
     }
   }
 ]
@@ -1523,110 +1657,26 @@ const scenarioVisualTypes = [
     label: 'DRAWING_PANEL',
     type: 'drawing-panel',
     color: 'currentColor',
-    description: 'Drawing board placeholder for manual markup, zones, arrows, and scenario maps.',
+    description: 'Fullscreen drawing panel for mapping scenario structure, paths, and notes.',
     params: {
       shortCode: 'DRW',
       menuLabel: 'DRAW',
-      protocol: 'DRAWING_BOARD',
-      description: 'Drawing board placeholder for manual markup, zones, arrows, and scenario maps.',
-      value: 'Drawing board: mark zones, arrows, and decision areas.'
+      protocol: 'FULLSCREEN_DRAWING_BOARD',
+      description: 'Fullscreen drawing panel for mapping scenario structure, paths, and notes.',
+      value: 'Double click to open fullscreen drawing mode.',
+      strokes: []
     }
   },
   {
-    label: 'MARKUP_PANEL',
-    type: 'markup-panel',
+    label: 'FILE_ATTACHMENT',
+    type: 'file-attachment',
     color: 'currentColor',
-    description: 'Visual markup panel for explaining chart areas, liquidity pools, and reaction points.',
+    description: 'Attach a file to the scenario archive.',
     params: {
-      shortCode: 'MRK',
-      menuLabel: 'MARKUP',
-      protocol: 'CHART_MARKUP_PANEL',
-      description: 'Visual markup panel for explaining chart areas, liquidity pools, and reaction points.',
-      value: 'Markup notes:\nKey area:\nExpected reaction:'
-    }
-  }
-]
-
-const scenarioVariantTypes = [
-  {
-    label: 'VARIANT_PATH',
-    type: 'variant-panel',
-    color: 'currentColor',
-    description: 'Alternative scenario branch describing what changes when the market chooses another path.',
-    params: {
-      shortCode: 'VAR',
-      menuLabel: 'VARIANT',
-      protocol: 'SCENARIO_VARIANT_PATH',
-      description: 'Alternative scenario branch describing what changes when the market chooses another path.',
-      value: 'Variant:\nCondition shift:\nResponse:'
-    }
-  },
-  {
-    label: 'FAILURE_CASE',
-    type: 'failure-panel',
-    color: 'currentColor',
-    description: 'Failure-mode panel for common false signals, traps, and execution mistakes.',
-    params: {
-      shortCode: 'FLR',
-      menuLabel: 'FAIL',
-      protocol: 'FAILURE_CASE_ARCHIVE',
-      description: 'Failure-mode panel for common false signals, traps, and execution mistakes.',
-      value: 'Failure case:\nWarning sign:\nAvoidance rule:'
-    }
-  },
-  {
-    label: 'INVALIDATION',
-    type: 'invalidation-panel',
-    color: 'currentColor',
-    description: 'Invalidation panel defining when the scenario is no longer tradable.',
-    params: {
-      shortCode: 'INV',
-      menuLabel: 'INVALID',
-      protocol: 'INVALIDATION_PROTOCOL',
-      description: 'Invalidation panel defining when the scenario is no longer tradable.',
-      value: 'Invalid if:\nRequired exit:\nRe-entry condition:'
-    }
-  }
-]
-
-const scenarioReviewTypes = [
-  {
-    label: 'DECISION_GATE',
-    type: 'decision-gate',
-    color: 'currentColor',
-    description: 'Decision gate for go/no-go criteria before moving to execution.',
-    params: {
-      shortCode: 'GTE',
-      menuLabel: 'GATE',
-      protocol: 'DECISION_GATE',
-      description: 'Decision gate for go/no-go criteria before moving to execution.',
-      value: 'Go if:\nNo-go if:\nEscalate if:'
-    }
-  },
-  {
-    label: 'PLAYBOOK_STEP',
-    type: 'playbook-step',
-    color: 'currentColor',
-    description: 'Playbook step for sequencing scenario preparation, entry, management, and review.',
-    params: {
-      shortCode: 'PBK',
-      menuLabel: 'PLAY',
-      protocol: 'PLAYBOOK_SEQUENCE',
-      description: 'Playbook step for sequencing scenario preparation, entry, management, and review.',
-      value: 'Step:\nAction:\nExpected result:'
-    }
-  },
-  {
-    label: 'POST_TRADE_NOTE',
-    type: 'review-panel',
-    color: 'currentColor',
-    description: 'Post-trade review panel for lessons, screenshots to revisit, and improvement notes.',
-    params: {
-      shortCode: 'REV',
-      menuLabel: 'REVIEW',
-      protocol: 'POST_TRADE_REVIEW',
-      description: 'Post-trade review panel for lessons, screenshots to revisit, and improvement notes.',
-      value: 'Observed result:\nLesson:\nNext adjustment:'
+      shortCode: 'FIL',
+      menuLabel: 'FILE',
+      protocol: 'FILE_ATTACHMENT',
+      description: 'Attach a file to the scenario archive.'
     }
   }
 ]
@@ -1646,14 +1696,190 @@ const effectiveSelectedNode = computed(() => {
   return node
 })
 
+const activeDrawingNodeId = ref<string | null>(null)
+const fullscreenDrawingBoard = ref<HTMLElement | null>(null)
+const activeDrawingStrokeId = ref<string | null>(null)
+const isDrawingPointerDown = ref(false)
+const isDrawingCursorVisible = ref(false)
+const drawingCursor = ref({ x: 0, y: 0 })
+const drawingTool = ref<'brush' | 'eraser'>('brush')
+const drawingColor = ref('#2c2c2a')
+const drawingSize = ref(4)
+const activeDrawingNode = computed(() => (
+  activeDrawingNodeId.value ? findNodeById(rootNodes.value, activeDrawingNodeId.value) : null
+))
+const drawingCursorDiameter = computed(() => Math.max(10, drawingSize.value * (drawingTool.value === 'eraser' ? 2.8 : 2)))
+const drawingSizePercent = computed(() => ((drawingSize.value - 1) / 23) * 100)
+const drawingCursorStyle = computed(() => ({
+  width: `${drawingCursorDiameter.value}px`,
+  height: `${drawingCursorDiameter.value}px`,
+  transform: `translate(${drawingCursor.value.x - drawingCursorDiameter.value / 2}px, ${drawingCursor.value.y - drawingCursorDiameter.value / 2}px)`
+}))
+
+function ensureDrawingParams(node: Node) {
+  if (!node.params) node.params = {}
+  if (!Array.isArray(node.params.strokes)) node.params.strokes = []
+}
+
+function openDrawingFullscreen(node: Node) {
+  ensureDrawingParams(node)
+  activeDrawingNodeId.value = node.id
+  activeMenuCategory.value = null
+}
+
+function closeDrawingFullscreen() {
+  activeDrawingNodeId.value = null
+  activeDrawingStrokeId.value = null
+  isDrawingPointerDown.value = false
+  isDrawingCursorVisible.value = false
+  saveMatrixData()
+}
+
+function clearDrawingFullscreen() {
+  if (!activeDrawingNode.value) return
+  ensureDrawingParams(activeDrawingNode.value)
+  activeDrawingNode.value.params.strokes = []
+  saveMatrixData()
+  forceUpdate()
+}
+
+function setDrawingSizeFromEvent(e: MouseEvent, track: HTMLElement) {
+  const rect = track.getBoundingClientRect()
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)))
+  drawingSize.value = Math.round(1 + ratio * 23)
+}
+
+function startDrawingSizeDrag(e: MouseEvent) {
+  const track = e.currentTarget as HTMLElement
+  setDrawingSizeFromEvent(e, track)
+
+  const move = (moveEvent: MouseEvent) => {
+    setDrawingSizeFromEvent(moveEvent, track)
+  }
+  const stop = () => {
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('mouseup', stop)
+  }
+
+  window.addEventListener('mousemove', move)
+  window.addEventListener('mouseup', stop)
+}
+
+function getFullscreenDrawingPoint(e: MouseEvent) {
+  const board = fullscreenDrawingBoard.value
+  if (!board) return { x: 0, y: 0 }
+  const rect = board.getBoundingClientRect()
+  return {
+    x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / Math.max(1, rect.width)) * 100)),
+    y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / Math.max(1, rect.height)) * 100))
+  }
+}
+
+function updateDrawingCursor(e: MouseEvent) {
+  const board = fullscreenDrawingBoard.value
+  if (!board) return
+  const rect = board.getBoundingClientRect()
+  drawingCursor.value = {
+    x: Math.max(0, Math.min(rect.width, e.clientX - rect.left)),
+    y: Math.max(0, Math.min(rect.height, e.clientY - rect.top))
+  }
+  isDrawingCursorVisible.value = true
+}
+
+function startFullscreenDrawing(e: MouseEvent) {
+  if (!activeDrawingNode.value) return
+  ensureDrawingParams(activeDrawingNode.value)
+  updateDrawingCursor(e)
+  isDrawingPointerDown.value = true
+  if (drawingTool.value === 'eraser') {
+    eraseDrawingAtPoint(getFullscreenDrawingPoint(e))
+    return
+  }
+  const stroke = {
+    id: 's' + Date.now().toString(36),
+    color: drawingColor.value,
+    size: drawingSize.value,
+    points: [getFullscreenDrawingPoint(e)]
+  }
+  activeDrawingNode.value.params.strokes.push(stroke)
+  activeDrawingStrokeId.value = stroke.id
+}
+
+function moveFullscreenDrawing(e: MouseEvent) {
+  if (!activeDrawingNode.value) return
+  updateDrawingCursor(e)
+  if (!isDrawingPointerDown.value) return
+  if (drawingTool.value === 'eraser') {
+    eraseDrawingAtPoint(getFullscreenDrawingPoint(e))
+    return
+  }
+  if (!activeDrawingStrokeId.value) return
+  const stroke = activeDrawingNode.value.params?.strokes?.find((item: any) => item.id === activeDrawingStrokeId.value)
+  if (!stroke) return
+  stroke.points.push(getFullscreenDrawingPoint(e))
+}
+
+function finishFullscreenDrawing() {
+  if (!activeDrawingNode.value) return
+  activeDrawingStrokeId.value = null
+  isDrawingPointerDown.value = false
+  isDrawingCursorVisible.value = false
+  saveMatrixData()
+  forceUpdate()
+}
+
+function formatDrawingStroke(stroke: any) {
+  return (stroke.points || []).map((point: any) => `${point.x},${point.y}`).join(' ')
+}
+
+function eraseDrawingAtPoint(point: { x: number; y: number }) {
+  if (!activeDrawingNode.value?.params?.strokes) return
+  const boardRect = fullscreenDrawingBoard.value?.getBoundingClientRect()
+  const thresholdPx = Math.max(6, drawingSize.value * 1.4)
+  const nextStrokes: any[] = []
+
+  activeDrawingNode.value.params.strokes.forEach((stroke: any) => {
+    let currentSegment: any[] = []
+
+    ;(stroke.points || []).forEach((strokePoint: any) => {
+      const dx = ((strokePoint.x - point.x) / 100) * (boardRect?.width || 1000)
+      const dy = ((strokePoint.y - point.y) / 100) * (boardRect?.height || 1000)
+      const shouldErasePoint = Math.sqrt(dx * dx + dy * dy) <= thresholdPx
+
+      if (shouldErasePoint) {
+        if (currentSegment.length > 1) {
+          nextStrokes.push({
+            ...stroke,
+            id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            points: currentSegment
+          })
+        }
+        currentSegment = []
+      } else {
+        currentSegment.push(strokePoint)
+      }
+    })
+
+    if (currentSegment.length > 1) {
+      nextStrokes.push({
+        ...stroke,
+        id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        points: currentSegment
+      })
+    }
+  })
+
+  activeDrawingNode.value.params.strokes = nextStrokes
+  forceUpdate()
+}
+
 // --- MENU STATE --- //
 const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG']
-const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_VARIANTS', 'SCENARIO_REVIEW']
+const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO']
 const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   SCENARIO_DOCS: 'DOCS',
   SCENARIO_VISUALS: 'VISUALS',
-  SCENARIO_VARIANTS: 'VARIANTS',
-  SCENARIO_REVIEW: 'REVIEW'
+  SCENARIO_AUDIO: 'AUDIO'
 }
 const activeMenuCategory = ref<MenuCategory | null>('LOGIC')
 const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
@@ -1668,6 +1894,19 @@ const riskLossTradeUnit = ref<'%' | '$'>('%')
 const riskLossDayUnit = ref<'%' | '$'>('$')
 const riskLossDay = ref(5)
 const riskRR = ref(3)
+const matrixAudioRecordingState = ref<'idle' | 'recording' | 'paused'>('idle')
+const matrixAudioError = ref('')
+const matrixAudioRecorder = ref<MediaRecorder | null>(null)
+const matrixAudioStream = ref<MediaStream | null>(null)
+const isMatrixNativeAudioSession = ref(false)
+let matrixAudioChunks: BlobPart[] = []
+
+const matrixAudioErrorLabel = computed(() => {
+  if (matrixAudioError.value === 'Secure_Context_Required') return 'Open_Through_Localhost_Or_HTTPS'
+  if (matrixAudioError.value === 'Recorder_Not_Available') return 'Audio_Recorder_Not_Available'
+  if (matrixAudioError.value === 'Microphone_Not_Available') return 'MacOS_Microphone_Permission_Required'
+  return matrixAudioError.value
+})
 
 const commandLinkCategories = computed(() => (
   isScenarioContext.value ? scenarioCommandCategories : defaultCommandCategories
@@ -1883,12 +2122,21 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('click', handleGlobalClick)
+  cleanupMatrixAudioRecording()
 })
 
 function handleGlobalKeydown(e: KeyboardEvent) {
   // Ignore if user is typing in an input or textarea
   const target = e.target as HTMLElement
   const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+
+  if (activeDrawingNodeId.value) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      closeDrawingFullscreen()
+    }
+    return
+  }
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
     if (!isInput) {
@@ -2288,6 +2536,242 @@ function handleNodeDive(node: Node) {
     resetView()
   } else if (node.type === 'image') {
     triggerImageUpload(node.id)
+  } else if (node.type === 'drawing-panel') {
+    openDrawingFullscreen(node)
+  } else if (node.type === 'file-attachment') {
+    triggerGenericFileUpload(node.id)
+  }
+}
+
+type LegacyNavigatorWithMedia = Navigator & {
+  getUserMedia?: (constraints: MediaStreamConstraints, success: (stream: MediaStream) => void, error: (error: Error) => void) => void
+  webkitGetUserMedia?: (constraints: MediaStreamConstraints, success: (stream: MediaStream) => void, error: (error: Error) => void) => void
+  mozGetUserMedia?: (constraints: MediaStreamConstraints, success: (stream: MediaStream) => void, error: (error: Error) => void) => void
+}
+
+function canRequestMatrixMicrophone() {
+  if (typeof navigator === 'undefined') return false
+  const legacyNavigator = navigator as LegacyNavigatorWithMedia
+  return !!navigator.mediaDevices?.getUserMedia ||
+    !!legacyNavigator.getUserMedia ||
+    !!legacyNavigator.webkitGetUserMedia ||
+    !!legacyNavigator.mozGetUserMedia
+}
+
+function isTauriRuntime() {
+  return typeof window !== 'undefined' && (
+    '__TAURI__' in (window as any) ||
+    '__TAURI_INTERNALS__' in (window as any) ||
+    navigator.userAgent.includes('Tauri')
+  )
+}
+
+function shouldUseNativeMatrixAudioRecorder() {
+  return isTauriRuntime() && !canRequestMatrixMicrophone()
+}
+
+function requestMatrixAudioStream() {
+  if (navigator.mediaDevices?.getUserMedia) {
+    return navigator.mediaDevices.getUserMedia({ audio: true })
+  }
+
+  const legacyNavigator = navigator as LegacyNavigatorWithMedia
+  const legacyGetUserMedia = legacyNavigator.getUserMedia ||
+    legacyNavigator.webkitGetUserMedia ||
+    legacyNavigator.mozGetUserMedia
+
+  if (!legacyGetUserMedia) {
+    return Promise.reject(new Error('MICROPHONE_API_UNAVAILABLE'))
+  }
+
+  return new Promise<MediaStream>((resolve, reject) => {
+    legacyGetUserMedia.call(navigator, { audio: true }, resolve, reject)
+  })
+}
+
+function getMatrixMicrophoneUnavailableReason() {
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    return 'Secure_Context_Required'
+  }
+  if (typeof MediaRecorder === 'undefined') {
+    return 'Recorder_Not_Available'
+  }
+  return 'Microphone_Not_Available'
+}
+
+function getSupportedMatrixAudioMimeType() {
+  const options = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4'
+  ]
+  return options.find(type => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) || ''
+}
+
+function createAudioNodeFromRecording(params: { audioName: string; audioType: string; audioDataUrl: string }) {
+  addNode({
+    label: 'AUDIO_NOTE',
+    type: 'audio-note',
+    color: 'currentColor',
+    description: 'Recorded audio note for scenario archive.',
+    params: {
+      shortCode: 'AUD',
+      menuLabel: 'AUDIO',
+      protocol: 'AUDIO_NOTE',
+      description: 'Recorded audio note for scenario archive.',
+      ...params
+    }
+  })
+}
+
+async function startMatrixAudioRecording() {
+  matrixAudioError.value = ''
+  if (shouldUseNativeMatrixAudioRecorder()) {
+    await startNativeMatrixAudioRecording()
+    return
+  }
+  if (typeof MediaRecorder === 'undefined') {
+    matrixAudioError.value = 'Recorder_Not_Available'
+    return
+  }
+  if (!canRequestMatrixMicrophone()) {
+    matrixAudioError.value = getMatrixMicrophoneUnavailableReason()
+    return
+  }
+
+  try {
+    cleanupMatrixAudioRecording()
+    matrixAudioChunks = []
+    const stream = await requestMatrixAudioStream()
+    const mimeType = getSupportedMatrixAudioMimeType()
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+    matrixAudioStream.value = stream
+    matrixAudioRecorder.value = recorder
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) matrixAudioChunks.push(event.data)
+    }
+    recorder.onstop = () => {
+      const type = recorder.mimeType || mimeType || 'audio/webm'
+      const blob = new Blob(matrixAudioChunks, { type })
+      const extension = type.includes('mp4') ? 'mp4' : 'webm'
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        createAudioNodeFromRecording({
+          audioName: `audio-note-${new Date().toISOString().replace(/[:.]/g, '-')}.${extension}`,
+          audioType: type,
+          audioDataUrl: event.target?.result as string
+        })
+        cleanupMatrixAudioRecording()
+      }
+      reader.readAsDataURL(blob)
+    }
+
+    recorder.start()
+    matrixAudioRecordingState.value = 'recording'
+  } catch {
+    matrixAudioError.value = 'Microphone_Access_Denied'
+    cleanupMatrixAudioRecording()
+  }
+}
+
+function pauseMatrixAudioRecording() {
+  if (isMatrixNativeAudioSession.value) {
+    pauseNativeMatrixAudioRecording()
+    return
+  }
+  if (matrixAudioRecorder.value?.state !== 'recording') return
+  matrixAudioRecorder.value.pause()
+  matrixAudioRecordingState.value = 'paused'
+}
+
+function resumeMatrixAudioRecording() {
+  if (isMatrixNativeAudioSession.value) {
+    resumeNativeMatrixAudioRecording()
+    return
+  }
+  if (matrixAudioRecorder.value?.state !== 'paused') return
+  matrixAudioRecorder.value.resume()
+  matrixAudioRecordingState.value = 'recording'
+}
+
+function finishMatrixAudioRecording() {
+  if (isMatrixNativeAudioSession.value) {
+    stopNativeMatrixAudioRecording()
+    return
+  }
+  if (!matrixAudioRecorder.value || matrixAudioRecorder.value.state === 'inactive') return
+  matrixAudioRecorder.value.stop()
+  matrixAudioRecordingState.value = 'idle'
+}
+
+function cleanupMatrixAudioRecording() {
+  if (isMatrixNativeAudioSession.value) {
+    invoke('native_audio_stop').catch(() => {})
+    isMatrixNativeAudioSession.value = false
+  }
+  if (matrixAudioRecorder.value && matrixAudioRecorder.value.state !== 'inactive') {
+    matrixAudioRecorder.value.onstop = null
+    try {
+      matrixAudioRecorder.value.stop()
+    } catch {
+      // Recorder may already be closing after its tracks were revoked.
+    }
+  }
+  matrixAudioStream.value?.getTracks().forEach(track => track.stop())
+  matrixAudioStream.value = null
+  matrixAudioRecorder.value = null
+  matrixAudioRecordingState.value = 'idle'
+}
+
+async function startNativeMatrixAudioRecording() {
+  try {
+    await invoke('native_audio_start')
+    isMatrixNativeAudioSession.value = true
+    matrixAudioRecordingState.value = 'recording'
+    matrixAudioError.value = ''
+  } catch (error) {
+    matrixAudioError.value = String(error || 'Native_Audio_Start_Failed')
+    isMatrixNativeAudioSession.value = false
+    matrixAudioRecordingState.value = 'idle'
+  }
+}
+
+async function pauseNativeMatrixAudioRecording() {
+  try {
+    await invoke('native_audio_pause')
+    matrixAudioRecordingState.value = 'paused'
+  } catch (error) {
+    matrixAudioError.value = String(error || 'Native_Audio_Pause_Failed')
+  }
+}
+
+async function resumeNativeMatrixAudioRecording() {
+  try {
+    await invoke('native_audio_resume')
+    matrixAudioRecordingState.value = 'recording'
+  } catch (error) {
+    matrixAudioError.value = String(error || 'Native_Audio_Resume_Failed')
+  }
+}
+
+async function stopNativeMatrixAudioRecording() {
+  try {
+    const result = await invoke<{
+      data_url: string
+      mime_type: string
+      file_name: string
+    }>('native_audio_stop')
+    createAudioNodeFromRecording({
+      audioName: result.file_name,
+      audioType: result.mime_type,
+      audioDataUrl: result.data_url
+    })
+  } catch (error) {
+    matrixAudioError.value = String(error || 'Native_Audio_Stop_Failed')
+  } finally {
+    isMatrixNativeAudioSession.value = false
+    matrixAudioRecordingState.value = 'idle'
   }
 }
 
@@ -2510,11 +2994,18 @@ function addNode(type: any) {
 }
 
 const imageInput = ref<HTMLInputElement | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 const uploadingNodeId = ref<string | null>(null)
+const uploadingFileNodeId = ref<string | null>(null)
 
 function triggerImageUpload(nodeId: string) {
   uploadingNodeId.value = nodeId
   imageInput.value?.click()
+}
+
+function triggerGenericFileUpload(nodeId: string) {
+  uploadingFileNodeId.value = nodeId
+  fileInput.value?.click()
 }
 
 function handleImageUpload(e: Event) {
@@ -2535,12 +3026,30 @@ function handleImageUpload(e: Event) {
   reader.readAsDataURL(file)
 }
 
+function handleGenericFileUpload(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !uploadingFileNodeId.value) return
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    const node = getNode(uploadingFileNodeId.value!)
+    if (node) {
+      if (!node.params) node.params = {}
+      node.params.fileName = file.name
+      node.params.fileSize = file.size
+      node.params.fileType = file.type || 'application/octet-stream'
+      node.params.fileDataUrl = event.target?.result as string
+    }
+    uploadingFileNodeId.value = null
+    ;(e.target as HTMLInputElement).value = ''
+  }
+  reader.readAsDataURL(file)
+}
+
 function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
   if (!node) return null
   if (isScenarioContext.value) {
-    if (['image', 'drawing-panel', 'markup-panel'].includes(node.type)) return 'SCENARIO_VISUALS'
-    if (['variant-panel', 'failure-panel', 'invalidation-panel'].includes(node.type)) return 'SCENARIO_VARIANTS'
-    if (['decision-gate', 'playbook-step', 'review-panel'].includes(node.type)) return 'SCENARIO_REVIEW'
+    if (['text-panel', 'checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
     return 'SCENARIO_DOCS'
   }
   if (node.params?.needsConfig) return 'CONFIG'

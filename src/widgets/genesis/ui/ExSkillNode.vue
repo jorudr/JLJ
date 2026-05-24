@@ -1,17 +1,17 @@
 <template>
-  <div class="skill-chip absolute cursor-pointer group pointer-events-auto" 
-       :style="{ 
-         left: (node.x) + 'px', 
+  <div class="skill-chip absolute cursor-pointer group pointer-events-auto"
+       :style="{
+         left: (node.x) + 'px',
          top: (node.y) + 'px',
          zIndex: isSelected ? 1000 : 1,
-         width: node.type === 'image' ? (node.params?.width || 300) + 'px' : (isScenarioPanel ? (node.params?.width || scenarioPanelSize.width) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px')),
-         height: node.type === 'image' ? (node.params?.height || 200) + 'px' : (isScenarioPanel ? (node.params?.height || scenarioPanelSize.height) + 'px' : (node.type === 'scaling-entry' || node.type === 'step' ? '56px' : '112px'))
+         width: nodeWidth,
+         height: nodeHeight
        }"
        @mousedown.stop="startDrag"
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
-    
+
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="node.type.toUpperCase()" class="w-full h-full">
+     <ExNTtooltip :title="node.type.toUpperCase()" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
            <div class="relative w-full h-full border-[2px] backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
@@ -26,7 +26,7 @@
                 ]"
                 :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
                 @dblclick.stop="$emit('doubleclick')">
-           
+
            <!-- Selection Brackets -->
             <div v-if="isSelected" class="absolute -inset-4 pointer-events-none">
                <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
@@ -34,13 +34,16 @@
                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
             </div>
-           
+
+           <div class="absolute left-1/2 top-1/2 flex flex-col items-center justify-center"
+                :style="nodeContentScaleStyle">
+
            <!-- Skill Icon / Label / Image Content -->
-           <div v-if="node.type === 'instrument' || ['indicator', 'pattern', 'smc', 'emotion-state', 'step', 'scaling-entry', 'risk-element'].includes(node.type)" 
+           <div v-if="node.type === 'instrument' || ['indicator', 'pattern', 'smc', 'emotion-state', 'step', 'scaling-entry', 'risk-element'].includes(node.type)"
                 class="w-full h-full flex items-center justify-center overflow-hidden relative"
                 :class="(node.type === 'step' || node.type === 'scaling-entry') ? 'p-0' : 'p-[15%]'">
-              <img v-if="node.type === 'instrument' && node.params?.logo && !imageError" 
-                   :src="node.params.logo" 
+              <img v-if="node.type === 'instrument' && node.params?.logo && !imageError"
+                   :src="node.params.logo"
                    @error="imageError = true"
                    draggable="false"
                    class="w-full h-full object-contain opacity-100 grayscale transition-all duration-700 select-none pointer-events-none"
@@ -50,16 +53,16 @@
                     :class="[
                       (node.type === 'step' || node.type === 'scaling-entry') ? 'text-nier-white dark:text-nier-black opacity-100 font-light' : 'text-nier-text-light dark:text-nier-text-dark opacity-100 font-black',
                       isSelected ? 'opacity-100' : '',
-                      node.type === 'emotion-state' ? 'text-[36px]' : 
+                      node.type === 'emotion-state' ? 'text-[36px]' :
                        (node.type === 'scaling-entry' || node.type === 'step') ? (node.label && node.label.length > 3 ? 'text-[12px]' : 'text-[24px]') :
                        'text-[24px]'
                     ]"
                     :style="displayColor ? { color: displayColor } : (node.type === 'risk-element' ? { color: '#ef4444' } : {})">
-                {{ 
-                   node.type === 'emotion-state' ? (node.label || 'EN').slice(0, 2).toUpperCase() : 
-                   (node.type === 'step' || node.type === 'scaling-entry') ? (node.label || '') : 
+                {{
+                   node.type === 'emotion-state' ? (node.label || 'EN').slice(0, 2).toUpperCase() :
+                   (node.type === 'step' || node.type === 'scaling-entry') ? (node.label || '') :
                    node.type === 'risk-element' ? (node.params?.riskType === 'trade' ? 'RT' : node.params?.riskType === 'day' ? 'RD' : node.params?.riskType === 'style' ? (node.label || 'ST').slice(0, 2).toUpperCase() : 'RR') :
-                   (node.label || 'NOD').slice(0, 3).toUpperCase() 
+                   (node.label || 'NOD').slice(0, 3).toUpperCase()
                 }}
               </div>
            </div>
@@ -73,7 +76,7 @@
                   <ExText variant="telemetry" class="opacity-40">Awaiting_Visual_Protocol</ExText>
                </div>
                             <div v-else class="w-full h-full border-2 border-nier-border-light dark:border-nier-border-dark p-1 bg-nier-white dark:bg-nier-black relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                 <img :src="node.params.imageUrl" 
+                 <img :src="node.params.imageUrl"
                       class="w-full h-full object-contain opacity-100 transition-all duration-700 select-none pointer-events-none"
                       style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; transform: translateZ(0); will-change: transform, opacity;" />
                                   <!-- Scanning Lines overlay -->
@@ -95,42 +98,138 @@
                <div class="absolute -inset-4 border border-nier-border-light dark:border-nier-border-dark opacity-20 pointer-events-none"></div>
             </div>
 
+            <!-- Audio Player Rendering -->
+            <div v-if="node.type === 'audio-note'" class="w-full h-full border border-nier-border-light dark:border-nier-border-dark bg-nier-white/90 dark:bg-nier-black/90 flex items-center px-3 gap-3 overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.4)] pointer-events-auto relative">
+                 <button @mousedown.stop
+                         @click.stop="toggleAudioPlayback"
+                         :disabled="!node.params.audioDataUrl"
+                         class="border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed hover:border-nier-text-light dark:hover:border-nier-text-dark transition-colors flex-shrink-0 w-8 h-8 bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
+                    <span v-if="!isAudioPlaying" class="w-0 h-0 border-y-[6px] border-y-transparent border-l-[10px] border-l-nier-text-light dark:border-l-nier-text-dark ml-0.5"></span>
+                    <span v-else class="w-3 h-3 border-x-4 border-nier-text-light dark:border-nier-text-dark"></span>
+                 </button>
+                 <div class="flex-1 min-w-0 flex flex-col gap-1.5 py-1">
+                    <div class="relative h-4 cursor-pointer flex items-center"
+                         @mousedown.stop.prevent="seekAudio">
+                       <div class="w-full h-[2px] bg-nier-border-light dark:bg-nier-border-dark"></div>
+                       <div class="absolute left-0 h-[2px] bg-nier-text-light dark:bg-nier-text-dark"
+                            :style="{ width: `${audioProgressPercent}%` }"></div>
+                       <div class="absolute top-1/2 w-2.5 h-2.5 -translate-y-1/2 -translate-x-1/2 border-[1.5px] border-nier-text-light dark:border-nier-text-dark bg-nier-white dark:bg-nier-black transition-[left] duration-75"
+                            :class="isAudioSeeking ? '!transition-none' : ''"
+                            :style="{ left: `${audioProgressPercent}%` }"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[8px] font-mono opacity-60">
+                       <span>{{ formatAudioTime(audioCurrentTime) }}</span>
+                       <span class="truncate px-2 flex-1 text-center font-black">{{ node.params.audioName || 'AUDIO_NOTE' }}</span>
+                       <span>{{ formatAudioTime(audioDuration) }}</span>
+                    </div>
+                 </div>
+                 <audio ref="audioElement"
+                        v-if="node.params.audioDataUrl"
+                        :src="node.params.audioDataUrl"
+                        class="hidden"
+                        @timeupdate="updateAudioProgress"
+                        @loadedmetadata="updateAudioProgress"
+                        @ended="handleAudioEnded"></audio>
+                 
+                 <!-- Inner Corner Accents -->
+                 <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
+                 <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
+            </div>
+
            <!-- Scenario documentation panels -->
             <div v-if="isScenarioPanel"
                  class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
                <div class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
-                  <span class="text-[8px] font-mono tracking-[0.35em] uppercase font-black opacity-60">{{ node.params?.menuLabel || node.label }}</span>
-                  <span class="text-[8px] font-mono tracking-widest uppercase opacity-30">{{ node.params?.shortCode || node.type.slice(0, 3) }}</span>
+                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate">{{ scenarioPanelHeaderTitle }}</span>
+                  <span class="text-[8px] font-mono tracking-widest uppercase opacity-30 truncate max-w-[96px]">{{ scenarioPanelHeaderCode }}</span>
                </div>
 
-               <div v-if="isVisualScenarioPanel"
-                    class="relative flex-1 m-3 border border-dashed border-nier-border-light dark:border-nier-border-dark bg-[linear-gradient(90deg,currentColor_1px,transparent_1px),linear-gradient(currentColor_1px,transparent_1px)] bg-[size:20px_20px] text-nier-text-light/10 dark:text-nier-text-dark/10 cursor-crosshair overflow-hidden"
-                    @mousedown.stop.prevent="startScenarioDrawing"
-                    @mousemove.stop.prevent="moveScenarioDrawing"
-                    @mouseup.stop.prevent="finishScenarioDrawing"
-                    @mouseleave.stop.prevent="finishScenarioDrawing">
-                  <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+               <div v-if="isDrawingPanel"
+                    class="relative flex-1 m-3 border border-dashed border-nier-border-light dark:border-nier-border-dark bg-[linear-gradient(90deg,currentColor_1px,transparent_1px),linear-gradient(currentColor_1px,transparent_1px)] bg-[size:18px_18px] text-nier-text-light/10 dark:text-nier-text-dark/10 overflow-hidden">
+                  <svg class="absolute inset-0 w-full h-full pointer-events-none text-nier-text-light dark:text-nier-text-dark"
+                       viewBox="0 0 100 100"
+                       preserveAspectRatio="none">
                      <polyline v-for="stroke in node.params?.strokes || []"
                                :key="stroke.id"
-                               :points="formatScenarioStroke(stroke)"
+                               :points="formatPanelStroke(stroke)"
                                fill="none"
-                               stroke="currentColor"
-                               stroke-width="1.4"
+                               :stroke="stroke.color || 'currentColor'"
+                               :stroke-width="Math.max(0.7, (stroke.size || 2) * 0.45)"
                                stroke-linecap="round"
                                stroke-linejoin="round"
-                               class="text-nier-text-light dark:text-nier-text-dark opacity-70" />
+                               vector-effect="non-scaling-stroke"
+                               class="opacity-70" />
                   </svg>
                   <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <span class="text-[9px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">{{ node.params?.protocol || 'VISUAL_PANEL' }}</span>
+                     <span class="text-[8px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">Double_Click_To_Draw</span>
                   </div>
-                  <div class="absolute top-2 left-2 w-6 h-6 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                  <div class="absolute bottom-2 right-2 w-6 h-6 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                  <button v-if="node.params?.strokes?.length"
-                          @mousedown.stop
-                          @click.stop="node.params.strokes = []"
-                          class="absolute right-2 top-2 px-2 py-1 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 text-[7px] font-mono tracking-widest uppercase text-nier-text-light dark:text-nier-text-dark opacity-0 group-hover:opacity-80 hover:opacity-100 transition-opacity">
-                     CLR
+               </div>
+
+               <div v-else-if="node.type === 'checklist-panel'" class="flex-1 min-h-0 px-3 py-2 overflow-y-auto custom-scrollbar space-y-2">
+                  <div v-for="item in node.params.items || []" :key="item.id" class="flex items-center gap-2">
+                     <button @mousedown.stop
+                             @click.stop="item.done = !item.done"
+                             class="w-3.5 h-3.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center flex-shrink-0">
+                        <div v-if="item.done" class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45"></div>
+                     </button>
+                     <input v-model="item.text"
+                            @mousedown.stop
+                            @click.stop
+                            class="flex-1 min-w-0 bg-transparent outline-none text-[9px] font-mono uppercase tracking-wide text-nier-text-light dark:text-nier-text-dark"
+                            :class="item.done ? 'line-through opacity-35' : ''" />
+                  </div>
+                  <button @mousedown.stop
+                          @click.stop="addChecklistItem"
+                          class="w-full h-7 border border-dashed border-nier-border-light dark:border-nier-border-dark text-[8px] font-mono tracking-[0.25em] uppercase opacity-45 hover:opacity-100 transition-opacity">
+                     +
                   </button>
+               </div>
+
+               <div v-else-if="node.type === 'embed-panel'" class="flex-1 min-h-0 p-3 flex flex-col gap-2">
+                  <input v-model="node.params.embedUrl"
+                         @mousedown.stop
+                         @click.stop
+                         placeholder="https://..."
+                         class="h-8 bg-transparent border border-nier-border-light dark:border-nier-border-dark px-2 text-[9px] font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
+                  <div class="flex-1 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex items-center justify-center overflow-hidden">
+                     <span class="text-[8px] font-mono tracking-[0.25em] uppercase opacity-35 break-all px-3 text-center">{{ node.params.embedUrl || 'Embed_URL' }}</span>
+                  </div>
+               </div>
+
+               <div v-else-if="node.type === 'table-panel'" class="flex-1 min-h-0 p-3 flex flex-col gap-2">
+                  <div class="flex items-center justify-between gap-2">
+                     <div class="flex items-center gap-1">
+                        <button @mousedown.stop @click.stop="resizeTable(-1, 0)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">-</button>
+                        <span class="text-[8px] font-mono opacity-45 w-8 text-center">{{ tableRows }}R</span>
+                        <button @mousedown.stop @click.stop="resizeTable(1, 0)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">+</button>
+                     </div>
+                     <div class="flex items-center gap-1">
+                        <button @mousedown.stop @click.stop="resizeTable(0, -1)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">-</button>
+                        <span class="text-[8px] font-mono opacity-45 w-8 text-center">{{ tableCols }}C</span>
+                        <button @mousedown.stop @click.stop="resizeTable(0, 1)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">+</button>
+                     </div>
+                  </div>
+                  <div class="flex-1 overflow-auto custom-scrollbar border border-nier-border-light dark:border-nier-border-dark">
+                     <div class="grid min-w-max" :style="{ gridTemplateColumns: `repeat(${tableCols || 1}, minmax(64px, 1fr))` }">
+                        <input v-for="cell in tableCells"
+                               :key="`${cell.row}-${cell.col}`"
+                               :value="tableDraft[cell.row]?.[cell.col] || ''"
+                               @focus="isEditingTable = true"
+                               @input="updateTableCell(cell.row, cell.col, $event)"
+                               @blur="finishTableEditing"
+                               @mousedown.stop
+                               @click.stop
+                               class="h-8 min-w-16 bg-transparent border-r border-b border-nier-border-light dark:border-nier-border-dark px-2 text-[9px] font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
+                     </div>
+                  </div>
+               </div>
+
+               <div v-else-if="node.type === 'file-attachment'" class="flex-1 min-h-0 p-3 flex flex-col items-center justify-center gap-3">
+                  <div class="w-10 h-10 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
+                     <span class="text-[10px] font-mono font-black">FILE</span>
+                  </div>
+                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double_Click_To_Attach' }}</span>
+                  <a v-if="node.params.fileDataUrl" :href="node.params.fileDataUrl" :download="node.params.fileName" @mousedown.stop @click.stop class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</a>
                </div>
 
                <textarea v-else
@@ -139,31 +238,20 @@
                          @click.stop
                          placeholder="ENTER_SCENARIO_DETAILS..."
                          class="flex-1 w-full min-h-0 resize-none bg-transparent px-3 py-2 text-[10px] leading-relaxed font-mono uppercase tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar"></textarea>
+
+               <div class="absolute -bottom-3 -right-3 w-8 h-8 cursor-nwse-resize flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
+                    @mousedown.stop.prevent="startResize">
+                  <div class="w-3 h-3 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark"></div>
+               </div>
             </div>
-
-           <!-- Connection Points -->
-            <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', node)" @mouseup.stop="$emit('drop', node)" 
-                 @dblclick.stop="$emit('clear-input', node)"
-                 :class="[
-                   isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100'
-                 ]"
-                 class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -left-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black transition-all shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
-            <div @mousedown.stop="$emit('start-output', node)" 
-                 @dblclick.stop="$emit('clear-output', node)"
-                 class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
-            
-            <!-- Hover Fill -->
-            <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
-           
-
             <!-- Placeholder / Empty Cell -->
             <div v-if="node.type === 'placeholder'" class="flex items-center justify-center">
                <div class="w-3 h-3 bg-nier-text-light dark:bg-nier-text-dark rotate-45"></div>
             </div>
 
            <!-- Default SVGs for other types -->
-           <svg v-if="!isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image'].includes(node.type)"
-               class="w-[60%] h-[60%] opacity-60 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark" 
+           <svg v-if="!isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image', 'audio-note'].includes(node.type)"
+               class="w-[60%] h-[60%] opacity-60 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark"
                :class="{ 'opacity-100': isSelected }"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path v-if="node.type === 'strategy'" d="M12 4L20 18H4L12 4z" />
@@ -185,6 +273,21 @@
             </g>
             <path v-else d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
            </svg>
+           </div>
+
+           <!-- Connection Points -->
+            <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', node)" @mouseup.stop="$emit('drop', node)"
+                 @dblclick.stop="$emit('clear-input', node)"
+                 :class="[
+                   isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100'
+                 ]"
+                 class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -left-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black transition-all shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
+            <div @mousedown.stop="$emit('start-output', node)"
+                 @dblclick.stop="$emit('clear-output', node)"
+                 class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
+
+            <!-- Hover Fill -->
+            <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
          </div>
        </template>
         <div class="flex flex-col space-y-2 p-1">
@@ -207,7 +310,7 @@
      </ExNTtooltip>
 
       <!-- MERGE BUTTON -->
-      <div v-if="node.params?.canMerge" 
+      <div v-if="node.params?.canMerge"
            class="absolute top-full left-1/2 -translate-x-1/2 mt-4 pointer-events-auto z-[2000]">
         <button @click.stop="$emit('merge', node.params.isIndicatorSide ? { fromId: node.id, toId: node.params.mergePartnerId } : { fromId: node.params.mergePartnerId, toId: node.id })"
                 class="bg-nier-white dark:bg-nier-black border border-nier-text-light dark:border-nier-text-dark px-8 py-3 text-[10px] font-mono tracking-[0.3em] uppercase font-black hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all shadow-xl whitespace-nowrap">
@@ -218,12 +321,12 @@
 
 
       <!-- Scaling Entry Subtitle -->
-       <div v-if="node.type === 'scaling-entry'" 
+       <div v-if="node.type === 'scaling-entry'"
             class="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex flex-col items-center pointer-events-none z-50">
          <div class="px-5 py-3 bg-nier-white dark:bg-nier-black border-[1.5px] border-nier-border-light dark:border-nier-border-dark flex flex-col items-center space-y-1 min-w-[130px] shadow-[0_15px_35px_rgba(0,0,0,0.4)] relative">
             <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
             <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
-            
+
             <span class="text-[14px] font-mono font-black tracking-[0.1em] text-nier-text-light dark:text-nier-text-dark uppercase leading-none">{{ node.params.lots }} LOTS</span>
             <div class="w-full h-px bg-nier-border-light dark:bg-nier-border-dark opacity-20"></div>
             <span class="text-[12px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none">{{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
@@ -231,7 +334,7 @@
       </div>
 
       <!-- Risk Element Overlay -->
-      <div v-if="node.type === 'risk-element' && node.params" 
+      <div v-if="node.type === 'risk-element' && node.params"
            class="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex flex-col items-center pointer-events-none min-w-max">
          <!-- Connector Line -->
          <div class="w-0.5 h-3 bg-red-500/40"></div>
@@ -239,7 +342,7 @@
             <!-- Glitch Scanning Line -->
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-red-500/5 to-transparent h-1/2 animate-scan pointer-events-none"></div>
             <ExText variant="telemetry" class="!text-red-500 !opacity-100 font-black tracking-[0.2em] whitespace-nowrap !text-[12px]">{{ node.label }}</ExText>
-            
+
             <!-- Technical corner accents -->
             <div class="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-500"></div>
             <div class="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-500"></div>
@@ -251,7 +354,7 @@
            class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center z-50">
        <!-- Editing Mode -->
        <div v-if="node.params?.isEditingName" class="min-w-full w-max pointer-events-auto relative">
-          <ExInput 
+          <ExInput
             variant="terminal"
             :modelValue="node.params.customName"
             @update:modelValue="node.params.customName = $event.toUpperCase()"
@@ -263,7 +366,7 @@
           />
        </div>
         <!-- Display Mode -->
-        <div v-else-if="node.params?.customName" 
+        <div v-else-if="node.params?.customName"
              class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1.5 flex flex-col items-center">
            <ExText variant="telemetry" class="!opacity-100 font-black">{{ node.params.customName }}</ExText>
            <!-- Mini Corners -->
@@ -301,16 +404,16 @@
 
 
     <!-- TACTICAL COMMENTS -->
-    <div v-if="isSelected && node.params?.comments?.length" 
+    <div v-if="isSelected && node.params?.comments?.length"
          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[500]"
          style="width: 2000px; height: 2000px;">
-       
+
        <svg class="absolute inset-0 w-full h-full overflow-visible opacity-60">
           <g v-for="comment in node.params.comments" :key="'path-'+comment.id">
              <path :d="(() => {
                const origin = getEdgeOrigin(1000, 1000, 1000 + comment.x/2, 1000 + comment.y/2, node.type === 'step');
                return `M ${origin.x} ${origin.y} L ${1000 + comment.x/2} ${1000 + comment.y/2} L ${1000 + comment.x} ${1000 + comment.y}`;
-             })()" 
+             })()"
                    fill="none" stroke="currentColor" stroke-width="2" class="text-nier-text-light dark:text-nier-text-dark" />
           </g>
        </svg>
@@ -324,7 +427,7 @@
              }"
              @mousedown.stop="startCommentDrag($event, comment)"
              @click.stop>
-          
+
           <Transition name="callout-pop" appear>
             <div class="bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark relative group flex flex-col overflow-hidden"
                  :style="{
@@ -333,7 +436,7 @@
                     minWidth: '450px',
                     minHeight: '280px'
                  }">
-               
+
                <!-- ExPanel Corners -->
                <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-nier-text-light dark:border-nier-text-dark opacity-30 pointer-events-none"></div>
                <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark opacity-30 pointer-events-none"></div>
@@ -343,7 +446,7 @@
                   <div class="flex items-center space-x-3">
                      <span class="text-[13px] font-black tracking-[0.4em] uppercase font-sans">Comment {{ Number(idx) + 1 }}</span>
                   </div>
-                  <button @click.stop="removeComment(comment.id)" 
+                  <button @click.stop="removeComment(comment.id)"
                           class="hover:scale-125 transition-transform p-1">
                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 1 L9 9 M9 1 L1 9" />
@@ -355,7 +458,7 @@
                <div class="flex-1 flex flex-col overflow-hidden">
                   <!-- Editing State -->
                   <div v-if="comment.isEditing" class="flex-1 p-6">
-                     <textarea v-model="comment.text" 
+                     <textarea v-model="comment.text"
                                @blur="comment.isEditing = false"
                                @keyup.enter.shift="comment.isEditing = false"
                                @input="adjustTextareaHeight($event)"
@@ -364,9 +467,9 @@
                                class="w-full bg-transparent text-nier-text-light dark:text-nier-text-dark font-mono text-[22px] outline-none resize-none uppercase tracking-wide leading-relaxed p-0 overflow-hidden"
                                style="height: auto; min-height: 180px;"></textarea>
                   </div>
-                  
+
                   <!-- Display State -->
-                  <div v-else @click="comment.isEditing = true" 
+                  <div v-else @click="comment.isEditing = true"
                        class="flex-1 p-6 overflow-y-auto custom-scrollbar cursor-pointer">
                      <p class="text-[22px] font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed">
                         {{ comment.text || '[ NO_DATA_AVAILABLE ]' }}
@@ -388,10 +491,10 @@
     </div>
 
     <!-- TACTICAL REMEDY CALLOUTS -->
-    <div v-if="isSelected && node.type === 'emotion-state' && node.params?.remedies?.length" 
+    <div v-if="isSelected && node.type === 'emotion-state' && node.params?.remedies?.length"
          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100]"
          style="width: 1200px; height: 1000px;">
-       
+
        <svg class="absolute inset-0 w-full h-full overflow-visible opacity-30">
           <defs>
              <filter id="pointerGlow">
@@ -414,14 +517,14 @@
               left: getRemedyCoords(idx).styleLeft + 'px',
               '--delay': `${idx * 150}ms`
             }">
-          
+
           <Transition name="callout-pop" appear>
             <ExNTtooltip :title="'ANALYTICS_V.0' + (idx + 1)">
               <template #trigger>
                 <ExPanel :title="'FIX_PROTOCOL_0' + (idx + 1)" class="min-w-[320px]">
                    <!-- Scanning Effect -->
                    <div class="absolute inset-0 bg-nier-text-light/5 dark:bg-nier-text-dark/5 opacity-5 animate-pulse"></div>
-                   
+
                    <ExText variant="body" class="!text-nier-text-light dark:!text-nier-text-dark font-bold tracking-[0.1em] uppercase leading-tight">{{ remedy }}</ExText>
 
                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col space-y-1 opacity-20">
@@ -447,7 +550,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
@@ -483,14 +586,14 @@ const displayColor = computed(() => {
   if (props.node.params?.isCustom) {
     const baseColor = props.node.params?.color || props.node.color
     const hex = baseColor?.toLowerCase()
-    
+
     // If they have default white/black colors, swap them based on theme
     if (hex === '#ffffff' || hex === '#000000') {
       return props.isDark ? '#ffffff' : '#000000'
     }
     return baseColor
   }
-  
+
   // For system nodes, return null so they use theme-based CSS classes (text-theme-text, etc.)
   return null
 })
@@ -501,59 +604,300 @@ const isDragging = ref(false)
 const imageError = ref(false)
 const scenarioPanelTypes = [
   'text-panel',
-  'rules-panel',
-  'checklist-panel',
   'drawing-panel',
-  'markup-panel',
-  'variant-panel',
-  'failure-panel',
-  'invalidation-panel',
-  'decision-gate',
-  'playbook-step',
-  'review-panel'
+  'checklist-panel',
+  'embed-panel',
+  'table-panel',
+  'file-attachment',
 ]
-const visualScenarioPanelTypes = ['drawing-panel', 'markup-panel']
 const isScenarioPanel = computed(() => scenarioPanelTypes.includes(props.node.type))
-const isVisualScenarioPanel = computed(() => visualScenarioPanelTypes.includes(props.node.type))
-const scenarioPanelSize = computed(() => (
-  isVisualScenarioPanel.value
-    ? { width: 300, height: 190 }
-    : { width: 260, height: 180 }
+const isScenarioContentNode = computed(() => (
+  isScenarioPanel.value ||
+  (props.node.type === 'image' && props.node.params?.shortCode === 'IMG') ||
+  isAudioNote.value
 ))
-const activeScenarioStrokeId = ref<string | null>(null)
-
-function getScenarioDrawPoint(e: MouseEvent) {
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+const isDrawingPanel = computed(() => props.node.type === 'drawing-panel')
+const isAudioNote = computed(() => props.node.type === 'audio-note')
+const scenarioPanelSize = computed(() => (
+  isAudioNote.value ? { width: 320, height: 56 } :
+    isDrawingPanel.value || props.node.type === 'table-panel' ? { width: 300, height: 190 } : { width: 260, height: 180 }
+))
+const nodeWidth = computed(() => {
+  if (props.node.type === 'image') return `${props.node.params?.width || 300}px`
+  if (isAudioNote.value) return `${scenarioPanelSize.value.width}px`
+  if (isScenarioPanel.value) return `${props.node.params?.width || scenarioPanelSize.value.width}px`
+  return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
+})
+const nodeHeight = computed(() => {
+  if (props.node.type === 'image') return `${props.node.params?.height || 200}px`
+  if (isAudioNote.value) return `${scenarioPanelSize.value.height}px`
+  if (isScenarioPanel.value) return `${props.node.params?.height || scenarioPanelSize.value.height}px`
+  return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
+})
+const nodeInnerScale = computed(() => Math.min(1, Math.max(0.25, props.scale || 1)))
+const nodeContentScaleStyle = computed(() => {
+  const scale = nodeInnerScale.value
   return {
-    x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
-    y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100))
+    width: `${100 / scale}%`,
+    height: `${100 / scale}%`,
+    transform: `translate(-50%, -50%) scale(${scale})`,
+    transformOrigin: 'center center'
   }
-}
+})
+const tableDraft = ref<string[][]>([])
+const isEditingTable = ref(false)
+let tableCommitTimeout: ReturnType<typeof setTimeout> | null = null
+const audioElement = ref<HTMLAudioElement | null>(null)
+const isAudioPlaying = ref(false)
+const isAudioSeeking = ref(false)
+const audioCurrentTime = ref(0)
+const audioDuration = ref(0)
+let audioSeekTrackElement: HTMLElement | null = null
+let audioAnimationId = 0
 
-function startScenarioDrawing(e: MouseEvent) {
-  if (!isVisualScenarioPanel.value) return
-  if (!props.node.params.strokes) props.node.params.strokes = []
-  const stroke = {
-    id: 's' + Date.now().toString(36),
-    points: [getScenarioDrawPoint(e)]
+function startAudioAnimationLoop() {
+  const loop = () => {
+    if (isAudioPlaying.value && audioElement.value) {
+      if (!isAudioSeeking.value) {
+        audioCurrentTime.value = Number.isFinite(audioElement.value.currentTime) ? audioElement.value.currentTime : 0
+      }
+      audioAnimationId = requestAnimationFrame(loop)
+    }
   }
-  props.node.params.strokes.push(stroke)
-  activeScenarioStrokeId.value = stroke.id
+  audioAnimationId = requestAnimationFrame(loop)
 }
 
-function moveScenarioDrawing(e: MouseEvent) {
-  if (!activeScenarioStrokeId.value || !props.node.params?.strokes) return
-  const stroke = props.node.params.strokes.find((item: any) => item.id === activeScenarioStrokeId.value)
-  if (!stroke) return
-  stroke.points.push(getScenarioDrawPoint(e))
+function stopAudioAnimationLoop() {
+  cancelAnimationFrame(audioAnimationId)
 }
+const scenarioPanelHeaderTitle = computed(() => {
+  if (isAudioNote.value) return props.node.params?.audioName || props.node.label || 'Audio_Note'
+  return props.node.params?.menuLabel || props.node.label
+})
+const scenarioPanelHeaderCode = computed(() => {
+  if (isAudioNote.value) return props.node.params?.audioType || ''
+  return props.node.params?.shortCode || props.node.type.slice(0, 3)
+})
+const tableRows = computed(() => (
+  props.node.type === 'table-panel' ? Math.max(1, Math.min(12, Number(props.node.params?.rows) || 3)) : 0
+))
+const tableCols = computed(() => (
+  props.node.type === 'table-panel' ? Math.max(1, Math.min(8, Number(props.node.params?.cols) || 3)) : 0
+))
+const audioProgressPercent = computed(() => (
+  audioDuration.value > 0 ? Math.min(100, Math.max(0, (audioCurrentTime.value / audioDuration.value) * 100)) : 0
+))
+const tableCells = computed(() => {
+  if (props.node.type !== 'table-panel') return []
+  const cells: Array<{ row: number; col: number }> = []
+  for (let row = 0; row < tableRows.value; row++) {
+    for (let col = 0; col < tableCols.value; col++) {
+      cells.push({ row, col })
+    }
+  }
+  return cells
+})
 
-function finishScenarioDrawing() {
-  activeScenarioStrokeId.value = null
-}
+watch(
+  () => props.node.id,
+  () => syncTableDraft(),
+  { immediate: true }
+)
 
-function formatScenarioStroke(stroke: any) {
+watch(
+  () => [props.node.params?.rows, props.node.params?.cols],
+  () => {
+    if (props.node.type !== 'table-panel') return
+    ensureTableShape()
+    if (isEditingTable.value) return
+    syncTableDraft()
+  }
+)
+
+onBeforeUnmount(() => {
+  commitTableDraft()
+  stopAudioPlayback()
+  stopAudioSeekDrag()
+})
+
+watch(
+  () => props.node.params?.audioDataUrl,
+  () => {
+    stopAudioPlayback()
+    audioCurrentTime.value = 0
+    audioDuration.value = 0
+  }
+)
+
+function formatPanelStroke(stroke: any) {
   return (stroke.points || []).map((point: any) => `${point.x},${point.y}`).join(' ')
+}
+
+function addChecklistItem() {
+  if (!Array.isArray(props.node.params.items)) props.node.params.items = []
+  props.node.params.items.push({
+    id: 'c' + Date.now().toString(36),
+    text: 'NEW_CHECK',
+    done: false
+  })
+}
+
+function ensureTableShape() {
+  if (!props.node.params) props.node.params = {}
+  const rows = Math.max(1, Math.min(12, Number(props.node.params.rows) || 3))
+  const cols = Math.max(1, Math.min(8, Number(props.node.params.cols) || 3))
+  props.node.params.rows = rows
+  props.node.params.cols = cols
+  if (!Array.isArray(props.node.params.table)) props.node.params.table = []
+  for (let row = 0; row < rows; row++) {
+    if (!Array.isArray(props.node.params.table[row])) props.node.params.table[row] = []
+    for (let col = 0; col < cols; col++) {
+      if (typeof props.node.params.table[row][col] !== 'string') props.node.params.table[row][col] = ''
+    }
+    props.node.params.table[row] = props.node.params.table[row].slice(0, cols)
+  }
+  props.node.params.table = props.node.params.table.slice(0, rows)
+}
+
+function cloneTableShape(source: any[][] = [], rows = tableRows.value, cols = tableCols.value) {
+  return Array.from({ length: rows }, (_, row) => (
+    Array.from({ length: cols }, (_, col) => {
+      const value = source[row]?.[col]
+      return typeof value === 'string' ? value : ''
+    })
+  ))
+}
+
+function syncTableDraft() {
+  if (props.node.type !== 'table-panel') return
+  ensureTableShape()
+  tableDraft.value = cloneTableShape(props.node.params.table)
+}
+
+function commitTableDraft() {
+  if (props.node.type !== 'table-panel') return
+  if (tableCommitTimeout) {
+    clearTimeout(tableCommitTimeout)
+    tableCommitTimeout = null
+  }
+  ensureTableShape()
+  props.node.params.table = cloneTableShape(tableDraft.value)
+}
+
+function finishTableEditing() {
+  isEditingTable.value = false
+  commitTableDraft()
+}
+
+function scheduleTableCommit() {
+  if (tableCommitTimeout) clearTimeout(tableCommitTimeout)
+  tableCommitTimeout = setTimeout(() => {
+    commitTableDraft()
+  }, 350)
+}
+
+function updateTableCell(row: number, col: number, e: Event) {
+  const target = e.target as HTMLInputElement
+  const next = tableDraft.value.slice()
+  const nextRow = (next[row] || []).slice()
+  nextRow[col] = target.value
+  next[row] = nextRow
+  tableDraft.value = next
+  scheduleTableCommit()
+}
+
+function resizeTable(rowDelta: number, colDelta: number) {
+  commitTableDraft()
+  props.node.params.rows = Math.max(1, Math.min(12, (Number(props.node.params.rows) || 3) + rowDelta))
+  props.node.params.cols = Math.max(1, Math.min(8, (Number(props.node.params.cols) || 3) + colDelta))
+  ensureTableShape()
+  syncTableDraft()
+}
+
+async function toggleAudioPlayback() {
+  const audio = audioElement.value
+  if (!audio || !props.node.params?.audioDataUrl) return
+  if (isAudioPlaying.value) {
+    audio.pause()
+    isAudioPlaying.value = false
+    stopAudioAnimationLoop()
+    return
+  }
+
+  try {
+    await audio.play()
+    isAudioPlaying.value = true
+    startAudioAnimationLoop()
+  } catch {
+    isAudioPlaying.value = false
+  }
+}
+
+function stopAudioPlayback() {
+  const audio = audioElement.value
+  if (!audio) return
+  audio.pause()
+  audio.currentTime = 0
+  isAudioPlaying.value = false
+  stopAudioAnimationLoop()
+}
+
+function updateAudioProgress() {
+  const audio = audioElement.value
+  if (!audio) return
+  audioCurrentTime.value = Number.isFinite(audio.currentTime) ? audio.currentTime : 0
+  audioDuration.value = Number.isFinite(audio.duration) ? audio.duration : 0
+}
+
+function handleAudioEnded() {
+  isAudioPlaying.value = false
+  updateAudioProgress()
+  stopAudioAnimationLoop()
+}
+
+function getAudioSeekRatioFromEvent(e: MouseEvent) {
+  const track = audioSeekTrackElement
+  if (!track) return 0
+  const rect = track.getBoundingClientRect()
+  const physicalLeft = rect.left * (props.scale || 1)
+  const physicalWidth = rect.width * (props.scale || 1)
+  return Math.max(0, Math.min(1, (e.clientX - physicalLeft) / Math.max(1, physicalWidth)))
+}
+
+function setAudioSeekRatio(ratio: number) {
+  const audio = audioElement.value
+  if (!audio || !audioDuration.value) return
+  audio.currentTime = Math.max(0, Math.min(1, ratio)) * audioDuration.value
+  updateAudioProgress()
+}
+
+function moveAudioSeekDrag(e: MouseEvent) {
+  if (!isAudioSeeking.value) return
+  const nextRatio = getAudioSeekRatioFromEvent(e)
+  setAudioSeekRatio(nextRatio)
+}
+
+function stopAudioSeekDrag() {
+  isAudioSeeking.value = false
+  audioSeekTrackElement = null
+  window.removeEventListener('mousemove', moveAudioSeekDrag)
+  window.removeEventListener('mouseup', stopAudioSeekDrag)
+}
+
+function seekAudio(e: MouseEvent) {
+  audioSeekTrackElement = e.currentTarget as HTMLElement
+  isAudioSeeking.value = true
+  const nextRatio = getAudioSeekRatioFromEvent(e)
+  setAudioSeekRatio(nextRatio)
+  window.addEventListener('mousemove', moveAudioSeekDrag)
+  window.addEventListener('mouseup', stopAudioSeekDrag)
+}
+
+function formatAudioTime(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '0:00'
+  const minutes = Math.floor(value / 60)
+  const seconds = Math.floor(value % 60).toString().padStart(2, '0')
+  return `${minutes}:${seconds}`
 }
 
 const startDrag = (e: MouseEvent) => {
@@ -563,20 +907,20 @@ const startDrag = (e: MouseEvent) => {
   const startY = e.clientY
   const initialX = props.node.x
   const initialY = props.node.y
-  
+
   const move = (mE: MouseEvent) => {
     if (!isDragging.value) return
     props.node.x = initialX + (mE.clientX - startX) / props.scale
     props.node.y = initialY + (mE.clientY - startY) / props.scale
     emit('moved')
   }
-  
+
   const stop = () => {
     isDragging.value = false
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
   }
-  
+
   window.addEventListener('mousemove', move)
   window.addEventListener('mouseup', stop)
 }
@@ -587,30 +931,31 @@ const startCommentResize = (e: MouseEvent, comment: any) => {
   const startY = e.clientY
   const initialWidth = comment.width || 300
   const initialHeight = comment.height || 160
-  
+
   const move = (mE: MouseEvent) => {
     comment.width = Math.max(450, initialWidth + (mE.clientX - startX) / props.scale)
     comment.height = Math.max(280, initialHeight + (mE.clientY - startY) / props.scale)
     emit('moved')
   }
-  
+
   const stop = () => {
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
   }
-  
+
   window.addEventListener('mousemove', move)
   window.addEventListener('mouseup', stop)
 }
 
 const isResizing = ref(false)
 const startResize = (e: MouseEvent) => {
+  if (isAudioNote.value) return
   isResizing.value = true
   const startX = e.clientX
   const startY = e.clientY
-  const initialWidth = props.node.params?.width || 300
-  const initialHeight = props.node.params?.height || 200
-  
+  const initialWidth = props.node.params?.width || (isScenarioPanel.value ? scenarioPanelSize.value.width : 300)
+  const initialHeight = props.node.params?.height || (isScenarioPanel.value ? scenarioPanelSize.value.height : 200)
+
   const move = (mE: MouseEvent) => {
     if (!isResizing.value) return
     const dx = (mE.clientX - startX) / props.scale
@@ -619,36 +964,36 @@ const startResize = (e: MouseEvent) => {
     props.node.params.height = Math.max(100, initialHeight + dy)
     emit('moved')
   }
-  
+
   const stop = () => {
     isResizing.value = false
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
   }
-  
+
   window.addEventListener('mousemove', move)
   window.addEventListener('mouseup', stop)
 }
 
 const startCommentDrag = (e: MouseEvent, comment: any) => {
   if (comment.isEditing) return
-  
+
   const startX = e.clientX
   const startY = e.clientY
   const initialX = comment.x
   const initialY = comment.y
-  
+
   const move = (mE: MouseEvent) => {
     comment.x = initialX + (mE.clientX - startX) / props.scale
     comment.y = initialY + (mE.clientY - startY) / props.scale
     emit('moved')
   }
-  
+
   const stop = () => {
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
   }
-  
+
   window.addEventListener('mousemove', move)
   window.addEventListener('mouseup', stop)
 }
@@ -673,7 +1018,7 @@ const getRemedyCoords = (idx: number) => {
   const baseX = isLeft ? 320 : 880
   const baseStyleTop = isTop ? 360 : 560
   const baseStyleLeft = isLeft ? 0 : 880
-  
+
   return {
     x: baseX + (isLeft ? -repulsion : repulsion),
     y: baseY + (isTop ? -repulsion : repulsion),
@@ -685,8 +1030,8 @@ const getRemedyCoords = (idx: number) => {
 const getEdgeOrigin = (centerX: number, centerY: number, targetX: number, targetY: number, isCircle: boolean) => {
   const dx = targetX - centerX
   const dy = targetY - centerY
-  const radius = 62 
-  
+  const radius = 62
+
   if (isCircle) {
     const dist = Math.sqrt(dx * dx + dy * dy)
     if (dist === 0) return { x: centerX, y: centerY }
