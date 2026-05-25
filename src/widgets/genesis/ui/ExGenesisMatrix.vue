@@ -379,7 +379,7 @@
       </div>
 
       <!-- VIEWPORT TELEMETRY -->
-      <div class="absolute top-32 left-12 flex flex-col space-y-8 z-[40]">
+      <div v-if="!isScenarioContext" class="absolute top-32 left-12 flex flex-col space-y-8 z-[40]">
 
          <div class="flex items-center space-x-6">
             <div class="flex flex-col border-l border-nier-text-light/20 dark:border-nier-text-dark/20 pl-4 py-1">
@@ -446,6 +446,59 @@
             <div class="relative w-full flex px-6 transition-all duration-500"
                  :class="[activeMenuCategory ? 'pt-6 pb-6' : 'pt-0 pb-0', isScenarioContext ? 'overflow-visible' : 'overflow-hidden']">
                 <div v-if="activeMenuCategory" class="w-full flex justify-center">
+
+                <!-- TEXT FORMAT TOOLS -->
+                  <div v-if="activeMenuCategory === 'TEXT_FORMAT' && activeTextNode" class="flex flex-wrap items-center justify-center gap-4 pointer-events-auto px-4 w-full">
+                    <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
+                      <button v-for="preset in textFormatPresets"
+                              :key="preset.id"
+                              @mousedown.stop.prevent="applyTextBlock(preset.id)"
+                              class="h-9 px-4 border-l first:border-l-0 border-nier-border-light dark:border-nier-border-dark text-[9px] font-mono font-black tracking-[0.25em] uppercase opacity-60 hover:opacity-100 transition-all">
+                        {{ preset.label }}
+                      </button>
+                    </div>
+
+                    <div class="h-9 px-3 border border-nier-border-light dark:border-nier-border-dark flex items-center gap-3">
+                      <button @mousedown.stop.prevent="adjustTextCommandFontSize(-1)"
+                              class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 text-[12px] font-mono">-</button>
+                      <span class="text-[9px] font-mono font-black w-12 text-center">{{ activeTextFontSize }}px</span>
+                      <button @mousedown.stop.prevent="adjustTextCommandFontSize(1)"
+                              class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 text-[12px] font-mono">+</button>
+                    </div>
+
+                    <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
+                      <button @mousedown.stop.prevent="applyTextCommand('bold')"
+                              class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 transition-all">B</button>
+                      <button @mousedown.stop.prevent="applyTextCommand('italic')"
+                              class="h-9 w-11 border-l border-nier-border-light dark:border-nier-border-dark flex items-center justify-center font-serif italic text-[15px] opacity-60 hover:opacity-100 transition-all">I</button>
+                      <button @mousedown.stop.prevent="applyTextCommand('underline')"
+                              class="h-9 w-11 border-l border-nier-border-light dark:border-nier-border-dark flex items-center justify-center font-mono text-[13px] underline opacity-60 hover:opacity-100 transition-all">U</button>
+                    </div>
+
+                    <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
+                      <button @mousedown.stop.prevent="applyTextCommand('insertUnorderedList')"
+                              class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 transition-all">•</button>
+                      <button @mousedown.stop.prevent="applyTextBlock('quote')"
+                              class="h-9 w-11 border-l border-nier-border-light dark:border-nier-border-dark flex items-center justify-center font-serif text-[18px] opacity-60 hover:opacity-100 transition-all">“</button>
+                    </div>
+
+                    <label class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center cursor-pointer relative overflow-hidden">
+                      <span class="w-5 h-5 border border-nier-border-light dark:border-nier-border-dark"
+                            :style="{ backgroundColor: activeTextColor }"></span>
+                      <input :value="activeTextColor === 'currentColor' ? '#2c2c2a' : activeTextColor"
+                             type="color"
+                             class="absolute inset-0 opacity-0 cursor-pointer"
+                             @mousedown.stop
+                             @input="applyTextColor($event)" />
+                    </label>
+                    <button @mousedown.stop.prevent="resetTextColor"
+                            class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 transition-all"
+                            aria-label="Default text color">
+                      <span class="w-5 h-5 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light dark:bg-nier-text-dark relative">
+                        <span class="absolute left-1/2 top-[-3px] h-[26px] w-px bg-red-500 rotate-45 origin-center"></span>
+                      </span>
+                    </button>
+                  </div>
 
                 <!-- INDICATORS TOOLS (Universal Library) -->
                   <div v-if="activeMenuCategory === 'INDICATORS' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
@@ -1397,6 +1450,7 @@ type MenuCategory =
   | 'RISK'
   | 'SYSTEM'
   | 'CONFIG'
+  | 'TEXT_FORMAT'
   | 'SCENARIO_DOCS'
   | 'SCENARIO_VISUALS'
   | 'SCENARIO_AUDIO'
@@ -1441,6 +1495,10 @@ const activeContextNode = computed(() => {
   return findNodeById(rootNodes.value, activeContextId.value)
 })
 const isScenarioContext = computed(() => activeContextNode.value?.type === 'scenario')
+
+watch(isScenarioContext, (isScenario) => {
+  if (isScenario) viewState.value.scale = 1
+})
 
 // Current Reactive Viewport Data
 const nodes = computed<Node[]>({
@@ -1609,12 +1667,12 @@ const scenarioDocumentationTypes = [
     label: 'TABLE_PANEL',
     type: 'table-panel',
     color: 'currentColor',
-    description: 'Custom table panel with adjustable row and column count.',
+    description: 'Structured table panel with fixed full-cell inputs and auto sizing.',
     params: {
       shortCode: 'TBL',
       menuLabel: 'TABLE',
-      protocol: 'CUSTOM_TABLE_PANEL',
-      description: 'Custom table panel with adjustable row and column count.',
+      protocol: 'STRUCTURED_TABLE_PANEL',
+      description: 'Structured table panel with fixed full-cell inputs and auto sizing.',
       rows: 3,
       cols: 3,
       table: [
@@ -1697,6 +1755,7 @@ const effectiveSelectedNode = computed(() => {
 })
 
 const activeDrawingNodeId = ref<string | null>(null)
+const activeTextNodeId = ref<string | null>(null)
 const fullscreenDrawingBoard = ref<HTMLElement | null>(null)
 const activeDrawingStrokeId = ref<string | null>(null)
 const isDrawingPointerDown = ref(false)
@@ -1708,6 +1767,9 @@ const drawingSize = ref(4)
 const activeDrawingNode = computed(() => (
   activeDrawingNodeId.value ? findNodeById(rootNodes.value, activeDrawingNodeId.value) : null
 ))
+const activeTextNode = computed(() => (
+  activeTextNodeId.value ? findNodeById(rootNodes.value, activeTextNodeId.value) : null
+))
 const drawingCursorDiameter = computed(() => Math.max(10, drawingSize.value * (drawingTool.value === 'eraser' ? 2.8 : 2)))
 const drawingSizePercent = computed(() => ((drawingSize.value - 1) / 23) * 100)
 const drawingCursorStyle = computed(() => ({
@@ -1715,6 +1777,127 @@ const drawingCursorStyle = computed(() => ({
   height: `${drawingCursorDiameter.value}px`,
   transform: `translate(${drawingCursor.value.x - drawingCursorDiameter.value / 2}px, ${drawingCursor.value.y - drawingCursorDiameter.value / 2}px)`
 }))
+
+type TextFormatPreset = 'h' | 'p' | 'quote'
+
+const textFormatPresets: Array<{ id: TextFormatPreset; label: string; block: string }> = [
+  { id: 'h', label: 'H', block: 'h2' },
+  { id: 'p', label: 'P', block: 'p' }
+]
+const activeTextFontSize = ref(16)
+const activeTextColor = ref('#2c2c2a')
+const savedTextSelection = ref<Range | null>(null)
+
+function ensureTextPanelParams(node: Node) {
+  if (!node.params) node.params = {}
+  if (typeof node.params.value !== 'string') node.params.value = ''
+  if (typeof node.params.activeTextColor !== 'string') node.params.activeTextColor = ''
+  if (typeof node.params.html !== 'string') {
+    node.params.html = escapeTextHtml(node.params.value).replace(/\n/g, '<br>')
+  }
+}
+
+function escapeTextHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function getActiveTextEditor() {
+  if (!activeTextNode.value) return null
+  return document.querySelector(`[data-text-node-id="${activeTextNode.value.id}"]`) as HTMLElement | null
+}
+
+function saveTextSelection() {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  const editor = getActiveTextEditor()
+  if (!editor || !editor.contains(range.commonAncestorContainer)) return
+  savedTextSelection.value = range.cloneRange()
+}
+
+function restoreTextSelection() {
+  const editor = getActiveTextEditor()
+  if (!editor) return
+  editor.focus()
+  const selection = window.getSelection()
+  if (!selection) return
+  selection.removeAllRanges()
+  if (savedTextSelection.value) {
+    selection.addRange(savedTextSelection.value)
+  }
+}
+
+function syncActiveTextHtml() {
+  const node = activeTextNode.value
+  const editor = getActiveTextEditor()
+  if (!node || !editor) return
+  ensureTextPanelParams(node)
+  node.params.html = editor.innerHTML
+  node.params.value = editor.innerText
+  saveMatrixData()
+  forceUpdate()
+}
+
+function openTextCommandLink(node: Node) {
+  ensureTextPanelParams(node)
+  activeTextNodeId.value = node.id
+  activeTextColor.value = node.params.activeTextColor || 'currentColor'
+  activeMenuCategory.value = 'TEXT_FORMAT'
+}
+
+function applyTextCommand(command: string, value?: string) {
+  if (!activeTextNode.value) return
+  restoreTextSelection()
+  document.execCommand('styleWithCSS', false, 'true')
+  document.execCommand(command, false, value)
+  syncActiveTextHtml()
+  saveTextSelection()
+}
+
+function applyTextBlock(preset: TextFormatPreset) {
+  const block = preset === 'quote' ? 'blockquote' : textFormatPresets.find(item => item.id === preset)?.block
+  if (!block) return
+  applyTextCommand('formatBlock', block)
+}
+
+function applyTextFontSize() {
+  const size = Math.max(10, Math.min(72, activeTextFontSize.value))
+  activeTextFontSize.value = size
+  applyTextCommand('fontSize', '7')
+  getActiveTextEditor()?.querySelectorAll('font[size="7"]').forEach((font) => {
+    const span = document.createElement('span')
+    span.style.fontSize = `${size}px`
+    span.innerHTML = font.innerHTML
+    font.replaceWith(span)
+  })
+  syncActiveTextHtml()
+}
+
+function adjustTextCommandFontSize(delta: number) {
+  activeTextFontSize.value = Math.max(10, Math.min(72, activeTextFontSize.value + delta))
+  applyTextFontSize()
+}
+
+function applyTextColor(event?: Event) {
+  activeTextColor.value = (event?.target as HTMLInputElement | undefined)?.value || activeTextColor.value
+  if (activeTextNode.value) {
+    ensureTextPanelParams(activeTextNode.value)
+    activeTextNode.value.params.activeTextColor = activeTextColor.value
+  }
+  applyTextCommand('foreColor', activeTextColor.value)
+}
+
+function resetTextColor() {
+  if (activeTextNode.value) {
+    ensureTextPanelParams(activeTextNode.value)
+    activeTextNode.value.params.activeTextColor = 'currentColor'
+  }
+  activeTextColor.value = 'currentColor'
+  applyTextCommand('foreColor', 'var(--matrix-text-default-color)')
+}
 
 function ensureDrawingParams(node: Node) {
   if (!node.params) node.params = {}
@@ -1875,11 +2058,12 @@ function eraseDrawingAtPoint(point: { x: number; y: number }) {
 
 // --- MENU STATE --- //
 const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG']
-const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO']
+const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO', 'TEXT_FORMAT']
 const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   SCENARIO_DOCS: 'DOCS',
   SCENARIO_VISUALS: 'VISUALS',
-  SCENARIO_AUDIO: 'AUDIO'
+  SCENARIO_AUDIO: 'AUDIO',
+  TEXT_FORMAT: 'TEXT'
 }
 const activeMenuCategory = ref<MenuCategory | null>('LOGIC')
 const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
@@ -1908,15 +2092,18 @@ const matrixAudioErrorLabel = computed(() => {
   return matrixAudioError.value
 })
 
-const commandLinkCategories = computed(() => (
-  isScenarioContext.value ? scenarioCommandCategories : defaultCommandCategories
-))
+const commandLinkCategories = computed(() => {
+  const categories = isScenarioContext.value ? scenarioCommandCategories : defaultCommandCategories
+  if (activeTextNode.value) return categories
+  return categories.filter(category => category !== 'TEXT_FORMAT')
+})
 
 function getCommandCategoryLabel(category: MenuCategory) {
   return commandCategoryLabels[category] || category
 }
 
 function shouldShowCommandCategory(category: MenuCategory) {
+  if (category === 'TEXT_FORMAT') return !!activeTextNode.value
   if (isScenarioContext.value) return scenarioCommandCategories.includes(category)
   const selected = effectiveSelectedNode.value
   return (
@@ -2061,6 +2248,7 @@ onMounted(async () => {
   initAssetService()
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('click', handleGlobalClick)
+  document.addEventListener('selectionchange', saveTextSelection)
 
   // Start Boot Animation Sequence
   const bootInterval = setInterval(() => {
@@ -2122,6 +2310,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('click', handleGlobalClick)
+  document.removeEventListener('selectionchange', saveTextSelection)
   cleanupMatrixAudioRecording()
 })
 
@@ -2536,6 +2725,9 @@ function handleNodeDive(node: Node) {
     resetView()
   } else if (node.type === 'image') {
     triggerImageUpload(node.id)
+  } else if (node.type === 'text-panel') {
+    selectNode(node.id)
+    openTextCommandLink(node)
   } else if (node.type === 'drawing-panel') {
     openDrawingFullscreen(node)
   } else if (node.type === 'file-attachment') {
@@ -2859,6 +3051,10 @@ watch([rootNodes, rootConnections, rootZones, personalIndicators], () => {
 
 // Watch for viewport changes separately (to preserve focus state)
 watch([() => viewState.value.panX, () => viewState.value.panY, () => viewState.value.scale], () => {
+  if (isScenarioContext.value && viewState.value.scale !== 1) {
+    viewState.value.scale = 1
+    return
+  }
   saveMatrixData()
 })
 
@@ -3049,9 +3245,11 @@ function handleGenericFileUpload(e: Event) {
 function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
   if (!node) return null
   if (isScenarioContext.value) {
-    if (['text-panel', 'checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
+    if (node.type === 'text-panel') return 'TEXT_FORMAT'
+    if (['checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
     return 'SCENARIO_DOCS'
   }
+  if (node.type === 'text-panel') return 'TEXT_FORMAT'
   if (node.params?.needsConfig) return 'CONFIG'
   if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
     return 'INDICATORS'
@@ -3072,18 +3270,22 @@ function selectNode(id: string | null) {
   nodeContextMenu.value = null
   if (!id) {
     activeMenuCategory.value = null
+    activeTextNodeId.value = null
     drawCurrent.value = null
     return
   }
   const node = getNode(id)
   
   if (node?.type === 'placeholder') {
+    activeTextNodeId.value = null
     // Find parent node
     const parentConn = connections.value.find(c => c.toId === id)
     const parentNode = parentConn ? getNode(parentConn.fromId) : null
     activeMenuCategory.value = getMenuCategoryForNode(parentNode || null)
   } else {
+    if (node?.type !== 'text-panel') activeTextNodeId.value = null
     activeMenuCategory.value = getMenuCategoryForNode(node || null)
+    if (node?.type === 'text-panel') openTextCommandLink(node)
   }
 }
 
@@ -3598,6 +3800,7 @@ function startZoneDrag(e: MouseEvent, zone: Zone) {
   const stop = () => {
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
+    saveMatrixData()
   }
   window.addEventListener('mousemove', move)
   window.addEventListener('mouseup', stop)

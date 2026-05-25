@@ -998,21 +998,25 @@
             </div>
             <div class="grid grid-cols-7 gap-4">
               <div v-for="(day, idx) in calendarDays" :key="idx" 
-                   class="relative aspect-square border transition-all duration-300"
+                   class="calendar-day-cell relative aspect-square border transition-all duration-300"
                    :class="[
                      !day.isInMonth ? 'border-transparent bg-transparent' : 
                      day.tradesCount === 0 ? 'border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5' :
                      day.pnl > 0 ? 'border-black/30 dark:border-white/30 bg-black/10 dark:bg-white/10' :
                      day.pnl < 0 ? 'border-red-500/30 bg-red-500/10' :
                      'border-yellow-500/30 bg-yellow-500/10'
-                   ]">
+                   ]"
+                   @mouseenter="showCalendarDayTooltip($event, day)"
+                   @mousemove="moveCalendarDayTooltip($event, day)"
+                   @mouseleave="hideCalendarDayTooltip">
                 <template v-if="day.isInMonth">
                   <div class="absolute top-2 right-2 text-[10px] opacity-40 font-bold" :class="{ 'text-black dark:text-white opacity-100': day.isToday }">{{ day.dayNum }}</div>
                   
                   <div v-if="day.tradesCount > 0" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span class="text-lg font-black" 
+                    <span class="calendar-day-result font-black"
+                          :title="formatCalendarDayValue(day)"
                           :class="day.pnl > 0 ? 'text-black dark:text-white' : day.pnl < 0 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'">
-                      {{ day.pnl > 0 ? '+' : '' }}{{ calendarValueMode === 'currency' ? day.pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : day.pnlPercent.toFixed(2) + '%' }}
+                      {{ formatCalendarDayValue(day) }}
                     </span>
                     <span class="text-[9px] uppercase tracking-widest opacity-50 mt-1">{{ day.tradesCount }} TRADES</span>
                   </div>
@@ -1040,6 +1044,20 @@
         </div>
       </div>
     </Transition>
+
+    <Teleport to="body">
+      <Transition name="tooltip-dist-fade">
+        <div v-if="hoveredCalendarDayTooltip"
+             class="fixed z-[2147483647] pointer-events-none border border-black/15 dark:border-white/20 bg-white/95 dark:bg-[#0a0a0a]/95 text-black dark:text-white px-3 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.22)]"
+             :style="{ left: hoveredCalendarDayTooltip.x + 'px', top: hoveredCalendarDayTooltip.y + 'px' }">
+          <div class="text-[9px] font-mono uppercase tracking-[0.32em] opacity-40 mb-1">{{ hoveredCalendarDayTooltip.date }}</div>
+          <div class="text-[12px] font-mono font-black tracking-[0.12em] whitespace-nowrap"
+               :class="hoveredCalendarDayTooltip.pnl > 0 ? 'text-black dark:text-white' : hoveredCalendarDayTooltip.pnl < 0 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'">
+            {{ hoveredCalendarDayTooltip.value }}
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <Teleport to="body">
       <Transition name="page-reify">
@@ -1212,6 +1230,7 @@ const showSimulator = ref(false)
 const showCalendarMode = ref(false)
 const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
 const calendarValueMode = ref<'currency' | 'percentage'>('currency')
+const hoveredCalendarDayTooltip = ref<{ x: number; y: number; value: string; date: string; pnl: number } | null>(null)
 
 const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.length >= 20)
 
@@ -6977,6 +6996,40 @@ const currentCalendarMonthName = computed(() => {
   return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
 })
 
+function formatCalendarDayValue(day: CalendarDay) {
+  const sign = day.pnl > 0 ? '+' : ''
+  if (calendarValueMode.value === 'currency') {
+    return `${sign}${day.pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`
+  }
+  return `${sign}${day.pnlPercent.toFixed(2)}%`
+}
+
+function setCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
+  if (!day.isInMonth || day.tradesCount <= 0) {
+    hoveredCalendarDayTooltip.value = null
+    return
+  }
+  hoveredCalendarDayTooltip.value = {
+    x: event.clientX + 16,
+    y: event.clientY + 16,
+    value: formatCalendarDayValue(day),
+    date: day.dateStr,
+    pnl: day.pnl
+  }
+}
+
+function showCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
+  setCalendarDayTooltip(event, day)
+}
+
+function moveCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
+  setCalendarDayTooltip(event, day)
+}
+
+function hideCalendarDayTooltip() {
+  hoveredCalendarDayTooltip.value = null
+}
+
 const calendarDays = computed(() => {
   if (!currentCalendarMonthStr.value) return []
   const [y, m] = currentCalendarMonthStr.value.split('-')
@@ -7048,6 +7101,25 @@ onUnmounted(() => { cancelAnimationFrame(rafId) })
 <style scoped>
 .ex-equity-curve-3d {
   font-family: 'Cormorant Garamond', serif;
+}
+
+.calendar-day-cell {
+  container-type: inline-size;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.calendar-day-result {
+  display: block;
+  font-size: clamp(9px, 13cqw, 18px);
+  letter-spacing: 0;
+  line-height: 1;
+  max-width: calc(100% - 12px);
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 canvas {

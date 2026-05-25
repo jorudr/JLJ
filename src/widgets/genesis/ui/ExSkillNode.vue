@@ -1,8 +1,8 @@
 <template>
   <div class="skill-chip absolute cursor-pointer group pointer-events-auto"
        :style="{
-         left: (node.x) + 'px',
-         top: (node.y) + 'px',
+         left: Math.round(node.x) + 'px',
+         top: Math.round(node.y) + 'px',
          zIndex: isSelected ? 1000 : 1,
          width: nodeWidth,
          height: nodeHeight
@@ -13,19 +13,25 @@
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
      <ExNTtooltip :title="node.type.toUpperCase()" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
-           <div class="relative w-full h-full border-[2px] backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-500"
+           <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
-                  (node.type === 'step' || node.type === 'scaling-entry') ? 'rounded-full bg-nier-text-light dark:bg-nier-text-dark' : 'bg-nier-white/10 dark:bg-nier-black/10',
-                  node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80 bg-transparent' : '',
-                  node.params?.needsConfig ? 'needs-config-pulse !bg-red-500/10' :
-                    isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]'),
-                  node.type === 'image' ? 'border-none !bg-transparent shadow-none' : '',
-                  node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
-                  node.params?.direction === 'SHORT' ? '!bg-red-500/50' : '',
-                  node.type === 'risk-element' ? '!bg-red-500/5' : ''
+                  node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
+                  isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]'),
+                  node.type === 'image' ? 'border-none shadow-none' : ''
                 ]"
                 :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
                 @dblclick.stop="$emit('doubleclick')">
+
+             <!-- Separate Background Layer -->
+             <div class="absolute inset-0 pointer-events-none -z-10 transition-colors duration-500"
+                  :class="[
+                    (node.type === 'step' || node.type === 'scaling-entry') ? 'rounded-full bg-nier-text-light dark:bg-nier-text-dark' : 'bg-nier-white/10 dark:bg-nier-black/10',
+                    node.params?.needsConfig ? 'needs-config-pulse !bg-red-500/10' : '',
+                    node.type === 'image' ? '!bg-transparent' : '',
+                    node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
+                    node.params?.direction === 'SHORT' ? '!bg-red-500/50' : '',
+                    node.type === 'risk-element' ? '!bg-red-500/5' : ''
+                  ]"></div>
 
            <!-- Selection Brackets -->
             <div v-if="isSelected" class="absolute -inset-4 pointer-events-none">
@@ -35,8 +41,7 @@
                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
             </div>
 
-           <div class="absolute left-1/2 top-1/2 flex flex-col items-center justify-center"
-                :style="nodeContentScaleStyle">
+           <div class="absolute inset-0 w-full h-full flex flex-col items-center justify-center">
 
            <!-- Skill Icon / Label / Image Content -->
            <div v-if="node.type === 'instrument' || ['indicator', 'pattern', 'smc', 'emotion-state', 'step', 'scaling-entry', 'risk-element'].includes(node.type)"
@@ -196,31 +201,35 @@
                   </div>
                </div>
 
-               <div v-else-if="node.type === 'table-panel'" class="flex-1 min-h-0 p-3 flex flex-col gap-2">
-                  <div class="flex items-center justify-between gap-2">
-                     <div class="flex items-center gap-1">
-                        <button @mousedown.stop @click.stop="resizeTable(-1, 0)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">-</button>
-                        <span class="text-[8px] font-mono opacity-45 w-8 text-center">{{ tableRows }}R</span>
-                        <button @mousedown.stop @click.stop="resizeTable(1, 0)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">+</button>
+               <div v-else-if="node.type === 'table-panel'" class="flex-1 w-full h-full min-h-0 flex flex-col bg-nier-white/40 dark:bg-nier-black/40">
+                  <div class="h-11 flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark px-3 bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] gap-3">
+                     <div class="table-stepper">
+                        <span class="table-stepper-label">Rows</span>
+                        <div class="table-stepper-control">
+                           <button @mousedown.stop @click.stop="resizeTable(-1, 0)" class="table-stepper-button" aria-label="Remove row">-</button>
+                           <span class="table-stepper-value">{{ tableRows }}</span>
+                           <button @mousedown.stop @click.stop="resizeTable(1, 0)" class="table-stepper-button" aria-label="Add row">+</button>
+                        </div>
                      </div>
-                     <div class="flex items-center gap-1">
-                        <button @mousedown.stop @click.stop="resizeTable(0, -1)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">-</button>
-                        <span class="text-[8px] font-mono opacity-45 w-8 text-center">{{ tableCols }}C</span>
-                        <button @mousedown.stop @click.stop="resizeTable(0, 1)" class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark text-[10px]">+</button>
+                     <div class="table-stepper">
+                        <span class="table-stepper-label">Cols</span>
+                        <div class="table-stepper-control">
+                           <button @mousedown.stop @click.stop="resizeTable(0, -1)" class="table-stepper-button" aria-label="Remove column">-</button>
+                           <span class="table-stepper-value">{{ tableCols }}</span>
+                           <button @mousedown.stop @click.stop="resizeTable(0, 1)" class="table-stepper-button" aria-label="Add column">+</button>
+                        </div>
                      </div>
                   </div>
-                  <div class="flex-1 overflow-auto custom-scrollbar border border-nier-border-light dark:border-nier-border-dark">
-                     <div class="grid min-w-max" :style="{ gridTemplateColumns: `repeat(${tableCols || 1}, minmax(64px, 1fr))` }">
-                        <input v-for="cell in tableCells"
-                               :key="`${cell.row}-${cell.col}`"
-                               :value="tableDraft[cell.row]?.[cell.col] || ''"
-                               @focus="isEditingTable = true"
-                               @input="updateTableCell(cell.row, cell.col, $event)"
-                               @blur="finishTableEditing"
-                               @mousedown.stop
-                               @click.stop
-                               class="h-8 min-w-16 bg-transparent border-r border-b border-nier-border-light dark:border-nier-border-dark px-2 text-[9px] font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
-                     </div>
+                  <div class="matrix-table-grid flex-1 min-h-0 grid w-full" :style="tableGridStyle">
+                     <input v-for="cell in tableCells"
+                            :key="`${cell.row}-${cell.col}`"
+                            :value="tableDraft[cell.row]?.[cell.col] || ''"
+                            @focus="isEditingTable = true"
+                            @input="updateTableCell(cell.row, cell.col, $event)"
+                            @blur="finishTableEditing"
+                            @mousedown.stop
+                            @click.stop
+                            class="matrix-table-input w-full h-full min-w-0 min-h-0 bg-transparent border-r border-b border-nier-border-light dark:border-nier-border-dark px-2 py-0 text-[11px] leading-none font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
                   </div>
                </div>
 
@@ -232,14 +241,22 @@
                   <a v-if="node.params.fileDataUrl" :href="node.params.fileDataUrl" :download="node.params.fileName" @mousedown.stop @click.stop class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</a>
                </div>
 
-               <textarea v-else
-                         v-model="node.params.value"
-                         @mousedown.stop
-                         @click.stop
-                         placeholder="ENTER_SCENARIO_DETAILS..."
-                         class="flex-1 w-full min-h-0 resize-none bg-transparent px-3 py-2 text-[10px] leading-relaxed font-mono uppercase tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar"></textarea>
+               <div v-else
+                    ref="textEditorElement"
+                    contenteditable="true"
+                    :data-text-node-id="node.id"
+                    :data-placeholder="textPanelPlaceholder"
+                    :style="textPanelEditorStyle"
+                    @mousedown.stop
+                    @click.stop="$emit('doubleclick')"
+                    @focus="focusTextPanel"
+                    @blur="blurTextPanel"
+                    @beforeinput="handleTextPanelBeforeInput"
+                    @input="updateTextPanelHtml"
+                    class="matrix-text-rich flex-1 w-full min-h-0 overflow-y-auto bg-transparent px-3 py-2 font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar"></div>
 
-               <div class="absolute -bottom-3 -right-3 w-8 h-8 cursor-nwse-resize flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
+               <div v-if="!isTablePanel"
+                    class="absolute -bottom-3 -right-3 w-8 h-8 cursor-nwse-resize flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
                     @mousedown.stop.prevent="startResize">
                   <div class="w-3 h-3 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark"></div>
                </div>
@@ -249,8 +266,16 @@
                <div class="w-3 h-3 bg-nier-text-light dark:bg-nier-text-dark rotate-45"></div>
             </div>
 
+           <!-- Configuration Node Preview Match -->
+           <div v-if="node.params?.isConfig"
+                class="w-full h-full flex items-center justify-center text-nier-text-light dark:text-nier-text-dark">
+              <span class="text-[24px] font-mono font-black tracking-tighter uppercase leading-none">
+                {{ configNodeCode }}
+              </span>
+           </div>
+
            <!-- Default SVGs for other types -->
-           <svg v-if="!isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image', 'audio-note'].includes(node.type)"
+           <svg v-if="!node.params?.isConfig && !isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image', 'audio-note'].includes(node.type)"
                class="w-[60%] h-[60%] opacity-60 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark"
                :class="{ 'opacity-100': isSelected }"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -550,7 +575,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
@@ -618,34 +643,43 @@ const isScenarioContentNode = computed(() => (
 ))
 const isDrawingPanel = computed(() => props.node.type === 'drawing-panel')
 const isAudioNote = computed(() => props.node.type === 'audio-note')
+const isTablePanel = computed(() => props.node.type === 'table-panel')
+const configNodeCode = computed(() => (props.node.label || 'CFG').slice(0, 3).toUpperCase())
+const tableRows = computed(() => (
+  isTablePanel.value ? Math.max(1, Math.min(12, Number(props.node.params?.rows) || 3)) : 0
+))
+const tableCols = computed(() => (
+  isTablePanel.value ? Math.max(1, Math.min(8, Number(props.node.params?.cols) || 3)) : 0
+))
+const tablePanelSize = computed(() => ({
+  width: Math.max(320, tableCols.value * 112),
+  height: Math.max(180, tableRows.value * 54 + 36)
+}))
 const scenarioPanelSize = computed(() => (
   isAudioNote.value ? { width: 320, height: 56 } :
-    isDrawingPanel.value || props.node.type === 'table-panel' ? { width: 300, height: 190 } : { width: 260, height: 180 }
+    isDrawingPanel.value ? { width: 300, height: 190 } :
+      isTablePanel.value ? tablePanelSize.value : { width: 260, height: 180 }
 ))
 const nodeWidth = computed(() => {
   if (props.node.type === 'image') return `${props.node.params?.width || 300}px`
   if (isAudioNote.value) return `${scenarioPanelSize.value.width}px`
+  if (isTablePanel.value) return `${tablePanelSize.value.width}px`
   if (isScenarioPanel.value) return `${props.node.params?.width || scenarioPanelSize.value.width}px`
   return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
 })
 const nodeHeight = computed(() => {
   if (props.node.type === 'image') return `${props.node.params?.height || 200}px`
   if (isAudioNote.value) return `${scenarioPanelSize.value.height}px`
+  if (isTablePanel.value) return `${tablePanelSize.value.height}px`
   if (isScenarioPanel.value) return `${props.node.params?.height || scenarioPanelSize.value.height}px`
   return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
 })
-const nodeInnerScale = computed(() => Math.min(1, Math.max(0.25, props.scale || 1)))
-const nodeContentScaleStyle = computed(() => {
-  const scale = nodeInnerScale.value
-  return {
-    width: `${100 / scale}%`,
-    height: `${100 / scale}%`,
-    transform: `translate(-50%, -50%) scale(${scale})`,
-    transformOrigin: 'center center'
-  }
-})
+
 const tableDraft = ref<string[][]>([])
 const isEditingTable = ref(false)
+const textEditorElement = ref<HTMLElement | null>(null)
+const isEditingTextPanel = ref(false)
+let isSyncingTextEditor = false
 let tableCommitTimeout: ReturnType<typeof setTimeout> | null = null
 const audioElement = ref<HTMLAudioElement | null>(null)
 const isAudioPlaying = ref(false)
@@ -678,17 +712,11 @@ const scenarioPanelHeaderCode = computed(() => {
   if (isAudioNote.value) return props.node.params?.audioType || ''
   return props.node.params?.shortCode || props.node.type.slice(0, 3)
 })
-const tableRows = computed(() => (
-  props.node.type === 'table-panel' ? Math.max(1, Math.min(12, Number(props.node.params?.rows) || 3)) : 0
-))
-const tableCols = computed(() => (
-  props.node.type === 'table-panel' ? Math.max(1, Math.min(8, Number(props.node.params?.cols) || 3)) : 0
-))
 const audioProgressPercent = computed(() => (
   audioDuration.value > 0 ? Math.min(100, Math.max(0, (audioCurrentTime.value / audioDuration.value) * 100)) : 0
 ))
 const tableCells = computed(() => {
-  if (props.node.type !== 'table-panel') return []
+  if (!isTablePanel.value) return []
   const cells: Array<{ row: number; col: number }> = []
   for (let row = 0; row < tableRows.value; row++) {
     for (let col = 0; col < tableCols.value; col++) {
@@ -697,6 +725,99 @@ const tableCells = computed(() => {
   }
   return cells
 })
+const tableGridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${tableCols.value || 1}, minmax(0, 1fr))`,
+  gridTemplateRows: `repeat(${tableRows.value || 1}, minmax(0, 1fr))`
+}))
+const textPanelPlaceholder = 'ENTER_SCENARIO_DETAILS...'
+const textPanelHtml = computed(() => {
+  if (props.node.type !== 'text-panel') return ''
+  if (typeof props.node.params?.html === 'string') return props.node.params.html
+  return escapeTextHtml(props.node.params?.value || '').replace(/\n/g, '<br>')
+})
+const textPanelEditorStyle = computed(() => {
+  if (props.node.type !== 'text-panel') return {}
+  const color = props.node.params?.activeTextColor
+  const defaultColor = props.isDark ? '#ffffff' : '#2c2c2a'
+  return {
+    '--matrix-text-default-color': defaultColor,
+    caretColor: color && color !== 'currentColor' ? color : defaultColor
+  }
+})
+
+function syncTextEditorFromNode() {
+  if (props.node.type !== 'text-panel') return
+  nextTick(() => {
+    const editor = textEditorElement.value
+    if (!editor || isEditingTextPanel.value) return
+    const nextHtml = textPanelHtml.value
+    if (editor.innerHTML === nextHtml) return
+    isSyncingTextEditor = true
+    editor.innerHTML = nextHtml
+    isSyncingTextEditor = false
+  })
+}
+
+function escapeTextHtml(value: string) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function focusTextPanel() {
+  isEditingTextPanel.value = true
+  emit('doubleclick')
+}
+
+function blurTextPanel(event: FocusEvent) {
+  updateTextPanelHtml(event)
+  isEditingTextPanel.value = false
+}
+
+function handleTextPanelBeforeInput(event: InputEvent) {
+  if (props.node.type !== 'text-panel') return
+  if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
+  const color = props.node.params?.activeTextColor
+  if (!color) return
+
+  const editor = textEditorElement.value
+  const selection = window.getSelection()
+  if (!editor || !selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  if (!editor.contains(range.commonAncestorContainer)) return
+
+  event.preventDefault()
+  range.deleteContents()
+
+  const span = document.createElement('span')
+  span.style.color = color === 'currentColor' ? 'var(--matrix-text-default-color)' : color
+  span.appendChild(document.createTextNode(event.data))
+  range.insertNode(span)
+
+  const nextRange = document.createRange()
+  nextRange.setStartAfter(span)
+  nextRange.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(nextRange)
+
+  updateTextPanelHtml({ currentTarget: editor } as unknown as Event)
+}
+
+function updateTextPanelHtml(event: Event) {
+  if (props.node.type !== 'text-panel' || isSyncingTextEditor) return
+  if (!props.node.params) props.node.params = {}
+  const target = event.currentTarget as HTMLElement
+  props.node.params.html = target.innerHTML
+  props.node.params.value = target.innerText
+  emit('moved')
+}
+
+watch(
+  () => [props.node.id, props.node.params?.html, props.node.params?.value],
+  syncTextEditorFromNode,
+  { immediate: true, flush: 'post' }
+)
 
 watch(
   () => props.node.id,
@@ -707,7 +828,7 @@ watch(
 watch(
   () => [props.node.params?.rows, props.node.params?.cols],
   () => {
-    if (props.node.type !== 'table-panel') return
+    if (!isTablePanel.value) return
     ensureTableShape()
     if (isEditingTable.value) return
     syncTableDraft()
@@ -769,13 +890,13 @@ function cloneTableShape(source: any[][] = [], rows = tableRows.value, cols = ta
 }
 
 function syncTableDraft() {
-  if (props.node.type !== 'table-panel') return
+  if (!isTablePanel.value) return
   ensureTableShape()
   tableDraft.value = cloneTableShape(props.node.params.table)
 }
 
 function commitTableDraft() {
-  if (props.node.type !== 'table-panel') return
+  if (!isTablePanel.value) return
   if (tableCommitTimeout) {
     clearTimeout(tableCommitTimeout)
     tableCommitTimeout = null
@@ -793,7 +914,7 @@ function scheduleTableCommit() {
   if (tableCommitTimeout) clearTimeout(tableCommitTimeout)
   tableCommitTimeout = setTimeout(() => {
     commitTableDraft()
-  }, 350)
+  }, 250)
 }
 
 function updateTableCell(row: number, col: number, e: Event) {
@@ -949,19 +1070,32 @@ const startCommentResize = (e: MouseEvent, comment: any) => {
 
 const isResizing = ref(false)
 const startResize = (e: MouseEvent) => {
-  if (isAudioNote.value) return
+  if (isAudioNote.value || isTablePanel.value) return
   isResizing.value = true
   const startX = e.clientX
   const startY = e.clientY
   const initialWidth = props.node.params?.width || (isScenarioPanel.value ? scenarioPanelSize.value.width : 300)
   const initialHeight = props.node.params?.height || (isScenarioPanel.value ? scenarioPanelSize.value.height : 200)
+  const aspectRatio = initialWidth / Math.max(1, initialHeight)
 
   const move = (mE: MouseEvent) => {
     if (!isResizing.value) return
     const dx = (mE.clientX - startX) / props.scale
     const dy = (mE.clientY - startY) / props.scale
-    props.node.params.width = Math.max(100, initialWidth + dx)
-    props.node.params.height = Math.max(100, initialHeight + dy)
+    if (isScenarioPanel.value || props.node.type === 'image') {
+      const widthFromX = Math.max(100, initialWidth + dx)
+      const heightFromY = Math.max(100, initialHeight + dy)
+      if (heightFromY * aspectRatio > widthFromX) {
+        props.node.params.height = heightFromY
+        props.node.params.width = heightFromY * aspectRatio
+      } else {
+        props.node.params.width = widthFromX
+        props.node.params.height = widthFromX / aspectRatio
+      }
+    } else {
+      props.node.params.width = Math.max(100, initialWidth + dx)
+      props.node.params.height = Math.max(100, initialHeight + dy)
+    }
     emit('moved')
   }
 
@@ -1063,6 +1197,111 @@ const getRemedyPath = (idx: number) => {
 .skill-chip {
   transform: translate(-50%, -50%);
   user-select: none;
+}
+
+.matrix-table-input {
+  appearance: none;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.matrix-text-rich {
+  --matrix-text-default-color: #2c2c2a;
+  font-size: 14px;
+  line-height: 1.55;
+  text-transform: none;
+  user-select: text;
+  cursor: text;
+}
+
+:global(.dark) .matrix-text-rich {
+  --matrix-text-default-color: #ffffff;
+}
+
+.matrix-text-rich:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.35;
+}
+
+.matrix-text-rich :deep(h2) {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.matrix-text-rich :deep(p) {
+  margin: 0 0 0.55em;
+}
+
+.matrix-text-rich :deep(blockquote) {
+  border-left: 2px solid currentColor;
+  margin: 0.25em 0;
+  opacity: 0.78;
+  padding-left: 0.8em;
+}
+
+.matrix-text-rich :deep(ul),
+.matrix-text-rich :deep(ol) {
+  list-style-position: inside;
+  margin: 0.25em 0;
+  padding-left: 0.35em;
+}
+
+.table-stepper {
+  align-items: center;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  display: flex;
+  flex: 1 1 0;
+  height: 28px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.table-stepper-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  opacity: 0.48;
+  padding-left: 8px;
+  text-transform: uppercase;
+}
+
+.table-stepper-control {
+  align-items: stretch;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  display: flex;
+  height: 100%;
+}
+
+.table-stepper-button {
+  align-items: center;
+  display: flex;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  height: 100%;
+  justify-content: center;
+  line-height: 1;
+  opacity: 0.55;
+  transition: background-color 160ms ease, opacity 160ms ease;
+  width: 26px;
+}
+
+.table-stepper-button:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  opacity: 1;
+}
+
+.table-stepper-value {
+  align-items: center;
+  border-left: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  border-right: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  display: flex;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 30px;
+  padding: 0 8px;
 }
 
 .callout-pop-enter-active {

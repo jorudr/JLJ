@@ -13,12 +13,12 @@
     <!-- Telemetry Header & Controls (2x Buffer) -->
     <div class="absolute -top-[56px] left-0 flex items-center space-x-4 pointer-events-auto z-10">
        <button @click.stop="$emit('remove', zone.id)"
-               class="tactical-button w-[48px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-current hover:text-white transition-all text-[16px] font-mono opacity-40 hover:opacity-100">
+               class="tactical-button w-[48px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all text-[16px] font-mono opacity-40 hover:opacity-100">
           X
        </button>
        
        <button @click.stop="$emit('cycle-type', zone.id)"
-               class="tactical-button px-[24px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-current hover:text-white transition-all text-[16px] font-mono opacity-40 hover:opacity-100 uppercase tracking-widest whitespace-nowrap">
+               class="tactical-button px-[24px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all text-[16px] font-mono opacity-40 hover:opacity-100 uppercase tracking-widest whitespace-nowrap">
           {{ zone.type }}
        </button>
 
@@ -35,9 +35,14 @@
        </span>
     </div>
 
-    <!-- Drag Area -->
-    <div class="tactical-button absolute top-0 left-0 right-0 h-[32px] cursor-move pointer-events-auto z-10 hover:bg-current/5 transition-colors"
-         @mousedown.stop="$emit('drag-start', $event)"></div>
+    <!-- Drag Handle -->
+    <button class="tactical-button absolute top-2 left-2 w-6 h-6 cursor-move pointer-events-auto z-20 border border-current/25 bg-nier-white/70 dark:bg-nier-black/70 flex items-center justify-center opacity-45 hover:opacity-100 hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all"
+            aria-label="Move zone with contents"
+            @mousedown.stop.prevent="$emit('drag-start', $event)">
+       <span class="grid grid-cols-2 gap-[3px]">
+         <span v-for="i in 4" :key="i" class="w-[3px] h-[3px] bg-current"></span>
+       </span>
+    </button>
 
     <!-- Resize Handle -->
     <div class="tactical-button absolute bottom-0 right-0 w-[32px] h-[32px] cursor-nwse-resize pointer-events-auto flex items-end justify-end p-[2px] z-10"
