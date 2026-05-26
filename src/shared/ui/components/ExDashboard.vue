@@ -1,7 +1,7 @@
 <template>
-  <div class="h-full flex flex-col p-12 max-w-7xl mx-auto space-y-12 relative overflow-hidden">
+  <div class="h-full flex flex-col p-12 max-w-7xl mx-auto space-y-12 relative">
     <!-- 1. Header / Global Status -->
-    <header class="flex justify-between items-start z-10">
+    <header class="flex justify-between items-start z-[200] relative">
       <div class="flex flex-col space-y-2">
         <ExHeading level="h1" variant="cinematic" class="!text-3xl">{{ t('dashboard.title') }}</ExHeading>
         <div class="flex items-center space-x-4">
@@ -24,8 +24,46 @@
           </button>
         </div>
 
-        <!-- User Identity -->
-        <ExIdentity name="Operator_0x4F" rank="System Architect" />
+        <!-- User Identity (clickable → sign-out popover) -->
+        <div class="relative" ref="identityRef">
+          <button @click="toggleMenu" class="focus:outline-none cursor-pointer">
+            <ExIdentity
+              :name="displayName"
+              :avatar-url="authStore.user?.photoURL ?? undefined"
+              rank="Operator"
+            />
+          </button>
+
+          <!-- Teleport dropdown to body to escape any overflow:hidden ancestors -->
+          <Teleport to="body">
+            <Transition name="menu-drop">
+              <div
+                v-if="userMenuOpen"
+                ref="menuRef"
+                :style="menuStyle"
+                class="fixed z-[9999] min-w-[200px] border border-theme-border bg-theme-bg shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+              >
+                <!-- User info strip -->
+                <div class="px-5 py-3 border-b border-theme-border">
+                  <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">Signed_In_As</p>
+                  <p class="text-[10px] font-mono font-black uppercase tracking-widest truncate">{{ authStore.user?.email }}</p>
+                </div>
+                <!-- Sign out -->
+                <button
+                  @click="doSignOut"
+                  class="w-full flex items-center space-x-3 px-5 py-3 text-[9px] font-mono uppercase tracking-[0.4em] hover:text-red-400 transition-all duration-300"
+                >
+                  <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span>Sign_Out</span>
+                </button>
+              </div>
+            </Transition>
+          </Teleport>
+        </div>
       </div>
     </header>
 
@@ -79,17 +117,77 @@
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { getAuth, signOut } from 'firebase/auth'
 import { useI18n } from '../../i18n/useI18n'
 import ExHeading from '../ExHeading.vue'
 import ExText from '../ExText.vue'
 import ExTag from '../ExTag.vue'
 import ExIdentity from '../ExIdentity.vue'
+import { useAuthStore } from '~/entities/user/auth.store'
 
-defineEmits(['navigate'])
+const emit = defineEmits(['navigate', 'signed-out'])
 
 const { t, locale, setLocale } = useI18n()
+const authStore = useAuthStore()
+
+// User menu
+const userMenuOpen = ref(false)
+const identityRef = ref<HTMLElement | null>(null)
+const menuRef = ref<HTMLElement | null>(null)
+const menuStyle = ref<Record<string, string>>({})
+
+const toggleMenu = () => {
+  if (!userMenuOpen.value && identityRef.value) {
+    const rect = identityRef.value.getBoundingClientRect()
+    const themeRoot = identityRef.value.closest('.theme-dark, .theme-light') as HTMLElement | null
+    const themeStyle = themeRoot ? getComputedStyle(themeRoot) : null
+    const themeBg = themeStyle?.getPropertyValue('--theme-bg').trim() || '#0a0a0a'
+    const themeText = themeStyle?.getPropertyValue('--theme-text').trim() || 'rgba(255, 255, 255, 0.7)'
+    const themeBorder = themeStyle?.getPropertyValue('--theme-border').trim() || 'rgba(255, 255, 255, 0.1)'
+
+    menuStyle.value = {
+      top: `${rect.bottom + 8}px`,
+      right: `${window.innerWidth - rect.right}px`,
+      backgroundColor: themeBg,
+      color: themeText,
+      borderColor: themeBorder,
+      '--theme-bg': themeBg,
+      '--theme-text': themeText,
+      '--theme-border': themeBorder,
+    }
+  }
+  userMenuOpen.value = !userMenuOpen.value
+}
+
+const doSignOut = async () => {
+  userMenuOpen.value = false
+  await signOut(getAuth())
+  authStore.setUser(null as any)
+  emit('signed-out')
+}
+
+// Close on outside click
+const handleOutsideClick = (e: MouseEvent) => {
+  const target = e.target as Node
+
+  if (
+    identityRef.value &&
+    !identityRef.value.contains(target) &&
+    !menuRef.value?.contains(target)
+  ) {
+    userMenuOpen.value = false
+  }
+}
+onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
+onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
+
+const displayName = computed(() => {
+  const u = authStore.user
+  if (!u) return 'Operator'
+  return u.displayName || u.email?.split('@')[0] || 'Operator'
+})
 
 const dashboardModules = [
   { 
@@ -112,3 +210,15 @@ const dashboardModules = [
   }
 ]
 </script>
+
+<style scoped>
+.menu-drop-enter-active,
+.menu-drop-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.menu-drop-enter-from,
+.menu-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>

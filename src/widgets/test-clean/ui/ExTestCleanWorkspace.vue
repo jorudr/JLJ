@@ -24,7 +24,7 @@
        <Transition name="page-reify" mode="out-in">
          <!-- Dashboard Hub (No Tab) -->
          <div v-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
-            <ExDashboard @navigate="handleDashboardNavigate" />
+            <ExDashboard @navigate="handleDashboardNavigate" @signed-out="handleSignedOut" />
          </div>
 
          <!-- Genesis Module -->
@@ -261,6 +261,16 @@ const handleInitializationComplete = () => {
       isAssembled.value = true
     }, 400)
   }, 500)
+}
+
+const handleSignedOut = () => {
+  hasInitialized.value = false
+  isAssembled.value = false
+  showBloom.value = true
+  isNodeMapActive.value = false
+  activeTab.value = ''
+
+  router.replace({ path: '/test_clean' })
 }
 
 onMounted(() => {

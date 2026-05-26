@@ -3,16 +3,18 @@
     
     <!-- Avatar Slot / Icon -->
     <div 
-      :class="detailed ? 'w-12 h-12 bg-theme-text flex items-center justify-center' : 'w-10 h-10 border border-theme-border relative overflow-hidden flex items-center justify-center bg-theme-text opacity-75'"
+      :class="detailed ? 'w-12 h-12 bg-theme-text flex items-center justify-center overflow-hidden' : 'w-10 h-10 border border-theme-border relative overflow-hidden flex items-center justify-center bg-theme-text/10'"
     >
-      <template v-if="detailed">
+      <template v-if="avatarUrl">
+        <img :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
+      </template>
+      <template v-else-if="detailed">
         <span class="text-theme-bg font-mono font-black text-xl">
           <slot name="avatar">{{ name?.charAt(0) }}</slot>
         </span>
       </template>
       <template v-else>
-        <div class="w-4 h-4 border border-theme-text opacity-40 rotate-45 group-hover:rotate-[135deg] transition-transform duration-700"></div>
-        <div class="absolute inset-0 bg-gradient-to-tr from-theme-text opacity-10 to-transparent"></div>
+        <span class="font-mono font-black text-sm text-theme-bg">{{ name?.charAt(0)?.toUpperCase() }}</span>
       </template>
     </div>
 
@@ -35,6 +37,7 @@ defineProps({
     required: true
   },
   rank: String,
+  avatarUrl: String,
   detailed: {
     type: Boolean,
     default: false
