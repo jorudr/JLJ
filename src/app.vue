@@ -59,12 +59,12 @@ watchEffect(() => {
 
   if (route.meta.public) return
 
-  if (!auth.isAuthenticated) {
-    navigateTo({
-      path: '/login',
-      query: { redirect: route.fullPath }
-    })
-  }
+  // if (!auth.isAuthenticated) {
+  //   navigateTo({
+  //     path: '/login',
+  //     query: { redirect: route.fullPath }
+  //   })
+  // }
 })
 
 // Disable backspace navigation globally
