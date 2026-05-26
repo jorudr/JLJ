@@ -9,16 +9,22 @@
         class="grid grid-flow-col grid-rows-7 gap-[2px] md:gap-[4px]" 
         style="aspect-ratio: 52 / 7; width: 100%; max-height: 100%; height: auto;"
       >
-        <ExTooltip v-for="n in 364" :key="n" position="top" :is-dark="isDark">
+        <ExTooltip v-for="cell in heatmapCells" :key="cell.date" position="top" :is-dark="isDark">
           <template #trigger>
             <div 
-              class="w-full h-full border transition-all duration-700 rounded-[1px] md:rounded-sm bg-theme-text/5 border-black/15 dark:border-white/10 hover:bg-theme-text/20"
+              class="w-full h-full border transition-all duration-700 rounded-[1px] md:rounded-sm hover:bg-theme-text/20"
+              :class="[
+                cell.active 
+                  ? 'bg-[#050505] dark:bg-white border-black/15 dark:border-white/10 shadow-[0_0_12px_rgba(255,255,255,0.1)]' 
+                  : 'bg-theme-text/5 border-black/15 dark:border-white/10',
+                cell.isFuture ? 'opacity-20' : ''
+              ]"
             ></div>
           </template>
           <template #default>
             <div class="flex flex-col space-y-1">
-              <span class="font-black">Activity_Level: 0%</span>
-              <span class="opacity-50">Archive_Date: --.--.----</span>
+              <span class="opacity-50">Archive_Date: {{ cell.label }}</span>
+              <span v-if="cell.note" class="italic opacity-80 mt-1 font-sans">"{{ cell.note }}"</span>
             </div>
           </template>
         </ExTooltip>
@@ -28,25 +34,118 @@
 
     <!-- Action Button (Absolute Bottom) -->
     <div class="absolute bottom-8 md:bottom-12 left-0 w-full flex justify-center pointer-events-none">
-      <div class="pointer-events-auto">
-        <ExButton variant="tactical">Initialize_Session</ExButton>
+      <div class="pointer-events-auto flex flex-col items-center gap-4">
+        <ExButton 
+           variant="tactical" 
+           @click="handleCheckIn" 
+           :disabled="isSubmittingActivity || checkInUsedToday"
+           :class="[
+             checkInUsedToday && isDark ? '!bg-white !text-[#050505]' : '',
+             checkInUsedToday && !isDark ? '!bg-[#050505] !text-white' : ''
+           ]"
+        >
+           {{ isSubmittingActivity ? 'Initializing...' : (checkInUsedToday ? 'Session_Active' : 'Initialize_Session') }}
+        </ExButton>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
+import { computed, ref, watch, onMounted } from 'vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import { useThemeStore } from '~/features/store/useTheme'
+import { useAuthStore } from '~/entities/user/auth.store'
+import { useForumStore } from '~/features/store/useForum'
+import { submitDailyActivity, isSubmittingActivity, calculateStreak, type DailyActivity } from '~/widgets/dashboard/model/useActivity'
 
 const emit = defineEmits(['exit'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 
-// Format function
+const auth = useAuthStore()
+const forum = useForumStore()
+
+const activeUserId = computed(() => auth.user?.uid)
+
+onMounted(async () => {
+    if (activeUserId.value) {
+        await forum.fetchUser(activeUserId.value)
+    }
+})
+
+watch(activeUserId, async (newVal) => {
+    if (newVal) {
+        await forum.fetchUser(newVal)
+    }
+})
+const activeUser = computed(() => activeUserId.value ? forum.users.get(activeUserId.value) : null)
+const dailyActivityList = computed<DailyActivity[]>(() => activeUser.value?.dailyActivity || [])
+
+const getTodayDateString = () => {
+    const d = new Date()
+    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0] || ''
+}
+
+const todayStr = getTodayDateString()
+const todaysNote = ref('')
+
+const checkInUsedToday = computed(() => dailyActivityList.value.some(a => a.date === todayStr))
+
+const heatmapCells = computed(() => {
+    const cells = []
+    const now = new Date()
+    
+    const totalDays = 364
+    const dayOfWeek = now.getDay()
+    const daysToEndOfWeek = 6 - dayOfWeek
+    const totalVisible = totalDays - 1
+    
+    for (let i = totalVisible; i >= 0; i--) {
+        const d = new Date(now)
+        d.setDate(d.getDate() - i + daysToEndOfWeek)
+        
+        const dateStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]
+        const isFuture = d > now
+        const activity = !isFuture ? dailyActivityList.value.find(a => a.date === dateStr) : null
+        
+        cells.push({
+            date: dateStr,
+            active: !!activity,
+            isFuture,
+            label: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d),
+            note: activity?.note || ''
+        })
+    }
+    return cells
+})
+
+watch(dailyActivityList, (newList) => {
+    const todayEntry = newList.find(a => a.date === todayStr)
+    if (todayEntry && !todaysNote.value) {
+        todaysNote.value = todayEntry.note
+    }
+}, { immediate: true })
+
+const handleCheckIn = async () => {
+    const userId = activeUserId.value
+    if (!userId) return
+    
+    await submitDailyActivity(userId, todaysNote.value, todayStr)
+    
+    if (activeUser.value) {
+        const list = [...(activeUser.value.dailyActivity || [])]
+        const idx = list.findIndex(a => a.date === todayStr)
+        if (idx >= 0 && list[idx]) {
+            list[idx].note = todaysNote.value
+        } else {
+            list.push({ date: todayStr, note: todaysNote.value })
+        }
+        activeUser.value.dailyActivity = list
+    }
+}
 </script>
 
 <style scoped>
