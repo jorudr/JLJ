@@ -77,6 +77,9 @@ export interface DiaryImage {
     context?: string;
     name?: string;
     tags?: string[];
+    createdAt?: string;
+    timestamp?: string;
+    date?: string;
 }
 
 export interface DiaryNote {

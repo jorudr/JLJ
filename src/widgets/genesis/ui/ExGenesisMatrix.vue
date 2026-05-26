@@ -367,16 +367,6 @@
          </div>
       </Transition>
 
-      <!-- BACK_TO_MENU BUTTON (PIXEL-PERFECT ALIGNMENT) -->
-      <div class="absolute top-12 left-12 z-[100] pointer-events-auto">
-        <button 
-          @click="$emit('exit')" 
-          class="group flex items-center space-x-4 opacity-40 hover:opacity-100 transition-all duration-500"
-        >
-          <div class="w-2 h-2 border border-black dark:border-white rotate-45 group-hover:bg-black dark:group-hover:bg-white transition-colors"></div>
-          <div class="text-[10px] font-mono tracking-[0.4em] uppercase text-black dark:text-white">BACK_TO_MENU</div>
-        </button>
-      </div>
 
       <!-- VIEWPORT TELEMETRY -->
       <div v-if="!isScenarioContext" class="absolute top-32 left-12 flex flex-col space-y-8 z-[40]">

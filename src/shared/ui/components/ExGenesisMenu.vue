@@ -1,15 +1,5 @@
 <template>
   <div class="h-full flex flex-col space-y-12 relative justify-center items-center overflow-hidden">
-    <!-- Navigation Backlink -->
-    <div class="absolute top-12 left-12 z-20">
-      <button 
-        @click="$emit('back')" 
-        class="group flex items-center space-x-4 opacity-80 hover:opacity-100 transition-all duration-500"
-      >
-        <div class="w-2 h-2 border border-theme-text rotate-45 group-hover:bg-theme-text transition-colors"></div>
-        <ExText variant="telemetry" class="tracking-[0.4em] uppercase">BACK_TO_ORIGIN</ExText>
-      </button>
-    </div>
 
     <!-- Header Telemetry -->
     <div class="flex flex-col items-center space-y-4">
@@ -61,6 +51,7 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 import ExHeading from '../ExHeading.vue'
 import ExText from '../ExText.vue'
 import ExGothicCorners from '../ExGothicCorners.vue'
@@ -76,5 +67,5 @@ defineProps({
   }
 })
 
-defineEmits(['select', 'back'])
+const emit = defineEmits(['select', 'back'])
 </script>

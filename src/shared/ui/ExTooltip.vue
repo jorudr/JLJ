@@ -31,13 +31,13 @@
           </div>
 
           <!-- BASIC VARIANT -->
-          <div v-else class="border border-theme-text/20 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[300px] flex flex-col space-y-3 text-theme-text relative"
+          <div v-else class="border border-theme-text/20 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[200px] flex flex-col space-y-2 text-theme-text relative"
                style="background-color: var(--theme-bg); opacity: 1 !important;">
-            <div v-if="title" class="flex items-center justify-between border-b border-theme-border pb-3">
-              <span class="text-[12px] font-mono uppercase tracking-[0.3em] font-black">{{ title }}</span>
+            <div v-if="title" class="flex items-center justify-between border-b border-theme-border pb-2">
+              <span class="text-[11px] font-mono uppercase tracking-[0.3em] font-black">{{ title }}</span>
               <div class="w-2 h-2 bg-theme-accent rotate-45"></div>
             </div>
-            <p class="text-[15px] font-mono leading-relaxed opacity-100">
+            <p class="text-[13px] font-mono leading-relaxed opacity-100">
               <slot></slot>
             </p>
             <!-- Stem -->
@@ -109,8 +109,8 @@ const tooltipStyle = computed(() => {
   const topY = triggerPos.value.y
   
   // Base width doubled (800 for tactical, 560 for basic)
-  // Adjusted to 1.5x: 600 for tactical, 420 for basic
-  const w = props.variant === 'tactical' ? 600 : 420
+  // Adjusted: 600 for tactical, 300 for basic
+  const w = props.variant === 'tactical' ? 600 : 300
   const margin = 16
   
   // Center-align by default
@@ -134,7 +134,7 @@ const tooltipStyle = computed(() => {
 
 const stemStyle = computed(() => {
   const centerX = triggerPos.value.x + (triggerPos.value.width / 2)
-  const w = props.variant === 'tactical' ? 600 : 420
+  const w = props.variant === 'tactical' ? 600 : 300
   const margin = 16
   let left = centerX - (w / 2)
   

@@ -1,6 +1,6 @@
 <template>
-  <div class="ethereal-void min-h-screen relative overflow-hidden transition-all duration-1000"
-       :class="{ 'is-runified': isIdle, 'is-dark': isDark, 'dark': isDark }">
+  <div class="ethereal-void min-h-screen relative transition-all duration-1000"
+       :class="{ 'is-runified': isIdle, 'is-dark': isDark, 'dark': isDark, 'overflow-hidden': activeTab === 'genesis' }">
     
     <EtherealBackground :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
     <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
@@ -62,6 +62,24 @@ const router = useRouter()
 
 const activeTab = ref('archive')
 
+const setDocumentScrollMode = (tab: string) => {
+  if (typeof document === 'undefined') return
+
+  const shouldLock = tab === 'genesis'
+  const nuxtRoot = document.getElementById('__nuxt')
+
+  document.documentElement.style.overflow = shouldLock ? 'hidden' : 'auto'
+  document.documentElement.style.height = shouldLock ? '100%' : 'auto'
+  document.body.style.overflow = shouldLock ? 'hidden' : 'auto'
+  document.body.style.height = shouldLock ? '100vh' : 'auto'
+
+  if (nuxtRoot) {
+    nuxtRoot.style.overflow = shouldLock ? 'hidden' : 'visible'
+    nuxtRoot.style.height = shouldLock ? '100%' : 'auto'
+    nuxtRoot.style.minHeight = '100%'
+  }
+}
+
 watch(activeTab, (newTab) => {
     const query = { ...route.query }
     if (newTab === 'archive') {
@@ -71,14 +89,7 @@ watch(activeTab, (newTab) => {
     }
     router.replace({ query })
 
-    // System-Level Scroll Lock
-    if (newTab === 'genesis') {
-        document.body.style.overflow = 'hidden'
-        document.body.style.height = '100vh'
-    } else {
-        document.body.style.overflow = ''
-        document.body.style.height = ''
-    }
+    setDocumentScrollMode(newTab)
 })
 
 watch(() => route.query.tab, (newQueryTab) => {
@@ -111,6 +122,7 @@ onMounted(() => {
   if (route.query.tab && typeof route.query.tab === 'string') {
     activeTab.value = route.query.tab
   }
+  setDocumentScrollMode(activeTab.value)
   
   window.addEventListener('mousemove', resetIdleTimer)
   window.addEventListener('keydown', resetIdleTimer)
@@ -119,6 +131,21 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    const nuxtRoot = document.getElementById('__nuxt')
+
+    document.documentElement.style.overflow = ''
+    document.documentElement.style.height = ''
+    document.body.style.overflow = ''
+    document.body.style.height = ''
+
+    if (nuxtRoot) {
+      nuxtRoot.style.overflow = ''
+      nuxtRoot.style.height = ''
+      nuxtRoot.style.minHeight = ''
+    }
+  }
+
   window.removeEventListener('mousemove', resetIdleTimer)
   window.removeEventListener('keydown', resetIdleTimer)
   if (idleTimer) clearTimeout(idleTimer)

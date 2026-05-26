@@ -341,77 +341,7 @@
             <div class="flex-grow h-px bg-theme-border"></div>
           </div>
 
-          <ExPanel class="max-w-4xl" noPadding>
-            <template #header>
-               Session_Activity_Monitor
-            </template>
-
-            <!-- 1. Header Section -->
-            <div class="p-12 border-b border-theme-border flex items-start justify-between">
-              <div class="flex flex-col space-y-2">
-                <ExHeading level="h2" variant="cinematic" class="!text-3xl lowercase leading-none">
-                  Log of <br /> Temporal Existence
-                </ExHeading>
-                <ExText variant="body" class="opacity-60">Session Consistency & Focus Registry</ExText>
-              </div>
-
-              <!-- Streak Counter -->
-              <div class="flex flex-col items-end">
-                <ExText variant="telemetry" class="opacity-30">Active_Streak</ExText>
-                <div class="flex items-center space-x-4">
-                  <span class="text-4xl font-serif italic text-theme-text">14</span>
-                  <div class="w-6 h-6 text-theme-accent opacity-50">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.41-1.09-2.12-1.61.12-.07.26-.14.37-.24.58-.51.85-1.29.58-2.03-.1-.31-.24-.59-.47-.83-.84-.9-2.28-1-3.37-.36-.4.23-.74.55-.99.94C10.15 7.42 10.02 8.7 10.3 9.6c.03.11.05.21.05.33 0 .22-.19.43-.45.43-.13 0-.27-.06-.34-.14-.23-.27-.33-.63-.44-.98-.18-.58-.3-1.15-.36-1.74 0-.17-.02-.34-.14-.46-.07-.07-.12-.13-.19-.13-.08 0-.15.06-.21.12-.47.45-.8 1.01-1.01 1.62-.25.7-.35 1.5-.08 2.22.06.18.15.36.26.52.27.42.59.81.95 1.14.73.66 1.57 1.2 2.3 1.89.7.67 1.34 1.45 1.57 2.4.08.33.12.68.12 1.02 0 .61-.13 1.23-.41 1.77-.32.61-.83 1.1-1.4 1.44-.09.05-.18.1-.25.17-.14.12-.11.23-.05.33.26.43.68.74 1.14.88.59.18 1.23.16 1.83.02.6-.14 1.18-.46 1.62-.91.49-.49.88-1.06 1.13-1.7.27-.68.32-1.44.25-2.18-.04-.61-.19-1.22-.49-1.76-.3-.54-.69-1.02-1.12-1.46-.37-.4-.78-.77-1.18-1.14-.14-.14-.26-.29-.41-.42-.07-.07-.1-.13-.05-.22.12-.22.42-.25.56-.05.81.82 1.65 1.62 2.29 2.58.11.17.38.2.53.07.13-.1.17-.25.16-.4-.05-.44-.31-.83-.54-1.21z" /></svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. Heatmap Section -->
-            <div class="p-12 border-b border-theme-border">
-               <div class="flex items-center justify-between mb-8">
-                  <ExText variant="telemetry" class="!opacity-70">Historical_Consistency_Matrix</ExText>
-                  <ExText variant="small">Scale: 0 - 100% Reification</ExText>
-               </div>
-
-               <!-- Heatmap Grid Mockup -->
-               <div class="grid grid-flow-col grid-rows-7 gap-2 overflow-x-auto pb-4 scroll-minimal">
-                  <ExTooltip v-for="n in 364" :key="n" position="top" :is-dark="isDark">
-                    <template #trigger>
-                      <div 
-                        class="w-3.5 h-3.5 border transition-all duration-700"
-                        :class="Math.random() > 0.8 ? 'bg-theme-text border-theme-text' : 'bg-theme-text/5 border-theme-border hover:bg-theme-text/20'"
-                      ></div>
-                    </template>
-                    <template #default>
-                      <div class="flex flex-col space-y-1">
-                        <span class="font-black">Activity_Level: {{ Math.floor(Math.random() * 100) }}%</span>
-                        <span class="opacity-50">Archive_Date: 24.04.2026</span>
-                      </div>
-                    </template>
-                  </ExTooltip>
-               </div>
-            </div>
-
-            <!-- 3. Action Section -->
-            <div class="p-12 flex flex-col md:flex-row md:items-end md:space-x-12 space-y-8 md:space-y-0">
-               <div class="flex-grow flex flex-col space-y-6">
-                  <ExInput 
-                    variant="terminal" 
-                    placeholder="scribe today's objective into the void..."
-                    class="italic font-serif"
-                  />
-                  <div class="flex items-center space-x-3 opacity-30">
-                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-theme-text"><path d="M12 2C9.243 2 7 4.243 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.757-2.243-5-5-5zM9 7c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm11 13H4v-8h16v8zm-8-5a2 2 0 100 4 2 2 0 000-4z"/></svg>
-                    <ExText variant="telemetry">REIFICATION_LOG // ENCRYPTION: ACTIVE</ExText>
-                  </div>
-               </div>
-              <div class="shrink-0">
-                  <ExButton variant="tactical">Initiate_Session</ExButton>
-               </div>
-            </div>
-
-          </ExPanel>
+          <ExActivityMonitor />
         </section>
         <!-- SECTION 11: EXGENESIS_MENU_LATTICE -->
         <section class="flex flex-col space-y-12 pb-64">
@@ -842,15 +772,6 @@
 
       </div>
     </div>
-
-    <!-- FULLSCREEN NODE MAP OVERLAY -->
-    <ExTacticalNodeMap 
-      :is-open="showNodeMap"
-      :is-dark="isDark"
-      :entry-scenario="mockScenarioData.entry"
-      :exit-scenario="mockScenarioData.exit"
-      @close="showNodeMap = false"
-    />
   </div>
 </template>
 
@@ -874,6 +795,7 @@ import ExImageEditor from '~/shared/ui/components/ExImageEditor.vue'
 import ExTacticalNodeMap from '~/shared/ui/components/ExTacticalNodeMap.vue'
 import ExVerticalTradeList from '~/shared/ui/components/ExVerticalTradeList.vue'
 import OpenStrategyMetrics from '~/shared/ui/components/Open_Strategy_Metrics.vue'
+import ExActivityMonitor from '~/shared/ui/components/ExActivityMonitor.vue'
 
 const isDark = ref(true)
 const showInitPreview = ref(false)
@@ -1155,6 +1077,7 @@ const getDiaryHeatmapFontClasses = (trade: any) => {
   }
 }
 
+
 </script>
 
 <style>
@@ -1212,6 +1135,23 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 ::-webkit-scrollbar { width: 4px; }

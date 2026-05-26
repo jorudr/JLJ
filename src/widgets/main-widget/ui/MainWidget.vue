@@ -2,7 +2,7 @@
   <main :class="activeTab === 'genesis' ? 'p-0 pt-0' : 'p-16 pt-32'"
         class="relative z-50 flex items-start justify-center min-h-screen transition-all duration-700">
     <Transition name="page-reify" mode="out-in">
-    <div :key="activeTab" 
+    <div :key="activeTab"
          :class="[
            activeTab === 'genesis' ? 'max-w-none w-screen h-screen bg-transparent backdrop-blur-none border-none overflow-hidden' : 'max-w-[65rem] w-full bg-current/5 focus-widget p-12 min-h-[35rem]'
          ]"

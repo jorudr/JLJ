@@ -46,7 +46,7 @@ interface Trade {
   side?: 'Long' | 'Short';
   notes?: string;
   notesList?: { id: string; content: string; date: string; title?: string }[];
-  images?: { url?: string; context?: string; name?: string; tags?: string[] }[];
+  images?: { url?: string; context?: string; name?: string; tags?: string[]; createdAt?: string; timestamp?: string; date?: string }[];
 }
 
 interface TradeAnalysisProps {
@@ -322,8 +322,21 @@ const addNote = async () => {
   }
 };
 
-const formatDateTactical = (dateStr: string | Date) => {
+const formatDateTactical = (dateStr?: string | Date | null) => {
+  const fallbackDate = props.trade?.date || props.trade?.dateExit || props.trade?.entryTime || props.trade?.exitTime;
+  const d = new Date(dateStr || fallbackDate || Date.now());
+  if (Number.isNaN(d.getTime())) return 'DATE_UNASSIGNED';
+
+  const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${date} // ${time}`;
+};
+
+const formatImageSlotDate = (dateStr?: string | Date | null) => {
+  if (!dateStr) return 'DATE_UNASSIGNED';
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return 'DATE_UNASSIGNED';
+
   const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
   const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   return `${date} // ${time}`;
@@ -396,7 +409,7 @@ const deleteNote = async (noteId: string) => {
 const addImageSlot = async () => {
   if (props.trade?.strategyId && props.trade?.id) {
     const currentImages = enrichedTrade.value?.images || [];
-    const newImages = [...currentImages, { url: "", context: "" }];
+    const newImages = [...currentImages, { url: "", context: "", createdAt: new Date().toISOString() }];
     await tradeStore.updateTrade(props.trade.strategyId, props.trade.id, {
       images: newImages
     });
@@ -419,6 +432,7 @@ const handleImageUpload = async (event: any, index: number) => {
       const currentImages = [...(enrichedTrade.value?.images || [])];
       if (currentImages[index]) {
         currentImages[index].url = url;
+        currentImages[index].createdAt = currentImages[index].createdAt || new Date().toISOString();
         await tradeStore.updateTrade(props.trade.strategyId, props.trade.id, {
           images: currentImages
         });
@@ -1497,17 +1511,17 @@ const strategyExecutionMetrics = computed(() => {
       <!-- ADAPTIVE BACKGROUND DECORATIONS -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40">
         <!-- Tesseract / 3D Wireframe -->
-        <div class="absolute -top-20 -right-20 w-96 h-96 border border-black/10 dark:border-white/10 rounded-full animate-slow-rotate">
-           <div class="absolute inset-10 border border-black/5 dark:border-white/5 rotate-45 animate-reverse-rotate"></div>
-           <div class="absolute inset-20 border border-black/5 dark:border-white/5 -rotate-12 animate-slow-rotate"></div>
+        <div class="absolute -top-20 -right-20 w-96 h-96 border border-black/10 dark:border-white/10 rounded-full">
+           <div class="absolute inset-10 border border-black/5 dark:border-white/5 rotate-45"></div>
+           <div class="absolute inset-20 border border-black/5 dark:border-white/5 -rotate-12"></div>
         </div>
 
         <!-- Floating Squares / Tesseracts -->
-        <div class="absolute top-1/4 left-10 w-12 h-12 border border-black/20 dark:border-white/20 rotate-12 animate-float"></div>
-        <div class="absolute bottom-1/4 right-10 w-24 h-24 border border-black/10 dark:border-white/10 -rotate-45 animate-float-delayed"></div>
+        <div class="absolute top-1/4 left-10 w-12 h-12 border border-black/20 dark:border-white/20 rotate-12"></div>
+        <div class="absolute bottom-1/4 right-10 w-24 h-24 border border-black/10 dark:border-white/10 -rotate-45"></div>
 
         <!-- Geometric Pulse Circles -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/[0.03] dark:border-white/[0.03] rounded-full animate-pulse-slow"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/[0.03] dark:border-white/[0.03] rounded-full"></div>
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-black/[0.02] dark:border-white/[0.02] rounded-full"></div>
         
         <!-- Tactical Grid Accents -->
@@ -1626,7 +1640,7 @@ const strategyExecutionMetrics = computed(() => {
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Required_Adherence</span>
@@ -1640,24 +1654,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Evaluates the percentage of required matrix conditions fulfilled during execution.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (Fulfilled / Required) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">100%</span><span class="text-emerald-500 font-bold">Perfect</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 100%</span><span class="text-amber-500 font-bold">Sub-Optimal</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="matrixAdherenceMetrics.reqRatio === 100 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ matrixAdherenceMetrics.reqRatio === 100 ? 'Perfect' : 'Sub-Optimal' }}
                               </span>
@@ -1665,7 +1679,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Additional_Alpha</span>
@@ -1679,24 +1693,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Calculates the PnL alpha generated by adding extra confirmation layers compared to the strategy baseline.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  ((PnL - AvgPnL) / AvgPnL) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 0%</span><span class="text-emerald-500 font-bold">Positive Alpha</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 0%</span><span class="text-rose-500 font-bold">Negative Drag</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="matrixAdherenceMetrics.addAlpha >= 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ matrixAdherenceMetrics.addAlpha >= 0 ? 'Positive' : 'Negative' }}
                               </span>
@@ -1704,7 +1718,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Protocol_Strictness</span>
@@ -1718,24 +1732,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>A weighted algorithmic score combining required and additional criteria to measure execution strictness.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (Req * 2.5) + (Add * 1.5)
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= 8.0</span><span class="text-emerald-500 font-bold">Good</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 8.0</span><span class="text-amber-500 font-bold">Sub-Optimal</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="matrixAdherenceMetrics.strictness >= 8.0 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ matrixAdherenceMetrics.strictness >= 8.0 ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -1743,7 +1757,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_PnL_Ratio</span>
@@ -1757,24 +1771,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Measures the ratio of total profit captured per active condition in the setup.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Total PnL / Active Conditions
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt; $0</span><span class="text-emerald-500 font-bold">Positive Yield</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; $0</span><span class="text-rose-500 font-bold">Negative Drag</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="matrixAdherenceMetrics.condPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ matrixAdherenceMetrics.condPnl >= 0 ? 'Positive' : 'Negative' }}
                               </span>
@@ -1782,7 +1796,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Setup_Complexity</span>
@@ -1796,24 +1810,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Evaluates the total number of rules triggered versus the historical median rule count of the strategy.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Active Rules / Median Rules
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&lt;= 1.5x</span><span class="text-emerald-500 font-bold">Good</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 1.5x</span><span class="text-amber-500 font-bold">Over-Complicated</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="matrixAdherenceMetrics.complexity <= 1.5 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ matrixAdherenceMetrics.complexity <= 1.5 ? 'Good' : 'Over-Complicated' }}
                               </span>
@@ -1822,7 +1836,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAB B: BEHAVIOURAL METRICS -->
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Cognitive_Stability</span>
@@ -1836,24 +1850,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Evaluates active emotional markers, deducting stability points for psychological friction tags.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  100 - (FrictionTags * 15)
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= 70%</span><span class="text-emerald-500 font-bold">Stable</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 70%</span><span class="text-rose-500 font-bold">Unstable</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="behaviouralMetrics.stability >= 70 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ behaviouralMetrics.stability >= 70 ? 'Stable' : 'Unstable' }}
                               </span>
@@ -1861,7 +1875,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Dominant_Bias</span>
@@ -1875,24 +1889,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Identifies the primary psychological friction marker present and maps it to its known execution risk profile.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Highest Priority Friction Tag
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">None</span><span class="text-emerald-500 font-bold">Clear Execution</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">Active Bias</span><span class="text-amber-500 font-bold">Cognitive Risk</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="behaviouralMetrics.bias.startsWith('None') ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ behaviouralMetrics.bias.startsWith('None') ? 'Clear' : 'Cognitive Risk' }}
                               </span>
@@ -1900,7 +1914,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Emotional_PnL_Drag</span>
@@ -1914,24 +1928,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Calculates potential profit lost or left on the table due to psychological friction markers.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Actual PnL - (AvgPnL * 1.15)
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= $0</span><span class="text-emerald-500 font-bold">Zero Drag</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; $0</span><span class="text-rose-500 font-bold">Profit Drag</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="behaviouralMetrics.pnlDrag >= 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ behaviouralMetrics.pnlDrag >= 0 ? 'Good' : 'Negative Drag' }}
                               </span>
@@ -1939,7 +1953,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Friction_Density</span>
@@ -1953,24 +1967,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Total count of active negative emotional tags divided by total active tags.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (FrictionTags / TotalTags) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">0%</span><span class="text-emerald-500 font-bold">Pristine</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 0%</span><span class="text-amber-500 font-bold">Friction Present</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="behaviouralMetrics.frictionDensity === 0 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ behaviouralMetrics.frictionDensity === 0 ? 'Perfect' : 'Friction Present' }}
                               </span>
@@ -1978,7 +1992,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Hesitation</span>
@@ -1992,24 +2006,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Estimates potential slippage or entry delay caused by psychological hesitation markers like Anxiety or Fear.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Hesitation Tags Mapping
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">Nominal</span><span class="text-emerald-500 font-bold">Good</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">Moderate/High</span><span class="text-amber-500 font-bold">Execution Lag</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="behaviouralMetrics.hesitation.startsWith('Nominal') ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ behaviouralMetrics.hesitation.startsWith('Nominal') ? 'Good' : 'Lag Warning' }}
                               </span>
@@ -2019,7 +2033,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <!-- TAB C: EXECUTION & RISK METRICS (Existing) -->
                      <!-- PROFIT COMPARISON -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Net_Result_Variance</span>
@@ -2035,24 +2049,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Calculates the difference between the current trade's profit/loss and the historical average for this strategy.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  TradePnL - StrategyAvgPnL
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= Avg</span><span class="text-emerald-500 font-bold">Above Average</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; Avg</span><span class="text-amber-500 font-bold">Below Average</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="props.trade.pnl >= strategyStats.avgPnl ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ props.trade.pnl >= strategyStats.avgPnl ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2061,7 +2075,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- YIELD EFFICIENCY -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Yield_Efficiency</span>
@@ -2073,24 +2087,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Measures the net impact of this trade on the overall portfolio balance as a percentage.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (TradePnL / AccountBalance) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 0%</span><span class="text-emerald-500 font-bold">Positive Impact</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 0%</span><span class="text-rose-500 font-bold">Drawdown</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="tradeDetailStats.yieldPct >= 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ tradeDetailStats.yieldPct >= 0 ? 'Positive' : 'Negative' }}
                               </span>
@@ -2099,7 +2113,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- PROFIT VELOCITY -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Profit_Velocity</span>
@@ -2111,24 +2125,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Capital efficiency metric showing USD earned per hour of market exposure.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  TradePnL / (DurationMinutes / 60)
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= Avg Velocity</span><span class="text-emerald-500 font-bold">High Efficiency</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; Avg Velocity</span><span class="text-amber-500 font-bold">Low Efficiency</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="tradeDetailStats.velocity >= strategyStats.avgVelocity ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ tradeDetailStats.velocity >= strategyStats.avgVelocity ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2137,7 +2151,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ACTUAL VS TARGET RR -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Target_RR</span>
@@ -2153,24 +2167,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>{{ resolvedRRNode ? 'Compares the realized Risk/Reward ratio against the matrix target protocol.' : 'The realized ratio of risk taken to potential reward captured during this session.' }}</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  RealizedReward / RealizedRisk
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= Target RR</span><span class="text-emerald-500 font-bold">Target Met</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; Target RR</span><span class="text-amber-500 font-bold">Sub-Optimal</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="actualRR >= targetRR ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ actualRR >= targetRR ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2179,7 +2193,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ACTUAL VS MAX RISK -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Max_Risk</span>
@@ -2198,24 +2212,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>{{ maxRiskTrade ? 'Compares the actual monetary or percentage risk of the trade against the matrix maximum risk threshold.' : 'The realized monetary risk calculated from entry, stop loss, and position size.' }}</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  |Entry - SL| * PositionSize
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&lt;= Max Risk</span><span class="text-emerald-500 font-bold">Compliant</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; Max Risk</span><span class="text-rose-500 font-bold">Breach Warning</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="(!maxRiskTrade || (maxRiskTrade.unit === '%' ? actualRiskPct <= maxRiskTrade.value : actualRiskDollars <= maxRiskTrade.value)) ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ (!maxRiskTrade || (maxRiskTrade.unit === '%' ? actualRiskPct <= maxRiskTrade.value : actualRiskDollars <= maxRiskTrade.value)) ? 'Good' : 'Bad' }}
                               </span>
@@ -2224,7 +2238,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- DURATION COMPARISON -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Temporal_Exposure</span>
@@ -2240,24 +2254,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Total duration of the trade from entry to exit protocol completion.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  ExitTimestamp - EntryTimestamp
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&lt;= Avg Duration</span><span class="text-emerald-500 font-bold">Efficient</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; Avg Duration</span><span class="text-amber-500 font-bold">Extended Hold</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="tradeDurationMinutes <= strategyStats.avgDuration ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ tradeDurationMinutes <= strategyStats.avgDuration ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2266,7 +2280,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ASSET PROTOCOL -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Asset_Protocol</span>
@@ -2278,22 +2292,22 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>The specific market vehicle and direction (Long/Short) utilized for this tactical operation.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Trade.Side + Trade.Asset
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">Valid Asset</span><span class="text-emerald-500 font-bold">Verified</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 text-emerald-500">
                                  Perfect
                               </span>
@@ -2302,7 +2316,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- STOP LOSS DISTANCE -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Stop_Loss_Distance</span>
@@ -2314,24 +2328,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>The percentage distance between the entry price and the planned stop loss threshold.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (|Entry - SL| / Entry) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&lt;= Avg SL Dist</span><span class="text-emerald-500 font-bold">Tight Stop</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; Avg SL Dist</span><span class="text-amber-500 font-bold">Wide Stop</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="currentSlDistPct <= strategyStats.avgSlDistPct ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ currentSlDistPct <= strategyStats.avgSlDistPct ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2340,7 +2354,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAKE PROFIT DISTANCE -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Take_Profit_Distance</span>
@@ -2352,24 +2366,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>The percentage distance between the entry price and the planned take profit target.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (|TP - Entry| / Entry) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= Avg TP Dist</span><span class="text-emerald-500 font-bold">High Target</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; Avg TP Dist</span><span class="text-amber-500 font-bold">Low Target</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="currentTpDistPct >= strategyStats.avgTpDistPct ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ currentTpDistPct >= strategyStats.avgTpDistPct ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2378,7 +2392,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAB D: STRATEGY VS. EXECUTION METRICS -->
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">SL_Execution_Drag</span>
@@ -2392,24 +2406,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Compares planned stop loss against actual exit price to measure execution slippage or premature cutting.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  ActualExit - PlannedStopLoss
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= $0</span><span class="text-emerald-500 font-bold">Zero Drag</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; $0</span><span class="text-rose-500 font-bold">Slippage / Premature Cut</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.slDrag >= 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ strategyExecutionMetrics.slDrag >= 0 ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2417,7 +2431,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
@@ -2431,24 +2445,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Compares realized dollar risk against the strategy's defined maximum risk budget per trade.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (ActualRisk / MaxRisk) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&lt;= 100%</span><span class="text-emerald-500 font-bold">Compliant</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 100%</span><span class="text-rose-500 font-bold">Budget Exceeded</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'Good' : 'Breach' }}
                               </span>
@@ -2456,7 +2470,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
@@ -2470,24 +2484,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Compares actual exit price against planned take profit target to evaluate target realization discipline.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  (RealizedReward / TargetReward) * 100
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">100%</span><span class="text-emerald-500 font-bold">Full Capture</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 100%</span><span class="text-amber-500 font-bold">Partial Capture</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ strategyExecutionMetrics.tpCapture === 100 ? 'Perfect' : 'Sub-Optimal' }}
                               </span>
@@ -2495,7 +2509,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Edge_Capture_Quotient</span>
@@ -2509,24 +2523,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Compares realized Risk/Reward ratio against the strategy's expected baseline R/R.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  RealizedRR / BaselineRR
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= 1.0x</span><span class="text-emerald-500 font-bold">Edge Maintained</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 1.0x</span><span class="text-rose-500 font-bold">Edge Diluted</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.edgeQuotient >= 1 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ strategyExecutionMetrics.edgeQuotient >= 1 ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2534,7 +2548,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Unrealized_Alpha_Left</span>
@@ -2548,24 +2562,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Calculates additional profit that would have been captured if held to the planned Take Profit level.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  PlannedTPProfit - RealizedProfit
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">$0</span><span class="text-emerald-500 font-bold">Zero Left</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; $0</span><span class="text-amber-500 font-bold">Left on Table</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ strategyExecutionMetrics.unrealizedLeft === 0 ? 'Perfect' : 'Sub-Optimal' }}
                               </span>
@@ -2573,7 +2587,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Horizon_Sync_Rating</span>
@@ -2587,24 +2601,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Evaluates trade duration against the defined limits of the active trading style horizon.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  Duration ∈ [StyleMin, StyleMax]
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">100%</span><span class="text-emerald-500 font-bold">Horizon Aligned</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 100%</span><span class="text-rose-500 font-bold">Horizon Mismatch</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.horizonSync === 100 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ strategyExecutionMetrics.horizonSync === 100 ? 'Good' : 'Mismatch' }}
                               </span>
@@ -2612,7 +2626,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Velocity_Variance_Index</span>
@@ -2626,24 +2640,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Compares realized profit velocity against the strategy's historical baseline velocity.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  RealizedVelocity / BaselineVelocity
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= 1.0x</span><span class="text-emerald-500 font-bold">Optimal Pacing</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 1.0x</span><span class="text-amber-500 font-bold">Lagging Velocity</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.velocityDelta >= 1 ? 'text-emerald-500' : 'text-amber-500'">
                                  {{ strategyExecutionMetrics.velocityDelta >= 1 ? 'Good' : 'Sub-Optimal' }}
                               </span>
@@ -2651,7 +2665,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_Alpha_Decay</span>
@@ -2665,24 +2679,24 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>Correlates negative emotional markers with bypassed required matrix conditions.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  BypassedRequiredRules * EmotionPenalty
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">0 Rules</span><span class="text-emerald-500 font-bold">Zero Decay</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&gt; 0 Rules</span><span class="text-rose-500 font-bold">Alpha Decay</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.alphaDecay === 0 ? 'text-emerald-500' : 'text-rose-500'">
                                  {{ strategyExecutionMetrics.alphaDecay === 0 ? 'Perfect' : 'Decay Warning' }}
                               </span>
@@ -2690,7 +2704,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="tactical">
+                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-help">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Confidence_Index</span>
@@ -2704,25 +2718,25 @@ const strategyExecutionMetrics = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-[330px] text-[14px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-2">
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
                            <div>A unified composite score combining adherence, target capture efficiency, risk compliance, and cognitive stability.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1.5 bg-black/5 dark:bg-white/5 rounded text-[12px] font-mono font-bold text-black dark:text-white tracking-tighter">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
+                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
                                  w1*Adherence + w2*TPCapture + w3*RiskSync + w4*Emotion
                               </code>
                            </div>
                            <div>
-                              <span class="text-[11px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[12px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1.5 rounded border border-black/5 dark:border-white/5 font-medium">
+                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
+                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
                                  <div class="flex justify-between"><span class="opacity-70">&gt;= 80</span><span class="text-emerald-500 font-bold">High Confidence</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">60-79</span><span class="text-amber-500 font-bold">Moderate</span></div>
                                  <div class="flex justify-between"><span class="opacity-70">&lt; 60</span><span class="text-rose-500 font-bold">Low Confidence</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[11px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[14px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
                                     :class="strategyExecutionMetrics.executionGrade >= 80 ? 'text-emerald-500' : (strategyExecutionMetrics.executionGrade >= 60 ? 'text-amber-500' : 'text-rose-500')">
                                  {{ strategyExecutionMetrics.executionGrade >= 80 ? 'Good' : (strategyExecutionMetrics.executionGrade >= 60 ? 'Stable' : 'Sub-Optimal') }}
                               </span>
@@ -2761,7 +2775,7 @@ const strategyExecutionMetrics = computed(() => {
                         <ExImageArchiveSlot 
                            :id="idx"
                            :imageUrl="img.url"
-                           :timestamp="formatDateTactical(enrichedTrade.entryTime)"
+                           :timestamp="formatImageSlotDate(img.createdAt || img.timestamp || img.date)"
                            :name="img.name"
                            :tags="img.tags"
                            @upload="triggerUpload(idx)"

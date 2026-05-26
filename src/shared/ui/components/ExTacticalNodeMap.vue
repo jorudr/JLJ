@@ -630,17 +630,17 @@ const emotionalStatus = computed(() => {
     <!-- ADAPTIVE BACKGROUND DECORATIONS -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40 text-black dark:text-white">
       <!-- Tesseract / 3D Wireframe -->
-      <div class="absolute -top-[240px] -right-[240px] w-[1152px] h-[1152px] border border-black/10 dark:border-white/10 rounded-full animate-slow-rotate">
-         <div class="absolute inset-[120px] border border-black/5 dark:border-white/5 rotate-45 animate-reverse-rotate"></div>
-         <div class="absolute inset-[240px] border border-black/5 dark:border-white/5 -rotate-12 animate-slow-rotate"></div>
+      <div class="absolute -top-[240px] -right-[240px] w-[1152px] h-[1152px] border border-black/10 dark:border-white/10 rounded-full">
+         <div class="absolute inset-[120px] border border-black/5 dark:border-white/5 rotate-45"></div>
+         <div class="absolute inset-[240px] border border-black/5 dark:border-white/5 -rotate-12"></div>
       </div>
 
       <!-- Floating Squares / Tesseracts -->
-      <div class="absolute top-1/4 left-10 w-12 h-12 border border-black/20 dark:border-white/20 rotate-12 animate-float"></div>
-      <div class="absolute bottom-1/4 right-10 w-24 h-24 border border-black/10 dark:border-white/10 -rotate-45 animate-float-delayed"></div>
+      <div class="absolute top-1/4 left-10 w-12 h-12 border border-black/20 dark:border-white/20 rotate-12"></div>
+      <div class="absolute bottom-1/4 right-10 w-24 h-24 border border-black/10 dark:border-white/10 -rotate-45"></div>
 
       <!-- Geometric Pulse Circles -->
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/[0.03] dark:border-white/[0.03] rounded-full animate-pulse-slow"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/[0.03] dark:border-white/[0.03] rounded-full"></div>
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-black/[0.02] dark:border-white/[0.02] rounded-full"></div>
       
       <!-- Tactical Grid Accents -->

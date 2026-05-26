@@ -13,7 +13,7 @@
 
         <div class="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-12">
           <!-- Selection: Simple Diary -->
-          <button @click="currentMode = 'diary'" 
+          <button @click="navigateToMode('diary')" 
                   class="selection-card group relative overflow-hidden border border-current/20 p-12 transition-all duration-700 hover:border-current/60">
             <div class="flex flex-col items-center space-y-6 relative z-10 w-48">
               <div class="w-2 h-2 border border-current rotate-45 mb-4 group-hover:bg-current transition-colors"></div>
@@ -28,7 +28,7 @@
           <div class="hidden md:block w-px h-24 bg-current/10"></div>
 
           <!-- Selection: Genesis Diary -->
-          <button @click="currentMode = 'genesis-diary'" 
+          <button @click="navigateToMode('genesis-diary')" 
                   class="selection-card group relative overflow-hidden border border-current/20 p-12 transition-all duration-700 hover:border-current/60">
             <div class="flex flex-col items-center space-y-6 relative z-10 w-48">
               <div class="flex space-x-1 mb-4">
@@ -46,7 +46,7 @@
           <div class="hidden md:block w-px h-24 bg-current/10"></div>
 
           <!-- Selection: Strategy Matrix -->
-          <button @click="currentMode = 'matrix'" 
+          <button @click="navigateToMode('matrix')" 
                   class="selection-card group relative overflow-hidden border border-current/20 p-12 transition-all duration-700 hover:border-current/60">
             <div class="flex flex-col items-center space-y-6 relative z-10 w-48">
               <div class="flex space-x-2 mb-4 group-hover:scale-110 transition-transform">
@@ -73,10 +73,6 @@
       <div v-else key="active" class="h-full flex flex-col relative">
         <header v-if="currentMode" class="flex items-center justify-between border-b border-current/10 py-4 px-8">
           <div class="flex items-center space-x-6">
-            <button @click="currentMode = null" class="text-[9px] font-mono opacity-20 hover:opacity-100 transition-opacity uppercase tracking-widest">
-              [ BACK_TO_ORIGIN ]
-            </button>
-            <div class="w-px h-4 bg-current/10"></div>
             <span class="text-[10px] font-mono tracking-widest uppercase opacity-60">
               {{ 
                 currentMode === 'diary' ? 'VIRTUAL_LOG' : 
@@ -92,7 +88,7 @@
         <!-- Stealth Left-Side Archive Trigger (To Cube) -->
         <div v-if="currentMode === 'genesis-diary' && diaryViewMode === 'stats'" 
              class="fixed left-0 top-1/2 -translate-y-1/2 z-[110] group w-24 h-64 flex items-center justify-center">
-           <div @click="diaryViewMode = 'cube'"
+           <div @click="setDiaryViewMode('cube')"
                 class="cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 bg-black p-2 shadow-lg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                  <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="square"/>
@@ -103,7 +99,7 @@
         <!-- Stealth Right-Side Stats Trigger (To Stats) -->
         <div v-if="currentMode === 'genesis-diary' && diaryViewMode === 'cube'" 
              class="fixed right-0 top-1/2 -translate-y-1/2 z-[110] group w-24 h-64 flex items-center justify-center">
-           <div @click="diaryViewMode = 'stats'"
+           <div @click="setDiaryViewMode('stats')"
                 class="cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 bg-black p-2 shadow-lg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                  <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="square"/>
@@ -114,7 +110,7 @@
         <!-- Stealth Right-Side Matrix Trigger (To Matrix) -->
         <div v-if="currentMode === 'genesis-diary' && diaryViewMode === 'stats'" 
              class="fixed right-0 top-1/2 -translate-y-1/2 z-[110] group w-24 h-64 flex items-center justify-center">
-           <div @click="currentMode = 'matrix'"
+           <div @click="navigateToMode('matrix')"
                 class="cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 bg-black p-2 shadow-lg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                  <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="square"/>
@@ -125,7 +121,7 @@
         <!-- Stealth Left-Side Diary Trigger (To Diary) -->
         <div v-if="currentMode === 'matrix'" 
              class="fixed left-0 top-1/2 -translate-y-1/2 z-[110] group w-24 h-64 flex items-center justify-center">
-           <div @click="currentMode = 'genesis-diary'; diaryViewMode = 'stats'"
+           <div @click="navigateToMode('genesis-diary'); setDiaryViewMode('stats')"
                 class="cursor-pointer opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 bg-black p-2 shadow-lg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                  <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="square"/>
@@ -135,9 +131,9 @@
 
         <div class="flex-grow overflow-hidden">
           <!-- DIARY MODES -->
-          <div v-if="currentMode === 'diary'" class="flex items-center justify-center h-full">
-             <span class="text-[10px] font-mono tracking-[0.8em] opacity-20 uppercase animate-pulse">Accessing_Simple_Logs...</span>
-          </div>
+          <Transition name="page-reify" mode="out-in">
+             <ExGenesisVirtualLog v-if="currentMode === 'diary'" />
+          </Transition>
           
            <Transition name="page-reify" mode="out-in">
               <ExGenesisDiary v-if="currentMode === 'genesis-diary'" :viewMode="diaryViewMode" />
@@ -148,8 +144,13 @@
                                :activeTab="activeTab" 
                                :isDark="themeStore.settings.isDark"
                                @exit="$emit('exit')" 
-                               @back="currentMode = null" />
+                               @back="backToOrigin" />
            </Transition>
+        </div>
+
+        <!-- Bottom Left Label -->
+        <div v-if="currentMode" class="fixed bottom-8 left-8 text-[10px] font-mono tracking-widest uppercase opacity-40 pointer-events-none z-[100]">
+          Click Left Arrow to Go back
         </div>
       </div>
 
@@ -159,10 +160,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ExGenesisDiary from './ExGenesisDiary.vue'
 import ExGenesisMatrix from './ExGenesisMatrix.vue'
+import ExGenesisVirtualLog from './ExGenesisVirtualLog.vue'
 import { useThemeStore } from '@/features/store/useTheme'
 
 const themeStore = useThemeStore()
@@ -180,25 +182,93 @@ const currentMode = ref<'diary' | 'matrix' | 'genesis-diary' | null>(null)
 const diaryViewMode = ref<'stats' | 'cube'>('stats')
 
 // --- QUERY SYNC --- //
+const modeToSection: Record<'diary' | 'matrix' | 'genesis-diary', string> = {
+  diary: 'virtual-log',
+  matrix: 'matrix',
+  'genesis-diary': 'diary'
+}
+
+const sectionToMode: Record<string, 'diary' | 'matrix' | 'genesis-diary'> = {
+  'virtual-log': 'diary',
+  log: 'diary',
+  matrix: 'matrix',
+  diary: 'genesis-diary',
+  'genesis-diary': 'genesis-diary'
+}
+
+const getModeFromRoute = () => {
+  const section = route.params.section
+  const sectionKey = Array.isArray(section) ? section[0] : section
+  if (sectionKey && sectionToMode[sectionKey]) return sectionToMode[sectionKey]
+
+  const queryMode = route.query.mode
+  if (typeof queryMode === 'string' && (queryMode === 'diary' || queryMode === 'matrix' || queryMode === 'genesis-diary')) {
+    return queryMode
+  }
+
+  return null
+}
+
+const syncModeFromRoute = () => {
+  currentMode.value = getModeFromRoute()
+  diaryViewMode.value = route.query.view === 'cube' ? 'cube' : 'stats'
+}
+
+const navigateToMode = (mode: 'diary' | 'matrix' | 'genesis-diary') => {
+  currentMode.value = mode
+  const query = {
+    ...route.query,
+    tab: 'genesis',
+    mode,
+    ...(mode === 'genesis-diary' ? { view: diaryViewMode.value } : {})
+  }
+
+  if (mode !== 'genesis-diary') delete (query as Record<string, any>).view
+
+  router.push({
+    path: `/genesis/${modeToSection[mode]}`,
+    query
+  })
+}
+
+const setDiaryViewMode = (view: 'stats' | 'cube') => {
+  diaryViewMode.value = view
+  if (currentMode.value !== 'genesis-diary') return
+
+  router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      tab: 'genesis',
+      mode: 'genesis-diary',
+      view
+    }
+  })
+}
+
+const backToOrigin = () => {
+  currentMode.value = null
+  diaryViewMode.value = 'stats'
+  // Also clear route query params
+  const { mode, view, ...restQuery } = route.query
+  router.push({ path: '/genesis', query: { ...restQuery, tab: 'genesis' } })
+}
 
 onMounted(() => {
-  if (route.query.mode) {
-    const m = route.query.mode as string
-    if (m === 'diary' || m === 'matrix' || m === 'genesis-diary') {
-      currentMode.value = m
-    }
-  }
+  syncModeFromRoute()
+  window.addEventListener('keydown', handleKeydown)
 })
 
-watch(currentMode, (newMode) => {
-  const query = { ...route.query }
-  if (newMode) {
-    query.mode = newMode
-  } else {
-    delete query.mode
-  }
-  router.replace({ query })
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowLeft' && currentMode.value) {
+    backToOrigin()
+  }
+}
+watch(() => [route.params.section, route.query.mode, route.query.view], syncModeFromRoute)
 </script>
 
 <style scoped>

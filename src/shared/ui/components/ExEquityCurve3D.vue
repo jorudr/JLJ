@@ -298,16 +298,6 @@
       </Transition>
     </Teleport>
 
-    <!-- BACK_TO_MENU BUTTON (PIXEL-PERFECT ALIGNMENT) -->
-    <div class="absolute top-12 left-12 z-[100] pointer-events-auto">
-      <button 
-        @click="$emit('exit')" 
-        class="group flex items-center space-x-4 opacity-40 hover:opacity-100 transition-all duration-500"
-      >
-        <div class="w-2 h-2 border border-black dark:border-white rotate-45 group-hover:bg-black dark:group-hover:bg-white transition-colors"></div>
-        <div class="text-[10px] font-mono tracking-[0.4em] uppercase text-black dark:text-white">BACK_TO_MENU</div>
-      </button>
-    </div>
 
 
     <!-- OVERLAY UI -->
@@ -4288,7 +4278,9 @@ const getMatchedFormulaTerms = (formula: string) => {
         range = findFormulaTermRange(formula, term, usedRanges)
       }
       if (!hasMatch) return []
-      return [{ term, config: formulaTermConfigs[term] }]
+      const config = formulaTermConfigs[term]
+      if (!config) return []
+      return [{ term, config }]
     })
 }
 
@@ -4529,6 +4521,7 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           
           if ((regex && regex.test(cfg.formula)) || (!regex && cfg.formula.includes(term))) {
             const propInfo = terms[term];
+            if (!propInfo) return;
             const isLocal = propInfo.source;
             const valObj = isLocal === 'riskFree' ? riskFree : (isLocal === 'bench' ? bench : m[propInfo.key]);
             
@@ -4729,6 +4722,7 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           
           if ((regex && regex.test(evaluatedStr)) || (!regex && evaluatedStr.includes(term))) {
             const propInfo = terms[term];
+            if (!propInfo) return;
             const isLocal = propInfo.source;
             const valObj = isLocal === 'riskFree' ? riskFree : (isLocal === 'bench' ? bench : m[propInfo.key]);
 

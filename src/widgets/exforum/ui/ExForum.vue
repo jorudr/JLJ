@@ -1,260 +1,161 @@
 <template>
-  <div class="journal-wrapper h-full flex flex-col min-w-0 overflow-hidden relative">
-    
-    <Transition name="fade-slide" mode="out-in">
-    <!-- READER VIEW: Detailed Content -->
-    <ExNodeContent v-if="selectedNode" :node="selectedNode" @back="closeReader" key="reader" />
+  <div class="w-full max-w-4xl mx-auto px-6 py-12 pb-32 flex flex-col space-y-16">
+    <!-- Header -->
+    <header class="flex flex-col items-start border-b border-theme-border pb-8">
+      <div class="flex items-center space-x-4 mb-4">
+        <div class="w-3 h-3 bg-theme-text rotate-45"></div>
+        <h1 class="text-[10px] font-mono tracking-[0.8em] uppercase font-black opacity-40 text-theme-text">Market_Intel_Subsystem</h1>
+      </div>
+      <p class="text-4xl font-mono font-black uppercase tracking-tighter text-theme-text">Real-Time_Discourse</p>
+    </header>
 
-    <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="flex flex-col h-full overflow-hidden" :key="`page-${currentPage}`">
-      
-      <!-- Masthead (Page 1 Only) -->
-      <header v-if="currentPage === 1" class="pt-8 pb-12 border-b-4 border-double border-current/20 flex flex-col items-center space-y-4 px-8 relative z-10">
-        <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
-          <span>Vol. XXIV // No. 12</span>
-          <span class="text-[10px] tracking-[1em] italic font-serif">Reification Edition</span>
-          <span>Reified on {{ new Date().toLocaleDateString() }}</span>
-        </div>
+    <!-- Feed -->
+    <div class="flex flex-col space-y-16">
+      <div v-for="(thread, index) in threads" :key="thread.id" class="flex flex-col space-y-6">
         
-        <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center py-4 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
-          The Eve's Apple
-        </h1>
-
-        <div class="flex items-center justify-between w-full border-t border-current/10 pt-4 px-4">
-          <!-- Filters -->
-          <div class="flex items-center space-x-8">
-            <div v-for="tag in ['SETUPS', 'RESEARCH', 'PROTOCOL', 'INQUIRY']" :key="tag" 
-                 class="text-[9px] font-mono tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer">
-              {{ tag }}
-            </div>
-          </div>
-
-          <!-- Search Bar -->
-          <div class="relative flex items-center group/search">
-            <span class="absolute left-0 text-[10px] font-mono opacity-20 group-focus-within/search:opacity-100 transition-opacity uppercase tracking-widest">Search_</span>
-            <input v-model="searchQuery" 
-                   type="text" 
-                   placeholder="INDEX_REIFICATION"
-                   class="bg-transparent border-b border-current/10 py-2 pl-20 pr-4 text-[10px] font-mono tracking-widest focus:outline-none focus:border-current/40 w-48 transition-all focus:w-80 placeholder:opacity-20 uppercase" />
-          </div>
+        <!-- Section Divider / Meta Tag -->
+        <div class="flex items-center space-x-6 text-theme-text">
+          <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">{{ (index + 1).toString().padStart(2, '0') }} // {{ thread.asset }}</span>
+          <div class="flex-grow h-px bg-theme-border"></div>
         </div>
-      </header>
 
-      <!-- Main Journal Body -->
-      <div class="flex-grow overflow-y-auto scroll-minimal relative z-10 pb-24">
-        
-        <!-- DYNAMIC MAGAZINE LAYOUT -->
-        <div v-if="pagedNodes.length > 0" class="flex flex-col">
-          <!-- SECTION 1: Top Row (Lead Setup + Inquiry Sidebar) -->
-          <div class="grid grid-cols-12 border-b border-current/10">
-            <section class="journal-sector col-span-12 lg:col-span-8 p-12 lg:border-r border-current/10">
-              <div class="flex flex-col space-y-12">
-                <div class="flex items-center justify-between border-b border-current/10 pb-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Strategic Setups</h2>
-                  </div>
-                  <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">Edition_0{{ currentPage }}</span>
-                </div>
-                <ExJournalSpotlight v-if="pagedSetups[0]" :node="pagedSetups[0]" @click="navigateToNode(pagedSetups[0].id)" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-current/10 pt-8">
-                  <ExNodeCard v-for="node in pagedSetups.slice(1, 3)" :key="node.id" :node="node" />
-                </div>
-              </div>
-            </section>
+        <!-- ExPanel for the Thread -->
+        <ExPanel :title="thread.title" :telemetry="thread.time" variant="standard">
+          <div class="flex flex-col space-y-6 pt-2">
             
-            <section class="journal-sector col-span-12 lg:col-span-4 p-8">
-              <div class="space-y-12">
-                 <div class="flex items-center space-x-3 border-b border-current/10 pb-4">
-                   <div class="w-1 h-1 bg-current opacity-20"></div>
-                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">Inquiry Voices</h2>
-                </div>
-                <div class="space-y-6">
-                  <ExNodeCard v-for="node in pagedInquiry.slice(0, 3)" :key="node.id" :node="node" />
-                </div>
+            <!-- Author & Sentiment Metadata -->
+            <div class="flex flex-wrap items-center space-x-4 pb-4 border-b border-theme-border/30 gap-y-2">
+              <div class="flex items-center space-x-2">
+                <div class="w-1.5 h-1.5 rotate-45" :class="thread.sentiment === 'Bullish' ? 'bg-green-500' : thread.sentiment === 'Bearish' ? 'bg-red-500' : 'bg-theme-text/50'"></div>
+                <span class="text-[9px] font-mono uppercase tracking-[0.3em] font-black" :class="thread.sentiment === 'Bullish' ? 'text-green-500' : thread.sentiment === 'Bearish' ? 'text-red-500' : 'text-theme-text/50'">Bias: {{ thread.sentiment }}</span>
               </div>
-            </section>
+              <span class="text-[9px] font-mono uppercase tracking-widest opacity-30 hidden sm:inline">|</span>
+              <div class="flex items-center space-x-2">
+                <img :src="thread.avatar" :alt="thread.author" class="w-5 h-5 rounded-sm border border-theme-border opacity-80" />
+                <span class="text-[9px] font-mono uppercase tracking-widest opacity-60">{{ thread.author }}</span>
+              </div>
+            </div>
+
+            <!-- Content Area (Expandable) -->
+            <div class="relative transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden"
+                 :class="thread.expanded ? 'max-h-[2000px]' : 'max-h-[72px]'">
+              <ExText variant="body" class="leading-relaxed whitespace-pre-wrap opacity-80">{{ thread.content }}</ExText>
+              
+              <!-- Fade Out Gradient -->
+              <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--theme-bg)] to-transparent pointer-events-none transition-opacity duration-500"
+                   :style="{ opacity: thread.expanded ? '0' : '0.95' }">
+              </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-between pt-4 border-t border-theme-border/30">
+              <div class="flex space-x-6 text-[9px] font-mono tracking-[0.2em] uppercase text-theme-text opacity-40">
+                <span class="flex items-center space-x-2">
+                  <span class="w-1 h-1 bg-current rounded-full"></span>
+                  <span>{{ thread.replies }} Replies</span>
+                </span>
+                <span class="flex items-center space-x-2">
+                  <span class="w-1 h-1 bg-current rounded-full"></span>
+                  <span>{{ thread.likes }} Likes</span>
+                </span>
+                <span class="flex items-center space-x-2">
+                  <span class="w-1 h-1 bg-current rounded-full"></span>
+                  <span>Impact: {{ thread.impact }}</span>
+                </span>
+              </div>
+              
+              <ExButton variant="ghost" @click="thread.expanded = !thread.expanded">
+                {{ thread.expanded ? 'Collapse_Data' : 'Expand_Data' }}
+              </ExButton>
+            </div>
           </div>
-
-          <!-- SECTION 2: Middle Horizontal (Market Ledger) -->
-          <section class="journal-sector p-12 border-b border-current/10">
-            <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between border-b border-current/10 pb-4">
-                <div class="flex items-center space-x-3">
-                  <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                  <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Market Ledger</h2>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-                <ExNodeCard v-for="node in pagedResearch.slice(0, 3)" :key="node.id" :node="node" />
-              </div>
-            </div>
-          </section>
-
-          <!-- SECTION 3: Bottom Strip (Protocol Masterclass) -->
-          <section class="journal-sector p-12">
-            <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between border-b border-current/10 pb-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Protocol Masterclass</h2>
-                  </div>
-              </div>
-              <div class="flex overflow-x-auto space-x-12 scroll-minimal pb-4">
-                <div v-for="node in pagedLessons.slice(0, 3)" :key="node.id" class="min-w-[400px]">
-                  <ExNodeCard :node="node" class="!border-none" />
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <!-- NO CONTENT WARNING: The Reification Void -->
-        <div v-else class="flex flex-col items-center justify-center py-48 px-12 space-y-8 animate-pulse text-center">
-            <div class="text-4xl font-serif italic tracking-tighter opacity-20">
-               The Reification Void
-            </div>
-            <div class="w-12 h-px bg-current opacity-10"></div>
-            <p class="max-w-md text-[10px] font-mono tracking-[0.3em] uppercase opacity-30 leading-loose">
-               Caution: You have reached the edge of the indexed registry. 
-               No tactical intelligence or archival nodes have been reified at this temporal coordinate.
-            </p>
-            <button @click="navigateToPage(1)" class="mt-8 text-[9px] font-mono tracking-[0.4em] uppercase border border-current/20 px-8 py-3 hover:bg-current/5 transition-all">
-               [ Return_to_Origin ]
-            </button>
-        </div>
-
-        <!-- Pagination Controls -->
-        <div class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
-           <div class="flex items-center space-x-12">
-              <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
-                      class="px-8 py-3 border border-current/10 text-[9px] font-mono tracking-[0.4em] uppercase opacity-40 hover:opacity-100 hover:bg-current/[0.02] transition-all">
-                [ PREV_PAGE ]
-              </button>
-              <button @click="navigateToPage(currentPage + 1)" 
-                      class="px-8 py-3 bg-zinc-800 dark:bg-white/10 text-white dark:text-current text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
-                [ NEXT_PAGE // ARV_0{{ currentPage + 1 }} ]
-              </button>
-           </div>
-           
-           <div class="text-[7px] font-mono opacity-20 uppercase tracking-[0.8em]">End of Indexed Reification</div>
-        </div>
-
-        <!-- Journal Footer -->
-        <footer class="p-12 text-center opacity-10 hover:opacity-100 transition-opacity duration-700">
-          <div class="flex flex-col items-center space-y-4">
-            <div class="text-[10px] font-serif italic tracking-widest text-current">"Knowledge Reified. Value Extracted."</div>
-            <div class="w-24 h-px bg-current/20 mx-auto text-current"></div>
-            <div class="text-[7px] font-mono tracking-[0.8em] uppercase text-current">The Eve's Apple // Distributed Intel Hub</div>
-          </div>
-        </footer>
-
+        </ExPanel>
       </div>
     </div>
-    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { mockExNodes } from '../../../entities/exnode/model/exnode.mock'
-import ExNodeCard from '../../../entities/exnode/ui/ExNodeCard.vue'
-import ExNodeContent from '../../../entities/exnode/ui/ExNodeContent.vue'
-import ExJournalSpotlight from './ExJournalSpotlight.vue'
+import { ref } from 'vue'
+import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExText from '~/shared/ui/ExText.vue'
+import ExButton from '~/shared/ui/ExButton.vue'
 
-const route = useRoute()
-const router = useRouter()
-
-// Archival State
-const searchQuery = ref('')
-
-// Pagination Logic
-const currentPage = computed(() => Number(route.query.page) || 1)
-const nodesPerPage = 12
-
-const filteredNodes = computed(() => {
-  if (!searchQuery.value) return mockExNodes
-  const q = searchQuery.value.toLowerCase()
-  return mockExNodes.filter(n => 
-    n.title.toLowerCase().includes(q) || 
-    n.thesis_brief?.toLowerCase().includes(q) ||
-    n.category.toLowerCase().includes(q)
-  )
-})
-
-const pagedNodes = computed(() => {
-  const start = (currentPage.value - 1) * nodesPerPage
-  return filteredNodes.value.slice(start, start + nodesPerPage)
-})
-
-const pagedSetups = computed(() => pagedNodes.value.filter(n => n.mode === 'SETUP'))
-const pagedResearch = computed(() => pagedNodes.value.filter(n => n.mode === 'RESEARCH'))
-const pagedLessons = computed(() => pagedNodes.value.filter(n => n.mode === 'LESSON'))
-const pagedInquiry = computed(() => pagedNodes.value.filter(n => n.mode === 'QUESTION'))
-
-const navigateToPage = (page: number) => {
-  const query = { ...route.query, page: page === 1 ? undefined : page.toString() }
-  router.replace({ query })
+interface Thread {
+  id: number
+  asset: string
+  author: string
+  avatar: string
+  time: string
+  title: string
+  content: string
+  sentiment: 'Bullish' | 'Bearish' | 'Neutral'
+  replies: number
+  likes: number
+  impact: string
+  expanded: boolean
 }
 
-// Reader Logic
-const selectedNodeId = computed(() => route.query.nodeId as string | undefined)
-const selectedNode = computed(() => mockExNodes.find(n => n.id === selectedNodeId.value))
-
-const closeReader = () => {
-  const query = { ...route.query }
-  delete query.nodeId
-  router.replace({ query })
-}
-
-const navigateToNode = (id: string) => {
-  router.replace({
-    query: {
-      ...route.query,
-      nodeId: id
-    }
-  })
-}
-
-// Scroll to Top Logic
-watch(() => [route.query.nodeId, route.query.page], () => {
-  nextTick(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    const scrollContainers = document.querySelectorAll('.scroll-minimal, .overflow-y-auto, main, .ethereal-void')
-    scrollContainers.forEach(container => {
-      container.scrollTo({ top: 0, behavior: 'smooth' })
-    })
-  })
-}, { immediate: true })
-
-// Sectional Intelligence Logic (Inherited by paged computed)
+const threads = ref<Thread[]>([
+  {
+    id: 1,
+    asset: 'EUR/USD',
+    author: 'Quant_0x9',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Quant_0x9',
+    time: 'T-15m',
+    title: 'Liquidity Sweep at 1.0850 structural level',
+    content: 'We observed a massive liquidity cascade sweeping the 1.0850 lows during the London open. High-frequency algorithms unloaded significant volume into retail stop losses, creating a classic deviation before reversion.\n\nLooking at the order book depth, there is an imbalance resting around 1.0920. If we reclaim the Vwap on the 15m timeframe, the probability of a squeeze towards that inefficiency is extremely high. Note the delta divergence on the footprint charts—selling pressure was entirely absorbed by passive limit bids. This indicates accumulation by larger participants. We are setting alerts for a break of structure on the 5m to confirm the shift in order flow.',
+    sentiment: 'Bullish',
+    replies: 12,
+    likes: 342,
+    impact: 'High',
+    expanded: false
+  },
+  {
+    id: 2,
+    asset: 'XAU/USD',
+    author: 'Macro_Vector',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Macro_Vector',
+    time: 'T-1h',
+    title: 'Yield curve steepening implications for Gold',
+    content: 'The recent bear steepening of the yield curve is putting unprecedented pressure on non-yielding assets. Despite geopolitical premiums remaining high, the mathematical reality of a 10-year pushing 4.8% is shifting capital flows.\n\nFrom a technical perspective, Gold is testing the weekly fair value gap. A closure below $1980 on the daily timeframe would likely trigger systematic trend-following funds to flip net-short. However, central bank buying remains the invisible hand supporting the bids. Proceed with caution and reduce position sizing until structural clarity returns. The next 48 hours will be critical for defining the quarterly trend.',
+    sentiment: 'Bearish',
+    replies: 34,
+    likes: 184,
+    impact: 'Medium',
+    expanded: false
+  },
+  {
+    id: 3,
+    asset: 'BTC/USD',
+    author: 'Hash_Rate',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Hash_Rate',
+    time: 'T-3h',
+    title: 'On-chain accumulation phases and exchange outflow',
+    content: 'Exchange reserves have hit a multi-year low this morning. On-chain metrics show aggressive accumulation by wallets holding between 1k and 10k BTC, a cohort that historically front-runs major volatility expansions.\n\nSimultaneously, the funding rates on perpetual futures have reset to baseline neutral, washing out the excessive leverage from late longs. This creates a clean slate for the next impulse. The primary resistance block sits at $64,500. A daily close above this level invalidates the local distribution thesis and shifts the market structure back to trending conditions. Spot volume must confirm any breakout attempts.',
+    sentiment: 'Bullish',
+    replies: 89,
+    likes: 812,
+    impact: 'High',
+    expanded: false
+  },
+  {
+    id: 4,
+    asset: 'SPX',
+    author: 'Volatility_Arb',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Volatility_Arb',
+    time: 'T-5h',
+    title: 'VIX crush and institutional put selling',
+    content: 'The relentless grind higher in equities is being entirely driven by options market dealer positioning. We are seeing massive volumes of put selling at the 5000 strike, forcing dealers into a long-gamma state. This suppresses volatility and creates a self-fulfilling feedback loop of tight ranges and upward drift.\n\nUntil we see a catalyst that forces dealers to unhedge, shorting this market is fighting structural flows. The skew is historically flat, suggesting complacency is at a peak. While a reversion is mathematically inevitable, timing it in a suppressed volatility regime requires patience. Wait for the VIX to sustain a breakout above 15 before assuming any short delta exposure.',
+    sentiment: 'Neutral',
+    replies: 45,
+    likes: 92,
+    impact: 'Low',
+    expanded: false
+  }
+])
 </script>
 
 <style scoped>
-.journal-wrapper {
-  color: var(--text-primary);
-}
-
-.journal-sector {
-  position: relative;
-}
-
-.fade-slide-enter-active, .fade-slide-leave-active {
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.fade-slide-enter-from { opacity: 0; transform: translateY(20px); filter: blur(20px); }
-.fade-slide-leave-to { opacity: 0; transform: translateY(-20px); filter: blur(20px); }
-
-.scroll-minimal::-webkit-scrollbar { display: none; }
-.scroll-minimal { scrollbar-width: none; }
-
-.grid-auto-flow-dense {
-  grid-auto-flow: dense;
-}
-
-/* Double border for masthead authority */
-.border-double {
-  border-style: double;
-}
+/* Scoped styles are largely unnecessary due to Ex* components and global tokens. */
 </style>

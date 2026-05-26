@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import ExButton from '../ExButton.vue'
 
 const props = defineProps<{
@@ -17,6 +17,11 @@ const localName = ref(props.name || `Archive_Node_${props.id || '0x42'}`)
 
 const isAddingTag = ref(false)
 const newTag = ref('')
+
+const displayTimestamp = computed(() => {
+  if (!props.timestamp || props.timestamp.includes('Invalid Date')) return 'DATE_UNASSIGNED'
+  return props.timestamp
+})
 
 function saveName() {
   isEditingName.value = false
@@ -139,7 +144,7 @@ function getTagColor(tag: string) {
                </button>
             </div>
         </div>
-        <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.3em] pl-3 text-black dark:text-white mt-1">{{ timestamp || '09.05.2026 // 19:58' }}</span>
+        <span class="text-[8px] font-mono opacity-30 uppercase tracking-[0.3em] pl-3 text-black dark:text-white mt-1">{{ displayTimestamp }}</span>
       </div>
       
       <!-- Remove Button -->

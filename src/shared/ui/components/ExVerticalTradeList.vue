@@ -1,16 +1,34 @@
 <template>
   <div class="flex flex-col space-y-6 text-black dark:text-white font-mono select-none">
-    <!-- FILTER HEADER -->
-    <div class="flex items-center justify-between pb-4 text-xs">
-      <div class="flex items-center space-x-4">
-        <span class="font-black uppercase tracking-widest">Filters</span>
-        <span v-if="activeFilterCount > 0" class="opacity-40 text-[10px] uppercase">({{ activeFilterCount }} Active)</span>
-        <button v-if="activeFilterCount > 0" @click="resetAllFilters" class="text-[10px] opacity-40 hover:opacity-100 uppercase transition-opacity">
-          [Reset]
-        </button>
-      </div>
-      <div class="flex items-center space-x-6">
-        <div class="flex items-center space-x-3 pr-4 border-r border-black/10 dark:border-white/10">
+    <!-- FILTER BAR -->
+    <div ref="filterBarRef" class="relative z-30 flex flex-col gap-3 pb-4 border-b border-black/10 dark:border-white/10">
+      <div class="flex items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="font-black uppercase tracking-widest">Filters</span>
+          <span v-if="activeFilterCount > 0" class="opacity-40 text-[10px] uppercase whitespace-nowrap">({{ activeFilterCount }} Active)</span>
+          <button v-if="activeFilterCount > 0" @click="resetAllFilters" class="text-[10px] opacity-40 hover:opacity-100 uppercase transition-opacity">
+            [Reset]
+          </button>
+        </div>
+        <div class="flex items-center space-x-3 shrink-0">
+          <div class="flex items-center gap-1 pr-3 border-r border-black/10 dark:border-white/10">
+            <button
+              @click="setResultDisplayMode('currency')"
+              class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
+              :class="resultDisplayMode === 'currency' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
+              title="Show result in dollars"
+            >
+              $
+            </button>
+            <button
+              @click="setResultDisplayMode('percent')"
+              class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
+              :class="resultDisplayMode === 'percent' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
+              title="Show result in percent"
+            >
+              %
+            </button>
+          </div>
           <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group" title="Monochrome">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-black dark:border-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-black dark:bg-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
@@ -20,231 +38,201 @@
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-green-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
         </div>
-        <button @click="isExtended = !isExtended" class="font-black uppercase tracking-widest hover:opacity-70 transition-opacity">
-          {{ isExtended ? '[-] Collapse' : '[+] Expand' }}
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <div v-for="filter in filterDropdowns" :key="filter.id" class="relative">
+          <button
+            @click.stop="openFilterId = openFilterId === filter.id ? null : filter.id"
+            class="h-8 max-w-[220px] px-3 border text-[11px] uppercase tracking-wider transition-colors flex items-center gap-2"
+            :class="filter.isActive || openFilterId === filter.id ? 'bg-black/10 dark:bg-white/10 border-black/40 dark:border-white/40 opacity-100' : 'border-black/20 dark:border-white/20 opacity-55 hover:opacity-100 hover:border-black/40 dark:hover:border-white/40'"
+          >
+            <span class="truncate">{{ filterButtonLabel(filter.id) }}</span>
+            <span class="text-[10px] opacity-50">{{ openFilterId === filter.id ? '^' : '⌄' }}</span>
+          </button>
+
+          <Transition name="fade">
+            <div
+              v-if="openFilterId === filter.id"
+              class="absolute top-full mt-1 w-80 max-w-[calc(100vw-3rem)] bg-[#f3f0e8]/95 dark:bg-[#070707]/95 border border-black/20 dark:border-white/20 shadow-xl backdrop-blur-md p-3 z-50"
+              :class="filter.id === 'profit' || filter.id === 'time' || filter.id === 'duration' ? 'right-0 left-auto' : 'left-0'"
+            >
+              <div v-if="filter.id !== 'profit'" class="flex items-center justify-between pb-2 border-b border-black/10 dark:border-white/10">
+                <span class="text-[10px] font-black uppercase tracking-widest">{{ filter.label }}</span>
+                <button
+                  v-if="filter.isActive"
+                  @click.stop="resetFilterById(filter.id)"
+                  class="text-[9px] uppercase opacity-40 hover:opacity-100 transition-opacity"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div v-if="filter.type === 'options'" class="max-h-64 overflow-y-auto custom-scrollbar py-2">
+                <button
+                  v-for="item in filter.options"
+                  :key="item.id"
+                  @click.stop="selectDropdownOption(filter.id, item.id)"
+                  class="w-full px-2.5 py-2 text-left text-[10px] uppercase tracking-wider transition-colors flex items-center justify-between gap-3 border-b border-black/5 dark:border-white/5 last:border-0"
+                  :class="isDropdownOptionActive(filter.id, item.id) ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'opacity-65 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'"
+                >
+                  <span class="truncate">{{ item.label }}</span>
+                  <span v-if="isDropdownOptionActive(filter.id, item.id)" class="text-[8px] opacity-60">ACTIVE</span>
+                </button>
+              </div>
+
+              <div v-else-if="filter.id === 'profit'" class="py-2">
+                <div class="pb-2 border-b border-black/10 dark:border-white/10">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-black uppercase tracking-wider">Profit change {{ resultMetricLabel }}</span>
+                    <button
+                      v-if="filter.isActive"
+                      @click.stop="resetFilterById(filter.id)"
+                      class="text-[9px] uppercase opacity-40 hover:opacity-100 transition-opacity"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <span class="mt-1 block text-[9px] opacity-45">{{ resultDisplayMode === 'percent' ? 'Percent mode' : 'Dollar mode' }}</span>
+                  <input
+                    v-model="profitTierSearch"
+                    type="text"
+                    placeholder="Search"
+                    class="mt-2 w-full px-2.5 py-2 text-[10px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono"
+                  />
+                </div>
+
+                <div class="max-h-64 overflow-y-auto custom-scrollbar py-2">
+                  <button
+                    v-for="item in filteredProfitTierOptions"
+                    :key="item.id"
+                    @click.stop="selectedProfitTier = selectedProfitTier === item.id ? 'ALL' : item.id"
+                    class="w-full px-2.5 py-2 text-left text-[10px] uppercase tracking-wider transition-colors flex items-start justify-between gap-3 border-b border-black/5 dark:border-white/5 last:border-0"
+                    :class="selectedProfitTier === item.id ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'"
+                  >
+                    <span class="flex flex-col min-w-0">
+                      <span class="truncate">{{ item.label }}</span>
+                      <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ item.description }}</span>
+                    </span>
+                    <span v-if="selectedProfitTier === item.id" class="text-[8px] opacity-60">ACTIVE</span>
+                  </button>
+                </div>
+
+                <div class="mt-1 pt-3 border-t border-black/10 dark:border-white/10">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] opacity-40">{{ resultMetricLabel }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input v-model.number="customProfitMin" type="number" :placeholder="`Min ${resultMetricLabel}`" class="filter-input w-20" />
+                    <span class="text-[9px] opacity-40">..</span>
+                    <input v-model.number="customProfitMax" type="number" :placeholder="`Max ${resultMetricLabel}`" class="filter-input w-20" />
+                    <button
+                      @click.stop="selectedProfitTier = 'CUSTOM'"
+                      class="px-2 py-1 text-[9px] uppercase border border-black/20 dark:border-white/20 opacity-60 hover:opacity-100"
+                      :class="selectedProfitTier === 'CUSTOM' ? 'bg-black text-white dark:bg-white dark:text-black opacity-100' : ''"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="filter.id === 'year'" class="flex items-center gap-2 py-4">
+                <input v-model.number="yearFrom" type="number" placeholder="From" class="filter-input w-24" />
+                <span class="text-[9px] opacity-40">..</span>
+                <input v-model.number="yearTo" type="number" placeholder="To" class="filter-input w-24" />
+              </div>
+
+              <div v-else-if="filter.id === 'day'" class="flex items-center gap-2 py-4">
+                <input v-model.number="dayFrom" type="number" min="1" max="31" placeholder="From" class="filter-input w-20" />
+                <span class="text-[9px] opacity-40">..</span>
+                <input v-model.number="dayTo" type="number" min="1" max="31" placeholder="To" class="filter-input w-20" />
+              </div>
+
+              <div v-else-if="filter.id === 'time'" class="py-2">
+                <button
+                  v-for="preset in timeWindowPresets"
+                  :key="preset.id"
+                  @click.stop="applyTimeWindowPreset(preset)"
+                  class="w-full px-2.5 py-2 text-left text-[10px] uppercase tracking-wider transition-colors flex items-start justify-between gap-3 border-b border-black/5 dark:border-white/5 last:border-0"
+                  :class="isTimeWindowPresetActive(preset) ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'opacity-65 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'"
+                >
+                  <span class="flex flex-col min-w-0">
+                    <span class="truncate">{{ preset.label }}</span>
+                    <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ preset.description }}</span>
+                  </span>
+                  <span v-if="isTimeWindowPresetActive(preset)" class="text-[8px] opacity-60">ACTIVE</span>
+                </button>
+
+                <div class="mt-3 pt-3 border-t border-black/10 dark:border-white/10">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] opacity-40">{{ timeWindowLabel }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input :value="manualMinTime" @input="setManualTime('min', $event)" type="time" class="filter-input w-28" />
+                    <span class="text-[9px] opacity-40">..</span>
+                    <input :value="manualMaxTime" @input="setManualTime('max', $event)" type="time" class="filter-input w-28" />
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="filter.id === 'duration'" class="py-2">
+                <button
+                  v-for="preset in durationWindowPresets"
+                  :key="preset.id"
+                  @click.stop="applyDurationWindowPreset(preset)"
+                  class="w-full px-2.5 py-2 text-left text-[10px] uppercase tracking-wider transition-colors flex items-start justify-between gap-3 border-b border-black/5 dark:border-white/5 last:border-0"
+                  :class="isDurationWindowPresetActive(preset) ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'opacity-65 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'"
+                >
+                  <span class="flex flex-col min-w-0">
+                    <span class="truncate">{{ preset.label }}</span>
+                    <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ preset.description }}</span>
+                  </span>
+                  <span v-if="isDurationWindowPresetActive(preset)" class="text-[8px] opacity-60">ACTIVE</span>
+                </button>
+
+                <div class="mt-3 pt-3 border-t border-black/10 dark:border-white/10">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] opacity-40">{{ durationWindowLabel }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input :value="minDuration" @input="setManualDuration('min', $event)" type="number" min="0" placeholder="Min m" class="filter-input w-20" />
+                    <span class="text-[9px] opacity-40">..</span>
+                    <input :value="maxDuration" @input="setManualDuration('max', $event)" type="number" min="0" placeholder="Max m" class="filter-input w-20" />
+                    <span class="text-[9px] opacity-40">min</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="filter.id === 'conditions' && selectedCondition.length > 0" class="pt-2 border-t border-black/10 dark:border-white/10">
+                <button
+                  @click.stop="conditionMatchMode = conditionMatchMode === 'INCLUDED' ? 'EXACT' : 'INCLUDED'"
+                  class="w-full px-2 py-2 text-[9px] uppercase tracking-wider flex items-center justify-between opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                >
+                  <span>Match Mode</span>
+                  <span class="font-bold">{{ conditionMatchMode === 'INCLUDED' ? 'Included' : 'Alone' }}</span>
+                </button>
+              </div>
+
+            </div>
+          </Transition>
+        </div>
+      </div>
+
+      <div v-if="activeFilterChips.length > 0" class="flex flex-wrap gap-2">
+        <button
+          v-for="chip in activeFilterChips"
+          :key="chip.id"
+          @click="removeFilterChip(chip.id)"
+          class="flex items-center space-x-2 px-2 py-1 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-[9px] uppercase group"
+        >
+          <span class="opacity-45">{{ chip.type }}:</span>
+          <span class="font-bold">{{ chip.label }}</span>
+          <span class="opacity-40 group-hover:opacity-100 group-hover:text-red-500 transition-colors ml-1">×</span>
         </button>
-      </div>
-    </div>
-
-    <!-- ACTIVE FILTER CHIPS -->
-    <div v-if="activeFilterChips.length > 0" class="flex flex-wrap gap-2 pb-4 border-b border-black/10 dark:border-white/10">
-      <button 
-        v-for="chip in activeFilterChips" 
-        :key="chip.id"
-        @click="removeFilterChip(chip.id)"
-        class="flex items-center space-x-2 px-2 py-1 bg-black/5 dark:bg-white/5 border border-black/20 dark:border-white/20 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-[9px] uppercase group"
-      >
-        <span class="opacity-50">{{ chip.type }}:</span>
-        <span class="font-bold">{{ chip.label }}</span>
-        <span class="opacity-40 group-hover:opacity-100 group-hover:text-red-500 transition-colors ml-1">✕</span>
-      </button>
-    </div>
-
-    <!-- COMMAND CENTER (EXTENDED FILTER PANEL) -->
-    <div v-if="isExtended" class="flex flex-col space-y-8 pt-4 pb-8 animate-[fadeIn_0.3s_ease-out]">
-      
-      <!-- CATEGORY 1: TACTICAL METADATA -->
-      <div class="flex flex-col space-y-4">
-        <h3 class="text-[10px] font-black uppercase tracking-widest opacity-40 border-b border-black/10 dark:border-white/10 pb-2">Tactical Metadata</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Scenario</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in scenariosList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedScenario = selectedScenario === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedScenario === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[9px] opacity-60 uppercase">Condition</span>
-              <button 
-                v-if="selectedCondition.length > 0"
-                @click="conditionMatchMode = conditionMatchMode === 'INCLUDED' ? 'EXACT' : 'INCLUDED'"
-                class="px-2 py-0.5 text-[8px] uppercase border border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center space-x-1 rounded"
-                title="Toggle condition matching mode"
-              >
-                <span class="opacity-60">Mode:</span>
-                <span class="font-bold">{{ conditionMatchMode === 'INCLUDED' ? 'INCLUDED' : 'ALONE' }}</span>
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in conditionsList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="if (selectedCondition.includes(item.id)) selectedCondition = selectedCondition.filter(x => x !== item.id); else selectedCondition.push(item.id)"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedCondition.includes(item.id) ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Direction</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in directionList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedDirection = selectedDirection === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedDirection === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CATEGORY 2: ASSET & OUTCOME -->
-      <div class="flex flex-col space-y-4">
-        <h3 class="text-[10px] font-black uppercase tracking-widest opacity-40 border-b border-black/10 dark:border-white/10 pb-2">Asset & Outcome</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Asset</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in assetsList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedAsset = selectedAsset === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedAsset === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Status</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in statusList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedStatus = selectedStatus === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedStatus === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Profit Tier</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in profitTierList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedProfitTier = selectedProfitTier === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedProfitTier === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-            <div v-if="selectedProfitTier === 'CUSTOM'" class="flex items-center space-x-2 pt-1 animate-[fadeIn_0.2s_ease-out]">
-              <input 
-                v-model.number="customProfitMin" 
-                type="number" 
-                placeholder="Min %" 
-                class="w-20 px-2 py-1 text-[9px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span class="text-[9px] opacity-40">..</span>
-              <input 
-                v-model.number="customProfitMax" 
-                type="number" 
-                placeholder="Max %" 
-                class="w-20 px-2 py-1 text-[9px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span class="text-[9px] opacity-40">%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CATEGORY 3: TEMPORAL & DURATION -->
-      <div class="flex flex-col space-y-4">
-        <h3 class="text-[10px] font-black uppercase tracking-widest opacity-40 border-b border-black/10 dark:border-white/10 pb-2">Temporal Control</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Year</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in yearList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedYear = selectedYear === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedYear === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <span class="text-[9px] opacity-60 uppercase">Date Interval</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button 
-                v-for="item in dateIntervalList.filter(i => i.id !== 'ALL')" 
-                :key="item.id"
-                @click="selectedDateInterval = selectedDateInterval === item.id ? 'ALL' : item.id"
-                class="px-2 py-1 text-[9px] uppercase border transition-colors"
-                :class="selectedDateInterval === item.id ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold' : 'border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100'"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PRECISION SLIDERS -->
-      <div class="flex flex-col space-y-4 pt-4 border-t border-black/10 dark:border-white/10">
-        <h3 class="text-[10px] font-black uppercase tracking-widest opacity-40 pb-2">Precision Windows</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <!-- 1. EXACT TIME SLIDER -->
-          <div class="flex flex-col space-y-1 w-full px-4">
-            <div class="flex items-center justify-between text-[9px]">
-              <span class="opacity-60 uppercase">Time Window</span>
-            </div>
-            <div 
-              ref="timeTrackRef"
-              class="relative h-px bg-black/20 dark:bg-white/20 my-3 cursor-pointer"
-              @click="onTimeTrackClick"
-            >
-              <div class="absolute h-px bg-black dark:bg-white" :style="{ left: `${timeMinPercent}%`, right: `${100 - timeMaxPercent}%` }"></div>
-              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#070707] border border-black dark:border-white rotate-45 cursor-ew-resize z-10" :style="{ left: `${timeMinPercent}%` }" @mousedown.stop="startTimeMinDrag"></div>
-              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#070707] border border-black dark:border-white rotate-45 cursor-ew-resize z-10" :style="{ left: `${timeMaxPercent}%` }" @mousedown.stop="startTimeMaxDrag"></div>
-              
-              <div class="absolute top-4 -translate-x-1/2 text-[9px] font-mono whitespace-nowrap opacity-60" :style="{ left: `${timeMinPercent}%` }">{{ minTimeDisplay }}</div>
-              <div class="absolute top-4 -translate-x-1/2 text-[9px] font-mono whitespace-nowrap opacity-60" :style="{ left: `${timeMaxPercent}%` }">{{ maxTimeDisplay }}</div>
-            </div>
-          </div>
-
-          <!-- 2. DURATION SLIDER -->
-          <div class="flex flex-col space-y-1 w-full px-4">
-            <div class="flex items-center justify-between text-[9px]">
-              <span class="opacity-60 uppercase">Duration Window</span>
-            </div>
-            <div 
-              ref="durationTrackRef"
-              class="relative h-px bg-black/20 dark:bg-white/20 my-3 cursor-pointer"
-              @click="onDurationTrackClick"
-            >
-              <div class="absolute h-px bg-black dark:bg-white" :style="{ left: `${durationMinPercent}%`, right: `${100 - durationMaxPercent}%` }"></div>
-              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#070707] border border-black dark:border-white rotate-45 cursor-ew-resize z-10" :style="{ left: `${durationMinPercent}%` }" @mousedown.stop="startDurationMinDrag"></div>
-              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#070707] border border-black dark:border-white rotate-45 cursor-ew-resize z-10" :style="{ left: `${durationMaxPercent}%` }" @mousedown.stop="startDurationMaxDrag"></div>
-              
-              <div class="absolute top-4 -translate-x-1/2 text-[9px] font-mono whitespace-nowrap opacity-60" :style="{ left: `${durationMinPercent}%` }">{{ minDurationDisplay }}</div>
-              <div class="absolute top-4 -translate-x-1/2 text-[9px] font-mono whitespace-nowrap opacity-60" :style="{ left: `${durationMaxPercent}%` }">{{ maxDurationDisplay }}</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -302,7 +290,7 @@
             
             <span class="opacity-60 uppercase tracking-wider truncate">{{ trade.asset }}</span>
             <span class="opacity-40 text-right tracking-wider truncate">{{ trade.duration }}</span>
-            <span class="font-bold text-right tracking-wider" :class="colorMode === 'colorful' ? (trade.profitValue > 0 ? 'text-green-500' : trade.profitValue < 0 ? 'text-red-500' : 'text-yellow-500') : ''">{{ trade.profitValue > 0 ? '+' : '' }}{{ trade.profitValue }}%</span>
+            <span class="font-bold text-right tracking-wider" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
           </div>
 
           <!-- EXPANDED TELEMETRY -->
@@ -330,7 +318,7 @@
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">Result</span>
-                  <span class="font-bold mt-0.5 text-xs" :class="colorMode === 'colorful' ? (trade.profitInCurrency > 0 ? 'text-green-500' : trade.profitInCurrency < 0 ? 'text-red-500' : 'text-yellow-500') : ''">{{ trade.profitInCurrency > 0 ? '+' : '' }}${{ trade.profitInCurrency }} ({{ trade.profitValue > 0 ? '+' : '' }}{{ trade.profitValue }}%)</span>
+                  <span class="font-bold mt-0.5 text-xs" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">Duration</span>
@@ -358,7 +346,7 @@
             <!-- ATTACHED NOTES -->
             <div class="flex flex-col space-y-3">
               <span class="block text-[9px] opacity-40 uppercase tracking-widest">// Attached Notes ({{ trade.notes.length }})</span>
-              <div class="flex flex-col space-y-1.5 pt-1">
+              <div v-if="trade.notes.length > 0" class="flex flex-col space-y-1.5 pt-1">
                 <div 
                   v-for="(note, nIdx) in trade.notes" 
                   :key="note.id" 
@@ -374,6 +362,9 @@
                   </div>
                 </div>
               </div>
+              <div v-else class="pt-1 text-[10px] font-mono uppercase tracking-[0.25em] opacity-30">
+                NO_ATTACHED_NOTES
+              </div>
             </div>
           </div>
         </div>
@@ -384,7 +375,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   trades?: any[]
@@ -394,9 +385,11 @@ const emit = defineEmits<{
   (e: 'open-note', payload: { tradeId: string; noteId: string }): void
 }>()
 
-const isExtended = ref(false)
 const expandedTradeId = ref<string | null>(null)
 const colorMode = ref<'monochrome' | 'colorful'>('monochrome')
+const resultDisplayMode = ref<'currency' | 'percent'>('percent')
+const openFilterId = ref<string | null>(null)
+const filterBarRef = ref<HTMLElement | null>(null)
 
 const toggleTradeExpand = (tradeId: string) => {
   expandedTradeId.value = expandedTradeId.value === tradeId ? null : tradeId
@@ -404,6 +397,33 @@ const toggleTradeExpand = (tradeId: string) => {
 
 const onNoteClick = (tradeId: string, noteId: string) => {
   emit('open-note', { tradeId, noteId })
+}
+
+const getResultMetricValue = (trade: any) => {
+  return resultDisplayMode.value === 'currency' ? Number(trade.profitInCurrency || 0) : Number(trade.profitValue || 0)
+}
+
+const resultMetricLabel = computed(() => resultDisplayMode.value === 'currency' ? '$' : '%')
+
+const formatTradeResult = (trade: any) => {
+  const value = getResultMetricValue(trade)
+  const sign = value > 0 ? '+' : ''
+  if (resultDisplayMode.value === 'currency') return `${value < 0 ? '-' : sign}$${Math.abs(value)}`
+  return `${sign}${value}%`
+}
+
+const resultColorClass = (trade: any) => {
+  if (colorMode.value !== 'colorful') return ''
+  const value = getResultMetricValue(trade)
+  return value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'text-yellow-500'
+}
+
+const setResultDisplayMode = (mode: 'currency' | 'percent') => {
+  if (resultDisplayMode.value === mode) return
+  resultDisplayMode.value = mode
+  if (selectedProfitTier.value !== 'ALL' && selectedProfitTier.value !== 'CUSTOM') {
+    selectedProfitTier.value = 'ALL'
+  }
 }
 
 const activeFilterChips = computed(() => {
@@ -419,12 +439,14 @@ const activeFilterChips = computed(() => {
   if (selectedStatus.value !== 'ALL') chips.push({ id: 'status', type: 'STATUS', label: statusList.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value })
   if (selectedProfitTier.value !== 'ALL') {
     const label = selectedProfitTier.value === 'CUSTOM'
-      ? `${customProfitMin.value !== null && customProfitMin.value !== '' as any ? customProfitMin.value : '-∞'}% .. ${customProfitMax.value !== null && customProfitMax.value !== '' as any ? customProfitMax.value : '+∞'}%`
-      : profitTierList.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
+      ? `${customProfitMin.value !== null && customProfitMin.value !== '' as any ? customProfitMin.value : '-∞'}${resultMetricLabel.value} .. ${customProfitMax.value !== null && customProfitMax.value !== '' as any ? customProfitMax.value : '+∞'}${resultMetricLabel.value}`
+      : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
     chips.push({ id: 'profitTier', type: 'PROFIT', label })
   }
-  if (selectedYear.value !== 'ALL') chips.push({ id: 'year', type: 'YEAR', label: yearList.find(x => x.id === selectedYear.value)?.label || selectedYear.value })
-  if (selectedDateInterval.value !== 'ALL') chips.push({ id: 'dateInterval', type: 'DATE', label: dateIntervalList.find(x => x.id === selectedDateInterval.value)?.label || selectedDateInterval.value })
+  if (hasYearRangeFilter.value) chips.push({ id: 'yearRange', type: 'YEAR', label: formatRangeLabel(yearFrom.value, yearTo.value) })
+  if (hasDayRangeFilter.value) chips.push({ id: 'dayRange', type: 'DAY', label: formatRangeLabel(dayFrom.value, dayTo.value) })
+  if (hasTimeWindowFilter.value) chips.push({ id: 'timeWindow', type: 'TIME', label: timeWindowLabel.value })
+  if (hasDurationWindowFilter.value) chips.push({ id: 'durationWindow', type: 'DURATION', label: durationWindowLabel.value })
   return chips
 })
 
@@ -442,8 +464,16 @@ const removeFilterChip = (id: string) => {
     customProfitMin.value = null
     customProfitMax.value = null
   }
-  if (id === 'year') selectedYear.value = 'ALL'
-  if (id === 'dateInterval') selectedDateInterval.value = 'ALL'
+  if (id === 'yearRange') {
+    yearFrom.value = null
+    yearTo.value = null
+  }
+  if (id === 'dayRange') {
+    dayFrom.value = null
+    dayTo.value = null
+  }
+  if (id === 'timeWindow') resetFilterById('time')
+  if (id === 'durationWindow') resetFilterById('duration')
 }
 
 
@@ -453,9 +483,6 @@ const ABS_MAX_TIME_MIN = 1440
 const minTimeMinute = ref(ABS_MIN_TIME_MIN)
 const maxTimeMinute = ref(ABS_MAX_TIME_MIN)
 
-const timeMinPercent = computed(() => (minTimeMinute.value / 1440) * 100)
-const timeMaxPercent = computed(() => (maxTimeMinute.value / 1440) * 100)
-
 const formatTimeMinuteStr = (mins: number) => {
   const h = Math.floor(mins / 60)
   const m = mins % 60
@@ -464,17 +491,90 @@ const formatTimeMinuteStr = (mins: number) => {
   return `${hh}:${mm}`
 }
 
-const minTimeDisplay = computed(() => minTimeMinute.value === ABS_MIN_TIME_MIN && maxTimeMinute.value === ABS_MAX_TIME_MIN ? 'All Times' : formatTimeMinuteStr(minTimeMinute.value))
-const maxTimeDisplay = computed(() => minTimeMinute.value === ABS_MIN_TIME_MIN && maxTimeMinute.value === ABS_MAX_TIME_MIN ? '' : formatTimeMinuteStr(maxTimeMinute.value))
+const hasTimeWindowFilter = computed(() => minTimeMinute.value > ABS_MIN_TIME_MIN || maxTimeMinute.value < ABS_MAX_TIME_MIN)
+const manualMinTime = computed(() => formatTimeMinuteStr(minTimeMinute.value))
+const manualMaxTime = computed(() => maxTimeMinute.value === ABS_MAX_TIME_MIN ? '23:59' : formatTimeMinuteStr(maxTimeMinute.value))
+const timeWindowLabel = computed(() => hasTimeWindowFilter.value ? `${formatTimeMinuteStr(minTimeMinute.value)} .. ${manualMaxTime.value}` : 'All Times')
+
+type MinutePreset = { id: string; label: string; description: string; min: number; max: number }
+
+const timeWindowPresets: MinutePreset[] = [
+  { id: 'ALL', label: 'All Times', description: 'No intraday restriction', min: ABS_MIN_TIME_MIN, max: ABS_MAX_TIME_MIN },
+  { id: 'PREMARKET', label: 'Pre Market', description: '04:00 .. 09:30', min: 240, max: 570 },
+  { id: 'OPEN', label: 'Opening Drive', description: '09:30 .. 11:00', min: 570, max: 660 },
+  { id: 'MIDDAY', label: 'Midday', description: '11:00 .. 14:00', min: 660, max: 840 },
+  { id: 'POWER_HOUR', label: 'Power Hour', description: '15:00 .. 16:00', min: 900, max: 960 },
+  { id: 'AFTER_HOURS', label: 'After Hours', description: '16:00 .. 20:00', min: 960, max: 1200 },
+  { id: 'OVERNIGHT', label: 'Overnight', description: '20:00 .. 23:59', min: 1200, max: 1439 }
+]
+
+const normalizeTimeMax = (value: number) => value >= 1439 ? ABS_MAX_TIME_MIN : value
+
+const applyTimeWindowPreset = (preset: MinutePreset) => {
+  minTimeMinute.value = preset.min
+  maxTimeMinute.value = normalizeTimeMax(preset.max)
+}
+
+const isTimeWindowPresetActive = (preset: MinutePreset) => {
+  return minTimeMinute.value === preset.min && maxTimeMinute.value === normalizeTimeMax(preset.max)
+}
+
+const parseTimeInput = (value: string) => {
+  const [hours, minutes] = value.split(':').map(Number)
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null
+  return Math.max(ABS_MIN_TIME_MIN, Math.min(ABS_MAX_TIME_MIN, hours * 60 + minutes))
+}
+
+const setManualTime = (edge: 'min' | 'max', event: Event) => {
+  const value = (event.target as HTMLInputElement | null)?.value || ''
+  const parsed = parseTimeInput(value)
+  if (parsed === null) return
+  if (edge === 'min') {
+    minTimeMinute.value = Math.min(parsed, maxTimeMinute.value)
+  } else {
+    maxTimeMinute.value = normalizeTimeMax(Math.max(parsed, minTimeMinute.value))
+  }
+}
 
 const ABS_MIN_DURATION = 0
 const ABS_MAX_DURATION = 720
 const minDuration = ref(ABS_MIN_DURATION)
 const maxDuration = ref(ABS_MAX_DURATION)
-const durationMinPercent = computed(() => (minDuration.value / ABS_MAX_DURATION) * 100)
-const durationMaxPercent = computed(() => (maxDuration.value / ABS_MAX_DURATION) * 100)
-const minDurationDisplay = computed(() => minDuration.value === ABS_MIN_DURATION && maxDuration.value === ABS_MAX_DURATION ? 'All Durations' : `${minDuration.value}m`)
-const maxDurationDisplay = computed(() => minDuration.value === ABS_MIN_DURATION && maxDuration.value === ABS_MAX_DURATION ? '' : maxDuration.value === ABS_MAX_DURATION ? 'Unlimited' : `${maxDuration.value}m`)
+const hasDurationWindowFilter = computed(() => minDuration.value > ABS_MIN_DURATION || maxDuration.value < ABS_MAX_DURATION)
+const durationWindowLabel = computed(() => {
+  if (!hasDurationWindowFilter.value) return 'All Durations'
+  const maxLabel = maxDuration.value >= ABS_MAX_DURATION ? 'Unlimited' : `${maxDuration.value}m`
+  return `${minDuration.value}m .. ${maxLabel}`
+})
+
+const durationWindowPresets: MinutePreset[] = [
+  { id: 'ALL', label: 'All Durations', description: 'No duration restriction', min: ABS_MIN_DURATION, max: ABS_MAX_DURATION },
+  { id: 'SCALP', label: 'Scalp', description: '0 .. 15 minutes', min: 0, max: 15 },
+  { id: 'INTRADAY_SHORT', label: 'Fast Intraday', description: '15 .. 60 minutes', min: 15, max: 60 },
+  { id: 'INTRADAY_CORE', label: 'Core Intraday', description: '1 .. 4 hours', min: 60, max: 240 },
+  { id: 'EXTENDED', label: 'Extended Hold', description: '4 .. 12 hours', min: 240, max: ABS_MAX_DURATION }
+]
+
+const applyDurationWindowPreset = (preset: MinutePreset) => {
+  minDuration.value = preset.min
+  maxDuration.value = preset.max
+}
+
+const isDurationWindowPresetActive = (preset: MinutePreset) => {
+  return minDuration.value === preset.min && maxDuration.value === preset.max
+}
+
+const setManualDuration = (edge: 'min' | 'max', event: Event) => {
+  const raw = (event.target as HTMLInputElement | null)?.value
+  const parsed = raw === '' || raw === undefined ? null : Number(raw)
+  if (parsed !== null && !Number.isFinite(parsed)) return
+
+  if (edge === 'min') {
+    minDuration.value = Math.max(ABS_MIN_DURATION, Math.min(parsed ?? ABS_MIN_DURATION, maxDuration.value))
+  } else {
+    maxDuration.value = Math.max(minDuration.value, Math.min(parsed ?? ABS_MAX_DURATION, ABS_MAX_DURATION))
+  }
+}
 
 const selectedScenario = ref('ALL')
 const selectedCondition = ref<string[]>([])
@@ -482,7 +582,10 @@ const conditionMatchMode = ref<'INCLUDED' | 'EXACT'>('INCLUDED')
 const selectedAsset = ref('ALL')
 const selectedStatus = ref('ALL')
 const selectedDirection = ref('ALL')
-const selectedYear = ref('ALL')
+const yearFrom = ref<number | null>(null)
+const yearTo = ref<number | null>(null)
+const dayFrom = ref<number | null>(null)
+const dayTo = ref<number | null>(null)
 
 const statusList = [
   { id: 'ALL', label: 'ALL' },
@@ -497,42 +600,73 @@ const directionList = [
   { id: 'SHORT', label: 'SHORT' }
 ]
 
-const yearList = [
-  { id: 'ALL', label: 'ALL' },
-  { id: '2026', label: '2026' },
-  { id: '2025', label: '2025' },
-  { id: '2024', label: '2024' },
-  { id: '2023', label: '2023' },
-  { id: '2022', label: '2022' },
-  { id: '2021', label: '2021' },
-  { id: '2020', label: '2020' },
-  { id: '1800-2019', label: '1800-2019' }
-]
-
 const selectedProfitTier = ref('ALL')
+const profitTierSearch = ref('')
 const customProfitMin = ref<number | null>(null)
 const customProfitMax = ref<number | null>(null)
 
-const profitTierList = [
-  { id: 'ALL', label: 'ALL' },
-  { id: 'MEGA_GAIN', label: '> +2000%' },
-  { id: 'SUPER_GAIN', label: '+1000% .. +2000%' },
-  { id: 'HIGH_GAIN', label: '+500% .. +1000%' },
-  { id: 'MODERATE_GAIN', label: '0% .. +500%' },
-  { id: 'MODERATE_LOSS', label: '-500% .. 0%' },
-  { id: 'HEAVY_LOSS', label: '< -500%' },
-  { id: 'CUSTOM', label: 'CUSTOM RANGE' }
-]
+type ProfitTierOption = {
+  id: string
+  label: string
+  description: string
+  min?: number
+  max?: number
+}
 
-const selectedDateInterval = ref('ALL')
-const dateIntervalList = [
-  { id: 'ALL', label: 'ALL' },
-  { id: 'FIRST_HALF', label: 'Days 01 .. 15' },
-  { id: 'SECOND_HALF', label: 'Days 16 .. 31' },
-  { id: 'EARLY_MONTH', label: 'Days 01 .. 10' },
-  { id: 'MID_MONTH', label: 'Days 11 .. 20' },
-  { id: 'LATE_MONTH', label: 'Days 21 .. 31' }
-]
+const profitTierOptions = computed<ProfitTierOption[]>(() => {
+  if (resultDisplayMode.value === 'currency') {
+    return [
+      { id: 'ABOVE_5000', label: 'Above $5,000', description: 'Exceptional up', min: 5000 },
+      { id: 'ABOVE_1000', label: 'Above $1,000', description: 'Very strong up', min: 1000 },
+      { id: 'ABOVE_500', label: 'Above $500', description: 'Strong up', min: 500 },
+      { id: 'ABOVE_100', label: 'Above $100', description: 'Moderate up', min: 100 },
+      { id: 'ZERO_TO_100', label: '$0 to $100', description: 'Weak up', min: 0, max: 100 },
+      { id: 'ABOVE_0', label: 'Above $0', description: 'Up', min: 0 },
+      { id: 'BELOW_0', label: 'Below $0', description: 'Down', max: 0 },
+      { id: 'MINUS_100_TO_0', label: '-$100 to $0', description: 'Weak down', min: -100, max: 0 },
+      { id: 'BELOW_MINUS_100', label: 'Below -$100', description: 'Strong down', max: -100 }
+    ]
+  }
+
+  return [
+    { id: 'ABOVE_30', label: 'Above 30%', description: 'Exceptional up', min: 30 },
+    { id: 'ABOVE_20', label: 'Above 20%', description: 'Very strong up', min: 20 },
+    { id: 'ABOVE_10', label: 'Above 10%', description: 'Strong up', min: 10 },
+    { id: 'ABOVE_5', label: 'Above 5%', description: 'Moderate up', min: 5 },
+    { id: 'ZERO_TO_5', label: '0% to 5%', description: 'Weak up', min: 0, max: 5 },
+    { id: 'ABOVE_0', label: 'Above 0%', description: 'Up', min: 0 },
+    { id: 'BELOW_0', label: 'Below 0%', description: 'Down', max: 0 },
+    { id: 'MINUS_5_TO_0', label: '-5% to 0%', description: 'Weak down', min: -5, max: 0 },
+    { id: 'BELOW_MINUS_5', label: 'Below -5%', description: 'Strong down', max: -5 }
+  ]
+})
+
+const filteredProfitTierOptions = computed(() => {
+  const query = profitTierSearch.value.trim().toLowerCase()
+  if (!query) return profitTierOptions.value
+  return profitTierOptions.value.filter(item => {
+    return item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+  })
+})
+
+const hasRangeValue = (value: number | null) => value !== null && value !== undefined && value !== '' as any
+const hasYearRangeFilter = computed(() => hasRangeValue(yearFrom.value) || hasRangeValue(yearTo.value))
+const hasDayRangeFilter = computed(() => hasRangeValue(dayFrom.value) || hasRangeValue(dayTo.value))
+
+const formatRangeLabel = (from: number | null, to: number | null) => {
+  const start = hasRangeValue(from) ? from : '-∞'
+  const end = hasRangeValue(to) ? to : '+∞'
+  return `${start} .. ${end}`
+}
+
+const isWithinRange = (value: number, from: number | null, to: number | null) => {
+  if (!hasRangeValue(from) && !hasRangeValue(to)) return true
+  const rawMin = hasRangeValue(from) ? Number(from) : -Infinity
+  const rawMax = hasRangeValue(to) ? Number(to) : Infinity
+  const min = Math.min(rawMin, rawMax)
+  const max = Math.max(rawMin, rawMax)
+  return value >= min && value <= max
+}
 
 const mockTrades = ref([
   {
@@ -764,9 +898,9 @@ const activeFilterCount = computed(() => {
   if (selectedAsset.value !== 'ALL') count++
   if (selectedStatus.value !== 'ALL') count++
   if (selectedDirection.value !== 'ALL') count++
-  if (selectedYear.value !== 'ALL') count++
+  if (hasYearRangeFilter.value) count++
   if (selectedProfitTier.value !== 'ALL') count++
-  if (selectedDateInterval.value !== 'ALL') count++
+  if (hasDayRangeFilter.value) count++
   if (minTimeMinute.value > ABS_MIN_TIME_MIN || maxTimeMinute.value < ABS_MAX_TIME_MIN) count++
   if (minDuration.value > ABS_MIN_DURATION || maxDuration.value < ABS_MAX_DURATION) count++
   return count
@@ -778,11 +912,13 @@ const resetAllFilters = () => {
   selectedAsset.value = 'ALL'
   selectedStatus.value = 'ALL'
   selectedDirection.value = 'ALL'
-  selectedYear.value = 'ALL'
+  yearFrom.value = null
+  yearTo.value = null
   selectedProfitTier.value = 'ALL'
   customProfitMin.value = null
   customProfitMax.value = null
-  selectedDateInterval.value = 'ALL'
+  dayFrom.value = null
+  dayTo.value = null
   minTimeMinute.value = ABS_MIN_TIME_MIN
   maxTimeMinute.value = ABS_MAX_TIME_MIN
   minDuration.value = ABS_MIN_DURATION
@@ -837,26 +973,16 @@ const activeTrades = computed(() => {
       const hours = Math.floor(diffMins / 60)
       const durStr = hours > 0 ? `${hours}h ${diffMins % 60}m` : `${diffMins}m`
       
-      let notesArr: any[] = []
-      if (Array.isArray(t.notesList) && t.notesList.length > 0) {
-        notesArr = t.notesList.map((n: any, idx: number) => ({
-          id: n.id || `note-${idx}`,
-          text: n.content || n.text || '',
-          timestamp: n.date ? new Date(n.date).toLocaleDateString() : new Date(start).toLocaleDateString(),
-          author: n.title || 'TRADER'
-        }))
-      } else if (Array.isArray(t.notes)) {
-        notesArr = t.notes.map((n: any, idx: number) => ({
-          id: n.id || `note-${idx}`,
-          text: typeof n === 'string' ? n : (n.text || n.content || ''),
-          timestamp: n.timestamp || (n.date ? new Date(n.date).toLocaleDateString() : new Date(start).toLocaleDateString()),
-          author: n.author || n.title || 'TRADER'
-        }))
-      } else if (t.notes && typeof t.notes === 'string') {
-        notesArr = [{ id: 'n-1', text: t.notes, timestamp: new Date(start).toLocaleDateString(), author: 'TRADER' }]
-      } else {
-        notesArr = [{ id: 'n-1', text: 'Execution recorded via Genesis Log.', timestamp: new Date(start).toLocaleDateString(), author: 'SYSTEM' }]
-      }
+      const notesArr = Array.isArray(t.notesList)
+        ? t.notesList
+            .filter((n: any) => n && n.id)
+            .map((n: any, idx: number) => ({
+              id: n.id || `note-${idx}`,
+              text: n.content || '',
+              timestamp: n.date ? new Date(n.date).toLocaleDateString() : new Date(start).toLocaleDateString(),
+              author: n.title || 'TRADER'
+            }))
+        : []
 
       return {
         id: t.id || 'TRD-XX',
@@ -905,6 +1031,8 @@ const matrixConnections = ref<any[]>([])
 const matrixZones = ref<any[]>([])
 
 onMounted(async () => {
+  window.addEventListener('mousedown', closeFilterDropdownOnOutside)
+
   try {
     const saved = await loadFromDisk<any>('genesis_matrix_v2')
     if (saved) {
@@ -915,6 +1043,10 @@ onMounted(async () => {
   } catch (err) {
     console.error('Failed to load matrix nodes:', err)
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('mousedown', closeFilterDropdownOnOutside)
 })
 
 const selectedStrategyId = computed(() => strategyStore.selectedStrategyId)
@@ -1159,6 +1291,90 @@ const assetsList = computed(() => {
   return [{ id: 'ALL', label: 'ALL' }, ...list]
 })
 
+const filterDropdowns = computed(() => [
+  { id: 'scenarios', label: 'Scenarios', type: 'options', options: scenariosList.value, isActive: selectedScenario.value !== 'ALL' },
+  { id: 'conditions', label: 'Conditions', type: 'options', options: conditionsList.value.filter(i => i.id !== 'ALL'), isActive: selectedCondition.value.length > 0 },
+  { id: 'direction', label: 'Direction', type: 'options', options: directionList, isActive: selectedDirection.value !== 'ALL' },
+  { id: 'asset', label: 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value !== 'ALL' },
+  { id: 'status', label: 'Status', type: 'options', options: statusList, isActive: selectedStatus.value !== 'ALL' },
+  { id: 'profit', label: 'Profit Tier', type: 'custom', options: [], isActive: selectedProfitTier.value !== 'ALL' },
+  { id: 'year', label: 'Year Range', type: 'range', options: [], isActive: hasYearRangeFilter.value },
+  { id: 'day', label: 'Day Range', type: 'range', options: [], isActive: hasDayRangeFilter.value },
+  { id: 'time', label: 'Time Window', type: 'custom', options: [], isActive: hasTimeWindowFilter.value },
+  { id: 'duration', label: 'Duration Window', type: 'custom', options: [], isActive: hasDurationWindowFilter.value }
+])
+
+const filterButtonLabel = (id: string) => {
+  if (id === 'scenarios') return selectedScenario.value === 'ALL' ? 'Scenarios' : scenariosList.value.find(x => x.id === selectedScenario.value)?.label || selectedScenario.value
+  if (id === 'conditions') return selectedCondition.value.length === 0 ? 'Conditions' : `Conditions (${selectedCondition.value.length})`
+  if (id === 'direction') return selectedDirection.value === 'ALL' ? 'Direction' : directionList.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value
+  if (id === 'asset') return selectedAsset.value === 'ALL' ? 'Asset' : assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value
+  if (id === 'status') return selectedStatus.value === 'ALL' ? 'Status' : statusList.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value
+  if (id === 'profit') return selectedProfitTier.value === 'ALL' ? 'Profit Tier' : selectedProfitTier.value === 'CUSTOM' ? 'Custom Profit' : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
+  if (id === 'year') return hasYearRangeFilter.value ? `Year ${formatRangeLabel(yearFrom.value, yearTo.value)}` : 'Year Range'
+  if (id === 'day') return hasDayRangeFilter.value ? `Day ${formatRangeLabel(dayFrom.value, dayTo.value)}` : 'Day Range'
+  if (id === 'time') return hasTimeWindowFilter.value ? timeWindowLabel.value : 'Time Window'
+  if (id === 'duration') return hasDurationWindowFilter.value ? durationWindowLabel.value : 'Duration Window'
+  return id
+}
+
+const isDropdownOptionActive = (filterId: string, optionId: string) => {
+  if (filterId === 'scenarios') return selectedScenario.value === optionId
+  if (filterId === 'conditions') return selectedCondition.value.includes(optionId)
+  if (filterId === 'direction') return selectedDirection.value === optionId
+  if (filterId === 'asset') return selectedAsset.value === optionId
+  if (filterId === 'status') return selectedStatus.value === optionId
+  return false
+}
+
+const selectDropdownOption = (filterId: string, optionId: string) => {
+  if (filterId === 'conditions') {
+    selectedCondition.value = selectedCondition.value.includes(optionId)
+      ? selectedCondition.value.filter(x => x !== optionId)
+      : [...selectedCondition.value, optionId]
+    return
+  }
+
+  if (filterId === 'scenarios') selectedScenario.value = selectedScenario.value === optionId ? 'ALL' : optionId
+  if (filterId === 'direction') selectedDirection.value = selectedDirection.value === optionId ? 'ALL' : optionId
+  if (filterId === 'asset') selectedAsset.value = selectedAsset.value === optionId ? 'ALL' : optionId
+  if (filterId === 'status') selectedStatus.value = selectedStatus.value === optionId ? 'ALL' : optionId
+}
+
+const resetFilterById = (id: string) => {
+  if (id === 'scenarios') selectedScenario.value = 'ALL'
+  if (id === 'conditions') selectedCondition.value = []
+  if (id === 'direction') selectedDirection.value = 'ALL'
+  if (id === 'asset') selectedAsset.value = 'ALL'
+  if (id === 'status') selectedStatus.value = 'ALL'
+  if (id === 'profit') {
+    selectedProfitTier.value = 'ALL'
+    customProfitMin.value = null
+    customProfitMax.value = null
+  }
+  if (id === 'year') {
+    yearFrom.value = null
+    yearTo.value = null
+  }
+  if (id === 'day') {
+    dayFrom.value = null
+    dayTo.value = null
+  }
+  if (id === 'time') {
+    minTimeMinute.value = ABS_MIN_TIME_MIN
+    maxTimeMinute.value = ABS_MAX_TIME_MIN
+  }
+  if (id === 'duration') {
+    minDuration.value = ABS_MIN_DURATION
+    maxDuration.value = ABS_MAX_DURATION
+  }
+}
+
+const closeFilterDropdownOnOutside = (event: MouseEvent) => {
+  if (!filterBarRef.value) return
+  if (!filterBarRef.value.contains(event.target as Node)) openFilterId.value = null
+}
+
 const getTradeYear = (trade: any) => {
   if (trade.dateObj) return trade.dateObj.getFullYear()
   if (trade.dateTime && trade.dateTime.includes('.')) {
@@ -1221,17 +1437,10 @@ const filteredTrades = computed(() => {
     if (selectedStatus.value !== 'ALL' && trade.status !== selectedStatus.value) return false
     if (selectedDirection.value !== 'ALL' && trade.direction !== selectedDirection.value) return false
     
-    if (selectedYear.value !== 'ALL') {
-      const y = getTradeYear(trade)
-      if (selectedYear.value === '1800-2019') {
-        if (y > 2019) return false
-      } else {
-        if (y.toString() !== selectedYear.value) return false
-      }
-    }
+    if (hasYearRangeFilter.value && !isWithinRange(getTradeYear(trade), yearFrom.value, yearTo.value)) return false
 
     if (selectedProfitTier.value !== 'ALL') {
-      const p = trade.profitValue
+      const p = getResultMetricValue(trade)
       if (selectedProfitTier.value === 'CUSTOM') {
         if (customProfitMin.value !== null && customProfitMin.value !== undefined && customProfitMin.value !== '' as any) {
           if (p < customProfitMin.value) return false
@@ -1240,23 +1449,14 @@ const filteredTrades = computed(() => {
           if (p > customProfitMax.value) return false
         }
       } else {
-        if (selectedProfitTier.value === 'MEGA_GAIN' && p <= 2000) return false
-        if (selectedProfitTier.value === 'SUPER_GAIN' && (p < 1000 || p > 2000)) return false
-        if (selectedProfitTier.value === 'HIGH_GAIN' && (p < 500 || p > 1000)) return false
-        if (selectedProfitTier.value === 'MODERATE_GAIN' && (p < 0 || p > 500)) return false
-        if (selectedProfitTier.value === 'MODERATE_LOSS' && (p < -500 || p > 0)) return false
-        if (selectedProfitTier.value === 'HEAVY_LOSS' && p >= -500) return false
+        const tier = profitTierOptions.value.find(item => item.id === selectedProfitTier.value)
+        if (!tier) return false
+        if (tier.min !== undefined && p < tier.min) return false
+        if (tier.max !== undefined && p > tier.max) return false
       }
     }
 
-    if (selectedDateInterval.value !== 'ALL') {
-      const d = getTradeDay(trade)
-      if (selectedDateInterval.value === 'FIRST_HALF' && d > 15) return false
-      if (selectedDateInterval.value === 'SECOND_HALF' && d <= 15) return false
-      if (selectedDateInterval.value === 'EARLY_MONTH' && d > 10) return false
-      if (selectedDateInterval.value === 'MID_MONTH' && (d < 11 || d > 20)) return false
-      if (selectedDateInterval.value === 'LATE_MONTH' && d < 21) return false
-    }
+    if (hasDayRangeFilter.value && !isWithinRange(getTradeDay(trade), dayFrom.value, dayTo.value)) return false
 
     const tm = getTradeTimeMinutes(trade)
     if (minTimeMinute.value > ABS_MIN_TIME_MIN && tm < minTimeMinute.value) return false
@@ -1307,119 +1507,16 @@ const removeSelectedTrades = async () => {
   selectedTradeIds.value = []
 }
 
-
-
-// Dragging logic for Exact Time
-const timeTrackRef = ref<HTMLElement | null>(null)
-const isDraggingTimeMin = ref(false)
-const isDraggingTimeMax = ref(false)
-
-const startTimeMinDrag = (e: MouseEvent) => {
-  isDraggingTimeMin.value = true
-  window.addEventListener('mousemove', onTimeMinMove)
-  window.addEventListener('mouseup', stopTimeDrag)
-}
-
-const startTimeMaxDrag = (e: MouseEvent) => {
-  isDraggingTimeMax.value = true
-  window.addEventListener('mousemove', onTimeMaxMove)
-  window.addEventListener('mouseup', stopTimeDrag)
-}
-
-const stopTimeDrag = () => {
-  isDraggingTimeMin.value = false
-  isDraggingTimeMax.value = false
-  window.removeEventListener('mousemove', onTimeMinMove)
-  window.removeEventListener('mousemove', onTimeMaxMove)
-  window.removeEventListener('mouseup', stopTimeDrag)
-}
-
-const onTimeMinMove = (e: MouseEvent) => {
-  if (!timeTrackRef.value) return
-  const rect = timeTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_TIME_MIN)
-  if (val <= maxTimeMinute.value - 15) minTimeMinute.value = val
-  else minTimeMinute.value = maxTimeMinute.value - 15
-}
-
-const onTimeMaxMove = (e: MouseEvent) => {
-  if (!timeTrackRef.value) return
-  const rect = timeTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_TIME_MIN)
-  if (val >= minTimeMinute.value + 15) maxTimeMinute.value = val
-  else maxTimeMinute.value = minTimeMinute.value + 15
-}
-
-const onTimeTrackClick = (e: MouseEvent) => {
-  if (!timeTrackRef.value) return
-  const rect = timeTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_TIME_MIN)
-  const distMin = Math.abs(val - minTimeMinute.value)
-  const distMax = Math.abs(val - maxTimeMinute.value)
-  if (distMin < distMax) {
-    if (val <= maxTimeMinute.value - 15) minTimeMinute.value = val
-  } else {
-    if (val >= minTimeMinute.value + 15) maxTimeMinute.value = val
-  }
-}
-
-// Dragging logic for Duration
-const durationTrackRef = ref<HTMLElement | null>(null)
-const isDraggingDurationMin = ref(false)
-const isDraggingDurationMax = ref(false)
-
-const startDurationMinDrag = (e: MouseEvent) => {
-  isDraggingDurationMin.value = true
-  window.addEventListener('mousemove', onDurationMinMove)
-  window.addEventListener('mouseup', stopDurationDrag)
-}
-
-const startDurationMaxDrag = (e: MouseEvent) => {
-  isDraggingDurationMax.value = true
-  window.addEventListener('mousemove', onDurationMaxMove)
-  window.addEventListener('mouseup', stopDurationDrag)
-}
-
-const stopDurationDrag = () => {
-  isDraggingDurationMin.value = false
-  isDraggingDurationMax.value = false
-  window.removeEventListener('mousemove', onDurationMinMove)
-  window.removeEventListener('mousemove', onDurationMaxMove)
-  window.removeEventListener('mouseup', stopDurationDrag)
-}
-
-const onDurationMinMove = (e: MouseEvent) => {
-  if (!durationTrackRef.value) return
-  const rect = durationTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_DURATION)
-  if (val <= maxDuration.value - 15) minDuration.value = val
-  else minDuration.value = maxDuration.value - 15
-}
-
-const onDurationMaxMove = (e: MouseEvent) => {
-  if (!durationTrackRef.value) return
-  const rect = durationTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_DURATION)
-  if (val >= minDuration.value + 15) maxDuration.value = val
-  else maxDuration.value = minDuration.value + 15
-}
-
-const onDurationTrackClick = (e: MouseEvent) => {
-  if (!durationTrackRef.value) return
-  const rect = durationTrackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const val = Math.round(percent * ABS_MAX_DURATION)
-  const distMin = Math.abs(val - minDuration.value)
-  const distMax = Math.abs(val - maxDuration.value)
-  if (distMin < distMax) {
-    if (val <= maxDuration.value - 15) minDuration.value = val
-  } else {
-    if (val >= minDuration.value + 15) maxDuration.value = val
-  }
-}
 </script>
+
+<style scoped>
+.filter-input {
+  @apply px-2 py-1 text-[9px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+</style>

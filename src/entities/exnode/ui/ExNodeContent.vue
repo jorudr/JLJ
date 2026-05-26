@@ -1,5 +1,5 @@
 <template>
-  <div class="exnode-content h-full flex flex-col relative">
+  <div class="exnode-content flex flex-col relative">
     
     <!-- Reader Header Toolbar -->
     <div class="flex items-center justify-between border-b border-current/10 py-6 px-12 bg-current/[0.01]">
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Reader Body -->
-    <div class="flex-grow overflow-y-auto scroll-minimal py-16 px-12 lg:px-24">
+    <div class="py-16 px-12 lg:px-24">
       <div class="max-w-4xl mx-auto space-y-16">
         
         <!-- Article Header -->
