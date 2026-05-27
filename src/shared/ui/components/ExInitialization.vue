@@ -20,7 +20,7 @@
       <button
         v-if="isAuthenticated && phase === 'auth'"
         @click="doSignOut"
-        class="fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border px-4 py-2 transition-all duration-300"
+        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border px-4 py-2 transition-all duration-300"
         style="border-color: var(--theme-text); color: var(--theme-text); opacity: 0.3;"
         @mouseenter="(e) => (e.currentTarget as HTMLElement).style.opacity = '1'"
         @mouseleave="(e) => (e.currentTarget as HTMLElement).style.opacity = '0.3'"

@@ -4863,6 +4863,7 @@ const emit = defineEmits(['exit'])
 // --- STATE --- //
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const isInitializing = ref(true)
+const canRevealCurve = ref(false)
 const bootProgress = ref(0)
 const container = ref<HTMLElement | null>(null)
 const revealProgress = ref(0)
@@ -5673,8 +5674,8 @@ const update = () => {
 
   ctx.clearRect(0, 0, w, h)
 
-  if (revealProgress.value < 1) {
-    revealProgress.value = Math.min(1, revealProgress.value + 0.015)
+  if (canRevealCurve.value && revealProgress.value < 1) {
+    revealProgress.value = Math.min(1, revealProgress.value + 0.005)
   }
   
   currentRotation.value.x += (targetRotation.value.x - currentRotation.value.x) * 0.08
@@ -6266,13 +6267,32 @@ const update = () => {
       }
 
       // Leading edge indicator
-      if (limitIdx > 0 && limitIdx < numPoints) {
+      if (limitIdx >= 0 && limitIdx < numPoints && transformedCurve.length > 0) {
         const lastP = transformedCurve[limitIdx]!
         ctx.fillStyle = colors.value.accent
         ctx.shadowBlur = 20
         ctx.shadowColor = colors.value.accent
         ctx.beginPath(); ctx.arc(lastP.x, lastP.y, 4, 0, Math.PI * 2); ctx.fill()
         ctx.shadowBlur = 0
+      }
+
+      // Orbital spinner at the spawn point (index 0) while curve is drawing
+      if (revealProgress.value < 1 && transformedCurve.length > 0) {
+        const spawnP = transformedCurve[0]!
+        const time = Date.now() * 0.006
+        ctx.strokeStyle = colors.value.accent
+        ctx.lineWidth = 1.5
+        ctx.shadowBlur = 10
+        ctx.shadowColor = colors.value.accent
+        ctx.beginPath()
+        ctx.arc(spawnP.x, spawnP.y, 12, time, time + Math.PI * 1.5)
+        ctx.stroke()
+        ctx.shadowBlur = 0
+        
+        ctx.fillStyle = colors.value.accent
+        ctx.globalAlpha = 0.5
+        ctx.beginPath(); ctx.arc(spawnP.x, spawnP.y, 3, 0, Math.PI * 2); ctx.fill()
+        ctx.globalAlpha = 1
       }
 
       // Nodes and Interaction
@@ -6911,6 +6931,7 @@ onMounted(async () => {
 
   setTimeout(() => {
     isInitializing.value = false
+    canRevealCurve.value = true
     clearInterval(bootInterval)
   }, 500)
 
