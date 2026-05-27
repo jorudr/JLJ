@@ -2,8 +2,14 @@
   <div class="w-full h-full flex items-center justify-center p-8 md:p-16 relative">
 
     <!-- Activity Matrix Container -->
-    <div class="w-full h-full bg-theme-bg/50 p-6 md:p-12 flex flex-col items-center justify-center overflow-hidden">
+    <div class="w-full h-full bg-theme-bg/50 p-6 md:p-12 flex flex-col items-center justify-center overflow-hidden relative">
       
+      <!-- Header Section -->
+      <div class="flex flex-col items-center mb-16 text-center z-10 w-full">
+        <h1 class="text-3xl md:text-4xl font-serif uppercase tracking-[0.2em]  mb-4">Activity Monitor</h1>
+        <p class="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] opacity-40 max-w-2xl">Core tactical data repository and historical consistency matrix.</p>
+      </div>
+
       <!-- The Grid Aspect Ratio Wrapper -->
       <div 
         class="grid grid-flow-col grid-rows-7 gap-[2px] md:gap-[4px]" 
@@ -40,8 +46,8 @@
            @click="handleCheckIn" 
            :disabled="isSubmittingActivity || checkInUsedToday"
            :class="[
-             checkInUsedToday && isDark ? '!bg-white !text-[#050505]' : '',
-             checkInUsedToday && !isDark ? '!bg-[#050505] !text-white' : ''
+             checkInUsedToday && isDark ? '!bg-white !text-[#050505] !opacity-100' : '',
+             checkInUsedToday && !isDark ? '!bg-[#050505] !text-white !opacity-100' : ''
            ]"
         >
            {{ isSubmittingActivity ? 'Initializing...' : (checkInUsedToday ? 'Session_Active' : 'Initialize_Session') }}

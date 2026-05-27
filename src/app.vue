@@ -15,7 +15,8 @@
       }"
     ></div>
 
-    <div class="relative z-10 h-full min-h-full flex flex-col">
+    <div class="relative z-10 h-full min-h-full flex flex-col transition-all duration-300" :class="isFullscreen ? '' : 'pt-10'">
+      <CustomTitleBar />
       <NuxtPage />
     </div>
     
@@ -36,12 +37,14 @@ import { useRoute } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import SettingsModal from '~/widgets/settings/ui/SettingsModal.vue'
 import { isSettingsOpen } from '~/widgets/settings/model/useSettings'
+import CustomTitleBar from '~/widgets/titlebar/ui/CustomTitleBar.vue'
 import { useBoardStore } from '~/features/store/useBoard'
 
 const route = useRoute()
 const auth = useAuthStore()
 const themeStore = useThemeStore()
 const boardStore = useBoardStore()
+const isFullscreen = useState('isFullscreen', () => false)
 
 // Initialize theme
 themeStore.init()

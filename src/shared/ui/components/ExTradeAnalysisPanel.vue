@@ -1642,7 +1642,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
                      <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Required_Adherence</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.reqRatio === 100 ? 'text-emerald-400' : 'text-amber-400'">
@@ -1681,7 +1681,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Additional_Alpha</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.addAlpha >= 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -1720,7 +1720,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Protocol_Strictness</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white">
@@ -1759,7 +1759,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_PnL_Ratio</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.condPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -1798,7 +1798,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Setup_Complexity</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white">
@@ -1838,7 +1838,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- TAB B: BEHAVIOURAL METRICS -->
                      <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Cognitive_Stability</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.stability >= 70 ? 'text-emerald-400' : 'text-rose-400'">
@@ -1877,7 +1877,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Dominant_Bias</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-sm font-mono font-black text-black dark:text-white truncate">
@@ -1916,7 +1916,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Emotional_PnL_Drag</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.pnlDrag >= 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -1955,7 +1955,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Friction_Density</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.frictionDensity === 0 ? 'text-emerald-400' : 'text-amber-400'">
@@ -1994,7 +1994,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Hesitation</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-sm font-mono font-black text-black dark:text-white truncate">
@@ -2035,7 +2035,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- PROFIT COMPARISON -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Net_Result_Variance</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
@@ -2077,7 +2077,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- YIELD EFFICIENCY -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Yield_Efficiency</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white uppercase">{{ tradeDetailStats.yieldPct.toFixed(2) }}%</span>
@@ -2115,7 +2115,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- PROFIT VELOCITY -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Profit_Velocity</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white uppercase">${{ tradeDetailStats.velocity.toFixed(2) }}/h</span>
@@ -2153,7 +2153,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- ACTUAL VS TARGET RR -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Target_RR</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
@@ -2195,7 +2195,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- ACTUAL VS MAX RISK -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Max_Risk</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
@@ -2240,7 +2240,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- DURATION COMPARISON -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Temporal_Exposure</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white uppercase flex items-baseline flex-wrap">
@@ -2282,7 +2282,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- ASSET PROTOCOL -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Asset_Protocol</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white truncate uppercase">{{ props.trade.side }} {{ enrichedTrade?.asset || 'N/A' }}</span>
@@ -2318,7 +2318,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- STOP LOSS DISTANCE -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Stop_Loss_Distance</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white">{{ currentSlDistPct.toFixed(2) }}%</span>
@@ -2356,7 +2356,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- TAKE PROFIT DISTANCE -->
                      <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Take_Profit_Distance</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white">{{ currentTpDistPct.toFixed(2) }}%</span>
@@ -2394,7 +2394,7 @@ const strategyExecutionMetrics = computed(() => {
                      <!-- TAB D: STRATEGY VS. EXECUTION METRICS -->
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">SL_Execution_Drag</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.slDrag >= 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -2433,7 +2433,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'text-emerald-400' : 'text-rose-400'">
@@ -2472,7 +2472,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-400' : 'text-amber-400'">
@@ -2511,7 +2511,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Edge_Capture_Quotient</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.edgeQuotient >= 1 ? 'text-emerald-400' : 'text-rose-400'">
@@ -2550,7 +2550,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Unrealized_Alpha_Left</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-400' : 'text-amber-400'">
@@ -2589,7 +2589,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Horizon_Sync_Rating</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.horizonSync === 100 ? 'text-emerald-400' : 'text-rose-400'">
@@ -2628,7 +2628,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Velocity_Variance_Index</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.velocityDelta >= 1 ? 'text-emerald-400' : 'text-amber-400'">
@@ -2667,7 +2667,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_Alpha_Decay</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.alphaDecay === 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -2706,7 +2706,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-help">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Confidence_Index</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.executionGrade >= 80 ? 'text-emerald-400' : (strategyExecutionMetrics.executionGrade >= 60 ? 'text-amber-400' : 'text-rose-400')">

@@ -73,10 +73,14 @@
        </Transition>
     </div>
 
-     <!-- Global Bottom Center Label -->
-     <div v-if="activeTab && !isNodeMapActive" class="fixed bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-mono tracking-widest uppercase opacity-40 pointer-events-none z-[5000]">
+     <!-- Global Bottom Right Label -->
+     <button 
+       v-if="activeTab && !isNodeMapActive" 
+       @click="goBack"
+       class="fixed bottom-8 right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity cursor-pointer z-[5000] outline-none"
+     >
        Click Left Arrow to Go back
-     </div>
+     </button>
   </div>
 </template>
 
@@ -110,6 +114,7 @@ const route = useRoute()
 const router = useRouter()
 
 const genesisBasePath = '/test_clean/genesis'
+const activityBasePath = '/test_clean/activity'
 const validTabs = ['activity', 'forum', 'genesis', 'matrix']
 const modeMap = {
   diary: 'log',
@@ -125,6 +130,7 @@ const isNodeMapActive = ref(false)
 const activeTab = ref('')
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
+const isActivityPath = computed(() => route.path === activityBasePath || route.path.startsWith(`${activityBasePath}/`))
 
 const getRouteMode = () => {
   const routeMode = route.params.mode
@@ -141,6 +147,7 @@ const getRouteTab = () => {
   const queryTab = route.query.tab
   if (typeof queryTab === 'string' && validTabs.includes(queryTab)) return queryTab
   if (isGenesisPath.value || currentGenesisMode.value) return 'genesis'
+  if (isActivityPath.value) return 'activity'
   return ''
 }
 
@@ -172,9 +179,22 @@ const canonicalizeGenesisRoute = () => {
   }
 }
 
+const canonicalizeActivityRoute = () => {
+  if (activeTab.value !== 'activity') return
+
+  const targetPath = activityBasePath
+  const query = { ...route.query, tab: 'activity' }
+  delete query.mode
+
+  if (route.path !== targetPath || route.query.tab !== 'activity') {
+    router.replace({ path: targetPath, query })
+  }
+}
+
 const syncTabFromRoute = () => {
   activeTab.value = getRouteTab()
   canonicalizeGenesisRoute()
+  canonicalizeActivityRoute()
 }
 
 const handleDashboardNavigate = (tab) => {
@@ -187,9 +207,12 @@ const handleDashboardNavigate = (tab) => {
   const query = { ...route.query, tab }
   delete query.mode
 
-  const path = tab === 'genesis'
-    ? genesisBasePath
-    : '/test_clean'
+  let path = '/test_clean'
+  if (tab === 'genesis') {
+    path = genesisBasePath
+  } else if (tab === 'activity') {
+    path = activityBasePath
+  }
 
   router.push({
     path,
@@ -237,6 +260,14 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
+const goBack = () => {
+  if (currentGenesisMode.value) {
+    clearMode()
+  } else if (activeTab.value) {
+    goToHub()
+  }
+}
+
 const handleGlobalKeydown = (e) => {
   // Prevent back navigation if user is typing in an input field
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
@@ -244,11 +275,7 @@ const handleGlobalKeydown = (e) => {
   }
   
   if (e.key === 'ArrowLeft') {
-    if (currentGenesisMode.value) {
-      clearMode()
-    } else if (activeTab.value) {
-      goToHub()
-    }
+    goBack()
   }
 }
 

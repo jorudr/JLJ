@@ -50,7 +50,7 @@
 
         <!-- ── AUTHENTICATED: boot prompt ── -->
         <div v-if="isAuthenticated && phase === 'auth'" key="authenticated" class="w-full flex flex-col items-center space-y-5">
-          <div class="w-full border p-4 flex items-center space-x-4" style="border-color: var(--theme-text); border-opacity: 0.1; background: rgba(128,128,128,0.05);">
+          <div class="w-full border p-4 flex items-center space-x-4" style="border-color: var(--theme-border); background: rgba(128,128,128,0.05);">
             <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse shrink-0"></div>
             <div class="flex flex-col min-w-0">
               <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.5;">Operator_Authenticated</span>
@@ -103,7 +103,7 @@
                 autocomplete="email"
                 placeholder="OPERATOR@SYSTEM.IO"
                 class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all uppercase placeholder:opacity-20"
-                style="border: 1px solid var(--theme-text); border-opacity: 0.2; color: var(--theme-text);"
+                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
               />
             </div>
 
@@ -116,7 +116,7 @@
                 autocomplete="current-password"
                 placeholder="••••••••"
                 class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
-                style="border: 1px solid var(--theme-text); border-opacity: 0.2; color: var(--theme-text);"
+                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
               />
             </div>
 
@@ -128,7 +128,7 @@
                 required
                 placeholder="••••••••"
                 class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
-                style="border: 1px solid var(--theme-text); border-opacity: 0.2; color: var(--theme-text);"
+                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
               />
             </div>
 
@@ -156,7 +156,7 @@
             @click="doGoogleLogin"
             :disabled="authLoading"
             class="w-full py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40 hover:opacity-100"
-            style="border: 1px solid var(--theme-text); border-opacity: 0.2; color: var(--theme-text); opacity: 0.6;"
+            style="border: 1px solid var(--theme-border); color: var(--theme-text); opacity: 0.6;"
           >
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
