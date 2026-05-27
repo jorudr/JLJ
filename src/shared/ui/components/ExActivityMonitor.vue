@@ -6,8 +6,8 @@
       
       <!-- Header Section -->
       <div class="flex flex-col items-center mb-16 text-center z-10 w-full">
-        <h1 class="text-3xl md:text-4xl font-serif uppercase tracking-[0.2em]  mb-4">Activity Monitor</h1>
-        <p class="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] opacity-40 max-w-2xl">Core tactical data repository and historical consistency matrix.</p>
+        <h1 class="text-3xl md:text-4xl font-serif uppercase tracking-[0.2em]  mb-4">{{ t('activityMonitor.title') }}</h1>
+        <p class="text-[10px] md:text-xs font-mono uppercase tracking-[0.4em] opacity-40 max-w-2xl">{{ t('activityMonitor.subtitle') }}</p>
       </div>
 
       <!-- The Grid Aspect Ratio Wrapper -->
@@ -29,7 +29,7 @@
           </template>
           <template #default>
             <div class="flex flex-col space-y-1">
-              <span class="opacity-50">Archive_Date: {{ cell.label }}</span>
+              <span class="opacity-50">{{ t('activityMonitor.archiveDate') }} {{ cell.label }}</span>
               <span v-if="cell.note" class="italic opacity-80 mt-1 font-sans">"{{ cell.note }}"</span>
             </div>
           </template>
@@ -50,7 +50,7 @@
              checkInUsedToday && !isDark ? '!bg-[#050505] !text-white !opacity-100' : ''
            ]"
         >
-           {{ isSubmittingActivity ? 'Initializing...' : (checkInUsedToday ? 'Session_Active' : 'Initialize_Session') }}
+           {{ isSubmittingActivity ? t('activityMonitor.initializing') : (checkInUsedToday ? t('activityMonitor.sessionActive') : t('activityMonitor.initializeSession')) }}
         </ExButton>
       </div>
     </div>
@@ -61,12 +61,15 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useForumStore } from '~/features/store/useForum'
 import { submitDailyActivity, isSubmittingActivity, calculateStreak, type DailyActivity } from '~/widgets/dashboard/model/useActivity'
 
 const emit = defineEmits(['exit'])
+
+const { t } = useI18n()
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)

@@ -47,7 +47,7 @@
               >
                 <!-- User info strip -->
                 <div class="px-5 py-3 border-b border-theme-border">
-                  <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">Signed_In_As</p>
+                  <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">{{ t('dashboard.ui.signedInAs') }}</p>
                   <p class="text-[10px] font-mono font-black uppercase tracking-widest truncate">{{ authStore.user?.email }}</p>
                 </div>
                 <!-- Sign out -->
@@ -60,7 +60,7 @@
                     <polyline points="16 17 21 12 16 7"/>
                     <line x1="21" y1="12" x2="9" y2="12"/>
                   </svg>
-                  <span>Sign_Out</span>
+                  <span>{{ t('dashboard.ui.signOut') }}</span>
                 </button>
               </div>
             </Transition>
@@ -104,13 +104,13 @@
 
             <div class="flex flex-col space-y-2">
               <ExHeading level="h3" variant="cinematic" class="!text-xl group-hover:opacity-100 opacity-50 transition-all duration-700 whitespace-pre-line">{{ t(module.titleKey) }}</ExHeading>
-              <ExText variant="small" class="opacity-40 leading-relaxed">{{ module.description }}</ExText>
+              <ExText variant="small" class="opacity-40 leading-relaxed">{{ t(module.descriptionKey) }}</ExText>
             </div>
 
             <div class="mt-auto pt-6 border-t border-theme-border opacity-0 group-hover:opacity-100 transition-opacity duration-700">
                <div class="flex items-center space-x-2">
                   <div class="w-1 h-1 bg-theme-text"></div>
-                  <ExText variant="telemetry" class="tracking-widest">ACCESS_PROTOCOL</ExText>
+                  <ExText variant="telemetry" class="tracking-widest">{{ t('dashboard.ui.accessProtocol') }}</ExText>
                </div>
             </div>
           </div>
@@ -124,8 +124,8 @@
     <!-- 3. Bottom Utility Bar -->
     <footer class="flex justify-between items-center z-10 opacity-100 pt-8 border-t border-theme-border">
       <div class="flex space-x-12 items-center">
-        <ExText variant="small" class="tracking-widest uppercase">System_Time: 04:22:19</ExText>
-        <ExText variant="small" class="tracking-widest uppercase">Encryption: AES-256_REIFIED</ExText>
+        <ExText variant="small" class="tracking-widest uppercase">{{ t('dashboard.ui.systemTime') }}</ExText>
+        <ExText variant="small" class="tracking-widest uppercase">{{ t('dashboard.ui.encryption') }}</ExText>
       </div>
       <div class="flex space-x-4">
          <div v-for="i in 4" :key="i" class="w-1 h-1 border border-theme-text rotate-45"></div>
@@ -213,19 +213,19 @@ const dashboardModules = [
     id: 'forum', 
     code: 'F1', 
     titleKey: 'dashboard.modules.knowledge_matrix', 
-    description: 'Collaborative protocol exchange and strategic link network.' 
+    descriptionKey: 'dashboard.descriptions.knowledge_matrix' 
   },
   { 
     id: 'activity', 
     code: 'A2', 
     titleKey: 'dashboard.modules.activity_monitor', 
-    description: 'Core tactical data repository and historical consistency matrix.' 
+    descriptionKey: 'dashboard.descriptions.activity_monitor' 
   },
   { 
     id: 'genesis', 
     code: 'G3', 
     titleKey: 'dashboard.modules.genesis_protocol', 
-    description: 'Module management and neural diary reification sequence.' 
+    descriptionKey: 'dashboard.descriptions.genesis_protocol' 
   }
 ]
 </script>

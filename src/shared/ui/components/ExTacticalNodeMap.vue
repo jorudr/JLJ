@@ -5,6 +5,9 @@ import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import ExEquityCurve2D from '~/shared/ui/components/ExEquityCurve2D.vue'
 import ExTradeAnalysisPanel from '~/shared/ui/components/ExTradeAnalysisPanel.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   isOpen: boolean
@@ -403,7 +406,7 @@ function openNodeChart(node: any) {
   showFrequency.value = true
   showPF.value = true
   const nodeData = isRef(node) ? node.value : node
-  chartModalTitle.value = nodeData.name || (nodeData === entryHubData.value ? 'Entry_Protocol' : 'Exit_Protocol')
+  chartModalTitle.value = nodeData.name || (nodeData === entryHubData.value ? t('tacticalNodeMap.entryProtocol') : t('tacticalNodeMap.exitProtocol'))
   const pfPoints = []
   const freqPoints = []
   const width = 740
@@ -677,7 +680,7 @@ const emotionalStatus = computed(() => {
         <div class="px-6 py-2 transition-all duration-500"
              :class="isDark ? 'text-white/40 hover:text-white/70' : 'text-black/40 hover:text-black/70'">
           <span class="text-base font-serif tracking-widest">
-            This trade is better than <span class="font-bold text-black dark:text-white">{{ percentileRank }}%</span> of your trades
+            {{ t('tacticalNodeMap.betterThan') }} <span class="font-bold text-black dark:text-white">{{ percentileRank }}%</span> {{ t('tacticalNodeMap.ofYourTrades') }}
           </span>
         </div>
       </div>
@@ -690,7 +693,7 @@ const emotionalStatus = computed(() => {
         <button @click.stop="activeAnalyticsPage = 3; analyticsModalOpen = true"
                 class="w-10 h-10 flex items-center justify-center transition-all duration-300 cursor-pointer pointer-events-auto"
                 :class="isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-black/50 hover:text-black'"
-                title="View Trade Analytics Reified">
+                :title="t('tacticalNodeMap.viewAnalytics')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 3v18h18" />
             <path d="M7 16l5-5 3 3 5-5" />
@@ -703,7 +706,7 @@ const emotionalStatus = computed(() => {
         <!-- Close Map Button -->
         <button @click="emit('close')" 
                 class="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-red-500/20 text-red-500/70 hover:text-red-500 cursor-pointer"
-                title="Terminate Neural Link">
+                :title="t('tacticalNodeMap.terminateLink')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -721,7 +724,7 @@ const emotionalStatus = computed(() => {
           </svg>
         </div>
         <div class="flex flex-col items-center mt-1">
-          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">ENTRY_HUB</span>
+          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.entryHub') }}</span>
           <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryIndicator.dist }}px</span>
         </div>
       </div>
@@ -736,7 +739,7 @@ const emotionalStatus = computed(() => {
           </svg>
         </div>
         <div class="flex flex-col items-center mt-1">
-          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">EXIT_HUB</span>
+          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.exitHub') }}</span>
           <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitIndicator.dist }}px</span>
         </div>
       </div>
@@ -804,7 +807,7 @@ const emotionalStatus = computed(() => {
 
             <div class="flex items-center justify-around w-full border-t border-black/10 dark:border-white/10 pt-4">
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">Frequency</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
                   <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryHubData.freq }}</span>
                   <svg v-if="entryHubData.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -812,7 +815,7 @@ const emotionalStatus = computed(() => {
                 </div>
               </div>
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">PF_Ratio</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
                   <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryHubData.pf }}</span>
                   <svg v-if="entryHubData.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -841,7 +844,7 @@ const emotionalStatus = computed(() => {
 
             <div class="flex items-center justify-around w-full border-t border-black/10 dark:border-white/10 pt-4">
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">Frequency</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
                   <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitHubData.freq }}</span>
                   <svg v-if="exitHubData.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -849,7 +852,7 @@ const emotionalStatus = computed(() => {
                 </div>
               </div>
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">PF_Ratio</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
                   <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitHubData.pf }}</span>
                   <svg v-if="exitHubData.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -874,7 +877,7 @@ const emotionalStatus = computed(() => {
 
           <div class="flex flex-col space-y-1">
             <div class="flex items-center justify-end space-x-2">
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">FREQ</span>
+              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
               <div class="flex items-center space-x-0.5">
                 <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.freq }}</span>
                 <svg v-if="cond.freqTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -882,7 +885,7 @@ const emotionalStatus = computed(() => {
               </div>
             </div>
             <div class="flex items-center justify-end space-x-2">
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">P/F</span>
+              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
               <div class="flex items-center space-x-0.5">
                 <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.pf }}</span>
                 <svg v-if="cond.pfTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -908,7 +911,7 @@ const emotionalStatus = computed(() => {
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.freq }}</span>
               </div>
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">FREQ</span>
+              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
             </div>
             <div class="flex items-center justify-start space-x-2">
               <div class="flex items-center space-x-0.5">
@@ -916,7 +919,7 @@ const emotionalStatus = computed(() => {
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.pf }}</span>
               </div>
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">P/F</span>
+              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
             </div>
           </div>
 
@@ -955,15 +958,15 @@ const emotionalStatus = computed(() => {
           <!-- Integrated Legend Overlay -->
           <div class="absolute top-8 left-8 z-40 flex flex-col pointer-events-auto">
             <div class="flex items-center space-x-4 mb-1 text-black dark:text-white">
-              <span class="text-[10px] font-mono opacity-40 tracking-[0.5em] uppercase">Diagnostic_Telemetry</span>
-              <button @click="resetChartView" class="px-2 py-0.5 border border-dashed border-black/10 dark:border-white/10 text-[8px] font-mono uppercase tracking-widest hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Reset_View</button>
+              <span class="text-[10px] font-mono opacity-40 tracking-[0.5em] uppercase">{{ t('tacticalNodeMap.diagnosticTelemetry') }}</span>
+              <button @click="resetChartView" class="px-2 py-0.5 border border-dashed border-black/10 dark:border-white/10 text-[8px] font-mono uppercase tracking-widest hover:bg-black/5 dark:hover:bg-white/5 transition-colors">{{ t('tacticalNodeMap.resetView') }}</button>
             </div>
             <span class="font-mono tracking-[0.2em] uppercase font-black text-3xl mb-6 truncate max-w-[600px] text-black dark:text-white">{{ chartModalTitle }}</span>
             
             <div class="flex flex-col space-y-4">
               <div class="flex items-center space-x-4 group cursor-pointer" @click="showFrequency = !showFrequency">
                 <div class="w-6 h-0.5 bg-black dark:bg-white border-b border-dashed transition-opacity" :class="showFrequency ? 'opacity-40' : 'opacity-10'"></div>
-                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showFrequency ? 'opacity-60' : 'opacity-20'">Frequency_Dashed</span>
+                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showFrequency ? 'opacity-60' : 'opacity-20'">{{ t('tacticalNodeMap.frequencyDashed') }}</span>
                 <div class="transition-all duration-300 text-black dark:text-white" :class="showFrequency ? 'opacity-100' : 'opacity-30'">
                   <svg v-if="showFrequency" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88 2 12s3-7 10-7a9 9 0 0 1 5.12 1.6M12.42 17.15c-1.4.35-2.9.3-4.42-.15L2 12s3-7 10-7c.56 0 1.1.06 1.62.17M2 2l20 20M12 12l.18.18A3 3 0 0 1 12 12Z"/></svg>
@@ -972,7 +975,7 @@ const emotionalStatus = computed(() => {
               
               <div class="flex items-center space-x-4 group cursor-pointer" @click="showPF = !showPF">
                 <div class="w-6 h-0.5 bg-black dark:bg-white transition-opacity" :class="showPF ? 'opacity-100' : 'opacity-10'"></div>
-                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showPF ? 'opacity-60' : 'opacity-20'">PF_Normal</span>
+                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showPF ? 'opacity-60' : 'opacity-20'">{{ t('tacticalNodeMap.pfNormal') }}</span>
                 <div class="transition-all duration-300 text-black dark:text-white" :class="showPF ? 'opacity-100' : 'opacity-30'">
                   <svg v-if="showPF" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88 2 12s3-7 10-7a9 9 0 0 1 5.12 1.6M12.42 17.15c-1.4.35-2.9.3-4.42-.15L2 12s3-7 10-7c.56 0 1.1.06 1.62.17M2 2l20 20M12 12l.18.18A3 3 0 0 1 12 12Z"/></svg>
@@ -1078,7 +1081,7 @@ const emotionalStatus = computed(() => {
             </span>
             <div class="flex items-center space-x-1">
               <div class="w-1 h-1 rounded-full animate-pulse" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-              <span class="text-[6px] font-mono opacity-30 uppercase tracking-widest">Live_Analysis</span>
+              <span class="text-[6px] font-mono opacity-30 uppercase tracking-widest">{{ t('tacticalNodeMap.liveAnalysis') }}</span>
             </div>
           </div>
           
@@ -1102,7 +1105,7 @@ const emotionalStatus = computed(() => {
                 <div class="w-4 h-0 border-t border-dashed" :class="isDark ? 'border-white/40' : 'border-black/40'"></div>
                 <div class="flex flex-col">
                   <span class="text-[6px] font-mono opacity-30 uppercase tracking-widest"
-                        :class="isDark ? 'text-white' : 'text-black'">Freq</span>
+                        :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
                   <span class="text-[9px] font-mono font-bold"
                         :class="isDark ? 'text-white' : 'text-black'">{{ hoveredNode.freq }}</span>
                 </div>
@@ -1111,14 +1114,14 @@ const emotionalStatus = computed(() => {
                 <div class="w-4 h-px" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                 <div class="flex flex-col">
                   <span class="text-[6px] font-mono opacity-30 uppercase tracking-widest"
-                        :class="isDark ? 'text-white' : 'text-black'">PF_Ratio</span>
+                        :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
                   <span class="text-[9px] font-mono font-bold"
                         :class="isDark ? 'text-white' : 'text-black'">{{ hoveredNode.pf }}</span>
                 </div>
               </div>
             </div>
             <span class="text-[6px] font-mono opacity-20 uppercase tracking-tighter"
-                  :class="isDark ? 'text-white' : 'text-black'">Live_History</span>
+                  :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.liveHistory') }}</span>
           </div>
 
           <!-- Tactical Corners -->
@@ -1182,7 +1185,7 @@ const emotionalStatus = computed(() => {
 
                   <div class="flex flex-col space-y-1 items-end">
                     <div class="flex items-center space-x-2">
-                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">FREQ</span>
+                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
                       <div class="flex items-center space-x-0.5">
                         <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ emotion.freq }}</span>
                         <svg v-if="emotion.freqTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1190,7 +1193,7 @@ const emotionalStatus = computed(() => {
                       </div>
                     </div>
                     <div class="flex items-center space-x-2">
-                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">P/F</span>
+                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
                       <div class="flex items-center space-x-0.5">
                         <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ emotion.pf }}</span>
                         <svg v-if="emotion.pfTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
