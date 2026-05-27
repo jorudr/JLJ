@@ -6301,7 +6301,7 @@ const update = () => {
 
           ctx.fillStyle = colors.value.accent
           ctx.font = 'bold 9px monospace'
-          ctx.fillText(p3d.dateLabel, tFloor.x - 30, tFloor.y + 15)
+          ctx.fillText(String(p3d.dateLabel).toUpperCase(), tFloor.x - 30, tFloor.y + 15)
 
           const val = p3d.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
           ctx.fillStyle = themeText

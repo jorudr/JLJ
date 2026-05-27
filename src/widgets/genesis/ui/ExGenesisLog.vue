@@ -712,6 +712,10 @@ const selectedStrategyId = computed({
   set: (val) => { tradeStore.selectedStrategyId = val }
 })
 
+const formatCubeTradeAssetLabel = (asset?: string) => {
+  return String(asset || '').toUpperCase()
+}
+
 const matrixNodes = shallowRef<any[]>([])
 const matrixConnections = shallowRef<any[]>([])
 const isMatrixLoading = ref(true)
@@ -1004,7 +1008,7 @@ const initTrades = () => {
 
       nodes.push({
         id: t.id!,
-        label: `${t.asset} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${t.profitInCurrency ?? 0}$]`,
+        label: `${formatCubeTradeAssetLabel(t.asset)} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${t.profitInCurrency ?? 0}$]`,
         faceIndex: i,
         localPos: { x: localX, y: localY },
         worldPos: calculateWorldPos(i, localX, localY),

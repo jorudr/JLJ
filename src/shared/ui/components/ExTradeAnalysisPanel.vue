@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, onMounted } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useThemeStore } from '~/features/store/useTheme'
 import { loadFromDisk } from '~/shared/diskStorage'
 import ExPanel from '../ExPanel.vue'
 import ExHeading from '../ExHeading.vue'
@@ -77,6 +78,9 @@ const styleLimits: Record<number, { label: string, max?: number, min?: number, d
   1: { label: 'Swing Trading', min: 1, desc: '(from 1 day to unlimited)' },
   2: { label: 'Investing', min: 90, desc: '(from 3 month - to unlimited)' }
 };
+
+const themeStore = useThemeStore();
+const isDark = computed(() => themeStore.settings.isDark);
 
 const tradeStore = useStrategyTradesStore();
 const matrixNodes = shallowRef<any[]>([]);
@@ -1640,7 +1644,7 @@ const strategyExecutionMetrics = computed(() => {
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Required_Adherence</span>
@@ -1679,7 +1683,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Additional_Alpha</span>
@@ -1718,7 +1722,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Protocol_Strictness</span>
@@ -1757,7 +1761,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_PnL_Ratio</span>
@@ -1796,7 +1800,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Setup_Complexity</span>
@@ -1836,7 +1840,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAB B: BEHAVIOURAL METRICS -->
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Cognitive_Stability</span>
@@ -1875,7 +1879,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Dominant_Bias</span>
@@ -1914,7 +1918,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Emotional_PnL_Drag</span>
@@ -1953,7 +1957,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Friction_Density</span>
@@ -1992,7 +1996,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Hesitation</span>
@@ -2033,7 +2037,7 @@ const strategyExecutionMetrics = computed(() => {
 
                      <!-- TAB C: EXECUTION & RISK METRICS (Existing) -->
                      <!-- PROFIT COMPARISON -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Net_Result_Variance</span>
@@ -2075,7 +2079,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- YIELD EFFICIENCY -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Yield_Efficiency</span>
@@ -2113,7 +2117,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- PROFIT VELOCITY -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Profit_Velocity</span>
@@ -2151,7 +2155,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ACTUAL VS TARGET RR -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Target_RR</span>
@@ -2193,7 +2197,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ACTUAL VS MAX RISK -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Max_Risk</span>
@@ -2238,7 +2242,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- DURATION COMPARISON -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Temporal_Exposure</span>
@@ -2280,7 +2284,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- ASSET PROTOCOL -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Asset_Protocol</span>
@@ -2316,7 +2320,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- STOP LOSS DISTANCE -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Stop_Loss_Distance</span>
@@ -2354,7 +2358,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAKE PROFIT DISTANCE -->
-                     <ExTooltip v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Take_Profit_Distance</span>
@@ -2392,7 +2396,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
 
                      <!-- TAB D: STRATEGY VS. EXECUTION METRICS -->
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">SL_Execution_Drag</span>
@@ -2431,7 +2435,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
@@ -2470,7 +2474,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
@@ -2509,7 +2513,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Edge_Capture_Quotient</span>
@@ -2548,7 +2552,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Unrealized_Alpha_Left</span>
@@ -2587,7 +2591,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Horizon_Sync_Rating</span>
@@ -2626,7 +2630,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Velocity_Variance_Index</span>
@@ -2665,7 +2669,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_Alpha_Decay</span>
@@ -2704,7 +2708,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
+                     <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Confidence_Index</span>

@@ -15,7 +15,7 @@
         @click="toggleFullscreen" 
         class="inline-flex justify-center items-center w-12 h-full hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer transition-colors"
       >
-        <Icon name="lucide:square" class="w-3.5 h-3.5 text-[var(--text-heading)]" />
+        <Icon name="lucide:maximize" class="w-3.5 h-3.5 text-[var(--text-heading)]" />
       </div>
       <div 
         @click="close" 

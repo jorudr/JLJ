@@ -275,7 +275,7 @@ const initTrades = () => {
       const localY = (Math.random() - 0.5) * 160
       nodes.push({
         id: t.id!,
-        label: `${t.asset} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${t.profitInCurrency ?? 0}$]`,
+        label: `${String(t.asset || '').toUpperCase()} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${t.profitInCurrency ?? 0}$]`,
         faceIndex: i,
         localPos: { x: localX, y: localY },
         worldPos: calculateWorldPos(i, localX, localY)

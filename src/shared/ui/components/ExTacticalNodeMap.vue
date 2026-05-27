@@ -162,12 +162,29 @@ const getNormalizedPnl = (tr: any) => {
   return val
 }
 
+const EMOTION_WEIGHTS_LOCAL: Record<string, number> = {
+  'CONFIDENCE': 10, 'PATIENCE': 15, 'DISCIPLINE': 20,
+  'FOMO': -20, 'GREED': -25, 'REVENGE': -30, 'FEAR': -15, 'TILT': -40, 'ANXIETY': -15
+}
+
+const getTradeScore = (tr: any) => {
+  const pnl = getNormalizedPnl(tr)
+  let emotionalScore = 0
+  if (tr && tr.emotions && Array.isArray(tr.emotions)) {
+    tr.emotions.forEach((e: any) => {
+      const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
+      emotionalScore += EMOTION_WEIGHTS_LOCAL[key] || 0
+    })
+  }
+  return pnl + emotionalScore
+}
+
 const percentileRank = computed(() => {
-  const currentPnl = props.trade?.pnl || 0
-  const pnls = allTrades.value.map(getNormalizedPnl).sort((a, b) => a - b)
-  if (pnls.length === 0) return 0
-  const lower = pnls.filter(p => p < currentPnl).length
-  return Math.round((lower / pnls.length) * 100)
+  const currentScore = getTradeScore(props.trade)
+  const scores = allTrades.value.map(getTradeScore).sort((a, b) => a - b)
+  if (scores.length === 0) return 0
+  const lower = scores.filter(s => s < currentScore).length
+  return Math.round((lower / scores.length) * 100)
 })
 
 const contentTransform = computed(() => ({
@@ -1118,7 +1135,7 @@ const emotionalStatus = computed(() => {
          class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[10001] flex flex-col items-center">
       
       <!-- THE CIRCULAR GAUGE -->
-      <div class="relative w-24 h-24 flex items-center justify-center shrink-0 group/gauge cursor-help">
+      <div class="relative w-24 h-24 flex items-center justify-center shrink-0 group/gauge cursor-pointer">
          <!-- Atmosphere Glow -->
          <div class="absolute inset-0 rounded-full transition-all duration-1000 opacity-20 blur-2xl scale-125" :class="emotionalStatus.color"></div>
          
