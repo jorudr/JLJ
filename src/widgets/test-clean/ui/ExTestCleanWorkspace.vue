@@ -10,13 +10,6 @@
     <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
     <DesignVignette :is-dark="isDark" />
 
-    <button v-if="!isNodeMapActive"
-            @click="isDark = !isDark"
-            class="fixed top-12 right-12 z-[5000] px-6 py-2 border-2 border-theme-border bg-theme-bg text-theme-text hover:bg-theme-text hover:text-theme-bg transition-all duration-500 group flex items-center space-x-4">
-      <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ isDark ? 'SWT_LIGHT_MODE' : 'SWT_DARK_MODE' }}</span>
-      <div class="w-2 h-2 border border-current rotate-45 transition-transform group-hover:rotate-[135deg]" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-    </button>
-
     <div
       class="relative z-10 flex inset-0 h-full"
       :class="activeTab === 'forum' ? 'items-start justify-center py-0' : 'items-center justify-center py-20'"

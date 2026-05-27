@@ -24,6 +24,8 @@
           </button>
         </div>
 
+
+
         <!-- User Identity (clickable → sign-out popover) -->
         <div class="relative" ref="identityRef">
           <button @click="toggleMenu" class="focus:outline-none cursor-pointer">
@@ -64,6 +66,21 @@
             </Transition>
           </Teleport>
         </div>
+
+        <!-- Theme Toggle -->
+        <button
+          class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
+          @click="themeStore.toggleDark"
+        >
+          <template v-if="themeStore.isReady">
+            <img
+              alt="Toggle Theme"
+              :src="themeStore.settings.isDark ? '/assets/light-mode-switcher.svg' : '/assets/dark-mode-switcher.svg'"
+              class="block"
+            />
+          </template>
+        </button>
+
       </div>
     </header>
 
@@ -126,11 +143,13 @@ import ExText from '../ExText.vue'
 import ExTag from '../ExTag.vue'
 import ExIdentity from '../ExIdentity.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
+import { useThemeStore } from '~/features/store/useTheme'
 
 const emit = defineEmits(['navigate', 'signed-out'])
 
 const { t, locale, setLocale } = useI18n()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 // User menu
 const userMenuOpen = ref(false)
