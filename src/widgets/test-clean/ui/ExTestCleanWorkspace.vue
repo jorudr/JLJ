@@ -96,7 +96,8 @@ import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 import ExActivityMonitor from '~/shared/ui/components/ExActivityMonitor.vue'
 
 import { useThemeStore } from '~/features/store/useTheme'
-
+import { useWorkspaceStore } from '~/widgets/test-clean/model/useWorkspace'
+import { storeToRefs } from 'pinia'
 const themeStore = useThemeStore()
 const isDark = computed({
   get: () => themeStore.settings.isDark,
@@ -106,8 +107,7 @@ const isDark = computed({
 const route = useRoute()
 const router = useRouter()
 
-const genesisBasePath = '/test_clean/genesis'
-const activityBasePath = '/test_clean/activity'
+const genesisBasePath = '/genesis'
 const validTabs = ['activity', 'forum', 'genesis', 'matrix']
 const modeMap = {
   diary: 'log',
@@ -115,20 +115,17 @@ const modeMap = {
   matrix: 'matrix'
 }
 
-const hasInitialized = ref(false)
-const isAssembled = ref(false)
-const showBloom = ref(true)
-const isTesseractEnabled = ref(false)
-const isNodeMapActive = ref(false)
+const workspaceStore = useWorkspaceStore()
+const { hasInitialized, isAssembled, showBloom, isTesseractEnabled, isNodeMapActive } = storeToRefs(workspaceStore)
 const activeTab = ref('')
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
-const isActivityPath = computed(() => route.path === activityBasePath || route.path.startsWith(`${activityBasePath}/`))
 
 const getRouteMode = () => {
-  const routeMode = route.params.mode
-  const modeFromPath = Array.isArray(routeMode) ? routeMode[0] : routeMode
-  if (typeof modeFromPath === 'string' && modeFromPath) return modeFromPath
+  const workspaceParams = route.params.workspace
+  const workspaceArray = Array.isArray(workspaceParams) ? workspaceParams : [workspaceParams]
+  const modeFromPath = workspaceArray.length > 1 ? workspaceArray[1] : ''
+  if (modeFromPath) return modeFromPath
 
   const queryMode = route.query.mode
   return typeof queryMode === 'string' ? queryMode : ''
@@ -140,7 +137,6 @@ const getRouteTab = () => {
   const queryTab = route.query.tab
   if (typeof queryTab === 'string' && validTabs.includes(queryTab)) return queryTab
   if (isGenesisPath.value || currentGenesisMode.value) return 'genesis'
-  if (isActivityPath.value) return 'activity'
   return ''
 }
 
@@ -175,7 +171,7 @@ const canonicalizeGenesisRoute = () => {
 const canonicalizeActivityRoute = () => {
   if (activeTab.value !== 'activity') return
 
-  const targetPath = activityBasePath
+  const targetPath = '/'
   const query = { ...route.query, tab: 'activity' }
   delete query.mode
 
@@ -200,11 +196,9 @@ const handleDashboardNavigate = (tab) => {
   const query = { ...route.query, tab }
   delete query.mode
 
-  let path = '/test_clean'
+  let path = '/'
   if (tab === 'genesis') {
     path = genesisBasePath
-  } else if (tab === 'activity') {
-    path = activityBasePath
   }
 
   router.push({
@@ -242,12 +236,12 @@ const goToHub = () => {
   delete query.mode
 
   router.push({
-    path: '/test_clean',
+    path: '/',
     query
   })
 }
 
-watch(() => [route.path, route.params.mode, route.query.tab, route.query.mode], syncTabFromRoute, { immediate: true })
+watch(() => [route.path, route.params.workspace, route.query.tab, route.query.mode], syncTabFromRoute, { immediate: true })
 
 watch(activeTab, (newTab) => {
   setScrollLock(newTab)
@@ -290,7 +284,7 @@ const handleSignedOut = () => {
   isNodeMapActive.value = false
   activeTab.value = ''
 
-  router.replace({ path: '/test_clean' })
+  router.replace({ path: '/' })
 }
 
 onMounted(() => {

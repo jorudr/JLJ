@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col bg-[#f7f5fa] bg-center bg-cover dark:bg-none dark:bg-[#050505]">
-    <Header />
+  
     
     <main class="flex-grow flex flex-col items-center justify-center text-center px-4">
       <h1 class="text-9xl font-serif text-black dark:text-white opacity-10 mb-4">
@@ -20,13 +20,12 @@
       </button>
     </main>
 
-    <Footer />
+ 
   </div>
 </template>
 
 <script setup lang="ts">
-import Header from '~/widgets/header/ui/Header.vue'
-import Footer from '~/widgets/footer/Footer.vue'
+
 
 const error = useError()
 
