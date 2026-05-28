@@ -6,7 +6,7 @@
         <ExHeading level="h1" variant="cinematic" class="!text-3xl">{{ t('dashboard.title') }}</ExHeading>
         <div class="flex items-center space-x-4">
            <ExTag>v1.0.4_REIFIED</ExTag>
-           <ExText variant="small" class="opacity-30 tracking-[0.4em]">{{ t('dashboard.subtitle') }}</ExText>
+           <ExText variant="small" class="!opacity-100 tracking-[0.4em] text-[#2C3E50]/35 dark:text-white/35">{{ t('dashboard.subtitle') }}</ExText>
         </div>
       </div>
 
@@ -18,7 +18,7 @@
             :key="l"
             @click="setLocale(l)"
             class="text-[10px] font-mono tracking-widest uppercase transition-all duration-300"
-            :class="locale === l ? 'text-theme-text font-bold underline underline-offset-4' : 'opacity-30 hover:opacity-100'"
+            :class="locale === l ? 'text-[#2C3E50] dark:text-white/70 font-bold underline underline-offset-4' : 'opacity-30 hover:opacity-100'"
           >
             {{ l }}
           </button>
@@ -97,20 +97,20 @@
           <div class="flex flex-col h-full space-y-8 relative z-10">
             <div class="flex justify-between items-start">
                <div class="w-10 h-10 border border-theme-border flex items-center justify-center group-hover:border-theme-text transition-colors">
-                  <ExText variant="telemetry" class="opacity-40 group-hover:opacity-100">{{ module.code }}</ExText>
+                  <ExText variant="telemetry" class="!opacity-100 text-[#2C3E50]/45 dark:text-white/40 group-hover:text-[#2C3E50] dark:group-hover:text-white/90">{{ module.code }}</ExText>
                </div>
                <div class="w-1.5 h-1.5 bg-theme-accent rotate-45 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
 
             <div class="flex flex-col space-y-2">
-              <ExHeading level="h3" variant="cinematic" class="!text-xl group-hover:opacity-100 opacity-50 transition-all duration-700 whitespace-pre-line">{{ t(module.titleKey) }}</ExHeading>
-              <ExText variant="small" class="opacity-40 leading-relaxed">{{ t(module.descriptionKey) }}</ExText>
+              <ExHeading level="h3" variant="cinematic" class="!text-xl !opacity-100 text-[#2C3E50]/60 dark:text-white/50 group-hover:text-[#2C3E50] dark:group-hover:text-white/90 transition-all duration-700 whitespace-pre-line">{{ t(module.titleKey) }}</ExHeading>
+              <ExText variant="small" class="!opacity-100 leading-relaxed text-[#2C3E50]/45 dark:text-white/40">{{ t(module.descriptionKey) }}</ExText>
             </div>
 
             <div class="mt-auto pt-6 border-t border-theme-border opacity-0 group-hover:opacity-100 transition-opacity duration-700">
                <div class="flex items-center space-x-2">
                   <div class="w-1 h-1 bg-theme-text"></div>
-                  <ExText variant="telemetry" class="tracking-widest">{{ t('dashboard.ui.accessProtocol') }}</ExText>
+                  <ExText variant="telemetry" class="!opacity-100 tracking-widest text-[#2C3E50]/45 dark:text-white/45">{{ t('dashboard.ui.accessProtocol') }}</ExText>
                </div>
             </div>
           </div>
@@ -124,8 +124,8 @@
     <!-- 3. Bottom Utility Bar -->
     <footer class="flex justify-between items-center z-10 opacity-100 pt-8 border-t border-theme-border">
       <div class="flex space-x-12 items-center">
-        <ExText variant="small" class="tracking-widest uppercase">{{ t('dashboard.ui.systemTime') }}</ExText>
-        <ExText variant="small" class="tracking-widest uppercase">{{ t('dashboard.ui.encryption') }}</ExText>
+        <ExText variant="small" class="!opacity-100 tracking-widest uppercase text-[#2C3E50]/40 dark:text-white/40">{{ t('dashboard.ui.systemTime') }}</ExText>
+        <ExText variant="small" class="!opacity-100 tracking-widest uppercase text-[#2C3E50]/40 dark:text-white/40">{{ t('dashboard.ui.encryption') }}</ExText>
       </div>
       <div class="flex space-x-4">
          <div v-for="i in 4" :key="i" class="w-1 h-1 border border-theme-text rotate-45"></div>

@@ -7,6 +7,18 @@ const translatedAttributes = ['placeholder', 'title', 'aria-label', 'alt']
 
 const normalize = (value: string) => value.replace(/\s+/g, ' ').trim()
 
+const buildReverseDictionary = (dictionary: Record<string, unknown>) => {
+  const reverse = new Map<string, string>()
+
+  for (const [source, translation] of Object.entries(dictionary)) {
+    if (typeof translation === 'string') {
+      reverse.set(normalize(translation), source)
+    }
+  }
+
+  return reverse
+}
+
 const translateDynamic = (key: string, dictionary: Record<string, string>) => {
   const fulfilled = key.match(/^(\d+) Fulfilled$/)
   if (fulfilled) return `${fulfilled[1]} ${dictionary.Fulfilled || 'Fulfilled'}`
@@ -48,21 +60,39 @@ export function useDomI18n(rootRef: Ref<HTMLElement | null>, namespace: string, 
   const { locale, tm } = useI18n()
   let observer: MutationObserver | null = null
 
-  const translateTextNode = (node: Text, dictionary: Record<string, string>) => {
-    if (!textOriginals.has(node)) {
-      textOriginals.set(node, node.nodeValue || '')
+  const resolveOriginal = (value: string, dictionary: Record<string, string>, reverseDictionary: Map<string, string>) => {
+    const key = normalize(value)
+    if (!key) return ''
+
+    if (dictionary[key] || translateDynamic(key, dictionary)) {
+      return value
     }
 
-    const original = textOriginals.get(node) || ''
+    const source = locale.value === 'en' ? reverseDictionary.get(key) : ''
+    return source ? withOriginalSpacing(value, source) : ''
+  }
+
+  const translateTextNode = (node: Text, dictionary: Record<string, string>, reverseDictionary: Map<string, string>) => {
+    const currentValue = node.nodeValue || ''
+    let original = textOriginals.get(node)
+
+    if (!original) {
+      original = resolveOriginal(currentValue, dictionary, reverseDictionary)
+      if (!original) return
+      textOriginals.set(node, original)
+    }
+
     const key = normalize(original)
     if (!key) return
 
-    const translation = locale.value === 'ru' ? (dictionary[key] || translateDynamic(key, dictionary)) : ''
-    const nextValue = translation ? withOriginalSpacing(original, translation) : original
+    const translation = dictionary[key] || translateDynamic(key, dictionary)
+    if (!translation) return
+
+    const nextValue = locale.value === 'ru' ? withOriginalSpacing(original, translation) : original
     if (node.nodeValue !== nextValue) node.nodeValue = nextValue
   }
 
-  const translateAttributes = (el: Element, dictionary: Record<string, string>) => {
+  const translateAttributes = (el: Element, dictionary: Record<string, string>, reverseDictionary: Map<string, string>) => {
     for (const attr of translatedAttributes) {
       if (!el.hasAttribute(attr)) continue
 
@@ -73,19 +103,23 @@ export function useDomI18n(rootRef: Ref<HTMLElement | null>, namespace: string, 
       }
 
       if (!originals.has(attr)) {
-        originals.set(attr, el.getAttribute(attr) || '')
+        const original = resolveOriginal(el.getAttribute(attr) || '', dictionary, reverseDictionary)
+        if (!original) continue
+        originals.set(attr, original)
       }
 
       const original = originals.get(attr) || ''
-      const translation = locale.value === 'ru' ? dictionary[normalize(original)] : ''
-      const nextValue = translation || original
+      const translation = dictionary[normalize(original)]
+      if (!translation) continue
+
+      const nextValue = locale.value === 'ru' ? translation : original
       if (el.getAttribute(attr) !== nextValue) el.setAttribute(attr, nextValue)
     }
   }
 
-  const walk = (root: Node, dictionary: Record<string, string>) => {
+  const walk = (root: Node, dictionary: Record<string, string>, reverseDictionary: Map<string, string>) => {
     if (root.nodeType === Node.TEXT_NODE) {
-      translateTextNode(root as Text, dictionary)
+      translateTextNode(root as Text, dictionary, reverseDictionary)
       return
     }
 
@@ -94,12 +128,12 @@ export function useDomI18n(rootRef: Ref<HTMLElement | null>, namespace: string, 
     const element = root as Element
     const tag = element.tagName
     if (['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION'].includes(tag)) {
-      translateAttributes(element, dictionary)
+      translateAttributes(element, dictionary, reverseDictionary)
       return
     }
 
-    translateAttributes(element, dictionary)
-    root.childNodes.forEach(child => walk(child, dictionary))
+    translateAttributes(element, dictionary, reverseDictionary)
+    root.childNodes.forEach(child => walk(child, dictionary, reverseDictionary))
   }
 
   const applyTranslations = async () => {
@@ -108,9 +142,10 @@ export function useDomI18n(rootRef: Ref<HTMLElement | null>, namespace: string, 
     if (!root) return
 
     const dictionary = tm(namespace) as Record<string, string>
-    walk(root, dictionary || {})
+    const reverseDictionary = buildReverseDictionary(dictionary || {})
+    walk(root, dictionary || {}, reverseDictionary)
     if (options.includeBody && typeof document !== 'undefined') {
-      walk(document.body, dictionary || {})
+      walk(document.body, dictionary || {}, reverseDictionary)
     }
   }
 
