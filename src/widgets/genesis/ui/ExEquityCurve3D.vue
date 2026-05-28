@@ -159,7 +159,7 @@
            class="absolute top-12 left-1/2 z-30 w-[min(560px,calc(100vw-320px))] -translate-x-1/2 pointer-events-none">
         <div class="relative border border-black/15 dark:border-white/15 bg-white/95 dark:bg-[#0a0a0a]/95 px-7 py-4 text-black dark:text-white shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
           <div class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border border-black dark:border-white bg-white dark:bg-[#0a0a0a]"></div>
-          <div class="text-center text-[9px] font-mono uppercase tracking-[0.42em] opacity-55">What to do now</div>
+          <div class="text-center text-[9px] font-mono uppercase tracking-[0.42em] opacity-55">Next step</div>
           <div class="mt-3 text-center text-base font-semibold leading-6" :style="{ color: robustnessExplanation.tone }">
             {{ formatSentenceCase(robustnessExplanation.action.replace('Recommended action: ', '')) }}
           </div>
@@ -5338,7 +5338,7 @@ const getRobustnessExplanation = (stats: any) => {
       distribution,
       verdict: 'Unmanaged fat-tail profile',
       diagnosis: 'The return stream has large tail events while most trades lack protective stop or target data. A positive average can be dominated by a few outliers, so the curve is not robust without explicit loss limits.',
-      action: 'Recommended action: add stop-loss data before trusting expectancy, cap position size by worst-tail loss, test the strategy after removing the largest winner, and pause scale-up until risk coverage is above 90%.',
+      action: 'Add stop-loss data first. Keep position size small. Retest without the biggest winner before scaling up.',
       tone: '#fb7185'
     }
   }
@@ -5348,7 +5348,7 @@ const getRobustnessExplanation = (stats: any) => {
       distribution,
       verdict: 'Negative skew detected',
       diagnosis: 'The left tail is heavier than the right tail. The strategy is probably collecting frequent small gains while exposing the account to rare but oversized losses.',
-      action: 'Recommended action: review stop placement, reduce position size until tail loss is acceptable, and audit losing trades for gap risk or late exits.',
+      action: 'Review the losing trades. Tighten stops or exits. Use smaller position size until the worst loss is acceptable.',
       tone: '#fb7185'
     }
   }
@@ -5358,7 +5358,7 @@ const getRobustnessExplanation = (stats: any) => {
       distribution,
       verdict: 'Right-skewed tail dependency',
       diagnosis: 'The right tail is profitable, but the distribution is still fat-tailed. The strategy may look attractive because of rare oversized winners rather than stable repeatable expectancy.',
-      action: 'Recommended action: evaluate results with the largest winner removed, keep per-trade risk fixed, and require a wider sample before increasing exposure.',
+      action: 'Retest without the biggest winner. Keep risk per trade fixed. Wait for more trades before increasing size.',
       tone: stats.mean < 0 ? '#fb7185' : '#fbbf24'
     }
   }
@@ -5368,7 +5368,7 @@ const getRobustnessExplanation = (stats: any) => {
       distribution,
       verdict: 'Positive skew profile',
       diagnosis: 'The right tail is dominant. This usually fits trend-following or breakout logic where many small losses can be paid by a few large winners.',
-      action: 'Recommended action: keep risk per trade stable, avoid cutting winners early, and judge the system over a larger sample instead of single-trade comfort.',
+      action: 'Keep risk per trade steady. Let winners run. Judge the strategy on a bigger sample, not one trade.',
       tone: stats.mean < 0 ? '#fb7185' : '#34d399'
     }
   }
@@ -5378,7 +5378,7 @@ const getRobustnessExplanation = (stats: any) => {
       distribution,
       verdict: 'Fat tails are present',
       diagnosis: "Returns are better described by a Student's t shape than by a calm normal curve. Outliers are part of the system, not noise.",
-      action: 'Recommended action: keep a capital buffer, cap leverage, stress-test the worst trade cluster, and size positions for the tail rather than the average.',
+      action: 'Keep extra cash aside. Avoid leverage. Test the worst losing streak and size trades for that case.',
       tone: '#fbbf24'
     }
   }
@@ -5387,7 +5387,7 @@ const getRobustnessExplanation = (stats: any) => {
     distribution,
     verdict: 'Calm diversified distribution',
     diagnosis: 'The return shape is close to normal. This points to calmer, more diversified behavior with fewer structural tail shocks.',
-    action: 'Recommended action: maintain execution discipline, keep diversification intact, and avoid over-optimizing parameters against a stable-looking sample.',
+    action: 'Keep the current rules. Do not over-tune the strategy. Recheck after more trades.',
     tone: colors.value.accent
   }
 }

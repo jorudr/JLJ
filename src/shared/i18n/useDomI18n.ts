@@ -37,6 +37,36 @@ const translateDynamic = (key: string, dictionary: Record<string, string>) => {
   const protocolCount = key.match(/^(\d+)_PROTOCOLS$/)
   if (protocolCount) return `${protocolCount[1]}_ПРОТОКОЛОВ`
 
+  const resultCount = key.match(/^(\d+)_Results$/)
+  if (resultCount) return `${resultCount[1]}_РЕЗУЛЬТАТОВ`
+
+  const rootNodes = key.match(/^(\d+)_Root_Nodes$/)
+  if (rootNodes) return `${rootNodes[1]}_КОРНЕВЫХ_УЗЛОВ`
+
+  const cmeExample = key.match(/^\(e\.g\. (.+): 1 contract = (.+)\)$/)
+  if (cmeExample) return `(напр. ${cmeExample[1]}: 1 контракт = ${cmeExample[2]})`
+
+  const archiveId = key.match(/^Archive_ID: (.+)$/)
+  if (archiveId) return `ID_Архива: ${archiveId[1]}`
+
+  const systemState = key.match(/^System_State: (.+)$/)
+  if (systemState) return `Состояние_Системы: ${dictionary[systemState[1]] || systemState[1]}`
+
+  const tokenGenitive: Record<string, string> = {
+    OPEN: 'ОТКРЫТИЯ',
+    ENTRY: 'ВХОДА',
+    EXIT: 'ВЫХОДА'
+  }
+
+  const archiveToken = key.match(/^([A-Z0-9_]+)_ARCHIVE$/)
+  if (archiveToken) return `АРХИВ_${tokenGenitive[archiveToken[1]] || dictionary[archiveToken[1]] || archiveToken[1]}`
+
+  const syncToken = key.match(/^([A-Z0-9_]+)_SYNC$/)
+  if (syncToken) return `СИНХР_${tokenGenitive[syncToken[1]] || dictionary[syncToken[1]] || syncToken[1]}`
+
+  const clusterToken = key.match(/^(.+)_CLUSTER$/)
+  if (clusterToken) return `${dictionary[clusterToken[1]] || clusterToken[1]}_КЛАСТЕР`
+
   const tradesLower = key.match(/^(\d+) trades$/)
   if (tradesLower) return `${tradesLower[1]} сделок`
 
