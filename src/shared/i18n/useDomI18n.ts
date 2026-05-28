@@ -3,7 +3,7 @@ import { useI18n } from './useI18n'
 
 const textOriginals = new WeakMap<Text, string>()
 const attributeOriginals = new WeakMap<Element, Map<string, string>>()
-const translatedAttributes = ['placeholder', 'title', 'aria-label', 'alt']
+const translatedAttributes = ['placeholder', 'title', 'aria-label', 'alt', 'data-placeholder']
 
 const normalize = (value: string) => value.replace(/\s+/g, ' ').trim()
 
@@ -66,6 +66,54 @@ const translateDynamic = (key: string, dictionary: Record<string, string>) => {
 
   const clusterToken = key.match(/^(.+)_CLUSTER$/)
   if (clusterToken) return `${dictionary[clusterToken[1]] || clusterToken[1]}_КЛАСТЕР`
+
+  const typedMeta = key.match(/^(TYPE|PRIORITY|STATUS): (.+)$/)
+  if (typedMeta) {
+    return `${dictionary[`${typedMeta[1]}:`] || `${typedMeta[1]}:`} ${dictionary[typedMeta[2]] || typedMeta[2]}`
+  }
+
+  const commentNumber = key.match(/^Comment (\d+)$/)
+  if (commentNumber) return `Комментарий ${commentNumber[1]}`
+
+  const stepNumber = key.match(/^Step (.+)$/)
+  if (stepNumber) return `Шаг ${stepNumber[1]}`
+
+  const initializeStep = key.match(/^Initialize (numerical|alphabetic|roman) sequence step (.+)$/)
+  if (initializeStep) {
+    const modeMap: Record<string, string> = {
+      numerical: 'числовой',
+      alphabetic: 'буквенный',
+      roman: 'римский'
+    }
+    return `Инициализировать ${modeMap[initializeStep[1]]} шаг ${initializeStep[2]}`
+  }
+
+  const initializeProtocol = key.match(/^Initialize (.+) protocol$/)
+  if (initializeProtocol) {
+    const protocolKey = initializeProtocol[1].replace(/\s+/g, '_')
+    return `Инициализировать протокол ${dictionary[initializeProtocol[1]] || dictionary[protocolKey] || initializeProtocol[1]}`
+  }
+
+  const constructDomain = key.match(/^Construct behavioral domain: (.+)$/)
+  if (constructDomain) return `Создать поведенческую зону: ${dictionary[constructDomain[1]] || constructDomain[1]}`
+
+  const dataLink = key.match(/^Establish data link: (.+)$/)
+  if (dataLink) return `Создать связь с данными: ${dataLink[1]}`
+
+  const assetTicker = key.match(/^ASSET_TICKER: (.+)$/)
+  if (assetTicker) return `ТИКЕР_АКТИВА: ${assetTicker[1]}`
+
+  const scalingProtocol = key.match(/^SCALING_PROTOCOL: (.+) LOTS @ (.+)$/)
+  if (scalingProtocol) {
+    const price = dictionary[scalingProtocol[2]] || scalingProtocol[2]
+    return `ПРОТОКОЛ_МАСШТАБИРОВАНИЯ: ${scalingProtocol[1]} ЛОТОВ @ ${price}`
+  }
+
+  const lots = key.match(/^(.+) LOTS$/)
+  if (lots) return `${lots[1]} ЛОТОВ`
+
+  const constructingDomain = key.match(/^Constructing_(.+)_Domain\.\.\.$/)
+  if (constructingDomain) return `Создание_Зоны_${dictionary[constructingDomain[1].toUpperCase()] || constructingDomain[1]}...`
 
   const tradesLower = key.match(/^(\d+) trades$/)
   if (tradesLower) return `${tradesLower[1]} сделок`
