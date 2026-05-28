@@ -52,9 +52,9 @@
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
-import ExHeading from '../ExHeading.vue'
-import ExText from '../ExText.vue'
-import ExGothicCorners from '../ExGothicCorners.vue'
+import ExHeading from "~/shared/ui/ExHeading.vue"
+import ExText from "~/shared/ui/ExText.vue"
+import ExGothicCorners from "~/shared/ui/ExGothicCorners.vue"
 
 defineProps({
   items: {

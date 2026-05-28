@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import ExTradeEntry from '~/shared/ui/components/ExTradeEntry.vue'
+import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 

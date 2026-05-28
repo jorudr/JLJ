@@ -1386,8 +1386,8 @@ import ExInput from '@/shared/ui/ExInput.vue'
 import ExNTtooltip from '@/shared/ui/ExNTtooltip.vue'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExButton from '@/shared/ui/ExButton.vue'
-import ExConditionCreator from '@/shared/ui/components/ExConditionCreator.vue'
-import ExConfigSetter from '@/shared/ui/components/ExConfigSetter.vue'
+import ExConditionCreator from '@/widgets/genesis/ui/ExConditionCreator.vue'
+import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import { useThemeStore } from '@/features/store/useTheme'
 
 const themeStore = useThemeStore()

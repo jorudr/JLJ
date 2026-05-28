@@ -252,7 +252,7 @@
 import { ref, onMounted, nextTick, watch } from 'vue';
 import { newEntry, isAdvancedMode, isEmotionSyncComplete } from '@/widgets/diary/model/useDiary';
 import DrawingModal from '@/widgets/diary/ui/Thoughts/DrawingModal.vue';
-import TacticalIcon from '~/shared/ui/components/TacticalIcon.vue';
+import TacticalIcon from '~/widgets/diary/ui/TacticalIcon.vue';
 
 const editorRef = ref<HTMLDivElement | null>(null);
 const currentFontSize = ref(14);

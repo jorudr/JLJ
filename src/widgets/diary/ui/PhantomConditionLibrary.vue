@@ -102,8 +102,8 @@
 import { ref, computed } from 'vue';
 import { useBoardStore } from '@/features/store/useBoard';
 import { isConditionLibraryOpen as isOpen, newEntry, selectedStrategyId, strategyOptions } from '@/widgets/diary/model/useDiary';
-import PhantomTacticalCard from '~/shared/ui/components/PhantomTacticalCard.vue';
-import CursorTooltip from '~/shared/ui/components/CursorTooltip.vue';
+import PhantomTacticalCard from '~/widgets/diary/ui/PhantomTacticalCard.vue';
+import CursorTooltip from '~/widgets/diary/ui/CursorTooltip.vue';
 
 const boardStore = useBoardStore();
 

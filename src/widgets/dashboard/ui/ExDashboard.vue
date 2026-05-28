@@ -137,11 +137,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getAuth, signOut } from 'firebase/auth'
-import { useI18n } from '../../i18n/useI18n'
-import ExHeading from '../ExHeading.vue'
-import ExText from '../ExText.vue'
-import ExTag from '../ExTag.vue'
-import ExIdentity from '../ExIdentity.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
+import ExHeading from "~/shared/ui/ExHeading.vue"
+import ExText from "~/shared/ui/ExText.vue"
+import ExTag from "~/shared/ui/ExTag.vue"
+import ExIdentity from "~/shared/ui/ExIdentity.vue"
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 

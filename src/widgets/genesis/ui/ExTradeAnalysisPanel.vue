@@ -3,14 +3,14 @@ import { computed, ref, shallowRef, onMounted } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useThemeStore } from '~/features/store/useTheme'
 import { loadFromDisk } from '~/shared/diskStorage'
-import ExPanel from '../ExPanel.vue'
-import ExHeading from '../ExHeading.vue'
-import ExText from '../ExText.vue'
-import ExButton from '../ExButton.vue'
+import ExPanel from "~/shared/ui/ExPanel.vue"
+import ExHeading from "~/shared/ui/ExHeading.vue"
+import ExText from "~/shared/ui/ExText.vue"
+import ExButton from "~/shared/ui/ExButton.vue"
 import DrawingModal from '@/widgets/diary/ui/Thoughts/DrawingModal.vue'
 import ExImageArchiveSlot from './ExImageArchiveSlot.vue'
 import ExImageEditor from './ExImageEditor.vue'
-import ExEfficiencyLattice from '../ExEfficiencyLattice.vue'
+import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
 
 interface Condition {
   id: string;
@@ -928,7 +928,7 @@ const emotionMetrics = computed(() => {
   return result;
 });
 
-import ExTooltip from '../ExTooltip.vue'
+import ExTooltip from "~/shared/ui/ExTooltip.vue"
 
 const getPFColor = (pf: number) => {
   if (pf >= 2.2) return 'text-black dark:text-white border-black/40 dark:border-white/40 bg-black/[0.08] dark:bg-white/[0.08] shadow-[inset_0_0_10px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_0_10px_rgba(255,255,255,0.02)]';

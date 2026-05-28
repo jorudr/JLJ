@@ -3,8 +3,8 @@ import { ref, computed, onMounted, onUnmounted, isRef } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
-import ExEquityCurve2D from '~/shared/ui/components/ExEquityCurve2D.vue'
-import ExTradeAnalysisPanel from '~/shared/ui/components/ExTradeAnalysisPanel.vue'
+import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
+import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 
 const { t } = useI18n()

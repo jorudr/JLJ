@@ -357,12 +357,12 @@ import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import { calculateTacticalHistory } from '~/shared/utils/tacticalHistory'
-import ExTradeAnalysisPanel from '~/shared/ui/components/ExTradeAnalysisPanel.vue'
+import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
-import ExTacticalNodeMap from '~/shared/ui/components/ExTacticalNodeMap.vue'
-import ExTradeEntry from '~/shared/ui/components/ExTradeEntry.vue'
-import ExVerticalTradeList from '~/shared/ui/components/ExVerticalTradeList.vue'
+import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
+import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
+import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 
 const emit = defineEmits(['exit', 'nodeMapState'])
 

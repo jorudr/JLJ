@@ -20,7 +20,7 @@
       <NuxtPage />
     </div>
     
-    <Updater v-if="!updaterDone" @done="updaterDone = true" />
+ 
 
     <Transition name="settings">
       <SettingsModal v-if="isSettingsOpen" />
@@ -30,7 +30,6 @@
 
 <script setup>
 import { ref, watchEffect, onMounted, onUnmounted } from 'vue'
-import Updater from '~/widgets/updater/Updater.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useAuthInit } from '~/features/auth/useAuthInit'
 import { useRoute } from 'vue-router'

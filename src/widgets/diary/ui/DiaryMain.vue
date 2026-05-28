@@ -629,9 +629,9 @@ import RiskRewardChart from '@/widgets/diary/ui/RiskRewardChart.vue';
 import InitialDeposit from '@/widgets/diary/ui/InitialDeposit.vue';
 import ThoughtsMain from '@/widgets/diary/ui/Thoughts/ThoughtsMain.vue';
 import { loadThoughtsFromDisk } from '@/widgets/diary/model/useThoughts';
-import PhantomDeck from '@/shared/ui/components/PhantomDeck.vue';
+import PhantomDeck from '@/widgets/diary/ui/PhantomDeck.vue';
 import TacticalCommandSidebar from './TacticalCommandSidebar.vue';
-import PhantomSuccessWizard from '@/shared/ui/components/PhantomSuccessWizard.vue';
+import PhantomSuccessWizard from '@/widgets/diary/ui/PhantomSuccessWizard.vue';
 import { getIconForAsset, initAssetService, type AssetType } from '@/shared/api/asset.service';
 
 

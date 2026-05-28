@@ -911,12 +911,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import TacticalIcon from '~/shared/ui/components/TacticalIcon.vue';
-import CursorTooltip from '~/shared/ui/components/CursorTooltip.vue';
-import PhantomNotebook from '~/shared/ui/components/PhantomNotebook.vue';
-import PhantomTelemetry from '~/shared/ui/components/PhantomTelemetry.vue';
-import PhantomConditionLibrary from '~/shared/ui/components/PhantomConditionLibrary.vue';
-import PhantomPositionManager from '~/shared/ui/components/PhantomPositionManager.vue';
+import TacticalIcon from '~/widgets/diary/ui/TacticalIcon.vue';
+import CursorTooltip from '~/widgets/diary/ui/CursorTooltip.vue';
+import PhantomNotebook from '~/widgets/diary/ui/PhantomNotebook.vue';
+import PhantomTelemetry from '~/widgets/diary/ui/PhantomTelemetry.vue';
+import PhantomConditionLibrary from '~/widgets/diary/ui/PhantomConditionLibrary.vue';
+import PhantomPositionManager from '~/widgets/diary/ui/PhantomPositionManager.vue';
 import { useAuthStore } from '~/entities/user/auth.store';
 import { useRoute } from 'vue-router';
 import { initAssetService, searchAssets, type AssetInfo } from '@/shared/api/asset.service';

@@ -7,7 +7,7 @@ import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
-import ExEquityCurve2D from '~/shared/ui/components/ExEquityCurve2D.vue'
+import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 

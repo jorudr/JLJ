@@ -518,11 +518,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import TacticalIcon from '~/shared/ui/components/TacticalIcon.vue';
-import CursorTooltip from '~/shared/ui/components/CursorTooltip.vue';
-import AssetPicker from '~/shared/ui/components/AssetPicker.vue';
-import DirectionToggle from '~/shared/ui/components/DirectionToggle.vue';
-import CustomSelect from '~/shared/ui/components/CustomSelect.vue';
+import TacticalIcon from '~/widgets/diary/ui/TacticalIcon.vue';
+import CursorTooltip from '~/widgets/diary/ui/CursorTooltip.vue';
+import AssetPicker from '~/widgets/diary/ui/AssetPicker.vue';
+import DirectionToggle from '~/widgets/diary/ui/DirectionToggle.vue';
+import CustomSelect from '~/widgets/diary/ui/CustomSelect.vue';
 import { isAddModalOpen, newEntry, resetEntry, addDiaryEntry, isSubmitting, strategyOptions, selectedStrategyId } from '~/widgets/diary/model/useDiary';
 import type { DiaryEntry } from '~/entities/diary/model/diary.types';
 import { useForumStore } from "~/features/store/useForum";

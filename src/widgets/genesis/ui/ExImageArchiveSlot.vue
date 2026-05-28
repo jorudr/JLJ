@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ExButton from '../ExButton.vue'
+import ExButton from "~/shared/ui/ExButton.vue"
 
 const props = defineProps<{
   imageUrl?: string

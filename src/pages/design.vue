@@ -782,16 +782,16 @@ import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import ExInput from '~/shared/ui/ExInput.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
-import ExGenesisMenu from '~/shared/ui/components/ExGenesisMenu.vue'
-import ExInitialization from '~/shared/ui/components/ExInitialization.vue'
-import ExDashboard from '~/shared/ui/components/ExDashboard.vue'
-import ExTradeAnalysisPanel from '~/shared/ui/components/ExTradeAnalysisPanel.vue'
-import ExImageArchiveSlot from '~/shared/ui/components/ExImageArchiveSlot.vue'
-import ExImageEditor from '~/shared/ui/components/ExImageEditor.vue'
-import ExTacticalNodeMap from '~/shared/ui/components/ExTacticalNodeMap.vue'
-import ExVerticalTradeList from '~/shared/ui/components/ExVerticalTradeList.vue'
-import OpenStrategyMetrics from '~/shared/ui/components/Open_Strategy_Metrics.vue'
-import ExActivityMonitor from '~/shared/ui/components/ExActivityMonitor.vue'
+import ExGenesisMenu from '~/widgets/genesis/ui/ExGenesisMenu.vue'
+import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
+import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
+import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
+import ExImageArchiveSlot from '~/widgets/genesis/ui/ExImageArchiveSlot.vue'
+import ExImageEditor from '~/widgets/genesis/ui/ExImageEditor.vue'
+import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
+import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
+import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
+import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 
 const isDark = ref(true)
 const showInitPreview = ref(false)
@@ -804,7 +804,7 @@ const handleEditMetrics = () => {
   console.log('Edit metrics triggered in design preview')
 }
 
-import type { MetricConfig } from '~/shared/ui/components/Open_Strategy_Metrics.vue'
+import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 
 const mockMetricsConfigs: MetricConfig[] = [
   {

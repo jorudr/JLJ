@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import ExPanel from '../ExPanel.vue'
-import ExButton from '../ExButton.vue'
-import ExGothicCorners from '../ExGothicCorners.vue'
+import ExPanel from "~/shared/ui/ExPanel.vue"
+import ExButton from "~/shared/ui/ExButton.vue"
+import ExGothicCorners from "~/shared/ui/ExGothicCorners.vue"
 
 const props = withDefaults(defineProps<{
   isOpen: boolean
