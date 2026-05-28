@@ -60,7 +60,7 @@
           <button
             @click="startBoot"
             class="w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all duration-300 hover:opacity-90"
-            style="background: var(--theme-text); color: var(--theme-bg);"
+            :style="primaryButtonStyle"
           >Initiate_Boot_Sequence</button>
         </div>
 
@@ -73,14 +73,14 @@
               @click="authTab = 'login'"
               class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
               :style="authTab === 'login'
-                ? 'background: var(--theme-text); color: var(--theme-bg); font-weight: 900;'
+                ? activeTabStyle
                 : 'color: var(--theme-text); opacity: 0.4;'"
             >Sign_In</button>
             <button
               @click="authTab = 'register'"
               class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
               :style="authTab === 'register'
-                ? 'background: var(--theme-text); color: var(--theme-bg); font-weight: 900;'
+                ? activeTabStyle
                 : 'color: var(--theme-text); opacity: 0.4;'"
             >Register</button>
           </div>
@@ -136,7 +136,7 @@
               type="submit"
               :disabled="authLoading"
               class="w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all mt-1 disabled:opacity-40 hover:opacity-90"
-              style="background: var(--theme-text); color: var(--theme-bg);"
+              :style="primaryButtonStyle"
             >
               <span v-if="authLoading">Processing...</span>
               <span v-else-if="authTab === 'login'">Access_System</span>
@@ -199,7 +199,7 @@
           <button
             @click="$emit('initiate')"
             class="px-10 py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all hover:opacity-90"
-            style="background: var(--theme-text); color: var(--theme-bg);"
+            :style="primaryButtonStyle"
           >Initiate_Neural_Link</button>
           <p class="text-[8px] font-mono lowercase italic" style="opacity: 0.2; color: var(--theme-text);">Operator authenticated. System ready.</p>
         </div>
@@ -235,6 +235,14 @@ const emit = defineEmits(['initiate'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
+const primaryButtonStyle = computed(() => ({
+  background: isDark.value ? 'var(--theme-text)' : 'rgba(0, 0, 0, 0.8)',
+  color: 'var(--theme-bg)'
+}))
+const activeTabStyle = computed(() => ({
+  ...primaryButtonStyle.value,
+  fontWeight: '900'
+}))
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -286,12 +294,23 @@ const ensureUserDocument = async (user: any) => {
   }
 }
 
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+
+const getPasswordValidationError = (password: string) => {
+  if (password.length < 8) return 'Password must contain at least 8 characters.'
+  if (!/[A-Z]/.test(password)) return 'Password must contain an uppercase letter.'
+  if (!/[a-z]/.test(password)) return 'Password must contain a lowercase letter.'
+  if (!/\d/.test(password)) return 'Password must contain a number.'
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain a special character.'
+  return null
+}
+
 // ── Email/password login ──
 const doLogin = async () => {
   authError.value = null
   authLoading.value = true
   try {
-    const result = await signInWithEmailAndPassword(firebaseAuth, authEmail.value, authPassword.value)
+    const result = await signInWithEmailAndPassword(firebaseAuth, authEmail.value.trim(), authPassword.value)
     const user = result.user
     authStore.setUser({
       uid: user.uid,
@@ -311,13 +330,23 @@ const doLogin = async () => {
 // ── Email/password register ──
 const doRegister = async () => {
   authError.value = null
+  const email = authEmail.value.trim()
+  if (!isValidEmail(email)) {
+    authError.value = 'Email must be valid and contain @.'
+    return
+  }
+  const passwordError = getPasswordValidationError(authPassword.value)
+  if (passwordError) {
+    authError.value = passwordError
+    return
+  }
   if (authPassword.value !== authPasswordConfirm.value) {
     authError.value = 'Passwords do not match.'
     return
   }
   authLoading.value = true
   try {
-    const result = await createUserWithEmailAndPassword(firebaseAuth, authEmail.value, authPassword.value)
+    const result = await createUserWithEmailAndPassword(firebaseAuth, email, authPassword.value)
     const user = result.user
     authStore.setUser({
       uid: user.uid,
