@@ -6918,7 +6918,7 @@ const handleWheel = (e: WheelEvent) => {
   viewScale.value = Math.max(0.5, Math.min(6, viewScale.value - e.deltaY * 0.001))
 }
 
-onMounted(async () => { 
+onMounted(() => {
   const bootInterval = setInterval(() => {
     bootProgress.value += Math.random() * 30
     if (bootProgress.value >= 100) {
@@ -6927,27 +6927,36 @@ onMounted(async () => {
     }
   }, 50)
 
-  setTimeout(() => {
+  const revealInitialFrame = () => {
+    initData()
+    updateColors()
+    update()
+    bootProgress.value = 100
     isInitializing.value = false
     canRevealCurve.value = true
     clearInterval(bootInterval)
-  }, 500)
-
-  console.log('[ExEquityCurve] S&P 500 Benchmark Yield:', sp500BenchmarkRate.value + '%')
-  await loadBenchmarkMetricsCache()
-  await tradeStore.init()
-  await loadMatrixData()
-  
-  const loadedKeys = await loadFromDisk<string[]>('custom_metrics_layout_v1')
-  if (loadedKeys && Array.isArray(loadedKeys) && loadedKeys.length > 0) {
-    activeMetricKeys.value = loadedKeys
   }
 
-  await fetchRealtimeMetrics(getBenchmarkStrategyIds())
+  requestAnimationFrame(revealInitialFrame)
 
-  initData()
-  updateColors()
-  update() 
+  const hydrateData = async () => {
+    console.log('[ExEquityCurve] S&P 500 Benchmark Yield:', sp500BenchmarkRate.value + '%')
+    await loadBenchmarkMetricsCache()
+    await tradeStore.init()
+    await loadMatrixData()
+
+    const loadedKeys = await loadFromDisk<string[]>('custom_metrics_layout_v1')
+    if (loadedKeys && Array.isArray(loadedKeys) && loadedKeys.length > 0) {
+      activeMetricKeys.value = loadedKeys
+    }
+
+    await fetchRealtimeMetrics(getBenchmarkStrategyIds())
+    initData()
+  }
+
+  void hydrateData().catch(err => {
+    console.error('[ExEquityCurve3D] Failed to hydrate deferred data:', err)
+  })
 })
 
 // --- CALENDAR DAY BLOCKS LOGIC ---
