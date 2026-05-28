@@ -1063,6 +1063,7 @@
         <ExEquityCurveSimulator 
           v-if="showSimulator" 
           @close="showSimulator = false"
+          :historical-trades="props.trades || tradeStore.getTradesForStrategy(selectedStrategyId)"
           :initial-equity="props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId)"
           :default-win-rate="strategyMetrics?.winRate || 50"
           :default-r-r="strategyMetrics?.riskRewardRatio || 1.5"

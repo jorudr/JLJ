@@ -64,6 +64,18 @@
                   <label class="text-[8px] uppercase tracking-widest opacity-40">Risk/Trade (%) [LOCKED]</label>
                   <input type="number" step="0.1" readonly v-model.number="params.riskPerTrade" class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-3 py-2 text-sm focus:outline-none font-bold opacity-60 cursor-not-allowed no-spin-arrows text-black dark:text-white" />
                 </div>
+                <div class="flex flex-col space-y-1 group">
+                  <label class="text-[8px] uppercase tracking-widest opacity-40">Simulation Model [LOCKED]</label>
+                  <div class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-3 py-2 text-sm font-bold opacity-60 cursor-not-allowed text-black dark:text-white">
+                    {{ simulationModelLabel }}
+                  </div>
+                </div>
+                <div class="flex flex-col space-y-1 group">
+                  <label class="text-[8px] uppercase tracking-widest opacity-40">Regime Periods [LOCKED]</label>
+                  <div class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-3 py-2 text-sm font-bold opacity-60 cursor-not-allowed text-black dark:text-white">
+                    {{ simulationRegimeLabel }}
+                  </div>
+                </div>
               </div>
 
               <!-- EDITABLE METRICS -->
@@ -120,8 +132,8 @@
             </div>
             
             <div class="flex flex-col">
-              <span class="text-[8px] uppercase tracking-widest opacity-40 mb-0.5">AVG_PERFORMANCE</span>
-              <span class="text-sm font-bold" :class="metrics.avgPerformance > 0 ? 'text-green-500' : 'text-red-500'">{{ metrics.avgPerformance > 0 ? '+' : '' }}{{ metrics.avgPerformance.toFixed(1) }}%</span>
+              <span class="text-[8px] uppercase tracking-widest opacity-40 mb-0.5">MEDIAN_PERFORMANCE</span>
+              <span class="text-sm font-bold" :class="metrics.medianPerformance > 0 ? 'text-green-500' : 'text-red-500'">{{ metrics.medianPerformance > 0 ? '+' : '' }}{{ metrics.medianPerformance.toFixed(1) }}%</span>
             </div>
             <div class="flex flex-col">
               <span class="text-[8px] uppercase tracking-widest opacity-40 mb-0.5">AVG_MAX_DRAWDOWN</span>
@@ -172,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import { computed, ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useThemeStore } from '~/features/store/useTheme';
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue';
 
@@ -183,6 +195,7 @@ const props = defineProps<{
   defaultWinRate: number; // 0 - 100
   defaultRR: number;
   defaultRiskPerTrade: number; // 0 - 100
+  historicalTrades?: any[];
 }>();
 
 const emit = defineEmits<{
@@ -198,6 +211,28 @@ const finiteOr = (value: unknown, fallback: number): number => {
 
 const clamp = (value: number, min: number, max: number): number => {
   return Math.min(max, Math.max(min, value));
+}
+
+const calculateDownsideWeightedMedian = (values: number[]): number => {
+  const sortedValues = values
+    .filter(value => Number.isFinite(value))
+    .sort((a, b) => a - b);
+
+  if (sortedValues.length === 0) return 0;
+
+  const weightedValues = sortedValues.map(value => ({
+    value,
+    weight: value < 0 ? 2 : 1
+  }));
+  const totalWeight = weightedValues.reduce((sum, item) => sum + item.weight, 0);
+  let cumulativeWeight = 0;
+
+  for (const item of weightedValues) {
+    cumulativeWeight += item.weight;
+    if (cumulativeWeight >= totalWeight / 2) return item.value;
+  }
+
+  return weightedValues[weightedValues.length - 1]?.value ?? 0;
 }
 
 const getNormalizedParams = () => ({
@@ -223,6 +258,79 @@ const params = reactive({
   numLines: 500,
 });
 
+interface SimulationRegime {
+  name: string;
+  winRate: number;
+  rewardRisk: number;
+  sampleSize: number;
+}
+
+const getTradeTimestamp = (trade: any): number => {
+  const rawDate = trade?.dateExit || trade?.date || trade?.createdAt || trade?.timestamp;
+  const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
+  const timestamp = date.getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+const getTradePnl = (trade: any): number => {
+  const candidates = [
+    trade?.profitInCurrency,
+    trade?.pnl,
+    trade?.pnlNum,
+    trade?.result,
+    trade?.profit,
+    trade?.netProfit
+  ];
+
+  for (const candidate of candidates) {
+    const value = Number(candidate);
+    if (Number.isFinite(value)) return value;
+  }
+
+  return 0;
+}
+
+const buildRegimeModel = (normalized = getNormalizedParams()): SimulationRegime[] => {
+  const trades = [...(props.historicalTrades || [])]
+    .map(trade => ({ trade, pnl: getTradePnl(trade), timestamp: getTradeTimestamp(trade) }))
+    .filter(item => item.pnl !== 0)
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  if (trades.length < 12) return [];
+
+  const periodCount = clamp(Math.floor(trades.length / 10), 2, 6);
+  const periodSize = Math.ceil(trades.length / periodCount);
+  const regimes: SimulationRegime[] = [];
+
+  for (let i = 0; i < periodCount; i++) {
+    const period = trades.slice(i * periodSize, (i + 1) * periodSize);
+    if (period.length < 4) continue;
+
+    const wins = period.filter(item => item.pnl > 0).map(item => item.pnl);
+    const losses = period.filter(item => item.pnl < 0).map(item => Math.abs(item.pnl));
+    const avgWin = wins.length ? wins.reduce((sum, value) => sum + value, 0) / wins.length : 0;
+    const avgLoss = losses.length ? losses.reduce((sum, value) => sum + value, 0) / losses.length : 0;
+
+    regimes.push({
+      name: `P${i + 1}`,
+      winRate: wins.length / period.length,
+      rewardRisk: avgWin > 0 && avgLoss > 0 ? avgWin / avgLoss : normalized.rewardRisk,
+      sampleSize: period.length
+    });
+  }
+
+  return regimes.length >= 2 ? regimes : [];
+}
+
+const regimeModel = computed(() => buildRegimeModel());
+const simulationModelLabel = computed(() => regimeModel.value.length >= 2 ? 'REGIME_BASED' : 'STATIC_WINRATE');
+const simulationRegimeLabel = computed(() => {
+  const regimes = regimeModel.value;
+  if (regimes.length < 2) return 'NOT_ENOUGH_HISTORY';
+  const totalSamples = regimes.reduce((sum, regime) => sum + regime.sampleSize, 0);
+  return `${regimes.length} PERIODS / ${totalSamples} TRADES`;
+});
+
 const metrics = reactive({
   kelly: 0,
   expectation: 0,
@@ -230,7 +338,7 @@ const metrics = reactive({
   avgMaxDrawdown: 0,
   minEquity: 0,
   maxEquity: 0,
-  avgPerformance: 0,
+  medianPerformance: 0,
   romad: 0,
   maxConsecutiveWinner: 0,
   maxConsecutiveLoser: 0,
@@ -315,18 +423,36 @@ function runSimulation() {
   const initEq = normalized.initialEquity;
   const nTrades = normalized.numTrades;
   const nLines = normalized.numLines;
+  const regimes = buildRegimeModel(normalized);
+  const usesRegimes = regimes.length >= 2;
 
-  const kellyFraction = rr > 0 ? wr - ((1 - wr) / rr) : 0;
+  const pickNextRegimeIndex = (currentIndex: number) => {
+    if (!usesRegimes) return 0;
+    const roll = Math.random();
+    if (roll < 0.82) return currentIndex;
+    if (roll < 0.91) return Math.max(0, currentIndex - 1);
+    if (roll < 0.97) return Math.min(regimes.length - 1, currentIndex + 1);
+    return Math.floor(Math.random() * regimes.length);
+  }
+
+  const avgRegimeWinRate = usesRegimes
+    ? regimes.reduce((sum, regime) => sum + regime.winRate, 0) / regimes.length
+    : wr;
+  const avgRegimeRR = usesRegimes
+    ? regimes.reduce((sum, regime) => sum + regime.rewardRisk, 0) / regimes.length
+    : rr;
+
+  const kellyFraction = avgRegimeRR > 0 ? avgRegimeWinRate - ((1 - avgRegimeWinRate) / avgRegimeRR) : 0;
   metrics.kelly = Number.isFinite(kellyFraction) ? kellyFraction * 100 : 0;
   
-  metrics.expectation = (wr * rr) - (1 - wr);
+  metrics.expectation = (avgRegimeWinRate * avgRegimeRR) - (1 - avgRegimeWinRate);
 
   simulations = [];
   gMin = initEq;
   gMax = initEq;
   let sumMaxDD = 0;
   let biggestMaxDD = 0;
-  let sumPerf = 0;
+  const finalPerformances: number[] = [];
 
   let globalMaxConsWin = 0;
   let globalMaxConsLoss = 0;
@@ -342,11 +468,15 @@ function runSimulation() {
     let consLoss = 0;
     let maxConsWin = 0;
     let maxConsLoss = 0;
+    let regimeIndex = usesRegimes ? Math.floor(Math.random() * regimes.length) : 0;
 
     for (let j = 1; j <= nTrades; j++) {
-      const isWin = Math.random() < wr;
+      const regime = usesRegimes ? regimes[regimeIndex] : null;
+      const activeWinRate = regime?.winRate ?? wr;
+      const activeRewardRisk = regime?.rewardRisk ?? rr;
+      const isWin = Math.random() < activeWinRate;
       if (isWin) {
-        eq += eq * rpt * rr;
+        eq += eq * rpt * activeRewardRisk;
         if (eq > peak) peak = eq;
         consWin++;
         consLoss = 0;
@@ -365,12 +495,14 @@ function runSimulation() {
 
       if (eq < gMin) gMin = eq;
       if (eq > gMax) gMax = eq;
+
+      regimeIndex = pickNextRegimeIndex(regimeIndex);
     }
 
     simulations.push(path);
     sumMaxDD += maxDD;
     if (maxDD > biggestMaxDD) biggestMaxDD = maxDD;
-    sumPerf += initEq > 0 ? ((eq - initEq) / initEq) : 0;
+    finalPerformances.push(initEq > 0 ? ((eq - initEq) / initEq) : 0);
 
     if (maxConsWin > globalMaxConsWin) globalMaxConsWin = maxConsWin;
     if (maxConsLoss > globalMaxConsLoss) globalMaxConsLoss = maxConsLoss;
@@ -398,9 +530,16 @@ function runSimulation() {
   const indicesToRender = new Set<number>();
   if (bestIndex !== -1) indicesToRender.add(bestIndex);
   if (worstIndex !== -1) indicesToRender.add(worstIndex);
-  
-  for (let i = nLines - 1; i >= 0 && indicesToRender.size < 50; i--) {
-    indicesToRender.add(i);
+
+  const randomIndices = Array.from({ length: nLines }, (_, index) => index);
+  for (let i = randomIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [randomIndices[i], randomIndices[j]] = [randomIndices[j] as number, randomIndices[i] as number];
+  }
+
+  for (const index of randomIndices) {
+    if (indicesToRender.size >= 50) break;
+    indicesToRender.add(index);
   }
 
   const range = gMax - gMin;
@@ -434,9 +573,10 @@ function runSimulation() {
   metrics.minEquity = gMin === Infinity ? 0 : gMin;
   metrics.maxEquity = gMax === -Infinity ? 0 : gMax;
   
-  const avgP = (sumPerf / nLines) * 100;
-  metrics.avgPerformance = avgP;
-  metrics.romad = metrics.avgMaxDrawdown > 0 ? (avgP / metrics.avgMaxDrawdown) : (avgP > 0 ? 99.99 : 0);
+  const distributionSample = finalPerformances.filter((_, index) => index !== bestIndex);
+  const medianPerf = calculateDownsideWeightedMedian(distributionSample) * 100;
+  metrics.medianPerformance = medianPerf;
+  metrics.romad = metrics.avgMaxDrawdown > 0 ? (medianPerf / metrics.avgMaxDrawdown) : (medianPerf > 0 ? 99.99 : 0);
   metrics.maxConsecutiveWinner = globalMaxConsWin;
   metrics.maxConsecutiveLoser = globalMaxConsLoss;
 

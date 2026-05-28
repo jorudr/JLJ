@@ -121,6 +121,9 @@ const translateDynamic = (key: string, dictionary: Record<string, string>) => {
   const tradesUpper = key.match(/^(\d+) TRADES$/)
   if (tradesUpper) return `${tradesUpper[1]} СДЕЛОК`
 
+  const regimePeriods = key.match(/^(\d+) PERIODS \/ (\d+) TRADES$/)
+  if (regimePeriods) return `${regimePeriods[1]} ПЕРИОДОВ / ${regimePeriods[2]} СДЕЛОК`
+
   const fulfilled = key.match(/^(\d+) Fulfilled$/)
   if (fulfilled) return `${fulfilled[1]} ${dictionary.Fulfilled || 'Fulfilled'}`
 
