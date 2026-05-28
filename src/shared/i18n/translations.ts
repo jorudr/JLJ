@@ -96,9 +96,69 @@ export const translations = {
       status: "Status",
       online: "Reified",
       offline: "Void"
+    },
+    error: {
+      pageNotFound: "Page not found",
+      goBackHome: "Go Back Home"
+    },
+    forum: {
+      moduleLocked: "Module_Locked",
+      description: "This function will be opened in future versions. It will be a comprehensive forum for traders of all levels, containing trading ideas, strategic discussions, and complete courses.",
+      awaitingDeployment: "[ AWAITING_DEPLOYMENT ]"
+    },
+    report: {
+      transmitReport: "Transmit_Report",
+      classification: "Report_Classification",
+      systemAnomaly: "System_Anomaly",
+      featureProposal: "Feature_Proposal",
+      primaryDesignation: "Primary_Designation",
+      titlePlaceholder: "E.G. 'UI OVERLAP ON MOBILE' OR 'ADD DARK MODE HOTKEY'",
+      detailedTelemetry: "Detailed_Telemetry",
+      descPlaceholder: "PROVIDE ADDITIONAL CONTEXT OR SPECIFICS...",
+      cancel: "Cancel",
+      processing: "Processing...",
+      transmitData: "Transmit_Data",
+      success: "TRANSMISSION_SUCCESSFUL: REPORT LOGGED IN ARCHIVE.",
+      errors: {
+        authError: "AUTH_ERROR: OPERATOR EMAIL NOT FOUND",
+        validationError: "VALIDATION_ERROR: ALL FIELDS ARE REQUIRED",
+        rateLimit: "RATE_LIMIT_EXCEEDED: PLEASE WAIT",
+        hours: "HOURS BEFORE TRANSMITTING ANOTHER REPORT.",
+        transmissionFailed: "TRANSMISSION_FAILED"
+      }
     }
   },
   ru: {
+    error: {
+      pageNotFound: "Страница не найдена",
+      goBackHome: "Вернуться на главную"
+    },
+    forum: {
+      moduleLocked: "Модуль_Заблокирован",
+      description: "Эта функция будет открыта в будущих версиях. Это будет комплексный форум для трейдеров всех уровней, содержащий торговые идеи, стратегические обсуждения и полноценные курсы.",
+      awaitingDeployment: "[ ОЖИДАНИЕ_РАЗВЕРТЫВАНИЯ ]"
+    },
+    report: {
+      transmitReport: "Передача_Отчета",
+      classification: "Классификация_Отчета",
+      systemAnomaly: "Системная_Аномалия",
+      featureProposal: "Предложение_Функции",
+      primaryDesignation: "Первичное_Обозначение",
+      titlePlaceholder: "НАПР. 'НАЛОЖЕНИЕ UI НА МОБИЛЬНОМ' ИЛИ 'ГОРЯЧАЯ КЛАВИША ТЕМНОЙ ТЕМЫ'",
+      detailedTelemetry: "Детальная_Телеметрия",
+      descPlaceholder: "ПРЕДОСТАВЬТЕ ДОПОЛНИТЕЛЬНЫЙ КОНТЕКСТ ИЛИ ДЕТАЛИ...",
+      cancel: "Отмена",
+      processing: "Обработка...",
+      transmitData: "Передать_Данные",
+      success: "ПЕРЕДАЧА_УСПЕШНА: ОТЧЕТ ЗАНЕСЕН В АРХИВ.",
+      errors: {
+        authError: "ОШИБКА_АВТОРИЗАЦИИ: EMAIL ОПЕРАТОРА НЕ НАЙДЕН",
+        validationError: "ОШИБКА_ВАЛИДАЦИИ: ВСЕ ПОЛЯ ОБЯЗАТЕЛЬНЫ",
+        rateLimit: "ПРЕВЫШЕН_ЛИМИТ: ПОЖАЛУЙСТА, ПОДОЖДИТЕ",
+        hours: "ЧАСОВ ДО ПЕРЕДАЧИ СЛЕДУЮЩЕГО ОТЧЕТА.",
+        transmissionFailed: "ОШИБКА_ПЕРЕДАЧИ"
+      }
+    },
     dashboard: {
       title: "Тактическая Панель",
       subtitle: "Системный_Реестр // Слой_0x01",

@@ -8,7 +8,7 @@
       </h1>
       
       <h2 class="text-3xl md:text-4xl font-serif text-black dark:text-white mb-6">
-        {{ error?.message || 'Page not found' }}
+        {{ error?.message || t('error.pageNotFound') }}
       </h2>
       
 
@@ -16,7 +16,7 @@
         @click="handleError"
         class="text-sm text-white bg-black dark:bg-white dark:text-black px-8 py-3 rounded-full hover:opacity-80 transition-opacity"
       >
-        Go Back Home
+        {{ t('error.goBackHome') }}
       </button>
     </main>
 
@@ -25,8 +25,9 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from '~/shared/i18n/useI18n'
 
-
+const { t } = useI18n()
 const error = useError()
 
 const handleError = () => {

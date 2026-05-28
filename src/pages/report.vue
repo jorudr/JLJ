@@ -10,14 +10,14 @@
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <ExHeading level="h2" variant="cinematic" class="!text-2xl uppercase tracking-[0.2em] !mb-0">Transmit_Report</ExHeading>
+        <ExHeading level="h2" variant="cinematic" class="!text-2xl uppercase tracking-[0.2em] !mb-0">{{ t('report.transmitReport') }}</ExHeading>
       </div>
 
       <form @submit.prevent="submitReport" class="flex flex-col space-y-6">
         
         <!-- Type Selection -->
         <div class="flex flex-col space-y-3">
-          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">Report_Classification</label>
+          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">{{ t('report.classification') }}</label>
           <div class="flex items-center space-x-4">
             <button 
               type="button"
@@ -25,7 +25,7 @@
               class="flex-1 py-3 border text-[10px] font-mono uppercase tracking-widest transition-all duration-300"
               :class="reportType === 'PROBLEM' ? 'border-theme-text bg-theme-text text-theme-bg font-bold' : 'border-theme-border text-theme-text opacity-40 hover:opacity-100'"
             >
-              System_Anomaly
+              {{ t('report.systemAnomaly') }}
             </button>
             <button 
               type="button"
@@ -33,19 +33,19 @@
               class="flex-1 py-3 border text-[10px] font-mono uppercase tracking-widest transition-all duration-300"
               :class="reportType === 'IDEA' ? 'border-theme-text bg-theme-text text-theme-bg font-bold' : 'border-theme-border text-theme-text opacity-40 hover:opacity-100'"
             >
-              Feature_Proposal
+              {{ t('report.featureProposal') }}
             </button>
           </div>
         </div>
 
         <!-- Title -->
         <div class="flex flex-col space-y-3">
-          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">Primary_Designation</label>
+          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">{{ t('report.primaryDesignation') }}</label>
           <input 
             v-model="title" 
             type="text" 
             required 
-            placeholder="E.G. 'UI OVERLAP ON MOBILE' OR 'ADD DARK MODE HOTKEY'"
+            :placeholder="t('report.titlePlaceholder')"
             class="bg-transparent border border-theme-border p-4 text-[12px] font-mono tracking-wider focus:outline-none focus:border-theme-text transition-colors text-theme-text placeholder:opacity-20 uppercase"
             :disabled="isSubmitting"
           />
@@ -53,12 +53,12 @@
 
         <!-- Description -->
         <div class="flex flex-col space-y-3">
-          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">Detailed_Telemetry</label>
+          <label class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-theme-text">{{ t('report.detailedTelemetry') }}</label>
           <textarea 
             v-model="description" 
             required 
             rows="4"
-            placeholder="PROVIDE ADDITIONAL CONTEXT OR SPECIFICS..."
+            :placeholder="t('report.descPlaceholder')"
             class="bg-transparent border border-theme-border p-4 text-[12px] font-mono tracking-wider focus:outline-none focus:border-theme-text transition-colors text-theme-text placeholder:opacity-20 uppercase resize-none"
             :disabled="isSubmitting"
           ></textarea>
@@ -82,14 +82,14 @@
             @click="navigateBack"
             class="px-8 py-3 border border-theme-border text-theme-text text-[10px] font-mono uppercase tracking-widest opacity-60 hover:opacity-100 hover:bg-theme-text/10 hover:border-theme-text/50 transition-all duration-300"
           >
-            Cancel
+            {{ t('report.cancel') }}
           </button>
           <button 
             type="submit" 
             :disabled="isSubmitting || !title.trim() || !description.trim()"
             class="px-10 py-3 bg-black text-white dark:bg-white dark:text-black text-[10px] font-bold font-mono uppercase tracking-widest hover:bg-black/80 dark:hover:bg-white/80 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-black dark:disabled:hover:bg-white"
           >
-            {{ isSubmitting ? 'Processing...' : 'Transmit_Data' }}
+            {{ isSubmitting ? t('report.processing') : t('report.transmitData') }}
           </button>
         </div>
       </form>
@@ -105,6 +105,9 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { t } = useI18n()
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
@@ -128,7 +131,7 @@ const submitReport = async () => {
   successMessage.value = ''
   
   if (!authStore.user?.email) {
-    errorMessage.value = 'AUTH_ERROR: OPERATOR EMAIL NOT FOUND'
+    errorMessage.value = t('report.errors.authError')
     return
   }
 
@@ -136,7 +139,7 @@ const submitReport = async () => {
   const trimmedDescription = description.value.trim()
   
   if (!trimmedTitle || !trimmedDescription) {
-    errorMessage.value = 'VALIDATION_ERROR: ALL FIELDS ARE REQUIRED'
+    errorMessage.value = t('report.errors.validationError')
     return
   }
 
@@ -150,7 +153,7 @@ const submitReport = async () => {
     
     if (diffMs < hours24) {
       const hoursLeft = Math.ceil((hours24 - diffMs) / (60 * 60 * 1000))
-      errorMessage.value = `RATE_LIMIT_EXCEEDED: PLEASE WAIT ${hoursLeft} HOURS BEFORE TRANSMITTING ANOTHER REPORT.`
+      errorMessage.value = `${t('report.errors.rateLimit')} ${hoursLeft} ${t('report.errors.hours')}`
       return
     }
   }
@@ -173,7 +176,7 @@ const submitReport = async () => {
     // Update local rate limit cache
     localStorage.setItem('last_report_time', Date.now().toString())
 
-    successMessage.value = 'TRANSMISSION_SUCCESSFUL: REPORT LOGGED IN ARCHIVE.'
+    successMessage.value = t('report.success')
     title.value = ''
     description.value = ''
     
@@ -184,7 +187,7 @@ const submitReport = async () => {
 
   } catch (error: any) {
     console.error('Failed to submit report:', error)
-    errorMessage.value = `TRANSMISSION_FAILED: ${error.message}`
+    errorMessage.value = `${t('report.errors.transmissionFailed')}: ${error.message}`
   } finally {
     isSubmitting.value = false
   }
