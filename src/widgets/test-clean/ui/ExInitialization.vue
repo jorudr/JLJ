@@ -395,7 +395,7 @@ const doSignOut = async () => {
   authPassword.value = ''
   authPasswordConfirm.value = ''
   authError.value = null
-  progress.value = 0
+  appBootStore.bootProgress = 0
   phase.value = 'auth'
 }
 

@@ -20,6 +20,29 @@ const buildReverseDictionary = (dictionary: Record<string, unknown>) => {
 }
 
 const translateDynamic = (key: string, dictionary: Record<string, string>) => {
+  const quoted = key.match(/^> (.+)$/)
+  if (quoted) {
+    const translated = dictionary[quoted[1]] || translateDynamic(quoted[1], dictionary)
+    if (translated) return `> ${translated}`
+  }
+
+  const multiStepTrace = key.match(/^(1\. Fit check: .+?) (2\. Curve domain: .+?) (3\. Dispersion check: .+?) (4\. Shape check: .+?) (5\. Risk check: .+?) (6\. Verdict: .+?) (7\. Action: .+)$/)
+  if (multiStepTrace) {
+    return multiStepTrace
+      .slice(1)
+      .map(line => dictionary[line] || translateDynamic(line, dictionary) || line)
+      .join('\n')
+  }
+
+  const protocolCount = key.match(/^(\d+)_PROTOCOLS$/)
+  if (protocolCount) return `${protocolCount[1]}_ПРОТОКОЛОВ`
+
+  const tradesLower = key.match(/^(\d+) trades$/)
+  if (tradesLower) return `${tradesLower[1]} сделок`
+
+  const tradesUpper = key.match(/^(\d+) TRADES$/)
+  if (tradesUpper) return `${tradesUpper[1]} СДЕЛОК`
+
   const fulfilled = key.match(/^(\d+) Fulfilled$/)
   if (fulfilled) return `${fulfilled[1]} ${dictionary.Fulfilled || 'Fulfilled'}`
 
@@ -46,6 +69,76 @@ const translateDynamic = (key: string, dictionary: Record<string, string>) => {
 
   const aligned = key.match(/^(.+) Aligned$/)
   if (aligned && dictionary[aligned[1]]) return `${dictionary[aligned[1]]}_Синхронизирован`
+
+  const statusTokenMap: Record<string, string> = {
+    PASS: 'ПРОЙДЕН',
+    REJECT: 'ОТКЛОНЕНО',
+    WATCH: 'НАБЛЮДАТЬ',
+    FAT_TAIL: 'ТОЛСТЫЙ_ХВОСТ',
+    ALIGNED: 'СИНХРОНИЗИРОВАНО',
+    TAIL_DEVIATION: 'ОТКЛОНЕНИЕ_ХВОСТА',
+    OUTLIER_RISK: 'РИСК_ВЫБРОСОВ',
+    NO_RISK_MODEL: 'НЕТ_РИСК_МОДЕЛИ'
+  }
+
+  for (const [token, translation] of Object.entries(statusTokenMap)) {
+    const statusMatch = key.match(new RegExp(`^(.+) ${token}$`))
+    if (statusMatch) return `${statusMatch[1]} ${translation}`
+  }
+
+  const studentBic = key.match(/^Student's t is preferred by BIC by (.+) points\. The strategy should be managed as fat-tailed: outliers and capital reserve matter more than average trade comfort\.$/)
+  if (studentBic) {
+    return `Student's t предпочтительнее по BIC на ${studentBic[1]} пункта. Стратегию нужно вести как fat-tail: выбросы и резерв капитала важнее комфорта средней сделки.`
+  }
+
+  const normalBic = key.match(/^Normal fit is preferred by BIC by (.+) points\. The current distribution looks calmer, but skew and sample size still decide risk policy\.$/)
+  if (normalBic) {
+    return `Нормальная аппроксимация предпочтительнее по BIC на ${normalBic[1]} пункта. Текущее распределение выглядит спокойнее, но skew и размер выборки все еще определяют риск-политику.`
+  }
+
+  const fragileHypothesis = key.match(/^Hypothesis verdict: fragile profile\. Tails, skew, and weak risk controls are all active, so average PnL is misleading\. Stop-loss coverage is (.+)%\.$/)
+  if (fragileHypothesis) {
+    return `Вердикт гипотезы: хрупкий профиль. Хвосты, skew и слабый риск-контроль активны одновременно, поэтому средний PnL вводит в заблуждение. Покрытие stop-loss: ${fragileHypothesis[1]}%.`
+  }
+
+  const unmanagedTailHypothesis = key.match(/^Hypothesis verdict: unmanaged tail risk\. Outliers are present and risk coverage is weak, so the strategy needs controls before the average trade means much\. Stop-loss coverage is (.+)%\.$/)
+  if (unmanagedTailHypothesis) {
+    return `Вердикт гипотезы: неуправляемый хвостовой риск. Есть выбросы и слабое риск-покрытие, поэтому стратегии нужны ограничения до того, как средняя сделка станет значимой. Покрытие stop-loss: ${unmanagedTailHypothesis[1]}%.`
+  }
+
+  const asymmetricHypothesis = key.match(/^Hypothesis verdict: asymmetric and under-controlled\. The return shape is tilted, but the risk model is too thin to trust the edge\. Stop-loss coverage is (.+)%\.$/)
+  if (asymmetricHypothesis) {
+    return `Вердикт гипотезы: асимметрично и недостаточно контролируемо. Форма доходности смещена, но риск-модель слишком тонкая, чтобы доверять преимуществу. Покрытие stop-loss: ${asymmetricHypothesis[1]}%.`
+  }
+
+  const riskModelHypothesis = key.match(/^Hypothesis verdict: risk model missing\. The distribution may look acceptable, but robustness is limited until stop-loss coverage improves from (.+)%\.$/)
+  if (riskModelHypothesis) {
+    return `Вердикт гипотезы: отсутствует риск-модель. Распределение может выглядеть приемлемо, но устойчивость ограничена, пока покрытие stop-loss не вырастет с ${riskModelHypothesis[1]}%.`
+  }
+
+  const traceStudent = key.match(/^1\. Fit check: Student's t BIC \((.+)\) is lower than Normal BIC \((.+)\), so tail risk deserves priority\.$/)
+  if (traceStudent) return `1. Проверка fitting: BIC Student's t (${traceStudent[1]}) ниже BIC Normal (${traceStudent[2]}), поэтому хвостовой риск имеет приоритет.`
+
+  const traceNormal = key.match(/^1\. Fit check: Normal BIC \((.+)\) is competitive with Student's t BIC \((.+)\), so the profile is treated as calmer unless skew\/kurtosis disagrees\.$/)
+  if (traceNormal) return `1. Проверка fitting: BIC Normal (${traceNormal[1]}) конкурентен BIC Student's t (${traceNormal[2]}), поэтому профиль считается более спокойным, если skew/kurtosis не противоречат.`
+
+  const traceDomain = key.match(/^2\. Curve domain: fitted PDFs span \$(.+) to \$(.+), covering observed PnL from \$(.+) to \$(.+)\.$/)
+  if (traceDomain) return `2. Диапазон кривой: подобранные PDF охватывают $${traceDomain[1]}-$${traceDomain[2]}, покрывая наблюдаемый PnL от $${traceDomain[3]} до $${traceDomain[4]}.`
+
+  const traceDispersion = key.match(/^3\. Dispersion check: standard deviation is \$(.+), so average trade expectations should be judged against this volatility band\.$/)
+  if (traceDispersion) return `3. Проверка разброса: стандартное отклонение равно $${traceDispersion[1]}, поэтому ожидания средней сделки нужно оценивать относительно этой полосы волатильности.`
+
+  const traceShape = key.match(/^4\. Shape check: skewness is (.+) and excess kurtosis is (.+)\.$/)
+  if (traceShape) return `4. Проверка формы: skewness = ${traceShape[1]}, excess kurtosis = ${traceShape[2]}.`
+
+  const traceRisk = key.match(/^5\. Risk check: stop-loss coverage is (.+)%, take-profit coverage is (.+)%, and (.+) trades are unmanaged\.$/)
+  if (traceRisk) return `5. Проверка риска: покрытие stop-loss = ${traceRisk[1]}%, take-profit = ${traceRisk[2]}%, сделок без управления риском: ${traceRisk[3]}.`
+
+  const traceVerdict = key.match(/^6\. Verdict: (.+)\.$/)
+  if (traceVerdict) return `6. Вердикт: ${dictionary[traceVerdict[1]] || traceVerdict[1]}.`
+
+  const traceAction = key.match(/^7\. Action: (.+)$/)
+  if (traceAction) return `7. Действие: ${dictionary[traceAction[1]] || traceAction[1]}`
 
   return ''
 }
