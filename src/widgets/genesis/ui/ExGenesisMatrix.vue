@@ -1389,6 +1389,7 @@ import ExButton from '@/shared/ui/ExButton.vue'
 import ExConditionCreator from '@/widgets/genesis/ui/ExConditionCreator.vue'
 import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import { useThemeStore } from '@/features/store/useTheme'
+import { useAppBootStore } from '~/features/store/useAppBoot'
 
 const themeStore = useThemeStore()
 
@@ -2251,7 +2252,8 @@ onMounted(async () => {
 
   // Load Persisted Matrix Data
   try {
-    const saved = await loadFromDisk<any>(STORAGE_KEY)
+    const appBootStore = useAppBootStore()
+    const saved = appBootStore.genesisMatrixCache || await loadFromDisk<any>(STORAGE_KEY)
     if (saved && saved.nodes?.length > 0) {
       // Migration: Ensure old 'system' nodes (like the legacy root) are converted to 'strategy'
       rootNodes.value = saved.nodes.map((n: any) => {

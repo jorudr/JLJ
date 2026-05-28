@@ -9,6 +9,21 @@ export interface DailyActivity {
 
 export const isSubmittingActivity = ref(false)
 export const activityStatus = ref<'idle' | 'success' | 'error'>('idle')
+export const currentDailyActivity = ref<DailyActivity[]>([])
+
+export async function fetchDailyActivity(userId: string) {
+  if (!userId) return
+  try {
+    const userRef = doc(db, 'users', userId)
+    const userSnap = await getDoc(userRef)
+    if (userSnap.exists()) {
+      const userData = userSnap.data()
+      currentDailyActivity.value = userData.dailyActivity || []
+    }
+  } catch (e) {
+    console.error('Failed to fetch daily activity:', e)
+  }
+}
 
 export function calculateStreak(activities: DailyActivity[]): number {
   if (!activities || activities.length === 0) return 0

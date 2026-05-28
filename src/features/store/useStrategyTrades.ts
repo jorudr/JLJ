@@ -27,8 +27,10 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   })
   const selectedStrategyId = ref('MAIN_DIARY')
   const isLoading = ref(true)
+  const isInitialized = ref(false)
 
-  async function init() {
+  async function init(force = false) {
+    if (isInitialized.value && !force) return
     isLoading.value = true
     try {
       // Try Main first
@@ -71,6 +73,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
 
       // Main diary trades are loaded exclusively from disk storage
     } finally {
+      isInitialized.value = true
       isLoading.value = false
     }
   }

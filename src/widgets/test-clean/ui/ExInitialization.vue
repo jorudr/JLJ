@@ -250,32 +250,25 @@ const authLoading = ref(false)
 // ── Phase ──
 const phase = ref<'auth' | 'boot' | 'ready'>('auth')
 
-// ── Boot progress ──
-const progress = ref(0)
-const currentLog = ref('Verifying tactical protocols...')
-const logs = [
-  'Verifying tactical protocols...',
-  'Synchronizing archival lattice...',
-  'Calibrating neural interface...',
-  'Establishing secure reification channel...',
-  'Archival pods: ONLINE',
-  'Ready for operator input.'
-]
+import { useAppBootStore } from '~/features/store/useAppBoot'
 
-const startBoot = () => {
+const appBootStore = useAppBootStore()
+
+// ── Boot progress ──
+const progress = computed(() => appBootStore.bootProgress)
+const currentLog = computed(() => appBootStore.currentLog)
+
+const startBoot = async () => {
   phase.value = 'boot'
-  const interval = setInterval(() => {
-    if (progress.value < 100) {
-      progress.value += Math.random() * 5
-      const logIndex = Math.floor((progress.value / 100) * logs.length)
-      if (logs[logIndex]) currentLog.value = logs[logIndex]
-    } else {
-      progress.value = 100
-      currentLog.value = logs[logs.length - 1] ?? 'Ready.'
-      clearInterval(interval)
-      setTimeout(() => { phase.value = 'ready' }, 600)
-    }
-  }, 150)
+  
+  if (authStore.user?.uid) {
+    await appBootStore.executeBootSequence(authStore.user.uid)
+  }
+  
+  // Add a slight visual delay for high fidelity transition after 100%
+  setTimeout(() => {
+    phase.value = 'ready'
+  }, 600)
 }
 
 // ── Helpers ──

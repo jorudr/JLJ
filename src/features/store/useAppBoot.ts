@@ -1,0 +1,61 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { loadFromDisk } from '~/shared/diskStorage'
+import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { fetchDailyActivity } from '~/widgets/dashboard/model/useActivity'
+
+export const useAppBootStore = defineStore('appBoot', () => {
+  const isBooting = ref(false)
+  const bootProgress = ref(0)
+  const currentLog = ref('Initializing...')
+  
+  // Caches
+  const genesisMatrixCache = ref<any>(null)
+  
+  async function executeBootSequence(userId: string) {
+    isBooting.value = true
+    bootProgress.value = 0
+    
+    try {
+      // Helper for minimum visual delay (so it doesn't flash instantly)
+      const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
+      
+      // Step 1: Network - Activity
+      currentLog.value = 'Fetching monitor activity...'
+      await fetchDailyActivity(userId)
+      await delay(600) // Visual pause
+      bootProgress.value = 33
+      
+      // Step 2: Disk - Trades
+      currentLog.value = 'Loading strategy trades...'
+      await useStrategyTradesStore().init()
+      await delay(500)
+      bootProgress.value = 66
+      
+      // Step 3: Disk - Genesis Matrix
+      currentLog.value = 'Synchronizing Genesis Matrix...'
+      genesisMatrixCache.value = await loadFromDisk<any>('genesis_matrix_v2')
+      await delay(500)
+      bootProgress.value = 95
+      
+      // Complete
+      await delay(300)
+      currentLog.value = 'Ready.'
+      bootProgress.value = 100
+      
+    } catch (e) {
+      console.error('Boot sequence failed:', e)
+      currentLog.value = 'Boot sequence error.'
+    } finally {
+      isBooting.value = false
+    }
+  }
+
+  return {
+    isBooting,
+    bootProgress,
+    currentLog,
+    genesisMatrixCache,
+    executeBootSequence
+  }
+})

@@ -1079,6 +1079,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { invoke } from '@tauri-apps/api/core'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useAppBootStore } from '~/features/store/useAppBoot'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -1179,7 +1180,8 @@ const studentTPDF = (x: number, mean: number, scale: number, nu: number): number
 const matrixNodes = ref<any[]>([])
 const loadMatrixData = async () => {
   try {
-    const data = await loadFromDisk<{ nodes: any[] }>('genesis_matrix_v2')
+    const appBootStore = useAppBootStore()
+    const data = appBootStore.genesisMatrixCache || await loadFromDisk<{ nodes: any[] }>('genesis_matrix_v2')
     if (data && data.nodes) {
       matrixNodes.value = data.nodes
     }
@@ -5675,7 +5677,7 @@ const update = () => {
   ctx.clearRect(0, 0, w, h)
 
   if (canRevealCurve.value && revealProgress.value < 1) {
-    revealProgress.value = Math.min(1, revealProgress.value + 0.005)
+    revealProgress.value = Math.min(1, revealProgress.value + 0.012)
   }
   
   currentRotation.value.x += (targetRotation.value.x - currentRotation.value.x) * 0.08
@@ -6233,66 +6235,65 @@ const update = () => {
       ctx.shadowColor = colors.value.accent
       
       const numPoints = transformedCurve.length
-      const limitIdx = Math.floor(numPoints * revealProgress.value)
-      const numHistorical = equityPoints3D.value.filter(p => !p.isProjection).length
+      const revealSpan = Math.max(0, numPoints - 1)
+      const revealPosition = revealSpan * revealProgress.value
+      const limitIdx = Math.min(numPoints - 1, Math.floor(revealPosition))
+      const nextIdx = Math.min(numPoints - 1, limitIdx + 1)
+      const segmentProgress = Math.min(1, Math.max(0, revealPosition - limitIdx))
+      const edgePoint = transformedCurve[limitIdx] && transformedCurve[nextIdx]
+        ? {
+            x: transformedCurve[limitIdx]!.x + (transformedCurve[nextIdx]!.x - transformedCurve[limitIdx]!.x) * segmentProgress,
+            y: transformedCurve[limitIdx]!.y + (transformedCurve[nextIdx]!.y - transformedCurve[limitIdx]!.y) * segmentProgress
+          }
+        : transformedCurve[limitIdx]
+
+      let lastHistoricalIdx = -1
+      equityPoints3D.value.forEach((point, idx) => {
+        if (!point.isProjection) lastHistoricalIdx = idx
+      })
 
       // Draw solid path for historical
       ctx.beginPath()
-      let lastRealIdx = -1
-      transformedCurve.forEach((p, idx) => {
-        if (idx >= numHistorical && idx > limitIdx) return
-        const isProj = equityPoints3D.value[idx]?.isProjection
-        if (isProj) return
-        
-        if (idx === 0) ctx.moveTo(p.x, p.y)
-        else ctx.lineTo(p.x, p.y)
-        lastRealIdx = idx
-      })
+      const solidEndIdx = Math.min(limitIdx, lastHistoricalIdx)
+      const startPoint = transformedCurve[0]
+      if (startPoint && solidEndIdx >= 0) {
+        ctx.moveTo(startPoint.x, startPoint.y)
+        for (let idx = 1; idx <= solidEndIdx; idx++) {
+          const p = transformedCurve[idx]!
+          ctx.lineTo(p.x, p.y)
+        }
+        if (edgePoint && nextIdx <= lastHistoricalIdx && segmentProgress > 0) {
+          ctx.lineTo(edgePoint.x, edgePoint.y)
+        }
+      }
       ctx.stroke()
       ctx.shadowBlur = 0
 
       // Draw dashed path for projection
-      if (lastRealIdx !== -1 && limitIdx >= lastRealIdx) {
+      if (lastHistoricalIdx !== -1 && revealPosition > lastHistoricalIdx) {
         ctx.setLineDash([10, 5])
         ctx.beginPath()
-        const lastRealP = transformedCurve[lastRealIdx]!
+        const lastRealP = transformedCurve[lastHistoricalIdx]!
         ctx.moveTo(lastRealP.x, lastRealP.y)
-        
-        transformedCurve.forEach((p, idx) => {
-          if (idx <= lastRealIdx || idx > limitIdx) return
+
+        for (let idx = lastHistoricalIdx + 1; idx <= limitIdx; idx++) {
+          const p = transformedCurve[idx]!
           ctx.lineTo(p.x, p.y)
-        })
+        }
+        if (edgePoint && nextIdx > lastHistoricalIdx && segmentProgress > 0) {
+          ctx.lineTo(edgePoint.x, edgePoint.y)
+        }
         ctx.stroke()
         ctx.setLineDash([])
       }
 
       // Leading edge indicator
-      if (limitIdx >= 0 && limitIdx < numPoints && transformedCurve.length > 0) {
-        const lastP = transformedCurve[limitIdx]!
+      if (limitIdx > 0 && edgePoint) {
         ctx.fillStyle = colors.value.accent
         ctx.shadowBlur = 20
         ctx.shadowColor = colors.value.accent
-        ctx.beginPath(); ctx.arc(lastP.x, lastP.y, 4, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(edgePoint.x, edgePoint.y, 4, 0, Math.PI * 2); ctx.fill()
         ctx.shadowBlur = 0
-      }
-
-      // Orbital spinner at the spawn point (index 0) while curve is drawing
-      if (revealProgress.value < 1 && transformedCurve.length > 0) {
-        const spawnP = transformedCurve[0]!
-        const time = Date.now() * 0.006
-        ctx.strokeStyle = colors.value.accent
-        ctx.lineWidth = 1.5
-        ctx.shadowBlur = 10
-        ctx.shadowColor = colors.value.accent
-        ctx.beginPath()
-        ctx.arc(spawnP.x, spawnP.y, 12, time, time + Math.PI * 1.5)
-        ctx.stroke()
-        ctx.shadowBlur = 0
-        
-        ctx.fillStyle = colors.value.accent
-        ctx.globalAlpha = 0.5
-        ctx.beginPath(); ctx.arc(spawnP.x, spawnP.y, 3, 0, Math.PI * 2); ctx.fill()
-        ctx.globalAlpha = 1
       }
 
       // Nodes and Interaction
