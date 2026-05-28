@@ -1,5 +1,5 @@
 <template>
-  <div class="genesis-container h-full flex flex-col relative overflow-hidden text-current">
+  <div ref="genesisContainer" class="genesis-container h-full flex flex-col relative overflow-hidden text-current">
     
     <!-- Transition between Mode Selection and Active Modes -->
     <Transition name="matrix-shift" mode="out-in">
@@ -166,8 +166,11 @@ import ExGenesisDiary from './ExGenesisDiary.vue'
 import ExGenesisMatrix from './ExGenesisMatrix.vue'
 import ExGenesisVirtualLog from './ExGenesisVirtualLog.vue'
 import { useThemeStore } from '@/features/store/useTheme'
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 
 const themeStore = useThemeStore()
+const genesisContainer = ref<HTMLElement | null>(null)
+useDomI18n(genesisContainer, 'genesis.dom', { includeBody: true })
 
 const route = useRoute()
 const router = useRouter()

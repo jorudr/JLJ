@@ -1,5 +1,5 @@
 <template>
-  <div class="ethereal-void h-full min-h-full relative overflow-hidden transition-all duration-1000"
+  <div ref="workspaceRoot" class="ethereal-void h-full min-h-full relative overflow-hidden transition-all duration-1000"
        :class="[isDark ? 'is-dark dark theme-dark' : 'theme-light']">
 
     <Transition name="fade">
@@ -98,6 +98,7 @@ import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useWorkspaceStore } from '~/widgets/test-clean/model/useWorkspace'
 import { storeToRefs } from 'pinia'
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 const themeStore = useThemeStore()
 const isDark = computed({
   get: () => themeStore.settings.isDark,
@@ -118,6 +119,8 @@ const modeMap = {
 const workspaceStore = useWorkspaceStore()
 const { hasInitialized, isAssembled, showBloom, isTesseractEnabled, isNodeMapActive } = storeToRefs(workspaceStore)
 const activeTab = ref('')
+const workspaceRoot = ref(null)
+useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
 

@@ -41,9 +41,29 @@ export function useI18n() {
     return typeof result === 'string' ? result : path
   }
 
+  const tm = (path: string): any => {
+    const keys = path.split('.')
+    let result: any = translations[currentLocale.value]
+
+    for (const key of keys) {
+      if (result && result[key]) {
+        result = result[key]
+      } else {
+        result = translations.en
+        for (const fallbackKey of keys) {
+          result = result?.[fallbackKey]
+        }
+        return result || {}
+      }
+    }
+
+    return result
+  }
+
   return {
     locale: computed(() => currentLocale.value),
     setLocale,
-    t
+    t,
+    tm
   }
 }

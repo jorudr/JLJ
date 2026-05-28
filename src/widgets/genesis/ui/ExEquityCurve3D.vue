@@ -5128,8 +5128,19 @@ const initData = () => {
         
         let benchVal = initialDeposit
         let rfVal = initialDeposit
-        let firstBenchRealPrice = curves?.benchmark?.length > 0 ? curves.benchmark[0]!.value : 0
-        let lastKnownRfYield = curves?.risk_free?.length > 0 ? curves.risk_free[0]!.value : 5.00
+        const getMarketValueForDay = (points: { timestamp: number, value: number }[], dayUnix: number) => {
+          let value = 0
+          for (const point of points) {
+            if (point.timestamp <= dayUnix + 86400) {
+              value = point.value
+            } else {
+              return value || point.value
+            }
+          }
+          return value
+        }
+        const firstBenchRealPrice = getMarketValueForDay(curves.benchmark, startTs)
+        let lastKnownRfYield = getMarketValueForDay(curves.risk_free, startTs) || 5.00
         
         for (let i = 0; i <= daysTotal; i++) {
           const currentMs = firstDateTime + i * 24 * 60 * 60 * 1000
@@ -5145,26 +5156,13 @@ const initData = () => {
           }
           
           // S&P 500 mapping
-          let currentBenchRealPrice = firstBenchRealPrice
-          for (const bp of curves.benchmark) {
-            if (bp.timestamp <= currentUnix + 86400) {
-              currentBenchRealPrice = bp.value
-            } else {
-              break
-            }
-          }
+          const currentBenchRealPrice = getMarketValueForDay(curves.benchmark, currentUnix) || firstBenchRealPrice
           if (firstBenchRealPrice > 0) {
             benchVal = initialDeposit * (currentBenchRealPrice / firstBenchRealPrice)
           }
           
           // Risk Free compound
-          for (const rp of curves.risk_free) {
-            if (rp.timestamp <= currentUnix + 86400) {
-              lastKnownRfYield = rp.value
-            } else {
-              break
-            }
-          }
+          lastKnownRfYield = getMarketValueForDay(curves.risk_free, currentUnix) || lastKnownRfYield
           if (i > 0) {
             rfVal = rfVal * (1 + (lastKnownRfYield / 100) / 365)
           }
@@ -6175,7 +6173,6 @@ const update = () => {
             ctx.beginPath()
             ctx.rect(labelBox.rectX, labelBox.rectY, labelBox.width, labelBox.height)
             ctx.fill()
-            ctx.stroke()
 
             ctx.strokeStyle = color
             ctx.globalAlpha = 0.55

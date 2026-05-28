@@ -22,9 +22,9 @@
         
         <!-- HUD Telemetry -->
         <div class="absolute top-8 right-8 flex flex-col items-end space-y-1 opacity-20 pointer-events-none">
-           <span class="text-[8px] font-mono tracking-widest uppercase text-slate-400">System_Neural_CUBE // REIFICATION_v4</span>
+           <span class="text-[8px] font-mono tracking-widest uppercase text-slate-400">{{ t('genesis.virtualLog.cubeTelemetry') }}</span>
            <div class="h-px w-32 bg-slate-500/50"></div>
-           <span class="text-[7px] font-mono tracking-widest uppercase text-slate-400">Facet: {{ currentFace + 1 }} / Status: {{ isTransitioning ? 'ROTATING...' : 'LOCKED' }}</span>
+           <span class="text-[7px] font-mono tracking-widest uppercase text-slate-400">{{ t('genesis.virtualLog.facet') }}: {{ currentFace + 1 }} / {{ t('genesis.virtualLog.status') }}: {{ isTransitioning ? t('genesis.virtualLog.rotating') : t('genesis.virtualLog.locked') }}</span>
         </div>
 
         <!-- Facet Navigation -->
@@ -92,13 +92,13 @@
              <button @click="selectedTradeId = null"
                      class="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-l border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors">
                <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 -rotate-90 whitespace-nowrap">Close_Archive</span>
+               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 -rotate-90 whitespace-nowrap">{{ t('genesis.virtualLog.closeArchive') }}</span>
              </button>
  
              <ExPanel 
                class="!bg-gray-50 dark:!bg-[#070707] !border-black/10 dark:!border-white/10 !shadow-[0_40px_100px_rgba(0,0,0,0.1)] dark:!shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
-               title="ARCHIVAL_RECORD" 
-               :telemetry="`REGISTRY_IDX: ${selectedTrade?.id?.slice(-8).toUpperCase()}`"
+               :title="t('genesis.virtualLog.archivalRecord')"
+               :telemetry="`${t('genesis.virtualLog.registryIdx')}: ${selectedTrade?.id?.slice(-8).toUpperCase()}`"
                :show-corners="true"
                variant="light"
              >
@@ -111,7 +111,7 @@
                      <span class="text-2xl font-black opacity-20 font-mono text-black dark:text-white">{{ selectedTrade?.asset?.slice(0, 1) }}</span>
                    </div>
                    <div class="flex flex-col">
-                     <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.5em] text-black dark:text-white">Asset_Identifier</span>
+                     <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.5em] text-black dark:text-white">{{ t('genesis.virtualLog.assetIdentifier') }}</span>
                      <h3 class="text-3xl font-light font-serif tracking-[0.2em] uppercase text-black dark:text-white mt-1 leading-none">
                        {{ selectedTrade?.asset }}
                      </h3>
@@ -123,28 +123,28 @@
                   <div class="grid grid-cols-2 gap-x-8 gap-y-8 px-6 pb-6 mt-4">
                     <!-- ENTRY -->
                     <div class="flex flex-col">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">Entry_Price</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.entryPrice') }}</span>
                       <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ selectedTrade?.entry }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
                     </div>
 
                     <!-- EXIT -->
                     <div class="flex flex-col">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">Exit_Price</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.exitPrice') }}</span>
                       <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ selectedTrade?.exit }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') }}</span>
                     </div>
 
                     <!-- RISK MANAGEMENT -->
                     <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">Risk_Exposure</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.riskExposure') }}</span>
                       <div class="flex flex-col mt-2 space-y-2">
                         <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">Stop_Loss</span>
+                          <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.stopLoss') }}</span>
                           <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.stopLoss }}</span>
                         </div>
                         <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">Take_Profit</span>
+                          <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.takeProfit') }}</span>
                           <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.takeProfit }}</span>
                         </div>
                       </div>
@@ -152,14 +152,14 @@
 
                     <!-- PERFORMANCE -->
                     <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">Trade_Metrics</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.tradeMetrics') }}</span>
                       <div class="flex flex-col mt-2 space-y-2">
                          <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">R:R_Ratio</span>
+                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.rrRatio') }}</span>
                            <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">1:{{ calculateRR(selectedTrade) }}</span>
                          </div>
                          <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">Duration</span>
+                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.duration') }}</span>
                            <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ calculateDuration(selectedTrade) }}</span>
                          </div>
                       </div>
@@ -172,7 +172,7 @@
                     class="w-full" 
                     @click="showNodeMap = true"
                   >
-                     Show_Details
+                     {{ t('genesis.virtualLog.showDetails') }}
                   </ExButton>
                 </template>
               </ExPanel>
@@ -207,9 +207,9 @@
             <div class="flex items-center justify-between px-6 py-3 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
                <div class="flex items-center space-x-3">
                   <div class="w-1 h-1 bg-black dark:bg-white rotate-45"></div>
-                  <span class="text-[8px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">Registry_Index</span>
+                  <span class="text-[8px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">{{ t('genesis.virtualLog.registryIndex') }}</span>
                </div>
-               <span class="text-[7px] font-mono opacity-30 uppercase tracking-widest">{{ strategies.length }}_PROTOCOLS</span>
+               <span class="text-[7px] font-mono opacity-30 uppercase tracking-widest">{{ strategies.length }}_{{ t('genesis.virtualLog.protocols') }}</span>
             </div>
 
             <div class="max-h-80 overflow-y-auto custom-scrollbar py-2">
@@ -247,12 +247,12 @@
              <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/30 dark:border-white/30"></div>
 
              <div class="flex flex-col min-w-[220px] py-1">
-                <span class="text-[7px] font-mono opacity-50 uppercase tracking-[0.5em] font-bold text-black dark:text-white">SYSTEM_PROTOCOL_SELECT</span>
+                <span class="text-[7px] font-mono opacity-50 uppercase tracking-[0.5em] font-bold text-black dark:text-white">{{ t('genesis.virtualLog.systemProtocolSelect') }}</span>
                 <div class="flex items-center justify-between mt-1">
                    <div class="flex items-center gap-3">
                       <div class="w-1.5 h-1.5 bg-black dark:bg-white rotate-45 animate-pulse"></div>
                       <span class="text-[11px] font-mono tracking-[0.3em] uppercase font-black leading-tight text-black dark:text-white" :class="isMatrixLoading ? 'animate-pulse' : ''">
-                        {{ isMatrixLoading ? 'LOADING_PROTOCOL...' : (selectedStrategy?.name || 'MAIN_DIARY') }}
+                        {{ isMatrixLoading ? t('genesis.virtualLog.loadingProtocol') : selectedStrategyLabel }}
                       </span>
                    </div>
                    <div class="w-2 h-2 border-b-2 border-r-2 border-black/60 dark:border-white/60 rotate-45 ml-4 transition-transform duration-500" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-1' : ''"></div>
@@ -286,12 +286,12 @@
           <div class="flex items-center justify-between px-10 py-6 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
             <div class="flex items-center gap-4">
               <div class="w-2 h-2 bg-black dark:bg-white rotate-45"></div>
-              <span class="text-xs uppercase tracking-[0.8em] font-black font-mono text-black dark:text-white">Temporal_Matrix_Protocol</span>
+              <span class="text-xs uppercase tracking-[0.8em] font-black font-mono text-black dark:text-white">{{ t('genesis.virtualLog.temporalMatrixProtocol') }}</span>
             </div>
 
             <button @click="isTemporalOpen = false" 
                     class="group relative px-8 py-2 bg-black/5 dark:bg-white/5 border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all duration-300 cursor-pointer font-mono font-bold">
-              <span class="text-[9px] font-black uppercase tracking-[0.4em]">Accept</span>
+              <span class="text-[9px] font-black uppercase tracking-[0.4em]">{{ t('genesis.virtualLog.accept') }}</span>
             </button>
           </div>
 
@@ -301,13 +301,13 @@
                 <div class="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center rotate-45 mb-4">
                   <div class="w-2 h-2 bg-black dark:bg-white animate-pulse"></div>
                 </div>
-                <span class="text-xs uppercase tracking-widest font-mono font-bold text-black dark:text-white">Custom_Temporal_Lock</span>
+                <span class="text-xs uppercase tracking-widest font-mono font-bold text-black dark:text-white">{{ t('genesis.virtualLog.customTemporalLock') }}</span>
                 <p class="text-[10px] font-mono text-black/40 dark:text-white/40 tracking-wider mb-4 leading-relaxed">
-                  Select precise chronological coordinates to isolate trade execution telemetry.
+                  {{ t('genesis.virtualLog.temporalDescription') }}
                 </p>
                 <button @click="customDate = new Date(); syncTempParts()" 
                         class="w-full py-3 border border-black/10 dark:border-white/10 text-[9px] uppercase tracking-widest text-black/60 dark:text-white/60 hover:bg-black/10 dark:hover:bg-white/10 font-mono cursor-pointer font-bold transition-all shadow-sm">
-                  Sync_to_Current_System_Time
+                  {{ t('genesis.virtualLog.syncToCurrentSystemTime') }}
                 </button>
               </div>
             </div>
@@ -322,7 +322,7 @@
                            @input="e => handleManualDate(activeTemporalTarget, unit, (e.target as any).value)"
                            class="w-24 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-tighter text-black dark:text-white" />
                     <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity cursor-pointer"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
-                    <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/40">{{ unit }}</span>
+                    <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/40">{{ translateTemporalUnit(unit) }}</span>
                   </div>
                 </div>
 
@@ -336,7 +336,7 @@
                            @input="e => handleManualDate(activeTemporalTarget, unit, (e.target as any).value)"
                            class="w-20 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-widest text-black dark:text-white" />
                     <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity cursor-pointer"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
-                    <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/40">{{ unit }}</span>
+                    <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/40">{{ translateTemporalUnit(unit) }}</span>
                   </div>
                 </div>
               </div>
@@ -363,11 +363,13 @@ import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 
 const emit = defineEmits(['exit', 'nodeMapState'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
+const { t, locale } = useI18n()
 
 const viewType = ref<'cube' | 'list'>('cube')
 const selectedTradeId = ref<string | null>(null)
@@ -392,9 +394,9 @@ watch(showNodeMap, (val) => {
 })
 
 const formatFullDate = (d: any) => {
-  if (!d) return 'N/A'
+  if (!d) return t('genesis.virtualLog.notAvailable')
   const date = new Date(d)
-  const datePart = date.toLocaleDateString('en-GB', { 
+  const datePart = date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
     day: 'numeric', 
     month: 'long', 
     year: 'numeric' 
@@ -406,6 +408,8 @@ const formatFullDate = (d: any) => {
   })
   return `${datePart}\n${timePart}`
 }
+
+const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
 
 
 const currentTrades = computed(() => {
@@ -424,7 +428,7 @@ const calculateRR = (trade: any) => {
 }
 
 const calculateDuration = (trade: any) => {
-  if (!trade || !trade.date || !trade.dateExit) return 'N/A'
+  if (!trade || !trade.date || !trade.dateExit) return t('genesis.virtualLog.notAvailable')
   const start = new Date(trade.date).getTime()
   const end = new Date(trade.dateExit).getTime()
   const diff = end - start
@@ -810,6 +814,10 @@ const selectStrategy = (id: string) => {
 const strategies = computed(() => tradeStore.strategies)
 const selectedStrategy = computed(() => {
   return tradeStore.strategies.find(s => s.id === selectedStrategyId.value) || tradeStore.strategies[0] || { id: 'MAIN_DIARY', name: 'MAIN_DIARY' }
+})
+const selectedStrategyLabel = computed(() => {
+  const name = selectedStrategy.value?.name || 'MAIN_DIARY'
+  return name === 'MAIN_DIARY' ? t('genesis.virtualLog.mainDiary') : name
 })
 
 const mappedTradeForAnalysis = computed(() => {

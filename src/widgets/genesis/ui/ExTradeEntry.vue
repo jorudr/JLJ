@@ -19,17 +19,35 @@ const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const viewMode = ref('tactical') // 'tactical' or 'journal'
 const journalEntries = ref([])
 
+const getArchiveNodeName = (id) => `Archive_Node_${id.toString(16).toUpperCase().slice(-6)}`
+
 const addJournalEntry = () => {
+  const id = Date.now()
   journalEntries.value.push({
-    id: Date.now(),
+    id,
     image: null,
-    description: '',
-    type: 'Entry'
+    name: getArchiveNodeName(id),
+    tags: [],
+    tagInput: '',
+    createdAt: new Date().toISOString()
   })
 }
 
 const removeJournalEntry = (id) => {
   journalEntries.value = journalEntries.value.filter(e => e.id !== id)
+}
+
+const addJournalEntryTag = (entry) => {
+  const tag = (entry.tagInput || '').trim().toUpperCase()
+  if (!tag) return
+
+  if (!Array.isArray(entry.tags)) entry.tags = []
+  if (!entry.tags.includes(tag)) entry.tags.push(tag)
+  entry.tagInput = ''
+}
+
+const removeJournalEntryTag = (entry, tag) => {
+  entry.tags = (entry.tags || []).filter(t => t !== tag)
 }
 
 const handleImageUpload = (id, event) => {
@@ -965,8 +983,33 @@ const pnl = computed({
   set: (val) => { overridePnl.value = val }
 })
 
+const commitState = ref('idle')
+
+const resetForm = () => {
+  asset.value = ''
+  side.value = 'long'
+  entry.value = ''
+  exit.value = ''
+  size.value = ''
+  stopLoss.value = ''
+  takeProfit.value = ''
+  activeConditions.value.clear()
+  selectedEmotions.value = []
+  journalEntries.value = []
+  openDate.value = new Date()
+  exitDate.value = new Date()
+  overridePnl.value = null
+  selectedRegistryScenarioId.value = null
+  showConditionLibrary.value = false
+  showEmotionSelector.value = false
+  viewMode.value = 'tactical'
+  isTemporalOpen.value = false
+  syncTempParts()
+}
+
 const submit = async () => {
   if (!entry.value || !exit.value || !size.value) return
+  if (commitState.value !== 'idle') return
   
   const findActiveScenario = (scenarios) => {
     // First check if the currently selected registry ID belongs to this group
@@ -1132,15 +1175,26 @@ const submit = async () => {
     boardScenarioExit: formatScen(activeExit || activeMini, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
     images: journalEntries.value.map(e => ({
       url: e.image,
-      context: `[${e.type}] ${e.description}`
+      name: e.name || getArchiveNodeName(e.id),
+      tags: Array.isArray(e.tags) ? e.tags : [],
+      createdAt: e.createdAt || new Date().toISOString(),
+      context: ''
     })).filter(img => img.url),
-    notes: journalEntries.value.map(e => e.description).filter(Boolean).join('\n---\n')
+    notes: ''
   }
 
+  commitState.value = 'loading'
+  
   await tradeStore.addTrade(selectedStrategyId.value, newTrade)
   
-  emit('addTrade', newTrade)
-  emit('close')
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  commitState.value = 'success'
+  
+  setTimeout(() => {
+    resetForm()
+    commitState.value = 'idle'
+  }, 2000)
 }
 </script>
 
@@ -1564,21 +1618,40 @@ const submit = async () => {
  
                     <!-- Controls & Info -->
                     <div class="p-6 flex flex-col space-y-4">
-                       <!-- Type Selector -->
-                       <div class="flex items-center space-x-2">
-                          <button v-for="t in ['Entry', 'In-trade', 'Exit']" :key="t"
-                                  @click="entry.type = t"
-                                  class="flex-1 py-1.5 border transition-all text-[8px] font-mono tracking-widest uppercase"
-                                  :class="entry.type === t ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white' : 'border-black/5 dark:border-white/5 opacity-40 hover:opacity-100'">
-                             {{ t }}
-                          </button>
-                       </div>
- 
-                       <!-- Description -->
+                       <!-- Visual metadata aligned with Trade Analytics Visuals -->
                        <div class="relative">
-                          <textarea v-model="entry.description" 
-                                    placeholder="Tactical_Data_Reflections..."
-                                    class="w-full h-24 bg-transparent border border-black/5 dark:border-white/5 p-4 text-[10px] font-mono leading-relaxed focus:outline-none transition-all text-black dark:text-white uppercase placeholder:opacity-20 resize-none focus:border-black/20 dark:focus:border-white/20"></textarea>
+                          <input v-model="entry.name"
+                                 type="text"
+                                 placeholder="Archive_Node_Name..."
+                                 class="w-full bg-transparent border border-black/5 dark:border-white/5 px-4 py-3 text-[10px] font-mono tracking-[0.2em] font-black focus:outline-none transition-all text-black dark:text-white uppercase placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
+                       </div>
+
+                       <div class="flex flex-col gap-3">
+                          <div class="flex flex-wrap gap-2 min-h-7">
+                             <span v-for="tag in entry.tags" :key="tag"
+                                   class="flex items-center gap-2 border border-black/10 dark:border-white/10 px-2 py-1 text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/70">
+                                {{ tag }}
+                                <button @click="removeJournalEntryTag(entry, tag)"
+                                        class="text-[9px] leading-none opacity-40 hover:opacity-100 hover:text-red-500 transition-all">
+                                   x
+                                </button>
+                             </span>
+                             <span v-if="!entry.tags?.length" class="text-[8px] font-mono uppercase tracking-[0.3em] opacity-20 self-center">
+                                No_Tags_Attached
+                             </span>
+                          </div>
+
+                          <div class="flex items-center gap-2">
+                             <input v-model="entry.tagInput"
+                                    @keyup.enter="addJournalEntryTag(entry)"
+                                    type="text"
+                                    placeholder="Custom_Tag..."
+                                    class="flex-1 bg-transparent border border-black/5 dark:border-white/5 px-3 py-2 text-[9px] font-mono uppercase tracking-widest focus:outline-none transition-all text-black dark:text-white placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
+                             <button @click="addJournalEntryTag(entry)"
+                                     class="px-3 py-2 border border-black/10 dark:border-white/10 text-[8px] font-mono uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
+                                Add_Tag
+                             </button>
+                          </div>
                        </div>
  
                        <!-- Footer Metadata -->
@@ -1604,10 +1677,10 @@ const submit = async () => {
     <Teleport to="body">
       <Transition name="nier-fade">
         <div v-if="!showConditionLibrary && !showEmotionSelector" 
-             class="fixed left-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999] opacity-5 hover:opacity-100 transition-all duration-700 delay-100">
+             class="fixed left-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
         <!-- UNIFIED MATRIX TOGGLE -->
         <button @click="showConditionLibrary = !showConditionLibrary" 
-                class="group relative">
+                class="group relative opacity-35 hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300">
            <div class="relative flex items-center justify-center w-12 h-12">
               <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white group-hover:border-black dark:group-hover:border-white transition-all duration-500 shadow-xl"
                    :class="{ 'bg-black dark:bg-white border-black dark:border-white': showConditionLibrary }"></div>
@@ -1893,8 +1966,14 @@ const submit = async () => {
               </div>
             </div>
 
-            <button @click="submit" class="group relative h-9 px-6 bg-white/10 border border-white/30 hover:bg-white transition-all duration-300">
-              <span class="relative z-10 text-[9px] uppercase tracking-[0.5em] font-black text-white group-hover:text-black">Commit</span>
+            <button @click="submit" :disabled="commitState !== 'idle'" 
+                    class="group relative h-9 px-6 bg-white/10 border border-white/30 transition-all duration-300 flex items-center justify-center min-w-[120px]"
+                    :class="commitState === 'idle' ? 'hover:bg-white cursor-pointer' : 'cursor-not-allowed'">
+              <span v-if="commitState === 'idle'" class="relative z-10 text-[9px] uppercase tracking-[0.5em] font-black text-white group-hover:text-black">Commit</span>
+              <div v-else-if="commitState === 'loading'" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              <svg v-else-if="commitState === 'success'" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
             </button>
           </div>
         </div>
@@ -2194,7 +2273,6 @@ const submit = async () => {
         </div>
       </Transition>
     </Teleport>
-    
 
   </div>
 </template>
@@ -2302,4 +2380,3 @@ input[type=number] {
   transform: translate(-30px, -50%); 
 }
 </style>
-

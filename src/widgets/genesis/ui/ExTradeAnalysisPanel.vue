@@ -11,6 +11,7 @@ import DrawingModal from '@/widgets/diary/ui/Thoughts/DrawingModal.vue'
 import ExImageArchiveSlot from './ExImageArchiveSlot.vue'
 import ExImageEditor from './ExImageEditor.vue'
 import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 
 interface Condition {
   id: string;
@@ -81,6 +82,8 @@ const styleLimits: Record<number, { label: string, max?: number, min?: number, d
 
 const themeStore = useThemeStore();
 const isDark = computed(() => themeStore.settings.isDark);
+const analysisPanelRoot = ref<HTMLElement | null>(null);
+useDomI18n(analysisPanelRoot, 'genesis.dom', { includeBody: true });
 
 const tradeStore = useStrategyTradesStore();
 const matrixNodes = shallowRef<any[]>([]);
@@ -1466,7 +1469,7 @@ const strategyExecutionMetrics = computed(() => {
 </script>
 
 <template>
-  <div class="relative h-full w-full">
+  <div ref="analysisPanelRoot" class="relative h-full w-full">
     <!-- CLOSE HANDLE (RIGHT EDGE) -->
     <button @click="emit('close')"
             class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
