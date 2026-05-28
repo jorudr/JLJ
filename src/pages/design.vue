@@ -766,6 +766,81 @@
           </div>
         </section>
 
+        <!-- SECTION 23: EXREPORT_FORM -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">23 // ExReport_Form</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col lg:flex-row gap-16 items-start">
+             <ExPanel class="w-full max-w-xl" noPadding variant="light">
+                <template #header>
+                   TRANSMIT_REPORT // ARCHIVAL_NODE
+                </template>
+
+                <div class="p-10 flex flex-col space-y-10">
+                   <!-- Field: Type -->
+                   <div class="flex flex-col space-y-4">
+                      <div class="flex items-center justify-between">
+                         <ExText variant="telemetry" class="opacity-40">Report_Classification</ExText>
+                         <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">REQ_001</span>
+                      </div>
+                      <div class="flex space-x-8">
+                         <label class="flex items-center space-x-3 cursor-pointer group">
+                            <input type="radio" name="report_type" value="Problem" class="peer sr-only" checked />
+                            <div class="w-4 h-4 border border-theme-border peer-checked:border-theme-text peer-checked:bg-theme-text flex items-center justify-center transition-all">
+                               <div class="w-1.5 h-1.5 bg-theme-bg opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                            <span class="text-[11px] font-mono tracking-widest uppercase text-theme-text opacity-60 peer-checked:opacity-100 transition-opacity">Problem</span>
+                         </label>
+                         <label class="flex items-center space-x-3 cursor-pointer group">
+                            <input type="radio" name="report_type" value="Idea" class="peer sr-only" />
+                            <div class="w-4 h-4 border border-theme-border peer-checked:border-theme-text peer-checked:bg-theme-text flex items-center justify-center transition-all">
+                               <div class="w-1.5 h-1.5 bg-theme-bg opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            </div>
+                            <span class="text-[11px] font-mono tracking-widest uppercase text-theme-text opacity-60 peer-checked:opacity-100 transition-opacity">Idea</span>
+                         </label>
+                      </div>
+                   </div>
+
+                   <!-- Field: Title -->
+                   <div class="flex flex-col space-y-4">
+                      <div class="flex items-center justify-between">
+                         <ExText variant="telemetry" class="opacity-40">Nomenclature</ExText>
+                         <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">REQ_002</span>
+                      </div>
+                      <ExInput placeholder="ENTER_REPORT_TITLE..." variant="standard" class="!py-5 !pl-6 !text-lg" />
+                   </div>
+
+                   <!-- Field: Description -->
+                   <div class="flex flex-col space-y-4">
+                      <div class="flex items-center justify-between">
+                         <ExText variant="telemetry" class="opacity-40">Narrative_Log</ExText>
+                         <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">REQ_003</span>
+                      </div>
+                      <div class="relative group">
+                         <textarea 
+                           placeholder="DESCRIBE_THE_PROBLEM_OR_IDEA_IN_DETAIL..."
+                           class="w-full h-40 bg-theme-bg border border-theme-border p-6 text-xs font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20 uppercase resize-none leading-relaxed"
+                         ></textarea>
+                         <ExGothicCorners variant="light" :opacity="0.2" class="group-focus-within:opacity-80 transition-opacity duration-500" />
+                      </div>
+                   </div>
+
+                   <!-- Footer Actions -->
+                   <div class="pt-10 border-t border-theme-border flex items-center justify-between">
+                      <div class="flex items-center space-x-3 opacity-20 group cursor-pointer hover:opacity-100 transition-opacity">
+                         <div class="w-1.5 h-1.5 border border-theme-text rotate-45"></div>
+                         <span class="text-[9px] font-mono uppercase tracking-[0.3em]">Discard_Draft</span>
+                      </div>
+                      <ExButton variant="solid">Transmit_Data</ExButton>
+                   </div>
+                </div>
+             </ExPanel>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>

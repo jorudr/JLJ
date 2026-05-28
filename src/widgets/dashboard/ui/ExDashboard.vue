@@ -26,60 +26,76 @@
 
 
 
-        <!-- User Identity (clickable → sign-out popover) -->
-        <div class="relative" ref="identityRef">
-          <button @click="toggleMenu" class="focus:outline-none cursor-pointer">
-            <ExIdentity
-              :name="displayName"
-              :avatar-url="authStore.user?.photoURL ?? undefined"
-              rank="Operator"
-            />
+        <!-- Utility Group: Identity, Report, Theme -->
+        <div class="flex items-center space-x-6">
+          <!-- User Identity (clickable → sign-out popover) -->
+          <div class="relative" ref="identityRef">
+            <button @click="toggleMenu" class="focus:outline-none cursor-pointer">
+              <ExIdentity
+                :name="displayName"
+                :avatar-url="authStore.user?.photoURL ?? undefined"
+                rank="Operator"
+              />
+            </button>
+
+            <!-- Teleport dropdown to body to escape any overflow:hidden ancestors -->
+            <Teleport to="body">
+              <Transition name="menu-drop">
+                <div
+                  v-if="userMenuOpen"
+                  ref="menuRef"
+                  :style="menuStyle"
+                  class="fixed z-[9999] min-w-[200px] border border-theme-border bg-theme-bg shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                >
+                  <!-- User info strip -->
+                  <div class="px-5 py-3 border-b border-theme-border">
+                    <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">{{ t('dashboard.ui.signedInAs') }}</p>
+                    <p class="text-[10px] font-mono font-black uppercase tracking-widest truncate">{{ authStore.user?.email }}</p>
+                  </div>
+                  <!-- Sign out -->
+                  <button
+                    @click="doSignOut"
+                    class="w-full flex items-center space-x-3 px-5 py-3 text-[9px] font-mono uppercase tracking-[0.4em] hover:text-red-400 transition-all duration-300"
+                  >
+                    <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>{{ t('dashboard.ui.signOut') }}</span>
+                  </button>
+                </div>
+              </Transition>
+            </Teleport>
+          </div>
+
+          <!-- Report Feature -->
+          <button
+            @click="navigateTo('/report')"
+            class="opacity-40 hover:opacity-100 hover:text-red-400 transition-all duration-300"
+            title="Submit a report"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
           </button>
 
-          <!-- Teleport dropdown to body to escape any overflow:hidden ancestors -->
-          <Teleport to="body">
-            <Transition name="menu-drop">
-              <div
-                v-if="userMenuOpen"
-                ref="menuRef"
-                :style="menuStyle"
-                class="fixed z-[9999] min-w-[200px] border border-theme-border bg-theme-bg shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
-              >
-                <!-- User info strip -->
-                <div class="px-5 py-3 border-b border-theme-border">
-                  <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">{{ t('dashboard.ui.signedInAs') }}</p>
-                  <p class="text-[10px] font-mono font-black uppercase tracking-widest truncate">{{ authStore.user?.email }}</p>
-                </div>
-                <!-- Sign out -->
-                <button
-                  @click="doSignOut"
-                  class="w-full flex items-center space-x-3 px-5 py-3 text-[9px] font-mono uppercase tracking-[0.4em] hover:text-red-400 transition-all duration-300"
-                >
-                  <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                  <span>{{ t('dashboard.ui.signOut') }}</span>
-                </button>
-              </div>
-            </Transition>
-          </Teleport>
+          <!-- Theme Toggle -->
+          <button
+            class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
+            @click="themeStore.toggleDark"
+          >
+            <template v-if="themeStore.isReady">
+              <img
+                alt="Toggle Theme"
+                :src="themeStore.settings.isDark ? '/assets/light-mode-switcher.svg' : '/assets/dark-mode-switcher.svg'"
+                class="block"
+              />
+            </template>
+          </button>
         </div>
-
-        <!-- Theme Toggle -->
-        <button
-          class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
-          @click="themeStore.toggleDark"
-        >
-          <template v-if="themeStore.isReady">
-            <img
-              alt="Toggle Theme"
-              :src="themeStore.settings.isDark ? '/assets/light-mode-switcher.svg' : '/assets/dark-mode-switcher.svg'"
-              class="block"
-            />
-          </template>
-        </button>
 
       </div>
     </header>
