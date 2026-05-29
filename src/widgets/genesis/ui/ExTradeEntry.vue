@@ -663,12 +663,15 @@ const size = ref('')
 const entryFee = ref('')
 const exitFee = ref('')
 const feeType = ref('%')
+const resultMode = ref('auto')
 
 const isForex = computed(() => {
-  if (currentAssetData.value?.type === 'Forex') return true
+  if (currentAssetData.value) return currentAssetData.value.type === 'Forex'
   const s = asset.value.toUpperCase()
   return s.includes('/') || (s.length === 6 && !s.includes(' '))
 })
+
+
 
 const isManualEntryAsset = computed(() => {
   if (currentAssetData.value?.contractSize) return false
@@ -680,13 +683,22 @@ const isManualEntryAsset = computed(() => {
     'WTI', 'BRENT', 'NATGAS', 'SOYBN', 'WHEAT', 'CORN', 'COCOA',
     'LIVCAT', 'FDRCAT', 'LN_HOG', 'ORNG_J', 'RICE', 'LUMBER', 'PALLAD', 'PLATIN', 'HEAT_O', 'GASOLN'
   ]
-  return manuals.some(idx => sym.includes(idx))
+  return manuals.some(idx => sym === idx)
 })
+
+const isFixedFeeAsset = computed(() => isManualEntryAsset.value || isForex.value)
+watch(isFixedFeeAsset, (val) => {
+  if (val) feeType.value = '$'
+}, { immediate: true })
 
 const overridePnl = ref(null)
 watch(asset, () => { 
-  if (isManualEntryAsset.value) overridePnl.value = null 
+  overridePnl.value = null 
 })
+
+watch(isManualEntryAsset, (val) => {
+  resultMode.value = val ? 'manual' : 'auto'
+}, { immediate: true })
 
 // Forex Rates System
 const liveRates = ref({})
@@ -956,11 +968,16 @@ const projectedProfit = computed(() => {
   return finalProfit - (eFee + xFee)
 })
 
+const hasValidProjection = computed(() => {
+  if (resultMode.value === 'manual' && overridePnl.value !== null && overridePnl.value !== '') return true
+  return projectedProfit.value !== null
+})
+
 const equityCurveTrades = computed(() => {
   const historical = tradeStore.getTradesForStrategy(selectedStrategyId.value)
-  const currentPnl = projectedProfit.value
+  const currentPnl = pnl.value
   
-  if (currentPnl === null) return historical
+  if (!hasValidProjection.value) return historical
   
   // Create a projection point based on current setup
   const projection = {
@@ -969,7 +986,7 @@ const equityCurveTrades = computed(() => {
     side: side.value,
     date: exitDate.value,
     dateExit: exitDate.value,
-    profitInCurrency: currentPnl,
+    profitInCurrency: Number(currentPnl) || 0,
     isProjection: true
   }
   
@@ -1009,7 +1026,7 @@ watch(activeTemporalTarget, () => {
 const scrollContainer = ref(null)
 
 const pnl = computed({
-  get: () => (isManualEntryAsset.value && overridePnl.value !== null) ? overridePnl.value : (projectedProfit.value || 0),
+  get: () => (resultMode.value === 'manual' && overridePnl.value !== null) ? overridePnl.value : (projectedProfit.value || 0),
   set: (val) => { overridePnl.value = val }
 })
 
@@ -1609,7 +1626,7 @@ const submit = async () => {
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
              <div v-else class="relative w-full h-[500px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
                 <Transition name="sector-swap" mode="out-in">
-                  <div v-if="projectedProfit !== null" key="curve" class="absolute inset-0 w-full h-full">
+                  <div v-if="hasValidProjection" key="curve" class="absolute inset-0 w-full h-full">
                      <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
                   </div>
                   <div v-else key="empty" class="flex flex-col items-center justify-center py-20 opacity-20">
@@ -1871,8 +1888,8 @@ const submit = async () => {
     <!-- BOTTOM PANEL (NIER CHASSIS) -->
     <div class="fixed bottom-0 mb-4 left-1/2 -translate-x-1/2 z-[1100] font-sans">
       
-      <!-- NIER SECTOR TABS -->
-      <div class="flex ml-2">
+      <!-- NIER SECTOR TABS AND SWITCHER -->
+      <div class="flex justify-between items-end w-full px-2 max-w-5xl">
         <div class="flex gap-0.5 bg-black dark:bg-black p-1 border-t border-l border-r border-white/30">
           <button 
             v-for="sector in sectors" 
@@ -1883,6 +1900,11 @@ const submit = async () => {
           >
             <span class="text-[8px] uppercase tracking-[0.4em] font-black relative z-10">{{ sector.id === 'fee' && locale === 'ru' ? 'КОМИССИИ' : sector.label }}</span>
           </button>
+        </div>
+
+        <div class="flex gap-0.5 bg-black dark:bg-black p-1 border-t border-l border-r border-white/30 shrink-0">
+          <button @click="resultMode = 'auto'" :class="resultMode === 'auto' ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">AUTO</button>
+          <button @click="resultMode = 'manual'" :class="resultMode === 'manual' ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">MANUAL</button>
         </div>
       </div>
 
@@ -2010,8 +2032,9 @@ const submit = async () => {
               </div>
 
               <div v-else-if="activeSector === 'fee'" :key="'fee'" class="flex items-center gap-8">
-                <button @click="feeType = feeType === '%' ? '$' : '%'" 
-                        class="flex items-center justify-center w-6 h-6 text-xl font-mono font-bold shrink-0">
+                <button @click="!isFixedFeeAsset && (feeType = feeType === '%' ? '$' : '%')" 
+                        :class="[isFixedFeeAsset ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/10']"
+                        class="flex items-center justify-center w-6 h-6 text-xl font-mono font-bold shrink-0 transition-colors">
                   {{ feeType }}
                 </button>
 
@@ -2036,7 +2059,7 @@ const submit = async () => {
           <div class="flex items-center gap-10 pl-8 border-l border-white/10 w-[240px] shrink-0 justify-end">
             <div class="flex flex-col items-end gap-0.5">
               <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">Yield_Est</span>
-              <div v-if="isManualEntryAsset" class="flex items-center">
+              <div v-if="resultMode === 'manual'" class="flex items-center">
                 <input v-model.number="pnl" 
                        type="number" 
                        step="1"
