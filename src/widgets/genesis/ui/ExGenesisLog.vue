@@ -98,7 +98,6 @@
              <ExPanel 
                class="!bg-gray-50 dark:!bg-[#070707] !border-black/10 dark:!border-white/10 !shadow-[0_40px_100px_rgba(0,0,0,0.1)] dark:!shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
                :title="t('genesis.virtualLog.archivalRecord')"
-               :telemetry="`${t('genesis.virtualLog.registryIdx')}: ${selectedTrade?.id?.slice(-8).toUpperCase()}`"
                :show-corners="true"
                variant="light"
              >

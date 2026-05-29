@@ -5,8 +5,8 @@
       <div class="flex flex-col space-y-2">
         <ExHeading level="h1" variant="cinematic" class="!text-3xl">{{ t('dashboard.title') }}</ExHeading>
         <div class="flex items-center space-x-4">
-           <ExTag>v1.0.4_REIFIED</ExTag>
-           <ExText variant="small" class="!opacity-100 tracking-[0.4em] text-[#2C3E50]/35 dark:text-white/35">{{ t('dashboard.subtitle') }}</ExText>
+           <ExTag>v{{ pkg.version.toUpperCase().replace('-', '_') }}</ExTag>
+         
         </div>
       </div>
 
@@ -139,10 +139,7 @@
 
     <!-- 3. Bottom Utility Bar -->
     <footer class="flex justify-between items-center z-10 opacity-100 pt-8 border-t border-theme-border">
-      <div class="flex space-x-12 items-center">
-        <ExText variant="small" class="!opacity-100 tracking-widest uppercase text-[#2C3E50]/40 dark:text-white/40">{{ t('dashboard.ui.systemTime') }}</ExText>
-        <ExText variant="small" class="!opacity-100 tracking-widest uppercase text-[#2C3E50]/40 dark:text-white/40">{{ t('dashboard.ui.encryption') }}</ExText>
-      </div>
+      
       <div class="flex space-x-4">
          <div v-for="i in 4" :key="i" class="w-1 h-1 border border-theme-text rotate-45"></div>
       </div>
@@ -154,6 +151,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useI18n } from '~/shared/i18n/useI18n'
+import pkg from '../../../../package.json'
 import ExHeading from "~/shared/ui/ExHeading.vue"
 import ExText from "~/shared/ui/ExText.vue"
 import ExTag from "~/shared/ui/ExTag.vue"

@@ -920,6 +920,18 @@
             </div>
           </button>
 
+          <!-- WINRATE CURVE TOGGLE -->
+          <button @click="showWinrateCurve = !showWinrateCurve"
+                  class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                  :class="showWinrateCurve ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+              {{ showWinrateCurve ? '[ HIDE_WINRATE_CURVE ]' : '[ SHOW_WINRATE_CURVE ]' }}
+            </div>
+          </button>
+
           <!-- VALUE MODE TOGGLE (only in calendar mode) -->
           <button v-if="showCalendarMode"
                   @click="calendarValueMode = calendarValueMode === 'currency' ? 'percentage' : 'currency'"
@@ -1221,6 +1233,7 @@ const showRobustnessHistogram = ref(false)
 const showRobustnessWarning = ref(false)
 const showSimulator = ref(false)
 const showCalendarMode = ref(false)
+const showWinrateCurve = ref(false)
 const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
 const calendarValueMode = ref<'currency' | 'percentage'>('currency')
 const hoveredCalendarDayTooltip = ref<{ x: number; y: number; value: string; date: string; pnl: number } | null>(null)
@@ -4996,8 +5009,14 @@ const currentMouseCanvasPos = ref({ x: 0, y: 0 })
 const equityPoints3D = ref<CurvePoint[]>([])
 const benchmarkPoints3D = ref<CurvePoint[]>([])
 const riskFreePoints3D = ref<CurvePoint[]>([])
+const winratePoints3D = ref<CurvePoint[]>([])
 
 const displayBalance = computed(() => {
+  if (showWinrateCurve.value) {
+    const lastPoint = winratePoints3D.value[winratePoints3D.value.length - 1]
+    const val = (lastPoint?.value ?? 0) * revealProgress.value
+    return `${val.toFixed(1)}%`
+  }
   const lastPoint = equityPoints3D.value[equityPoints3D.value.length - 1]
   const val = (lastPoint?.value ?? 0) * revealProgress.value
   return val.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -5064,6 +5083,14 @@ const initData = () => {
     dateLabel: 'DEPOSIT'
   })
 
+  let wins = 0
+  winratePoints3D.value = []
+  winratePoints3D.value.push({
+    x: -200, y: 95, z: 0, // starts at 0%
+    value: 0,
+    dateLabel: 'DEPOSIT'
+  })
+
   sortedTrades.forEach((trade, i) => {
     runningBalance += (trade.profitInCurrency ?? 0)
     const x = -200 + (i + 1) * step
@@ -5072,10 +5099,23 @@ const initData = () => {
     
     const dVal = trade.dateExit || trade.date
     const date = dVal instanceof Date ? dVal : new Date(dVal)
+    const dateLabel = `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+    
     equityPoints3D.value.push({ 
       x, y, z, 
       value: runningBalance,
-      dateLabel: `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`,
+      dateLabel,
+      isProjection: !!trade.isProjection
+    })
+
+    if ((trade.profitInCurrency ?? 0) > 0) wins++
+    const winrate = (wins / (i + 1)) * 100
+    const winrateY = 95 - (winrate / 100) * 135
+    
+    winratePoints3D.value.push({
+      x, y: winrateY, z,
+      value: winrate,
+      dateLabel,
       isProjection: !!trade.isProjection
     })
   })
@@ -6047,7 +6087,8 @@ const update = () => {
       }
     } else {
       // --- DRAW 3D EQUITY CURVE --- //
-      const transformedCurve = equityPoints3D.value.map(v => {
+      const activePoints = showWinrateCurve.value ? winratePoints3D.value : equityPoints3D.value
+      const transformedCurve = activePoints.map(v => {
         let p = rotateY(v, currentRotation.value.y)
         p = rotateX(p, currentRotation.value.x)
         p.x *= scale; p.y *= scale; p.z *= scale
@@ -6078,133 +6119,135 @@ const update = () => {
       ctx.beginPath(); ctx.moveTo(tStart.x, tStart.y); ctx.lineTo(tEnd.x, tEnd.y); ctx.stroke()
       ctx.globalAlpha = 1
 
-      // --- DRAW BENCHMARK & RISK-FREE CURVES --- //
-      if (showBenchmarkCurves.value) {
-        const benchmarkLabelBoxes: Array<{ x: number; y: number; width: number; height: number }> = []
-        const placeBenchmarkLabel = (x: number, y: number, text: string) => {
-          ctx.font = 'bold 14px monospace'
-          const paddingX = 7
-          const paddingY = 4
-          const width = ctx.measureText(text).width + paddingX * 2
-          const height = 22
-          const maxX = w - width - 12
-          const maxY = h - height - 12
-          const baseX = Math.max(12, Math.min(maxX, x + 10))
-          const baseTop = y - height + 8
-          const candidateOffsets = [0, -28, 28, -56, 56, -84, 84]
-          const overlaps = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
-            a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+      // --- DRAW BENCHMARK, RISK-FREE & WINRATE CURVES --- //
+      const extraCurveLabelBoxes: Array<{ x: number; y: number; width: number; height: number }> = []
+      const placeExtraCurveLabel = (x: number, y: number, text: string) => {
+        ctx.font = 'bold 14px monospace'
+        const paddingX = 7
+        const paddingY = 4
+        const width = ctx.measureText(text).width + paddingX * 2
+        const height = 22
+        const maxX = w - width - 12
+        const maxY = h - height - 12
+        const baseX = Math.max(12, Math.min(maxX, x + 10))
+        const baseTop = y - height + 8
+        const candidateOffsets = [0, -28, 28, -56, 56, -84, 84]
+        const overlaps = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
+          a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
 
-          let rect = {
+        let rect = {
+          x: baseX,
+          y: Math.max(12, Math.min(maxY, baseTop)),
+          width,
+          height
+        }
+
+        for (const offset of candidateOffsets) {
+          const candidate = {
             x: baseX,
-            y: Math.max(12, Math.min(maxY, baseTop)),
+            y: Math.max(12, Math.min(maxY, baseTop + offset)),
             width,
             height
           }
 
-          for (const offset of candidateOffsets) {
-            const candidate = {
-              x: baseX,
-              y: Math.max(12, Math.min(maxY, baseTop + offset)),
-              width,
-              height
-            }
-
-            if (!benchmarkLabelBoxes.some(box => overlaps(candidate, box))) {
-              rect = candidate
-              break
-            }
-          }
-
-          benchmarkLabelBoxes.push(rect)
-          return {
-            x: rect.x + paddingX,
-            y: rect.y + height - paddingY - 2,
-            rectX: rect.x,
-            rectY: rect.y,
-            width,
-            height,
-            paddingX,
-            paddingY
+          if (!extraCurveLabelBoxes.some(box => overlaps(candidate, box))) {
+            rect = candidate
+            break
           }
         }
 
-        const drawExtraCurve = (points: CurvePoint[], color: string, label: string) => {
-          if (points.length === 0) return
-          const transformed = points.map(v => {
-            let p = rotateY(v, currentRotation.value.y)
-            p = rotateX(p, currentRotation.value.x)
-            p.x *= scale; p.y *= scale; p.z *= scale
-            return project(p, w, h)
-          })
+        extraCurveLabelBoxes.push(rect)
+        return {
+          x: rect.x + paddingX,
+          y: rect.y + height - paddingY - 2,
+          rectX: rect.x,
+          rectY: rect.y,
+          width,
+          height,
+          paddingX,
+          paddingY
+        }
+      }
 
-          ctx.lineWidth = 1.5
+      const drawExtraCurve = (points: CurvePoint[], color: string, label: string) => {
+        if (points.length === 0) return
+        const transformed = points.map(v => {
+          let p = rotateY(v, currentRotation.value.y)
+          p = rotateX(p, currentRotation.value.x)
+          p.x *= scale; p.y *= scale; p.z *= scale
+          return project(p, w, h)
+        })
+
+        ctx.lineWidth = 1.5
+        ctx.strokeStyle = color
+        ctx.setLineDash([4, 4])
+        ctx.globalAlpha = 0.6
+        ctx.beginPath()
+        
+        const limitIdx = Math.floor(transformed.length * revealProgress.value)
+        
+        transformed.forEach((p, idx) => {
+          if (idx > limitIdx) return
+          if (idx === 0) ctx.moveTo(p.x, p.y)
+          else ctx.lineTo(p.x, p.y)
+        })
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.globalAlpha = 1
+        
+        // Draw Label at the end
+        const drawEndpointLabel = (pointIndex: number) => {
+          const lastP = transformed[pointIndex]
+          const valuePoint = points[pointIndex]
+          if (!lastP || !valuePoint) return
+
+          // format as currency, but if it is winrate, format as %
+          const isWinrate = label.includes('%')
+          const val = isWinrate ? `${valuePoint.value.toFixed(1)}%` : valuePoint.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+          const text = `${label} ${val}`
+          const labelBox = placeExtraCurveLabel(lastP.x, lastP.y, text)
+          const isDark = themeStore.settings.isDark
+
+          ctx.save()
+          ctx.fillStyle = isDark ? 'rgba(10, 10, 10, 0.86)' : 'rgba(255, 255, 255, 0.88)'
           ctx.strokeStyle = color
-          ctx.setLineDash([4, 4])
-          ctx.globalAlpha = 0.6
+          ctx.globalAlpha = 0.96
+          ctx.lineWidth = 1
           ctx.beginPath()
-          
-          const limitIdx = Math.floor(transformed.length * revealProgress.value)
-          
-          transformed.forEach((p, idx) => {
-            if (idx > limitIdx) return
-            if (idx === 0) ctx.moveTo(p.x, p.y)
-            else ctx.lineTo(p.x, p.y)
-          })
+          ctx.rect(labelBox.rectX, labelBox.rectY, labelBox.width, labelBox.height)
+          ctx.fill()
+
+          ctx.strokeStyle = color
+          ctx.globalAlpha = 0.55
+          ctx.beginPath()
+          ctx.moveTo(lastP.x, lastP.y)
+          ctx.lineTo(labelBox.rectX, labelBox.rectY + labelBox.height / 2)
           ctx.stroke()
-          ctx.setLineDash([])
+
+          ctx.fillStyle = color
           ctx.globalAlpha = 1
-          
-          // Draw Label at the end
-          const drawEndpointLabel = (pointIndex: number) => {
-            const lastP = transformed[pointIndex]
-            const valuePoint = points[pointIndex]
-            if (!lastP || !valuePoint) return
-
-            const val = valuePoint.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-            const text = `${label} ${val}`
-            const labelBox = placeBenchmarkLabel(lastP.x, lastP.y, text)
-            const isDark = themeStore.settings.isDark
-
-            ctx.save()
-            ctx.fillStyle = isDark ? 'rgba(10, 10, 10, 0.86)' : 'rgba(255, 255, 255, 0.88)'
-            ctx.strokeStyle = color
-            ctx.globalAlpha = 0.96
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.rect(labelBox.rectX, labelBox.rectY, labelBox.width, labelBox.height)
-            ctx.fill()
-
-            ctx.strokeStyle = color
-            ctx.globalAlpha = 0.55
-            ctx.beginPath()
-            ctx.moveTo(lastP.x, lastP.y)
-            ctx.lineTo(labelBox.rectX, labelBox.rectY + labelBox.height / 2)
-            ctx.stroke()
-
-            ctx.fillStyle = color
-            ctx.globalAlpha = 1
-            ctx.font = 'bold 14px monospace'
-            ctx.fillText(text, labelBox.x, labelBox.y)
-            ctx.restore()
-          }
-
-          if (limitIdx > 0 && limitIdx < transformed.length) {
-             drawEndpointLabel(limitIdx)
-          } else if (limitIdx >= transformed.length - 1 && transformed.length > 0) {
-             drawEndpointLabel(transformed.length - 1)
-          }
+          ctx.font = 'bold 14px monospace'
+          ctx.fillText(text, labelBox.x, labelBox.y)
+          ctx.restore()
         }
 
+        if (limitIdx > 0 && limitIdx < transformed.length) {
+            drawEndpointLabel(limitIdx)
+        } else if (limitIdx >= transformed.length - 1 && transformed.length > 0) {
+            drawEndpointLabel(transformed.length - 1)
+        }
+      }
+
+      if (showBenchmarkCurves.value) {
         drawExtraCurve(benchmarkPoints3D.value, '#0ea5e9', 'S&P 500') // Sky Blue
         drawExtraCurve(riskFreePoints3D.value, '#f43f5e', 'RISK-FREE') // Rose Pink
       }
 
       // Time Ticks (Fixed Labels)
-      const labelsToShow = [0, equityPoints3D.value.length - 1]
+      const labelsToShow = [0, activePoints.length - 1]
       labelsToShow.forEach(idx => {
-        if (idx < 0 || idx >= equityPoints3D.value.length) return
-        const p3d = equityPoints3D.value[idx]!
+        if (idx < 0 || idx >= activePoints.length) return
+        const p3d = activePoints[idx]!
         const xPos = p3d.x * scale
         
         const tickStart = { x: xPos, y: (axisY - 2) * scale, z: 0 }
@@ -6246,7 +6289,7 @@ const update = () => {
         : transformedCurve[limitIdx]
 
       let lastHistoricalIdx = -1
-      equityPoints3D.value.forEach((point, idx) => {
+      activePoints.forEach((point, idx) => {
         if (!point.isProjection) lastHistoricalIdx = idx
       })
 
@@ -6307,7 +6350,7 @@ const update = () => {
           ctx.lineWidth = 1
           ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke()
           
-          const p3d = equityPoints3D.value[idx]!
+          const p3d = activePoints[idx]!
           const floorP = { x: p3d.x * scale, y: axisY * scale, z: p3d.z * scale }
           const tFloor = project(rotateX(rotateY(floorP, currentRotation.value.y), currentRotation.value.x), w, h)
           
@@ -6322,7 +6365,7 @@ const update = () => {
           ctx.font = 'bold 9px monospace'
           ctx.fillText(String(p3d.dateLabel).toUpperCase(), tFloor.x - 30, tFloor.y + 15)
 
-          const val = p3d.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+          const val = showWinrateCurve.value ? `${p3d.value.toFixed(1)}%` : p3d.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
           ctx.fillStyle = themeText
           ctx.font = 'bold 20px monospace'
           ctx.fillText(val, p.x + 20, p.y - 20)
@@ -6838,7 +6881,8 @@ const handleMouseMove = (e: MouseEvent) => {
       hoveredDistributionTooltip.value = null
       let nearestIdx: number | null = null
       let minDist = 25
-      equityPoints3D.value.forEach((p, idx) => {
+      const activePts = showWinrateCurve.value ? winratePoints3D.value : equityPoints3D.value
+      activePts.forEach((p, idx) => {
         let pt = rotateY(p, currentRotation.value.y)
         pt = rotateX(pt, currentRotation.value.x)
         pt.x *= viewScale.value; pt.y *= viewScale.value; pt.z *= viewScale.value

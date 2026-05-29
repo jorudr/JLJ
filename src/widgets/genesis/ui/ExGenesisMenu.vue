@@ -60,9 +60,9 @@ defineProps({
   items: {
     type: Array,
     default: () => [
-      { id: 'diary', code: '0x01', title: 'VIRTUAL_LOG', description: 'Simple recording of tactical thoughts and daily reflections.' },
-      { id: 'genesis-diary', code: '0x02', title: 'GENESIS_DIARY', description: 'Chronological narrative of strategy evolution and core journal.' },
-      { id: 'matrix', code: '0x03', title: 'GENESIS_MATRIX', description: 'Advanced reification of skill-based trading protocols.' }
+      { id: 'diary', code: '0x01', title: 'VIRTUAL_LOG', description: 'Node-based knowledge graph for mapping trading concepts and relationships.' },
+      { id: 'genesis-diary', code: '0x02', title: 'GENESIS_DIARY', description: 'Interactive 3D visualization of equity curve and performance metrics.' },
+      { id: 'matrix', code: '0x03', title: 'GENESIS_MATRIX', description: 'Comprehensive repository for trading strategies, systems, and risk management templates.' }
     ]
   }
 })

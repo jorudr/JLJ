@@ -41,8 +41,8 @@
 
       <!-- Identity -->
       <div class="flex flex-col items-center space-y-1 text-center">
-        <h1 class="text-3xl tracking-[0.5em] uppercase font-light" style="color: var(--theme-text);">Archival_Node</h1>
-        <p class="text-[8px] font-mono tracking-[0.6em] uppercase" style="color: var(--theme-text); opacity: 0.3;">Universal_Reification_Pod</p>
+        <h1 class="text-3xl tracking-[0.5em] uppercase font-light" style="color: var(--theme-text);">J.L.Jörmungandr</h1>
+        <p class="text-[8px] font-mono tracking-[0.6em] uppercase" style="color: var(--theme-text); opacity: 0.3;">Universal_Analytical_Platform</p>
       </div>
 
       <!-- ── PHASE SWITCHER ── -->
@@ -61,7 +61,7 @@
             @click="startBoot"
             class="w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all duration-300 hover:opacity-90"
             :style="primaryButtonStyle"
-          >Initiate_Boot_Sequence</button>
+          >Continue</button>
         </div>
 
         <!-- ── NOT AUTHENTICATED: login / register ── -->
@@ -200,7 +200,7 @@
             @click="$emit('initiate')"
             class="px-10 py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all hover:opacity-90"
             :style="primaryButtonStyle"
-          >Initiate_Neural_Link</button>
+          >Continue</button>
           <p class="text-[8px] font-mono lowercase italic" style="opacity: 0.2; color: var(--theme-text);">Operator authenticated. System ready.</p>
         </div>
 
@@ -209,14 +209,15 @@
 
     <!-- Bottom Telemetry -->
     <div class="fixed bottom-10 left-0 right-0 px-12 flex justify-between items-center pointer-events-none">
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">ID: 0x4F.F7 // REIFIED</span>
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">B_ARCHIVE_ESTABLISHED</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">ID: {{ pkg.version }} // VOSHE COMPANY D.O.O</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">ALPHA VERSION</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import pkg from '../../../../package.json'
 import {
   getAuth,
   signInWithEmailAndPassword,

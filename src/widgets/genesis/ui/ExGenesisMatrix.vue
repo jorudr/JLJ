@@ -422,10 +422,10 @@
             <div class="w-full flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
               <div class="flex items-center space-x-3">
                 <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
-                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Matrix_Command_Link</span>
+                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Command_Panel</span>
               </div>
               <div class="flex items-center space-x-4">
-                 <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">Protocol_v1.07</span>
+
                  <div class="flex space-x-1">
                     <div v-for="i in 3" :key="i" class="w-1 h-2 border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                  </div>

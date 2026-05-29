@@ -11,7 +11,7 @@ export const translations = {
       },
       descriptions: {
         knowledge_matrix: "Collaborative protocol exchange and strategic link network.",
-        activity_monitor: "Core tactical data repository and historical consistency matrix.",
+        activity_monitor: "Matrix of Your Trading and Analytical Activity.",
         genesis_protocol: "Module management and neural diary reification sequence."
       },
       ui: {
@@ -44,7 +44,7 @@ export const translations = {
     },
     activityMonitor: {
       title: "Activity Monitor",
-      subtitle: "Core tactical data repository and historical consistency matrix.",
+      subtitle: "Matrix of Your Trading and Analytical Activity.",
       archiveDate: "Archive_Date:",
       initializing: "Initializing...",
       sessionActive: "Session_Active",
@@ -170,13 +170,13 @@ export const translations = {
       },
       descriptions: {
         knowledge_matrix: "Совместный обмен протоколами и сеть стратегических связей.",
-        activity_monitor: "Основной репозиторий тактических данных и матрица истории.",
+        activity_monitor: "Матрица истории вашей торговой и аналитической активности.",
         genesis_protocol: "Управление модулями и последовательность восстановления дневника."
       },
       ui: {
         signedInAs: "Вошел_Как",
         signOut: "Выйти",
-        accessProtocol: "ПРОТОКОЛ_ДОСТУПА",
+        accessProtocol: "ПЕРЕЙТИ",
         systemTime: "Системное_Время: 04:22:19",
         encryption: "Шифрование: AES-256_REIFIED"
       }
@@ -203,7 +203,7 @@ export const translations = {
     },
     activityMonitor: {
       title: "Мониторинг Активности",
-      subtitle: "Основной репозиторий тактических данных и матрица истории.",
+      subtitle: "Матрица истории вашей торговой и аналитической активности.",
       archiveDate: "Дата_Архива:",
       initializing: "Инициализация...",
       sessionActive: "Сессия_Активна",
@@ -249,10 +249,10 @@ export const translations = {
         }
       },
       dom: {
-        "Universal_Reification_Pod": "Универсальный_Контейнер_Материализации",
+        "Universal_Reification_Pod": "Универсальная_Аналитическая_Платформа",
         "Sign_Out": "Выйти",
         "Operator_Authenticated": "Оператор_Аутентифицирован",
-        "Initiate_Boot_Sequence": "Запустить_Последовательность_Загрузки",
+        "Initiate_Boot_Sequence": "Продолжить",
         "Sign_In": "Войти",
         "Register": "Регистрация",
         "Email_Address": "Email_Адрес",
@@ -270,10 +270,9 @@ export const translations = {
         "Synchronizing Genesis Matrix...": "Синхронизация Матрицы Генезиса...",
         "Ready.": "Готово.",
         "Boot sequence error.": "Ошибка последовательности загрузки.",
-        "Initiate_Neural_Link": "Запустить_Нейронную_Связь",
+        "Initiate_Neural_Link": "Продолжить",
         "Operator authenticated. System ready.": "Оператор аутентифицирован. Система готова.",
-        "ID: 0x4F.F7 // REIFIED": "ID: 0x4F.F7 // МАТЕРИАЛИЗОВАНО",
-        "B_ARCHIVE_ESTABLISHED": "B_АРХИВ_УСТАНОВЛЕН",
+        "B_ARCHIVE_ESTABLISHED": "АЛЬФА ВЕРСИЯ",
         "Passwords do not match.": "Пароли не совпадают.",
         "Login failed.": "Ошибка входа.",
         "Registration failed.": "Ошибка регистрации.",
@@ -284,12 +283,12 @@ export const translations = {
         "0x01 // VIRTUAL_LOG": "0x01 // ВИРТУАЛЬНЫЙ_ЖУРНАЛ",
         "0x02 // GENESIS_DIARY": "0x02 // ДНЕВНИК_ГЕНЕЗИСА",
         "0x03 // GENESIS_MATRIX": "0x03 // МАТРИЦА_ГЕНЕЗИСА",
-        "\"Simple recording of tactical thoughts and daily reflections.\"": "\"Простая фиксация тактических мыслей и дневных наблюдений.\"",
-        "\"Chronological narrative of strategy evolution and core journal.\"": "\"Хронологическая история развития стратегии и основного журнала.\"",
-        "\"Advanced reification of skill-based trading protocols.\"": "\"Продвинутая материализация торговых протоколов на основе навыков.\"",
-        "Simple recording of tactical thoughts and daily reflections.": "Простая фиксация тактических мыслей и дневных наблюдений.",
-        "Chronological narrative of strategy evolution and core journal.": "Хронологическая история развития стратегии и основного журнала.",
-        "Advanced reification of skill-based trading protocols.": "Продвинутая материализация торговых протоколов на основе навыков.",
+        "\"Node-based knowledge graph for mapping trading concepts and relationships.\"": "\"Узловой граф знаний для картографирования торговых концепций и связей.\"",
+        "\"Interactive 3D visualization of equity curve and performance metrics.\"": "\"Интерактивная 3D визуализация кривой доходности и показателей эффективности.\"",
+        "\"Comprehensive repository for trading strategies, systems, and risk management templates.\"": "\"Комплексный репозиторий для торговых стратегий, систем и шаблонов управления рисками.\"",
+        "Node-based knowledge graph for mapping trading concepts and relationships.": "Узловой граф знаний для картографирования торговых концепций и связей.",
+        "Interactive 3D visualization of equity curve and performance metrics.": "Интерактивная 3D визуализация кривой доходности и показателей эффективности.",
+        "Comprehensive repository for trading strategies, systems, and risk management templates.": "Комплексный репозиторий для торговых стратегий, систем и шаблонов управления рисками.",
         "Wait for user input...": "Ожидание ввода пользователя...",
         "Wait for operator input...": "Ожидание ввода оператора...",
         "Click Left Arrow to Go back": "Нажмите левую стрелку, чтобы вернуться",
@@ -312,7 +311,7 @@ export const translations = {
         "Archival_Briefing_Protocol": "Протокол_Архивного_Брифинга",
         "Diagnostic_Lockout": "Диагностическая_Блокировка",
         "Preset_Focus_Layers": "Предустановленные_Слои_Фокуса",
-        "Matrix_Command_Link": "Командная_Связь_Матрицы",
+        "Command_Panel": "Командная_Панель",
         "GENESIS_PROTOCOL": "ПРОТОКОЛ_ГЕНЕЗИСА",
         "STRATEGY_CORE": "ЯДРО_СТРАТЕГИИ",
         "System_Init": "Инициализация_Системы",
@@ -1488,7 +1487,9 @@ export const translations = {
         "[ HIDE_NORMAL_DIST ]": "[ СКРЫТЬ_NORMAL_DIST ]",
         "[ SHOW_NORMAL_DIST ]": "[ ПОКАЗАТЬ_NORMAL_DIST ]",
         "[ HIDE_STUDENT_T_DIST ]": "[ СКРЫТЬ_STUDENT_T_DIST ]",
-        "[ SHOW_STUDENT_T_DIST ]": "[ ПОКАЗАТЬ_STUDENT_T_DIST ]"
+        "[ SHOW_STUDENT_T_DIST ]": "[ ПОКАЗАТЬ_STUDENT_T_DIST ]",
+        "[ HIDE_WINRATE_CURVE ]": "[ СКРЫТЬ_КРИВУЮ_ВИНРЕЙТА ]",
+        "[ SHOW_WINRATE_CURVE ]": "[ ПОКАЗАТЬ_КРИВУЮ_ВИНРЕЙТА ]"
       }
     },
     common: {
