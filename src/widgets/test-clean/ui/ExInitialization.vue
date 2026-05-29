@@ -41,7 +41,7 @@
 
       <!-- Identity -->
       <div class="flex flex-col items-center space-y-1 text-center">
-        <h1 class="text-3xl tracking-[0.5em] uppercase font-light" style="color: var(--theme-text);">J.L.Jörmungandr</h1>
+        <h1 class="text-3xl tracking-[0.5em] uppercase font-light animate-glitch" style="color: var(--theme-text);">J.L.Jörmungandr</h1>
         <p class="text-[8px] font-mono tracking-[0.6em] uppercase" style="color: var(--theme-text); opacity: 0.3;">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ_АНАЛИТИЧЕСКАЯ_ПЛАТФОРМА' : 'Universal_Analytical_Platform' }}</p>
       </div>
 
@@ -485,4 +485,15 @@ onMounted(() => {
   100% { transform: translateX(100%); opacity: 0; }
 }
 .animate-scan { animation: scan 2.5s linear infinite; }
+
+@keyframes glitch-interval {
+  0%, 2%, 100% { transform: translate(0); text-shadow: none; opacity: 1; filter: none; }
+  0.4% { transform: translate(-2px, 1px) skewX(2deg); opacity: 0.8; text-shadow: 2px 0px rgba(255,0,0,0.6), -2px 0px rgba(0,255,255,0.6); }
+  0.8% { transform: translate(2px, -1px) skewX(-2deg); opacity: 0.9; text-shadow: -2px 0px rgba(255,0,0,0.6), 2px 0px rgba(0,255,255,0.6); }
+  1.2% { transform: translate(-1px, 2px) skewX(1deg); opacity: 0.8; text-shadow: 1px 0px rgba(255,0,0,0.6), -1px 0px rgba(0,255,255,0.6); }
+  1.6% { transform: translate(1px, -2px) skewX(-1deg); opacity: 0.9; text-shadow: -1px 0px rgba(255,0,0,0.6), 1px 0px rgba(0,255,255,0.6); }
+}
+.animate-glitch {
+  animation: glitch-interval 10s infinite;
+}
 </style>

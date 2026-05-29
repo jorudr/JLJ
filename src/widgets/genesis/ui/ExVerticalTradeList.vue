@@ -4,10 +4,10 @@
     <div ref="filterBarRef" class="relative z-30 flex flex-col gap-3 pb-4 border-b border-black/10 dark:border-white/10">
       <div class="flex items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3 min-w-0">
-          <span class="font-black uppercase tracking-widest">Filters</span>
-          <span v-if="activeFilterCount > 0" class="opacity-40 text-[10px] uppercase whitespace-nowrap">({{ activeFilterCount }} Active)</span>
+          <span class="font-black uppercase tracking-widest">{{ locale === 'ru' ? 'Фильтры' : 'Filters' }}</span>
+          <span v-if="activeFilterCount > 0" class="opacity-40 text-[10px] uppercase whitespace-nowrap">({{ activeFilterCount }} {{ locale === 'ru' ? 'Активно' : 'Active' }})</span>
           <button v-if="activeFilterCount > 0" @click="resetAllFilters" class="text-[10px] opacity-40 hover:opacity-100 uppercase transition-opacity">
-            [Reset]
+            {{ locale === 'ru' ? '[Сброс]' : '[Reset]' }}
           </button>
         </div>
         <div class="flex items-center space-x-3 shrink-0">
@@ -16,7 +16,7 @@
               @click="setResultDisplayMode('currency')"
               class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
               :class="resultDisplayMode === 'currency' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              title="Show result in dollars"
+              :title="locale === 'ru' ? 'Показать результат в долларах' : 'Show result in dollars'"
             >
               $
             </button>
@@ -24,16 +24,16 @@
               @click="setResultDisplayMode('percent')"
               class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
               :class="resultDisplayMode === 'percent' ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              title="Show result in percent"
+              :title="locale === 'ru' ? 'Показать результат в процентах' : 'Show result in percent'"
             >
               %
             </button>
           </div>
-          <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group" title="Monochrome">
+          <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group" :title="locale === 'ru' ? 'Монохром' : 'Monochrome'">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-black dark:border-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-black dark:bg-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
-          <button @click="colorMode = 'colorful'" class="relative w-4 h-4 transition-all group" title="Colorful">
+          <button @click="colorMode = 'colorful'" class="relative w-4 h-4 transition-all group" :title="locale === 'ru' ? 'Цветной' : 'Colorful'">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-red-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-green-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
@@ -64,7 +64,7 @@
                   @click.stop="resetFilterById(filter.id)"
                   class="text-[9px] uppercase opacity-40 hover:opacity-100 transition-opacity"
                 >
-                  Clear
+                  {{ locale === 'ru' ? 'Очистить' : 'Clear' }}
                 </button>
               </div>
 
@@ -77,27 +77,27 @@
                   :class="isDropdownOptionActive(filter.id, item.id) ? 'bg-black text-white dark:bg-white dark:text-black font-bold' : 'opacity-65 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'"
                 >
                   <span class="truncate">{{ item.label }}</span>
-                  <span v-if="isDropdownOptionActive(filter.id, item.id)" class="text-[8px] opacity-60">ACTIVE</span>
+                  <span v-if="isDropdownOptionActive(filter.id, item.id)" class="text-[8px] opacity-60">{{ locale === 'ru' ? 'АКТИВНО' : 'ACTIVE' }}</span>
                 </button>
               </div>
 
               <div v-else-if="filter.id === 'profit'" class="py-2">
                 <div class="pb-2 border-b border-black/10 dark:border-white/10">
                   <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-black uppercase tracking-wider">Profit change {{ resultMetricLabel }}</span>
+                    <span class="text-[11px] font-black uppercase tracking-wider">{{ locale === 'ru' ? 'Изменение прибыли' : 'Profit change' }} {{ resultMetricLabel }}</span>
                     <button
                       v-if="filter.isActive"
                       @click.stop="resetFilterById(filter.id)"
                       class="text-[9px] uppercase opacity-40 hover:opacity-100 transition-opacity"
                     >
-                      Clear
+                      {{ locale === 'ru' ? 'Очистить' : 'Clear' }}
                     </button>
                   </div>
-                  <span class="mt-1 block text-[9px] opacity-45">{{ resultDisplayMode === 'percent' ? 'Percent mode' : 'Dollar mode' }}</span>
+                  <span class="mt-1 block text-[9px] opacity-45">{{ resultDisplayMode === 'percent' ? (locale === 'ru' ? 'В процентах' : 'Percent mode') : (locale === 'ru' ? 'В долларах' : 'Dollar mode') }}</span>
                   <input
                     v-model="profitTierSearch"
                     type="text"
-                    placeholder="Search"
+                    :placeholder="locale === 'ru' ? 'Поиск' : 'Search'"
                     class="mt-2 w-full px-2.5 py-2 text-[10px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono"
                   />
                 </div>
@@ -114,40 +114,40 @@
                       <span class="truncate">{{ item.label }}</span>
                       <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ item.description }}</span>
                     </span>
-                    <span v-if="selectedProfitTier === item.id" class="text-[8px] opacity-60">ACTIVE</span>
+                    <span v-if="selectedProfitTier === item.id" class="text-[8px] opacity-60">{{ locale === 'ru' ? 'АКТИВНО' : 'ACTIVE' }}</span>
                   </button>
                 </div>
 
                 <div class="mt-1 pt-3 border-t border-black/10 dark:border-white/10">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">{{ locale === 'ru' ? 'Ручная настройка' : 'Manual Setup' }}</span>
                     <span class="text-[9px] opacity-40">{{ resultMetricLabel }}</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <input v-model.number="customProfitMin" type="number" :placeholder="`Min ${resultMetricLabel}`" class="filter-input w-20" />
+                    <input v-model.number="customProfitMin" type="number" :placeholder="`${locale === 'ru' ? 'Мин' : 'Min'} ${resultMetricLabel}`" class="filter-input w-20" />
                     <span class="text-[9px] opacity-40">..</span>
-                    <input v-model.number="customProfitMax" type="number" :placeholder="`Max ${resultMetricLabel}`" class="filter-input w-20" />
+                    <input v-model.number="customProfitMax" type="number" :placeholder="`${locale === 'ru' ? 'Макс' : 'Max'} ${resultMetricLabel}`" class="filter-input w-20" />
                     <button
                       @click.stop="selectedProfitTier = 'CUSTOM'"
                       class="px-2 py-1 text-[9px] uppercase border border-black/20 dark:border-white/20 opacity-60 hover:opacity-100"
                       :class="selectedProfitTier === 'CUSTOM' ? 'bg-black text-white dark:bg-white dark:text-black opacity-100' : ''"
                     >
-                      Apply
+                      {{ locale === 'ru' ? 'Применить' : 'Apply' }}
                     </button>
                   </div>
                 </div>
               </div>
 
               <div v-else-if="filter.id === 'year'" class="flex items-center gap-2 py-4">
-                <input v-model.number="yearFrom" type="number" placeholder="From" class="filter-input w-24" />
+                <input v-model.number="yearFrom" type="number" :placeholder="locale === 'ru' ? 'От' : 'From'" class="filter-input w-24" />
                 <span class="text-[9px] opacity-40">..</span>
-                <input v-model.number="yearTo" type="number" placeholder="To" class="filter-input w-24" />
+                <input v-model.number="yearTo" type="number" :placeholder="locale === 'ru' ? 'До' : 'To'" class="filter-input w-24" />
               </div>
 
               <div v-else-if="filter.id === 'day'" class="flex items-center gap-2 py-4">
-                <input v-model.number="dayFrom" type="number" min="1" max="31" placeholder="From" class="filter-input w-20" />
+                <input v-model.number="dayFrom" type="number" min="1" max="31" :placeholder="locale === 'ru' ? 'От' : 'From'" class="filter-input w-20" />
                 <span class="text-[9px] opacity-40">..</span>
-                <input v-model.number="dayTo" type="number" min="1" max="31" placeholder="To" class="filter-input w-20" />
+                <input v-model.number="dayTo" type="number" min="1" max="31" :placeholder="locale === 'ru' ? 'До' : 'To'" class="filter-input w-20" />
               </div>
 
               <div v-else-if="filter.id === 'time'" class="py-2">
@@ -167,7 +167,7 @@
 
                 <div class="mt-3 pt-3 border-t border-black/10 dark:border-white/10">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">{{ locale === 'ru' ? 'Ручная настройка' : 'Manual Setup' }}</span>
                     <span class="text-[9px] opacity-40">{{ timeWindowLabel }}</span>
                   </div>
                   <div class="flex items-center gap-2">
@@ -195,14 +195,14 @@
 
                 <div class="mt-3 pt-3 border-t border-black/10 dark:border-white/10">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-[9px] uppercase tracking-widest opacity-45">Manual Setup</span>
+                    <span class="text-[9px] uppercase tracking-widest opacity-45">{{ locale === 'ru' ? 'Ручная настройка' : 'Manual Setup' }}</span>
                     <span class="text-[9px] opacity-40">{{ durationWindowLabel }}</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <input :value="minDuration" @input="setManualDuration('min', $event)" type="number" min="0" placeholder="Min m" class="filter-input w-20" />
+                    <input :value="minDuration" @input="setManualDuration('min', $event)" type="number" min="0" :placeholder="locale === 'ru' ? 'Мин м' : 'Min m'" class="filter-input w-20" />
                     <span class="text-[9px] opacity-40">..</span>
-                    <input :value="maxDuration" @input="setManualDuration('max', $event)" type="number" min="0" placeholder="Max m" class="filter-input w-20" />
-                    <span class="text-[9px] opacity-40">min</span>
+                    <input :value="maxDuration" @input="setManualDuration('max', $event)" type="number" min="0" :placeholder="locale === 'ru' ? 'Макс м' : 'Max m'" class="filter-input w-20" />
+                    <span class="text-[9px] opacity-40">{{ locale === 'ru' ? 'мин' : 'min' }}</span>
                   </div>
                 </div>
               </div>
@@ -212,8 +212,8 @@
                   @click.stop="conditionMatchMode = conditionMatchMode === 'INCLUDED' ? 'EXACT' : 'INCLUDED'"
                   class="w-full px-2 py-2 text-[9px] uppercase tracking-wider flex items-center justify-between opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                 >
-                  <span>Match Mode</span>
-                  <span class="font-bold">{{ conditionMatchMode === 'INCLUDED' ? 'Included' : 'Alone' }}</span>
+                  <span>{{ locale === 'ru' ? 'Режим совпадения' : 'Match Mode' }}</span>
+                  <span class="font-bold">{{ conditionMatchMode === 'INCLUDED' ? (locale === 'ru' ? 'Включено' : 'Included') : (locale === 'ru' ? 'Только' : 'Alone') }}</span>
                 </button>
               </div>
 
@@ -242,30 +242,31 @@
       <div class="flex items-center justify-between pb-1 text-[10px] opacity-60 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
           <button @click="toggleSelectAllTrades" class="hover:opacity-100 transition-opacity font-bold">
-            {{ isAllSelected ? '[Deselect All]' : '[Select All]' }}
+            {{ isAllSelected ? (locale === 'ru' ? '[Отменить выбор]' : '[Deselect All]') : (locale === 'ru' ? '[Выбрать все]' : '[Select All]') }}
           </button>
-          <span v-if="selectedTradeIds.length > 0" class="opacity-70">({{ selectedTradeIds.length }} Selected)</span>
+          <span v-if="selectedTradeIds.length > 0" class="opacity-70">({{ selectedTradeIds.length }} {{ locale === 'ru' ? 'Выбрано' : 'Selected' }})</span>
           <button v-if="selectedTradeIds.length > 0" @click="removeSelectedTrades" class="hover:opacity-100 transition-opacity font-bold text-red-500">
-            [Remove]
+            {{ locale === 'ru' ? '[Удалить]' : '[Remove]' }}
           </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 items-center pb-3 border-b border-black/10 dark:border-white/10 text-[10px] opacity-40 uppercase tracking-widest px-2">
+      <div class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b border-black/10 dark:border-white/10 text-[10px] opacity-40 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
           <button @click.stop="toggleSelectAllTrades" class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0" :class="isAllSelected ? 'bg-black dark:bg-white text-white dark:text-black opacity-100' : 'opacity-40'">
             <span v-if="isAllSelected" class="text-[8px] font-bold">✓</span>
             <span v-else-if="selectedTradeIds.length > 0" class="text-[8px] font-bold">-</span>
           </button>
-          <span>Direction</span>
+          <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
         </div>
-        <span>Asset</span>
-        <span class="text-right">Duration</span>
-        <span class="text-right">Result</span>
+        <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
+        <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
+        <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
+        <span class="w-6"></span>
       </div>
 
       <div v-if="filteredTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
-        No Results
+        {{ locale === 'ru' ? 'Нет результатов' : 'No Results' }}
       </div>
 
       <!-- TRADE ROWS -->
@@ -277,11 +278,11 @@
         >
           <!-- ROW GRID -->
           <div 
-            class="grid grid-cols-4 items-center py-3 px-2 cursor-pointer opacity-80 group-hover:opacity-100 transition-opacity" 
-            @click="toggleTradeExpand(trade.id)"
+            class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center py-3 px-2 opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer"
+            @click="emit('open-trade', { tradeId: trade.id })"
           >
-            <div class="flex items-center space-x-3 truncate">
-              <button @click.stop="toggleSelectTrade(trade.id)" class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0" :class="selectedTradeIds.includes(trade.id) ? 'bg-black dark:bg-white text-white dark:text-black opacity-100' : 'opacity-30'">
+            <div class="flex items-center space-x-3 truncate" @click.stop="toggleSelectTrade(trade.id)">
+              <button class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0 cursor-pointer" :class="selectedTradeIds.includes(trade.id) ? 'bg-black dark:bg-white text-white dark:text-black opacity-100' : 'opacity-30'">
                 <span v-if="selectedTradeIds.includes(trade.id)" class="text-[8px] font-bold">✓</span>
               </button>
               <span class="w-1 h-1 rounded-full shrink-0" :class="colorMode === 'colorful' ? (trade.status === 'WIN' ? 'bg-green-500' : trade.status === 'LOSS' ? 'bg-red-500' : 'bg-yellow-500') : (trade.status === 'WIN' ? 'bg-black dark:bg-white' : trade.status === 'LOSS' ? 'bg-black/30 dark:bg-white/30' : 'bg-black/60 dark:bg-white/60')"></span>
@@ -291,6 +292,11 @@
             <span class="opacity-60 uppercase tracking-wider truncate">{{ trade.asset }}</span>
             <span class="opacity-40 text-right tracking-wider truncate">{{ trade.duration }}</span>
             <span class="font-bold text-right tracking-wider" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
+            <button @click.stop="toggleTradeExpand(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="View details">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="expandedTradeId === trade.id ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+              </svg>
+            </button>
           </div>
 
           <!-- EXPANDED TELEMETRY -->
@@ -298,46 +304,46 @@
             <!-- TRADE EXECUTION DATA GRID -->
             <div class="flex flex-col space-y-2">
               <div class="flex items-center justify-between">
-                <span class="block text-[9px] opacity-40 uppercase tracking-widest">// Execution Metrics</span>
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Метрики Исполнения' : '// Execution Metrics' }}</span>
                 <button @click.stop="toggleTradeExpand(trade.id)" class="text-[9px] uppercase opacity-40 hover:opacity-100 font-bold tracking-widest transition-opacity">
-                  [Close]
+                  {{ locale === 'ru' ? '[Закрыть]' : '[Close]' }}
                 </button>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-[10px]">
                 <div class="flex flex-col">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Entry Price</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Цена Входа' : 'Entry Price' }}</span>
                   <span class="font-bold mt-0.5 text-xs">{{ trade.entryPrice }}</span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Exit Price</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Цена Выхода' : 'Exit Price' }}</span>
                   <span class="font-bold mt-0.5 text-xs">{{ trade.exitPrice }}</span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Position Size</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Размер Позиции' : 'Position Size' }}</span>
                   <span class="font-bold mt-0.5 text-xs">{{ trade.size }}</span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Result</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
                   <span class="font-bold mt-0.5 text-xs" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Duration</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
                   <span class="font-bold mt-0.5">{{ trade.duration }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Stop Loss</span>
-                  <span class="font-bold mt-0.5">{{ trade.stopLoss || 'NONE' }}</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Стоп Лосс' : 'Stop Loss' }}</span>
+                  <span class="font-bold mt-0.5">{{ trade.stopLoss || (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Take Profit</span>
-                  <span class="font-bold mt-0.5">{{ trade.takeProfit || 'NONE' }}</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Тейк Профит' : 'Take Profit' }}</span>
+                  <span class="font-bold mt-0.5">{{ trade.takeProfit || (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Date Entry</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Входа' : 'Date Entry' }}</span>
                   <span class="font-bold mt-0.5 opacity-80">{{ trade.dateEntryStr }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
-                  <span class="opacity-40 text-[9px] uppercase tracking-wider">Date Exit</span>
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Выхода' : 'Date Exit' }}</span>
                   <span class="font-bold mt-0.5 opacity-80">{{ trade.dateExitStr }}</span>
                 </div>
               </div>
@@ -345,7 +351,7 @@
 
             <!-- ATTACHED NOTES -->
             <div class="flex flex-col space-y-3">
-              <span class="block text-[9px] opacity-40 uppercase tracking-widest">// Attached Notes ({{ trade.notes.length }})</span>
+              <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Прикрепленные Заметки' : '// Attached Notes' }} ({{ trade.notes.length }})</span>
               <div v-if="trade.notes.length > 0" class="flex flex-col space-y-1.5 pt-1">
                 <div 
                   v-for="(note, nIdx) in trade.notes" 
@@ -356,14 +362,14 @@
                   <div class="flex items-center justify-between text-[10px] font-mono opacity-60 group-hover:opacity-100 transition-opacity">
                     <div class="flex items-center space-x-2 truncate pr-2">
                       <span class="font-bold">[{{ note.author }}]</span>
-                      <span class="truncate">{{ note.text ? note.text.slice(0, 40) + (note.text.length > 40 ? '...' : '') : `Note #${nIdx + 1}` }}</span>
+                      <span class="truncate">{{ note.text ? note.text.slice(0, 40) + (note.text.length > 40 ? '...' : '') : `${locale === 'ru' ? 'Заметка' : 'Note'} #${Number(nIdx) + 1}` }}</span>
                     </div>
-                    <span class="shrink-0 text-[9px] opacity-40 group-hover:opacity-100">[OPEN]</span>
+                    <span class="shrink-0 text-[9px] opacity-40 group-hover:opacity-100">{{ locale === 'ru' ? '[ОТКРЫТЬ]' : '[OPEN]' }}</span>
                   </div>
                 </div>
               </div>
               <div v-else class="pt-1 text-[10px] font-mono uppercase tracking-[0.25em] opacity-30">
-                NO_ATTACHED_NOTES
+                {{ locale === 'ru' ? 'НЕТ_ПРИКРЕПЛЕННЫХ_ЗАМЕТОК' : 'NO_ATTACHED_NOTES' }}
               </div>
             </div>
           </div>
@@ -376,6 +382,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { locale } = useI18n()
 
 const props = defineProps<{
   trades?: any[]
@@ -383,6 +392,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'open-note', payload: { tradeId: string; noteId: string }): void
+  (e: 'open-trade', payload: { tradeId: string }): void
 }>()
 
 const expandedTradeId = ref<string | null>(null)
@@ -434,9 +444,9 @@ const activeFilterChips = computed(() => {
       chips.push({ id: `condition-${condId}`, type: 'CONDITION', label: conditionsList.value.find(x => x.id === condId)?.label || condId })
     })
   }
-  if (selectedDirection.value !== 'ALL') chips.push({ id: 'direction', type: 'DIRECTION', label: directionList.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value })
+  if (selectedDirection.value !== 'ALL') chips.push({ id: 'direction', type: 'DIRECTION', label: directionList.value.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value })
   if (selectedAsset.value !== 'ALL') chips.push({ id: 'asset', type: 'ASSET', label: assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value })
-  if (selectedStatus.value !== 'ALL') chips.push({ id: 'status', type: 'STATUS', label: statusList.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value })
+  if (selectedStatus.value !== 'ALL') chips.push({ id: 'status', type: 'STATUS', label: statusList.value.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value })
   if (selectedProfitTier.value !== 'ALL') {
     const label = selectedProfitTier.value === 'CUSTOM'
       ? `${customProfitMin.value !== null && customProfitMin.value !== '' as any ? customProfitMin.value : '-∞'}${resultMetricLabel.value} .. ${customProfitMax.value !== null && customProfitMax.value !== '' as any ? customProfitMax.value : '+∞'}${resultMetricLabel.value}`
@@ -494,19 +504,19 @@ const formatTimeMinuteStr = (mins: number) => {
 const hasTimeWindowFilter = computed(() => minTimeMinute.value > ABS_MIN_TIME_MIN || maxTimeMinute.value < ABS_MAX_TIME_MIN)
 const manualMinTime = computed(() => formatTimeMinuteStr(minTimeMinute.value))
 const manualMaxTime = computed(() => maxTimeMinute.value === ABS_MAX_TIME_MIN ? '23:59' : formatTimeMinuteStr(maxTimeMinute.value))
-const timeWindowLabel = computed(() => hasTimeWindowFilter.value ? `${formatTimeMinuteStr(minTimeMinute.value)} .. ${manualMaxTime.value}` : 'All Times')
+const timeWindowLabel = computed(() => hasTimeWindowFilter.value ? `${formatTimeMinuteStr(minTimeMinute.value)} .. ${manualMaxTime.value}` : (locale.value === 'ru' ? 'Всё время' : 'All Times'))
 
 type MinutePreset = { id: string; label: string; description: string; min: number; max: number }
 
-const timeWindowPresets: MinutePreset[] = [
-  { id: 'ALL', label: 'All Times', description: 'No intraday restriction', min: ABS_MIN_TIME_MIN, max: ABS_MAX_TIME_MIN },
-  { id: 'PREMARKET', label: 'Pre Market', description: '04:00 .. 09:30', min: 240, max: 570 },
-  { id: 'OPEN', label: 'Opening Drive', description: '09:30 .. 11:00', min: 570, max: 660 },
-  { id: 'MIDDAY', label: 'Midday', description: '11:00 .. 14:00', min: 660, max: 840 },
-  { id: 'POWER_HOUR', label: 'Power Hour', description: '15:00 .. 16:00', min: 900, max: 960 },
-  { id: 'AFTER_HOURS', label: 'After Hours', description: '16:00 .. 20:00', min: 960, max: 1200 },
-  { id: 'OVERNIGHT', label: 'Overnight', description: '20:00 .. 23:59', min: 1200, max: 1439 }
-]
+const timeWindowPresets = computed<MinutePreset[]>(() => [
+  { id: 'ALL', label: locale.value === 'ru' ? 'Всё время' : 'All Times', description: locale.value === 'ru' ? 'Без ограничений внутри дня' : 'No intraday restriction', min: ABS_MIN_TIME_MIN, max: ABS_MAX_TIME_MIN },
+  { id: 'PREMARKET', label: locale.value === 'ru' ? 'Премаркет' : 'Pre Market', description: '04:00 .. 09:30', min: 240, max: 570 },
+  { id: 'OPEN', label: locale.value === 'ru' ? 'Открытие' : 'Opening Drive', description: '09:30 .. 11:00', min: 570, max: 660 },
+  { id: 'MIDDAY', label: locale.value === 'ru' ? 'Полдень' : 'Midday', description: '11:00 .. 14:00', min: 660, max: 840 },
+  { id: 'POWER_HOUR', label: locale.value === 'ru' ? 'Пауэр-ауэр' : 'Power Hour', description: '15:00 .. 16:00', min: 900, max: 960 },
+  { id: 'AFTER_HOURS', label: locale.value === 'ru' ? 'После закрытия' : 'After Hours', description: '16:00 .. 20:00', min: 960, max: 1200 },
+  { id: 'OVERNIGHT', label: locale.value === 'ru' ? 'Овернайт' : 'Overnight', description: '20:00 .. 23:59', min: 1200, max: 1439 }
+])
 
 const normalizeTimeMax = (value: number) => value >= 1439 ? ABS_MAX_TIME_MIN : value
 
@@ -520,8 +530,10 @@ const isTimeWindowPresetActive = (preset: MinutePreset) => {
 }
 
 const parseTimeInput = (value: string) => {
-  const [hours, minutes] = value.split(':').map(Number)
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null
+  const parts = value.split(':').map(Number)
+  const hours = parts[0]
+  const minutes = parts[1]
+  if (hours === undefined || minutes === undefined || !Number.isFinite(hours) || !Number.isFinite(minutes)) return null
   return Math.max(ABS_MIN_TIME_MIN, Math.min(ABS_MAX_TIME_MIN, hours * 60 + minutes))
 }
 
@@ -542,18 +554,18 @@ const minDuration = ref(ABS_MIN_DURATION)
 const maxDuration = ref(ABS_MAX_DURATION)
 const hasDurationWindowFilter = computed(() => minDuration.value > ABS_MIN_DURATION || maxDuration.value < ABS_MAX_DURATION)
 const durationWindowLabel = computed(() => {
-  if (!hasDurationWindowFilter.value) return 'All Durations'
-  const maxLabel = maxDuration.value >= ABS_MAX_DURATION ? 'Unlimited' : `${maxDuration.value}m`
-  return `${minDuration.value}m .. ${maxLabel}`
+  if (!hasDurationWindowFilter.value) return locale.value === 'ru' ? 'Все длительности' : 'All Durations'
+  const maxLabel = maxDuration.value >= ABS_MAX_DURATION ? (locale.value === 'ru' ? 'Безлимит' : 'Unlimited') : `${maxDuration.value}${locale.value === 'ru' ? 'м' : 'm'}`
+  return `${minDuration.value}${locale.value === 'ru' ? 'м' : 'm'} .. ${maxLabel}`
 })
 
-const durationWindowPresets: MinutePreset[] = [
-  { id: 'ALL', label: 'All Durations', description: 'No duration restriction', min: ABS_MIN_DURATION, max: ABS_MAX_DURATION },
-  { id: 'SCALP', label: 'Scalp', description: '0 .. 15 minutes', min: 0, max: 15 },
-  { id: 'INTRADAY_SHORT', label: 'Fast Intraday', description: '15 .. 60 minutes', min: 15, max: 60 },
-  { id: 'INTRADAY_CORE', label: 'Core Intraday', description: '1 .. 4 hours', min: 60, max: 240 },
-  { id: 'EXTENDED', label: 'Extended Hold', description: '4 .. 12 hours', min: 240, max: ABS_MAX_DURATION }
-]
+const durationWindowPresets = computed<MinutePreset[]>(() => [
+  { id: 'ALL', label: locale.value === 'ru' ? 'Все длительности' : 'All Durations', description: locale.value === 'ru' ? 'Без ограничений' : 'No duration restriction', min: ABS_MIN_DURATION, max: ABS_MAX_DURATION },
+  { id: 'SCALP', label: locale.value === 'ru' ? 'Скальп' : 'Scalp', description: locale.value === 'ru' ? '0 .. 15 минут' : '0 .. 15 minutes', min: 0, max: 15 },
+  { id: 'INTRADAY_SHORT', label: locale.value === 'ru' ? 'Быстрый Интрадей' : 'Fast Intraday', description: locale.value === 'ru' ? '15 .. 60 минут' : '15 .. 60 minutes', min: 15, max: 60 },
+  { id: 'INTRADAY_CORE', label: locale.value === 'ru' ? 'Основной Интрадей' : 'Core Intraday', description: locale.value === 'ru' ? '1 .. 4 часа' : '1 .. 4 hours', min: 60, max: 240 },
+  { id: 'EXTENDED', label: locale.value === 'ru' ? 'Длительное удержание' : 'Extended Hold', description: locale.value === 'ru' ? '4 .. 12 часов' : '4 .. 12 hours', min: 240, max: ABS_MAX_DURATION }
+])
 
 const applyDurationWindowPreset = (preset: MinutePreset) => {
   minDuration.value = preset.min
@@ -587,18 +599,18 @@ const yearTo = ref<number | null>(null)
 const dayFrom = ref<number | null>(null)
 const dayTo = ref<number | null>(null)
 
-const statusList = [
-  { id: 'ALL', label: 'ALL' },
-  { id: 'WIN', label: 'WIN' },
-  { id: 'LOSS', label: 'LOSS' },
-  { id: 'SCRATCH', label: 'SCRATCH' }
-]
+const statusList = computed(() => [
+  { id: 'ALL', label: locale.value === 'ru' ? 'ВСЕ' : 'ALL' },
+  { id: 'WIN', label: locale.value === 'ru' ? 'ПРИБЫЛЬ' : 'WIN' },
+  { id: 'LOSS', label: locale.value === 'ru' ? 'УБЫТОК' : 'LOSS' },
+  { id: 'SCRATCH', label: locale.value === 'ru' ? 'БЕЗУБЫТОК' : 'SCRATCH' }
+])
 
-const directionList = [
-  { id: 'ALL', label: 'ALL' },
-  { id: 'LONG', label: 'LONG' },
-  { id: 'SHORT', label: 'SHORT' }
-]
+const directionList = computed(() => [
+  { id: 'ALL', label: locale.value === 'ru' ? 'ВСЕ' : 'ALL' },
+  { id: 'LONG', label: locale.value === 'ru' ? 'ЛОНГ' : 'LONG' },
+  { id: 'SHORT', label: locale.value === 'ru' ? 'ШОРТ' : 'SHORT' }
+])
 
 const selectedProfitTier = ref('ALL')
 const profitTierSearch = ref('')
@@ -616,28 +628,28 @@ type ProfitTierOption = {
 const profitTierOptions = computed<ProfitTierOption[]>(() => {
   if (resultDisplayMode.value === 'currency') {
     return [
-      { id: 'ABOVE_5000', label: 'Above $5,000', description: 'Exceptional up', min: 5000 },
-      { id: 'ABOVE_1000', label: 'Above $1,000', description: 'Very strong up', min: 1000 },
-      { id: 'ABOVE_500', label: 'Above $500', description: 'Strong up', min: 500 },
-      { id: 'ABOVE_100', label: 'Above $100', description: 'Moderate up', min: 100 },
-      { id: 'ZERO_TO_100', label: '$0 to $100', description: 'Weak up', min: 0, max: 100 },
-      { id: 'ABOVE_0', label: 'Above $0', description: 'Up', min: 0 },
-      { id: 'BELOW_0', label: 'Below $0', description: 'Down', max: 0 },
-      { id: 'MINUS_100_TO_0', label: '-$100 to $0', description: 'Weak down', min: -100, max: 0 },
-      { id: 'BELOW_MINUS_100', label: 'Below -$100', description: 'Strong down', max: -100 }
+      { id: 'ABOVE_5000', label: locale.value === 'ru' ? 'Больше $5,000' : 'Above $5,000', description: locale.value === 'ru' ? 'Исключительный рост' : 'Exceptional up', min: 5000 },
+      { id: 'ABOVE_1000', label: locale.value === 'ru' ? 'Больше $1,000' : 'Above $1,000', description: locale.value === 'ru' ? 'Очень сильный рост' : 'Very strong up', min: 1000 },
+      { id: 'ABOVE_500', label: locale.value === 'ru' ? 'Больше $500' : 'Above $500', description: locale.value === 'ru' ? 'Сильный рост' : 'Strong up', min: 500 },
+      { id: 'ABOVE_100', label: locale.value === 'ru' ? 'Больше $100' : 'Above $100', description: locale.value === 'ru' ? 'Умеренный рост' : 'Moderate up', min: 100 },
+      { id: 'ZERO_TO_100', label: locale.value === 'ru' ? '$0 до $100' : '$0 to $100', description: locale.value === 'ru' ? 'Слабый рост' : 'Weak up', min: 0, max: 100 },
+      { id: 'ABOVE_0', label: locale.value === 'ru' ? 'Больше $0' : 'Above $0', description: locale.value === 'ru' ? 'Рост' : 'Up', min: 0 },
+      { id: 'BELOW_0', label: locale.value === 'ru' ? 'Меньше $0' : 'Below $0', description: locale.value === 'ru' ? 'Падение' : 'Down', max: 0 },
+      { id: 'MINUS_100_TO_0', label: locale.value === 'ru' ? '-$100 до $0' : '-$100 to $0', description: locale.value === 'ru' ? 'Слабое падение' : 'Weak down', min: -100, max: 0 },
+      { id: 'BELOW_MINUS_100', label: locale.value === 'ru' ? 'Меньше -$100' : 'Below -$100', description: locale.value === 'ru' ? 'Сильное падение' : 'Strong down', max: -100 }
     ]
   }
 
   return [
-    { id: 'ABOVE_30', label: 'Above 30%', description: 'Exceptional up', min: 30 },
-    { id: 'ABOVE_20', label: 'Above 20%', description: 'Very strong up', min: 20 },
-    { id: 'ABOVE_10', label: 'Above 10%', description: 'Strong up', min: 10 },
-    { id: 'ABOVE_5', label: 'Above 5%', description: 'Moderate up', min: 5 },
-    { id: 'ZERO_TO_5', label: '0% to 5%', description: 'Weak up', min: 0, max: 5 },
-    { id: 'ABOVE_0', label: 'Above 0%', description: 'Up', min: 0 },
-    { id: 'BELOW_0', label: 'Below 0%', description: 'Down', max: 0 },
-    { id: 'MINUS_5_TO_0', label: '-5% to 0%', description: 'Weak down', min: -5, max: 0 },
-    { id: 'BELOW_MINUS_5', label: 'Below -5%', description: 'Strong down', max: -5 }
+    { id: 'ABOVE_30', label: locale.value === 'ru' ? 'Больше 30%' : 'Above 30%', description: locale.value === 'ru' ? 'Исключительный рост' : 'Exceptional up', min: 30 },
+    { id: 'ABOVE_20', label: locale.value === 'ru' ? 'Больше 20%' : 'Above 20%', description: locale.value === 'ru' ? 'Очень сильный рост' : 'Very strong up', min: 20 },
+    { id: 'ABOVE_10', label: locale.value === 'ru' ? 'Больше 10%' : 'Above 10%', description: locale.value === 'ru' ? 'Сильный рост' : 'Strong up', min: 10 },
+    { id: 'ABOVE_5', label: locale.value === 'ru' ? 'Больше 5%' : 'Above 5%', description: locale.value === 'ru' ? 'Умеренный рост' : 'Moderate up', min: 5 },
+    { id: 'ZERO_TO_5', label: locale.value === 'ru' ? '0% до 5%' : '0% to 5%', description: locale.value === 'ru' ? 'Слабый рост' : 'Weak up', min: 0, max: 5 },
+    { id: 'ABOVE_0', label: locale.value === 'ru' ? 'Больше 0%' : 'Above 0%', description: locale.value === 'ru' ? 'Рост' : 'Up', min: 0 },
+    { id: 'BELOW_0', label: locale.value === 'ru' ? 'Меньше 0%' : 'Below 0%', description: locale.value === 'ru' ? 'Падение' : 'Down', max: 0 },
+    { id: 'MINUS_5_TO_0', label: locale.value === 'ru' ? '-5% до 0%' : '-5% to 0%', description: locale.value === 'ru' ? 'Слабое падение' : 'Weak down', min: -5, max: 0 },
+    { id: 'BELOW_MINUS_5', label: locale.value === 'ru' ? 'Меньше -5%' : 'Below -5%', description: locale.value === 'ru' ? 'Сильное падение' : 'Strong down', max: -5 }
   ]
 })
 
@@ -1292,29 +1304,29 @@ const assetsList = computed(() => {
 })
 
 const filterDropdowns = computed(() => [
-  { id: 'scenarios', label: 'Scenarios', type: 'options', options: scenariosList.value, isActive: selectedScenario.value !== 'ALL' },
-  { id: 'conditions', label: 'Conditions', type: 'options', options: conditionsList.value.filter(i => i.id !== 'ALL'), isActive: selectedCondition.value.length > 0 },
-  { id: 'direction', label: 'Direction', type: 'options', options: directionList, isActive: selectedDirection.value !== 'ALL' },
-  { id: 'asset', label: 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value !== 'ALL' },
-  { id: 'status', label: 'Status', type: 'options', options: statusList, isActive: selectedStatus.value !== 'ALL' },
-  { id: 'profit', label: 'Profit Tier', type: 'custom', options: [], isActive: selectedProfitTier.value !== 'ALL' },
-  { id: 'year', label: 'Year Range', type: 'range', options: [], isActive: hasYearRangeFilter.value },
-  { id: 'day', label: 'Day Range', type: 'range', options: [], isActive: hasDayRangeFilter.value },
-  { id: 'time', label: 'Time Window', type: 'custom', options: [], isActive: hasTimeWindowFilter.value },
-  { id: 'duration', label: 'Duration Window', type: 'custom', options: [], isActive: hasDurationWindowFilter.value }
+  { id: 'scenarios', label: locale.value === 'ru' ? 'Сценарии' : 'Scenarios', type: 'options', options: scenariosList.value, isActive: selectedScenario.value !== 'ALL' },
+  { id: 'conditions', label: locale.value === 'ru' ? 'Условия' : 'Conditions', type: 'options', options: conditionsList.value.filter(i => i.id !== 'ALL'), isActive: selectedCondition.value.length > 0 },
+  { id: 'direction', label: locale.value === 'ru' ? 'Направление' : 'Direction', type: 'options', options: directionList.value, isActive: selectedDirection.value !== 'ALL' },
+  { id: 'asset', label: locale.value === 'ru' ? 'Актив' : 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value !== 'ALL' },
+  { id: 'status', label: locale.value === 'ru' ? 'Статус' : 'Status', type: 'options', options: statusList.value, isActive: selectedStatus.value !== 'ALL' },
+  { id: 'profit', label: locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier', type: 'custom', options: [], isActive: selectedProfitTier.value !== 'ALL' },
+  { id: 'year', label: locale.value === 'ru' ? 'Диапазон лет' : 'Year Range', type: 'range', options: [], isActive: hasYearRangeFilter.value },
+  { id: 'day', label: locale.value === 'ru' ? 'Диапазон дней' : 'Day Range', type: 'range', options: [], isActive: hasDayRangeFilter.value },
+  { id: 'time', label: locale.value === 'ru' ? 'Временное окно' : 'Time Window', type: 'custom', options: [], isActive: hasTimeWindowFilter.value },
+  { id: 'duration', label: locale.value === 'ru' ? 'Длительность' : 'Duration Window', type: 'custom', options: [], isActive: hasDurationWindowFilter.value }
 ])
 
 const filterButtonLabel = (id: string) => {
-  if (id === 'scenarios') return selectedScenario.value === 'ALL' ? 'Scenarios' : scenariosList.value.find(x => x.id === selectedScenario.value)?.label || selectedScenario.value
-  if (id === 'conditions') return selectedCondition.value.length === 0 ? 'Conditions' : `Conditions (${selectedCondition.value.length})`
-  if (id === 'direction') return selectedDirection.value === 'ALL' ? 'Direction' : directionList.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value
-  if (id === 'asset') return selectedAsset.value === 'ALL' ? 'Asset' : assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value
-  if (id === 'status') return selectedStatus.value === 'ALL' ? 'Status' : statusList.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value
-  if (id === 'profit') return selectedProfitTier.value === 'ALL' ? 'Profit Tier' : selectedProfitTier.value === 'CUSTOM' ? 'Custom Profit' : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
-  if (id === 'year') return hasYearRangeFilter.value ? `Year ${formatRangeLabel(yearFrom.value, yearTo.value)}` : 'Year Range'
-  if (id === 'day') return hasDayRangeFilter.value ? `Day ${formatRangeLabel(dayFrom.value, dayTo.value)}` : 'Day Range'
-  if (id === 'time') return hasTimeWindowFilter.value ? timeWindowLabel.value : 'Time Window'
-  if (id === 'duration') return hasDurationWindowFilter.value ? durationWindowLabel.value : 'Duration Window'
+  if (id === 'scenarios') return selectedScenario.value === 'ALL' ? (locale.value === 'ru' ? 'Сценарии' : 'Scenarios') : scenariosList.value.find(x => x.id === selectedScenario.value)?.label || selectedScenario.value
+  if (id === 'conditions') return selectedCondition.value.length === 0 ? (locale.value === 'ru' ? 'Условия' : 'Conditions') : `${locale.value === 'ru' ? 'Условия' : 'Conditions'} (${selectedCondition.value.length})`
+  if (id === 'direction') return selectedDirection.value === 'ALL' ? (locale.value === 'ru' ? 'Направление' : 'Direction') : directionList.value.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value
+  if (id === 'asset') return selectedAsset.value === 'ALL' ? (locale.value === 'ru' ? 'Актив' : 'Asset') : assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value
+  if (id === 'status') return selectedStatus.value === 'ALL' ? (locale.value === 'ru' ? 'Статус' : 'Status') : statusList.value.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value
+  if (id === 'profit') return selectedProfitTier.value === 'ALL' ? (locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier') : selectedProfitTier.value === 'CUSTOM' ? (locale.value === 'ru' ? 'Польз. Прибыль' : 'Custom Profit') : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
+  if (id === 'year') return hasYearRangeFilter.value ? `${locale.value === 'ru' ? 'Год' : 'Year'} ${formatRangeLabel(yearFrom.value, yearTo.value)}` : (locale.value === 'ru' ? 'Диапазон лет' : 'Year Range')
+  if (id === 'day') return hasDayRangeFilter.value ? `${locale.value === 'ru' ? 'День' : 'Day'} ${formatRangeLabel(dayFrom.value, dayTo.value)}` : (locale.value === 'ru' ? 'Диапазон дней' : 'Day Range')
+  if (id === 'time') return hasTimeWindowFilter.value ? timeWindowLabel.value : (locale.value === 'ru' ? 'Временное окно' : 'Time Window')
+  if (id === 'duration') return hasDurationWindowFilter.value ? durationWindowLabel.value : (locale.value === 'ru' ? 'Длительность' : 'Duration Window')
   return id
 }
 
@@ -1509,7 +1521,7 @@ const removeSelectedTrades = async () => {
 
 </script>
 
-<style scoped>
+<style scoped lang="postcss">
 .filter-input {
   @apply px-2 py-1 text-[9px] bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
 }

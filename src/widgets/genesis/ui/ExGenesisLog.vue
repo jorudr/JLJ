@@ -45,7 +45,7 @@
       <!-- LIST VIEW LAYER -->
       <div v-if="viewType === 'list'" class="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white dark:bg-[#070707] backdrop-blur-3xl pointer-events-auto">
          <div class="w-full h-full overflow-y-auto custom-scrollbar px-12 md:px-24 py-24 md:py-32">
-           <ExVerticalTradeList :trades="currentTrades" @open-note="handleOpenNote" />
+           <ExVerticalTradeList :trades="currentTrades" @open-note="handleOpenNote" @open-trade="handleOpenTrade" />
          </div>
       </div>
 
@@ -580,6 +580,14 @@ const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
    panelInitialNoteId.value = payload.noteId
    showExtraDetails.value = true
    showNodeMap.value = true
+}
+
+const handleOpenTrade = (payload: { tradeId: string }) => {
+   if (authStore.user?.type !== 'premium') {
+     showPaywall.value = true
+     return
+   }
+   selectedTradeId.value = payload.tradeId
 }
 
 watch(showNodeMap, (val) => {
