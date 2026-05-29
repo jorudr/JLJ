@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Voes",
+  "productName": "JLJ",
   "version": "1.0.4-alpha",
   "identifier": "com.voe.app",
   "build": {
@@ -12,17 +12,20 @@
   "app": {
     "windows": [
       {
-        "title": "Voe's",
+        "title": "JLJ",
         "width": 1200,
         "height": 800,
         "resizable": false,
+        "maximized": true,
         "fullscreen": false,
         "decorations": false
       }
     ],
     "security": {
       "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data: blob: ws: wss:;",
-      "capabilities": ["default"]
+      "capabilities": [
+        "default"
+      ]
     },
     "withGlobalTauri": true
   },
@@ -30,20 +33,26 @@
     "active": true,
     "targets": "all",
     "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
       "icons/icon.ico"
     ]
   },
   "plugins": {
-      "updater": {
-          "endpoints": [
-              "https://github.com/waltzno19inaminor-cmd/voe-s-desktop-application/releases/latest/download/latest.json"
-          ],
-          "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVDQzVDRUEwNzY3ODI3OTcKUldTWEozaDJvTTdGN0tMWjVTanZqem9nS0dMbXhRaHVUZ0hUMDVFMk9WZkhvMHFmVVpkVEpnTVEK"
-      },
-      "deep-link": {
-        "desktop": {
-          "schemes": ["com.googleusercontent.apps.79915571390-v910mjv94lmgod0nrcu1vj9ctb3tdm22"]
-        }
+    "updater": {
+      "endpoints": [
+        "https://github.com/waltzno19inaminor-cmd/voe-s-desktop-application/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVDQzVDRUEwNzY3ODI3OTcKUldTWEozaDJvTTdGN0tMWjVTanZqem9nS0dMbXhRaHVUZ0hUMDVFMk9WZkhvMHFmVVpkVEpnTVEK"
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "com.googleusercontent.apps.79915571390-v910mjv94lmgod0nrcu1vj9ctb3tdm22"
+        ]
       }
+    }
   }
 }

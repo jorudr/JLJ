@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Voes needs microphone access to record audio notes inside Genesis Matrix scenarios.</string>
+	<string>JLJ needs microphone access to record audio notes inside Genesis Matrix scenarios.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
