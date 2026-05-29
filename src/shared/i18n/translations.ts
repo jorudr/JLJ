@@ -109,24 +109,24 @@ export const translations = {
       awaitingDeployment: "[ AWAITING_DEPLOYMENT ]"
     },
     report: {
-      transmitReport: "Transmit_Report",
-      classification: "Report_Classification",
-      systemAnomaly: "System_Anomaly",
-      featureProposal: "Feature_Proposal",
-      primaryDesignation: "Primary_Designation",
-      titlePlaceholder: "E.G. 'UI OVERLAP ON MOBILE' OR 'ADD DARK MODE HOTKEY'",
-      detailedTelemetry: "Detailed_Telemetry",
-      descPlaceholder: "PROVIDE ADDITIONAL CONTEXT OR SPECIFICS...",
+      transmitReport: "Submit Report",
+      classification: "Report Type",
+      systemAnomaly: "Problem / Bug",
+      featureProposal: "Idea / Feature",
+      primaryDesignation: "Title",
+      titlePlaceholder: "e.g., 'UI overlap on mobile' or 'Add dark mode hotkey'",
+      detailedTelemetry: "Description",
+      descPlaceholder: "Provide additional context or specifics...",
       cancel: "Cancel",
       processing: "Processing...",
-      transmitData: "Transmit_Data",
-      success: "TRANSMISSION_SUCCESSFUL: REPORT LOGGED IN ARCHIVE.",
+      transmitData: "Submit",
+      success: "Success: Report submitted.",
       errors: {
-        authError: "AUTH_ERROR: OPERATOR EMAIL NOT FOUND",
-        validationError: "VALIDATION_ERROR: ALL FIELDS ARE REQUIRED",
-        rateLimit: "RATE_LIMIT_EXCEEDED: PLEASE WAIT",
-        hours: "HOURS BEFORE TRANSMITTING ANOTHER REPORT.",
-        transmissionFailed: "TRANSMISSION_FAILED"
+        authError: "Error: User email not found.",
+        validationError: "Error: All fields are required.",
+        rateLimit: "Rate limit exceeded: Please wait",
+        hours: "hours before submitting another report.",
+        transmissionFailed: "Submission Failed"
       }
     }
   },
@@ -141,24 +141,24 @@ export const translations = {
       awaitingDeployment: "[ ОЖИДАНИЕ_РАЗВЕРТЫВАНИЯ ]"
     },
     report: {
-      transmitReport: "Передача_Отчета",
-      classification: "Классификация_Отчета",
-      systemAnomaly: "Системная_Аномалия",
-      featureProposal: "Предложение_Функции",
-      primaryDesignation: "Первичное_Обозначение",
-      titlePlaceholder: "НАПР. 'НАЛОЖЕНИЕ UI НА МОБИЛЬНОМ' ИЛИ 'ГОРЯЧАЯ КЛАВИША ТЕМНОЙ ТЕМЫ'",
-      detailedTelemetry: "Детальная_Телеметрия",
-      descPlaceholder: "ПРЕДОСТАВЬТЕ ДОПОЛНИТЕЛЬНЫЙ КОНТЕКСТ ИЛИ ДЕТАЛИ...",
+      transmitReport: "Отправить Отчет",
+      classification: "Тип отчета",
+      systemAnomaly: "Проблема / Баг",
+      featureProposal: "Идея / Предложение",
+      primaryDesignation: "Заголовок",
+      titlePlaceholder: "Напр., 'Наложение UI на мобильном' или 'Горячая клавиша темной темы'",
+      detailedTelemetry: "Описание",
+      descPlaceholder: "Предоставьте дополнительные детали...",
       cancel: "Отмена",
       processing: "Обработка...",
-      transmitData: "Передать_Данные",
-      success: "ПЕРЕДАЧА_УСПЕШНА: ОТЧЕТ ЗАНЕСЕН В АРХИВ.",
+      transmitData: "Отправить",
+      success: "Успешно: Отчет отправлен.",
       errors: {
-        authError: "ОШИБКА_АВТОРИЗАЦИИ: EMAIL ОПЕРАТОРА НЕ НАЙДЕН",
-        validationError: "ОШИБКА_ВАЛИДАЦИИ: ВСЕ ПОЛЯ ОБЯЗАТЕЛЬНЫ",
-        rateLimit: "ПРЕВЫШЕН_ЛИМИТ: ПОЖАЛУЙСТА, ПОДОЖДИТЕ",
-        hours: "ЧАСОВ ДО ПЕРЕДАЧИ СЛЕДУЮЩЕГО ОТЧЕТА.",
-        transmissionFailed: "ОШИБКА_ПЕРЕДАЧИ"
+        authError: "Ошибка: Email пользователя не найден.",
+        validationError: "Ошибка: Все поля обязательны.",
+        rateLimit: "Превышен лимит: Пожалуйста, подождите",
+        hours: "часов до отправки следующего отчета.",
+        transmissionFailed: "Ошибка отправки"
       }
     },
     dashboard: {
