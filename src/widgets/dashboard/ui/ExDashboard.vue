@@ -28,7 +28,7 @@
           </div>
           <div class="flex items-center space-x-2 mt-1.5 opacity-60">
             <div class="h-[1px] w-12 bg-white dark:bg-black"></div>
-            <span class="text-[7.5px] font-mono tracking-widest text-white dark:text-black uppercase opacity-70">Protocol_Update_Required // Awaiting_Operator_Action</span>
+            <span class="text-[7.5px] font-mono tracking-widest text-white dark:text-black uppercase opacity-70">Your data will be saved.</span>
           </div>
         </div>
       </div>

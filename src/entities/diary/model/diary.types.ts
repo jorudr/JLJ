@@ -27,6 +27,9 @@ export interface DiaryEntry {
     size?: number;
     sizeInCurrency?: number;
     currency?: string;
+    entryFee?: number;
+    exitFee?: number;
+    feeType?: '%' | 'Fixed' | string;
     result?: number;
     notes?: string;
     notesList?: DiaryNote[];

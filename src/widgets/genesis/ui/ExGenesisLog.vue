@@ -103,12 +103,12 @@
              >
                <div class="flex flex-col space-y-6 p-6">
                  <div class="flex items-center space-x-6">
-                   <div v-if="assetIcon" class="w-16 h-16 border border-black/10 dark:border-white/10 flex items-center justify-center bg-white p-2 shadow-inner">
-                     <img :src="assetIcon" class="w-full h-full object-contain" />
-                   </div>
-                   <div v-else class="w-16 h-16 border border-black/10 dark:border-white/10 flex items-center justify-center bg-black/5 dark:bg-white/5 shadow-inner">
-                     <span class="text-2xl font-black opacity-20 font-mono text-black dark:text-white">{{ selectedTrade?.asset?.slice(0, 1) }}</span>
-                   </div>
+                    <div v-if="assetIcon && !imageLoadError" class="w-16 h-16 border border-black/10 dark:border-white/10 flex items-center justify-center bg-white p-2 shadow-inner">
+                      <img :src="assetIcon" class="w-full h-full object-contain" @error="imageLoadError = true" />
+                    </div>
+                    <div v-else class="w-16 h-16 border border-black/10 dark:border-white/10 flex items-center justify-center bg-black/5 dark:bg-white/5 shadow-inner">
+                      <span class="text-2xl font-black opacity-20 font-mono text-black dark:text-white uppercase">{{ selectedTrade?.asset?.slice(0, 2) }}</span>
+                    </div>
                    <div class="flex flex-col">
                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.5em] text-black dark:text-white">{{ t('genesis.virtualLog.assetIdentifier') }}</span>
                      <h3 class="text-3xl font-light font-serif tracking-[0.2em] uppercase text-black dark:text-white mt-1 leading-none">
@@ -393,6 +393,7 @@ const panelInitialNoteId = ref<string | undefined>(undefined)
 const showNodeMap = ref(false)
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
+const imageLoadError = ref(false)
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
    viewType.value = 'cube'
@@ -694,6 +695,10 @@ const resetAllFilters = () => {
 const selectedTrade = computed(() => {
   if (!selectedTradeId.value) return null
   return currentTrades.value.find(t => t.id === selectedTradeId.value) || null
+})
+
+watch(selectedTradeId, () => {
+  imageLoadError.value = false
 })
 
 const assetIcon = computed(() => {

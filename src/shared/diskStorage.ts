@@ -9,15 +9,15 @@ import {
 import { documentDir, join } from '@tauri-apps/api/path';
 import { message } from '@tauri-apps/plugin-dialog';
 
-const VOES_DATA_DIR = 'VoesData';
+const JLJ_DATA_DIR = 'JLJData';
 
 /**
- * Ensures the VoesData directory exists in the Documents folder.
+ * Ensures the JLJData directory exists in the Documents folder.
  */
 export const ensureDataDir = async (): Promise<string> => {
     try {
         const docDir = await documentDir();
-        const dataPath = await join(docDir, VOES_DATA_DIR);
+        const dataPath = await join(docDir, JLJ_DATA_DIR);
         console.log(`[DiskStorage] Document dir: ${docDir}, Data path: ${dataPath}`);
         
         const dirExists = await exists(dataPath);
@@ -36,7 +36,7 @@ export const ensureDataDir = async (): Promise<string> => {
 };
 
 /**
- * Saves a JSON object to a file in the VoesData directory.
+ * Saves a JSON object to a file in the JLJData directory.
  * @param fileName Name of the file (without .json extension)
  * @param data Data to save
  */
@@ -54,7 +54,7 @@ export const saveToDisk = async (fileName: string, data: any): Promise<void> => 
 };
 
 /**
- * Loads a JSON object from a file in the VoesData directory.
+ * Loads a JSON object from a file in the JLJData directory.
  * @param fileName Name of the file (without .json extension)
  */
 export const loadFromDisk = async <T>(fileName: string): Promise<T | null> => {
@@ -74,7 +74,7 @@ export const loadFromDisk = async <T>(fileName: string): Promise<T | null> => {
 };
 
 /**
- * Removes a file from the VoesData directory.
+ * Removes a file from the JLJData directory.
  */
 export const removeFromDisk = async (fileName: string): Promise<void> => {
     try {

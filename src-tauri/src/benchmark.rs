@@ -180,9 +180,9 @@ pub async fn get_benchmark_and_beta(
     // Helper to get cache file path
     let get_cache_path = || -> Result<std::path::PathBuf, String> {
         let doc_dir = app.path().document_dir().map_err(|e| e.to_string())?;
-        let voes_dir = doc_dir.join("VoesData");
-        std::fs::create_dir_all(&voes_dir).map_err(|e| e.to_string())?;
-        Ok(voes_dir.join("benchmark_rust_cache.json"))
+        let jlj_dir = doc_dir.join("JLJData");
+        std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
+        Ok(jlj_dir.join("benchmark_rust_cache.json"))
     };
 
     // 2. Reuse a local cache for strategies with too little data instead of overwriting
@@ -466,9 +466,9 @@ pub async fn get_historical_curves(
     }
 
     let doc_dir = app.path().document_dir().map_err(|e| e.to_string())?;
-    let voes_dir = doc_dir.join("VoesData");
-    std::fs::create_dir_all(&voes_dir).map_err(|e| e.to_string())?;
-    let cache_path = voes_dir.join(format!("historical_curves_{}.json", strategy_key));
+    let jlj_dir = doc_dir.join("JLJData");
+    std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
+    let cache_path = jlj_dir.join(format!("historical_curves_{}.json", strategy_key));
 
     // Try reading cache
     if let Ok(json_str) = std::fs::read_to_string(&cache_path) {

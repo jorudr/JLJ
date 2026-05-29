@@ -32,11 +32,11 @@
 
       <!-- Core Icon -->
       <div class="relative w-20 h-20 flex items-center justify-center mb-2 shrink-0">
-        <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" style="border-color: var(--theme-text); opacity: 0.4;"></div>
-        <div class="absolute inset-3 border animate-[spin_6s_linear_infinite_reverse]" style="border-color: var(--theme-text); opacity: 0.6;"></div>
-        <div class="w-3 h-3 rotate-45 animate-pulse" style="background-color: var(--theme-text);"></div>
-        <div class="absolute -top-3 -left-3 w-5 h-5 border-t-2 border-l-2" style="border-color: var(--theme-text);"></div>
-        <div class="absolute -bottom-3 -right-3 w-5 h-5 border-b-2 border-r-2" style="border-color: var(--theme-text);"></div>
+        <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite] border-black/40 dark:border-white/40"></div>
+        <div class="absolute inset-3 border animate-[spin_6s_linear_infinite_reverse] border-black/60 dark:border-white/60"></div>
+        <div class="w-3 h-3 rotate-45 animate-pulse bg-black dark:bg-white"></div>
+        <div class="absolute -top-3 -left-3 w-5 h-5 border-t-2 border-l-2 border-black dark:border-white"></div>
+        <div class="absolute -bottom-3 -right-3 w-5 h-5 border-b-2 border-r-2 border-black dark:border-white"></div>
       </div>
 
       <!-- Identity -->
