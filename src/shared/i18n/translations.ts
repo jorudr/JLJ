@@ -19,7 +19,9 @@ export const translations = {
         signOut: "Sign_Out",
         accessProtocol: "ACCESS_PROTOCOL",
         systemTime: "System_Time: 04:22:19",
-        encryption: "Encryption: AES-256_REIFIED"
+        encryption: "Encryption: AES-256_REIFIED",
+        newVersionAvailable: "New version available for downloading",
+        download: "Download"
       }
     },
     tacticalNodeMap: {
@@ -178,7 +180,9 @@ export const translations = {
         signOut: "Выйти",
         accessProtocol: "ПЕРЕЙТИ",
         systemTime: "Системное_Время: 04:22:19",
-        encryption: "Шифрование: AES-256_REIFIED"
+        encryption: "Шифрование: AES-256_REIFIED",
+        newVersionAvailable: "Доступна новая версия для скачивания",
+        download: "Скачать"
       }
     },
     tacticalNodeMap: {

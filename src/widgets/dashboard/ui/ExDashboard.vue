@@ -1,5 +1,65 @@
 <template>
   <div class="h-full flex flex-col p-12 max-w-7xl mx-auto space-y-12 relative">
+    <!-- Update Notification Widget -->
+    <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] bg-black dark:bg-white p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
+      
+      <!-- Animated Background Scanline -->
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 dark:via-black/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] ease-in-out"></div>
+      
+      <!-- Decorative Tactical Elements -->
+      <div class="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-white/20 dark:border-black/20 pointer-events-none"></div>
+      <div class="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-white/20 dark:border-black/20 pointer-events-none"></div>
+      
+      <!-- Left side: Text & Icon -->
+      <div class="flex items-center space-x-6 relative z-10">
+        <div class="flex flex-col items-center space-y-1.5">
+          <div class="w-2 h-2 bg-theme-accent animate-pulse shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.8)]"></div>
+          <div class="text-[6px] text-white/40 dark:text-black/40 font-mono tracking-widest">SYS</div>
+        </div>
+        
+        <div class="flex flex-col">
+          <div class="flex items-center space-x-3">
+            <ExText variant="telemetry" class="!opacity-100 uppercase tracking-[0.2em] !text-white dark:!text-black font-bold">
+              {{ t('dashboard.ui.newVersionAvailable') }}
+            </ExText>
+            <span class="px-2 py-0.5 border border-theme-accent text-white dark:text-black text-[9px] font-mono font-bold shadow-[0_0_5px_rgba(var(--theme-accent-rgb),0.3)]" v-if="updateNotification.version">
+              v{{ updateNotification.version }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2 mt-1.5 opacity-60">
+            <div class="h-[1px] w-12 bg-white dark:bg-black"></div>
+            <span class="text-[7.5px] font-mono tracking-widest text-white dark:text-black uppercase opacity-70">Protocol_Update_Required // Awaiting_Operator_Action</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Download Button -->
+      <div class="relative z-10 flex items-center space-x-6">
+        <!-- Hash/Code decorative -->
+        <div class="flex flex-col space-y-1 text-right hidden md:flex">
+           <span class="text-[7px] font-mono text-white/30 dark:text-black/30 tracking-[0.3em]">0xUPDATE_SEQ_INIT</span>
+           <span class="text-[7px] font-mono text-white/30 dark:text-black/30 tracking-[0.3em]">{{ new Date().toISOString().split('T')[1]?.substring(0, 8) }}Z</span>
+        </div>
+        
+        <button 
+          @click="handleDownload(updateNotification.downloadLink)" 
+          class="relative px-8 py-3.5 bg-transparent border border-white/20 dark:border-black/20 text-white dark:text-black text-[10px] font-mono uppercase tracking-[0.25em] overflow-hidden group/btn hover:border-white dark:hover:border-black transition-colors duration-300 cursor-pointer"
+        >
+          <!-- Button background slide -->
+          <div class="absolute inset-0 bg-white dark:bg-black transform scale-x-0 group-hover/btn:scale-x-100 transition-transform duration-500 origin-left"></div>
+          
+          <span class="relative z-10 flex items-center space-x-3 group-hover/btn:text-black dark:group-hover/btn:text-white transition-colors duration-500 font-bold">
+            <span>{{ t('dashboard.ui.download') }}</span>
+            <svg class="w-3.5 h-3.5 transform group-hover/btn:translate-y-0.5 transition-all duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- 1. Header / Global Status -->
     <header class="flex justify-between items-start z-[200] relative">
       <div class="flex flex-col space-y-2">
@@ -150,6 +210,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getAuth, signOut } from 'firebase/auth'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { db } from '~/shared/firebase.client'
+import { open } from '@tauri-apps/plugin-shell'
 import { useI18n } from '~/shared/i18n/useI18n'
 import pkg from '../../../../package.json'
 import ExHeading from "~/shared/ui/ExHeading.vue"
@@ -213,8 +276,46 @@ const handleOutsideClick = (e: MouseEvent) => {
     userMenuOpen.value = false
   }
 }
-onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
-onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
+const updateNotification = ref({ showUpdate: false, downloadLink: '', version: '' })
+let unsubUpdate: any = null
+
+const handleDownload = async (url: string) => {
+  if (!url) return
+  try {
+    await open(url)
+  } catch (err) {
+    console.error("Failed to open via tauri:", err)
+    window.open(url, '_blank')
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleOutsideClick)
+  
+  const pushInitialData = async () => {
+    try {
+      await setDoc(doc(db, 'app_settings', 'update_notification'), {
+        showUpdate: true,
+        version: '1.0.5',
+        downloadLink: 'https://example.com/download/latest'
+      }, { merge: true })
+    } catch (e) {
+      console.warn("Could not push initial data:", e)
+    }
+  }
+  pushInitialData()
+
+  unsubUpdate = onSnapshot(doc(db, 'app_settings', 'update_notification'), (docSnap) => {
+    if (docSnap.exists()) {
+      updateNotification.value = docSnap.data() as any
+    }
+  })
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleOutsideClick)
+  if (unsubUpdate) unsubUpdate()
+})
 
 const displayName = computed(() => {
   const u = authStore.user
