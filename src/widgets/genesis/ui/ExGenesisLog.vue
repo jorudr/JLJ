@@ -181,21 +181,25 @@
                   </div>
                 </div>
                 <template #footer>
-                  <div class="flex flex-col space-y-2 w-full">
-                    <ExButton 
-                      variant="solid" 
-                      class="w-full relative group" 
-                      @click="showShareCardModal = true"
-                    >
-                      <span class="relative z-10">{{ locale === 'ru' ? 'Сгенерировать Карточку' : 'Generate Share Card' }}</span>
-                      <div class="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-current rotate-45 opacity-40"></div>
-                    </ExButton>
+                  <div class="flex items-center space-x-2 w-full">
                     <ExButton 
                       variant="ghost" 
-                      class="w-full" 
+                      class="flex-1" 
                       @click="showNodeMap = true"
                     >
                        {{ t('genesis.virtualLog.showDetails') }}
+                    </ExButton>
+                    <ExButton 
+                      variant="solid" 
+                      class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
+                      @click="showShareCardModal = true"
+                      :title="locale === 'ru' ? 'Сгенерировать Карточку' : 'Generate Share Card'"
+                    >
+                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                         <polyline points="16 6 12 2 8 6" />
+                         <line x1="12" y1="2" x2="12" y2="15" />
+                       </svg>
                     </ExButton>
                   </div>
                 </template>
@@ -306,12 +310,12 @@
           <div v-if="showShareCardModal" 
                class="fixed inset-0 z-[10020] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md p-8"
                @click.self="showShareCardModal = false">
-             <div class="absolute inset-12 border border-white/5 pointer-events-none">
+             <div class="absolute inset-0 bg-black border border-white/5 pointer-events-none">
                 <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/20"></div>
                 <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/20"></div>
              </div>
              <div class="flex flex-col items-center max-w-[1240px] w-full relative z-10">
-                <div class="share-card-capture-wrapper p-2 bg-black border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] relative">
+                <div class="share-card-capture-wrapper shadow-[0_0_80px_rgba(0,0,0,0.8)] relative">
                    <div class="absolute -inset-1 bg-gradient-to-tr from-white/10 to-transparent blur-md opacity-30 pointer-events-none"></div>
                    <ExTradeShareCardPreview
                      :efficiency="tradeEfficiency"

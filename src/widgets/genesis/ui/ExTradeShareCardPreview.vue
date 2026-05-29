@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-x-auto pb-8 custom-scrollbar">
+  <div class="overflow-x-auto custom-scrollbar">
     <div id="share-card-export-target" class="relative w-[1200px] h-[675px] bg-[#0a0a0a] border border-theme-border shadow-2xl overflow-hidden group mx-auto shrink-0">
       <!-- Decorative Mesh Pattern -->
       <div class="absolute inset-0 opacity-[0.03] pointer-events-none" 
