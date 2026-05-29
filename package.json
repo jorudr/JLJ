@@ -1,6 +1,6 @@
 {
   "name": "jlj",
-  "version": "1.0.4-alpha",
+  "version": "1.0.4",
   "type": "module",
   "private": true,
   "scripts": {
