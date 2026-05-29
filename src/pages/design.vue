@@ -528,57 +528,18 @@
             </ExText>
             
             <!-- THE CARD DESIGN (TRUE 1200x675 RESOLUTION) -->
-            <div class="overflow-x-auto pb-8 custom-scrollbar">
-               <div class="relative w-[1200px] h-[675px] bg-[#0a0a0a] border border-theme-border shadow-2xl overflow-hidden group mx-auto shrink-0">
-               <!-- Decorative Mesh Pattern -->
-               <div class="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                    style="background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px); background-size: 40px 40px;"></div>
-               
-               <!-- Gradient Overlay -->
-               <div class="absolute inset-0 bg-gradient-to-tr from-black to-transparent opacity-60"></div>
-
-               <!-- Header: Proportional to 60px at 1200px width (5%) -->
-               <div class="absolute top-[5%] left-[5%] flex flex-col space-y-1">
-                  <span class="text-[10px] md:text-[13px] font-mono font-black uppercase tracking-[0.4em] text-white">Genesis // Tactical_Archive</span>
-                  <span class="text-[8px] md:text-[10px] font-mono opacity-30 uppercase tracking-widest text-white">ID: TRD-08X-42 // 06.05.2026</span>
-               </div>
-
-               <!-- Primary Metric: Center Aligned (matching 600, 320 on 1200x675) -->
-               <div class="absolute inset-0 flex flex-col items-center justify-center -translate-y-[8%]">
-                  <span class="text-[120px] md:text-[200px] font-serif italic text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]">78%</span>
-                  <div class="flex flex-col items-center mt-2 md:mt-4">
-                     <span class="text-[10px] md:text-[15px] font-mono font-black uppercase tracking-[0.6em] text-white opacity-40">Percentile_Efficiency</span>
-                     <div class="h-px w-24 bg-white/20 mt-4"></div>
-                  </div>
-               </div>
-
-               <!-- Secure Code Block: Proportional to Top-Right -->
-               <div class="absolute top-[5%] right-[5%] grid grid-cols-4 gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity duration-1000">
-                  <div v-for="n in 16" :key="n" 
-                       class="w-2 md:w-3 h-2 md:h-3" 
-                       :class="Math.random() > 0.5 ? 'bg-white' : 'bg-white/5'"></div>
-               </div>
-
-               <!-- Bottom Telemetry Grid: Proportional to y=480 (71%) -->
-               <div class="absolute top-[71%] left-[5%] right-[5%]">
-                  <div class="h-px w-full bg-white/10 mb-6 md:mb-10"></div>
-                  <div class="grid grid-cols-4 gap-4 md:gap-8">
-                     <div v-for="metric in [
-                        { label: 'Protocol', value: 'Day Trading' },
-                        { label: 'Duration', value: '56.5 Hours' },
-                        { label: 'Stability', value: '84%' },
-                        { label: 'Net_Result', value: '+1,250.00' }
-                     ]" :key="metric.label" class="flex flex-col space-y-1 md:space-y-3">
-                        <span class="text-[7px] md:text-[9px] font-mono font-black uppercase tracking-widest text-white/30">{{ metric.label }}</span>
-                        <span class="text-[10px] md:text-[20px] font-mono font-black text-white uppercase truncate">{{ metric.value }}</span>
-                     </div>
-                  </div>
-               </div>
-
-               <!-- HUD Corner Bracket -->
-               <div class="absolute bottom-[5%] right-[5%] w-8 md:w-12 h-8 md:h-12 border-r border-b border-white/20"></div>
-            </div>
-          </div>
+            <ExTradeShareCardPreview
+              efficiency="78"
+              protocol="Day Trading"
+              duration="56.5 Hours"
+              entry-price="$150.00"
+              exit-price="$162.50"
+              emotional-state="Optimal"
+              net-result="+1,250.00"
+              asset="BTC/USD"
+              :username="authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F'"
+              :account-type="authStore.user?.type || 'Premium'"
+            />
         </div>
       </section>
 
@@ -867,7 +828,10 @@ import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
+import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
+import { useAuthStore } from '~/entities/user/auth.store'
 
+const authStore = useAuthStore()
 const isDark = ref(true)
 const showInitPreview = ref(false)
 const isEditorOpen = ref(false)

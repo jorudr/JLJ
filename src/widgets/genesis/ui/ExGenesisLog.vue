@@ -181,13 +181,23 @@
                   </div>
                 </div>
                 <template #footer>
-                  <ExButton 
-                    variant="ghost" 
-                    class="w-full" 
-                    @click="showNodeMap = true"
-                  >
-                     {{ t('genesis.virtualLog.showDetails') }}
-                  </ExButton>
+                  <div class="flex flex-col space-y-2 w-full">
+                    <ExButton 
+                      variant="solid" 
+                      class="w-full relative group" 
+                      @click="showShareCardModal = true"
+                    >
+                      <span class="relative z-10">{{ locale === 'ru' ? 'Сгенерировать Карточку' : 'Generate Share Card' }}</span>
+                      <div class="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-current rotate-45 opacity-40"></div>
+                    </ExButton>
+                    <ExButton 
+                      variant="ghost" 
+                      class="w-full" 
+                      @click="showNodeMap = true"
+                    >
+                       {{ t('genesis.virtualLog.showDetails') }}
+                    </ExButton>
+                  </div>
                 </template>
               </ExPanel>
           </div>
@@ -291,8 +301,56 @@
                    @addTrade="isTradeEntryOpen = false" />
   </Transition>
 
-  <Teleport to="body">
-    <Transition name="protocol-slide">
+    <Teleport to="body">
+       <Transition name="fade-blur">
+          <div v-if="showShareCardModal" 
+               class="fixed inset-0 z-[10020] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md p-8"
+               @click.self="showShareCardModal = false">
+             <div class="absolute inset-12 border border-white/5 pointer-events-none">
+                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/20"></div>
+                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/20"></div>
+             </div>
+             <div class="flex flex-col items-center max-w-[1240px] w-full relative z-10">
+                <div class="share-card-capture-wrapper p-2 bg-black border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] relative">
+                   <div class="absolute -inset-1 bg-gradient-to-tr from-white/10 to-transparent blur-md opacity-30 pointer-events-none"></div>
+                   <ExTradeShareCardPreview
+                     :efficiency="tradeEfficiency"
+                     :protocol="selectedStrategyLabel"
+                     :duration="tradeDuration"
+                     :entry-price="tradeEntryPrice"
+                     :exit-price="tradeExitPrice"
+                     :emotional-state="tradeEmotionalState"
+                     :net-result="tradeNetResult"
+                     :username="authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F'"
+                     :account-type="authStore.user?.type || 'Premium'"
+                     :asset="selectedTrade?.asset || 'UNKNOWN'"
+                   />
+                </div>
+                <div class="mt-8 flex items-center space-x-6">
+                   <ExButton 
+                     variant="solid" 
+                     class="!px-10 !py-3 font-black tracking-widest text-xs relative overflow-hidden" 
+                     :disabled="isGeneratingPng"
+                     @click="downloadCardPng"
+                   >
+                      <span v-if="isGeneratingPng">{{ locale === 'ru' ? 'РЕНДЕРИНГ...' : 'RENDERING...' }}</span>
+                      <span v-else>{{ locale === 'ru' ? 'СКАЧАТЬ PNG' : 'DOWNLOAD PNG' }}</span>
+                   </ExButton>
+                   <ExButton 
+                     variant="ghost" 
+                     class="!px-10 !py-3 tracking-widest text-xs" 
+                     @click="showShareCardModal = false"
+                   >
+                      {{ locale === 'ru' ? 'ЗАКРЫТЬ' : 'CLOSE' }}
+                   </ExButton>
+                </div>
+             </div>
+          </div>
+       </Transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <Transition name="protocol-slide">
       <div v-if="isTemporalOpen" 
            class="fixed inset-0 z-[2000] flex items-center justify-center p-20 bg-black/40 dark:bg-black/80 backdrop-blur-md">
         <div class="relative w-full max-w-4xl bg-white dark:bg-black border border-black/40 dark:border-white/40 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto">
@@ -378,12 +436,74 @@ import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
+import { useAuthStore } from '~/entities/user/auth.store'
 
 const emit = defineEmits(['exit', 'nodeMapState'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
+const authStore = useAuthStore()
+
+const showShareCardModal = ref(false)
+const isGeneratingPng = ref(false)
+
+const tradeEfficiency = computed(() => {
+  return mappedTradeForAnalysis.value?.percentileRank ?? 0
+})
+
+const tradeDuration = computed(() => {
+  if (!selectedTrade.value) return '0.0 Hours'
+  return calculateDuration(selectedTrade.value)
+})
+
+const tradeEntryPrice = computed(() => {
+  if (!selectedTrade.value || selectedTrade.value.entry === undefined) return '$0.00'
+  return `$${Number(selectedTrade.value.entry).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+})
+
+const tradeExitPrice = computed(() => {
+  if (!selectedTrade.value || selectedTrade.value.exit === undefined) return '$0.00'
+  return `$${Number(selectedTrade.value.exit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+})
+
+const tradeEmotionalState = computed(() => {
+  if (!selectedTrade.value || !selectedTrade.value.emotions || selectedTrade.value.emotions.length === 0) return 'Stable'
+  return selectedTrade.value.emotions[0]
+})
+
+const tradeNetResult = computed(() => {
+  if (!selectedTrade.value) return '+0.00'
+  const profit = selectedTrade.value.profitInCurrency || 0
+  const sign = profit >= 0 ? '+' : ''
+  return `${sign}${profit.toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+})
+
+const downloadCardPng = async () => {
+  const cardElement = document.querySelector('.share-card-capture-wrapper')
+  if (!cardElement) return
+  isGeneratingPng.value = true
+  
+  try {
+    const html2canvasModule = await import('html2canvas')
+    const html2canvas = html2canvasModule.default
+    const canvas = await html2canvas(cardElement as HTMLElement, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: '#0a0a0a'
+    })
+    const url = canvas.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.download = `trade-share-${selectedTrade.value?.asset || 'card'}.png`
+    link.href = url
+    link.click()
+  } catch (err) {
+    console.error('Error generating card image:', err)
+  } finally {
+    isGeneratingPng.value = false
+  }
+}
 
 const viewType = ref<'cube' | 'list'>('cube')
 const selectedTradeId = ref<string | null>(null)
@@ -855,6 +975,38 @@ const selectedStrategyLabel = computed(() => {
   return name === 'MAIN_DIARY' ? t('genesis.virtualLog.mainDiary') : name
 })
 
+const EMOTION_WEIGHTS_LOCAL = {
+  'CONFIDENCE': 10, 'PATIENCE': 15, 'DISCIPLINE': 20,
+  'FOMO': -20, 'GREED': -25, 'REVENGE': -30, 'FEAR': -15, 'TILT': -40, 'ANXIETY': -15
+} as Record<string, number>
+
+const getNormalizedPnl = (tr: any, initialDeposit = 1000) => {
+  let p = tr.profitInCurrency
+  if (p === undefined || p === null || p === 0) {
+    p = tr.result ?? tr.pnl ?? 0
+  }
+  const val = Number(p)
+  if (isNaN(val)) return 0
+  
+  if ((tr.profitInCurrency === undefined || tr.profitInCurrency === null || tr.profitInCurrency === 0) && 
+      Math.abs(val) < 100 && initialDeposit > 1000) {
+    return (val / 100) * initialDeposit
+  }
+  return val
+}
+
+const getTradeScore = (tr: any, initialDeposit = 1000) => {
+  const pnl = getNormalizedPnl(tr, initialDeposit)
+  let emotionalScore = 0
+  if (tr && tr.emotions && Array.isArray(tr.emotions)) {
+    tr.emotions.forEach((e: any) => {
+      const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
+      emotionalScore += EMOTION_WEIGHTS_LOCAL[key] || 0
+    })
+  }
+  return pnl + emotionalScore
+}
+
 const mappedTradeForAnalysis = computed(() => {
   const t = selectedTrade.value as any
   if (!t) return undefined
@@ -862,11 +1014,12 @@ const mappedTradeForAnalysis = computed(() => {
   const allTrades = currentTrades.value
   const totalCount = allTrades.length
 
-  // Calculate Percentile Rank (PnL based)
-  const allPnls = allTrades.map(tr => tr.profitInCurrency || 0).sort((a, b) => a - b)
-  const currentPnl = t.profitInCurrency || 0
-  const lowerPnls = allPnls.filter(p => p < currentPnl).length
-  const percentileRank = totalCount > 0 ? Math.round((lowerPnls / totalCount) * 100) : 0
+  const stratId = t.strategyId || selectedStrategyId.value
+  const deposit = tradeStore.getInitialDeposit(stratId)
+  const currentScore = getTradeScore(t, deposit)
+  const scores = allTrades.map(tr => getTradeScore(tr, deposit)).sort((a, b) => a - b)
+  const lowerScores = scores.filter(s => s < currentScore).length
+  const percentileRank = totalCount > 0 ? Math.round((lowerScores / totalCount) * 100) : 0
 
   return {
     ...t,
@@ -1569,5 +1722,17 @@ canvas { image-rendering: pixelated; }
 .panel-slide-enter-to, .panel-slide-leave-from {
   transform: translateX(0) translateY(-50%);
   opacity: 1;
+}
+
+.fade-blur-enter-active, .fade-blur-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fade-blur-enter-from, .fade-blur-leave-to {
+  opacity: 0;
+  backdrop-filter: blur(0px);
+}
+.fade-blur-enter-to, .fade-blur-leave-from {
+  opacity: 1;
+  backdrop-filter: blur(12px);
 }
 </style>
