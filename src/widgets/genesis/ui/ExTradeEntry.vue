@@ -10,6 +10,9 @@ import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { locale } = useI18n()
 
 const emit = defineEmits(['addTrade', 'close'])
 const themeStore = useThemeStore()
@@ -66,6 +69,16 @@ const triggerUpload = (id) => {
 }
 
 const showCmeNotice = ref(true)
+const rememberCmeNotice = ref(false)
+
+const closeCmeNotice = () => {
+  showCmeNotice.value = false
+  if (rememberCmeNotice.value) {
+    try {
+      localStorage.setItem('genesis_cme_notice_hidden', 'true')
+    } catch(e) {}
+  }
+}
 
 // Asset Selection state
 const showAssetMenu = ref(false)
@@ -178,6 +191,11 @@ const closeAssetMenu = (e) => {
 }
 
 onMounted(() => {
+  try {
+    if (localStorage.getItem('genesis_cme_notice_hidden') === 'true') {
+      showCmeNotice.value = false
+    }
+  } catch (e) {}
   window.addEventListener('click', closeAssetMenu)
   loadMatrixData()
   tradeStore.init()
@@ -1206,34 +1224,62 @@ const submit = async () => {
 
     <DesignVignette :is-dark="isDark" />
 
+    <!-- CME Metadata Notice Backdrop -->
+    <Transition name="fade">
+      <div v-if="currentAssetData?.contractSize && showCmeNotice" 
+           class="fixed inset-0 z-[999] bg-black/60 dark:bg-white/10 backdrop-blur-sm"></div>
+    </Transition>
     <!-- CME Metadata Notice -->
     <Transition name="protocol-slide">
       <div v-if="currentAssetData?.contractSize && showCmeNotice" 
-           class="fixed top-6 right-8 z-[1000] flex items-center gap-6 px-6 py-3 bg-black dark:bg-white border-l-4 border-white dark:border-black shadow-[20px_20px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_30px_rgba(255,255,255,0.05)] overflow-hidden">
-        <!-- Structural Brackets -->
-        <div class="absolute top-0 right-0 w-1 h-1 bg-white dark:bg-black rotate-45 translate-x-1/2 -translate-y-1/2"></div>
-        <div class="absolute bottom-0 right-0 w-1 h-1 bg-white dark:bg-black rotate-45 translate-x-1/2 translate-y-1/2"></div>
+           class="fixed inset-0 m-auto z-[1000] flex flex-col items-center justify-center gap-6 px-12 py-10 bg-black dark:bg-white shadow-[0_0_100px_rgba(0,0,0,0.8)] dark:shadow-[0_0_100px_rgba(255,255,255,0.2)] w-fit min-w-[500px] max-w-2xl h-fit max-h-[80vh] overflow-hidden text-center">
         
-        <div class="flex flex-col min-w-[240px]">
-          <div class="flex items-center gap-2">
-            <div class="w-1.5 h-1.5 bg-white dark:bg-black rotate-45"></div>
-            <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-white dark:text-black">CME_CONTRACT_SPECIFICATIONS</span>
+        <div class="flex flex-col items-center w-full mt-4">
+          <div class="flex items-center justify-center gap-4 w-full mb-6">
+            <div class="w-3 h-3 bg-white dark:bg-black rotate-45"></div>
+            <span class="text-xl md:text-2xl font-mono tracking-[0.3em] uppercase font-black text-white dark:text-black">
+              <span v-if="locale === 'en'">CME_CONTRACT_SPECIFICATIONS</span>
+              <span v-if="locale === 'ru'">СПЕЦИФИКАЦИИ_КОНТРАКТОВ_CME</span>
+            </span>
+            <div class="w-3 h-3 bg-white dark:bg-black rotate-45"></div>
           </div>
-          <span class="text-[8px] font-mono tracking-[0.1em] opacity-60 uppercase text-white dark:text-black mt-1 leading-relaxed">
-            Utilizing official CME contract sizes for Commodities & Indices to calculate Estimated Yield 
-            <span class="opacity-40">(e.g. {{ asset }}: 1 contract = {{ currentAssetData?.contractSize }})</span>
-          </span>
+          <div class="flex flex-col items-center gap-2 h-20 justify-center">
+            <span v-if="locale === 'en'" class="text-xs font-mono tracking-[0.1em] opacity-80 uppercase text-white dark:text-black leading-loose max-w-[90%] transition-opacity">
+              Utilizing official CME contract sizes for Commodities & Indices to calculate Estimated Yield.
+            </span>
+            <span v-if="locale === 'ru'" class="text-[10px] font-mono tracking-[0.1em] opacity-80 uppercase text-white dark:text-black leading-loose max-w-[90%] transition-opacity">
+              Для расчета ожидаемой прибыли используются официальные размеры контрактов CME для сырья и индексов.
+            </span>
+            <div class="mt-2 flex flex-col items-center opacity-60 text-[10px] font-mono tracking-[0.1em] uppercase text-white dark:text-black">
+              <span v-if="locale === 'en'">(e.g. {{ asset }}: 1 contract = {{ currentAssetData?.contractSize }})</span>
+              <span v-if="locale === 'ru'">(например: 1 контракт = {{ currentAssetData?.contractSize }})</span>
+            </div>
+          </div>
         </div>
         
-        <div class="w-px h-8 bg-white/10 dark:bg-black/10"></div>
+        <div class="w-full h-px bg-white/20 dark:bg-black/20 my-4"></div>
         
-        <button @click="showCmeNotice = false" 
-                class="group/cme-close relative w-6 h-6 flex items-center justify-center hover:bg-white/5 dark:hover:bg-black/5 transition-colors">
-          <div class="w-2.5 h-2.5 relative">
-            <div class="absolute inset-0 m-auto w-full h-px bg-white dark:bg-black rotate-45 group-hover/cme-close:scale-125 transition-transform"></div>
-            <div class="absolute inset-0 m-auto w-full h-px bg-white dark:bg-black -rotate-45 group-hover/cme-close:scale-125 transition-transform"></div>
-          </div>
-        </button>
+        <div class="flex flex-col sm:flex-row items-center justify-between w-full px-4 gap-8">
+          <label class="flex items-center gap-3 cursor-pointer group">
+            <div class="relative w-5 h-5 border border-white/50 dark:border-black/50 group-hover:border-white dark:group-hover:border-black transition-colors flex items-center justify-center">
+              <input type="checkbox" v-model="rememberCmeNotice" class="absolute opacity-0 cursor-pointer w-full h-full" />
+              <div v-if="rememberCmeNotice" class="w-3 h-3 bg-white dark:bg-black"></div>
+            </div>
+            <span class="flex flex-col text-[10px] font-mono tracking-[0.15em] text-white/60 dark:text-black/60 group-hover:text-white dark:group-hover:text-black transition-colors uppercase text-left">
+              <span v-if="locale === 'en'">Remember & Don't Show Again</span>
+              <span v-if="locale === 'ru'">Больше не показывать</span>
+            </span>
+          </label>
+          
+          <button @click="closeCmeNotice" 
+                  class="px-8 py-3 border border-white dark:border-black text-white dark:text-black font-mono text-sm tracking-[0.2em] hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-colors uppercase font-bold relative group/btn overflow-hidden w-48 h-12">
+            <span class="absolute inset-0 flex items-center justify-center z-10 transition-colors group-hover/btn:text-black dark:group-hover/btn:text-white">
+              <span v-if="locale === 'en'">Acknowledge</span>
+              <span v-if="locale === 'ru'" class="text-[10px] opacity-90 mt-0.5 tracking-[0.3em]">ПОДТВЕРДИТЬ</span>
+            </span>
+            <div class="absolute inset-0 bg-white dark:bg-black translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+          </button>
+        </div>
       </div>
     </Transition>
     <!-- TOP SECTION: STRATEGIC PANEL (REORDERED TO CORNERS) -->
