@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', {
             followed?: string[];
             followers?: number;
             type?: string;
-            
+            expiresAt?: any;
         },
         loading: false as boolean,
         error: null as null | string,
@@ -46,7 +46,30 @@ export const useAuthStore = defineStore('auth', {
                 if (userSnap.exists()) {
                     const data = userSnap.data()
                     if (this.user && this.user.uid === user.uid) {
-                        this.user.type = data.type || data.role || 'common'
+                        let computedType = data.type || data.role || 'common'
+                        
+                        // Check expiration if present
+                        if (data.expiresAt) {
+                            let expiresAtMs = 0
+                            if (typeof data.expiresAt.toMillis === 'function') {
+                                expiresAtMs = data.expiresAt.toMillis()
+                            } else if (data.expiresAt instanceof Date) {
+                                expiresAtMs = data.expiresAt.getTime()
+                            } else if (typeof data.expiresAt === 'number') {
+                                expiresAtMs = data.expiresAt
+                            } else if (typeof data.expiresAt === 'string') {
+                                expiresAtMs = new Date(data.expiresAt).getTime()
+                            }
+                            
+                            // If the current time is past the expiration time, downgrade to common
+                            if (expiresAtMs > 0 && Date.now() > expiresAtMs) {
+                                computedType = 'common'
+                            }
+                        }
+
+                        this.user.type = computedType
+                        this.user.expiresAt = data.expiresAt
+                        
                         if (data.displayName) this.user.displayName = data.displayName
                         if (data.photoURL) this.user.photoURL = data.photoURL
                     }
