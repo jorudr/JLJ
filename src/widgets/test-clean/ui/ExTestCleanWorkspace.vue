@@ -74,6 +74,8 @@
      >
        Click Left Arrow to Go back
      </button>
+
+    <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
   </div>
 </template>
 
@@ -94,9 +96,11 @@ import ExEquityCurve3D from '~/widgets/genesis/ui/ExEquityCurve3D.vue'
 import ExGenesisLog from '~/widgets/genesis/ui/ExGenesisLog.vue'
 import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
+import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 
 import { useThemeStore } from '~/features/store/useTheme'
 import { useWorkspaceStore } from '~/widgets/test-clean/model/useWorkspace'
+import { useAuthStore } from '~/entities/user/auth.store'
 import { storeToRefs } from 'pinia'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 const themeStore = useThemeStore()
@@ -117,8 +121,10 @@ const modeMap = {
 }
 
 const workspaceStore = useWorkspaceStore()
+const authStore = useAuthStore()
 const { hasInitialized, isAssembled, showBloom, isTesseractEnabled, isNodeMapActive } = storeToRefs(workspaceStore)
 const activeTab = ref('')
+const showPaywall = ref(false)
 const workspaceRoot = ref(null)
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
@@ -185,6 +191,13 @@ const canonicalizeActivityRoute = () => {
 
 const syncTabFromRoute = () => {
   activeTab.value = getRouteTab()
+  
+  if (currentGenesisMode.value === 'matrix' && authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    clearMode()
+    return
+  }
+
   canonicalizeGenesisRoute()
   canonicalizeActivityRoute()
 }
@@ -212,6 +225,12 @@ const handleDashboardNavigate = (tab) => {
 
 const handleGenesisSelect = (moduleId) => {
   const mode = modeMap[moduleId] || moduleId
+  
+  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    return
+  }
+
   router.push({
     path: `${genesisBasePath}/${mode}`,
     query: {

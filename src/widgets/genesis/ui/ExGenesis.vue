@@ -156,6 +156,7 @@
 
     </Transition>
 
+    <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
   </div>
 </template>
 
@@ -165,10 +166,13 @@ import { useRoute, useRouter } from 'vue-router'
 import ExGenesisDiary from './ExGenesisDiary.vue'
 import ExGenesisMatrix from './ExGenesisMatrix.vue'
 import ExGenesisVirtualLog from './ExGenesisVirtualLog.vue'
+import ExPaywallOverlay from './ExPaywallOverlay.vue'
 import { useThemeStore } from '@/features/store/useTheme'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
+import { useAuthStore } from '~/entities/user/auth.store'
 
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 const genesisContainer = ref<HTMLElement | null>(null)
 useDomI18n(genesisContainer, 'genesis.dom', { includeBody: true })
 
@@ -183,6 +187,7 @@ const emit = defineEmits(['exit'])
 
 const currentMode = ref<'diary' | 'matrix' | 'genesis-diary' | null>(null)
 const diaryViewMode = ref<'stats' | 'cube'>('stats')
+const showPaywall = ref(false)
 
 // --- QUERY SYNC --- //
 const modeToSection: Record<'diary' | 'matrix' | 'genesis-diary', string> = {
@@ -213,11 +218,29 @@ const getModeFromRoute = () => {
 }
 
 const syncModeFromRoute = () => {
-  currentMode.value = getModeFromRoute()
+  const mode = getModeFromRoute()
+  
+  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    backToOrigin()
+    return
+  }
+
+  currentMode.value = mode
   diaryViewMode.value = route.query.view === 'cube' ? 'cube' : 'stats'
 }
 
 const navigateToMode = (mode: 'diary' | 'matrix' | 'genesis-diary') => {
+  console.log('[ExGenesis] navigateToMode called with mode:', mode)
+  console.log('[ExGenesis] Current user type:', authStore.user?.type)
+
+  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
+    console.log('[ExGenesis] Blocking access to matrix - user is not premium')
+    showPaywall.value = true
+    return
+  }
+
+  console.log('[ExGenesis] Access granted to mode:', mode)
   currentMode.value = mode
   const query = {
     ...route.query,

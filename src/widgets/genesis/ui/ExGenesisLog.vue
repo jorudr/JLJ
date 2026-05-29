@@ -185,7 +185,7 @@
                     <ExButton 
                       variant="ghost" 
                       class="flex-1" 
-                      @click="showNodeMap = true"
+                      @click="openNodeMap"
                     >
                        {{ t('genesis.virtualLog.showDetails') }}
                     </ExButton>
@@ -422,6 +422,8 @@
       </div>
     </Transition>
   </Teleport>
+
+  <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
 </template>
 
 <script setup lang="ts">
@@ -441,6 +443,7 @@ import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
+import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 
 const emit = defineEmits(['exit', 'nodeMapState'])
@@ -556,8 +559,21 @@ const showNodeMap = ref(false)
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
 const imageLoadError = ref(false)
+const showPaywall = ref(false)
+
+const openNodeMap = () => {
+  if (authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    return
+  }
+  showNodeMap.value = true
+}
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
+   if (authStore.user?.type !== 'premium') {
+     showPaywall.value = true
+     return
+   }
    viewType.value = 'cube'
    selectedTradeId.value = payload.tradeId
    panelInitialPage.value = 5

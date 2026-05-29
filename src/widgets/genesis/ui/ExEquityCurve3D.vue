@@ -869,7 +869,7 @@
 
         <!-- EQUITY CURVE SIMULATOR -->
         <button v-if="!showMetricsPanel && !showDistribution3D"
-                @click="showSimulator = true" 
+                @click="openSimulator" 
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M3 3v18h18" />
@@ -1083,6 +1083,7 @@
         />
       </Transition>
     </Teleport>
+    <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
   </div>
 </template>
 
@@ -1099,8 +1100,11 @@ import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExEquityCurveSimulator from './ExEquityCurveSimulator.vue'
+import ExPaywallOverlay from './ExPaywallOverlay.vue'
+import { useAuthStore } from '~/entities/user/auth.store'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
 
+const authStore = useAuthStore()
 const sp500BenchmarkRate = ref(SP500_BENCHMARK_RATE)
 const strategyBeta = ref(0.85)
 const riskFreeRate = ref(5.00)
@@ -1232,6 +1236,16 @@ const showRobustnessTDist = ref(true)
 const showRobustnessHistogram = ref(false)
 const showRobustnessWarning = ref(false)
 const showSimulator = ref(false)
+const showPaywall = ref(false)
+
+const openSimulator = () => {
+  if (authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    return
+  }
+  showSimulator.value = true
+}
+
 const showCalendarMode = ref(false)
 const showWinrateCurve = ref(false)
 const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
@@ -1243,6 +1257,10 @@ const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.
 const robustnessWarningTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const handleRobustnessDiagnosticsClick = () => {
+  if (authStore.user?.type !== 'premium') {
+    showPaywall.value = true
+    return
+  }
   if (!hasEnoughTradesForDiagnostics.value) {
     // Always reset the timer so repeated clicks restart the 5s countdown
     if (robustnessWarningTimer.value !== null) clearTimeout(robustnessWarningTimer.value)
