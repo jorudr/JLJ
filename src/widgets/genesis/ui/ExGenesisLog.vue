@@ -315,14 +315,14 @@
                    <div class="absolute -inset-1 bg-gradient-to-tr from-white/10 to-transparent blur-md opacity-30 pointer-events-none"></div>
                    <ExTradeShareCardPreview
                      :efficiency="tradeEfficiency"
-                     :protocol="selectedStrategyLabel"
+                     :protocol="shareCardProtocol"
                      :duration="tradeDuration"
                      :entry-price="tradeEntryPrice"
                      :exit-price="tradeExitPrice"
                      :emotional-state="tradeEmotionalState"
                      :net-result="tradeNetResult"
                      :username="authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F'"
-                     :account-type="authStore.user?.type || 'Premium'"
+                     :account-type="authStore.user?.type || 'common'"
                      :asset="selectedTrade?.asset || 'UNKNOWN'"
                    />
                 </div>
@@ -468,34 +468,72 @@ const tradeExitPrice = computed(() => {
   return `$${Number(selectedTrade.value.exit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 })
 
+const EMOTION_WEIGHTS_STABILITY = {
+  'CALMNESS': 15,
+  'DISCIPLINE': 25,
+  'FOCUS': 20,
+  'PATIENCE': 15,
+  'CONFIDENCE': 15,
+  'HOPE': -10,
+  'BOREDOM': -10,
+  'FATIGUE': -15,
+  'FOMO': -20,
+  'REVENGE': -30,
+  'GREED': -20,
+  'FEAR': -20,
+  'TILT': -40,
+  'ANXIETY': -15
+} as Record<string, number>
+
 const tradeEmotionalState = computed(() => {
-  if (!selectedTrade.value || !selectedTrade.value.emotions || selectedTrade.value.emotions.length === 0) return 'Stable'
-  return selectedTrade.value.emotions[0]
+  if (!selectedTrade.value) return '60%'
+  const emotions = selectedTrade.value.emotions || []
+  if (emotions.length === 0) {
+    return '60%'
+  }
+  
+  let score = 60 // Baseline stability
+  emotions.forEach((e: any) => {
+    const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
+    const weight = EMOTION_WEIGHTS_STABILITY[key] || 0
+    score += weight
+  })
+  
+  const val = Math.min(Math.max(Math.round(score), 0), 100)
+  return `${val}%`
 })
 
 const tradeNetResult = computed(() => {
-  if (!selectedTrade.value) return '+0.00'
+  if (!selectedTrade.value) return '+$0.00'
   const profit = selectedTrade.value.profitInCurrency || 0
-  const sign = profit >= 0 ? '+' : ''
-  return `${sign}${profit.toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const sign = profit >= 0 ? '+' : '-'
+  const absProfit = Math.abs(profit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return `${sign}$${absProfit}`
 })
 
 const downloadCardPng = async () => {
-  const cardElement = document.querySelector('.share-card-capture-wrapper')
+  const cardElement = document.querySelector('#share-card-export-target') as HTMLElement
   if (!cardElement) return
   isGeneratingPng.value = true
   
   try {
-    const html2canvasModule = await import('html2canvas')
-    const html2canvas = html2canvasModule.default
-    const canvas = await html2canvas(cardElement as HTMLElement, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: '#0a0a0a'
+    const htmlToImage = await import('html-to-image')
+    
+    const url = await htmlToImage.toPng(cardElement, {
+      pixelRatio: 2,
+      backgroundColor: '#0a0a0a',
+      width: 1200,
+      height: 675,
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: 'top left',
+        width: '1200px',
+        height: '675px'
+      }
     })
-    const url = canvas.toDataURL('image/png')
+    
     const link = document.createElement('a')
-    link.download = `trade-share-${selectedTrade.value?.asset || 'card'}.png`
+    link.download = `trade-share-${selectedTrade.value?.asset?.replaceAll('/', '-') || 'card'}.png`
     link.href = url
     link.click()
   } catch (err) {
@@ -973,6 +1011,38 @@ const selectedStrategy = computed(() => {
 const selectedStrategyLabel = computed(() => {
   const name = selectedStrategy.value?.name || 'MAIN_DIARY'
   return name === 'MAIN_DIARY' ? t('genesis.virtualLog.mainDiary') : name
+})
+
+const shareCardProtocol = computed(() => {
+  const stratId = selectedStrategyId.value
+  if (!stratId || stratId === 'MAIN_DIARY') return 'ANY'
+  
+  const findStyleRecursive = (targetId: string, depth: number): any => {
+    if (depth > 3) return null
+    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId)
+    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean)
+    
+    const styleNode = connectedNodes.find(n => 
+      (n.type === 'risk-element' && n.params?.riskType === 'style') || 
+      (n.label && n.label.toLowerCase().includes('style'))
+    )
+    if (styleNode) return styleNode
+    
+    for (const node of connectedNodes) {
+      const result = findStyleRecursive(node.id, depth + 1)
+      if (result) return result
+    }
+    return null
+  }
+  
+  const styleNode = findStyleRecursive(stratId, 0)
+  if (!styleNode) return 'ANY'
+  
+  const label = styleNode.label.toUpperCase()
+  if (label.includes('SWING')) return 'SWING'
+  if (label.includes('INVEST')) return 'INVESTING'
+  if (label.includes('DAY')) return 'DAYTRADING'
+  return styleNode.label
 })
 
 const EMOTION_WEIGHTS_LOCAL = {

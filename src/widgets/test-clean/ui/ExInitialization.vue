@@ -293,6 +293,13 @@ const ensureUserDocument = async (user: any) => {
       joinedAt: serverTimestamp()
     })
   }
+  await authStore.setUser({
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    joinedAt: user.metadata.creationTime ?? null
+  })
 }
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
@@ -361,6 +368,13 @@ const doRegister = async () => {
       email: user.email,
       role: 'member',
       joinedAt: serverTimestamp()
+    })
+    await authStore.setUser({
+      uid: user.uid,
+      email: user.email,
+      displayName: user.email,
+      photoURL: null,
+      joinedAt: user.metadata.creationTime ?? null
     })
     startBoot()
   } catch (e: any) {

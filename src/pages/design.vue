@@ -535,10 +535,10 @@
               entry-price="$150.00"
               exit-price="$162.50"
               emotional-state="Optimal"
-              net-result="+1,250.00"
+              net-result="+$1,250.00"
               asset="BTC/USD"
               :username="authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F'"
-              :account-type="authStore.user?.type || 'Premium'"
+              :account-type="authStore.user?.type || 'common'"
             />
         </div>
       </section>

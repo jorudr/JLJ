@@ -22,15 +22,38 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.user
   },
     actions: {
-        setUser(user: null | {
+        async setUser(user: null | {
             uid: string,
             email: string | null,
             displayName: string | null,
             photoURL: string | null,
             joinedAt: any;
+            type?: string;
         }) {
-            this.user = user;
-           
+            if (!user) {
+                this.user = null;
+                return;
+            }
+            this.user = {
+                ...user,
+                type: user.type || 'common'
+            };
+            
+            try {
+                const { doc, getDoc } = await import('firebase/firestore')
+                const { db } = await import('~/shared/firebase.client')
+                const userSnap = await getDoc(doc(db, 'users', user.uid))
+                if (userSnap.exists()) {
+                    const data = userSnap.data()
+                    if (this.user && this.user.uid === user.uid) {
+                        this.user.type = data.type || data.role || 'common'
+                        if (data.displayName) this.user.displayName = data.displayName
+                        if (data.photoURL) this.user.photoURL = data.photoURL
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch user Firestore doc:', err)
+            }
         },
         clearUser() {
             const auth = getAuth()
