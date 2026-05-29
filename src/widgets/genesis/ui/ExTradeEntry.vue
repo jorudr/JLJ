@@ -651,7 +651,8 @@ const activeSector = ref('core')
 const sectors = [
   { id: 'core', label: 'Core_Logic' },
   { id: 'risk', label: 'Risk_Param' },
-  { id: 'time', label: 'Temporal' }
+  { id: 'time', label: 'Temporal' },
+  { id: 'fee', label: 'Commissions' }
 ]
 
 // Core Data
@@ -659,6 +660,9 @@ const side = ref('long')
 const entry = ref('')
 const exit = ref('')
 const size = ref('')
+const entryFee = ref('')
+const exitFee = ref('')
+const feeType = ref('%')
 
 const isForex = computed(() => {
   if (currentAssetData.value?.type === 'Forex') return true
@@ -889,6 +893,8 @@ const projectedProfit = computed(() => {
   const sz = parseFloat(size.value)
   if (isNaN(en) || isNaN(ex) || isNaN(sz)) return null
   
+  let finalProfit = 0
+  
   if (isForex.value) {
     const symbol = asset.value.toUpperCase().replace('/', '')
     const base = symbol.substring(0, 3)
@@ -905,43 +911,49 @@ const projectedProfit = computed(() => {
     const pip_value = sz * 10
     
     // 4. profit calculation
-    let profit = 0
     if (quote === 'USD') {
-      profit = pips * pip_value
+      finalProfit = pips * pip_value
     } else if (isJpy) {
       const usdJpyRate = getRate('JPY')
-      // Note: For JPY pairs with pip_value standard fixed at sz*10, 
-      // we apply a 100 multiplier to normalize JPY scale against USD standard
-      profit = (pips * pip_value * 100) / usdJpyRate
+      finalProfit = (pips * pip_value * 100) / usdJpyRate
     } else if (base === 'USD') {
-      profit = (pips * pip_value) / ex
+      finalProfit = (pips * pip_value) / ex
     } else {
       const quoteToUsdRate = 1 / getRate(quote)
-      profit = (pips * pip_value) * quoteToUsdRate
+      finalProfit = (pips * pip_value) * quoteToUsdRate
     }
+  } else {
+    // Non-forex
+    const price_move = side.value === 'long' ? (ex - en) : (en - ex)
     
-    return profit
+    if (currentAssetData.value?.contractSize) {
+      const size_multiplier = currentAssetData.value.contractSize
+      const raw_profit = price_move * sz * size_multiplier
+      
+      // Currency conversion to USD
+      const assetCurrency = currentAssetData.value.currency || 'USD'
+      if (assetCurrency !== 'USD') {
+        const rate = getRate(assetCurrency)
+        finalProfit = raw_profit / rate
+      } else {
+        finalProfit = raw_profit
+      }
+    } else {
+      // Fallback for assets without metadata
+      finalProfit = price_move * sz
+    }
+  }
+
+  // Deduct Fees
+  let eFee = +entryFee.value || 0
+  let xFee = +exitFee.value || 0
+  
+  if (feeType.value === '%') {
+    eFee = (en * eFee) / 100
+    xFee = (ex * xFee) / 100
   }
   
-  // Non-forex
-  const price_move = side.value === 'long' ? (ex - en) : (en - ex)
-  
-  if (currentAssetData.value?.contractSize) {
-    const size_multiplier = currentAssetData.value.contractSize
-    const raw_profit = price_move * sz * size_multiplier
-    
-    // Currency conversion to USD
-    const assetCurrency = currentAssetData.value.currency || 'USD'
-    if (assetCurrency !== 'USD') {
-      const rate = getRate(assetCurrency)
-      return raw_profit / rate
-    }
-    
-    return raw_profit
-  }
-  
-  // Fallback for assets without metadata
-  return price_move * sz
+  return finalProfit - (eFee + xFee)
 })
 
 const equityCurveTrades = computed(() => {
@@ -1188,6 +1200,9 @@ const submit = async () => {
     profitInCurrency: pnl.value,
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: selectedStrategyId.value,
+    entryFee: +entryFee.value || 0,
+    exitFee: +exitFee.value || 0,
+    feeType: feeType.value,
     emotions: [...selectedEmotions.value],
     boardScenarioEntry: formatScen(activeEntry, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
     boardScenarioExit: formatScen(activeExit || activeMini, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
@@ -1866,7 +1881,7 @@ const submit = async () => {
             class="px-5 py-1.5 transition-all duration-300 relative group"
             :class="activeSector === sector.id ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'"
           >
-            <span class="text-[8px] uppercase tracking-[0.4em] font-black relative z-10">{{ sector.label }}</span>
+            <span class="text-[8px] uppercase tracking-[0.4em] font-black relative z-10">{{ sector.id === 'fee' && locale === 'ru' ? 'КОМИССИИ' : sector.label }}</span>
           </button>
         </div>
       </div>
@@ -1991,6 +2006,27 @@ const submit = async () => {
                     <span class="opacity-20">/</span>
                     <span class="tracking-widest">{{ formatPart(t === 'open' ? openDate : exitDate, 'hour') }}:{{ formatPart(t === 'open' ? openDate : exitDate, 'minute') }}</span>
                   </div>
+                </div>
+              </div>
+
+              <div v-else-if="activeSector === 'fee'" :key="'fee'" class="flex items-center gap-8">
+                <button @click="feeType = feeType === '%' ? '$' : '%'" 
+                        class="flex items-center justify-center w-6 h-6 text-xl font-mono font-bold shrink-0">
+                  {{ feeType }}
+                </button>
+
+                <div class="flex flex-col gap-0.5 text-left">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-amber-500/60">
+                    {{ locale === 'ru' ? 'ВХОДНАЯ КОМ.' : 'ENTRY_FEE' }}
+                  </span>
+                  <input v-model="entryFee" type="number" placeholder="0.00" class="nier-input w-20 font-mono text-amber-400"/>
+                </div>
+                
+                <div class="flex flex-col gap-0.5 text-left">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-amber-500/60">
+                    {{ locale === 'ru' ? 'ВЫХОДНАЯ КОМ.' : 'EXIT_FEE' }}
+                  </span>
+                  <input v-model="exitFee" type="number" placeholder="0.00" class="nier-input w-20 font-mono text-amber-400"/>
                 </div>
               </div>
             </Transition>

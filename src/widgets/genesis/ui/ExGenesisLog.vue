@@ -163,6 +163,21 @@
                          </div>
                       </div>
                     </div>
+
+                    <!-- COMMISSIONS -->
+                    <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5 col-span-2" v-if="selectedTrade?.entryFee || selectedTrade?.exitFee">
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'КОМИССИИ' : 'COMMISSIONS' }}</span>
+                      <div class="flex mt-2 space-x-8">
+                         <div class="flex flex-col flex-1 space-y-1">
+                            <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ locale === 'ru' ? 'ВХОДНАЯ' : 'ENTRY' }}</span>
+                            <span class="text-sm font-mono font-bold text-amber-500/80 tracking-widest">{{ getEntryFeeDisplay(selectedTrade) }}</span>
+                         </div>
+                         <div class="flex flex-col flex-1 space-y-1">
+                            <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ locale === 'ru' ? 'ВЫХОДНАЯ' : 'EXIT' }}</span>
+                            <span class="text-sm font-mono font-bold text-amber-500/80 tracking-widest">{{ getExitFeeDisplay(selectedTrade) }}</span>
+                         </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <template #footer>
@@ -424,6 +439,22 @@ const calculateRR = (trade: any) => {
   const reward = Math.abs(tp - entry)
   if (risk === 0) return '∞'
   return (reward / risk).toFixed(2)
+}
+
+const getEntryFeeDisplay = (trade: any) => {
+  if (!trade || (!trade.entryFee && trade.entryFee !== 0)) return '0.00$'
+  if (trade.feeType === '%') {
+    return ((+trade.entry * +trade.entryFee) / 100).toFixed(2) + '$'
+  }
+  return (+trade.entryFee).toFixed(2) + '$'
+}
+
+const getExitFeeDisplay = (trade: any) => {
+  if (!trade || (!trade.exitFee && trade.exitFee !== 0)) return '0.00$'
+  if (trade.feeType === '%') {
+    return ((+trade.exit * +trade.exitFee) / 100).toFixed(2) + '$'
+  }
+  return (+trade.exitFee).toFixed(2) + '$'
 }
 
 const calculateDuration = (trade: any) => {
