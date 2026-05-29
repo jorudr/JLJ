@@ -21,7 +21,7 @@
         </div>
         
         <div class="w-full text-center mt-2">
-          <span class="text-[200px] font-serif italic text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]">{{ efficiency }}%</span>
+          <span class="text-[200px] px-3 font-serif italic text-white leading-none drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]">{{ efficiency }}%</span>
         </div>
         
         <div class="w-full text-center mt-6 flex flex-col items-center">

@@ -210,7 +210,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getAuth, signOut } from 'firebase/auth'
-import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '~/shared/firebase.client'
 import { open } from '@tauri-apps/plugin-shell'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -292,18 +292,7 @@ const handleDownload = async (url: string) => {
 onMounted(() => {
   document.addEventListener('mousedown', handleOutsideClick)
   
-  const pushInitialData = async () => {
-    try {
-      await setDoc(doc(db, 'app_settings', 'update_notification'), {
-        showUpdate: true,
-        version: '1.0.5',
-        downloadLink: 'https://example.com/download/latest'
-      }, { merge: true })
-    } catch (e) {
-      console.warn("Could not push initial data:", e)
-    }
-  }
-  pushInitialData()
+
 
   unsubUpdate = onSnapshot(doc(db, 'app_settings', 'update_notification'), (docSnap) => {
     if (docSnap.exists()) {
