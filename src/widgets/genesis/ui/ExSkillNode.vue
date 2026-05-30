@@ -144,7 +144,7 @@
            <!-- Scenario documentation panels -->
             <div v-if="isScenarioPanel"
                  class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
-               <div class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
+               <div v-if="node.type !== 'text-label' || isSelected" class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
                   <span class="text-[8px] font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
                   <span class="text-[8px] font-mono tracking-widest uppercase opacity-30 truncate max-w-[96px]">{{ scenarioPanelHeaderCode }}</span>
                </div>
@@ -260,6 +260,8 @@
                     @mousedown.stop.prevent="startResize">
                   <div class="w-3 h-3 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark"></div>
                </div>
+
+               <!-- Invisible drag borders removed in favor of topbar -->
             </div>
             <!-- Placeholder / Empty Cell -->
             <div v-if="node.type === 'placeholder'" class="flex items-center justify-center">
@@ -662,8 +664,11 @@ const scenarioPanelSize = computed(() => (
   isAudioNote.value ? { width: 320, height: 56 } :
     isDrawingPanel.value ? { width: 300, height: 190 } :
       isTablePanel.value ? tablePanelSize.value : 
-        props.node.type === 'text-label' ? { width: 360, height: 60 } :
+        isScenarioPanel.value ? (
+          props.node.type === 'text-label' ? { width: 420, height: props.isSelected ? 104 : 80 } :
+          props.node.type === 'text-panel' ? { width: 360, height: 160 } :
           { width: 260, height: 180 }
+        ) : { width: 260, height: 180 }
 ))
 const nodeWidth = computed(() => {
   if (props.node.type === 'image') return `${props.node.params?.width || 300}px`
@@ -759,7 +764,7 @@ function syncTextEditorFromNode() {
   if (props.node.type !== 'text-panel' && props.node.type !== 'text-label') return
   nextTick(() => {
     const editor = textEditorElement.value
-    if (!editor || isEditingTextPanel.value) return
+    if (!editor || isEditingTextPanel.value || document.activeElement === editor) return
     const nextHtml = textPanelHtml.value
     if (editor.innerHTML === nextHtml) return
     isSyncingTextEditor = true

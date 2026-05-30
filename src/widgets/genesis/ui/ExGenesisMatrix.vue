@@ -3704,6 +3704,10 @@ function removeNode(id: string) {
   if (nodeToRemove?.type === 'condition' && activeMenuCategory.value === 'INDICATORS') {
     activeMenuCategory.value = null
   }
+  if (lastSelectedId.value === id) {
+    lastSelectedId.value = null
+    activeMenuCategory.value = null
+  }
 
   if (activeContextId.value && activeContextNode.value?.subGraph) {
     activeContextNode.value.subGraph.nodes = activeContextNode.value.subGraph.nodes.filter(n => n.id !== id)
