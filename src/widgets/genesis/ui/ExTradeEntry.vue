@@ -166,10 +166,85 @@ const selectedStrategy = computed(() => {
   return s || tradeStore.strategies[0] || { id: 'MAIN_DIARY', name: 'MAIN_DIARY' }
 })
 
+const findAllNodes = (nodes) => {
+  let list = []
+  if (!nodes) return list
+  for (const node of nodes) {
+    list.push(node)
+    if (node.subGraph?.nodes) {
+      list = list.concat(findAllNodes(node.subGraph.nodes))
+    }
+  }
+  return list
+}
+
+const findAllConnections = (nodes, currentConnections = []) => {
+  let list = [...currentConnections]
+  if (!nodes) return list
+  for (const node of nodes) {
+    if (node.subGraph) {
+      const subConns = node.subGraph.connections || []
+      list = list.concat(findAllConnections(node.subGraph.nodes, subConns))
+    }
+  }
+  return list
+}
+
+const findNodeById = (list, id) => {
+  if (!list) return null
+  for (const node of list) {
+    if (node.id === id) return node
+    if (node.subGraph?.nodes) {
+      const found = findNodeById(node.subGraph.nodes, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const getReachableNodes = (startId, allNodes, allConnections) => {
+  const visited = new Set([startId])
+  const queue = [startId]
+  const reachable = []
+  
+  while (queue.length > 0) {
+    const currId = queue.shift()
+    const childrenIds = allConnections.filter(c => c.fromId === currId).map(c => c.toId)
+    for (const childId of childrenIds) {
+      if (!visited.has(childId)) {
+        visited.add(childId)
+        queue.push(childId)
+        const node = allNodes.find(n => n.id === childId)
+        if (node) reachable.push(node)
+      }
+    }
+  }
+  return reachable
+}
+
+const getNodeZoneType = (targetId, currentNodes, currentZones) => {
+  if (!currentNodes) return null
+  for (const node of currentNodes) {
+    if (node.id === targetId) {
+      const matchedZone = (currentZones || []).find(z => 
+        node.x >= z.x && node.x <= z.x + z.width &&
+        node.y >= z.y && node.y <= z.y + z.height
+      )
+      return matchedZone?.type?.toUpperCase() || null
+    }
+    if (node.subGraph?.nodes) {
+      const type = getNodeZoneType(targetId, node.subGraph.nodes, node.subGraph.zones || [])
+      if (type) return type
+    }
+  }
+  return null
+}
+
 // Sync strategies when matrix nodes change
 watch([matrixNodes, () => tradeStore.isLoading], ([nodes, loading]) => {
   if (loading) return
-  const cores = nodes
+  const allNodes = findAllNodes(nodes)
+  const cores = allNodes
     .filter(n => n.type === 'strategy' || n.type === 'system')
     .map(n => ({
       id: n.id,
@@ -203,42 +278,33 @@ onMounted(() => {
 
 const selectedScenarioNode = computed(() => {
   if (selectedStrategyId.value === 'MAIN_DIARY') return null
-  return matrixNodes.value.find(n => n.id === selectedStrategyId.value)
+  return findNodeById(matrixNodes.value, selectedStrategyId.value)
 })
 
 const getNodesForStrategy = (type, entryExit = 'ALL') => {
   let candidates = []
   if (selectedStrategyId.value === 'MAIN_DIARY') {
-    candidates = matrixNodes.value.filter(n => n.type === type)
+    candidates = findAllNodes(matrixNodes.value).filter(n => n.type === type)
   } else {
     const parent = selectedScenarioNode.value
     if (!parent) return []
     
-    const subGraphNodes = parent.subGraph?.nodes || []
-    const connectedIds = matrixConnections.value
-      .filter(c => c.fromId === parent.id)
-      .map(c => c.toId)
-    const connectedNodes = matrixNodes.value.filter(n => connectedIds.includes(n.id))
+    const subGraphNodes = findAllNodes(parent.subGraph?.nodes || [])
+    const allNodes = findAllNodes(matrixNodes.value)
+    const allConnections = findAllConnections(matrixNodes.value, matrixConnections.value)
     
-    candidates = [...subGraphNodes, ...connectedNodes].filter(n => n.type === type)
+    const reachableNodes = getReachableNodes(parent.id, allNodes, allConnections)
+    const reachableNodesWithDescendants = findAllNodes(reachableNodes)
+    
+    candidates = [...subGraphNodes, ...reachableNodesWithDescendants].filter(n => n.type === type)
   }
 
   if (entryExit === 'ALL') return candidates
 
   // Filter candidates by whether they fall into an ENTRY or EXIT domain
   return candidates.filter(node => {
-    return matrixZones.value.some(zone => {
-      const isMatch = zone.type.toUpperCase() === entryExit.toUpperCase()
-      if (!isMatch) return false
-      
-      // Hit test for node center point
-      return (
-        node.x >= zone.x &&
-        node.x <= zone.x + zone.width &&
-        node.y >= zone.y &&
-        node.y <= zone.y + zone.height
-      )
-    })
+    const zoneType = getNodeZoneType(node.id, matrixNodes.value, matrixZones.value)
+    return zoneType === entryExit.toUpperCase()
   })
 }
 
@@ -355,18 +421,14 @@ const toggleCondition = (id, scenarioId = null) => {
     const getScenarioType = (scenId) => {
       if (scenId.includes('-entry-')) return 'ENTRY'
       if (scenId.includes('-exit-')) return 'EXIT'
-      const node = matrixNodes.value.find(n => n.id === scenId)
-      if (node) {
-        const zone = matrixZones.value.find(z => node.x >= z.x && node.x <= z.x + z.width && node.y >= z.y && node.y <= z.y + z.height)
-        return zone?.type?.toUpperCase() || 'ENTRY'
-      }
-      return 'ENTRY'
+      const zoneType = getNodeZoneType(scenId, matrixNodes.value, matrixZones.value)
+      return zoneType || 'ENTRY'
     }
 
     const targetType = getScenarioType(targetScenarioId)
     
     // Find all scenarios that currently have active conditions
-    const allScens = [...matrixNodes.value.filter(n => n.type === 'scenario'), ...DEFAULT_EXIT_SCENARIOS, ...DEFAULT_ENTRY_SCENARIOS]
+    const allScens = [...findAllNodes(matrixNodes.value).filter(n => n.type === 'scenario'), ...DEFAULT_EXIT_SCENARIOS, ...DEFAULT_ENTRY_SCENARIOS]
     allScens.forEach(s => {
       if (s.id !== targetScenarioId && getScenarioType(s.id) === targetType) {
         const conds = getActiveConditionsInScenario(s.id)
@@ -539,28 +601,28 @@ const getScenarioConditions = (scenarioId) => {
     return []
   }
 
-  const scenario = matrixNodes.value.find(n => n.id === scenarioId)
+  const scenario = findNodeById(matrixNodes.value, scenarioId)
   if (!scenario) return []
 
-  const subNodes = scenario.subGraph?.nodes || []
-  const subConns = scenario.subGraph?.connections || []
+  const allNodes = findAllNodes(matrixNodes.value)
+  const allConnections = findAllConnections(matrixNodes.value, matrixConnections.value)
+  const subNodes = findAllNodes(scenario.subGraph?.nodes || [])
 
-  // 1. Get all conditions connected to this scenario (flat list)
-  const connectedIds = [
-    ...matrixConnections.value.filter(c => c.fromId === scenarioId).map(c => c.toId),
-    ...subConns.filter(c => c.fromId === scenarioId).map(c => c.toId)
-  ]
+  // 1. Get all conditions connected to this scenario (recursive list)
+  const reachableNodes = getReachableNodes(scenarioId, allNodes, allConnections)
   
-  const allConditions = [
-    ...matrixNodes.value.filter(n => connectedIds.includes(n.id) && n.type === 'condition'),
-    ...subNodes.filter(n => n.type === 'condition' && connectedIds.includes(n.id))
-  ]
+  const subConditions = subNodes.filter(n => n.type === 'condition')
+  const connectedConditions = reachableNodes.filter(n => n.type === 'condition')
+  
+  // Combine and deduplicate
+  const allConditionsMap = new Map()
+  subConditions.forEach(c => allConditionsMap.set(c.id, c))
+  connectedConditions.forEach(c => allConditionsMap.set(c.id, c))
+  const allConditions = Array.from(allConditionsMap.values())
 
   // Helper to get indicator data
   const getIndicatorData = (nodeId, parentCond) => {
-     const n = matrixNodes.value.find(node => node.id === nodeId) || 
-               subNodes.find(node => node.id === nodeId) ||
-               (parentCond.subGraph?.nodes || []).find(node => node.id === nodeId)
+     const n = findNodeById(matrixNodes.value, nodeId)
                
      if (!n || n.params?.needsConfig) return null
      
@@ -613,13 +675,9 @@ const getScenarioConditions = (scenarioId) => {
       })
     } else {
       // Fallback: Just get all indicators connected to this condition flatly
-      const indicatorIds = [
-        ...matrixConnections.value.filter(c => c.fromId === cond.id).map(c => c.toId),
-        ...subConns.filter(c => c.fromId === cond.id).map(c => c.toId)
-      ]
+      const indicatorIds = allConnections.filter(c => c.fromId === cond.id).map(c => c.toId)
       const indicators = [
-        ...matrixNodes.value.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig),
-        ...subNodes.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig),
+        ...allNodes.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig),
         ...(cond.subGraph?.nodes || []).filter(n => !n.params?.needsConfig)
       ]
       
