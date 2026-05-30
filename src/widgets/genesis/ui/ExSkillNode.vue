@@ -11,7 +11,7 @@
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="node.type === 'instrument' ? node.label : (node.type === 'indicator' ? node.label : (node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase())))" :disabled="isScenarioContentNode" class="w-full h-full">
+     <ExNTtooltip :title="node.type === 'instrument' ? node.label : (node.type === 'indicator' ? node.label : (node.type === 'smc' ? (smcTooltipData?.title || 'SMC') : (node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase()))))" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
            <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
@@ -353,6 +353,9 @@
                    <template v-else>
                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
                    </template>
+                </template>
+                <template v-else-if="node.type === 'smc'">
+                   {{ smcTooltipData?.description }}
                 </template>
                 <template v-else>
                   {{ locale === 'ru' ? t(node.params.description || node.params.value || '') : (node.params.description || node.params.value || '') }}
@@ -1190,6 +1193,25 @@ const getRemedyPath = (idx: number) => {
   const origin = getEdgeOrigin(600, 500, midX, coords.y, props.node.type === 'step')
   return `M ${origin.x} ${origin.y} L ${midX} ${coords.y} L ${coords.x} ${coords.y}`
 }
+
+const smcTooltipData = computed(() => {
+  if (props.node.type !== 'smc') return null
+  const baseDesc = props.node.params?.description || props.node.params?.value || ''
+  
+  const parts = baseDesc.split(' - ')
+  if (parts.length > 1) {
+    const rawTitle = parts[0].trim()
+    const rawDesc = parts.slice(1).join(' - ').trim()
+    return {
+      title: t(rawTitle).toUpperCase(),
+      description: t(rawDesc)
+    }
+  }
+  return {
+    title: t(props.node.label || 'SMC').toUpperCase(),
+    description: t(baseDesc)
+  }
+})
 </script>
 
 <style scoped>

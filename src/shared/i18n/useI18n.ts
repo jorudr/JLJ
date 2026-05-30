@@ -22,6 +22,13 @@ export function useI18n() {
 
   // The helper function described by the user for {{ t('key') }}
   const t = (path: string): string => {
+    // Check if the exact path exists as a flat key first to avoid issues with keys containing dots
+    const directResult = (translations[currentLocale.value] as any)?.[path]
+    if (typeof directResult === 'string') return directResult
+
+    const engResult = (translations['en'] as any)?.[path]
+    if (typeof engResult === 'string') return engResult
+
     const keys = path.split('.')
     let result: any = translations[currentLocale.value]
     
