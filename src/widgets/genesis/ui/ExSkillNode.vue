@@ -11,7 +11,7 @@
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase())" :disabled="isScenarioContentNode" class="w-full h-full">
+     <ExNTtooltip :title="node.type === 'instrument' ? node.label : (node.type === 'indicator' ? node.label : (node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase())))" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
            <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
