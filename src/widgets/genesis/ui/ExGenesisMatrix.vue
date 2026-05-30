@@ -745,9 +745,14 @@
                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                         </button>
                       </template>
-                      <div class="flex flex-col gap-1 min-w-[180px]">
+                      <div class="flex flex-col gap-1 min-w-[220px]">
                         <span class="text-[8px] font-mono opacity-40 uppercase">REIFY_SEQUENCE</span>
-                        <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Establish high-level tactical logic node for strategic branch validation.</p>
+                        <template v-if="type.description">
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                        </template>
+                        <template v-else>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Establish high-level tactical logic node for strategic branch validation.</p>
+                        </template>
                       </div>
                     </ExNTtooltip>
 	                 </div>
@@ -901,9 +906,9 @@
                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                         </button>
                       </template>
-                      <div class="flex flex-col gap-1 min-w-[180px]">
+                      <div class="flex flex-col gap-1 min-w-[220px]">
                         <span class="text-[8px] font-mono opacity-40 uppercase">EXECUTION_METHOD</span>
-                        <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Initialize specialized management protocol for position scaling and averaging.</p>
+                        <p class="text-[11px] font-mono font-bold opacity-80">{{ type.description }}</p>
                       </div>
                     </ExNTtooltip>
                  </div>
@@ -1615,7 +1620,7 @@ const skillTypes = computed(() => {
   const isStrategyActive = (selectedNode?.type === 'strategy' || contextNode?.type === 'strategy')
   const isScenarioActive = (selectedNode?.type === 'scenario' || contextNode?.type === 'scenario')
   
-  const base = [
+  const base: { label: string; type: string; color: string; description?: string }[] = [
     { label: 'Strategy', type: 'strategy', color: 'currentColor' }
   ]
   
@@ -1628,7 +1633,7 @@ const skillTypes = computed(() => {
   }
   
   base.push({ label: 'Emotion', type: 'emotion', color: 'currentColor' })
-  base.push({ label: 'Risk', type: 'risk', color: 'currentColor' })
+  base.push({ label: 'Risk', type: 'risk', color: 'currentColor', description: 'Risk management protocol defining loss constraints and exposure limits.' })
   base.push({ label: 'Visual', type: 'image', color: 'currentColor' })
   
   return base

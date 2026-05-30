@@ -11,13 +11,13 @@
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="node.type.toUpperCase()" :disabled="isScenarioContentNode" class="w-full h-full">
+     <ExNTtooltip :title="node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase())" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
            <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
                   node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
                   isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]'),
-                  node.type === 'image' ? 'border-none shadow-none' : ''
+                  (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry') ? 'border-none shadow-none' : ''
                 ]"
                 :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
                 @dblclick.stop="$emit('doubleclick')">
@@ -310,28 +310,61 @@
             <div @mousedown.stop="$emit('start-output', node)"
                  @dblclick.stop="$emit('clear-output', node)"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
-
-            <!-- Hover Fill -->
-            <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
+                       <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
          </div>
        </template>
-        <div class="flex flex-col space-y-2 p-1">
-          <div v-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
-            <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
-               <template v-if="node.type === 'scaling-entry'">
-                  {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+         <div class="flex flex-col space-y-2 p-1">
+           <!-- Risk-element contextual tooltip body -->
+           <template v-if="node.type === 'risk-element' && node.params?.riskType !== 'style'">
+             <p class="text-[11px] leading-relaxed text-red-500 font-bold uppercase tracking-wide">
+               <template v-if="node.params.riskType === 'trade'">
+                 <template v-if="locale === 'ru'">
+                   Нельзя рисковать более чем {{ node.params.value }}{{ node.params.unit }} за одну сделку.
+                 </template>
+                 <template v-else>
+                   You cannot risk more than {{ node.params.value }}{{ node.params.unit }} per trade.
+                 </template>
                </template>
-              <template v-else>
-                {{ node.params.description || node.params.value }}
-              </template>
-            </p>
-          </div>
-         <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
-           <span>TYPE: {{ node.type.toUpperCase() }}</span>
-           <span v-if="node.type === 'condition'">PRIORITY: {{ node.params?.priority || 'NONE' }}</span>
-           <span>STATUS: {{ node.params?.needsConfig ? 'AWAITING_REIFICATION' : 'REIFIED' }}</span>
-         </div>
-       </div>
+               <template v-else-if="node.params.riskType === 'day'">
+                 <template v-if="locale === 'ru'">
+                   Нельзя терять более чем {{ node.params.unit === '$' ? '$' : '' }}{{ node.params.value }}{{ node.params.unit === '%' ? '%' : '' }} за одну сессию.
+                 </template>
+                 <template v-else>
+                   You cannot lose more than {{ node.params.unit === '$' ? '$' : '' }}{{ node.params.value }}{{ node.params.unit === '%' ? '%' : '' }} in a single session.
+                 </template>
+               </template>
+               <template v-else-if="node.params.riskType === 'rr'">
+                 <template v-if="locale === 'ru'">
+                   Каждая сделка должна иметь соотношение риска к прибыли не ниже 1:{{ node.params.value }}.
+                 </template>
+                 <template v-else>
+                   Every trade must target a minimum risk-to-reward ratio of 1:{{ node.params.value }}.
+                 </template>
+               </template>
+             </p>
+           </template>
+           <!-- Default tooltip body for other node types -->
+           <div v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
+             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
+                <template v-if="node.type === 'scaling-entry'">
+                   <template v-if="locale === 'ru'">
+                      {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                   </template>
+                   <template v-else>
+                      {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                   </template>
+                </template>
+                <template v-else>
+                  {{ locale === 'ru' && t(node.params.description || node.params.value) ? t(node.params.description || node.params.value) : (node.params.description || node.params.value) }}
+                </template>
+             </p>
+           </div>
+          <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
+             <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
+             <span v-if="node.type === 'condition'">{{ locale === 'ru' ? 'ПРИОРИТЕТ' : 'PRIORITY' }}: {{ node.params?.priority === 'REQUIRED' ? (locale === 'ru' ? 'ОБЯЗАТЕЛЬНО' : 'REQUIRED') : node.params?.priority === 'ADDITIONAL' ? (locale === 'ru' ? 'ДОПОЛНИТЕЛЬНО' : 'ADDITIONAL') : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+             <span>{{ locale === 'ru' ? 'СТАТУС' : 'STATUS' }}: {{ node.params?.needsConfig ? (locale === 'ru' ? 'ОЖИДАЕТ_НАСТРОЙКИ' : 'AWAITING_REIFICATION') : (locale === 'ru' ? 'АКТИВИРОВАНО' : 'REIFIED') }}</span>
+           </div>
+        </div>
      </ExNTtooltip>
 
       <!-- MERGE BUTTON -->
@@ -353,10 +386,10 @@
              <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
 
              <span class="text-[13px] font-mono font-black tracking-[0.06em] text-nier-text-light dark:text-nier-text-dark uppercase leading-none whitespace-nowrap">
-               {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '%' : node.params.lots + ' LOTS' }}
+               {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '%' : (locale === 'ru' ? node.params.lots + ' ЛОТОВ' : node.params.lots + ' LOTS') }}
              </span>
-             <span class="text-[10px] font-mono opacity-35 leading-none">in</span>
-             <span class="text-[13px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none whitespace-nowrap">{{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
+             <span class="text-[10px] font-mono opacity-35 leading-none">{{ locale === 'ru' ? 'в' : 'in' }}</span>
+             <span class="text-[13px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none whitespace-nowrap">{{ node.params.step === 0 && node.params.unit === '$' ? (locale === 'ru' ? 'ВХОД' : 'ENTRY') : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
           </div>
       </div>
 
@@ -365,11 +398,20 @@
            class="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex flex-col items-center pointer-events-none min-w-max">
          <!-- Connector Line -->
          <div class="w-0.5 h-3 bg-red-500/40"></div>
-         <div class="px-5 py-2 bg-red-500/10 border-2 border-red-500/40 backdrop-blur-md flex items-center shadow-[0_10px_30px_rgba(239,68,68,0.25)] relative overflow-hidden">
+         <div class="px-5 py-2 bg-red-500/10 border-2 border-red-500/40 backdrop-blur-md flex flex-col items-center shadow-[0_10px_30px_rgba(239,68,68,0.25)] relative overflow-hidden">
             <!-- Glitch Scanning Line -->
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-red-500/5 to-transparent h-1/2 animate-scan pointer-events-none"></div>
-            <ExText variant="telemetry" class="!text-red-500 !opacity-100 font-black tracking-[0.2em] whitespace-nowrap !text-[12px]">{{ node.label }}</ExText>
-
+            <ExText variant="telemetry" class="!text-red-500 !opacity-100 font-black tracking-[0.2em] whitespace-nowrap !text-[12px]">
+              <template v-if="node.params.riskType === 'trade'">RISK PER TRADE</template>
+              <template v-else-if="node.params.riskType === 'day'">RISK PER SESSION</template>
+              <template v-else-if="node.params.riskType === 'rr'">RISK REWARD RATIO</template>
+              <template v-else>{{ node.label }}</template>
+            </ExText>
+            <ExText variant="telemetry" class="!text-red-500/60 !opacity-100 font-mono tracking-[0.12em] whitespace-nowrap !text-[11px] mt-0.5">
+              <template v-if="node.params.riskType === 'trade'">{{ node.params.value }}{{ node.params.unit }}</template>
+              <template v-else-if="node.params.riskType === 'day'">{{ node.params.unit === '$' ? '$' : '' }}{{ node.params.value }}{{ node.params.unit === '%' ? '%' : '' }}</template>
+              <template v-else-if="node.params.riskType === 'rr'">1:{{ node.params.value }}</template>
+            </ExText>
             <!-- Technical corner accents -->
             <div class="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-red-500"></div>
             <div class="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-red-500"></div>
@@ -528,6 +570,9 @@ import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExInput from '~/shared/ui/ExInput.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { locale, t } = useI18n()
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()
@@ -567,6 +612,14 @@ const displayColor = computed(() => {
 
   // For system nodes, return null so they use theme-based CSS classes (text-theme-text, etc.)
   return null
+})
+
+const riskElementTooltipTitle = computed(() => {
+  const riskType = props.node.params?.riskType
+  if (riskType === 'trade') return 'Risk Per Trade'
+  if (riskType === 'day') return 'Risk Per Session'
+  if (riskType === 'rr') return 'Risk Reward Ratio'
+  return 'RISK-ELEMENT'
 })
 
 interface Comment { id: string, text: string, x: number, y: number, isEditing: boolean }
