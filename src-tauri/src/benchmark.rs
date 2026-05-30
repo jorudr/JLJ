@@ -179,8 +179,8 @@ pub async fn get_benchmark_and_beta(
 
     // Helper to get cache file path
     let get_cache_path = || -> Result<std::path::PathBuf, String> {
-        let doc_dir = app.path().document_dir().map_err(|e| e.to_string())?;
-        let jlj_dir = doc_dir.join("JLJData");
+        let app_data = app.path().data_dir().map_err(|e| e.to_string())?;
+        let jlj_dir = app_data.join("JLJData");
         std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
         Ok(jlj_dir.join("benchmark_rust_cache.json"))
     };
@@ -465,9 +465,14 @@ pub async fn get_historical_curves(
         return Err("Invalid strategy ID".to_string());
     }
 
-    let doc_dir = app.path().document_dir().map_err(|e| e.to_string())?;
-    let jlj_dir = doc_dir.join("JLJData");
-    std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
+    let get_cache_dir = || -> Result<std::path::PathBuf, String> {
+        let app_data = app.path().data_dir().map_err(|e| e.to_string())?;
+        let jlj_dir = app_data.join("JLJData");
+        std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
+        Ok(jlj_dir)
+    };
+
+    let jlj_dir = get_cache_dir()?;
     let cache_path = jlj_dir.join(format!("historical_curves_{}.json", strategy_key));
 
     // Try reading cache

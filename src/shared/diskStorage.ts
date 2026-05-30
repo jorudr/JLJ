@@ -6,31 +6,34 @@ import {
     BaseDirectory,
     remove
 } from '@tauri-apps/plugin-fs';
-import { documentDir, join } from '@tauri-apps/api/path';
+import { dataDir, join } from '@tauri-apps/api/path';
 import { message } from '@tauri-apps/plugin-dialog';
 
 const JLJ_DATA_DIR = 'JLJData';
 
+let resolvedDataPath: string | null = null;
+
 /**
- * Ensures the JLJData directory exists in the Documents folder.
+ * Ensures the JLJData directory exists in the dataDir.
  */
 export const ensureDataDir = async (): Promise<string> => {
+    if (resolvedDataPath) return resolvedDataPath;
+
     try {
-        const docDir = await documentDir();
-        const dataPath = await join(docDir, JLJ_DATA_DIR);
-        console.log(`[DiskStorage] Document dir: ${docDir}, Data path: ${dataPath}`);
+        const appData = await dataDir();
+        const dataPath = await join(appData, JLJ_DATA_DIR);
         
         const dirExists = await exists(dataPath);
         if (!dirExists) {
             console.log(`[DiskStorage] Creating directory: ${dataPath}`);
-            await mkdir(dataPath, { 
-                recursive: true 
-            });
+            await mkdir(dataPath, { recursive: true });
         }
+        
+        resolvedDataPath = dataPath;
         return dataPath;
     } catch (error: any) {
         console.error('[DiskStorage] Error in ensureDataDir:', error);
-        await message(`Failed to access Documents folder: ${error.message || error}`, { title: 'Storage Error', kind: 'error' });
+        await message(`Failed to access storage: ${error.message || error}`, { title: 'Storage Error', kind: 'error' });
         throw error;
     }
 };
