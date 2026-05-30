@@ -1845,15 +1845,15 @@ const scenarioVisualTypes = [
 
 const labelTypes = [
   {
-    label: 'TEXT_LABEL',
-    type: 'text-label',
+    label: 'TEXT_PANEL',
+    type: 'text-panel',
     color: 'currentColor',
-    description: 'Text label for long labels or sentences.',
+    description: 'Free-form text label for long labels or sentences.',
     params: {
       shortCode: 'LBL',
       menuLabel: 'LABEL',
-      protocol: 'TEXT_LABEL_PANEL',
-      description: 'Text label for long labels or sentences.',
+      protocol: 'TEXT_INPUT_PANEL',
+      description: 'Free-form text label for long labels or sentences.',
       value: ''
     }
   }
@@ -2868,7 +2868,7 @@ function handleNodeDive(node: Node) {
     navigateTo([...navigationStack.value, node.id])
   } else if (node.type === 'image') {
     triggerImageUpload(node.id)
-  } else if (node.type === 'text-panel' || node.type === 'text-label') {
+  } else if (node.type === 'text-panel') {
     selectNode(node.id)
     openTextCommandLink(node)
   } else if (node.type === 'drawing-panel') {
@@ -3388,11 +3388,11 @@ function handleGenericFileUpload(e: Event) {
 function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
   if (!node) return null
   if (isScenarioContext.value) {
-    if (node.type === 'text-panel' || node.type === 'text-label') return 'TEXT_FORMAT'
+    if (node.type === 'text-panel') return 'TEXT_FORMAT'
     if (['checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
     return 'SCENARIO_DOCS'
   }
-  if (node.type === 'text-panel' || node.type === 'text-label') return 'TEXT_FORMAT'
+  if (node.type === 'text-panel') return 'TEXT_FORMAT'
   if (node.params?.needsConfig) return 'CONFIG'
   if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
     return 'INDICATORS'
@@ -3426,9 +3426,9 @@ function selectNode(id: string | null) {
     const parentNode = parentConn ? getNode(parentConn.fromId) : null
     activeMenuCategory.value = getMenuCategoryForNode(parentNode || null)
   } else {
-    if (node?.type !== 'text-panel' && node?.type !== 'text-label') activeTextNodeId.value = null
+    if (node?.type !== 'text-panel') activeTextNodeId.value = null
     activeMenuCategory.value = getMenuCategoryForNode(node || null)
-    if (node?.type === 'text-panel' || node?.type === 'text-label') openTextCommandLink(node)
+    if (node?.type === 'text-panel') openTextCommandLink(node)
   }
 }
 
