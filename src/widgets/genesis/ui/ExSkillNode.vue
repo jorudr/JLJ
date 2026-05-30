@@ -390,7 +390,7 @@
              <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
 
              <span class="text-[13px] font-mono font-black tracking-[0.06em] text-nier-text-light dark:text-nier-text-dark uppercase leading-none whitespace-nowrap">
-               {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '%' : (locale === 'ru' ? node.params.lots + ' ЛОТОВ' : node.params.lots + ' LOTS') }}
+               {{ node.params.lotsMode === 'PERCENT' ? (locale === 'ru' ? node.params.lots + '%депо' : node.params.lots + '%cap') : (locale === 'ru' ? node.params.lots + ' ЛОТОВ' : node.params.lots + ' LOTS') }}
              </span>
              <span class="text-[10px] font-mono opacity-35 leading-none">{{ locale === 'ru' ? 'в' : 'in' }}</span>
              <span class="text-[13px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none whitespace-nowrap">{{ node.params.step === 0 && node.params.unit === '$' ? (locale === 'ru' ? 'ВХОД' : 'ENTRY') : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
