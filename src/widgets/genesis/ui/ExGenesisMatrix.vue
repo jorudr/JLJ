@@ -1531,7 +1531,10 @@ const activeContextNode = computed(() => {
   if (!activeContextId.value) return null
   return findNodeById(rootNodes.value, activeContextId.value)
 })
-const isScenarioContext = computed(() => activeContextNode.value?.type === 'scenario' || activeContextNode.value?.type === 'condition')
+const isScenarioContext = computed(() => {
+  const t = activeContextNode.value?.type
+  return t && t !== 'strategy'
+})
 
 watch(isScenarioContext, (isScenario) => {
   if (isScenario) viewState.value.scale = 1
@@ -1644,7 +1647,10 @@ const skillTypes = computed(() => {
   const contextNode = activeContextId.value ? getNode(activeContextId.value) : null
   
   const isStrategyActive = (selectedNode?.type === 'strategy' || contextNode?.type === 'strategy')
-  const isScenarioActive = (selectedNode?.type === 'scenario' || contextNode?.type === 'scenario' || selectedNode?.type === 'condition' || contextNode?.type === 'condition')
+  const isScenarioActive = (
+    (selectedNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(selectedNode.type)) ||
+    (contextNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(contextNode.type))
+  )
   
   const base: { label: string; type: string; color: string; description?: string }[] = [
     { label: 'Strategy', type: 'strategy', color: 'currentColor' }
@@ -2757,7 +2763,8 @@ function findNodeById(list: Node[], id: string): Node | null {
 }
 
 function handleNodeDive(node: Node) {
-  if (node.type === 'strategy' || node.type === 'scenario' || node.type === 'condition') {
+  const divableTypes = ['strategy', 'scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc']
+  if (divableTypes.includes(node.type)) {
     if (!node.subGraph) {
        node.subGraph = { nodes: [], connections: [], zones: [] }
     }
