@@ -844,50 +844,50 @@
                               @click="finishMatrixAudioRecording"
                               class="group relative min-w-[64px] h-14 border border-red-500/50 flex flex-col items-center justify-center transition-all hover:border-red-500 hover:scale-105 bg-red-500/5 backdrop-blur-md px-3">
                         <span class="w-3 h-3 bg-red-500"></span>
-                        <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-55 group-hover:opacity-90 transition-opacity whitespace-nowrap">FINISH</span>
-                      </button>
-                    </div>
-                  </div>
+                                       <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-55 group-hover:opacity-90 transition-opacity whitespace-nowrap">FINISH</span>
+                                     </button>
+                                   </div>
+                                 </div>
 
-               <!-- DOMAINS TOOLS -->
-                   <div v-if="activeMenuCategory === 'DOMAINS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
-                    <ExNTtooltip v-for="zoneType in (['entry', 'in-trade', 'exit'] as const)" :key="zoneType" :title="`${zoneType.toUpperCase()}_ZONE`">
-                      <template #trigger>
-                        <button @click="activateZoneTool(zoneType)"
-                                :class="[
-                                  isZoneToolActive && selectedZoneType === zoneType ? 'border-nier-text-light dark:border-nier-text-dark bg-nier-text-light/10 dark:bg-nier-text-dark/10 scale-110' : 'border-nier-border-light dark:border-nier-border-dark'
-                                ]"
-                                class="group relative w-12 h-12 border flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
-                           <div v-if="zoneType === 'entry'" class="w-4 h-4 border border-nier-text-light dark:border-nier-text-dark opacity-40 group-hover:opacity-100"></div>
-                           <div v-if="zoneType === 'in-trade'" class="w-4 h-4 border border-nier-text-light dark:border-nier-text-dark border-dashed opacity-40 group-hover:opacity-100"></div>
-                           <div v-if="zoneType === 'exit'" class="w-4 h-4 border-2 border-nier-text-light dark:border-nier-text-dark opacity-40 group-hover:opacity-100"></div>
-                        </button>
-                      </template>
-                      <span class="text-xs">Construct behavioral domain: {{ zoneType.toUpperCase() }}</span>
-                    </ExNTtooltip>
-                    
-                    <div class="w-px h-12 bg-nier-text-light/10 dark:bg-nier-text-dark/10 mx-2"></div>
+                              <!-- DOMAINS TOOLS -->
+                                 <div v-if="activeMenuCategory === 'DOMAINS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
+                                   <ExNTtooltip v-for="zoneType in (['entry', 'in-trade', 'exit'] as const)" :key="zoneType" :title="locale === 'ru' && t(`${zoneType.toUpperCase()}_ZONE`) ? t(`${zoneType.toUpperCase()}_ZONE`) : `${zoneType.toUpperCase()}_ZONE`">
+                                     <template #trigger>
+                                       <button @click="activateZoneTool(zoneType)"
+                                               :class="[
+                                                 isZoneToolActive && selectedZoneType === zoneType ? 'border-nier-text-light dark:border-nier-text-dark bg-nier-text-light/10 dark:bg-nier-text-dark/10 scale-110' : 'border-nier-border-light dark:border-nier-border-dark'
+                                               ]"
+                                               class="group relative w-12 h-12 border flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
+                                          <div v-if="zoneType === 'entry'" class="w-4 h-4 border border-nier-text-light dark:border-nier-text-dark opacity-40 group-hover:opacity-100"></div>
+                                          <div v-if="zoneType === 'in-trade'" class="w-4 h-4 border border-nier-text-light dark:border-nier-text-dark border-dashed opacity-40 group-hover:opacity-100"></div>
+                                          <div v-if="zoneType === 'exit'" class="w-4 h-4 border-2 border-nier-text-light dark:border-nier-text-dark opacity-40 group-hover:opacity-100"></div>
+                                       </button>
+                                     </template>
+                                     <span class="text-xs">{{ locale === 'ru' ? 'Создать поведенческую зону' : 'Construct behavioral domain' }}: {{ locale === 'ru' && t(zoneType) ? t(zoneType).toUpperCase() : zoneType.toUpperCase() }}</span>
+                                   </ExNTtooltip>
+                                   
+                                   <div class="w-px h-12 bg-nier-text-light/10 dark:bg-nier-text-dark/10 mx-2"></div>
 
-                    <!-- New Session Tool -->
-                    <ExNTtooltip title="SESSION_ZONE">
-                      <template #trigger>
-                        <button @click="activateZoneTool('session')"
-                                :class="[
-                                  isZoneToolActive && selectedZoneType === 'session' ? 'border-nier-text-light dark:border-nier-text-dark bg-nier-text-light/10 dark:bg-nier-text-dark/10 scale-110' : 'border-nier-border-light dark:border-nier-border-dark'
-                                ]"
-                                class="group relative w-12 h-12 border flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
-                           <svg class="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                             <circle cx="12" cy="12" r="10" />
-                             <path d="M12 6v6l4 2" />
-                           </svg>
-                        </button>
-                      </template>
-                      <span class="text-xs">Establish temporal session domain</span>
-                    </ExNTtooltip>
-                  </div>
+                                   <!-- New Session Tool -->
+                                   <ExNTtooltip :title="locale === 'ru' && t('SESSION_ZONE') ? t('SESSION_ZONE') : 'SESSION_ZONE'">
+                                     <template #trigger>
+                                       <button @click="activateZoneTool('session')"
+                                               :class="[
+                                                 isZoneToolActive && selectedZoneType === 'session' ? 'border-nier-text-light dark:border-nier-text-dark bg-nier-text-light/10 dark:bg-nier-text-dark/10 scale-110' : 'border-nier-border-light dark:border-nier-border-dark'
+                                               ]"
+                                               class="group relative w-12 h-12 border flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
+                                          <svg class="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 6v6l4 2" />
+                                          </svg>
+                                       </button>
+                                     </template>
+                                     <span class="text-xs">{{ locale === 'ru' ? 'Создать временную зону сессии' : 'Establish temporal session domain' }}</span>
+                                   </ExNTtooltip>
+                                 </div>
 
-               <!-- METHODS TOOLS -->
-                  <div v-if="activeMenuCategory === 'METHODS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
+                              <!-- METHODS TOOLS -->
+                                 <div v-if="activeMenuCategory === 'METHODS' && !isScenarioContext" class="flex space-x-6 pointer-events-auto">
                     <ExNTtooltip v-for="type in methodTypes" :key="type.label" :title="type.label">
                       <template #trigger>
                         <button @click="addNode(type)"
@@ -1410,7 +1410,9 @@ import ExConditionCreator from '@/widgets/genesis/ui/ExConditionCreator.vue'
 import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import { useThemeStore } from '@/features/store/useTheme'
 import { useAppBootStore } from '~/features/store/useAppBoot'
+import { useI18n } from '~/shared/i18n/useI18n'
 
+const { locale, t } = useI18n()
 const themeStore = useThemeStore()
 
 const STORAGE_KEY = 'genesis_matrix_v2'
@@ -3054,6 +3056,8 @@ const saveMatrixData = async () => {
       },
       personalIndicators: personalIndicators.value
     }
+    const appBootStore = useAppBootStore()
+    appBootStore.genesisMatrixCache = data
     await saveToDisk(STORAGE_KEY, data)
   }, 1000)
 }
@@ -3199,7 +3203,8 @@ function addNode(type: any) {
     rootNodes.value.push(newNode)
     if (lastNode) rootConnections.value.push({ fromId: lastNode.id, toId: id })
   }
-
+ 
+  saveMatrixData()
   selectNode(id)
 }
 

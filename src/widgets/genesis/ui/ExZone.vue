@@ -19,7 +19,7 @@
        
        <button @click.stop="$emit('cycle-type', zone.id)"
                class="tactical-button px-[24px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all text-[16px] font-mono opacity-40 hover:opacity-100 uppercase tracking-widest whitespace-nowrap">
-          {{ zone.type }}
+          {{ locale === 'ru' && t(zone.type) ? t(zone.type) : zone.type }}
        </button>
 
        <div class="w-[16px] h-[16px] rotate-45 border-[2px] border-current opacity-40 ml-4"></div>
@@ -31,7 +31,7 @@
        </svg>
 
        <span class="text-[18px] font-mono tracking-[0.4em] uppercase opacity-40 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-         {{ zone.type === 'session' ? localizedSessionLabel : zone.label }}
+         {{ zone.type === 'session' ? localizedSessionLabel : (locale === 'ru' && t(zone.label) && t(zone.label) !== zone.label ? t(zone.label) : zone.label) }}
        </span>
     </div>
 
@@ -78,7 +78,10 @@ const props = defineProps<{
   scale: number
 }>()
 
-defineEmits(['drag-start', 'resize-start', 'remove', 'cycle-type'])
+const emit = defineEmits(['drag-start', 'resize-start', 'remove', 'cycle-type'])
+
+import { useI18n } from '~/shared/i18n/useI18n'
+const { locale, t } = useI18n()
 
 const sessionReferences: Record<string, { start: number, end: number }> = {
   SYDNEY: { start: 21, end: 6 },
@@ -104,7 +107,8 @@ const localizedSessionLabel = computed(() => {
   const offsetValue = offset || 0
   const offsetLabel = offsetValue === 0 ? 'GMT' : `GMT${offsetValue >= 0 ? '+' : ''}${offsetValue}`
   
-  return `${props.zone.label} (${formatTime(ref.start)} - ${formatTime(ref.end)}) [${offsetLabel}]`
+  const labelText = locale.value === 'ru' && t(props.zone.label) ? t(props.zone.label) : props.zone.label
+  return `${labelText} (${formatTime(ref.start)} - ${formatTime(ref.end)}) [${offsetLabel}]`
 })
 
 const sessionPalette = {

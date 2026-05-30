@@ -145,7 +145,7 @@
             <div v-if="isScenarioPanel"
                  class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
                <div class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
-                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate">{{ scenarioPanelHeaderTitle }}</span>
+                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
                   <span class="text-[8px] font-mono tracking-widest uppercase opacity-30 truncate max-w-[96px]">{{ scenarioPanelHeaderCode }}</span>
                </div>
 
@@ -355,12 +355,12 @@
                    </template>
                 </template>
                 <template v-else>
-                  {{ locale === 'ru' && t(node.params.description || node.params.value) ? t(node.params.description || node.params.value) : (node.params.description || node.params.value) }}
+                  {{ locale === 'ru' ? t(node.params.description || node.params.value || '') : (node.params.description || node.params.value || '') }}
                 </template>
              </p>
            </div>
           <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
-             <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
+             <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
              <span v-if="node.type === 'condition'">{{ locale === 'ru' ? 'ПРИОРИТЕТ' : 'PRIORITY' }}: {{ node.params?.priority === 'REQUIRED' ? (locale === 'ru' ? 'ОБЯЗАТЕЛЬНО' : 'REQUIRED') : node.params?.priority === 'ADDITIONAL' ? (locale === 'ru' ? 'ДОПОЛНИТЕЛЬНО' : 'ADDITIONAL') : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
              <span>{{ locale === 'ru' ? 'СТАТУС' : 'STATUS' }}: {{ node.params?.needsConfig ? (locale === 'ru' ? 'ОЖИДАЕТ_НАСТРОЙКИ' : 'AWAITING_REIFICATION') : (locale === 'ru' ? 'АКТИВИРОВАНО' : 'REIFIED') }}</span>
            </div>
