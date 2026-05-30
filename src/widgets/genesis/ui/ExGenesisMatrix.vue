@@ -293,7 +293,7 @@
                   
                   <button @click="setConnectionLabel(opt)"
                           class="bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark px-6 py-2 min-w-[160px] text-left transition-all duration-500 hover:border-nier-text-light dark:hover:border-nier-text-dark hover:translate-x-4 flex items-center justify-between relative overflow-hidden shadow-[10px_10px_0_rgba(0,0,0,0.1)]">
-                    <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black group-hover:tracking-[0.8em] transition-all duration-500 relative z-10 text-nier-text-light dark:text-nier-text-dark">{{ opt }}</span>
+                    <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black group-hover:tracking-[0.8em] transition-all duration-500 relative z-10 text-nier-text-light dark:text-nier-text-dark">{{ locale === 'ru' ? t(opt) : opt }}</span>
                     <span class="text-[7px] font-mono opacity-20 group-hover:opacity-100 transition-opacity relative z-10 text-nier-text-light dark:text-nier-text-dark">[0x0{{ idx + 1 }}]</span>
                     
                     <div class="absolute inset-y-0 left-0 w-0 bg-nier-text-light dark:bg-nier-text-dark group-hover:w-1.5 transition-all duration-500"></div>
