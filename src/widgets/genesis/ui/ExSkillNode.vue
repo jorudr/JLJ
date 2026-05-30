@@ -318,9 +318,9 @@
         <div class="flex flex-col space-y-2 p-1">
           <div v-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
-              <template v-if="node.type === 'scaling-entry'">
-                 SCALING_PROTOCOL: {{ node.params.lots }} LOTS @ {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
-              </template>
+               <template v-if="node.type === 'scaling-entry'">
+                  {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+               </template>
               <template v-else>
                 {{ node.params.description || node.params.value }}
               </template>
@@ -348,14 +348,16 @@
       <!-- Scaling Entry Subtitle -->
        <div v-if="node.type === 'scaling-entry'"
             class="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex flex-col items-center pointer-events-none z-50">
-         <div class="px-5 py-3 bg-nier-white dark:bg-nier-black border-[1.5px] border-nier-border-light dark:border-nier-border-dark flex flex-col items-center space-y-1 min-w-[130px] shadow-[0_15px_35px_rgba(0,0,0,0.4)] relative">
-            <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
-            <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
+          <div class="px-5 py-2 bg-nier-white dark:bg-nier-black border-[1.5px] border-nier-border-light dark:border-nier-border-dark flex items-center space-x-2 shadow-[0_15px_35px_rgba(0,0,0,0.4)] relative">
+             <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
+             <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
 
-            <span class="text-[14px] font-mono font-black tracking-[0.1em] text-nier-text-light dark:text-nier-text-dark uppercase leading-none">{{ node.params.lots }} LOTS</span>
-            <div class="w-full h-px bg-nier-border-light dark:bg-nier-border-dark opacity-20"></div>
-            <span class="text-[12px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none">{{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
-         </div>
+             <span class="text-[13px] font-mono font-black tracking-[0.06em] text-nier-text-light dark:text-nier-text-dark uppercase leading-none whitespace-nowrap">
+               {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '%' : node.params.lots + ' LOTS' }}
+             </span>
+             <span class="text-[10px] font-mono opacity-35 leading-none">in</span>
+             <span class="text-[13px] font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase leading-none whitespace-nowrap">{{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
+          </div>
       </div>
 
       <!-- Risk Element Overlay -->

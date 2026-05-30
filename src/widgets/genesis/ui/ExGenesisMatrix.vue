@@ -912,21 +912,36 @@
                   <div v-if="activeMenuCategory === 'SCALING' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full">
                     <div class="flex flex-col items-center w-full space-y-3">
                        <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40">Configure_Scaling_Entry</span>
-                       <div class="flex items-end space-x-3">
+                       <div class="flex items-end space-x-2">
 
-                          <!-- Lots / Size -->
+                          <!-- Size Mode + Value (combined) -->
                           <div class="flex flex-col items-center">
-                             <span class="text-[7px] font-mono uppercase opacity-40 mb-1">Lots</span>
+                             <!-- Mode Switcher -->
+                             <div class="flex mb-1 border border-nier-border-light dark:border-nier-border-dark overflow-hidden">
+                                <button @click="scalingMode = 'LOTS'"
+                                        :class="scalingMode === 'LOTS' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'bg-transparent text-nier-text-light dark:text-nier-text-dark opacity-40 hover:opacity-100'"
+                                        class="px-2 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider transition-all h-[18px]">
+                                   LOTS
+                                </button>
+                                <button @click="scalingMode = 'PERCENT'"
+                                        :class="scalingMode === 'PERCENT' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'bg-transparent text-nier-text-light dark:text-nier-text-dark opacity-40 hover:opacity-100'"
+                                        class="px-2 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider transition-all h-[18px]">
+                                   %CAP
+                                </button>
+                             </div>
                              <ExInput v-model.number="scalingLots" type="number" min="0.01" step="0.01"
                                     class="w-20 hide-spinners" />
                           </div>
 
-                          <!-- Step value -->
+                          <!-- "in" separator -->
+                          <span class="text-[9px] font-mono opacity-30 pb-2">in</span>
+
+                          <!-- Step value + Unit toggle -->
                           <div class="flex flex-col items-center">
-                             <span class="text-[7px] font-mono uppercase opacity-40 mb-1">Distance from Entry</span>
+                             <span class="text-[7px] font-mono uppercase opacity-40 mb-1">Distance</span>
                              <div class="flex">
                                 <ExInput v-model.number="scalingStep" type="number" step="0.01"
-                                       class="w-24 hide-spinners" />
+                                       class="w-20 hide-spinners" />
                                 <button @click="scalingUnit = scalingUnit === '%' ? '$' : '%'"
                                         class="px-3 py-2 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/10 dark:bg-nier-text-dark/10 text-[12px] font-mono font-bold hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all h-[34px]">
                                    {{ scalingUnit }}
@@ -936,11 +951,11 @@
 
                           <!-- Action Button -->
                           <ExButton v-if="effectiveSelectedNode?.type === 'scaling-entry'" 
-                                    @click="updateScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-6">
+                                    @click="updateScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-4">
                              CHANGE <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">⟳</span>
                           </ExButton>
-                          <ExButton v-else @click="addScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-6">
-                             ADD_NODE <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
+                          <ExButton v-else @click="addScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-4">
+                             ADD <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
                           </ExButton>
                        </div>
                     </div>
@@ -2064,6 +2079,7 @@ const stepPagesCount = 3
 const scalingLots = ref(1)
 const scalingStep = ref(0)
 const scalingUnit = ref<'%' | '$'>('%')
+const scalingMode = ref<'LOTS' | 'PERCENT'>('LOTS')
 const riskLossTrade = ref(1)
 const riskLossTradeUnit = ref<'%' | '$'>('%')
 const riskLossDayUnit = ref<'%' | '$'>('$')
@@ -2128,6 +2144,7 @@ watch(lastSelectedId, (newId) => {
     scalingLots.value = node.params.lots || 1
     scalingStep.value = node.params.step || 0
     scalingUnit.value = node.params.unit || '%'
+    scalingMode.value = node.params.lotsMode || 'LOTS'
   }
 })
 const stepPresets = {
@@ -3306,6 +3323,7 @@ function addScalingEntry() {
       lots: scalingLots.value,
       step: scalingStep.value,
       unit: scalingUnit.value,
+      lotsMode: scalingMode.value,
       parentType: parentNode.type
     }
   }
@@ -3331,6 +3349,7 @@ function updateScalingEntry() {
   node.params.lots = scalingLots.value
   node.params.step = scalingStep.value
   node.params.unit = scalingUnit.value
+  node.params.lotsMode = scalingMode.value
   
   saveMatrixData()
   forceUpdate()
