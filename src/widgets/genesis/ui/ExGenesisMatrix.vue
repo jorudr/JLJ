@@ -314,6 +314,39 @@
         </Transition>
       </Teleport>
 
+      <!-- PERSONAL CONDITION CONTEXT MENU Overlay -->
+      <Teleport to="body">
+        <Transition name="nt-tooltip-fade">
+           <div v-if="personalCondContextMenu" 
+                class="fixed z-[100000001] pointer-events-auto context-menu-container"
+                :style="{ left: personalCondContextMenu.x + 'px', top: personalCondContextMenu.y + 'px' }"
+                @click.stop>
+              
+              <div class="flex flex-col space-y-1.5">
+                <!-- Anchor Point Indicator -->
+                <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark rotate-45 absolute -left-1 -top-1 animate-pulse"></div>
+
+                <div class="group relative">
+                  <button @click="removePersonalCondition(personalCondContextMenu.indicator)"
+                          class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-2.5 min-w-[160px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden group">
+                    <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">
+                      {{ locale === 'ru' ? 'УДАЛИТЬ' : 'REMOVE' }}
+                    </span>
+                    <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
+                    
+                    <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
+                  </button>
+                  <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
+                    <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">
+                      {{ locale === 'ru' ? 'Внимание: Безвозвратное стирание' : 'Warning: Permanent_Erasure' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+           </div>
+        </Transition>
+      </Teleport>
+
       <!-- SEQUENTIAL PROMPT (Nier Style) -->
       <div v-if="shouldShowInitializePrompt" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
          <div class="flex flex-col items-center space-y-4">
@@ -536,6 +569,7 @@
                         <ExNTtooltip v-for="type in indicatorTypes" :key="type.label" :title="type.label">
                           <template #trigger>
                             <button @click="addNode(type)"
+                                    @contextmenu.prevent="activeIndicatorCategory === 'PERSONAL' && handlePersonalCondContextMenu($event, type)"
                                     class="group relative min-w-[48px] h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-4">
                                <span class="text-[8px] font-mono tracking-widest uppercase mb-1">{{ type.label }}</span>
                                <div class="text-[14px] font-mono font-black opacity-40 group-hover:opacity-100 transition-all tracking-tighter">
@@ -755,7 +789,33 @@
                         </template>
                       </div>
                     </ExNTtooltip>
-	                 </div>
+                  </div>
+
+               <!-- LABELS TOOLS -->
+                  <div v-if="activeMenuCategory === 'LABELS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 mb-5">
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                      <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">{{ t('Label_Sequence_Layer') }}</span>
+                      <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+                    </div>
+                    <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
+                      <ExNTtooltip v-for="type in labelTypes" :key="type.label" :title="t(type.label)">
+                        <template #trigger>
+                          <button @click="addNode(type)"
+                                  class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
+                            <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
+                            <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t(type.params.menuLabel) }}</span>
+                            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                          </button>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-[220px]">
+                          <span class="text-[8px] font-mono opacity-40 uppercase">{{ t(type.params.protocol) }}</span>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ t(type.description) }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </div>
 
                <!-- SCENARIO DOCUMENTATION TOOLS -->
                   <div v-if="activeMenuCategory === 'SCENARIO_DOCS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
@@ -1467,6 +1527,7 @@ type MenuCategory =
   | 'SCENARIO_DOCS'
   | 'SCENARIO_VISUALS'
   | 'SCENARIO_AUDIO'
+  | 'LABELS'
 
 // --- SYSTEM STATE --- //
 
@@ -1778,6 +1839,22 @@ const scenarioVisualTypes = [
       menuLabel: 'FILE',
       protocol: 'FILE_ATTACHMENT',
       description: 'Attach a file to the scenario archive.'
+    }
+  }
+]
+
+const labelTypes = [
+  {
+    label: 'TEXT_LABEL',
+    type: 'text-label',
+    color: 'currentColor',
+    description: 'Text label for long labels or sentences.',
+    params: {
+      shortCode: 'LBL',
+      menuLabel: 'LABEL',
+      protocol: 'TEXT_LABEL_PANEL',
+      description: 'Text label for long labels or sentences.',
+      value: ''
     }
   }
 ]
@@ -2100,13 +2177,14 @@ function eraseDrawingAtPoint(point: { x: number; y: number }) {
 }
 
 // --- MENU STATE --- //
-const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG']
-const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO', 'TEXT_FORMAT']
+const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG', 'LABELS']
+const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO', 'TEXT_FORMAT', 'LABELS']
 const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   SCENARIO_DOCS: 'DOCS',
   SCENARIO_VISUALS: 'VISUALS',
   SCENARIO_AUDIO: 'AUDIO',
-  TEXT_FORMAT: 'TEXT'
+  TEXT_FORMAT: 'TEXT',
+  LABELS: 'LABELS'
 }
 const activeMenuCategory = ref<MenuCategory | null>('LOGIC')
 const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
@@ -2143,7 +2221,8 @@ const commandLinkCategories = computed(() => {
 })
 
 function getCommandCategoryLabel(category: MenuCategory) {
-  return commandCategoryLabels[category] || category
+  const labelKey = commandCategoryLabels[category] || category
+  return t(labelKey)
 }
 
 function shouldShowCommandCategory(category: MenuCategory) {
@@ -2401,6 +2480,24 @@ function handleConnectionClick(e: MouseEvent, connection: Connection) {
     y: e.clientY,
     connection
   }
+}
+
+const personalCondContextMenu = ref<{ x: number, y: number, indicator: any } | null>(null)
+
+function handlePersonalCondContextMenu(e: MouseEvent, indicator: any) {
+  personalCondContextMenu.value = {
+    x: e.clientX,
+    y: e.clientY,
+    indicator
+  }
+}
+
+function removePersonalCondition(indicator: any) {
+  personalIndicators.value = personalIndicators.value.filter(
+    (ind: any) => ind.label !== indicator.label
+  )
+  personalCondContextMenu.value = null
+  saveMatrixData()
 }
 
 function setConnectionLabel(label: string | null) {
@@ -2771,7 +2868,7 @@ function handleNodeDive(node: Node) {
     navigateTo([...navigationStack.value, node.id])
   } else if (node.type === 'image') {
     triggerImageUpload(node.id)
-  } else if (node.type === 'text-panel') {
+  } else if (node.type === 'text-panel' || node.type === 'text-label') {
     selectNode(node.id)
     openTextCommandLink(node)
   } else if (node.type === 'drawing-panel') {
@@ -3291,11 +3388,11 @@ function handleGenericFileUpload(e: Event) {
 function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
   if (!node) return null
   if (isScenarioContext.value) {
-    if (node.type === 'text-panel') return 'TEXT_FORMAT'
+    if (node.type === 'text-panel' || node.type === 'text-label') return 'TEXT_FORMAT'
     if (['checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
     return 'SCENARIO_DOCS'
   }
-  if (node.type === 'text-panel') return 'TEXT_FORMAT'
+  if (node.type === 'text-panel' || node.type === 'text-label') return 'TEXT_FORMAT'
   if (node.params?.needsConfig) return 'CONFIG'
   if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
     return 'INDICATORS'
@@ -3329,9 +3426,9 @@ function selectNode(id: string | null) {
     const parentNode = parentConn ? getNode(parentConn.fromId) : null
     activeMenuCategory.value = getMenuCategoryForNode(parentNode || null)
   } else {
-    if (node?.type !== 'text-panel') activeTextNodeId.value = null
+    if (node?.type !== 'text-panel' && node?.type !== 'text-label') activeTextNodeId.value = null
     activeMenuCategory.value = getMenuCategoryForNode(node || null)
-    if (node?.type === 'text-panel') openTextCommandLink(node)
+    if (node?.type === 'text-panel' || node?.type === 'text-label') openTextCommandLink(node)
   }
 }
 
@@ -3543,6 +3640,7 @@ function handleGlobalClick(e: MouseEvent) {
   if (!target.closest('.context-menu-container')) {
     nodeContextMenu.value = null
     connectionContextMenu.value = null
+    personalCondContextMenu.value = null
   }
 }
 
@@ -3552,6 +3650,7 @@ function handleBackgroundClick(e: MouseEvent) {
   // Clear context menus first
   nodeContextMenu.value = null
   connectionContextMenu.value = null
+  personalCondContextMenu.value = null
 
   // If we clicked an interactive element, do nothing else
   if (target.closest('.skill-chip') || 

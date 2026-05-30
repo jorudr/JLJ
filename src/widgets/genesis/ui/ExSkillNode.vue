@@ -631,6 +631,7 @@ const isDragging = ref(false)
 const imageError = ref(false)
 const scenarioPanelTypes = [
   'text-panel',
+  'text-label',
   'drawing-panel',
   'checklist-panel',
   'embed-panel',
@@ -660,7 +661,9 @@ const tablePanelSize = computed(() => ({
 const scenarioPanelSize = computed(() => (
   isAudioNote.value ? { width: 320, height: 56 } :
     isDrawingPanel.value ? { width: 300, height: 190 } :
-      isTablePanel.value ? tablePanelSize.value : { width: 260, height: 180 }
+      isTablePanel.value ? tablePanelSize.value : 
+        props.node.type === 'text-label' ? { width: 360, height: 60 } :
+          { width: 260, height: 180 }
 ))
 const nodeWidth = computed(() => {
   if (props.node.type === 'image') return `${props.node.params?.width || 300}px`
@@ -731,14 +734,19 @@ const tableGridStyle = computed(() => ({
   gridTemplateColumns: `repeat(${tableCols.value || 1}, minmax(0, 1fr))`,
   gridTemplateRows: `repeat(${tableRows.value || 1}, minmax(0, 1fr))`
 }))
-const textPanelPlaceholder = 'ENTER_SCENARIO_DETAILS...'
+const textPanelPlaceholder = computed(() => {
+  if (props.node.type === 'text-label') {
+    return t('ENTER_LABEL_DETAILS...')
+  }
+  return t('ENTER_SCENARIO_DETAILS...')
+})
 const textPanelHtml = computed(() => {
-  if (props.node.type !== 'text-panel') return ''
+  if (props.node.type !== 'text-panel' && props.node.type !== 'text-label') return ''
   if (typeof props.node.params?.html === 'string') return props.node.params.html
   return escapeTextHtml(props.node.params?.value || '').replace(/\n/g, '<br>')
 })
 const textPanelEditorStyle = computed(() => {
-  if (props.node.type !== 'text-panel') return {}
+  if (props.node.type !== 'text-panel' && props.node.type !== 'text-label') return {}
   const color = props.node.params?.activeTextColor
   const defaultColor = props.isDark ? '#ffffff' : '#2c2c2a'
   return {
@@ -748,7 +756,7 @@ const textPanelEditorStyle = computed(() => {
 })
 
 function syncTextEditorFromNode() {
-  if (props.node.type !== 'text-panel') return
+  if (props.node.type !== 'text-panel' && props.node.type !== 'text-label') return
   nextTick(() => {
     const editor = textEditorElement.value
     if (!editor || isEditingTextPanel.value) return
@@ -778,7 +786,7 @@ function blurTextPanel(event: FocusEvent) {
 }
 
 function handleTextPanelBeforeInput(event: InputEvent) {
-  if (props.node.type !== 'text-panel') return
+  if (props.node.type !== 'text-panel' && props.node.type !== 'text-label') return
   if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
   const color = props.node.params?.activeTextColor
   if (!color) return
@@ -807,7 +815,7 @@ function handleTextPanelBeforeInput(event: InputEvent) {
 }
 
 function updateTextPanelHtml(event: Event) {
-  if (props.node.type !== 'text-panel' || isSyncingTextEditor) return
+  if ((props.node.type !== 'text-panel' && props.node.type !== 'text-label') || isSyncingTextEditor) return
   if (!props.node.params) props.node.params = {}
   const target = event.currentTarget as HTMLElement
   props.node.params.html = target.innerHTML

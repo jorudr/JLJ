@@ -90,6 +90,16 @@ export const translations = {
           hour: "hour",
           minute: "minute"
         }
+      },
+      dom: {
+        "LABELS": "LABELS",
+        "Label_Sequence_Layer": "Label_Sequence_Layer",
+        "TEXT_LABEL": "TEXT_LABEL",
+        "LABEL": "LABEL",
+        "TEXT_LABEL_PANEL": "TEXT_LABEL_PANEL",
+        "Text label for long labels or sentences.": "Text label for long labels or sentences.",
+        "ENTER_LABEL_DETAILS...": "ENTER_LABEL_DETAILS...",
+        "ENTER_SCENARIO_DETAILS...": "ENTER_SCENARIO_DETAILS..."
       }
     },
     common: {
@@ -1582,7 +1592,14 @@ export const translations = {
         "[ HIDE_STUDENT_T_DIST ]": "[ СКРЫТЬ_STUDENT_T_DIST ]",
         "[ SHOW_STUDENT_T_DIST ]": "[ ПОКАЗАТЬ_STUDENT_T_DIST ]",
         "[ HIDE_WINRATE_CURVE ]": "[ СКРЫТЬ_КРИВУЮ_ВИНРЕЙТА ]",
-        "[ SHOW_WINRATE_CURVE ]": "[ ПОКАЗАТЬ_КРИВУЮ_ВИНРЕЙТА ]"
+        "[ SHOW_WINRATE_CURVE ]": "[ ПОКАЗАТЬ_КРИВУЮ_ВИНРЕЙТА ]",
+        "LABELS": "ЯРЛЫКИ",
+        "Label_Sequence_Layer": "Слой_Разметки_Ярлыков",
+        "TEXT_LABEL": "ТЕКСТОВЫЙ_ЯРЛЫК",
+        "LABEL": "ЯРЛЫК",
+        "TEXT_LABEL_PANEL": "ПАНЕЛЬ_ТЕКСТОВОГО_ЯРЛЫКА",
+        "Text label for long labels or sentences.": "Текстовый ярлык для длинных меток или предложений.",
+        "ENTER_LABEL_DETAILS...": "ВВЕДИТЕ_ТЕКСТ_ЯРЛЫКА..."
       }
     },
     common: {
