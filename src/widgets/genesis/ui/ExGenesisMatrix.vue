@@ -136,7 +136,7 @@
                 <div class="cursor-pointer pointer-events-auto px-2 py-1 hover:bg-nier-white/10 dark:hover:bg-nier-black/10 transition-colors"
                      @mousedown.stop="handleLabelDrag($event, line)">
                    <div class="text-[16px] font-mono text-nier-text-light dark:text-nier-text-dark tracking-widest lowercase italic font-bold">
-                      {{ line.label }}
+                      {{ locale === 'ru' ? t(line.label) : line.label }}
                    </div>
                 </div>
              </div>

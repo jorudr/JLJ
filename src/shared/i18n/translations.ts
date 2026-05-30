@@ -1123,6 +1123,8 @@ export const translations = {
         "IN-TRADE": "В_СДЕЛКЕ",
         "AND": "И",
         "OR": "ИЛИ",
+        "IF": "ЕСЛИ",
+        "THEREFORE": "СЛЕДОВАТЕЛЬНО",
         "long": "лонг",
         "short": "шорт",
         "both": "оба",
