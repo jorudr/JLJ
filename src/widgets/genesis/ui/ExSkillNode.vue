@@ -515,62 +515,6 @@
        </div>
     </div>
 
-    <!-- TACTICAL REMEDY CALLOUTS -->
-    <div v-if="isSelected && node.type === 'emotion-state' && node.params?.remedies?.length"
-         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100]"
-         style="width: 1200px; height: 1000px;">
-
-       <svg class="absolute inset-0 w-full h-full overflow-visible opacity-30">
-          <defs>
-             <filter id="pointerGlow">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                   <feMergeNode in="blur" />
-                   <feMergeNode in="SourceGraphic" />
-                </feMerge>
-             </filter>
-          </defs>
-           <g v-for="(remedy, idx) in (node.params.remedies as string[]).slice(0, 4)" :key="'path-'+idx">
-              <path :d="getRemedyPath(idx)" fill="none" stroke="currentColor" stroke-width="1.5" filter="url(#pointerGlow)" class="text-nier-text-light dark:text-nier-text-dark" />
-           </g>
-       </svg>
-
-        <div v-for="(remedy, idx) in (node.params.remedies as string[]).slice(0, 4)" :key="remedy"
-            class="absolute transition-all duration-300"
-            :style="{
-              top: getRemedyCoords(idx).styleTop + 'px',
-              left: getRemedyCoords(idx).styleLeft + 'px',
-              '--delay': `${idx * 150}ms`
-            }">
-
-          <Transition name="callout-pop" appear>
-            <ExNTtooltip :title="'ANALYTICS_V.0' + (idx + 1)">
-              <template #trigger>
-                <ExPanel :title="'FIX_PROTOCOL_0' + (idx + 1)" class="min-w-[320px]">
-                   <!-- Scanning Effect -->
-                   <div class="absolute inset-0 bg-nier-text-light/5 dark:bg-nier-text-dark/5 opacity-5 animate-pulse"></div>
-
-                   <ExText variant="body" class="!text-nier-text-light dark:!text-nier-text-dark font-bold tracking-[0.1em] uppercase leading-tight">{{ remedy }}</ExText>
-
-                   <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col space-y-1 opacity-20">
-                      <div v-for="i in 4" :key="i" class="w-1 h-1 bg-nier-text-light dark:bg-nier-text-dark"></div>
-                   </div>
-                </ExPanel>
-              </template>
-              <div class="flex flex-col space-y-2">
-                 <div class="flex items-center space-x-2">
-                    <div class="w-1.5 h-1.5 bg-red-500 rotate-45"></div>
-                    <span class="text-[10px] font-black tracking-widest text-nier-text-light dark:text-nier-text-dark uppercase">{{ node.params.description || 'EMOTIONAL_STATE_DETECTED' }}</span>
-                 </div>
-                 <p class="text-[11px] leading-relaxed opacity-70 font-mono italic">{{ node.params.info || 'Establishing neural link to archive...' }}</p>
-                 <div class="pt-2 border-t border-nier-border-light/20 dark:border-nier-border-dark/20">
-                    <span class="text-[8px] font-mono tracking-widest opacity-40 uppercase">Recommended_Remediation_Protocol</span>
-                 </div>
-              </div>
-            </ExNTtooltip>
-          </Transition>
-      </div>
-    </div>
   </div>
 </template>
 
