@@ -1487,6 +1487,7 @@ function clearBoard() {
   rootConnections.value = []
   rootZones.value = []
   navigationStack.value = []
+  savedScales.clear()
   lastSelectedId.value = 'root'
   isClearPanelOpen.value = false
   saveMatrixData()
@@ -1503,11 +1504,34 @@ const rootZones = ref<Zone[]>([])
 const navigationStack = ref<string[]>([])
 const activeContextId = computed(() => navigationStack.value[navigationStack.value.length - 1] || null)
 
+const savedScales = new Map<string, number>()
+
+function navigateTo(newStack: string[]) {
+  // Save current scale before mutating stack
+  const currentKey = navigationStack.value.join('/') || 'root'
+  savedScales.set(currentKey, viewState.value.scale)
+  
+  // Set the new stack
+  navigationStack.value = newStack
+  
+  // Reset pan
+  viewState.value.panX = 0
+  viewState.value.panY = 0
+  
+  // Restore scale or default to 1
+  const newKey = newStack.join('/') || 'root'
+  if (savedScales.has(newKey)) {
+    viewState.value.scale = savedScales.get(newKey)!
+  } else {
+    viewState.value.scale = 1
+  }
+}
+
 const activeContextNode = computed(() => {
   if (!activeContextId.value) return null
   return findNodeById(rootNodes.value, activeContextId.value)
 })
-const isScenarioContext = computed(() => activeContextNode.value?.type === 'scenario')
+const isScenarioContext = computed(() => activeContextNode.value?.type === 'scenario' || activeContextNode.value?.type === 'condition')
 
 watch(isScenarioContext, (isScenario) => {
   if (isScenario) viewState.value.scale = 1
@@ -1620,7 +1644,7 @@ const skillTypes = computed(() => {
   const contextNode = activeContextId.value ? getNode(activeContextId.value) : null
   
   const isStrategyActive = (selectedNode?.type === 'strategy' || contextNode?.type === 'strategy')
-  const isScenarioActive = (selectedNode?.type === 'scenario' || contextNode?.type === 'scenario')
+  const isScenarioActive = (selectedNode?.type === 'scenario' || contextNode?.type === 'scenario' || selectedNode?.type === 'condition' || contextNode?.type === 'condition')
   
   const base: { label: string; type: string; color: string; description?: string }[] = [
     { label: 'Strategy', type: 'strategy', color: 'currentColor' }
@@ -2733,12 +2757,11 @@ function findNodeById(list: Node[], id: string): Node | null {
 }
 
 function handleNodeDive(node: Node) {
-  if (node.type === 'strategy' || node.type === 'scenario') {
+  if (node.type === 'strategy' || node.type === 'scenario' || node.type === 'condition') {
     if (!node.subGraph) {
        node.subGraph = { nodes: [], connections: [], zones: [] }
     }
-    navigationStack.value.push(node.id)
-    resetView()
+    navigateTo([...navigationStack.value, node.id])
   } else if (node.type === 'image') {
     triggerImageUpload(node.id)
   } else if (node.type === 'text-panel') {
@@ -3077,18 +3100,15 @@ watch([() => viewState.value.panX, () => viewState.value.panY, () => viewState.v
 })
 
 function goBack() {
-  navigationStack.value.pop()
-  resetView()
+  navigateTo(navigationStack.value.slice(0, -1))
 }
 
 function jumpTo(index: number | null) {
   if (index === null) {
-    navigationStack.value = []
-    resetView()
+    navigateTo([])
     return
   }
-  navigationStack.value = navigationStack.value.slice(0, index + 1)
-  resetView()
+  navigateTo(navigationStack.value.slice(0, index + 1))
 }
 
 function handleCreateCustomIndicator(indicator: any) {
