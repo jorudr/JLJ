@@ -87,12 +87,22 @@ const handleGlobalBackspace = (event) => {
   }
 };
 
+// Disable context menu globally to hide browser options like Reload, Back, etc.
+const handleGlobalContextMenu = (event) => {
+  // Allow context menu only if the user is holding Shift (optional developer override)
+  if (!event.shiftKey) {
+    event.preventDefault();
+  }
+};
+
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalBackspace);
+  window.addEventListener('contextmenu', handleGlobalContextMenu);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalBackspace);
+  window.removeEventListener('contextmenu', handleGlobalContextMenu);
 });
 </script>
 
