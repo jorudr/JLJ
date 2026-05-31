@@ -110,7 +110,10 @@ export const translations = {
         "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...": "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...",
         "Unique Identifier": "Unique Identifier",
         "Valid Telemetry Link": "Valid Telemetry Link",
-        "Archive Priority": "Archive Priority"
+        "Archive Priority": "Archive Priority",
+        "SEARCH_TARGET": "SEARCH_TARGET",
+        "NO_TARGETS_FOUND": "NO_TARGETS_FOUND",
+        "[ SELECT_WINRATE_TARGET ]": "[ SELECT_WINRATE_TARGET ]"
       }
     },
     common: {
@@ -1628,7 +1631,10 @@ export const translations = {
         "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...": "ОПИШИТЕ_ТАКТИЧЕСКУЮ_ЗНАЧИМОСТЬ_ЭТОГО_УСЛОВИЯ...",
         "Unique Identifier": "Уникальный Идентификатор",
         "Valid Telemetry Link": "Валидный Канал Телеметрии",
-        "Archive Priority": "Приоритет Архива"
+        "Archive Priority": "Приоритет Архива",
+        "SEARCH_TARGET": "ПОИСК ЦЕЛИ",
+        "NO_TARGETS_FOUND": "ЦЕЛИ НЕ НАЙДЕНЫ",
+        "[ SELECT_WINRATE_TARGET ]": "[ ВЫБРАТЬ_ЦЕЛЬ_ВИНРЕЙТА ]"
       }
     },
     common: {
