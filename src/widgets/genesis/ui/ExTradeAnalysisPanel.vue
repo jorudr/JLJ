@@ -1333,17 +1333,12 @@ const behaviouralMetrics = computed(() => {
   const estCleanPnl = avgPnl * 1.15;
   const pnlDrag = frictionCount > 0 ? tr.pnl - estCleanPnl : 0;
 
-  let hesitation = 'Nominal (<0.2s Lag)';
-  if (hasEmo('anxiety') || hasEmo('fear')) hesitation = 'High (Est. 1.4s Lag)';
-  else if (hasEmo('boredom') || hasEmo('fatigue') || hasEmo('frustration')) hesitation = 'Moderate (Est. 0.8s Lag)';
-
   return {
     stability,
     bias,
     pnlDrag,
     frictionCount,
-    frictionDensity,
-    hesitation
+    frictionDensity
   };
 });
 
@@ -1380,12 +1375,23 @@ const strategyExecutionMetrics = computed(() => {
   }
 
   const actualRisk = actualRiskDollars.value;
-  let maxRisk = maxRiskTrade.value?.value || 250;
-  if (maxRiskTrade.value?.unit === '%') {
-    maxRisk = (maxRisk / 100) * initialBalance.value;
+  // Resolve risk budget from genesis matrix risk_per_trade node
+  let riskBudgetDollars: number | null = null;
+  if (maxRiskTrade.value) {
+    if (maxRiskTrade.value.unit === '%') {
+      riskBudgetDollars = (maxRiskTrade.value.value / 100) * initialBalance.value;
+    } else {
+      riskBudgetDollars = maxRiskTrade.value.value;
+    }
   }
-  const riskBudgetRatio = maxRisk > 0 ? Math.min(150, (actualRisk / maxRisk) * 100) : 100;
-  const riskBudgetText = actualRisk <= maxRisk ? 'Within Budget' : `Exceeded by $${(actualRisk - maxRisk).toFixed(2)}`;
+  const maxRisk = riskBudgetDollars ?? 250;
+  const riskBudgetRatio = maxRisk > 0 ? Math.min(200, (actualRisk / maxRisk) * 100) : 0;
+  const riskBudgetBudgetStr = riskBudgetDollars !== null
+    ? (maxRiskTrade.value!.unit === '%' ? `${maxRiskTrade.value!.value}% of deposit = $${maxRisk.toFixed(0)}` : `$${maxRisk.toFixed(0)}`)
+    : 'No budget set';
+  const riskBudgetText = riskBudgetDollars === null
+    ? 'No matrix budget set'
+    : (actualRisk <= maxRisk ? `Compliant · Budget: ${riskBudgetBudgetStr}` : `Exceeded · Budget: ${riskBudgetBudgetStr}`);
 
   if (tp <= 0 && pnl > 0 && exit > 0) tp = exit;
   let tpCapture = 100;
@@ -1999,44 +2005,7 @@ const strategyExecutionMetrics = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
-                        <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Hesitation</span>
-                              <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
-                                 <span class="text-sm font-mono font-black text-black dark:text-white truncate">
-                                    {{ behaviouralMetrics.hesitation.split(' ')[0] }}
-                                 </span>
-                                 <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
-                                    {{ behaviouralMetrics.hesitation.split(' ').slice(1).join(' ') }}
-                                 </span>
-                              </div>
-                           </div>
-                        </template>
-                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Estimates potential slippage or entry delay caused by psychological hesitation markers like Anxiety or Fear.</div>
-                           <div class="pt-2 border-t border-black/10 dark:border-white/10">
-                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
-                              <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Hesitation Tags Mapping
-                              </code>
-                           </div>
-                           <div>
-                              <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
-                              <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
-                                 <div class="flex justify-between"><span class="opacity-70">Nominal</span><span class="text-emerald-500 font-bold">Good</span></div>
-                                 <div class="flex justify-between"><span class="opacity-70">Moderate/High</span><span class="text-amber-500 font-bold">Execution Lag</span></div>
-                              </div>
-                           </div>
-                           <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
-                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="behaviouralMetrics.hesitation.startsWith('Nominal') ? 'text-emerald-500' : 'text-amber-500'">
-                                 {{ behaviouralMetrics.hesitation.startsWith('Nominal') ? 'Good' : 'Lag Warning' }}
-                              </span>
-                           </div>
-                        </div>
-                     </ExTooltip>
+
 
                      <!-- TAB C: EXECUTION & RISK METRICS (Existing) -->
                      <!-- PROFIT COMPARISON -->
@@ -2453,11 +2422,11 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares realized dollar risk against the strategy's defined maximum risk budget per trade.</div>
+                           <div>Compares the actual trade risk (|Entry - SL| × Size) against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (ActualRisk / MaxRisk) * 100
+                                 (|Entry - SL| × Size) / RiskBudget × 100
                               </code>
                            </div>
                            <div>
