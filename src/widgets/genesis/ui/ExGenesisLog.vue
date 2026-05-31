@@ -221,8 +221,8 @@
     />
 
     <!-- LEFT EDGE COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap" class="absolute left-0 top-1/2 -translate-y-1/2 z-[9000] flex flex-col pointer-events-auto group/compliance">
-       <div class="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-md opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 border-r border-black/10 dark:border-white/10"></div>
+    <div v-if="!showNodeMap && viewType === 'cube'" class="absolute left-0 top-1/2 -translate-y-1/2 z-[9000] flex flex-col pointer-events-auto group/compliance">
+       <div class="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-md opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 border-r border-black/5 dark:border-white/10"></div>
        <div class="relative w-64 p-6 opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 flex flex-col space-y-6">
           <span class="text-[9px] font-mono tracking-[0.3em] uppercase text-black dark:text-white/60 mb-2 border-b border-black/20 dark:border-white/20 pb-2">{{ locale === 'ru' ? 'СТАТУС СООТВЕТСТВИЯ' : 'COMPLIANCE_STATUS' }}</span>
           
