@@ -220,6 +220,58 @@
       @close="showNodeMap = false; showExtraDetails = false" 
     />
 
+    <!-- LEFT EDGE COMPLIANCE DASHBOARD -->
+    <div v-if="!showNodeMap" class="absolute left-0 top-1/2 -translate-y-1/2 z-[9000] flex flex-col pointer-events-auto group/compliance">
+       <div class="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-md opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 border-r border-black/10 dark:border-white/10"></div>
+       <div class="relative w-64 p-6 opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 flex flex-col space-y-6">
+          <span class="text-[9px] font-mono tracking-[0.3em] uppercase text-black dark:text-white/60 mb-2 border-b border-black/20 dark:border-white/20 pb-2">{{ locale === 'ru' ? 'СТАТУС СООТВЕТСТВИЯ' : 'COMPLIANCE_STATUS' }}</span>
+          
+          <!-- Risk Per Trade -->
+          <div class="flex flex-col space-y-2">
+             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
+                <span>{{ locale === 'ru' ? 'РИСК_НА_СДЕЛКУ' : 'Risk_Per_Trade' }}</span>
+                <span :class="complianceStats.riskPerTrade >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.riskPerTrade.toFixed(0) }}%</span>
+             </div>
+             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
+                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.riskPerTrade}%` }"></div>
+             </div>
+          </div>
+
+          <!-- Risk Per Session -->
+          <div class="flex flex-col space-y-2">
+             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
+                <span>{{ locale === 'ru' ? 'РИСК_НА_СЕССИЮ' : 'Risk_Per_Session' }}</span>
+                <span :class="complianceStats.riskPerSession >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.riskPerSession.toFixed(0) }}%</span>
+             </div>
+             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
+                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.riskPerSession}%` }"></div>
+             </div>
+          </div>
+
+          <!-- Trading Style -->
+          <div class="flex flex-col space-y-2">
+             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
+                <span>{{ locale === 'ru' ? 'СТИЛЬ_ТОРГОВЛИ' : 'Trading_Style' }}</span>
+                <span :class="complianceStats.tradingStyle >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.tradingStyle.toFixed(0) }}%</span>
+             </div>
+             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
+                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.tradingStyle}%` }"></div>
+             </div>
+          </div>
+
+          <div class="h-px w-full bg-black/10 dark:bg-white/10 my-4"></div>
+
+          <!-- Emotional State -->
+          <div class="flex flex-col space-y-2">
+             <span class="text-[8px] font-mono uppercase tracking-[0.2em] text-black/60 dark:text-white/60">{{ locale === 'ru' ? 'Нейростатус (Последние 5)' : 'Neural Status (Last 5)' }}</span>
+             <div class="flex items-center space-x-3 mt-1">
+                <div class="w-2 h-2 rounded-full animate-pulse" :class="emotionalStatus.colorClass"></div>
+                <span class="text-[10px] font-mono uppercase font-black tracking-widest" :class="emotionalStatus.textClass">{{ locale === 'ru' ? (emotionalStatus.label === 'NEGATIVE' ? 'НЕГАТИВНЫЙ' : emotionalStatus.label === 'POSITIVE' ? 'ПОЗИТИВНЫЙ' : 'НЕЙТРАЛЬНЫЙ') : emotionalStatus.label }}</span>
+             </div>
+          </div>
+       </div>
+    </div>
+
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
     <div v-if="!showNodeMap" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700">
@@ -616,6 +668,149 @@ const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${un
 const currentTrades = computed(() => {
   return tradeStore.getTradesForStrategy(selectedStrategyId.value)
 })
+
+const activeMatrixNodes = computed(() => {
+  const stratId = selectedStrategyId.value;
+  if (!stratId) return { riskTrade: null, riskSession: null, style: null };
+
+  const findNodeRecursive = (targetId: string, depth: number, predicate: (n: any) => boolean): any => {
+    if (depth > 4) return null;
+    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId);
+    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean);
+    
+    const found = connectedNodes.find(predicate);
+    if (found) return found;
+    
+    for (const node of connectedNodes) {
+      const result = findNodeRecursive(node.id, depth + 1, predicate);
+      if (result) return result;
+    }
+    return null;
+  };
+
+  const riskTrade = findNodeRecursive(stratId, 0, n => n.type === 'risk-element' && n.params?.riskType === 'trade');
+  const riskSession = findNodeRecursive(stratId, 0, n => n.type === 'risk-element' && n.params?.riskType === 'day');
+  const style = findNodeRecursive(stratId, 0, n => (n.type === 'risk-element' && n.params?.riskType === 'style') || (n.label && n.label.toLowerCase().includes('style')));
+
+  return { riskTrade, riskSession, style };
+});
+
+const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number, tradingStyle: number }>(() => {
+  const trades = currentTrades.value;
+  if (trades.length === 0) return { riskPerTrade: 100, riskPerSession: 100, tradingStyle: 100 };
+
+  let compliantTradeCount = 0;
+  let compliantSessionCount = 0;
+  let compliantStyleCount = 0;
+
+  const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 0;
+
+  let maxRiskDollars = 250;
+  if (activeMatrixNodes.value.riskTrade?.params) {
+    const p = activeMatrixNodes.value.riskTrade.params;
+    if (p.unit === '%') {
+      maxRiskDollars = (parseFloat(p.value) / 100) * initDep;
+    } else {
+      maxRiskDollars = parseFloat(p.value);
+    }
+  } else {
+    maxRiskDollars = Infinity;
+  }
+
+  const styleLimits: Record<number, { max?: number, min?: number }> = {
+    0: { max: 1 },
+    1: { min: 1, max: 14 },
+    2: { min: 14 }
+  };
+  const extraType = activeMatrixNodes.value.style?.params?.extraType;
+
+  let maxSessionRiskDollars = 500;
+  if (activeMatrixNodes.value.riskSession?.params) {
+    const p = activeMatrixNodes.value.riskSession.params;
+    if (p.unit === '%') {
+      maxSessionRiskDollars = (parseFloat(p.value) / 100) * initDep;
+    } else {
+      maxSessionRiskDollars = parseFloat(p.value);
+    }
+  } else {
+    maxSessionRiskDollars = Infinity;
+  }
+
+  const sessionRiskMap: Record<string, number> = {};
+
+  trades.forEach(t => {
+    // Risk Per Trade
+    let actualRisk = Number((t as any).risk) || 0;
+    if (actualRisk === 0 && t.entry && t.stopLoss) {
+      actualRisk = Math.abs(Number(t.entry) - Number(t.stopLoss)) * (Number((t as any).size) || 1);
+    }
+    if (actualRisk <= maxRiskDollars) compliantTradeCount++;
+
+    // Trading Style
+    let durationMins = 0;
+    if (t.date && t.dateExit) {
+      durationMins = (new Date(t.dateExit).getTime() - new Date(t.date).getTime()) / 60000;
+    }
+    const durationDays = durationMins / 60 / 24;
+    let styleCompliant = true;
+    if (extraType !== undefined && styleLimits[extraType]) {
+      const limit = styleLimits[extraType];
+      if (limit.min !== undefined && durationDays < limit.min) styleCompliant = false;
+      if (limit.max !== undefined && durationDays > limit.max) styleCompliant = false;
+    }
+    if (styleCompliant) compliantStyleCount++;
+
+    // Session Risk map
+    const pnl = Number((t as any).profitInCurrency) || 0;
+    const dateStr = new Date(t.date).toDateString();
+    sessionRiskMap[dateStr] = (sessionRiskMap[dateStr] || 0) + pnl;
+  });
+
+  let validSessions = 0;
+  const sessionKeys = Object.keys(sessionRiskMap);
+  sessionKeys.forEach(k => {
+    if ((sessionRiskMap[k] || 0) >= -maxSessionRiskDollars) validSessions++;
+  });
+
+  return {
+    riskPerTrade: (compliantTradeCount / trades.length) * 100,
+    riskPerSession: sessionKeys.length > 0 ? (validSessions / sessionKeys.length) * 100 : 100,
+    tradingStyle: (compliantStyleCount / trades.length) * 100
+  };
+});
+
+const emotionalStatus = computed(() => {
+  const trades = currentTrades.value;
+  const sorted = [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const last5 = sorted.slice(0, 5);
+  
+  if (last5.length === 0) return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+
+  let totalScore = 0;
+  let count = 0;
+
+  last5.forEach(t => {
+    const emotions = t.emotions || [];
+    if (emotions.length > 0) {
+      let tradeScore = 60;
+      emotions.forEach((e: any) => {
+        const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase();
+        const weight = EMOTION_WEIGHTS_STABILITY[key] || 0;
+        tradeScore += weight;
+      });
+      totalScore += tradeScore;
+      count++;
+    }
+  });
+
+  if (count === 0) return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  
+  const avg = totalScore / count;
+  
+  if (avg < 40) return { label: 'NEGATIVE', colorClass: 'bg-rose-500', textClass: 'text-rose-500' };
+  if (avg > 70) return { label: 'POSITIVE', colorClass: 'bg-emerald-500', textClass: 'text-emerald-500' };
+  return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+});
 
 const calculateRR = (trade: any) => {
   if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'
