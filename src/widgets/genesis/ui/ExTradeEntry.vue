@@ -1505,7 +1505,7 @@ const submit = async () => {
            </div>
         </div>
 
-        <button @click="emit('close')" class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500">
+        <button @click="emit('close')" :disabled="commitState === 'loading'" class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed">
            <div class="relative w-full h-full flex items-center justify-center">
               <div class="w-4 h-4 relative">
                  <div class="absolute inset-0 m-auto w-full h-px bg-black dark:bg-white rotate-45 group-hover:bg-white dark:group-hover:bg-black transition-colors duration-500"></div>
@@ -1856,7 +1856,8 @@ const submit = async () => {
              class="fixed left-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
         <!-- UNIFIED MATRIX TOGGLE -->
         <button @click="showConditionLibrary = !showConditionLibrary" 
-                class="group relative opacity-35 hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300">
+                :disabled="commitState === 'loading'"
+                class="group relative opacity-35 hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 disabled:cursor-not-allowed">
            <div class="relative flex items-center justify-center w-12 h-12">
               <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white group-hover:border-black dark:group-hover:border-white transition-all duration-500 shadow-xl"
                    :class="{ 'bg-black dark:bg-white border-black dark:border-white': showConditionLibrary }"></div>
@@ -1888,7 +1889,8 @@ const submit = async () => {
              class="fixed right-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
           <!-- JOURNAL TOGGLE -->
           <button @click="viewMode = viewMode === 'tactical' ? 'journal' : 'tactical'" 
-                  class="group relative">
+                  :disabled="commitState === 'loading'"
+                  class="group relative disabled:opacity-50 disabled:cursor-not-allowed">
              <div class="relative flex items-center justify-center w-12 h-12">
                 <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white group-hover:border-black dark:border-white transition-all duration-500 shadow-xl"
                      :class="{ 'bg-black dark:bg-white border-black dark:border-white': viewMode === 'journal' }"></div>
