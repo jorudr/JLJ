@@ -146,9 +146,10 @@
            <!-- Scenario documentation panels -->
             <div v-if="isScenarioPanel"
                  class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
-               <div v-if="true" class="flex items-center justify-between px-3 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
-                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
-                  <span class="text-[8px] font-mono tracking-widest uppercase opacity-30 truncate max-w-[96px]">{{ scenarioPanelHeaderCode }}</span>
+               <div v-if="true" class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
+                    :style="{ padding: `${8 * scale * headerScaleMult}px ${12 * scale * headerScaleMult}px` }">
+                  <span class="font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px` }">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
+                  <span class="font-mono tracking-widest uppercase opacity-30 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px`, maxWidth: `${96 * scale * headerScaleMult}px` }">{{ scenarioPanelHeaderCode }}</span>
                </div>
 
                <div v-if="isDrawingPanel"
@@ -253,7 +254,7 @@
                   <a v-if="node.params.fileDataUrl" :href="node.params.fileDataUrl" :download="node.params.fileName" @mousedown.stop @click.stop class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</a>
                </div>
 
-               <div v-else class="flex-1 w-full min-h-0 relative overflow-hidden">
+               <div v-else v-show="scale > 0.25" class="flex-1 w-full min-h-0 relative overflow-hidden">
                    <div ref="textEditorElement"
                         contenteditable="true"
                         :data-text-node-id="node.id"
@@ -406,6 +407,7 @@
 
       <!-- Scaling Entry Subtitle -->
        <div v-if="node.type === 'scaling-entry'"
+            v-show="scale > 0.25"
             class="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex flex-col items-center pointer-events-none z-50">
           <div class="px-5 py-2 bg-nier-white dark:bg-nier-black border-[1.5px] border-nier-border-light dark:border-nier-border-dark flex items-center space-x-2 shadow-[0_15px_35px_rgba(0,0,0,0.4)] relative">
              <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
@@ -421,6 +423,7 @@
 
       <!-- Risk Element Overlay -->
       <div v-if="node.type === 'risk-element' && node.params"
+           v-show="scale > 0.25"
            class="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex flex-col items-center pointer-events-none min-w-max">
          <!-- Connector Line -->
          <div class="w-0.5 h-3 bg-red-500/40"></div>
@@ -446,6 +449,7 @@
 
      <!-- Custom Identity Label -->
       <div v-if="['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName)"
+           v-show="scale > 0.25"
            class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center z-50">
        <!-- Editing Mode -->
        <div v-if="node.params?.isEditingName" class="min-w-full w-max pointer-events-auto relative">
@@ -472,6 +476,7 @@
 
       <!-- Emotion State Label -->
        <div v-if="node.type === 'emotion-state' && node.label"
+            v-show="scale > 0.25"
             class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center z-50">
          <div class="min-w-full w-max bg-nier-text-light dark:bg-nier-text-dark border border-nier-white dark:border-nier-black shadow-[0_5px_15px_rgba(0,0,0,0.3)] pointer-events-none relative text-center px-4 py-1.5 flex flex-col items-center">
             <ExText variant="telemetry" class="!text-nier-white dark:!text-nier-black !opacity-100 font-black">{{ node.label }}</ExText>
@@ -483,6 +488,7 @@
 
       <!-- Priority Label -->
       <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
+           v-show="scale > 0.25"
            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col items-center z-50 min-w-max">
          <div class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1 flex flex-col items-center"
               :class="node.params.priority === 'REQUIRED' ? 'border-t-2 !border-t-red-500/60' : 'border-t-2 !border-t-blue-500/60'">
@@ -664,6 +670,9 @@ const scenarioPanelTypes = [
   'file-attachment',
 ]
 const isScenarioPanel = computed(() => scenarioPanelTypes.includes(props.node.type))
+
+const headerScaleMult = computed(() => (props.scale <= 0.25 && props.node.type === 'text-panel') ? 2.5 : 1)
+
 const isScenarioContentNode = computed(() => (
   isScenarioPanel.value ||
   (props.node.type === 'image' && props.node.params?.shortCode === 'IMG') ||
@@ -697,7 +706,11 @@ const nodeWidth = computed(() => {
     if (props.node.type === 'image') return props.node.params?.width || 300
     if (isAudioNote.value) return scenarioPanelSize.value.width
     if (isTablePanel.value) return tablePanelSize.value.width
-    if (isScenarioPanel.value) return props.node.params?.width || scenarioPanelSize.value.width
+    if (isScenarioPanel.value) {
+      const w = props.node.params?.width || scenarioPanelSize.value.width
+      if (props.scale <= 0.25 && props.node.type === 'text-panel') return w / 2
+      return w
+    }
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
   return `${Math.round((getW() * props.scale) / 2) * 2}px`
@@ -707,7 +720,10 @@ const nodeHeight = computed(() => {
     if (props.node.type === 'image') return props.node.params?.height || 200
     if (isAudioNote.value) return scenarioPanelSize.value.height
     if (isTablePanel.value) return tablePanelSize.value.height
-    if (isScenarioPanel.value) return props.node.params?.height || scenarioPanelSize.value.height
+    if (isScenarioPanel.value) {
+      if (props.scale <= 0.25 && props.node.type === 'text-panel') return 70
+      return props.node.params?.height || scenarioPanelSize.value.height
+    }
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
   return `${Math.round((getH() * props.scale) / 2) * 2}px`
