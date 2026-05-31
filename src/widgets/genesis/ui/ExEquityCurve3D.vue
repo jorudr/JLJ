@@ -5061,6 +5061,50 @@ const getMetricRationale = (key: string | null): string => {
   return rationales[key] || "Identifies structural efficiency parameters to optimize execution and sustain consistent capital appreciation.";
 };
 
+const metricTonePalette = {
+  excellent: '#86efac',
+  positive: '#22c55e',
+  neutral: '#facc15',
+  warning: '#fb923c',
+  negative: '#ef4444'
+};
+
+const getMetricToneColor = (cfg: MetricConfig, mVals: any): string => {
+  const evalText = String(cfg.evalStr?.(mVals) || '').toLowerCase();
+  const classHint = `${cfg.evalClass?.(mVals) || ''} ${cfg.colorClass?.(mVals) || ''}`.toLowerCase();
+  const hasAny = (terms: string[]) => terms.some(term => evalText.includes(term));
+
+  if (hasAny(['perfect', 'elite', 'excellent', 'superior', 'highly', 'holy grail', 'optimal', 'strong edge', 'strong active', 'significant edge', 'geometric peak', 'market beating', 'positive skew'])) {
+    return metricTonePalette.excellent;
+  }
+
+  if (classHint.includes('rose') || classHint.includes('red')) {
+    return metricTonePalette.negative;
+  }
+
+  if (classHint.includes('amber') || classHint.includes('yellow') || classHint.includes('orange')) {
+    return metricTonePalette.warning;
+  }
+
+  if (classHint.includes('emerald') || classHint.includes('green')) {
+    return metricTonePalette.positive;
+  }
+
+  if (hasAny(['profitable', 'positive', 'favorable', 'safe', 'low risk', 'low stress', 'controlled', 'sustainable', 'robust', 'upward', 'majority wins', 'independent', 'persistent', 'defensive', 'nominal'])) {
+    return metricTonePalette.positive;
+  }
+
+  if (hasAny(['negative', 'drawdown', 'sub-optimal', 'unsustainable', 'severe', 'critical', 'fragile', 'inefficient', 'failed', 'dependent', 'capital erosion', 'underperforming', 'unstable', 'alpha decay', 'high risk', 'high stress', 'no edge', 'tail risk', 'systemic', 'heavy outlier'])) {
+    return metricTonePalette.negative;
+  }
+
+  if (hasAny(['moderate', 'vulnerable', 'small sample', 'inconclusive', 'short horizon', 'fat tails', 'aggressive', 'clustered', 'serial memory', 'random walk', 'average', 'acceptable'])) {
+    return metricTonePalette.warning;
+  }
+
+  return metricTonePalette.neutral;
+};
+
 // --- 3D MATH TYPES --- //
 interface Point3D { x: number; y: number; z: number }
 interface Point2D { x: number; y: number; opacity: number; depth: number }
@@ -5168,7 +5212,6 @@ const hoveredMetricScreenPos = ref<{x: number, y: number} | null>(null)
 const hoveredMetricTooltipData = computed(() => {
   if (hoveredMetricIndex.value === null || !activeMetricsConfigs.value[hoveredMetricIndex.value]) return null
   const cfg = activeMetricsConfigs.value[hoveredMetricIndex.value]!
-  const isDark = themeStore.settings.isDark
   const mVals = strategyMetrics.value
 
   let fullValString = cfg.tooltipValStr ? cfg.tooltipValStr(mVals) : cfg.valStr(mVals)
@@ -5184,7 +5227,7 @@ const hoveredMetricTooltipData = computed(() => {
   return {
     label: cfg.label.replace('_', ' '),
     evalText: cfg.evalStr(mVals).toUpperCase(),
-    color: isFullZero ? (isDark ? '#ffffff' : '#000000') : cfg.colorVal(mVals, isDark),
+    color: isFullZero ? metricTonePalette.neutral : getMetricToneColor(cfg, mVals),
     valStr: fullValString,
     desc: cfg.desc,
     benchmarks: cfg.benchmarks.map(b => `${b.label} (${b.eval})`),
@@ -6665,6 +6708,7 @@ const update = () => {
       }
       
       const isHovered = hoveredMetricIndex.value === i
+      const metricTone = getMetricToneColor(cfg, mVals)
       ctx.fillStyle = isHovered 
         ? (isDark ? `rgba(255, 255, 255, 0.12)` : `rgba(0, 0, 0, 0.08)`)
         : (isDark ? `rgba(15, 15, 15, ${0.75 * depthAlpha})` : `rgba(255, 255, 255, ${0.85 * depthAlpha})`)
@@ -6709,7 +6753,7 @@ const update = () => {
       }
       const cleanVal = valString.replace(/[\+\-\$\s\%Rxdhwm\|\(\)\/\,\:]/g, '')
       const isZero = cleanVal.length > 0 && cleanVal.split('').every(c => c === '0' || c === '.')
-      ctx.fillStyle = isZero ? (isDark ? '#ffffff' : '#000000') : cfg.colorVal(mVals, isDark)
+      ctx.fillStyle = isZero ? metricTonePalette.neutral : metricTone
       
       let baseFontSize = 6.5
       if (valString.length > 10) {
@@ -6804,6 +6848,7 @@ const update = () => {
       ctx.shadowBlur = 0
       ctx.shadowOffsetY = 0
 
+      const metricTone = getMetricToneColor(cfg, mVals)
       ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)'
       ctx.lineWidth = 2
       ctx.stroke()
@@ -6826,7 +6871,7 @@ const update = () => {
       }
       const cleanVal = valString.replace(/[\+\-\$\s\%Rxdhwm\|\(\)\/\,\:]/g, '')
       const isZero = cleanVal.length > 0 && cleanVal.split('').every(c => c === '0' || c === '.')
-      ctx.fillStyle = isZero ? (isDark ? '#ffffff' : '#000000') : cfg.colorVal(mVals, isDark)
+      ctx.fillStyle = isZero ? metricTonePalette.neutral : metricTone
       
       let baseFontSize = 6.5
       if (valString.length > 10) {
