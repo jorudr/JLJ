@@ -1,8 +1,8 @@
 <template>
   <div class="skill-chip absolute cursor-pointer group pointer-events-auto"
        :style="{
-         left: Math.round(node.x) + 'px',
-         top: Math.round(node.y) + 'px',
+         left: Math.round(node.x * scale) + 'px',
+         top: Math.round(node.y * scale) + 'px',
          zIndex: isSelected ? 1000 : 1,
          width: nodeWidth,
          height: nodeHeight
@@ -55,14 +55,16 @@
                    style="image-rendering: -webkit-optimize-contrast; transform: translateZ(0); will-change: transform, opacity;"
                    :class="{ 'opacity-100 grayscale-0': isSelected }" />
               <div v-else class="font-mono transition-all tracking-tighter text-center"
-                    :class="[
+                     :class="[
                       (node.type === 'step' || node.type === 'scaling-entry') ? 'text-nier-white dark:text-nier-black opacity-100 font-light' : 'text-nier-text-light dark:text-nier-text-dark opacity-100 font-black',
-                      isSelected ? 'opacity-100' : '',
-                      node.type === 'emotion-state' ? 'text-[36px]' :
-                       (node.type === 'scaling-entry' || node.type === 'step') ? (node.label && node.label.length > 3 ? 'text-[12px]' : 'text-[24px]') :
-                       'text-[24px]'
+                      isSelected ? 'opacity-100' : ''
                     ]"
-                    :style="displayColor ? { color: displayColor } : (node.type === 'risk-element' ? { color: '#ef4444' } : {})">
+                    :style="{
+                      ...(displayColor ? { color: displayColor } : (node.type === 'risk-element' ? { color: '#ef4444' } : {})),
+                      fontSize: node.type === 'emotion-state' ? `${36 * scale}px` : 
+                                (node.type === 'scaling-entry' || node.type === 'step') ? (node.label && node.label.length > 3 ? `${12 * scale}px` : `${24 * scale}px`) : 
+                                `${24 * scale}px`
+                    }">
                 {{
                    node.type === 'emotion-state' ? (node.label || 'EN').slice(0, 2).toUpperCase() :
                    (node.type === 'step' || node.type === 'scaling-entry') ? (node.label || '') :
@@ -220,16 +222,26 @@
                         </div>
                      </div>
                   </div>
-                  <div class="matrix-table-grid flex-1 min-h-0 grid w-full" :style="tableGridStyle">
-                     <input v-for="cell in tableCells"
-                            :key="`${cell.row}-${cell.col}`"
-                            :value="tableDraft[cell.row]?.[cell.col] || ''"
-                            @focus="isEditingTable = true"
-                            @input="updateTableCell(cell.row, cell.col, $event)"
-                            @blur="finishTableEditing"
-                            @mousedown.stop
-                            @click.stop
-                            class="matrix-table-input w-full h-full min-w-0 min-h-0 bg-transparent border-r border-b border-nier-border-light dark:border-nier-border-dark px-2 py-0 text-[11px] leading-none font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
+                  <div class="flex-1 min-h-0 relative overflow-hidden w-full">
+                     <div class="matrix-table-grid absolute top-0 left-0 grid" 
+                          :style="{
+                             ...tableGridStyle,
+                             transform: `scale(${scale})`,
+                             transformOrigin: 'top left',
+                             width: `${100 / scale}%`,
+                             height: `${100 / scale}%`
+                          }">
+                        <input v-for="cell in tableCells"
+                               :key="`${cell.row}-${cell.col}`"
+                               :value="tableDraft[cell.row]?.[cell.col] || ''"
+                               @focus="isEditingTable = true"
+                               @input="updateTableCell(cell.row, cell.col, $event)"
+                               @blur="finishTableEditing"
+                               @mousedown.stop
+                               @click.stop
+                               class="matrix-table-input w-full h-full min-w-0 min-h-0 bg-transparent border-r border-b border-nier-border-light dark:border-nier-border-dark px-2 py-0 font-mono outline-none text-nier-text-light dark:text-nier-text-dark"
+                               :style="{ fontSize: '11px' }" />
+                     </div>
                   </div>
                </div>
 
@@ -241,19 +253,27 @@
                   <a v-if="node.params.fileDataUrl" :href="node.params.fileDataUrl" :download="node.params.fileName" @mousedown.stop @click.stop class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</a>
                </div>
 
-               <div v-else
-                    ref="textEditorElement"
-                    contenteditable="true"
-                    :data-text-node-id="node.id"
-                    :data-placeholder="textPanelPlaceholder"
-                    :style="textPanelEditorStyle"
-                    @mousedown.stop
-                    @click.stop="$emit('doubleclick')"
-                    @focus="focusTextPanel"
-                    @blur="blurTextPanel"
-                    @beforeinput="handleTextPanelBeforeInput"
-                    @input="updateTextPanelHtml"
-                    class="matrix-text-rich flex-1 w-full min-h-0 overflow-y-auto bg-transparent px-3 py-2 font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar select-text cursor-text"></div>
+               <div v-else class="flex-1 w-full min-h-0 relative overflow-hidden">
+                   <div ref="textEditorElement"
+                        contenteditable="true"
+                        :data-text-node-id="node.id"
+                        :data-placeholder="textPanelPlaceholder"
+                        :style="{ 
+                           ...textPanelEditorStyle, 
+                           fontSize: '16px',
+                           transform: `scale(${scale})`,
+                           transformOrigin: 'top left',
+                           width: `${100 / scale}%`,
+                           height: `${100 / scale}%`
+                        }"
+                        @mousedown.stop
+                        @click.stop="$emit('doubleclick')"
+                        @focus="focusTextPanel"
+                        @blur="blurTextPanel"
+                        @beforeinput="handleTextPanelBeforeInput"
+                        @input="updateTextPanelHtml"
+                        class="matrix-text-rich absolute top-0 left-0 bg-transparent px-3 py-2 font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar select-text cursor-text overflow-y-auto"></div>
+               </div>
 
                <div v-if="!isTablePanel"
                     class="absolute -bottom-3 -right-3 w-8 h-8 cursor-nwse-resize flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
@@ -347,7 +367,8 @@
            </template>
            <!-- Default tooltip body for other node types -->
            <div v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
-             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
+             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide"
+                :style="{ fontSize: `${14 * scale}px` }">
                 <template v-if="node.type === 'scaling-entry'">
                    <template v-if="locale === 'ru'">
                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
@@ -495,8 +516,8 @@
         <div v-for="(comment, idx) in node.params.comments" :key="comment.id"
              class="absolute pointer-events-auto"
              :style="{
-               left: (1000 + comment.x) + 'px',
-               top: (1000 + comment.y) + 'px',
+               left: Math.round((1000 + comment.x) * scale) + 'px',
+               top: Math.round((1000 + comment.y) * scale) + 'px',
                zIndex: 1000 + Number(idx)
              }"
              @mousedown.stop="startCommentDrag($event, comment)"
@@ -508,7 +529,9 @@
                     width: (comment.width || 450) + 'px',
                     height: comment.isEditing ? 'auto' : (comment.height || 280) + 'px',
                     minWidth: '450px',
-                    minHeight: '280px'
+                    minHeight: '280px',
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left'
                  }">
 
                <!-- ExPanel Corners -->
@@ -518,7 +541,7 @@
                <!-- Tactical Header -->
                <div class="flex-shrink-0 flex items-center justify-between bg-nier-black dark:bg-nier-white text-nier-white dark:text-nier-black px-4 py-2 cursor-move border-b border-nier-white/10">
                   <div class="flex items-center space-x-3">
-                     <span class="text-[13px] font-black tracking-[0.4em] uppercase font-sans">Comment {{ Number(idx) + 1 }}</span>
+                     <span class="font-black tracking-[0.4em] uppercase font-sans" :style="{ fontSize: '13px' }">Comment {{ Number(idx) + 1 }}</span>
                   </div>
                   <button @click.stop="removeComment(comment.id)"
                           class="hover:scale-125 transition-transform p-1">
@@ -538,14 +561,15 @@
                                @input="adjustTextareaHeight($event)"
                                v-autofocus
                                placeholder="ENTRY_DATA_REQUIRED..."
-                               class="w-full bg-transparent text-nier-text-light dark:text-nier-text-dark font-mono text-[22px] outline-none resize-none uppercase tracking-wide leading-relaxed p-0 overflow-hidden"
-                               style="height: auto; min-height: 180px;"></textarea>
+                               class="w-full bg-transparent text-nier-text-light dark:text-nier-text-dark font-mono outline-none resize-none uppercase tracking-wide leading-relaxed p-0 overflow-hidden"
+                               :style="{ height: 'auto', minHeight: '180px', fontSize: '22px' }"></textarea>
                   </div>
 
                   <!-- Display State -->
                   <div v-else @click="comment.isEditing = true"
                        class="flex-1 p-6 overflow-y-auto custom-scrollbar cursor-pointer">
-                     <p class="text-[22px] font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed">
+                     <p class="font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed"
+                        :style="{ fontSize: '22px' }">
                         {{ comment.text || '[ NO_DATA_AVAILABLE ]' }}
                      </p>
                   </div>
@@ -676,7 +700,7 @@ const nodeWidth = computed(() => {
     if (isScenarioPanel.value) return props.node.params?.width || scenarioPanelSize.value.width
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
-  return `${Math.round(getW() / 2) * 2}px`
+  return `${Math.round((getW() * props.scale) / 2) * 2}px`
 })
 const nodeHeight = computed(() => {
   const getH = () => {
@@ -686,7 +710,7 @@ const nodeHeight = computed(() => {
     if (isScenarioPanel.value) return props.node.params?.height || scenarioPanelSize.value.height
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
-  return `${Math.round(getH() / 2) * 2}px`
+  return `${Math.round((getH() * props.scale) / 2) * 2}px`
 })
 
 const tableDraft = ref<string[][]>([])
@@ -1249,7 +1273,6 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 
 .matrix-text-rich {
   --matrix-text-default-color: #2c2c2a;
-  font-size: 16px !important;
   line-height: 1.3;
   text-transform: none;
   user-select: text;

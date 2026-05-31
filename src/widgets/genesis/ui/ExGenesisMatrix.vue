@@ -83,59 +83,63 @@
             </filter>
           </defs>
           
-          <g v-for="(group, gIdx) in bundleGroups" :key="group.id">
-            <!-- SHARED MAIN STEM (Once per Parent) -->
-            <path v-if="group.type === 'bundle' && group.isFirstForParent"
-                  :d="getMainStemPath(group.fromId)"
-                  stroke-width="1.2" fill="none"
-                  vector-effect="non-scaling-stroke"
-                  class="nier-conn-path pointer-events-none"
-                  :class="{ 'nier-conn-neon': group.connections.some(isNeonHighlight) }" />
-
-            <!-- SHARED BUNDLE STEM (Once per Bundle) -->
-            <path v-if="group.type === 'bundle'"
-                  :d="getBundleStemPath(group.fromId, group.bundleId)"
-                  stroke-width="1.2" fill="none"
-                  vector-effect="non-scaling-stroke"
-                  class="nier-conn-path pointer-events-none"
-                  :class="{ 'nier-conn-neon': group.connections.some(isNeonHighlight) }" />
-
-            <!-- INDIVIDUAL BRANCHES OR SIMPLE CONNECTIONS -->
-            <g v-for="line in (group.type === 'bundle' ? group.connections : [group.connection])" :key="line.toId" class="group/line">
-              <!-- Interactive Hit Area (Always Full Path for easy clicking) -->
-              <path :d="createRootPath(line.fromId, line.toId)" 
-                    stroke="transparent" 
-                    stroke-width="16"
-                    fill="none"
-                    class="pointer-events-auto cursor-pointer"
-                    @click.stop="handleConnectionClick($event, line)" />
-
-              <!-- Visual Path (Branch only if bundle, full path if simple) -->
-              <path :d="group.type === 'bundle' ? getBranchPath(line) : createRootPath(line.fromId, line.toId)" 
-                    stroke-width="1.2"
-                    fill="none" 
+          <g :transform="`scale(${viewState.scale})`">
+            <g v-for="(group, gIdx) in bundleGroups" :key="group.id">
+              <!-- SHARED MAIN STEM (Once per Parent) -->
+              <path v-if="group.type === 'bundle' && group.isFirstForParent"
+                    :d="getMainStemPath(group.fromId)"
+                    stroke-width="1.2" fill="none"
                     vector-effect="non-scaling-stroke"
                     class="nier-conn-path pointer-events-none"
-                    :class="{ 'nier-conn-neon': isNeonHighlight(line) }" />
+                    :class="{ 'nier-conn-neon': group.connections.some(isNeonHighlight) }" />
 
-              <circle v-if="getNode(line.toId)" 
-                      :cx="getNode(line.toId)!.x - (['scaling-entry', 'step'].includes(getNode(line.toId)!.type) ? 30 : 62)" 
-                      :cy="getNode(line.toId)!.y" 
-                      r="2" fill="currentColor" class="opacity-40" />
+              <!-- SHARED BUNDLE STEM (Once per Bundle) -->
+              <path v-if="group.type === 'bundle'"
+                    :d="getBundleStemPath(group.fromId, group.bundleId)"
+                    stroke-width="1.2" fill="none"
+                    vector-effect="non-scaling-stroke"
+                    class="nier-conn-path pointer-events-none"
+                    :class="{ 'nier-conn-neon': group.connections.some(isNeonHighlight) }" />
+
+              <!-- INDIVIDUAL BRANCHES OR SIMPLE CONNECTIONS -->
+              <g v-for="line in (group.type === 'bundle' ? group.connections : [group.connection])" :key="line.toId" class="group/line">
+                <!-- Interactive Hit Area (Always Full Path for easy clicking) -->
+                <path :d="createRootPath(line.fromId, line.toId)" 
+                      stroke="transparent" 
+                      stroke-width="16"
+                      fill="none"
+                      class="pointer-events-auto cursor-pointer"
+                      @click.stop="handleConnectionClick($event, line)" />
+
+                <!-- Visual Path (Branch only if bundle, full path if simple) -->
+                <path :d="group.type === 'bundle' ? getBranchPath(line) : createRootPath(line.fromId, line.toId)" 
+                      stroke-width="1.2"
+                      fill="none" 
+                      vector-effect="non-scaling-stroke"
+                      class="nier-conn-path pointer-events-none"
+                      :class="{ 'nier-conn-neon': isNeonHighlight(line) }" />
+
+                <circle v-if="getNode(line.toId)" 
+                        :cx="getNode(line.toId)!.x - (['scaling-entry', 'step'].includes(getNode(line.toId)!.type) ? 30 : 62)" 
+                        :cy="getNode(line.toId)!.y" 
+                        :r="2 / viewState.scale" fill="currentColor" class="opacity-40" />
+              </g>
             </g>
           </g>
 
           <!-- CONNECTION LABELS (Rendered last to ensure they are on top and capture clicks) -->
           <foreignObject v-for="line in connections.filter((c: any) => c.label && shouldShowLabel(c))" 
                          :key="'label-' + line.fromId + '-' + line.toId"
-                         :x="getConnectionMidpoint(line).x - 60" 
-                         :y="getConnectionMidpoint(line).y - 20" 
-                         width="120" height="40" 
+                         :x="(getConnectionMidpoint(line).x * viewState.scale) - (60 * viewState.scale)" 
+                         :y="(getConnectionMidpoint(line).y * viewState.scale) - (20 * viewState.scale)" 
+                         :width="120 * viewState.scale" :height="40 * viewState.scale" 
                          class="pointer-events-none select-none overflow-visible">
              <div class="w-full h-full flex items-center justify-center">
-                <div class="cursor-pointer pointer-events-auto px-2 py-1 hover:bg-nier-white/10 dark:hover:bg-nier-black/10 transition-colors"
+                <div class="cursor-pointer pointer-events-auto hover:bg-nier-white/10 dark:hover:bg-nier-black/10 transition-colors"
+                     :style="{ padding: `${4 * viewState.scale}px ${8 * viewState.scale}px` }"
                      @mousedown.stop="handleLabelDrag($event, line)">
-                    <div class="text-[16px] font-mono text-nier-text-light dark:text-nier-text-dark tracking-widest lowercase italic font-bold">
+                    <div class="font-mono text-nier-text-light dark:text-nier-text-dark tracking-widest lowercase italic font-bold"
+                         :style="{ fontSize: `${16 * viewState.scale}px` }">
                        {{ locale === 'ru' ? t(line.label || '') : line.label }}
                     </div>
                 </div>
@@ -1676,8 +1680,7 @@ const zones = computed<Zone[]>({
 })
 
 const contentTransform = computed(() => ({
-  transform: `translate(${viewState.value.panX / viewState.value.scale}px, ${viewState.value.panY / viewState.value.scale}px)`,
-  zoom: viewState.value.scale
+  transform: `translate(${viewState.value.panX}px, ${viewState.value.panY}px)`
 }))
 
 const gridTransform = computed(() => {
@@ -2777,15 +2780,15 @@ const indicatorTypes = computed(() => {
 
 const drawPreviewStyle = computed(() => {
   if (!drawStart.value || !drawCurrent.value) return {}
-  const x = Math.min(drawStart.value.x, drawCurrent.value.x)
-  const y = Math.min(drawStart.value.y, drawCurrent.value.y)
-  const w = Math.abs(drawStart.value.x - drawCurrent.value.x)
-  const h = Math.abs(drawStart.value.y - drawCurrent.value.y)
+  const x = Math.min(drawStart.value.x, drawCurrent.value.x) * viewState.value.scale
+  const y = Math.min(drawStart.value.y, drawCurrent.value.y) * viewState.value.scale
+  const w = Math.abs(drawStart.value.x - drawCurrent.value.x) * viewState.value.scale
+  const h = Math.abs(drawStart.value.y - drawCurrent.value.y) * viewState.value.scale
   return {
-    left: `${x}px`,
-    top: `${y}px`,
-    width: `${w}px`,
-    height: `${h}px`
+    left: `${Math.round(x)}px`,
+    top: `${Math.round(y)}px`,
+    width: `${Math.round(w)}px`,
+    height: `${Math.round(h)}px`
   }
 })
 

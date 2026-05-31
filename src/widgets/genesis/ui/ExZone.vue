@@ -142,10 +142,10 @@ const zoneStyle = computed(() => {
   }
 
   return {
-    left: `${props.zone.x}px`,
-    top: `${props.zone.y}px`,
-    width: `${props.zone.width}px`,
-    height: `${props.zone.height}px`,
+    left: `${Math.round(props.zone.x * props.scale)}px`,
+    top: `${Math.round(props.zone.y * props.scale)}px`,
+    width: `${Math.round(props.zone.width * props.scale)}px`,
+    height: `${Math.round(props.zone.height * props.scale)}px`,
     border: borderStyles[props.zone.type]
   }
 })
