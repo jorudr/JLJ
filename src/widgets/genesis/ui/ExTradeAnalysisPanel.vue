@@ -12,6 +12,7 @@ import ExImageArchiveSlot from './ExImageArchiveSlot.vue'
 import ExImageEditor from './ExImageEditor.vue'
 import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
+import { useI18n } from '~/shared/i18n/useI18n'
 
 interface Condition {
   id: string;
@@ -84,6 +85,7 @@ const themeStore = useThemeStore();
 const isDark = computed(() => themeStore.settings.isDark);
 const analysisPanelRoot = ref<HTMLElement | null>(null);
 useDomI18n(analysisPanelRoot, 'genesis.dom', { includeBody: true });
+const { locale } = useI18n();
 
 const tradeStore = useStrategyTradesStore();
 const matrixNodes = shallowRef<any[]>([]);
@@ -592,11 +594,23 @@ const resolvedStyleNode = computed(() => {
 
 const resolvedTradingStyle = computed(() => {
   const extraType = resolvedExtraType.value;
+  const isRu = locale.value === 'ru';
   if (typeof extraType === 'number') {
     const limit = styleLimits[extraType];
-    if (limit) return limit.label;
+    if (limit) {
+      if (isRu) {
+        if (extraType === 0) return 'Внутридневная торговля';
+        if (extraType === 1) return 'Свинг-трейдинг';
+        if (extraType === 2) return 'Инвестирование';
+      }
+      return limit.label;
+    }
   }
-  return resolvedStyleNode.value?.label?.replace(/_/g, ' ') || 'STYLE_UNDEFINED';
+  const label = resolvedStyleNode.value?.label?.replace(/_/g, ' ') || 'STYLE_UNDEFINED';
+  if (isRu && label === 'STYLE_UNDEFINED') {
+    return 'Неопределенный стиль';
+  }
+  return label;
 });
 
 const resolvedExtraType = computed(() => {
@@ -739,10 +753,12 @@ const durationText = computed(() => {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   
   const parts = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0 || days > 0) parts.push(`${hours}h`);
-  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
-  parts.push(`${seconds}s`);
+  const isRu = locale.value === 'ru';
+  
+  if (days > 0) parts.push(isRu ? `${days}д` : `${days}d`);
+  if (hours > 0 || days > 0) parts.push(isRu ? `${hours}ч` : `${hours}h`);
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(isRu ? `${minutes}м` : `${minutes}m`);
+  parts.push(isRu ? `${seconds}с` : `${seconds}s`);
   
   return parts.join(' ');
 });
@@ -759,11 +775,12 @@ const durationParts = computed(() => {
   const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   
+  const isRu = locale.value === 'ru';
   const parts = [];
-  if (days > 0) parts.push({ num: String(days), unit: 'd' });
-  if (hours > 0 || days > 0) parts.push({ num: String(hours), unit: 'h' });
-  if (minutes > 0 || hours > 0 || days > 0) parts.push({ num: String(minutes), unit: 'm' });
-  parts.push({ num: String(seconds), unit: 's' });
+  if (days > 0) parts.push({ num: String(days), unit: isRu ? 'д' : 'd' });
+  if (hours > 0 || days > 0) parts.push({ num: String(hours), unit: isRu ? 'ч' : 'h' });
+  if (minutes > 0 || hours > 0 || days > 0) parts.push({ num: String(minutes), unit: isRu ? 'м' : 'm' });
+  parts.push({ num: String(seconds), unit: isRu ? 'с' : 's' });
   
   return parts;
 });
@@ -798,10 +815,26 @@ const styleAlertMessage = computed(() => {
   const limit = styleLimits[extraType as number];
   if (!limit) return '';
   
+  const isRu = locale.value === 'ru';
+  
   if (limit.min && days < limit.min) {
+    if (isRu) {
+      let styleGenitive = 'неопределенного стиля';
+      if (extraType === 0) styleGenitive = 'внутридневной торговли';
+      else if (extraType === 1) styleGenitive = 'свинг-трейдинга';
+      else if (extraType === 2) styleGenitive = 'инвестирования';
+      return `Предупреждение: Длительность исполнения (${durationText.value}) ниже требуемого минимума в ${limit.min} дн. для протоколов ${styleGenitive}.`;
+    }
     return `Alert: Execution duration (${durationText.value}) is below the required minimum of ${limit.min}d for ${resolvedTradingStyle.value} protocols.`;
   }
   if (limit.max && days > limit.max) {
+    if (isRu) {
+      let styleGenitive = 'неопределенного стиля';
+      if (extraType === 0) styleGenitive = 'внутридневной торговли';
+      else if (extraType === 1) styleGenitive = 'свинг-трейдинга';
+      else if (extraType === 2) styleGenitive = 'инвестирования';
+      return `Предупреждение: Длительность исполнения (${durationText.value}) превышает максимальный лимит в ${limit.max} дн., установленный для протоколов ${styleGenitive}.`;
+    }
     return `Alert: Execution duration (${durationText.value}) exceeds the maximum ${limit.max}d limit defined for ${resolvedTradingStyle.value} protocols.`;
   }
   return '';
