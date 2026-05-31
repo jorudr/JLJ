@@ -461,14 +461,14 @@
     <Transition name="protocol-slide">
       <div v-if="showClearConfirmation" 
            class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md">
-        <div class="w-[450px] bg-white dark:bg-[#0a0a0a] border border-red-500/30 shadow-[0_40px_100px_rgba(255,0,0,0.1)] p-12 relative overflow-hidden">
+        <div class="w-[450px] bg-white dark:bg-[#0a0a0a]  p-12 relative overflow-hidden">
           <!-- Danger Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500 opacity-60"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-500 opacity-60"></div>
+          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white opacity-60"></div>
+          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white opacity-60"></div>
           
           <div class="flex flex-col space-y-8 relative z-10">
             <div class="flex flex-col">
-              <span class="text-[8px] font-mono tracking-[0.5em] text-red-500 uppercase">Critical_Data_Purge_Sequence</span>
+              <span class="text-[8px] font-mono text-red-500 uppercase">Critical_Data_Purge_Sequence</span>
               <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">PURGE_STRATEGY_DATA</h2>
             </div>
 

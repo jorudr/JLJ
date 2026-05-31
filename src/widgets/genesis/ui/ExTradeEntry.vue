@@ -546,6 +546,22 @@ const flatLibraryConditions = computed(() => {
             }
           })
         })
+      } else {
+        if (!c.id) return;
+        if (!seenIds.has(c.id)) {
+          const isSearchMatch = !registrySearchQuery.value || 
+                                (c.name || '').toLowerCase().includes(registrySearchQuery.value.toLowerCase());
+          if (isSearchMatch) {
+            allConds.push({ 
+              ...c, 
+              id: c.id,
+              name: c.name,
+              isMismatched, 
+              scenarioId: scen.id 
+            })
+            seenIds.add(c.id)
+          }
+        }
       }
     })
   })
@@ -739,6 +755,17 @@ const getFlattenedScenarioConditions = (scenarioId) => {
           }
         })
       })
+    } else {
+      if (!c.id) return;
+      if (!seenIds.has(c.id)) {
+        flattened.push({ 
+          ...c, 
+          id: c.id,
+          name: c.name,
+          priority: c.priority || 'NONE'
+        })
+        seenIds.add(c.id)
+      }
     }
   })
   return flattened
