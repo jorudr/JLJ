@@ -2176,6 +2176,11 @@ const matrixAudioStream = ref<MediaStream | null>(null)
 const isMatrixNativeAudioSession = ref(false)
 let matrixAudioChunks: BlobPart[] = []
 
+function isTextEditingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  return Boolean(target.closest('input, textarea, select, option, [contenteditable="true"], [data-text-editable="true"], .matrix-text-rich, .matrix-table-input'))
+}
+
 const matrixAudioErrorLabel = computed(() => {
   if (matrixAudioError.value === 'Secure_Context_Required') return 'Open_Through_Localhost_Or_HTTPS'
   if (matrixAudioError.value === 'Recorder_Not_Available') return 'Audio_Recorder_Not_Available'
@@ -2409,10 +2414,6 @@ onUnmounted(() => {
 })
 
 function handleGlobalKeydown(e: KeyboardEvent) {
-  // Ignore if user is typing in an input or textarea
-  const target = e.target as HTMLElement
-  const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
-
   if (activeDrawingNodeId.value) {
     if (e.key === 'Escape') {
       e.preventDefault()
@@ -2422,7 +2423,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   }
 
   if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (!isInput) {
+    if (!isTextEditingTarget(e.target)) {
       e.preventDefault() // Prevent browser back navigation
       if (lastSelectedId.value) {
         const node = getNode(lastSelectedId.value)
@@ -3752,6 +3753,8 @@ function screenToWorld(clientX: number, clientY: number) {
 
 
 function startPan(e: MouseEvent) {
+  if (isTextEditingTarget(e.target)) return
+
   if ((e.target as HTMLElement).closest('.skill-chip') || 
       (e.target as HTMLElement).closest('.tactical-button') ||
       (e.target as HTMLElement).closest('.pointer-events-auto:not(.absolute.inset-0)')) return

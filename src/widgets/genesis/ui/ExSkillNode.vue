@@ -258,6 +258,7 @@
                    <div ref="textEditorElement"
                         contenteditable="true"
                         :data-text-node-id="node.id"
+                        data-text-editable="true"
                         :data-placeholder="textPanelPlaceholder"
                         :style="{ 
                            ...textPanelEditorStyle, 
@@ -631,6 +632,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge'])
+
+function isTextEditingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  return Boolean(target.closest('input, textarea, select, option, [contenteditable="true"], [data-text-editable="true"], .matrix-text-rich, .matrix-table-input'))
+}
 
 const displayColor = computed(() => {
   // Only apply custom color logic for personal instruments (custom nodes)
@@ -1079,6 +1085,7 @@ function formatAudioTime(value: number) {
 }
 
 const startDrag = (e: MouseEvent) => {
+  if (isTextEditingTarget(e.target)) return
   if (isResizing.value) return
   isDragging.value = true
   const startX = e.clientX
@@ -1167,6 +1174,7 @@ const startResize = (e: MouseEvent) => {
 }
 
 const startCommentDrag = (e: MouseEvent, comment: any) => {
+  if (isTextEditingTarget(e.target)) return
   if (comment.isEditing) return
 
   const startX = e.clientX

@@ -69,19 +69,26 @@ watchEffect(() => {
   // }
 })
 
+const isEditableTarget = (target) => {
+  if (!(target instanceof HTMLElement)) return false
+
+  const editableRoot = target.closest(
+    'input, textarea, select, option, [contenteditable="true"], [data-text-editable="true"], .select-text'
+  )
+
+  if (!editableRoot) return false
+
+  if (editableRoot instanceof HTMLInputElement) {
+    return /^(text|password|search|email|number|tel|url)$/i.test(editableRoot.type)
+  }
+
+  return true
+}
+
 // Disable backspace navigation globally
 const handleGlobalBackspace = (event) => {
   if (event.key === 'Backspace') {
-    const target = event.target;
-    const isEditable = 
-      target.tagName === 'INPUT' || 
-      target.tagName === 'TEXTAREA' || 
-      target.isContentEditable;
-    
-    const supportsTextSelection = target.tagName === 'INPUT' && 
-      /^(text|password|search|email|number|tel|url)$/i.test(target.type);
-
-    if (!isEditable || (target.tagName === 'INPUT' && !supportsTextSelection)) {
+    if (!isEditableTarget(event.target)) {
       event.preventDefault();
     }
   }
@@ -128,6 +135,26 @@ html.dark {
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+body * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+option,
+[contenteditable="true"],
+[contenteditable="true"] *,
+[data-text-editable="true"],
+[data-text-editable="true"] *,
+.select-text,
+.select-text * {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 h1, h2, h3, h4, h5, h6 {
