@@ -669,18 +669,24 @@ const scenarioPanelSize = computed(() => (
         ) : { width: 260, height: 180 }
 ))
 const nodeWidth = computed(() => {
-  if (props.node.type === 'image') return `${props.node.params?.width || 300}px`
-  if (isAudioNote.value) return `${scenarioPanelSize.value.width}px`
-  if (isTablePanel.value) return `${tablePanelSize.value.width}px`
-  if (isScenarioPanel.value) return `${props.node.params?.width || scenarioPanelSize.value.width}px`
-  return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
+  const getW = () => {
+    if (props.node.type === 'image') return props.node.params?.width || 300
+    if (isAudioNote.value) return scenarioPanelSize.value.width
+    if (isTablePanel.value) return tablePanelSize.value.width
+    if (isScenarioPanel.value) return props.node.params?.width || scenarioPanelSize.value.width
+    return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
+  }
+  return `${Math.round(getW() / 2) * 2}px`
 })
 const nodeHeight = computed(() => {
-  if (props.node.type === 'image') return `${props.node.params?.height || 200}px`
-  if (isAudioNote.value) return `${scenarioPanelSize.value.height}px`
-  if (isTablePanel.value) return `${tablePanelSize.value.height}px`
-  if (isScenarioPanel.value) return `${props.node.params?.height || scenarioPanelSize.value.height}px`
-  return props.node.type === 'scaling-entry' || props.node.type === 'step' ? '56px' : '112px'
+  const getH = () => {
+    if (props.node.type === 'image') return props.node.params?.height || 200
+    if (isAudioNote.value) return scenarioPanelSize.value.height
+    if (isTablePanel.value) return tablePanelSize.value.height
+    if (isScenarioPanel.value) return props.node.params?.height || scenarioPanelSize.value.height
+    return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
+  }
+  return `${Math.round(getH() / 2) * 2}px`
 })
 
 const tableDraft = ref<string[][]>([])
@@ -1227,6 +1233,12 @@ const smcTooltipData = computed(() => {
 .skill-chip {
   transform: translate(-50%, -50%);
   user-select: none;
+}
+
+input, textarea, .matrix-text-rich, .matrix-table-input {
+  will-change: transform, width, height;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
 }
 
 .matrix-table-input {
