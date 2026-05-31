@@ -1093,19 +1093,19 @@ const startResize = (e: MouseEvent) => {
     if (!isResizing.value) return
     const dx = (mE.clientX - startX) / props.scale
     const dy = (mE.clientY - startY) / props.scale
-    if (isScenarioPanel.value || props.node.type === 'image') {
+    if (isDrawingPanel.value || props.node.type === 'image') {
       const widthFromX = Math.max(100, initialWidth + dx)
       const heightFromY = Math.max(100, initialHeight + dy)
       if (heightFromY * aspectRatio > widthFromX) {
-        props.node.params.height = heightFromY
-        props.node.params.width = heightFromY * aspectRatio
+        props.node.params.height = Math.round(heightFromY)
+        props.node.params.width = Math.round(heightFromY * aspectRatio)
       } else {
-        props.node.params.width = widthFromX
-        props.node.params.height = widthFromX / aspectRatio
+        props.node.params.width = Math.round(widthFromX)
+        props.node.params.height = Math.round(widthFromX / Math.max(0.001, aspectRatio))
       }
     } else {
-      props.node.params.width = Math.max(100, initialWidth + dx)
-      props.node.params.height = Math.max(100, initialHeight + dy)
+      props.node.params.width = Math.round(Math.max(100, initialWidth + dx))
+      props.node.params.height = Math.round(Math.max(100, initialHeight + dy))
     }
     emit('moved')
   }
