@@ -525,13 +525,27 @@ const flatLibraryConditions = computed(() => {
     const isMismatched = nodeDir !== 'NONE' && nodeDir !== tradeSide;
 
     getScenarioConditions(scen.id).forEach(c => {
-      if (!seenIds.has(c.id)) {
-        const isSearchMatch = !registrySearchQuery.value || 
-                              c.name.toLowerCase().includes(registrySearchQuery.value.toLowerCase());
-        if (isSearchMatch) {
-          allConds.push({ ...c, isMismatched, scenarioId: scen.id })
-          seenIds.add(c.id)
-        }
+      if (c.indicatorUnits) {
+        c.indicatorUnits.forEach(unit => {
+          const items = unit.type === 'bundle' ? unit.items : [unit.item];
+          items.forEach(item => {
+            if (!item || !item.id) return;
+            if (!seenIds.has(item.id)) {
+              const isSearchMatch = !registrySearchQuery.value || 
+                                    item.label.toLowerCase().includes(registrySearchQuery.value.toLowerCase());
+              if (isSearchMatch) {
+                allConds.push({ 
+                  ...item, 
+                  id: item.id,
+                  name: item.label,
+                  isMismatched, 
+                  scenarioId: scen.id 
+                })
+                seenIds.add(item.id)
+              }
+            }
+          })
+        })
       }
     })
   })
@@ -623,8 +637,7 @@ const getScenarioConditions = (scenarioId) => {
   // Helper to get indicator data
   const getIndicatorData = (nodeId, parentCond) => {
      const n = findNodeById(matrixNodes.value, nodeId)
-               
-     if (!n || n.params?.needsConfig) return null
+                    if (!n || n.params?.needsConfig || n.type === 'placeholder') return null
      
      return {
         id: n.id,
@@ -677,8 +690,8 @@ const getScenarioConditions = (scenarioId) => {
       // Fallback: Just get all indicators connected to this condition flatly
       const indicatorIds = allConnections.filter(c => c.fromId === cond.id).map(c => c.toId)
       const indicators = [
-        ...allNodes.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig),
-        ...(cond.subGraph?.nodes || []).filter(n => !n.params?.needsConfig)
+         ...allNodes.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig && n.type !== 'placeholder'),
+         ...(cond.subGraph?.nodes || []).filter(n => !n.params?.needsConfig && n.type !== 'placeholder')
       ]
       
       indicators.forEach(i => {
@@ -702,6 +715,33 @@ const getScenarioConditions = (scenarioId) => {
   })
 
   return tacticalUnits
+}
+
+const getFlattenedScenarioConditions = (scenarioId) => {
+  const conds = getScenarioConditions(scenarioId)
+  const flattened = []
+  const seenIds = new Set()
+  
+  conds.forEach(c => {
+    if (c.indicatorUnits) {
+      c.indicatorUnits.forEach(unit => {
+        const items = unit.type === 'bundle' ? unit.items : [unit.item];
+        items.forEach(item => {
+          if (!item || !item.id) return;
+          if (!seenIds.has(item.id)) {
+            flattened.push({ 
+              ...item, 
+              id: item.id,
+              name: item.label,
+              priority: c.priority 
+            })
+            seenIds.add(item.id)
+          }
+        })
+      })
+    }
+  })
+  return flattened
 }
 
 // Sector Navigation
@@ -2304,7 +2344,7 @@ const submit = async () => {
 
                 <!-- CONDITION MATRIX -->
                 <div class="flex flex-wrap gap-4">
-                  <ExNTtooltip v-for="cond in getScenarioConditions(scen.id)" :key="cond.id" :title="cond.name">
+                  <ExNTtooltip v-for="cond in getFlattenedScenarioConditions(scen.id)" :key="cond.id" :title="cond.name">
                     <template #trigger>
                        <div @click="toggleCondition(cond.id, scen.id)"
                             class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"

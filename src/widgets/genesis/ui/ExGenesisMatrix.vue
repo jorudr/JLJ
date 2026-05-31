@@ -135,9 +135,9 @@
              <div class="w-full h-full flex items-center justify-center">
                 <div class="cursor-pointer pointer-events-auto px-2 py-1 hover:bg-nier-white/10 dark:hover:bg-nier-black/10 transition-colors"
                      @mousedown.stop="handleLabelDrag($event, line)">
-                   <div class="text-[16px] font-mono text-nier-text-light dark:text-nier-text-dark tracking-widest lowercase italic font-bold">
-                      {{ locale === 'ru' ? t(line.label) : line.label }}
-                   </div>
+                    <div class="text-[16px] font-mono text-nier-text-light dark:text-nier-text-dark tracking-widest lowercase italic font-bold">
+                       {{ locale === 'ru' ? t(line.label || '') : line.label }}
+                    </div>
                 </div>
              </div>
           </foreignObject>
@@ -411,9 +411,7 @@
                </span>
                <span class="text-[12px] font-mono tracking-widest opacity-80 uppercase">{{ (viewState.scale * 100).toFixed(0) }}% // FOCUS</span>
             </div>
-             <button @click.stop="focusRoot" class="tactical-button px-3 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[8px] font-mono tracking-widest uppercase">
-               [ROOT]
-             </button>
+            
              <button @click.stop="resetView" class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
                [R]
              </button>
@@ -421,7 +419,7 @@
 
          <!-- FOCUS SELECTOR STRIP -->
          <div class="flex flex-col space-y-2 pl-4 border-l border-nier-text-light/10 dark:border-nier-text-dark/10">
-            <span class="text-[8px] font-mono tracking-[0.3em] uppercase opacity-40 mb-2 italic">Preset_Focus_Layers</span>
+            
             <div class="flex flex-col space-y-1">
                <button v-for="zoom in [25, 50, 75, 100, 150, 200]" :key="zoom"
                        @click.stop="viewState.scale = zoom / 100"
@@ -1412,17 +1410,8 @@
            </Transition>
         </Teleport>
 
-      <!-- SYSTEM STATUS (Top Right) -->
-      <div class="absolute top-12 right-12 flex flex-col items-end space-y-4 z-[40] pt-10">
-        <!-- Old button removed -->
-
-         <div class="flex flex-col items-end space-y-2 opacity-20 select-none">
-            <span class="text-[9px] font-mono tracking-[0.5em] uppercase">Status: Operating</span>
-            <div class="flex space-x-1">
-               <div v-for="i in 5" :key="i" class="w-1 h-3 border-l border-current"></div>
-            </div>
-         </div>
-      </div>
+  
+      
 
       <!-- BOOT OVERLAY -->
        <Transition name="fade">
@@ -3119,7 +3108,7 @@ const buildLogicalStructure = (parentId: string, allNodes: any[], allConnections
 
   conns.forEach(c => {
     const toNode = allNodes.find(n => n.id === c.toId)
-    if (!toNode) return
+    if (!toNode || toNode.type === 'placeholder') return
 
     if (c.bundleId) {
       if (!bundles[c.bundleId]) {
@@ -3157,9 +3146,9 @@ const processNodeTree = (node: any, allNodes: any[], allConnections: any[]): any
 
   // 3. Recursively process subgraph if it exists
   if (newNode.subGraph && newNode.subGraph.nodes) {
-    newNode.subGraph.nodes = newNode.subGraph.nodes.map((n: any) => 
-      processNodeTree(n, newNode.subGraph!.nodes, newNode.subGraph!.connections)
-    )
+    newNode.subGraph.nodes = newNode.subGraph.nodes
+      .map((n: any) => processNodeTree(n, newNode.subGraph!.nodes, newNode.subGraph!.connections))
+      .filter((n: any) => n.type !== 'placeholder')
   }
 
   return newNode
@@ -3170,7 +3159,9 @@ const saveMatrixData = async () => {
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(async () => {
     // Process the entire root tree
-    const processedNodes = rootNodes.value.map(n => processNodeTree(n, rootNodes.value, rootConnections.value))
+    const processedNodes = rootNodes.value
+      .map(n => processNodeTree(n, rootNodes.value, rootConnections.value))
+      .filter(n => n.type !== 'placeholder')
 
     const data = {
       nodes: processedNodes,
