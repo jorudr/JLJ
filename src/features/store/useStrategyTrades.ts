@@ -144,6 +144,28 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
     await save()
   }
 
+  async function purgeAllStrategies() {
+    const mainDiaryTrades = tradesByStrategy.value['MAIN_DIARY'] || []
+    
+    // Move all trades from all other strategies to MAIN_DIARY
+    Object.entries(tradesByStrategy.value).forEach(([strategyId, trades]) => {
+      if (strategyId !== 'MAIN_DIARY') {
+        const updatedTrades = trades.map(t => ({ ...t, strategyId: 'MAIN_DIARY', tradingStyle: 'Main Diary' }))
+        mainDiaryTrades.push(...updatedTrades)
+      }
+    })
+    
+    // Reset state to only have MAIN_DIARY
+    strategies.value = [
+      { id: 'MAIN_DIARY', name: 'Main Diary', createdAt: new Date().toISOString() }
+    ]
+    tradesByStrategy.value = {
+      'MAIN_DIARY': mainDiaryTrades
+    }
+    
+    await save()
+  }
+
   async function updateTrade(strategyId: string, tradeId: string, updates: Partial<DiaryEntry>) {
     if (!tradesByStrategy.value[strategyId]) return
     const index = tradesByStrategy.value[strategyId].findIndex(t => t.id === tradeId)
@@ -170,6 +192,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
     getInitialDeposit,
     setInitialDeposit,
     clearTrades,
-    selectedStrategyId
+    selectedStrategyId,
+    purgeAllStrategies
   }
 })

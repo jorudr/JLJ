@@ -1460,6 +1460,7 @@ import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import { useThemeStore } from '@/features/store/useTheme'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useStrategyTradesStore } from '@/features/store/useStrategyTrades'
 
 const { locale, t } = useI18n()
 const themeStore = useThemeStore()
@@ -1531,6 +1532,9 @@ const forceUpdate = () => updateKey.value++
 const isClearPanelOpen = ref(false)
 
 function clearBoard() {
+  const strategyTradesStore = useStrategyTradesStore()
+  strategyTradesStore.purgeAllStrategies()
+
   rootNodes.value = [
     { id: 'root', label: 'STRATEGY_CORE', type: 'strategy', x: 200, y: 300, color: 'currentColor', params: { value: 'System_Init' }, isRoot: true }
   ]
