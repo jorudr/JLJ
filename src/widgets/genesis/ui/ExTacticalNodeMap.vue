@@ -334,13 +334,6 @@ const displayEmotions = computed(() => {
   return props.pickedEmotions || []
 })
 
-// CHART MODAL LOGIC
-const chartModalOpen = ref(false)
-const chartModalTitle = ref('')
-const chartDataPF = ref<{x: number, y: number, val: string}[]>([])
-const chartDataFreq = ref<{x: number, y: number, val: string}[]>([])
-const hoveredPoint = ref<{x: number, y: number, val: string, type: string} | null>(null)
-
 // CHART VIEW STATE (TradingView-style interaction)
 const chartView = ref({
   zoomX: 1,
@@ -401,82 +394,79 @@ function resetChartView() {
 const showFrequency = ref(true)
 const showPF = ref(true)
 
-function openNodeChart(node: any) {
-  resetChartView()
-  showFrequency.value = true
-  showPF.value = true
-  const nodeData = isRef(node) ? node.value : node
-  chartModalTitle.value = nodeData.name || (nodeData === entryHubData.value ? t('tacticalNodeMap.entryProtocol') : t('tacticalNodeMap.exitProtocol'))
-  const pfPoints = []
-  const freqPoints = []
-  const width = 740
-  const height = 300
-  
-  const history = nodeData.history
-  const maxFreq = Math.max(...history.freq, 1)
-  
-  const L = history.pf.length || 1
 
-  for (let i = 0; i < L; i++) {
-    const pfVal = history.pf[i] || 0
-    const freqVal = history.freq[i] || 0
-    
-    pfPoints.push({ 
-      x: L > 1 ? i * (width / (L - 1)) : 0, 
-      y: (pfVal / 5) * (height * 0.9), // Normalized PF from 0 to 5
-      val: pfVal.toFixed(2)
-    })
-    freqPoints.push({ 
-      x: L > 1 ? i * (width / (L - 1)) : 0, 
-      y: (freqVal / 100) * (height * 0.9), // Normalized Freq from 0 to 100
-      val: freqVal.toFixed(1) + '%'
-    })
-  }
-  chartDataPF.value = pfPoints
-  chartDataFreq.value = freqPoints
-  chartModalOpen.value = true
-}
-
-const pfPath = computed(() => {
-  if (chartDataPF.value.length === 0) return ''
-  return 'M ' + chartDataPF.value.map(p => {
-    const sx = (p.x - chartView.value.offsetX) * chartView.value.zoomX
-    const sy = 300 - ((p.y - chartView.value.offsetY) * chartView.value.zoomY)
-    return `${sx} ${sy}`
-  }).join(' L ')
-})
-
-const freqPath = computed(() => {
-  if (chartDataFreq.value.length === 0) return ''
-  return 'M ' + chartDataFreq.value.map(p => {
-    const sx = (p.x - chartView.value.offsetX) * chartView.value.zoomX
-    const sy = 300 - ((p.y - chartView.value.offsetY) * chartView.value.zoomY)
-    return `${sx} ${sy}`
-  }).join(' L ')
-})
-
-const pfAxisTicks = computed(() => {
-  const ticks = []
-  for (let pfVal = 0; pfVal <= 5; pfVal++) {
-    const baseY = (pfVal / 5) * 270 // height * 0.9 = 270
-    const screenY = 300 - ((baseY - chartView.value.offsetY) * chartView.value.zoomY)
-    if (screenY >= -50 && screenY <= 350) {
-      ticks.push({ val: pfVal, y: screenY })
-    }
-  }
-  return ticks
-})
 
 const hoveredNode = ref<any>(null)
 const tooltipPos = ref({ x: 0, y: 0 })
 
+let hoverTimeout: any = null
+
+const miniChartView = ref({
+  zoomX: 1, zoomY: 1, offsetX: 0, offsetY: 0,
+  isPanning: false, startX: 0, startY: 0, startOffsetX: 0, startOffsetY: 0
+})
+
+function startMiniChartPan(e: MouseEvent) {
+  miniChartView.value.isPanning = true
+  miniChartView.value.startX = e.clientX
+  miniChartView.value.startY = e.clientY
+  miniChartView.value.startOffsetX = miniChartView.value.offsetX
+  miniChartView.value.startOffsetY = miniChartView.value.offsetY
+  
+  const onMove = (me: MouseEvent) => {
+    if (!miniChartView.value.isPanning) return
+    const dx = me.clientX - miniChartView.value.startX
+    const dy = me.clientY - miniChartView.value.startY
+    miniChartView.value.offsetX = miniChartView.value.startOffsetX - (dx / miniChartView.value.zoomX)
+    miniChartView.value.offsetY = miniChartView.value.startOffsetY + (dy / miniChartView.value.zoomY)
+  }
+  
+  const onUp = () => {
+    miniChartView.value.isPanning = false
+    window.removeEventListener('mousemove', onMove)
+    window.removeEventListener('mouseup', onUp)
+  }
+  
+  window.addEventListener('mousemove', onMove)
+  window.addEventListener('mouseup', onUp)
+}
+
+function handleMiniChartZoom(e: WheelEvent) {
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
+  if (e.shiftKey) {
+    miniChartView.value.zoomY = Math.max(0.2, Math.min(20, miniChartView.value.zoomY * zoomFactor))
+  } else {
+    miniChartView.value.zoomX = Math.max(0.2, Math.min(20, miniChartView.value.zoomX * zoomFactor))
+  }
+}
+
 function handleNodeHover(e: MouseEvent, node: any) {
-  hoveredNode.value = isRef(node) ? node.value : node
+  if (hoverTimeout) clearTimeout(hoverTimeout)
+  const newNode = isRef(node) ? node.value : node
+  if (hoveredNode.value !== newNode) {
+    miniChartView.value = {
+      zoomX: 1, zoomY: 1, offsetX: 0, offsetY: 0,
+      isPanning: false, startX: 0, startY: 0, startOffsetX: 0, startOffsetY: 0
+    }
+  }
+  hoveredNode.value = newNode
   tooltipPos.value = { x: e.clientX, y: e.clientY }
 }
 
 function handleNodeLeave() {
-  hoveredNode.value = null
+  hoverTimeout = setTimeout(() => {
+    hoveredNode.value = null
+  }, 200)
+}
+
+function handleTooltipHover() {
+  if (hoverTimeout) clearTimeout(hoverTimeout)
+}
+
+function handleTooltipLeave() {
+  hoverTimeout = setTimeout(() => {
+    hoveredNode.value = null
+  }, 200)
 }
 
 const miniChartPaths = computed(() => {
@@ -484,21 +474,32 @@ const miniChartPaths = computed(() => {
   const history = hoveredNode.value.history
   const w = 180
   const h = 80
-  const maxFreq = Math.max(...history.freq, 1)
+  const maxFreq = Math.max(...history.freq, 100)
+  const maxPF = Math.max(...history.pf, 5)
   
   const usableH = h * 0.6 // 60% of the height used for the curve
   const offsetH = h * 0.2 // 20% padding bottom
   const L = history.pf.length || 1
 
-  const pfPoints = history.pf.map((v: number, i: number) => ({
-    x: L > 1 ? i * (w / (L - 1)) : 0,
-    y: h - (offsetH + (v / 5) * usableH)
-  }))
+  const { offsetX, offsetY, zoomX, zoomY } = miniChartView.value;
+
+  const pfPoints = history.pf.map((v: number, i: number) => {
+    const rawX = L > 1 ? i * (w / (L - 1)) : 0;
+    const valueY = (v / maxPF) * usableH;
+    return {
+      x: (rawX - offsetX) * zoomX,
+      y: h - offsetH - ((valueY - offsetY) * zoomY)
+    }
+  })
   
-  const freqPoints = history.freq.map((v: number, i: number) => ({
-    x: L > 1 ? i * (w / (L - 1)) : 0,
-    y: h - (offsetH + (v / 100) * usableH)
-  }))
+  const freqPoints = history.freq.map((v: number, i: number) => {
+    const rawX = L > 1 ? i * (w / (L - 1)) : 0;
+    const valueY = (v / maxFreq) * usableH;
+    return {
+      x: (rawX - offsetX) * zoomX,
+      y: h - offsetH - ((valueY - offsetY) * zoomY)
+    }
+  })
 
   return {
     pf: 'M ' + pfPoints.map((p: any) => `${p.x} ${p.y}`).join(' L '),
@@ -510,7 +511,7 @@ const miniChartPaths = computed(() => {
 function startPan(e: MouseEvent) {
   // Don't pan if clicking on a node or if a modal is open
   if ((e.target as HTMLElement).closest('.node-element')) return
-  if (chartModalOpen.value || equityModalOpen.value || analyticsModalOpen.value) return
+  if (equityModalOpen.value || analyticsModalOpen.value) return
   
   viewState.value.isPanning = true
   const startX = e.clientX
@@ -791,7 +792,6 @@ const emotionalStatus = computed(() => {
 
         <!-- Scenario Hub: Entry -->
         <div v-if="entryHubData" class="absolute node-element group cursor-pointer" style="left: 150px; top: 300px;" 
-             @click="openNodeChart(entryHubData)"
              @mouseenter="handleNodeHover($event, entryHubData)"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
@@ -828,7 +828,6 @@ const emotionalStatus = computed(() => {
 
         <!-- Scenario Hub: Exit -->
         <div v-if="exitHubData" class="absolute node-element group cursor-pointer" style="left: 1200px; top: 700px;" 
-             @click="openNodeChart(exitHubData)"
              @mouseenter="handleNodeHover($event, exitHubData)"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
@@ -868,7 +867,6 @@ const emotionalStatus = computed(() => {
              class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 backdrop-blur-sm shadow-xl"
              :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
-             @click="openNodeChart(cond)"
              @mouseenter="handleNodeHover($event, cond)"
              @mouseleave="handleNodeLeave">
           <div class="flex flex-col mr-8">
@@ -900,7 +898,6 @@ const emotionalStatus = computed(() => {
              class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 backdrop-blur-sm shadow-xl"
              :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
-             @click="openNodeChart(cond)"
              @mouseenter="handleNodeHover($event, cond)"
              @mouseleave="handleNodeLeave">
           
@@ -928,101 +925,6 @@ const emotionalStatus = computed(() => {
           </div>
         </div>
 
-      </div>
-    </div>
-
-    <!-- Chart Modal -->
-    <div v-if="chartModalOpen" 
-         class="absolute inset-0 z-[20000] flex items-center justify-center bg-black/60 backdrop-blur-xl pointer-events-auto"
-         @mousedown.stop
-         @click="chartModalOpen = false">
-      <div class="relative w-[1100px] h-[750px] bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 shadow-2xl flex flex-col p-8 overflow-visible text-black dark:text-white" @click.stop>
-        <!-- Tactical Corners: Chassis -->
-        <div class="absolute -top-1 -left-1 w-6 h-6 border-t border-l opacity-60 z-50 border-black/30 dark:border-white/30"></div>
-        <div class="absolute -top-1 -right-1 w-6 h-6 border-t border-r opacity-60 z-50 border-black/30 dark:border-white/30"></div>
-        <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b border-l opacity-60 z-50 border-black/30 dark:border-white/30"></div>
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b border-r opacity-60 z-50 border-black/30 dark:border-white/30"></div>
-
-        <!-- Close Button -->
-        <button @click="chartModalOpen = false" class="absolute top-6 right-6 z-50 w-10 h-10 flex items-center justify-center border border-dashed border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-black dark:text-white">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-
-        <!-- Chart Display Area (Padded Child) -->
-        <div class="flex-grow relative w-full h-full bg-black/[0.02] dark:bg-white/[0.02] border border-dashed border-black/10 dark:border-white/10 overflow-hidden cursor-crosshair mt-4"
-             @mousedown="startChartPan"
-             @wheel.prevent="handleChartZoom">
-          
-          <!-- Integrated Legend Overlay -->
-          <div class="absolute top-8 left-8 z-40 flex flex-col pointer-events-auto">
-            <div class="flex items-center space-x-4 mb-1 text-black dark:text-white">
-              <span class="text-[10px] font-mono opacity-40 tracking-[0.5em] uppercase">{{ t('tacticalNodeMap.diagnosticTelemetry') }}</span>
-              <button @click="resetChartView" class="px-2 py-0.5 border border-dashed border-black/10 dark:border-white/10 text-[8px] font-mono uppercase tracking-widest hover:bg-black/5 dark:hover:bg-white/5 transition-colors">{{ t('tacticalNodeMap.resetView') }}</button>
-            </div>
-            <span class="font-mono tracking-[0.2em] uppercase font-black text-3xl mb-6 truncate max-w-[600px] text-black dark:text-white">{{ chartModalTitle }}</span>
-            
-            <div class="flex flex-col space-y-4">
-              <div class="flex items-center space-x-4 group cursor-pointer" @click="showFrequency = !showFrequency">
-                <div class="w-6 h-0.5 bg-black dark:bg-white border-b border-dashed transition-opacity" :class="showFrequency ? 'opacity-40' : 'opacity-10'"></div>
-                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showFrequency ? 'opacity-60' : 'opacity-20'">{{ t('tacticalNodeMap.frequencyDashed') }}</span>
-                <div class="transition-all duration-300 text-black dark:text-white" :class="showFrequency ? 'opacity-100' : 'opacity-30'">
-                  <svg v-if="showFrequency" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88 2 12s3-7 10-7a9 9 0 0 1 5.12 1.6M12.42 17.15c-1.4.35-2.9.3-4.42-.15L2 12s3-7 10-7c.56 0 1.1.06 1.62.17M2 2l20 20M12 12l.18.18A3 3 0 0 1 12 12Z"/></svg>
-                </div>
-              </div>
-              
-              <div class="flex items-center space-x-4 group cursor-pointer" @click="showPF = !showPF">
-                <div class="w-6 h-0.5 bg-black dark:bg-white transition-opacity" :class="showPF ? 'opacity-100' : 'opacity-10'"></div>
-                <span class="text-[10px] font-mono uppercase tracking-[0.2em] transition-opacity text-black dark:text-white" :class="showPF ? 'opacity-60' : 'opacity-20'">{{ t('tacticalNodeMap.pfNormal') }}</span>
-                <div class="transition-all duration-300 text-black dark:text-white" :class="showPF ? 'opacity-100' : 'opacity-30'">
-                  <svg v-if="showPF" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88 2 12s3-7 10-7a9 9 0 0 1 5.12 1.6M12.42 17.15c-1.4.35-2.9.3-4.42-.15L2 12s3-7 10-7c.56 0 1.1.06 1.62.17M2 2l20 20M12 12l.18.18A3 3 0 0 1 12 12Z"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 740 300">
-            <g v-if="showFrequency">
-              <!-- Frequency Dash Line -->
-              <path :d="freqPath" fill="none" class="stroke-black dark:stroke-white stroke-opacity-30" stroke-width="1.5" stroke-dasharray="8,4" vector-effect="non-scaling-stroke" />
-              <!-- Frequency Points -->
-              <circle v-for="(p, i) in chartDataFreq" :key="'fp-'+i"
-                      :cx="(p.x - chartView.offsetX) * chartView.zoomX" 
-                      :cy="300 - ((p.y - chartView.offsetY) * chartView.zoomY)" 
-                      r="2" 
-                      class="fill-black dark:fill-white stroke-black dark:stroke-white stroke-[1px] cursor-crosshair hover:r-[4px] transition-[r] opacity-60 hover:opacity-100"
-                      @mouseenter="hoveredPoint = { ...p, type: 'Frequency' }"
-                      @mouseleave="hoveredPoint = null" />
-            </g>
-
-            <g v-if="showPF">
-              <!-- Y Axis (Right Edge) -->
-              <line x1="739" y1="0" x2="739" y2="300" class="stroke-black/10 dark:stroke-white/10" stroke-width="1" />
-              <text x="732" y="12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic" text-anchor="end">PF</text>
-
-              <!-- Dynamic Linear Axis Ticks -->
-              <g v-for="tick in pfAxisTicks" :key="'pf-tick-'+tick.val">
-                <line x1="735" :y1="tick.y" x2="739" :y2="tick.y" class="stroke-black/20 dark:stroke-white/20" stroke-width="1" />
-                <text x="730" :y="tick.y + 3" class="fill-black/40 dark:fill-white/40 text-[8px] font-mono tracking-widest pointer-events-none" text-anchor="end">{{ tick.val }}</text>
-              </g>
-
-              <!-- PF Line -->
-              <path :d="pfPath" fill="none" stroke-width="3" vector-effect="non-scaling-stroke" class="stroke-black dark:stroke-white drop-shadow-[0_0_8px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
-              <!-- PF Points -->
-              <circle v-for="(p, i) in chartDataPF" :key="'pp-'+i"
-                      :cx="(p.x - chartView.offsetX) * chartView.zoomX" 
-                      :cy="300 - ((p.y - chartView.offsetY) * chartView.zoomY)" 
-                      r="3" 
-                      class="fill-white dark:fill-black stroke-black dark:stroke-white stroke-[1.5px] cursor-crosshair hover:r-[5px] transition-[r] shadow-xl"
-                      @mouseenter="hoveredPoint = { ...p, type: 'Profit Factor' }"
-                      @mouseleave="hoveredPoint = null" />
-            </g>
-          </svg>
-
-        </div>
       </div>
     </div>
 
@@ -1069,7 +971,9 @@ const emotionalStatus = computed(() => {
     <Teleport to="body">
       <Transition name="fade-tooltip">
         <div v-if="hoveredNode" 
-             class="fixed z-[100000] pointer-events-none shadow-xl backdrop-blur-xl rounded-sm"
+             class="fixed z-[100000] pointer-events-auto shadow-xl backdrop-blur-xl rounded-sm select-none"
+             @mouseenter="handleTooltipHover"
+             @mouseleave="handleTooltipLeave"
              :class="isDark ? 'bg-[#0a0a0a]/60 border border-white/20' : 'bg-white/40 border border-black/20'"
              :style="{ left: tooltipPos.x + 'px', top: tooltipPos.y + 'px', transform: 'translate(20px, -50%)' }">
           <!-- Node Name Header -->
@@ -1086,7 +990,9 @@ const emotionalStatus = computed(() => {
           </div>
           
           <!-- Mini SVG Chart (Curves Only) -->
-          <div class="w-[320px] h-[140px] relative overflow-hidden">
+          <div class="w-[320px] h-[140px] relative overflow-hidden cursor-crosshair"
+               @mousedown="startMiniChartPan"
+               @wheel.prevent="handleMiniChartZoom">
             <svg class="w-full h-full p-4 overflow-visible" viewBox="0 0 180 80">
               <!-- Frequency Dash -->
               <path :d="miniChartPaths.freq" fill="none" stroke-width="1.2" stroke-dasharray="4,2" 
