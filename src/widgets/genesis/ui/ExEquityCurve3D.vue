@@ -686,6 +686,81 @@
       </div>
     </Transition>
 
+    <!-- WINRATE TARGET MENU MODAL -->
+    <Transition name="protocol-slide">
+      <div v-if="showWinrateMenu" 
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md"
+           @click.self="showWinrateMenu = false">
+        <div class="w-[850px] max-h-[85vh] bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-8 relative flex flex-col overflow-visible">
+          <!-- Brackets -->
+          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
+          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
+          
+          <!-- SIDE-MOUNTED CLOSE TAB -->
+          <button @click="showWinrateMenu = false"
+                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
+             <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
+             <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Menu</span>
+          </button>
+          
+          <!-- SEARCH / FILTERS -->
+          <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10 gap-4">
+            <div class="relative flex-1">
+              <input
+                v-model="winrateTargetSearch"
+                type="search"
+                placeholder="SEARCH_TARGET"
+                class="w-full h-11 bg-black/[0.03] dark:bg-white/[0.03] border border-black/10 dark:border-white/10 px-4 pr-10 text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-black dark:text-white outline-none transition-all focus:border-black/40 dark:focus:border-white/40 placeholder:text-black/25 dark:placeholder:text-white/25"
+              />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 text-black dark:text-white pointer-events-none">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+              </svg>
+            </div>
+            <div class="flex items-center border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
+              <button
+                v-for="filter in winrateTargetFilters"
+                :key="filter.id"
+                @click="winrateTargetFilter = filter.id"
+                class="h-11 px-4 text-[9px] font-mono font-black uppercase tracking-[0.2em] transition-all border-r border-black/10 dark:border-white/10 last:border-r-0"
+                :class="winrateTargetFilter === filter.id ? 'bg-black dark:bg-white text-white dark:text-black' : 'text-black/45 dark:text-white/45 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'">
+                {{ filter.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar space-y-4 relative z-10">
+             <div v-for="node in winrateMenuNodes" :key="node.id"
+                  @click="selectedWinrateNodeId = node.id; showWinrateMenu = false; initData()"
+                  class="p-4 border transition-all flex items-center justify-between cursor-pointer group"
+                  :class="selectedWinrateNodeId === node.id ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-[0_10px_30px_rgba(0,0,0,0.3)]' : 'border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30 bg-white/50 dark:bg-white/[0.02] text-black dark:text-white'">
+                <div class="flex flex-col space-y-1 w-full">
+                  <div class="flex items-center space-x-3">
+                    <span class="text-xs font-mono font-bold uppercase tracking-widest">{{ node.name }}</span>
+                    <span
+                      class="text-[9px] font-mono px-2 py-0.5 border font-black"
+                      :class="node.type === 'scenario'
+                        ? 'border-blue-500/60 text-blue-600 dark:text-blue-300'
+                        : 'border-purple-500/60 text-purple-600 dark:text-purple-300'">
+                      {{ node.typeLabel }}
+                    </span>
+                  </div>
+                </div>
+             </div>
+             <div v-if="winrateMenuNodes.length === 0"
+                  class="p-8 border border-dashed border-black/10 dark:border-white/10 text-center text-[10px] font-mono font-black uppercase tracking-[0.35em] text-black/30 dark:text-white/30">
+               NO_TARGETS_FOUND
+             </div>
+          </div>
+          
+          <!-- Background Scan Line -->
+          <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
+            <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- DRAG TO TRASH ZONE (VISIBLE DURING EDIT MODE) -->
     <Transition name="protocol-slide">
       <div v-if="isEditMode && draggingMetricIndex !== null"
@@ -724,7 +799,7 @@
         </button>
 
         <!-- TOGGLE METRICS / EQUITY CURVE -->
-        <button v-if="!showDistribution3D"
+        <button v-if="!showDistribution3D && !showWinrateCurve"
                 @click="showMetricsPanel = !showMetricsPanel; showDistribution3D = false" 
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showMetricsPanel ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
@@ -743,7 +818,7 @@
         </button>
 
         <!-- EDIT MODE ICON BUTTON (ONLY VISIBLE WHEN METRICS PANEL IS ACTIVE) -->
-        <button v-if="showMetricsPanel"
+        <button v-if="showMetricsPanel && !showWinrateCurve"
                 @click="isEditMode = !isEditMode" 
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border"
                 :class="isEditMode ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-100' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'">
@@ -757,7 +832,7 @@
         </button>
 
         <!-- ROBUSTNESS DIAGNOSTICS -->
-        <button v-if="!showMetricsPanel"
+        <button v-if="!showMetricsPanel && !showWinrateCurve"
                 @click="handleRobustnessDiagnosticsClick"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border"
                 :class="[
@@ -778,7 +853,7 @@
         </button>
 
         <!-- BOOTSTRAP / PNL HISTOGRAM TOGGLE -->
-        <button v-if="showDistribution3D"
+        <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="toggleRobustnessHistogram"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showRobustnessHistogram ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
@@ -794,10 +869,8 @@
           </div>
         </button>
 
-
-
         <!-- QQ PLOT TOGGLE (Only when Robustness Diagnostics is active) -->
-        <button v-if="showDistribution3D"
+        <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="showQQPlot = !showQQPlot; if (showQQPlot) { showRobustnessExplanations = false; showRobustnessHistogram = false }"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showQQPlot ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
@@ -814,7 +887,7 @@
         </button>
 
         <!-- EXPLANATIONS & SIMULATIONS -->
-        <button v-if="showDistribution3D"
+        <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="showRobustnessExplanations = !showRobustnessExplanations; if (showRobustnessExplanations) { showQQPlot = false; showRobustnessHistogram = false }"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-black dark:text-white opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showRobustnessExplanations ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
@@ -842,7 +915,7 @@
         </button>
        
         <!-- SET BENCHMARK RATE -->
-        <button v-if="!showMetricsPanel && !showDistribution3D"
+        <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
                 @click="showBenchmarkModal = true; benchmarkInput = sp500BenchmarkRate" 
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
@@ -856,7 +929,7 @@
         </button>
 
         <!-- SET INITIAL DEPOSIT -->
-        <button v-if="!showMetricsPanel && !showDistribution3D"
+        <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
                 @click="showInitialDepositModal = true" 
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
@@ -868,7 +941,7 @@
         </button>
 
         <!-- EQUITY CURVE SIMULATOR -->
-        <button v-if="!showMetricsPanel && !showDistribution3D"
+        <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
                 @click="openSimulator" 
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
@@ -878,6 +951,24 @@
           </svg>
           <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
             [ EQUITY_CURVE_SIMULATOR ]
+          </div>
+        </button>
+
+        <!-- WINRATE TARGET MENU BUTTON -->
+        <button v-if="showWinrateCurve"
+                @click="showWinrateMenu = true" 
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                :class="showWinrateMenu ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            [ SELECT_WINRATE_TARGET ]
           </div>
         </button>
 
@@ -1246,6 +1337,96 @@ const openSimulator = () => {
 
 const showCalendarMode = ref(false)
 const showWinrateCurve = ref(false)
+const showWinrateMenu = ref(false)
+const selectedWinrateNodeId = ref<string | null>(null)
+const winrateTargetSearch = ref('')
+const winrateTargetFilter = ref<'all' | 'scenario' | 'condition'>('all')
+const winrateTargetFilters: { id: 'all' | 'scenario' | 'condition', label: string }[] = [
+  { id: 'all', label: 'ALL' },
+  { id: 'scenario', label: 'SCENARIO' },
+  { id: 'condition', label: 'CONDITION' }
+]
+
+type WinrateTargetNode = {
+  id: string
+  name: string
+  type: 'scenario' | 'condition'
+  typeLabel: string
+}
+
+const getCurrentWinrateTrades = () => props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
+
+const addWinrateTarget = (targets: Map<string, WinrateTargetNode>, target: Partial<WinrateTargetNode> | null | undefined) => {
+  if (!target?.id) return
+  const name = String(target.name || target.id).trim()
+  if (!name) return
+  targets.set(target.id, {
+    id: target.id,
+    name,
+    type: target.type || 'condition',
+    typeLabel: (target.type || 'condition').toUpperCase()
+  })
+}
+
+const getScenarioName = (scenario: any) => {
+  return scenario?.info?.name || scenario?.name || scenario?.label || scenario?.id
+}
+
+const getConditionName = (condition: any) => {
+  if (typeof condition === 'string') {
+    const matrixNode = matrixNodes.value.find(n => n.id === condition)
+    return matrixNode?.params?.customName || matrixNode?.label || condition
+  }
+  return condition?.info?.name || condition?.name || condition?.label || condition?.id
+}
+
+const winrateMenuNodes = computed(() => {
+  const targets = new Map<string, WinrateTargetNode>()
+  getCurrentWinrateTrades().forEach((trade: any) => {
+    ;[trade.boardScenarioEntry, trade.boardScenarioExit].forEach((scenario: any) => {
+      if (!scenario?.id) return
+      addWinrateTarget(targets, {
+        id: scenario.id,
+        name: getScenarioName(scenario),
+        type: 'scenario'
+      })
+      ;(scenario.info?.conditions || []).forEach((condition: any) => {
+        const id = typeof condition === 'string' ? condition : condition?.id
+        addWinrateTarget(targets, {
+          id,
+          name: getConditionName(condition),
+          type: 'condition'
+        })
+      })
+    })
+
+    ;(trade.boardConditions || []).forEach((condition: any) => {
+      const id = typeof condition === 'string' ? condition : condition?.id
+      addWinrateTarget(targets, {
+        id,
+        name: getConditionName(condition),
+        type: 'condition'
+      })
+    })
+  })
+
+  const query = winrateTargetSearch.value.trim().toLowerCase()
+  const activeFilter = winrateTargetFilter.value
+
+  return Array.from(targets.values()).filter(node => {
+    const matchesFilter = activeFilter === 'all' || node.type === activeFilter
+    const matchesSearch = !query || node.name.toLowerCase().includes(query) || node.typeLabel.toLowerCase().includes(query)
+    return matchesFilter && matchesSearch
+  }).sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'scenario' ? -1 : 1
+    return a.name.localeCompare(b.name)
+  })
+})
+
+const selectedWinrateTarget = computed(() => {
+  if (!selectedWinrateNodeId.value) return null
+  return winrateMenuNodes.value.find(node => node.id === selectedWinrateNodeId.value) || null
+})
 const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
 const calendarValueMode = ref<'currency' | 'percentage'>('currency')
 const hoveredCalendarDayTooltip = ref<{ x: number; y: number; value: string; date: string; pnl: number } | null>(null)
@@ -5059,6 +5240,17 @@ watch(() => themeStore.settings.isDark, () => {
   updateColors()
 }, { immediate: true })
 
+const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
+  return trade.boardScenarioEntry?.id === targetId ||
+    trade.boardScenarioExit?.id === targetId ||
+    trade.boardScenarioEntryId === targetId ||
+    trade.boardScenarioExitId === targetId ||
+    trade.boardConditions?.some((condition: any) => (typeof condition === 'string' ? condition === targetId : condition?.id === targetId)) ||
+    trade.boardScenarioEntry?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
+    trade.boardScenarioExit?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
+    trade.scenarios?.some((scenario: any) => scenario?.id === targetId || scenario?.conditions?.some((condition: any) => condition?.id === targetId))
+}
+
 // --- INITIALIZATION --- //
 const initData = () => {
   const currentTrades = props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
@@ -5100,11 +5292,17 @@ const initData = () => {
   })
 
   let wins = 0
+  let targetWins = 0
+  let targetCount = 0
   winratePoints3D.value = []
+  
+  const targetNode = selectedWinrateTarget.value
+  const useTargetWinrate = !!targetNode
+
   winratePoints3D.value.push({
     x: -200, y: 95, z: 0, // starts at 0%
     value: 0,
-    dateLabel: 'DEPOSIT'
+    dateLabel: targetNode ? `${targetNode.name} // START` : 'DEPOSIT'
   })
 
   sortedTrades.forEach((trade, i) => {
@@ -5124,16 +5322,33 @@ const initData = () => {
       isProjection: !!trade.isProjection
     })
 
-    if ((trade.profitInCurrency ?? 0) > 0) wins++
-    const winrate = (wins / (i + 1)) * 100
-    const winrateY = 95 - (winrate / 100) * 135
-    
-    winratePoints3D.value.push({
-      x, y: winrateY, z,
-      value: winrate,
-      dateLabel,
-      isProjection: !!trade.isProjection
-    })
+    if (useTargetWinrate && selectedWinrateNodeId.value) {
+      const isTargetTrade = tradeMatchesWinrateTarget(trade, selectedWinrateNodeId.value)
+      if (isTargetTrade) {
+        targetCount++
+        if ((trade.profitInCurrency ?? 0) > 0) targetWins++
+      }
+      const targetWinrate = targetCount > 0 ? (targetWins / targetCount) * 100 : 0
+      const winrateY = 95 - (targetWinrate / 100) * 135
+      
+      winratePoints3D.value.push({
+        x, y: winrateY, z,
+        value: targetWinrate,
+        dateLabel: `${dateLabel} // ${targetNode?.name || 'TARGET'}`,
+        isProjection: !!trade.isProjection
+      })
+    } else {
+      if ((trade.profitInCurrency ?? 0) > 0) wins++
+      const winrate = (wins / (i + 1)) * 100
+      const winrateY = 95 - (winrate / 100) * 135
+      
+      winratePoints3D.value.push({
+        x, y: winrateY, z,
+        value: winrate,
+        dateLabel,
+        isProjection: !!trade.isProjection
+      })
+    }
   })
 
   // Compute Benchmark & Risk-Free Daily Curves
