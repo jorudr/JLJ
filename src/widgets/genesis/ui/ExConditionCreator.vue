@@ -63,8 +63,8 @@
                           <div class="w-1.5 h-1.5 border border-nier-text-light dark:border-nier-text-dark rotate-45"></div>
                           <span class="text-[9px] font-mono uppercase tracking-[0.3em]">Discard_Draft</span>
                        </div>
-                      <ExButton variant="tactical" @click="handleCreate">Initialize_Protocol</ExButton>
-                   </div>
+                       <ExButton variant="tactical" @click="handleCreate">Create</ExButton>
+                    </div>
                 </div>
              </ExPanel>
 

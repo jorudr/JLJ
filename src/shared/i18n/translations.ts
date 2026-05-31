@@ -99,7 +99,18 @@ export const translations = {
         "TEXT_LABEL_PANEL": "TEXT_LABEL_PANEL",
         "Text label for long labels or sentences.": "Text label for long labels or sentences.",
         "ENTER_LABEL_DETAILS...": "ENTER_LABEL_DETAILS...",
-        "ENTER_SCENARIO_DETAILS...": "ENTER_SCENARIO_DETAILS..."
+        "ENTER_SCENARIO_DETAILS...": "ENTER_SCENARIO_DETAILS...",
+        "IDENTIFY_NEW_PROTOCOL // CONDITION_CREATOR": "IDENTIFY_NEW_PROTOCOL // CONDITION_CREATOR",
+        "\"Each custom condition is a reified sequence within the Genesis Matrix. Precision in nomenclature ensures structural integrity.\"": "\"Each custom condition is a reified sequence within the Genesis Matrix. Precision in nomenclature ensures structural integrity.\"",
+        "Protocol_Visualization_Preview": "Protocol_Visualization_Preview",
+        "Create": "Create",
+        "Discard_Draft": "Discard_Draft",
+        "System_Requirements": "System_Requirements",
+        "ENTER_CONDITION_NAME...": "ENTER_CONDITION_NAME...",
+        "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...": "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...",
+        "Unique Identifier": "Unique Identifier",
+        "Valid Telemetry Link": "Valid Telemetry Link",
+        "Archive Priority": "Archive Priority"
       }
     },
     common: {
@@ -1606,7 +1617,18 @@ export const translations = {
         "LABEL": "ЯРЛЫК",
         "TEXT_LABEL_PANEL": "ПАНЕЛЬ_ТЕКСТОВОГО_ЯРЛЫКА",
         "Text label for long labels or sentences.": "Текстовый ярлык для длинных меток или предложений.",
-        "ENTER_LABEL_DETAILS...": "ВВЕДИТЕ_ТЕКСТ_ЯРЛЫКА..."
+        "ENTER_LABEL_DETAILS...": "ВВЕДИТЕ_ТЕКСТ_ЯРЛЫКА...",
+        "IDENTIFY_NEW_PROTOCOL // CONDITION_CREATOR": "ИДЕНТИФИКАЦИЯ_НОВОГО_ПРОТОКОЛА // СОЗДАТЕЛЬ_УСЛОВИЙ",
+        "\"Each custom condition is a reified sequence within the Genesis Matrix. Precision in nomenclature ensures structural integrity.\"": "\"Каждое пользовательское условие — это материализованная последовательность внутри Матрицы Генезиса. Точность в номенклатуре обеспечивает структурную целостность.\"",
+        "Protocol_Visualization_Preview": "Предварительный_Просмотр_Визуализации_Протокола",
+        "Create": "Создать",
+        "Discard_Draft": "Сбросить_Черновик",
+        "System_Requirements": "Системные_Требования",
+        "ENTER_CONDITION_NAME...": "ВВЕДИТЕ_ИМЯ_УСЛОВИЯ...",
+        "DESCRIBE_THE_TACTICAL_SIGNIFICANCE_OF_THIS_CONDITION...": "ОПИШИТЕ_ТАКТИЧЕСКУЮ_ЗНАЧИМОСТЬ_ЭТОГО_УСЛОВИЯ...",
+        "Unique Identifier": "Уникальный Идентификатор",
+        "Valid Telemetry Link": "Валидный Канал Телеметрии",
+        "Archive Priority": "Приоритет Архива"
       }
     },
     common: {
