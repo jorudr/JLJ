@@ -11,29 +11,35 @@
           <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark rotate-45 mb-6 opacity-40"></div>
 
           <h2 class="text-xl font-black uppercase tracking-[0.2em] text-nier-text-light dark:text-nier-text-dark mb-4 font-mono text-center">
-            Premium Access Required
+            {{ locale === 'ru' ? 'Необходим Премиум Доступ' : 'Premium Access Required' }}
           </h2>
           
           <div class="h-px w-12 bg-nier-text-light dark:bg-nier-text-dark opacity-20 mb-6"></div>
 
-          <p class="text-[10px] font-mono tracking-widest leading-loose text-nier-text-light/60 dark:text-nier-text-dark/60 text-center uppercase mb-8">
-            THIS ANALYTICAL STRUCTURE IS LOCKED. <br/><br/> UPGRADE TO A PREMIUM SUBSCRIPTION TO ACCESS ADVANCED DIAGNOSTIC TOOLS AND MATRIX CAPABILITIES.
+          <p v-if="!showExplanation" class="text-[10px] font-mono tracking-widest leading-loose text-nier-text-light/60 dark:text-nier-text-dark/60 text-center uppercase mb-8">
+            <span v-if="locale === 'ru'">ЭТА АНАЛИТИЧЕСКАЯ СТРУКТУРА ЗАБЛОКИРОВАНА. <br/><br/> ОФОРМИТЕ ПРЕМИУМ-ПОДПИСКУ, ЧТОБЫ ПОЛУЧИТЬ ДОСТУП К ПРОДВИНУТЫМ ИНСТРУМЕНТАМ ДИАГНОСТИКИ И ВОЗМОЖНОСТЯМ МАТРИЦЫ.</span>
+            <span v-else>THIS ANALYTICAL STRUCTURE IS LOCKED. <br/><br/> UPGRADE TO A PREMIUM SUBSCRIPTION TO ACCESS ADVANCED DIAGNOSTIC TOOLS AND MATRIX CAPABILITIES.</span>
+          </p>
+          <p v-else class="text-[10px] font-mono tracking-widest leading-loose text-nier-text-light/60 dark:text-nier-text-dark/60 text-center uppercase mb-8">
+            <span v-if="locale === 'ru'">АВТОМАТИЧЕСКИЕ ОБНОВЛЕНИЯ ПОДПИСКИ В ДАННЫЙ МОМЕНТ ОТКЛЮЧЕНЫ. <br/><br/> ДЛЯ ПОЛУЧЕНИЯ ДОСТУПА, ПОЖАЛУЙСТА, ОТПРАВЬТЕ ПИСЬМО НА <span class="font-bold text-nier-text-light dark:text-nier-text-dark">GANDR.TRADE@GMAIL.COM</span> С EMAIL, КОТОРЫЙ ВЫ ИСПОЛЬЗОВАЛИ ДЛЯ ВХОДА. ДОСТУП БУДЕТ ПРЕДОСТАВЛЕН ПОСЛЕ РАССМОТРЕНИЯ.</span>
+            <span v-else>AUTOMATIC UPGRADES ARE CURRENTLY DISABLED. <br/><br/> TO GAIN ACCESS, PLEASE SEND AN EMAIL TO <span class="font-bold text-nier-text-light dark:text-nier-text-dark">GANDR.TRADE@GMAIL.COM</span> WITH YOUR LOGIN EMAIL. YOU WILL BE GRANTED ACCESS UPON REVIEW.</span>
           </p>
 
           <div class="flex items-center space-x-4 w-full mt-2">
             <ExButton 
+              v-if="!showExplanation"
               variant="solid" 
               class="w-full border-nier-text-light dark:border-nier-text-dark" 
-              @click.prevent
+              @click="showExplanation = true"
             >
-              UPGRADE_NOW
+              {{ locale === 'ru' ? 'ОФОРМИТЬ_СЕЙЧАС' : 'UPGRADE_NOW' }}
             </ExButton>
             <ExButton 
               variant="tactical" 
               class="w-full opacity-60 hover:opacity-100" 
-              @click="emit('close')"
+              @click="closeOverlay"
             >
-              CLOSE
+              {{ locale === 'ru' ? 'ЗАКРЫТЬ' : 'CLOSE' }}
             </ExButton>
           </div>
         </div>
@@ -43,13 +49,31 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import ExButton from '~/shared/ui/ExButton.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 
-defineProps<{
+const { locale } = useI18n()
+
+const props = defineProps<{
   isOpen: boolean
 }>()
 
 const emit = defineEmits(['close'])
+
+const showExplanation = ref(false)
+
+const closeOverlay = () => {
+  emit('close')
+}
+
+watch(() => props.isOpen, (newVal) => {
+  if (!newVal) {
+    setTimeout(() => {
+      showExplanation.value = false
+    }, 500)
+  }
+})
 </script>
 
 <style scoped>

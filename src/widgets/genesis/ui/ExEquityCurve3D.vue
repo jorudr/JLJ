@@ -924,9 +924,7 @@
           <button @click="showWinrateCurve = !showWinrateCurve"
                   class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                   :class="showWinrateCurve ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
+            <span class="text-[11px] font-black font-mono">%</span>
             <div class="absolute right-full mr-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
               {{ showWinrateCurve ? '[ HIDE_WINRATE_CURVE ]' : '[ SHOW_WINRATE_CURVE ]' }}
             </div>
