@@ -307,6 +307,7 @@ export function useDomI18n(rootRef: Ref<HTMLElement | null>, namespace: string, 
     }
 
     translateAttributes(element, dictionary, reverseDictionary)
+    if ((element as HTMLElement).isContentEditable || element.closest('[contenteditable="true"]')) return
     root.childNodes.forEach(child => walk(child, dictionary, reverseDictionary))
   }
 

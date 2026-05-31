@@ -479,14 +479,6 @@
                       </button>
                     </div>
 
-                    <div class="h-9 px-3 border border-nier-border-light dark:border-nier-border-dark flex items-center gap-3">
-                      <button @mousedown.stop.prevent="adjustTextCommandFontSize(-1)"
-                              class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 text-[12px] font-mono">-</button>
-                      <span class="text-[9px] font-mono font-black w-12 text-center">{{ activeTextFontSize }}px</span>
-                      <button @mousedown.stop.prevent="adjustTextCommandFontSize(1)"
-                              class="w-6 h-6 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 text-[12px] font-mono">+</button>
-                    </div>
-
                     <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
                       <button @mousedown.stop.prevent="applyTextCommand('bold')"
                               class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 transition-all">B</button>
@@ -1897,7 +1889,6 @@ const textFormatPresets: Array<{ id: TextFormatPreset; label: string; block: str
   { id: 'h', label: 'H', block: 'h2' },
   { id: 'p', label: 'P', block: 'p' }
 ]
-const activeTextFontSize = ref(16)
 const activeTextColor = ref('#2c2c2a')
 const savedTextSelection = ref<Range | null>(null)
 
@@ -1974,24 +1965,6 @@ function applyTextBlock(preset: TextFormatPreset) {
   const block = preset === 'quote' ? 'blockquote' : textFormatPresets.find(item => item.id === preset)?.block
   if (!block) return
   applyTextCommand('formatBlock', block)
-}
-
-function applyTextFontSize() {
-  const size = Math.max(10, Math.min(72, activeTextFontSize.value))
-  activeTextFontSize.value = size
-  applyTextCommand('fontSize', '7')
-  getActiveTextEditor()?.querySelectorAll('font[size="7"]').forEach((font) => {
-    const span = document.createElement('span')
-    span.style.fontSize = `${size}px`
-    span.innerHTML = font.innerHTML
-    font.replaceWith(span)
-  })
-  syncActiveTextHtml()
-}
-
-function adjustTextCommandFontSize(delta: number) {
-  activeTextFontSize.value = Math.max(10, Math.min(72, activeTextFontSize.value + delta))
-  applyTextFontSize()
 }
 
 function applyTextColor(event?: Event) {
@@ -3231,6 +3204,7 @@ function activateZoneTool(type: 'entry' | 'in-trade' | 'exit' | 'session') {
 
 function addNode(type: any) {
   const lastSelected = lastSelectedId.value ? getNode(lastSelectedId.value) : null
+  const hasParamValue = type.params && Object.prototype.hasOwnProperty.call(type.params, 'value')
   
   // Technical categories that require configuration
   const techCategories = ['TREND', 'MOMENTUM', 'VOLATILITY', 'VOLUME']
@@ -3254,7 +3228,7 @@ function addNode(type: any) {
          'averaging': 'Strategic cost-basis optimization through distributed entry execution.',
          'image': 'Visual documentation of market structure for archival verification.'
        }[type.type as string] || 'Standard tactical protocol for Matrix operations.'),
-       value: type.params?.value || type.description || type.params?.info || ('0x' + lastSelected.id.slice(-4)),
+       value: hasParamValue ? type.params.value : (type.description || type.params?.info || ('0x' + lastSelected.id.slice(-4))),
        ...( (type.type === 'pyramiding' || type.type === 'averaging') ? {
          scalingProtocol: [
            { id: 'p1', value: 5, unit: '%', size: 1 },
@@ -3298,7 +3272,7 @@ function addNode(type: any) {
         'averaging': 'Strategic cost-basis optimization through distributed entry execution.',
         'image': 'Visual documentation of market structure for archival verification.'
       }[type.type as string] || 'Standard tactical protocol for Matrix operations.'),
-      value: type.params?.value || type.description || type.params?.info || ('0x' + id.slice(-4)),
+      value: hasParamValue ? type.params.value : (type.description || type.params?.info || ('0x' + id.slice(-4))),
       ...( (type.type === 'pyramiding' || type.type === 'averaging') ? {
         scalingProtocol: [
           { id: 'p1', value: 5, unit: '%', size: 1 },

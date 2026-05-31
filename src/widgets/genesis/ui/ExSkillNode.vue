@@ -251,6 +251,7 @@
                     @click.stop="$emit('doubleclick')"
                     @focus="focusTextPanel"
                     @blur="blurTextPanel"
+                    @beforeinput="handleTextPanelBeforeInput"
                     @input="updateTextPanelHtml"
                     class="matrix-text-rich flex-1 w-full min-h-0 overflow-y-auto bg-transparent px-3 py-2 font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar select-text cursor-text"></div>
 
@@ -788,7 +789,8 @@ function handleTextPanelBeforeInput(event: InputEvent) {
   if (props.node.type !== 'text-panel') return
   if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
   const color = props.node.params?.activeTextColor
-  if (!color) return
+  const shouldWrapColor = !!color && color !== 'currentColor'
+  if (!shouldWrapColor) return
 
   const editor = textEditorElement.value
   const selection = window.getSelection()
@@ -800,7 +802,7 @@ function handleTextPanelBeforeInput(event: InputEvent) {
   range.deleteContents()
 
   const span = document.createElement('span')
-  span.style.color = color === 'currentColor' ? 'var(--matrix-text-default-color)' : color
+  if (shouldWrapColor) span.style.color = color
   span.appendChild(document.createTextNode(event.data))
   range.insertNode(span)
 
@@ -1235,8 +1237,8 @@ const smcTooltipData = computed(() => {
 
 .matrix-text-rich {
   --matrix-text-default-color: #2c2c2a;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 16px !important;
+  line-height: 1.3;
   text-transform: none;
   user-select: text;
   cursor: text;
@@ -1252,7 +1254,7 @@ const smcTooltipData = computed(() => {
 }
 
 .matrix-text-rich :deep(h2) {
-  font-size: 32px;
+  font-size: 2em;
   font-weight: 800;
   line-height: 1.15;
 }
