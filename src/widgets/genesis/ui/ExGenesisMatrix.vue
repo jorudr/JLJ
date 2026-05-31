@@ -148,7 +148,7 @@
  
 
           <!-- Active Drag Line -->
-          <g v-if="activeWire">
+          <g v-if="activeWire" :transform="`scale(${viewState.scale})`">
             <path :d="createCurvedPath(activeWire.from, activeWire.to)" 
                   stroke="currentColor" 
                   stroke-width="2" 
@@ -1695,19 +1695,15 @@ const skillTypes = computed(() => {
   const selectedNode = effectiveSelectedNode.value
   const contextNode = activeContextId.value ? getNode(activeContextId.value) : null
   
-  const isStrategyActive = (selectedNode?.type === 'strategy' || contextNode?.type === 'strategy')
   const isScenarioActive = (
     (selectedNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(selectedNode.type)) ||
     (contextNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(contextNode.type))
   )
   
   const base: { label: string; type: string; color: string; description?: string }[] = [
-    { label: 'Strategy', type: 'strategy', color: 'currentColor' }
+    { label: 'Strategy', type: 'strategy', color: 'currentColor' },
+    { label: 'Scenario', type: 'scenario', color: 'currentColor' }
   ]
-  
-  if (isStrategyActive) {
-    base.push({ label: 'Scenario', type: 'scenario', color: 'currentColor' })
-  }
 
   if (isScenarioActive) {
     base.push({ label: 'Condition', type: 'condition', color: 'currentColor' })
