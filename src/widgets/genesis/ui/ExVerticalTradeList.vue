@@ -251,7 +251,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b border-black/10 dark:border-white/10 text-[10px] opacity-40 uppercase tracking-widest px-2">
+      <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b border-black/10 dark:border-white/10 text-[10px] opacity-40 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
           <button @click.stop="toggleSelectAllTrades" class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0" :class="isAllSelected ? 'bg-black dark:bg-white text-white dark:text-black opacity-100' : 'opacity-40'">
             <span v-if="isAllSelected" class="text-[8px] font-bold">✓</span>
@@ -260,6 +260,7 @@
           <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
         </div>
         <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
+        <span>{{ locale === 'ru' ? 'Даты' : 'Dates' }}</span>
         <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
         <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
         <span class="w-6"></span>
@@ -278,7 +279,7 @@
         >
           <!-- ROW GRID -->
           <div 
-            class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center py-3 px-2 opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer"
+            class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center py-3 px-2 opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer"
             @click="emit('open-trade', { tradeId: trade.id })"
           >
             <div class="flex items-center space-x-3 truncate" @click.stop="toggleSelectTrade(trade.id)">
@@ -290,6 +291,14 @@
             </div>
             
             <span class="opacity-60 uppercase tracking-wider truncate">{{ trade.asset }}</span>
+            <div class="flex flex-col min-w-0">
+              <span class="mt-1 text-[9px] opacity-35 uppercase tracking-wider truncate">
+                {{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ trade.dateEntryStr }}
+              </span>
+              <span class="text-[9px] opacity-35 uppercase tracking-wider truncate">
+                {{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ trade.dateExitStr }}
+              </span>
+            </div>
             <span class="opacity-40 text-right tracking-wider truncate">{{ trade.duration }}</span>
             <span class="font-bold text-right tracking-wider" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
             <button @click.stop="toggleTradeExpand(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="View details">
