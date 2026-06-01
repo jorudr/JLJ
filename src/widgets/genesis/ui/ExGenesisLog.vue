@@ -40,6 +40,14 @@
               </div>
            </div>
         </div>
+        <!-- Cube Search Query Overlay -->
+        <Transition name="fade">
+          <div v-if="showCubeSearchText && cubeSearchQuery" class="absolute inset-0 flex items-center justify-center pointer-events-none z-[50]">
+            <span class="text-[15vw] font-bold text-white opacity-30 tracking-widest uppercase font-mono break-all text-center px-12 leading-none" style="text-shadow: 0 0 40px rgba(255,255,255,0.2);">
+              {{ cubeSearchQuery }}
+            </span>
+          </div>
+        </Transition>
       </div>
 
       <!-- LIST VIEW LAYER -->
@@ -867,6 +875,46 @@ const filterDate = ref<'ALL' | 'TODAY' | '7D' | '30D' | 'CUSTOM'>('ALL')
 const filterTime = ref<'ALL' | 'MORNING' | 'AFTERNOON' | 'NIGHT' | 'CUSTOM'>('ALL')
 const searchQuery = ref<string>('')
 
+const cubeSearchQuery = ref('')
+const showCubeSearchText = ref(false)
+let cubeSearchTimeout: any = null
+
+const handleGlobalKeydown = (e: KeyboardEvent) => {
+  if (showNodeMap.value || showExtraDetails.value || viewType.value !== 'cube') return
+  
+  const target = e.target as HTMLElement
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+
+  if (e.key === 'Backspace') {
+    if (!showCubeSearchText.value && cubeSearchQuery.value.length > 0) {
+      cubeSearchQuery.value = ''
+    } else {
+      cubeSearchQuery.value = cubeSearchQuery.value.slice(0, -1)
+    }
+    showCubeSearchText.value = true
+  } else if (e.key === 'Escape') {
+    cubeSearchQuery.value = ''
+    showCubeSearchText.value = true
+  } else if (e.key.length === 1 && /[a-zA-Z0-9 ]/.test(e.key)) {
+    if (!showCubeSearchText.value && cubeSearchQuery.value.length > 0) {
+      cubeSearchQuery.value = '' // Clear if they start typing a new query after the old one disappeared
+    }
+    cubeSearchQuery.value += e.key
+    showCubeSearchText.value = true
+  } else {
+    return
+  }
+  
+  if (cubeSearchTimeout) clearTimeout(cubeSearchTimeout)
+  if (cubeSearchQuery.value.length > 0) {
+    cubeSearchTimeout = setTimeout(() => {
+      showCubeSearchText.value = false
+    }, 2000)
+  } else {
+    showCubeSearchText.value = false
+  }
+}
+
 // Temporal Filter State
 const customDate = ref(new Date())
 const isTemporalOpen = ref(false)
@@ -1048,6 +1096,14 @@ const filteredTrades = computed(() => {
     // Search Query
     if (searchQuery.value.trim() !== '') {
       const q = searchQuery.value.toLowerCase()
+      const assetMatch = (t.asset || '').toLowerCase().includes(q)
+      const notesMatch = (t.notes || '').toLowerCase().includes(q)
+      if (!assetMatch && !notesMatch) return false
+    }
+
+    // Cube Typed Query
+    if (cubeSearchQuery.value.trim() !== '') {
+      const q = cubeSearchQuery.value.toLowerCase()
       const assetMatch = (t.asset || '').toLowerCase().includes(q)
       const notesMatch = (t.notes || '').toLowerCase().includes(q)
       if (!assetMatch && !notesMatch) return false
@@ -1390,7 +1446,7 @@ const activeFaceIndices = computed(() => {
 
 
 // Immediate update when trades are added, strategy changes, or filters are modified
-watch([selectedStrategyId, filteredTrades], () => {
+watch([selectedStrategyId, filteredTrades, cubeSearchQuery], () => {
   initTrades()
 }, { deep: true })
 
@@ -1983,6 +2039,7 @@ const handleWheel = (e: WheelEvent) => {
 }
 
 onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
   loadMatrixData()
   tradeStore.init().then(() => {
     initTrades()
@@ -1990,7 +2047,10 @@ onMounted(() => {
     update()
   })
 })
-onUnmounted(() => { cancelAnimationFrame(rafId) })
+onUnmounted(() => { 
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  cancelAnimationFrame(rafId) 
+})
 </script>
 
 <style scoped>
