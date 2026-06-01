@@ -998,6 +998,35 @@ const initialBalance = computed(() => {
   return tradeStore.getInitialDeposit(props.trade.strategyId || 'MAIN_DIARY');
 });
 
+const balanceBeforeTrade = computed(() => {
+  if (!props.trade) return 1000;
+
+  const strategyId = props.trade.strategyId || 'MAIN_DIARY';
+  const currentEntryTs = new Date(props.trade.date || props.trade.entryTime || props.trade.dateExit || Date.now()).getTime();
+  const currentTradeId = props.trade.id;
+  const startBalance = tradeStore.getInitialDeposit(strategyId);
+
+  const toCashPnl = (trade: any) => {
+    const val = Number(trade?.profitInCurrency ?? trade?.pnl ?? 0);
+    return Number.isFinite(val) ? val : 0;
+  };
+
+  const priorTrades = tradeStore
+    .getTradesForStrategy(strategyId)
+    .filter((trade: any) => {
+      if (currentTradeId && trade?.id === currentTradeId) return false;
+      const tradeExitTs = new Date(trade?.dateExit || trade?.date || 0).getTime();
+      return tradeExitTs > 0 && tradeExitTs < currentEntryTs;
+    })
+    .sort((a: any, b: any) => {
+      const aTs = new Date(a?.dateExit || a?.date || 0).getTime();
+      const bTs = new Date(b?.dateExit || b?.date || 0).getTime();
+      return aTs - bTs;
+    });
+
+  return priorTrades.reduce((balance: number, trade: any) => balance + toCashPnl(trade), startBalance);
+});
+
 import ExEquityCurve2D from './ExEquityCurve2D.vue'
 
 // REPORT GENERATION LOGIC
@@ -1107,7 +1136,7 @@ const tradeDetailStats = computed(() => {
   
   const durationHours = tradeDurationMinutes.value / 60;
   const velocity = durationHours > 0 ? props.trade.pnl / durationHours : props.trade.pnl;
-  const yieldPct = (props.trade.pnl / initialBalance.value) * 100;
+  const yieldPct = (props.trade.pnl / balanceBeforeTrade.value) * 100;
   
   // Total conditions across all scenarios
   const adherence = props.trade.scenarios?.reduce((acc, s) => acc + (s.conditions?.length || 0), 0) || 0;
@@ -1206,8 +1235,8 @@ const actualRiskDollars = computed(() => {
 });
 
 const actualRiskPct = computed(() => {
-  if (initialBalance.value <= 0) return 0;
-  return (actualRiskDollars.value / initialBalance.value) * 100;
+  if (balanceBeforeTrade.value <= 0) return 0;
+  return (actualRiskDollars.value / balanceBeforeTrade.value) * 100;
 });
 
 const maxRiskTrade = computed(() => {
@@ -1308,7 +1337,14 @@ const matrixAdherenceMetrics = computed(() => {
   const conditions = tr.boardScenarioEntry?.info?.conditions || [];
   const reqConditions = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
   const addConditions = conditions.filter((c: any) => c?.info?.priority === 'ADDITIONAL');
-  
+  const scenarioId = tr.boardScenarioEntry?.id;
+  const getRuleCount = (trade: any) => {
+    const scenarioRules = trade?.boardScenarioEntry?.info?.conditions;
+    if (Array.isArray(scenarioRules)) return scenarioRules.length;
+    if (Array.isArray(trade?.boardConditions)) return trade.boardConditions.length;
+    return 0;
+  };
+
   const reqRatio = reqConditions.length > 0 ? 100 : (conditions.length > 0 ? 0 : 100);
   const reqText = `${reqConditions.length} Fulfilled`;
 
@@ -1318,7 +1354,18 @@ const matrixAdherenceMetrics = computed(() => {
 
   const strictness = Math.min(10, (reqConditions.length * 2.5) + (addConditions.length * 1.5) || 8.5);
   const condPnl = conditions.length > 0 ? tr.pnl / conditions.length : tr.pnl;
-  const complexity = Math.max(0.5, (conditions.length / 2));
+  const historicalRuleCounts = tradeStore.getTradesForStrategy(tr?.strategyId || '')
+    .filter((trade: any) => !scenarioId || trade?.boardScenarioEntry?.id === scenarioId)
+    .map(getRuleCount)
+    .filter((count: number) => count > 0);
+  const sortedRuleCounts = [...historicalRuleCounts].sort((a, b) => a - b);
+  const medianRules = sortedRuleCounts.length > 0
+    ? (sortedRuleCounts.length % 2 === 1
+      ? sortedRuleCounts[(sortedRuleCounts.length - 1) / 2]
+      : (sortedRuleCounts[(sortedRuleCounts.length / 2) - 1] + sortedRuleCounts[sortedRuleCounts.length / 2]) / 2)
+    : 0;
+  const currentRuleCount = getRuleCount(tr);
+  const complexity = medianRules > 0 ? (currentRuleCount / medianRules) : 1.0;
 
   return {
     reqRatio,
@@ -1399,7 +1446,7 @@ const strategyExecutionMetrics = computed(() => {
   let slDrag = 0;
   let slDragText = 'No SL Breached';
   if (entry > 0 && sl > 0 && exit > 0) {
-    const isLong = tr.side === 'LONG';
+    const isLong = String(tr.side || '').toUpperCase() === 'LONG';
     if (pnl < 0) {
       const diff = isLong ? (exit - sl) : (sl - exit);
       slDrag = diff * (parseFloat(tr.size) || 1);
@@ -1408,11 +1455,12 @@ const strategyExecutionMetrics = computed(() => {
   }
 
   const actualRisk = actualRiskDollars.value;
+  const isRu = locale.value === 'ru';
   // Resolve risk budget from genesis matrix risk_per_trade node
   let riskBudgetDollars: number | null = null;
   if (maxRiskTrade.value) {
     if (maxRiskTrade.value.unit === '%') {
-      riskBudgetDollars = (maxRiskTrade.value.value / 100) * initialBalance.value;
+      riskBudgetDollars = (maxRiskTrade.value.value / 100) * balanceBeforeTrade.value;
     } else {
       riskBudgetDollars = maxRiskTrade.value.value;
     }
@@ -1420,11 +1468,17 @@ const strategyExecutionMetrics = computed(() => {
   const maxRisk = riskBudgetDollars ?? 250;
   const riskBudgetRatio = maxRisk > 0 ? Math.min(200, (actualRisk / maxRisk) * 100) : 0;
   const riskBudgetBudgetStr = riskBudgetDollars !== null
-    ? (maxRiskTrade.value!.unit === '%' ? `${maxRiskTrade.value!.value}% of deposit = $${maxRisk.toFixed(0)}` : `$${maxRisk.toFixed(0)}`)
+    ? (maxRiskTrade.value!.unit === '%'
+      ? (isRu
+        ? `${maxRiskTrade.value!.value}% от баланса до сделки = $${maxRisk.toFixed(0)}`
+        : `${maxRiskTrade.value!.value}% of pre-trade balance = $${maxRisk.toFixed(0)}`)
+      : `$${maxRisk.toFixed(0)}`)
     : 'No budget set';
   const riskBudgetText = riskBudgetDollars === null
-    ? 'No matrix budget set'
-    : (actualRisk <= maxRisk ? `Compliant · Budget: ${riskBudgetBudgetStr}` : `Exceeded · Budget: ${riskBudgetBudgetStr}`);
+    ? (isRu ? 'Бюджет матрицы не задан' : 'No matrix budget set')
+    : (actualRisk <= maxRisk
+      ? (isRu ? `В пределах лимита · Бюджет: ${riskBudgetBudgetStr}` : `Compliant · Budget: ${riskBudgetBudgetStr}`)
+      : (isRu ? `Превышен · Бюджет: ${riskBudgetBudgetStr}` : `Exceeded · Budget: ${riskBudgetBudgetStr}`));
 
   if (tp <= 0 && pnl > 0 && exit > 0) tp = exit;
   let tpCapture = 100;
@@ -1818,11 +1872,11 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Measures the ratio of total profit captured per active condition in the setup.</div>
+	                           <div>Measures the ratio of profit captured per active condition in the setup.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Total PnL / Active Conditions
+	                                 PnL / Active Conditions
                               </code>
                            </div>
                            <div>
@@ -1847,21 +1901,21 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Setup_Complexity</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
-                                 <span class="text-xl font-mono font-black text-black dark:text-white">
+                                <span class="text-xl font-mono font-black text-black dark:text-white">
                                     {{ matrixAdherenceMetrics.complexity.toFixed(2) }}x
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    vs Strategy Median
+                                    vs Scenario Median
                                  </span>
                               </div>
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Evaluates the total number of rules triggered versus the historical median rule count of the strategy.</div>
+                           <div>Evaluates the total number of rules triggered versus the historical median rule count of the same entry scenario.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Active Rules / Median Rules
+                                 Active Rules / Scenario Median
                               </code>
                            </div>
                            <div>
@@ -2091,17 +2145,17 @@ const strategyExecutionMetrics = computed(() => {
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white uppercase">{{ tradeDetailStats.yieldPct.toFixed(2) }}%</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    Total Account impact
+                                    Balance Before Trade
                                  </span>
                               </div>
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Measures the net impact of this trade on the overall portfolio balance as a percentage.</div>
+                           <div>Measures the net impact of this trade relative to the account balance immediately before entry.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (TradePnL / AccountBalance) * 100
+                                 (TradePnL / BalanceBeforeTrade) * 100
                               </code>
                            </div>
                            <div>
