@@ -369,8 +369,7 @@
            </template>
            <!-- Default tooltip body for other node types -->
            <div v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
-             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide"
-                :style="{ fontSize: `${14 * scale}px` }">
+             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
                 <template v-if="node.type === 'scaling-entry'">
                    <template v-if="locale === 'ru'">
                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
