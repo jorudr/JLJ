@@ -10,6 +10,14 @@ const props = defineProps({
   opacity: {
     type: [Number, String],
     default: 0.5
+  },
+  showTopLeft: {
+    type: Boolean,
+    default: true
+  },
+  showBottomRight: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -34,7 +42,7 @@ const offsetClasses = computed(() =>
 <template>
   <div class="absolute inset-0 pointer-events-none overflow-visible z-50">
     <!-- Top-Left -->
-    <div :class="['absolute top-0 left-0 text-current', cornerSize, offsetClasses]" :style="{ opacity }">
+    <div v-if="showTopLeft" :class="['absolute top-0 left-0 text-current', cornerSize, offsetClasses]" :style="{ opacity }">
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <mask :id="`corner-tl-${instanceId}`">
@@ -46,7 +54,7 @@ const offsetClasses = computed(() =>
     </div>
 
     <!-- Bottom-Right -->
-    <div :class="['absolute bottom-0 right-0 text-current rotate-180', cornerSize, offsetClasses]" :style="{ opacity }">
+    <div v-if="showBottomRight" :class="['absolute bottom-0 right-0 text-current rotate-180', cornerSize, offsetClasses]" :style="{ opacity }">
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <mask :id="`corner-br-${instanceId}`">

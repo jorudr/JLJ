@@ -2,6 +2,9 @@
   <div class="matrix-tree w-full h-screen relative flex flex-col overflow-hidden text-nier-text-light dark:text-nier-text-dark select-none"
        @mousemove="updateMousePos">
 
+    <!-- GLOBAL DRAG OVERLAY TO PREVENT HOVER/CLICKS ON UNDERLYING ELEMENTS -->
+    <div v-if="isCommentDragging" class="fixed inset-0 z-[99999] cursor-move pointer-events-auto"></div>
+
     <!-- TACTICAL CORNER BRACKETS -->
     <div class="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
     <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
@@ -166,6 +169,9 @@
                        :is-selected="lastSelectedId === node.id"
                        :is-closest="closestNodeId === node.id"
                        :is-dark="isDark"
+                       :class="{ 'pointer-events-none': isCommentDragging && lastSelectedId !== node.id }"
+                       @comment-drag-start="isCommentDragging = true"
+                       @comment-drag-end="isCommentDragging = false"
                        @click="selectNode(node.id)"
                        @doubleclick="handleNodeDive(node)"
                        @start-output="startWireDrag"
@@ -1848,6 +1854,7 @@ function getNode(id: string) {
 }
 
 const lastSelectedId = ref<string | null>('root')
+const isCommentDragging = ref(false)
 
 const effectiveSelectedNode = computed(() => {
   const node = lastSelectedId.value ? getNode(lastSelectedId.value) : null

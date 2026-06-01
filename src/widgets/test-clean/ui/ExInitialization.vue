@@ -51,7 +51,7 @@
         <!-- ── AUTHENTICATED: boot prompt ── -->
         <div v-if="isAuthenticated && phase === 'auth'" key="authenticated" class="w-full flex flex-col items-center space-y-5">
           <div class="w-full border p-4 flex items-center space-x-4" style="border-color: var(--theme-border); background: rgba(128,128,128,0.05);">
-            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse shrink-0"></div>
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse shrink-0"></div>
             <div class="flex flex-col min-w-0">
               <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.5;">Operator_Authenticated</span>
               <span class="text-[11px] font-mono font-black uppercase tracking-widest truncate" style="color: var(--theme-text);">{{ authStore.user?.email }}</span>

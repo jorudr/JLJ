@@ -512,8 +512,10 @@
        <svg class="absolute inset-0 w-full h-full overflow-visible opacity-60">
           <g v-for="comment in node.params.comments" :key="'path-'+comment.id">
              <path :d="(() => {
-               const origin = getEdgeOrigin(1000, 1000, 1000 + comment.x/2, 1000 + comment.y/2, node.type === 'step');
-               return `M ${origin.x} ${origin.y} L ${1000 + comment.x/2} ${1000 + comment.y/2} L ${1000 + comment.x} ${1000 + comment.y}`;
+               const cx = comment.x * scale;
+               const cy = comment.y * scale;
+               const origin = getEdgeOrigin(1000, 1000, 1000 + cx/2, 1000 + cy/2, node.type === 'step');
+               return `M ${origin.x} ${origin.y} L ${1000 + cx/2} ${1000 + cy/2} L ${1000 + cx} ${1000 + cy}`;
              })()"
                    fill="none" stroke="currentColor" stroke-width="2" class="text-nier-text-light dark:text-nier-text-dark" />
           </g>
@@ -522,8 +524,8 @@
         <div v-for="(comment, idx) in node.params.comments" :key="comment.id"
              class="absolute pointer-events-auto"
              :style="{
-               left: Math.round((1000 + comment.x) * scale) + 'px',
-               top: Math.round((1000 + comment.y) * scale) + 'px',
+               left: Math.round(1000 + comment.x * scale) + 'px',
+               top: Math.round(1000 + comment.y * scale) + 'px',
                zIndex: 1000 + Number(idx)
              }"
              @mousedown.stop="startCommentDrag($event, comment)"
@@ -630,7 +632,7 @@ const props = defineProps<{
   isDark?: boolean
 }>()
 
-const emit = defineEmits(['start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge'])
+const emit = defineEmits(['start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end'])
 
 function isTextEditingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -1176,6 +1178,8 @@ const startCommentDrag = (e: MouseEvent, comment: any) => {
   if (isTextEditingTarget(e.target)) return
   if (comment.isEditing) return
 
+  emit('comment-drag-start')
+
   const startX = e.clientX
   const startY = e.clientY
   const initialX = comment.x
@@ -1188,6 +1192,7 @@ const startCommentDrag = (e: MouseEvent, comment: any) => {
   }
 
   const stop = () => {
+    emit('comment-drag-end')
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
   }
