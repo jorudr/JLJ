@@ -1093,20 +1093,21 @@
 
     <!-- CALENDAR OVERLAY -->
     <Transition name="fade">
-      <div v-if="showCalendarMode" class="absolute inset-0 z-[100] bg-white dark:bg-[#070707] overflow-y-auto pointer-events-auto flex flex-col font-mono text-black dark:text-white">
-        <div class="relative flex flex-col items-center justify-center min-h-full py-24 px-12 w-full max-w-4xl mx-auto">
+      <div v-if="showCalendarMode" class="absolute inset-0 z-[100] bg-white dark:bg-[#070707] pointer-events-auto flex flex-col font-mono text-black dark:text-white">
+        <div class="relative flex flex-col items-center h-full pt-24 pb-8 px-12 w-full max-w-4xl mx-auto">
           <!-- CALENDAR HEADER -->
-          <div class="flex items-center justify-center w-full mb-12 border-b border-black/10 dark:border-white/10 pb-6">
+          <div class="flex-shrink-0 flex items-center justify-center w-full mb-6 border-b border-black/10 dark:border-white/10 pb-6">
             <h2 class="text-3xl font-black tracking-[0.2em] uppercase">{{ currentCalendarMonthName }}</h2>
           </div>
 
           <!-- CALENDAR GRID -->
-          <div class="w-full">
-            <div class="grid grid-cols-7 gap-4 mb-4 text-center text-[10px] uppercase tracking-widest opacity-50">
-              <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
+          <div class="w-full flex-1 min-h-0 flex flex-col">
+            <div class="flex-shrink-0 grid grid-cols-7 gap-4 mb-4 text-center text-[10px] uppercase tracking-widest opacity-50">
+              <div v-for="d in calendarDaysOfWeek" :key="d">{{ d }}</div>
             </div>
-            <div class="grid grid-cols-7 gap-4">
-              <div v-for="(day, idx) in calendarDays" :key="idx" 
+            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
+              <div class="grid grid-cols-7 gap-4 pb-4">
+                <div v-for="(day, idx) in calendarDays" :key="idx" 
                    class="calendar-day-cell relative aspect-square border transition-all duration-300"
                    :class="[
                      !day.isInMonth ? 'border-transparent bg-transparent' : 
@@ -1132,10 +1133,11 @@
                 </template>
               </div>
             </div>
+            </div>
           </div>
 
           <!-- CALENDAR FOOTER -->
-          <div class="flex items-center justify-center w-full mt-12">
+          <div class="flex-shrink-0 flex items-center justify-center w-full mt-6">
             <!-- Pagination — centered -->
             <div class="flex items-center space-x-2">
               <button @click="prevCalendarMonth" 
@@ -1210,6 +1212,7 @@ import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExEquityCurveSimulator from './ExEquityCurveSimulator.vue'
 import ExPaywallOverlay from './ExPaywallOverlay.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
+import { useI18n } from '~/shared/i18n/useI18n'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
 
 const authStore = useAuthStore()
@@ -1230,6 +1233,7 @@ const benchmarkMetricsByStrategy = ref<Record<string, StrategyBenchmarkMetrics>>
 
 const themeStore = useThemeStore()
 const tradeStore = useStrategyTradesStore()
+const { locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const isTradeEntryOpen = ref(route.query.entry === 'true')
@@ -7364,10 +7368,19 @@ const prevCalendarMonth = () => {
 }
 
 const currentCalendarMonthName = computed(() => {
-  if (!currentCalendarMonthStr.value) return 'NO DATA'
+  if (!currentCalendarMonthStr.value) {
+    return locale.value === 'ru' ? 'НЕТ ДАННЫХ' : 'NO DATA'
+  }
   const [y, m] = currentCalendarMonthStr.value.split('-')
   const date = new Date(parseInt(y!), parseInt(m!) - 1, 1)
-  return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+  const loc = locale.value === 'ru' ? 'ru-RU' : 'en-US'
+  return date.toLocaleString(loc, { month: 'long', year: 'numeric' })
+})
+
+const calendarDaysOfWeek = computed(() => {
+  return locale.value === 'ru' 
+    ? ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
+    : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 })
 
 function formatCalendarDayValue(day: CalendarDay) {
