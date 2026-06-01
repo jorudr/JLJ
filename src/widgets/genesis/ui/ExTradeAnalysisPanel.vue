@@ -740,6 +740,47 @@ const duration = computed(() => {
   return (end - start) / (1000 * 60 * 60); // hours
 });
 
+const scenarioDurationStats = computed(() => {
+  const trade = props.trade as any;
+  if (!trade?.strategyId) return { minDays: 0, maxDays: 0, count: 0 };
+
+  const scenarioId = trade.boardScenarioEntry?.id;
+  if (!scenarioId) return { minDays: 0, maxDays: 0, count: 0 };
+
+  const relatedTrades = tradeStore.getTradesForStrategy(trade.strategyId).filter((t: any) => {
+    if (t?.id === trade.id) return false;
+    return t?.boardScenarioEntry?.id === scenarioId;
+  });
+
+  const durations = relatedTrades.map((t: any) => {
+    const start = new Date(t.date || Date.now()).getTime();
+    const end = new Date(t.dateExit || t.date || Date.now()).getTime();
+    return Math.max(0, (end - start) / (1000 * 60 * 60 * 24));
+  }).filter((days: number) => days > 0);
+
+  if (durations.length === 0) {
+    const currentDays = Math.max(0, duration.value / 24);
+    return { minDays: currentDays, maxDays: currentDays, count: 0 };
+  }
+
+  return {
+    minDays: Math.min(...durations),
+    maxDays: Math.max(...durations),
+    count: durations.length
+  };
+});
+
+const scenarioDurationLabel = computed(() => {
+  const stats = scenarioDurationStats.value;
+  const isRu = locale.value === 'ru';
+  if (stats.count === 0) {
+    return isRu ? 'Нет истории сценария' : 'No scenario history';
+  }
+  return isRu
+    ? `Диапазон сценария (${stats.minDays.toFixed(1)}д - ${stats.maxDays.toFixed(1)}д)`
+    : `Scenario range (${stats.minDays.toFixed(1)}d - ${stats.maxDays.toFixed(1)}d)`;
+});
+
 const durationText = computed(() => {
   if (!props.trade) return '0s';
   const start = new Date(props.trade.date || Date.now()).getTime();
@@ -795,47 +836,27 @@ const tradeDurationMinutes = computed(() => {
 
 const isStyleCompliant = computed(() => {
   const days = duration.value / 24;
-  const extraType = resolvedExtraType.value;
-  
-  if (extraType === undefined) return true;
-  
-  const limit = styleLimits[extraType as number];
-  if (!limit) return true;
-  
-  const minOk = limit.min ? days >= limit.min : true;
-  const maxOk = limit.max ? days <= limit.max : true;
-  
-  return minOk && maxOk;
+  const stats = scenarioDurationStats.value;
+  if (stats.count === 0) return true;
+  return days >= stats.minDays && days <= stats.maxDays;
 });
 
 const styleAlertMessage = computed(() => {
   const days = duration.value / 24;
-  const extraType = resolvedExtraType.value;
-  if (extraType === undefined) return '';
-  const limit = styleLimits[extraType as number];
-  if (!limit) return '';
-  
+  const stats = scenarioDurationStats.value;
+  if (stats.count === 0) return '';
+
   const isRu = locale.value === 'ru';
-  
-  if (limit.min && days < limit.min) {
-    if (isRu) {
-      let styleGenitive = 'неопределенного стиля';
-      if (extraType === 0) styleGenitive = 'внутридневной торговли';
-      else if (extraType === 1) styleGenitive = 'свинг-трейдинга';
-      else if (extraType === 2) styleGenitive = 'инвестирования';
-      return `Предупреждение: Длительность исполнения (${durationText.value}) ниже требуемого минимума в ${limit.min} дн. для протоколов ${styleGenitive}.`;
-    }
-    return `Alert: Execution duration (${durationText.value}) is below the required minimum of ${limit.min}d for ${resolvedTradingStyle.value} protocols.`;
+
+  if (days < stats.minDays) {
+    return isRu
+      ? `Предупреждение: Длительность исполнения (${durationText.value}) ниже исторического минимума сценария (${stats.minDays.toFixed(1)} дн.).`
+      : `Alert: Execution duration (${durationText.value}) is below the historical scenario minimum (${stats.minDays.toFixed(1)}d).`;
   }
-  if (limit.max && days > limit.max) {
-    if (isRu) {
-      let styleGenitive = 'неопределенного стиля';
-      if (extraType === 0) styleGenitive = 'внутридневной торговли';
-      else if (extraType === 1) styleGenitive = 'свинг-трейдинга';
-      else if (extraType === 2) styleGenitive = 'инвестирования';
-      return `Предупреждение: Длительность исполнения (${durationText.value}) превышает максимальный лимит в ${limit.max} дн., установленный для протоколов ${styleGenitive}.`;
-    }
-    return `Alert: Execution duration (${durationText.value}) exceeds the maximum ${limit.max}d limit defined for ${resolvedTradingStyle.value} protocols.`;
+  if (days > stats.maxDays) {
+    return isRu
+      ? `Предупреждение: Длительность исполнения (${durationText.value}) превышает исторический максимум сценария (${stats.maxDays.toFixed(1)} дн.).`
+      : `Alert: Execution duration (${durationText.value}) exceeds the historical scenario maximum (${stats.maxDays.toFixed(1)}d).`;
   }
   return '';
 });
@@ -1442,6 +1463,7 @@ const strategyExecutionMetrics = computed(() => {
   const sl = parseFloat(tr.stopLoss) || 0;
   let tp = parseFloat(tr.takeProfit) || 0;
   const pnl = tr.profitInCurrency ?? tr.pnl ?? 0;
+  const isLong = String(tr.side || '').toUpperCase() === 'LONG';
 
   let slDrag = 0;
   let slDragText = 'No SL Breached';
@@ -1483,9 +1505,11 @@ const strategyExecutionMetrics = computed(() => {
   if (tp <= 0 && pnl > 0 && exit > 0) tp = exit;
   let tpCapture = 100;
   let tpCaptureText = 'Full Target Achieved';
-  if (entry > 0 && tp > 0 && exit > 0 && pnl > 0) {
+  if (entry > 0 && tp > 0 && exit > 0) {
     const plannedDist = Math.abs(tp - entry);
-    const actualDist = Math.abs(exit - entry);
+    const actualDist = isLong
+      ? Math.max(0, exit - entry)
+      : Math.max(0, entry - exit);
     if (plannedDist > 0) {
       tpCapture = Math.min(100, (actualDist / plannedDist) * 100);
       tpCaptureText = tpCapture < 100 ? 'Premature Exit' : 'Full Target Achieved';
@@ -1499,9 +1523,8 @@ const strategyExecutionMetrics = computed(() => {
 
   let unrealizedLeft = 0;
   let unrealizedLeftText = 'Full Target Captured';
-  if (entry > 0 && tp > 0 && exit > 0 && pnl > 0) {
-    const isLong = tr.side === 'LONG';
-    const plannedPnL = Math.abs(tp - entry) * (parseFloat(tr.size) || (pnl / Math.abs(exit - entry)));
+  if (entry > 0 && tp > 0 && exit > 0) {
+    const plannedPnL = Math.abs(tp - entry) * (parseFloat(tr.size) || (Math.abs(pnl) / Math.abs(exit - entry)));
     if (plannedPnL > pnl) {
       unrealizedLeft = plannedPnL - pnl;
       unrealizedLeftText = 'Target Unreached';
@@ -1509,14 +1532,25 @@ const strategyExecutionMetrics = computed(() => {
   }
 
   const days = duration.value / 24;
-  const extraType = resolvedExtraType.value;
-  let horizonSync = 100;
-  let horizonSyncText = `${resolvedTradingStyle.value} Aligned`;
-  if (extraType !== undefined) {
-    const limit = styleLimits[extraType as number];
-    if (limit) {
-      if (limit.min && days < limit.min) { horizonSync = 60; horizonSyncText = `Below Min (${limit.min}d)`; }
-      else if (limit.max && days > limit.max) { horizonSync = 40; horizonSyncText = `Exceeded Max (${limit.max}d)`; }
+  const scenarioMinDays = scenarioDurationStats.value.minDays;
+  const scenarioMaxDays = scenarioDurationStats.value.maxDays;
+  let horizonSync = 50;
+  let horizonSyncText = isRu ? 'Позиция в коридоре' : 'Position in Range';
+  if (scenarioDurationStats.value.count > 0) {
+    const span = Math.max(scenarioMaxDays - scenarioMinDays, 0.0001);
+    const normalizedPosition = ((days - scenarioMinDays) / span) * 100;
+    horizonSync = Math.min(100, Math.max(0, normalizedPosition));
+
+    if (days < scenarioMinDays) {
+      horizonSyncText = isRu
+        ? `Ниже диапазона сценария (${scenarioMinDays.toFixed(1)}д - ${scenarioMaxDays.toFixed(1)}д)`
+        : `Below scenario range (${scenarioMinDays.toFixed(1)}d - ${scenarioMaxDays.toFixed(1)}d)`;
+    } else if (days > scenarioMaxDays) {
+      horizonSyncText = isRu
+        ? `Выше диапазона сценария (${scenarioMinDays.toFixed(1)}д - ${scenarioMaxDays.toFixed(1)}д)`
+        : `Above scenario range (${scenarioMinDays.toFixed(1)}d - ${scenarioMaxDays.toFixed(1)}d)`;
+    } else {
+      horizonSyncText = isRu ? 'Позиция в коридоре' : 'Position in Range';
     }
   }
 
@@ -1534,7 +1568,11 @@ const strategyExecutionMetrics = computed(() => {
   const hasNegative = emotions.map(getEmotionName).some((e: string) => negativeSet.has(e));
   const conditions = tr.boardScenarioEntry?.info?.conditions || [];
   const reqConditions = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
-  const alphaDecay = hasNegative && reqConditions.length < 3 ? (3 - reqConditions.length) : 0;
+  const executedConditions = tr.boardConditions || [];
+  const missingRequiredRules = reqConditions.filter((req: any) =>
+    !executedConditions.some((exec: any) => (typeof exec === 'string' ? exec === req.id : exec?.id === req.id))
+  ).length;
+  const alphaDecay = hasNegative ? missingRequiredRules : 0;
   const alphaDecayText = alphaDecay > 0 ? `Bypassed ${alphaDecay} Required Rules` : 'Zero Degradation';
 
   const adherenceScore = matrixAdherenceMetrics.value.reqRatio;
@@ -1684,7 +1722,7 @@ const strategyExecutionMetrics = computed(() => {
                              <div class="w-1 h-1 bg-black dark:bg-white rotate-45"></div>
                              <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black dark:text-white">
                                {{ resolvedTradingStyle }} 
-                               <span v-if="resolvedExtraType !== undefined" class="opacity-40 ml-1">{{ styleLimits[resolvedExtraType as number]?.desc }}</span>
+                               <span v-if="scenarioDurationStats.count > 0" class="opacity-40 ml-1">scenario range</span>
                              </span>
                           </div>
                        </div>
@@ -1692,12 +1730,12 @@ const strategyExecutionMetrics = computed(() => {
                     <div class="space-y-2">
                        <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest opacity-30 text-black dark:text-white">
                           <span>Start_Point</span>
-                          <span>{{ resolvedExtraType !== undefined && styleLimits[resolvedExtraType as number]?.max ? `Limit_Threshold (${styleLimits[resolvedExtraType as number]?.max}d)` : `Min_Threshold (${resolvedExtraType !== undefined ? styleLimits[resolvedExtraType as number]?.min || 0 : 0}d)` }}</span>
+                          <span>{{ scenarioDurationLabel }}</span>
                        </div>
                        <div class="h-1 w-full bg-black/5 dark:bg-white/5 relative group">
                           <div class="h-full transition-all duration-1000 ease-[var(--nier-ease)]"
                                :class="isStyleCompliant ? 'bg-black dark:bg-white' : 'bg-rose-500'"
-                               :style="{ width: `${Math.min((duration / 24 / (resolvedExtraType !== undefined ? (styleLimits[resolvedExtraType as number]?.max || styleLimits[resolvedExtraType as number]?.min || 1) : 1)) * 100, 100)}%` }">
+                               :style="{ width: `${scenarioDurationStats.count > 0 ? Math.min((duration / 24 / Math.max(scenarioDurationStats.maxDays, 0.0001)) * 100, 100) : 100}%` }">
                           </div>
                           <div v-if="!isStyleCompliant" class="absolute inset-y-0 right-0 w-px bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></div>
                        </div>
@@ -2183,7 +2221,7 @@ const strategyExecutionMetrics = computed(() => {
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white uppercase">${{ tradeDetailStats.velocity.toFixed(2) }}/h</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    vs avg <span class="font-black text-black dark:text-white">${{ strategyStats.avgVelocity.toFixed(0) }}/h</span>
+                                    vs baseline <span class="font-black text-black dark:text-white">${{ strategyStats.avgVelocity.toFixed(2) }}/h</span>
                                  </span>
                               </div>
                            </div>
@@ -2548,11 +2586,11 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares actual exit price against planned take profit target to evaluate target realization discipline.</div>
+                           <div>Measures how much of the planned reward toward take profit was realized before exit, using trade direction.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (RealizedReward / TargetReward) * 100
+                                 (RewardTowardTP / TargetReward) * 100
                               </code>
                            </div>
                            <div>
@@ -2665,25 +2703,25 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Evaluates trade duration against the defined limits of the active trading style horizon.</div>
+                           <div>Shows the trade duration position inside the historical scenario range, from minimum to maximum.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Duration ∈ [StyleMin, StyleMax]
+                                 (Duration - ScenarioMin) / (ScenarioMax - ScenarioMin) * 100
                               </code>
                            </div>
                            <div>
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
                               <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
-                                 <div class="flex justify-between"><span class="opacity-70">100%</span><span class="text-emerald-500 font-bold">Horizon Aligned</span></div>
-                                 <div class="flex justify-between"><span class="opacity-70">&lt; 100%</span><span class="text-rose-500 font-bold">Horizon Mismatch</span></div>
+                                 <div class="flex justify-between"><span class="opacity-70">0%</span><span class="text-emerald-500 font-bold">Scenario Min</span></div>
+                                 <div class="flex justify-between"><span class="opacity-70">50%</span><span class="text-slate-500 font-bold">Scenario Mid</span></div>
+                                 <div class="flex justify-between"><span class="opacity-70">100%</span><span class="text-emerald-500 font-bold">Scenario Max</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
-                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="strategyExecutionMetrics.horizonSync === 100 ? 'text-emerald-500' : 'text-rose-500'">
-                                 {{ strategyExecutionMetrics.horizonSync === 100 ? 'Good' : 'Mismatch' }}
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 text-black dark:text-white">
+                                 {{ strategyExecutionMetrics.horizonSyncText }}
                               </span>
                            </div>
                         </div>
@@ -2704,7 +2742,7 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares realized profit velocity against the strategy's historical baseline velocity.</div>
+                           <div>Compares realized profit velocity against the strategy's historical baseline velocity in dollars per hour.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
@@ -2743,11 +2781,11 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Correlates negative emotional markers with bypassed required matrix conditions.</div>
+                           <div>Correlates negative emotional markers with required rules missing from the executed condition set.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 BypassedRequiredRules * EmotionPenalty
+                                 MissingRequiredRules * EmotionPenalty
                               </code>
                            </div>
                            <div>
