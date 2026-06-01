@@ -1,5 +1,5 @@
 <template>
-  <div class="matrix-tree w-full h-screen relative flex flex-col overflow-hidden text-nier-text-light dark:text-nier-text-dark select-none shadow-[inset_0_0_100px_rgba(44,44,42,0.02)] dark:shadow-[inset_0_0_100px_rgba(255,255,255,0.02)]"
+  <div class="matrix-tree w-full h-screen relative flex flex-col overflow-hidden text-nier-text-light dark:text-nier-text-dark select-none"
        @mousemove="updateMousePos">
 
     <!-- TACTICAL CORNER BRACKETS -->

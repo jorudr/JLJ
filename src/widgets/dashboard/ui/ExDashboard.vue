@@ -143,7 +143,7 @@
           </button>
 
           <!-- Theme Toggle -->
-          <button
+          <!-- <button
             class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
             @click="themeStore.toggleDark"
           >
@@ -154,7 +154,7 @@
                 class="block"
               />
             </template>
-          </button>
+          </button> -->
         </div>
 
       </div>
@@ -162,7 +162,7 @@
 
     <!-- 2. The Module Grid (Central Hub) -->
     <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-8 z-10">
-      <div v-for="module in dashboardModules" :key="module.id" class="relative group h-full">
+      <div v-for="module in dashboardModules" :key="module.id" class="relative group h-full ">
         <button 
           @click="$emit('navigate', module.id)"
           class="w-full h-full text-left flex flex-col p-8 border border-theme-border bg-theme-bg/40 backdrop-blur-sm transition-all duration-700 hover:border-theme-text/40 hover:bg-theme-bg/60 relative overflow-hidden"

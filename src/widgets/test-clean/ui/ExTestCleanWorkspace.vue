@@ -8,8 +8,12 @@
 
     <EtherealBackground :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
     <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
-    <DesignVignette :is-dark="isDark" />
-
+    <!-- <DesignVignette :is-dark="isDark" /> -->
+     <div 
+        class="absolute inset-0 opacity-[0.2] transition-opacity duration-1000"
+        :class="isDark ? 'grid-dark' : 'grid-light'"
+      ></div>
+   
     <div
       class="relative z-10 flex inset-0 h-full"
       :class="activeTab === 'forum' ? 'items-start justify-center py-0' : 'items-center justify-center py-20'"
@@ -322,7 +326,14 @@ onUnmounted(() => {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
-
+.grid-light {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.25) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.grid-dark {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
 /* THEME DEFINITIONS - SYNCED WITH TEST.VUE */
 .theme-dark {
   --theme-bg: #0a0a0a;
@@ -332,7 +343,7 @@ onUnmounted(() => {
 }
 
 .theme-light {
-  --theme-bg: #FFFFFF;
+  --theme-bg: #f3f3f3;
   --theme-text: #2C3E50;
   --theme-border: rgba(44, 62, 80, 0.1);
   --theme-border-strong: rgba(44, 62, 80, 0.25);

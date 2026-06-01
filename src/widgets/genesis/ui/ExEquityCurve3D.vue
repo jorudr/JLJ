@@ -687,79 +687,97 @@
     </Transition>
 
     <!-- WINRATE TARGET MENU MODAL -->
-    <Transition name="protocol-slide">
-      <div v-if="showWinrateMenu" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md"
-           @click.self="showWinrateMenu = false">
-        <div class="w-[850px] max-h-[85vh] bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-8 relative flex flex-col overflow-visible">
-          <!-- Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
+    <Teleport to="body">
+      <Transition name="protocol-slide">
+        <div v-if="showWinrateMenu" 
+             @click.self="showWinrateMenu = false"
+             class="fixed inset-0 z-[10005] flex items-center justify-center p-20 backdrop-blur-md bg-black/60">
           
-          <!-- SIDE-MOUNTED CLOSE TAB -->
-          <button @click="showWinrateMenu = false"
-                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
-             <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-             <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Menu</span>
-          </button>
-          
-          <!-- SEARCH / FILTERS -->
-          <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10 gap-4">
-            <div class="relative flex-1">
-              <input
-                v-model="winrateTargetSearch"
-                type="search"
-                placeholder="SEARCH_TARGET"
-                class="w-full h-11 bg-black/[0.03] dark:bg-white/[0.03] border border-black/10 dark:border-white/10 px-4 pr-10 text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-black dark:text-white outline-none transition-all focus:border-black/40 dark:focus:border-white/40 placeholder:text-black/25 dark:placeholder:text-white/25"
-              />
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 text-black dark:text-white pointer-events-none">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-              </svg>
-            </div>
-            <div class="flex items-center border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
-              <button
-                v-for="filter in winrateTargetFilters"
-                :key="filter.id"
-                @click="winrateTargetFilter = filter.id"
-                class="h-11 px-4 text-[9px] font-mono font-black uppercase tracking-[0.2em] transition-all border-r border-black/10 dark:border-white/10 last:border-r-0"
-                :class="winrateTargetFilter === filter.id ? 'bg-black dark:bg-white text-white dark:text-black' : 'text-black/45 dark:text-white/45 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'">
-                {{ filter.label }}
+            <div class="w-full max-w-4xl relative">
+              <!-- SIDE-MOUNTED CLOSE TAB -->
+              <button @click="showWinrateMenu = false"
+                      class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
+                 <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
+                 <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Menu</span>
               </button>
-            </div>
-          </div>
+              
+              <ExPanel class="w-full h-full" noPadding variant="light">
+                <template #header>
+                  <div class="flex items-center justify-between w-full">
+                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">Winrate_Target_Protocol_v4.0</span>
+                  </div>
+                </template>
 
-          <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar space-y-4 relative z-10">
-             <div v-for="node in winrateMenuNodes" :key="node.id"
-                  @click="selectedWinrateNodeId = node.id; showWinrateMenu = false; initData()"
-                  class="p-4 border transition-all flex items-center justify-between cursor-pointer group"
-                  :class="selectedWinrateNodeId === node.id ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-[0_10px_30px_rgba(0,0,0,0.3)]' : 'border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30 bg-white/50 dark:bg-white/[0.02] text-black dark:text-white'">
-                <div class="flex flex-col space-y-1 w-full">
-                  <div class="flex items-center space-x-3">
-                    <span class="text-xs font-mono font-bold uppercase tracking-widest">{{ node.name }}</span>
-                    <span
-                      class="text-[9px] font-mono px-2 py-0.5 border font-black"
-                      :class="node.type === 'scenario'
-                        ? 'border-blue-500/60 text-blue-600 dark:text-blue-300'
-                        : 'border-purple-500/60 text-purple-600 dark:text-purple-300'">
-                      {{ node.typeLabel }}
-                    </span>
+              <!-- CONTENT GRID -->
+              <div class="p-10 flex flex-col space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                
+                <!-- SEARCH & FILTERS -->
+                <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6">
+                  <div class="relative flex items-center">
+                    <div class="absolute left-3 w-1.5 h-1.5 bg-black/20 dark:bg-white/20 rotate-45"></div>
+                    <input v-model="winrateTargetSearch" 
+                           placeholder="SEARCH_TARGET..." 
+                           class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-8 py-1.5 text-[9px] font-mono tracking-widest focus:outline-none focus:border-black/30 dark:focus:border-white/30 w-64 uppercase placeholder:opacity-30 text-black dark:text-white" />
+                  </div>
+
+                  <div class="flex border border-black/10 dark:border-white/10 overflow-hidden">
+                    <button v-for="filter in winrateTargetFilters" :key="filter.id"
+                            @click="winrateTargetFilter = filter.id"
+                            class="flex items-center justify-center h-9 px-4 transition-all"
+                            :class="winrateTargetFilter === filter.id ? 'bg-black dark:bg-white text-white dark:text-black' : 'text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5'">
+                      <span class="text-[9px] font-mono font-black uppercase tracking-[0.2em]">{{ filter.label }}</span>
+                    </button>
                   </div>
                 </div>
-             </div>
-             <div v-if="winrateMenuNodes.length === 0"
-                  class="p-8 border border-dashed border-black/10 dark:border-white/10 text-center text-[10px] font-mono font-black uppercase tracking-[0.35em] text-black/30 dark:text-white/30">
-               NO_TARGETS_FOUND
-             </div>
-          </div>
-          
-          <!-- Background Scan Line -->
-          <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
-            <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
+
+                <!-- TARGET LIST -->
+                <div class="flex flex-wrap gap-4">
+                  <ExNTtooltip v-for="node in winrateMenuNodes" :key="node.id" :title="node.name">
+                    <template #trigger>
+                       <div @click="selectedWinrateNodeId = node.id; showWinrateMenu = false; initData()"
+                            class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
+                            :class="[
+                              selectedWinrateNodeId === node.id 
+                                ? 'bg-black dark:bg-white border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
+                                : 'bg-black/[0.02] dark:bg-white/[0.02] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white'
+                            ]">
+                          
+                          <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                               :class="selectedWinrateNodeId === node.id ? 'border-white/40 dark:border-black/40' : 'border-black/10 dark:border-white/10'"></div>
+
+                          <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border"
+                               :class="node.type === 'scenario' ? 'border-blue-500/50 text-blue-500 bg-blue-500/10' : 'border-purple-500/50 text-purple-500 bg-purple-500/10'">
+                            {{ node.type === 'scenario' ? 'SCN' : 'CND' }}
+                          </div>
+
+                          <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors"
+                                :class="selectedWinrateNodeId === node.id ? 'text-white dark:text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
+                            {{ (node.name || '').slice(0, 3) }}
+                          </span>
+
+                          <div v-if="selectedWinrateNodeId === node.id" 
+                               class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-blue-500"></div>
+                       </div>
+                    </template>
+                    <div class="flex flex-col gap-1">
+                       <div class="flex items-center justify-between">
+                         <span class="text-[8px] font-mono opacity-40 uppercase">Target_Description</span>
+                       </div>
+                       <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase">{{ node.type === 'condition' ? (node.description || 'NO_METADATA_AVAILABLE') : node.name }}</p>
+                    </div>
+                  </ExNTtooltip>
+
+                  <div v-if="winrateMenuNodes.length === 0"
+                       class="w-full p-8 border border-dashed border-black/10 dark:border-white/10 text-center text-[10px] font-mono font-black uppercase tracking-[0.35em] text-black/30 dark:text-white/30">
+                    NO_TARGETS_FOUND
+                  </div>
+                </div>
+              </div>
+            </ExPanel>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
 
     <!-- DRAG TO TRASH ZONE (VISIBLE DURING EDIT MODE) -->
     <Transition name="protocol-slide">
@@ -1186,6 +1204,7 @@ import { useAppBootStore } from '~/features/store/useAppBoot'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExEquityCurveSimulator from './ExEquityCurveSimulator.vue'
@@ -1350,6 +1369,7 @@ const winrateTargetFilters: { id: 'all' | 'scenario' | 'condition', label: strin
 type WinrateTargetNode = {
   id: string
   name: string
+  description?: string
   type: 'scenario' | 'condition'
   typeLabel: string
 }
@@ -1363,9 +1383,18 @@ const addWinrateTarget = (targets: Map<string, WinrateTargetNode>, target: Parti
   targets.set(target.id, {
     id: target.id,
     name,
+    description: target.description,
     type: target.type || 'condition',
     typeLabel: (target.type || 'condition').toUpperCase()
   })
+}
+
+const getConditionDesc = (condition: any) => {
+  if (typeof condition === 'string') {
+    const matrixNode = matrixNodes.value.find(n => n.id === condition)
+    return matrixNode?.params?.description || matrixNode?.params?.value || matrixNode?.params?.info || ''
+  }
+  return condition?.info?.description || condition?.description || ''
 }
 
 const getScenarioName = (scenario: any) => {
@@ -1395,6 +1424,7 @@ const winrateMenuNodes = computed(() => {
         addWinrateTarget(targets, {
           id,
           name: getConditionName(condition),
+          description: getConditionDesc(condition),
           type: 'condition'
         })
       })
@@ -1405,6 +1435,7 @@ const winrateMenuNodes = computed(() => {
       addWinrateTarget(targets, {
         id,
         name: getConditionName(condition),
+        description: getConditionDesc(condition),
         type: 'condition'
       })
     })

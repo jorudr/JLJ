@@ -5,13 +5,13 @@
     style="background-color: var(--theme-bg); color: var(--theme-text); font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Background Ambience -->
-    <div class="absolute inset-0 opacity-20 pointer-events-none">
+    <!-- <div class="absolute inset-0 opacity-20 pointer-events-none">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--theme-text)_0%,transparent_70%)] opacity-5"></div>
       <div class="absolute top-0 left-0 w-full h-full bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.5)_100%)]"></div>
-    </div>
+    </div> -->
 
     <!-- Scan line -->
-    <div class="absolute inset-0 pointer-events-none opacity-[0.03] overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none opacity-[0.23] overflow-hidden">
       <div class="w-full h-px bg-theme-text animate-scan"></div>
     </div>
 

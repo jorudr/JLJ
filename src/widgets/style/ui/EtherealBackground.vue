@@ -4,8 +4,16 @@
     <div class="fixed inset-0 z-0 bg-cover bg-center pointer-events-none transition-all duration-1000" 
          :style="{ 
            backgroundImage: 'url(\'/assets/white_ethereal_bg.png\')',
-           filter: 'blur(30px) brightness(1.1) contrast(0.9)',
-           opacity: isDark ? 0 : (isAssembled ? 0.35 : 0)
+           filter: 'blur(20px) brightness(1.1) contrast(0.9)',
+           opacity: isDark ? 0 : (isAssembled ? 0.55 : 0)
+         }"></div>
+
+    <!-- Dark Theme Ethereal Background -->
+    <div class="fixed inset-0 z-0 bg-cover bg-center pointer-events-none transition-all duration-1000" 
+         :style="{ 
+           backgroundImage: 'url(\'/assets/dark_ethereal_bg.png\')',
+           filter: 'blur(30px) brightness(1.1) contrast(1.1)',
+           opacity: isDark ? (isAssembled ? 0 : 0) : 0
          }"></div>
 
     <!-- Initial Bloom Reveal -->
