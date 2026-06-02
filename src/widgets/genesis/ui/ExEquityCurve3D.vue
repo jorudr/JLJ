@@ -1024,7 +1024,7 @@
         </button>
 
         <!-- WINRATE TARGET MENU BUTTON -->
-        <button v-if="!showMetricsPanel && !showDistribution3D"
+        <button v-if="!showMetricsPanel && !showDistribution3D && !showCalendarMode"
                 @click="showWinrateMenu = true" 
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showWinrateMenu ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
@@ -1081,7 +1081,8 @@
           </button>
 
           <!-- WINRATE CURVE TOGGLE -->
-          <button @click="showWinrateCurve = !showWinrateCurve"
+          <button v-if="!showCalendarMode"
+                  @click="showWinrateCurve = !showWinrateCurve"
                   class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                   :class="showWinrateCurve ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
             <span class="text-[11px] font-black font-mono">%</span>
