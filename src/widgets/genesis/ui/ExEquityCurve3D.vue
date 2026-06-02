@@ -704,7 +704,7 @@
               <ExPanel class="w-full h-full" noPadding variant="light">
                 <template #header>
                   <div class="flex items-center justify-between w-full">
-                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">Winrate_Target_Protocol_v4.0</span>
+                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">SYSTEM_TARGET_PROTOCOL_V4.0</span>
                   </div>
                 </template>
 
@@ -734,7 +734,7 @@
                 <div class="flex flex-wrap gap-4">
                   <ExNTtooltip v-for="node in winrateMenuNodes" :key="node.id" :title="node.name">
                     <template #trigger>
-                       <div @click="selectedWinrateNodeId = node.id; showWinrateMenu = false; initData()"
+                       <div @click="selectedWinrateNodeId = selectedWinrateNodeId === node.id ? null : node.id; showWinrateMenu = false; initData()"
                             class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
                             :class="[
                               selectedWinrateNodeId === node.id 
@@ -973,7 +973,7 @@
         </button>
 
         <!-- WINRATE TARGET MENU BUTTON -->
-        <button v-if="showWinrateCurve"
+        <button v-if="!showMetricsPanel && !showDistribution3D"
                 @click="showWinrateMenu = true" 
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                 :class="showWinrateMenu ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 text-black dark:text-white' : 'border-transparent text-black dark:text-white opacity-60 hover:opacity-100'">
@@ -986,7 +986,7 @@
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
           <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            [ SELECT_WINRATE_TARGET ]
+            [ SELECT_SYSTEM_TARGET ]
           </div>
         </button>
 
@@ -1184,7 +1184,7 @@
         <ExEquityCurveSimulator 
           v-if="showSimulator" 
           @close="showSimulator = false"
-          :historical-trades="props.trades || tradeStore.getTradesForStrategy(selectedStrategyId)"
+          :historical-trades="getFilteredTrades()"
           :initial-equity="props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId)"
           :default-win-rate="strategyMetrics?.winRate || 50"
           :default-r-r="strategyMetrics?.riskRewardRatio || 1.5"
@@ -1378,7 +1378,27 @@ type WinrateTargetNode = {
   typeLabel: string
 }
 
-const getCurrentWinrateTrades = () => props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
+const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
+  return trade.boardScenarioEntry?.id === targetId ||
+    trade.boardScenarioExit?.id === targetId ||
+    trade.boardScenarioEntryId === targetId ||
+    trade.boardScenarioExitId === targetId ||
+    trade.boardConditions?.some((condition: any) => (typeof condition === 'string' ? condition === targetId : condition?.id === targetId)) ||
+    trade.boardScenarioEntry?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
+    trade.boardScenarioExit?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
+    trade.scenarios?.some((scenario: any) => scenario?.id === targetId || scenario?.conditions?.some((condition: any) => condition?.id === targetId))
+}
+
+const getFilteredTrades = (strategyId?: string) => {
+  const sId = strategyId || selectedStrategyId.value
+  const baseTrades = props.trades || tradeStore.getTradesForStrategy(sId) || []
+  if (selectedWinrateNodeId.value && sId === selectedStrategyId.value) {
+    return baseTrades.filter((t: any) => tradeMatchesWinrateTarget(t, selectedWinrateNodeId.value!))
+  }
+  return baseTrades
+}
+
+const getCurrentWinrateTrades = () => props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
 
 const addWinrateTarget = (targets: Map<string, WinrateTargetNode>, target: Partial<WinrateTargetNode> | null | undefined) => {
   if (!target?.id) return
@@ -1536,7 +1556,7 @@ const getBenchmarkStrategyIds = () => {
 
 const getBenchmarkReturnsForStrategy = (strategyId: string) => {
   const initialDep = tradeStore.getInitialDeposit(strategyId) || 10000
-  const trades = tradeStore.getTradesForStrategy(strategyId) || []
+  const trades = getFilteredTrades(strategyId)
 
   return trades.map(t => {
     const pnlVal = t.profitInCurrency ?? t.result ?? (t as any).pnl ?? 0
@@ -1579,7 +1599,30 @@ const fetchRealtimeMetrics = async (strategyIds = getBenchmarkStrategyIds()) => 
   for (const strategyId of ids) {
     try {
       const strategyReturns = getBenchmarkReturnsForStrategy(strategyId)
-      const res: any = await invoke('get_benchmark_and_beta', { strategyReturns, strategyId })
+      const trades = getFilteredTrades(strategyId)
+      
+      let startTs: number | null = null
+      let endTs: number | null = null
+      
+      if (trades && trades.length > 0) {
+        const sortedTrades = [...trades].sort((a: any, b: any) => {
+          const tA = new Date(a.dateEntry || a.date).getTime()
+          const tB = new Date(b.dateEntry || b.date).getTime()
+          return tA - tB
+        })
+        const firstTrade = sortedTrades[0]
+        const lastTrade = sortedTrades[sortedTrades.length - 1]
+        
+        const firstDate = new Date(firstTrade.dateEntry || firstTrade.date)
+        const lastDate = new Date(lastTrade.dateExit || lastTrade.dateEntry || lastTrade.date)
+        
+        if (!isNaN(firstDate.getTime()) && !isNaN(lastDate.getTime())) {
+          startTs = Math.floor(firstDate.getTime() / 1000)
+          endTs = Math.floor(lastDate.getTime() / 1000)
+        }
+      }
+
+      const res: any = await invoke('get_benchmark_and_beta', { strategyReturns, strategyId, startTs, endTs })
       if (res && typeof res.benchmark_rate === 'number') {
         benchmarkMetricsByStrategy.value[strategyId] = {
           benchmarkRate: res.benchmark_rate,
@@ -1760,7 +1803,7 @@ const calculateHurstStats = (values: number[]) => {
 }
 
 const strategyMetrics = computed(() => {
-  const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
+  const currentTrades = getFilteredTrades()
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
 
   const trades = [...currentTrades]
@@ -2315,7 +2358,7 @@ const strategyMetrics = computed(() => {
 
 // --- ROBUSTNESS DIAGNOSTICS COMPUTED PROPERTIES --- //
 const diagnosticStats = computed(() => {
-  const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value) || [];
+  const currentTrades = getFilteredTrades();
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
   const pnls = currentTrades.map(t => getTradePnl(t, initialDeposit));
   
@@ -5318,20 +5361,9 @@ watch(() => themeStore.settings.isDark, () => {
   updateColors()
 }, { immediate: true })
 
-const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
-  return trade.boardScenarioEntry?.id === targetId ||
-    trade.boardScenarioExit?.id === targetId ||
-    trade.boardScenarioEntryId === targetId ||
-    trade.boardScenarioExitId === targetId ||
-    trade.boardConditions?.some((condition: any) => (typeof condition === 'string' ? condition === targetId : condition?.id === targetId)) ||
-    trade.boardScenarioEntry?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
-    trade.boardScenarioExit?.info?.conditions?.some((condition: any) => condition?.id === targetId) ||
-    trade.scenarios?.some((scenario: any) => scenario?.id === targetId || scenario?.conditions?.some((condition: any) => condition?.id === targetId))
-}
-
 // --- INITIALIZATION --- //
 const initData = () => {
-  const currentTrades = props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  const currentTrades = getFilteredTrades()
   const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId.value)
   depositInput.value = initialDeposit
   
@@ -5957,7 +5989,7 @@ const robustnessVisualizationStatus = computed(() => [
 
 const robustnessReturnHeatmap = computed(() => {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
+  const currentTrades = getFilteredTrades()
   const cells = new Map<string, { month: string; weekday: string; pnl: number; count: number }>()
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -6549,7 +6581,7 @@ const update = () => {
 
       if (showBenchmarkCurves.value) {
         drawExtraCurve(benchmarkPoints3D.value, '#0ea5e9', 'S&P 500') // Sky Blue
-        drawExtraCurve(riskFreePoints3D.value, '#f43f5e', 'RISK-FREE') // Rose Pink
+        // drawExtraCurve(riskFreePoints3D.value, '#f43f5e', 'RISK-FREE') // Rose Pink (Hidden for now)
       }
 
       // Time Ticks (Fixed Labels)
@@ -7330,7 +7362,7 @@ interface CalendarDay {
 // Group all trades by YYYY-MM
 const calendarMonthsList = computed(() => {
   const months = new Set<string>()
-  const currentTrades = props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  const currentTrades = getFilteredTrades()
   currentTrades.forEach(trade => {
     const dVal = trade.dateExit || trade.date
     const date = dVal instanceof Date ? dVal : new Date(dVal)
@@ -7424,7 +7456,7 @@ const calendarDays = computed(() => {
   const month = parseInt(m!) - 1
   
   // Get trades for this month
-  const currentTrades = props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  const currentTrades = getFilteredTrades()
   const tradesForMonth = currentTrades.filter(trade => {
     const dVal = trade.dateExit || trade.date
     const date = dVal instanceof Date ? dVal : new Date(dVal)

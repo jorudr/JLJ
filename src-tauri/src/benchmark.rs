@@ -90,6 +90,8 @@ struct ChartQuote {
 pub async fn get_benchmark_and_beta(
     strategy_returns: Vec<f64>,
     strategy_id: Option<String>,
+    start_ts: Option<i64>,
+    end_ts: Option<i64>,
     state: tauri::State<'_, BenchmarkState>,
     app: tauri::AppHandle,
 ) -> Result<BenchmarkResponse, String> {
@@ -182,7 +184,7 @@ pub async fn get_benchmark_and_beta(
         let app_data = app.path().data_dir().map_err(|e| e.to_string())?;
         let jlj_dir = app_data.join("JLJData");
         std::fs::create_dir_all(&jlj_dir).map_err(|e| e.to_string())?;
-        Ok(jlj_dir.join("benchmark_rust_cache.json"))
+        Ok(jlj_dir.join("benchmark_rust_cache_v2.json"))
     };
 
     // 2. Reuse a local cache for strategies with too little data instead of overwriting
@@ -198,8 +200,8 @@ pub async fn get_benchmark_and_beta(
     }
 
     // 3. Attempt live fetch from Yahoo Finance
-    let bench_beta_res = fetch_live_benchmark_and_beta(&strategy_returns).await;
-    let risk_free_res = fetch_live_risk_free_rate().await;
+    let bench_beta_res = fetch_live_benchmark_and_beta(&strategy_returns, start_ts, end_ts).await;
+    let risk_free_res = fetch_live_risk_free_rate(start_ts, end_ts).await;
 
     match bench_beta_res {
         Ok((rate, beta)) => {
@@ -243,11 +245,15 @@ pub async fn get_benchmark_and_beta(
     }
 }
 
-async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64, f64), String> {
-    let url = "https://query2.finance.yahoo.com/v8/finance/chart/^GSPC?interval=1d&range=1y";
+async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Option<i64>, end_ts: Option<i64>) -> Result<(f64, f64), String> {
+    let url = if let (Some(start), Some(end)) = (start_ts, end_ts) {
+        format!("https://query2.finance.yahoo.com/v8/finance/chart/^GSPC?interval=1d&period1={}&period2={}", start - (10 * 86400), end + (2 * 86400))
+    } else {
+        "https://query2.finance.yahoo.com/v8/finance/chart/^GSPC?interval=1d&range=1y".to_string()
+    };
     let client = reqwest::Client::new();
     let res = client
-        .get(url)
+        .get(&url)
         .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         .send()
         .await
@@ -389,11 +395,15 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64]) -> Result<(f64,
     Ok((benchmark_rate, beta))
 }
 
-async fn fetch_live_risk_free_rate() -> Result<f64, String> {
-    let url = "https://query2.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&range=5d";
+async fn fetch_live_risk_free_rate(start_ts: Option<i64>, end_ts: Option<i64>) -> Result<f64, String> {
+    let url = if let (Some(start), Some(end)) = (start_ts, end_ts) {
+        format!("https://query2.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&period1={}&period2={}", start, end)
+    } else {
+        "https://query2.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&range=5d".to_string()
+    };
     let client = reqwest::Client::new();
     let res = client
-        .get(url)
+        .get(&url)
         .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         .send()
         .await
@@ -412,7 +422,7 @@ async fn fetch_live_risk_free_rate() -> Result<f64, String> {
 
     if let Some(meta) = &result.meta {
         if let Some(price) = meta.regular_market_price {
-            if price > 0.0 {
+            if price > 0.0 && start_ts.is_none() {
                 log::info!(
                     "[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX): {:.2}%",
                     price
@@ -427,7 +437,14 @@ async fn fetch_live_risk_free_rate() -> Result<f64, String> {
             if let Some(quote) = quotes.pop() {
                 if let Some(closes) = quote.close {
                     let valid_prices: Vec<f64> = closes.into_iter().filter_map(|p| p).collect();
-                    if let Some(&last_close) = valid_prices.last() {
+                    if start_ts.is_some() && !valid_prices.is_empty() {
+                        let sum: f64 = valid_prices.iter().sum();
+                        let mean = sum / (valid_prices.len() as f64);
+                        if mean > 0.0 {
+                            log::info!("[benchmark_diagnostic] Fetched Historical Risk-Free Rate (^IRX) mean: {:.2}%", mean);
+                            return Ok(mean);
+                        }
+                    } else if let Some(&last_close) = valid_prices.last() {
                         if last_close > 0.0 {
                             log::info!("[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX) from last close: {:.2}%", last_close);
                             return Ok(last_close);
