@@ -408,7 +408,8 @@
       <!-- Scaling Entry Subtitle -->
        <div v-if="node.type === 'scaling-entry'"
             v-show="scale > 0.25"
-            class="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex flex-col items-center pointer-events-none z-50">
+            class="absolute top-full left-1/2 mt-4 flex flex-col items-center pointer-events-none z-50"
+            :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'top center' }">
           <div class="px-5 py-2 bg-nier-white dark:bg-nier-black border-[1.5px] border-nier-border-light dark:border-nier-border-dark flex items-center space-x-2 shadow-[0_15px_35px_rgba(0,0,0,0.4)] relative">
              <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
              <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
@@ -424,7 +425,8 @@
       <!-- Risk Element Overlay -->
       <div v-if="node.type === 'risk-element' && node.params"
            v-show="scale > 0.25"
-           class="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex flex-col items-center pointer-events-none min-w-max">
+           class="absolute top-full left-1/2 mt-3 flex flex-col items-center pointer-events-none min-w-max"
+           :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'top center' }">
          <!-- Connector Line -->
          <div class="w-0.5 h-3 bg-red-500/40"></div>
          <div class="px-5 py-2 bg-red-500/10 border-2 border-red-500/40 backdrop-blur-md flex flex-col items-center shadow-[0_10px_30px_rgba(239,68,68,0.25)] relative overflow-hidden">
@@ -450,7 +452,8 @@
      <!-- Custom Identity Label -->
       <div v-if="['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName)"
            v-show="scale > 0.25"
-           class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center z-50">
+           class="absolute top-full left-1/2 mt-2 flex flex-col items-center z-50"
+           :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'top center' }">
        <!-- Editing Mode -->
        <div v-if="node.params?.isEditingName" class="min-w-full w-max pointer-events-auto relative">
           <ExInput
@@ -477,7 +480,8 @@
       <!-- Emotion State Label -->
        <div v-if="node.type === 'emotion-state' && node.label"
             v-show="scale > 0.25"
-            class="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-col items-center z-50">
+            class="absolute top-full left-1/2 mt-2 flex flex-col items-center z-50"
+            :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'top center' }">
          <div class="min-w-full w-max bg-nier-text-light dark:bg-nier-text-dark border border-nier-white dark:border-nier-black shadow-[0_5px_15px_rgba(0,0,0,0.3)] pointer-events-none relative text-center px-4 py-1.5 flex flex-col items-center">
             <ExText variant="telemetry" class="!text-nier-white dark:!text-nier-black !opacity-100 font-black">{{ node.label }}</ExText>
             <!-- Mini Corners -->
@@ -489,7 +493,8 @@
       <!-- Priority Label -->
       <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
            v-show="scale > 0.25"
-           class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col items-center z-50 min-w-max">
+           class="absolute bottom-full left-1/2 mb-2 flex flex-col items-center z-50 min-w-max"
+           :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'bottom center' }">
          <div class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1 flex flex-col items-center"
               :class="node.params.priority === 'REQUIRED' ? 'border-t-2 !border-t-red-500/60' : 'border-t-2 !border-t-blue-500/60'">
             <ExText variant="telemetry" class="!opacity-100 font-black tracking-widest text-[10px]"
