@@ -731,49 +731,100 @@
                 </div>
 
                 <!-- TARGET LIST -->
-                <div class="flex flex-wrap gap-4">
-                  <ExNTtooltip v-for="node in winrateMenuNodes" :key="node.id" :title="node.name">
-                    <template #trigger>
-                       <div @click="selectedWinrateNodeId = selectedWinrateNodeId === node.id ? null : node.id; showWinrateMenu = false; initData()"
-                            class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
-                            :class="[
-                              selectedWinrateNodeId === node.id 
-                                ? 'bg-black dark:bg-white border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
-                                : 'bg-black/[0.02] dark:bg-white/[0.02] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white'
-                            ]">
-                          
-                          <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
-                               :class="selectedWinrateNodeId === node.id ? 'border-white/40 dark:border-black/40' : 'border-black/10 dark:border-white/10'"></div>
+                <div class="flex flex-col gap-6">
+                  <template v-if="winrateTargetFilter === 'condition'">
+                    <div v-for="group in groupedWinrateMenuNodes" :key="group.groupName" class="flex flex-col gap-4 mb-6">
+                      <div class="flex items-center gap-4">
+                        <div class="w-1.5 h-1.5 bg-black/40 dark:bg-white/40 rotate-45"></div>
+                        <span class="text-[9px] font-mono tracking-[0.2em] text-black/60 dark:text-white/60 uppercase">{{ group.groupName }}</span>
+                        <div class="flex-1 h-px bg-black/5 dark:bg-white/5"></div>
+                        <span class="text-[7px] font-mono opacity-20 uppercase tracking-[0.4em]">Scenario_Node</span>
+                      </div>
+                      <div class="flex flex-wrap gap-4">
+                        <ExNTtooltip v-for="node in group.nodes" :key="node.id" :title="node.name">
+                          <template #trigger>
+                            <div @click="selectedWinrateNodeId = selectedWinrateNodeId === node.id ? null : node.id; initData()"
+                                 class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
+                                 :class="[
+                                   selectedWinrateNodeId === node.id 
+                                     ? 'bg-black dark:bg-white border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
+                                     : 'bg-black/[0.02] dark:bg-white/[0.02] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white'
+                                 ]">
+                              
+                              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                                   :class="selectedWinrateNodeId === node.id ? 'border-white/40 dark:border-black/40' : 'border-black/10 dark:border-white/10'"></div>
 
-                          <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border"
-                               :class="node.type === 'scenario' ? 'border-blue-500/50 text-blue-500 bg-blue-500/10' : 'border-purple-500/50 text-purple-500 bg-purple-500/10'">
-                            {{ node.type === 'scenario' ? 'SCN' : 'CND' }}
+                              <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border"
+                                   :class="node.type === 'scenario' ? 'border-blue-500/50 text-blue-500 bg-blue-500/10' : 'border-purple-500/50 text-purple-500 bg-purple-500/10'">
+                                {{ node.type === 'scenario' ? 'SCN' : 'CND' }}
+                              </div>
+
+                              <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors"
+                                    :class="selectedWinrateNodeId === node.id ? 'text-white dark:text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
+                                {{ (node.name || '').slice(0, 3) }}
+                              </span>
+
+                              <div v-if="selectedWinrateNodeId === node.id" 
+                                   class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-blue-500"></div>
+                            </div>
+                          </template>
+                          <div class="flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                              <span class="text-[8px] font-mono opacity-40 uppercase">Target_Description</span>
+                            </div>
+                            <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase">{{ node.type === 'condition' ? (node.description || 'NO_METADATA_AVAILABLE') : node.name }}</p>
                           </div>
-
-                          <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors"
-                                :class="selectedWinrateNodeId === node.id ? 'text-white dark:text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
-                            {{ (node.name || '').slice(0, 3) }}
-                          </span>
-
-                          <div v-if="selectedWinrateNodeId === node.id" 
-                               class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-blue-500"></div>
-                       </div>
-                    </template>
-                    <div class="flex flex-col gap-1">
-                       <div class="flex items-center justify-between">
-                         <span class="text-[8px] font-mono opacity-40 uppercase">Target_Description</span>
-                       </div>
-                       <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase">{{ node.type === 'condition' ? (node.description || 'NO_METADATA_AVAILABLE') : node.name }}</p>
+                        </ExNTtooltip>
+                      </div>
                     </div>
-                  </ExNTtooltip>
+                  </template>
 
-                  <div v-if="winrateMenuNodes.length === 0"
+                  <template v-else>
+                    <div class="flex flex-wrap gap-4">
+                      <ExNTtooltip v-for="node in winrateMenuNodes" :key="node.id" :title="node.name">
+                        <template #trigger>
+                          <div @click="selectedWinrateNodeId = selectedWinrateNodeId === node.id ? null : node.id; initData()"
+                               class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
+                               :class="[
+                                 selectedWinrateNodeId === node.id 
+                                   ? 'bg-black dark:bg-white border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
+                                   : 'bg-black/[0.02] dark:bg-white/[0.02] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white'
+                               ]">
+                            
+                            <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                                 :class="selectedWinrateNodeId === node.id ? 'border-white/40 dark:border-black/40' : 'border-black/10 dark:border-white/10'"></div>
+
+                            <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border"
+                                 :class="node.type === 'scenario' ? 'border-blue-500/50 text-blue-500 bg-blue-500/10' : 'border-purple-500/50 text-purple-500 bg-purple-500/10'">
+                              {{ node.type === 'scenario' ? 'SCN' : 'CND' }}
+                            </div>
+
+                            <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors"
+                                  :class="selectedWinrateNodeId === node.id ? 'text-white dark:text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
+                              {{ (node.name || '').slice(0, 3) }}
+                            </span>
+
+                            <div v-if="selectedWinrateNodeId === node.id" 
+                                 class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-blue-500"></div>
+                          </div>
+                        </template>
+                        <div class="flex flex-col gap-1">
+                          <div class="flex items-center justify-between">
+                            <span class="text-[8px] font-mono opacity-40 uppercase">Target_Description</span>
+                          </div>
+                          <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase">{{ node.type === 'condition' ? (node.description || 'NO_METADATA_AVAILABLE') : node.name }}</p>
+                        </div>
+                      </ExNTtooltip>
+                    </div>
+                  </template>
+                </div>
+
+                <div v-if="winrateMenuNodes.length === 0"
                        class="w-full p-8 border border-dashed border-black/10 dark:border-white/10 text-center text-[10px] font-mono font-black uppercase tracking-[0.35em] text-black/30 dark:text-white/30">
                     NO_TARGETS_FOUND
                   </div>
                 </div>
-              </div>
-            </ExPanel>
+              </ExPanel>
           </div>
         </div>
       </Transition>
@@ -1370,12 +1421,13 @@ const winrateTargetFilters: { id: 'all' | 'scenario' | 'condition', label: strin
   { id: 'condition', label: 'CONDITION' }
 ]
 
-type WinrateTargetNode = {
+interface WinrateTargetNode {
   id: string
   name: string
   description?: string
   type: 'scenario' | 'condition'
   typeLabel: string
+  parentScenarioName?: string
 }
 
 const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
@@ -1404,12 +1456,14 @@ const addWinrateTarget = (targets: Map<string, WinrateTargetNode>, target: Parti
   if (!target?.id) return
   const name = String(target.name || target.id).trim()
   if (!name) return
-  targets.set(target.id, {
+  const key = target.type === 'condition' && target.parentScenarioName ? `${target.parentScenarioName}_${target.id}` : target.id;
+  targets.set(key, {
     id: target.id,
     name,
     description: target.description,
     type: target.type || 'condition',
-    typeLabel: (target.type || 'condition').toUpperCase()
+    typeLabel: (target.type || 'condition').toUpperCase(),
+    parentScenarioName: target.parentScenarioName
   })
 }
 
@@ -1438,9 +1492,10 @@ const winrateMenuNodes = computed(() => {
   getCurrentWinrateTrades().forEach((trade: any) => {
     ;[trade.boardScenarioEntry, trade.boardScenarioExit].forEach((scenario: any) => {
       if (!scenario?.id) return
+      const sName = getScenarioName(scenario)
       addWinrateTarget(targets, {
         id: scenario.id,
-        name: getScenarioName(scenario),
+        name: sName,
         type: 'scenario'
       })
       ;(scenario.info?.conditions || []).forEach((condition: any) => {
@@ -1449,18 +1504,9 @@ const winrateMenuNodes = computed(() => {
           id,
           name: getConditionName(condition),
           description: getConditionDesc(condition),
-          type: 'condition'
+          type: 'condition',
+          parentScenarioName: sName
         })
-      })
-    })
-
-    ;(trade.boardConditions || []).forEach((condition: any) => {
-      const id = typeof condition === 'string' ? condition : condition?.id
-      addWinrateTarget(targets, {
-        id,
-        name: getConditionName(condition),
-        description: getConditionDesc(condition),
-        type: 'condition'
       })
     })
   })
@@ -1476,6 +1522,20 @@ const winrateMenuNodes = computed(() => {
     if (a.type !== b.type) return a.type === 'scenario' ? -1 : 1
     return a.name.localeCompare(b.name)
   })
+})
+
+const groupedWinrateMenuNodes = computed(() => {
+  const groups = new Map<string, WinrateTargetNode[]>()
+  winrateMenuNodes.value.forEach(node => {
+    if (node.type !== 'condition') return
+    if (!node.parentScenarioName) return // Skip if no parent scenario
+    const groupName = node.parentScenarioName
+    if (!groups.has(groupName)) groups.set(groupName, [])
+    groups.get(groupName)!.push(node)
+  })
+  return Array.from(groups.entries())
+    .map(([groupName, nodes]) => ({ groupName, nodes }))
+    .sort((a, b) => a.groupName.localeCompare(b.groupName))
 })
 
 const selectedWinrateTarget = computed(() => {
