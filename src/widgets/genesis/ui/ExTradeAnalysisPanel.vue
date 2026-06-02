@@ -1836,7 +1836,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 ((PnL - AvgPnL) / AvgPnL) * 100
+                                 ((PnL - Average PnL) / Average PnL) * 100
                               </code>
                            </div>
                            <div>
@@ -1875,7 +1875,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (Req * 2.5) + (Add * 1.5)
+                                 (Required Rules * 2.5) + (Additional Rules * 1.5)
                               </code>
                            </div>
                            <div>
@@ -1993,7 +1993,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 100 - (FrictionTags * 15)
+                                 100 - (Friction Tags * 15)
                               </code>
                            </div>
                            <div>
@@ -2071,7 +2071,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Actual PnL - (AvgPnL * 1.15)
+                                 Actual PnL - (Average PnL * 1.15)
                               </code>
                            </div>
                            <div>
@@ -2110,7 +2110,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (FrictionTags / TotalTags) * 100
+                                 (Friction Tags / Total Tags) * 100
                               </code>
                            </div>
                            <div>
@@ -2155,7 +2155,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 TradePnL - StrategyAvgPnL
+                                 Trade PnL - Strategy Avg PnL
                               </code>
                            </div>
                            <div>
@@ -2193,7 +2193,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (TradePnL / BalanceBeforeTrade) * 100
+                                 (PnL / Balance Before Trade) * 100
                               </code>
                            </div>
                            <div>
@@ -2231,7 +2231,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 TradePnL / (DurationMinutes / 60)
+                                 PnL / (Duration Minutes / 60)
                               </code>
                            </div>
                            <div>
@@ -2273,7 +2273,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 RealizedReward / RealizedRisk
+                                 Realized Reward / Realized Risk
                               </code>
                            </div>
                            <div>
@@ -2318,7 +2318,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 |Entry - SL| * PositionSize
+                                 |Entry Price - Stop Loss| * Position Size
                               </code>
                            </div>
                            <div>
@@ -2360,7 +2360,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 ExitTimestamp - EntryTimestamp
+                                 Exit Timestamp - Entry Timestamp
                               </code>
                            </div>
                            <div>
@@ -2398,7 +2398,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 Trade.Side + Trade.Asset
+                                 Trade Side + Trade Asset
                               </code>
                            </div>
                            <div>
@@ -2434,7 +2434,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (|Entry - SL| / Entry) * 100
+                                 (|Entry Price - Stop Loss| / Entry Price) * 100
                               </code>
                            </div>
                            <div>
@@ -2472,7 +2472,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (|TP - Entry| / Entry) * 100
+                                 (|Take Profit - Entry Price| / Entry Price) * 100
                               </code>
                            </div>
                            <div>
@@ -2512,7 +2512,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 ActualExit - PlannedStopLoss
+                                 Actual Exit - Planned Stop Loss
                               </code>
                            </div>
                            <div>
@@ -2547,11 +2547,11 @@ const strategyExecutionMetrics = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares the actual trade risk (|Entry - SL| × Size) against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
+                           <div>Compares the actual trade risk (|Entry Price - Stop Loss| × Position Size) against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (|Entry - SL| × Size) / RiskBudget × 100
+                                 (|Entry Price - Stop Loss| × Position Size) / Risk Budget × 100
                               </code>
                            </div>
                            <div>
@@ -2590,7 +2590,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (RewardTowardTP / TargetReward) * 100
+                                 (Reward Toward TP / Target Reward) * 100
                               </code>
                            </div>
                            <div>
@@ -2629,7 +2629,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 RealizedRR / BaselineRR
+                                 Realized RR / Baseline RR
                               </code>
                            </div>
                            <div>
@@ -2668,7 +2668,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 PlannedTPProfit - RealizedProfit
+                                 Planned TP Profit - Realized Profit
                               </code>
                            </div>
                            <div>
@@ -2707,7 +2707,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 (Duration - ScenarioMin) / (ScenarioMax - ScenarioMin) * 100
+                                 (Trade Duration - Scenario Min) / (Scenario Max - Scenario Min) * 100
                               </code>
                            </div>
                            <div>
@@ -2746,7 +2746,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 RealizedVelocity / BaselineVelocity
+                                 Realized Velocity / Baseline Velocity
                               </code>
                            </div>
                            <div>
@@ -2785,7 +2785,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 MissingRequiredRules * EmotionPenalty
+                                 Missing Required Rules * Emotion Penalty
                               </code>
                            </div>
                            <div>
@@ -2824,7 +2824,7 @@ const strategyExecutionMetrics = computed(() => {
                            <div class="pt-2 border-t border-black/10 dark:border-white/10">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold text-black dark:text-white tracking-tighter">
-                                 w1*Adherence + w2*TPCapture + w3*RiskSync + w4*Emotion
+                                 0.3*Adherence + 0.3*TP Capture + 0.2*Risk Score + 0.2*Stability
                               </code>
                            </div>
                            <div>
