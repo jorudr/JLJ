@@ -121,6 +121,7 @@ export interface PatternForecastMatchSummary {
   continuationToEndPct: number
   totalFileReturnPct: number
   matchedPhaseLabel: string
+  blocks: PatternForecastBlockView[]
 }
 
 export interface PatternForecastResult {
@@ -337,7 +338,14 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
       continuation20Pct: match.future20ReturnPct,
       continuationToEndPct: match.futureToEndReturnPct,
       totalFileReturnPct: match.totalFileReturnPct,
-      matchedPhaseLabel: match.matchedPhaseLabel
+      matchedPhaseLabel: match.matchedPhaseLabel,
+      blocks: match.matchedBlocks.map((block) => ({
+        phase: block.phase,
+        tradeCount: block.tradeCount,
+        returnPct: block.returnPct,
+        averageDurationHours: block.averageDurationHours,
+        winRate: block.winRate
+      }))
     }))
   }
 }

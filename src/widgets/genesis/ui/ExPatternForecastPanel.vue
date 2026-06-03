@@ -29,7 +29,33 @@
       </div>
     </div>
 
+    <div class="shrink-0 border-b border-black/10 px-5 py-2 dark:border-white/10">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
+          :class="activeTab === 'summary'
+            ? 'bg-black text-white dark:bg-white dark:text-black'
+            : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
+          @click="activeTab = 'summary'"
+        >
+          {{ locale === 'ru' ? 'Summary' : 'Summary' }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
+          :class="activeTab === 'patterns'
+            ? 'bg-black text-white dark:bg-white dark:text-black'
+            : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
+          @click="activeTab = 'patterns'"
+        >
+          {{ locale === 'ru' ? 'Patterns' : 'Patterns' }}
+        </button>
+      </div>
+    </div>
+
     <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+      <template v-if="activeTab === 'summary'">
       <div class="grid grid-cols-1 gap-0 md:grid-cols-2">
         <div class="border-b border-black/10 px-5 py-4 dark:border-white/10 md:border-b-0 md:border-r">
           <div class="flex items-center justify-between gap-3">
@@ -282,6 +308,119 @@
       >
         {{ forecast.message }}
       </div>
+      </template>
+
+      <template v-else>
+        <div class="px-5 py-4">
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
+              {{ locale === 'ru' ? 'Паттерн пользователя' : 'User pattern' }}
+            </span>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ forecast.currentPattern.sequenceLabel }}
+            </span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div
+              v-for="(block, index) in forecast.currentPattern.blocks"
+              :key="`user-${block.phase}-${index}`"
+              class="border border-black/10 px-4 py-4 dark:border-white/10"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <span class="font-mono text-[8px] font-black uppercase tracking-[0.24em]" :class="phaseClass(block.phase)">
+                  {{ phaseLabel(block.phase) }}
+                </span>
+                <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
+                  {{ block.tradeCount }}T
+                </span>
+              </div>
+              <div class="mt-3 grid grid-cols-1 gap-1">
+                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                  {{ locale === 'ru' ? 'Результат' : 'Return' }}: {{ formatPercent(block.returnPct) }}
+                </div>
+                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                  Duration: {{ formatHours(block.averageDurationHours) }}
+                </div>
+                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                  WR: {{ formatPercent(block.winRate, false) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-black/10 px-5 py-4 dark:border-white/10">
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
+              {{ locale === 'ru' ? 'Совпавшие historical patterns' : 'Matched historical patterns' }}
+            </span>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ locale === 'ru' ? 'текущий sequence vs sequence в файле' : 'current sequence vs sequence inside file' }}
+            </span>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-4">
+            <div
+              v-for="(match, index) in forecast.topMatches"
+              :key="`pattern-${match.sourceFile}-${index}`"
+              class="border border-black/10 px-4 py-4 dark:border-white/10"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-col">
+                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.24em] text-black dark:text-white">
+                    {{ match.fileLabel }}
+                  </span>
+                  <span class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+                    {{ match.matchedPhaseLabel }}
+                  </span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <span class="font-mono text-[10px] text-black/45 dark:text-white/45">Style {{ formatPercent(match.styleScore, false) }}</span>
+                  <span class="font-mono text-[10px] text-black/45 dark:text-white/45">Pattern {{ formatPercent(match.patternScore, false) }}</span>
+                  <span class="font-mono text-[10px] text-black/45 dark:text-white/45">+10T {{ formatPercent(match.continuation10Pct) }}</span>
+                  <span class="font-mono text-[10px] text-black/45 dark:text-white/45">End {{ formatPercent(match.continuationToEndPct) }}</span>
+                </div>
+              </div>
+
+              <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div
+                  v-for="(block, blockIndex) in match.blocks"
+                  :key="`${match.sourceFile}-${block.phase}-${blockIndex}`"
+                  class="border border-black/8 px-3 py-3 dark:border-white/8"
+                >
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em]" :class="phaseClass(block.phase)">
+                      {{ phaseLabel(block.phase) }}
+                    </span>
+                    <span class="font-mono text-[8px] uppercase tracking-[0.2em] text-black/40 dark:text-white/40">
+                      {{ block.tradeCount }}T
+                    </span>
+                  </div>
+                  <div class="mt-2 grid grid-cols-1 gap-1">
+                    <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                      {{ formatPercent(block.returnPct) }}
+                    </div>
+                    <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                      {{ formatHours(block.averageDurationHours) }}
+                    </div>
+                    <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                      WR {{ formatPercent(block.winRate, false) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="forecast.status === 'insufficient-data'"
+          class="border-t border-black/10 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-amber-600 dark:border-white/10 dark:text-amber-300"
+        >
+          {{ forecast.message }}
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -313,6 +452,7 @@ const { locale } = useI18n()
 
 const loading = ref(false)
 const forecast = ref<PatternForecastResult>(createEmptyPatternForecast())
+const activeTab = ref<'summary' | 'patterns'>('summary')
 let requestId = 0
 
 const persistPatternForecastSnapshot = async (result: PatternForecastResult) => {
@@ -402,6 +542,12 @@ onUnmounted(() => {
   emit('loading-change', false)
 })
 
+watch(() => props.visible, (visible) => {
+  if (!visible) {
+    activeTab.value = 'summary'
+  }
+})
+
 const confidenceLabel = computed(() => {
   if (locale.value === 'ru') {
     if (forecast.value.confidence === 'high') return 'Высокая уверенность'
@@ -465,6 +611,13 @@ const phaseLabel = (phase: string) => {
   if (phase === 'drawdown') return 'Drawdown'
   if (phase === 'recovery') return 'Recovery'
   return 'Range'
+}
+
+const phaseClass = (phase: string) => {
+  if (phase === 'impulse-up') return 'text-emerald-600 dark:text-emerald-300'
+  if (phase === 'drawdown') return 'text-red-600 dark:text-red-300'
+  if (phase === 'recovery') return 'text-sky-600 dark:text-sky-300'
+  return 'text-amber-600 dark:text-amber-300'
 }
 
 function sanitizeFileSegment(value: string) {
