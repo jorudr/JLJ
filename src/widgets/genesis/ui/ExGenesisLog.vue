@@ -284,6 +284,23 @@
            </span>
          </div>
 
+         <div v-if="protocolForecastLoading" class="border-b border-black/10 dark:border-white/10 px-5 py-3">
+           <div class="flex items-center justify-between gap-4">
+             <div class="flex items-center gap-3">
+               <div class="h-2 w-2 animate-pulse rotate-45 bg-amber-500 dark:bg-amber-300"></div>
+               <span class="font-mono text-[9px] font-black uppercase tracking-[0.28em] text-amber-700 dark:text-amber-200">
+                 {{ locale === 'ru' ? 'Идет анализ протокола и исторической базы' : 'Analyzing protocol and historical base' }}
+               </span>
+             </div>
+             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'загрузка' : 'loading' }}
+             </span>
+           </div>
+           <div class="mt-3 h-[3px] overflow-hidden bg-black/8 dark:bg-white/10">
+             <div class="forecast-loading-bar h-full bg-gradient-to-r from-amber-500 via-black to-amber-500 dark:from-amber-300 dark:via-white dark:to-amber-300"></div>
+           </div>
+         </div>
+
          <div class="grid grid-cols-1 divide-y divide-black/10 dark:divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
            <div class="px-5 py-4">
              <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P50</div>
@@ -1448,6 +1465,12 @@ watch([selectedStrategyId, currentTrades, locale], () => {
   void refreshProtocolForecast()
 }, { immediate: true, deep: true })
 
+watch(showComplianceStatus, (value) => {
+  if (value) {
+    void refreshProtocolForecast()
+  }
+})
+
 const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()
 }
@@ -2347,5 +2370,22 @@ canvas { image-rendering: pixelated; }
 .fade-blur-enter-to, .fade-blur-leave-from {
   opacity: 1;
   backdrop-filter: blur(12px);
+}
+
+.forecast-loading-bar {
+  width: 42%;
+  animation: forecast-loading-shift 1.2s ease-in-out infinite;
+}
+
+@keyframes forecast-loading-shift {
+  0% {
+    transform: translateX(-115%);
+  }
+  50% {
+    transform: translateX(95%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
 }
 </style>

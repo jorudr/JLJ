@@ -1,6 +1,8 @@
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import { HISTORICAL_FORECAST_FILES } from './protocolForecastFiles'
 
+type HistoricalSourceTier = 'primary' | 'auxiliary'
+
 export interface ProtocolForecastInput {
   trades: DiaryEntry[]
   currentCapital: number
@@ -88,11 +90,13 @@ interface ParsedStatementRow {
 
 interface HistoricalTimeline {
   sourceFile: string
+  sourceTier: HistoricalSourceTier
   trades: PreparedTrade[]
 }
 
 interface HistoricalWindow {
   sourceFile: string
+  sourceTier: HistoricalSourceTier
   features: ProtocolForecastMetrics
   futureReturnPct: number
   futureMaxDrawdownPct: number
@@ -154,6 +158,13 @@ const DEFAULT_WINDOW_TRADES = 30
 const DEFAULT_TOP_MATCHES = 160
 const MAX_WINDOWS_PER_FILE = 8
 const MIN_USER_TRADES = 8
+const AUXILIARY_HISTORICAL_FILE = '/data/historical/historical_data.csv'
+const AUXILIARY_SOURCE_DISTANCE_MULTIPLIER = 1.18
+const AUXILIARY_SOURCE_CONFIDENCE_MULTIPLIER = 0.9
+const AUXILIARY_SOURCE_CANDIDATE_MULTIPLIER = 0.88
+const AUXILIARY_RETURN_CAP_PCT = 35
+const PRIMARY_DURATION_BONUS_MULTIPLIER = 0.94
+const PRIMARY_DURATION_PENALTY_MULTIPLIER = 1.08
 const FORECAST_REGIMES: ForecastRegime[] = [
   { windowTrades: 30, horizonTrades: 30 },
   { windowTrades: 20, horizonTrades: 20 },
@@ -185,6 +196,7 @@ const FEATURE_WEIGHTS: Record<FeatureKey, number> = {
   tailLossCvar95: 0.9
 }
 
+let historicalTimelinesPromise: Promise<HistoricalTimeline[]> | null = null
 const historicalWindowsPromises = new Map<string, Promise<HistoricalWindow[]>>()
 
 export function calculateCurrentCapital(trades: DiaryEntry[], startingCapital: number) {
@@ -251,7 +263,7 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
       currentCapital,
       horizonTrades: initialHorizonTrades,
       metrics: initialMetrics,
-      message: 'Историческая база myfxbook/mql4/mql5 пока не дает подходящего слоя 30/20/10 для этого профиля.'
+      message: 'Историческая база myfxbook/mql4/mql5/historical_data пока не дает подходящего слоя 30/20/10 для этого профиля.'
     })
   }
 
@@ -259,6 +271,7 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
   const futureReturns = matches.map((match) => match.window.futureReturnPct)
   const futureCapitals = futureReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
   const futureDrawdowns = matches.map((match) => match.window.futureMaxDrawdownPct)
+  const auxiliaryMatchShare = percentage(matches.filter((match) => match.window.sourceTier === 'auxiliary').length, matches.length) / 100
   const probabilityProfit = percentage(futureReturns.filter((value) => value > 0).length, futureReturns.length)
   const probabilityDrawdownOver10 = percentage(futureDrawdowns.filter((value) => value <= -10).length, futureDrawdowns.length)
   const confidenceScore = calculateConfidenceScore({
@@ -266,14 +279,17 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
     windowTrades: regime.windowTrades,
     matches: matches.length,
     sourceFiles: sourceFilesCount,
-    medianDistance
+    medianDistance,
+    auxiliaryMatchShare
   })
 
   return {
     status: 'ready',
     confidence: confidenceLabel(confidenceScore),
     confidenceScore,
-    message: `Прогноз построен по похожим историческим окнам myfxbook/mql4/mql5 на слое ${regime.windowTrades}/${regime.horizonTrades}.`,
+    message: auxiliaryMatchShare > 0
+      ? `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}, включая ослабленный execution-source historical_data.csv.`
+      : `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}.`,
     horizonTrades: regime.horizonTrades,
     currentCapital,
     metrics: userMetrics,
@@ -355,6 +371,7 @@ async function buildForecastCandidate(
 
   const sourceFilesCount = new Set(matches.map((match) => match.window.sourceFile)).size
   const medianDistance = quantile(matches.map((match) => match.distance), 0.5)
+  const auxiliaryMatchShare = percentage(matches.filter((match) => match.window.sourceTier === 'auxiliary').length, matches.length) / 100
 
   return {
     regime,
@@ -369,7 +386,8 @@ async function buildForecastCandidate(
       windowsCount: historicalWindows.length,
       sourceFilesCount,
       matchesCount: matches.length,
-      medianDistance
+      medianDistance,
+      auxiliaryMatchShare
     })
   }
 }
@@ -412,26 +430,35 @@ async function loadHistoricalWindows(windowTrades: number, horizonTrades: number
 }
 
 async function buildHistoricalWindows(windowTrades: number, horizonTrades: number): Promise<HistoricalWindow[]> {
+  const timelines = await loadHistoricalTimelines()
+  return timelines
+    .filter((timeline) => timeline.trades.length >= windowTrades + horizonTrades)
+    .flatMap((timeline) => buildWindowsForTimeline(timeline, windowTrades, horizonTrades))
+}
+
+async function loadHistoricalTimelines(): Promise<HistoricalTimeline[]> {
   if (typeof fetch !== 'function' || typeof window === 'undefined') {
     return []
   }
 
-  const settled = await Promise.allSettled(
-    HISTORICAL_FORECAST_FILES.map(async (file) => {
-      const response = await fetch(encodeURI(file))
-      if (!response.ok) {
-        return null
-      }
+  if (!historicalTimelinesPromise) {
+    const allHistoricalFiles = [...HISTORICAL_FORECAST_FILES, AUXILIARY_HISTORICAL_FILE]
+    historicalTimelinesPromise = Promise.allSettled(
+      allHistoricalFiles.map(async (file) => {
+        const response = await fetch(encodeURI(file))
+        if (!response.ok) {
+          return null
+        }
 
-      return parseHistoricalTimeline(await response.text(), file)
-    })
-  )
+        return parseHistoricalTimeline(await response.text(), file)
+      })
+    ).then((settled) => settled
+      .filter((result): result is PromiseFulfilledResult<HistoricalTimeline | null> => result.status === 'fulfilled')
+      .map((result) => result.value)
+      .filter((timeline): timeline is HistoricalTimeline => Boolean(timeline)))
+  }
 
-  return settled
-    .filter((result): result is PromiseFulfilledResult<HistoricalTimeline | null> => result.status === 'fulfilled')
-    .map((result) => result.value)
-    .filter((timeline): timeline is HistoricalTimeline => Boolean(timeline && timeline.trades.length >= windowTrades + horizonTrades))
-    .flatMap((timeline) => buildWindowsForTimeline(timeline, windowTrades, horizonTrades))
+  return historicalTimelinesPromise
 }
 
 function buildWindowsForTimeline(
@@ -448,6 +475,7 @@ function buildWindowsForTimeline(
 
     windows.push({
       sourceFile: timeline.sourceFile,
+      sourceTier: timeline.sourceTier,
       features: calculateMetrics(window),
       futureReturnPct: compoundReturns(future.map((trade) => trade.returnPct)),
       futureMaxDrawdownPct: maxDrawdownFromReturns(future.map((trade) => trade.returnPct))
@@ -458,6 +486,10 @@ function buildWindowsForTimeline(
 }
 
 function parseHistoricalTimeline(csvText: string, file: string): HistoricalTimeline | null {
+  if (file === AUXILIARY_HISTORICAL_FILE) {
+    return parseAuxiliaryHistoricalTimeline(csvText, file)
+  }
+
   const lines = getStatementLines(csvText)
   if (lines.length < 2) {
     return null
@@ -478,7 +510,59 @@ function parseHistoricalTimeline(csvText: string, file: string): HistoricalTimel
     : parseMqlRows(lines, delimiter, headerMap, sourceKind)
 
   const trades = rowsToPreparedTrades(rows)
-  return trades.length ? { sourceFile: file, trades } : null
+  return trades.length ? { sourceFile: file, sourceTier: 'primary', trades } : null
+}
+
+function parseAuxiliaryHistoricalTimeline(csvText: string, file: string): HistoricalTimeline | null {
+  const lines = csvText.split(/\r?\n/).filter((line) => line.trim())
+  if (lines.length < 2) {
+    return null
+  }
+
+  const header = splitCsvLine(lines[0] || '', ',').map((value) => value.replace(/^\uFEFF/, '').trim())
+  const headerMap = new Map<string, number>()
+  header.forEach((name, index) => headerMap.set(name, index))
+
+  const coinIndex = headerMap.get('Coin') ?? -1
+  const pnlIndex = headerMap.get('Closed PnL') ?? -1
+  const sizeUsdIndex = headerMap.get('Size USD') ?? -1
+  const timestampIstIndex = headerMap.get('Timestamp IST') ?? -1
+  const directionIndex = headerMap.get('Direction') ?? -1
+
+  if (coinIndex === -1 || pnlIndex === -1 || sizeUsdIndex === -1 || timestampIstIndex === -1) {
+    return null
+  }
+
+  const trades = lines.slice(1).flatMap((line): PreparedTrade[] => {
+    const cells = splitCsvLine(line, ',')
+    const profit = parseNumber(cells[pnlIndex] ?? '0')
+    if (!Number.isFinite(profit) || profit === 0) return []
+
+    const sizeUsd = Math.abs(parseNumber(cells[sizeUsdIndex] ?? '0'))
+    if (!(sizeUsd > 0)) return []
+
+    const timestamp = parseDayMonthTimestamp(cells[timestampIstIndex] ?? '')
+    if (!Number.isFinite(timestamp)) return []
+
+    const asset = String(cells[coinIndex] ?? 'UNKNOWN').trim().toUpperCase()
+    const direction = String(cells[directionIndex] ?? '').trim().toLowerCase()
+    if (direction.includes('conversion') || direction.includes('deleveraging')) return []
+
+    const returnPct = clamp((profit / sizeUsd) * 100, -AUXILIARY_RETURN_CAP_PCT, AUXILIARY_RETURN_CAP_PCT)
+
+    return [{
+      timestamp,
+      entryTimestamp: timestamp,
+      asset: asset || 'UNKNOWN',
+      profit,
+      returnPct,
+      durationHours: 0,
+      riskReward: null
+    }]
+  })
+
+  trades.sort((left, right) => left.timestamp - right.timestamp)
+  return trades.length ? { sourceFile: file, sourceTier: 'auxiliary', trades } : null
 }
 
 function parseMyfxbookRows(lines: string[], delimiter: string, headerMap: Map<string, number>): ParsedStatementRow[] {
@@ -679,7 +763,7 @@ function selectNearestWindows(
   const ranked = windows
     .map((window) => ({
       window,
-      distance: calculateDistance(userMetrics, window.features, normalizers)
+      distance: calculateDistance(userMetrics, window, normalizers)
     }))
     .filter((match) => Number.isFinite(match.distance))
     .sort((left, right) => left.distance - right.distance)
@@ -706,7 +790,7 @@ function selectNearestWindows(
 
 function calculateDistance(
   userMetrics: ProtocolForecastMetrics,
-  windowMetrics: ProtocolForecastMetrics,
+  window: HistoricalWindow,
   normalizers: Normalizer[]
 ) {
   let weightedSum = 0
@@ -714,8 +798,12 @@ function calculateDistance(
 
   for (const normalizer of normalizers) {
     const key = normalizer.key
+    if (key === 'averageDurationHours' && window.sourceTier === 'auxiliary') {
+      continue
+    }
+
     const userValue = readFeature(userMetrics, key)
-    const windowValue = readFeature(windowMetrics, key)
+    const windowValue = readFeature(window.features, key)
 
     if (!Number.isFinite(userValue) || !Number.isFinite(windowValue)) {
       continue
@@ -727,13 +815,39 @@ function calculateDistance(
     weightSum += weight
   }
 
-  return weightSum > 0 ? Math.sqrt(weightedSum / weightSum) : Number.POSITIVE_INFINITY
+  if (weightSum <= 0) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const distance = Math.sqrt(weightedSum / weightSum)
+  if (window.sourceTier === 'auxiliary') {
+    return distance * AUXILIARY_SOURCE_DISTANCE_MULTIPLIER
+  }
+
+  return distance * calculatePrimaryDurationMultiplier(userMetrics.averageDurationHours, window.features.averageDurationHours)
 }
 
 function readFeature(metrics: ProtocolForecastMetrics, key: FeatureKey) {
   const value = metrics[key]
   if (value === Number.POSITIVE_INFINITY) return 10
   return typeof value === 'number' && Number.isFinite(value) ? value : Number.NaN
+}
+
+function calculatePrimaryDurationMultiplier(userDurationHours: number, windowDurationHours: number) {
+  if (!(userDurationHours > 0) || !(windowDurationHours > 0)) {
+    return 1
+  }
+
+  const ratio = Math.max(userDurationHours, windowDurationHours) / Math.min(userDurationHours, windowDurationHours)
+  if (ratio <= 1.5) {
+    return PRIMARY_DURATION_BONUS_MULTIPLIER
+  }
+
+  if (ratio <= 3) {
+    return 1
+  }
+
+  return PRIMARY_DURATION_PENALTY_MULTIPLIER
 }
 
 function featureKeys() {
@@ -914,6 +1028,26 @@ function parseMqlTimestamp(value: string) {
   }
 
   return new Date(year, month - 1, day, hours, minutes, seconds, 0).getTime()
+}
+
+function parseDayMonthTimestamp(value: string) {
+  const raw = String(value).trim()
+  if (!raw) return Number.NaN
+
+  const match = raw.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/)
+  if (!match) return Number.NaN
+
+  const day = Number(match[1])
+  const month = Number(match[2])
+  const year = Number(match[3])
+  const hours = Number(match[4])
+  const minutes = Number(match[5])
+
+  if (!isValidDateParts(year, month, day, hours, minutes, 0)) {
+    return Number.NaN
+  }
+
+  return new Date(year, month - 1, day, hours, minutes, 0, 0).getTime()
 }
 
 function isValidDateParts(year: number, month: number, day: number, hours: number, minutes: number, seconds: number) {
@@ -1120,13 +1254,15 @@ function calculateConfidenceScore(params: {
   matches: number
   sourceFiles: number
   medianDistance: number
+  auxiliaryMatchShare: number
 }) {
   const sampleScore = clamp(params.userTrades / Math.max(params.windowTrades, MIN_USER_TRADES), 0, 1)
   const matchScore = clamp(params.matches / DEFAULT_TOP_MATCHES, 0, 1)
   const sourceScore = clamp(params.sourceFiles / 30, 0, 1)
   const distanceScore = clamp(1 - params.medianDistance / 4, 0, 1)
+  const confidence = Math.round((sampleScore * 0.25 + matchScore * 0.25 + sourceScore * 0.25 + distanceScore * 0.25) * 100)
 
-  return Math.round((sampleScore * 0.25 + matchScore * 0.25 + sourceScore * 0.25 + distanceScore * 0.25) * 100)
+  return Math.round(confidence * (1 - params.auxiliaryMatchShare * (1 - AUXILIARY_SOURCE_CONFIDENCE_MULTIPLIER)))
 }
 
 function calculateCandidateScore(params: {
@@ -1135,18 +1271,20 @@ function calculateCandidateScore(params: {
   sourceFilesCount: number
   matchesCount: number
   medianDistance: number
+  auxiliaryMatchShare: number
 }) {
   const regimeScore = clamp(params.regime.windowTrades / DEFAULT_WINDOW_TRADES, 0, 1)
   const windowsScore = clamp(params.windowsCount / 500, 0, 1)
   const sourceScore = clamp(params.sourceFilesCount / 40, 0, 1)
   const matchScore = clamp(params.matchesCount / DEFAULT_TOP_MATCHES, 0, 1)
   const distanceScore = clamp(1 - params.medianDistance / 4, 0, 1)
-
-  return regimeScore * 0.35 +
+  const rawScore = regimeScore * 0.35 +
     windowsScore * 0.15 +
     sourceScore * 0.2 +
     matchScore * 0.15 +
     distanceScore * 0.15
+
+  return rawScore * (1 - params.auxiliaryMatchShare * (1 - AUXILIARY_SOURCE_CANDIDATE_MULTIPLIER))
 }
 
 function confidenceLabel(score: number): ProtocolForecastResult['confidence'] {
