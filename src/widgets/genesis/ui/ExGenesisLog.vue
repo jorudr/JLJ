@@ -260,7 +260,7 @@
     />
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
+    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] flex w-[1100px] max-w-[95vw] flex-col gap-3 pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
        <OpenStrategyMetrics
          :is-dark="isDark"
          :minimal="true"
@@ -270,6 +270,82 @@
          :is-live="true"
          :editable="false"
        />
+
+       <div class="border border-black/10 dark:border-white/10 bg-white/90 dark:bg-[#070707]/90 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
+         <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-5 py-3">
+           <div class="flex items-center gap-3">
+             <div class="h-1.5 w-1.5 rotate-45 bg-black dark:bg-white"></div>
+             <span class="font-mono text-[8px] font-black uppercase tracking-[0.45em] text-black/60 dark:text-white/60">
+               {{ locale === 'ru' ? 'Прогноз капитала' : 'Capital Forecast' }}
+             </span>
+           </div>
+           <span class="font-mono text-[8px] font-black uppercase tracking-[0.3em]" :class="forecastConfidenceClass">
+             {{ forecastConfidenceLabel }}
+           </span>
+         </div>
+
+         <div class="grid grid-cols-1 divide-y divide-black/10 dark:divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P50</div>
+             <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
+               {{ formatForecastMoney(protocolForecast.capitalQuantiles.p50) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px]" :class="protocolForecast.quantiles.p50 >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'">
+               {{ formatForecastPercent(protocolForecast.quantiles.p50) }}
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P25 / P75</div>
+             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
+               {{ formatForecastPercent(protocolForecast.quantiles.p25) }} ... {{ formatForecastPercent(protocolForecast.quantiles.p75) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               {{ protocolForecast.horizonTrades }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
+               {{ locale === 'ru' ? 'Шанс плюса' : 'Profit odds' }}
+             </div>
+             <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
+               {{ formatForecastPercent(protocolForecast.probabilityProfit, false) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               {{ protocolForecastLoading ? (locale === 'ru' ? 'загрузка' : 'loading') : `${protocolForecast.matchesCount ?? protocolForecast.simulationsCount} matches / ${protocolForecast.sourceFilesCount ?? 0} files` }}
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
+               {{ locale === 'ru' ? 'DD > 10%' : 'DD > 10%' }}
+             </div>
+             <div class="mt-2 font-mono text-lg font-black text-red-600 dark:text-red-300">
+               {{ formatForecastPercent(protocolForecast.probabilityDrawdownOver10, false) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               {{ formatForecastPercent(protocolForecast.metrics.currentDrawdownPct) }} now
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
+               {{ locale === 'ru' ? 'Профиль' : 'Profile' }}
+             </div>
+             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
+               PF {{ formatForecastNumber(protocolForecast.metrics.profitFactor, 2) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               WR {{ formatForecastPercent(protocolForecast.metrics.winRate, false) }} / {{ protocolForecast.metrics.tradeCount }}T
+             </div>
+           </div>
+         </div>
+
+         <div v-if="protocolForecast.status === 'insufficient-data'" class="border-t border-black/10 dark:border-white/10 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-amber-600 dark:text-amber-300">
+           {{ protocolForecast.message }}
+         </div>
+       </div>
     </div>
 
 
@@ -499,6 +575,12 @@ import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
+import {
+  calculateCurrentCapital,
+  calculateProtocolForecast,
+  createEmptyProtocolForecast
+} from '~/widgets/genesis/model/protocolForecast'
+import type { ProtocolForecastResult } from '~/widgets/genesis/model/protocolForecast'
 
 const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
 
@@ -914,6 +996,86 @@ const complianceDotColor = computed(() => {
   return null;
 })
 
+const protocolForecast = ref<ProtocolForecastResult>(createEmptyProtocolForecast())
+const protocolForecastLoading = ref(false)
+let protocolForecastRequestId = 0
+
+const refreshProtocolForecast = async () => {
+  const requestId = protocolForecastRequestId + 1
+  protocolForecastRequestId = requestId
+
+  const baseCapital = tradeStore.getInitialDeposit(selectedStrategyId.value)
+  const currentCapital = calculateCurrentCapital(currentTrades.value, baseCapital)
+
+  protocolForecastLoading.value = true
+  protocolForecast.value = createEmptyProtocolForecast({
+    currentCapital,
+    message: locale.value === 'ru'
+      ? 'Загружаю историческую базу myfxbook/mql4/mql5.'
+      : 'Loading myfxbook/mql4/mql5 historical base.'
+  })
+
+  try {
+    const result = await calculateProtocolForecast({
+      trades: currentTrades.value,
+      currentCapital
+    })
+
+    if (requestId === protocolForecastRequestId) {
+      protocolForecast.value = result
+    }
+  } catch (error) {
+    if (requestId === protocolForecastRequestId) {
+      protocolForecast.value = createEmptyProtocolForecast({
+        currentCapital,
+        message: locale.value === 'ru'
+          ? 'Не удалось собрать исторический прогноз из myfxbook/mql4/mql5.'
+          : 'Unable to build the historical myfxbook/mql4/mql5 forecast.'
+      })
+    }
+  } finally {
+    if (requestId === protocolForecastRequestId) {
+      protocolForecastLoading.value = false
+    }
+  }
+}
+
+const forecastConfidenceLabel = computed(() => {
+  if (locale.value === 'ru') {
+    if (protocolForecast.value.confidence === 'high') return 'Высокая уверенность'
+    if (protocolForecast.value.confidence === 'medium') return 'Средняя уверенность'
+    return 'Низкая уверенность'
+  }
+
+  if (protocolForecast.value.confidence === 'high') return 'High confidence'
+  if (protocolForecast.value.confidence === 'medium') return 'Medium confidence'
+  return 'Low confidence'
+})
+
+const forecastConfidenceClass = computed(() => {
+  if (protocolForecast.value.confidence === 'high') return 'text-emerald-600 dark:text-emerald-300'
+  if (protocolForecast.value.confidence === 'medium') return 'text-amber-600 dark:text-amber-300'
+  return 'text-red-600 dark:text-red-300'
+})
+
+const formatForecastNumber = (value: number, digits = 1) => {
+  if (!Number.isFinite(value)) return '∞'
+  return new Intl.NumberFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(value)
+}
+
+const formatForecastPercent = (value: number, signed = true) => {
+  const sign = signed && value > 0 ? '+' : ''
+  return `${sign}${formatForecastNumber(value, 1)}%`
+}
+
+const formatForecastMoney = (value: number) => {
+  const sign = value < 0 ? '-$' : '$'
+  return `${sign}${formatForecastNumber(Math.abs(value), 0)}`
+}
+
 const calculateRR = (trade: any) => {
   if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'
   const entry = +trade.entry
@@ -1281,6 +1443,10 @@ const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }
 })
+
+watch([selectedStrategyId, currentTrades, locale], () => {
+  void refreshProtocolForecast()
+}, { immediate: true, deep: true })
 
 const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()
