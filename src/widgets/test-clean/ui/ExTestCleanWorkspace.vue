@@ -44,7 +44,7 @@
 
                 <!-- Log -->
                 <div v-else-if="currentGenesisMode === 'log'" key="log" class="w-full h-full">
-                   <ExGenesisLog @exit="clearMode" @nodeMapState="isNodeMapActive = $event" />
+                   <ExGenesisLog @exit="clearMode" @nodeMapState="isNodeMapActive = $event" @hudState="isHudActive = $event" />
                 </div>
 
                 <!-- Default Placeholder -->
@@ -72,7 +72,7 @@
 
      <!-- Global Bottom Right Label -->
      <button 
-       v-if="activeTab && !isNodeMapActive" 
+       v-if="activeTab && !isNodeMapActive && isHudActive" 
        @click="goBack"
        class="fixed bottom-8 right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity cursor-pointer z-[5000] outline-none"
      >
@@ -130,6 +130,7 @@ const { hasInitialized, isAssembled, showBloom, isTesseractEnabled, isNodeMapAct
 const activeTab = ref('')
 const showPaywall = ref(false)
 const workspaceRoot = ref(null)
+const isHudActive = ref(true)
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))

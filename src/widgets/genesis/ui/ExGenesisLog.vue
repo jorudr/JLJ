@@ -20,15 +20,41 @@
       <!-- CUBE LAYER (UI ONLY) -->
       <div v-if="viewType === 'cube'" class="w-full h-full absolute inset-0 transition-opacity duration-700 pointer-events-none opacity-100 z-40">
         
-        <!-- HUD Telemetry -->
-        <div class="absolute top-8 right-8 flex flex-col items-end space-y-1 opacity-20 pointer-events-none">
-           <span class="text-[8px] font-mono tracking-widest uppercase text-slate-400">{{ t('genesis.virtualLog.cubeTelemetry') }}</span>
-           <div class="h-px w-32 bg-slate-500/50"></div>
-           <span class="text-[7px] font-mono tracking-widest uppercase text-slate-400">{{ t('genesis.virtualLog.facet') }}: {{ currentFace + 1 }} / {{ t('genesis.virtualLog.status') }}: {{ isTransitioning ? t('genesis.virtualLog.rotating') : t('genesis.virtualLog.locked') }}</span>
-        </div>
+        <!-- TOP CONTROLS (HUD & COMPLIANCE) -->
+        <div class="absolute top-8 left-6 flex flex-row space-x-3 pointer-events-auto transition-all duration-500 z-[10000]"
+             :class="!isHudVisible ? 'opacity-0 hover:opacity-100' : 'opacity-100'">
+           
+           <!-- HUD Toggle -->
+           <button @click="isHudVisible = !isHudVisible" 
+                   class="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center transition-all bg-white/5 dark:bg-black/5 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                   :class="isHudVisible ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/40'"
+                   title="Toggle HUD">
+              <svg v-if="isHudVisible" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                 <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                 <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+           </button>
 
+           <!-- Compliance Toggle -->
+           <button @click="showComplianceStatus = !showComplianceStatus" 
+                   class="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
+                   :class="showComplianceStatus 
+                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
+                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
+                   title="Toggle Compliance Status">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <rect x="18" y="3" width="4" height="18"></rect>
+                 <rect x="10" y="8" width="4" height="13"></rect>
+                 <rect x="2" y="13" width="4" height="8"></rect>
+              </svg>
+           </button>
+        </div>
         <!-- Facet Navigation -->
-        <div v-if="activeFaceIndices.length > 1" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto">
+        <div v-if="activeFaceIndices.length > 1 && isHudVisible" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto">
            <div class="flex items-center space-x-12">
               <div class="flex flex-col items-center">
                  <div class="flex space-x-2 mt-2">
@@ -42,7 +68,7 @@
         </div>
         <!-- Cube Search Query Overlay -->
         <Transition name="fade">
-          <div v-if="showCubeSearchText && cubeSearchQuery" class="absolute inset-0 flex items-center justify-center pointer-events-none z-[50]">
+          <div v-if="showCubeSearchText && cubeSearchQuery && isHudVisible" class="absolute inset-0 flex items-center justify-center pointer-events-none z-[50]">
             <span class="text-[15vw] font-bold text-white opacity-30 tracking-widest uppercase font-mono break-all text-center px-12 leading-none" style="text-shadow: 0 0 40px rgba(255,255,255,0.2);">
               {{ cubeSearchQuery }}
             </span>
@@ -58,7 +84,7 @@
       </div>
 
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
-      <div class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto">
+      <div v-show="isHudVisible" class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto">
          <div class="flex items-center space-x-2 p-1.5 border border-black/10 dark:border-white/10 bg-white/5 dark:bg-black/5 backdrop-blur-xl relative">
             <!-- Brackets -->
             <div class="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-black/40 dark:border-white/40"></div>
@@ -228,65 +254,22 @@
       @close="showNodeMap = false; showExtraDetails = false" 
     />
 
-    <!-- LEFT EDGE COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube'" class="absolute left-0 top-1/2 -translate-y-1/2 z-[9000] flex flex-col pointer-events-auto group/compliance">
-       <div class="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-md opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 border-r border-black/5 dark:border-white/10"></div>
-       
-       <!-- Gothic Corners (No Top-Left, Light Variant) -->
-       <ExGothicCorners variant="light" :show-top-left="false" class="text-black dark:text-white opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 pointer-events-none z-10" />
-       
-       <div class="relative w-64 p-6 opacity-20 group-hover/compliance:opacity-100 transition-opacity duration-500 flex flex-col space-y-6 z-20">
-          <span class="text-[9px] font-mono tracking-[0.3em] uppercase text-black dark:text-white/60 mb-2 border-b border-black/20 dark:border-white/20 pb-2">{{ locale === 'ru' ? 'СТАТУС СООТВЕТСТВИЯ' : 'COMPLIANCE_STATUS' }}</span>
-          
-          <!-- Risk Per Trade -->
-          <div class="flex flex-col space-y-2">
-             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
-                <span>{{ locale === 'ru' ? 'РИСК_НА_СДЕЛКУ' : 'Risk_Per_Trade' }}</span>
-                <span :class="complianceStats.riskPerTrade >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.riskPerTrade.toFixed(0) }}%</span>
-             </div>
-             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
-                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.riskPerTrade}%` }"></div>
-             </div>
-          </div>
-
-          <!-- Risk Per Session -->
-          <div class="flex flex-col space-y-2">
-             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
-                <span>{{ locale === 'ru' ? 'РИСК_НА_СЕССИЮ' : 'Risk_Per_Session' }}</span>
-                <span :class="complianceStats.riskPerSession >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.riskPerSession.toFixed(0) }}%</span>
-             </div>
-             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
-                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.riskPerSession}%` }"></div>
-             </div>
-          </div>
-
-          <!-- Trading Style -->
-          <div class="flex flex-col space-y-2">
-             <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/60">
-                <span>{{ locale === 'ru' ? 'СТИЛЬ_ТОРГОВЛИ' : 'Trading_Style' }}</span>
-                <span :class="complianceStats.tradingStyle >= 80 ? 'text-emerald-500' : 'text-rose-500'">{{ complianceStats.tradingStyle.toFixed(0) }}%</span>
-             </div>
-             <div class="w-full h-0.5 bg-black/10 dark:bg-white/10">
-                <div class="h-full bg-black dark:bg-white transition-all duration-1000" :style="{ width: `${complianceStats.tradingStyle}%` }"></div>
-             </div>
-          </div>
-
-          <div class="h-px w-full bg-black/10 dark:bg-white/10 my-4"></div>
-
-          <!-- Emotional State -->
-          <div class="flex flex-col space-y-2">
-             <span class="text-[8px] font-mono uppercase tracking-[0.2em] text-black/60 dark:text-white/60">{{ locale === 'ru' ? 'Нейростатус (Последние 5)' : 'Neural Status (Last 5)' }}</span>
-             <div class="flex items-center space-x-3 mt-1">
-                <div class="w-2 h-2 rounded-full animate-pulse" :class="emotionalStatus.colorClass"></div>
-                <span class="text-[10px] font-mono uppercase font-black tracking-widest" :class="emotionalStatus.textClass">{{ locale === 'ru' ? (emotionalStatus.label === 'NEGATIVE' ? 'НЕГАТИВНЫЙ' : emotionalStatus.label === 'POSITIVE' ? 'ПОЗИТИВНЫЙ' : 'НЕЙТРАЛЬНЫЙ') : emotionalStatus.label }}</span>
-             </div>
-          </div>
-       </div>
+    <!-- TOP CENTER COMPLIANCE DASHBOARD -->
+    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
+       <OpenStrategyMetrics
+         :is-dark="isDark"
+         :minimal="true"
+         :metrics="complianceMetricsConfigs"
+         :values="complianceMetricsValues"
+         strategy-name="Protocol_Compliance"
+         :is-live="true"
+         :editable="false"
+       />
     </div>
 
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700">
+    <div v-if="!showNodeMap && isHudVisible" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700">
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
@@ -509,8 +492,10 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
+import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
+import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 
-const emit = defineEmits(['exit', 'nodeMapState'])
+const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
@@ -620,9 +605,15 @@ const showExtraDetails = ref(false)
 const panelInitialPage = ref<number | undefined>(undefined)
 const panelInitialNoteId = ref<string | undefined>(undefined)
 const showNodeMap = ref(false)
+const isHudVisible = ref(true)
+const showComplianceStatus = ref(false)
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
 const imageLoadError = ref(false)
+
+watch(isHudVisible, (val) => {
+  emit('hudState', val)
+})
 const showPaywall = ref(false)
 
 const openNodeMap = () => {
@@ -793,15 +784,13 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
 
 const emotionalStatus = computed(() => {
   const trades = currentTrades.value;
-  const sorted = [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const last5 = sorted.slice(0, 5);
   
-  if (last5.length === 0) return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  if (trades.length === 0) return { score: 60, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
 
   let totalScore = 0;
   let count = 0;
 
-  last5.forEach(t => {
+  trades.forEach(t => {
     const emotions = t.emotions || [];
     if (emotions.length > 0) {
       let tradeScore = 60;
@@ -815,14 +804,89 @@ const emotionalStatus = computed(() => {
     }
   });
 
-  if (count === 0) return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  if (count === 0) return { score: 60, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
   
   const avg = totalScore / count;
   
-  if (avg < 40) return { label: 'NEGATIVE', colorClass: 'bg-rose-500', textClass: 'text-rose-500' };
-  if (avg > 70) return { label: 'POSITIVE', colorClass: 'bg-emerald-500', textClass: 'text-emerald-500' };
-  return { label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  if (avg < 40) return { score: avg, label: 'NEGATIVE', colorClass: 'bg-rose-500', textClass: 'text-rose-500' };
+  if (avg > 70) return { score: avg, label: 'POSITIVE', colorClass: 'bg-emerald-500', textClass: 'text-emerald-500' };
+  return { score: avg, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
 });
+
+const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
+  {
+    key: 'riskPerTrade',
+    label: locale.value === 'ru' ? 'РИСК_НА_СДЕЛКУ' : 'Risk_Per_Trade',
+    sub: 'Compliance',
+    desc: 'Adherence to max risk per trade.',
+    formula: 'actual / limit',
+    valStr: (m) => `${Math.round(m.riskPerTrade)}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.riskPerTrade >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.riskPerTrade >= 80 ? 'Optimal' : 'Violation',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  },
+  {
+    key: 'riskPerSession',
+    label: locale.value === 'ru' ? 'РИСК_НА_СЕССИЮ' : 'Risk_Per_Session',
+    sub: 'Compliance',
+    desc: 'Adherence to session risk limits.',
+    formula: 'actual / limit',
+    valStr: (m) => `${Math.round(m.riskPerSession)}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.riskPerSession >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.riskPerSession >= 80 ? 'Optimal' : 'Violation',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  },
+  {
+    key: 'tradingStyle',
+    label: locale.value === 'ru' ? 'СТИЛЬ_ТОРГОВЛИ' : 'Trading_Style',
+    sub: 'Compliance',
+    desc: 'Adherence to defined trading style.',
+    formula: 'actual / limit',
+    valStr: (m) => `${Math.round(m.tradingStyle)}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.tradingStyle >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.tradingStyle >= 80 ? 'Aligned' : 'Drifting',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  },
+  {
+    key: 'emotionalState',
+    label: locale.value === 'ru' ? 'НЕЙРОСТАТУС' : 'Neural_Status',
+    sub: 'Overall',
+    desc: 'Emotional stability.',
+    formula: 'avg(emotions)',
+    valStr: (m) => m.emotionalStateLabel,
+    colorClass: () => '',
+    colorVal: (m, isDark) => {
+      if (m.emotionalStateScore > 60) return isDark ? '#34d399' : '#059669';
+      if (m.emotionalStateScore > 40) return isDark ? '#fcd34d' : '#fbbf24';
+      return isDark ? '#f87171' : '#dc2626';
+    },
+    evalStr: (m) => m.emotionalStateLabel,
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  }
+])
+
+const complianceMetricsValues = computed(() => {
+  return {
+    riskPerTrade: complianceStats.value.riskPerTrade,
+    riskPerSession: complianceStats.value.riskPerSession,
+    tradingStyle: complianceStats.value.tradingStyle,
+    emotionalStateScore: emotionalStatus.value.score || 50,
+    emotionalStateLabel: locale.value === 'ru' 
+      ? (emotionalStatus.value.label === 'NEGATIVE' ? 'НЕГАТИВНЫЙ' : emotionalStatus.value.label === 'POSITIVE' ? 'ПОЗИТИВНЫЙ' : 'НЕЙТРАЛЬНЫЙ') 
+      : emotionalStatus.value.label
+  }
+})
 
 const calculateRR = (trade: any) => {
   if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'

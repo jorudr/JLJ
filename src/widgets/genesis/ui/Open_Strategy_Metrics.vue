@@ -1,8 +1,8 @@
 <template>
-  <div class="osp-metrics-panel font-mono" :class="isDark ? 'osp-dark' : 'osp-light'">
+  <div class="osp-metrics-panel font-mono" :class="[isDark ? 'osp-dark' : 'osp-light', { 'osp-minimal': minimal }]">
 
     <!-- PANEL HEADER -->
-    <div class="osp-header">
+    <div class="osp-header" v-if="!minimal">
       <div class="osp-header-left">
         <div class="osp-diamond" :class="{ 'osp-diamond--pulse': isLive }"></div>
         <div class="osp-header-titles">
@@ -29,13 +29,13 @@
       <template v-for="(group, idx) in groupedMetrics" :key="group.name">
         <div class="osp-category-section">
           <!-- Category Header -->
-          <div class="osp-category-header">
+          <div class="osp-category-header" v-if="!minimal">
             <div class="osp-category-line"></div>
             <span class="osp-label-micro">{{ ['I', 'II', 'III', 'IV', 'V'][idx] || '*' }}. {{ group.name }}_Metrics</span>
           </div>
 
           <!-- Category Grid -->
-          <div class="osp-kpi-grid">
+          <div class="osp-kpi-grid" :style="minimal ? { gridTemplateColumns: `repeat(${group.items?.length || 0}, 1fr)` } : {}">
             <div
               v-for="kpi in group.items"
               :key="kpi.key"
@@ -74,7 +74,7 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="osp-footer">
+    <div class="osp-footer" v-if="!minimal">
       <div class="osp-footer-stat">
         <span class="osp-label-nano osp-muted">Active_Metrics</span>
         <span class="osp-footer-val">{{ metrics.length }}</span>
@@ -112,6 +112,7 @@ interface Props {
   metrics?: MetricConfig[];
   values?: any;
   editable?: boolean;
+  minimal?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -121,7 +122,8 @@ const props = withDefaults(defineProps<Props>(), {
   version: 'v2.0',
   metrics: () => [],
   values: () => ({}),
-  editable: true
+  editable: true,
+  minimal: false
 })
 
 defineEmits(['edit'])
@@ -445,5 +447,16 @@ const groupedMetrics = computed(() => {
 @media (max-width: 480px) {
   .osp-kpi-grid { grid-template-columns: 1fr; }
   .osp-kpi-card { border-right: none !important; }
+}
+
+/* Minimal mode overrides */
+.osp-minimal.osp-metrics-panel {
+  padding: 0;
+}
+.osp-minimal .osp-kpi-card {
+  padding: 8px 12px 6px;
+}
+.osp-minimal .osp-kpi-inner {
+  gap: 2px;
 }
 </style>

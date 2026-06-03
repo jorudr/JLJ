@@ -802,6 +802,30 @@
           </div>
         </section>
 
+        <!-- SECTION 24: COMPLIANCE_STATUS -->
+        <section class="flex flex-col space-y-12 pb-64">
+          <div class="flex items-center space-x-6 text-theme-text">
+            <span class="text-[10px] font-mono tracking-[0.4em] opacity-30 uppercase">24 // Compliance_Status</span>
+            <div class="flex-grow h-px bg-theme-border"></div>
+          </div>
+
+          <div class="flex flex-col space-y-8">
+            <ExText variant="body" class="max-w-2xl">
+              Compliance status telemetry showing adherence to predefined risk and style parameters.
+            </ExText>
+
+            <OpenStrategyMetrics
+              :is-dark="isDark"
+              strategy-name="Protocol_Compliance"
+              :is-live="true"
+              :minimal="true"
+              :metrics="mockComplianceConfigs"
+              :values="mockComplianceValues"
+              @edit="handleEditMetrics"
+            />
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
@@ -909,6 +933,57 @@ const mockMetricsValues = {
   profitFactor: 2.56,
   maxDrawdown: -8.4,
   sharpeRatio: 1.82
+}
+
+const mockComplianceConfigs: MetricConfig[] = [
+  {
+    key: 'riskPerTrade',
+    label: 'Risk_Per_Trade',
+    sub: 'Compliance',
+    desc: 'Adherence to max risk per trade.',
+    formula: 'actual / limit',
+    valStr: (m) => `${m.riskPerTrade}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.riskPerTrade === 100 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.riskPerTrade === 100 ? 'Optimal' : 'Violation',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  },
+  {
+    key: 'riskPerSession',
+    label: 'Risk_Per_Session',
+    sub: 'Compliance',
+    desc: 'Adherence to session risk limits.',
+    formula: 'actual / limit',
+    valStr: (m) => `${m.riskPerSession}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.riskPerSession >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.riskPerSession >= 80 ? 'Optimal' : 'Violation',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  },
+  {
+    key: 'tradingStyle',
+    label: 'Trading_Style',
+    sub: 'Compliance',
+    desc: 'Adherence to defined trading style.',
+    formula: 'actual / limit',
+    valStr: (m) => `${m.tradingStyle}%`,
+    colorClass: () => '',
+    colorVal: (m, isDark) => m.tradingStyle >= 90 ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#f87171' : '#dc2626'),
+    evalStr: (m) => m.tradingStyle >= 90 ? 'Aligned' : 'Drifting',
+    evalClass: () => '',
+    benchmarks: [],
+    category: 'Compliance'
+  }
+]
+
+const mockComplianceValues = {
+  riskPerTrade: 100,
+  riskPerSession: 85,
+  tradingStyle: 92
 }
 
 const customCondition = ref({
