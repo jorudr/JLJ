@@ -68,7 +68,7 @@
                  <path d="M3 17l5-5 4 4 8-9"></path>
                  <path d="M17 7h3v3"></path>
               </svg>
-              <div v-if="protocolForecastLoading"
+              <div v-if="patternForecastLoading"
                    class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.55)]">
               </div>
            </button>
@@ -292,151 +292,14 @@
       class="absolute left-1/2 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
       :class="showComplianceStatus ? 'top-[8.5rem]' : 'top-8'"
     >
-       <div class="border border-black/10 dark:border-white/10 bg-white/90 dark:bg-[#070707]/90 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
-         <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-5 py-3">
-           <div class="flex items-center gap-3">
-             <div class="h-1.5 w-1.5 rotate-45 bg-black dark:bg-white"></div>
-             <span class="font-mono text-[8px] font-black uppercase tracking-[0.45em] text-black/60 dark:text-white/60">
-               {{ locale === 'ru' ? 'Прогноз капитала' : 'Capital Forecast' }}
-             </span>
-           </div>
-           <span class="font-mono text-[8px] font-black uppercase tracking-[0.3em]" :class="forecastConfidenceClass">
-             {{ forecastConfidenceLabel }}
-           </span>
-         </div>
-
-         <div v-if="protocolForecastLoading" class="border-b border-black/10 dark:border-white/10 px-5 py-3">
-           <div class="flex items-center justify-between gap-4">
-             <div class="flex items-center gap-3">
-               <div class="h-2 w-2 animate-pulse rotate-45 bg-amber-500 dark:bg-amber-300"></div>
-               <span class="font-mono text-[9px] font-black uppercase tracking-[0.28em] text-amber-700 dark:text-amber-200">
-                 {{ locale === 'ru' ? 'Идет анализ протокола и исторической базы' : 'Analyzing protocol and historical base' }}
-               </span>
-             </div>
-             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'загрузка' : 'loading' }}
-             </span>
-           </div>
-           <div class="mt-3 h-[3px] overflow-hidden bg-black/8 dark:bg-white/10">
-             <div class="forecast-loading-bar h-full bg-gradient-to-r from-amber-500 via-black to-amber-500 dark:from-amber-300 dark:via-white dark:to-amber-300"></div>
-           </div>
-         </div>
-
-         <div class="grid grid-cols-1 divide-y divide-black/10 dark:divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P50 / {{ protocolForecast.previewHorizonTrades }}T</div>
-             <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
-               {{ formatForecastMoney(protocolForecast.previewCapitalQuantiles.p50) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px]" :class="protocolForecast.previewQuantiles.p50 >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'">
-               {{ formatForecastPercent(protocolForecast.previewQuantiles.p50) }}
-             </div>
-           </div>
-
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P25 / P75 / {{ protocolForecast.previewHorizonTrades }}T</div>
-             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-               {{ formatForecastPercent(protocolForecast.previewQuantiles.p25) }} ... {{ formatForecastPercent(protocolForecast.previewQuantiles.p75) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               {{ locale === 'ru' ? 'Полный слой' : 'Full layer' }} {{ protocolForecast.horizonTrades }}T
-             </div>
-           </div>
-
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'Вероятный пик' : 'Likely peak' }}
-             </div>
-             <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
-               {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p50) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               P10 {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p10) }} / P90 {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p90) }}
-             </div>
-           </div>
-
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'Вероятный минимум' : 'Likely trough' }}
-             </div>
-             <div class="mt-2 font-mono text-lg font-black text-red-600 dark:text-red-300">
-               {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p50) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               P10 {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p10) }} / P90 {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p90) }}
-             </div>
-           </div>
-
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'Слой / шанс' : 'Layer / odds' }}
-             </div>
-             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-               {{ protocolForecast.horizonTrades }}T / {{ formatForecastPercent(protocolForecast.probabilityProfit, false) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               {{ protocolForecastLoading ? (locale === 'ru' ? 'загрузка' : 'loading') : `${protocolForecast.matchesCount ?? protocolForecast.simulationsCount} matches / ${protocolForecast.sourceFilesCount ?? 0} files` }}
-             </div>
-           </div>
-         </div>
-
-         <div class="border-t border-black/10 dark:border-white/10 px-5 py-4">
-           <div class="flex items-center justify-between gap-4">
-             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'Путь капитала по следующим сделкам' : 'Capital path over next trades' }}
-             </span>
-             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-               {{ locale === 'ru' ? 'Жесткий стрик может тянуть медиану вниз' : 'Loss streaks can pull the median down' }}
-             </span>
-           </div>
-
-           <div class="mt-4">
-             <svg viewBox="0 0 100 36" class="h-28 w-full">
-               <polyline
-                 v-if="forecastPreviewP90Path"
-                 :points="forecastPreviewP90Path"
-                 fill="none"
-                 stroke="rgba(16,185,129,0.28)"
-                 stroke-width="1.25"
-               />
-               <polyline
-                 v-if="forecastPreviewP10Path"
-                 :points="forecastPreviewP10Path"
-                 fill="none"
-                 stroke="rgba(239,68,68,0.28)"
-                 stroke-width="1.25"
-               />
-               <polyline
-                 v-if="forecastPreviewP50Path"
-                 :points="forecastPreviewP50Path"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="1.7"
-                 class="text-black dark:text-white"
-               />
-             </svg>
-           </div>
-
-           <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4">
-             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'Текущий DD' : 'Current DD' }}: {{ formatForecastPercent(protocolForecast.metrics.currentDrawdownPct) }}
-             </div>
-             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'DD > 10%' : 'DD > 10%' }}: {{ formatForecastPercent(protocolForecast.probabilityDrawdownOver10, false) }}
-             </div>
-             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'PF профиля' : 'Profile PF' }}: {{ formatForecastNumber(protocolForecast.metrics.profitFactor, 2) }}
-             </div>
-             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-               {{ locale === 'ru' ? 'WR профиля' : 'Profile WR' }}: {{ formatForecastPercent(protocolForecast.metrics.winRate, false) }}
-             </div>
-           </div>
-         </div>
-
-         <div v-if="protocolForecast.status === 'insufficient-data'" class="border-t border-black/10 dark:border-white/10 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.25em] text-amber-600 dark:text-amber-300">
-           {{ protocolForecast.message }}
-         </div>
-       </div>
+      <ExPatternForecastPanel
+        :visible="showCapitalForecast"
+        :trades="currentTrades"
+        :initial-capital="tradeStore.getInitialDeposit(selectedStrategyId) || 1000"
+        :strategy-id="selectedStrategyId"
+        :strategy-name="selectedStrategy.name"
+        @loading-change="patternForecastLoading = $event"
+      />
     </div>
 
 
@@ -663,15 +526,10 @@ import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
+import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
-import {
-  calculateCurrentCapital,
-  calculateProtocolForecast,
-  createEmptyProtocolForecast
-} from '~/widgets/genesis/model/protocolForecast'
-import type { ProtocolForecastResult } from '~/widgets/genesis/model/protocolForecast'
 
 const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
 
@@ -683,6 +541,7 @@ const authStore = useAuthStore()
 const showShareCardModal = ref(false)
 const isGeneratingPng = ref(false)
 const showCapitalForecast = ref(false)
+const patternForecastLoading = ref(false)
 
 const tradeEfficiency = computed(() => {
   return mappedTradeForAnalysis.value?.percentileRank ?? 0
@@ -1092,120 +951,9 @@ const complianceDotColor = computed(() => {
   return null;
 })
 
-const protocolForecast = ref<ProtocolForecastResult>(createEmptyProtocolForecast())
-const protocolForecastLoading = ref(false)
-let protocolForecastRequestId = 0
-
-const refreshProtocolForecast = async () => {
-  const requestId = protocolForecastRequestId + 1
-  protocolForecastRequestId = requestId
-
-  const baseCapital = tradeStore.getInitialDeposit(selectedStrategyId.value)
-  const currentCapital = calculateCurrentCapital(currentTrades.value, baseCapital)
-
-  protocolForecastLoading.value = true
-  protocolForecast.value = createEmptyProtocolForecast({
-    currentCapital,
-    message: locale.value === 'ru'
-      ? 'Загружаю историческую базу myfxbook/mql4/mql5.'
-      : 'Loading myfxbook/mql4/mql5 historical base.'
-  })
-
-  try {
-    const result = await calculateProtocolForecast({
-      trades: currentTrades.value,
-      currentCapital
-    })
-
-    if (requestId === protocolForecastRequestId) {
-      protocolForecast.value = result
-    }
-  } catch (error) {
-    if (requestId === protocolForecastRequestId) {
-      protocolForecast.value = createEmptyProtocolForecast({
-        currentCapital,
-        message: locale.value === 'ru'
-          ? 'Не удалось собрать исторический прогноз из myfxbook/mql4/mql5.'
-          : 'Unable to build the historical myfxbook/mql4/mql5 forecast.'
-      })
-    }
-  } finally {
-    if (requestId === protocolForecastRequestId) {
-      protocolForecastLoading.value = false
-    }
-  }
-}
-
 const toggleCapitalForecast = () => {
   showCapitalForecast.value = !showCapitalForecast.value
-
-  if (showCapitalForecast.value) {
-    void refreshProtocolForecast()
-  }
 }
-
-const forecastConfidenceLabel = computed(() => {
-  if (locale.value === 'ru') {
-    if (protocolForecast.value.confidence === 'high') return 'Высокая уверенность'
-    if (protocolForecast.value.confidence === 'medium') return 'Средняя уверенность'
-    return 'Низкая уверенность'
-  }
-
-  if (protocolForecast.value.confidence === 'high') return 'High confidence'
-  if (protocolForecast.value.confidence === 'medium') return 'Medium confidence'
-  return 'Low confidence'
-})
-
-const forecastConfidenceClass = computed(() => {
-  if (protocolForecast.value.confidence === 'high') return 'text-emerald-600 dark:text-emerald-300'
-  if (protocolForecast.value.confidence === 'medium') return 'text-amber-600 dark:text-amber-300'
-  return 'text-red-600 dark:text-red-300'
-})
-
-const formatForecastNumber = (value: number, digits = 1) => {
-  if (!Number.isFinite(value)) return '∞'
-  return new Intl.NumberFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits
-  }).format(value)
-}
-
-const formatForecastPercent = (value: number, signed = true) => {
-  const sign = signed && value > 0 ? '+' : ''
-  return `${sign}${formatForecastNumber(value, 1)}%`
-}
-
-const formatForecastMoney = (value: number) => {
-  const sign = value < 0 ? '-$' : '$'
-  return `${sign}${formatForecastNumber(Math.abs(value), 0)}`
-}
-
-const buildForecastPreviewPolyline = (band: 'p10' | 'p50' | 'p90') => {
-  const path = protocolForecast.value.previewPath
-  if (!path.length) return ''
-
-  const values = path
-    .map((point) => point.capital[band])
-    .filter(Number.isFinite)
-  if (!values.length) return ''
-
-  const minValue = Math.min(...values)
-  const maxValue = Math.max(...values)
-  const spread = Math.max(maxValue - minValue, 1)
-
-  return path
-    .map((point, index) => {
-      const x = path.length > 1 ? (index / (path.length - 1)) * 100 : 50
-      const value = point.capital[band]
-      const y = 31 - ((value - minValue) / spread) * 26
-      return `${x},${y}`
-    })
-    .join(' ')
-}
-
-const forecastPreviewP10Path = computed(() => buildForecastPreviewPolyline('p10'))
-const forecastPreviewP50Path = computed(() => buildForecastPreviewPolyline('p50'))
-const forecastPreviewP90Path = computed(() => buildForecastPreviewPolyline('p90'))
 
 const calculateRR = (trade: any) => {
   if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'
@@ -1574,12 +1322,6 @@ const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }
 })
-
-watch([selectedStrategyId, currentTrades, locale], () => {
-  if (showCapitalForecast.value) {
-    void refreshProtocolForecast()
-  }
-}, { deep: true })
 
 const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()

@@ -18,6 +18,8 @@ export interface ProtocolForecastMetrics {
   expectancyPct: number
   averageAbsReturnPct: number
   medianAbsReturnPct: number
+  averagePositiveReturnPct: number
+  averageNegativeReturnPctAbs: number
   payoffRatio: number
   averageRiskReward: number | null
   volatilityPct: number
@@ -37,6 +39,63 @@ export interface ProtocolForecastMetrics {
   returnSkewness: number
   symbolConcentrationTop1: number
   tailLossCvar95: number
+}
+
+export interface LifecycleForecastResult {
+  status: 'ready' | 'insufficient-data'
+  confidence: 'low' | 'medium' | 'high'
+  confidenceScore: number
+  message: string
+  quantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  capitalQuantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  probabilityProfit: number
+  probabilityDrawdownOver10: number
+  matchesCount: number
+  sourceFilesCount: number
+  medianTradeCount: number
+  medianDurationDays: number
+  medianMaxDrawdownPct: number
+  strengthFactorP50: number
+  baseQuantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+}
+
+export interface TacticalForecastDiagnostics {
+  userPerTradeExpectancyPct: number
+  userPerTradeExpectancyUsd: number
+  userAverageWinPct: number
+  userAverageLossPctAbs: number
+  amplitudeScaleP50: number
+  historicalShapePreviewQuantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  periods: Array<{
+    horizonTrades: number
+    userLinearEstimatePct: number
+    historicalShapeP50Pct: number
+    userScaledP50Pct: number
+  }>
 }
 
 export interface ProtocolForecastResult {
@@ -103,6 +162,8 @@ export interface ProtocolForecastResult {
   sourceFilesCount?: number
   amplitudeCalibrationFactor?: number
   amplitudeCalibrationWeight?: number
+  tacticalDiagnostics: TacticalForecastDiagnostics
+  lifecycle: LifecycleForecastResult
 }
 
 interface PreparedTrade {
@@ -140,6 +201,16 @@ interface HistoricalWindow {
   futureReturnPct: number
   futureMaxDrawdownPct: number
   futureReturnsPath: number[]
+}
+
+interface HistoricalLifecycleProfile {
+  sourceFile: string
+  sourceTier: HistoricalSourceTier
+  features: ProtocolForecastMetrics
+  totalReturnPct: number
+  maxDrawdownPct: number
+  tradeCount: number
+  durationDays: number
 }
 
 interface Normalizer {
@@ -193,9 +264,10 @@ type FeatureKey = keyof Pick<
   | 'tailLossCvar95'
 >
 
-const DEFAULT_HORIZON_TRADES = 30
-const DEFAULT_WINDOW_TRADES = 30
-const DEFAULT_TOP_MATCHES = 160
+const DEFAULT_HORIZON_TRADES = 20
+const DEFAULT_WINDOW_TRADES = 20
+const DEFAULT_TOP_MATCHES = 80
+const DEFAULT_LIFECYCLE_MATCHES = 48
 const MAX_WINDOWS_PER_FILE = 8
 const MIN_USER_TRADES = 8
 const AUXILIARY_HISTORICAL_FILE = '/data/historical/historical_data.csv'
@@ -205,27 +277,26 @@ const AUXILIARY_SOURCE_CANDIDATE_MULTIPLIER = 0.88
 const AUXILIARY_RETURN_CAP_PCT = 35
 const PRIMARY_DURATION_BONUS_MULTIPLIER = 0.94
 const PRIMARY_DURATION_PENALTY_MULTIPLIER = 1.08
-const AMPLITUDE_SCALE_MIN = 0.65
-const AMPLITUDE_SCALE_MAX = 1.75
+const AMPLITUDE_SCALE_MIN = 0.35
+const AMPLITUDE_SCALE_MAX = 4.5
 const FORECAST_REGIMES: ForecastRegime[] = [
-  { windowTrades: 30, horizonTrades: 30 },
   { windowTrades: 20, horizonTrades: 20 },
   { windowTrades: 10, horizonTrades: 10 }
 ]
 
-const FEATURE_WEIGHTS: Record<FeatureKey, number> = {
-  expectancyPct: 1.35,
-  profitFactor: 1.2,
-  winRate: 0.9,
-  payoffRatio: 1.0,
-  averageRiskReward: 0.65,
-  volatilityPct: 1.1,
+const TACTICAL_FEATURE_WEIGHTS: Record<FeatureKey, number> = {
+  expectancyPct: 0.8,
+  profitFactor: 1.25,
+  winRate: 1.0,
+  payoffRatio: 1.05,
+  averageRiskReward: 0.7,
+  volatilityPct: 0.85,
   maxDrawdownPct: 1.25,
   currentDrawdownPct: 1.1,
-  recentReturnPct: 1.1,
-  recentDrawdownPct: 1.05,
-  maxLossStreak: 0.8,
-  currentLossStreak: 0.55,
+  recentReturnPct: 0.65,
+  recentDrawdownPct: 1.1,
+  maxLossStreak: 1.0,
+  currentLossStreak: 0.9,
   tradeFrequencyPerWeek: 0.45,
   averageDurationHours: 0.45,
   recoveryFactor: 0.75,
@@ -238,8 +309,34 @@ const FEATURE_WEIGHTS: Record<FeatureKey, number> = {
   tailLossCvar95: 0.9
 }
 
+const LIFECYCLE_FEATURE_WEIGHTS: Record<FeatureKey, number> = {
+  expectancyPct: 0.95,
+  profitFactor: 1.3,
+  winRate: 0.95,
+  payoffRatio: 1.1,
+  averageRiskReward: 0.75,
+  volatilityPct: 0.75,
+  maxDrawdownPct: 1.35,
+  currentDrawdownPct: 0.3,
+  recentReturnPct: 0.25,
+  recentDrawdownPct: 0.25,
+  maxLossStreak: 0.9,
+  currentLossStreak: 0.25,
+  tradeFrequencyPerWeek: 0.55,
+  averageDurationHours: 0.5,
+  recoveryFactor: 0.95,
+  ulcerIndex: 1.0,
+  downsideDeviationPct: 1.0,
+  sortinoLike: 0.85,
+  equitySlope: 0.9,
+  returnSkewness: 0.4,
+  symbolConcentrationTop1: 0.4,
+  tailLossCvar95: 0.95
+}
+
 let historicalTimelinesPromise: Promise<HistoricalTimeline[]> | null = null
 const historicalWindowsPromises = new Map<string, Promise<HistoricalWindow[]>>()
+let historicalLifecycleProfilesPromise: Promise<HistoricalLifecycleProfile[]> | null = null
 
 export function calculateCurrentCapital(trades: DiaryEntry[], startingCapital: number) {
   const baseCapital = finitePositive(startingCapital) ? startingCapital : 1000
@@ -280,13 +377,15 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
   const initialHorizonTrades = regimes[0]?.horizonTrades ?? DEFAULT_HORIZON_TRADES
   const initialWindow = userTrades.slice(Math.max(0, userTrades.length - largestWindowTrades))
   const initialMetrics = calculateMetrics(initialWindow)
+  const lifecycleFallback = createEmptyLifecycleForecast(currentCapital)
 
   if (currentCapital <= 0) {
     return emptyForecast({
       currentCapital,
       horizonTrades: initialHorizonTrades,
       metrics: initialMetrics,
-      message: 'Текущий капитал меньше или равен нулю, прогноз недоступен.'
+      message: 'Текущий капитал меньше или равен нулю, прогноз недоступен.',
+      lifecycle: lifecycleFallback
     })
   }
 
@@ -295,86 +394,118 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
       currentCapital,
       horizonTrades: initialHorizonTrades,
       metrics: initialMetrics,
-      message: `Недостаточно закрытых сделок выбранного протокола для сравнения с исторической базой. Нужно хотя бы ${minimumRequiredTrades}.`
+      message: `Недостаточно закрытых сделок выбранного протокола для сравнения с исторической базой. Нужно хотя бы ${minimumRequiredTrades}.`,
+      lifecycle: createEmptyLifecycleForecast(
+        currentCapital,
+        `Недостаточно закрытых сделок выбранного протокола для lifecycle-анализа. Нужно хотя бы ${minimumRequiredTrades}.`
+      )
     })
   }
 
+  const lifecycleForecast = await safeBuildLifecycleForecast(userTrades, currentCapital)
   const candidate = await selectForecastCandidate(userTrades, regimes, topMatches)
   if (!candidate) {
     return emptyForecast({
       currentCapital,
       horizonTrades: initialHorizonTrades,
       metrics: initialMetrics,
-      message: 'Историческая база myfxbook/mql4/mql5/historical_data пока не дает подходящего слоя 30/20/10 для этого профиля.'
+      message: 'Историческая база myfxbook/mql4/mql5/historical_data пока не дает подходящего tactical-слоя 20/10 для этого профиля.',
+      lifecycle: lifecycleForecast
     })
   }
 
-  const { regime, userWindow, userMetrics, matches, sourceFilesCount, medianDistance } = candidate
-  const amplitudeCalibration = calculateAmplitudeCalibration(userWindow, userMetrics, matches)
-  const calibratedFuturePaths = matches.map((match) => calibrateFuturePath(
-    match.window.futureReturnsPath,
-    amplitudeCalibration.userAmplitudePct,
-    readAmplitudeMetric(match.window.features),
-    amplitudeCalibration.weight
-  ))
-  const futureReturns = calibratedFuturePaths.map(compoundReturns)
-  const futureCapitals = futureReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
-  const futureDrawdowns = matches.map((match) => calibrateFutureDrawdown(
-    match.window.futureMaxDrawdownPct,
-    amplitudeCalibration.userAmplitudePct,
-    readAmplitudeMetric(match.window.features),
-    amplitudeCalibration.weight
-  ))
-  const preview = buildPreviewForecast(currentCapital, calibratedFuturePaths, 10)
-  const auxiliaryMatchShare = percentage(matches.filter((match) => match.window.sourceTier === 'auxiliary').length, matches.length) / 100
-  const probabilityProfit = percentage(futureReturns.filter((value) => value > 0).length, futureReturns.length)
-  const probabilityDrawdownOver10 = percentage(futureDrawdowns.filter((value) => value <= -10).length, futureDrawdowns.length)
-  const confidenceScore = calculateConfidenceScore({
-    userTrades: userWindow.length,
-    windowTrades: regime.windowTrades,
-    matches: matches.length,
-    sourceFiles: sourceFilesCount,
-    medianDistance,
-    auxiliaryMatchShare
-  })
+  try {
+    const { regime, userWindow, userMetrics, matches, sourceFilesCount, medianDistance } = candidate
+    const matchWeights = buildMatchWeights(matches)
+    const amplitudeCalibration = calculateAmplitudeCalibration(userWindow, userMetrics, matches)
+    const rawFuturePaths = matches.map((match) => match.window.futureReturnsPath)
+    const calibratedFuturePaths = matches.map((match) => reshapeFuturePathForUser(
+      match.window.futureReturnsPath,
+      userMetrics,
+      match.window.features,
+      amplitudeCalibration.weight
+    ))
+    const futureReturns = calibratedFuturePaths.map(compoundReturns)
+    const futureCapitals = futureReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
+    const futureDrawdowns = matches.map((match) => calibrateFutureDrawdown(
+      match.window.futureMaxDrawdownPct,
+      userMetrics,
+      match.window.features,
+      amplitudeCalibration.weight
+    ))
+    const basePreview = buildPreviewForecast(currentCapital, rawFuturePaths, 10, matchWeights)
+    const preview = buildPreviewForecast(currentCapital, calibratedFuturePaths, 10, matchWeights)
+    const auxiliaryMatchShare = percentage(matches.filter((match) => match.window.sourceTier === 'auxiliary').length, matches.length) / 100
+    const probabilityProfit = weightedPercentage(futureReturns.map((value) => value > 0), matchWeights)
+    const probabilityDrawdownOver10 = weightedPercentage(futureDrawdowns.map((value) => value <= -10), matchWeights)
+    const confidenceScore = calculateConfidenceScore({
+      userTrades: userWindow.length,
+      windowTrades: regime.windowTrades,
+      matches: matches.length,
+      sourceFiles: sourceFilesCount,
+      medianDistance,
+      auxiliaryMatchShare
+    })
 
-  return {
-    status: 'ready',
-    confidence: confidenceLabel(confidenceScore),
-    confidenceScore,
-    message: auxiliaryMatchShare > 0
-      ? `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}, включая ослабленный execution-source historical_data.csv, с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`
-      : `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades} с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`,
-    horizonTrades: regime.horizonTrades,
-    currentCapital,
-    metrics: userMetrics,
-    quantiles: {
-      p10: quantile(futureReturns, 0.1),
-      p25: quantile(futureReturns, 0.25),
-      p50: quantile(futureReturns, 0.5),
-      p75: quantile(futureReturns, 0.75),
-      p90: quantile(futureReturns, 0.9)
-    },
-    capitalQuantiles: {
-      p10: quantile(futureCapitals, 0.1),
-      p25: quantile(futureCapitals, 0.25),
-      p50: quantile(futureCapitals, 0.5),
-      p75: quantile(futureCapitals, 0.75),
-      p90: quantile(futureCapitals, 0.9)
-    },
-    previewHorizonTrades: preview.previewHorizonTrades,
-    previewQuantiles: preview.previewQuantiles,
-    previewCapitalQuantiles: preview.previewCapitalQuantiles,
-    previewPeakCapitalQuantiles: preview.previewPeakCapitalQuantiles,
-    previewTroughCapitalQuantiles: preview.previewTroughCapitalQuantiles,
-    previewPath: preview.previewPath,
-    probabilityProfit,
-    probabilityDrawdownOver10,
-    simulationsCount: matches.length,
-    matchesCount: matches.length,
-    sourceFilesCount,
-    amplitudeCalibrationFactor: amplitudeCalibration.averageScale,
-    amplitudeCalibrationWeight: amplitudeCalibration.weight
+    return {
+      status: 'ready',
+      confidence: confidenceLabel(confidenceScore),
+      confidenceScore,
+      message: auxiliaryMatchShare > 0
+        ? `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}, включая ослабленный execution-source historical_data.csv, с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`
+        : `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades} с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`,
+      horizonTrades: regime.horizonTrades,
+      currentCapital,
+      metrics: userMetrics,
+      quantiles: {
+        p10: weightedQuantile(futureReturns, matchWeights, 0.1),
+        p25: weightedQuantile(futureReturns, matchWeights, 0.25),
+        p50: weightedQuantile(futureReturns, matchWeights, 0.5),
+        p75: weightedQuantile(futureReturns, matchWeights, 0.75),
+        p90: weightedQuantile(futureReturns, matchWeights, 0.9)
+      },
+      capitalQuantiles: {
+        p10: weightedQuantile(futureCapitals, matchWeights, 0.1),
+        p25: weightedQuantile(futureCapitals, matchWeights, 0.25),
+        p50: weightedQuantile(futureCapitals, matchWeights, 0.5),
+        p75: weightedQuantile(futureCapitals, matchWeights, 0.75),
+        p90: weightedQuantile(futureCapitals, matchWeights, 0.9)
+      },
+      previewHorizonTrades: preview.previewHorizonTrades,
+      previewQuantiles: preview.previewQuantiles,
+      previewCapitalQuantiles: preview.previewCapitalQuantiles,
+      previewPeakCapitalQuantiles: preview.previewPeakCapitalQuantiles,
+      previewTroughCapitalQuantiles: preview.previewTroughCapitalQuantiles,
+      previewPath: preview.previewPath,
+      probabilityProfit,
+      probabilityDrawdownOver10,
+      simulationsCount: matches.length,
+      matchesCount: matches.length,
+      sourceFilesCount,
+      amplitudeCalibrationFactor: amplitudeCalibration.averageScale,
+      amplitudeCalibrationWeight: amplitudeCalibration.weight,
+      tacticalDiagnostics: buildTacticalDiagnostics({
+        userMetrics,
+        currentCapital,
+        regime,
+        amplitudeScaleP50: amplitudeCalibration.averageScale,
+        basePreviewQuantiles: basePreview.previewQuantiles,
+        scaledPreviewQuantiles: preview.previewQuantiles,
+        fullHistoricalShapeP50Pct: weightedQuantile(matches.map((match) => match.window.futureReturnPct), matchWeights, 0.5),
+        fullUserScaledP50Pct: weightedQuantile(futureReturns, matchWeights, 0.5)
+      }),
+      lifecycle: lifecycleForecast
+    }
+  } catch (error) {
+    console.error('[protocolForecast] Tactical forecast failed:', error)
+    return emptyForecast({
+      currentCapital,
+      horizonTrades: candidate.regime.horizonTrades,
+      metrics: candidate.userMetrics,
+      message: 'Не удалось собрать tactical forecast. Lifecycle Forecast сохранен отдельно.',
+      tacticalDiagnostics: createEmptyTacticalDiagnostics(),
+      lifecycle: lifecycleForecast
+    })
   }
 }
 
@@ -426,8 +557,8 @@ async function buildForecastCandidate(
     return null
   }
 
-  const normalizers = buildNormalizers(historicalWindows)
-  const matches = selectNearestWindows(userMetrics, historicalWindows, normalizers, topMatches)
+  const normalizers = buildNormalizers(historicalWindows, TACTICAL_FEATURE_WEIGHTS)
+  const matches = selectNearestWindows(userMetrics, historicalWindows, normalizers, topMatches, TACTICAL_FEATURE_WEIGHTS)
   if (!matches.length) {
     return null
   }
@@ -765,6 +896,8 @@ function calculateMetrics(trades: PreparedTrade[]): ProtocolForecastMetrics {
   const profits = trades.map((trade) => trade.profit)
   const winningProfits = profits.filter((profit) => profit > 0)
   const losingProfits = profits.filter((profit) => profit < 0)
+  const positiveReturns = returns.filter((value) => value > 0)
+  const negativeReturnsAbs = returns.filter((value) => value < 0).map((value) => Math.abs(value))
   const grossProfit = sum(winningProfits)
   const grossLoss = Math.abs(sum(losingProfits))
   const averageWin = average(winningProfits)
@@ -783,6 +916,8 @@ function calculateMetrics(trades: PreparedTrade[]): ProtocolForecastMetrics {
     expectancyPct: average(returns),
     averageAbsReturnPct: average(absoluteReturns),
     medianAbsReturnPct: quantile(absoluteReturns, 0.5),
+    averagePositiveReturnPct: average(positiveReturns),
+    averageNegativeReturnPctAbs: average(negativeReturnsAbs),
     payoffRatio: averageLoss > 0 ? averageWin / averageLoss : averageWin > 0 ? Infinity : 0,
     averageRiskReward: rrValues.length ? average(rrValues) : null,
     volatilityPct: standardDeviation(returns),
@@ -821,12 +956,12 @@ function calculateAmplitudeCalibration(
     : 0
   const sampleWeight = clamp((userWindow.length - 8) / 22, 0, 1)
   const stabilityWeight = clamp(1 - userAmplitudeIqr / Math.max(userAmplitudePct * 2.5, 0.25), 0, 1)
-  const weight = clamp(sampleWeight * 0.65 + stabilityWeight * 0.35, 0, 0.8)
+  const weight = clamp(sampleWeight * 0.65 + stabilityWeight * 0.35, 0, 0.92)
 
+  const matchWeights = buildMatchWeights(matches)
   const scales = matches
     .map((match) => calculateBlendedAmplitudeScale(userAmplitudePct, readAmplitudeMetric(match.window.features), weight))
-    .filter(Number.isFinite)
-  const averageScale = scales.length ? average(scales) : 1
+  const averageScale = weightedAverage(scales, matchWeights, 1)
 
   return {
     userAmplitudePct,
@@ -853,39 +988,63 @@ function calculateBlendedAmplitudeScale(userAmplitudePct: number, historicalAmpl
   return 1 + (rawScale - 1) * weight
 }
 
-function calibrateFutureReturn(
-  futureReturnPct: number,
-  userAmplitudePct: number,
-  historicalAmplitudePct: number,
-  weight: number
-) {
-  return futureReturnPct * calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
-}
-
-function calibrateFuturePath(
+function reshapeFuturePathForUser(
   futureReturnsPath: number[],
-  userAmplitudePct: number,
-  historicalAmplitudePct: number,
+  userMetrics: ProtocolForecastMetrics,
+  historicalMetrics: ProtocolForecastMetrics,
   weight: number
 ) {
-  const scale = calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
-  return futureReturnsPath.map((returnPct) => returnPct * scale)
+  const positiveScale = calculateBlendedAmplitudeScale(
+    userMetrics.averagePositiveReturnPct,
+    historicalMetrics.averagePositiveReturnPct,
+    weight
+  )
+  const negativeScale = calculateBlendedAmplitudeScale(
+    userMetrics.averageNegativeReturnPctAbs,
+    historicalMetrics.averageNegativeReturnPctAbs,
+    weight
+  )
+  const volatilityScale = calculateBlendedAmplitudeScale(
+    Math.max(userMetrics.volatilityPct, userMetrics.averageAbsReturnPct),
+    Math.max(historicalMetrics.volatilityPct, historicalMetrics.averageAbsReturnPct),
+    weight * 0.4
+  )
+
+  return futureReturnsPath.map((returnPct) => {
+    if (returnPct > 0) {
+      return returnPct * positiveScale * volatilityScale
+    }
+    if (returnPct < 0) {
+      return returnPct * negativeScale * volatilityScale
+    }
+    return 0
+  })
 }
 
 function calibrateFutureDrawdown(
   futureDrawdownPct: number,
-  userAmplitudePct: number,
-  historicalAmplitudePct: number,
+  userMetrics: ProtocolForecastMetrics,
+  historicalMetrics: ProtocolForecastMetrics,
   weight: number
 ) {
   if (futureDrawdownPct >= 0) {
     return futureDrawdownPct
   }
 
-  return futureDrawdownPct * calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
+  const drawdownScale = calculateBlendedAmplitudeScale(
+    Math.max(Math.abs(userMetrics.maxDrawdownPct), userMetrics.averageNegativeReturnPctAbs),
+    Math.max(Math.abs(historicalMetrics.maxDrawdownPct), historicalMetrics.averageNegativeReturnPctAbs),
+    weight
+  )
+  return futureDrawdownPct * drawdownScale
 }
 
-function buildPreviewForecast(currentCapital: number, calibratedFuturePaths: number[][], requestedHorizonTrades: number) {
+function buildPreviewForecast(
+  currentCapital: number,
+  calibratedFuturePaths: number[][],
+  requestedHorizonTrades: number,
+  weights?: number[]
+) {
   const previewHorizonTrades = Math.max(1, Math.min(
     requestedHorizonTrades,
     ...calibratedFuturePaths.map((path) => path.length).filter((length) => length > 0)
@@ -905,11 +1064,11 @@ function buildPreviewForecast(currentCapital: number, calibratedFuturePaths: num
     return {
       tradeIndex: index + 1,
       capital: {
-        p10: quantile(capitalValues, 0.1),
-        p25: quantile(capitalValues, 0.25),
-        p50: quantile(capitalValues, 0.5),
-        p75: quantile(capitalValues, 0.75),
-        p90: quantile(capitalValues, 0.9)
+        p10: weightedQuantile(capitalValues, weights, 0.1),
+        p25: weightedQuantile(capitalValues, weights, 0.25),
+        p50: weightedQuantile(capitalValues, weights, 0.5),
+        p75: weightedQuantile(capitalValues, weights, 0.75),
+        p90: weightedQuantile(capitalValues, weights, 0.9)
       }
     }
   })
@@ -920,35 +1079,345 @@ function buildPreviewForecast(currentCapital: number, calibratedFuturePaths: num
   return {
     previewHorizonTrades,
     previewQuantiles: {
-      p10: quantile(previewReturns, 0.1),
-      p25: quantile(previewReturns, 0.25),
-      p50: quantile(previewReturns, 0.5),
-      p75: quantile(previewReturns, 0.75),
-      p90: quantile(previewReturns, 0.9)
+      p10: weightedQuantile(previewReturns, weights, 0.1),
+      p25: weightedQuantile(previewReturns, weights, 0.25),
+      p50: weightedQuantile(previewReturns, weights, 0.5),
+      p75: weightedQuantile(previewReturns, weights, 0.75),
+      p90: weightedQuantile(previewReturns, weights, 0.9)
     },
     previewCapitalQuantiles: {
-      p10: quantile(previewCapitals, 0.1),
-      p25: quantile(previewCapitals, 0.25),
-      p50: quantile(previewCapitals, 0.5),
-      p75: quantile(previewCapitals, 0.75),
-      p90: quantile(previewCapitals, 0.9)
+      p10: weightedQuantile(previewCapitals, weights, 0.1),
+      p25: weightedQuantile(previewCapitals, weights, 0.25),
+      p50: weightedQuantile(previewCapitals, weights, 0.5),
+      p75: weightedQuantile(previewCapitals, weights, 0.75),
+      p90: weightedQuantile(previewCapitals, weights, 0.9)
     },
     previewPeakCapitalQuantiles: {
-      p10: quantile(peakCapitals, 0.1),
-      p50: quantile(peakCapitals, 0.5),
-      p90: quantile(peakCapitals, 0.9)
+      p10: weightedQuantile(peakCapitals, weights, 0.1),
+      p50: weightedQuantile(peakCapitals, weights, 0.5),
+      p90: weightedQuantile(peakCapitals, weights, 0.9)
     },
     previewTroughCapitalQuantiles: {
-      p10: quantile(troughCapitals, 0.1),
-      p50: quantile(troughCapitals, 0.5),
-      p90: quantile(troughCapitals, 0.9)
+      p10: weightedQuantile(troughCapitals, weights, 0.1),
+      p50: weightedQuantile(troughCapitals, weights, 0.5),
+      p90: weightedQuantile(troughCapitals, weights, 0.9)
     },
     previewPath
   }
 }
 
-function buildNormalizers(windows: HistoricalWindow[]): Normalizer[] {
-  return featureKeys().map((key) => {
+async function buildLifecycleForecast(userTrades: PreparedTrade[], currentCapital: number): Promise<LifecycleForecastResult> {
+  const profiles = await loadHistoricalLifecycleProfiles()
+  if (!profiles.length) {
+    return createEmptyLifecycleForecast(currentCapital, 'Историческая база myfxbook/mql4/mql5 пока не дает lifecycle-профилей.')
+  }
+
+  const userMetrics = calculateMetrics(userTrades)
+  const normalizers = buildLifecycleNormalizers(profiles)
+  const matches = selectNearestLifecycleProfiles(userMetrics, profiles, normalizers, DEFAULT_LIFECYCLE_MATCHES)
+  if (!matches.length) {
+    return createEmptyLifecycleForecast(currentCapital, 'Не найдено похожих полных lifecycle-профилей в базе myfxbook/mql4/mql5.')
+  }
+
+  const weights = buildMatchWeights(matches)
+  const baseReturns = matches.map((match) => match.profile.totalReturnPct)
+  const adjustedReturns = matches.map((match) => {
+    const strength = calculateLifecycleStrength(userMetrics, match.profile.features)
+    return adjustSignedOutcome(match.profile.totalReturnPct, strength)
+  })
+  const adjustedCapitals = adjustedReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
+  const adjustedDrawdowns = matches.map((match) =>
+    adjustLifecycleDrawdown(match.profile.maxDrawdownPct, userMetrics, match.profile.features)
+  )
+  const sourceFilesCount = new Set(matches.map((match) => match.profile.sourceFile)).size
+  const medianDistance = weightedQuantile(matches.map((match) => match.distance), weights, 0.5)
+  const confidenceScore = calculateConfidenceScore({
+    userTrades: userTrades.length,
+    windowTrades: Math.max(userTrades.length, MIN_USER_TRADES),
+    matches: matches.length,
+    sourceFiles: sourceFilesCount,
+    medianDistance,
+    auxiliaryMatchShare: percentage(matches.filter((match) => match.profile.sourceTier === 'auxiliary').length, matches.length) / 100
+  })
+  const strengthFactors = matches.map((match) => calculateLifecycleStrength(userMetrics, match.profile.features))
+
+  return {
+    status: 'ready',
+    confidence: confidenceLabel(confidenceScore),
+    confidenceScore,
+    message: 'Lifecycle Forecast использует полные результаты похожих файлов myfxbook/mql4/mql5 и масштабирует итог под профиль пользователя.',
+    quantiles: {
+      p10: weightedQuantile(adjustedReturns, weights, 0.1),
+      p25: weightedQuantile(adjustedReturns, weights, 0.25),
+      p50: weightedQuantile(adjustedReturns, weights, 0.5),
+      p75: weightedQuantile(adjustedReturns, weights, 0.75),
+      p90: weightedQuantile(adjustedReturns, weights, 0.9)
+    },
+    capitalQuantiles: {
+      p10: weightedQuantile(adjustedCapitals, weights, 0.1),
+      p25: weightedQuantile(adjustedCapitals, weights, 0.25),
+      p50: weightedQuantile(adjustedCapitals, weights, 0.5),
+      p75: weightedQuantile(adjustedCapitals, weights, 0.75),
+      p90: weightedQuantile(adjustedCapitals, weights, 0.9)
+    },
+    probabilityProfit: weightedPercentage(adjustedReturns.map((value) => value > 0), weights),
+    probabilityDrawdownOver10: weightedPercentage(adjustedDrawdowns.map((value) => value <= -10), weights),
+    matchesCount: matches.length,
+    sourceFilesCount,
+    medianTradeCount: weightedQuantile(matches.map((match) => match.profile.tradeCount), weights, 0.5),
+    medianDurationDays: weightedQuantile(matches.map((match) => match.profile.durationDays), weights, 0.5),
+    medianMaxDrawdownPct: weightedQuantile(adjustedDrawdowns, weights, 0.5),
+    strengthFactorP50: weightedQuantile(strengthFactors, weights, 0.5),
+    baseQuantiles: {
+      p10: weightedQuantile(baseReturns, weights, 0.1),
+      p25: weightedQuantile(baseReturns, weights, 0.25),
+      p50: weightedQuantile(baseReturns, weights, 0.5),
+      p75: weightedQuantile(baseReturns, weights, 0.75),
+      p90: weightedQuantile(baseReturns, weights, 0.9)
+    }
+  }
+}
+
+async function safeBuildLifecycleForecast(userTrades: PreparedTrade[], currentCapital: number) {
+  try {
+    return await buildLifecycleForecast(userTrades, currentCapital)
+  } catch (error) {
+    console.error('[protocolForecast] Lifecycle forecast failed:', error)
+    const errorMessage = error instanceof Error && error.message
+      ? error.message
+      : 'unknown lifecycle error'
+    return createEmptyLifecycleForecast(currentCapital, `Не удалось собрать lifecycle forecast по myfxbook/mql4/mql5 cycles: ${errorMessage}`)
+  }
+}
+
+async function loadHistoricalLifecycleProfiles(): Promise<HistoricalLifecycleProfile[]> {
+  if (!historicalLifecycleProfilesPromise) {
+    historicalLifecycleProfilesPromise = loadHistoricalTimelines().then((timelines) => timelines
+      .filter((timeline) => timeline.sourceTier === 'primary')
+      .filter((timeline) => timeline.trades.length >= MIN_USER_TRADES)
+      .map((timeline): HistoricalLifecycleProfile => {
+        const totalReturnPct = compoundReturns(timeline.trades.map((trade) => trade.returnPct))
+        const maxDrawdownPct = maxDrawdownFromReturns(timeline.trades.map((trade) => trade.returnPct))
+        const firstTimestamp = timeline.trades[0]?.entryTimestamp ?? timeline.trades[0]?.timestamp ?? 0
+        const lastTimestamp = lastItem(timeline.trades)?.timestamp ?? firstTimestamp
+        const durationDays = Math.max((lastTimestamp - firstTimestamp) / 86400000, 1)
+
+        return {
+          sourceFile: timeline.sourceFile,
+          sourceTier: timeline.sourceTier,
+          features: calculateMetrics(timeline.trades),
+          totalReturnPct,
+          maxDrawdownPct,
+          tradeCount: timeline.trades.length,
+          durationDays
+        }
+      })
+      .filter((profile) =>
+        Number.isFinite(profile.totalReturnPct) &&
+        Number.isFinite(profile.maxDrawdownPct) &&
+        Number.isFinite(profile.tradeCount) &&
+        Number.isFinite(profile.durationDays)
+      ))
+  }
+
+  return historicalLifecycleProfilesPromise
+}
+
+function buildLifecycleNormalizers(profiles: HistoricalLifecycleProfile[]): Normalizer[] {
+  return featureKeys(LIFECYCLE_FEATURE_WEIGHTS).map((key) => {
+    const values = profiles
+      .map((profile) => readFeature(profile.features, key))
+      .filter(Number.isFinite)
+
+    return {
+      key,
+      median: quantile(values, 0.5),
+      iqr: Math.max(quantile(values, 0.75) - quantile(values, 0.25), 0.0001)
+    }
+  })
+}
+
+function selectNearestLifecycleProfiles(
+  userMetrics: ProtocolForecastMetrics,
+  profiles: HistoricalLifecycleProfile[],
+  normalizers: Normalizer[],
+  topMatches: number
+) {
+  return profiles
+    .map((profile) => ({
+      profile,
+      distance: calculateMetricsDistance(userMetrics, profile.features, profile.sourceTier, normalizers, LIFECYCLE_FEATURE_WEIGHTS)
+    }))
+    .filter((match) => Number.isFinite(match.distance))
+    .sort((left, right) => left.distance - right.distance)
+    .slice(0, topMatches)
+}
+
+function calculateLifecycleStrength(userMetrics: ProtocolForecastMetrics, historicalMetrics: ProtocolForecastMetrics) {
+  const amplitudeScale = calculateBlendedAmplitudeScale(
+    readAmplitudeMetric(userMetrics),
+    readAmplitudeMetric(historicalMetrics),
+    0.82
+  )
+  const profitFactorDelta = boundedMetricDelta(logLikeMetric(userMetrics.profitFactor), logLikeMetric(historicalMetrics.profitFactor), 0.4)
+  const winRateDelta = boundedMetricDelta(userMetrics.winRate, historicalMetrics.winRate, 12)
+  const payoffDelta = boundedMetricDelta(logLikeMetric(userMetrics.payoffRatio), logLikeMetric(historicalMetrics.payoffRatio), 0.35)
+  const expectancyDelta = boundedMetricDelta(userMetrics.expectancyPct, historicalMetrics.expectancyPct, 2)
+  const drawdownDelta = boundedMetricDelta(Math.abs(historicalMetrics.maxDrawdownPct), Math.abs(userMetrics.maxDrawdownPct), 12)
+  const sortinoDelta = boundedMetricDelta(userMetrics.sortinoLike, historicalMetrics.sortinoLike, 0.75)
+  const qualityBias = profitFactorDelta * 0.25 +
+    winRateDelta * 0.15 +
+    payoffDelta * 0.15 +
+    expectancyDelta * 0.15 +
+    drawdownDelta * 0.2 +
+    sortinoDelta * 0.1
+  const qualityScale = clamp(1 + qualityBias * 0.35, 0.72, 1.42)
+
+  return clamp(qualityScale * (1 + (amplitudeScale - 1) * 0.55), 0.55, 2.4)
+}
+
+function adjustSignedOutcome(baseReturnPct: number, strength: number) {
+  if (!Number.isFinite(baseReturnPct) || !Number.isFinite(strength) || strength <= 0) {
+    return baseReturnPct
+  }
+
+  if (baseReturnPct >= 0) {
+    return baseReturnPct * strength
+  }
+
+  return baseReturnPct / strength
+}
+
+function adjustLifecycleDrawdown(
+  baseDrawdownPct: number,
+  userMetrics: ProtocolForecastMetrics,
+  historicalMetrics: ProtocolForecastMetrics
+) {
+  if (!(baseDrawdownPct < 0)) {
+    return baseDrawdownPct
+  }
+
+  const amplitudeDelta = boundedMetricDelta(readAmplitudeMetric(userMetrics), readAmplitudeMetric(historicalMetrics), Math.max(readAmplitudeMetric(historicalMetrics), 0.75))
+  const drawdownDelta = boundedMetricDelta(Math.abs(userMetrics.maxDrawdownPct), Math.abs(historicalMetrics.maxDrawdownPct), 10)
+  const scale = clamp(1 + amplitudeDelta * 0.35 + drawdownDelta * 0.3, 0.65, 2.3)
+  return baseDrawdownPct * scale
+}
+
+function buildTacticalDiagnostics(params: {
+  userMetrics: ProtocolForecastMetrics
+  currentCapital: number
+  regime: ForecastRegime
+  amplitudeScaleP50: number
+  basePreviewQuantiles: ProtocolForecastResult['previewQuantiles']
+  scaledPreviewQuantiles: ProtocolForecastResult['previewQuantiles']
+  fullHistoricalShapeP50Pct: number
+  fullUserScaledP50Pct: number
+}): TacticalForecastDiagnostics {
+  const makePeriod = (horizonTrades: number, historicalShapeP50Pct: number, userScaledP50Pct: number) => ({
+    horizonTrades,
+    userLinearEstimatePct: compoundReturns(Array.from({ length: horizonTrades }, () => params.userMetrics.expectancyPct)),
+    historicalShapeP50Pct,
+    userScaledP50Pct
+  })
+
+  const periods = [
+    makePeriod(10, params.basePreviewQuantiles.p50, params.scaledPreviewQuantiles.p50)
+  ]
+
+  if (params.regime.horizonTrades !== 10) {
+    periods.push(makePeriod(params.regime.horizonTrades, params.fullHistoricalShapeP50Pct, params.fullUserScaledP50Pct))
+  }
+
+  return {
+    userPerTradeExpectancyPct: params.userMetrics.expectancyPct,
+    userPerTradeExpectancyUsd: params.currentCapital * (params.userMetrics.expectancyPct / 100),
+    userAverageWinPct: params.userMetrics.averagePositiveReturnPct,
+    userAverageLossPctAbs: params.userMetrics.averageNegativeReturnPctAbs,
+    amplitudeScaleP50: params.amplitudeScaleP50,
+    historicalShapePreviewQuantiles: params.basePreviewQuantiles,
+    periods
+  }
+}
+
+function boundedMetricDelta(userValue: number, historicalValue: number, scale: number) {
+  if (!Number.isFinite(userValue) || !Number.isFinite(historicalValue) || !(scale > 0)) {
+    return 0
+  }
+
+  return clamp((userValue - historicalValue) / scale, -1, 1)
+}
+
+function logLikeMetric(value: number) {
+  if (value === Number.POSITIVE_INFINITY) {
+    return Math.log1p(10)
+  }
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0
+  }
+
+  return Math.log1p(value)
+}
+
+function createEmptyLifecycleForecast(currentCapital: number, message = 'Lifecycle Forecast пока недоступен.') : LifecycleForecastResult {
+  return {
+    status: 'insufficient-data',
+    confidence: 'low',
+    confidenceScore: 0,
+    message,
+    quantiles: { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
+    capitalQuantiles: {
+      p10: currentCapital,
+      p25: currentCapital,
+      p50: currentCapital,
+      p75: currentCapital,
+      p90: currentCapital
+    },
+    probabilityProfit: 0,
+    probabilityDrawdownOver10: 0,
+    matchesCount: 0,
+    sourceFilesCount: 0,
+    medianTradeCount: 0,
+    medianDurationDays: 0,
+    medianMaxDrawdownPct: 0,
+    strengthFactorP50: 1,
+    baseQuantiles: { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 }
+  }
+}
+
+function createEmptyTacticalDiagnostics(): TacticalForecastDiagnostics {
+  return {
+    userPerTradeExpectancyPct: 0,
+    userPerTradeExpectancyUsd: 0,
+    userAverageWinPct: 0,
+    userAverageLossPctAbs: 0,
+    amplitudeScaleP50: 1,
+    historicalShapePreviewQuantiles: { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
+    periods: []
+  }
+}
+
+function buildMatchWeights(matches: Array<{ distance: number }>) {
+  if (!matches.length) return []
+
+  const distanceScale = Math.max(quantile(matches.map((match) => match.distance), 0.35), 0.2)
+  const rawWeights = matches.map((match, index) => {
+    const distance = Number.isFinite(match.distance) ? match.distance : distanceScale * 4
+    const closenessWeight = Math.exp(-Math.pow(distance / distanceScale, 2))
+    const rankWeight = 1 / Math.sqrt(index + 1)
+    return Math.max(closenessWeight * rankWeight, 0.000001)
+  })
+
+  const total = sum(rawWeights)
+  if (!(total > 0)) {
+    return matches.map(() => 1 / matches.length)
+  }
+
+  return rawWeights.map((weight) => weight / total)
+}
+
+function buildNormalizers(windows: HistoricalWindow[], weights: Record<FeatureKey, number>): Normalizer[] {
+  return featureKeys(weights).map((key) => {
     const values = windows
       .map((window) => readFeature(window.features, key))
       .filter(Number.isFinite)
@@ -965,12 +1434,13 @@ function selectNearestWindows(
   userMetrics: ProtocolForecastMetrics,
   windows: HistoricalWindow[],
   normalizers: Normalizer[],
-  topMatches: number
+  topMatches: number,
+  weights: Record<FeatureKey, number>
 ) {
   const ranked = windows
     .map((window) => ({
       window,
-      distance: calculateDistance(userMetrics, window, normalizers)
+      distance: calculateDistance(userMetrics, window, normalizers, weights)
     }))
     .filter((match) => Number.isFinite(match.distance))
     .sort((left, right) => left.distance - right.distance)
@@ -998,25 +1468,37 @@ function selectNearestWindows(
 function calculateDistance(
   userMetrics: ProtocolForecastMetrics,
   window: HistoricalWindow,
-  normalizers: Normalizer[]
+  normalizers: Normalizer[],
+  weights: Record<FeatureKey, number>
+) {
+  return calculateMetricsDistance(userMetrics, window.features, window.sourceTier, normalizers, weights, userMetrics.averageDurationHours)
+}
+
+function calculateMetricsDistance(
+  userMetrics: ProtocolForecastMetrics,
+  targetMetrics: ProtocolForecastMetrics,
+  sourceTier: HistoricalSourceTier,
+  normalizers: Normalizer[],
+  weights: Record<FeatureKey, number>,
+  userDurationHours = userMetrics.averageDurationHours
 ) {
   let weightedSum = 0
   let weightSum = 0
 
   for (const normalizer of normalizers) {
     const key = normalizer.key
-    if (key === 'averageDurationHours' && window.sourceTier === 'auxiliary') {
+    if (key === 'averageDurationHours' && sourceTier === 'auxiliary') {
       continue
     }
 
     const userValue = readFeature(userMetrics, key)
-    const windowValue = readFeature(window.features, key)
+    const windowValue = readFeature(targetMetrics, key)
 
     if (!Number.isFinite(userValue) || !Number.isFinite(windowValue)) {
       continue
     }
 
-    const weight = FEATURE_WEIGHTS[key]
+    const weight = weights[key]
     const diff = clamp((userValue - windowValue) / normalizer.iqr, -5, 5)
     weightedSum += weight * diff * diff
     weightSum += weight
@@ -1027,11 +1509,11 @@ function calculateDistance(
   }
 
   const distance = Math.sqrt(weightedSum / weightSum)
-  if (window.sourceTier === 'auxiliary') {
+  if (sourceTier === 'auxiliary') {
     return distance * AUXILIARY_SOURCE_DISTANCE_MULTIPLIER
   }
 
-  return distance * calculatePrimaryDurationMultiplier(userMetrics.averageDurationHours, window.features.averageDurationHours)
+  return distance * calculatePrimaryDurationMultiplier(userDurationHours, targetMetrics.averageDurationHours)
 }
 
 function readFeature(metrics: ProtocolForecastMetrics, key: FeatureKey) {
@@ -1057,8 +1539,8 @@ function calculatePrimaryDurationMultiplier(userDurationHours: number, windowDur
   return PRIMARY_DURATION_PENALTY_MULTIPLIER
 }
 
-function featureKeys() {
-  return Object.keys(FEATURE_WEIGHTS) as FeatureKey[]
+function featureKeys(weights: Record<FeatureKey, number>) {
+  return Object.keys(weights) as FeatureKey[]
 }
 
 function emptyForecast(params: {
@@ -1066,6 +1548,8 @@ function emptyForecast(params: {
   horizonTrades: number
   metrics: ProtocolForecastMetrics
   message: string
+  lifecycle?: LifecycleForecastResult
+  tacticalDiagnostics?: TacticalForecastDiagnostics
 }): ProtocolForecastResult {
   return {
     status: 'insufficient-data',
@@ -1107,7 +1591,9 @@ function emptyForecast(params: {
     probabilityDrawdownOver10: 0,
     simulationsCount: 0,
     matchesCount: 0,
-    sourceFilesCount: 0
+    sourceFilesCount: 0,
+    tacticalDiagnostics: params.tacticalDiagnostics ?? createEmptyTacticalDiagnostics(),
+    lifecycle: params.lifecycle ?? createEmptyLifecycleForecast(params.currentCapital)
   }
 }
 
@@ -1119,6 +1605,8 @@ function createEmptyMetrics(): ProtocolForecastMetrics {
     expectancyPct: 0,
     averageAbsReturnPct: 0,
     medianAbsReturnPct: 0,
+    averagePositiveReturnPct: 0,
+    averageNegativeReturnPctAbs: 0,
     payoffRatio: 0,
     averageRiskReward: null,
     volatilityPct: 0,
@@ -1391,7 +1879,7 @@ function calculateMaxDrawdownPct(equityValues: number[]) {
 }
 
 function calculateCurrentDrawdownPct(equityValues: number[]) {
-  const peak = Math.max(...equityValues)
+  const peak = maxInArray(equityValues)
   const current = lastItem(equityValues) ?? peak
   return peak > 0 ? ((current - peak) / peak) * 100 : 0
 }
@@ -1478,7 +1966,7 @@ function calculateSymbolConcentration(trades: PreparedTrade[]) {
 
   const counts = new Map<string, number>()
   trades.forEach((trade) => counts.set(trade.asset, (counts.get(trade.asset) ?? 0) + 1))
-  return (Math.max(...Array.from(counts.values())) / trades.length) * 100
+  return (maxInArray(Array.from(counts.values())) / trades.length) * 100
 }
 
 function calculateTailLossCvar95(values: number[]) {
@@ -1546,13 +2034,81 @@ function quantile(values: number[], percentile: number) {
   return (sorted[lower] ?? 0) * (1 - weight) + (sorted[upper] ?? 0) * weight
 }
 
+function weightedQuantile(values: number[], weights: number[] | undefined, percentile: number) {
+  if (!values.length) return 0
+  if (!weights || weights.length !== values.length) {
+    return quantile(values, percentile)
+  }
+
+  const pairs = values
+    .map((value, index) => ({ value, weight: Math.max(weights[index] ?? 0, 0) }))
+    .filter((pair) => Number.isFinite(pair.value) && Number.isFinite(pair.weight))
+    .sort((left, right) => left.value - right.value)
+
+  if (!pairs.length) return 0
+
+  const totalWeight = sum(pairs.map((pair) => pair.weight))
+  if (!(totalWeight > 0)) {
+    return quantile(values, percentile)
+  }
+
+  const target = clamp(percentile, 0, 1) * totalWeight
+  let cumulative = 0
+
+  for (const pair of pairs) {
+    cumulative += pair.weight
+    if (cumulative >= target) {
+      return pair.value
+    }
+  }
+
+  return pairs[pairs.length - 1]?.value ?? 0
+}
+
 function percentage(count: number, total: number) {
   return total > 0 ? (count / total) * 100 : 0
+}
+
+function weightedPercentage(flags: boolean[], weights: number[]) {
+  if (!flags.length) return 0
+  if (weights.length !== flags.length) {
+    return percentage(flags.filter(Boolean).length, flags.length)
+  }
+
+  const totalWeight = sum(weights)
+  if (!(totalWeight > 0)) {
+    return percentage(flags.filter(Boolean).length, flags.length)
+  }
+
+  const positiveWeight = sum(flags.map((flag, index) => flag ? (weights[index] ?? 0) : 0))
+  return (positiveWeight / totalWeight) * 100
 }
 
 function average(values: number[]) {
   if (!values.length) return 0
   return sum(values) / values.length
+}
+
+function weightedAverage(values: number[], weights: number[], fallback = 0) {
+  if (!values.length || weights.length !== values.length) {
+    return values.length ? average(values.filter(Number.isFinite)) : fallback
+  }
+
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index]
+    const weight = weights[index]
+    if (!Number.isFinite(value) || !Number.isFinite(weight) || weight <= 0) {
+      continue
+    }
+
+    weightedSum += value * weight
+    totalWeight += weight
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : fallback
 }
 
 function standardDeviation(values: number[]) {
@@ -1564,6 +2120,18 @@ function standardDeviation(values: number[]) {
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0)
+}
+
+function maxInArray(values: number[]) {
+  let max = Number.NEGATIVE_INFINITY
+
+  for (const value of values) {
+    if (Number.isFinite(value) && value > max) {
+      max = value
+    }
+  }
+
+  return Number.isFinite(max) ? max : 0
 }
 
 function finitePositive(value: number) {
