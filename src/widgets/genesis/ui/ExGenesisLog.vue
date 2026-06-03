@@ -26,7 +26,7 @@
            
            <!-- HUD Toggle -->
            <button @click="isHudVisible = !isHudVisible" 
-                   class="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center transition-all bg-white/5 dark:bg-black/5 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                   class="w-8 h-8 flex items-center justify-center transition-all bg-white/5 dark:bg-black/5 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
                    :class="isHudVisible ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/40'"
                    title="Toggle HUD">
               <svg v-if="isHudVisible" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -41,7 +41,7 @@
 
            <!-- Compliance Toggle -->
            <button @click="showComplianceStatus = !showComplianceStatus" 
-                   class="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
+                   class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
                    :class="showComplianceStatus 
                             ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
                             : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
@@ -51,6 +51,11 @@
                  <rect x="10" y="8" width="4" height="13"></rect>
                  <rect x="2" y="13" width="4" height="8"></rect>
               </svg>
+              <!-- Indicator Dot -->
+              <div v-if="complianceDotColor" 
+                   class="absolute -top-1 -right-1 w-2 h-2 rounded-full shadow-[0_0_5px_rgba(0,0,0,0.5)]"
+                   :class="complianceDotColor">
+              </div>
            </button>
         </div>
         <!-- Facet Navigation -->
@@ -822,8 +827,12 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
     formula: 'actual / limit',
     valStr: (m) => `${Math.round(m.riskPerTrade)}%`,
     colorClass: () => '',
-    colorVal: (m, isDark) => m.riskPerTrade >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
-    evalStr: (m) => m.riskPerTrade >= 80 ? 'Optimal' : 'Violation',
+    colorVal: (m, isDark) => {
+      if (m.riskPerTrade >= 85) return isDark ? '#ffffff' : '#000000';
+      if (m.riskPerTrade >= 40) return isDark ? '#fcd34d' : '#fbbf24';
+      return isDark ? '#f87171' : '#dc2626';
+    },
+    evalStr: (m) => m.riskPerTrade >= 85 ? 'Optimal' : 'Violation',
     evalClass: () => '',
     benchmarks: [],
     category: 'Compliance'
@@ -836,8 +845,12 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
     formula: 'actual / limit',
     valStr: (m) => `${Math.round(m.riskPerSession)}%`,
     colorClass: () => '',
-    colorVal: (m, isDark) => m.riskPerSession >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
-    evalStr: (m) => m.riskPerSession >= 80 ? 'Optimal' : 'Violation',
+    colorVal: (m, isDark) => {
+      if (m.riskPerSession >= 85) return isDark ? '#ffffff' : '#000000';
+      if (m.riskPerSession >= 40) return isDark ? '#fcd34d' : '#fbbf24';
+      return isDark ? '#f87171' : '#dc2626';
+    },
+    evalStr: (m) => m.riskPerSession >= 85 ? 'Optimal' : 'Violation',
     evalClass: () => '',
     benchmarks: [],
     category: 'Compliance'
@@ -850,8 +863,12 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
     formula: 'actual / limit',
     valStr: (m) => `${Math.round(m.tradingStyle)}%`,
     colorClass: () => '',
-    colorVal: (m, isDark) => m.tradingStyle >= 80 ? (isDark ? '#34d399' : '#059669') : (isDark ? '#f87171' : '#dc2626'),
-    evalStr: (m) => m.tradingStyle >= 80 ? 'Aligned' : 'Drifting',
+    colorVal: (m, isDark) => {
+      if (m.tradingStyle >= 85) return isDark ? '#ffffff' : '#000000';
+      if (m.tradingStyle >= 40) return isDark ? '#fcd34d' : '#fbbf24';
+      return isDark ? '#f87171' : '#dc2626';
+    },
+    evalStr: (m) => m.tradingStyle >= 85 ? 'Aligned' : 'Drifting',
     evalClass: () => '',
     benchmarks: [],
     category: 'Compliance'
@@ -865,7 +882,7 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
     valStr: (m) => m.emotionalStateLabel,
     colorClass: () => '',
     colorVal: (m, isDark) => {
-      if (m.emotionalStateScore > 60) return isDark ? '#34d399' : '#059669';
+      if (m.emotionalStateScore > 60) return isDark ? '#ffffff' : '#000000';
       if (m.emotionalStateScore > 40) return isDark ? '#fcd34d' : '#fbbf24';
       return isDark ? '#f87171' : '#dc2626';
     },
@@ -886,6 +903,15 @@ const complianceMetricsValues = computed(() => {
       ? (emotionalStatus.value.label === 'NEGATIVE' ? 'НЕГАТИВНЫЙ' : emotionalStatus.value.label === 'POSITIVE' ? 'ПОЗИТИВНЫЙ' : 'НЕЙТРАЛЬНЫЙ') 
       : emotionalStatus.value.label
   }
+})
+
+const complianceDotColor = computed(() => {
+  const v = complianceMetricsValues.value;
+  // Check for red (critical)
+  if (v.riskPerTrade < 40 || v.riskPerSession < 40 || v.tradingStyle < 40 || v.emotionalStateScore < 40) return 'bg-[#dc2626] dark:bg-[#f87171]';
+  // Check for yellow (warning)
+  if (v.riskPerTrade < 85 || v.riskPerSession < 85 || v.tradingStyle < 85 || v.emotionalStateScore < 60) return 'bg-[#fbbf24] dark:bg-[#fcd34d]';
+  return null;
 })
 
 const calculateRR = (trade: any) => {
