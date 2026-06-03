@@ -136,6 +136,9 @@
                   WR {{ formatPercent(block.winRate, false) }}
                 </div>
               </div>
+              <div class="mt-2 font-mono text-[9px] text-black/35 dark:text-white/35">
+                {{ formatCloseRange(block.firstCloseTimestamp, block.lastCloseTimestamp) }}
+              </div>
             </div>
           </div>
         </div>
@@ -271,9 +274,14 @@
           class="border border-black/10 px-4 py-4 dark:border-white/10"
         >
           <div class="flex items-center justify-between gap-3">
-            <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] text-black dark:text-white">
-              {{ match.fileLabel }}
-            </span>
+            <div class="flex flex-col">
+              <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] text-black dark:text-white">
+                {{ match.fileLabel }}
+              </span>
+              <span class="mt-1 inline-flex w-fit items-center border border-black/10 px-2 py-1 font-mono text-[7px] uppercase tracking-[0.22em] text-black/45 dark:border-white/10 dark:text-white/45">
+                {{ match.sourceGroup }}
+              </span>
+            </div>
             <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
               {{ match.matchedPhaseLabel }}
             </span>
@@ -345,6 +353,9 @@
                 <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
                   WR: {{ formatPercent(block.winRate, false) }}
                 </div>
+                <div class="font-mono text-[10px] text-black/35 dark:text-white/35">
+                  {{ formatCloseRange(block.firstCloseTimestamp, block.lastCloseTimestamp) }}
+                </div>
               </div>
             </div>
           </div>
@@ -367,14 +378,17 @@
               class="border border-black/10 px-4 py-4 dark:border-white/10"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.24em] text-black dark:text-white">
-                    {{ match.fileLabel }}
-                  </span>
-                  <span class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-                    {{ match.matchedPhaseLabel }}
-                  </span>
-                </div>
+              <div class="flex flex-col">
+                <span class="font-mono text-[8px] font-black uppercase tracking-[0.24em] text-black dark:text-white">
+                  {{ match.fileLabel }}
+                </span>
+                <span class="mt-1 inline-flex w-fit items-center border border-black/10 px-2 py-1 font-mono text-[7px] uppercase tracking-[0.22em] text-black/45 dark:border-white/10 dark:text-white/45">
+                  {{ match.sourceGroup }}
+                </span>
+                <span class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+                  {{ match.matchedPhaseLabel }}
+                </span>
+              </div>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                   <span class="font-mono text-[10px] text-black/45 dark:text-white/45">Style {{ formatPercent(match.styleScore, false) }}</span>
                   <span class="font-mono text-[10px] text-black/45 dark:text-white/45">Pattern {{ formatPercent(match.patternScore, false) }}</span>
@@ -406,6 +420,9 @@
                     </div>
                     <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
                       WR {{ formatPercent(block.winRate, false) }}
+                    </div>
+                    <div class="font-mono text-[10px] text-black/35 dark:text-white/35">
+                      {{ formatCloseRange(block.firstCloseTimestamp, block.lastCloseTimestamp) }}
                     </div>
                   </div>
                 </div>
@@ -597,6 +614,25 @@ const formatHours = (hours: number) => {
     return `${formatNumber(hours / 24, 1)}D`
   }
   return `${formatNumber(hours, 1)}H`
+}
+
+const formatCloseRange = (firstTimestamp: number, lastTimestamp: number) => {
+  if (!Number.isFinite(firstTimestamp) || !Number.isFinite(lastTimestamp)) {
+    return locale.value === 'ru' ? 'Даты закрытия: n/a' : 'Close dates: n/a'
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+
+  const first = formatter.format(new Date(firstTimestamp))
+  const last = formatter.format(new Date(lastTimestamp))
+
+  return locale.value === 'ru'
+    ? `Закрытия: ${first} -> ${last}`
+    : `Closes: ${first} -> ${last}`
 }
 
 const phaseLabel = (phase: string) => {

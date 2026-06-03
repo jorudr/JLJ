@@ -91,6 +91,8 @@ export interface PatternForecastBlockView {
   returnPct: number
   averageDurationHours: number
   winRate: number
+  firstCloseTimestamp: number
+  lastCloseTimestamp: number
 }
 
 export interface PatternForecastHorizonResult {
@@ -114,6 +116,7 @@ export interface PatternForecastOutcomeGroup {
 export interface PatternForecastMatchSummary {
   sourceFile: string
   fileLabel: string
+  sourceGroup: 'mql4' | 'mql5' | 'myfxbook'
   styleScore: number
   patternScore: number
   continuation10Pct: number
@@ -244,7 +247,7 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
 
   const userStyle = calculateStyleProfile(userTrades)
   const userBlocks = buildStructuralBlocks(userTrades)
-  const userPatternBlocks = userBlocks.slice(Math.max(0, userBlocks.length - Math.min(3, userBlocks.length)))
+  const userPatternBlocks = userBlocks.slice()
 
   if (!userPatternBlocks.length) {
     return createEmptyPatternForecast({
@@ -296,14 +299,8 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
       styleLabel: classifyTradingStyle(userStyle.averageDurationHours)
     },
     currentPattern: {
-      sequenceLabel: userPatternBlocks.map((block) => phaseTitle(block.phase)).join(' -> '),
-      blocks: userPatternBlocks.map((block) => ({
-        phase: block.phase,
-        tradeCount: block.tradeCount,
-        returnPct: block.returnPct,
-        averageDurationHours: block.averageDurationHours,
-        winRate: block.winRate
-      }))
+      sequenceLabel: userBlocks.map((block) => phaseTitle(block.phase)).join(' -> '),
+      blocks: userBlocks.map((block) => toBlockView(block, userTrades))
     },
     tactical: {
       matchesCount: matches.length,
@@ -329,9 +326,10 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
       medianRemainingTrades: weightedQuantile(matches.map((match) => match.remainingTrades), weights, 0.5),
       groups: lifecycleGroups
     },
-    topMatches: matches.slice(0, 5).map((match) => ({
+    topMatches: buildDiverseTopMatches(matches, 5).map((match) => ({
       sourceFile: match.sourceFile,
       fileLabel: compactFileLabel(match.sourceFile),
+      sourceGroup: detectSourceGroup(match.sourceFile),
       styleScore: match.styleScore * 100,
       patternScore: match.patternScore * 100,
       continuation10Pct: match.future10ReturnPct,
@@ -339,13 +337,10 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
       continuationToEndPct: match.futureToEndReturnPct,
       totalFileReturnPct: match.totalFileReturnPct,
       matchedPhaseLabel: match.matchedPhaseLabel,
-      blocks: match.matchedBlocks.map((block) => ({
-        phase: block.phase,
-        tradeCount: block.tradeCount,
-        returnPct: block.returnPct,
-        averageDurationHours: block.averageDurationHours,
-        winRate: block.winRate
-      }))
+      blocks: match.matchedBlocks.map((block) => {
+        const timeline = timelines.find((item) => item.sourceFile === match.sourceFile)
+        return toBlockView(block, timeline?.trades ?? [])
+      })
     }))
   }
 }
@@ -451,17 +446,21 @@ function selectPatternMatches(
   for (const timeline of timelines) {
     const styleScore = calculateStyleCompatibility(userStyle, timeline.style)
     if (styleScore < 0.18) continue
-    if (timeline.blocks.length < userBlocks.length) continue
 
-    for (let endIndex = userBlocks.length - 1; endIndex < timeline.blocks.length; endIndex += 1) {
-      const matchedBlocks = timeline.blocks.slice(endIndex - userBlocks.length + 1, endIndex + 1)
+    const compareLength = Math.min(userBlocks.length, timeline.blocks.length)
+    if (compareLength <= 0) continue
+
+    const userComparableBlocks = userBlocks.slice(userBlocks.length - compareLength)
+
+    for (let endIndex = compareLength - 1; endIndex < timeline.blocks.length; endIndex += 1) {
+      const matchedBlocks = timeline.blocks.slice(endIndex - compareLength + 1, endIndex + 1)
       const lastMatchedBlock = matchedBlocks[matchedBlocks.length - 1]
       if (!lastMatchedBlock) continue
 
       const futureTrades = timeline.trades.slice(lastMatchedBlock.endTradeIndex + 1)
       if (!futureTrades.length) continue
 
-      const patternDistance = comparePatternSequences(userBlocks, matchedBlocks)
+      const patternDistance = comparePatternSequences(userComparableBlocks, matchedBlocks)
       const stylePenalty = (1 - styleScore) * 1.2
       const distance = patternDistance + stylePenalty
 
@@ -1301,4 +1300,56 @@ function phaseTitle(phase: StructuralBlock['phase']) {
 function compactFileLabel(sourceFile: string) {
   const segments = sourceFile.split('/')
   return segments.slice(-2).join('/')
+}
+
+function toBlockView(block: StructuralBlock, trades: PreparedTrade[]): PatternForecastBlockView {
+  const firstTrade = trades[block.startTradeIndex]
+  const lastTrade = trades[block.endTradeIndex]
+
+  return {
+    phase: block.phase,
+    tradeCount: block.tradeCount,
+    returnPct: block.returnPct,
+    averageDurationHours: block.averageDurationHours,
+    winRate: block.winRate,
+    firstCloseTimestamp: Number.isFinite(firstTrade?.timestamp) ? Number(firstTrade.timestamp) : Number.NaN,
+    lastCloseTimestamp: Number.isFinite(lastTrade?.timestamp) ? Number(lastTrade.timestamp) : Number.NaN
+  }
+}
+
+function detectSourceGroup(sourceFile: string): 'mql4' | 'mql5' | 'myfxbook' {
+  if (sourceFile.includes('/data/mql4/')) return 'mql4'
+  if (sourceFile.includes('/data/mql5/')) return 'mql5'
+  return 'myfxbook'
+}
+
+function buildDiverseTopMatches(matches: PatternMatch[], limit: number) {
+  const selected: PatternMatch[] = []
+  const selectedKeys = new Set<string>()
+  const desiredGroups: Array<'mql4' | 'mql5' | 'myfxbook'> = ['mql4', 'mql5', 'myfxbook']
+
+  for (const group of desiredGroups) {
+    const groupMatch = matches.find((match) => detectSourceGroup(match.sourceFile) === group)
+    if (!groupMatch) continue
+
+    const key = `${groupMatch.sourceFile}:${groupMatch.matchedPhaseLabel}:${groupMatch.distance}`
+    if (selectedKeys.has(key)) continue
+
+    selected.push(groupMatch)
+    selectedKeys.add(key)
+    if (selected.length >= limit) {
+      return selected
+    }
+  }
+
+  for (const match of matches) {
+    const key = `${match.sourceFile}:${match.matchedPhaseLabel}:${match.distance}`
+    if (selectedKeys.has(key)) continue
+
+    selected.push(match)
+    selectedKeys.add(key)
+    if (selected.length >= limit) break
+  }
+
+  return selected
 }
