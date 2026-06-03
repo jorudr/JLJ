@@ -57,6 +57,21 @@
                    :class="complianceDotColor">
               </div>
            </button>
+
+           <button @click="toggleCapitalForecast()" 
+                   class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
+                   :class="showCapitalForecast
+                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
+                   title="Toggle Capital Forecast">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                 <path d="M3 17l5-5 4 4 8-9"></path>
+                 <path d="M17 7h3v3"></path>
+              </svg>
+              <div v-if="protocolForecastLoading"
+                   class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.55)]">
+              </div>
+           </button>
         </div>
         <!-- Facet Navigation -->
         <div v-if="activeFaceIndices.length > 1 && isHudVisible" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto">
@@ -84,7 +99,7 @@
       <!-- LIST VIEW LAYER -->
       <div v-if="viewType === 'list'" class="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white dark:bg-[#070707] backdrop-blur-3xl pointer-events-auto">
          <div class="w-full h-full overflow-y-auto custom-scrollbar px-12 md:px-24 py-24 md:py-32">
-           <ExVerticalTradeList :trades="currentTrades" @open-note="handleOpenNote" @open-trade="handleOpenTrade" />
+           <ExVerticalTradeList :trades="currentTradesForList" @open-note="handleOpenNote" @open-trade="handleOpenTrade" />
          </div>
       </div>
 
@@ -260,7 +275,7 @@
     />
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] flex w-[1100px] max-w-[95vw] flex-col gap-3 pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
+    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
        <OpenStrategyMetrics
          :is-dark="isDark"
          :minimal="true"
@@ -270,7 +285,13 @@
          :is-live="true"
          :editable="false"
        />
+    </div>
 
+    <div
+      v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible"
+      class="absolute left-1/2 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
+      :class="showComplianceStatus ? 'top-[8.5rem]' : 'top-8'"
+    >
        <div class="border border-black/10 dark:border-white/10 bg-white/90 dark:bg-[#070707]/90 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
          <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-5 py-3">
            <div class="flex items-center gap-3">
@@ -303,58 +324,111 @@
 
          <div class="grid grid-cols-1 divide-y divide-black/10 dark:divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
            <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P50</div>
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P50 / {{ protocolForecast.previewHorizonTrades }}T</div>
              <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
-               {{ formatForecastMoney(protocolForecast.capitalQuantiles.p50) }}
+               {{ formatForecastMoney(protocolForecast.previewCapitalQuantiles.p50) }}
              </div>
-             <div class="mt-1 font-mono text-[10px]" :class="protocolForecast.quantiles.p50 >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'">
-               {{ formatForecastPercent(protocolForecast.quantiles.p50) }}
+             <div class="mt-1 font-mono text-[10px]" :class="protocolForecast.previewQuantiles.p50 >= 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'">
+               {{ formatForecastPercent(protocolForecast.previewQuantiles.p50) }}
              </div>
            </div>
 
            <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P25 / P75</div>
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">P25 / P75 / {{ protocolForecast.previewHorizonTrades }}T</div>
              <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-               {{ formatForecastPercent(protocolForecast.quantiles.p25) }} ... {{ formatForecastPercent(protocolForecast.quantiles.p75) }}
+               {{ formatForecastPercent(protocolForecast.previewQuantiles.p25) }} ... {{ formatForecastPercent(protocolForecast.previewQuantiles.p75) }}
              </div>
              <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               {{ protocolForecast.horizonTrades }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
+               {{ locale === 'ru' ? 'Полный слой' : 'Full layer' }} {{ protocolForecast.horizonTrades }}T
              </div>
            </div>
 
            <div class="px-5 py-4">
              <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'Шанс плюса' : 'Profit odds' }}
+               {{ locale === 'ru' ? 'Вероятный пик' : 'Likely peak' }}
              </div>
              <div class="mt-2 font-mono text-lg font-black text-black dark:text-white">
-               {{ formatForecastPercent(protocolForecast.probabilityProfit, false) }}
+               {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p50) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               P10 {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p10) }} / P90 {{ formatForecastMoney(protocolForecast.previewPeakCapitalQuantiles.p90) }}
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
+               {{ locale === 'ru' ? 'Вероятный минимум' : 'Likely trough' }}
+             </div>
+             <div class="mt-2 font-mono text-lg font-black text-red-600 dark:text-red-300">
+               {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p50) }}
+             </div>
+             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+               P10 {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p10) }} / P90 {{ formatForecastMoney(protocolForecast.previewTroughCapitalQuantiles.p90) }}
+             </div>
+           </div>
+
+           <div class="px-5 py-4">
+             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
+               {{ locale === 'ru' ? 'Слой / шанс' : 'Layer / odds' }}
+             </div>
+             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
+               {{ protocolForecast.horizonTrades }}T / {{ formatForecastPercent(protocolForecast.probabilityProfit, false) }}
              </div>
              <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
                {{ protocolForecastLoading ? (locale === 'ru' ? 'загрузка' : 'loading') : `${protocolForecast.matchesCount ?? protocolForecast.simulationsCount} matches / ${protocolForecast.sourceFilesCount ?? 0} files` }}
              </div>
            </div>
+         </div>
 
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'DD > 10%' : 'DD > 10%' }}
-             </div>
-             <div class="mt-2 font-mono text-lg font-black text-red-600 dark:text-red-300">
-               {{ formatForecastPercent(protocolForecast.probabilityDrawdownOver10, false) }}
-             </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               {{ formatForecastPercent(protocolForecast.metrics.currentDrawdownPct) }} now
-             </div>
+         <div class="border-t border-black/10 dark:border-white/10 px-5 py-4">
+           <div class="flex items-center justify-between gap-4">
+             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'Путь капитала по следующим сделкам' : 'Capital path over next trades' }}
+             </span>
+             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+               {{ locale === 'ru' ? 'Жесткий стрик может тянуть медиану вниз' : 'Loss streaks can pull the median down' }}
+             </span>
            </div>
 
-           <div class="px-5 py-4">
-             <div class="font-mono text-[7px] uppercase tracking-[0.35em] text-black/35 dark:text-white/35">
-               {{ locale === 'ru' ? 'Профиль' : 'Profile' }}
+           <div class="mt-4">
+             <svg viewBox="0 0 100 36" class="h-28 w-full">
+               <polyline
+                 v-if="forecastPreviewP90Path"
+                 :points="forecastPreviewP90Path"
+                 fill="none"
+                 stroke="rgba(16,185,129,0.28)"
+                 stroke-width="1.25"
+               />
+               <polyline
+                 v-if="forecastPreviewP10Path"
+                 :points="forecastPreviewP10Path"
+                 fill="none"
+                 stroke="rgba(239,68,68,0.28)"
+                 stroke-width="1.25"
+               />
+               <polyline
+                 v-if="forecastPreviewP50Path"
+                 :points="forecastPreviewP50Path"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7"
+                 class="text-black dark:text-white"
+               />
+             </svg>
+           </div>
+
+           <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4">
+             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'Текущий DD' : 'Current DD' }}: {{ formatForecastPercent(protocolForecast.metrics.currentDrawdownPct) }}
              </div>
-             <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-               PF {{ formatForecastNumber(protocolForecast.metrics.profitFactor, 2) }}
+             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'DD > 10%' : 'DD > 10%' }}: {{ formatForecastPercent(protocolForecast.probabilityDrawdownOver10, false) }}
              </div>
-             <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
-               WR {{ formatForecastPercent(protocolForecast.metrics.winRate, false) }} / {{ protocolForecast.metrics.tradeCount }}T
+             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'PF профиля' : 'Profile PF' }}: {{ formatForecastNumber(protocolForecast.metrics.profitFactor, 2) }}
+             </div>
+             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+               {{ locale === 'ru' ? 'WR профиля' : 'Profile WR' }}: {{ formatForecastPercent(protocolForecast.metrics.winRate, false) }}
              </div>
            </div>
          </div>
@@ -608,6 +682,7 @@ const authStore = useAuthStore()
 
 const showShareCardModal = ref(false)
 const isGeneratingPng = ref(false)
+const showCapitalForecast = ref(false)
 
 const tradeEfficiency = computed(() => {
   return mappedTradeForAnalysis.value?.percentileRank ?? 0
@@ -774,6 +849,10 @@ const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${un
 
 const currentTrades = computed(() => {
   return tradeStore.getTradesForStrategy(selectedStrategyId.value)
+})
+
+const currentTradesForList = computed(() => {
+  return tradeStore.getAllTradesForStrategy(selectedStrategyId.value)
 })
 
 const activeMatrixNodes = computed(() => {
@@ -1057,6 +1136,14 @@ const refreshProtocolForecast = async () => {
   }
 }
 
+const toggleCapitalForecast = () => {
+  showCapitalForecast.value = !showCapitalForecast.value
+
+  if (showCapitalForecast.value) {
+    void refreshProtocolForecast()
+  }
+}
+
 const forecastConfidenceLabel = computed(() => {
   if (locale.value === 'ru') {
     if (protocolForecast.value.confidence === 'high') return 'Высокая уверенность'
@@ -1092,6 +1179,33 @@ const formatForecastMoney = (value: number) => {
   const sign = value < 0 ? '-$' : '$'
   return `${sign}${formatForecastNumber(Math.abs(value), 0)}`
 }
+
+const buildForecastPreviewPolyline = (band: 'p10' | 'p50' | 'p90') => {
+  const path = protocolForecast.value.previewPath
+  if (!path.length) return ''
+
+  const values = path
+    .map((point) => point.capital[band])
+    .filter(Number.isFinite)
+  if (!values.length) return ''
+
+  const minValue = Math.min(...values)
+  const maxValue = Math.max(...values)
+  const spread = Math.max(maxValue - minValue, 1)
+
+  return path
+    .map((point, index) => {
+      const x = path.length > 1 ? (index / (path.length - 1)) * 100 : 50
+      const value = point.capital[band]
+      const y = 31 - ((value - minValue) / spread) * 26
+      return `${x},${y}`
+    })
+    .join(' ')
+}
+
+const forecastPreviewP10Path = computed(() => buildForecastPreviewPolyline('p10'))
+const forecastPreviewP50Path = computed(() => buildForecastPreviewPolyline('p50'))
+const forecastPreviewP90Path = computed(() => buildForecastPreviewPolyline('p90'))
 
 const calculateRR = (trade: any) => {
   if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'
@@ -1462,14 +1576,10 @@ const selectedStrategyId = computed({
 })
 
 watch([selectedStrategyId, currentTrades, locale], () => {
-  void refreshProtocolForecast()
-}, { immediate: true, deep: true })
-
-watch(showComplianceStatus, (value) => {
-  if (value) {
+  if (showCapitalForecast.value) {
     void refreshProtocolForecast()
   }
-})
+}, { deep: true })
 
 const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()

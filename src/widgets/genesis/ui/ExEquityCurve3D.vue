@@ -5665,7 +5665,7 @@ watch(selectedStrategyId, async () => {
   initData()
 })
 
-watch([() => props.trades, () => tradeStore.tradesByStrategy[selectedStrategyId.value]], async () => {
+watch([() => props.trades, () => tradeStore.tradesByStrategy[selectedStrategyId.value], () => tradeStore.hiddenTradeIdsByStrategy[selectedStrategyId.value]], async () => {
   await fetchRealtimeMetrics([selectedStrategyId.value])
   initData()
 }, { deep: true })

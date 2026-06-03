@@ -1048,7 +1048,7 @@ onMounted(async () => {
 const diaryHeatmapTrades = computed(() => {
   // Force mock data for testing 30 trades layout
   const useMockData = true 
-  let trades: any[] = useMockData ? [] : (strategyStore.tradesByStrategy['MAIN_DIARY'] || [])
+  let trades: any[] = useMockData ? [] : strategyStore.getTradesForStrategy('MAIN_DIARY')
   
   if (trades.length === 0) {
     const assets = ['NVDA', 'SOL/USD', 'MSFT', 'GOLD', 'AAPL', 'BTC/USD', 'EUR/USD', 'ETH/USD', 'TSLA', 'AMZN', 'NQ1!', 'ES1!', 'GBP/JPY', 'XRP/USD', 'META', 'NFLX', 'AMD', 'SPY', 'QQQ', 'DOGE/USD']

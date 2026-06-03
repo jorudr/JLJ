@@ -16,6 +16,8 @@ export interface ProtocolForecastMetrics {
   winRate: number
   profitFactor: number
   expectancyPct: number
+  averageAbsReturnPct: number
+  medianAbsReturnPct: number
   payoffRatio: number
   averageRiskReward: number | null
   volatilityPct: number
@@ -59,11 +61,48 @@ export interface ProtocolForecastResult {
     p75: number
     p90: number
   }
+  previewHorizonTrades: number
+  previewQuantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  previewCapitalQuantiles: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  previewPeakCapitalQuantiles: {
+    p10: number
+    p50: number
+    p90: number
+  }
+  previewTroughCapitalQuantiles: {
+    p10: number
+    p50: number
+    p90: number
+  }
+  previewPath: Array<{
+    tradeIndex: number
+    capital: {
+      p10: number
+      p25: number
+      p50: number
+      p75: number
+      p90: number
+    }
+  }>
   probabilityProfit: number
   probabilityDrawdownOver10: number
   simulationsCount: number
   matchesCount?: number
   sourceFilesCount?: number
+  amplitudeCalibrationFactor?: number
+  amplitudeCalibrationWeight?: number
 }
 
 interface PreparedTrade {
@@ -100,6 +139,7 @@ interface HistoricalWindow {
   features: ProtocolForecastMetrics
   futureReturnPct: number
   futureMaxDrawdownPct: number
+  futureReturnsPath: number[]
 }
 
 interface Normalizer {
@@ -165,6 +205,8 @@ const AUXILIARY_SOURCE_CANDIDATE_MULTIPLIER = 0.88
 const AUXILIARY_RETURN_CAP_PCT = 35
 const PRIMARY_DURATION_BONUS_MULTIPLIER = 0.94
 const PRIMARY_DURATION_PENALTY_MULTIPLIER = 1.08
+const AMPLITUDE_SCALE_MIN = 0.65
+const AMPLITUDE_SCALE_MAX = 1.75
 const FORECAST_REGIMES: ForecastRegime[] = [
   { windowTrades: 30, horizonTrades: 30 },
   { windowTrades: 20, horizonTrades: 20 },
@@ -268,9 +310,22 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
   }
 
   const { regime, userWindow, userMetrics, matches, sourceFilesCount, medianDistance } = candidate
-  const futureReturns = matches.map((match) => match.window.futureReturnPct)
+  const amplitudeCalibration = calculateAmplitudeCalibration(userWindow, userMetrics, matches)
+  const calibratedFuturePaths = matches.map((match) => calibrateFuturePath(
+    match.window.futureReturnsPath,
+    amplitudeCalibration.userAmplitudePct,
+    readAmplitudeMetric(match.window.features),
+    amplitudeCalibration.weight
+  ))
+  const futureReturns = calibratedFuturePaths.map(compoundReturns)
   const futureCapitals = futureReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
-  const futureDrawdowns = matches.map((match) => match.window.futureMaxDrawdownPct)
+  const futureDrawdowns = matches.map((match) => calibrateFutureDrawdown(
+    match.window.futureMaxDrawdownPct,
+    amplitudeCalibration.userAmplitudePct,
+    readAmplitudeMetric(match.window.features),
+    amplitudeCalibration.weight
+  ))
+  const preview = buildPreviewForecast(currentCapital, calibratedFuturePaths, 10)
   const auxiliaryMatchShare = percentage(matches.filter((match) => match.window.sourceTier === 'auxiliary').length, matches.length) / 100
   const probabilityProfit = percentage(futureReturns.filter((value) => value > 0).length, futureReturns.length)
   const probabilityDrawdownOver10 = percentage(futureDrawdowns.filter((value) => value <= -10).length, futureDrawdowns.length)
@@ -288,8 +343,8 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
     confidence: confidenceLabel(confidenceScore),
     confidenceScore,
     message: auxiliaryMatchShare > 0
-      ? `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}, включая ослабленный execution-source historical_data.csv.`
-      : `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}.`,
+      ? `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades}, включая ослабленный execution-source historical_data.csv, с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`
+      : `Прогноз построен по похожим историческим окнам на слое ${regime.windowTrades}/${regime.horizonTrades} с персональной калибровкой амплитуды ${formatSignedPercent(amplitudeCalibration.averageScalePct)}.`,
     horizonTrades: regime.horizonTrades,
     currentCapital,
     metrics: userMetrics,
@@ -307,11 +362,19 @@ export async function calculateProtocolForecast(input: ProtocolForecastInput): P
       p75: quantile(futureCapitals, 0.75),
       p90: quantile(futureCapitals, 0.9)
     },
+    previewHorizonTrades: preview.previewHorizonTrades,
+    previewQuantiles: preview.previewQuantiles,
+    previewCapitalQuantiles: preview.previewCapitalQuantiles,
+    previewPeakCapitalQuantiles: preview.previewPeakCapitalQuantiles,
+    previewTroughCapitalQuantiles: preview.previewTroughCapitalQuantiles,
+    previewPath: preview.previewPath,
     probabilityProfit,
     probabilityDrawdownOver10,
     simulationsCount: matches.length,
     matchesCount: matches.length,
-    sourceFilesCount
+    sourceFilesCount,
+    amplitudeCalibrationFactor: amplitudeCalibration.averageScale,
+    amplitudeCalibrationWeight: amplitudeCalibration.weight
   }
 }
 
@@ -478,7 +541,8 @@ function buildWindowsForTimeline(
       sourceTier: timeline.sourceTier,
       features: calculateMetrics(window),
       futureReturnPct: compoundReturns(future.map((trade) => trade.returnPct)),
-      futureMaxDrawdownPct: maxDrawdownFromReturns(future.map((trade) => trade.returnPct))
+      futureMaxDrawdownPct: maxDrawdownFromReturns(future.map((trade) => trade.returnPct)),
+      futureReturnsPath: future.map((trade) => trade.returnPct)
     })
   }
 
@@ -697,6 +761,7 @@ function rowsToPreparedTrades(rows: ParsedStatementRow[]): PreparedTrade[] {
 
 function calculateMetrics(trades: PreparedTrade[]): ProtocolForecastMetrics {
   const returns = trades.map((trade) => trade.returnPct).filter(Number.isFinite)
+  const absoluteReturns = returns.map((value) => Math.abs(value))
   const profits = trades.map((trade) => trade.profit)
   const winningProfits = profits.filter((profit) => profit > 0)
   const losingProfits = profits.filter((profit) => profit < 0)
@@ -716,6 +781,8 @@ function calculateMetrics(trades: PreparedTrade[]): ProtocolForecastMetrics {
     winRate: percentage(winningProfits.length, trades.length),
     profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0,
     expectancyPct: average(returns),
+    averageAbsReturnPct: average(absoluteReturns),
+    medianAbsReturnPct: quantile(absoluteReturns, 0.5),
     payoffRatio: averageLoss > 0 ? averageWin / averageLoss : averageWin > 0 ? Infinity : 0,
     averageRiskReward: rrValues.length ? average(rrValues) : null,
     volatilityPct: standardDeviation(returns),
@@ -737,6 +804,146 @@ function calculateMetrics(trades: PreparedTrade[]): ProtocolForecastMetrics {
     returnSkewness: skewness(returns),
     symbolConcentrationTop1: calculateSymbolConcentration(trades),
     tailLossCvar95: calculateTailLossCvar95(returns)
+  }
+}
+
+function calculateAmplitudeCalibration(
+  userWindow: PreparedTrade[],
+  userMetrics: ProtocolForecastMetrics,
+  matches: Array<{ window: HistoricalWindow; distance: number }>
+) {
+  const userReturns = userWindow
+    .map((trade) => Math.abs(trade.returnPct))
+    .filter(Number.isFinite)
+  const userAmplitudePct = readAmplitudeMetric(userMetrics)
+  const userAmplitudeIqr = userReturns.length
+    ? quantile(userReturns, 0.75) - quantile(userReturns, 0.25)
+    : 0
+  const sampleWeight = clamp((userWindow.length - 8) / 22, 0, 1)
+  const stabilityWeight = clamp(1 - userAmplitudeIqr / Math.max(userAmplitudePct * 2.5, 0.25), 0, 1)
+  const weight = clamp(sampleWeight * 0.65 + stabilityWeight * 0.35, 0, 0.8)
+
+  const scales = matches
+    .map((match) => calculateBlendedAmplitudeScale(userAmplitudePct, readAmplitudeMetric(match.window.features), weight))
+    .filter(Number.isFinite)
+  const averageScale = scales.length ? average(scales) : 1
+
+  return {
+    userAmplitudePct,
+    weight,
+    averageScale,
+    averageScalePct: (averageScale - 1) * 100
+  }
+}
+
+function readAmplitudeMetric(metrics: ProtocolForecastMetrics) {
+  const medianAbs = finitePositive(metrics.medianAbsReturnPct) ? metrics.medianAbsReturnPct : 0
+  const averageAbs = finitePositive(metrics.averageAbsReturnPct) ? metrics.averageAbsReturnPct : 0
+  const volatility = finitePositive(metrics.volatilityPct) ? metrics.volatilityPct : 0
+  const amplitude = medianAbs * 0.5 + averageAbs * 0.35 + volatility * 0.15
+  return amplitude > 0 ? amplitude : Math.max(averageAbs, medianAbs, volatility, 0.01)
+}
+
+function calculateBlendedAmplitudeScale(userAmplitudePct: number, historicalAmplitudePct: number, weight: number) {
+  if (!(userAmplitudePct > 0) || !(historicalAmplitudePct > 0)) {
+    return 1
+  }
+
+  const rawScale = clamp(userAmplitudePct / historicalAmplitudePct, AMPLITUDE_SCALE_MIN, AMPLITUDE_SCALE_MAX)
+  return 1 + (rawScale - 1) * weight
+}
+
+function calibrateFutureReturn(
+  futureReturnPct: number,
+  userAmplitudePct: number,
+  historicalAmplitudePct: number,
+  weight: number
+) {
+  return futureReturnPct * calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
+}
+
+function calibrateFuturePath(
+  futureReturnsPath: number[],
+  userAmplitudePct: number,
+  historicalAmplitudePct: number,
+  weight: number
+) {
+  const scale = calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
+  return futureReturnsPath.map((returnPct) => returnPct * scale)
+}
+
+function calibrateFutureDrawdown(
+  futureDrawdownPct: number,
+  userAmplitudePct: number,
+  historicalAmplitudePct: number,
+  weight: number
+) {
+  if (futureDrawdownPct >= 0) {
+    return futureDrawdownPct
+  }
+
+  return futureDrawdownPct * calculateBlendedAmplitudeScale(userAmplitudePct, historicalAmplitudePct, weight)
+}
+
+function buildPreviewForecast(currentCapital: number, calibratedFuturePaths: number[][], requestedHorizonTrades: number) {
+  const previewHorizonTrades = Math.max(1, Math.min(
+    requestedHorizonTrades,
+    ...calibratedFuturePaths.map((path) => path.length).filter((length) => length > 0)
+  ))
+
+  const previewReturns = calibratedFuturePaths.map((path) => compoundReturns(path.slice(0, previewHorizonTrades)))
+  const previewCapitals = previewReturns.map((returnPct) => currentCapital * (1 + returnPct / 100))
+  const previewCapitalPaths = calibratedFuturePaths.map((path) =>
+    buildCapitalPathFromReturns(currentCapital, path.slice(0, previewHorizonTrades))
+  )
+
+  const previewPath = Array.from({ length: previewHorizonTrades }, (_, index) => {
+    const capitalValues = previewCapitalPaths
+      .map((path) => path[index + 1] ?? currentCapital)
+      .filter(Number.isFinite)
+
+    return {
+      tradeIndex: index + 1,
+      capital: {
+        p10: quantile(capitalValues, 0.1),
+        p25: quantile(capitalValues, 0.25),
+        p50: quantile(capitalValues, 0.5),
+        p75: quantile(capitalValues, 0.75),
+        p90: quantile(capitalValues, 0.9)
+      }
+    }
+  })
+
+  const peakCapitals = previewCapitalPaths.map((path) => Math.max(...path))
+  const troughCapitals = previewCapitalPaths.map((path) => Math.min(...path))
+
+  return {
+    previewHorizonTrades,
+    previewQuantiles: {
+      p10: quantile(previewReturns, 0.1),
+      p25: quantile(previewReturns, 0.25),
+      p50: quantile(previewReturns, 0.5),
+      p75: quantile(previewReturns, 0.75),
+      p90: quantile(previewReturns, 0.9)
+    },
+    previewCapitalQuantiles: {
+      p10: quantile(previewCapitals, 0.1),
+      p25: quantile(previewCapitals, 0.25),
+      p50: quantile(previewCapitals, 0.5),
+      p75: quantile(previewCapitals, 0.75),
+      p90: quantile(previewCapitals, 0.9)
+    },
+    previewPeakCapitalQuantiles: {
+      p10: quantile(peakCapitals, 0.1),
+      p50: quantile(peakCapitals, 0.5),
+      p90: quantile(peakCapitals, 0.9)
+    },
+    previewTroughCapitalQuantiles: {
+      p10: quantile(troughCapitals, 0.1),
+      p50: quantile(troughCapitals, 0.5),
+      p90: quantile(troughCapitals, 0.9)
+    },
+    previewPath
   }
 }
 
@@ -876,6 +1083,26 @@ function emptyForecast(params: {
       p75: params.currentCapital,
       p90: params.currentCapital
     },
+    previewHorizonTrades: 10,
+    previewQuantiles: { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
+    previewCapitalQuantiles: {
+      p10: params.currentCapital,
+      p25: params.currentCapital,
+      p50: params.currentCapital,
+      p75: params.currentCapital,
+      p90: params.currentCapital
+    },
+    previewPeakCapitalQuantiles: {
+      p10: params.currentCapital,
+      p50: params.currentCapital,
+      p90: params.currentCapital
+    },
+    previewTroughCapitalQuantiles: {
+      p10: params.currentCapital,
+      p50: params.currentCapital,
+      p90: params.currentCapital
+    },
+    previewPath: [],
     probabilityProfit: 0,
     probabilityDrawdownOver10: 0,
     simulationsCount: 0,
@@ -890,6 +1117,8 @@ function createEmptyMetrics(): ProtocolForecastMetrics {
     winRate: 0,
     profitFactor: 0,
     expectancyPct: 0,
+    averageAbsReturnPct: 0,
+    medianAbsReturnPct: 0,
     payoffRatio: 0,
     averageRiskReward: null,
     volatilityPct: 0,
@@ -1128,6 +1357,18 @@ function buildRelativeEquity(returns: number[]) {
   return values
 }
 
+function buildCapitalPathFromReturns(startCapital: number, returns: number[]) {
+  let capital = startCapital
+  const values = [capital]
+
+  for (const returnPct of returns) {
+    capital *= 1 + returnPct / 100
+    values.push(capital)
+  }
+
+  return values
+}
+
 function compoundReturns(returns: number[]) {
   return (returns.reduce((equity, returnPct) => equity * (1 + returnPct / 100), 1) - 1) * 100
 }
@@ -1335,4 +1576,9 @@ function clamp(value: number, min: number, max: number) {
 
 function lastItem<T>(values: T[]) {
   return values.length ? values[values.length - 1] : undefined
+}
+
+function formatSignedPercent(value: number) {
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${value.toFixed(1)}%`
 }

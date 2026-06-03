@@ -245,10 +245,33 @@
             {{ isAllSelected ? (locale === 'ru' ? '[Отменить выбор]' : '[Deselect All]') : (locale === 'ru' ? '[Выбрать все]' : '[Select All]') }}
           </button>
           <span v-if="selectedTradeIds.length > 0" class="opacity-70">({{ selectedTradeIds.length }} {{ locale === 'ru' ? 'Выбрано' : 'Selected' }})</span>
+          <button
+            v-if="selectedTradeIds.length > 0"
+            @click="toggleSelectedTradesHidden"
+            class="hover:opacity-100 transition-opacity font-bold flex items-center gap-1"
+            :title="toggleHiddenButtonTitle"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                :d="selectedTradesAreHidden ? 'M3 3l18 18M10.58 10.58a2 2 0 102.83 2.83M9.88 5.09A9.77 9.77 0 0112 4.91c5 0 9.27 3.11 11 7.5a11.83 11.83 0 01-4.08 5.36M6.61 6.61C4.62 7.88 3.1 9.91 2 12.41a11.82 11.82 0 004.24 5.44A9.76 9.76 0 0012 19.09c1.63 0 3.16-.37 4.52-1.02' : 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z'"
+              />
+            </svg>
+            <span>{{ selectedTradesAreHidden ? (locale === 'ru' ? '[Вернуть]' : '[Restore]') : (locale === 'ru' ? '[Скрыть]' : '[Hide]') }}</span>
+          </button>
           <button v-if="selectedTradeIds.length > 0" @click="removeSelectedTrades" class="hover:opacity-100 transition-opacity font-bold text-red-500">
             {{ locale === 'ru' ? '[Удалить]' : '[Remove]' }}
           </button>
         </div>
+        <button
+          v-if="hiddenTradesCount > 0"
+          @click="showHiddenTrades = !showHiddenTrades"
+          class="hover:opacity-100 transition-opacity font-bold"
+        >
+          {{ showHiddenTrades ? (locale === 'ru' ? '[Скрытые: ON]' : '[Hidden: ON]') : (locale === 'ru' ? '[Скрытые: OFF]' : '[Hidden: OFF]') }}
+        </button>
       </div>
 
       <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b border-black/10 dark:border-white/10 text-[10px] opacity-40 uppercase tracking-widest px-2">
@@ -276,10 +299,12 @@
           v-for="trade in filteredTrades" 
           :key="trade.id"
           class="flex flex-col group transition-opacity duration-150 border-b border-black/5 dark:border-white/5 pb-2"
+          :class="isTradeHidden(trade) ? 'opacity-40' : ''"
         >
           <!-- ROW GRID -->
           <div 
             class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center py-3 px-2 opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer"
+            :class="isTradeHidden(trade) ? 'opacity-45 group-hover:opacity-70' : ''"
             @click="emit('open-trade', { tradeId: trade.id })"
           >
             <div class="flex items-center space-x-3 truncate" @click.stop="toggleSelectTrade(trade.id)">
@@ -288,6 +313,9 @@
               </button>
               <span class="w-1 h-1 rounded-full shrink-0" :class="colorMode === 'colorful' ? (trade.status === 'WIN' ? 'bg-green-500' : trade.status === 'LOSS' ? 'bg-red-500' : 'bg-yellow-500') : (trade.status === 'WIN' ? 'bg-black dark:bg-white' : trade.status === 'LOSS' ? 'bg-black/30 dark:bg-white/30' : 'bg-black/60 dark:bg-white/60')"></span>
               <span class="font-bold uppercase tracking-widest">{{ trade.direction }}</span>
+              <span v-if="isTradeHidden(trade)" class="text-[8px] uppercase tracking-[0.24em] opacity-45">
+                {{ locale === 'ru' ? 'скрыто' : 'hidden' }}
+              </span>
             </div>
             
             <span class="opacity-60 uppercase tracking-wider truncate">{{ trade.asset }}</span>
@@ -409,6 +437,7 @@ const colorMode = ref<'monochrome' | 'colorful'>('monochrome')
 const resultDisplayMode = ref<'currency' | 'percent'>('percent')
 const openFilterId = ref<string | null>(null)
 const filterBarRef = ref<HTMLElement | null>(null)
+const showHiddenTrades = ref(true)
 
 const toggleTradeExpand = (tradeId: string) => {
   expandedTradeId.value = expandedTradeId.value === tradeId ? null : tradeId
@@ -951,6 +980,12 @@ import { loadFromDisk } from '~/shared/diskStorage'
 
 const strategyStore = useStrategyTradesStore()
 
+const resolveTradeStrategyId = (trade: any) => trade.strategyId || strategyStore.selectedStrategyId
+
+const isTradeHidden = (trade: any) => {
+  return strategyStore.isTradeHidden(resolveTradeStrategyId(trade), trade.id)
+}
+
 const activeTrades = computed(() => {
   if (props.trades) {
     const tradesByStrat: Record<string, any[]> = {}
@@ -981,6 +1016,7 @@ const activeTrades = computed(() => {
     }
 
     return props.trades.map(t => {
+      const strategyId = resolveTradeStrategyId(t)
       const enriched = enrichedTradesMap[t.id || 'TRD-XX'] || {
         currencyProfit: t.profitInCurrency !== undefined ? t.profitInCurrency : (t.pnl !== undefined ? t.pnl : (t.result || 0)),
         calcPercent: 0
@@ -1007,6 +1043,7 @@ const activeTrades = computed(() => {
 
       return {
         id: t.id || 'TRD-XX',
+        strategyId,
         scenario: t.boardScenarioEntry?.info?.name || t.scenario || 'Tactical_Entry_Alpha',
         condition: t.boardScenarioEntry?.info?.conditions?.[0]?.info?.name || t.boardScenarioEntry?.info?.conditions?.[0]?.name || t.conditions?.[0]?.info?.name || t.conditions?.[0]?.name || t.boardConditions?.[0]?.info?.name || t.boardConditions?.[0]?.name || t.condition || 'Market_Structure_Break',
         boardScenarioEntry: t.boardScenarioEntry,
@@ -1421,6 +1458,7 @@ const getTradeTimeMinutes = (trade: any) => {
 
 const filteredTrades = computed(() => {
   return activeTrades.value.filter((trade: any) => {
+    if (!showHiddenTrades.value && isTradeHidden(trade)) return false
     if (selectedScenario.value !== 'ALL') {
       const isExitScen = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION'].includes(selectedScenario.value)
       if (isExitScen) {
@@ -1492,6 +1530,25 @@ const filteredTrades = computed(() => {
 
 const selectedTradeIds = ref<string[]>([])
 
+const selectedTrades = computed(() => {
+  return activeTrades.value.filter(t => selectedTradeIds.value.includes(t.id))
+})
+
+const hiddenTradesCount = computed(() => {
+  return activeTrades.value.filter(trade => isTradeHidden(trade)).length
+})
+
+const selectedTradesAreHidden = computed(() => {
+  if (selectedTrades.value.length === 0) return false
+  return selectedTrades.value.every(trade => isTradeHidden(trade))
+})
+
+const toggleHiddenButtonTitle = computed(() => {
+  return selectedTradesAreHidden.value
+    ? (locale.value === 'ru' ? 'Вернуть скрытые сделки в стратегию' : 'Restore hidden trades into the strategy')
+    : (locale.value === 'ru' ? 'Скрыть сделки из стратегии и всех расчетов' : 'Hide trades from the strategy and all analytics')
+})
+
 const isAllSelected = computed(() => {
   if (filteredTrades.value.length === 0) return false
   return filteredTrades.value.every(t => selectedTradeIds.value.includes(t.id))
@@ -1525,6 +1582,26 @@ const removeSelectedTrades = async () => {
   } else {
     mockTrades.value = mockTrades.value.filter(t => !selectedTradeIds.value.includes(t.id))
   }
+  selectedTradeIds.value = []
+}
+
+const toggleSelectedTradesHidden = async () => {
+  if (selectedTrades.value.length === 0) return
+
+  const hideTrades = !selectedTradesAreHidden.value
+  const tradeIdsByStrategy = new Map<string, string[]>()
+
+  selectedTrades.value.forEach(trade => {
+    const strategyId = resolveTradeStrategyId(trade)
+    const strategyTradeIds = tradeIdsByStrategy.get(strategyId) || []
+    strategyTradeIds.push(trade.id)
+    tradeIdsByStrategy.set(strategyId, strategyTradeIds)
+  })
+
+  for (const [strategyId, tradeIds] of tradeIdsByStrategy.entries()) {
+    await strategyStore.setTradesHidden(strategyId, tradeIds, hideTrades)
+  }
+
   selectedTradeIds.value = []
 }
 

@@ -212,7 +212,7 @@ watch(() => props.viewMode, (newMode) => {
 })
 
 // Immediate update when trades are added or strategy changes
-watch([selectedStrategyId, () => tradeStore.tradesByStrategy[selectedStrategyId.value]], () => {
+watch([selectedStrategyId, () => tradeStore.tradesByStrategy[selectedStrategyId.value], () => tradeStore.hiddenTradeIdsByStrategy[selectedStrategyId.value]], () => {
   initTrades()
 }, { deep: true })
 
