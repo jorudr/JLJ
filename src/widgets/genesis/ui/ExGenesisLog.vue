@@ -117,7 +117,6 @@
 
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
       <div
-        v-show="isHudVisible"
         class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
       >
@@ -147,8 +146,53 @@
                </div>
                <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
             </button>
+
+            <button @click="viewType = 'none'" 
+                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
+                    :class="viewType === 'none' ? 'bg-black dark:bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
+                    title="Hide Views">
+               <svg v-if="viewType === 'none'" class="w-4 h-4 transition-all duration-500 text-white dark:text-black scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+               </svg>
+               <svg v-else class="w-4 h-4 text-black dark:text-white transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+               </svg>
+               <div v-if="viewType === 'none'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
+            </button>
          </div>
       </div>
+
+      <!-- NONE VIEW: CENTER NODE -->
+      <div v-if="viewType === 'none'" class="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto">
+        <ExNTtooltip>
+          <template #trigger>
+             <div class="relative w-14 h-14 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node bg-white/5 dark:bg-black/5 border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 shadow-[0_0_20px_rgba(0,0,0,0.05)] backdrop-blur-md">
+               
+               <div class="absolute top-1 left-1 w-1 h-1 border-t border-l border-black/20 dark:border-white/20 transition-colors duration-500 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+
+               <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border border-blue-500/50 text-blue-500 bg-blue-500/10">
+                 USR
+               </div>
+
+               <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
+                 USR
+               </span>
+             </div>
+          </template>
+          <div class="flex flex-col gap-1 min-w-[120px] p-1">
+            <div class="flex flex-col space-y-1 font-mono leading-relaxed uppercase text-black dark:text-white">
+              <span class="font-black text-[14px] tracking-widest pb-0.5">{{ authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F' }}</span>
+              <div class="w-full h-[1px] bg-black/10 dark:bg-white/10 mb-1"></div>
+              <span class="text-[9px] opacity-60">ID. {{ authStore.user?.uid?.slice(0, 10) || 'UNKNOWN' }}</span>
+              <span class="text-[9px] opacity-60">TYPE. {{ authStore.user?.type || 'COMMON' }}</span>
+              <span class="text-[9px] opacity-60">EST. {{ formatCreationDate(authStore.user?.joinedAt) }}</span>
+            </div>
+          </div>
+        </ExNTtooltip>
+      </div>
+
     </div>
 
     <!-- TACTICAL PROTOCOL INSIGHT (FIXED RIGHT - ARCHIVE) -->
@@ -328,7 +372,7 @@
     </div>
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && isHudVisible && viewType !== 'none'" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
@@ -545,6 +589,7 @@ import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
+import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -682,7 +727,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list'>('cube')
+const viewType = ref<'cube' | 'list' | 'none'>('cube')
 const selectedTradeId = ref<string | null>(null)
 const showExtraDetails = ref(false)
 const panelInitialPage = ref<number | undefined>(undefined)
@@ -747,6 +792,16 @@ const formatFullDate = (d: any) => {
     hour12: false
   })
   return `${datePart}\n${timePart}`
+}
+
+const formatCreationDate = (d: string | null | undefined) => {
+  if (!d) return 'UNKNOWN_ORIGIN'
+  const date = new Date(d)
+  return date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).toUpperCase()
 }
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)

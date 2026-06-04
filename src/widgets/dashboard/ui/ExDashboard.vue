@@ -273,7 +273,7 @@
       <Transition name="premium-modal">
         <div v-if="showChangeNameModal" 
              class="fixed inset-0 z-[10050] flex flex-col items-center justify-center p-8 bg-white/10 dark:bg-black/40 transition-all duration-700"
-             style="backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);"
+             style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
              @click.self="closeChangeName">
           
           <div class="w-full max-w-lg transform scale-100 transition-all duration-700">
