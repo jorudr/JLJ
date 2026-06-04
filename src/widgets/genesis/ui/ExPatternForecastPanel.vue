@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-[38rem] max-h-[70vh] flex-col overflow-hidden border border-black/10 bg-white/90 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-colors hover:bg-white dark:border-white/10 dark:bg-[#070707]/90 dark:hover:bg-[#070707]">
+  <div class="flex h-[52rem] max-h-[82vh] flex-col overflow-hidden border border-black/10 bg-white/90 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-colors hover:bg-white dark:border-white/10 dark:bg-[#070707]/90 dark:hover:bg-[#070707]">
     <div class="flex shrink-0 items-center justify-between border-b border-black/10 px-5 py-3 dark:border-white/10">
       <div class="flex items-center gap-3">
         <div class="h-1.5 w-1.5 rotate-45 bg-black dark:bg-white"></div>
