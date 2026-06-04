@@ -569,10 +569,12 @@ const getResultMetricValue = (trade: any) => {
 const resultMetricLabel = computed(() => resultDisplayMode.value === 'currency' ? '$' : '%')
 
 const formatTradeResult = (trade: any) => {
-  const value = getResultMetricValue(trade)
+  const rawValue = getResultMetricValue(trade)
+  const value = Number.isFinite(rawValue) ? rawValue : 0
   const sign = value > 0 ? '+' : ''
-  if (resultDisplayMode.value === 'currency') return `${value < 0 ? '-' : sign}$${Math.abs(value)}`
-  return `${sign}${value}%`
+  const fixedValue = Math.abs(value).toFixed(2)
+  if (resultDisplayMode.value === 'currency') return `${value < 0 ? '-' : sign}$${fixedValue}`
+  return `${sign}${Number(value).toFixed(2)}%`
 }
 
 const resultColorClass = (trade: any) => {
