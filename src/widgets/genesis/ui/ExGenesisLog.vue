@@ -66,8 +66,12 @@
                    class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
                    :class="showCapitalForecast
                             ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
-                   title="Toggle Capital Forecast">
+                            : canOpenCapitalForecast
+                              ? 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'
+                              : 'bg-white/5 dark:bg-black/5 text-black/20 dark:text-white/20 hover:bg-black/10 dark:hover:bg-white/10 ring-1 ring-dashed ring-black/10 dark:ring-white/10'"
+                   :title="canOpenCapitalForecast
+                      ? 'Toggle Capital Forecast'
+                      : (locale === 'ru' ? 'Нужен премиум-доступ' : 'Premium access required')">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                  <path d="M3 17l5-5 4 4 8-9"></path>
                  <path d="M17 7h3v3"></path>
@@ -300,7 +304,7 @@
     </div>
 
     <div
-      v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible"
+      v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible && canOpenCapitalForecast"
       class="absolute left-1/2 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
       :class="showComplianceStatus ? 'top-[8.5rem]' : 'top-8'"
     >
@@ -664,6 +668,7 @@ watch(isHudVisible, (val) => {
   emit('hudState', val)
 })
 const showPaywall = ref(false)
+const canOpenCapitalForecast = computed(() => authStore.user?.type === 'premium')
 
 const openNodeMap = () => {
   if (authStore.user?.type !== 'premium') {
@@ -963,6 +968,11 @@ const complianceDotColor = computed(() => {
 })
 
 const toggleCapitalForecast = () => {
+  if (!canOpenCapitalForecast.value) {
+    showPaywall.value = true
+    showCapitalForecast.value = false
+    return
+  }
   showCapitalForecast.value = !showCapitalForecast.value
 }
 
