@@ -790,6 +790,51 @@ const exitFee = ref('')
 const feeType = ref('%')
 const resultMode = ref('auto')
 
+// Entry Method Protocol
+const showEntryMethod = ref(false)
+const entryMethodType = ref('PYRAMIDING') // PYRAMIDING or AVERAGING_DOWN
+const pyramidingEntries = ref([])
+const averagingDownEntries = ref([])
+
+const activeMultipleEntries = computed(() => 
+  entryMethodType.value === 'PYRAMIDING' ? pyramidingEntries.value : averagingDownEntries.value
+)
+
+const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 1)
+
+const addMultipleEntry = () => {
+  activeMultipleEntries.value.push({ id: Date.now(), price: '', size: '' })
+}
+
+const removeMultipleEntry = (id) => {
+  if (entryMethodType.value === 'PYRAMIDING') {
+    pyramidingEntries.value = pyramidingEntries.value.filter(e => e.id !== id)
+  } else {
+    averagingDownEntries.value = averagingDownEntries.value.filter(e => e.id !== id)
+  }
+}
+
+const totalSize = computed(() => {
+  if (!entryMethodEnabled.value || activeMultipleEntries.value.length === 0) return parseFloat(size.value) || 0
+  return activeMultipleEntries.value.reduce((sum, e) => sum + (parseFloat(e.size) || 0), 0)
+})
+
+const averageEntry = computed(() => {
+  if (!entryMethodEnabled.value || activeMultipleEntries.value.length === 0) return parseFloat(entry.value) || 0
+  
+  let totalValue = 0
+  let totalQty = 0
+  activeMultipleEntries.value.forEach(e => {
+    const p = parseFloat(e.price) || 0
+    const s = parseFloat(e.size) || 0
+    if (p > 0 && s > 0) {
+      totalValue += p * s
+      totalQty += s
+    }
+  })
+  return totalQty > 0 ? totalValue / totalQty : 0
+})
+
 const isForex = computed(() => {
   if (currentAssetData.value) return currentAssetData.value.type === 'Forex'
   const s = asset.value.toUpperCase()
@@ -1025,9 +1070,9 @@ const handleManualDate = (target, unit, val) => {
 
 // Equity Projection Logic
 const projectedProfit = computed(() => {
-  const en = parseFloat(entry.value)
+  const en = entryMethodEnabled.value ? averageEntry.value : parseFloat(entry.value)
   const ex = parseFloat(exit.value)
-  const sz = parseFloat(size.value)
+  const sz = entryMethodEnabled.value ? totalSize.value : parseFloat(size.value)
   if (isNaN(en) || isNaN(ex) || isNaN(sz)) return null
   
   let finalProfit = 0
@@ -1173,6 +1218,9 @@ const resetForm = () => {
   overridePnl.value = null
   selectedRegistryScenarioId.value = null
   showConditionLibrary.value = false
+  showEntryMethod.value = false
+  pyramidingEntries.value = []
+  averagingDownEntries.value = []
   showEmotionSelector.value = false
   viewMode.value = 'tactical'
   isTemporalOpen.value = false
@@ -1879,7 +1927,7 @@ const submit = async () => {
     <!-- LEFT SIDE PHANTOM CLUSTER (Stealth Mode) -->
     <Teleport to="body">
       <Transition name="nier-fade">
-        <div v-if="!showConditionLibrary && !showEmotionSelector" 
+        <div v-if="!showConditionLibrary && !showEmotionSelector && !showEntryMethod" 
              class="fixed left-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
         <!-- UNIFIED MATRIX TOGGLE -->
         <button @click="showConditionLibrary = !showConditionLibrary" 
@@ -1905,6 +1953,26 @@ const submit = async () => {
               </div>
            </div>
         </button>
+
+        <!-- ENTRY METHOD BUTTON -->
+        <button @click="showEntryMethod = true" 
+                :disabled="commitState === 'loading'"
+                class="group relative disabled:opacity-50 disabled:cursor-not-allowed">
+           <div class="relative flex items-center justify-center w-12 h-12">
+              <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white transition-all duration-500 shadow-xl"
+                   :class="{ 'bg-black dark:bg-white': showEntryMethod }"></div>
+              <div class="w-2 h-2 bg-black dark:bg-white relative z-10 transition-colors duration-500 group-hover:bg-white dark:group-hover:bg-black"
+                   :class="{ 'bg-white dark:bg-black': showEntryMethod }"></div>
+              
+              <div class="absolute left-full ml-8 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0 whitespace-nowrap pointer-events-none">
+                 <div class="flex flex-col items-start">
+                    <span class="text-[8px] font-mono tracking-[0.5em] uppercase font-black text-black dark:text-white">ENTRY_METHOD</span>
+                    <div class="h-px w-0 group-hover:w-full bg-black dark:bg-white transition-all duration-500 mt-1 opacity-40"></div>
+                 </div>
+              </div>
+           </div>
+        </button>
+
       </div>
       </Transition>
     </Teleport>
@@ -1912,7 +1980,7 @@ const submit = async () => {
     <!-- RIGHT SIDE TOGGLE (JOURNAL) -->
     <Teleport to="body">
       <Transition name="nier-fade">
-        <div v-if="!showConditionLibrary && !showEmotionSelector" 
+        <div v-if="!showConditionLibrary && !showEmotionSelector && !showEntryMethod" 
              class="fixed right-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
           <!-- JOURNAL TOGGLE -->
           <button @click="viewMode = viewMode === 'tactical' ? 'journal' : 'tactical'" 
@@ -2013,9 +2081,10 @@ const submit = async () => {
     </Teleport>
 
     <!-- BOTTOM PANEL (NIER CHASSIS) -->
-    <div class="fixed bottom-0 mb-4 left-1/2 -translate-x-1/2 z-[1100] font-sans">
-      
-      <!-- NIER SECTOR TABS AND SWITCHER -->
+    <Transition name="nier-fade">
+      <div v-if="!showEntryMethod" class="fixed bottom-0 mb-4 left-1/2 -translate-x-1/2 z-[1100] font-sans">
+        
+        <!-- NIER SECTOR TABS AND SWITCHER -->
       <div class="flex justify-between items-end w-full px-2 max-w-5xl">
         <div class="flex gap-0.5 bg-black dark:bg-black p-1 border-t border-l border-r border-white/30">
           <button 
@@ -2118,19 +2187,23 @@ const submit = async () => {
           <div class="flex-1">
             <Transition name="sector-swap" mode="out-in">
               <div v-if="activeSector === 'core'" :key="'core'" class="flex items-center gap-10">
-                <div class="flex flex-col gap-0.5 text-left">
-                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">Entry_Lvl</span>
-                  <input v-model="entry" type="number" placeholder="0.00" class="nier-input w-20 font-mono"/>
+                <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': entryMethodEnabled }">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="entryMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
+                     {{ entryMethodEnabled ? 'Avg_Entry_Lvl' : 'Entry_Lvl' }}
+                  </span>
+                  <input v-if="!entryMethodEnabled" v-model="entry" type="number" placeholder="0.00" class="nier-input w-20 font-mono"/>
+                  <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5 text-left">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">Exit_Lvl</span>
                   <input v-model="exit" type="number" placeholder="0.00" class="nier-input w-20 font-mono"/>
                 </div>
-                <div class="flex flex-col gap-0.5 text-left">
-                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">
-                    {{ isForex ? 'Lot_Size' : 'Unit_Qty' }}
+                <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': entryMethodEnabled }">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="entryMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
+                    {{ entryMethodEnabled ? 'Total_Vol' : (isForex ? 'Lot_Size' : 'Unit_Qty') }}
                   </span>
-                  <input v-model="size" type="number" step="0.01" :placeholder="isForex ? '0.01' : '1.0'" class="nier-input w-16 font-mono"/>
+                  <input v-if="!entryMethodEnabled" v-model="size" type="number" step="0.01" :placeholder="isForex ? '0.01' : '1.0'" class="nier-input w-16 font-mono"/>
+                  <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
                 </div>
               </div>
 
@@ -2217,6 +2290,7 @@ const submit = async () => {
 
       </div>
     </div>
+    </Transition>
     <!-- CONDITION LIBRARY (RECTANGULAR MENU) -->
     <Teleport to="body">
       <Transition name="nier-fade">
@@ -2420,6 +2494,72 @@ const submit = async () => {
                 </div>
               </div>
             </div>
+
+            </ExPanel>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ENTRY METHOD MATRIX WIDGET -->
+    <Teleport to="body">
+      <Transition name="nier-fade">
+        <div v-if="showEntryMethod" 
+             @click.self="showEntryMethod = false"
+             class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
+          
+            <ExPanel class="w-full max-w-[500px]" noPadding variant="light">
+
+
+              <!-- CONTENT GRID -->
+              <div class="p-10 flex flex-col space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+
+                <div class="flex items-center gap-4 border border-black/10 dark:border-white/10 p-1 bg-black/[0.02] dark:bg-white/[0.02]">
+                  <button @click="entryMethodType = 'PYRAMIDING'"
+                          class="flex-1 py-3 text-[9px] font-mono tracking-[0.3em] uppercase font-black transition-all"
+                          :class="entryMethodType === 'PYRAMIDING' ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/5'">
+                     Pyramiding
+                  </button>
+                  <button @click="entryMethodType = 'AVERAGING_DOWN'"
+                          class="flex-1 py-3 text-[9px] font-mono tracking-[0.3em] uppercase font-black transition-all"
+                          :class="entryMethodType === 'AVERAGING_DOWN' ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/5'">
+                     Averaging_Down
+                  </button>
+                </div>
+
+                <div class="flex flex-col gap-4 transition-all">
+                  <div v-for="(ent, idx) in activeMultipleEntries" :key="ent.id" class="flex items-center gap-4">
+                     <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Price_Lvl</span>
+                        <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
+                        <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <button @click="removeMultipleEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                     </button>
+                  </div>
+
+                  <button @click="addMultipleEntry" class="w-full py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2">
+                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                     Add_Position_Node
+                  </button>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-black/10 dark:border-white/10 pt-6 transition-all" :class="{ 'opacity-30 grayscale': !entryMethodEnabled }">
+                  <div class="flex flex-col gap-1">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Entry</span>
+                     <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
+                  </div>
+                  <div class="flex flex-col gap-1 items-end">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Volume</span>
+                     <span class="text-sm font-mono font-black text-black dark:text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
+                  </div>
+                </div>
+
+              </div>
 
             </ExPanel>
         </div>
