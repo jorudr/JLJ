@@ -850,7 +850,7 @@
     <!-- BOTTOM TACTICAL CONTROL PANEL -->
     <div v-if="!isTradeEntryOpen" 
          class="absolute bottom-12 left-0 right-0 z-40 flex items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto flex items-center space-x-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-black/10 dark:border-white/10 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] relative">
+      <div class="pointer-events-auto flex items-center space-x-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-black/10 dark:border-white/10 p-2 relative">
         <!-- Corner Accents -->
         <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
         <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>
@@ -1059,7 +1059,7 @@
     <!-- RIGHT PANEL -->
     <div v-if="!showMetricsPanel && !showRobustnessExplanations"
          class="absolute right-12 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-black/10 dark:border-white/10 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] relative">
+      <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-black/10 dark:border-white/10 p-2 relative">
         <!-- Corner Accents -->
         <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
         <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>

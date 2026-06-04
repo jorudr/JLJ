@@ -192,15 +192,17 @@
                   <div class="grid grid-cols-2 gap-x-8 gap-y-8 px-6 pb-6 mt-4">
                     <!-- ENTRY -->
                     <div class="flex flex-col">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.entryPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ selectedTrade?.entry }}</span>
+                      <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВХОД' : 'AVERAGE_ENTRY' }}</span>
+                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.entryPrice') }}</span>
+                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ Number(selectedTrade?.entry || 0).toFixed(2) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
                     </div>
 
                     <!-- EXIT -->
                     <div class="flex flex-col">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.exitPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ selectedTrade?.exit }}</span>
+                      <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВЫХОД' : 'AVERAGE_EXIT' }}</span>
+                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.exitPrice') }}</span>
+                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ Number(selectedTrade?.exit || 0).toFixed(2) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') }}</span>
                     </div>
 
@@ -210,11 +212,11 @@
                       <div class="flex flex-col mt-2 space-y-2">
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.stopLoss') }}</span>
-                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.stopLoss }}</span>
+                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.stopLoss ? Number(selectedTrade.stopLoss).toFixed(2) : '0.00' }}</span>
                         </div>
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.takeProfit') }}</span>
-                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.takeProfit }}</span>
+                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.takeProfit ? Number(selectedTrade.takeProfit).toFixed(2) : '0.00' }}</span>
                         </div>
                       </div>
                     </div>
@@ -230,6 +232,12 @@
                          <div class="flex items-baseline justify-between">
                            <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.duration') }}</span>
                            <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ calculateDuration(selectedTrade) }}</span>
+                         </div>
+                         <div v-if="methodLabels.length > 0" class="flex items-baseline justify-between mt-2 pt-2 border-t border-black/5 dark:border-white/5">
+                           <span class="text-[8px] font-mono opacity-30 text-emerald-500 uppercase">{{ locale === 'ru' ? 'МЕТОД' : 'METHOD' }}</span>
+                           <span class="text-[9px] font-mono font-bold text-emerald-500 tracking-widest uppercase text-right">
+                             {{ methodLabels.join(' + ') }}
+                           </span>
                          </div>
                       </div>
                     </div>
@@ -618,6 +626,27 @@ const tradeNetResult = computed(() => {
   const sign = profit >= 0 ? '+' : '-'
   const absProfit = Math.abs(profit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return `${sign}$${absProfit}`
+})
+
+const hasMultipleEntries = computed(() => {
+  if (!selectedTrade.value || !selectedTrade.value.executions) return false
+  return selectedTrade.value.executions.filter((e: any) => e.type === 'entry').length > 1
+})
+
+const hasMultipleExits = computed(() => {
+  if (!selectedTrade.value || !selectedTrade.value.executions) return false
+  return selectedTrade.value.executions.filter((e: any) => e.type === 'exit').length > 1
+})
+
+const methodLabels = computed(() => {
+  if (!selectedTrade.value || !selectedTrade.value.executions) return []
+  const labels = new Set<string>()
+  selectedTrade.value.executions.forEach((e: any) => {
+    if (e.label && e.label !== 'SINGLE') {
+      labels.add(e.label.replace('_DOWN', ''))
+    }
+  })
+  return Array.from(labels)
 })
 
 const downloadCardPng = async () => {
@@ -1709,7 +1738,7 @@ const initTrades = () => {
 
       nodes.push({
         id: t.id!,
-        label: `${formatCubeTradeAssetLabel(t.asset)} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${t.profitInCurrency ?? 0}$]`,
+        label: `${formatCubeTradeAssetLabel(t.asset)} [${(t.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(t.profitInCurrency ?? 0).toFixed(2)}$]`,
         faceIndex: i,
         localPos: { x: localX, y: localY },
         worldPos: calculateWorldPos(i, localX, localY),

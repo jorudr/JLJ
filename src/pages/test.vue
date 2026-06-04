@@ -278,7 +278,7 @@
                   <StatCard
                     :label="stats.sourceKind === 'myfxbook' ? 'Initial deposit' : 'Initial balance'"
                     :value="formatMoney(stats.initialDeposit)"
-                    :hint="stats.sourceKind === 'myfxbook' ? 'сумма стартовых deposit' : 'сумма стартовых balance'"
+                    :hint="stats.sourceKind === 'myfxbook' ? 'cash flow до первой сделки' : 'сумма стартовых balance'"
                   />
                   <StatCard label="Финальный капитал" :value="formatMoney(stats.finalCapital)" hint="после всех cash flow" />
                   <StatCard
@@ -429,6 +429,50 @@
                   <StatCard label="Средняя просадка" :value="formatPercent(aggregateStats.avgMaxDrawdownPercent)" hint="по файлам" />
                   <StatCard label="Средний initial balance" :value="formatMoney(aggregateStats.avgInitialDeposit)" hint="стартовая база по всем файлам" />
             </div>
+
+                <section v-if="aggregateStats" class="mt-5 rounded-3xl border border-white/10 bg-black/20 p-5 sm:p-6">
+                  <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div class="text-[10px] uppercase tracking-[0.35em] text-white/35">Result distribution</div>
+                      <div class="mt-2 text-lg font-semibold text-white">Диапазоны торгового результата</div>
+                    </div>
+                    <div class="text-sm text-white/45">
+                      {{ aggregateStats.filesCount }} файлов
+                    </div>
+                  </div>
+
+                  <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <StatCard
+                      v-for="range in aggregateStats.resultRanges"
+                      :key="range.label"
+                      :label="range.label"
+                      :value="formatPercent(range.sharePercent, false)"
+                      :hint="`${formatInteger(range.filesCount)} файлов`"
+                    />
+                  </div>
+
+                  <div class="mt-6 border-t border-white/10 pt-5">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <div class="text-[10px] uppercase tracking-[0.35em] text-white/35">100%+ breakdown</div>
+                        <div class="mt-2 text-base font-semibold text-white">Распределение среди файлов выше 100%</div>
+                      </div>
+                      <div class="text-sm text-white/45">
+                        {{ formatInteger(aggregateStats.resultRanges.find((range) => range.label === '100%+')?.filesCount ?? 0) }} файлов
+                      </div>
+                    </div>
+
+                    <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                      <StatCard
+                        v-for="range in aggregateStats.highResultRanges"
+                        :key="range.label"
+                        :label="range.label"
+                        :value="formatPercent(range.sharePercent, false)"
+                        :hint="`${formatInteger(range.filesCount)} файлов из 100%+`"
+                      />
+                    </div>
+                  </div>
+                </section>
           </div>
         </div>
       </section>
@@ -482,6 +526,8 @@ type AggregateStats = {
   meanNetResult: number
   medianNetResult: number
   trimmedMeanNetResult: number
+  resultRanges: ResultRangeStats[]
+  highResultRanges: ResultRangeStats[]
   meanRiskReward: number | null
   medianRiskReward: number | null
   trimmedMeanRiskReward: number | null
@@ -490,6 +536,12 @@ type AggregateStats = {
   avgWinRate: number
   avgMaxDrawdownPercent: number
   avgInitialDeposit: number
+}
+
+type ResultRangeStats = {
+  label: string
+  filesCount: number
+  sharePercent: number
 }
 
 type EquityPoint = {
@@ -744,6 +796,47 @@ const benchmarkStats = computed(() => {
   }
 })
 
+function buildResultRanges(statsList: FileStats[]): ResultRangeStats[] {
+  const ranges = [
+    { label: '< 0%', test: (value: number) => value < 0 },
+    { label: '0% - 15%', test: (value: number) => value >= 0 && value < 15 },
+    { label: '15% - 30%', test: (value: number) => value >= 15 && value < 30 },
+    { label: '30% - 60%', test: (value: number) => value >= 30 && value < 60 },
+    { label: '60% - 100%', test: (value: number) => value >= 60 && value < 100 },
+    { label: '100%+', test: (value: number) => value >= 100 }
+  ]
+
+  return ranges.map((range) => {
+    const filesCount = statsList.filter((item) => range.test(item.netResultPercent)).length
+
+    return {
+      label: range.label,
+      filesCount,
+      sharePercent: statsList.length ? (filesCount / statsList.length) * 100 : 0
+    }
+  })
+}
+
+function buildHighResultRanges(statsList: FileStats[]): ResultRangeStats[] {
+  const highResultFiles = statsList.filter((item) => item.netResultPercent >= 100)
+  const ranges = [
+    { label: '100% - 200%', test: (value: number) => value >= 100 && value < 200 },
+    { label: '200% - 500%', test: (value: number) => value >= 200 && value < 500 },
+    { label: '500% - 1000%', test: (value: number) => value >= 500 && value < 1000 },
+    { label: '1000%+', test: (value: number) => value >= 1000 }
+  ]
+
+  return ranges.map((range) => {
+    const filesCount = highResultFiles.filter((item) => range.test(item.netResultPercent)).length
+
+    return {
+      label: range.label,
+      filesCount,
+      sharePercent: highResultFiles.length ? (filesCount / highResultFiles.length) * 100 : 0
+    }
+  })
+}
+
 function selectFile(file: string, closeDropdown = true) {
   selectedFile.value = file
   searchText.value = prettyFileLabel(file)
@@ -828,6 +921,8 @@ async function loadAggregateStats() {
       meanNetResult: average(netResults),
       medianNetResult: median(netResults),
       trimmedMeanNetResult: trimmedMean(netResults, 0.1),
+      resultRanges: buildResultRanges(statsList),
+      highResultRanges: buildHighResultRanges(statsList),
       meanRiskReward: finiteRiskRewards.length ? average(finiteRiskRewards) : null,
       medianRiskReward: finiteRiskRewards.length ? median(finiteRiskRewards) : null,
       trimmedMeanRiskReward: finiteRiskRewards.length ? trimmedMean(finiteRiskRewards, 0.1) : null,
@@ -1042,7 +1137,7 @@ function analyzeCsv(csvText: string, file: string): FileStats {
   })
 
   const leadingCashFlowCount = sourceKind === 'myfxbook'
-    ? countLeadingDeposits(timelineRows)
+    ? countInitialCashFlowsBeforeFirstTrade(timelineRows)
     : countLeadingBalanceRows(timelineRows)
   const initialDeposit = timelineRows
     .slice(0, leadingCashFlowCount)
@@ -1142,9 +1237,9 @@ function analyzeCsv(csvText: string, file: string): FileStats {
   }
 
   const finalCapital = capital
-  const netResult = finalCapital - initialDeposit
-  const netResultPercent = initialDeposit > 0 ? (netResult / initialDeposit) * 100 : 0
   const netCashFlow = additionalDeposits + withdrawals
+  const netResult = finalCapital - initialDeposit - netCashFlow
+  const netResultPercent = initialDeposit > 0 ? (netResult / initialDeposit) * 100 : 0
   const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0
   const avgDurationSeconds = durationCount > 0 ? durationTotal / durationCount : 0
   const maxDrawdownPercent = peakCapital > 0 ? -((maxDrawdownAmount / peakCapital) * 100) : 0
@@ -1179,20 +1274,17 @@ function analyzeCsv(csvText: string, file: string): FileStats {
   }
 }
 
-function countLeadingDeposits(rows: ParsedRow[]) {
-  let count = 0
-
-  for (const row of rows) {
-    const action = row.action.toLowerCase()
-    if (row.kind === 'cashflow' && action.includes('deposit')) {
-      count += 1
-      continue
-    }
-
-    break
+function countInitialCashFlowsBeforeFirstTrade(rows: ParsedRow[]) {
+  const firstTradeIndex = rows.findIndex((row) => row.kind === 'trade')
+  if (firstTradeIndex <= 0) {
+    return Math.max(firstTradeIndex, 0)
   }
 
-  return count
+  return rows
+    .slice(0, firstTradeIndex)
+    .every((row) => row.kind === 'cashflow')
+    ? firstTradeIndex
+    : 0
 }
 
 function countLeadingBalanceRows(rows: ParsedRow[]) {

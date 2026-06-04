@@ -1383,7 +1383,11 @@ const resetForm = () => {
 }
 
 const submit = async () => {
-  if (!entry.value || !exit.value || !size.value) return
+  const finalEntry = entryMethodEnabled.value ? averageEntry.value : +entry.value
+  const finalExit = exitMethodEnabled.value ? averageExit.value : +exit.value
+  const finalSize = totalSize.value
+
+  if (!finalEntry || !finalExit || !finalSize) return
   if (commitState.value !== 'idle') return
   
   const findActiveScenario = (scenarios) => {
@@ -1531,13 +1535,67 @@ const submit = async () => {
   if (activeEntry?.id) processConds(activeEntry.id)
   if (activeExit?.id) processConds(activeExit.id)
 
+  const builtExecutions = []
+  if (entryMethodEnabled.value) {
+    activeMultipleEntries.value.forEach(e => {
+       if (e.price && e.size) {
+         builtExecutions.push({
+           id: e.id.toString(),
+           type: 'entry',
+           side: side.value === 'long' ? 'Long' : 'Short',
+           price: parseFloat(e.price) || 0,
+           size: parseFloat(e.size) || 0,
+           date: openDate.value,
+           label: entryMethodType.value
+         })
+       }
+    })
+  } else {
+    builtExecutions.push({
+         id: Date.now().toString() + 'en',
+         type: 'entry',
+         side: side.value === 'long' ? 'Long' : 'Short',
+         price: parseFloat(entry.value) || 0,
+         size: parseFloat(size.value) || 0,
+         date: openDate.value,
+         label: 'SINGLE'
+    })
+  }
+
+  if (exitMethodEnabled.value) {
+    exitEntries.value.forEach(e => {
+       if (e.price && e.size) {
+         builtExecutions.push({
+           id: e.id.toString(),
+           type: 'exit',
+           side: 'Close',
+           price: parseFloat(e.price) || 0,
+           size: parseFloat(e.size) || 0,
+           date: exitDate.value,
+           label: 'EXIT_SCALE'
+         })
+       }
+    })
+  } else {
+    builtExecutions.push({
+         id: Date.now().toString() + 'ex',
+         type: 'exit',
+         side: 'Close',
+         price: parseFloat(exit.value) || 0,
+         size: parseFloat(size.value) || 0,
+         date: exitDate.value,
+         label: 'SINGLE'
+    })
+  }
+
   const newTrade = {
     id: Date.now().toString(),
     asset: asset.value || 'UNTITLED',
     side: side.value === 'long' ? 'Long' : 'Short',
-    entry: +entry.value,
-    exit: +exit.value,
-    size: +size.value,
+    entry: entryMethodEnabled.value ? averageEntry.value : +entry.value,
+    exit: exitMethodEnabled.value ? averageExit.value : +exit.value,
+    size: totalSize.value,
+    executions: builtExecutions,
     stopLoss: +stopLoss.value,
     takeProfit: +takeProfit.value,
     date: openDate.value,

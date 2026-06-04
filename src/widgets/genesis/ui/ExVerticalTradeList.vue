@@ -341,7 +341,7 @@
             <!-- TRADE EXECUTION DATA GRID -->
             <div class="flex flex-col space-y-2">
               <div class="flex items-center justify-between">
-                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Метрики Исполнения' : '// Execution Metrics' }}</span>
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// МЕТРИКИ ИСПОЛНЕНИЯ' : '// EXECUTION METRICS' }}</span>
                 <button @click.stop="toggleTradeExpand(trade.id)" class="text-[9px] uppercase opacity-40 hover:opacity-100 font-bold tracking-widest transition-opacity">
                   {{ locale === 'ru' ? '[Закрыть]' : '[Close]' }}
                 </button>
@@ -382,6 +382,72 @@
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Выхода' : 'Date Exit' }}</span>
                   <span class="font-bold mt-0.5 opacity-80">{{ trade.dateExitStr }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ENTRY-EXIT METHODS -->
+            <div v-if="hasExecutionBreakdown(trade)" class="flex flex-col space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Методы входа-выхода' : '// Entry-Exit Methods' }}</span>
+              </div>
+              <div class="p-3.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-[10px]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex flex-col space-y-2 md:pr-4 md:border-r md:border-black/10 md:dark:border-white/10">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[8px] uppercase tracking-[0.3em] opacity-40">
+                        {{ getExecutionGroupLabel(trade, 'entry') }}
+                      </span>
+                      <span v-if="hasMethodLabel(getExecutionGroup(trade, 'entry'))" class="text-[8px] uppercase tracking-[0.3em] text-emerald-500 opacity-90">
+                        {{ getMethodLabel(getExecutionGroup(trade, 'entry')) }}
+                      </span>
+                    </div>
+                    <div v-if="getExecutionGroup(trade, 'entry').length > 0" class="flex flex-col space-y-2">
+                      <div
+                        v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
+                        :key="exec.id || `entry-${index}`"
+                        class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                      >
+                        <span class="opacity-60 uppercase tracking-[0.2em]">
+                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ index + 1 }}
+                        </span>
+                        <span class="font-bold whitespace-nowrap text-right">
+                          {{ formatExecutionRow(exec) }}
+                        </span>
+                      </div>
+                    </div>
+                    <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
+                      {{ locale === 'ru' ? 'НЕТ_ВХОДОВ' : 'NO_ENTRIES' }}
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col space-y-2 md:pl-4">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[8px] uppercase tracking-[0.3em] opacity-40">
+                        {{ getExecutionGroupLabel(trade, 'exit') }}
+                      </span>
+                      <span v-if="hasMethodLabel(getExecutionGroup(trade, 'exit'))" class="text-[8px] uppercase tracking-[0.3em] text-blue-500 opacity-90">
+                        {{ getMethodLabel(getExecutionGroup(trade, 'exit')) }}
+                      </span>
+                    </div>
+                    <div v-if="getExecutionGroup(trade, 'exit').length > 0" class="flex flex-col space-y-2">
+                      <div
+                        v-for="(exec, index) in getExecutionGroup(trade, 'exit')"
+                        :key="exec.id || `exit-${index}`"
+                        class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                      >
+                        <span class="opacity-60 uppercase tracking-[0.2em]">
+                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ index + 1 }}
+                        </span>
+                        <span class="font-bold whitespace-nowrap text-right">
+                          {{ formatExecutionRow(exec) }}
+                        </span>
+                      </div>
+                    </div>
+                    <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
+                      {{ locale === 'ru' ? 'НЕТ_ВЫХОДОВ' : 'NO_EXITS' }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -441,6 +507,55 @@ const showHiddenTrades = ref(true)
 
 const toggleTradeExpand = (tradeId: string) => {
   expandedTradeId.value = expandedTradeId.value === tradeId ? null : tradeId
+}
+
+const getNormalizedExecutionLabel = (exec: any) => {
+  const rawLabel = String(exec?.label || '').toUpperCase()
+  if (!rawLabel || rawLabel === 'SINGLE') return exec?.type === 'exit' ? 'EXIT' : 'ENTRY'
+  return rawLabel.replace(/_/g, ' ')
+}
+
+const getExecutionGroup = (trade: any, type: 'entry' | 'exit') => {
+  const executions = Array.isArray(trade?.executions) ? trade.executions : []
+  return executions.filter((exec: any) => exec?.type === type)
+}
+
+const getExecutionGroupLabel = (trade: any, type: 'entry' | 'exit') => {
+  const group = getExecutionGroup(trade, type)
+  if (group.length === 0) return ''
+  if (type === 'entry') {
+    return locale.value === 'ru' ? 'МЕТОДЫ ВХОДА' : 'ENTRY METHODS'
+  }
+  return locale.value === 'ru' ? 'ВЫХОД' : 'EXITING'
+}
+
+const hasMethodLabel = (group: any[]) => {
+  return group.some(exec => String(exec?.label || '').toUpperCase() !== 'SINGLE')
+}
+
+const getMethodLabel = (group: any[]) => {
+  const exec = group.find(item => String(item?.label || '').toUpperCase() !== 'SINGLE')
+  return exec ? getNormalizedExecutionLabel(exec) : ''
+}
+
+const formatExecutionRow = (exec: any) => {
+  const price = Number(exec?.price || 0).toFixed(2)
+  const size = Number(exec?.size || 0)
+  const method = getNormalizedExecutionLabel(exec)
+  return `${price} · ${size} L · ${method}`
+}
+
+const hasExecutionBreakdown = (trade: any) => {
+  const executions = Array.isArray(trade?.executions) ? trade.executions : []
+  const entryExecutions = executions.filter((exec: any) => exec?.type === 'entry')
+  const exitExecutions = executions.filter((exec: any) => exec?.type === 'exit')
+
+  return (
+    entryExecutions.length > 1 ||
+    exitExecutions.length > 1 ||
+    entryExecutions.some((exec: any) => String(exec?.label || '').toUpperCase() !== 'SINGLE') ||
+    exitExecutions.some((exec: any) => String(exec?.label || '').toUpperCase() !== 'SINGLE')
+  )
 }
 
 const onNoteClick = (tradeId: string, noteId: string) => {
@@ -1056,6 +1171,7 @@ const activeTrades = computed(() => {
         stopLoss: t.stopLoss !== undefined ? t.stopLoss : 0,
         takeProfit: t.takeProfit !== undefined ? t.takeProfit : 0,
         profitInCurrency: currencyProfit,
+        executions: Array.isArray(t.executions) ? t.executions : [],
         dateEntryStr: t.date ? new Date(t.date).toLocaleString() : '10.05.2026, 14:30:00',
         dateExitStr: t.dateExit ? new Date(t.dateExit).toLocaleString() : '10.05.2026, 15:15:00',
         profitValue: calcPercent,
