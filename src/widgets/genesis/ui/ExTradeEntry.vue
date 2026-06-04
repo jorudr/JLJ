@@ -1525,9 +1525,9 @@ const submit = async () => {
       </div>
     </Transition>
     <!-- TOP SECTION: STRATEGIC PANEL (REORDERED TO CORNERS) -->
-    <div class="w-full flex justify-between items-start px-12 py-10 shrink-0 relative z-[200]">
+    <div class="w-full flex justify-between items-start px-12 py-10 shrink-0">
       <!-- LEFT CORNER: PROTOCOL SELECT -->
-      <div class="flex items-center space-x-6 px-8 py-4 bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10 relative group/hud backdrop-blur-md">
+      <div class="flex items-center space-x-6 px-8 py-4 bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10 relative group/hud backdrop-blur-md z-[200]">
          <!-- Corner Decor -->
          <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/30 dark:border-white/30"></div>
          <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/30 dark:border-white/30"></div>
@@ -1584,7 +1584,7 @@ const submit = async () => {
       </div>
 
       <!-- RIGHT CORNER: TACTICAL DATA SNAPSHOT -->
-      <div class="flex items-center gap-6">
+      <div class="flex items-center gap-6 relative z-[10010]">
         <div class="flex items-center px-8 py-4 bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10 backdrop-blur-md gap-10 relative">
            <!-- Corner Decor -->
            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/30 dark:border-white/30"></div>
@@ -2541,19 +2541,20 @@ const submit = async () => {
     </Teleport>
 
     <!-- ENTRY METHOD MATRIX WIDGET -->
-    <Teleport to="body">
-      <Transition name="nier-fade">
-        <div v-if="showEntryMethod" 
-             @click.self="showEntryMethod = false"
-             class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
-          
-            <ExPanel class="w-full max-w-[500px]" noPadding variant="light">
+    <Transition name="nier-fade">
+      <div v-if="showEntryMethod" 
+           @click.self="showEntryMethod = false"
+           style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"
+           class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
+        
+          <ExPanel class="w-full max-w-[500px]" noPadding variant="light">
 
 
-              <!-- CONTENT GRID -->
-              <div class="p-10 flex flex-col space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <!-- CONTENT GRID -->
+            <div class="p-10 flex flex-col space-y-10 h-[80vh] min-h-[400px]">
 
-                <!-- PROTOCOL TABS -->
+              <!-- PROTOCOL TABS (Fixed top) -->
+              <div class="flex-shrink-0">
                 <div class="flex items-center gap-2 border border-black/10 dark:border-white/10 p-1 bg-black/[0.02] dark:bg-white/[0.02]">
                   <button @click="activeProtocolTab = 'PYRAMIDING'; entryMethodType = 'PYRAMIDING'"
                           class="flex-1 py-3 text-[9px] font-mono tracking-[0.2em] uppercase font-black transition-all"
@@ -2571,91 +2572,95 @@ const submit = async () => {
                      Exiting
                   </button>
                 </div>
-
-                <!-- ENTRY TAB -->
-                <div v-if="activeProtocolTab === 'PYRAMIDING' || activeProtocolTab === 'AVERAGING_DOWN'" class="flex flex-col space-y-10">
-
-                  <div class="flex flex-col gap-4 transition-all">
-                    <div v-for="(ent, idx) in activeMultipleEntries" :key="ent.id" class="flex items-center gap-4">
-                       <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
-                       <div class="flex-1 flex flex-col gap-1">
-                          <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Price_Lvl</span>
-                          <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
-                       </div>
-                       <div class="flex-1 flex flex-col gap-1">
-                          <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
-                          <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
-                       </div>
-                       <button @click="removeMultipleEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                       </button>
-                    </div>
-
-                    <button @click="addMultipleEntry" class="w-full py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2">
-                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                       Add_Position_Node
-                    </button>
-                  </div>
-
-                  <div class="flex items-center justify-between border-t border-black/10 dark:border-white/10 pt-6 transition-all" :class="{ 'opacity-30 grayscale': !entryMethodEnabled }">
-                    <div class="flex flex-col gap-1">
-                       <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Entry</span>
-                       <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
-                    </div>
-                    <div class="flex flex-col gap-1 items-end">
-                       <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Volume</span>
-                       <span class="text-sm font-mono font-black text-black dark:text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- EXIT TAB -->
-                <div v-if="activeProtocolTab === 'EXIT'" class="flex flex-col space-y-10">
-                  <div class="flex flex-col gap-4 transition-all">
-                    <div v-for="(ent, idx) in exitEntries" :key="ent.id" class="flex items-center gap-4">
-                       <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
-                       <div class="flex-1 flex flex-col gap-1">
-                          <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Exit_Lvl</span>
-                          <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
-                       </div>
-                       <div class="flex-1 flex flex-col gap-1">
-                          <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
-                          <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
-                       </div>
-                       <button @click="removeExitEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                       </button>
-                    </div>
-
-                    <button @click="addExitEntry" 
-                            :disabled="totalSize - totalExitSize <= 0"
-                            class="w-full py-4 border border-dashed text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2"
-                            :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20 cursor-not-allowed' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
-                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                       {{ (totalSize - totalExitSize <= 0) ? 'VOLUME_DEPLETED' : 'Add_Exit_Node' }}
-                    </button>
-                  </div>
-
-                  <div class="flex items-center justify-between border-t border-black/10 dark:border-white/10 pt-6 transition-all">
-                    <div class="flex flex-col gap-1">
-                       <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Exit</span>
-                       <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
-                    </div>
-                    <div class="flex flex-col gap-1 items-end">
-                       <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Exit_Volume</span>
-                       <span class="text-sm font-mono font-black" :class="(totalExitSize > totalSize) ? 'text-rose-500' : 'text-black dark:text-white'">
-                          {{ totalExitSize > 0 ? totalExitSize.toFixed(2) : '0.00' }} <span class="opacity-40 text-xs">/ {{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
-                       </span>
-                    </div>
-                  </div>
-                </div>
-
               </div>
 
-            </ExPanel>
-        </div>
-      </Transition>
-    </Teleport>
+              <!-- SCROLLABLE POSITIONS NODES CONTAINER -->
+              <div class="flex-1 overflow-y-auto custom-scrollbar pr-4 min-h-0 pb-10">
+                
+                <!-- ENTRY NODES -->
+                <div v-if="activeProtocolTab === 'PYRAMIDING' || activeProtocolTab === 'AVERAGING_DOWN'" class="flex flex-col gap-4 transition-all">
+                  <div v-for="(ent, idx) in activeMultipleEntries" :key="ent.id" class="flex items-center gap-4">
+                     <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Price_Lvl</span>
+                        <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
+                        <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <button @click="removeMultipleEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                     </button>
+                  </div>
+
+                  <button @click="addMultipleEntry" class="w-full py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2">
+                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                     Add_Position_Node
+                  </button>
+                </div>
+
+                <!-- EXIT NODES -->
+                <div v-if="activeProtocolTab === 'EXIT'" class="flex flex-col gap-4 transition-all">
+                  <div v-for="(ent, idx) in exitEntries" :key="ent.id" class="flex items-center gap-4">
+                     <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Exit_Lvl</span>
+                        <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <div class="flex-1 flex flex-col gap-1">
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
+                        <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
+                     </div>
+                     <button @click="removeExitEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                     </button>
+                  </div>
+
+                  <button @click="addExitEntry" 
+                          :disabled="totalSize - totalExitSize <= 0"
+                          class="w-full py-4 border border-dashed text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2"
+                          :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20 cursor-not-allowed' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
+                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                     {{ (totalSize - totalExitSize <= 0) ? 'VOLUME_DEPLETED' : 'Add_Exit_Node' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- FOOTER (Fixed bottom) -->
+              <div class="flex-shrink-0 border-t border-black/10 dark:border-white/10 pt-6 transition-all">
+                <!-- ENTRY FOOTER -->
+                <div v-if="activeProtocolTab === 'PYRAMIDING' || activeProtocolTab === 'AVERAGING_DOWN'" class="flex items-center justify-between" :class="{ 'opacity-30 grayscale': !entryMethodEnabled }">
+                  <div class="flex flex-col gap-1">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Entry</span>
+                     <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
+                  </div>
+                  <div class="flex flex-col gap-1 items-end">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Volume</span>
+                     <span class="text-sm font-mono font-black text-black dark:text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
+                  </div>
+                </div>
+
+                <!-- EXIT FOOTER -->
+                <div v-if="activeProtocolTab === 'EXIT'" class="flex items-center justify-between">
+                  <div class="flex flex-col gap-1">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Exit</span>
+                     <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
+                  </div>
+                  <div class="flex flex-col gap-1 items-end">
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Exit_Volume</span>
+                     <span class="text-sm font-mono font-black" :class="(totalExitSize > totalSize) ? 'text-rose-500' : 'text-black dark:text-white'">
+                        {{ totalExitSize > 0 ? totalExitSize.toFixed(2) : '0.00' }} <span class="opacity-40 text-xs">/ {{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
+                     </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </ExPanel>
+      </div>
+    </Transition>
 
     <!-- TEMPORAL MATRIX WIDGET -->
     <Teleport to="body">
