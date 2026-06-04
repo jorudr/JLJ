@@ -467,15 +467,19 @@ function selectPatternMatches(
       const futureTrades = timeline.trades.slice(lastMatchedBlock.endTradeIndex + 1)
       if (!futureTrades.length) continue
 
-      const patternDistance = comparePatternSequences(userComparableBlocks, matchedBlocks)
-      const stylePenalty = (1 - styleScore) * 1.2
-      const distance = patternDistance + stylePenalty
+      const shapeDistance = comparePatternShapeSequences(userComparableBlocks, matchedBlocks)
+      const shapeScore = 1 / (1 + shapeDistance)
+      if (shapeScore < 0.18) continue
+
+      const qualityDistance = comparePatternQualitySequences(userComparableBlocks, matchedBlocks)
+      const stylePenalty = (1 - styleScore) * 1.1
+      const distance = shapeDistance * 1.75 + stylePenalty + qualityDistance * 0.8
 
       candidates.push({
         sourceFile: timeline.sourceFile,
         distance,
         styleScore,
-        patternScore: 1 / (1 + patternDistance),
+        patternScore: 1 / (1 + shapeDistance + qualityDistance * 0.45),
         future10Returns: futureTrades.slice(0, 10).map((trade) => trade.returnPct),
         future20Returns: futureTrades.slice(0, 20).map((trade) => trade.returnPct),
         futureToEndReturns: futureTrades.map((trade) => trade.returnPct),
@@ -511,7 +515,7 @@ function selectPatternMatches(
   return selected
 }
 
-function comparePatternSequences(userBlocks: StructuralBlock[], historicalBlocks: StructuralBlock[]) {
+function comparePatternShapeSequences(userBlocks: StructuralBlock[], historicalBlocks: StructuralBlock[]) {
   const weights = userBlocks.map((_, index) => 1 + index * 0.45)
   let distance = 0
   let weightSum = 0
@@ -522,21 +526,46 @@ function comparePatternSequences(userBlocks: StructuralBlock[], historicalBlocks
 
     const weight = weights[index] ?? 1
     const phaseDistance = comparePhase(userBlock.phase, historicalBlock.phase)
-    const returnDistance = normalizedDifference(userBlock.returnPct, historicalBlock.returnPct, 8)
     const tradeCountDistance = normalizedDifference(userBlock.tradeCount, historicalBlock.tradeCount, 5)
-    const durationDistance = ratioDistance(userBlock.averageDurationHours, historicalBlock.averageDurationHours, 0.25)
-    const winRateDistance = normalizedDifference(userBlock.winRate, historicalBlock.winRate, 30)
-    const magnitudeDistance = normalizedDifference(userBlock.averageAbsReturnPct, historicalBlock.averageAbsReturnPct, 3)
-    const streakDistance = normalizedDifference(userBlock.maxLossStreak + userBlock.maxWinStreak, historicalBlock.maxLossStreak + historicalBlock.maxWinStreak, 3)
+    const phaseTransitionDistance = index > 0
+      ? comparePhase(userBlocks[index - 1]?.phase ?? userBlock.phase, historicalBlocks[index - 1]?.phase ?? historicalBlock.phase)
+      : 0
 
     distance += (
-      phaseDistance * 1.55 +
-      returnDistance * 1.35 +
-      magnitudeDistance * 1.1 +
-      durationDistance * 0.95 +
-      tradeCountDistance * 0.8 +
-      winRateDistance * 0.65 +
-      streakDistance * 0.55
+      phaseDistance * 2.1 +
+      phaseTransitionDistance * 0.65 +
+      tradeCountDistance * 0.3
+    ) * weight
+    weightSum += weight
+  })
+
+  return weightSum > 0 ? distance / weightSum : Number.POSITIVE_INFINITY
+}
+
+function comparePatternQualitySequences(userBlocks: StructuralBlock[], historicalBlocks: StructuralBlock[]) {
+  const weights = userBlocks.map((_, index) => 1 + index * 0.35)
+  let distance = 0
+  let weightSum = 0
+
+  userBlocks.forEach((userBlock, index) => {
+    const historicalBlock = historicalBlocks[index]
+    if (!historicalBlock) return
+
+    const weight = weights[index] ?? 1
+    const returnDistance = normalizedDifference(userBlock.returnPct, historicalBlock.returnPct, 8)
+    const winRateDistance = normalizedDifference(userBlock.winRate, historicalBlock.winRate, 30)
+    const magnitudeDistance = normalizedDifference(userBlock.averageAbsReturnPct, historicalBlock.averageAbsReturnPct, 3)
+    const streakDistance = normalizedDifference(
+      userBlock.maxLossStreak + userBlock.maxWinStreak,
+      historicalBlock.maxLossStreak + historicalBlock.maxWinStreak,
+      3
+    )
+
+    distance += (
+      returnDistance * 1.25 +
+      winRateDistance * 0.85 +
+      magnitudeDistance * 0.55 +
+      streakDistance * 0.65
     ) * weight
     weightSum += weight
   })
@@ -837,12 +866,11 @@ function calculateStyleCompatibility(
 ) {
   const durationScore = ratioScore(userStyle.averageDurationHours, targetStyle.averageDurationHours, 0.25)
   const amplitudeScore = ratioScore(userStyle.medianAbsReturnPct, targetStyle.medianAbsReturnPct, 0.1)
-  const frequencyScore = ratioScore(userStyle.tradeFrequencyPerWeek, targetStyle.tradeFrequencyPerWeek, 0.25)
   const drawdownScore = ratioScore(Math.abs(userStyle.maxDrawdownPct), Math.abs(targetStyle.maxDrawdownPct), 1)
   const rrScore = ratioScore(userStyle.averageRR, targetStyle.averageRR, 0.15)
   const compatibility = includeAverageRR
-    ? durationScore * 0.4 + amplitudeScore * 0.28 + frequencyScore * 0.08 + drawdownScore * 0.09 + rrScore * 0.15
-    : durationScore * 0.45 + amplitudeScore * 0.35 + frequencyScore * 0.1 + drawdownScore * 0.1
+    ? durationScore * 0.43 + amplitudeScore * 0.31 + drawdownScore * 0.1 + rrScore * 0.16
+    : durationScore * 0.5 + amplitudeScore * 0.36 + drawdownScore * 0.14
 
   if (durationScore < 0.08 || amplitudeScore < 0.08) {
     return 0
