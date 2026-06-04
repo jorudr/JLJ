@@ -406,11 +406,8 @@
                       <div
                         v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
                         :key="exec.id || `entry-${index}`"
-                        class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                        class="flex items-center justify-end gap-3 pb-1 border-b border-black/5 dark:border-white/5"
                       >
-                        <span class="opacity-60 uppercase tracking-[0.2em]">
-                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ Number(index) + 1 }}
-                        </span>
                         <span class="font-bold whitespace-nowrap text-right">
                           {{ formatExecutionRow(exec) }}
                         </span>
@@ -434,11 +431,8 @@
                       <div
                         v-for="(exec, index) in getExecutionGroup(trade, 'exit')"
                         :key="exec.id || `exit-${index}`"
-                        class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                        class="flex items-center justify-end gap-3 pb-1 border-b border-black/5 dark:border-white/5"
                       >
-                        <span class="opacity-60 uppercase tracking-[0.2em]">
-                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ Number(index) + 1 }}
-                        </span>
                         <span class="font-bold whitespace-nowrap text-right">
                           {{ formatExecutionRow(exec) }}
                         </span>
@@ -541,8 +535,7 @@ const getMethodLabel = (group: any[]) => {
 const formatExecutionRow = (exec: any) => {
   const price = Number(exec?.price || 0).toFixed(2)
   const size = Number(exec?.size || 0)
-  const method = getNormalizedExecutionLabel(exec)
-  return `${price} · ${size} L · ${method}`
+  return `${price} · ${size} L`
 }
 
 const hasExecutionBreakdown = (trade: any) => {
