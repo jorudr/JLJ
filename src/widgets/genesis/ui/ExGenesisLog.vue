@@ -8,7 +8,8 @@
       <!-- CANVAS LAYER (Shared) -->
       <canvas v-show="viewType === 'cube'"
               ref="canvasRef"
-              class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-30"
+              class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-30 transition-all duration-300"
+              :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
               @mousedown="handleMouseDown"
               @mousemove="handleMouseMove"
               @mouseup="handleMouseUp"
@@ -18,10 +19,13 @@
       </canvas>
 
       <!-- CUBE LAYER (UI ONLY) -->
-      <div v-if="viewType === 'cube'" class="w-full h-full absolute inset-0 transition-opacity duration-700 pointer-events-none opacity-100 z-40">
+      <div
+        v-if="viewType === 'cube'"
+        class="w-full h-full absolute inset-0 transition-all duration-300 pointer-events-none opacity-100 z-40"
+      >
         
         <!-- TOP CONTROLS (HUD & COMPLIANCE) -->
-        <div class="absolute top-8 left-6 flex flex-row space-x-3 pointer-events-auto transition-all duration-500 z-[10000]"
+        <div class="absolute top-8 left-6 flex flex-row space-x-3 pointer-events-auto transition-all duration-500 z-[10020]"
              :class="!isHudVisible ? 'opacity-0 hover:opacity-100' : 'opacity-100'">
            
            <!-- HUD Toggle -->
@@ -74,7 +78,7 @@
            </button>
         </div>
         <!-- Facet Navigation -->
-        <div v-if="activeFaceIndices.length > 1 && isHudVisible" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto">
+        <div v-if="activeFaceIndices.length > 1 && isHudVisible" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto transition-all duration-300" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
            <div class="flex items-center space-x-12">
               <div class="flex flex-col items-center">
                  <div class="flex space-x-2 mt-2">
@@ -97,14 +101,22 @@
       </div>
 
       <!-- LIST VIEW LAYER -->
-      <div v-if="viewType === 'list'" class="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white dark:bg-[#070707] backdrop-blur-3xl pointer-events-auto">
+      <div
+        v-if="viewType === 'list'"
+        class="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white dark:bg-[#070707] backdrop-blur-3xl pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
+      >
          <div class="w-full h-full overflow-y-auto custom-scrollbar px-12 md:px-24 py-24 md:py-32">
            <ExVerticalTradeList :trades="currentTradesForList" @open-note="handleOpenNote" @open-trade="handleOpenTrade" />
          </div>
       </div>
 
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
-      <div v-show="isHudVisible" class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto">
+      <div
+        v-show="isHudVisible"
+        class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
+      >
          <div class="flex items-center space-x-2 p-1.5 border border-black/10 dark:border-white/10 bg-white/5 dark:bg-black/5 backdrop-blur-xl relative">
             <!-- Brackets -->
             <div class="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-black/40 dark:border-white/40"></div>
@@ -275,7 +287,7 @@
     />
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
+    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        <OpenStrategyMetrics
          :is-dark="isDark"
          :minimal="true"
@@ -302,9 +314,8 @@
       />
     </div>
 
-
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700">
+    <div v-if="!showNodeMap && isHudVisible" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">

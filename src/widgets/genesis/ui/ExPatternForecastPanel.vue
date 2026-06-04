@@ -1,10 +1,10 @@
 <template>
-  <div class="flex h-[38rem] max-h-[70vh] flex-col overflow-hidden border border-black/10 bg-white/90 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl dark:border-white/10 dark:bg-[#070707]/90">
+  <div class="flex h-[38rem] max-h-[70vh] flex-col overflow-hidden border border-black/10 bg-white/90 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-colors hover:bg-white dark:border-white/10 dark:bg-[#070707]/90 dark:hover:bg-[#070707]">
     <div class="flex shrink-0 items-center justify-between border-b border-black/10 px-5 py-3 dark:border-white/10">
       <div class="flex items-center gap-3">
         <div class="h-1.5 w-1.5 rotate-45 bg-black dark:bg-white"></div>
         <span class="font-mono text-[8px] font-black uppercase tracking-[0.45em] text-black/60 dark:text-white/60">
-          {{ locale === 'ru' ? 'Structural Pattern Forecast' : 'Structural Pattern Forecast' }}
+          {{ locale === 'ru' ? 'Прогноз структурных паттернов' : 'Structural Pattern Forecast' }}
         </span>
       </div>
       <span class="font-mono text-[8px] font-black uppercase tracking-[0.3em]" :class="confidenceClass">
@@ -17,7 +17,7 @@
         <div class="flex items-center gap-3">
           <div class="h-2 w-2 animate-pulse rotate-45 bg-amber-500 dark:bg-amber-300"></div>
           <span class="font-mono text-[9px] font-black uppercase tracking-[0.28em] text-amber-700 dark:text-amber-200">
-            {{ locale === 'ru' ? 'Ищу совместимые стили и паттерны в исторических файлах' : 'Matching style-compatible historical patterns' }}
+            {{ locale === 'ru' ? 'Ищу совместимые стили и паттерны в исторических данных' : 'Matching style-compatible historical patterns' }}
           </span>
         </div>
         <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/45 dark:text-white/45">
@@ -25,7 +25,7 @@
         </span>
       </div>
       <div class="mt-3 h-[3px] overflow-hidden bg-black/8 dark:bg-white/10">
-        <div class="forecast-loading-bar h-full bg-gradient-to-r from-amber-500 via-black to-amber-500 dark:from-amber-300 dark:via-white dark:to-amber-300"></div>
+        <div class="forecast-loading-bar h-full w-[220%] bg-[linear-gradient(90deg,transparent_0%,rgba(245,158,11,0.2)_18%,rgba(245,158,11,1)_50%,rgba(0,0,0,0.25)_70%,transparent_100%)] dark:bg-[linear-gradient(90deg,transparent_0%,rgba(253,230,138,0.18)_18%,rgba(253,230,138,1)_50%,rgba(255,255,255,0.32)_70%,transparent_100%)]"></div>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
             : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
           @click="activeTab = 'summary'"
         >
-          {{ locale === 'ru' ? 'Summary' : 'Summary' }}
+          {{ locale === 'ru' ? 'Сводка' : 'Summary' }}
         </button>
         <button
           type="button"
@@ -49,7 +49,7 @@
             : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
           @click="activeTab = 'settings'"
         >
-          {{ locale === 'ru' ? 'Settings' : 'Settings' }}
+          {{ locale === 'ru' ? 'Настройки' : 'Settings' }}
         </button>
       </div>
     </div>
@@ -61,7 +61,7 @@
       {{ forecast.message }}
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+    <div class="min-h-0 flex-1 overflow-y-auto px-0 pb-6 custom-scrollbar">
       <template v-if="activeTab === 'summary'">
       <div class="grid grid-cols-1 gap-0">
         <div class="border-b border-black/10 px-5 py-4 dark:border-white/10">
@@ -74,7 +74,7 @@
             </span>
           </div>
           <div class="mt-3 grid grid-cols-2 gap-3">
-            <div class="col-span-2 border border-black/10 px-3 py-3 dark:border-white/10">
+            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
                 {{ locale === 'ru' ? 'Вероятный итог за 10 сделок' : 'Likely outcome over 10 trades' }}
               </div>
@@ -92,7 +92,7 @@
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Похоже на прибыльные истории' : 'Similar to profitable histories' }}
+                {{ locale === 'ru' ? 'Похожесть на прибыльные истории' : 'Similarity to profitable histories' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
                 {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
@@ -154,14 +154,6 @@
             </div>
             <div class="mt-3 grid grid-cols-1 gap-1">
               <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                {{ locale === 'ru' ? 'Вероятный диапазон результата' : 'Likely result range' }}:
-                {{ formatPercentWithCapital(horizon.p25, forecast.currentCapital) }} ... {{ formatPercentWithCapital(horizon.p75, forecast.currentCapital) }}
-              </div>
-              <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                {{ locale === 'ru' ? 'Простой расчет по текущему профилю' : 'Simple estimate from current profile' }}:
-                {{ formatPercentWithCapital(horizon.userLinearEstimatePct, forecast.currentCapital) }}
-              </div>
-              <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
                 {{ locale === 'ru' ? 'Вероятный максимум по пути' : 'Likely peak along the way' }}:
                 {{ formatPercentWithCapital(horizon.medianPeakPct, forecast.currentCapital) }}
               </div>
@@ -180,7 +172,7 @@
             {{ locale === 'ru' ? 'Итоговая близость по финальным исходам' : 'Terminal outcome affinity' }}
           </span>
           <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-            {{ locale === 'ru' ? 'от текущего паттерна до конца файла' : 'from current pattern to file end' }}
+            {{ locale === 'ru' ? 'от текущего паттерна до конца периода торговли' : 'from current pattern to the end of the trading period' }}
           </span>
         </div>
 
@@ -193,7 +185,7 @@
           </div>
           <div class="mt-2 grid grid-cols-1 gap-1 md:grid-cols-3">
             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Похоже на прибыльные истории' : 'Similar to profitable histories' }}:
+              {{ locale === 'ru' ? 'Похожесть на прибыльные истории' : 'Similarity to profitable histories' }}:
               {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
             </div>
             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
@@ -212,14 +204,17 @@
             v-for="group in forecast.lifecycle.groups"
             :key="group.key"
             class="border border-black/10 px-3 py-3 dark:border-white/10"
+            :class="topLifecycleGroupKeys.has(group.key)
+              ? 'bg-white text-black dark:bg-white dark:text-black'
+              : ''"
           >
-            <div class="font-mono text-[8px] font-black uppercase tracking-[0.22em] text-black dark:text-white">
+            <div class="font-mono text-[8px] font-black uppercase tracking-[0.22em]" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black' : 'text-black dark:text-white'">
               {{ group.label }}
             </div>
-            <div class="mt-2 font-mono text-base font-black text-black dark:text-white">
+            <div class="mt-2 font-mono text-base font-black" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black' : 'text-black dark:text-white'">
               {{ formatPercent(group.affinityScore, false) }}
             </div>
-            <div class="mt-1 font-mono text-[10px] text-black/40 dark:text-white/40">
+            <div class="mt-1 font-mono text-[10px]" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black/55' : 'text-black/40 dark:text-white/40'">
               {{ group.matchesCount }} matches
             </div>
           </div>
@@ -268,6 +263,24 @@
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
                 {{ formatMoney(forecast.currentCapital) }}
+              </div>
+            </div>
+            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
+              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+                {{ locale === 'ru' ? 'Вероятный диапазон результата' : 'Likely result range' }}
+              </div>
+              <div class="mt-2 font-mono text-[10px] font-black text-black dark:text-white">
+                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.currentCapital) }}
+                ...
+                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p75 ?? 0, forecast.currentCapital) }}
+              </div>
+            </div>
+            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
+              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+                {{ locale === 'ru' ? 'Простой расчет по текущему профилю' : 'Simple estimate from current profile' }}
+              </div>
+              <div class="mt-2 font-mono text-[10px] font-black text-black dark:text-white">
+                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0, forecast.currentCapital) }}
               </div>
             </div>
           </div>
@@ -321,47 +334,45 @@
               {{ locale === 'ru' ? 'Лучшие исторические совпадения' : 'Best historical matches' }}
             </span>
             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ locale === 'ru' ? 'style + pattern' : 'style + pattern' }}
+              {{ locale === 'ru' ? 'стиль + паттерн' : 'style + pattern' }}
             </span>
           </div>
 
           <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div
-              v-for="(match, index) in forecast.topMatches"
-              :key="`${match.sourceFile}-${index}`"
-              class="border border-black/10 px-4 py-4 dark:border-white/10"
-            >
+          <div
+            v-for="(match, index) in forecast.topMatches"
+            :key="`${match.sourceFile}-${index}`"
+            class="border border-black/10 px-4 py-4 dark:border-white/10"
+            :class="index < 2 ? 'bg-black text-white dark:bg-black dark:text-white' : ''"
+          >
               <div class="flex items-center justify-between gap-3">
                 <div class="flex flex-col">
-                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] text-black dark:text-white">
-                    {{ match.fileLabel }}
-                  </span>
-                  <span class="mt-1 inline-flex w-fit items-center border border-black/10 px-2 py-1 font-mono text-[7px] uppercase tracking-[0.22em] text-black/45 dark:border-white/10 dark:text-white/45">
-                    {{ match.sourceGroup }}
+                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em]" :class="index < 2 ? 'text-white' : 'text-black dark:text-white'">
+                    {{ index + 1 }}
                   </span>
                 </div>
-                <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
+                <span class="font-mono text-[8px] uppercase tracking-[0.22em]" :class="index < 2 ? 'text-white/80' : 'text-black/40 dark:text-white/40'">
                   {{ match.matchedPhaseLabel }}
                 </span>
               </div>
               <div class="mt-3 grid grid-cols-2 gap-2">
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  Style: {{ formatPercent(match.styleScore, false) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Стиль' : 'Style' }}: {{ formatPercent(match.styleScore, false) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  Pattern: {{ formatPercent(match.patternScore, false) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Паттерн' : 'Pattern' }}: {{ formatPercent(match.patternScore, false) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  +10T: {{ formatPercent(match.continuation10Pct) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Через 10 сделок' : '+10T' }}: {{ formatPercent(match.continuation10Pct) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  +20T: {{ formatPercent(match.continuation20Pct) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Через 20 сделок' : '+20T' }}: {{ formatPercent(match.continuation20Pct) }}
                 </div>
-                <div class="font-mono text-[10px] text-black dark:text-white">
-                  End: {{ formatPercent(match.continuationToEndPct) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white' : 'text-black dark:text-white'">
+                  {{ locale === 'ru' ? 'До конца' : 'End' }}: {{ formatPercent(match.continuationToEndPct) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  File total: {{ formatPercent(match.totalFileReturnPct) }}
+                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Итог файла' : 'File total' }}: {{ formatPercent(match.totalFileReturnPct) }}
                 </div>
               </div>
             </div>
@@ -441,8 +452,8 @@ const refreshForecast = async () => {
   emit('loading-change', true)
   forecast.value = createEmptyPatternForecast({
     message: locale.value === 'ru'
-      ? 'Собираю новый pattern forecast по myfxbook/mql4/mql5.'
-      : 'Building structural pattern forecast from myfxbook/mql4/mql5.'
+      ? 'Ищу совместимые стили и паттерны в исторических данных.'
+      : 'Matching style-compatible historical patterns.'
   })
 
   try {
@@ -452,7 +463,14 @@ const refreshForecast = async () => {
     })
 
     if (requestId === nextRequestId) {
-      forecast.value = result
+      forecast.value = result.status === 'insufficient-data'
+        ? {
+            ...result,
+            message: locale.value === 'ru'
+              ? 'Пока недостаточно закрытых сделок, чтобы определить стабильный структурный паттерн.'
+              : result.message
+          }
+        : result
       if (result.status === 'ready') {
         await persistPatternForecastSnapshot(result)
       }
@@ -513,9 +531,19 @@ const confidenceClass = computed(() => {
   return 'text-red-600 dark:text-red-300'
 })
 
+const topLifecycleGroupKeys = computed(() => {
+  return new Set(
+    forecast.value.lifecycle.groups
+      .slice()
+      .sort((left, right) => right.affinityScore - left.affinityScore)
+      .slice(0, 2)
+      .map((group) => group.key)
+  )
+})
+
 const lifecycleSummary = computed(() => {
   if (locale.value === 'ru') {
-    return `Текущий профиль ближе всего к фазам, которые в итоге заканчивались в группе ${forecast.value.lifecycle.strongestGroupLabel} со сходством ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)}.`
+    return `Ваша торговая история ближе всего к фазам, которые в итоге заканчивались с результатом ${forecast.value.lifecycle.strongestGroupLabel} со сходством ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)}.`
   }
   return `The current profile is closest to phases that eventually finished in the ${forecast.value.lifecycle.strongestGroupLabel} group with ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)} affinity.`
 })
@@ -597,3 +625,20 @@ function sanitizeFileSegment(value: string) {
   return String(value || 'strategy').replace(/[^a-zA-Z0-9_-]+/g, '_')
 }
 </script>
+
+<style scoped>
+.forecast-loading-bar {
+  animation: forecast-loading-shift 1.1s linear infinite;
+  transform: translateX(-55%);
+}
+
+@keyframes forecast-loading-shift {
+  0% {
+    transform: translateX(-55%);
+  }
+
+  100% {
+    transform: translateX(0%);
+  }
+}
+</style>
