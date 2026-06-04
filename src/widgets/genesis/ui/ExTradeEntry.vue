@@ -805,6 +805,11 @@ const activeMultipleEntries = computed(() =>
 
 const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 1)
 
+const hasActiveMethodNode = computed(() => {
+  const pType = entryMethodType.value === 'PYRAMIDING' ? 'pyramiding' : 'averaging'
+  return getNodesForStrategy(pType).length > 0
+})
+
 const addMultipleEntry = () => {
   activeMultipleEntries.value.push({ id: Date.now(), price: '', size: '' })
 }
@@ -846,6 +851,119 @@ const removeMultipleEntry = (id) => {
   } else {
     averagingDownEntries.value = averagingDownEntries.value.filter(e => e.id !== id)
   }
+}
+
+const showAutoPrompt = ref(false)
+const autoEntryBasePrice = ref('')
+const autoEntryBaseLots = ref('')
+
+const toggleAutoPrompt = () => {
+  showAutoPrompt.value = !showAutoPrompt.value
+  if (showAutoPrompt.value) {
+    autoEntryBasePrice.value = ''
+    autoEntryBaseLots.value = size.value || '1.0'
+  }
+}
+
+const confirmAutoGenerate = () => {
+  const methodMode = entryMethodType.value
+  const pType = methodMode === 'PYRAMIDING' ? 'pyramiding' : 'averaging'
+  
+  const allNodes = findAllNodes(matrixNodes.value)
+  const allConns = findAllConnections(matrixNodes.value, matrixConnections.value)
+  
+  let methodNode = getNodesForStrategy(pType)[0]
+  if (!methodNode) {
+    alert(`No ${methodMode} node found in the selected strategy.`)
+    return
+  }
+
+  let steps = []
+  
+  if (methodNode) {
+    const childIds = allConns.filter(c => c.fromId === methodNode.id).map(c => c.toId)
+    const scalingNodes = allNodes.filter(n => childIds.includes(n.id) && (n.type === 'scaling-entry' || n.type === 'step'))
+
+    if (scalingNodes.length > 0) {
+      const sorted = [...scalingNodes].sort((a,b) => {
+         const posA = a.params?.posNumber !== undefined ? a.params.posNumber : a.x
+         const posB = b.params?.posNumber !== undefined ? b.params.posNumber : b.x
+         return posA - posB
+      })
+      steps = sorted.map(n => ({
+        lots: parseFloat(n.params?.lots || 1),
+        step: parseFloat(n.params?.step || n.params?.distance || n.params?.value || 0),
+        unit: n.params?.unit || '%'
+      }))
+    } else if (methodNode.params?.scalingProtocol) {
+      steps = methodNode.params.scalingProtocol.map(p => ({
+         lots: parseFloat(p.size),
+         step: parseFloat(p.value || p.distance || 0),
+         unit: p.unit
+      }))
+    }
+  }
+
+  if (steps.length === 0) {
+    alert(`No ${methodMode} sequence steps found attached to the method node in the Genesis Matrix.`)
+    return
+  }
+
+  const basePrice = parseFloat(autoEntryBasePrice.value)
+  if (isNaN(basePrice) || basePrice <= 0) {
+    alert("Invalid price")
+    return
+  }
+  
+  const baseLots = parseFloat(autoEntryBaseLots.value)
+  if (isNaN(baseLots) || baseLots <= 0) {
+    alert("Invalid lot size")
+    return
+  }
+
+  const isLong = side.value === 'long'
+  const newEntries = []
+  
+  newEntries.push({
+    id: Date.now().toString() + 'base',
+    price: basePrice,
+    size: baseLots
+  })
+
+  let currentBase = basePrice
+
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i]
+    let priceOffset = 0
+    if (s.unit === '%') {
+      priceOffset = currentBase * (s.step / 100)
+    } else {
+      priceOffset = s.step
+    }
+    
+    let calculatedPrice = currentBase
+    if (pType === 'pyramiding') {
+      calculatedPrice = isLong ? (currentBase + priceOffset) : (currentBase - priceOffset)
+    } else {
+      calculatedPrice = isLong ? (currentBase - priceOffset) : (currentBase + priceOffset)
+    }
+    
+    newEntries.push({
+      id: Date.now().toString() + i,
+      price: parseFloat(calculatedPrice.toFixed(5)),
+      size: s.lots
+    })
+    
+    currentBase = calculatedPrice
+  }
+
+  if (methodMode === 'PYRAMIDING') {
+    pyramidingEntries.value = newEntries
+  } else {
+    averagingDownEntries.value = newEntries
+  }
+
+  showAutoPrompt.value = false
 }
 
 const totalSize = computed(() => {
@@ -2594,10 +2712,38 @@ const submit = async () => {
                      </button>
                   </div>
 
-                  <button @click="addMultipleEntry" class="w-full py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2">
-                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                     Add_Position_Node
-                  </button>
+                  <div class="flex items-center gap-2 mt-2">
+                     <button @click="addMultipleEntry" class="flex-1 py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        Add_Position_Node
+                     </button>
+                     <button v-if="hasActiveMethodNode && !showAutoPrompt && activeMultipleEntries.length === 0" @click="toggleAutoPrompt" class="flex-1 py-4 border border-dashed border-black/50 dark:border-white/50 text-black dark:text-white hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        AUTO
+                     </button>
+                  </div>
+                  
+                  <!-- Auto Generation Prompt -->
+                  <div v-if="showAutoPrompt" class="mt-2 p-3 border border-black/30 dark:border-white/30 bg-black/5 dark:bg-white/5 flex flex-col gap-3">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1">
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">Base_Price</span>
+                        <input v-model="autoEntryBasePrice" type="number" placeholder="Price..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" />
+                      </div>
+                      <div class="flex-1">
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">Lot_Size</span>
+                        <input v-model="autoEntryBaseLots" type="number" step="0.01" placeholder="Lots..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" />
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                      <button @click="showAutoPrompt = false" class="px-4 py-2 border border-black/30 dark:border-white/30 text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono tracking-widest uppercase transition-all font-bold">
+                         CANCEL
+                      </button>
+                      <button @click="confirmAutoGenerate" class="px-4 py-2 bg-black/10 dark:bg-white/10 text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono tracking-widest uppercase transition-all font-bold">
+                         CONFIRM
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- EXIT NODES -->
