@@ -13,6 +13,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  noShadow: {
+    type: Boolean,
+    default: false
+  },
   variant: {
     type: String,
     default: 'standard',
@@ -41,8 +45,11 @@ const bottomRightClasses = computed(() =>
 
 <template>
   <div 
-    class="relative w-full bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 flex flex-col shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
-    :class="{ 'p-0': noPadding }"
+    :class="[
+      'relative w-full bg-white dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 flex flex-col',
+      { 'p-0': noPadding },
+      noShadow ? 'shadow-none dark:shadow-none' : 'shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
+    ]"
   >
     <template v-if="showCorners">
       <ExGothicCorners :variant="variant" :opacity="0.9" />

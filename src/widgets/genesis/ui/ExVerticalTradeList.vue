@@ -409,7 +409,7 @@
                         class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
                       >
                         <span class="opacity-60 uppercase tracking-[0.2em]">
-                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ index + 1 }}
+                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ Number(index) + 1 }}
                         </span>
                         <span class="font-bold whitespace-nowrap text-right">
                           {{ formatExecutionRow(exec) }}
@@ -437,7 +437,7 @@
                         class="flex items-center justify-between gap-3 pb-1 border-b border-black/5 dark:border-white/5"
                       >
                         <span class="opacity-60 uppercase tracking-[0.2em]">
-                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ index + 1 }}
+                          {{ locale === 'ru' ? 'Лот' : 'Lot' }} {{ Number(index) + 1 }}
                         </span>
                         <span class="font-bold whitespace-nowrap text-right">
                           {{ formatExecutionRow(exec) }}
