@@ -61,6 +61,7 @@ interface HistoricalPatternTimeline {
   initialCapital: number
   finalCapital: number
   finalReturnPct: number
+  netCashFlow: number
 }
 
 interface PatternMatch {
@@ -400,19 +401,28 @@ function rowsToHistoricalPatternTimeline(rows: ParsedStatementRow[], sourceFile:
   })
   if (!timelineRows.length) return null
 
-  const leadingCashflowCount = countLeadingCashflows(timelineRows)
+  const sourceKind = detectSourceKind(sourceFile)
+  const leadingCashflowCount = sourceKind === 'myfxbook'
+    ? countInitialCashflowsBeforeFirstTrade(timelineRows)
+    : countLeadingCashflows(timelineRows)
   const leadingCashflows = timelineRows.slice(0, leadingCashflowCount)
   const initialCapitalRaw = sum(leadingCashflows.map((row) => row.profit))
   const initialCapital = finitePositive(initialCapitalRaw) ? initialCapitalRaw : 1000
 
   let equity = initialCapital
+  let netCashFlow = 0
   const trades: PreparedTrade[] = []
 
   for (const row of timelineRows.slice(leadingCashflowCount)) {
     const baseEquity = equity > 0 ? equity : initialCapital
     equity += row.profit
 
-    if (row.kind !== 'trade' || !(baseEquity > 0)) {
+    if (row.kind === 'cashflow') {
+      netCashFlow += row.profit
+      continue
+    }
+
+    if (!(baseEquity > 0)) {
       continue
     }
 
@@ -438,7 +448,8 @@ function rowsToHistoricalPatternTimeline(rows: ParsedStatementRow[], sourceFile:
     style: calculateStyleProfile(trades),
     initialCapital,
     finalCapital: equity,
-    finalReturnPct: initialCapital > 0 ? ((equity - initialCapital) / initialCapital) * 100 : compoundReturns(trades.map((trade) => trade.returnPct))
+    netCashFlow,
+    finalReturnPct: initialCapital > 0 ? ((equity - initialCapital - netCashFlow) / initialCapital) * 100 : compoundReturns(trades.map((trade) => trade.returnPct))
   }
 }
 
@@ -973,6 +984,23 @@ function countLeadingCashflows(rows: ParsedStatementRow[]) {
     break
   }
   return count
+}
+
+function countInitialCashflowsBeforeFirstTrade(rows: ParsedStatementRow[]) {
+  const firstTradeIndex = rows.findIndex((row) => row.kind === 'trade')
+  if (firstTradeIndex <= 0) return Math.max(firstTradeIndex, 0)
+
+  return rows
+    .slice(0, firstTradeIndex)
+    .every((row) => row.kind === 'cashflow')
+    ? firstTradeIndex
+    : 0
+}
+
+function detectSourceKind(sourceFile: string): 'myfxbook' | 'mql4' | 'mql5' {
+  if (sourceFile.startsWith('/data/mql5/')) return 'mql5'
+  if (sourceFile.startsWith('/data/mql4/')) return 'mql4'
+  return 'myfxbook'
 }
 
 function getStatementLines(csvText: string) {
