@@ -30,7 +30,8 @@
     </div>
 
     <div class="shrink-0 border-b border-black/10 px-5 py-2 dark:border-white/10">
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
         <button
           type="button"
           class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
@@ -51,6 +52,39 @@
         >
           {{ locale === 'ru' ? 'Настройки' : 'Settings' }}
         </button>
+        </div>
+
+        <label class="flex cursor-pointer items-center gap-2 select-none">
+          <input
+            v-model="includeAverageRR"
+            type="checkbox"
+            class="peer sr-only"
+          >
+          <span
+            class="flex h-5 w-5 items-center justify-center border border-black/20 bg-white transition-colors dark:border-white/25 dark:bg-black/40"
+            :class="includeAverageRR
+              ? 'bg-black text-white dark:bg-white dark:text-black'
+              : 'bg-white text-transparent dark:bg-black/40'"
+          >
+            <svg
+              viewBox="0 0 12 12"
+              class="h-3 w-3"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.2 6.2L4.7 8.7L9.8 3.4"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] text-black/60 dark:text-white/60">
+            {{ locale === 'ru' ? 'Учитывать Avg RR' : 'Include Avg RR' }}
+          </span>
+        </label>
       </div>
     </div>
 
@@ -232,7 +266,7 @@
               {{ forecast.styleProfile.styleLabel }}
             </span>
           </div>
-          <div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
                 {{ locale === 'ru' ? 'Средний duration' : 'Avg duration' }}
@@ -263,6 +297,14 @@
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
                 {{ formatMoney(forecast.currentCapital) }}
+              </div>
+            </div>
+            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
+              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+                Avg RR
+              </div>
+              <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
+                {{ formatNumber(forecast.styleProfile.averageRR, 2) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
@@ -374,6 +416,13 @@
                 <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
                   {{ locale === 'ru' ? 'Итог файла' : 'File total' }}: {{ formatPercent(match.totalFileReturnPct) }}
                 </div>
+                <div
+                  v-if="includeAverageRR"
+                  class="font-mono text-[10px]"
+                  :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'"
+                >
+                  Avg RR: {{ formatNumber(match.matchedAverageRR, 2) }}
+                </div>
               </div>
             </div>
           </div>
@@ -411,6 +460,7 @@ const { locale } = useI18n()
 const loading = ref(false)
 const forecast = ref<PatternForecastResult>(createEmptyPatternForecast())
 const activeTab = ref<'summary' | 'settings'>('summary')
+const includeAverageRR = ref(false)
 let requestId = 0
 
 const persistPatternForecastSnapshot = async (result: PatternForecastResult) => {
@@ -459,7 +509,8 @@ const refreshForecast = async () => {
   try {
     const result = await calculatePatternForecast({
       trades: props.trades,
-      initialCapital: props.initialCapital
+      initialCapital: props.initialCapital,
+      includeAverageRR: includeAverageRR.value
     })
 
     if (requestId === nextRequestId) {
@@ -492,7 +543,7 @@ const refreshForecast = async () => {
 }
 
 watch(
-  () => [props.visible, props.strategyId, props.initialCapital, props.trades, locale.value],
+  () => [props.visible, props.strategyId, props.initialCapital, props.trades, locale.value, includeAverageRR.value],
   () => {
     if (props.visible) {
       void refreshForecast()

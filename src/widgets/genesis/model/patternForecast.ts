@@ -44,6 +44,7 @@ interface StyleProfile {
   averageDurationHours: number
   medianAbsReturnPct: number
   averageAbsReturnPct: number
+  averageRR: number
   tradeFrequencyPerWeek: number
   expectancyPct: number
   winRate: number
@@ -83,6 +84,7 @@ interface PatternMatch {
 export interface PatternForecastInput {
   trades: DiaryEntry[]
   initialCapital: number
+  includeAverageRR?: boolean
 }
 
 export interface PatternForecastBlockView {
@@ -119,6 +121,7 @@ export interface PatternForecastMatchSummary {
   sourceGroup: 'mql4' | 'mql5' | 'myfxbook'
   styleScore: number
   patternScore: number
+  matchedAverageRR: number
   continuation10Pct: number
   continuation20Pct: number
   continuationToEndPct: number
@@ -191,6 +194,7 @@ export function createEmptyPatternForecast(params?: {
       averageDurationHours: 0,
       medianAbsReturnPct: 0,
       averageAbsReturnPct: 0,
+      averageRR: 0,
       tradeFrequencyPerWeek: 0,
       expectancyPct: 0,
       winRate: 0,
@@ -237,6 +241,7 @@ export function createEmptyPatternForecast(params?: {
 export async function calculatePatternForecast(input: PatternForecastInput): Promise<PatternForecastResult> {
   const currentCapital = calculatePatternForecastCurrentCapital(input.trades, input.initialCapital)
   const userTrades = prepareUserTrades(input.trades, input.initialCapital)
+  const includeAverageRR = Boolean(input.includeAverageRR)
 
   if (userTrades.length < MIN_USER_TRADES) {
     return createEmptyPatternForecast({
@@ -257,7 +262,7 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
   }
 
   const timelines = await loadHistoricalPatternTimelines()
-  const matches = selectPatternMatches(userPatternBlocks, userStyle, timelines)
+  const matches = selectPatternMatches(userPatternBlocks, userStyle, timelines, includeAverageRR)
 
   if (!matches.length) {
     return createEmptyPatternForecast({
@@ -332,6 +337,7 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
       sourceGroup: detectSourceGroup(match.sourceFile),
       styleScore: match.styleScore * 100,
       patternScore: match.patternScore * 100,
+      matchedAverageRR: timelines.find((item) => item.sourceFile === match.sourceFile)?.style.averageRR ?? 0,
       continuation10Pct: match.future10ReturnPct,
       continuation20Pct: match.future20ReturnPct,
       continuationToEndPct: match.futureToEndReturnPct,
@@ -439,12 +445,13 @@ function rowsToHistoricalPatternTimeline(rows: ParsedStatementRow[], sourceFile:
 function selectPatternMatches(
   userBlocks: StructuralBlock[],
   userStyle: StyleProfile,
-  timelines: HistoricalPatternTimeline[]
+  timelines: HistoricalPatternTimeline[],
+  includeAverageRR = false
 ): PatternMatch[] {
   const candidates: PatternMatch[] = []
 
   for (const timeline of timelines) {
-    const styleScore = calculateStyleCompatibility(userStyle, timeline.style)
+    const styleScore = calculateStyleCompatibility(userStyle, timeline.style, includeAverageRR)
     if (styleScore < 0.18) continue
 
     const compareLength = Math.min(userBlocks.length, timeline.blocks.length)
@@ -608,16 +615,19 @@ function calculateStyleProfile(trades: PreparedTrade[]): StyleProfile {
   const positiveReturns = returns.filter((value) => value > 0)
   const negativeReturnsAbs = returns.filter((value) => value < 0).map((value) => Math.abs(value))
   const equity = buildRelativeEquity(returns)
+  const averageWinPct = average(positiveReturns)
+  const averageLossPctAbs = average(negativeReturnsAbs)
 
   return {
     averageDurationHours: average(trades.map((trade) => trade.durationHours).filter(Number.isFinite)),
     medianAbsReturnPct: quantile(returns.map((value) => Math.abs(value)), 0.5),
     averageAbsReturnPct: average(returns.map((value) => Math.abs(value))),
+    averageRR: averageLossPctAbs > 0 ? averageWinPct / averageLossPctAbs : 0,
     tradeFrequencyPerWeek: calculateTradeFrequencyPerWeek(trades),
     expectancyPct: average(returns),
     winRate: percentage(positiveReturns.length, returns.length),
-    averageWinPct: average(positiveReturns),
-    averageLossPctAbs: average(negativeReturnsAbs),
+    averageWinPct,
+    averageLossPctAbs,
     maxDrawdownPct: calculateMaxDrawdownPct(equity)
   }
 }
@@ -820,12 +830,19 @@ function prepareUserTrades(trades: DiaryEntry[], initialCapital: number): Prepar
   })
 }
 
-function calculateStyleCompatibility(userStyle: StyleProfile, targetStyle: StyleProfile) {
+function calculateStyleCompatibility(
+  userStyle: StyleProfile,
+  targetStyle: StyleProfile,
+  includeAverageRR = false
+) {
   const durationScore = ratioScore(userStyle.averageDurationHours, targetStyle.averageDurationHours, 0.25)
   const amplitudeScore = ratioScore(userStyle.medianAbsReturnPct, targetStyle.medianAbsReturnPct, 0.1)
   const frequencyScore = ratioScore(userStyle.tradeFrequencyPerWeek, targetStyle.tradeFrequencyPerWeek, 0.25)
   const drawdownScore = ratioScore(Math.abs(userStyle.maxDrawdownPct), Math.abs(targetStyle.maxDrawdownPct), 1)
-  const compatibility = durationScore * 0.45 + amplitudeScore * 0.35 + frequencyScore * 0.1 + drawdownScore * 0.1
+  const rrScore = ratioScore(userStyle.averageRR, targetStyle.averageRR, 0.15)
+  const compatibility = includeAverageRR
+    ? durationScore * 0.4 + amplitudeScore * 0.28 + frequencyScore * 0.08 + drawdownScore * 0.09 + rrScore * 0.15
+    : durationScore * 0.45 + amplitudeScore * 0.35 + frequencyScore * 0.1 + drawdownScore * 0.1
 
   if (durationScore < 0.08 || amplitudeScore < 0.08) {
     return 0
