@@ -63,36 +63,36 @@
 
     <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
       <template v-if="activeTab === 'summary'">
-      <div class="grid grid-cols-1 gap-0 md:grid-cols-2">
-        <div class="border-b border-black/10 px-5 py-4 dark:border-white/10 md:border-b-0 md:border-r">
+      <div class="grid grid-cols-1 gap-0">
+        <div class="border-b border-black/10 px-5 py-4 dark:border-white/10">
           <div class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Текущий капитал' : 'Current capital' }}
+              {{ locale === 'ru' ? 'Вероятный итог' : 'Likely outcome' }}
             </span>
             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
               {{ formatMoney(forecast.currentCapital) }}
             </span>
           </div>
           <div class="mt-3 grid grid-cols-2 gap-3">
-            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
+            <div class="col-span-2 border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'P50 10T' : 'P50 10T' }}
+                {{ locale === 'ru' ? 'Вероятный итог за 10 сделок' : 'Likely outcome over 10 trades' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-                {{ formatPercent(forecast.tactical.horizons[0]?.p50 ?? 0) }}
+                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p50 ?? 0, forecast.currentCapital) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'P50 20T' : 'P50 20T' }}
+                {{ locale === 'ru' ? 'Вероятный итог за 20 сделок' : 'Likely outcome over 20 trades' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-                {{ formatPercent(forecast.tactical.horizons[1]?.p50 ?? 0) }}
+                {{ formatPercentWithCapital(forecast.tactical.horizons[1]?.p50 ?? 0, forecast.currentCapital) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Близость к 30%+' : 'Affinity to 30%+' }}
+                {{ locale === 'ru' ? 'Похоже на прибыльные истории' : 'Similar to profitable histories' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
                 {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
@@ -100,30 +100,11 @@
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Шанс профита' : 'Profit odds' }}
+                {{ locale === 'ru' ? 'Шанс завершиться в плюсе' : 'Chance to finish in profit' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
                 {{ formatPercent(forecast.lifecycle.affinityPositive, false) }}
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="px-5 py-4">
-          <div class="flex items-center justify-between gap-3">
-            <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Краткий вывод' : 'Short summary' }}
-            </span>
-            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ forecast.lifecycle.strongestGroupLabel }}
-            </span>
-          </div>
-          <div class="mt-3 border border-black/10 px-4 py-4 dark:border-white/10">
-            <div class="font-mono text-[8px] uppercase tracking-[0.28em] text-black/35 dark:text-white/35">
-              {{ locale === 'ru' ? 'Ключевой вывод' : 'Key takeaway' }}
-            </div>
-            <div class="mt-2 font-mono text-sm font-black text-black dark:text-white">
-              {{ lifecycleSummary }}
             </div>
           </div>
         </div>
@@ -150,19 +131,21 @@
                 {{ horizon.horizonTrades }}T
               </span>
               <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
-                {{ locale === 'ru' ? 'медиана matched continuation' : 'matched median continuation' }}
+                {{ locale === 'ru' ? 'Вероятное продолжение' : 'Likely continuation' }}
               </span>
             </div>
             <div class="mt-3 grid grid-cols-2 gap-3">
-              <div>
-                <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">P50</div>
-                <div class="mt-1 font-mono text-lg font-black text-black dark:text-white">
-                  {{ formatPercent(horizon.p50) }}
-                </div>
+            <div>
+              <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
+                {{ locale === 'ru' ? 'Вероятный итог' : 'Likely outcome' }}
               </div>
-              <div>
-                <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
-                  {{ locale === 'ru' ? 'Шанс плюса' : 'Positive odds' }}
+              <div class="mt-1 font-mono text-lg font-black text-black dark:text-white">
+                  {{ formatPercentWithCapital(horizon.p50, forecast.currentCapital) }}
+              </div>
+            </div>
+            <div>
+              <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
+                  {{ locale === 'ru' ? 'Шанс на прибыль' : 'Profit chance' }}
                 </div>
                 <div class="mt-1 font-mono text-lg font-black text-black dark:text-white">
                   {{ formatPercent(horizon.probabilityPositive, false) }}
@@ -171,19 +154,20 @@
             </div>
             <div class="mt-3 grid grid-cols-1 gap-1">
               <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                P25 / P75: {{ formatPercent(horizon.p25) }} ... {{ formatPercent(horizon.p75) }}
+                {{ locale === 'ru' ? 'Вероятный диапазон результата' : 'Likely result range' }}:
+                {{ formatPercentWithCapital(horizon.p25, forecast.currentCapital) }} ... {{ formatPercentWithCapital(horizon.p75, forecast.currentCapital) }}
               </div>
               <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                {{ locale === 'ru' ? 'Линейно от пользователя' : 'User linear estimate' }}:
-                {{ formatPercent(horizon.userLinearEstimatePct) }}
+                {{ locale === 'ru' ? 'Простой расчет по текущему профилю' : 'Simple estimate from current profile' }}:
+                {{ formatPercentWithCapital(horizon.userLinearEstimatePct, forecast.currentCapital) }}
               </div>
               <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                {{ locale === 'ru' ? 'Медианный пик' : 'Median peak' }}:
-                {{ formatPercent(horizon.medianPeakPct) }}
+                {{ locale === 'ru' ? 'Вероятный максимум по пути' : 'Likely peak along the way' }}:
+                {{ formatPercentWithCapital(horizon.medianPeakPct, forecast.currentCapital) }}
               </div>
               <div class="font-mono text-[10px] text-red-600 dark:text-red-300">
-                {{ locale === 'ru' ? 'Медианный минимум' : 'Median trough' }}:
-                {{ formatPercent(horizon.medianTroughPct) }}
+                {{ locale === 'ru' ? 'Вероятная просадка по пути' : 'Likely drawdown along the way' }}:
+                {{ formatPercentWithCapital(horizon.medianTroughPct, forecast.currentCapital) }}
               </div>
             </div>
           </div>
@@ -209,15 +193,15 @@
           </div>
           <div class="mt-2 grid grid-cols-1 gap-1 md:grid-cols-3">
             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Близость к 30%+' : 'Affinity to 30%+' }}:
+              {{ locale === 'ru' ? 'Похоже на прибыльные истории' : 'Similar to profitable histories' }}:
               {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
             </div>
             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Близость к профиту' : 'Affinity to profit' }}:
+              {{ locale === 'ru' ? 'Шанс завершиться в плюсе' : 'Chance to finish in profit' }}:
               {{ formatPercent(forecast.lifecycle.affinityPositive, false) }}
             </div>
             <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Медианный остаток пути' : 'Median remaining path' }}:
+              {{ locale === 'ru' ? 'Вероятный остаток пути' : 'Likely remaining path' }}:
               {{ formatPercent(forecast.lifecycle.medianContinuationToEndPct) }}
             </div>
           </div>
@@ -547,6 +531,13 @@ const formatNumber = (value: number, digits = 1) => {
 const formatPercent = (value: number, signed = true) => {
   const sign = signed && value > 0 ? '+' : ''
   return `${sign}${formatNumber(value, 1)}%`
+}
+
+const formatPercentWithCapital = (value: number, capital: number) => {
+  const percent = formatPercent(value)
+  const projectedCapital = Number.isFinite(capital) ? capital * (1 + value / 100) : Number.NaN
+  if (!Number.isFinite(projectedCapital)) return percent
+  return `${percent} (${formatMoney(projectedCapital)})`
 }
 
 const formatMoney = (value: number) => {
