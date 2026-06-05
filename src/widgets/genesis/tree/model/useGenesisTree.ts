@@ -11,6 +11,7 @@ export interface GenesisTreeScenarioNode {
   label?: string
   displayName?: string
   shortName?: string
+  typeLabel?: string
   globalX: number
   globalY: number
   conditions?: GenesisTreeConditionNode[]
@@ -34,6 +35,7 @@ export interface GenesisTreeConditionContentNode {
   label?: string
   displayName?: string
   shortName?: string
+  typeLabel?: string
   globalX: number
   globalY: number
 }
@@ -117,6 +119,19 @@ export const useGenesisTree = () => {
       .find(Boolean) || displayName
 
     return firstWord.replace(/[^A-Z0-9]/g, '').slice(0, 3)
+  }
+
+  const getScenarioTypeLabel = (node: any) => {
+    const rawType = String(
+      node?.params?.scenarioType ||
+      node?.params?.type ||
+      node?.params?.phase ||
+      node?.type ||
+      ''
+    ).toUpperCase()
+    const scenarioType = rawType.includes('EXIT') ? 'EXIT' : 'ENTRY'
+
+    return `${scenarioType} SCENARIO`
   }
 
   const getConditionDisplayName = (node: any) => {
@@ -326,7 +341,8 @@ export const useGenesisTree = () => {
             ...content,
             conditionId: cond.id,
             displayName: getConditionContentDisplayName(content),
-            shortName: getConditionContentShortName(content)
+            shortName: getConditionContentShortName(content),
+            typeLabel: 'CONDITION'
           }))
         )
 
@@ -353,6 +369,7 @@ export const useGenesisTree = () => {
           ...sc,
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
+          typeLabel: getScenarioTypeLabel(sc),
           conditions,
           contents,
           globalX: scenarioX,

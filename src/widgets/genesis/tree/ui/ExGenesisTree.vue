@@ -34,10 +34,6 @@
           <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md">
             <div class="absolute top-1 left-1 w-1 h-1 border-t border-l border-black/20 dark:border-white/20 transition-colors duration-500 group-hover/node:border-black dark:group-hover/node:border-white"></div>
 
-            <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border border-blue-500/50 text-blue-500 bg-blue-500/10">
-              USR
-            </div>
-
             <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
               USR
             </span>
@@ -70,10 +66,6 @@
               <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
                    :class="selectedStrategyId === node.id ? 'border-black/40 dark:border-white/40' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
 
-              <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[4px] font-mono font-bold tracking-tighter uppercase border border-emerald-500/50 text-emerald-500 bg-emerald-500/10">
-                PRT
-              </div>
-
               <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
                     :class="selectedStrategyId === node.id ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
                 {{ (node.name || '').slice(0, 3) }}
@@ -99,19 +91,19 @@
           <template #trigger>
             <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
               <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
-              <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[4px] font-mono font-bold tracking-tighter uppercase border border-blue-500/50 text-blue-500 bg-blue-500/10">
-                NODE
-              </div>
               <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
                 {{ sc.shortName || sc.displayName || sc.label || sc.name || 'SCN' }}
               </span>
             </div>
           </template>
-          <div class="flex flex-col gap-1">
-            <div class="flex items-center justify-between">
-              <span class="text-[8px] font-mono opacity-40 uppercase">Scenario_Metadata</span>
-            </div>
-            <p class="text-[10px] font-mono font-bold leading-relaxed uppercase">{{ sc.displayName || sc.label || sc.name || 'Scenario' }}</p>
+          <div class="flex min-w-[150px] flex-col gap-2">
+            <p class="text-[13px] font-mono font-black leading-snug uppercase tracking-wide text-black dark:text-white">
+              {{ sc.displayName || sc.label || sc.name || 'Scenario' }}
+            </p>
+            <div class="h-px w-full bg-white/25"></div>
+            <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
+              TYPE: {{ sc.typeLabel || 'ENTRY SCENARIO' }}
+            </p>
           </div>
         </ExNTtooltip>
       </div>
@@ -124,19 +116,19 @@
             <template #trigger>
               <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
                 <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
-                <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[4px] font-mono font-bold tracking-tighter uppercase border border-emerald-500/50 text-emerald-500 bg-emerald-500/10">
-                  CNT
-                </div>
                 <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
                   {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
                 </span>
               </div>
             </template>
-            <div class="flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <span class="text-[8px] font-mono opacity-40 uppercase">Content_Metadata</span>
-              </div>
-              <p class="text-[10px] font-mono font-bold leading-relaxed uppercase">{{ content.displayName || content.label || content.name || 'Content' }}</p>
+            <div class="flex min-w-[140px] flex-col gap-2">
+              <p class="text-[13px] font-mono font-black leading-snug uppercase tracking-wide text-black dark:text-white">
+                {{ content.displayName || content.label || content.name || 'Condition' }}
+              </p>
+              <div class="h-px w-full bg-white/25"></div>
+              <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
+                TYPE: {{ content.typeLabel || 'CONDITION' }}
+              </p>
             </div>
           </ExNTtooltip>
         </div>
