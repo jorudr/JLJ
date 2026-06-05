@@ -147,11 +147,11 @@
                <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
             </button>
 
-            <button @click="viewType = 'none'" 
+            <button @click="viewType = 'tree'" 
                     class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
-                    :class="viewType === 'none' ? 'bg-black dark:bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
-                    title="Hide Views">
-               <svg v-if="viewType === 'none'" class="w-4 h-4 transition-all duration-500 text-white dark:text-black scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    :class="viewType === 'tree' ? 'bg-black dark:bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
+                    title="Tree View">
+               <svg v-if="viewType === 'tree'" class="w-4 h-4 transition-all duration-500 text-white dark:text-black scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                   <line x1="1" y1="1" x2="23" y2="23"></line>
                </svg>
@@ -159,95 +159,15 @@
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                   <line x1="1" y1="1" x2="23" y2="23"></line>
                </svg>
-               <div v-if="viewType === 'none'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
+               <div v-if="viewType === 'tree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
             </button>
          </div>
       </div>
 
-      <!-- NONE VIEW: CENTER NODE & STRATEGIES -->
-      <div v-if="viewType === 'none'" class="absolute inset-0 z-50 overflow-hidden pointer-events-auto">
-        
-        <!-- Connecting Lines -->
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]">
-          <svg class="overflow-visible" width="2" height="2">
-            <line v-for="node in strategyNodePositions" :key="'line-'+node.id"
-                  x1="1" y1="1"
-                  :x2="node.x" :y2="node.y"
-                  stroke="rgba(255, 255, 255, 0.5)" 
-                  stroke-width="1.5" />
-          </svg>
-        </div>
-
-        <!-- Center Node -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <ExNTtooltip>
-            <template #trigger>
-               <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md">
-                 
-                 <div class="absolute top-1 left-1 w-1 h-1 border-t border-l border-black/20 dark:border-white/20 transition-colors duration-500 group-hover/node:border-black dark:group-hover/node:border-white"></div>
-
-                 <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[5px] font-mono font-bold tracking-tighter uppercase border border-blue-500/50 text-blue-500 bg-blue-500/10">
-                   USR
-                 </div>
-
-                 <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
-                   USR
-                 </span>
-               </div>
-            </template>
-            <div class="flex flex-col gap-1 min-w-[120px] p-1">
-              <div class="flex flex-col space-y-1 font-mono leading-relaxed uppercase text-black dark:text-white">
-                <span class="font-black text-[14px] tracking-widest pb-0.5">{{ authStore.user?.displayName || authStore.user?.email || 'Operator_0x4F' }}</span>
-                <div class="w-full h-[1px] bg-black/10 dark:bg-white/10 mb-1"></div>
-                <span class="text-[9px] opacity-60">ID. {{ authStore.user?.uid?.slice(0, 10) || 'UNKNOWN' }}</span>
-                <span class="text-[9px] opacity-60">TYPE. {{ authStore.user?.type || 'COMMON' }}</span>
-                <span class="text-[9px] opacity-60">EST. {{ formatCreationDate(authStore.user?.joinedAt) }}</span>
-              </div>
-            </div>
-          </ExNTtooltip>
-        </div>
-
-        <!-- Strategy Nodes -->
-        <div v-for="(node, i) in strategyNodePositions" :key="node.id"
-             class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[5]"
-             :style="{ transform: `translate(calc(-50% + ${node.x}px), calc(-50% + ${node.y}px))` }">
-          
-          <ExNTtooltip>
-             <template #trigger>
-                <div @click="selectedStrategyId = node.id; viewType = 'cube'"
-                     class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
-                     :class="[
-                       selectedStrategyId === node.id 
-                         ? 'shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.05)] border-black/30 dark:border-white/30' 
-                         : ''
-                     ]">
-                  
-                  <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
-                       :class="selectedStrategyId === node.id ? 'border-black/40 dark:border-white/40' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-
-                  <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[4px] font-mono font-bold tracking-tighter uppercase border border-emerald-500/50 text-emerald-500 bg-emerald-500/10">
-                    PRT
-                  </div>
-
-                  <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
-                        :class="selectedStrategyId === node.id ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
-                    {{ (node.name || '').slice(0, 3) }}
-                  </span>
-
-                  <div v-if="selectedStrategyId === node.id" 
-                       class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-emerald-500"></div>
-                </div>
-             </template>
-             <div class="flex flex-col gap-1">
-               <div class="flex items-center justify-between">
-                 <span class="text-[8px] font-mono opacity-40 uppercase">Protocol_Metadata</span>
-               </div>
-               <p class="text-[10px] font-mono font-bold leading-relaxed uppercase">{{ node.name }}</p>
-             </div>
-          </ExNTtooltip>
-        </div>
-
-      </div>
+      <ExGenesisTree
+        v-if="viewType === 'tree'"
+        @switch-view="viewType = $event"
+      />
 
     </div>
 
@@ -428,7 +348,7 @@
     </div>
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible && viewType !== 'none'" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && isHudVisible && viewType !== 'tree'" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
@@ -645,7 +565,6 @@ import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
-import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -655,6 +574,7 @@ import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
+import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 
 const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
 
@@ -783,7 +703,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list' | 'none'>('cube')
+const viewType = ref<'cube' | 'list' | 'tree'>('cube')
 const selectedTradeId = ref<string | null>(null)
 const showExtraDetails = ref(false)
 const panelInitialPage = ref<number | undefined>(undefined)
@@ -848,16 +768,6 @@ const formatFullDate = (d: any) => {
     hour12: false
   })
   return `${datePart}\n${timePart}`
-}
-
-const formatCreationDate = (d: string | null | undefined) => {
-  if (!d) return 'UNKNOWN_ORIGIN'
-  const date = new Date(d)
-  return date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).toUpperCase()
 }
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
@@ -1582,24 +1492,6 @@ const selectStrategy = (id: string) => {
 
 const strategies = computed(() => tradeStore.strategies)
 
-const strategyNodePositions = computed(() => {
-  const nodes = strategies.value.filter(s => s.id !== 'MAIN_DIARY');
-  return nodes.map((strat, i) => {
-    const angleStep = Math.PI * 2 * 0.61803398875; // golden angle
-    const baseRadius = 150;
-    const r = baseRadius + Math.sqrt(i) * 50; 
-    const theta = i * angleStep;
-    
-    const x = Math.cos(theta) * r;
-    const y = Math.sin(theta) * r;
-
-    return {
-      ...strat,
-      x,
-      y
-    };
-  });
-})
 const selectedStrategy = computed(() => {
   return tradeStore.strategies.find(s => s.id === selectedStrategyId.value) || tradeStore.strategies[0] || { id: 'MAIN_DIARY', name: 'MAIN_DIARY' }
 })
