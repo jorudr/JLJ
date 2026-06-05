@@ -1,18 +1,29 @@
 <template>
-  <div class="absolute inset-0 z-50 overflow-hidden pointer-events-auto">
+  <div class="absolute inset-0 z-50 overflow-hidden pointer-events-auto touch-none"
+       :class="isPanning ? 'cursor-grabbing' : 'cursor-grab'"
+       @pointerdown="startPan"
+       @pointermove="movePan"
+       @pointerup="endPan"
+       @pointercancel="endPan">
+    <div class="absolute inset-0" :style="panLayerStyle">
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]">
       <svg class="overflow-visible" width="2" height="2">
+        <path :d="connectorPath(1, 1, strategyNodePositions, 'x', 'y')"
+              fill="none"
+              stroke="#7f7f7f"
+              stroke-width="1.5" />
         <template v-for="node in strategyNodePositions" :key="'line-group-'+node.id">
-          <line x1="1" y1="1"
-                :x2="node.x" :y2="node.y"
-                stroke="rgba(255, 255, 255, 0.5)"
-                stroke-width="1.5" />
-          <line v-for="sc in node.scenarios" :key="'line-sc-'+sc.id"
-                :x1="node.x" :y1="node.y"
-                :x2="sc.globalX" :y2="sc.globalY"
-                stroke="rgba(255, 255, 255, 0.2)"
+          <path :d="connectorPath(node.x + 1, node.y + 1, node.scenarios, 'globalX', 'globalY')"
+                fill="none"
+                stroke="#333333"
                 stroke-dasharray="2 2"
                 stroke-width="1" />
+          <template v-for="sc in node.scenarios" :key="'line-content-group-'+sc.id">
+            <path :d="conditionRowsPath(sc.globalX + 1, sc.globalY + 1, sc.contents || [])"
+                  fill="none"
+                  stroke="#2e2e2e"
+                  stroke-width="1" />
+          </template>
         </template>
       </svg>
     </div>
@@ -104,11 +115,39 @@
           </div>
         </ExNTtooltip>
       </div>
+
+      <template v-for="sc in node.scenarios" :key="'content-group-'+sc.id">
+        <div v-for="content in (sc.contents || [])" :key="'content-'+content.id"
+             class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[2]"
+             :style="{ transform: `translate(calc(-50% + ${content.globalX}px), calc(-50% + ${content.globalY}px))` }">
+          <ExNTtooltip>
+            <template #trigger>
+              <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
+                <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+                <div class="absolute top-1 right-1 px-1 py-[0.5px] text-[4px] font-mono font-bold tracking-tighter uppercase border border-emerald-500/50 text-emerald-500 bg-emerald-500/10">
+                  CNT
+                </div>
+                <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
+                  {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
+                </span>
+              </div>
+            </template>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[8px] font-mono opacity-40 uppercase">Content_Metadata</span>
+              </div>
+              <p class="text-[10px] font-mono font-bold leading-relaxed uppercase">{{ content.displayName || content.label || content.name || 'Content' }}</p>
+            </div>
+          </ExNTtooltip>
+        </div>
+      </template>
     </template>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
 
@@ -124,8 +163,164 @@ const {
   selectStrategy
 } = useGenesisTree()
 
+const pan = ref({ x: 0, y: 0 })
+const panStart = ref({ x: 0, y: 0 })
+const lastPointer = ref({ x: 0, y: 0 })
+const isPanning = ref(false)
+const suppressNextClick = ref(false)
+
+const panLayerStyle = computed(() => ({
+  transform: `translate3d(${pan.value.x}px, ${pan.value.y}px, 0)`
+}))
+
 const handleStrategyClick = (id: string) => {
+  if (suppressNextClick.value) return
+
   selectStrategy(id)
   emit('switch-view', 'cube')
 }
+
+const startPan = (event: PointerEvent) => {
+  if (event.button !== 0) return
+
+  isPanning.value = true
+  suppressNextClick.value = false
+  panStart.value = { x: event.clientX, y: event.clientY }
+  lastPointer.value = { x: event.clientX, y: event.clientY }
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+
+const movePan = (event: PointerEvent) => {
+  if (!isPanning.value) return
+
+  const totalDx = event.clientX - panStart.value.x
+  const totalDy = event.clientY - panStart.value.y
+  const dx = event.clientX - lastPointer.value.x
+  const dy = event.clientY - lastPointer.value.y
+
+  if (Math.hypot(totalDx, totalDy) > 4) {
+    suppressNextClick.value = true
+  }
+
+  pan.value = {
+    x: pan.value.x + dx,
+    y: pan.value.y + dy
+  }
+  lastPointer.value = { x: event.clientX, y: event.clientY }
+}
+
+const endPan = (event: PointerEvent) => {
+  if (!isPanning.value) return
+
+  isPanning.value = false
+
+  if ((event.currentTarget as HTMLElement).hasPointerCapture(event.pointerId)) {
+    ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
+  }
+
+  if (suppressNextClick.value) {
+    window.setTimeout(() => {
+      suppressNextClick.value = false
+    }, 0)
+  }
+}
+
+const connectorPath = (
+  parentX: number,
+  parentY: number,
+  children: Array<Record<string, any>>,
+  childXKey: string,
+  childYKey: string
+) => {
+  if (!children.length) return ''
+
+  const points = children.map(child => ({
+    x: Number(child[childXKey]) + 1,
+    y: Number(child[childYKey]) + 1
+  }))
+  const childY = points[0].y
+  const busY = parentY + ((childY - parentY) / 2)
+  const minX = Math.min(...points.map(point => point.x))
+  const maxX = Math.max(...points.map(point => point.x))
+  const busStartX = Math.min(parentX, minX)
+  const busEndX = Math.max(parentX, maxX)
+  const childDrops = points.map(point => `M ${point.x} ${busY} V ${point.y}`)
+
+  return [
+    `M ${parentX} ${parentY} V ${busY}`,
+    `M ${busStartX} ${busY} H ${busEndX}`,
+    ...childDrops
+  ].join(' ')
+}
+
+const conditionRowsPath = (
+  scenarioX: number,
+  scenarioY: number,
+  contents: Array<Record<string, any>>
+) => {
+  if (!contents.length) return ''
+
+  const points = contents.map(content => ({
+    x: Number(content.globalX) + 1,
+    y: Number(content.globalY) + 1
+  }))
+  const rowMap = new Map<number, Array<{ x: number, y: number }>>()
+
+  points.forEach((point) => {
+    rowMap.set(point.y, [...(rowMap.get(point.y) || []), point])
+  })
+
+  const rows = Array.from(rowMap.entries())
+    .sort(([rowA], [rowB]) => rowA - rowB)
+    .map(([, row]) => row.sort((a, b) => a.x - b.x))
+  const firstRow = rows[0]
+  const firstRowY = firstRow[0].y
+  const rootBusY = scenarioY + ((firstRowY - scenarioY) / 2)
+  const rootMinX = Math.min(scenarioX, ...firstRow.map(point => point.x))
+  const rootMaxX = Math.max(scenarioX, ...firstRow.map(point => point.x))
+  const paths = [
+    `M ${scenarioX} ${scenarioY} V ${rootBusY}`,
+    `M ${rootMinX} ${rootBusY} H ${rootMaxX}`,
+    ...firstRow.map(point => `M ${point.x} ${rootBusY} V ${point.y}`)
+  ]
+
+  rows.slice(1).forEach((row, rowIndex) => {
+    const previousRow = rows[rowIndex]
+    const parentPoint = previousRow[Math.min(1, previousRow.length - 1)]
+    const rowY = row[0].y
+    const rowBusY = parentPoint.y + ((rowY - parentPoint.y) / 2)
+    const minX = Math.min(...row.map(point => point.x))
+    const maxX = Math.max(...row.map(point => point.x))
+    const childDrops = row.map(point => `M ${point.x} ${rowBusY} V ${point.y}`)
+
+    paths.push(`M ${parentPoint.x} ${parentPoint.y} V ${rowBusY}`)
+    paths.push(`M ${Math.min(parentPoint.x, minX)} ${rowBusY} H ${Math.max(parentPoint.x, maxX)}`)
+    paths.push(...childDrops)
+  })
+
+  return paths.join(' ')
+}
+
+const connectorPointsPath = (
+  parentX: number,
+  parentY: number,
+  points: Array<{ x: number, y: number }>
+) => {
+  if (!points.length) return ''
+
+  const childY = points[0].y
+  const busY = parentY + ((childY - parentY) / 2)
+  const minX = Math.min(...points.map(point => point.x))
+  const maxX = Math.max(...points.map(point => point.x))
+  const busStartX = Math.min(parentX, minX)
+  const busEndX = Math.max(parentX, maxX)
+  const childDrops = points.map(point => `M ${point.x} ${busY} V ${point.y}`)
+
+  return [
+    `M ${parentX} ${parentY} V ${busY}`,
+    `M ${busStartX} ${busY} H ${busEndX}`,
+    ...childDrops
+  ].join(' ')
+}
+
 </script>

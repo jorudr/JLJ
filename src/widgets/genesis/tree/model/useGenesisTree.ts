@@ -9,6 +9,31 @@ export interface GenesisTreeScenarioNode {
   id: string
   name?: string
   label?: string
+  displayName?: string
+  shortName?: string
+  globalX: number
+  globalY: number
+  conditions?: GenesisTreeConditionNode[]
+  contents?: GenesisTreeConditionContentNode[]
+}
+
+export interface GenesisTreeConditionNode {
+  id: string
+  name?: string
+  label?: string
+  displayName?: string
+  shortName?: string
+  globalX: number
+  globalY: number
+  contents?: GenesisTreeConditionContentNode[]
+}
+
+export interface GenesisTreeConditionContentNode {
+  id: string
+  name?: string
+  label?: string
+  displayName?: string
+  shortName?: string
   globalX: number
   globalY: number
 }
@@ -86,19 +111,155 @@ export const useGenesisTree = () => {
 
   const getScenarioShortName = (node: any) => {
     const displayName = getScenarioDisplayName(node)
-    const parts = displayName
+    const firstWord = displayName
       .split(/[\s_/-]+/g)
       .map(part => part.trim())
-      .filter(Boolean)
+      .find(Boolean) || displayName
 
-    if (parts.length > 1) {
-      return parts
-        .map(part => part[0])
-        .join('')
-        .slice(0, 3)
+    return firstWord.replace(/[^A-Z0-9]/g, '').slice(0, 3)
+  }
+
+  const getConditionDisplayName = (node: any) => {
+    const name = node?.params?.customName || node?.label || node?.name || node?.id || 'Condition'
+    return String(name).toUpperCase()
+  }
+
+  const getConditionShortName = (node: any) => {
+    return getConditionDisplayName(node).replace(/[^A-Z0-9]/g, '').slice(0, 3)
+  }
+
+  const getConditionContentDisplayName = (node: any) => {
+    const name = node?.params?.customName || node?.label || node?.name || node?.id || 'Node'
+    return String(name).toUpperCase()
+  }
+
+  const getConditionContentShortName = (node: any) => {
+    return getConditionContentDisplayName(node).replace(/[^A-Z0-9]/g, '').slice(0, 3)
+  }
+
+  const resolveNode = (nodeId: string, fallbackNodes: any[] = []) => {
+    return getNodeById(nodeId) || fallbackNodes.find((node: any) => node.id === nodeId) || null
+  }
+
+  const collectLogicalNodeIds = (structure: any[]): string[] => {
+    const ids: string[] = []
+
+    const visit = (units: any[] | undefined) => {
+      if (!Array.isArray(units)) return
+
+      units.forEach((unit: any) => {
+        if (!unit) return
+
+        if (Array.isArray(unit.nodeIds)) {
+          unit.nodeIds.forEach((nodeId: any) => {
+            if (typeof nodeId === 'string' && nodeId.trim()) ids.push(nodeId)
+          })
+        }
+
+        if (typeof unit.id === 'string' && unit.type !== 'bundle') {
+          ids.push(unit.id)
+        }
+
+        if (Array.isArray(unit.logicalStructure)) {
+          visit(unit.logicalStructure)
+        }
+      })
     }
 
-    return displayName.replace(/[^A-Z0-9]/g, '').slice(0, 3)
+    visit(structure)
+
+    return Array.from(new Set(ids))
+  }
+
+  const getReachableNodes = (startId: string) => {
+    const visited = new Set<string>([startId])
+    const queue = [startId]
+    const reachable: any[] = []
+
+    while (queue.length > 0) {
+      const currId = queue.shift()
+      if (!currId) continue
+
+      const childrenIds = matrixConnections.value
+        .filter(c => c.fromId === currId)
+        .map(c => c.toId)
+
+      for (const childId of childrenIds) {
+        if (visited.has(childId)) continue
+        visited.add(childId)
+        queue.push(childId)
+
+        const node = getNodeById(childId)
+        if (node) reachable.push(node)
+      }
+    }
+
+    return reachable
+  }
+
+  const collectConditionNodes = (scenarioId: string) => {
+    const scenarioNode = getNodeById(scenarioId)
+    if (!scenarioNode) return []
+
+    const scenarioLocalNodes = scenarioNode.subGraph?.nodes || []
+    const scenarioStructureIds = collectLogicalNodeIds(scenarioNode.params?.logicalStructure || [])
+    const fallbackConditionIds = [
+      ...matrixConnections.value.filter(c => c.fromId === scenarioId).map(c => c.toId),
+      ...scenarioLocalNodes.filter((node: any) => node.type === 'condition').map((node: any) => node.id)
+    ]
+
+    const conditionIds = Array.from(new Set([
+      ...scenarioStructureIds,
+      ...fallbackConditionIds
+    ]))
+
+    const collected = conditionIds
+      .map(conditionId => resolveNode(conditionId, scenarioLocalNodes))
+      .filter((node: any) => node && node.type === 'condition')
+
+    return Array.from(new Map(collected.map((cond: any) => [cond.id, cond])).values())
+  }
+
+  const collectConditionContentNodes = (conditionId: string) => {
+    const conditionNode = getNodeById(conditionId)
+    if (!conditionNode) return []
+
+    const subNodes = conditionNode.subGraph?.nodes || []
+    const subConns = conditionNode.subGraph?.connections || []
+
+    const structure = conditionNode.params?.logicalStructure || []
+    const collected: any[] = []
+
+    const pushNode = (node: any) => {
+      if (!node || !node.id) return
+      if (node.type === 'placeholder' || node.params?.needsConfig) return
+      if (node.id === conditionId) return
+      collected.push(node)
+    }
+
+    if (structure && structure.length > 0) {
+      collectLogicalNodeIds(structure).forEach((nodeId: string) => {
+        const node = resolveNode(nodeId, subNodes)
+        pushNode(node)
+      })
+    } else {
+      const connectedIds = [
+        ...matrixConnections.value.filter(c => c.fromId === conditionId).map(c => c.toId),
+        ...subConns.filter((c: any) => c.fromId === conditionId).map((c: any) => c.toId)
+      ]
+
+      const fallbackNodes = [
+        ...matrixNodes.value.filter(n => connectedIds.includes(n.id)),
+        ...subNodes.filter((n: any) => connectedIds.includes(n.id))
+      ]
+
+      fallbackNodes.forEach(pushNode)
+      subNodes.forEach((node: any) => {
+        if (node.type !== 'condition') pushNode(node)
+      })
+    }
+
+    return Array.from(new Map(collected.map(node => [node.id, node])).values())
   }
 
   const collectScenarioNodes = (rootId: string, depth = 0, visited = new Set<string>()): any[] => {
@@ -136,40 +297,109 @@ export const useGenesisTree = () => {
 
   const strategyNodePositions = computed<GenesisTreeStrategyNode[]>(() => {
     const nodes = strategies.value.filter(s => s.id !== 'MAIN_DIARY')
+    const horizontalGap = 92
+    const contentRowGap = 92
+    const maxConditionColumns = 3
+    const strategyY = 120
+    const scenarioY = 240
+    const contentY = 360
+    let leafCursor = 0
 
-    return nodes.map((strat, i) => {
-      const angleStep = Math.PI * 2 * 0.61803398875
-      const baseRadius = 150
-      const r = baseRadius + Math.sqrt(i) * 50
-      const theta = i * angleStep
-
-      const x = Math.cos(theta) * r
-      const y = Math.sin(theta) * r
-
+    const treeNodes = nodes.map((strat) => {
       const rawScenarios = collectScenarioNodes(strat.id)
 
-      const scenarios = rawScenarios.map((sc, scIdx) => {
-        const scAngle = rawScenarios.length === 1
-          ? theta
-          : theta - Math.PI / 2 + (Math.PI / (rawScenarios.length - 1)) * scIdx
-        const scRadius = 70
+      const scenarios = rawScenarios.map((sc) => {
+        const conditionNodes = collectConditionNodes(sc.id)
+
+        const conditions = conditionNodes.map((cond) => {
+          return {
+            ...cond,
+            displayName: getConditionDisplayName(cond),
+            shortName: getConditionShortName(cond),
+            globalX: 0,
+            globalY: scenarioY
+          }
+        })
+
+        const contentNodes = conditionNodes.flatMap((cond) =>
+          collectConditionContentNodes(cond.id).map((content) => ({
+            ...content,
+            conditionId: cond.id,
+            displayName: getConditionContentDisplayName(content),
+            shortName: getConditionContentShortName(content)
+          }))
+        )
+
+        const scenarioLeafCount = Math.max(Math.min(contentNodes.length, maxConditionColumns), 1)
+        const contents = contentNodes.map((content, contentIdx) => {
+          const column = contentIdx % maxConditionColumns
+          const row = Math.floor(contentIdx / maxConditionColumns)
+          const globalX = (leafCursor + column) * horizontalGap
+
+          return {
+            ...content,
+            globalX,
+            globalY: contentY + (row * contentRowGap)
+          }
+        })
+
+        const scenarioStartX = leafCursor * horizontalGap
+        const scenarioEndX = (leafCursor + scenarioLeafCount - 1) * horizontalGap
+        const scenarioX = (scenarioStartX + scenarioEndX) / 2
+
+        leafCursor += scenarioLeafCount
 
         return {
           ...sc,
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
-          globalX: x + Math.cos(scAngle) * scRadius,
-          globalY: y + Math.sin(scAngle) * scRadius
+          conditions,
+          contents,
+          globalX: scenarioX,
+          globalY: scenarioY
         }
       })
 
+      if (scenarios.length === 0) {
+        const strategyX = leafCursor * horizontalGap
+        leafCursor += 1
+
+        return {
+          ...strat,
+          x: strategyX,
+          y: strategyY,
+          scenarios
+        }
+      }
+
+      const strategyX = scenarios.reduce((sum, scenario) => sum + scenario.globalX, 0) / scenarios.length
+
       return {
         ...strat,
-        x,
-        y,
+        x: strategyX,
+        y: strategyY,
         scenarios
       }
     })
+
+    const centerOffset = ((Math.max(leafCursor, 1) - 1) * horizontalGap) / 2
+    treeNodes.forEach((node) => {
+      node.x -= centerOffset
+
+      node.scenarios.forEach((scenario) => {
+        scenario.globalX -= centerOffset
+
+        ;(scenario.conditions || []).forEach((condition) => {
+          condition.globalX = scenario.globalX
+        })
+
+        ;(scenario.contents || []).forEach((content) => {
+          content.globalX -= centerOffset
+        })
+      })
+    })
+
+    return treeNodes
   })
 
   const selectedStrategy = computed(() => {
@@ -229,6 +459,8 @@ export const useGenesisTree = () => {
     matrixNodes,
     getScenarioDisplayName,
     getScenarioShortName,
+    getConditionDisplayName,
+    getConditionShortName,
     selectStrategy,
     selectedStrategyId,
     selectedStrategyLabel,
