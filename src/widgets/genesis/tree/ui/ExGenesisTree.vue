@@ -10,8 +10,8 @@
       <svg class="overflow-visible" width="2" height="2">
         <path :d="connectorPath(1, 1, strategyNodePositions, 'x', 'y')"
               fill="none"
-              stroke="#7f7f7f"
-              stroke-width="1.5" />
+              stroke="#333333"
+              stroke-width="1" />
         <template v-for="node in strategyNodePositions" :key="'line-group-'+node.id">
           <path :d="connectorPath(node.x + 1, node.y + 1, node.scenarios, 'globalX', 'globalY')"
                 fill="none"
@@ -33,6 +33,7 @@
         <template #trigger>
           <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md">
             <div class="absolute top-1 left-1 w-1 h-1 border-t border-l border-black/20 dark:border-white/20 transition-colors duration-500 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+            <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
 
             <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
               USR
@@ -58,17 +59,32 @@
           <template #trigger>
             <div class="relative w-12 h-12 border flex items-center justify-center transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
               <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+              <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.35)]"></div>
 
               <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
                 {{ (node.name || '').slice(0, 3) }}
               </span>
             </div>
           </template>
-          <div class="flex flex-col gap-1">
-            <div class="flex items-center justify-between">
-              <span class="text-[8px] font-mono opacity-40 uppercase">Protocol_Metadata</span>
+          <div class="flex min-w-[140px] flex-col gap-2">
+            <p class="text-[13px] font-mono font-black leading-snug uppercase tracking-wide text-black dark:text-white">
+              {{ node.name }}
+            </p>
+            <div class="h-px w-full bg-white/25"></div>
+            <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.frequencyLabel || '0%' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.profitFactorRatioLabel || '1.00' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.winrateLabel || '0%' }}</span>
+              </div>
             </div>
-            <p class="text-[10px] font-mono font-bold leading-relaxed uppercase">{{ node.name }}</p>
           </div>
         </ExNTtooltip>
       </div>
@@ -80,6 +96,7 @@
           <template #trigger>
             <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
               <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+              <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.35)]"></div>
               <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
                 {{ sc.shortName || sc.displayName || sc.label || sc.name || 'SCN' }}
               </span>
@@ -93,7 +110,7 @@
             <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
               TYPE: {{ sc.typeLabel || 'ENTRY SCENARIO' }}
             </p>
-            <div class="grid grid-cols-2 gap-3 pt-1 font-mono uppercase">
+            <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
                 <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.frequencyLabel || '0%' }}</span>
@@ -101,6 +118,10 @@
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
                 <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.winrateLabel || '0%' }}</span>
               </div>
             </div>
           </div>
@@ -115,6 +136,7 @@
             <template #trigger>
               <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
                 <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+                <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.35)]"></div>
                 <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
                   {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
                 </span>
@@ -128,7 +150,7 @@
               <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
                 TYPE: {{ content.typeLabel || 'CONDITION' }}
               </p>
-              <div class="grid grid-cols-2 gap-3 pt-1 font-mono uppercase">
+              <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
                   <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.frequencyLabel || '0%' }}</span>
@@ -136,6 +158,10 @@
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
                   <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.profitFactorRatioLabel || '1.00' }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.winrateLabel || '0%' }}</span>
                 </div>
               </div>
             </div>

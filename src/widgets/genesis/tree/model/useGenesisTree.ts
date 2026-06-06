@@ -14,6 +14,7 @@ export interface GenesisTreeScenarioNode {
   typeLabel?: string
   frequencyLabel?: string
   profitFactorRatioLabel?: string
+  winrateLabel?: string
   globalX: number
   globalY: number
   conditions?: GenesisTreeConditionNode[]
@@ -40,6 +41,7 @@ export interface GenesisTreeConditionContentNode {
   typeLabel?: string
   frequencyLabel?: string
   profitFactorRatioLabel?: string
+  winrateLabel?: string
   globalX: number
   globalY: number
 }
@@ -47,6 +49,9 @@ export interface GenesisTreeConditionContentNode {
 export interface GenesisTreeStrategyNode {
   id: string
   name: string
+  frequencyLabel?: string
+  profitFactorRatioLabel?: string
+  winrateLabel?: string
   x: number
   y: number
   scenarios: GenesisTreeScenarioNode[]
@@ -71,6 +76,12 @@ export const useGenesisTree = () => {
 
   const currentTrades = computed(() => {
     return tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  })
+
+  const allStrategyTrades = computed(() => {
+    return tradeStore.strategies
+      .filter(strategy => strategy.id !== 'MAIN_DIARY')
+      .flatMap(strategy => tradeStore.getTradesForStrategy(strategy.id))
   })
 
   const loadMatrixData = async () => {
@@ -234,14 +245,17 @@ export const useGenesisTree = () => {
 
     let gProf = 0
     let gLoss = 0
+    let wins = 0
     presentIn.forEach((tr) => {
       const p = tr.profitInCurrency || 0
       if (p > 0) gProf += p
       else gLoss += Math.abs(p)
+      if (p > 0) wins += 1
     })
     const pf = gLoss === 0 ? (gProf > 0 ? 5.0 : 1.0) : gProf / gLoss
+    const winrate = count > 0 ? wins / count : 0
 
-    return { freq, pf }
+    return { freq, pf, winrate }
   }
 
   const getPerformanceLabels = (id: string) => {
@@ -249,7 +263,32 @@ export const useGenesisTree = () => {
 
     return {
       frequencyLabel: `${Math.round(stats.freq * 100)}%`,
-      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : 'INF'
+      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : 'INF',
+      winrateLabel: `${Math.round(stats.winrate * 100)}%`
+    }
+  }
+
+  const getStrategyPerformanceLabels = (strategyId: string) => {
+    const strategyTrades = tradeStore.getTradesForStrategy(strategyId)
+    const totalTrades = allStrategyTrades.value.length
+    const freq = totalTrades > 0 ? strategyTrades.length / totalTrades : 0
+
+    let gProf = 0
+    let gLoss = 0
+    let wins = 0
+    strategyTrades.forEach((trade) => {
+      const p = trade.profitInCurrency || 0
+      if (p > 0) gProf += p
+      else gLoss += Math.abs(p)
+      if (p > 0) wins += 1
+    })
+    const pf = gLoss === 0 ? (gProf > 0 ? 5.0 : 1.0) : gProf / gLoss
+    const winrate = strategyTrades.length > 0 ? wins / strategyTrades.length : 0
+
+    return {
+      frequencyLabel: `${Math.round(freq * 100)}%`,
+      profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : 'INF',
+      winrateLabel: `${Math.round(winrate * 100)}%`
     }
   }
 
@@ -436,6 +475,7 @@ export const useGenesisTree = () => {
 
       return {
         ...strat,
+        ...getStrategyPerformanceLabels(strat.id),
         x: strategyX,
         y: strategyY,
         scenarios
