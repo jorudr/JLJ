@@ -97,12 +97,46 @@ export const translations = {
           frequency: "Frequency",
           winrate: "Winrate",
           pfRatio: "PF Ratio",
+          trades: "Trades",
           scenario: "Scenario",
           condition: "Condition",
           types: {
             "ENTRY SCENARIO": "Entry Scenario",
             "EXIT SCENARIO": "Exit Scenario",
             "CONDITION": "Condition"
+          }
+        },
+        controls: {
+          resetView: "Reset View",
+          heatmap: "Heatmap",
+          time: "Time"
+        },
+        heatmap: {
+          none: "None",
+          winrate: "Win",
+          pf: "PF",
+          frequency: "Freq"
+        },
+        timeFilters: {
+          all: "All",
+          days30: "30D",
+          days90: "90D",
+          year: "1Y"
+        },
+        details: {
+          close: "Close_Node",
+          trades: "Trades",
+          winrate: "Winrate",
+          pf: "PF",
+          netPnl: "Net PnL",
+          bestTrade: "Best Trade",
+          worstTrade: "Worst Trade",
+          recentTrades: "Recent Trades",
+          noTrades: "No Trades",
+          types: {
+            strategy: "Strategy Node",
+            scenario: "Scenario Node",
+            condition: "Condition Node"
           }
         },
         presets: {
@@ -126,7 +160,10 @@ export const translations = {
             "Max Winrate": "Max Winrate",
             "Max Profit Factor": "Max Profit Factor",
             "Most Used Conditions": "Most Used Conditions",
-            "Most Profitable Conditions": "Most Profitable Conditions"
+            "Most Profitable Conditions": "Most Profitable Conditions",
+            "Weak Winrate": "Weak Winrate",
+            "Weak Profit Factor": "Weak Profit Factor",
+            "Weakest Conditions": "Weakest Conditions"
           },
           types: {
             "All Nodes": "All Nodes",
@@ -329,12 +366,46 @@ export const translations = {
           frequency: "Частота",
           winrate: "Винрейт",
           pfRatio: "Коэф. PF",
+          trades: "Сделки",
           scenario: "Сценарий",
           condition: "Условие",
           types: {
             "ENTRY SCENARIO": "Сценарий входа",
             "EXIT SCENARIO": "Сценарий выхода",
             "CONDITION": "Условие"
+          }
+        },
+        controls: {
+          resetView: "Сбросить вид",
+          heatmap: "Тепловая карта",
+          time: "Период"
+        },
+        heatmap: {
+          none: "Нет",
+          winrate: "Win",
+          pf: "PF",
+          frequency: "Freq"
+        },
+        timeFilters: {
+          all: "Все",
+          days30: "30Д",
+          days90: "90Д",
+          year: "1Г"
+        },
+        details: {
+          close: "Закрыть_Узел",
+          trades: "Сделки",
+          winrate: "Винрейт",
+          pf: "PF",
+          netPnl: "Net PnL",
+          bestTrade: "Лучшая сделка",
+          worstTrade: "Худшая сделка",
+          recentTrades: "Последние сделки",
+          noTrades: "Нет сделок",
+          types: {
+            strategy: "Узел стратегии",
+            scenario: "Узел сценария",
+            condition: "Узел условия"
           }
         },
         presets: {
@@ -358,7 +429,10 @@ export const translations = {
             "Max Winrate": "Макс. винрейт",
             "Max Profit Factor": "Макс. profit factor",
             "Most Used Conditions": "Самые частые условия",
-            "Most Profitable Conditions": "Самые прибыльные условия"
+            "Most Profitable Conditions": "Самые прибыльные условия",
+            "Weak Winrate": "Слабый винрейт",
+            "Weak Profit Factor": "Слабый profit factor",
+            "Weakest Conditions": "Самые слабые условия"
           },
           types: {
             "All Nodes": "Все узлы",
