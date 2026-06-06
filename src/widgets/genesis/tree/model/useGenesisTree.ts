@@ -7,6 +7,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 
 export interface GenesisTreeScenarioNode {
   id: string
+  treeKey?: string
   name?: string
   label?: string
   displayName?: string
@@ -15,6 +16,12 @@ export interface GenesisTreeScenarioNode {
   frequencyLabel?: string
   profitFactorRatioLabel?: string
   winrateLabel?: string
+  frequencyColorClass?: string
+  profitFactorRatioColorClass?: string
+  winrateColorClass?: string
+  frequencyValue?: number
+  profitFactorRatioValue?: number
+  winrateValue?: number
   globalX: number
   globalY: number
   conditions?: GenesisTreeConditionNode[]
@@ -34,6 +41,7 @@ export interface GenesisTreeConditionNode {
 
 export interface GenesisTreeConditionContentNode {
   id: string
+  treeKey?: string
   name?: string
   label?: string
   displayName?: string
@@ -42,19 +50,40 @@ export interface GenesisTreeConditionContentNode {
   frequencyLabel?: string
   profitFactorRatioLabel?: string
   winrateLabel?: string
+  frequencyColorClass?: string
+  profitFactorRatioColorClass?: string
+  winrateColorClass?: string
+  frequencyValue?: number
+  profitFactorRatioValue?: number
+  winrateValue?: number
   globalX: number
   globalY: number
 }
 
 export interface GenesisTreeStrategyNode {
   id: string
+  treeKey?: string
   name: string
   frequencyLabel?: string
   profitFactorRatioLabel?: string
   winrateLabel?: string
+  frequencyColorClass?: string
+  profitFactorRatioColorClass?: string
+  winrateColorClass?: string
+  frequencyValue?: number
+  profitFactorRatioValue?: number
+  winrateValue?: number
   x: number
   y: number
   scenarios: GenesisTreeScenarioNode[]
+}
+
+export interface GenesisTreePresetOption {
+  id: string
+  label: string
+  typeLabel: string
+  targetNodeIds: string[]
+  empty?: boolean
 }
 
 export const useGenesisTree = () => {
@@ -74,11 +103,7 @@ export const useGenesisTree = () => {
     }
   })
 
-  const currentTrades = computed(() => {
-    return tradeStore.getTradesForStrategy(selectedStrategyId.value)
-  })
-
-  const allStrategyTrades = computed(() => {
+  const globalTreeTrades = computed(() => {
     return tradeStore.strategies
       .filter(strategy => strategy.id !== 'MAIN_DIARY')
       .flatMap(strategy => tradeStore.getTradesForStrategy(strategy.id))
@@ -258,19 +283,37 @@ export const useGenesisTree = () => {
     return { freq, pf, winrate }
   }
 
+  const getRatioColorClass = (value: number, goodThreshold: number, warningThreshold: number) => {
+    if (value >= goodThreshold) return 'text-emerald-400'
+    if (value >= warningThreshold) return 'text-amber-400'
+    return 'text-rose-400'
+  }
+
+  const getProfitFactorColorClass = (value: number) => {
+    if (value >= 1.5) return 'text-emerald-400'
+    if (value >= 1) return 'text-amber-400'
+    return 'text-rose-400'
+  }
+
   const getPerformanceLabels = (id: string) => {
-    const stats = getStats(id, currentTrades.value)
+    const stats = getStats(id, globalTreeTrades.value)
 
     return {
       frequencyLabel: `${Math.round(stats.freq * 100)}%`,
       profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : 'INF',
-      winrateLabel: `${Math.round(stats.winrate * 100)}%`
+      winrateLabel: `${Math.round(stats.winrate * 100)}%`,
+      frequencyColorClass: getRatioColorClass(stats.freq, 0.6, 0.3),
+      profitFactorRatioColorClass: getProfitFactorColorClass(stats.pf),
+      winrateColorClass: getRatioColorClass(stats.winrate, 0.55, 0.4),
+      frequencyValue: stats.freq,
+      profitFactorRatioValue: stats.pf,
+      winrateValue: stats.winrate
     }
   }
 
   const getStrategyPerformanceLabels = (strategyId: string) => {
     const strategyTrades = tradeStore.getTradesForStrategy(strategyId)
-    const totalTrades = allStrategyTrades.value.length
+    const totalTrades = globalTreeTrades.value.length
     const freq = totalTrades > 0 ? strategyTrades.length / totalTrades : 0
 
     let gProf = 0
@@ -288,7 +331,13 @@ export const useGenesisTree = () => {
     return {
       frequencyLabel: `${Math.round(freq * 100)}%`,
       profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : 'INF',
-      winrateLabel: `${Math.round(winrate * 100)}%`
+      winrateLabel: `${Math.round(winrate * 100)}%`,
+      frequencyColorClass: getRatioColorClass(freq, 0.6, 0.3),
+      profitFactorRatioColorClass: getProfitFactorColorClass(pf),
+      winrateColorClass: getRatioColorClass(winrate, 0.55, 0.4),
+      frequencyValue: freq,
+      profitFactorRatioValue: pf,
+      winrateValue: winrate
     }
   }
 
@@ -435,6 +484,7 @@ export const useGenesisTree = () => {
 
           return {
             ...content,
+            treeKey: `${strat.id}:${sc.id}:${content.id}`,
             globalX,
             globalY: contentY + (row * contentRowGap)
           }
@@ -448,6 +498,7 @@ export const useGenesisTree = () => {
 
         return {
           ...sc,
+          treeKey: `${strat.id}:${sc.id}`,
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
           typeLabel: getScenarioTypeLabel(sc),
@@ -465,6 +516,7 @@ export const useGenesisTree = () => {
 
         return {
           ...strat,
+          treeKey: strat.id,
           x: strategyX,
           y: strategyY,
           scenarios
@@ -475,6 +527,7 @@ export const useGenesisTree = () => {
 
       return {
         ...strat,
+        treeKey: strat.id,
         ...getStrategyPerformanceLabels(strat.id),
         x: strategyX,
         y: strategyY,
@@ -500,6 +553,232 @@ export const useGenesisTree = () => {
     })
 
     return treeNodes
+  })
+
+  const getTradeConditionIds = (trade: any) => {
+    const ids = new Set<string>()
+    const pushCondition = (condition: any) => {
+      const rawId = typeof condition === 'string' ? condition : condition?.id
+      if (!rawId) return
+
+      const id = String(rawId)
+      const node = getNodeById(id)
+
+      if (node?.type === 'condition') {
+        collectConditionContentNodes(id).forEach((content) => {
+          ids.add(content.id)
+        })
+        return
+      }
+
+      ids.add(id)
+    }
+
+    ;(trade.boardConditions || []).forEach(pushCondition)
+    ;(trade.boardScenarioEntry?.info?.conditions || []).forEach(pushCondition)
+    ;(trade.boardScenarioExit?.info?.conditions || []).forEach(pushCondition)
+
+    return [...ids]
+  }
+
+  const treePresetOptions = computed<GenesisTreePresetOption[]>(() => {
+    const treeNodes = strategyNodePositions.value
+    const strategyMetricNodes = treeNodes.map(strategy => ({
+      id: strategy.treeKey || strategy.id,
+      frequency: strategy.frequencyValue || 0,
+      winrate: strategy.winrateValue || 0,
+      pf: strategy.profitFactorRatioValue || 0
+    }))
+    const scenarioMetricNodesByStrategy = treeNodes.flatMap(strategy => {
+      const strategyTrades = tradeStore.getTradesForStrategy(strategy.id)
+
+      return strategy.scenarios.map((scenario) => {
+        const stats = getStats(scenario.id, strategyTrades)
+
+        return {
+          id: scenario.treeKey || scenario.id,
+          strategyId: strategy.id,
+          frequency: stats.freq,
+          winrate: stats.winrate,
+          pf: stats.pf
+        }
+      })
+    })
+    const conditionMetricNodesByStrategy = treeNodes.flatMap(strategy => {
+      const strategyTrades = tradeStore.getTradesForStrategy(strategy.id)
+
+      return strategy.scenarios.flatMap(scenario => (scenario.contents || []).map((content) => {
+        const stats = getStats(content.id, strategyTrades)
+
+        return {
+          id: content.treeKey || content.id,
+          strategyId: strategy.id,
+          frequency: stats.freq,
+          winrate: stats.winrate,
+          pf: stats.pf
+        }
+      }))
+    })
+    const metricNodesByStrategy = treeNodes.flatMap(strategy => {
+      const strategyNode = strategyMetricNodes.find(node => node.id === (strategy.treeKey || strategy.id))
+      const scenarioNodes = scenarioMetricNodesByStrategy.filter(node => node.strategyId === strategy.id)
+      const conditionNodes = conditionMetricNodesByStrategy.filter(node => node.strategyId === strategy.id)
+
+      return [
+        ...(strategyNode ? [{ ...strategyNode, strategyId: strategy.id }] : []),
+        ...scenarioNodes,
+        ...conditionNodes
+      ]
+    })
+    const metricGroups = [
+      { key: 'all', label: 'All Nodes', nodes: metricNodesByStrategy, perStrategy: true },
+      { key: 'strategy', label: 'Strategies', nodes: strategyMetricNodes, perStrategy: false },
+      { key: 'scenario', label: 'Scenarios', nodes: scenarioMetricNodesByStrategy, perStrategy: true },
+      { key: 'condition', label: 'Conditions', nodes: conditionMetricNodesByStrategy, perStrategy: true }
+    ]
+    const visibleConditionIds = new Set(
+      treeNodes.flatMap(strategy => strategy.scenarios.flatMap(scenario => (scenario.contents || []).map(content => content.id)))
+    )
+    const conditionTreeKeysByStrategy = new Map<string, Map<string, string[]>>()
+    treeNodes.forEach((strategy) => {
+      const conditionMap = new Map<string, string[]>()
+
+      strategy.scenarios.forEach((scenario) => {
+        ;(scenario.contents || []).forEach((content) => {
+          conditionMap.set(content.id, [
+            ...(conditionMap.get(content.id) || []),
+            content.treeKey || content.id
+          ])
+        })
+      })
+
+      conditionTreeKeysByStrategy.set(strategy.id, conditionMap)
+    })
+    const comboStatsByStrategy = new Map<string, Map<string, { ids: string[], count: number, netProfit: number }>>()
+
+    treeNodes.forEach((strategy) => {
+      const comboStats = new Map<string, { ids: string[], count: number, netProfit: number }>()
+      const conditionMap = conditionTreeKeysByStrategy.get(strategy.id) || new Map()
+
+      tradeStore.getTradesForStrategy(strategy.id).forEach((trade) => {
+        const rawIds = getTradeConditionIds(trade)
+          .filter(id => visibleConditionIds.has(id))
+          .sort()
+
+        if (rawIds.length < 2) return
+
+        const ids = rawIds.flatMap(id => conditionMap.get(id) || [])
+        if (ids.length < 2) return
+
+        const key = rawIds.join('|')
+        const existing = comboStats.get(key) || { ids, count: 0, netProfit: 0 }
+        existing.count += 1
+        existing.netProfit += Number(trade.profitInCurrency || 0)
+        comboStats.set(key, existing)
+      })
+
+      comboStatsByStrategy.set(strategy.id, comboStats)
+    })
+
+    const maxGroupBy = <T extends { value: number, ids: string[] }>(items: T[]) => {
+      if (items.length === 0) return null
+
+      const maxValue = Math.max(...items.map(item => item.value))
+      const ids = items
+        .filter(item => item.value === maxValue)
+        .flatMap(item => item.ids)
+
+      return {
+        value: maxValue,
+        ids: Array.from(new Set(ids))
+      }
+    }
+    const metricPresets = metricGroups.flatMap((group) => {
+      const nodesWithTrades = group.nodes.filter(node => node.frequency > 0)
+      const maxPerGroup = (metric: 'frequency' | 'winrate' | 'pf') => {
+        if (!group.perStrategy) {
+          return maxGroupBy(nodesWithTrades.map(node => ({ value: node[metric], ids: [node.id] })))
+        }
+
+        const nodesByStrategy = nodesWithTrades.reduce<Record<string, any[]>>((acc, node: any) => {
+          const strategyId = node.strategyId || 'GLOBAL'
+          acc[strategyId] = [...(acc[strategyId] || []), node]
+          return acc
+        }, {})
+        const winners = Object.values(nodesByStrategy).flatMap((nodes) => {
+          const winner = maxGroupBy(nodes.map(node => ({ value: node[metric], ids: [node.id] })))
+          return winner ? [winner] : []
+        })
+
+        if (winners.length === 0) return null
+
+        return {
+          value: Math.max(...winners.map(winner => winner.value)),
+          ids: Array.from(new Set(winners.flatMap(winner => winner.ids)))
+        }
+      }
+      const maxFrequency = maxPerGroup('frequency')
+      const maxWinrate = maxPerGroup('winrate')
+      const maxProfitFactor = maxPerGroup('pf')
+
+      return [
+        {
+          id: `max-frequency-${group.key}`,
+          label: `Max Frequency`,
+          typeLabel: group.label,
+          targetNodeIds: maxFrequency?.ids || [],
+          empty: !maxFrequency || maxFrequency.value <= 0
+        },
+        {
+          id: `max-winrate-${group.key}`,
+          label: `Max Winrate`,
+          typeLabel: group.label,
+          targetNodeIds: maxWinrate?.ids || [],
+          empty: !maxWinrate || maxWinrate.value <= 0
+        },
+        {
+          id: `max-profit-factor-${group.key}`,
+          label: `Max Profit Factor`,
+          typeLabel: group.label,
+          targetNodeIds: maxProfitFactor?.ids || [],
+          empty: !maxProfitFactor || maxProfitFactor.value <= 0
+        }
+      ]
+    })
+    const comboWinnersByStrategy = (metric: 'count' | 'netProfit') => {
+      const winners = [...comboStatsByStrategy.values()].flatMap((comboStats) => {
+        const combos = [...comboStats.values()]
+        const winner = maxGroupBy(combos.map(combo => ({ value: combo[metric], ids: combo.ids })))
+        return winner ? [winner] : []
+      })
+
+      if (winners.length === 0) return null
+
+      return {
+        value: Math.max(...winners.map(winner => winner.value)),
+        ids: Array.from(new Set(winners.flatMap(winner => winner.ids)))
+      }
+    }
+    const frequentCombo = comboWinnersByStrategy('count')
+    const profitableCombo = comboWinnersByStrategy('netProfit')
+
+    return [
+      ...metricPresets,
+      {
+        id: 'most-used-combo',
+        label: 'Most Used Conditions',
+        typeLabel: 'Combinations',
+        targetNodeIds: frequentCombo?.ids || [],
+        empty: !frequentCombo
+      },
+      {
+        id: 'most-profitable-combo',
+        label: 'Most Profitable Conditions',
+        typeLabel: 'Combinations',
+        targetNodeIds: profitableCombo?.ids || [],
+        empty: !profitableCombo || profitableCombo.value <= 0
+      }
+    ]
   })
 
   const selectedStrategy = computed(() => {
@@ -565,6 +844,7 @@ export const useGenesisTree = () => {
     selectedStrategyId,
     selectedStrategyLabel,
     strategies,
-    strategyNodePositions
+    strategyNodePositions,
+    treePresetOptions
   }
 }

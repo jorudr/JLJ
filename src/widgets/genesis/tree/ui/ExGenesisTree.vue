@@ -12,17 +12,29 @@
               fill="none"
               stroke="#333333"
               stroke-width="1" />
-        <template v-for="node in strategyNodePositions" :key="'line-group-'+node.id">
+        <path :d="connectorPath(1, 1, highlightedStrategies, 'x', 'y')"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="1.3" />
+        <template v-for="node in strategyNodePositions" :key="'line-group-'+(node.treeKey || node.id)">
           <path :d="connectorPath(node.x + 1, node.y + 1, node.scenarios, 'globalX', 'globalY')"
                 fill="none"
                 stroke="#333333"
                 stroke-dasharray="2 2"
                 stroke-width="1" />
-          <template v-for="sc in node.scenarios" :key="'line-content-group-'+sc.id">
+          <path :d="connectorPath(node.x + 1, node.y + 1, highlightedScenarios(node), 'globalX', 'globalY')"
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="1.3" />
+          <template v-for="sc in node.scenarios" :key="'line-content-group-'+(sc.treeKey || sc.id)">
             <path :d="conditionRowsPath(sc.globalX + 1, sc.globalY + 1, sc.contents || [])"
                   fill="none"
                   stroke="#2e2e2e"
                   stroke-width="1" />
+            <path :d="conditionRowsPath(sc.globalX + 1, sc.globalY + 1, highlightedContents(sc))"
+                  fill="none"
+                  stroke="#ffffff"
+                  stroke-width="1.3" />
           </template>
         </template>
       </svg>
@@ -31,11 +43,14 @@
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
       <ExNTtooltip>
         <template #trigger>
-          <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md">
-            <div class="absolute top-1 left-1 w-1 h-1 border-t border-l border-black/20 dark:border-white/20 transition-colors duration-500 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+          <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md"
+               :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'">
+            <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                 :class="isRootHighlighted ? 'border-black' : 'border-black/20 dark:border-white/20 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
             <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
 
-            <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
+            <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors"
+                  :class="isRootHighlighted ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
               USR
             </span>
           </div>
@@ -52,16 +67,19 @@
       </ExNTtooltip>
     </div>
 
-    <template v-for="node in strategyNodePositions" :key="'strat-'+node.id">
+    <template v-for="node in strategyNodePositions" :key="'strat-'+(node.treeKey || node.id)">
       <div class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[5]"
            :style="{ transform: `translate(calc(-50% + ${node.x}px), calc(-50% + ${node.y}px))` }">
         <ExNTtooltip>
           <template #trigger>
-            <div class="relative w-12 h-12 border flex items-center justify-center transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
-              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+            <div class="relative w-12 h-12 border flex items-center justify-center transition-all duration-500 group/node backdrop-blur-md border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
+               :class="isNodeHighlighted(node) ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'">
+              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                   :class="isNodeHighlighted(node) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
               <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.35)]"></div>
 
-              <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
+              <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
+                    :class="isNodeHighlighted(node) ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
                 {{ (node.name || '').slice(0, 3) }}
               </span>
             </div>
@@ -74,30 +92,33 @@
             <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.frequencyLabel || '0%' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="node.frequencyColorClass || 'text-rose-400'">{{ node.frequencyLabel || '0%' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.profitFactorRatioLabel || '1.00' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="node.profitFactorRatioColorClass || 'text-amber-400'">{{ node.profitFactorRatioLabel || '1.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ node.winrateLabel || '0%' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="node.winrateColorClass || 'text-rose-400'">{{ node.winrateLabel || '0%' }}</span>
               </div>
             </div>
           </div>
         </ExNTtooltip>
       </div>
 
-      <div v-for="sc in node.scenarios" :key="'sc-'+sc.id"
+      <div v-for="sc in node.scenarios" :key="'sc-'+(sc.treeKey || sc.id)"
            class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[4]"
            :style="{ transform: `translate(calc(-50% + ${sc.globalX}px), calc(-50% + ${sc.globalY}px))` }">
         <ExNTtooltip>
           <template #trigger>
-            <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
-              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+            <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
+                 :class="isNodeHighlighted(sc) ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'">
+              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                   :class="isNodeHighlighted(sc) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
               <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.35)]"></div>
-              <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
+              <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
+                    :class="isNodeHighlighted(sc) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
                 {{ sc.shortName || sc.displayName || sc.label || sc.name || 'SCN' }}
               </span>
             </div>
@@ -113,31 +134,34 @@
             <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.frequencyLabel || '0%' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="sc.frequencyColorClass || 'text-rose-400'">{{ sc.frequencyLabel || '0%' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="sc.profitFactorRatioColorClass || 'text-amber-400'">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
-                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.winrateLabel || '0%' }}</span>
+                <span class="text-[11px] font-black tracking-wide" :class="sc.winrateColorClass || 'text-rose-400'">{{ sc.winrateLabel || '0%' }}</span>
               </div>
             </div>
           </div>
         </ExNTtooltip>
       </div>
 
-      <template v-for="sc in node.scenarios" :key="'content-group-'+sc.id">
-        <div v-for="content in (sc.contents || [])" :key="'content-'+content.id"
+      <template v-for="sc in node.scenarios" :key="'content-group-'+(sc.treeKey || sc.id)">
+        <div v-for="content in (sc.contents || [])" :key="'content-'+(content.treeKey || content.id)"
              class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[2]"
              :style="{ transform: `translate(calc(-50% + ${content.globalX}px), calc(-50% + ${content.globalY}px))` }">
           <ExNTtooltip>
             <template #trigger>
-              <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
-                <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
+              <div class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
+                   :class="isNodeHighlighted(content) ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'">
+                <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                     :class="isNodeHighlighted(content) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
                 <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.35)]"></div>
-                <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white break-words">
+                <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
+                      :class="isNodeHighlighted(content) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
                   {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
                 </span>
               </div>
@@ -153,15 +177,15 @@
               <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
-                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.frequencyLabel || '0%' }}</span>
+                  <span class="text-[11px] font-black tracking-wide" :class="content.frequencyColorClass || 'text-rose-400'">{{ content.frequencyLabel || '0%' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
-                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.profitFactorRatioLabel || '1.00' }}</span>
+                  <span class="text-[11px] font-black tracking-wide" :class="content.profitFactorRatioColorClass || 'text-amber-400'">{{ content.profitFactorRatioLabel || '1.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
-                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.winrateLabel || '0%' }}</span>
+                  <span class="text-[11px] font-black tracking-wide" :class="content.winrateColorClass || 'text-rose-400'">{{ content.winrateLabel || '0%' }}</span>
                 </div>
               </div>
             </div>
@@ -169,6 +193,63 @@
         </div>
       </template>
     </template>
+    </div>
+
+    <div class="absolute left-8 top-1/2 z-[80] -translate-y-1/2 pointer-events-auto"
+         @pointerdown.stop
+         @pointermove.stop
+         @click.stop>
+      <div class="relative h-[620px] transition-[width] duration-500"
+           :class="isPresetPanelCollapsed ? 'w-0' : 'w-80'">
+      <aside class="absolute left-0 top-0 h-[620px] w-80 border border-white/10 bg-[#0a0a0a]/90 p-4 backdrop-blur-xl transition-all duration-500"
+             :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
+        <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-white/80">Presets</span>
+          <button class="font-mono text-[9px] font-bold uppercase tracking-widest text-white/35 transition-colors hover:text-white"
+                  @click="activePresetId = null">
+            Clear
+          </button>
+        </div>
+        <input v-model="presetSearch"
+               class="mb-3 h-10 w-full border border-white/10 bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white outline-none transition-colors placeholder:text-white/25 focus:border-white/45"
+               placeholder="Search preset"
+               @keydown.stop />
+        <div class="mb-3 grid grid-cols-3 border border-white/10">
+          <button v-for="tab in presetTabs"
+                  :key="tab.id"
+                  class="border-r border-white/10 px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
+                  :class="activePresetTab === tab.id ? 'bg-white text-black' : 'bg-white/[0.02] text-white/35 hover:text-white'"
+                  @click="activePresetTab = tab.id">
+            {{ tab.label }}
+          </button>
+        </div>
+        <div class="flex h-[426px] flex-col gap-2 overflow-y-auto pr-1">
+          <button v-for="preset in filteredPresetOptions"
+                  :key="preset.id"
+                  class="group relative border px-4 py-3 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  :class="activePresetId === preset.id ? 'border-white bg-white text-black' : 'border-white/10 text-white/50 hover:border-white/35 hover:text-white'"
+                  :disabled="preset.empty"
+                  @click="activePresetId = activePresetId === preset.id ? null : preset.id">
+            <span class="block font-mono text-[10px] font-black uppercase tracking-[0.16em]">{{ preset.label }}</span>
+            <span class="mt-1 block font-mono text-[8px] font-bold uppercase tracking-widest opacity-45">
+              {{ preset.typeLabel }} / {{ preset.empty ? 'No Data' : `${preset.targetNodeIds.length} Nodes` }}
+            </span>
+          </button>
+          <div v-if="filteredPresetOptions.length === 0"
+               class="border border-white/10 px-4 py-5 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
+            No Presets Found
+          </div>
+        </div>
+      </aside>
+      <button class="absolute top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-r border-b border-white/20 bg-[#070707] transition-colors hover:bg-[#111] group/preset-tab"
+              :class="isPresetPanelCollapsed ? 'right-0' : '-right-6'"
+              @click="isPresetPanelCollapsed = !isPresetPanelCollapsed">
+        <div class="h-16 w-[1px] bg-white/10 transition-all duration-300 group-hover/preset-tab:bg-white/40"></div>
+        <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-white/10 transition-colors group-hover/preset-tab:text-white/40">
+          {{ isPresetPanelCollapsed ? 'Open_Presets' : 'Close_Presets' }}
+        </span>
+      </button>
+      </div>
     </div>
   </div>
 </template>
@@ -181,23 +262,116 @@ import { useGenesisTree } from '../model/useGenesisTree'
 const {
   authStore,
   formatCreationDate,
-  strategyNodePositions
+  strategyNodePositions,
+  treePresetOptions
 } = useGenesisTree()
 
 const pan = ref({ x: 0, y: 0 })
-const panStart = ref({ x: 0, y: 0 })
 const lastPointer = ref({ x: 0, y: 0 })
 const isPanning = ref(false)
+const activePresetId = ref<string | null>(null)
+const presetSearch = ref('')
+const activePresetTab = ref<'strategy' | 'scenario' | 'condition'>('strategy')
+const isPresetPanelCollapsed = ref(false)
+
+const presetTabs = [
+  { id: 'strategy', label: 'Strategy' },
+  { id: 'scenario', label: 'Scenario' },
+  { id: 'condition', label: 'Condition' }
+] as const
 
 const panLayerStyle = computed(() => ({
   transform: `translate3d(${pan.value.x}px, ${pan.value.y}px, 0)`
 }))
 
+const filteredPresetOptions = computed(() => {
+  const query = presetSearch.value.trim().toLowerCase()
+  const tabbedPresets = treePresetOptions.value.filter((preset) => {
+    if (activePresetTab.value === 'strategy') return preset.typeLabel === 'Strategies'
+    if (activePresetTab.value === 'scenario') return preset.typeLabel === 'Scenarios'
+    return preset.typeLabel === 'Conditions' || preset.typeLabel === 'Combinations'
+  })
+
+  if (!query) return tabbedPresets
+
+  return tabbedPresets.filter((preset) => {
+    return `${preset.label} ${preset.typeLabel}`.toLowerCase().includes(query)
+  })
+})
+
+const activePreset = computed(() => {
+  return treePresetOptions.value.find(preset => preset.id === activePresetId.value) || null
+})
+
+const targetNodeIds = computed(() => {
+  return new Set(activePreset.value?.targetNodeIds || [])
+})
+
+const highlightedNodeIds = computed(() => {
+  const highlighted = new Set<string>()
+  if (targetNodeIds.value.size === 0) return highlighted
+
+  strategyNodePositions.value.forEach((strategy: any) => {
+    if (isTargetNode(strategy)) {
+      highlighted.add(strategy.treeKey || strategy.id)
+    }
+
+    strategy.scenarios.forEach((scenario: any) => {
+      const hasScenarioTarget = isTargetNode(scenario)
+      const targetContents = (scenario.contents || []).filter((content: any) => isTargetNode(content))
+
+      if (hasScenarioTarget || targetContents.length > 0) {
+        highlighted.add(strategy.treeKey || strategy.id)
+        highlighted.add(scenario.treeKey || scenario.id)
+      }
+
+      targetContents.forEach((content: any) => {
+        highlighted.add(content.treeKey || content.id)
+      })
+    })
+  })
+
+  return highlighted
+})
+
+const isRootHighlighted = computed(() => targetNodeIds.value.size > 0)
+
+const isTargetNode = (node: any) => {
+  return targetNodeIds.value.has(node?.treeKey || '') || targetNodeIds.value.has(node?.id || '')
+}
+
+const isNodeHighlighted = (node: any) => {
+  if (typeof node === 'string') return highlightedNodeIds.value.has(node)
+
+  return highlightedNodeIds.value.has(node?.treeKey || '') || highlightedNodeIds.value.has(node?.id || '')
+}
+
+const strategyHasHighlight = (strategy: any) => {
+  return isNodeHighlighted(strategy) ||
+    strategy.scenarios.some((scenario: any) => scenarioHasHighlight(scenario))
+}
+
+const scenarioHasHighlight = (scenario: any) => {
+  return isNodeHighlighted(scenario) ||
+    (scenario.contents || []).some((content: any) => isNodeHighlighted(content))
+}
+
+const highlightedStrategies = computed(() => {
+  return strategyNodePositions.value.filter(strategyHasHighlight)
+})
+
+const highlightedScenarios = (strategy: any) => {
+  return (strategy.scenarios || []).filter((scenario: any) => scenarioHasHighlight(scenario))
+}
+
+const highlightedContents = (scenario: any) => {
+  return (scenario.contents || []).filter((content: any) => isNodeHighlighted(content))
+}
+
 const startPan = (event: PointerEvent) => {
   if (event.button !== 0) return
 
   isPanning.value = true
-  panStart.value = { x: event.clientX, y: event.clientY }
   lastPointer.value = { x: event.clientX, y: event.clientY }
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
 }
@@ -205,8 +379,6 @@ const startPan = (event: PointerEvent) => {
 const movePan = (event: PointerEvent) => {
   if (!isPanning.value) return
 
-  const totalDx = event.clientX - panStart.value.x
-  const totalDy = event.clientY - panStart.value.y
   const dx = event.clientX - lastPointer.value.x
   const dy = event.clientY - lastPointer.value.y
 
@@ -301,28 +473,6 @@ const conditionRowsPath = (
   })
 
   return paths.join(' ')
-}
-
-const connectorPointsPath = (
-  parentX: number,
-  parentY: number,
-  points: Array<{ x: number, y: number }>
-) => {
-  if (!points.length) return ''
-
-  const childY = points[0].y
-  const busY = parentY + ((childY - parentY) / 2)
-  const minX = Math.min(...points.map(point => point.x))
-  const maxX = Math.max(...points.map(point => point.x))
-  const busStartX = Math.min(parentX, minX)
-  const busEndX = Math.max(parentX, maxX)
-  const childDrops = points.map(point => `M ${point.x} ${busY} V ${point.y}`)
-
-  return [
-    `M ${parentX} ${parentY} V ${busY}`,
-    `M ${busStartX} ${busY} H ${busEndX}`,
-    ...childDrops
-  ].join(' ')
 }
 
 </script>
