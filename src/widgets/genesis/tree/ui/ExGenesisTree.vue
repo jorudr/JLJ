@@ -91,15 +91,15 @@
             <div class="h-px w-full bg-white/25"></div>
             <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.frequency') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="node.frequencyColorClass || 'text-rose-400'">{{ node.frequencyLabel || '0%' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="node.profitFactorRatioColorClass || 'text-amber-400'">{{ node.profitFactorRatioLabel || '1.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="node.winrateColorClass || 'text-rose-400'">{{ node.winrateLabel || '0%' }}</span>
               </div>
             </div>
@@ -125,23 +125,23 @@
           </template>
           <div class="flex min-w-[150px] flex-col gap-2">
             <p class="text-[13px] font-mono font-black leading-snug uppercase tracking-wide text-black dark:text-white">
-              {{ sc.displayName || sc.label || sc.name || 'Scenario' }}
+              {{ sc.displayName || sc.label || sc.name || t('genesis.tree.tooltip.scenario') }}
             </p>
             <div class="h-px w-full bg-white/25"></div>
             <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
-              TYPE: {{ sc.typeLabel || 'ENTRY SCENARIO' }}
+              {{ t('genesis.tree.tooltip.type') }}: {{ translateTooltipType(sc.typeLabel || 'ENTRY SCENARIO') }}
             </p>
             <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.frequency') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="sc.frequencyColorClass || 'text-rose-400'">{{ sc.frequencyLabel || '0%' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="sc.profitFactorRatioColorClass || 'text-amber-400'">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
                 <span class="text-[11px] font-black tracking-wide" :class="sc.winrateColorClass || 'text-rose-400'">{{ sc.winrateLabel || '0%' }}</span>
               </div>
             </div>
@@ -168,23 +168,23 @@
             </template>
             <div class="flex min-w-[140px] flex-col gap-2">
               <p class="text-[13px] font-mono font-black leading-snug uppercase tracking-wide text-black dark:text-white">
-                {{ content.displayName || content.label || content.name || 'Condition' }}
+                {{ content.displayName || content.label || content.name || t('genesis.tree.tooltip.condition') }}
               </p>
               <div class="h-px w-full bg-white/25"></div>
               <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
-                TYPE: {{ content.typeLabel || 'CONDITION' }}
+                {{ t('genesis.tree.tooltip.type') }}: {{ translateTooltipType(content.typeLabel || 'CONDITION') }}
               </p>
               <div class="grid grid-cols-3 gap-3 pt-1 font-mono uppercase">
                 <div class="flex flex-col gap-0.5">
-                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.frequency') }}</span>
                   <span class="text-[11px] font-black tracking-wide" :class="content.frequencyColorClass || 'text-rose-400'">{{ content.frequencyLabel || '0%' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5">
-                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
                   <span class="text-[11px] font-black tracking-wide" :class="content.profitFactorRatioColorClass || 'text-amber-400'">{{ content.profitFactorRatioLabel || '1.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5">
-                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Winrate</span>
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
                   <span class="text-[11px] font-black tracking-wide" :class="content.winrateColorClass || 'text-rose-400'">{{ content.winrateLabel || '0%' }}</span>
                 </div>
               </div>
@@ -204,15 +204,15 @@
       <aside class="absolute left-0 top-0 h-[620px] w-80 border border-white/10 bg-[#0a0a0a]/90 p-4 backdrop-blur-xl transition-all duration-500"
              :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
         <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
-          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-white/80">Presets</span>
+          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-white/80">{{ t('genesis.tree.presets.title') }}</span>
           <button class="font-mono text-[9px] font-bold uppercase tracking-widest text-white/35 transition-colors hover:text-white"
                   @click="activePresetId = null">
-            Clear
+            {{ t('genesis.tree.presets.clear') }}
           </button>
         </div>
         <input v-model="presetSearch"
                class="mb-3 h-10 w-full border border-white/10 bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white outline-none transition-colors placeholder:text-white/25 focus:border-white/45"
-               placeholder="Search preset"
+               :placeholder="t('genesis.tree.presets.searchPlaceholder')"
                @keydown.stop />
         <div class="mb-3 grid grid-cols-3 border border-white/10">
           <button v-for="tab in presetTabs"
@@ -220,7 +220,7 @@
                   class="border-r border-white/10 px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
                   :class="activePresetTab === tab.id ? 'bg-white text-black' : 'bg-white/[0.02] text-white/35 hover:text-white'"
                   @click="activePresetTab = tab.id">
-            {{ tab.label }}
+            {{ t(tab.labelKey) }}
           </button>
         </div>
         <div class="flex h-[426px] flex-col gap-2 overflow-y-auto pr-1">
@@ -230,14 +230,14 @@
                   :class="activePresetId === preset.id ? 'border-white bg-white text-black' : 'border-white/10 text-white/50 hover:border-white/35 hover:text-white'"
                   :disabled="preset.empty"
                   @click="activePresetId = activePresetId === preset.id ? null : preset.id">
-            <span class="block font-mono text-[10px] font-black uppercase tracking-[0.16em]">{{ preset.label }}</span>
+            <span class="block font-mono text-[10px] font-black uppercase tracking-[0.16em]">{{ translatePresetLabel(preset.label) }}</span>
             <span class="mt-1 block font-mono text-[8px] font-bold uppercase tracking-widest opacity-45">
-              {{ preset.typeLabel }} / {{ preset.empty ? 'No Data' : `${preset.targetNodeIds.length} Nodes` }}
+              {{ translatePresetType(preset.typeLabel) }} / {{ preset.empty ? t('genesis.tree.presets.noData') : `${preset.targetNodeIds.length} ${t('genesis.tree.presets.nodes')}` }}
             </span>
           </button>
           <div v-if="filteredPresetOptions.length === 0"
                class="border border-white/10 px-4 py-5 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
-            No Presets Found
+            {{ t('genesis.tree.presets.noPresetsFound') }}
           </div>
         </div>
       </aside>
@@ -246,7 +246,7 @@
               @click="isPresetPanelCollapsed = !isPresetPanelCollapsed">
         <div class="h-16 w-[1px] bg-white/10 transition-all duration-300 group-hover/preset-tab:bg-white/40"></div>
         <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-white/10 transition-colors group-hover/preset-tab:text-white/40">
-          {{ isPresetPanelCollapsed ? 'Open_Presets' : 'Close_Presets' }}
+          {{ isPresetPanelCollapsed ? t('genesis.tree.presets.handle.open') : t('genesis.tree.presets.handle.close') }}
         </span>
       </button>
       </div>
@@ -258,6 +258,7 @@
 import { computed, ref } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
+import { useI18n } from '~/shared/i18n/useI18n'
 
 const {
   authStore,
@@ -265,6 +266,7 @@ const {
   strategyNodePositions,
   treePresetOptions
 } = useGenesisTree()
+const { t } = useI18n()
 
 const pan = ref({ x: 0, y: 0 })
 const lastPointer = ref({ x: 0, y: 0 })
@@ -275,9 +277,9 @@ const activePresetTab = ref<'strategy' | 'scenario' | 'condition'>('strategy')
 const isPresetPanelCollapsed = ref(false)
 
 const presetTabs = [
-  { id: 'strategy', label: 'Strategy' },
-  { id: 'scenario', label: 'Scenario' },
-  { id: 'condition', label: 'Condition' }
+  { id: 'strategy', labelKey: 'genesis.tree.presets.tabs.strategy' },
+  { id: 'scenario', labelKey: 'genesis.tree.presets.tabs.scenario' },
+  { id: 'condition', labelKey: 'genesis.tree.presets.tabs.condition' }
 ] as const
 
 const panLayerStyle = computed(() => ({
@@ -298,6 +300,20 @@ const filteredPresetOptions = computed(() => {
     return `${preset.label} ${preset.typeLabel}`.toLowerCase().includes(query)
   })
 })
+
+const translatePresetLabel = (label: string) => {
+  return t(`genesis.tree.presets.labels.${label}`)
+}
+
+const translatePresetType = (typeLabel: string) => {
+  return t(`genesis.tree.presets.types.${typeLabel}`)
+}
+
+const translateTooltipType = (typeLabel: string) => {
+  const key = `genesis.tree.tooltip.types.${typeLabel}`
+  const translatedType = t(key)
+  return translatedType === key ? typeLabel : translatedType
+}
 
 const activePreset = computed(() => {
   return treePresetOptions.value.find(preset => preset.id === activePresetId.value) || null

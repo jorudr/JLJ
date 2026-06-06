@@ -91,6 +91,52 @@ export const translations = {
           minute: "minute"
         }
       },
+      tree: {
+        tooltip: {
+          type: "Type",
+          frequency: "Frequency",
+          winrate: "Winrate",
+          pfRatio: "PF Ratio",
+          scenario: "Scenario",
+          condition: "Condition",
+          types: {
+            "ENTRY SCENARIO": "Entry Scenario",
+            "EXIT SCENARIO": "Exit Scenario",
+            "CONDITION": "Condition"
+          }
+        },
+        presets: {
+          title: "Presets",
+          clear: "Clear",
+          searchPlaceholder: "Search preset",
+          noPresetsFound: "No Presets Found",
+          noData: "No Data",
+          nodes: "Nodes",
+          tabs: {
+            strategy: "Strategy",
+            scenario: "Scenario",
+            condition: "Condition"
+          },
+          handle: {
+            open: "Open_Presets",
+            close: "Close_Presets"
+          },
+          labels: {
+            "Max Frequency": "Max Frequency",
+            "Max Winrate": "Max Winrate",
+            "Max Profit Factor": "Max Profit Factor",
+            "Most Used Conditions": "Most Used Conditions",
+            "Most Profitable Conditions": "Most Profitable Conditions"
+          },
+          types: {
+            "All Nodes": "All Nodes",
+            "Strategies": "Strategies",
+            "Scenarios": "Scenarios",
+            "Conditions": "Conditions",
+            "Combinations": "Combinations"
+          }
+        }
+      },
       dom: {
         "LABELS": "LABELS",
         "Label_Sequence_Layer": "Label_Sequence_Layer",
@@ -275,6 +321,52 @@ export const translations = {
           year: "год",
           hour: "час",
           minute: "минута"
+        }
+      },
+      tree: {
+        tooltip: {
+          type: "Тип",
+          frequency: "Частота",
+          winrate: "Винрейт",
+          pfRatio: "Коэф. PF",
+          scenario: "Сценарий",
+          condition: "Условие",
+          types: {
+            "ENTRY SCENARIO": "Сценарий входа",
+            "EXIT SCENARIO": "Сценарий выхода",
+            "CONDITION": "Условие"
+          }
+        },
+        presets: {
+          title: "Пресеты",
+          clear: "Сбросить",
+          searchPlaceholder: "Поиск пресета",
+          noPresetsFound: "Пресеты не найдены",
+          noData: "Нет данных",
+          nodes: "Узлов",
+          tabs: {
+            strategy: "Стратегия",
+            scenario: "Сценарий",
+            condition: "Условие"
+          },
+          handle: {
+            open: "Открыть_Пресеты",
+            close: "Закрыть_Пресеты"
+          },
+          labels: {
+            "Max Frequency": "Макс. частота",
+            "Max Winrate": "Макс. винрейт",
+            "Max Profit Factor": "Макс. profit factor",
+            "Most Used Conditions": "Самые частые условия",
+            "Most Profitable Conditions": "Самые прибыльные условия"
+          },
+          types: {
+            "All Nodes": "Все узлы",
+            "Strategies": "Стратегии",
+            "Scenarios": "Сценарии",
+            "Conditions": "Условия",
+            "Combinations": "Комбинации"
+          }
         }
       },
       dom: {
