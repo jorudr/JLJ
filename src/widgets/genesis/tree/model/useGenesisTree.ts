@@ -12,6 +12,8 @@ export interface GenesisTreeScenarioNode {
   displayName?: string
   shortName?: string
   typeLabel?: string
+  frequencyLabel?: string
+  profitFactorRatioLabel?: string
   globalX: number
   globalY: number
   conditions?: GenesisTreeConditionNode[]
@@ -36,6 +38,8 @@ export interface GenesisTreeConditionContentNode {
   displayName?: string
   shortName?: string
   typeLabel?: string
+  frequencyLabel?: string
+  profitFactorRatioLabel?: string
   globalX: number
   globalY: number
 }
@@ -63,6 +67,10 @@ export const useGenesisTree = () => {
     set: (val) => {
       tradeStore.selectedStrategyId = val
     }
+  })
+
+  const currentTrades = computed(() => {
+    return tradeStore.getTradesForStrategy(selectedStrategyId.value)
   })
 
   const loadMatrixData = async () => {
@@ -212,6 +220,39 @@ export const useGenesisTree = () => {
     return reachable
   }
 
+  const getStats = (id: string, allTrades: any[]) => {
+    const presentIn = allTrades.filter(tr =>
+      tr.boardScenarioEntry?.id === id ||
+      tr.boardScenarioExit?.id === id ||
+      tr.boardConditions?.some((c: any) => (typeof c === 'string' ? c === id : c.id === id)) ||
+      tr.boardScenarioEntry?.info?.conditions?.some((c: any) => c.id === id) ||
+      tr.boardScenarioExit?.info?.conditions?.some((c: any) => c.id === id) ||
+      (tr.emotions && Array.isArray(tr.emotions) && tr.emotions.includes(id))
+    )
+    const count = presentIn.length
+    const freq = allTrades.length > 0 ? count / allTrades.length : 0
+
+    let gProf = 0
+    let gLoss = 0
+    presentIn.forEach((tr) => {
+      const p = tr.profitInCurrency || 0
+      if (p > 0) gProf += p
+      else gLoss += Math.abs(p)
+    })
+    const pf = gLoss === 0 ? (gProf > 0 ? 5.0 : 1.0) : gProf / gLoss
+
+    return { freq, pf }
+  }
+
+  const getPerformanceLabels = (id: string) => {
+    const stats = getStats(id, currentTrades.value)
+
+    return {
+      frequencyLabel: `${Math.round(stats.freq * 100)}%`,
+      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : 'INF'
+    }
+  }
+
   const collectConditionNodes = (scenarioId: string) => {
     const scenarioNode = getNodeById(scenarioId)
     if (!scenarioNode) return []
@@ -342,7 +383,8 @@ export const useGenesisTree = () => {
             conditionId: cond.id,
             displayName: getConditionContentDisplayName(content),
             shortName: getConditionContentShortName(content),
-            typeLabel: 'CONDITION'
+            typeLabel: 'CONDITION',
+            ...getPerformanceLabels(content.id)
           }))
         )
 
@@ -370,6 +412,7 @@ export const useGenesisTree = () => {
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
           typeLabel: getScenarioTypeLabel(sc),
+          ...getPerformanceLabels(sc.id),
           conditions,
           contents,
           globalX: scenarioX,

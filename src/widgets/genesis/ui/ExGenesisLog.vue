@@ -2064,10 +2064,6 @@ const update = () => {
           const baseSize = 8 * focusMultiplier
           const thinWidth = baseSize * 0.6
           
-          // Add tactical glow
-          ctx.shadowBlur = 20 * focusMultiplier
-          ctx.shadowColor = isDark.value ? '#ffffff' : 'rgba(15, 23, 42, 0.6)' // Darker gray glow for light theme
-          
           ctx.fillStyle = isDark.value ? '#ffffff' : '#334155' 
           ctx.beginPath()
           ctx.moveTo(proj.x, proj.y - baseSize)
@@ -2076,8 +2072,6 @@ const update = () => {
           ctx.lineTo(proj.x - thinWidth, proj.y)
           ctx.closePath()
           ctx.fill()
-          
-          ctx.shadowBlur = 0 // Reset glow
           
           ctx.fillStyle = isDark.value ? '#94a3b8' : '#94a3b8'
           ctx.beginPath()

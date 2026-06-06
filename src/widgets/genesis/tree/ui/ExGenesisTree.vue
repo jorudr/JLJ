@@ -56,23 +56,12 @@
            :style="{ transform: `translate(calc(-50% + ${node.x}px), calc(-50% + ${node.y}px))` }">
         <ExNTtooltip>
           <template #trigger>
-            <div @click="handleStrategyClick(node.id)"
-                 class="relative w-12 h-12 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
-                 :class="[
-                   selectedStrategyId === node.id
-                     ? 'shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.05)] border-black/30 dark:border-white/30'
-                     : ''
-                 ]">
-              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
-                   :class="selectedStrategyId === node.id ? 'border-black/40 dark:border-white/40' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
+            <div class="relative w-12 h-12 border flex items-center justify-center transition-all duration-500 group/node backdrop-blur-md bg-zinc-100 dark:bg-[#0a0a0a] border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white">
+              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500 border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white"></div>
 
-              <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
-                    :class="selectedStrategyId === node.id ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
+              <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white">
                 {{ (node.name || '').slice(0, 3) }}
               </span>
-
-              <div v-if="selectedStrategyId === node.id"
-                   class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500 bg-emerald-500"></div>
             </div>
           </template>
           <div class="flex flex-col gap-1">
@@ -104,6 +93,16 @@
             <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
               TYPE: {{ sc.typeLabel || 'ENTRY SCENARIO' }}
             </p>
+            <div class="grid grid-cols-2 gap-3 pt-1 font-mono uppercase">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.frequencyLabel || '0%' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
+              </div>
+            </div>
           </div>
         </ExNTtooltip>
       </div>
@@ -129,6 +128,16 @@
               <p class="text-[9px] font-mono font-bold uppercase tracking-wide text-black/60 dark:text-white/60">
                 TYPE: {{ content.typeLabel || 'CONDITION' }}
               </p>
+              <div class="grid grid-cols-2 gap-3 pt-1 font-mono uppercase">
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">Frequency</span>
+                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.frequencyLabel || '0%' }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">PF Ratio</span>
+                  <span class="text-[10px] font-black tracking-wide text-black/70 dark:text-white/70">{{ content.profitFactorRatioLabel || '1.00' }}</span>
+                </div>
+              </div>
             </div>
           </ExNTtooltip>
         </div>
@@ -143,40 +152,25 @@ import { computed, ref } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
 
-const emit = defineEmits<{
-  (e: 'switch-view', value: 'cube'): void
-}>()
-
 const {
   authStore,
   formatCreationDate,
-  selectedStrategyId,
-  strategyNodePositions,
-  selectStrategy
+  strategyNodePositions
 } = useGenesisTree()
 
 const pan = ref({ x: 0, y: 0 })
 const panStart = ref({ x: 0, y: 0 })
 const lastPointer = ref({ x: 0, y: 0 })
 const isPanning = ref(false)
-const suppressNextClick = ref(false)
 
 const panLayerStyle = computed(() => ({
   transform: `translate3d(${pan.value.x}px, ${pan.value.y}px, 0)`
 }))
 
-const handleStrategyClick = (id: string) => {
-  if (suppressNextClick.value) return
-
-  selectStrategy(id)
-  emit('switch-view', 'cube')
-}
-
 const startPan = (event: PointerEvent) => {
   if (event.button !== 0) return
 
   isPanning.value = true
-  suppressNextClick.value = false
   panStart.value = { x: event.clientX, y: event.clientY }
   lastPointer.value = { x: event.clientX, y: event.clientY }
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
@@ -189,10 +183,6 @@ const movePan = (event: PointerEvent) => {
   const totalDy = event.clientY - panStart.value.y
   const dx = event.clientX - lastPointer.value.x
   const dy = event.clientY - lastPointer.value.y
-
-  if (Math.hypot(totalDx, totalDy) > 4) {
-    suppressNextClick.value = true
-  }
 
   pan.value = {
     x: pan.value.x + dx,
@@ -208,12 +198,6 @@ const endPan = (event: PointerEvent) => {
 
   if ((event.currentTarget as HTMLElement).hasPointerCapture(event.pointerId)) {
     ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
-  }
-
-  if (suppressNextClick.value) {
-    window.setTimeout(() => {
-      suppressNextClick.value = false
-    }, 0)
   }
 }
 
