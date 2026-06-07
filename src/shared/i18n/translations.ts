@@ -144,7 +144,8 @@ export const translations = {
           tabs: {
             strategy: "Strategy",
             scenario: "Scenario",
-            condition: "Condition"
+            condition: "Condition",
+            emotion: "Emotion"
           },
           handle: {
             open: "Open_Presets",
@@ -164,6 +165,7 @@ export const translations = {
             "Strategies": "Strategies",
             "Scenarios": "Scenarios",
             "Conditions": "Conditions",
+            "Emotions": "Emotions",
             "Combinations": "Combinations"
           }
         }
@@ -407,7 +409,8 @@ export const translations = {
           tabs: {
             strategy: "Стратегия",
             scenario: "Сценарий",
-            condition: "Условие"
+            condition: "Условие",
+            emotion: "Эмоции"
           },
           handle: {
             open: "Открыть_Пресеты",
@@ -427,6 +430,7 @@ export const translations = {
             "Strategies": "Стратегии",
             "Scenarios": "Сценарии",
             "Conditions": "Условия",
+            "Emotions": "Эмоции",
             "Combinations": "Комбинации"
           }
         }

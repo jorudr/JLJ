@@ -12,6 +12,10 @@
               fill="none"
               stroke="#333333"
               stroke-width="1" />
+        <path :d="highlightedEmotionConnectorPath"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="1.3" />
         <path :d="connectorPath(1, 1, strategyNodePositions, 'x', 'y')"
               fill="none"
               stroke="#333333"
@@ -85,8 +89,16 @@
            :style="{ transform: `translate(calc(-50% + ${emotion.x}px), calc(-50% + ${emotion.y}px))` }">
         <ExNTtooltip>
           <template #trigger>
-            <div class="group/node relative flex h-12 w-12 cursor-pointer items-center justify-center border border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.16em] backdrop-blur-md transition-all duration-500 hover:border-black hover:text-black dark:border-white/10 dark:hover:border-white dark:hover:text-white"
-                 :class="[nodeSurfaceClass(emotion), isNodeHighlighted(emotion) ? 'text-black' : 'text-black/45 dark:text-white/45']"
+            <div class="group/node relative flex h-12 w-12 cursor-pointer items-center justify-center border border-black/10 font-mono font-black uppercase tracking-[0.16em] backdrop-blur-md transition-all duration-500 hover:border-black hover:text-black dark:border-white/10 dark:hover:border-white dark:hover:text-white"
+                 :class="[
+                   nodeSurfaceClass(emotion),
+                   isHeatmapActive ? heatmapMetricSizeClass(emotion) : 'text-[10px]',
+                   isNodeHighlighted(emotion)
+                     ? 'text-black'
+                     : isHeatmapActive
+                       ? heatmapMetricColorClass(emotion)
+                       : 'text-black/45 dark:text-white/45'
+                 ]"
                  @pointerdown.stop
                  @click.stop="selectTreeNode(emotion, 'emotion')">
               <div v-if="!isHeatmapActive"
@@ -94,7 +106,7 @@
                    :class="block.accentClass"></div>
               <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                    :class="isNodeHighlighted(emotion) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-              {{ emotion.shortName || emotion.label.slice(0, 3) }}
+              {{ isHeatmapActive ? heatmapMetricLabel(emotion) : (emotion.shortName || emotion.label.slice(0, 3)) }}
             </div>
           </template>
           <div class="flex max-w-[220px] flex-col gap-2">
@@ -143,7 +155,7 @@
 
               <span class="font-mono font-black uppercase leading-none transition-colors"
                     :class="isHeatmapActive
-                      ? ['text-[11px] tracking-tight', isNodeHighlighted(node) ? 'text-black' : heatmapMetricColorClass(node)]
+                      ? [heatmapMetricSizeClass(node), 'tracking-tight', isNodeHighlighted(node) ? 'text-black' : heatmapMetricColorClass(node)]
                       : ['text-[12px] tracking-tighter', isNodeHighlighted(node) ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white']">
                 {{ isHeatmapActive ? heatmapMetricLabel(node) : (node.name || '').slice(0, 3) }}
               </span>
@@ -189,7 +201,7 @@
                    :class="isNodeHighlighted(sc) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
               <span class="px-1 font-mono font-black uppercase leading-tight text-center transition-colors break-words"
                     :class="isHeatmapActive
-                      ? ['text-[11px] tracking-tight', isNodeHighlighted(sc) ? 'text-black' : heatmapMetricColorClass(sc)]
+                      ? [heatmapMetricSizeClass(sc), 'tracking-tight', isNodeHighlighted(sc) ? 'text-black' : heatmapMetricColorClass(sc)]
                       : ['text-[10px] tracking-[0.16em]', isNodeHighlighted(sc) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white']">
                 {{ isHeatmapActive ? heatmapMetricLabel(sc) : (sc.shortName || sc.displayName || sc.label || sc.name || 'SCN') }}
               </span>
@@ -239,7 +251,7 @@
                      :class="isNodeHighlighted(content) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
                 <span class="px-1 font-mono font-black uppercase leading-tight text-center transition-colors break-words"
                       :class="isHeatmapActive
-                        ? ['text-[11px] tracking-tight', isNodeHighlighted(content) ? 'text-black' : heatmapMetricColorClass(content)]
+                        ? [heatmapMetricSizeClass(content), 'tracking-tight', isNodeHighlighted(content) ? 'text-black' : heatmapMetricColorClass(content)]
                         : ['text-[10px] tracking-[0.16em]', isNodeHighlighted(content) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white']">
                   {{ isHeatmapActive ? heatmapMetricLabel(content) : (content.shortName || content.displayName || content.label || content.name || 'CNT') }}
                 </span>
@@ -328,7 +340,7 @@
             </button>
           </div>
         </div>
-        <div class="mb-3 grid grid-cols-3 border border-white/10">
+        <div class="mb-3 grid grid-cols-4 border border-white/10">
           <button v-for="tab in presetTabs"
                   :key="tab.id"
                   class="border-r border-white/10 px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
@@ -486,7 +498,7 @@ const lastPointer = ref({ x: 0, y: 0 })
 const isPanning = ref(false)
 const activePresetId = ref<string | null>(null)
 const presetSearch = ref('')
-const activePresetTab = ref<'strategy' | 'scenario' | 'condition'>('strategy')
+const activePresetTab = ref<'strategy' | 'scenario' | 'condition' | 'emotion'>('strategy')
 const isPresetPanelCollapsed = ref(false)
 const heatmapMode = ref<'none' | 'winrate' | 'pf' | 'frequency'>('none')
 const selectedTreeNode = ref<any | null>(null)
@@ -496,7 +508,8 @@ const selectedTreeNodeKey = ref<string | null>(null)
 const presetTabs = [
   { id: 'strategy', labelKey: 'genesis.tree.presets.tabs.strategy' },
   { id: 'scenario', labelKey: 'genesis.tree.presets.tabs.scenario' },
-  { id: 'condition', labelKey: 'genesis.tree.presets.tabs.condition' }
+  { id: 'condition', labelKey: 'genesis.tree.presets.tabs.condition' },
+  { id: 'emotion', labelKey: 'genesis.tree.presets.tabs.emotion' }
 ] as const
 
 const heatmapModes = [
@@ -519,6 +532,7 @@ const filteredPresetOptions = computed(() => {
   const tabbedPresets = treePresetOptions.value.filter((preset) => {
     if (activePresetTab.value === 'strategy') return preset.typeLabel === 'Strategies'
     if (activePresetTab.value === 'scenario') return preset.typeLabel === 'Scenarios'
+    if (activePresetTab.value === 'emotion') return preset.typeLabel === 'Emotions'
     return preset.typeLabel === 'Conditions' || preset.typeLabel === 'Combinations'
   })
 
@@ -606,6 +620,14 @@ const heatmapMetricLabel = (node: any) => {
   return `${Math.round(value * 100)}%`
 }
 
+const heatmapMetricSizeClass = (node: any) => {
+  const length = heatmapMetricLabel(node).length
+  if (length >= 6) return 'text-[7px]'
+  if (length >= 5) return 'text-[8px]'
+  if (length >= 4) return 'text-[9px]'
+  return 'text-[11px]'
+}
+
 const heatmapMetricColorClass = (node: any) => {
   const value = getNodeMetricValue(node)
   if (value >= 0.8) return 'text-emerald-300'
@@ -664,6 +686,14 @@ const highlightedNodeIds = computed(() => {
       targetContents.forEach((content: any) => {
         highlighted.add(content.treeKey || content.id)
       })
+    })
+  })
+
+  emotionBlocks.value.forEach((block: any) => {
+    block.emotions.forEach((emotion: any) => {
+      if (isTargetNode(emotion)) {
+        highlighted.add(emotion.treeKey || emotion.id)
+      }
     })
   })
 
@@ -727,8 +757,21 @@ const emotionNodePositions = (block: any) => {
 const emotionConnectorPath = computed(() => {
   if (!emotionBlocks.value.length) return ''
 
+  return emotionConnectorPathFor(emotionBlocks.value.flatMap((block) => emotionNodePositions(block)))
+})
+
+const highlightedEmotionConnectorPath = computed(() => {
+  const highlightedEmotionNodes = emotionBlocks.value
+    .flatMap((block) => emotionNodePositions(block))
+    .filter((emotion) => isNodeHighlighted(emotion))
+
+  return emotionConnectorPathFor(highlightedEmotionNodes)
+})
+
+const emotionConnectorPathFor = (points: Array<{ x: number, y: number }>) => {
+  if (!points.length) return ''
+
   const branchY = -118
-  const points = emotionBlocks.value.flatMap((block) => emotionNodePositions(block))
   const minX = Math.min(...points.map((point) => point.x + 1))
   const maxX = Math.max(...points.map((point) => point.x + 1))
 
@@ -737,7 +780,7 @@ const emotionConnectorPath = computed(() => {
     `M ${minX} ${branchY} H ${maxX}`,
     ...points.map((point) => `M ${point.x + 1} ${branchY} V ${point.y + 1}`)
   ].join(' ')
-})
+}
 
 const startPan = (event: PointerEvent) => {
   if (event.button !== 0) return

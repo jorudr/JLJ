@@ -129,6 +129,7 @@ export interface GenesisTreeEmotionBlock {
 
 export interface GenesisTreeEmotionNode extends GenesisEmotionItem {
   id: string
+  treeKey?: string
   name: string
   displayName: string
   shortName: string
@@ -203,6 +204,7 @@ export const useGenesisTree = () => {
         .map((emotion) => ({
           ...emotion,
           id: emotion.label,
+          treeKey: `emotion-${emotion.label}`,
           name: emotion.label.toUpperCase(),
           displayName: emotion.label.toUpperCase(),
           shortName: emotion.label.replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase(),
@@ -821,6 +823,12 @@ export const useGenesisTree = () => {
         }
       }))
     })
+    const emotionMetricNodes = emotionBlocks.value.flatMap(block => block.emotions.map((emotion) => ({
+      id: emotion.treeKey || emotion.id,
+      frequency: emotion.frequencyValue || 0,
+      winrate: emotion.winrateValue || 0,
+      pf: emotion.profitFactorRatioValue || 0
+    })))
     const metricNodesByStrategy = treeNodes.flatMap(strategy => {
       const strategyNode = strategyMetricNodes.find(node => node.id === (strategy.treeKey || strategy.id))
       const scenarioNodes = scenarioMetricNodesByStrategy.filter(node => node.strategyId === strategy.id)
@@ -836,7 +844,8 @@ export const useGenesisTree = () => {
       { key: 'all', label: 'All Nodes', nodes: metricNodesByStrategy, perStrategy: true },
       { key: 'strategy', label: 'Strategies', nodes: strategyMetricNodes, perStrategy: false },
       { key: 'scenario', label: 'Scenarios', nodes: scenarioMetricNodesByStrategy, perStrategy: true },
-      { key: 'condition', label: 'Conditions', nodes: conditionMetricNodesByStrategy, perStrategy: true }
+      { key: 'condition', label: 'Conditions', nodes: conditionMetricNodesByStrategy, perStrategy: true },
+      { key: 'emotion', label: 'Emotions', nodes: emotionMetricNodes, perStrategy: false }
     ]
     const visibleConditionIds = new Set(
       treeNodes.flatMap(strategy => strategy.scenarios.flatMap(scenario => (scenario.contents || []).map(content => content.id)))
