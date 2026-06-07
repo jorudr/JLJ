@@ -7,7 +7,7 @@
       <button @click="$emit('close')"
               class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
          <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-         <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Panel</span>
+         <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ isRu ? 'ЗАКРЫТЬ_ПАНЕЛЬ' : 'Close_Panel' }}</span>
       </button>
 
       <ExPanel no-padding class="!w-[800px] !max-w-[96vw] overflow-hidden !bg-white dark:!bg-[#0a0a0a] transition-all duration-500">
@@ -48,7 +48,7 @@
                   </div>
                   <div>
                     <p class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-emerald-600 dark:text-emerald-400">{{ selectedBroker.assetClass }}</p>
-                    <h3 class="mt-1 font-mono text-[28px] font-black uppercase tracking-widest">{{ selectedBroker.label }} Setup</h3>
+                    <h3 class="mt-1 font-mono text-[28px] font-black uppercase tracking-widest">{{ selectedBroker.label }} {{ isRu ? 'Настройка' : 'Setup' }}</h3>
                   </div>
                 </div>
 
@@ -74,9 +74,9 @@
                      class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
                   <div class="flex items-center justify-between gap-4 mb-5">
                     <div>
-                      <p class="font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-50">Import Target Strategy</p>
+                      <p class="font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-50">{{ isRu ? 'Целевая Стратегия Импорта' : 'Import Target Strategy' }}</p>
                       <p class="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] opacity-60">
-                        Choose where this connector should load trading history.
+                        {{ isRu ? 'Выберите, куда этот коннектор должен загружать историю торгов.' : 'Choose where this connector should load trading history.' }}
                       </p>
                     </div>
                     <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border border-black/10 dark:border-white/10">
@@ -93,31 +93,30 @@
                               : 'border-black/10 bg-white/50 text-black/60 hover:border-black/40 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white'"
                             @click="setImportTargetStrategy(strategy.id)">
                       <p class="font-mono text-[11px] font-black uppercase tracking-[0.14em]">{{ strategy.name }}</p>
-                      <p class="mt-2 font-mono text-[8px] font-bold uppercase tracking-[0.14em] opacity-40">{{ strategy.id }}</p>
                     </button>
                   </div>
                 </div>
 
                 <div class="border border-black/10 p-5 dark:border-white/10 mb-8 bg-white/40 dark:bg-black/40">
-                  <p class="font-mono text-[9px] font-black uppercase tracking-[0.28em] opacity-40 mb-5">Connection Status</p>
+                  <p class="font-mono text-[9px] font-black uppercase tracking-[0.28em] opacity-40 mb-5">{{ isRu ? 'Статус Подключения' : 'Connection Status' }}</p>
                   <div class="grid grid-cols-3 gap-4">
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
-                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Saved Local</p>
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">{{ isRu ? 'Сохранено Локально' : 'Saved Local' }}</p>
                       <p class="mt-3 font-mono text-[14px] font-black uppercase"
                          :class="savedCurrentConnection ? 'text-emerald-500' : 'opacity-30'">
-                        {{ savedCurrentConnection ? 'Yes' : 'No' }}
+                        {{ savedCurrentConnection ? (isRu ? 'Да' : 'Yes') : (isRu ? 'Нет' : 'No') }}
                       </p>
                     </div>
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10 relative overflow-hidden">
                       <div v-if="connectionMap[selectedBroker.id]?.active" class="absolute inset-0 bg-emerald-500/5"></div>
-                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40 relative z-10">Status</p>
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40 relative z-10">{{ isRu ? 'Статус' : 'Status' }}</p>
                       <p class="mt-3 font-mono text-[14px] font-black uppercase relative z-10"
                          :class="connectionMap[selectedBroker.id]?.active ? 'text-emerald-500' : 'opacity-30'">
-                        {{ connectionMap[selectedBroker.id]?.active ? 'Active' : 'Offline' }}
+                        {{ connectionMap[selectedBroker.id]?.active ? (isRu ? 'Активен' : 'Active') : (isRu ? 'Оффлайн' : 'Offline') }}
                       </p>
                     </div>
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
-                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Mode</p>
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">{{ isRu ? 'Режим' : 'Mode' }}</p>
                       <p class="mt-3 font-mono text-[11px] font-black uppercase opacity-70">{{ selectedBroker.mode }}</p>
                     </div>
                   </div>
@@ -136,7 +135,7 @@
                 <div class="grid gap-4" :class="isSelectedBrokerActive ? 'grid-cols-3' : 'grid-cols-2'">
                   <button class="border border-black/10 bg-white dark:bg-[#050505] px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:border-black hover:bg-black hover:text-white dark:border-white/10 dark:hover:border-white dark:hover:bg-white dark:hover:text-black shadow-sm"
                           @click="saveCurrentConnection">
-                    Save Local Keys
+                    {{ isRu ? 'Сохранить Ключи Локально' : 'Save Local Keys' }}
                   </button>
                   <button class="border px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all shadow-md"
                           :class="primaryActionEnabled
@@ -150,7 +149,7 @@
                           class="border border-emerald-500/40 bg-emerald-500/10 px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 transition-all hover:border-emerald-500 hover:bg-emerald-500 hover:text-white dark:text-emerald-400 dark:hover:text-black shadow-sm"
                           :disabled="activationState === 'loading'"
                           @click="handleManualSync">
-                    {{ activationState === 'loading' ? 'Syncing...' : 'Sync Trades' }}
+                    {{ activationState === 'loading' ? (isRu ? 'Синхронизация...' : 'Syncing...') : (isRu ? 'Синхронизировать Сделки' : 'Sync Trades') }}
                   </button>
                 </div>
 
@@ -167,6 +166,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import { testBinanceConnection, type BinanceCredentials } from '~/utils/binance'
@@ -218,57 +218,59 @@ defineEmits<{
 
 const STORAGE_KEY = 'broker_connections_v1'
 const tradeStore = useStrategyTradesStore()
+const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru')
 
-const brokers: BrokerDefinition[] = [
+const brokers = computed<BrokerDefinition[]>(() => [
   {
     id: 'binance',
     label: 'Binance',
-    assetClass: 'Crypto Spot / Futures',
-    description: 'Read-only Binance connector. Uses signed USER_DATA endpoints for account validation and trade history helpers.',
-    mode: 'Live Activation',
+    assetClass: isRu.value ? 'Крипто Спот / Фьючерсы' : 'Crypto Spot / Futures',
+    description: isRu.value ? 'Коннектор Binance (только чтение). Использует подписанные эндпоинты USER_DATA для проверки аккаунта.' : 'Read-only Binance connector. Uses signed USER_DATA endpoints for account validation and trade history helpers.',
+    mode: isRu.value ? 'Активно' : 'Live Activation',
     canActivate: true,
     fields: [
-      { key: 'apiKey', label: 'API Key', placeholder: 'X-MBX-APIKEY' },
-      { key: 'apiSecret', label: 'API Secret', placeholder: 'HMAC SHA256 secret', secret: true }
+      { key: 'apiKey', label: isRu.value ? 'API Ключ' : 'API Key', placeholder: 'X-MBX-APIKEY' },
+      { key: 'apiSecret', label: isRu.value ? 'API Секрет' : 'API Secret', placeholder: 'HMAC SHA256 secret', secret: true }
     ]
   },
   {
     id: 'bybit',
     label: 'Bybit',
-    assetClass: 'Crypto Derivatives',
-    description: 'Connect Bybit read-only API to load execution history.',
-    mode: 'Live Activation',
+    assetClass: isRu.value ? 'Крипто Деривативы' : 'Crypto Derivatives',
+    description: isRu.value ? 'Подключите API Bybit (только чтение) для загрузки истории исполнения сделок.' : 'Connect Bybit read-only API to load execution history.',
+    mode: isRu.value ? 'Активно' : 'Live Activation',
     canActivate: true,
     fields: [
-      { key: 'apiKey', label: 'API Key', placeholder: 'Bybit API key' },
-      { key: 'apiSecret', label: 'API Secret', placeholder: 'Bybit API secret', secret: true }
+      { key: 'apiKey', label: isRu.value ? 'API Ключ' : 'API Key', placeholder: 'Bybit API key' },
+      { key: 'apiSecret', label: isRu.value ? 'API Секрет' : 'API Secret', placeholder: 'Bybit API secret', secret: true }
     ]
   },
   {
     id: 'kraken',
     label: 'Kraken',
-    assetClass: 'Crypto Spot',
-    description: 'Prepared connector slot for Kraken closed orders and ledgers.',
-    mode: 'Prepared',
+    assetClass: isRu.value ? 'Крипто Спот' : 'Crypto Spot',
+    description: isRu.value ? 'Заготовленный слот коннектора для закрытых ордеров и леджеров Kraken.' : 'Prepared connector slot for Kraken closed orders and ledgers.',
+    mode: isRu.value ? 'В Разработке' : 'Prepared',
     canActivate: false,
     fields: [
-      { key: 'apiKey', label: 'API Key', placeholder: 'Kraken API key' },
-      { key: 'privateKey', label: 'Private Key', placeholder: 'Kraken private key', secret: true }
+      { key: 'apiKey', label: isRu.value ? 'API Ключ' : 'API Key', placeholder: 'Kraken API key' },
+      { key: 'privateKey', label: isRu.value ? 'Приватный Ключ' : 'Private Key', placeholder: 'Kraken private key', secret: true }
     ]
   },
   {
     id: 'interactive-brokers',
     label: 'Interactive Brokers',
-    assetClass: 'Stocks / Options / Forex',
-    description: 'Prepared connector slot for IBKR Client Portal or Flex Query trade history.',
-    mode: 'Prepared',
+    assetClass: isRu.value ? 'Акции / Опционы / Форекс' : 'Stocks / Options / Forex',
+    description: isRu.value ? 'Заготовленный слот коннектора для истории торгов IBKR Client Portal или Flex Query.' : 'Prepared connector slot for IBKR Client Portal or Flex Query trade history.',
+    mode: isRu.value ? 'В Разработке' : 'Prepared',
     canActivate: false,
     fields: [
-      { key: 'host', label: 'Gateway URL', placeholder: 'https://localhost:5000' },
-      { key: 'token', label: 'Session / Flex Token', placeholder: 'IBKR token', secret: true }
+      { key: 'host', label: isRu.value ? 'URL Шлюза' : 'Gateway URL', placeholder: 'https://localhost:5000' },
+      { key: 'token', label: isRu.value ? 'Сессия / Flex Токен' : 'Session / Flex Token', placeholder: 'IBKR token', secret: true }
     ]
   },
-]
+])
 
 const selectedBrokerId = ref<BrokerId>('binance')
 const connectionMap = ref<Record<string, SavedConnection>>({})
@@ -280,7 +282,7 @@ const importTargetStrategyId = ref('MAIN_DIARY')
 
 
 const selectedBroker = computed(() => {
-  return (brokers.find(broker => broker.id === selectedBrokerId.value) || brokers[0]) as BrokerDefinition
+  return (brokers.value.find(broker => broker.id === selectedBrokerId.value) || brokers.value[0]) as BrokerDefinition
 })
 
 const selectedImportStrategyName = computed(() => {
