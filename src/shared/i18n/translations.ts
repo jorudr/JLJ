@@ -108,20 +108,13 @@ export const translations = {
         },
         controls: {
           resetView: "Reset View",
-          heatmap: "Heatmap",
-          time: "Time"
+          heatmap: "Heatmap"
         },
         heatmap: {
           none: "None",
           winrate: "Win",
           pf: "PF",
           frequency: "Freq"
-        },
-        timeFilters: {
-          all: "All",
-          days30: "30D",
-          days90: "90D",
-          year: "1Y"
         },
         details: {
           close: "Close_Node",
@@ -161,9 +154,8 @@ export const translations = {
             "Max Profit Factor": "Max Profit Factor",
             "Most Used Conditions": "Most Used Conditions",
             "Most Profitable Conditions": "Most Profitable Conditions",
-            "Weak Winrate": "Weak Winrate",
-            "Weak Profit Factor": "Weak Profit Factor",
-            "Weakest Conditions": "Weakest Conditions"
+            "Least Winrate": "Least Winrate",
+            "Least Profit Factor": "Least Profit Factor"
           },
           types: {
             "All Nodes": "All Nodes",
@@ -377,20 +369,13 @@ export const translations = {
         },
         controls: {
           resetView: "Сбросить вид",
-          heatmap: "Тепловая карта",
-          time: "Период"
+          heatmap: "Тепловая карта"
         },
         heatmap: {
           none: "Нет",
           winrate: "Win",
           pf: "PF",
           frequency: "Freq"
-        },
-        timeFilters: {
-          all: "Все",
-          days30: "30Д",
-          days90: "90Д",
-          year: "1Г"
         },
         details: {
           close: "Закрыть_Узел",
@@ -430,9 +415,8 @@ export const translations = {
             "Max Profit Factor": "Макс. profit factor",
             "Most Used Conditions": "Самые частые условия",
             "Most Profitable Conditions": "Самые прибыльные условия",
-            "Weak Winrate": "Слабый винрейт",
-            "Weak Profit Factor": "Слабый profit factor",
-            "Weakest Conditions": "Самые слабые условия"
+            "Least Winrate": "Мин. винрейт",
+            "Least Profit Factor": "Мин. profit factor"
           },
           types: {
             "All Nodes": "Все узлы",

@@ -46,9 +46,9 @@
           <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md"
                :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'"
                @pointerdown.stop>
-            <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+            <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
+            <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                  :class="isRootHighlighted ? 'border-black' : 'border-black/20 dark:border-white/20 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-            <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
 
             <span class="text-[16px] font-mono font-black tracking-tighter uppercase transition-colors"
                   :class="isRootHighlighted ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
@@ -77,9 +77,9 @@
                :class="nodeSurfaceClass(node)"
                @pointerdown.stop
                @click.stop="selectTreeNode(node, 'strategy')">
-              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+              <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.35)]"></div>
+              <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                    :class="isNodeHighlighted(node) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-              <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.35)]"></div>
 
               <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
                     :class="isNodeHighlighted(node) ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
@@ -99,7 +99,7 @@
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
-                <span class="text-[13px] font-black tracking-wide" :class="node.profitFactorRatioColorClass || 'text-amber-400'">{{ node.profitFactorRatioLabel || '1.00' }}</span>
+                <span class="text-[13px] font-black tracking-wide" :class="node.profitFactorRatioColorClass || 'text-amber-400'">{{ node.profitFactorRatioLabel || '0.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
@@ -122,9 +122,9 @@
                  :class="nodeSurfaceClass(sc)"
                  @pointerdown.stop
                  @click.stop="selectTreeNode(sc, 'scenario')">
-              <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+              <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.35)]"></div>
+              <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                    :class="isNodeHighlighted(sc) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-              <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.35)]"></div>
               <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
                     :class="isNodeHighlighted(sc) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
                 {{ sc.shortName || sc.displayName || sc.label || sc.name || 'SCN' }}
@@ -146,7 +146,7 @@
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
-                <span class="text-[13px] font-black tracking-wide" :class="sc.profitFactorRatioColorClass || 'text-amber-400'">{{ sc.profitFactorRatioLabel || '1.00' }}</span>
+                <span class="text-[13px] font-black tracking-wide" :class="sc.profitFactorRatioColorClass || 'text-amber-400'">{{ sc.profitFactorRatioLabel || '0.00' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
                 <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
@@ -170,9 +170,9 @@
                    :class="nodeSurfaceClass(content)"
                    @pointerdown.stop
                    @click.stop="selectTreeNode(content, 'condition')">
-                <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
+                <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.35)]"></div>
+                <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                      :class="isNodeHighlighted(content) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-                <div class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.35)]"></div>
                 <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
                       :class="isNodeHighlighted(content) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
                   {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
@@ -194,7 +194,7 @@
                 </div>
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
-                  <span class="text-[13px] font-black tracking-wide" :class="content.profitFactorRatioColorClass || 'text-amber-400'">{{ content.profitFactorRatioLabel || '1.00' }}</span>
+                  <span class="text-[13px] font-black tracking-wide" :class="content.profitFactorRatioColorClass || 'text-amber-400'">{{ content.profitFactorRatioLabel || '0.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5">
                   <span class="text-[8px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
@@ -211,7 +211,7 @@
     </template>
     </div>
 
-    <div class="absolute left-8 top-8 z-[90] flex items-start gap-3 pointer-events-auto"
+    <div class="absolute left-8 top-8 z-[90] pointer-events-auto"
          @pointerdown.stop
          @pointermove.stop
          @click.stop>
@@ -227,36 +227,6 @@
         <div class="absolute left-1 top-1 h-1 w-1 border-l border-t border-white/30"></div>
         <div class="absolute bottom-1 right-1 h-1 w-1 border-b border-r border-white/30"></div>
       </button>
-
-      <div class="border border-white/10 bg-[#0a0a0a]/90 p-2">
-        <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-white/35">
-          {{ t('genesis.tree.controls.heatmap') }}
-        </div>
-        <div class="grid grid-cols-4 border border-white/10">
-          <button v-for="mode in heatmapModes"
-                  :key="mode.id"
-                  class="px-2 py-2 font-mono text-[7px] font-black uppercase tracking-[0.12em] transition-colors"
-                  :class="heatmapMode === mode.id ? 'bg-white text-black' : 'bg-white/[0.02] text-white/35 hover:text-white'"
-                  @click="heatmapMode = mode.id">
-            {{ t(mode.labelKey) }}
-          </button>
-        </div>
-      </div>
-
-      <div class="border border-white/10 bg-[#0a0a0a]/90 p-2">
-        <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-white/35">
-          {{ t('genesis.tree.controls.time') }}
-        </div>
-        <div class="grid grid-cols-4 border border-white/10">
-          <button v-for="filter in timeFilters"
-                  :key="filter.id"
-                  class="px-2 py-2 font-mono text-[7px] font-black uppercase tracking-[0.12em] transition-colors"
-                  :class="selectedTimeFilter === filter.id ? 'bg-white text-black' : 'bg-white/[0.02] text-white/35 hover:text-white'"
-                  @click="selectedTimeFilter = filter.id">
-            {{ t(filter.labelKey) }}
-          </button>
-        </div>
-      </div>
     </div>
 
     <div class="absolute left-8 top-1/2 z-[80] -translate-y-1/2 pointer-events-auto"
@@ -278,6 +248,20 @@
                class="mb-3 h-10 w-full border border-white/10 bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white outline-none transition-colors placeholder:text-white/25 focus:border-white/45"
                :placeholder="t('genesis.tree.presets.searchPlaceholder')"
                @keydown.stop />
+        <div class="mb-3 border border-white/10 bg-white/[0.02] p-3">
+          <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-white/35">
+            {{ t('genesis.tree.controls.heatmap') }}
+          </div>
+          <div class="grid grid-cols-4 gap-1">
+            <button v-for="mode in heatmapModes"
+                    :key="mode.id"
+                    class="relative overflow-hidden border px-2 py-2 font-mono text-[7px] font-black uppercase tracking-[0.12em] transition-all duration-300"
+                    :class="heatmapMode === mode.id ? heatmapButtonClass(mode.id) : 'border-white/10 bg-[#050505] text-white/35 hover:border-white/30 hover:text-white'"
+                    @click="heatmapMode = mode.id">
+              <span class="relative z-10">{{ t(mode.labelKey) }}</span>
+            </button>
+          </div>
+        </div>
         <div class="mb-3 grid grid-cols-3 border border-white/10">
           <button v-for="tab in presetTabs"
                   :key="tab.id"
@@ -287,7 +271,7 @@
             {{ t(tab.labelKey) }}
           </button>
         </div>
-        <div class="flex h-[426px] flex-col gap-2 overflow-y-auto pr-1">
+        <div class="flex h-[374px] flex-col gap-2 overflow-y-auto pr-1">
           <button v-for="preset in filteredPresetOptions"
                   :key="preset.id"
                   class="group relative border px-4 py-3 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-30"
@@ -355,7 +339,7 @@
         </div>
         <div class="border border-white/10 bg-white/[0.025] p-3">
           <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-white/30">{{ t('genesis.tree.details.pf') }}</span>
-          <p class="mt-2 font-mono text-[20px] font-black" :class="selectedTreeNode.profitFactorRatioColorClass || 'text-amber-400'">{{ selectedTreeNode.profitFactorRatioLabel || '1.00' }}</p>
+          <p class="mt-2 font-mono text-[20px] font-black" :class="selectedTreeNode.profitFactorRatioColorClass || 'text-amber-400'">{{ selectedTreeNode.profitFactorRatioLabel || '0.00' }}</p>
         </div>
         <div class="border border-white/10 bg-white/[0.025] p-3">
           <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-white/30">{{ t('genesis.tree.details.netPnl') }}</span>
@@ -401,7 +385,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -409,7 +393,6 @@ import { useI18n } from '~/shared/i18n/useI18n'
 const {
   authStore,
   formatCreationDate,
-  selectedTimeFilter,
   strategyNodePositions,
   treePresetOptions
 } = useGenesisTree()
@@ -432,13 +415,6 @@ const presetTabs = [
   { id: 'condition', labelKey: 'genesis.tree.presets.tabs.condition' }
 ] as const
 
-const timeFilters = [
-  { id: 'all', labelKey: 'genesis.tree.timeFilters.all' },
-  { id: '30d', labelKey: 'genesis.tree.timeFilters.days30' },
-  { id: '90d', labelKey: 'genesis.tree.timeFilters.days90' },
-  { id: 'year', labelKey: 'genesis.tree.timeFilters.year' }
-] as const
-
 const heatmapModes = [
   { id: 'none', labelKey: 'genesis.tree.heatmap.none' },
   { id: 'winrate', labelKey: 'genesis.tree.heatmap.winrate' },
@@ -449,6 +425,8 @@ const heatmapModes = [
 const panLayerStyle = computed(() => ({
   transform: `translate3d(${pan.value.x}px, ${pan.value.y}px, 0)`
 }))
+
+const isHeatmapActive = computed(() => heatmapMode.value !== 'none')
 
 const filteredPresetOptions = computed(() => {
   const query = presetSearch.value.trim().toLowerCase()
@@ -516,9 +494,20 @@ const getHeatmapClass = (node: any) => {
   if (heatmapMode.value === 'none') return ''
 
   const value = getNodeMetricValue(node)
-  if (value >= 0.66) return 'bg-emerald-400/80 border-emerald-200/90 shadow-[0_0_18px_rgba(52,211,153,0.22)]'
-  if (value >= 0.33) return 'bg-cyan-400/75 border-cyan-200/80 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
-  return 'bg-rose-400/75 border-rose-200/80 shadow-[0_0_18px_rgba(251,113,133,0.18)]'
+  if (value >= 0.66) {
+    return 'border-teal-200/80 bg-[#0a0a0a] text-teal-100 shadow-[0_0_0_1px_rgba(94,234,212,0.22),0_0_24px_rgba(20,184,166,0.18),inset_0_0_18px_rgba(20,184,166,0.16)]'
+  }
+  if (value >= 0.33) {
+    return 'border-sky-200/70 bg-[#0a0a0a] text-sky-100 shadow-[0_0_0_1px_rgba(125,211,252,0.18),0_0_22px_rgba(56,189,248,0.14),inset_0_0_18px_rgba(56,189,248,0.12)]'
+  }
+  return 'border-rose-200/70 bg-[#0a0a0a] text-rose-100 shadow-[0_0_0_1px_rgba(253,164,175,0.18),0_0_22px_rgba(244,63,94,0.14),inset_0_0_18px_rgba(244,63,94,0.12)]'
+}
+
+const heatmapButtonClass = (mode: string) => {
+  if (mode === 'winrate') return 'border-teal-200/50 bg-teal-300/10 text-teal-100 shadow-[inset_0_0_14px_rgba(20,184,166,0.12)]'
+  if (mode === 'pf') return 'border-sky-200/50 bg-sky-300/10 text-sky-100 shadow-[inset_0_0_14px_rgba(56,189,248,0.12)]'
+  if (mode === 'frequency') return 'border-rose-200/50 bg-rose-300/10 text-rose-100 shadow-[inset_0_0_14px_rgba(244,63,94,0.12)]'
+  return 'border-white bg-white text-black'
 }
 
 const nodeSurfaceClass = (node: any) => {
@@ -536,10 +525,6 @@ const tradePnlClass = (trade: any) => {
   if (pnl < 0) return 'text-rose-400'
   return 'text-white/45'
 }
-
-watch(selectedTimeFilter, () => {
-  closeSelectedTreeNode()
-})
 
 const activePreset = computed(() => {
   return treePresetOptions.value.find(preset => preset.id === activePresetId.value) || null

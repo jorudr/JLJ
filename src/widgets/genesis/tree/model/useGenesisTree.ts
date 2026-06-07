@@ -5,8 +5,6 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
 
-export type GenesisTreeTimeFilter = 'all' | '30d' | '90d' | 'year'
-
 export interface GenesisTreeTradeSummary {
   id?: string
   asset: string
@@ -126,7 +124,6 @@ export const useGenesisTree = () => {
   const matrixNodes = shallowRef<any[]>([])
   const matrixConnections = shallowRef<any[]>([])
   const isMatrixLoading = ref(true)
-  const selectedTimeFilter = ref<GenesisTreeTimeFilter>('all')
 
   const selectedStrategyId = computed<string | null>({
     get: () => tradeStore.selectedStrategyId,
@@ -142,24 +139,18 @@ export const useGenesisTree = () => {
     return Number.isFinite(timestamp) ? timestamp : 0
   }
 
-  const filterTradesByTime = (trades: any[]) => {
-    if (selectedTimeFilter.value === 'all') return trades
-
-    const now = Date.now()
-    const days = selectedTimeFilter.value === '30d' ? 30 : selectedTimeFilter.value === '90d' ? 90 : 365
-    const minTimestamp = now - (days * 24 * 60 * 60 * 1000)
-
-    return trades.filter(trade => getTradeTimestamp(trade) >= minTimestamp)
-  }
+  const allVisibleStrategyTrades = computed(() => {
+    return tradeStore.strategies
+      .filter(strategy => strategy.id !== 'MAIN_DIARY')
+      .flatMap(strategy => tradeStore.getTradesForStrategy(strategy.id))
+  })
 
   const getTradesForStrategyInTime = (strategyId: string) => {
-    return filterTradesByTime(tradeStore.getTradesForStrategy(strategyId))
+    return tradeStore.getTradesForStrategy(strategyId)
   }
 
   const globalTreeTrades = computed(() => {
-    return tradeStore.strategies
-      .filter(strategy => strategy.id !== 'MAIN_DIARY')
-      .flatMap(strategy => getTradesForStrategyInTime(strategy.id))
+    return allVisibleStrategyTrades.value
   })
 
   const loadMatrixData = async () => {
@@ -332,7 +323,7 @@ export const useGenesisTree = () => {
       else gLoss += Math.abs(p)
       if (p > 0) wins += 1
     })
-    const pf = gLoss === 0 ? (gProf > 0 ? 5.0 : 1.0) : gProf / gLoss
+    const pf = count === 0 ? 0 : gLoss === 0 ? (gProf > 0 ? Infinity : 0) : gProf / gLoss
     const winrate = count > 0 ? wins / count : 0
     const sortedByPnl = [...presentIn].sort((a, b) => Number(b.profitInCurrency || 0) - Number(a.profitInCurrency || 0))
     const sortedByDate = [...presentIn].sort((a, b) => getTradeTimestamp(b) - getTradeTimestamp(a))
@@ -389,7 +380,7 @@ export const useGenesisTree = () => {
 
     return {
       frequencyLabel: `${Math.round(stats.freq * 100)}%`,
-      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : 'INF',
+      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : '∞',
       winrateLabel: `${Math.round(stats.winrate * 100)}%`,
       tradeCountLabel: `${stats.count}`,
       netPnlLabel: formatMoney(stats.netPnl),
@@ -423,14 +414,14 @@ export const useGenesisTree = () => {
       else gLoss += Math.abs(p)
       if (p > 0) wins += 1
     })
-    const pf = gLoss === 0 ? (gProf > 0 ? 5.0 : 1.0) : gProf / gLoss
+    const pf = strategyTrades.length === 0 ? 0 : gLoss === 0 ? (gProf > 0 ? Infinity : 0) : gProf / gLoss
     const winrate = strategyTrades.length > 0 ? wins / strategyTrades.length : 0
     const sortedByPnl = [...strategyTrades].sort((a, b) => Number(b.profitInCurrency || 0) - Number(a.profitInCurrency || 0))
     const sortedByDate = [...strategyTrades].sort((a, b) => getTradeTimestamp(b) - getTradeTimestamp(a))
 
     return {
       frequencyLabel: `${Math.round(freq * 100)}%`,
-      profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : 'INF',
+      profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : '∞',
       winrateLabel: `${Math.round(winrate * 100)}%`,
       tradeCountLabel: `${strategyTrades.length}`,
       netPnlLabel: formatMoney(netPnl),
@@ -815,6 +806,7 @@ export const useGenesisTree = () => {
     }
     const metricPresets = metricGroups.flatMap((group) => {
       const nodesWithTrades = group.nodes.filter(node => node.frequency > 0)
+      const allMetricNodes = group.nodes
       const maxPerGroup = (metric: 'frequency' | 'winrate' | 'pf') => {
         if (!group.perStrategy) {
           return maxGroupBy(nodesWithTrades.map(node => ({ value: node[metric], ids: [node.id] })))
@@ -839,10 +831,10 @@ export const useGenesisTree = () => {
       }
       const minPerGroup = (metric: 'winrate' | 'pf') => {
         if (!group.perStrategy) {
-          return minGroupBy(nodesWithTrades.map(node => ({ value: node[metric], ids: [node.id] })))
+          return minGroupBy(allMetricNodes.map(node => ({ value: node[metric], ids: [node.id] })))
         }
 
-        const nodesByStrategy = nodesWithTrades.reduce<Record<string, any[]>>((acc, node: any) => {
+        const nodesByStrategy = allMetricNodes.reduce<Record<string, any[]>>((acc, node: any) => {
           const strategyId = node.strategyId || 'GLOBAL'
           acc[strategyId] = [...(acc[strategyId] || []), node]
           return acc
@@ -862,8 +854,8 @@ export const useGenesisTree = () => {
       const maxFrequency = maxPerGroup('frequency')
       const maxWinrate = maxPerGroup('winrate')
       const maxProfitFactor = maxPerGroup('pf')
-      const weakWinrate = minPerGroup('winrate')
-      const weakProfitFactor = minPerGroup('pf')
+      const leastWinrate = minPerGroup('winrate')
+      const leastProfitFactor = minPerGroup('pf')
 
       return [
         {
@@ -888,18 +880,18 @@ export const useGenesisTree = () => {
           empty: !maxProfitFactor || maxProfitFactor.value <= 0
         },
         {
-          id: `weak-winrate-${group.key}`,
-          label: `Weak Winrate`,
+          id: `least-winrate-${group.key}`,
+          label: `Least Winrate`,
           typeLabel: group.label,
-          targetNodeIds: weakWinrate?.ids || [],
-          empty: !weakWinrate
+          targetNodeIds: leastWinrate?.ids || [],
+          empty: !leastWinrate
         },
         {
-          id: `weak-profit-factor-${group.key}`,
-          label: `Weak Profit Factor`,
+          id: `least-profit-factor-${group.key}`,
+          label: `Least Profit Factor`,
           typeLabel: group.label,
-          targetNodeIds: weakProfitFactor?.ids || [],
-          empty: !weakProfitFactor
+          targetNodeIds: leastProfitFactor?.ids || [],
+          empty: !leastProfitFactor
         }
       ]
     })
@@ -919,20 +911,6 @@ export const useGenesisTree = () => {
     }
     const frequentCombo = comboWinnersByStrategy('count')
     const profitableCombo = comboWinnersByStrategy('netProfit')
-    const losingCombo = (() => {
-      const losers = [...comboStatsByStrategy.values()].flatMap((comboStats) => {
-        const combos = [...comboStats.values()].filter(combo => combo.netProfit < 0)
-        const loser = minGroupBy(combos.map(combo => ({ value: combo.netProfit, ids: combo.ids })))
-        return loser ? [loser] : []
-      })
-
-      if (losers.length === 0) return null
-
-      return {
-        value: Math.min(...losers.map(loser => loser.value)),
-        ids: Array.from(new Set(losers.flatMap(loser => loser.ids)))
-      }
-    })()
 
     return [
       ...metricPresets,
@@ -949,13 +927,6 @@ export const useGenesisTree = () => {
         typeLabel: 'Combinations',
         targetNodeIds: profitableCombo?.ids || [],
         empty: !profitableCombo || profitableCombo.value <= 0
-      },
-      {
-        id: 'weakest-condition-combo',
-        label: 'Weakest Conditions',
-        typeLabel: 'Combinations',
-        targetNodeIds: losingCombo?.ids || [],
-        empty: !losingCombo
       }
     ]
   })
@@ -1022,7 +993,6 @@ export const useGenesisTree = () => {
     selectStrategy,
     selectedStrategyId,
     selectedStrategyLabel,
-    selectedTimeFilter,
     strategies,
     strategyNodePositions,
     treePresetOptions
