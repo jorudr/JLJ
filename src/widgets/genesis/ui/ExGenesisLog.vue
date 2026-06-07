@@ -321,7 +321,7 @@
     />
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && !showCapitalForecast && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
        <OpenStrategyMetrics
          :is-dark="isDark"
          :minimal="true"
@@ -335,8 +335,7 @@
 
     <div
       v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible && canOpenCapitalForecast"
-      class="absolute left-1/2 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
-      :class="showComplianceStatus ? 'top-[8.5rem]' : 'top-8'"
+      class="absolute left-1/2 top-8 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
     >
       <ExPatternForecastPanel
         :visible="showCapitalForecast"
