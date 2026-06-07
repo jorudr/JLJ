@@ -704,7 +704,7 @@
               <ExPanel class="w-full h-full" noPadding variant="light">
                 <template #header>
                   <div class="flex items-center justify-between w-full">
-                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">SYSTEM_TARGET_PROTOCOL_V4.0</span>
+                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">{{ isRu ? 'ПРОТОКОЛ_ЦЕЛЕЙ_СИСТЕМЫ_V4.0' : 'SYSTEM_TARGET_PROTOCOL_V4.0' }}</span>
                   </div>
                 </template>
 
@@ -712,11 +712,11 @@
               <div class="p-10 flex flex-col space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
                 
                 <!-- SEARCH & FILTERS -->
-                <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6">
+                <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6">
                   <div class="relative flex items-center">
                     <div class="absolute left-3 w-1.5 h-1.5 bg-black/20 dark:bg-white/20 rotate-45"></div>
                     <input v-model="winrateTargetSearch" 
-                           placeholder="SEARCH_TARGET..." 
+                           :placeholder="isRu ? 'ПОИСК_ЦЕЛИ...' : 'SEARCH_TARGET...'" 
                            class="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 px-8 py-1.5 text-[9px] font-mono tracking-widest focus:outline-none focus:border-black/30 dark:focus:border-white/30 w-64 uppercase placeholder:opacity-30 text-black dark:text-white" />
                   </div>
 
@@ -731,7 +731,7 @@
                 </div>
 
                 <!-- TARGET LIST -->
-                <div class="flex flex-col gap-6">
+                <div v-if="winrateMenuNodes.length > 0" class="flex flex-col gap-6">
                   <template v-if="winrateTargetFilter === 'condition'">
                     <div v-for="group in groupedWinrateMenuNodes" :key="group.groupName" class="flex flex-col gap-4 mb-6">
                       <div class="flex items-center gap-4">
@@ -819,9 +819,9 @@
                   </template>
                 </div>
 
-                <div v-if="winrateMenuNodes.length === 0"
+                <div v-else
                        class="w-full p-8 border border-dashed border-black/10 dark:border-white/10 text-center text-[10px] font-mono font-black uppercase tracking-[0.35em] text-black/30 dark:text-white/30">
-                    NO_TARGETS_FOUND
+                    {{ isRu ? 'ЦЕЛИ НЕ НАЙДЕНЫ' : 'NO_TARGETS_FOUND' }}
                   </div>
                 </div>
               </ExPanel>
@@ -983,19 +983,6 @@
           </div>
         </button>
        
-        <!-- SET BENCHMARK RATE -->
-        <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
-                @click="showBenchmarkModal = true; benchmarkInput = sp500BenchmarkRate" 
-                class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="12" r="6"></circle>
-            <circle cx="12" cy="12" r="2"></circle>
-          </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            [ SET_BENCHMARK_RATE ]
-          </div>
-        </button>
 
         <!-- SET INITIAL DEPOSIT -->
         <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
@@ -1037,7 +1024,7 @@
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
           <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
-            [ SELECT_SYSTEM_TARGET ]
+            {{ isRu ? '[ ВЫБОР_ЦЕЛИ_СИСТЕМЫ ]' : '[ SELECT_SYSTEM_TARGET ]' }}
           </div>
         </button>
 
@@ -1308,6 +1295,7 @@ const benchmarkMetricsByStrategy = ref<Record<string, StrategyBenchmarkMetrics>>
 const themeStore = useThemeStore()
 const tradeStore = useStrategyTradesStore()
 const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru')
 const route = useRoute()
 const router = useRouter()
 const isTradeEntryOpen = ref(route.query.entry === 'true')
