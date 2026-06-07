@@ -11,7 +11,7 @@
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="node.type === 'instrument' ? node.label : (node.type === 'indicator' ? node.label : (node.type === 'smc' ? (smcTooltipData?.title || 'SMC') : (node.type === 'risk-element' ? (locale === 'ru' ? t(riskElementTooltipTitle) : riskElementTooltipTitle) : (locale === 'ru' && t(node.type.toUpperCase()) ? t(node.type.toUpperCase()) : node.type.toUpperCase()))))" :disabled="isScenarioContentNode" class="w-full h-full">
+     <ExNTtooltip :title="tooltipTitle" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
            <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
@@ -367,6 +367,17 @@
                </template>
              </p>
            </template>
+           <template v-else-if="node.type === 'emotion-state'">
+             <div class="flex min-w-[180px] flex-col gap-2">
+               <p class="font-mono text-[13px] font-black uppercase tracking-wide text-black dark:text-white">
+                 {{ emotionTooltipData.title }}
+               </p>
+               <div class="h-px w-full bg-white/20"></div>
+               <p class="font-mono text-[9px] font-bold uppercase leading-relaxed text-black/55 dark:text-white/55">
+                 {{ emotionTooltipData.description }}
+               </p>
+             </div>
+           </template>
            <!-- Default tooltip body for other node types -->
            <div v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
              <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
@@ -613,6 +624,7 @@ import ExInput from '~/shared/ui/ExInput.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 
 const { locale, t } = useI18n()
 
@@ -1282,6 +1294,73 @@ const smcTooltipData = computed(() => {
   return {
     title: t(props.node.label || 'SMC').toUpperCase(),
     description: t(baseDesc)
+  }
+})
+
+const tooltipTitle = computed(() => {
+  if (props.node.type === 'emotion-state') return undefined
+  if (props.node.type === 'instrument') return props.node.label
+  if (props.node.type === 'indicator') return props.node.label
+  if (props.node.type === 'smc') return smcTooltipData.value?.title || 'SMC'
+  if (props.node.type === 'risk-element') return locale.value === 'ru' ? t(riskElementTooltipTitle.value) : riskElementTooltipTitle.value
+
+  const typeKey = props.node.type.toUpperCase()
+  const translatedType = t(typeKey)
+  return locale.value === 'ru' && translatedType ? translatedType : typeKey
+})
+
+const normalizeEmotionKey = (value: string | undefined) => {
+  return String(value || '').trim().toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+const emotionAliasMap: Record<string, string> = {
+  fearofmissingout: 'FOMO',
+  страхупуститьдвижение: 'FOMO',
+  compulsoryrecovery: 'Revenge',
+  компульсивноевосстановление: 'Revenge',
+  overexpectation: 'Greed',
+  завышенныеожидания: 'Greed',
+  executionparalysis: 'Fear',
+  параличисполнения: 'Fear',
+  systemoverride: 'Tilt',
+  отключениесистемы: 'Tilt',
+  cognitivefriction: 'Anxiety',
+  когнитивноетрение: 'Anxiety',
+  neuralstability: 'Calmness',
+  нейроннаястабильность: 'Calmness',
+  protocoladherence: 'Discipline',
+  соблюдениепротокола: 'Discipline',
+  sensoryawareness: 'Focus',
+  сенсорнаяосознанность: 'Focus',
+  temporalresilience: 'Patience',
+  временнаяустойчивость: 'Patience',
+  executioncertainty: 'Confidence',
+  уверенностьисполнения: 'Confidence',
+  logicgap: 'Hope',
+  разрывлогики: 'Hope',
+  stimulusvoid: 'Boredom',
+  пустотастимула: 'Boredom',
+  biologicaldecay: 'Fatigue',
+  биологическийспад: 'Fatigue'
+}
+
+const emotionTooltipData = computed(() => {
+  const keys = [
+    props.node.label,
+    props.node.params?.customName,
+    props.node.params?.description,
+    props.node.params?.value,
+    props.node.params?.info
+  ].map(normalizeEmotionKey)
+  const aliasLabel = keys.map((key) => emotionAliasMap[key]).find(Boolean)
+  const emotion = GENESIS_EMOTION_LIBRARY.find((item) => {
+    const itemKey = normalizeEmotionKey(item.label)
+    return item.label === aliasLabel || keys.includes(itemKey)
+  })
+
+  return {
+    title: emotion?.label || props.node.label || 'Emotion',
+    description: emotion?.description || props.node.params?.description || ''
   }
 })
 </script>

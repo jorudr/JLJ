@@ -624,17 +624,10 @@
                        </div>
                        
                         <div class="flex space-x-3 overflow-x-auto pt-6 pb-8 w-full justify-start px-12 no-scrollbar scroll-smooth">
-                          <ExNTtooltip v-for="emotion in emotionLibrary.filter((e: any) => e.type === activeEmotionTab.toLowerCase())" :key="emotion.label" :title="emotion.label">
+                          <ExNTtooltip v-for="emotion in emotionLibrary.filter((e: any) => e.type === activeEmotionTab.toLowerCase())" :key="emotion.label">
                             <template #trigger>
-                              <button @click="addNode({ label: emotion.label, type: 'emotion-state', params: { emotionType: emotion.type, remedies: emotion.remedies, info: emotion.info, description: emotion.description } })"
-                                      :class="[
-                                        emotion.type === 'negative' 
-                                          ? 'bg-nier-black text-nier-white border-nier-text-light/40 dark:border-nier-text-dark/40 group-hover:border-nier-white' 
-                                          : emotion.type === 'neutral'
-                                          ? 'bg-nier-text-light/10 dark:bg-nier-text-dark/10 text-nier-text-light dark:text-nier-text-dark border-nier-text-light/20 dark:border-nier-text-dark/20 group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark'
-                                          : 'bg-nier-text-light/5 dark:bg-nier-text-dark/5 text-nier-text-light dark:text-nier-text-dark border-nier-text-light/20 dark:border-nier-text-dark/20 group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark'
-                                      ]"
-                                      class="group relative w-12 h-12 border flex flex-col items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-md flex-shrink-0">
+                              <button @click="addNode({ label: emotion.label, type: 'emotion-state', params: { emotionType: emotion.type, description: emotion.description } })"
+                                      class="group relative w-12 h-12 flex-shrink-0 border border-nier-text-light/20 bg-nier-text-light/5 text-nier-text-light backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-nier-text-light dark:border-nier-text-dark/20 dark:bg-nier-text-dark/5 dark:text-nier-text-dark dark:hover:border-nier-text-dark">
                                  
                                  <span class="text-[12px] font-mono font-black tracking-tighter uppercase leading-none">
                                    {{ emotion.label.slice(0, 2) }}
@@ -645,9 +638,14 @@
                                  <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                               </button>
                             </template>
-                            <div class="flex flex-col gap-1 min-w-[180px]">
-                              <span class="text-[8px] font-mono opacity-40 uppercase">PSYCH_TELEMETRY</span>
-                              <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ emotion.description }}</p>
+                            <div class="flex min-w-[180px] flex-col gap-2">
+                              <p class="font-mono text-[13px] font-black uppercase tracking-wide text-black dark:text-white">
+                                {{ emotion.label }}
+                              </p>
+                              <div class="h-px w-full bg-white/20"></div>
+                              <p class="font-mono text-[9px] font-bold uppercase leading-relaxed text-black/55 dark:text-white/55">
+                                {{ emotion.description }}
+                              </p>
                             </div>
                           </ExNTtooltip>
                         </div>
@@ -1463,6 +1461,7 @@ import { useThemeStore } from '@/features/store/useTheme'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useStrategyTradesStore } from '@/features/store/useStrategyTrades'
+import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 
 const { locale, t } = useI18n()
 const themeStore = useThemeStore()
@@ -2245,22 +2244,7 @@ const stepPresets = {
   alpha: ['a', 'b', 'c', 'd', 'e'],
   roman: ['I', 'II', 'III', 'IV', 'V']
 }
-const emotionLibrary = [
-  { label: 'FOMO', type: 'negative', description: 'FEAR_OF_MISSING_OUT', info: 'Entering trades based on price momentum rather than predefined logic.', remedies: ['Check HTF Structure', 'Wait for 15m Retest', 'Review Trading Plan'] },
-  { label: 'Revenge', type: 'negative', description: 'COMPULSIVE_RECOVERY', info: 'Attempting to "win back" losses after a failed trade, usually with excessive size.', remedies: ['Terminate Session', 'Walk Away for 1h', 'Verify Logic vs Bias'] },
-  { label: 'Greed', type: 'negative', description: 'OVER_EXPECTATION', info: 'Overstaying in a trade or over-leveraging due to unreasonable profit targets.', remedies: ['Set Technical Exit', 'Lock 50% Profit', 'Scale Out Immediately'] },
-  { label: 'Fear', type: 'negative', description: 'EXECUTION_PARALYSIS', info: 'Hesitation or premature exits due to over-sensitivity to market fluctuations.', remedies: ['Reduce Pos. Size', 'Verify Hard Stop', 'Recalculate R:R'] },
-  { label: 'Tilt', type: 'negative', description: 'SYSTEM_OVERRIDE', info: 'Complete loss of emotional control. Critical session termination required.', remedies: ['Emergency Shutdown', 'Execute Breach Log', 'Reset Environment'] },
-  { label: 'Anxiety', type: 'negative', description: 'COGNITIVE_FRICTION', info: 'Low-level psychological stress reducing decision-making quality.', remedies: ['Box Breathing', 'Step Away from M1', 'Verify Risk Max'] },
-  { label: 'Calmness', type: 'positive', description: 'NEURAL_STABILITY', info: 'High mental clarity. Objective market observation without bias.', remedies: [] },
-  { label: 'Discipline', type: 'positive', description: 'PROTOCOL_ADHERENCE', info: 'Strict adherence to the pre-trade plan and risk parameters.', remedies: [] },
-  { label: 'Focus', type: 'positive', description: 'SENSORY_AWARENESS', info: 'High logical concentration and high-fidelity market reading.', remedies: [] },
-  { label: 'Patience', type: 'positive', description: 'TEMPORAL_RESILIENCE', info: 'Waiting for high-probability setups without impulse interaction.', remedies: [] },
-  { label: 'Confidence', type: 'positive', description: 'EXECUTION_CERTAINTY', info: 'Clear conviction backed by backtested logic and data.', remedies: [] },
-  { label: 'Hope', type: 'neutral', description: 'LOGIC_GAP', info: 'Relying on "luck" or "feel" instead of hard technical triggers.', remedies: ['Exit immediately', 'Verify hard stop'] },
-  { label: 'Boredom', type: 'neutral', description: 'STIMULUS_VOID', info: 'Impulse to trade due to lack of market action. High risk of overtrading.', remedies: ['Step away', 'Set alerts'] },
-  { label: 'Fatigue', type: 'neutral', description: 'BIOLOGICAL_DECAY', info: 'Reduced reaction time and logic due to extended session duration.', remedies: ['Terminate session', 'Sleep'] }
-]
+const emotionLibrary = GENESIS_EMOTION_LIBRARY
 const activeIndicatorCategory = ref(indicatorData.categories[0]?.id || 'TREND')
 const indicatorSearchQuery = ref('')
 const currentRiskStep = ref(0)
