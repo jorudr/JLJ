@@ -81,9 +81,11 @@
               <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                    :class="isNodeHighlighted(node) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
 
-              <span class="text-[12px] font-mono font-black tracking-tighter uppercase transition-colors"
-                    :class="isNodeHighlighted(node) ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
-                {{ (node.name || '').slice(0, 3) }}
+              <span class="font-mono font-black uppercase leading-none transition-colors"
+                    :class="isHeatmapActive
+                      ? ['text-[11px] tracking-tight', isNodeHighlighted(node) ? 'text-black' : heatmapMetricColorClass(node)]
+                      : ['text-[12px] tracking-tighter', isNodeHighlighted(node) ? 'text-black' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white']">
+                {{ isHeatmapActive ? heatmapMetricLabel(node) : (node.name || '').slice(0, 3) }}
               </span>
             </div>
           </template>
@@ -125,9 +127,11 @@
               <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.35)]"></div>
               <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                    :class="isNodeHighlighted(sc) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-              <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
-                    :class="isNodeHighlighted(sc) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
-                {{ sc.shortName || sc.displayName || sc.label || sc.name || 'SCN' }}
+              <span class="px-1 font-mono font-black uppercase leading-tight text-center transition-colors break-words"
+                    :class="isHeatmapActive
+                      ? ['text-[11px] tracking-tight', isNodeHighlighted(sc) ? 'text-black' : heatmapMetricColorClass(sc)]
+                      : ['text-[10px] tracking-[0.16em]', isNodeHighlighted(sc) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white']">
+                {{ isHeatmapActive ? heatmapMetricLabel(sc) : (sc.shortName || sc.displayName || sc.label || sc.name || 'SCN') }}
               </span>
             </div>
           </template>
@@ -173,9 +177,11 @@
                 <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70 bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.35)]"></div>
                 <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
                      :class="isNodeHighlighted(content) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
-                <span class="px-1 text-[10px] font-mono font-black tracking-[0.16em] uppercase leading-tight text-center transition-colors break-words"
-                      :class="isNodeHighlighted(content) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white'">
-                  {{ content.shortName || content.displayName || content.label || content.name || 'CNT' }}
+                <span class="px-1 font-mono font-black uppercase leading-tight text-center transition-colors break-words"
+                      :class="isHeatmapActive
+                        ? ['text-[11px] tracking-tight', isNodeHighlighted(content) ? 'text-black' : heatmapMetricColorClass(content)]
+                        : ['text-[10px] tracking-[0.16em]', isNodeHighlighted(content) ? 'text-black' : 'text-black/45 dark:text-white/45 group-hover/node:text-black dark:group-hover/node:text-white']">
+                  {{ isHeatmapActive ? heatmapMetricLabel(content) : (content.shortName || content.displayName || content.label || content.name || 'CNT') }}
                 </span>
               </div>
             </template>
@@ -523,23 +529,32 @@ const getNodeMetricValue = (node: any) => {
   return 0
 }
 
-const getHeatmapClass = (node: any) => {
-  if (heatmapMode.value === 'none') return ''
-
-  const value = getNodeMetricValue(node)
-  if (value >= 0.66) {
-    return 'border-teal-200/80 bg-[#0a0a0a] text-teal-100 shadow-[0_0_0_1px_rgba(94,234,212,0.22),0_0_24px_rgba(20,184,166,0.18),inset_0_0_18px_rgba(20,184,166,0.16)]'
-  }
-  if (value >= 0.33) {
-    return 'border-sky-200/70 bg-[#0a0a0a] text-sky-100 shadow-[0_0_0_1px_rgba(125,211,252,0.18),0_0_22px_rgba(56,189,248,0.14),inset_0_0_18px_rgba(56,189,248,0.12)]'
-  }
-  return 'border-rose-200/70 bg-[#0a0a0a] text-rose-100 shadow-[0_0_0_1px_rgba(253,164,175,0.18),0_0_22px_rgba(244,63,94,0.14),inset_0_0_18px_rgba(244,63,94,0.12)]'
+const getHeatmapClass = (_node: any) => {
+  return ''
 }
 
-const heatmapButtonClass = (mode: string) => {
-  if (mode === 'winrate') return 'border-teal-200/50 bg-teal-300/10 text-teal-100 shadow-[inset_0_0_14px_rgba(20,184,166,0.12)]'
-  if (mode === 'pf') return 'border-sky-200/50 bg-sky-300/10 text-sky-100 shadow-[inset_0_0_14px_rgba(56,189,248,0.12)]'
-  if (mode === 'frequency') return 'border-rose-200/50 bg-rose-300/10 text-rose-100 shadow-[inset_0_0_14px_rgba(244,63,94,0.12)]'
+const heatmapMetricLabel = (node: any) => {
+  if (heatmapMode.value === 'pf') {
+    return node?.profitFactorRatioLabel || '0.00'
+  }
+
+  const value = heatmapMode.value === 'frequency'
+    ? Number(node?.frequencyValue || 0)
+    : Number(node?.winrateValue || 0)
+
+  return `${Math.round(value * 100)}%`
+}
+
+const heatmapMetricColorClass = (node: any) => {
+  const value = getNodeMetricValue(node)
+  if (value >= 0.8) return 'text-emerald-300'
+  if (value >= 0.6) return 'text-green-300'
+  if (value >= 0.4) return 'text-lime-300'
+  if (value >= 0.2) return 'text-orange-300'
+  return 'text-rose-400'
+}
+
+const heatmapButtonClass = (_mode: string) => {
   return 'border-white bg-white text-black'
 }
 
