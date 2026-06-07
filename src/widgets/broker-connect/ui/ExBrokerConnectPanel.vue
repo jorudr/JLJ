@@ -2,8 +2,8 @@
   <div class="fixed inset-0 z-[2500] flex items-center justify-center bg-black/45 px-6 backdrop-blur-sm"
        @click.self="$emit('close')">
     <ExPanel no-padding class="w-[920px] max-w-[96vw] overflow-hidden !bg-white dark:!bg-[#0a0a0a]">
-      <div class="flex min-h-[620px] text-black dark:text-white">
-        <aside class="w-[280px] shrink-0 border-r border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
+      <div class="flex h-[620px] max-h-[90vh] text-black dark:text-white">
+        <aside class="w-[280px] shrink-0 overflow-y-auto border-r border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
           <div class="mb-5 border-b border-black/10 pb-4 dark:border-white/10">
             <p class="font-mono text-[9px] font-black uppercase tracking-[0.32em] opacity-40">Broker_Link</p>
             <h2 class="mt-2 font-mono text-[18px] font-black uppercase tracking-wide">Connect_Source</h2>
@@ -36,7 +36,7 @@
         </aside>
 
         <section class="flex min-w-0 flex-1 flex-col">
-          <header class="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10">
+          <header class="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10 shrink-0">
             <div>
               <p class="font-mono text-[8px] font-black uppercase tracking-[0.32em] opacity-35">{{ selectedBroker.assetClass }}</p>
               <h3 class="mt-1 font-mono text-[20px] font-black uppercase tracking-wide">{{ selectedBroker.label }}</h3>
@@ -47,7 +47,7 @@
             </button>
           </header>
 
-          <div class="grid flex-1 grid-cols-[1fr_260px] gap-0">
+          <div class="grid flex-1 grid-cols-[1fr_260px] gap-0 overflow-y-auto relative">
             <div class="p-6">
               <div class="mb-5 border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
                 <p class="font-mono text-[9px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-55">
@@ -71,14 +71,25 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                  <label class="flex flex-col gap-2">
+                  <div class="flex flex-col gap-2 relative">
                     <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] opacity-45">Platform</span>
-                    <select v-model="metaTraderPlatform"
-                            class="h-11 border border-black/10 bg-white px-3 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-black outline-none transition-colors focus:border-black/45 dark:border-white/10 dark:bg-[#050505] dark:text-white dark:focus:border-white/45">
-                      <option value="MT5">MT5</option>
-                      <option value="MT4">MT4</option>
-                    </select>
-                  </label>
+                    <button class="flex h-11 items-center justify-between border border-black/10 bg-white px-3 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-black outline-none transition-colors focus:border-black/45 dark:border-white/10 dark:bg-[#050505] dark:text-white dark:focus:border-white/45"
+                            @click="isPlatformDropdownOpen = !isPlatformDropdownOpen">
+                      {{ metaTraderPlatform }}
+                      <span class="opacity-50 text-[8px]">▼</span>
+                    </button>
+                    <div v-if="isPlatformDropdownOpen"
+                         class="absolute left-0 right-0 top-[60px] z-10 border border-black/10 bg-white dark:border-white/10 dark:bg-[#050505] shadow-lg">
+                      <button class="w-full px-3 py-3 text-left font-mono text-[11px] font-bold uppercase tracking-[0.08em] hover:bg-black/5 dark:hover:bg-white/5"
+                              @click="metaTraderPlatform = 'MT5'; isPlatformDropdownOpen = false">
+                        MT5
+                      </button>
+                      <button class="w-full px-3 py-3 text-left font-mono text-[11px] font-bold uppercase tracking-[0.08em] hover:bg-black/5 dark:hover:bg-white/5 border-t border-black/5 dark:border-white/5"
+                              @click="metaTraderPlatform = 'MT4'; isPlatformDropdownOpen = false">
+                        MT4
+                      </button>
+                    </div>
+                  </div>
                   <label class="flex flex-col gap-2">
                     <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] opacity-45">Currency</span>
                     <input v-model="metaTraderCurrency"
@@ -250,6 +261,12 @@
         </section>
       </div>
     </ExPanel>
+    
+    <!-- invisible overlay to close dropdown -->
+    <div v-if="isPlatformDropdownOpen" 
+         class="fixed inset-0 z-0" 
+         @click="isPlatformDropdownOpen = false">
+    </div>
   </div>
 </template>
 
@@ -408,6 +425,7 @@ const metaTraderNewCount = ref(0)
 const metaTraderDuplicateCount = ref(0)
 const metaTraderSources = ref<MetaTraderDetectedSource[]>([])
 const isMetaTraderScanning = ref(false)
+const isPlatformDropdownOpen = ref(false)
 
 const selectedBroker = computed(() => {
   return brokers.find(broker => broker.id === selectedBrokerId.value) || brokers[0]
