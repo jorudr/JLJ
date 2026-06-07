@@ -445,8 +445,10 @@ const panLayerStyle = computed(() => ({
 
 const isHeatmapActive = computed(() => heatmapMode.value !== 'none')
 
+const normalizePresetSearch = (value: string) => value.toLocaleLowerCase().trim()
+
 const filteredPresetOptions = computed(() => {
-  const query = presetSearch.value.trim().toLowerCase()
+  const query = normalizePresetSearch(presetSearch.value)
   const tabbedPresets = treePresetOptions.value.filter((preset) => {
     if (activePresetTab.value === 'strategy') return preset.typeLabel === 'Strategies'
     if (activePresetTab.value === 'scenario') return preset.typeLabel === 'Scenarios'
@@ -456,7 +458,14 @@ const filteredPresetOptions = computed(() => {
   if (!query) return tabbedPresets
 
   return tabbedPresets.filter((preset) => {
-    return `${preset.label} ${preset.typeLabel}`.toLowerCase().includes(query)
+    const searchableText = [
+      preset.label,
+      preset.typeLabel,
+      translatePresetLabel(preset.label),
+      translatePresetType(preset.typeLabel)
+    ].join(' ')
+
+    return normalizePresetSearch(searchableText).includes(query)
   })
 })
 
