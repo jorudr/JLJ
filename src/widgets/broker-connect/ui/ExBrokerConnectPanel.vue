@@ -1,175 +1,171 @@
 <template>
-  <div class="fixed inset-0 z-[2500] flex items-center justify-center bg-black/45 px-6 backdrop-blur-sm"
+  <div class="fixed inset-0 z-[2500] flex items-center justify-center bg-black/45 px-6 transition-all"
+       style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
        @click.self="$emit('close')">
-    <ExPanel no-padding class="w-[920px] max-w-[96vw] overflow-hidden !bg-white dark:!bg-[#0a0a0a]">
-      <div class="flex h-[620px] max-h-[90vh] text-black dark:text-white">
-        <aside class="w-[280px] shrink-0 overflow-y-auto border-r border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
-          <div class="mb-5 border-b border-black/10 pb-4 dark:border-white/10">
-            <p class="font-mono text-[9px] font-black uppercase tracking-[0.32em] opacity-40">Broker_Link</p>
-            <h2 class="mt-2 font-mono text-[18px] font-black uppercase tracking-wide">Connect_Source</h2>
-          </div>
+    <div class="relative">
+      <!-- CLOSE HANDLE (RIGHT EDGE) -->
+      <button @click="$emit('close')"
+              class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
+         <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
+         <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Panel</span>
+      </button>
 
-          <div class="flex flex-col gap-2">
-            <button v-for="broker in brokers"
-                    :key="broker.id"
-                    class="group relative border px-4 py-3 text-left transition-all"
-                    :class="selectedBrokerId === broker.id
-                      ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                      : 'border-black/10 bg-white/40 text-black/55 hover:border-black/35 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45 dark:hover:border-white/35 dark:hover:text-white'"
-                    @click="selectedBrokerId = broker.id">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="font-mono text-[11px] font-black uppercase tracking-[0.18em]">{{ broker.label }}</p>
-                  <p class="mt-1 font-mono text-[7px] font-bold uppercase tracking-[0.18em] opacity-45">{{ broker.assetClass }}</p>
-                </div>
-                <span class="h-2 w-2 rotate-45"
-                      :class="connectionMap[broker.id]?.active
-                        ? 'bg-emerald-400'
-                        : selectedBrokerId === broker.id
-                          ? 'bg-white dark:bg-black'
-                          : 'bg-black/20 dark:bg-white/20'"></span>
+      <ExPanel no-padding class="!w-[800px] !max-w-[96vw] overflow-hidden !bg-white dark:!bg-[#0a0a0a] transition-all duration-500">
+        <div class="flex h-[640px] max-h-[90vh] text-black dark:text-white overflow-hidden relative">
+          <div class="w-full h-full flex flex-col absolute inset-0">
+            
+            <!-- TOPBAR BROKER SELECTOR -->
+            <div class="flex items-center justify-between border-b border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02] px-8 py-4 shrink-0">
+              <div class="flex items-center gap-4 overflow-x-auto custom-scrollbar pr-4">
+                <button v-for="broker in brokers"
+                        :key="broker.id"
+                        class="group flex items-center gap-3 px-5 py-2.5 border transition-colors shrink-0 relative"
+                        :class="selectedBrokerId === broker.id
+                          ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                          : 'border-black/10 bg-white/40 text-black/55 hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45 dark:hover:border-white/30 dark:hover:text-white'"
+                        @click="selectedBrokerId = broker.id">
+                  <div class="absolute -top-px -left-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -bottom-px -left-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -top-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -bottom-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  
+                  <img :src="`/brokers/${broker.id}.svg`" class="w-5 h-5 object-contain transition-all"
+                       :class="selectedBrokerId === broker.id ? 'grayscale-0 opacity-100' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'" :alt="broker.label" />
+                  <div class="flex flex-col items-start">
+                    <span class="font-mono text-[10px] font-black uppercase tracking-[0.14em]">{{ broker.label }}</span>
+                  </div>
+                  <span v-if="connectionMap[broker.id]?.active" class="absolute top-1.5 right-1.5 z-10 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                </button>
               </div>
-              <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t"
-                   :class="selectedBrokerId === broker.id ? 'border-white dark:border-black' : 'border-black/20 dark:border-white/20'"></div>
-            </button>
-          </div>
-        </aside>
-
-        <section class="flex min-w-0 flex-1 flex-col">
-          <header class="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10 shrink-0">
-            <div>
-              <p class="font-mono text-[8px] font-black uppercase tracking-[0.32em] opacity-35">{{ selectedBroker.assetClass }}</p>
-              <h3 class="mt-1 font-mono text-[20px] font-black uppercase tracking-wide">{{ selectedBroker.label }}</h3>
             </div>
-            <button class="font-mono text-[9px] font-black uppercase tracking-[0.24em] opacity-35 transition-opacity hover:opacity-100"
-                    @click="$emit('close')">
-              Close
-            </button>
-          </header>
 
-          <div class="grid flex-1 grid-cols-[1fr_260px] gap-0 overflow-y-auto relative">
-            <div class="p-6">
-              <div class="mb-5 border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
-                <p class="font-mono text-[9px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-55">
-                  {{ selectedBroker.description }}
-                </p>
-              </div>
-
-              <div class="grid grid-cols-1 gap-4">
-                <label v-for="field in selectedBroker.fields"
-                       :key="field.key"
-                       class="flex flex-col gap-2">
-                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em] opacity-45">{{ field.label }}</span>
-                  <input v-model="formState[field.key]"
-                         :type="field.secret ? 'password' : 'text'"
-                         :placeholder="field.placeholder"
-                         class="h-11 border border-black/10 bg-white px-3 font-mono text-[11px] font-bold tracking-[0.08em] text-black outline-none transition-colors placeholder:text-black/25 focus:border-black/45 dark:border-white/10 dark:bg-[#050505] dark:text-white dark:placeholder:text-white/20 dark:focus:border-white/45" />
-                </label>
-              </div>
-
-              <div class="mt-6 grid gap-3" :class="isSelectedBrokerActive ? 'grid-cols-3' : 'grid-cols-2'">
-                <button class="border border-black/10 px-4 py-3 font-mono text-[9px] font-black uppercase tracking-[0.22em] transition-colors hover:border-black hover:bg-black hover:text-white dark:border-white/10 dark:hover:border-white dark:hover:bg-white dark:hover:text-black"
-                        @click="saveCurrentConnection">
-                  Save_Local_Keys
-                </button>
-                <button class="border px-4 py-3 font-mono text-[9px] font-black uppercase tracking-[0.22em] transition-colors"
-                        :class="primaryActionEnabled
-                          ? 'border-black bg-black text-white hover:bg-black/80 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/80'
-                          : 'cursor-not-allowed border-black/10 text-black/25 dark:border-white/10 dark:text-white/25'"
-                        :disabled="!primaryActionEnabled || activationState === 'loading'"
-                        @click="handlePrimaryAction">
-                  {{ primaryActionLabel }}
-                </button>
-                <button v-if="isSelectedBrokerActive"
-                        class="border border-black/10 bg-black/[0.02] px-4 py-3 font-mono text-[9px] font-black uppercase tracking-[0.22em] text-emerald-600 transition-colors hover:border-emerald-500 hover:bg-emerald-500 hover:text-white dark:border-white/10 dark:bg-white/[0.02] dark:text-emerald-400 dark:hover:border-emerald-500 dark:hover:bg-emerald-500 dark:hover:text-black"
-                        :disabled="activationState === 'loading'"
-                        @click="handleManualSync">
-                  {{ activationState === 'loading' ? 'Syncing...' : 'Sync_Trades' }}
-                </button>
-              </div>
-
-              <div v-if="statusMessage"
-                   class="mt-5 border px-4 py-3 font-mono text-[9px] font-bold uppercase leading-relaxed tracking-[0.14em]"
-                   :class="statusTone === 'success'
-                    ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500'
-                    : statusTone === 'error'
-                      ? 'border-rose-500/30 bg-rose-500/5 text-rose-500'
-                      : 'border-black/10 bg-black/[0.02] text-black/45 dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45'">
-                {{ statusMessage }}
-              </div>
-
-              <div v-if="showStrategyBinding"
-                   class="mt-5 border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
-                <div class="flex items-center justify-between gap-4">
+            <!-- MAIN FORM AREA -->
+            <div class="flex flex-1 overflow-y-auto relative">
+              <div class="px-8 py-10 w-full max-w-3xl mx-auto flex flex-col">
+                <div class="flex items-center gap-5 mb-8 pb-8 border-b border-black/10 dark:border-white/10">
+                  <div class="w-16 h-16 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-center p-3">
+                    <img :src="`/brokers/${selectedBroker.id}.svg`" class="w-full h-full object-contain grayscale-0" :alt="selectedBroker.label" />
+                  </div>
                   <div>
-                    <p class="font-mono text-[8px] font-black uppercase tracking-[0.24em] opacity-45">Import_Target_Strategy</p>
-                    <p class="mt-2 font-mono text-[8px] font-bold uppercase tracking-[0.12em] opacity-55">
-                      Choose where this connector should load trading history in the diary.
+                    <p class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-emerald-600 dark:text-emerald-400">{{ selectedBroker.assetClass }}</p>
+                    <h3 class="mt-1 font-mono text-[28px] font-black uppercase tracking-widest">{{ selectedBroker.label }} Setup</h3>
+                  </div>
+                </div>
+
+                <div class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
+                  <p class="font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-60">
+                    {{ selectedBroker.description }}
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 mb-8">
+                  <label v-for="field in selectedBroker.fields"
+                         :key="field.key"
+                         class="flex flex-col gap-3">
+                    <span class="font-mono text-[9px] font-black uppercase tracking-[0.22em] opacity-50">{{ field.label }}</span>
+                    <input v-model="formState[field.key]"
+                           :type="field.secret ? 'password' : 'text'"
+                           :placeholder="field.placeholder"
+                           class="h-14 border border-black/10 bg-white px-4 font-mono text-[12px] font-bold tracking-[0.1em] text-black outline-none transition-colors placeholder:text-black/20 focus:border-black/50 focus:bg-black/[0.02] dark:border-white/10 dark:bg-[#050505] dark:text-white dark:placeholder:text-white/20 dark:focus:border-white/50 dark:focus:bg-white/[0.02]" />
+                  </label>
+                </div>
+
+                <div v-if="showStrategyBinding"
+                     class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
+                  <div class="flex items-center justify-between gap-4 mb-5">
+                    <div>
+                      <p class="font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-50">Import Target Strategy</p>
+                      <p class="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] opacity-60">
+                        Choose where this connector should load trading history.
+                      </p>
+                    </div>
+                    <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border border-black/10 dark:border-white/10">
+                      {{ selectedImportStrategyName }}
                     </p>
                   </div>
-                  <p class="font-mono text-[9px] font-black uppercase opacity-40">
-                    {{ selectedImportStrategyName }}
-                  </p>
+
+                  <div class="grid grid-cols-2 gap-3">
+                    <button v-for="strategy in tradeStore.strategies"
+                            :key="strategy.id"
+                            class="border px-4 py-4 text-left transition-colors"
+                            :class="importTargetStrategyId === strategy.id
+                              ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                              : 'border-black/10 bg-white/50 text-black/60 hover:border-black/40 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white'"
+                            @click="setImportTargetStrategy(strategy.id)">
+                      <p class="font-mono text-[11px] font-black uppercase tracking-[0.14em]">{{ strategy.name }}</p>
+                      <p class="mt-2 font-mono text-[8px] font-bold uppercase tracking-[0.14em] opacity-40">{{ strategy.id }}</p>
+                    </button>
+                  </div>
                 </div>
 
-                <div class="mt-4 grid grid-cols-2 gap-2">
-                  <button v-for="strategy in tradeStore.strategies"
-                          :key="strategy.id"
-                          class="border px-3 py-3 text-left transition-colors"
-                          :class="importTargetStrategyId === strategy.id
-                            ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                            : 'border-black/10 bg-white/50 text-black/65 hover:border-black/35 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/60 dark:hover:border-white/35 dark:hover:text-white'"
-                          @click="setImportTargetStrategy(strategy.id)">
-                    <p class="font-mono text-[10px] font-black uppercase tracking-[0.14em]">{{ strategy.name }}</p>
-                    <p class="mt-1 font-mono text-[7px] font-bold uppercase tracking-[0.14em] opacity-40">{{ strategy.id }}</p>
+                <div class="border border-black/10 p-5 dark:border-white/10 mb-8 bg-white/40 dark:bg-black/40">
+                  <p class="font-mono text-[9px] font-black uppercase tracking-[0.28em] opacity-40 mb-5">Connection Status</p>
+                  <div class="grid grid-cols-3 gap-4">
+                    <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Saved Local</p>
+                      <p class="mt-3 font-mono text-[14px] font-black uppercase"
+                         :class="savedCurrentConnection ? 'text-emerald-500' : 'opacity-30'">
+                        {{ savedCurrentConnection ? 'Yes' : 'No' }}
+                      </p>
+                    </div>
+                    <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10 relative overflow-hidden">
+                      <div v-if="connectionMap[selectedBroker.id]?.active" class="absolute inset-0 bg-emerald-500/5"></div>
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40 relative z-10">Status</p>
+                      <p class="mt-3 font-mono text-[14px] font-black uppercase relative z-10"
+                         :class="connectionMap[selectedBroker.id]?.active ? 'text-emerald-500' : 'opacity-30'">
+                        {{ connectionMap[selectedBroker.id]?.active ? 'Active' : 'Offline' }}
+                      </p>
+                    </div>
+                    <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
+                      <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">Mode</p>
+                      <p class="mt-3 font-mono text-[11px] font-black uppercase opacity-70">{{ selectedBroker.mode }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="statusMessage"
+                     class="mb-8 border px-5 py-4 font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.14em]"
+                     :class="statusTone === 'success'
+                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : statusTone === 'error'
+                        ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                        : 'border-black/10 bg-black/[0.02] text-black/50 dark:border-white/10 dark:bg-white/[0.02] dark:text-white/50'">
+                  {{ statusMessage }}
+                </div>
+
+                <div class="grid gap-4" :class="isSelectedBrokerActive ? 'grid-cols-3' : 'grid-cols-2'">
+                  <button class="border border-black/10 bg-white dark:bg-[#050505] px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:border-black hover:bg-black hover:text-white dark:border-white/10 dark:hover:border-white dark:hover:bg-white dark:hover:text-black shadow-sm"
+                          @click="saveCurrentConnection">
+                    Save Local Keys
+                  </button>
+                  <button class="border px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all shadow-md"
+                          :class="primaryActionEnabled
+                            ? 'border-black bg-black text-white hover:bg-black/90 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90'
+                            : 'cursor-not-allowed border-black/10 text-black/25 dark:border-white/10 dark:text-white/25 shadow-none'"
+                          :disabled="!primaryActionEnabled || activationState === 'loading'"
+                          @click="handlePrimaryAction">
+                    {{ primaryActionLabel }}
+                  </button>
+                  <button v-if="isSelectedBrokerActive"
+                          class="border border-emerald-500/40 bg-emerald-500/10 px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 transition-all hover:border-emerald-500 hover:bg-emerald-500 hover:text-white dark:text-emerald-400 dark:hover:text-black shadow-sm"
+                          :disabled="activationState === 'loading'"
+                          @click="handleManualSync">
+                    {{ activationState === 'loading' ? 'Syncing...' : 'Sync Trades' }}
                   </button>
                 </div>
+
+                <div class="h-10 shrink-0"></div>
               </div>
             </div>
-
-            <aside class="border-l border-black/10 p-5 dark:border-white/10">
-              <p class="font-mono text-[8px] font-black uppercase tracking-[0.28em] opacity-35">Connection_Status</p>
-              <div class="mt-4 space-y-3">
-                <div class="border border-black/10 p-3 dark:border-white/10">
-                  <p class="font-mono text-[7px] font-black uppercase tracking-[0.2em] opacity-35">Saved</p>
-                  <p class="mt-2 font-mono text-[13px] font-black uppercase"
-                     :class="savedCurrentConnection ? 'text-emerald-500' : 'opacity-35'">
-                    {{ savedCurrentConnection ? 'Yes' : 'No' }}
-                  </p>
-                </div>
-                <div class="border border-black/10 p-3 dark:border-white/10">
-                  <p class="font-mono text-[7px] font-black uppercase tracking-[0.2em] opacity-35">Active</p>
-                  <p class="mt-2 font-mono text-[13px] font-black uppercase"
-                     :class="connectionMap[selectedBroker.id]?.active ? 'text-emerald-500' : 'opacity-35'">
-                    {{ connectionMap[selectedBroker.id]?.active ? 'Enabled' : 'Inactive' }}
-                  </p>
-                </div>
-                <div class="border border-black/10 p-3 dark:border-white/10">
-                  <p class="font-mono text-[7px] font-black uppercase tracking-[0.2em] opacity-35">Mode</p>
-                  <p class="mt-2 font-mono text-[11px] font-black uppercase opacity-60">{{ selectedBroker.mode }}</p>
-                </div>
-                <div v-if="showStrategyBinding" class="border border-black/10 p-3 dark:border-white/10">
-                  <p class="font-mono text-[7px] font-black uppercase tracking-[0.2em] opacity-35">Target</p>
-                  <p class="mt-2 font-mono text-[11px] font-black uppercase opacity-60">{{ selectedImportStrategyName }}</p>
-                </div>
-              </div>
-
-              <p class="mt-5 border-t border-black/10 pt-4 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-40 dark:border-white/10">
-                Use read-only API keys. Local save stores credentials on this device for connector activation.
-              </p>
-            </aside>
           </div>
-        </section>
-      </div>
-    </ExPanel>
-
+        </div>
+      </ExPanel>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
-import { open } from '@tauri-apps/plugin-dialog'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
@@ -185,7 +181,7 @@ import {
 import { resolveImportedAsset } from '~/utils/assetResolver'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
-type BrokerId = 'binance' | 'bybit' | 'kraken' | 'interactive-brokers' | 'oanda'
+type BrokerId = 'binance' | 'bybit' | 'kraken' | 'interactive-brokers'
 
 interface BrokerField {
   key: string
@@ -210,16 +206,6 @@ interface SavedConnection {
   active: boolean
   updatedAt: string
   activatedAt?: string
-}
-
-interface MetaTraderDetectedSource {
-  id: string
-  platform: string
-  terminalName: string
-  dataDir: string
-  exportFilePath: string
-  exportFileName: string
-  modifiedAtMs?: number
 }
 
 const props = defineProps<{
@@ -282,19 +268,6 @@ const brokers: BrokerDefinition[] = [
       { key: 'token', label: 'Session / Flex Token', placeholder: 'IBKR token', secret: true }
     ]
   },
-  {
-    id: 'oanda',
-    label: 'OANDA',
-    assetClass: 'Forex / CFD',
-    description: 'Prepared connector slot for OANDA v20 transactions and account trade history.',
-    mode: 'Prepared',
-    canActivate: false,
-    fields: [
-      { key: 'accountId', label: 'Account ID', placeholder: 'OANDA account id' },
-      { key: 'apiToken', label: 'API Token', placeholder: 'OANDA token', secret: true },
-      { key: 'environment', label: 'Environment', placeholder: 'practice / live' }
-    ]
-  }
 ]
 
 const selectedBrokerId = ref<BrokerId>('binance')
@@ -734,21 +707,6 @@ const deactivateCurrentConnection = async () => {
     activationState.value = 'idle'
   }
 }
-
-
-
-const formatMoney = (value: unknown) => {
-  const number = Number(value || 0)
-  return `${number >= 0 ? '+' : ''}${number.toFixed(2)}`
-}
-
-const formatDateLabel = (value: unknown) => {
-  const date = value instanceof Date ? value : new Date(String(value || ''))
-  return Number.isNaN(date.getTime()) ? 'NO_DATE' : date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-}
-
-
-
 watch(selectedBrokerId, () => {
   statusMessage.value = ''
   statusTone.value = 'neutral'
