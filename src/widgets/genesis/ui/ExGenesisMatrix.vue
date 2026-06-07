@@ -570,9 +570,8 @@
                           <template #trigger>
                             <button @click="addNode(type)"
                                     @contextmenu.prevent="activeIndicatorCategory === 'PERSONAL' && handlePersonalCondContextMenu($event, type)"
-                                    class="group relative min-w-[48px] h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-4">
-                               <span class="text-[8px] font-mono tracking-widest uppercase mb-1">{{ type.label }}</span>
-                               <div class="text-[14px] font-mono font-black opacity-40 group-hover:opacity-100 transition-all tracking-tighter">
+                                    class="group relative flex h-12 w-12 flex-shrink-0 items-center justify-center border border-nier-border-light bg-nier-text-light/5 backdrop-blur-md transition-all hover:scale-110 hover:border-nier-text-light dark:border-nier-border-dark dark:bg-nier-text-dark/5 dark:hover:border-nier-text-dark">
+                               <div class="font-mono text-[14px] font-black tracking-tighter opacity-40 transition-all group-hover:opacity-100">
                                  {{ type.label.slice(0, 3).toUpperCase() }}
                                </div>
                                
