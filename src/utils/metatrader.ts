@@ -1,4 +1,5 @@
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
+import { resolveImportedAsset } from '~/utils/assetResolver'
 
 export type MetaTraderPlatform = 'MT4' | 'MT5'
 export type MetaTraderImportFormat = 'csv' | 'json' | 'html'
@@ -235,7 +236,12 @@ const normalizeRawTrade = (row: Record<string, unknown>, fallbackCurrency?: stri
 }
 
 const rawToDiaryTrade = (raw: MetaTraderRawTrade, platform: MetaTraderPlatform = 'MT5'): DiaryEntry | null => {
-  const symbol = String(raw.symbol || '').trim().toUpperCase()
+  const rawSymbol = String(raw.symbol || '').trim().toUpperCase()
+  const resolvedAsset = resolveImportedAsset(
+    rawSymbol,
+    inferBrokerFamily(rawSymbol)
+  )
+  const symbol = resolvedAsset.symbol
   const side = parseSide(raw.side || raw.type)
   const date = parseMetaTraderDate(raw.openTime)
   const dateExit = parseMetaTraderDate(raw.closeTime || raw.openTime)
@@ -260,10 +266,14 @@ const rawToDiaryTrade = (raw: MetaTraderRawTrade, platform: MetaTraderPlatform =
     exitFee: Math.abs(swap),
     feeType: 'Fixed',
     currency: String(raw.currency || 'USD').toUpperCase(),
-    assetType: inferAssetType(symbol),
+    assetType: resolvedAsset.assetType,
+    assetIcon: resolvedAsset.assetIcon,
     profitInCurrency,
     result: profitInCurrency,
-    notes: raw.comment ? `MetaTrader comment: ${raw.comment}` : 'Imported from MetaTrader local sync.'
+    notes: [
+      raw.comment ? `MetaTrader comment: ${raw.comment}` : 'Imported from MetaTrader local sync.',
+      `AssetMatch: ${resolvedAsset.matchSource || 'none'}`
+    ].join('\n')
   }
 }
 
@@ -346,9 +356,8 @@ const parseMetaTraderDate = (value: unknown) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-const inferAssetType = (symbol: string): DiaryEntry['assetType'] => {
-  if (/XAU|XAG|GOLD|SILVER/i.test(symbol)) return 'Metals'
-  if (/BTC|ETH|USDT|USDC|BNB|SOL|XRP/i.test(symbol)) return 'Crypto'
-  if (/^[A-Z]{6,8}$/.test(symbol)) return 'Forex'
-  return 'Stocks'
+const inferBrokerFamily = (symbol: string): 'crypto-broker' | 'forex-broker' | 'stock-broker' => {
+  if (/USDT|USDC|BUSD|FDUSD|BTC|ETH|SOL|XRP/i.test(symbol)) return 'crypto-broker'
+  if (/^[A-Z]{6}$/.test(symbol) || /XAU|XAG|XPT|XPD|OIL|WTI|BRENT/i.test(symbol)) return 'forex-broker'
+  return 'stock-broker'
 }

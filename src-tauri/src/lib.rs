@@ -3,6 +3,7 @@ use tauri::Emitter;
 mod audio_recorder;
 mod benchmark;
 mod binance;
+mod bybit;
 mod metatrader;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -18,6 +19,7 @@ pub fn run() {
             benchmark::get_benchmark_and_beta,
             benchmark::get_historical_curves,
             binance::binance_signed_request,
+            bybit::bybit_signed_request,
             metatrader::detect_metatrader_sources,
             metatrader::read_metatrader_export
         ])
