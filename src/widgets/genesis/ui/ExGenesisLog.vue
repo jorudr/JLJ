@@ -167,6 +167,7 @@
       <ExGenesisTree
         v-if="viewType === 'tree'"
         @switch-view="viewType = $event"
+        @open-trade-archive="handleTreeOpenTradeArchive"
       />
 
     </div>
@@ -748,6 +749,23 @@ const handleOpenTrade = (payload: { tradeId: string }) => {
      return
    }
    selectedTradeId.value = payload.tradeId
+}
+
+const handleTreeOpenTradeArchive = (trade: { id?: string; strategyId?: string }) => {
+   if (!trade.id) return
+   if (authStore.user?.type !== 'premium') {
+     showPaywall.value = true
+     return
+   }
+
+   if (trade.strategyId) {
+     selectedStrategyId.value = trade.strategyId
+   }
+   selectedTradeId.value = trade.id
+   panelInitialPage.value = 0
+   panelInitialNoteId.value = undefined
+   showExtraDetails.value = false
+   showNodeMap.value = false
 }
 
 watch(showNodeMap, (val) => {

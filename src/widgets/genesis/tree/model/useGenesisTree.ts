@@ -7,6 +7,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 
 export interface GenesisTreeTradeSummary {
   id?: string
+  strategyId?: string
   asset: string
   date: string
   pnl: number
@@ -356,6 +357,7 @@ export const useGenesisTree = () => {
 
     return {
       id: trade.id,
+      strategyId: trade.strategyId,
       asset: String(trade.asset || 'UNKNOWN').toUpperCase(),
       date: timestamp ? new Date(timestamp).toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-GB') : 'UNKNOWN',
       pnl,
@@ -375,8 +377,8 @@ export const useGenesisTree = () => {
     return 'text-rose-400'
   }
 
-  const getPerformanceLabels = (id: string) => {
-    const stats = getStats(id, globalTreeTrades.value)
+  const getPerformanceLabels = (id: string, tradesScope = globalTreeTrades.value) => {
+    const stats = getStats(id, tradesScope)
 
     return {
       frequencyLabel: `${Math.round(stats.freq * 100)}%`,
@@ -548,6 +550,7 @@ export const useGenesisTree = () => {
     let leafCursor = 0
 
     const treeNodes = nodes.map((strat) => {
+      const strategyTrades = getTradesForStrategyInTime(strat.id)
       const rawScenarios = collectScenarioNodes(strat.id)
 
       const scenarios = rawScenarios.map((sc) => {
@@ -570,7 +573,7 @@ export const useGenesisTree = () => {
             displayName: getConditionContentDisplayName(content),
             shortName: getConditionContentShortName(content),
             typeLabel: 'CONDITION',
-            ...getPerformanceLabels(content.id)
+            ...getPerformanceLabels(content.id, strategyTrades)
           }))
         )
 
@@ -600,7 +603,7 @@ export const useGenesisTree = () => {
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
           typeLabel: getScenarioTypeLabel(sc),
-          ...getPerformanceLabels(sc.id),
+          ...getPerformanceLabels(sc.id, strategyTrades),
           conditions,
           contents,
           globalX: scenarioX,
