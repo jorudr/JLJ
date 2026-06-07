@@ -4,6 +4,7 @@ import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { GENESIS_EMOTION_LIBRARY, type GenesisEmotionItem } from '~/widgets/genesis/model/emotionLibrary'
 
 export interface GenesisTreeTradeSummary {
   id?: string
@@ -116,6 +117,40 @@ export interface GenesisTreePresetOption {
   empty?: boolean
 }
 
+export interface GenesisTreeEmotionBlock {
+  id: 'positive' | 'neutral' | 'negative'
+  label: string
+  x: number
+  y: number
+  colorClass: string
+  accentClass: string
+  emotions: GenesisTreeEmotionNode[]
+}
+
+export interface GenesisTreeEmotionNode extends GenesisEmotionItem {
+  id: string
+  name: string
+  displayName: string
+  shortName: string
+  typeLabel: string
+  frequencyLabel?: string
+  profitFactorRatioLabel?: string
+  winrateLabel?: string
+  tradeCountLabel?: string
+  netPnlLabel?: string
+  frequencyColorClass?: string
+  profitFactorRatioColorClass?: string
+  winrateColorClass?: string
+  frequencyValue?: number
+  profitFactorRatioValue?: number
+  winrateValue?: number
+  tradeCount?: number
+  netPnlValue?: number
+  bestTrade?: GenesisTreeTradeSummary | null
+  worstTrade?: GenesisTreeTradeSummary | null
+  recentTrades?: GenesisTreeTradeSummary[]
+}
+
 export const useGenesisTree = () => {
   const tradeStore = useStrategyTradesStore()
   const authStore = useAuthStore()
@@ -152,6 +187,29 @@ export const useGenesisTree = () => {
 
   const globalTreeTrades = computed(() => {
     return allVisibleStrategyTrades.value
+  })
+
+  const emotionBlocks = computed<GenesisTreeEmotionBlock[]>(() => {
+    const blockConfig = [
+      { id: 'positive' as const, label: 'POSITIVE', x: -230, y: -220, colorClass: 'text-emerald-300', accentClass: 'bg-emerald-400' },
+      { id: 'neutral' as const, label: 'NEUTRAL', x: 0, y: -220, colorClass: 'text-white/70', accentClass: 'bg-white/45' },
+      { id: 'negative' as const, label: 'NEGATIVE', x: 230, y: -220, colorClass: 'text-rose-300', accentClass: 'bg-rose-400' }
+    ]
+
+    return blockConfig.map((block) => ({
+      ...block,
+      emotions: GENESIS_EMOTION_LIBRARY
+        .filter((emotion) => emotion.type === block.id)
+        .map((emotion) => ({
+          ...emotion,
+          id: emotion.label,
+          name: emotion.label.toUpperCase(),
+          displayName: emotion.label.toUpperCase(),
+          shortName: emotion.label.replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase(),
+          typeLabel: 'EMOTION',
+          ...getPerformanceLabels(emotion.label)
+        }))
+    }))
   })
 
   const loadMatrixData = async () => {
@@ -245,6 +303,49 @@ export const useGenesisTree = () => {
     return getNodeById(nodeId) || fallbackNodes.find((node: any) => node.id === nodeId) || null
   }
 
+  const normalizeEmotionKey = (value: any) => {
+    const raw = typeof value === 'string'
+      ? value
+      : value?.id || value?.label || value?.name || value?.state || ''
+
+    return String(raw).trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  }
+
+  const emotionAliases = (id: string) => {
+    const key = normalizeEmotionKey(id)
+    const aliases: Record<string, string[]> = {
+      calmness: ['calmness', 'calm', 'calmzen', 'zen'],
+      revenge: ['revenge', 'frustration'],
+      focus: ['focus'],
+      discipline: ['discipline'],
+      patience: ['patience'],
+      confidence: ['confidence'],
+      fomo: ['fomo', 'fomodistortion'],
+      greed: ['greed', 'greedeuphoria', 'euphoria'],
+      fear: ['fear', 'fearresponse'],
+      tilt: ['tilt'],
+      anxiety: ['anxiety'],
+      hope: ['hope'],
+      boredom: ['boredom'],
+      fatigue: ['fatigue'],
+      neutral: ['neutral', 'neutrallogic']
+    }
+
+    return new Set(aliases[key] || [key])
+  }
+
+  const tradeHasEmotion = (trade: any, id: string) => {
+    const aliases = emotionAliases(id)
+    const emotionValues = [
+      ...(Array.isArray(trade?.emotions) ? trade.emotions : []),
+      ...(Array.isArray(trade?.emotionsEntry) ? trade.emotionsEntry : []),
+      ...(Array.isArray(trade?.emotionsDuring) ? trade.emotionsDuring : []),
+      ...(Array.isArray(trade?.emotionsExit) ? trade.emotionsExit : [])
+    ]
+
+    return emotionValues.some((emotion) => aliases.has(normalizeEmotionKey(emotion)))
+  }
+
   const collectLogicalNodeIds = (structure: any[]): string[] => {
     const ids: string[] = []
 
@@ -308,7 +409,7 @@ export const useGenesisTree = () => {
       tr.boardConditions?.some((c: any) => (typeof c === 'string' ? c === id : c.id === id)) ||
       tr.boardScenarioEntry?.info?.conditions?.some((c: any) => c.id === id) ||
       tr.boardScenarioExit?.info?.conditions?.some((c: any) => c.id === id) ||
-      (tr.emotions && Array.isArray(tr.emotions) && tr.emotions.includes(id))
+      tradeHasEmotion(tr, id)
     )
     const count = presentIn.length
     const freq = allTrades.length > 0 ? count / allTrades.length : 0
@@ -998,6 +1099,7 @@ export const useGenesisTree = () => {
     selectedStrategyLabel,
     strategies,
     strategyNodePositions,
+    emotionBlocks,
     treePresetOptions
   }
 }

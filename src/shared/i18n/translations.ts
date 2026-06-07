@@ -103,7 +103,8 @@ export const translations = {
           types: {
             "ENTRY SCENARIO": "Entry Scenario",
             "EXIT SCENARIO": "Exit Scenario",
-            "CONDITION": "Condition"
+            "CONDITION": "Condition",
+            "EMOTION": "Emotion"
           }
         },
         controls: {
@@ -129,7 +130,8 @@ export const translations = {
           types: {
             strategy: "Strategy Node",
             scenario: "Scenario Node",
-            condition: "Condition Node"
+            condition: "Condition Node",
+            emotion: "Emotion Node"
           }
         },
         presets: {
@@ -364,7 +366,8 @@ export const translations = {
           types: {
             "ENTRY SCENARIO": "Сценарий входа",
             "EXIT SCENARIO": "Сценарий выхода",
-            "CONDITION": "Условие"
+            "CONDITION": "Условие",
+            "EMOTION": "Эмоция"
           }
         },
         controls: {
@@ -390,7 +393,8 @@ export const translations = {
           types: {
             strategy: "Узел стратегии",
             scenario: "Узел сценария",
-            condition: "Узел условия"
+            condition: "Узел условия",
+            emotion: "Узел эмоции"
           }
         },
         presets: {

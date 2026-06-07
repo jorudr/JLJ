@@ -8,6 +8,10 @@
     <div class="absolute inset-0" :style="panLayerStyle">
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]">
       <svg class="overflow-visible" width="2" height="2">
+        <path :d="emotionConnectorPath"
+              fill="none"
+              stroke="#333333"
+              stroke-width="1" />
         <path :d="connectorPath(1, 1, strategyNodePositions, 'x', 'y')"
               fill="none"
               stroke="#333333"
@@ -67,6 +71,62 @@
         </div>
       </ExNTtooltip>
     </div>
+
+    <template v-for="block in emotionBlocks" :key="'emotion-group-'+block.id">
+      <div class="absolute top-1/2 left-1/2 z-[6] pointer-events-none font-mono text-[8px] font-black uppercase tracking-[0.32em]"
+           :class="block.colorClass"
+           :style="{ transform: `translate(calc(-50% + ${block.x}px), calc(-50% + ${block.y - 72}px))` }">
+        {{ block.label }}
+      </div>
+
+      <div v-for="emotion in emotionNodePositions(block)"
+           :key="'emotion-node-'+emotion.label"
+           class="absolute top-1/2 left-1/2 z-[6] transition-all duration-700"
+           :style="{ transform: `translate(calc(-50% + ${emotion.x}px), calc(-50% + ${emotion.y}px))` }">
+        <ExNTtooltip>
+          <template #trigger>
+            <div class="group/node relative flex h-12 w-12 cursor-pointer items-center justify-center border border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.16em] backdrop-blur-md transition-all duration-500 hover:border-black hover:text-black dark:border-white/10 dark:hover:border-white dark:hover:text-white"
+                 :class="[nodeSurfaceClass(emotion), isNodeHighlighted(emotion) ? 'text-black' : 'text-black/45 dark:text-white/45']"
+                 @pointerdown.stop
+                 @click.stop="selectTreeNode(emotion, 'emotion')">
+              <div v-if="!isHeatmapActive"
+                   class="absolute -bottom-1 -right-1 h-2 w-2 rotate-45 border border-white/70 shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                   :class="block.accentClass"></div>
+              <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
+                   :class="isNodeHighlighted(emotion) ? 'border-black' : 'border-black/10 dark:border-white/10 group-hover/node:border-black dark:group-hover/node:border-white'"></div>
+              {{ emotion.shortName || emotion.label.slice(0, 3) }}
+            </div>
+          </template>
+          <div class="flex max-w-[220px] flex-col gap-2">
+            <p class="font-mono text-[13px] font-black uppercase tracking-wide text-black dark:text-white">
+              {{ emotion.label }}
+            </p>
+            <div class="h-px w-full bg-white/20"></div>
+            <p class="font-mono text-[9px] font-bold uppercase leading-relaxed text-black/55 dark:text-white/55">
+              {{ emotion.description }}
+            </p>
+            <div class="grid grid-cols-4 gap-2 border-t border-white/10 pt-2 font-mono uppercase">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.trades') }}</span>
+                <span class="text-[12px] font-black tracking-wide text-black dark:text-white">{{ emotion.tradeCountLabel || '0' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.winrate') }}</span>
+                <span class="text-[12px] font-black tracking-wide" :class="emotion.winrateColorClass || 'text-rose-400'">{{ emotion.winrateLabel || '0%' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.frequency') }}</span>
+                <span class="text-[12px] font-black tracking-wide" :class="emotion.frequencyColorClass || 'text-rose-400'">{{ emotion.frequencyLabel || '0%' }}</span>
+              </div>
+              <div class="flex flex-col gap-0.5">
+                <span class="text-[7px] font-bold tracking-wide text-black/35 dark:text-white/35">{{ t('genesis.tree.tooltip.pfRatio') }}</span>
+                <span class="text-[12px] font-black tracking-wide" :class="emotion.profitFactorRatioColorClass || 'text-amber-400'">{{ emotion.profitFactorRatioLabel || '0.00' }}</span>
+              </div>
+            </div>
+          </div>
+        </ExNTtooltip>
+      </div>
+    </template>
 
     <template v-for="node in strategyNodePositions" :key="'strat-'+(node.treeKey || node.id)">
       <div class="absolute top-1/2 left-1/2 transition-all duration-1000 z-[5]"
@@ -413,6 +473,7 @@ const {
   authStore,
   formatCreationDate,
   strategyNodePositions,
+  emotionBlocks,
   treePresetOptions
 } = useGenesisTree()
 const { t } = useI18n()
@@ -429,7 +490,7 @@ const activePresetTab = ref<'strategy' | 'scenario' | 'condition'>('strategy')
 const isPresetPanelCollapsed = ref(false)
 const heatmapMode = ref<'none' | 'winrate' | 'pf' | 'frequency'>('none')
 const selectedTreeNode = ref<any | null>(null)
-const selectedTreeNodeType = ref<'strategy' | 'scenario' | 'condition' | null>(null)
+const selectedTreeNodeType = ref<'strategy' | 'scenario' | 'condition' | 'emotion' | null>(null)
 const selectedTreeNodeKey = ref<string | null>(null)
 
 const presetTabs = [
@@ -493,7 +554,7 @@ const resetView = () => {
   pan.value = { x: 0, y: 0 }
 }
 
-const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition') => {
+const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
   selectedTreeNode.value = node
   selectedTreeNodeType.value = type
   selectedTreeNodeKey.value = node?.treeKey || node?.id || null
@@ -642,6 +703,41 @@ const highlightedScenarios = (strategy: any) => {
 const highlightedContents = (scenario: any) => {
   return (scenario.contents || []).filter((content: any) => isNodeHighlighted(content))
 }
+
+const emotionNodePositions = (block: any) => {
+  const columns = Math.min(3, block.emotions.length)
+  const columnGap = 62
+  const rowGap = 62
+  const startX = block.x - (((columns - 1) * columnGap) / 2)
+
+  return block.emotions.map((emotion: any, index: number) => {
+    const row = Math.floor(index / 3)
+    const column = index % 3
+    const rowColumns = Math.min(3, block.emotions.length - (row * 3))
+    const rowStartX = block.x - (((rowColumns - 1) * columnGap) / 2)
+
+    return {
+      ...emotion,
+      x: rowColumns === columns ? startX + (column * columnGap) : rowStartX + (column * columnGap),
+      y: block.y + (row * rowGap)
+    }
+  })
+}
+
+const emotionConnectorPath = computed(() => {
+  if (!emotionBlocks.value.length) return ''
+
+  const branchY = -118
+  const points = emotionBlocks.value.flatMap((block) => emotionNodePositions(block))
+  const minX = Math.min(...points.map((point) => point.x + 1))
+  const maxX = Math.max(...points.map((point) => point.x + 1))
+
+  return [
+    `M 1 1 V ${branchY}`,
+    `M ${minX} ${branchY} H ${maxX}`,
+    ...points.map((point) => `M ${point.x + 1} ${branchY} V ${point.y + 1}`)
+  ].join(' ')
+})
 
 const startPan = (event: PointerEvent) => {
   if (event.button !== 0) return

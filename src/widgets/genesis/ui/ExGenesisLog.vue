@@ -117,6 +117,7 @@
 
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
       <div
+        v-if="isHudVisible"
         class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
       >
@@ -152,12 +153,24 @@
                     :class="viewType === 'tree' ? 'bg-black dark:bg-white shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
                     title="Tree View">
                <svg v-if="viewType === 'tree'" class="w-4 h-4 transition-all duration-500 text-white dark:text-black scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path d="M12 5v14"></path>
+                  <path d="M12 9H7"></path>
+                  <path d="M12 13h5"></path>
+                  <path d="M7 9v4"></path>
+                  <path d="M17 13v4"></path>
+                  <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
+                  <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
+                  <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
                </svg>
                <svg v-else class="w-4 h-4 text-black dark:text-white transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path d="M12 5v14"></path>
+                  <path d="M12 9H7"></path>
+                  <path d="M12 13h5"></path>
+                  <path d="M7 9v4"></path>
+                  <path d="M17 13v4"></path>
+                  <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
+                  <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
+                  <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
                </svg>
                <div v-if="viewType === 'tree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-black dark:bg-white opacity-50"></div>
             </button>
