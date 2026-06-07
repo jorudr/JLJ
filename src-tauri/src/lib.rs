@@ -2,6 +2,8 @@ use tauri::Emitter;
 
 mod audio_recorder;
 mod benchmark;
+mod binance;
+mod metatrader;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,7 +16,10 @@ pub fn run() {
             audio_recorder::native_audio_resume,
             audio_recorder::native_audio_stop,
             benchmark::get_benchmark_and_beta,
-            benchmark::get_historical_curves
+            benchmark::get_historical_curves,
+            binance::binance_signed_request,
+            metatrader::detect_metatrader_sources,
+            metatrader::read_metatrader_export
         ])
         .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
             let _ = app.emit("single-instance", (args, cwd));

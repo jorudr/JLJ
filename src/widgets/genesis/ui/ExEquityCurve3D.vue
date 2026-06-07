@@ -1041,6 +1041,23 @@
           </div>
         </button>
 
+        <!-- BROKER / EXCHANGE CONNECTORS -->
+        <button v-if="!showMetricsPanel && !showDistribution3D"
+                @click="showBrokerConnectPanel = true"
+                class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <path d="M4 7h16"></path>
+            <path d="M4 12h16"></path>
+            <path d="M4 17h16"></path>
+            <circle cx="8" cy="7" r="1.5" fill="currentColor" stroke="none"></circle>
+            <circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
+            <circle cx="11" cy="17" r="1.5" fill="currentColor" stroke="none"></circle>
+          </svg>
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            [ CONNECT_BROKER_API ]
+          </div>
+        </button>
+
         <!-- PURGE DIARY RECORDS -->
         <button v-if="!showMetricsPanel && !showDistribution3D"
                 @click="showClearConfirmation = true" 
@@ -1233,6 +1250,14 @@
 
     <Teleport to="body">
       <Transition name="page-reify">
+        <ExBrokerConnectPanel v-if="showBrokerConnectPanel"
+                              :strategy-id="selectedStrategyId"
+                              @close="showBrokerConnectPanel = false" />
+      </Transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <Transition name="page-reify">
         <ExEquityCurveSimulator 
           v-if="showSimulator" 
           @close="showSimulator = false"
@@ -1263,6 +1288,7 @@ import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExEquityCurveSimulator from './ExEquityCurveSimulator.vue'
 import ExPaywallOverlay from './ExPaywallOverlay.vue'
+import ExBrokerConnectPanel from '~/widgets/broker-connect/ui/ExBrokerConnectPanel.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
@@ -1401,6 +1427,7 @@ const showRobustnessHistogram = ref(false)
 const showRobustnessWarning = ref(false)
 const showSimulator = ref(false)
 const showPaywall = ref(false)
+const showBrokerConnectPanel = ref(false)
 
 const openSimulator = () => {
   if (authStore.user?.type !== 'premium') {
