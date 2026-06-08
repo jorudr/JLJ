@@ -25,6 +25,7 @@ export interface BrokerTradeStorePort {
   init: () => Promise<void>
   getAllTradesForStrategy: (strategyId: string) => DiaryEntry[]
   addTrade: (strategyId: string, trade: DiaryEntry) => Promise<void>
+  updateTrade?: (strategyId: string, tradeId: string, updates: Partial<DiaryEntry>) => Promise<void>
 }
 
 export interface BrokerSyncResult {
@@ -108,7 +109,10 @@ const syncKrakenSpot = async (
     apiSecret: connection.credentials.apiSecret || ''
   }, { type: 'all', trades: false })
   const fills = Object.entries(response.trades || {}).map(([tradeId, trade]) => ({ ...trade, tradeId }))
+  console.log('[BrokerSync][Kraken][Spot] Raw response:', response)
+  console.log('[BrokerSync][Kraken][Spot] Parsed fills:', fills)
   const result = await importDedupedTrades(buildKrakenSpotRoundTrips(fills), strategyId, tradeStore)
+  console.log('[BrokerSync][Kraken][Spot] Imported round trips:', result)
 
   return {
     ...result,
@@ -127,7 +131,18 @@ const syncKrakenFutures = async (
     apiSecret: connection.credentials.apiSecret || ''
   })
   const fills = response.fills || []
-  const result = await importDedupedTrades(buildKrakenFuturesRoundTrips(fills), strategyId, tradeStore)
+  console.log('[BrokerSync][Kraken][Futures] Raw response:', response)
+  console.log('[BrokerSync][Kraken][Futures] Parsed fills:', fills)
+  const roundTrips = buildKrakenFuturesRoundTrips(fills)
+  console.log('[BrokerSync][Kraken][Futures] Prepared round trips:', roundTrips.map(trade => ({
+    id: trade.id,
+    sourceExternalId: trade.sourceExternalId,
+    date: trade.date instanceof Date ? trade.date.toISOString() : trade.date,
+    dateExit: trade.dateExit instanceof Date ? trade.dateExit.toISOString() : trade.dateExit,
+    localDateExit: trade.dateExit instanceof Date ? trade.dateExit.toLocaleString() : String(trade.dateExit)
+  })))
+  const result = await importDedupedTrades(roundTrips, strategyId, tradeStore)
+  console.log('[BrokerSync][Kraken][Futures] Imported round trips:', result)
 
   return {
     ...result,
@@ -142,21 +157,26 @@ const importDedupedTrades = async (
   tradeStore: BrokerTradeStorePort
 ) => {
   await tradeStore.init()
-  const existingIds = new Set(tradeStore.getAllTradesForStrategy(strategyId)
-    .map(trade => (trade as DiaryEntry & { sourceExternalId?: string }).sourceExternalId || '')
-    .filter(Boolean))
+  const existingTrades = tradeStore.getAllTradesForStrategy(strategyId)
+  const existingBySourceId = new Map(existingTrades
+    .map(trade => [((trade as DiaryEntry & { sourceExternalId?: string }).sourceExternalId || ''), trade] as const)
+    .filter(([sourceId]) => Boolean(sourceId)))
 
   let importedCount = 0
   let duplicateCount = 0
 
   for (const trade of trades) {
-    if (existingIds.has(trade.sourceExternalId)) {
+    const existingTrade = existingBySourceId.get(trade.sourceExternalId)
+    if (existingTrade) {
+      if (existingTrade.id && tradeStore.updateTrade) {
+        await tradeStore.updateTrade(strategyId, existingTrade.id, trade)
+      }
       duplicateCount++
       continue
     }
 
     await tradeStore.addTrade(strategyId, trade)
-    existingIds.add(trade.sourceExternalId)
+    existingBySourceId.set(trade.sourceExternalId, trade)
     importedCount++
   }
 
@@ -214,7 +234,7 @@ const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
         rawLabel: order.orderId
       }
     })
-    .filter(fill => fill.symbol && fill.qty > 0 && fill.price > 0)
+    .filter(fill => fill.symbol && fill.qty > 0 && fill.price > 0 && Number.isFinite(fill.timestamp))
 
   return buildLongSpotRoundTrips(fills, 'Bybit V5 Spot', 'bybit', 'spot-close')
 }
@@ -232,7 +252,7 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
         qty,
         price,
         fee: Number(fill.fee || 0) || 0,
-        timestamp: Number(fill.time || 0) * 1000,
+        timestamp: parseKrakenSpotTimestamp(fill.time),
         rawLabel: fill.tradeId
       }
     })
@@ -332,7 +352,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
       qty: Number(fill.size || 0),
       priceNum: Number(fill.price || 0),
       feeNum: Number(fill.fee ?? fill.feePaid ?? 0) || 0,
-      timestamp: Date.parse(fill.fillTime || '')
+      timestamp: parseKrakenFuturesTimestamp(readKrakenFuturesFillTimestamp(fill))
     }))
     .filter(fill => fill.symbol && fill.qty > epsilon && fill.priceNum > epsilon && Number.isFinite(fill.timestamp))
     .sort((left, right) => left.timestamp - right.timestamp)
@@ -385,7 +405,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
           assetIcon: resolvedAsset.assetIcon,
           profitInCurrency: profit,
           result: profit,
-          notes: `Imported from Kraken Futures.\nOpenFills: ${consumedFillIds.join(', ')}\nCloseFill: ${fill.fill_id}\nOrderId: ${fill.order_id}\nSymbol: ${fill.symbol}\nFillType: ${fill.fillType || 'unknown'}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+          notes: `Imported from Kraken Futures.\nOpenFills: ${consumedFillIds.join(', ')}\nCloseFill: ${fill.fill_id}\nOrderId: ${fill.order_id}\nSymbol: ${fill.symbol}\nCloseTimeRaw: ${readKrakenFuturesFillTimestamp(fill) || 'unknown'}\nFillType: ${fill.fillType || 'unknown'}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
           source: 'kraken-futures',
           sourceExternalId: `futures-close:${fill.fill_id}`,
           sourcePlatform: 'Kraken Futures'
@@ -435,6 +455,50 @@ const normalizeKrakenPair = (pair: string) => {
     .replace(/ZUSD$/, 'USD')
     .replace(/ZEUR$/, 'EUR')
     .replace(/ZGBP$/, 'GBP')
+}
+
+const parseKrakenSpotTimestamp = (value: number | string) => {
+  const numeric = Number(value || 0)
+  if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
+  return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+}
+
+const readKrakenFuturesFillTimestamp = (fill: KrakenFuturesFill) => {
+  const candidates = [fill.fillTime, fill.fill_time, fill.time, fill.timestamp, fill.lastUpdateTimestamp]
+    .filter(value => value !== undefined && value !== null && value !== '') as Array<string | number>
+
+  return candidates.find(hasIntradayTimestampPrecision) ?? candidates[0] ?? ''
+}
+
+const parseKrakenFuturesTimestamp = (value: string | number) => {
+  let str = String(value || '').trim()
+  // Append 'Z' to ISO strings missing timezone offset to prevent WebKit parse errors
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
+    str += 'Z'
+  }
+  const parsed = Date.parse(str)
+  if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
+
+  const numeric = Number(value || 0)
+  if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
+  return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+}
+
+const hasIntradayTimestampPrecision = (value: string | number) => {
+  const numeric = Number(value)
+  if (Number.isFinite(numeric) && numeric > 0) return true
+
+  let str = String(value || '').trim()
+  // Append 'Z' to ISO strings missing timezone offset to prevent WebKit parse errors
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
+    str += 'Z'
+  }
+  
+  const parsed = Date.parse(str)
+  if (!Number.isFinite(parsed) || isNaN(parsed)) return false
+
+  const date = new Date(parsed)
+  return date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0 || date.getUTCMilliseconds() !== 0
 }
 
 const normalizeKrakenFuturesSymbol = (symbol: string) => {

@@ -35,7 +35,11 @@ export interface KrakenFuturesFill {
   order_id: string
   size: number | string
   price: number | string
-  fillTime: string
+  fillTime?: string
+  fill_time?: string
+  time?: number | string
+  timestamp?: number | string
+  lastUpdateTimestamp?: string
   fillType?: string
   fee?: number | string
   feePaid?: number | string

@@ -229,7 +229,7 @@
                     <div class="flex flex-col">
                       <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВХОД' : 'AVERAGE_ENTRY' }}</span>
                       <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.entryPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ Number(selectedTrade?.entry || 0).toFixed(2) }}</span>
+                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ formatFullPrice(selectedTrade?.entry) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
                     </div>
 
@@ -237,7 +237,7 @@
                     <div class="flex flex-col">
                       <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВЫХОД' : 'AVERAGE_EXIT' }}</span>
                       <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.exitPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ Number(selectedTrade?.exit || 0).toFixed(2) }}</span>
+                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ formatFullPrice(selectedTrade?.exit) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') }}</span>
                     </div>
 
@@ -247,11 +247,11 @@
                       <div class="flex flex-col mt-2 space-y-2">
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.stopLoss') }}</span>
-                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.stopLoss ? Number(selectedTrade.stopLoss).toFixed(2) : '0.00' }}</span>
+                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ formatFullPrice(selectedTrade?.stopLoss) }}</span>
                         </div>
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.takeProfit') }}</span>
-                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ selectedTrade?.takeProfit ? Number(selectedTrade.takeProfit).toFixed(2) : '0.00' }}</span>
+                          <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ formatFullPrice(selectedTrade?.takeProfit) }}</span>
                         </div>
                       </div>
                     </div>
@@ -798,6 +798,13 @@ const formatFullDate = (d: any) => {
     hour12: false
   })
   return `${datePart}\n${timePart}`
+}
+
+const formatFullPrice = (value: unknown) => {
+  if (value === undefined || value === null || value === '') return '0'
+  const number = Number(value)
+  if (!Number.isFinite(number)) return String(value)
+  return Number.isInteger(number) ? String(number) : number.toString()
 }
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
