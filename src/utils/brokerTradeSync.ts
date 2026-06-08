@@ -285,6 +285,7 @@ const buildLongSpotRoundTrips = (
     let allocatedEntryFee = 0
     let firstEntryDate: Date | null = null
     const consumedIds: Array<string | number> = []
+    const executions: any[] = []
 
     while (remainingSellQty > epsilon && lots.length) {
       const currentLot = lots[0]!
@@ -295,6 +296,15 @@ const buildLongSpotRoundTrips = (
       entryCost += matchedQty * currentLot.price
       allocatedEntryFee += currentLot.fee * lotShare
       consumedIds.push(currentLot.id)
+      executions.push({
+        id: String(currentLot.id),
+        type: 'entry',
+        side: 'Long',
+        price: currentLot.price,
+        size: matchedQty,
+        date: new Date(currentLot.date),
+        label: 'SINGLE'
+      })
       currentLot.remainingQty -= matchedQty
       currentLot.fee -= currentLot.fee * lotShare
       remainingSellQty -= matchedQty
@@ -309,6 +319,17 @@ const buildLongSpotRoundTrips = (
     const exitFee = fill.fee * (consumedQty / fill.qty)
     const profit = (consumedQty * fill.price) - entryCost - allocatedEntryFee - exitFee
     const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
+    
+    executions.push({
+      id: String(fill.id),
+      type: 'exit',
+      side: 'Close',
+      price: fill.price,
+      size: consumedQty,
+      date: new Date(fill.timestamp),
+      label: 'SINGLE'
+    })
+    
     roundTrips.push({
       id: `${source}-${externalPrefix}-${fill.id}`,
       date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
@@ -325,6 +346,7 @@ const buildLongSpotRoundTrips = (
       assetIcon: resolvedAsset.assetIcon,
       profitInCurrency: profit,
       result: profit,
+      executions,
       notes: `Imported from ${platform} round trip.\nOpenFills: ${consumedIds.join(', ')}\nCloseFill: ${fill.rawLabel}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
       source,
       sourceExternalId: `${externalPrefix}:${fill.id}`,
@@ -364,6 +386,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
       let allocatedEntryFee = 0
       let firstEntryDate: Date | null = null
       const consumedFillIds: string[] = []
+      const executions: any[] = []
 
       while (remainingQty > epsilon && lots.length && lots[0]?.side === closingSide) {
         const currentLot = lots[0]!
@@ -374,6 +397,15 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
         entryCost += matchedQty * currentLot.price
         allocatedEntryFee += currentLot.fee * lotShare
         consumedFillIds.push(currentLot.fillId)
+        executions.push({
+          id: currentLot.fillId,
+          type: 'entry',
+          side: currentLot.side,
+          price: currentLot.price,
+          size: matchedQty,
+          date: new Date(currentLot.date),
+          label: 'SINGLE'
+        })
         currentLot.remainingQty -= matchedQty
         currentLot.fee -= currentLot.fee * lotShare
         remainingQty -= matchedQty
@@ -386,6 +418,17 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
           ? (fill.priceNum * consumedQty) - entryCost - allocatedEntryFee - exitFee
           : entryCost - (fill.priceNum * consumedQty) - allocatedEntryFee - exitFee
         const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
+
+        executions.push({
+          id: fill.fill_id,
+          type: 'exit',
+          side: 'Close',
+          price: fill.priceNum,
+          size: consumedQty,
+          date: new Date(fill.timestamp),
+          label: 'SINGLE'
+        })
+
         roundTrips.push({
           id: `kraken-futures-close-${fill.fill_id}`,
           date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
@@ -402,6 +445,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
           assetIcon: resolvedAsset.assetIcon,
           profitInCurrency: profit,
           result: profit,
+          executions,
           notes: `Imported from Kraken Futures.\nOpenFills: ${consumedFillIds.join(', ')}\nCloseFill: ${fill.fill_id}\nOrderId: ${fill.order_id}\nSymbol: ${fill.symbol}\nCloseTimeRaw: ${readKrakenFuturesFillTimestamp(fill) || 'unknown'}\nFillType: ${fill.fillType || 'unknown'}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
           source: 'kraken-futures',
           sourceExternalId: `futures-close:${fill.fill_id}`,

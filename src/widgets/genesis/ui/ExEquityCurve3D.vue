@@ -5430,15 +5430,15 @@ const winratePoints3D = ref<CurvePoint[]>([])
 const isApiSyncing = ref(false)
 const apiSyncStatusMessage = ref('')
 
-const findCurrentStrategyApiConnection = async () => {
+const findCurrentStrategyApiConnections = async () => {
   const connections = await loadFromDisk<Record<string, StoredBrokerConnection>>(BROKER_CONNECTIONS_STORAGE_KEY)
-  if (!connections) return null
+  if (!connections) return []
 
-  return Object.values(connections).find((connection) => {
+  return Object.values(connections).filter((connection) => {
     if (!isSyncableBrokerConnection(connection)) return false
     const targetStrategyId = connection.credentials?.targetStrategyId || 'MAIN_DIARY'
     return targetStrategyId === selectedStrategyId.value
-  }) || null
+  })
 }
 
 const apiSyncButtonTitle = computed(() => {
@@ -5464,18 +5464,29 @@ const syncCurrentStrategyApi = async () => {
   apiSyncStatusMessage.value = isRu.value ? 'API_SYNC_STARTING' : 'API_SYNC_STARTING'
 
   try {
-    const connection = await findCurrentStrategyApiConnection()
-    if (!connection) {
+    const connections = await findCurrentStrategyApiConnections()
+    if (connections.length === 0) {
       apiSyncStatusMessage.value = isRu.value ? 'API_НЕ_ПОДКЛЮЧЕН_К_СТРАТЕГИИ' : 'NO_API_LINKED_TO_STRATEGY'
       return
     }
 
     apiSyncStatusMessage.value = isRu.value ? 'API_SYNC_IN_PROGRESS' : 'API_SYNC_IN_PROGRESS'
-    const result = await syncBrokerConnectionTrades(connection, selectedStrategyId.value, tradeStore)
+    
+    let totalImported = 0
+    let totalDuplicates = 0
+    let sources: string[] = []
+    
+    for (const connection of connections) {
+      const result = await syncBrokerConnectionTrades(connection, selectedStrategyId.value, tradeStore)
+      totalImported += result.importedCount
+      totalDuplicates += result.duplicateCount
+      sources.push(result.sourceLabel)
+    }
+    
     initData()
-    apiSyncStatusMessage.value = result.importedCount > 0
-      ? `${result.sourceLabel}: +${result.importedCount}_TRADES`
-      : `${result.sourceLabel}: 0_NEW / ${result.duplicateCount}_DUP`
+    apiSyncStatusMessage.value = totalImported > 0
+      ? `${sources.join(', ')}: +${totalImported}_TRADES`
+      : `${sources.join(', ')}: 0_NEW / ${totalDuplicates}_DUP`
   } catch (error: any) {
     apiSyncStatusMessage.value = error?.message || 'API_SYNC_FAILED'
   } finally {
