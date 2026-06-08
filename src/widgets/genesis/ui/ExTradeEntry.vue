@@ -2299,7 +2299,7 @@ const submit = async () => {
               
               <div class="absolute left-full ml-8 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0 whitespace-nowrap pointer-events-none">
                  <div class="flex flex-col items-start">
-                    <span class="text-[8px] font-mono tracking-[0.5em] uppercase font-black text-black dark:text-white">ENTRY_METHOD</span>
+                    <span class="text-[8px] font-mono tracking-[0.5em] uppercase font-black text-black dark:text-white">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY_METHOD' }}</span>
                     <div class="h-px w-0 group-hover:w-full bg-black dark:bg-white transition-all duration-500 mt-1 opacity-40"></div>
                  </div>
               </div>
@@ -2842,12 +2842,15 @@ const submit = async () => {
     <Transition name="nier-fade">
       <div v-if="showEntryMethod" 
            @click.self="showEntryMethod = false"
-           style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"
            class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
         
           <ExPanel class="w-full max-w-[500px]" noPadding variant="light">
-
-
+            <template #header>
+              <div class="flex items-center justify-between w-full">
+                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY_METHOD' }}</span>
+                <div class="flex items-center gap-12"></div>
+              </div>
+            </template>
             <!-- CONTENT GRID -->
             <div class="p-10 flex flex-col space-y-10 h-[80vh] min-h-[400px]">
 
@@ -2857,17 +2860,17 @@ const submit = async () => {
                   <button @click="activeProtocolTab = 'PYRAMIDING'; entryMethodType = 'PYRAMIDING'"
                           class="flex-1 py-3 text-[9px] font-mono tracking-[0.2em] uppercase font-black transition-all"
                           :class="activeProtocolTab === 'PYRAMIDING' ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/5'">
-                     Pyramiding
+                     {{ locale === 'ru' ? 'Пирамидинг' : 'Pyramiding' }}
                   </button>
                   <button @click="activeProtocolTab = 'AVERAGING_DOWN'; entryMethodType = 'AVERAGING_DOWN'"
                           class="flex-1 py-3 text-[9px] font-mono tracking-[0.2em] uppercase font-black transition-all"
                           :class="activeProtocolTab === 'AVERAGING_DOWN' ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/5'">
-                     Averaging
+                     {{ locale === 'ru' ? 'Усреднение' : 'Averaging' }}
                   </button>
                   <button @click="activeProtocolTab = 'EXIT'"
                           class="flex-1 py-3 text-[9px] font-mono tracking-[0.2em] uppercase font-black transition-all"
                           :class="activeProtocolTab === 'EXIT' ? 'bg-black text-white dark:bg-white dark:text-black' : 'text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/5'">
-                     Exiting
+                     {{ locale === 'ru' ? 'Выход' : 'Exiting' }}
                   </button>
                 </div>
               </div>
@@ -2880,11 +2883,11 @@ const submit = async () => {
                   <div v-for="(ent, idx) in activeMultipleEntries" :key="ent.id" class="flex items-center gap-4">
                      <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Price_Lvl</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'УРОВЕНЬ_ЦЕНЫ' : 'Price_Lvl' }}</span>
                         <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
                      </div>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
                         <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
                      </div>
                      <button @click="removeMultipleEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
@@ -2895,11 +2898,11 @@ const submit = async () => {
                   <div class="flex items-center gap-2 mt-2">
                      <button @click="addMultipleEntry" class="flex-1 py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                        Add_Position_Node
+                        {{ locale === 'ru' ? 'ДОБАВИТЬ_ПОЗИЦИЮ' : 'Add_Position_Node' }}
                      </button>
                      <button v-if="hasActiveMethodNode && !showAutoPrompt && activeMultipleEntries.length === 0" @click="toggleAutoPrompt" class="flex-1 py-4 border border-dashed border-black/50 dark:border-white/50 text-black dark:text-white hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        AUTO
+                        {{ locale === 'ru' ? 'АВТО' : 'AUTO' }}
                      </button>
                   </div>
                   
@@ -2907,20 +2910,20 @@ const submit = async () => {
                   <div v-if="showAutoPrompt" class="mt-2 p-3 border border-black/30 dark:border-white/30 bg-black/5 dark:bg-white/5 flex flex-col gap-3">
                     <div class="flex items-center gap-3">
                       <div class="flex-1">
-                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">Base_Price</span>
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">{{ locale === 'ru' ? 'Базовая_Цена' : 'Base_Price' }}</span>
                         <input v-model="autoEntryBasePrice" type="number" placeholder="Price..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" />
                       </div>
                       <div class="flex-1">
-                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">Lot_Size</span>
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 text-black dark:text-white mb-1">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
                         <input v-model="autoEntryBaseLots" type="number" step="0.01" placeholder="Lots..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" />
                       </div>
                     </div>
                     <div class="flex items-center justify-end gap-2">
                       <button @click="showAutoPrompt = false" class="px-4 py-2 border border-black/30 dark:border-white/30 text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono tracking-widest uppercase transition-all font-bold">
-                         CANCEL
+                         {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
                       </button>
                       <button @click="confirmAutoGenerate" class="px-4 py-2 bg-black/10 dark:bg-white/10 text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono tracking-widest uppercase transition-all font-bold">
-                         CONFIRM
+                         {{ locale === 'ru' ? 'ПОДТВЕРДИТЬ' : 'CONFIRM' }}
                       </button>
                     </div>
                   </div>
@@ -2931,11 +2934,11 @@ const submit = async () => {
                   <div v-for="(ent, idx) in exitEntries" :key="ent.id" class="flex items-center gap-4">
                      <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Exit_Lvl</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'Уровень_Выхода' : 'Exit_Lvl' }}</span>
                         <input v-model="ent.price" type="number" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
                      </div>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Lot_Size</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
                         <input v-model="ent.size" type="number" step="0.01" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" />
                      </div>
                      <button @click="removeExitEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
@@ -2948,7 +2951,7 @@ const submit = async () => {
                           class="w-full py-4 border border-dashed text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2"
                           :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20 cursor-not-allowed' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                     {{ (totalSize - totalExitSize <= 0) ? 'VOLUME_DEPLETED' : 'Add_Exit_Node' }}
+                     {{ (totalSize - totalExitSize <= 0) ? (locale === 'ru' ? 'ОБЪЕМ ИСЧЕРПАН' : 'VOLUME_DEPLETED') : (locale === 'ru' ? 'ДОБАВИТЬ_ВЫХОД' : 'Add_Exit_Node') }}
                   </button>
                 </div>
               </div>
@@ -2958,11 +2961,11 @@ const submit = async () => {
                 <!-- ENTRY FOOTER -->
                 <div v-if="activeProtocolTab === 'PYRAMIDING' || activeProtocolTab === 'AVERAGING_DOWN'" class="flex items-center justify-between" :class="{ 'opacity-30 grayscale': !entryMethodEnabled }">
                   <div class="flex flex-col gap-1">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Entry</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВХОДА' : 'Aggregated_Avg_Entry' }}</span>
                      <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
                   </div>
                   <div class="flex flex-col gap-1 items-end">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Volume</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ' : 'Total_Volume' }}</span>
                      <span class="text-sm font-mono font-black text-black dark:text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
                   </div>
                 </div>
@@ -2970,11 +2973,11 @@ const submit = async () => {
                 <!-- EXIT FOOTER -->
                 <div v-if="activeProtocolTab === 'EXIT'" class="flex items-center justify-between">
                   <div class="flex flex-col gap-1">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Aggregated_Avg_Exit</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВЫХОДА' : 'Aggregated_Avg_Exit' }}</span>
                      <span class="text-sm font-mono font-black text-black dark:text-white">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
                   </div>
                   <div class="flex flex-col gap-1 items-end">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">Total_Exit_Volume</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 text-black dark:text-white">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ ВЫХОДА' : 'Total_Exit_Volume' }}</span>
                      <span class="text-sm font-mono font-black" :class="(totalExitSize > totalSize) ? 'text-rose-500' : 'text-black dark:text-white'">
                         {{ totalExitSize > 0 ? totalExitSize.toFixed(2) : '0.00' }} <span class="opacity-40 text-xs">/ {{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
                      </span>
