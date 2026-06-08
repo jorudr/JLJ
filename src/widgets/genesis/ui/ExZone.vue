@@ -11,7 +11,8 @@
     </div>
 
     <!-- Telemetry Header & Controls (2x Buffer) -->
-    <div class="absolute -top-[56px] left-0 flex items-center space-x-4 pointer-events-auto z-10">
+    <div class="absolute bottom-full left-0 flex items-center space-x-4 pointer-events-auto z-10"
+         :style="{ transform: `scale(${scale})`, transformOrigin: 'bottom left', marginBottom: `${8 * scale}px` }">
        <button @click.stop="$emit('remove', zone.id)"
                class="tactical-button w-[48px] h-[48px] border-[2px] border-current/20 flex items-center justify-center hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all text-[16px] font-mono opacity-40 hover:opacity-100">
           X
