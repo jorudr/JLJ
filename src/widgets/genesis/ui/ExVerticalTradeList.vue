@@ -398,9 +398,6 @@
                       <span class="text-[8px] uppercase tracking-[0.3em] opacity-40">
                         {{ getExecutionGroupLabel(trade, 'entry') }}
                       </span>
-                      <span v-if="hasMethodLabel(getExecutionGroup(trade, 'entry'))" class="text-[8px] uppercase tracking-[0.3em] text-emerald-500 opacity-90">
-                        {{ getMethodLabel(getExecutionGroup(trade, 'entry')) }}
-                      </span>
                     </div>
                     <div v-if="getExecutionGroup(trade, 'entry').length > 0" class="flex flex-col space-y-2">
                       <div
