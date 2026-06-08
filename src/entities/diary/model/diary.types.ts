@@ -29,7 +29,7 @@ export interface DiaryEntry {
     currency?: string;
     entryFee?: number;
     exitFee?: number;
-    feeType?: '%' | 'Fixed' | string;
+    feeType?: '%' | string;
     result?: number;
     notes?: string;
     notesList?: DiaryNote[];
