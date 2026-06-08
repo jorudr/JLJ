@@ -269,9 +269,28 @@ const buildLongSpotRoundTrips = (
   type OpenLot = { id: string | number; date: Date; remainingQty: number; price: number; fee: number }
   const epsilon = 1e-10
   const openLotsBySymbol = new Map<string, OpenLot[]>()
+  const activeCycleBySymbol = new Map<string, any>()
   const roundTrips: ImportedTrade[] = []
 
   fills.sort((left, right) => left.timestamp - right.timestamp).forEach((fill) => {
+    let cycle = activeCycleBySymbol.get(fill.symbol)
+    if (!cycle) {
+      cycle = {
+        symbol: fill.symbol,
+        firstEntryDate: null,
+        lastExitDate: null,
+        closedQty: 0,
+        entryCost: 0,
+        allocatedEntryFee: 0,
+        exitRevenue: 0,
+        exitFee: 0,
+        consumedIds: new Set<string>(),
+        closeLabels: new Set<string>(),
+        executionsMap: new Map<string, any>()
+      }
+      activeCycleBySymbol.set(fill.symbol, cycle)
+    }
+
     const lots = openLotsBySymbol.get(fill.symbol) || []
     if (fill.side === 'buy') {
       lots.push({ id: fill.id, date: new Date(fill.timestamp).toISOString() as any, remainingQty: fill.qty, price: fill.price, fee: fill.fee })
@@ -280,81 +299,126 @@ const buildLongSpotRoundTrips = (
     }
 
     let remainingSellQty = fill.qty
-    let consumedQty = 0
-    let entryCost = 0
-    let allocatedEntryFee = 0
-    let firstEntryDate: Date | null = null
-    const consumedIds: Array<string | number> = []
-    const executions: any[] = []
+    let consumedInThisFill = 0
 
     while (remainingSellQty > epsilon && lots.length) {
       const currentLot = lots[0]!
       const matchedQty = Math.min(currentLot.remainingQty, remainingSellQty)
       const lotShare = matchedQty / currentLot.remainingQty
-      firstEntryDate ||= currentLot.date
-      consumedQty += matchedQty
-      entryCost += matchedQty * currentLot.price
-      allocatedEntryFee += currentLot.fee * lotShare
-      consumedIds.push(currentLot.id)
-      executions.push({
-        id: String(currentLot.id),
-        type: 'entry',
-        side: 'Long',
-        price: currentLot.price,
-        size: matchedQty,
-        date: new Date(currentLot.date),
-        label: 'SINGLE'
-      })
+      
+      cycle.firstEntryDate ||= currentLot.date
+      cycle.closedQty += matchedQty
+      cycle.entryCost += matchedQty * currentLot.price
+      cycle.allocatedEntryFee += currentLot.fee * lotShare
+      cycle.consumedIds.add(String(currentLot.id))
+      
+      consumedInThisFill += matchedQty
+
+      const execId = `entry-${currentLot.id}`
+      if (cycle.executionsMap.has(execId)) {
+        cycle.executionsMap.get(execId).size += matchedQty
+      } else {
+        cycle.executionsMap.set(execId, {
+          id: String(currentLot.id),
+          type: 'entry',
+          side: 'Long',
+          price: currentLot.price,
+          size: matchedQty,
+          date: new Date(currentLot.date),
+          label: 'SINGLE'
+        })
+      }
+
       currentLot.remainingQty -= matchedQty
       currentLot.fee -= currentLot.fee * lotShare
       remainingSellQty -= matchedQty
       if (currentLot.remainingQty <= epsilon) lots.shift()
     }
 
-    if (consumedQty <= epsilon || !firstEntryDate) {
-      openLotsBySymbol.set(fill.symbol, lots)
-      return
+    if (consumedInThisFill > epsilon) {
+      cycle.lastExitDate = new Date(fill.timestamp)
+      cycle.exitRevenue += consumedInThisFill * fill.price
+      cycle.exitFee += fill.fee * (consumedInThisFill / fill.qty)
+      cycle.closeLabels.add(String(fill.rawLabel))
+
+      const execId = `exit-${fill.id}`
+      if (cycle.executionsMap.has(execId)) {
+        cycle.executionsMap.get(execId).size += consumedInThisFill
+      } else {
+        cycle.executionsMap.set(execId, {
+          id: String(fill.id),
+          type: 'exit',
+          side: 'Close',
+          price: fill.price,
+          size: consumedInThisFill,
+          date: new Date(fill.timestamp),
+          label: 'SINGLE'
+        })
+      }
     }
 
-    const exitFee = fill.fee * (consumedQty / fill.qty)
-    const profit = (consumedQty * fill.price) - entryCost - allocatedEntryFee - exitFee
-    const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
-    
-    executions.push({
-      id: String(fill.id),
-      type: 'exit',
-      side: 'Close',
-      price: fill.price,
-      size: consumedQty,
-      date: new Date(fill.timestamp),
-      label: 'SINGLE'
-    })
-    
-    roundTrips.push({
-      id: `${source}-${externalPrefix}-${fill.id}`,
-      date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
-      dateExit: new Date(fill.timestamp).toISOString() as any,
-      asset: resolvedAsset.symbol,
-      side: 'Long',
-      entry: entryCost / consumedQty,
-      exit: fill.price,
-      size: consumedQty,
-      entryFee: allocatedEntryFee,
-      exitFee,
-      currency: inferQuoteCurrency(fill.symbol),
-      assetType: resolvedAsset.assetType,
-      assetIcon: resolvedAsset.assetIcon,
-      profitInCurrency: profit,
-      result: profit,
-      executions,
-      notes: `Imported from ${platform} round trip.\nOpenFills: ${consumedIds.join(', ')}\nCloseFill: ${fill.rawLabel}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
-      source,
-      sourceExternalId: `${externalPrefix}:${fill.id}`,
-      sourcePlatform: platform
-    } as ImportedTrade)
-
     openLotsBySymbol.set(fill.symbol, lots)
+
+    if (lots.length === 0 && cycle.closedQty > epsilon) {
+      const profit = cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+      const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
+      
+      roundTrips.push({
+        id: `${source}-${externalPrefix}-${Array.from(cycle.closeLabels)[0]}`,
+        date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+        dateExit: cycle.lastExitDate.toISOString() as any,
+        asset: resolvedAsset.symbol,
+        side: 'Long',
+        entry: cycle.entryCost / cycle.closedQty,
+        exit: cycle.exitRevenue / cycle.closedQty,
+        size: cycle.closedQty,
+        entryFee: cycle.allocatedEntryFee,
+        exitFee: cycle.exitFee,
+        currency: inferQuoteCurrency(cycle.symbol),
+        assetType: resolvedAsset.assetType,
+        assetIcon: resolvedAsset.assetIcon,
+        profitInCurrency: profit,
+        result: profit,
+        executions: Array.from(cycle.executionsMap.values()),
+        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        source,
+        sourceExternalId: `${externalPrefix}:${Array.from(cycle.closeLabels)[0]}`,
+        sourcePlatform: platform
+      } as ImportedTrade)
+      
+      activeCycleBySymbol.delete(fill.symbol)
+    }
   })
+
+  for (const [symbol, cycle] of activeCycleBySymbol.entries()) {
+    if (cycle.closedQty > epsilon) {
+      const profit = cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+      const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
+      
+      roundTrips.push({
+        id: `${source}-${externalPrefix}-${Array.from(cycle.closeLabels)[0]}`,
+        date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+        dateExit: cycle.lastExitDate.toISOString() as any,
+        asset: resolvedAsset.symbol,
+        side: 'Long',
+        entry: cycle.entryCost / cycle.closedQty,
+        exit: cycle.exitRevenue / cycle.closedQty,
+        size: cycle.closedQty,
+        entryFee: cycle.allocatedEntryFee,
+        exitFee: cycle.exitFee,
+        currency: inferQuoteCurrency(cycle.symbol),
+        assetType: resolvedAsset.assetType,
+        assetIcon: resolvedAsset.assetIcon,
+        profitInCurrency: profit,
+        result: profit,
+        executions: Array.from(cycle.executionsMap.values()),
+        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        source,
+        sourceExternalId: `${externalPrefix}:${Array.from(cycle.closeLabels)[0]}`,
+        sourcePlatform: platform
+      } as ImportedTrade)
+    }
+  }
 
   return roundTrips
 }
@@ -363,101 +427,136 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
   type OpenLot = { fillId: string; side: 'Long' | 'Short'; date: Date; remainingQty: number; price: number; fee: number }
   const epsilon = 1e-10
   const openLotsBySymbol = new Map<string, OpenLot[]>()
+  const activeCycleBySymbol = new Map<string, any>()
   const roundTrips: ImportedTrade[] = []
 
   fills
     .map(fill => ({
       ...fill,
       symbol: normalizeKrakenFuturesSymbol(fill.symbol),
+      priceNum: Number(fill.price) || 0,
       qty: Number(fill.size || 0),
-      priceNum: Number(fill.price || 0),
       feeNum: Number(fill.fee ?? fill.feePaid ?? 0) || 0,
       timestamp: parseKrakenFuturesTimestamp(readKrakenFuturesFillTimestamp(fill))
     }))
     .filter(fill => fill.symbol && fill.qty > epsilon && fill.priceNum > epsilon && Number.isFinite(fill.timestamp))
     .sort((left, right) => left.timestamp - right.timestamp)
     .forEach((fill) => {
-      const lots = openLotsBySymbol.get(fill.symbol) || []
       const closingSide = fill.side === 'buy' ? 'Short' : 'Long'
       const openingSide = fill.side === 'buy' ? 'Long' : 'Short'
+      
+      let lots = openLotsBySymbol.get(fill.symbol) || []
       let remainingQty = fill.qty
-      let consumedQty = 0
-      let entryCost = 0
-      let allocatedEntryFee = 0
-      let firstEntryDate: Date | null = null
-      const consumedFillIds: string[] = []
-      const executions: any[] = []
 
       while (remainingQty > epsilon && lots.length && lots[0]?.side === closingSide) {
+        let cycle = activeCycleBySymbol.get(fill.symbol)
+        if (!cycle) {
+          cycle = {
+            symbol: fill.symbol,
+            side: lots[0].side,
+            firstEntryDate: null,
+            lastExitDate: null,
+            closedQty: 0,
+            entryCost: 0,
+            allocatedEntryFee: 0,
+            exitRevenue: 0,
+            exitFee: 0,
+            consumedIds: new Set<string>(),
+            closeLabels: new Set<string>(),
+            executionsMap: new Map<string, any>()
+          }
+          activeCycleBySymbol.set(fill.symbol, cycle)
+        }
+
         const currentLot = lots[0]!
         const matchedQty = Math.min(currentLot.remainingQty, remainingQty)
         const lotShare = matchedQty / currentLot.remainingQty
-        firstEntryDate ||= currentLot.date
-        consumedQty += matchedQty
-        entryCost += matchedQty * currentLot.price
-        allocatedEntryFee += currentLot.fee * lotShare
-        consumedFillIds.push(currentLot.fillId)
-        executions.push({
-          id: currentLot.fillId,
-          type: 'entry',
-          side: currentLot.side,
-          price: currentLot.price,
-          size: matchedQty,
-          date: new Date(currentLot.date),
-          label: 'SINGLE'
-        })
+        
+        cycle.firstEntryDate ||= currentLot.date
+        cycle.closedQty += matchedQty
+        cycle.entryCost += matchedQty * currentLot.price
+        cycle.allocatedEntryFee += currentLot.fee * lotShare
+        cycle.consumedIds.add(currentLot.fillId)
+
+        const entryExecId = `entry-${currentLot.fillId}`
+        if (cycle.executionsMap.has(entryExecId)) {
+          cycle.executionsMap.get(entryExecId).size += matchedQty
+        } else {
+          cycle.executionsMap.set(entryExecId, {
+            id: currentLot.fillId,
+            type: 'entry',
+            side: currentLot.side,
+            price: currentLot.price,
+            size: matchedQty,
+            date: new Date(currentLot.date),
+            label: 'SINGLE'
+          })
+        }
+
+        cycle.lastExitDate = new Date(fill.timestamp)
+        cycle.exitRevenue += matchedQty * fill.priceNum
+        cycle.exitFee += fill.feeNum * (matchedQty / fill.qty)
+        cycle.closeLabels.add(fill.fill_id)
+
+        const exitExecId = `exit-${fill.fill_id}`
+        if (cycle.executionsMap.has(exitExecId)) {
+          cycle.executionsMap.get(exitExecId).size += matchedQty
+        } else {
+          cycle.executionsMap.set(exitExecId, {
+            id: fill.fill_id,
+            type: 'exit',
+            side: 'Close',
+            price: fill.priceNum,
+            size: matchedQty,
+            date: new Date(fill.timestamp),
+            label: 'SINGLE'
+          })
+        }
+
         currentLot.remainingQty -= matchedQty
         currentLot.fee -= currentLot.fee * lotShare
         remainingQty -= matchedQty
         if (currentLot.remainingQty <= epsilon) lots.shift()
-      }
 
-      if (consumedQty > epsilon && firstEntryDate) {
-        const exitFee = fill.feeNum * (consumedQty / fill.qty)
-        const profit = closingSide === 'Long'
-          ? (fill.priceNum * consumedQty) - entryCost - allocatedEntryFee - exitFee
-          : entryCost - (fill.priceNum * consumedQty) - allocatedEntryFee - exitFee
-        const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
+        if (lots.length === 0) {
+          const profit = cycle.side === 'Long'
+            ? cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+            : cycle.entryCost - cycle.exitRevenue - cycle.allocatedEntryFee - cycle.exitFee
+            
+          const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
 
-        executions.push({
-          id: fill.fill_id,
-          type: 'exit',
-          side: 'Close',
-          price: fill.priceNum,
-          size: consumedQty,
-          date: new Date(fill.timestamp),
-          label: 'SINGLE'
-        })
+          roundTrips.push({
+            id: `kraken-futures-close-${Array.from(cycle.closeLabels)[0]}`,
+            date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+            dateExit: cycle.lastExitDate.toISOString() as any,
+            asset: resolvedAsset.symbol,
+            side: cycle.side,
+            entry: cycle.entryCost / cycle.closedQty,
+            exit: cycle.exitRevenue / cycle.closedQty,
+            size: cycle.closedQty,
+            entryFee: cycle.allocatedEntryFee,
+            exitFee: cycle.exitFee,
+            currency: inferQuoteCurrency(cycle.symbol),
+            assetType: resolvedAsset.assetType,
+            assetIcon: resolvedAsset.assetIcon,
+            profitInCurrency: profit,
+            result: profit,
+            executions: Array.from(cycle.executionsMap.values()),
+            notes: `Imported from Kraken Futures.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+            source: 'kraken-futures',
+            sourceExternalId: `futures-close:${Array.from(cycle.closeLabels)[0]}`,
+            sourcePlatform: 'Kraken Futures'
+          } as ImportedTrade)
 
-        roundTrips.push({
-          id: `kraken-futures-close-${fill.fill_id}`,
-          date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
-          dateExit: new Date(fill.timestamp).toISOString() as any,
-          asset: resolvedAsset.symbol,
-          side: closingSide,
-          entry: entryCost / consumedQty,
-          exit: fill.priceNum,
-          size: consumedQty,
-          entryFee: allocatedEntryFee,
-          exitFee,
-          currency: inferQuoteCurrency(fill.symbol),
-          assetType: resolvedAsset.assetType,
-          assetIcon: resolvedAsset.assetIcon,
-          profitInCurrency: profit,
-          result: profit,
-          executions,
-          notes: `Imported from Kraken Futures.\nOpenFills: ${consumedFillIds.join(', ')}\nCloseFill: ${fill.fill_id}\nOrderId: ${fill.order_id}\nSymbol: ${fill.symbol}\nCloseTimeRaw: ${readKrakenFuturesFillTimestamp(fill) || 'unknown'}\nFillType: ${fill.fillType || 'unknown'}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
-          source: 'kraken-futures',
-          sourceExternalId: `futures-close:${fill.fill_id}`,
-          sourcePlatform: 'Kraken Futures'
-        } as ImportedTrade)
+          activeCycleBySymbol.delete(fill.symbol)
+        }
       }
 
       if (remainingQty > epsilon) {
         lots.push({
           fillId: fill.fill_id,
           side: openingSide,
-          date: new Date(fill.timestamp).toISOString() as any,
+          date: new Date(fill.timestamp),
           remainingQty,
           price: fill.priceNum,
           fee: fill.feeNum * (remainingQty / fill.qty)
@@ -466,6 +565,39 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
 
       openLotsBySymbol.set(fill.symbol, lots)
     })
+
+  for (const [symbol, cycle] of activeCycleBySymbol.entries()) {
+    if (cycle.closedQty > epsilon) {
+      const profit = cycle.side === 'Long'
+        ? cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+        : cycle.entryCost - cycle.exitRevenue - cycle.allocatedEntryFee - cycle.exitFee
+        
+      const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
+
+      roundTrips.push({
+        id: `kraken-futures-close-${Array.from(cycle.closeLabels)[0]}`,
+        date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+        dateExit: cycle.lastExitDate.toISOString() as any,
+        asset: resolvedAsset.symbol,
+        side: cycle.side,
+        entry: cycle.entryCost / cycle.closedQty,
+        exit: cycle.exitRevenue / cycle.closedQty,
+        size: cycle.closedQty,
+        entryFee: cycle.allocatedEntryFee,
+        exitFee: cycle.exitFee,
+        currency: inferQuoteCurrency(cycle.symbol),
+        assetType: resolvedAsset.assetType,
+        assetIcon: resolvedAsset.assetIcon,
+        profitInCurrency: profit,
+        result: profit,
+        executions: Array.from(cycle.executionsMap.values()),
+        notes: `Imported from Kraken Futures.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        source: 'kraken-futures',
+        sourceExternalId: `futures-close:${Array.from(cycle.closeLabels)[0]}`,
+        sourcePlatform: 'Kraken Futures'
+      } as ImportedTrade)
+    }
+  }
 
   return roundTrips
 }
