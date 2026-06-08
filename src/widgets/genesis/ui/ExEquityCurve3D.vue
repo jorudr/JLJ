@@ -352,11 +352,32 @@
             </div>
           </div>
           <div v-else class="flex flex-col">
-            <span class="text-6xl font-mono text-black dark:text-white tracking-tighter font-bold drop-shadow-sm">
-              {{ displayBalance }}
-            </span>
+            <div class="flex items-center gap-4">
+              <span class="text-6xl font-mono text-black dark:text-white tracking-tighter font-bold drop-shadow-sm">
+                {{ displayBalance }}
+              </span>
+              <button class="pointer-events-auto flex h-10 w-10 items-center justify-center border border-black/10 bg-white/50 text-black/45 transition-all hover:border-black/40 hover:text-black disabled:cursor-not-allowed disabled:opacity-25 dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45 dark:hover:border-white/40 dark:hover:text-white"
+                      :class="isApiSyncing ? 'border-black/40 text-black dark:border-white/40 dark:text-white' : ''"
+                      :disabled="isApiSyncing"
+                      :title="apiSyncButtonTitle"
+                      @click="syncCurrentStrategyApi">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     class="h-4 w-4"
+                     :class="isApiSyncing ? 'animate-spin' : ''">
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                  <path d="M3 21v-5h5" />
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                  <path d="M16 8h5V3" />
+                </svg>
+              </button>
+            </div>
             <span class="text-[9px] font-mono tracking-[0.4em] uppercase opacity-30 mt-2 text-black dark:text-white">
-              REIFIED_BALANCE_SNAPSHOT
+              {{ apiSyncStatusMessage || 'REIFIED_BALANCE_SNAPSHOT' }}
             </span>
           </div>
         </div>
@@ -1275,6 +1296,11 @@ import ExBrokerConnectPanel from '~/widgets/broker-connect/ui/ExBrokerConnectPan
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
+import {
+  isSyncableBrokerConnection,
+  syncBrokerConnectionTrades,
+  type StoredBrokerConnection
+} from '~/utils/brokerTradeSync'
 
 const authStore = useAuthStore()
 const sp500BenchmarkRate = ref(SP500_BENCHMARK_RATE)
@@ -1290,6 +1316,7 @@ interface StrategyBenchmarkMetrics {
 }
 
 const BENCHMARK_METRICS_CACHE_KEY = 'strategy_benchmark_metrics_v1'
+const BROKER_CONNECTIONS_STORAGE_KEY = 'broker_connections_v1'
 const benchmarkMetricsByStrategy = ref<Record<string, StrategyBenchmarkMetrics>>({})
 
 const themeStore = useThemeStore()
@@ -5400,6 +5427,24 @@ const equityPoints3D = ref<CurvePoint[]>([])
 const benchmarkPoints3D = ref<CurvePoint[]>([])
 const riskFreePoints3D = ref<CurvePoint[]>([])
 const winratePoints3D = ref<CurvePoint[]>([])
+const isApiSyncing = ref(false)
+const apiSyncStatusMessage = ref('')
+
+const findCurrentStrategyApiConnection = async () => {
+  const connections = await loadFromDisk<Record<string, StoredBrokerConnection>>(BROKER_CONNECTIONS_STORAGE_KEY)
+  if (!connections) return null
+
+  return Object.values(connections).find((connection) => {
+    if (!isSyncableBrokerConnection(connection)) return false
+    const targetStrategyId = connection.credentials?.targetStrategyId || 'MAIN_DIARY'
+    return targetStrategyId === selectedStrategyId.value
+  }) || null
+}
+
+const apiSyncButtonTitle = computed(() => {
+  if (isApiSyncing.value) return isRu.value ? 'Синхронизация сделок...' : 'Syncing trades...'
+  return isRu.value ? 'Синхронизировать сделки из API' : 'Sync trades from API'
+})
 
 const displayBalance = computed(() => {
   if (showWinrateCurve.value) {
@@ -5411,6 +5456,32 @@ const displayBalance = computed(() => {
   const val = (lastPoint?.value ?? 0) * revealProgress.value
   return val.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 })
+
+const syncCurrentStrategyApi = async () => {
+  if (isApiSyncing.value) return
+
+  isApiSyncing.value = true
+  apiSyncStatusMessage.value = isRu.value ? 'API_SYNC_STARTING' : 'API_SYNC_STARTING'
+
+  try {
+    const connection = await findCurrentStrategyApiConnection()
+    if (!connection) {
+      apiSyncStatusMessage.value = isRu.value ? 'API_НЕ_ПОДКЛЮЧЕН_К_СТРАТЕГИИ' : 'NO_API_LINKED_TO_STRATEGY'
+      return
+    }
+
+    apiSyncStatusMessage.value = isRu.value ? 'API_SYNC_IN_PROGRESS' : 'API_SYNC_IN_PROGRESS'
+    const result = await syncBrokerConnectionTrades(connection, selectedStrategyId.value, tradeStore)
+    initData()
+    apiSyncStatusMessage.value = result.importedCount > 0
+      ? `${result.sourceLabel}: +${result.importedCount}_TRADES`
+      : `${result.sourceLabel}: 0_NEW / ${result.duplicateCount}_DUP`
+  } catch (error: any) {
+    apiSyncStatusMessage.value = error?.message || 'API_SYNC_FAILED'
+  } finally {
+    isApiSyncing.value = false
+  }
+}
 
 // --- THEME COLORS --- //
 const colors = ref({
