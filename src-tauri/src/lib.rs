@@ -4,6 +4,7 @@ mod audio_recorder;
 mod benchmark;
 mod binance;
 mod bybit;
+mod kraken;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -18,7 +19,9 @@ pub fn run() {
             benchmark::get_benchmark_and_beta,
             benchmark::get_historical_curves,
             binance::binance_signed_request,
-            bybit::bybit_signed_request
+            bybit::bybit_signed_request,
+            kraken::kraken_signed_request,
+            kraken::kraken_futures_signed_request
         ])
         .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
             let _ = app.emit("single-instance", (args, cwd));

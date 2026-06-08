@@ -29,7 +29,7 @@
                   <div class="absolute -top-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
                   <div class="absolute -bottom-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
                   
-                  <img :src="`/brokers/${broker.id}.svg`" class="w-5 h-5 object-contain transition-all"
+                  <img :src="`/brokers/${broker.logoId || broker.id}.svg`" class="w-5 h-5 object-contain transition-all"
                        :class="selectedBrokerId === broker.id ? 'grayscale-0 opacity-100' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'" :alt="broker.label" />
                   <div class="flex flex-col items-start">
                     <span class="font-mono text-[10px] font-black uppercase tracking-[0.14em]">{{ broker.label }}</span>
@@ -44,7 +44,7 @@
               <div class="px-8 py-10 w-full max-w-3xl mx-auto flex flex-col">
                 <div class="flex items-center gap-5 mb-8 pb-8 border-b border-black/10 dark:border-white/10">
                   <div class="w-16 h-16 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-center p-3">
-                    <img :src="`/brokers/${selectedBroker.id}.svg`" class="w-full h-full object-contain grayscale-0" :alt="selectedBroker.label" />
+                    <img :src="`/brokers/${selectedBroker.logoId || selectedBroker.id}.svg`" class="w-full h-full object-contain grayscale-0" :alt="selectedBroker.label" />
                   </div>
                   <div>
                     <p class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-emerald-600 dark:text-emerald-400">{{ selectedBroker.assetClass }}</p>
@@ -56,6 +56,24 @@
                   <p class="font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-60">
                     {{ selectedBroker.description }}
                   </p>
+                </div>
+
+                <div v-if="selectedBroker.id === 'kraken'"
+                     class="mb-8 grid grid-cols-2 border border-black/10 bg-white dark:border-white/10 dark:bg-[#050505]">
+                  <button class="h-12 border-r border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors dark:border-white/10"
+                          :class="krakenMarketMode === 'spot'
+                            ? 'bg-black text-white dark:bg-white dark:text-black'
+                            : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
+                          @click="setKrakenMarketMode('spot')">
+                    Spot
+                  </button>
+                  <button class="h-12 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors"
+                          :class="krakenMarketMode === 'futures'
+                            ? 'bg-black text-white dark:bg-white dark:text-black'
+                            : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
+                          @click="setKrakenMarketMode('futures')">
+                    Futures
+                  </button>
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 mb-8">
@@ -108,11 +126,11 @@
                       </p>
                     </div>
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10 relative overflow-hidden">
-                      <div v-if="connectionMap[selectedBroker.id]?.active" class="absolute inset-0 bg-emerald-500/5"></div>
+                      <div v-if="isSelectedBrokerActive" class="absolute inset-0 bg-emerald-500/5"></div>
                       <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40 relative z-10">{{ isRu ? 'Статус' : 'Status' }}</p>
                       <p class="mt-3 font-mono text-[14px] font-black uppercase relative z-10"
-                         :class="connectionMap[selectedBroker.id]?.active ? 'text-emerald-500' : 'opacity-30'">
-                        {{ connectionMap[selectedBroker.id]?.active ? (isRu ? 'Активен' : 'Active') : (isRu ? 'Оффлайн' : 'Offline') }}
+                         :class="isSelectedBrokerActive ? 'text-emerald-500' : 'opacity-30'">
+                        {{ isSelectedBrokerActive ? (isRu ? 'Активен' : 'Active') : (isRu ? 'Оффлайн' : 'Offline') }}
                       </p>
                     </div>
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
@@ -178,10 +196,20 @@ import {
   type BybitClosedPnl,
   type BybitHistoricOrder
 } from '~/utils/bybit'
+import {
+  testKrakenConnection,
+  testKrakenFuturesConnection,
+  getKrakenTradesHistory,
+  getKrakenFuturesFills,
+  type KrakenCredentials,
+  type KrakenTrade,
+  type KrakenFuturesFill
+} from '~/utils/kraken'
 import { resolveImportedAsset } from '~/utils/assetResolver'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 type BrokerId = 'binance' | 'bybit' | 'kraken' | 'interactive-brokers'
+type KrakenMarketMode = 'spot' | 'futures'
 
 interface BrokerField {
   key: string
@@ -192,6 +220,7 @@ interface BrokerField {
 
 interface BrokerDefinition {
   id: BrokerId
+  logoId?: string
   label: string
   assetClass: string
   description: string
@@ -249,13 +278,13 @@ const brokers = computed<BrokerDefinition[]>(() => [
   {
     id: 'kraken',
     label: 'Kraken',
-    assetClass: isRu.value ? 'Крипто Спот' : 'Crypto Spot',
-    description: isRu.value ? 'Заготовленный слот коннектора для закрытых ордеров и леджеров Kraken.' : 'Prepared connector slot for Kraken closed orders and ledgers.',
-    mode: isRu.value ? 'В Разработке' : 'Prepared',
-    canActivate: false,
+    assetClass: isRu.value ? 'Крипто Спот / Фьючерсы' : 'Crypto Spot / Futures',
+    description: isRu.value ? 'Коннектор Kraken (только чтение). Выберите Spot или Futures для загрузки соответствующей истории сделок.' : 'Read-only Kraken connector. Choose Spot or Futures to load the matching trade history.',
+    mode: isRu.value ? 'Активно' : 'Live Activation',
+    canActivate: true,
     fields: [
       { key: 'apiKey', label: isRu.value ? 'API Ключ' : 'API Key', placeholder: 'Kraken API key' },
-      { key: 'privateKey', label: isRu.value ? 'Приватный Ключ' : 'Private Key', placeholder: 'Kraken private key', secret: true }
+      { key: 'apiSecret', label: isRu.value ? 'Приватный Ключ' : 'Private Key', placeholder: 'Kraken private key', secret: true }
     ]
   },
   {
@@ -279,6 +308,7 @@ const activationState = ref<'idle' | 'loading'>('idle')
 const statusMessage = ref('')
 const statusTone = ref<'neutral' | 'success' | 'error'>('neutral')
 const importTargetStrategyId = ref('MAIN_DIARY')
+const krakenMarketMode = ref<KrakenMarketMode>('spot')
 
 
 const selectedBroker = computed(() => {
@@ -292,10 +322,19 @@ const selectedImportStrategyName = computed(() => {
 
 
 const savedCurrentConnection = computed(() => {
+  if (selectedBroker.value.id === 'kraken') {
+    return connectionMap.value.kraken?.credentials?.market === krakenMarketMode.value
+  }
+
   return Boolean(connectionMap.value[selectedBroker.value.id])
 })
 
 const isSelectedBrokerActive = computed(() => {
+  if (selectedBroker.value.id === 'kraken') {
+    const saved = connectionMap.value.kraken
+    return Boolean(saved?.active && saved.credentials?.market === krakenMarketMode.value)
+  }
+
   return Boolean(connectionMap.value[selectedBroker.value.id]?.active)
 })
 
@@ -326,6 +365,10 @@ const resetFormForBroker = () => {
   })
 
   const saved = connectionMap.value[selectedBroker.value.id]
+  if (selectedBroker.value.id === 'kraken') {
+    krakenMarketMode.value = (saved?.credentials?.market as KrakenMarketMode) || 'spot'
+  }
+
   selectedBroker.value.fields.forEach((field) => {
     formState[field.key] = saved?.credentials?.[field.key] || ''
   })
@@ -338,6 +381,7 @@ const resetFormForBroker = () => {
 const loadConnections = async () => {
   const saved = await loadFromDisk<Record<string, SavedConnection>>(STORAGE_KEY)
   connectionMap.value = saved || {}
+  await migrateKrakenFuturesConnection()
   resetFormForBroker()
 }
 
@@ -348,6 +392,7 @@ const persistConnections = async () => {
 const saveCurrentConnection = async () => {
   const credentials = {
     ...Object.fromEntries(selectedBroker.value.fields.map(field => [field.key, String(formState[field.key] || '').trim()])),
+    ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
     targetStrategyId: importTargetStrategyId.value
   } as Record<string, string>
 
@@ -361,6 +406,23 @@ const saveCurrentConnection = async () => {
   await persistConnections()
   statusTone.value = 'success'
   statusMessage.value = `${selectedBroker.value.label} keys saved locally.`
+}
+
+const migrateKrakenFuturesConnection = async () => {
+  const legacyConnections = connectionMap.value as Record<string, SavedConnection | undefined>
+  const legacyFutures = legacyConnections['kraken-futures']
+  if (!legacyFutures || connectionMap.value.kraken) return
+
+  connectionMap.value.kraken = {
+    ...legacyFutures,
+    brokerId: 'kraken',
+    credentials: {
+      ...legacyFutures.credentials,
+      market: 'futures'
+    }
+  }
+  delete legacyConnections['kraken-futures']
+  await persistConnections()
 }
 
 const handlePrimaryAction = async () => {
@@ -381,6 +443,13 @@ const handleManualSync = async () => {
     const creds = connectionMap.value[selectedBroker.value.id]?.credentials
     if (selectedBroker.value.id === 'bybit' && creds) {
       await importBybitTrades({ apiKey: creds.apiKey || '', apiSecret: creds.apiSecret || '' })
+    } else if (selectedBroker.value.id === 'kraken' && creds) {
+      const credentials = { apiKey: creds.apiKey || '', apiSecret: creds.apiSecret || '' }
+      if (krakenMarketMode.value === 'futures') {
+        await importKrakenFuturesTrades(credentials)
+      } else {
+        await importKrakenTrades(credentials)
+      }
     } else {
       statusMessage.value = 'Manual sync is not supported for this connector yet.'
       statusTone.value = 'neutral'
@@ -412,6 +481,18 @@ const setImportTargetStrategy = async (strategyId: string) => {
   statusMessage.value = `${selectedBroker.value.label} import target set to ${selectedImportStrategyName.value}.`
 }
 
+const setKrakenMarketMode = (mode: KrakenMarketMode) => {
+  krakenMarketMode.value = mode
+  const saved = connectionMap.value.kraken
+  selectedBroker.value.fields.forEach((field) => {
+    formState[field.key] = saved?.credentials?.market === mode
+      ? saved.credentials[field.key] || ''
+      : ''
+  })
+  statusMessage.value = ''
+  statusTone.value = 'neutral'
+}
+
 const activateCurrentConnection = async () => {
   if (!canActivateSelected.value) return
 
@@ -433,12 +514,25 @@ const activateCurrentConnection = async () => {
       }
       await testBybitConnection(credentials)
       await importBybitTrades(credentials)
+    } else if (selectedBroker.value.id === 'kraken') {
+      const credentials: KrakenCredentials = {
+        apiKey: formState.apiKey || '',
+        apiSecret: formState.apiSecret || ''
+      }
+      if (krakenMarketMode.value === 'futures') {
+        await testKrakenFuturesConnection(credentials)
+        await importKrakenFuturesTrades(credentials)
+      } else {
+        await testKrakenConnection(credentials)
+        await importKrakenTrades(credentials)
+      }
     }
 
     connectionMap.value[selectedBroker.value.id] = {
       brokerId: selectedBroker.value.id,
       credentials: {
         ...Object.fromEntries(selectedBroker.value.fields.map(field => [field.key, String(formState[field.key] || '').trim()])),
+        ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
         targetStrategyId: importTargetStrategyId.value
       },
       active: true,
@@ -547,6 +641,75 @@ const importBybitTrades = async (credentials: BybitCredentials) => {
   statusMessage.value = importedCount > 0
     ? `${importedCount} Bybit trades imported. ${duplicateCount} duplicates skipped.`
     : `No importable Bybit trades found. Spot orders checked: ${spotTrades.length}, spot round trips: ${spotRoundTrips.length}, linear checked: ${linearTrades.length}, inverse checked: ${inverseTrades.length}.`
+}
+
+const importKrakenTrades = async (credentials: KrakenCredentials) => {
+  statusMessage.value = 'Fetching trade history from Kraken...'
+  const response = await getKrakenTradesHistory(credentials, { type: 'all', trades: false })
+  const krakenTrades = Object.entries(response.trades || {}).map(([tradeId, trade]) => ({
+    ...trade,
+    tradeId
+  }))
+
+  let importedCount = 0
+  let duplicateCount = 0
+
+  await tradeStore.init()
+  const existingTrades = tradeStore.getAllTradesForStrategy(importTargetStrategyId.value)
+  const existingIds = new Set(existingTrades.map(t => {
+    const anyTrade = t as DiaryEntry & { sourceExternalId?: string }
+    return anyTrade.sourceExternalId || ''
+  }).filter(Boolean))
+
+  const roundTrips = buildKrakenSpotRoundTrips(krakenTrades)
+  for (const trade of roundTrips) {
+    if (existingIds.has(trade.sourceExternalId)) {
+      duplicateCount++
+      continue
+    }
+
+    await tradeStore.addTrade(importTargetStrategyId.value, trade as DiaryEntry)
+    importedCount++
+    existingIds.add(trade.sourceExternalId)
+  }
+
+  statusTone.value = importedCount > 0 ? 'success' : 'neutral'
+  statusMessage.value = importedCount > 0
+    ? `${importedCount} Kraken trades imported. ${duplicateCount} duplicates skipped.`
+    : `No importable Kraken round trips found. Fills checked: ${krakenTrades.length}, round trips: ${roundTrips.length}.`
+}
+
+const importKrakenFuturesTrades = async (credentials: KrakenCredentials) => {
+  statusMessage.value = 'Fetching futures fills from Kraken...'
+  const response = await getKrakenFuturesFills(credentials)
+  const fills = response.fills || []
+
+  let importedCount = 0
+  let duplicateCount = 0
+
+  await tradeStore.init()
+  const existingTrades = tradeStore.getAllTradesForStrategy(importTargetStrategyId.value)
+  const existingIds = new Set(existingTrades.map(t => {
+    const anyTrade = t as DiaryEntry & { sourceExternalId?: string }
+    return anyTrade.sourceExternalId || ''
+  }).filter(Boolean))
+
+  const roundTrips = buildKrakenFuturesRoundTrips(fills)
+  for (const trade of roundTrips) {
+    if (existingIds.has(trade.sourceExternalId)) {
+      duplicateCount++
+      continue
+    }
+
+    await tradeStore.addTrade(importTargetStrategyId.value, trade as DiaryEntry)
+    importedCount++
+    existingIds.add(trade.sourceExternalId)
+  }
+
+  statusTone.value = importedCount > 0 ? 'success' : 'neutral'
+  statusMessage.value = importedCount > 0
+    ? `${importedCount} Kraken Futures trades imported. ${duplicateCount} duplicates skipped.`
+    : `No importable Kraken Futures round trips found. Fills checked: ${fills.length}, round trips: ${roundTrips.length}.`
 }
 
 const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
@@ -671,6 +834,284 @@ const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
   })
 
   return roundTrips
+}
+
+const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string }>) => {
+  type OpenLot = {
+    tradeId: string
+    symbol: string
+    date: Date
+    remainingQty: number
+    price: number
+    fee: number
+  }
+
+  const epsilon = 1e-10
+  const openLotsBySymbol = new Map<string, OpenLot[]>()
+  const roundTrips: Array<DiaryEntry & { sourceExternalId: string; sourcePlatform: string }> = []
+
+  const normalizedFills = fills
+    .map(fill => {
+      const symbol = normalizeKrakenPair(fill.pair)
+      const qty = Number(fill.vol || 0)
+      const priceRaw = Number(fill.price || 0)
+      const cost = Number(fill.cost || 0)
+      const price = priceRaw || (qty > 0 ? cost / qty : 0)
+      const fee = Number(fill.fee || 0) || 0
+      const timestamp = Number(fill.time || 0) * 1000
+
+      return {
+        ...fill,
+        symbol,
+        qty,
+        price,
+        cost,
+        fee,
+        timestamp
+      }
+    })
+    .filter(fill => fill.symbol && fill.qty > epsilon && fill.price > epsilon)
+    .sort((left, right) => left.timestamp - right.timestamp)
+
+  normalizedFills.forEach((fill) => {
+    const lots = openLotsBySymbol.get(fill.symbol) || []
+
+    if (fill.type === 'buy') {
+      lots.push({
+        tradeId: fill.tradeId,
+        symbol: fill.symbol,
+        date: new Date(fill.timestamp),
+        remainingQty: fill.qty,
+        price: fill.price,
+        fee: fill.fee
+      })
+      openLotsBySymbol.set(fill.symbol, lots)
+      return
+    }
+
+    let remainingSellQty = fill.qty
+    let consumedQty = 0
+    let entryCost = 0
+    let allocatedEntryFee = 0
+    let firstEntryDate: Date | null = null
+    const consumedTradeIds: string[] = []
+
+    while (remainingSellQty > epsilon && lots.length) {
+      const currentLot = lots[0]!
+      const matchedQty = Math.min(currentLot.remainingQty, remainingSellQty)
+      const lotShare = matchedQty / currentLot.remainingQty
+
+      if (!firstEntryDate) {
+        firstEntryDate = currentLot.date
+      }
+
+      consumedQty += matchedQty
+      entryCost += matchedQty * currentLot.price
+      allocatedEntryFee += currentLot.fee * lotShare
+      if (!consumedTradeIds.includes(currentLot.tradeId)) {
+        consumedTradeIds.push(currentLot.tradeId)
+      }
+
+      currentLot.remainingQty -= matchedQty
+      currentLot.fee -= currentLot.fee * lotShare
+      remainingSellQty -= matchedQty
+
+      if (currentLot.remainingQty <= epsilon) {
+        lots.shift()
+      }
+    }
+
+    if (consumedQty <= epsilon || !firstEntryDate) {
+      openLotsBySymbol.set(fill.symbol, lots)
+      return
+    }
+
+    const proceeds = consumedQty * fill.price
+    const exitFee = fill.fee * (consumedQty / fill.qty)
+    const profit = proceeds - entryCost - allocatedEntryFee - exitFee
+    const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
+
+    roundTrips.push({
+      id: `kraken-spot-close-${fill.tradeId}`,
+      date: firstEntryDate,
+      dateExit: new Date(fill.timestamp),
+      asset: resolvedAsset.symbol,
+      side: 'Long',
+      entry: entryCost / consumedQty,
+      exit: fill.price,
+      size: consumedQty,
+      entryFee: allocatedEntryFee,
+      exitFee,
+      feeType: 'Fixed',
+      currency: inferQuoteCurrency(fill.symbol),
+      assetType: resolvedAsset.assetType,
+      assetIcon: resolvedAsset.assetIcon,
+      profitInCurrency: profit,
+      result: profit,
+      notes: `Imported from Kraken spot round trip.\nOpenTrades: ${consumedTradeIds.join(', ')}\nCloseTrade: ${fill.tradeId}\nPair: ${fill.pair}\nOrderType: ${fill.ordertype}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+      source: 'kraken',
+      sourceExternalId: `spot-close:${fill.tradeId}`,
+      sourcePlatform: 'Kraken Spot'
+    } as DiaryEntry & { sourceExternalId: string; sourcePlatform: string })
+
+    openLotsBySymbol.set(fill.symbol, lots)
+  })
+
+  return roundTrips
+}
+
+const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
+  type OpenLot = {
+    fillId: string
+    symbol: string
+    side: 'Long' | 'Short'
+    date: Date
+    remainingQty: number
+    price: number
+    fee: number
+  }
+
+  const epsilon = 1e-10
+  const openLotsBySymbol = new Map<string, OpenLot[]>()
+  const roundTrips: Array<DiaryEntry & { sourceExternalId: string; sourcePlatform: string }> = []
+
+  const normalizedFills = fills
+    .map(fill => {
+      const symbol = normalizeKrakenFuturesSymbol(fill.symbol)
+      const qty = Number(fill.size || 0)
+      const price = Number(fill.price || 0)
+      const fee = Number(fill.fee ?? fill.feePaid ?? 0) || 0
+      const timestamp = Date.parse(fill.fillTime || '')
+
+      return {
+        ...fill,
+        symbol,
+        qty,
+        price,
+        fee,
+        timestamp
+      }
+    })
+    .filter(fill => fill.symbol && fill.qty > epsilon && fill.price > epsilon && Number.isFinite(fill.timestamp))
+    .sort((left, right) => left.timestamp - right.timestamp)
+
+  normalizedFills.forEach((fill) => {
+    const lots = openLotsBySymbol.get(fill.symbol) || []
+    const closingSide = fill.side === 'buy' ? 'Short' : 'Long'
+    const openingSide = fill.side === 'buy' ? 'Long' : 'Short'
+    let remainingQty = fill.qty
+    let consumedQty = 0
+    let entryCost = 0
+    let allocatedEntryFee = 0
+    let firstEntryDate: Date | null = null
+    const consumedFillIds: string[] = []
+
+    while (remainingQty > epsilon && lots.length && lots[0]?.side === closingSide) {
+      const currentLot = lots[0]!
+      const matchedQty = Math.min(currentLot.remainingQty, remainingQty)
+      const lotShare = matchedQty / currentLot.remainingQty
+
+      if (!firstEntryDate) {
+        firstEntryDate = currentLot.date
+      }
+
+      consumedQty += matchedQty
+      entryCost += matchedQty * currentLot.price
+      allocatedEntryFee += currentLot.fee * lotShare
+      if (!consumedFillIds.includes(currentLot.fillId)) {
+        consumedFillIds.push(currentLot.fillId)
+      }
+
+      currentLot.remainingQty -= matchedQty
+      currentLot.fee -= currentLot.fee * lotShare
+      remainingQty -= matchedQty
+
+      if (currentLot.remainingQty <= epsilon) {
+        lots.shift()
+      }
+    }
+
+    if (consumedQty > epsilon && firstEntryDate) {
+      const exitFee = fill.fee * (consumedQty / fill.qty)
+      const side = closingSide
+      const profit = side === 'Long'
+        ? (fill.price * consumedQty) - entryCost - allocatedEntryFee - exitFee
+        : entryCost - (fill.price * consumedQty) - allocatedEntryFee - exitFee
+      const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
+
+      roundTrips.push({
+        id: `kraken-futures-close-${fill.fill_id}`,
+        date: firstEntryDate,
+        dateExit: new Date(fill.timestamp),
+        asset: resolvedAsset.symbol,
+        side,
+        entry: entryCost / consumedQty,
+        exit: fill.price,
+        size: consumedQty,
+        entryFee: allocatedEntryFee,
+        exitFee,
+        feeType: 'Fixed',
+        currency: inferQuoteCurrency(fill.symbol),
+        assetType: resolvedAsset.assetType,
+        assetIcon: resolvedAsset.assetIcon,
+        profitInCurrency: profit,
+        result: profit,
+        notes: `Imported from Kraken Futures.\nOpenFills: ${consumedFillIds.join(', ')}\nCloseFill: ${fill.fill_id}\nOrderId: ${fill.order_id}\nSymbol: ${fill.symbol}\nFillType: ${fill.fillType || 'unknown'}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        source: 'kraken-futures',
+        sourceExternalId: `futures-close:${fill.fill_id}`,
+        sourcePlatform: 'Kraken Futures'
+      } as DiaryEntry & { sourceExternalId: string; sourcePlatform: string })
+    }
+
+    if (remainingQty > epsilon) {
+      lots.push({
+        fillId: fill.fill_id,
+        symbol: fill.symbol,
+        side: openingSide,
+        date: new Date(fill.timestamp),
+        remainingQty,
+        price: fill.price,
+        fee: fill.fee * (remainingQty / fill.qty)
+      })
+    }
+
+    openLotsBySymbol.set(fill.symbol, lots)
+  })
+
+  return roundTrips
+}
+
+const normalizeKrakenPair = (pair: string) => {
+  return String(pair || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .replace(/^XXBT/, 'BTC')
+    .replace(/^XBT/, 'BTC')
+    .replace(/^XETH/, 'ETH')
+    .replace(/^X(?=[A-Z0-9]{3,})/, '')
+    .replace(/^Z(?=[A-Z0-9]{3,})/, '')
+    .replace(/XXBT$/, 'BTC')
+    .replace(/XBT$/, 'BTC')
+    .replace(/ZUSD$/, 'USD')
+    .replace(/ZEUR$/, 'EUR')
+    .replace(/ZGBP$/, 'GBP')
+}
+
+const normalizeKrakenFuturesSymbol = (symbol: string) => {
+  const normalized = String(symbol || '').toUpperCase().replace(/[^A-Z0-9_]/g, '')
+  const compact = normalized
+    .replace(/^PF_/, '')
+    .replace(/^FI_/, '')
+    .replace(/_[0-9]{6,8}$/, '')
+    .replace(/^XBT/, 'BTC')
+    .replace(/XBT/, 'BTC')
+
+  return compact
+}
+
+const inferQuoteCurrency = (symbol: string) => {
+  const quotes = ['USDT', 'USDC', 'USD', 'EUR', 'GBP', 'BTC', 'ETH']
+  return quotes.find(quote => symbol.endsWith(quote)) || 'USD'
 }
 
 const readBybitSpotFee = (order: BybitHistoricOrder) => {
