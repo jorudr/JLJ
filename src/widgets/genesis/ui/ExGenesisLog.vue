@@ -268,12 +268,6 @@
                            <span class="text-[8px] font-mono opacity-30 text-black dark:text-white uppercase">{{ t('genesis.virtualLog.duration') }}</span>
                            <span class="text-sm font-mono font-bold text-black dark:text-white tracking-widest">{{ calculateDuration(selectedTrade) }}</span>
                          </div>
-                         <div v-if="methodLabels.length > 0" class="flex items-baseline justify-between mt-2 pt-2 border-t border-black/5 dark:border-white/5">
-                           <span class="text-[8px] font-mono opacity-30 text-emerald-500 uppercase">{{ locale === 'ru' ? 'МЕТОД' : 'METHOD' }}</span>
-                           <span class="text-[9px] font-mono font-bold text-emerald-500 tracking-widest uppercase text-right">
-                             {{ methodLabels.join(' + ') }}
-                           </span>
-                         </div>
                       </div>
                     </div>
 
