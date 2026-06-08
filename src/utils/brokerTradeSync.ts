@@ -193,8 +193,8 @@ const buildBybitDerivativeTrades = (trades: Array<BybitClosedPnl & { market: 'li
 
       return {
         id: `bybit-${trade.market}-${trade.orderId}`,
-        date: new Date(Number(trade.createdTime)),
-        dateExit: new Date(Number(trade.updatedTime || trade.createdTime)),
+        date: new Date(Number(trade.createdTime)).toISOString() as any,
+        dateExit: new Date(Number(trade.updatedTime || trade.createdTime)).toISOString() as any,
         asset: resolvedAsset.symbol,
         side,
         entry: Number(trade.avgEntryPrice),
@@ -275,7 +275,7 @@ const buildLongSpotRoundTrips = (
   fills.sort((left, right) => left.timestamp - right.timestamp).forEach((fill) => {
     const lots = openLotsBySymbol.get(fill.symbol) || []
     if (fill.side === 'buy') {
-      lots.push({ id: fill.id, date: new Date(fill.timestamp), remainingQty: fill.qty, price: fill.price, fee: fill.fee })
+      lots.push({ id: fill.id, date: new Date(fill.timestamp).toISOString() as any, remainingQty: fill.qty, price: fill.price, fee: fill.fee })
       openLotsBySymbol.set(fill.symbol, lots)
       return
     }
@@ -312,8 +312,8 @@ const buildLongSpotRoundTrips = (
     const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
     roundTrips.push({
       id: `${source}-${externalPrefix}-${fill.id}`,
-      date: firstEntryDate,
-      dateExit: new Date(fill.timestamp),
+      date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
+      dateExit: new Date(fill.timestamp).toISOString() as any,
       asset: resolvedAsset.symbol,
       side: 'Long',
       entry: entryCost / consumedQty,
@@ -390,8 +390,8 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
         const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
         roundTrips.push({
           id: `kraken-futures-close-${fill.fill_id}`,
-          date: firstEntryDate,
-          dateExit: new Date(fill.timestamp),
+          date: (firstEntryDate ? (firstEntryDate instanceof Date ? firstEntryDate.toISOString() : firstEntryDate) : new Date(fill.timestamp).toISOString()) as any,
+          dateExit: new Date(fill.timestamp).toISOString() as any,
           asset: resolvedAsset.symbol,
           side: closingSide,
           entry: entryCost / consumedQty,
@@ -416,7 +416,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
         lots.push({
           fillId: fill.fill_id,
           side: openingSide,
-          date: new Date(fill.timestamp),
+          date: new Date(fill.timestamp).toISOString() as any,
           remainingQty,
           price: fill.priceNum,
           fee: fill.feeNum * (remainingQty / fill.qty)
@@ -457,7 +457,23 @@ const normalizeKrakenPair = (pair: string) => {
     .replace(/ZGBP$/, 'GBP')
 }
 
+const safeParseDateStr = (val: string | number) => {
+  let str = String(val || '').trim()
+  // Replace space with T
+  str = str.replace(' ', 'T')
+  // Truncate microseconds (e.g. .123456 -> .123) which break Safari Date.parse
+  str = str.replace(/(\.\d{3})\d+(Z|[\+\-]\d{2}:?\d{2})?$/, '$1$2')
+  // Append 'Z' to ISO strings missing timezone offset
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
+    str += 'Z'
+  }
+  return str
+}
+
 const parseKrakenSpotTimestamp = (value: number | string) => {
+  const parsed = Date.parse(safeParseDateStr(value))
+  if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
+
   const numeric = Number(value || 0)
   if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
   return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
@@ -471,12 +487,7 @@ const readKrakenFuturesFillTimestamp = (fill: KrakenFuturesFill) => {
 }
 
 const parseKrakenFuturesTimestamp = (value: string | number) => {
-  let str = String(value || '').trim()
-  // Append 'Z' to ISO strings missing timezone offset to prevent WebKit parse errors
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
-    str += 'Z'
-  }
-  const parsed = Date.parse(str)
+  const parsed = Date.parse(safeParseDateStr(value))
   if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
 
   const numeric = Number(value || 0)
@@ -488,13 +499,7 @@ const hasIntradayTimestampPrecision = (value: string | number) => {
   const numeric = Number(value)
   if (Number.isFinite(numeric) && numeric > 0) return true
 
-  let str = String(value || '').trim()
-  // Append 'Z' to ISO strings missing timezone offset to prevent WebKit parse errors
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(str)) {
-    str += 'Z'
-  }
-  
-  const parsed = Date.parse(str)
+  const parsed = Date.parse(safeParseDateStr(value))
   if (!Number.isFinite(parsed) || isNaN(parsed)) return false
 
   const date = new Date(parsed)
