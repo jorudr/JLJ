@@ -117,7 +117,7 @@
 
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
       <div
-        v-if="isHudVisible"
+        v-if="isHudVisible && !isTradeEntryOpen"
         class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
       >
@@ -188,7 +188,7 @@
     <!-- TACTICAL PROTOCOL INSIGHT (FIXED RIGHT - ARCHIVE) -->
     <Teleport to="body">
        <Transition name="panel-slide" mode="out-in">
-          <div v-if="selectedTrade && !showExtraDetails && !showNodeMap" 
+          <div v-if="selectedTrade && !showExtraDetails && !showNodeMap && !isTradeEntryOpen" 
                key="trade-archive-insight"
                class="fixed right-12 top-1/2 -translate-y-1/2 w-[440px] z-[10005] transition-colors duration-500">
              
@@ -305,6 +305,17 @@
                     <ExButton 
                       variant="solid" 
                       class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
+                      @click="editTrade(selectedTrade)"
+                      :title="locale === 'ru' ? 'Редактировать сделку' : 'Edit Trade'"
+                    >
+                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                       </svg>
+                    </ExButton>
+                    <ExButton 
+                      variant="solid" 
+                      class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
                       @click="showShareCardModal = true"
                       :title="locale === 'ru' ? 'Сгенерировать Карточку' : 'Generate Share Card'"
                     >
@@ -361,7 +372,7 @@
     </div>
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible && viewType !== 'tree'" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && isHudVisible && viewType !== 'tree' && !isTradeEntryOpen" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
@@ -437,12 +448,16 @@
     </div>
   </div>
 
-  <Transition name="page-reify">
-     <ExTradeEntry v-if="isTradeEntryOpen" 
-                   class="absolute inset-0 z-[1000]"
-                   @close="isTradeEntryOpen = false" 
-                   @addTrade="isTradeEntryOpen = false" />
-  </Transition>
+  <Teleport to="body">
+    <Transition name="page-reify">
+       <ExTradeEntry v-if="isTradeEntryOpen" 
+                     class="fixed inset-0 z-[9999] w-screen h-screen"
+                     :initial-trade="editingTrade"
+                     @close="isTradeEntryOpen = false; editingTrade = undefined" 
+                     @addTrade="isTradeEntryOpen = false; editingTrade = undefined"
+                     @updateTrade="isTradeEntryOpen = false; editingTrade = undefined" />
+    </Transition>
+  </Teleport>
 
     <Teleport to="body">
        <Transition name="fade-blur">
@@ -517,7 +532,7 @@
                   <div class="w-2 h-2 bg-black dark:bg-white animate-pulse"></div>
                 </div>
                 <span class="text-xs uppercase tracking-widest font-mono font-bold text-black dark:text-white">{{ t('genesis.virtualLog.customTemporalLock') }}</span>
-                <p class="text-[10px] font-mono text-black/40 dark:text-white/40 tracking-wider mb-4 leading-relaxed">
+                <p class="text-[10px] font-mono text-black/40 dark:bg-white/40 tracking-wider mb-4 leading-relaxed">
                   {{ t('genesis.virtualLog.temporalDescription') }}
                 </p>
                 <button @click="customDate = new Date(); syncTempParts()" 
@@ -718,6 +733,13 @@ const downloadCardPng = async () => {
 
 const viewType = ref<'cube' | 'list' | 'tree'>('cube')
 const selectedTradeId = ref<string | null>(null)
+const editingTrade = ref<any>(undefined)
+
+const editTrade = (trade: any) => {
+  editingTrade.value = trade
+  isTradeEntryOpen.value = true
+}
+
 const showExtraDetails = ref(false)
 const panelInitialPage = ref<number | undefined>(undefined)
 const panelInitialNoteId = ref<string | undefined>(undefined)
@@ -1076,19 +1098,19 @@ const calculateRR = (trade: any) => {
 }
 
 const getEntryFeeDisplay = (trade: any) => {
-  if (!trade || (!trade.entryFee && trade.entryFee !== 0)) return '0.00$'
+  if (!trade || (!trade.entryFee && trade.entryFee !== 0)) return '0$'
   if (trade.feeType === '%') {
-    return ((+trade.entry * +trade.entryFee) / 100).toFixed(2) + '$'
+    return parseFloat((((+trade.entry * +trade.entryFee) / 100)).toFixed(8)).toString() + '$'
   }
-  return (+trade.entryFee).toFixed(2) + '$'
+  return parseFloat((+trade.entryFee).toFixed(8)).toString() + '$'
 }
 
 const getExitFeeDisplay = (trade: any) => {
-  if (!trade || (!trade.exitFee && trade.exitFee !== 0)) return '0.00$'
+  if (!trade || (!trade.exitFee && trade.exitFee !== 0)) return '0$'
   if (trade.feeType === '%') {
-    return ((+trade.exit * +trade.exitFee) / 100).toFixed(2) + '$'
+    return parseFloat((((+trade.exit * +trade.exitFee) / 100)).toFixed(8)).toString() + '$'
   }
-  return (+trade.exitFee).toFixed(2) + '$'
+  return parseFloat((+trade.exitFee).toFixed(8)).toString() + '$'
 }
 
 const calculateDuration = (trade: any) => {

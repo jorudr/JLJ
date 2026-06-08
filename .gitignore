@@ -30,4 +30,5 @@ dist/
 .DS_Store
 .env
 
-src-tauri/target/
+src-tauri/target/public/brokers/saev1.safetensors
+public/brokers/saev1.safetensors

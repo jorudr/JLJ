@@ -15,7 +15,13 @@ import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 
 const { locale } = useI18n()
 
-const emit = defineEmits(['addTrade', 'close'])
+const emit = defineEmits(['addTrade', 'updateTrade', 'close'])
+const props = defineProps({
+  initialTrade: {
+    type: Object,
+    default: null
+  }
+})
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 
@@ -275,6 +281,95 @@ onMounted(() => {
   window.addEventListener('click', closeAssetMenu)
   loadMatrixData()
   tradeStore.init()
+
+  if (props.initialTrade) {
+    const t = props.initialTrade
+    if (t.strategyId) {
+      selectedStrategyId.value = t.strategyId
+    }
+    asset.value = t.asset || ''
+    side.value = t.side?.toLowerCase() === 'short' ? 'short' : 'long'
+    
+    // Reverse-engineer the executions into the component's entry/exit arrays
+    if (t.executions && t.executions.length > 0) {
+      const entryExecs = t.executions.filter(e => e.type === 'ENTRY')
+      const exitExecs = t.executions.filter(e => e.type === 'EXIT')
+      
+      if (entryExecs.length > 0) {
+        entryMethodEnabled.value = true
+        activeProtocolTab.value = 'PYRAMIDING'
+        entryMethodType.value = 'PYRAMIDING'
+        pyramidingEntries.value = entryExecs.map(e => ({
+          price: e.price,
+          size: e.size,
+          fee: e.fee || 0
+        }))
+      } else {
+        entryMethodEnabled.value = false
+        entry.value = t.entry || ''
+        size.value = t.size || ''
+        entryFee.value = t.entryFee || ''
+      }
+      
+      if (exitExecs.length > 0) {
+        exitMethodEnabled.value = true
+        exitExecutions.value = exitExecs.map(e => ({
+          price: e.price,
+          size: e.size,
+          fee: e.fee || 0,
+          reason: e.reason || 'MANUAL'
+        }))
+      } else {
+        exitMethodEnabled.value = false
+        exit.value = t.exit || ''
+        exitFee.value = t.exitFee || ''
+      }
+    } else {
+      entryMethodEnabled.value = false
+      exitMethodEnabled.value = false
+      entry.value = t.entry || ''
+      exit.value = t.exit || ''
+      size.value = t.size || ''
+      entryFee.value = t.entryFee || ''
+      exitFee.value = t.exitFee || ''
+    }
+
+    feeType.value = t.feeType || '%'
+    stopLoss.value = t.stopLoss || ''
+    takeProfit.value = t.takeProfit || ''
+    openDate.value = t.date ? new Date(t.date) : new Date()
+    exitDate.value = t.dateExit ? new Date(t.dateExit) : new Date()
+    selectedEmotions.value = Array.isArray(t.emotions) ? [...t.emotions] : []
+
+    if (t.images && Array.isArray(t.images)) {
+      journalEntries.value = t.images.map((img, index) => ({
+        id: Date.now() + index,
+        image: img.url,
+        name: img.name,
+        tags: img.tags || [],
+        tagInput: '',
+        createdAt: img.createdAt || new Date().toISOString()
+      }))
+    }
+
+    // Reconstruct active conditions
+    const reconstructConditions = (scenario) => {
+      const conds = scenario?.info?.conditions || scenario?.conditions
+      if (!conds) return
+      conds.forEach(cond => {
+        if (cond.indicatorUnits) {
+          cond.indicatorUnits.forEach(unit => {
+            if (unit.type === 'bundle') unit.items?.forEach(i => activeConditions.value.add(i.id))
+            else if (unit.type === 'single' && unit.item) activeConditions.value.add(unit.item.id)
+          })
+        } else if (cond.id) {
+          activeConditions.value.add(cond.id)
+        }
+      })
+    }
+    reconstructConditions(t.boardScenarioEntry)
+    reconstructConditions(t.boardScenarioExit)
+  }
 })
 
 const selectedScenarioNode = computed(() => {
@@ -420,8 +515,13 @@ const toggleCondition = (id, scenarioId = null) => {
   // 2. Scenario Exclusivity Logic: Clear conditions from other scenarios of the same type
   if (targetScenarioId) {
     const getScenarioType = (scenId) => {
-      if (scenId.includes('-entry-')) return 'ENTRY'
-      if (scenId.includes('-exit-')) return 'EXIT'
+      if (!scenId) return 'ENTRY'
+      const strId = String(scenId)
+      if (strId === 'default-exit-system') return 'SYSTEM_EXIT'
+      if (strId.includes('-entry-')) return 'ENTRY'
+      if (strId.includes('-exit-')) return 'EXIT'
+      const node = findNodeById(matrixNodes.value, scenId)
+      if (node?.params?.phase) return node.params.phase.toUpperCase()
       const zoneType = getNodeZoneType(scenId, matrixNodes.value, matrixZones.value)
       return zoneType || 'ENTRY'
     }
@@ -1282,7 +1382,32 @@ const hasValidProjection = computed(() => {
 })
 
 const equityCurveTrades = computed(() => {
-  const historical = tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  let historical = tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  console.log('[DEBUG equityCurveTrades] Strat:', selectedStrategyId.value, 'Total historical:', historical.length)
+  
+  if (props.initialTrade) {
+    const initialDateStr = props.initialTrade.dateExit || props.initialTrade.date
+    if (initialDateStr) {
+      const initialDate = new Date(initialDateStr)
+      const initialTime = initialDate.getTime()
+      
+      historical = historical.filter(t => {
+        if (t.id === props.initialTrade.id) return false
+        const tDateStr = t.dateExit || t.date
+        if (!tDateStr) return true
+        
+        const tDate = new Date(tDateStr)
+        const tTime = tDate.getTime()
+        
+        // If either date is invalid, safely include the trade so we don't wipe the history
+        if (isNaN(tTime) || isNaN(initialTime)) return true
+        
+        return tTime <= initialTime
+      })
+    } else {
+      historical = historical.filter(t => t.id !== props.initialTrade.id)
+    }
+  }
   const currentPnl = pnl.value
   
   if (!hasValidProjection.value) return historical
@@ -1607,7 +1732,14 @@ const submit = async () => {
 
   commitState.value = 'loading'
   
-  await tradeStore.addTrade(selectedStrategyId.value, newTrade)
+  if (props.initialTrade) {
+    const updatedTrade = { ...props.initialTrade, ...newTrade, id: props.initialTrade.id }
+    await tradeStore.updateTrade(selectedStrategyId.value, updatedTrade.id, updatedTrade)
+    emit('updateTrade', updatedTrade)
+  } else {
+    await tradeStore.addTrade(selectedStrategyId.value, newTrade)
+    emit('addTrade', newTrade)
+  }
   
   await new Promise(resolve => setTimeout(resolve, 1000))
   
@@ -1991,6 +2123,8 @@ const submit = async () => {
                   <div class="flex gap-4">
                      <span class="text-[7px] font-mono tracking-widest uppercase">Encryption: AES_256</span>
                      <span class="text-[7px] font-mono tracking-widest uppercase">Lattice: v1.0.42</span>
+                     <!-- DEBUG UI -->
+                     <span class="text-[7px] font-mono tracking-widest uppercase text-red-400">DEBUG_STRAT: {{ selectedStrategyId }} | HIST: {{ equityCurveTrades.length }}</span>
                   </div>
                </div>
             </div>
@@ -2476,7 +2610,9 @@ const submit = async () => {
             <button @click="submit" :disabled="commitState !== 'idle'" 
                     class="group relative h-9 px-6 bg-white/10 border border-white/30 transition-all duration-300 flex items-center justify-center min-w-[120px]"
                     :class="commitState === 'idle' ? 'hover:bg-white cursor-pointer' : 'cursor-not-allowed'">
-              <span v-if="commitState === 'idle'" class="relative z-10 text-[9px] uppercase tracking-[0.5em] font-black text-white group-hover:text-black">Commit</span>
+              <span v-if="commitState === 'idle'" class="relative z-10 text-[9px] uppercase tracking-[0.5em] font-black text-white group-hover:text-black">
+                {{ props.initialTrade ? (isRu ? 'ОБНОВИТЬ' : 'UPDATE') : (isRu ? 'СОХРАНИТЬ' : 'COMMIT') }}
+              </span>
               <div v-else-if="commitState === 'loading'" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
               <svg v-else-if="commitState === 'success'" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M5 13l4 4L19 7"></path>

@@ -10,7 +10,7 @@
          <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ isRu ? 'ЗАКРЫТЬ_ПАНЕЛЬ' : 'Close_Panel' }}</span>
       </button>
 
-      <ExPanel no-padding class="!w-[800px] !max-w-[96vw] overflow-hidden !bg-white dark:!bg-[#0a0a0a] transition-all duration-500">
+      <ExPanel no-padding class="!w-[800px] !max-w-[96vw] !bg-white dark:!bg-[#0a0a0a] transition-all duration-500">
         <div class="flex h-[640px] max-h-[90vh] text-black dark:text-white overflow-hidden relative">
           <div class="w-full h-full flex flex-col absolute inset-0">
             
@@ -624,7 +624,7 @@ const importBybitTrades = async (credentials: BybitCredentials) => {
       size: Number(trade.closedSize),
       entryFee,
       exitFee,
-      feeType: 'Fixed',
+      feeType: '$',
       currency: 'USDT',
       assetType: resolvedAsset.assetType,
       assetIcon: resolvedAsset.assetIcon,
@@ -824,7 +824,7 @@ const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
       size: consumedQty,
       entryFee: allocatedEntryFee,
       exitFee,
-      feeType: 'Fixed',
+      feeType: '$',
       currency: 'USDT',
       assetType: resolvedAsset.assetType,
       assetIcon: resolvedAsset.assetIcon,
@@ -948,7 +948,7 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
       size: consumedQty,
       entryFee: allocatedEntryFee,
       exitFee,
-      feeType: 'Fixed',
+      feeType: '$',
       currency: inferQuoteCurrency(fill.symbol),
       assetType: resolvedAsset.assetType,
       assetIcon: resolvedAsset.assetIcon,
@@ -1056,7 +1056,7 @@ const buildKrakenFuturesRoundTrips = (fills: KrakenFuturesFill[]) => {
         size: consumedQty,
         entryFee: allocatedEntryFee,
         exitFee,
-        feeType: 'Fixed',
+        feeType: '$',
         currency: inferQuoteCurrency(fill.symbol),
         assetType: resolvedAsset.assetType,
         assetIcon: resolvedAsset.assetIcon,

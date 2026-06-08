@@ -158,13 +158,14 @@ const points = computed(() => {
     baseTrades = baseTrades.filter(t => {
       if ((t as any).isProjection) return true
       const tDate = new Date(t.dateExit || t.date).getTime()
+      if (isNaN(tDate) || isNaN(projDate)) return true // Keep invalid dates so we don't wipe history
       return tDate <= projDate
     })
   }
 
   const sortedTrades = baseTrades.sort((a, b) => {
-    const dateA = new Date(a.dateExit || a.date).getTime()
-    const dateB = new Date(b.dateExit || b.date).getTime()
+    const dateA = new Date(a.dateExit || a.date).getTime() || 0
+    const dateB = new Date(b.dateExit || b.date).getTime() || 0
     return dateA - dateB
   })
 
