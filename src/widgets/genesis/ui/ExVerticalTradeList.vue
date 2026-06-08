@@ -406,10 +406,13 @@
                       <div
                         v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
                         :key="exec.id || `entry-${index}`"
-                        class="flex items-center justify-end gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                        class="flex items-center justify-end gap-2 pb-1 border-b border-black/5 dark:border-white/5"
                       >
                         <span class="font-bold whitespace-nowrap text-right">
                           {{ formatExecutionRow(exec) }}
+                        </span>
+                        <span v-if="Number(index) > 0" class="text-[8px] uppercase tracking-wider opacity-60">
+                          {{ getEntryMethodType(trade, exec, Number(index)) }}
                         </span>
                       </div>
                     </div>
@@ -533,9 +536,29 @@ const getMethodLabel = (group: any[]) => {
 }
 
 const formatExecutionRow = (exec: any) => {
-  const price = Number(exec?.price || 0).toFixed(2)
+  const price = Number(exec?.price || 0)
   const size = Number(exec?.size || 0)
   return `${price} · ${size} L`
+}
+
+const getEntryMethodType = (trade: any, exec: any, index: number | string) => {
+  if (Number(index) === 0) return ''
+  const entries = getExecutionGroup(trade, 'entry')
+  const firstPrice = Number(entries[0]?.price || 0)
+  const currentPrice = Number(exec?.price || 0)
+  
+  let sideStr = String(trade?.side || '').toUpperCase()
+  if (!sideStr && entries.length > 0) {
+    sideStr = String(entries[0]?.side || '').toUpperCase()
+  }
+  
+  const isLong = sideStr === 'LONG' || sideStr === 'BUY' || sideStr === ''
+  
+  if (isLong) {
+    return currentPrice > firstPrice ? 'PYRAMIDING' : 'AVERAGING DOWN'
+  } else {
+    return currentPrice < firstPrice ? 'PYRAMIDING' : 'AVERAGING DOWN'
+  }
 }
 
 const hasExecutionBreakdown = (trade: any) => {
