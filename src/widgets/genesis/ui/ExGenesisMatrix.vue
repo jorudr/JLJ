@@ -1217,7 +1217,10 @@
         <Transition name="fade">
           <div v-if="isClearPanelOpen" class="fixed inset-0 z-[10000000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
              <div class="w-full max-w-lg">
-                <ExPanel title="SYSTEM_PURGE_PROTOCOL" telemetry="0x44_ERASE // ALERT">
+                <ExPanel variant="light">
+                   <template #telemetry>
+                      <span class="sr-only">Purge panel controls</span>
+                   </template>
                    <div class="flex flex-col space-y-6">
                       <div class="flex items-start space-x-6">
                          <div class="flex-shrink-0 w-12 h-12 border border-red-500/40 flex items-center justify-center text-red-500">

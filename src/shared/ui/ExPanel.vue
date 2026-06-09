@@ -51,6 +51,12 @@ const bottomRightClasses = computed(() =>
       { 'p-0': noPadding },
       noShadow ? 'shadow-none dark:shadow-none' : 'shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
     ]"
+    :style="variant === 'light'
+      ? {
+          backdropFilter: 'blur(18px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(140%)'
+        }
+      : undefined"
   >
     <template v-if="showCorners">
       <ExGothicCorners :variant="variant" :opacity="0.9" />
