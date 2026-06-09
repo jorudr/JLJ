@@ -49,7 +49,7 @@ const offsetClasses = computed(() =>
             <image :href="cornerAsset" x="0" y="0" width="200%" height="200%" />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="currentColor" :mask="`url(#corner-tl-${instanceId})`" />
+        <rect x="1" y="1" width="98" height="98" fill="currentColor" :mask="`url(#corner-tl-${instanceId})`" />
       </svg>
     </div>
 
@@ -61,7 +61,7 @@ const offsetClasses = computed(() =>
             <image :href="cornerAsset" x="-100%" y="-100%" width="200%" height="200%" />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="currentColor" :mask="`url(#corner-br-${instanceId})`" />
+        <rect x="1" y="1" width="98" height="98" fill="currentColor" :mask="`url(#corner-br-${instanceId})`" />
       </svg>
     </div>
   </div>

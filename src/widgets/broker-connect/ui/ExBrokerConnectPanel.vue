@@ -1,6 +1,5 @@
 <template>
   <div class="fixed inset-0 z-[2500] flex items-center justify-center bg-black/45 px-6 transition-all"
-       style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
        @click.self="$emit('close')">
     <div class="relative">
       <!-- CLOSE HANDLE (RIGHT EDGE) -->
@@ -10,7 +9,7 @@
          <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ isRu ? 'ЗАКРЫТЬ_ПАНЕЛЬ' : 'Close_Panel' }}</span>
       </button>
 
-      <ExPanel no-padding class="!w-[800px] !max-w-[96vw] !bg-white dark:!bg-[#0a0a0a] transition-all duration-500">
+      <ExPanel variant="light" no-padding class="!w-[800px] !max-w-[96vw] transition-all duration-500">
         <div class="flex h-[640px] max-h-[90vh] text-black dark:text-white overflow-hidden relative">
           <div class="w-full h-full flex flex-col absolute inset-0">
             

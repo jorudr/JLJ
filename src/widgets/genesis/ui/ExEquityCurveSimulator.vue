@@ -1,8 +1,9 @@
 <template>
-  <div class="fixed inset-0 z-[5000] bg-white dark:bg-[#070707] text-black dark:text-white font-mono selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black overflow-hidden">
+  <div class="fixed inset-0 z-[5000] text-black dark:text-white font-mono selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black overflow-hidden"
+       :class="hasRun ? 'bg-white dark:bg-[#070707]' : 'bg-transparent'">
     
     <!-- ETHEREAL VIGNETTE (From main app) -->
-    <DesignVignette :is-dark="themeStore.settings.isDark" class="z-20 pointer-events-none" />
+    <DesignVignette v-if="!showParams" :is-dark="themeStore.settings.isDark" class="z-20 pointer-events-none" />
 
     <!-- 3D CANVAS LAYER -->
     <canvas ref="canvasRef"
@@ -15,11 +16,11 @@
     </canvas>
 
     <!-- ETHEREAL VIGNETTE (From main app) -->
-    <DesignVignette :is-dark="themeStore.settings.isDark" class="z-20 pointer-events-none" />
+    <DesignVignette v-if="!showParams" :is-dark="themeStore.settings.isDark" class="z-20 pointer-events-none" />
 
     <!-- NAVIGATION CONTROLS -->
     <div class="absolute top-12 left-12 z-50 pointer-events-auto flex items-center space-x-8">
-      <button @click="$emit('close')" class="group flex items-center space-x-4 opacity-40 hover:opacity-100 transition-all duration-500">
+      <button v-if="hasRun" @click="$emit('close')" class="group flex items-center space-x-4 opacity-40 hover:opacity-100 transition-all duration-500">
         <div class="w-2 h-2 border border-black dark:border-white rotate-45 group-hover:bg-black dark:group-hover:bg-white transition-colors"></div>
         <div class="text-[10px] font-mono tracking-[0.4em] uppercase text-black dark:text-white">EXIT</div>
       </button>
@@ -32,13 +33,13 @@
 
     <!-- PARAMETERS MODAL (INITIAL STATE) -->
     <Transition name="protocol-slide">
-      <div v-if="showParams" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 backdrop-blur-md">
-        <div class="w-[500px] bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-12 relative overflow-hidden">
-          <!-- Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40"></div>
+      <div v-if="showParams" 
+           class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 px-6 transition-all"
+           @click.self="hasRun ? showParams = false : $emit('close')">
+        <ExPanel variant="light" no-shadow class="!w-[500px] relative overflow-visible">
+          <template #header>&nbsp;</template>
           
-          <div class="flex flex-col space-y-8 relative z-10">
+          <div class="flex flex-col space-y-8 relative z-10 p-4">
             <div class="flex flex-col">
               <span class="text-[8px] font-mono tracking-[0.5em] opacity-40 uppercase">Probabilistic_Projection_Module</span>
               <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">EQUITY_SIMULATOR</h2>
@@ -108,7 +109,7 @@
           <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
             <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 
@@ -187,6 +188,7 @@
 import { computed, ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useThemeStore } from '~/features/store/useTheme';
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue';
+import ExPanel from '~/shared/ui/ExPanel.vue';
 
 const themeStore = useThemeStore();
 

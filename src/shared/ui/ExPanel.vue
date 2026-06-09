@@ -53,8 +53,8 @@ const bottomRightClasses = computed(() =>
     ]"
     :style="variant === 'light'
       ? {
-          backdropFilter: 'blur(18px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(18px) saturate(140%)'
+          backdropFilter: 'blur(16px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(140%)'
         }
       : undefined"
   >
