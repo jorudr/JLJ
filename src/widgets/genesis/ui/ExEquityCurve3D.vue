@@ -541,12 +541,12 @@
     <!-- METRIC DEEP DIVE DESCRIPTION MODAL -->
     <Transition name="protocol-slide">
       <div v-if="selectedDeepDiveMetricKey" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md"
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 px-6 transition-all"
            @click.self="selectedDeepDiveMetricKey = null">
-         <div v-if="allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)"
-              class="w-[950px] max-h-[85vh] bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-8 relative flex flex-col overflow-visible">
-          <!-- Gothic Corners -->
-          <ExGothicCorners variant="standard" :opacity="0.8" class="text-black dark:text-white" />
+         <ExPanel v-if="allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)"
+                  variant="light" no-shadow noPadding
+                  class="!w-[950px] !max-w-[95vw] !max-h-[85vh] relative overflow-visible">
+          <template #header>&nbsp;</template>
           
           <!-- SIDE-MOUNTED CLOSE TAB -->
           <button @click="selectedDeepDiveMetricKey = null"
@@ -555,76 +555,77 @@
              <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Description</span>
           </button>
           
-          <!-- HEADER -->
-          <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10">
-            <div class="flex items-center space-x-4">
-              <span class="text-2xl font-serif font-light uppercase tracking-[0.3em] text-black dark:text-white">
-                {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.label.replaceAll('_', ' ') }}
-              </span>
-              <span class="text-[10px] font-serif font-light px-3 py-1 border border-black/10 dark:border-white/10 text-black/60 dark:text-white/60 tracking-widest uppercase">
-                {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.category }}
-              </span>
-              <span class="text-[10px] font-serif font-light opacity-50 px-3 py-1 border border-black/10 dark:border-white/10 text-black dark:text-white tracking-widest uppercase">
-                {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.sub }}
-              </span>
+          <div class="p-8 flex flex-col h-full overflow-hidden">
+            <!-- HEADER -->
+            <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10 shrink-0">
+              <div class="flex items-center space-x-4">
+                <span class="text-2xl font-serif font-light uppercase tracking-[0.3em] text-black dark:text-white">
+                  {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.label.replaceAll('_', ' ') }}
+                </span>
+                <span class="text-[10px] font-serif font-light px-3 py-1 border border-black/10 dark:border-white/10 text-black/60 dark:text-white/60 tracking-widest uppercase">
+                  {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.category }}
+                </span>
+                <span class="text-[10px] font-serif font-light opacity-50 px-3 py-1 border border-black/10 dark:border-white/10 text-black dark:text-white tracking-widest uppercase">
+                  {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.sub }}
+                </span>
+              </div>
+            </div>
+
+            <div class="space-y-8 relative z-10 flex-1 pr-2 overflow-y-auto custom-scrollbar">
+              <!-- DESCRIPTION & FORMULA -->
+              <div class="space-y-6">
+                <div class="flex flex-col space-y-2">
+                  <span class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Econometric_Definition</span>
+                  <div class="text-lg font-serif font-light leading-relaxed text-black dark:text-white tracking-wide space-y-2">
+                    <p class="opacity-90">
+                      {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.desc }}
+                    </p>
+                    <p class="opacity-70 italic text-[13px]">
+                      {{ getMetricRationale(selectedDeepDiveMetricKey) }}
+                    </p>
+                  </div>
+                </div>
+                <div class="pt-2 flex items-center justify-between">
+                  <div class="flex items-center space-x-4 w-full">
+                    <span class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-40">Formula:</span>
+                    <span class="text-xs text-black dark:text-white font-serif font-light italic tracking-widest flex-1">
+                      {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.formula }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VARIABLES USED -->
+              <div class="space-y-3">
+                <div class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Diagnostic_Variables_Used</div>
+                <div class="flex flex-col space-y-1.5">
+                  <div v-for="(v, i) in getMetricDeepDiveVariables(selectedDeepDiveMetricKey, strategyMetrics, sp500BenchmarkRate, riskFreeRate)" :key="i"
+                       class="py-1 flex items-center justify-between transition-all">
+                    <span class="text-sm font-serif font-light text-black dark:text-white opacity-70 tracking-wide">{{ v.name }}</span>
+                    <span class="text-sm font-serif font-light text-black dark:text-white tracking-widest">{{ v.val }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FULL CALCULATION STEP-BY-STEP -->
+              <div class="space-y-3">
+                <div class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Full_Calculation_Execution_Sequence</div>
+                <pre class="text-xs font-serif font-light text-black dark:text-white leading-relaxed whitespace-pre-wrap tracking-wide">{{ getMetricCalculationSteps(selectedDeepDiveMetricKey, strategyMetrics, sp500BenchmarkRate, riskFreeRate) }}</pre>
+              </div>
             </div>
           </div>
-
-          <div class="space-y-8 relative z-10 flex-1 pr-2 overflow-y-auto custom-scrollbar">
-            <!-- DESCRIPTION & FORMULA -->
-            <div class="space-y-6">
-              <div class="flex flex-col space-y-2">
-                <span class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Econometric_Definition</span>
-                <div class="text-lg font-serif font-light leading-relaxed text-black dark:text-white tracking-wide space-y-2">
-                  <p class="opacity-90">
-                    {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.desc }}
-                  </p>
-                  <p class="opacity-70 italic text-[13px]">
-                    {{ getMetricRationale(selectedDeepDiveMetricKey) }}
-                  </p>
-                </div>
-              </div>
-              <div class="pt-2 flex items-center justify-between">
-                <div class="flex items-center space-x-4 w-full">
-                  <span class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-40">Formula:</span>
-                  <span class="text-xs text-black dark:text-white font-serif font-light italic tracking-widest flex-1">
-                    {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.formula }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- VARIABLES USED -->
-            <div class="space-y-3">
-              <div class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Diagnostic_Variables_Used</div>
-              <div class="flex flex-col space-y-1.5">
-                <div v-for="(v, i) in getMetricDeepDiveVariables(selectedDeepDiveMetricKey, strategyMetrics, sp500BenchmarkRate, riskFreeRate)" :key="i"
-                     class="py-1 flex items-center justify-between transition-all">
-                  <span class="text-sm font-serif font-light text-black dark:text-white opacity-70 tracking-wide">{{ v.name }}</span>
-                  <span class="text-sm font-serif font-light text-black dark:text-white tracking-widest">{{ v.val }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- FULL CALCULATION STEP-BY-STEP -->
-            <div class="space-y-3">
-              <div class="text-[10px] font-serif font-light tracking-[0.3em] uppercase opacity-50 italic">Full_Calculation_Execution_Sequence</div>
-              <pre class="text-xs font-serif font-light text-black dark:text-white leading-relaxed whitespace-pre-wrap tracking-wide">{{ getMetricCalculationSteps(selectedDeepDiveMetricKey, strategyMetrics, sp500BenchmarkRate, riskFreeRate) }}</pre>
-            </div>
-          </div>
-        </div>
+         </ExPanel>
       </div>
     </Transition>
 
     <!-- ADD METRIC MODAL -->
     <Transition name="protocol-slide">
       <div v-if="showAddModal" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md"
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 px-6 transition-all"
            @click.self="showAddModal = false">
-        <div class="w-[1150px] max-h-[85vh] bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-8 relative flex flex-col overflow-visible">
-          <!-- Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40 pointer-events-none"></div>
+        <ExPanel variant="light" no-shadow noPadding
+                 class="!w-[1150px] !max-w-[95vw] !max-h-[85vh] relative overflow-visible">
+          <template #header>&nbsp;</template>
           
           <!-- SIDE-MOUNTED CLOSE TAB -->
           <button @click="showAddModal = false"
@@ -633,65 +634,67 @@
              <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Archive</span>
           </button>
           
-          <!-- SEARCH & CATEGORY FILTERS -->
-          <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10 space-x-6">
-            <div class="flex items-center space-x-4 flex-1">
-              <!-- Search Bar -->
-              <div class="relative flex-1">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40 dark:text-white/40">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input v-model="searchQuery" 
-                       type="text" 
-                       placeholder="SEARCH_METRICS_ARCHIVE..." 
-                       autocomplete="off"
-                       autocorrect="off"
-                       autocapitalize="off"
-                       spellcheck="false"
-                       class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 pl-10 pr-4 py-2.5 text-xs font-mono text-black dark:text-white placeholder:text-black/30 dark:placeholder:text-white/30 focus:outline-none focus:border-black/30 dark:focus:border-white/30 transition-all" />
-              </div>
-              
-              <!-- Category Filters -->
-              <div class="flex items-center space-x-1 bg-black/5 dark:bg-white/5 p-1 border border-black/10 dark:border-white/10">
-                <button v-for="cat in ['ALL', 'Primary', 'Advanced', 'Expert']" :key="cat"
-                        @click="selectedCategoryFilter = cat"
-                        class="px-4 py-1.5 text-[10px] font-mono tracking-widest uppercase transition-all"
-                        :class="selectedCategoryFilter === cat ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-[0_2px_10px_rgba(0,0,0,0.2)]' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'">
-                  {{ cat }}
-                </button>
+          <div class="p-8 flex flex-col h-full overflow-hidden">
+            <!-- SEARCH & CATEGORY FILTERS -->
+            <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6 mb-6 relative z-10 space-x-6 shrink-0">
+              <div class="flex items-center space-x-4 flex-1">
+                <!-- Search Bar -->
+                <div class="relative flex-1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40 dark:text-white/40">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input v-model="searchQuery" 
+                         type="text" 
+                         placeholder="SEARCH_METRICS_ARCHIVE..." 
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 pl-10 pr-4 py-2.5 text-xs font-mono text-black dark:text-white placeholder:text-black/30 dark:placeholder:text-white/30 focus:outline-none focus:border-black/30 dark:focus:border-white/30 transition-all" />
+                </div>
+                
+                <!-- Category Filters -->
+                <div class="flex items-center space-x-1 bg-black/5 dark:bg-white/5 p-1 border border-black/10 dark:border-white/10">
+                  <button v-for="cat in ['ALL', 'Primary', 'Advanced', 'Expert']" :key="cat"
+                          @click="selectedCategoryFilter = cat"
+                          class="px-4 py-1.5 text-[10px] font-mono tracking-widest uppercase transition-all"
+                          :class="selectedCategoryFilter === cat ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-[0_2px_10px_rgba(0,0,0,0.2)]' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'">
+                    {{ cat }}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar space-y-4 relative z-10">
-            <div v-for="cfg in filteredAvailableConfigs" :key="cfg.key"
-                 @click="activeMetricKeys.includes(cfg.key) ? activeMetricKeys = activeMetricKeys.filter(k => k !== cfg.key) : activeMetricKeys.push(cfg.key); saveMetricsLayout()"
-                 class="p-4 border transition-all flex items-center justify-between cursor-pointer group"
-                 :class="activeMetricKeys.includes(cfg.key) ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-[0_10px_30px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_30px_rgba(255,255,255,0.2)]' : 'border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30 bg-white/50 dark:bg-white/[0.02] text-black dark:text-white'">
-              <div class="flex flex-col space-y-1 w-full">
-                <div class="flex items-center space-x-3">
-                  <span class="text-xs font-mono font-bold uppercase tracking-widest transition-colors"
-                        :class="activeMetricKeys.includes(cfg.key) ? 'text-white dark:text-black font-extrabold' : 'text-black dark:text-white'">
-                    {{ cfg.label.replaceAll('_', ' ') }}
-                  </span>
-                  <span class="text-[9px] font-mono px-2 py-0.5 border transition-colors"
-                        :class="activeMetricKeys.includes(cfg.key) ? 'border-white/30 dark:border-black/30 text-white dark:text-black bg-white/10 dark:bg-black/10 font-bold' : (cfg.category === 'Expert' ? 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/5' : (cfg.category === 'Advanced' ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5' : 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5'))">
-                    {{ cfg.category }}
-                  </span>
-                  <span class="text-[9px] font-mono px-2 py-0.5 border transition-colors"
-                        :class="activeMetricKeys.includes(cfg.key) ? 'border-white/20 dark:border-black/20 text-white/80 dark:text-black/80' : 'border-black/10 dark:border-white/10 opacity-50'">
-                    {{ cfg.sub }}
+            <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar space-y-4 relative z-10">
+              <div v-for="cfg in filteredAvailableConfigs" :key="cfg.key"
+                   @click="activeMetricKeys.includes(cfg.key) ? activeMetricKeys = activeMetricKeys.filter(k => k !== cfg.key) : activeMetricKeys.push(cfg.key); saveMetricsLayout()"
+                   class="p-4 border transition-all flex items-center justify-between cursor-pointer group"
+                   :class="activeMetricKeys.includes(cfg.key) ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-[0_10px_30px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_30px_rgba(255,255,255,0.2)]' : 'border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30 bg-white/50 dark:bg-white/[0.02] text-black dark:text-white'">
+                <div class="flex flex-col space-y-1 w-full">
+                  <div class="flex items-center space-x-3">
+                    <span class="text-xs font-mono font-bold uppercase tracking-widest transition-colors"
+                          :class="activeMetricKeys.includes(cfg.key) ? 'text-white dark:text-black font-extrabold' : 'text-black dark:text-white'">
+                      {{ cfg.label.replaceAll('_', ' ') }}
+                    </span>
+                    <span class="text-[9px] font-mono px-2 py-0.5 border transition-colors"
+                          :class="activeMetricKeys.includes(cfg.key) ? 'border-white/30 dark:border-black/30 text-white dark:text-black bg-white/10 dark:bg-black/10 font-bold' : (cfg.category === 'Expert' ? 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/5' : (cfg.category === 'Advanced' ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5' : 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5'))">
+                      {{ cfg.category }}
+                    </span>
+                    <span class="text-[9px] font-mono px-2 py-0.5 border transition-colors"
+                          :class="activeMetricKeys.includes(cfg.key) ? 'border-white/20 dark:border-black/20 text-white/80 dark:text-black/80' : 'border-black/10 dark:border-white/10 opacity-50'">
+                      {{ cfg.sub }}
+                    </span>
+                  </div>
+                  <p class="text-[10px] font-mono leading-relaxed transition-colors mt-1"
+                     :class="activeMetricKeys.includes(cfg.key) ? 'text-white/90 dark:text-black/90' : 'text-black dark:text-white opacity-70'">
+                    {{ cfg.desc }}
+                  </p>
+                  <span class="text-[9px] font-mono transition-colors mt-1"
+                        :class="activeMetricKeys.includes(cfg.key) ? 'text-white/60 dark:text-black/60' : 'opacity-40'">
+                    Formula: {{ cfg.formula }}
                   </span>
                 </div>
-                <p class="text-[10px] font-mono leading-relaxed transition-colors mt-1"
-                   :class="activeMetricKeys.includes(cfg.key) ? 'text-white/90 dark:text-black/90' : 'text-black dark:text-white opacity-70'">
-                  {{ cfg.desc }}
-                </p>
-                <span class="text-[9px] font-mono transition-colors mt-1"
-                      :class="activeMetricKeys.includes(cfg.key) ? 'text-white/60 dark:text-black/60' : 'opacity-40'">
-                  Formula: {{ cfg.formula }}
-                </span>
               </div>
             </div>
           </div>
@@ -700,7 +703,7 @@
           <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
             <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 
