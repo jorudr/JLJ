@@ -112,6 +112,17 @@
                     <p class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40">{{ t('dashboard.ui.signedInAs') }}</p>
                     <p class="text-[10px] font-mono font-black uppercase tracking-widest truncate">{{ authStore.user?.email }}</p>
                   </div>
+                  <!-- Settings -->
+                  <button
+                    @click="goProfile"
+                    class="w-full flex items-center space-x-3 px-5 py-3 border-b border-theme-border text-[9px] font-mono uppercase tracking-[0.4em] hover:text-sky-400 transition-all duration-300"
+                  >
+                    <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.05V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.05-.33H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.05V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1.05.33H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/>
+                    </svg>
+                    <span>{{ locale === 'ru' ? 'НАСТРОЙКИ' : 'SETTINGS' }}</span>
+                  </button>
                   <!-- Change Name -->
                   <button
                     @click="openChangeName"

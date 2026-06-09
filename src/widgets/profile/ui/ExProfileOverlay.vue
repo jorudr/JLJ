@@ -3,19 +3,41 @@
     <Transition name="profile-overlay">
       <div
         v-if="open"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 lg:p-10 bg-black/75"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 lg:p-10 bg-black/45 backdrop-blur-xl"
         @click.self="emit('close')"
       >
-        <div class="w-full max-w-6xl max-h-[92vh] overflow-y-auto border border-white/10 bg-[#0a0a0a] text-white shadow-[0_30px_120px_rgba(0,0,0,0.6)]">
-          <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] min-h-[720px]">
-            <aside class="border-b lg:border-b-0 lg:border-r border-white/10 p-6 lg:p-8 bg-white/[0.03]">
+        <ExPanel
+          variant="light"
+          noPadding
+          class="!w-full !max-w-6xl !h-[74vh] !overflow-visible !border-white/10 !bg-[#0a0a0a]/80 text-white"
+        >
+          <button
+            @click="emit('close')"
+            class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#070707] border-t border-r border-b border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-[#111] transition-colors z-[100]"
+          >
+            <div class="w-[1px] h-16 bg-white/10 group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
+            <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-white/10 group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Profile</span>
+          </button>
+
+          <template #telemetry>
+            <span class="sr-only">Profile settings panel</span>
+          </template>
+          <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr] h-full min-h-0 overflow-hidden">
+            <aside class="h-full border-b lg:border-b-0 lg:border-r border-white/10 p-6 lg:p-8 bg-white/[0.03] overflow-hidden">
               <div class="flex items-center gap-3 pb-6 border-b border-white/10">
-                <div class="w-10 h-10 rounded-full border border-white/10 bg-white text-black flex items-center justify-center font-serif italic text-lg">
-                  {{ profileInitial }}
+                <div class="w-10 h-10 rounded-full border border-white/10 bg-white text-[#0a0a0a] flex items-center justify-center font-serif italic text-lg overflow-hidden">
+                  <img
+                    v-if="profileAvatarUrl"
+                    :src="profileAvatarUrl"
+                    alt="User avatar"
+                    class="w-full h-full object-cover"
+                    referrerpolicy="no-referrer"
+                  />
+                  <span v-else>{{ profileInitial }}</span>
                 </div>
-                <div class="flex flex-col">
-                  <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-40">Profile</span>
-                  <span class="text-[10px] font-mono uppercase tracking-[0.25em] opacity-55">Settings</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Profile</span>
+                  <span class="text-[10px] font-mono uppercase tracking-[0.25em] opacity-50 truncate">Settings</span>
                 </div>
               </div>
 
@@ -36,31 +58,33 @@
               </nav>
 
               <div class="mt-8 pt-6 border-t border-white/10 space-y-2">
-                <div class="text-[8px] font-mono uppercase tracking-[0.35em] opacity-35">Signed in as</div>
+                <div class="text-[8px] font-mono uppercase tracking-[0.35em] opacity-30">Signed in as</div>
                 <div class="text-[10px] font-mono tracking-[0.12em] text-white/85 break-all">
                   {{ profileEmail }}
                 </div>
               </div>
+
+              <div class="mt-6 pt-6 border-t border-white/10 space-y-2">
+                <div class="text-[8px] font-mono uppercase tracking-[0.35em] opacity-30">Account type</div>
+                <div class="text-[10px] font-mono uppercase tracking-[0.25em] text-white/85">
+                  {{ profileAccountType }}
+                </div>
+              </div>
             </aside>
 
-            <main class="p-6 lg:p-10 min-h-[720px]">
-              <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-5 mb-8">
-                <div class="flex flex-col gap-1">
-                  <h2 class="text-2xl lg:text-3xl font-serif tracking-[0.05em] text-white leading-tight">
+            <main class="h-full min-h-0 overflow-y-auto p-6 lg:p-10">
+              <div class="flex items-start gap-6 border-b border-white/10 pb-6 mb-8">
+                <div class="space-y-2">
+                  <span class="text-[10px] font-mono uppercase tracking-[0.35em] opacity-35">
+                    {{ activeTab === 'profile' ? 'Account' : 'Appearance' }}
+                  </span>
+                  <h2 class="text-3xl lg:text-4xl font-serif tracking-[0.05em] text-white leading-tight">
                     {{ activeTab === 'profile' ? 'Personal details' : 'App theme' }}
                   </h2>
                   <p class="text-sm leading-7 text-white/65 max-w-lg">
                     {{ activeTab === 'profile' ? 'Keep the core identity fields visible and unobtrusive.' : 'Minimal theme controls with a few restrained accent choices.' }}
                   </p>
                 </div>
-
-                <button
-                  type="button"
-                  class="px-3 py-2 border border-white/10 text-[8px] font-mono uppercase tracking-[0.25em] opacity-65 hover:opacity-100 hover:border-white transition-colors"
-                  @click="emit('close')"
-                >
-                  Close
-                </button>
               </div>
 
               <div v-if="activeTab === 'profile'" class="max-w-2xl space-y-8">
@@ -85,7 +109,7 @@
                       v-model="profileDescriptionDraft"
                       rows="6"
                       placeholder="Short description about the user"
-                      class="w-full px-4 py-3 border border-white/10 bg-white/[0.03] text-[13px] leading-7 text-white placeholder:opacity-25 focus:outline-none focus:border-white/50 resize-none"
+                      class="w-full px-4 py-3 border border-white/10 bg-white/[0.03] text-[13px] leading-7 text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 resize-none"
                     ></textarea>
                   </div>
                 </div>
@@ -114,8 +138,8 @@
                   </div>
                   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div v-for="tone in appearanceTones" :key="tone.name" class="flex flex-col gap-2">
-                      <div class="h-12 border border-white/10 bg-black" :style="{ backgroundColor: tone.value }"></div>
-                      <span class="text-[8px] font-mono uppercase tracking-[0.18em] opacity-55">{{ tone.name }}</span>
+                      <div class="h-12 border border-white/10 bg-[#0a0a0a]" :style="{ backgroundColor: tone.value }"></div>
+                      <span class="text-[8px] font-mono uppercase tracking-[0.18em] text-white/55">{{ tone.name }}</span>
                     </div>
                   </div>
                 </div>
@@ -140,7 +164,7 @@
                           {{ backgroundFileName || 'No file selected' }}
                         </span>
                       </div>
-                      <span class="px-3 py-1 border border-white/10 text-[8px] font-mono uppercase tracking-[0.25em] opacity-70 shrink-0">
+                      <span class="px-3 py-1 border border-white/10 text-[8px] font-mono uppercase tracking-[0.25em] text-white/70 shrink-0">
                         Browse
                       </span>
                     </div>
@@ -151,15 +175,15 @@
                       <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-40">Preview</span>
                       <span class="text-[8px] font-mono uppercase tracking-[0.25em] opacity-30">Wallpaper</span>
                     </div>
-                  <div class="h-28 bg-cover bg-center bg-black" :style="backgroundImageStyle">
-                    <div class="h-full w-full bg-black/35"></div>
+                    <div class="h-28 bg-cover bg-center bg-[#0a0a0a]" :style="backgroundImageStyle">
+                      <div class="h-full w-full bg-black/35"></div>
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             </main>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
   </Teleport>
@@ -168,6 +192,7 @@
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '~/entities/user/auth.store'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 
 defineProps<{
   open: boolean
@@ -181,7 +206,9 @@ const authStore = useAuthStore()
 
 const profileDisplayName = computed(() => authStore.user?.displayName?.trim() || 'Operator_0x4F')
 const profileEmail = computed(() => authStore.user?.email?.trim() || 'operator@genesis.app')
+const profileAvatarUrl = computed(() => authStore.user?.photoURL || '')
 const profileInitial = computed(() => (profileDisplayName.value[0] || 'O').toUpperCase())
+const profileAccountType = computed(() => String(authStore.user?.type || 'common').toUpperCase())
 
 const activeTab = ref<'profile' | 'appearance'>('profile')
 
