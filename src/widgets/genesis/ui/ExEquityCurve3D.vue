@@ -6666,7 +6666,21 @@ const update = () => {
 
       const drawExtraCurve = (points: CurvePoint[], color: string, label: string) => {
         if (points.length === 0) return
-        const transformed = points.map(v => {
+        const visibleMinY = -35
+        const visibleMaxY = 95
+        const yValues = points.map(point => point.y).filter(Number.isFinite)
+        const minPointY = yValues.length ? Math.min(...yValues) : visibleMinY
+        const maxPointY = yValues.length ? Math.max(...yValues) : visibleMaxY
+        const shouldFitCurve = minPointY < visibleMinY || maxPointY > visibleMaxY
+        const sourceYRange = Math.max(1, maxPointY - minPointY)
+        const fittedPoints = shouldFitCurve
+          ? points.map(point => ({
+              ...point,
+              y: visibleMinY + ((point.y - minPointY) / sourceYRange) * (visibleMaxY - visibleMinY)
+            }))
+          : points
+
+        const transformed = fittedPoints.map(v => {
           let p = rotateY(v, currentRotation.value.y)
           p = rotateX(p, currentRotation.value.x)
           p.x *= scale; p.y *= scale; p.z *= scale
