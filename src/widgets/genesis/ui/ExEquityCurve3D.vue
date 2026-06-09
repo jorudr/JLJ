@@ -387,13 +387,12 @@
     <!-- INITIAL DEPOSIT MODAL -->
     <Transition name="protocol-slide">
       <div v-if="showInitialDepositModal" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-md">
-        <div class="w-96 bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-12 relative overflow-hidden">
-          <!-- Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40"></div>
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 px-6 transition-all"
+           @click.self="showInitialDepositModal = false">
+        <ExPanel variant="light" no-shadow noPadding class="!w-96 relative overflow-visible">
+          <template #header>&nbsp;</template>
           
-          <div class="flex flex-col space-y-8 relative z-10">
+          <div class="p-12 flex flex-col space-y-8 relative z-10">
             <div class="flex flex-col">
               <span class="text-[8px] font-mono tracking-[0.5em] opacity-40 uppercase">Capital_Injection_Module</span>
               <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">SET_DEPOSIT</h2>
@@ -427,20 +426,19 @@
           <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
             <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 
     <!-- BENCHMARK RATE MODAL -->
     <Transition name="protocol-slide">
       <div v-if="showBenchmarkModal" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-md">
-        <div class="w-96 bg-white dark:bg-[#0a0a0a] border border-black/20 dark:border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.5)] p-12 relative overflow-hidden">
-          <!-- Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40"></div>
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 px-6 transition-all"
+           @click.self="showBenchmarkModal = false">
+        <ExPanel variant="light" no-shadow noPadding class="!w-96 relative overflow-visible">
+          <template #header>&nbsp;</template>
           
-          <div class="flex flex-col space-y-8 relative z-10">
+          <div class="p-12 flex flex-col space-y-8 relative z-10">
             <div class="flex flex-col">
               <span class="text-[8px] font-mono tracking-[0.5em] opacity-40 uppercase">Benchmark_Calibration_Module</span>
               <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">SET_BENCHMARK</h2>
@@ -474,20 +472,19 @@
           <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
             <div class="w-full h-px bg-black dark:bg-white animate-scan"></div>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 
     <!-- CLEAR CONFIRMATION MODAL -->
     <Transition name="protocol-slide">
       <div v-if="showClearConfirmation" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md">
-        <div class="w-[450px] bg-white dark:bg-[#0a0a0a]  p-12 relative overflow-hidden">
-          <!-- Danger Brackets -->
-          <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white opacity-60"></div>
-          <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white opacity-60"></div>
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 px-6 transition-all"
+           @click.self="showClearConfirmation = false">
+        <ExPanel variant="light" no-shadow noPadding class="!w-[450px] relative overflow-visible">
+          <template #header>&nbsp;</template>
           
-          <div class="flex flex-col space-y-8 relative z-10">
+          <div class="p-12 flex flex-col space-y-8 relative z-10">
             <div class="flex flex-col">
               <span class="text-[8px] font-mono text-red-500 uppercase">Critical_Data_Purge_Sequence</span>
               <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">PURGE_STRATEGY_DATA</h2>
@@ -511,7 +508,7 @@
 
           <!-- Glitch Overlay -->
           <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-red-500 mix-blend-overlay"></div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 
