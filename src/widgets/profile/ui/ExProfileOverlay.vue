@@ -87,33 +87,64 @@
                 </div>
               </div>
 
-              <div v-if="activeTab === 'profile'" class="max-w-2xl space-y-8">
+              <form v-if="activeTab === 'profile'" class="max-w-2xl space-y-8" @submit.prevent="saveProfile">
                 <div class="space-y-5">
                   <div class="space-y-2">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Display name</span>
-                    <div class="px-4 py-3 border border-white/10 bg-white/[0.03] font-mono tracking-[0.12em] text-white">
-                      {{ profileDisplayName }}
+                    <label for="profile-overlay-display-name" class="block text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Display name</label>
+                    <input
+                      id="profile-overlay-display-name"
+                      v-model="displayName"
+                      type="text"
+                      autocomplete="name"
+                      placeholder="Operator_0x4F"
+                      class="w-full px-4 py-3 border border-white/10 bg-white/[0.03] font-mono tracking-[0.12em] text-white placeholder:text-white/25 focus:outline-none focus:border-white/50"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <label for="profile-overlay-email" class="block text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Email address</label>
+                    <div class="relative">
+                      <input
+                        id="profile-overlay-email"
+                        :value="profileEmail"
+                        type="email"
+                        readonly
+                        tabindex="-1"
+                        class="w-full px-4 py-3 border border-white/10 bg-white/[0.03] font-mono tracking-[0.08em] text-white/90 break-all focus:outline-none"
+                      />
+                      <div class="absolute inset-0 flex items-center justify-end border border-white/10 bg-[#0a0a0a]/45 px-4 backdrop-blur-[1px] pointer-events-none">
+                        <span class="text-[8px] font-mono uppercase tracking-[0.3em] text-white/55">
+                          {{ emailLockedLabel }}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   <div class="space-y-2">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Email address</span>
-                    <div class="px-4 py-3 border border-white/10 bg-white/[0.03] font-mono tracking-[0.08em] text-white/90 break-all">
-                      {{ profileEmail }}
-                    </div>
-                  </div>
-
-                  <div class="space-y-2">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Description</span>
+                    <label for="profile-overlay-description" class="block text-[9px] font-mono uppercase tracking-[0.35em] opacity-35">Description</label>
                     <textarea
-                      v-model="profileDescriptionDraft"
+                      id="profile-overlay-description"
+                      v-model="description"
                       rows="6"
                       placeholder="Short description about the user"
                       class="w-full px-4 py-3 border border-white/10 bg-white/[0.03] text-[13px] leading-7 text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 resize-none"
                     ></textarea>
                   </div>
                 </div>
-              </div>
+
+                <div class="flex flex-col gap-4 border-t border-white/10 pt-6">
+                  <div v-if="errorMessage || successMessage" class="text-[9px] font-mono uppercase tracking-[0.25em]" :class="errorMessage ? 'text-red-300' : 'text-emerald-300'">
+                    {{ errorMessage || successMessage }}
+                  </div>
+                  <button
+                    type="submit"
+                    :disabled="isSubmitting"
+                    class="self-start border border-white/15 bg-white text-[#0a0a0a] px-6 py-3 text-[9px] font-mono uppercase tracking-[0.35em] font-black transition-colors duration-300 hover:bg-white/85 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {{ isSubmitting ? savingLabel : saveLabel }}
+                  </button>
+                </div>
+              </form>
 
               <div v-else class="max-w-2xl space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -190,11 +221,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onBeforeUnmount, watch } from 'vue'
 import { useAuthStore } from '~/entities/user/auth.store'
+import { useProfile } from '~/widgets/profile/model/useProfile'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
 }>()
 
@@ -203,12 +235,25 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const {
+  displayName,
+  description,
+  isSubmitting,
+  errorMessage,
+  successMessage,
+  loadProfile,
+  saveProfile,
+  locale
+} = useProfile()
 
-const profileDisplayName = computed(() => authStore.user?.displayName?.trim() || 'Operator_0x4F')
+const profileDisplayName = computed(() => displayName.value.trim() || authStore.user?.displayName?.trim() || 'Operator_0x4F')
 const profileEmail = computed(() => authStore.user?.email?.trim() || 'operator@genesis.app')
 const profileAvatarUrl = computed(() => authStore.user?.photoURL || '')
 const profileInitial = computed(() => (profileDisplayName.value[0] || 'O').toUpperCase())
 const profileAccountType = computed(() => String(authStore.user?.type || 'common').toUpperCase())
+const emailLockedLabel = computed(() => locale.value === 'ru' ? 'ПОЧТА НЕИЗМЕНЯЕМА' : 'EMAIL LOCKED')
+const saveLabel = computed(() => locale.value === 'ru' ? 'СОХРАНИТЬ' : 'SAVE')
+const savingLabel = computed(() => locale.value === 'ru' ? 'СОХРАНЕНИЕ' : 'SAVING')
 
 const activeTab = ref<'profile' | 'appearance'>('profile')
 
@@ -216,12 +261,6 @@ const profileTabs = [
   { key: 'profile', label: 'Profile', note: 'Core' },
   { key: 'appearance', label: 'Appearance', note: 'Theme' }
 ] as const
-
-const profileDescriptionDraft = ref(
-  authStore.user?.displayName
-    ? `${authStore.user.displayName} keeps the profile minimal, readable, and aligned with the app's overall tone.`
-    : 'Keep the profile minimal, readable, and aligned with the app\'s overall tone.'
-)
 
 const appearanceModes = [
   { key: 'dark', label: 'Dark', note: 'Active', active: true },
@@ -255,6 +294,23 @@ const handleBackgroundUpload = (event: Event) => {
   backgroundImageUrl.value = URL.createObjectURL(file)
   backgroundFileName.value = file.name
 }
+
+const hydrateProfile = async () => {
+  await loadProfile()
+  if (!displayName.value.trim()) {
+    displayName.value = authStore.user?.displayName?.trim() || 'Operator_0x4F'
+  }
+}
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (!isOpen) return
+    activeTab.value = 'profile'
+    void hydrateProfile()
+  },
+  { immediate: true }
+)
 
 onBeforeUnmount(() => {
   if (backgroundImageUrl.value) {

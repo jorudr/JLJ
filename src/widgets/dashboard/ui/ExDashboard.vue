@@ -115,24 +115,13 @@
                   <!-- Settings -->
                   <button
                     @click="goProfile"
-                    class="w-full flex items-center space-x-3 px-5 py-3 border-b border-theme-border text-[9px] font-mono uppercase tracking-[0.4em] hover:text-sky-400 transition-all duration-300"
+                    class="w-full flex items-center space-x-3 px-5 py-3 border-b border-theme-border text-[9px] font-mono uppercase tracking-[0.4em] hover:text-white transition-all duration-300"
                   >
                     <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="3"/>
                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.05V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.05-.33H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.05V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1.05.33H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/>
                     </svg>
                     <span>{{ locale === 'ru' ? 'НАСТРОЙКИ' : 'SETTINGS' }}</span>
-                  </button>
-                  <!-- Change Name -->
-                  <button
-                    @click="openChangeName"
-                    class="w-full flex items-center space-x-3 px-5 py-3 border-b border-theme-border text-[9px] font-mono uppercase tracking-[0.4em] hover:text-emerald-400 transition-all duration-300"
-                  >
-                    <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                    <span>{{ locale === 'ru' ? 'ИЗМЕНИТЬ ИМЯ' : 'CHANGE NAME' }}</span>
                   </button>
                   <!-- Sign out -->
                   <button
@@ -279,43 +268,13 @@
       </Transition>
     </Teleport>
 
-    <!-- Change Name Modal -->
-    <Teleport to="body">
-      <Transition name="premium-modal">
-        <div v-if="showChangeNameModal" 
-             class="fixed inset-0 z-[10050] flex flex-col items-center justify-center p-8 bg-white/10 dark:bg-black/40 transition-all duration-700"
-             style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);"
-             @click.self="closeChangeName">
-          
-          <div class="w-full max-w-lg transform scale-100 transition-all duration-700">
-            <ExPanel 
-              :title="locale === 'ru' ? 'ИЗМЕНЕНИЕ ИМЕНИ' : 'CHANGE NAME'" 
-              variant="standard"
-            >
-              <div class="flex flex-col items-center py-8 px-8 space-y-8">
-                <ExInput v-model="newName" :placeholder="locale === 'ru' ? 'НОВОЕ ИМЯ...' : 'NEW NAME...'" variant="standard" class="w-full !py-6 !pl-8 !text-3xl font-black tracking-widest text-center" />
-                
-                <div class="flex justify-center space-x-4 mt-4 w-full max-w-sm mx-auto">
-                  <ExButton class="flex-1 !px-0 !py-3 h-12" variant="ghost" @click="closeChangeName">
-                    {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
-                  </ExButton>
-                  <ExButton class="flex-1 !px-0 !py-3 h-12" variant="tactical" @click="commitChangeName">
-                    {{ locale === 'ru' ? 'ПРИМЕНИТЬ' : 'COMMIT' }}
-                  </ExButton>
-                </div>
-              </div>
-            </ExPanel>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
-import { getAuth, signOut, updateProfile } from 'firebase/auth'
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { getAuth, signOut } from 'firebase/auth'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '~/shared/firebase.client'
 import { open } from '@tauri-apps/plugin-shell'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -326,7 +285,6 @@ import ExTag from "~/shared/ui/ExTag.vue"
 import ExIdentity from "~/shared/ui/ExIdentity.vue"
 import ExPanel from "~/shared/ui/ExPanel.vue"
 import ExButton from "~/shared/ui/ExButton.vue"
-import ExInput from "~/shared/ui/ExInput.vue"
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
@@ -381,34 +339,6 @@ const goProfile = () => {
 
 const closeProfileOverlay = () => {
   showProfileOverlay.value = false
-}
-
-const showChangeNameModal = ref(false)
-const newName = ref('')
-
-const openChangeName = () => {
-  userMenuOpen.value = false
-  newName.value = displayName.value !== 'Operator' ? displayName.value : ''
-  showChangeNameModal.value = true
-}
-
-const closeChangeName = () => {
-  showChangeNameModal.value = false
-}
-
-const commitChangeName = async () => {
-  if (!newName.value.trim() || !authStore.user) return
-  try {
-    const auth = getAuth()
-    if (auth.currentUser) {
-      await updateProfile(auth.currentUser, { displayName: newName.value })
-      await updateDoc(doc(db, 'users', authStore.user.uid), { displayName: newName.value })
-      authStore.user.displayName = newName.value
-    }
-  } catch (e) {
-    console.error(e)
-  }
-  showChangeNameModal.value = false
 }
 
 // Close on outside click
