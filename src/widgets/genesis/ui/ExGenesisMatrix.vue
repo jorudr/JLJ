@@ -590,14 +590,14 @@
                  <!-- CONFIG TOOLS -->
                    <div v-if="activeMenuCategory === 'CONFIG' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto px-4 w-full pt-4 pb-4">
                       <div class="flex flex-col items-center space-y-4">
-                         <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Configuration_Protocol_Required</span>
+                         <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">{{ locale === 'ru' ? 'Требуется_Протокол_Конфигурации' : 'Configuration_Protocol_Required' }}</span>
                          <div class="w-12 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
                          
                          <ExButton @click="isConfigSetterOpen = true" variant="ghost" class="w-12 h-12 border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
                             <span class="text-[20px] font-black">+</span>
                          </ExButton>
                          
-                         <span class="text-[7px] font-mono tracking-widest uppercase opacity-20">Initialize_New_Configuration_Set</span>
+                         <span class="text-[7px] font-mono tracking-widest uppercase opacity-20">{{ locale === 'ru' ? 'Создать_Новый_Набор_Конфигурации' : 'Initialize_New_Configuration_Set' }}</span>
                       </div>
 
                       <!-- Config Setter Component -->

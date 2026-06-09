@@ -2,12 +2,14 @@ import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import {
   getBybitClosedTrades,
   getBybitOrderHistory,
+  withBybitEnvironment,
   type BybitClosedPnl,
   type BybitHistoricOrder
 } from '~/utils/bybit'
 import {
   getKrakenFuturesFills,
   getKrakenTradesHistory,
+  withKrakenFuturesEnvironment,
   type KrakenFuturesFill,
   type KrakenTrade
 } from '~/utils/kraken'
@@ -19,6 +21,12 @@ export interface StoredBrokerConnection {
   active: boolean
   updatedAt: string
   activatedAt?: string
+}
+
+type BrokerEnvironment = 'real' | 'demo'
+
+const readBrokerEnvironment = (connection: StoredBrokerConnection): BrokerEnvironment => {
+  return connection.credentials.environment === 'demo' ? 'demo' : 'real'
 }
 
 export interface BrokerTradeStorePort {
@@ -68,10 +76,12 @@ const syncBybit = async (
     apiKey: connection.credentials.apiKey || '',
     apiSecret: connection.credentials.apiSecret || ''
   }
+  const environment = readBrokerEnvironment(connection)
+  const scopedCredentials = withBybitEnvironment(credentials, environment)
   const [spotResponse, linearResponse, inverseResponse] = await Promise.allSettled([
-    getBybitOrderHistory(credentials, { category: 'spot', limit: 50 }),
-    getBybitClosedTrades(credentials, { category: 'linear', limit: 100 }),
-    getBybitClosedTrades(credentials, { category: 'inverse', limit: 100 })
+    getBybitOrderHistory(scopedCredentials, { category: 'spot', limit: 50 }),
+    getBybitClosedTrades(scopedCredentials, { category: 'linear', limit: 100 }),
+    getBybitClosedTrades(scopedCredentials, { category: 'inverse', limit: 100 })
   ])
 
   const spotTrades = spotResponse.status === 'fulfilled' ? (spotResponse.value.list || []) : []
@@ -95,7 +105,7 @@ const syncBybit = async (
   return {
     ...result,
     checkedCount: spotTrades.length + linearTrades.length + inverseTrades.length,
-    sourceLabel: 'Bybit'
+    sourceLabel: environment === 'demo' ? 'Bybit Demo' : 'Bybit'
   }
 }
 
@@ -104,6 +114,10 @@ const syncKrakenSpot = async (
   strategyId: string,
   tradeStore: BrokerTradeStorePort
 ): Promise<BrokerSyncResult> => {
+  if (readBrokerEnvironment(connection) === 'demo') {
+    throw new Error('Kraken Demo trade sync is available through Futures API only.')
+  }
+
   const response = await getKrakenTradesHistory({
     apiKey: connection.credentials.apiKey || '',
     apiSecret: connection.credentials.apiSecret || ''
@@ -126,10 +140,11 @@ const syncKrakenFutures = async (
   strategyId: string,
   tradeStore: BrokerTradeStorePort
 ): Promise<BrokerSyncResult> => {
-  const response = await getKrakenFuturesFills({
+  const environment = readBrokerEnvironment(connection)
+  const response = await getKrakenFuturesFills(withKrakenFuturesEnvironment({
     apiKey: connection.credentials.apiKey || '',
     apiSecret: connection.credentials.apiSecret || ''
-  })
+  }, environment))
   const fills = response.fills || []
   console.log('[BrokerSync][Kraken][Futures] Raw response:', response)
   console.log('[BrokerSync][Kraken][Futures] Parsed fills:', fills)
@@ -147,7 +162,7 @@ const syncKrakenFutures = async (
   return {
     ...result,
     checkedCount: fills.length,
-    sourceLabel: 'Kraken Futures'
+    sourceLabel: environment === 'demo' ? 'Kraken Futures Demo' : 'Kraken Futures'
   }
 }
 

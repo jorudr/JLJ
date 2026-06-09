@@ -76,6 +76,39 @@
                   </button>
                 </div>
 
+                <div v-if="selectedBrokerSupportsEnvironment"
+                     class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
+                  <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                      <p class="font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-50">{{ isRu ? 'Среда Подключения' : 'Connection Environment' }}</p>
+                      <p class="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] opacity-60">
+                        {{ environmentSupportNote }}
+                      </p>
+                    </div>
+                    <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border border-black/10 dark:border-white/10">
+                      {{ selectedBrokerEnvironmentLabel }}
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-2 border border-black/10 bg-white dark:border-white/10 dark:bg-[#050505]">
+                    <button
+                      v-for="option in brokerEnvironmentOptions"
+                      :key="option.id"
+                      class="h-12 border-r border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors last:border-r-0 dark:border-white/10"
+                      :class="brokerEnvironment === option.id
+                        ? 'bg-black text-white dark:bg-white dark:text-black'
+                        : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
+                      @click="setBrokerEnvironment(option.id)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+
+                  <p v-if="isKrakenSpotDemoSelected" class="mt-4 font-mono text-[9px] font-black uppercase leading-relaxed tracking-[0.14em] text-amber-600 dark:text-amber-400">
+                    {{ isRu ? 'Kraken Demo доступен через Futures API. Переключите Kraken на Futures или выберите REAL для Spot.' : 'Kraken Demo is available through the Futures API. Switch Kraken to Futures or choose REAL for Spot.' }}
+                  </p>
+                </div>
+
                 <div class="grid grid-cols-1 gap-6 mb-8">
                   <label v-for="field in selectedBroker.fields"
                          :key="field.key"
@@ -135,7 +168,7 @@
                     </div>
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
                       <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">{{ isRu ? 'Режим' : 'Mode' }}</p>
-                      <p class="mt-3 font-mono text-[11px] font-black uppercase opacity-70">{{ selectedBroker.mode }}</p>
+                      <p class="mt-3 font-mono text-[11px] font-black uppercase opacity-70">{{ connectionModeLabel }}</p>
                     </div>
                   </div>
                 </div>
@@ -187,11 +220,12 @@ import ExPanel from '~/shared/ui/ExPanel.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
-import { testBinanceConnection, type BinanceCredentials } from '~/utils/binance'
+import { testBinanceConnection, withBinanceEnvironment, type BinanceCredentials } from '~/utils/binance'
 import {
   testBybitConnection,
   getBybitClosedTrades,
   getBybitOrderHistory,
+  withBybitEnvironment,
   type BybitCredentials,
   type BybitClosedPnl,
   type BybitHistoricOrder
@@ -201,6 +235,7 @@ import {
   testKrakenFuturesConnection,
   getKrakenTradesHistory,
   getKrakenFuturesFills,
+  withKrakenFuturesEnvironment,
   type KrakenCredentials,
   type KrakenTrade,
   type KrakenFuturesFill
@@ -210,6 +245,7 @@ import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 type BrokerId = 'binance' | 'bybit' | 'kraken' | 'interactive-brokers'
 type KrakenMarketMode = 'spot' | 'futures'
+type BrokerEnvironment = 'real' | 'demo'
 
 interface BrokerField {
   key: string
@@ -309,6 +345,7 @@ const statusMessage = ref('')
 const statusTone = ref<'neutral' | 'success' | 'error'>('neutral')
 const importTargetStrategyId = ref('MAIN_DIARY')
 const krakenMarketMode = ref<KrakenMarketMode>('spot')
+const brokerEnvironment = ref<BrokerEnvironment>('real')
 
 
 const selectedBroker = computed(() => {
@@ -319,31 +356,86 @@ const selectedImportStrategyName = computed(() => {
   return tradeStore.strategies.find(strategy => strategy.id === importTargetStrategyId.value)?.name || 'Main Diary'
 })
 
+const brokerEnvironmentOptions = computed<Array<{ id: BrokerEnvironment; label: string }>>(() => [
+  { id: 'real', label: 'REAL' },
+  { id: 'demo', label: 'DEMO' }
+])
+
+const selectedBrokerSupportsEnvironment = computed(() => {
+  return ['binance', 'bybit', 'kraken'].includes(selectedBroker.value.id)
+})
+
+const selectedBrokerEnvironmentLabel = computed(() => {
+  return brokerEnvironment.value === 'demo'
+    ? (isRu.value ? 'DEMO / TESTNET' : 'DEMO / TESTNET')
+    : (isRu.value ? 'REAL / LIVE' : 'REAL / LIVE')
+})
+
+const environmentSupportNote = computed(() => {
+  if (selectedBroker.value.id === 'binance') {
+    return isRu.value
+      ? 'REAL использует Binance live. DEMO использует Spot Testnet и USD-M Futures Testnet.'
+      : 'REAL uses Binance live. DEMO uses Spot Testnet and USD-M Futures Testnet.'
+  }
+
+  if (selectedBroker.value.id === 'bybit') {
+    return isRu.value
+      ? 'REAL использует Bybit mainnet. DEMO использует Bybit Demo Trading API.'
+      : 'REAL uses Bybit mainnet. DEMO uses Bybit Demo Trading API.'
+  }
+
+  if (selectedBroker.value.id === 'kraken') {
+    return isRu.value
+      ? 'REAL использует Kraken live. DEMO доступен для Kraken Futures.'
+      : 'REAL uses Kraken live. DEMO is available for Kraken Futures.'
+  }
+
+  return isRu.value ? 'Выберите среду API для подключения.' : 'Choose the API environment for this connection.'
+})
+
+const isKrakenSpotDemoSelected = computed(() => {
+  return selectedBroker.value.id === 'kraken' && krakenMarketMode.value === 'spot' && brokerEnvironment.value === 'demo'
+})
+
+const connectionModeLabel = computed(() => {
+  if (!selectedBrokerSupportsEnvironment.value) return selectedBroker.value.mode
+
+  const environmentLabel = brokerEnvironment.value === 'demo' ? 'Demo' : 'Real'
+  if (selectedBroker.value.id === 'kraken') return `${environmentLabel} ${krakenMarketMode.value}`
+  return environmentLabel
+})
+
+const readSavedConnectionEnvironment = (connection?: SavedConnection): BrokerEnvironment => {
+  return connection?.credentials?.environment === 'demo' ? 'demo' : 'real'
+}
+
+const savedConnectionMatchesSelection = (connection?: SavedConnection) => {
+  if (!connection) return false
+  if (readSavedConnectionEnvironment(connection) !== brokerEnvironment.value) return false
+  if (selectedBroker.value.id === 'kraken') {
+    return connection.credentials?.market === krakenMarketMode.value
+  }
+  return true
+}
 
 
 const savedCurrentConnection = computed(() => {
-  if (selectedBroker.value.id === 'kraken') {
-    return connectionMap.value.kraken?.credentials?.market === krakenMarketMode.value
-  }
-
-  return Boolean(connectionMap.value[selectedBroker.value.id])
+  return savedConnectionMatchesSelection(connectionMap.value[selectedBroker.value.id])
 })
 
 const isSelectedBrokerActive = computed(() => {
-  if (selectedBroker.value.id === 'kraken') {
-    const saved = connectionMap.value.kraken
-    return Boolean(saved?.active && saved.credentials?.market === krakenMarketMode.value)
-  }
-
-  return Boolean(connectionMap.value[selectedBroker.value.id]?.active)
+  const saved = connectionMap.value[selectedBroker.value.id]
+  return Boolean(saved?.active && savedConnectionMatchesSelection(saved))
 })
 
 const showStrategyBinding = computed(() => {
-  return Boolean(connectionMap.value[selectedBroker.value.id]?.active)
+  return isSelectedBrokerActive.value
 })
 
 const canActivateSelected = computed(() => {
-  return selectedBroker.value.canActivate && selectedBroker.value.fields.every(field => String(formState[field.key] || '').trim())
+  return selectedBroker.value.canActivate
+    && !isKrakenSpotDemoSelected.value
+    && selectedBroker.value.fields.every(field => String(formState[field.key] || '').trim())
 })
 
 const primaryActionEnabled = computed(() => {
@@ -359,23 +451,83 @@ const primaryActionLabel = computed(() => {
   return 'Activate'
 })
 
+const getFormCredentials = () => {
+  return Object.fromEntries(selectedBroker.value.fields.map(field => [field.key, String(formState[field.key] || '').trim()])) as Record<string, string>
+}
+
+const getSavedCredentialsForCurrentSelection = () => {
+  const baseCredentials = {
+    ...getFormCredentials(),
+    environment: brokerEnvironment.value,
+    ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
+    targetStrategyId: importTargetStrategyId.value
+  } as Record<string, string>
+
+  if (selectedBroker.value.id === 'binance') {
+    const scopedCredentials = withBinanceEnvironment({
+      apiKey: baseCredentials.apiKey || '',
+      apiSecret: baseCredentials.apiSecret || ''
+    }, brokerEnvironment.value)
+
+    return {
+      ...baseCredentials,
+      ...(scopedCredentials.baseUrl ? { baseUrl: scopedCredentials.baseUrl } : {}),
+      ...(scopedCredentials.futuresBaseUrl ? { futuresBaseUrl: scopedCredentials.futuresBaseUrl } : {})
+    }
+  }
+
+  if (selectedBroker.value.id === 'bybit') {
+    const scopedCredentials = withBybitEnvironment({
+      apiKey: baseCredentials.apiKey || '',
+      apiSecret: baseCredentials.apiSecret || ''
+    }, brokerEnvironment.value)
+
+    return {
+      ...baseCredentials,
+      ...(scopedCredentials.baseUrl ? { baseUrl: scopedCredentials.baseUrl } : {})
+    }
+  }
+
+  if (selectedBroker.value.id === 'kraken' && krakenMarketMode.value === 'futures') {
+    const scopedCredentials = withKrakenFuturesEnvironment({
+      apiKey: baseCredentials.apiKey || '',
+      apiSecret: baseCredentials.apiSecret || ''
+    }, brokerEnvironment.value)
+
+    return {
+      ...baseCredentials,
+      ...(scopedCredentials.baseUrl ? { baseUrl: scopedCredentials.baseUrl } : {})
+    }
+  }
+
+  return baseCredentials
+}
+
+const applySavedCredentialsToForm = () => {
+  const saved = connectionMap.value[selectedBroker.value.id]
+  const shouldUseSaved = savedConnectionMatchesSelection(saved)
+
+  selectedBroker.value.fields.forEach((field) => {
+    formState[field.key] = shouldUseSaved ? saved?.credentials?.[field.key] || '' : ''
+  })
+
+  importTargetStrategyId.value = shouldUseSaved
+    ? saved?.credentials?.targetStrategyId || props.strategyId || tradeStore.selectedStrategyId || 'MAIN_DIARY'
+    : props.strategyId || tradeStore.selectedStrategyId || 'MAIN_DIARY'
+}
+
 const resetFormForBroker = () => {
   Object.keys(formState).forEach((key) => {
     delete formState[key]
   })
 
   const saved = connectionMap.value[selectedBroker.value.id]
+  brokerEnvironment.value = readSavedConnectionEnvironment(saved)
   if (selectedBroker.value.id === 'kraken') {
     krakenMarketMode.value = (saved?.credentials?.market as KrakenMarketMode) || 'spot'
   }
 
-  selectedBroker.value.fields.forEach((field) => {
-    formState[field.key] = saved?.credentials?.[field.key] || ''
-  })
-
-
-
-  importTargetStrategyId.value = saved?.credentials?.targetStrategyId || props.strategyId || tradeStore.selectedStrategyId || 'MAIN_DIARY'
+  applySavedCredentialsToForm()
 }
 
 const loadConnections = async () => {
@@ -390,18 +542,16 @@ const persistConnections = async () => {
 }
 
 const saveCurrentConnection = async () => {
-  const credentials = {
-    ...Object.fromEntries(selectedBroker.value.fields.map(field => [field.key, String(formState[field.key] || '').trim()])),
-    ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
-    targetStrategyId: importTargetStrategyId.value
-  } as Record<string, string>
+  const credentials = getSavedCredentialsForCurrentSelection()
+  const existing = connectionMap.value[selectedBroker.value.id]
+  const keepActive = Boolean(existing?.active && savedConnectionMatchesSelection(existing))
 
   connectionMap.value[selectedBroker.value.id] = {
     brokerId: selectedBroker.value.id,
     credentials,
-    active: connectionMap.value[selectedBroker.value.id]?.active || false,
+    active: keepActive,
     updatedAt: new Date().toISOString(),
-    activatedAt: connectionMap.value[selectedBroker.value.id]?.activatedAt
+    activatedAt: keepActive ? existing?.activatedAt : undefined
   }
   await persistConnections()
   statusTone.value = 'success'
@@ -440,14 +590,19 @@ const handleManualSync = async () => {
   if (!isSelectedBrokerActive.value) return
   activationState.value = 'loading'
   try {
-    const creds = connectionMap.value[selectedBroker.value.id]?.credentials
+    const saved = connectionMap.value[selectedBroker.value.id]
+    const creds = saved?.credentials
+    const environment = readSavedConnectionEnvironment(saved)
     if (selectedBroker.value.id === 'bybit' && creds) {
-      await importBybitTrades({ apiKey: creds.apiKey || '', apiSecret: creds.apiSecret || '' })
+      await importBybitTrades(withBybitEnvironment({ apiKey: creds.apiKey || '', apiSecret: creds.apiSecret || '' }, environment))
     } else if (selectedBroker.value.id === 'kraken' && creds) {
       const credentials = { apiKey: creds.apiKey || '', apiSecret: creds.apiSecret || '' }
       if (krakenMarketMode.value === 'futures') {
-        await importKrakenFuturesTrades(credentials)
+        await importKrakenFuturesTrades(withKrakenFuturesEnvironment(credentials, environment))
       } else {
+        if (environment === 'demo') {
+          throw new Error('Kraken Demo is available through Futures API only. Switch Kraken to Futures or choose REAL for Spot.')
+        }
         await importKrakenTrades(credentials)
       }
     } else {
@@ -483,12 +638,14 @@ const setImportTargetStrategy = async (strategyId: string) => {
 
 const setKrakenMarketMode = (mode: KrakenMarketMode) => {
   krakenMarketMode.value = mode
-  const saved = connectionMap.value.kraken
-  selectedBroker.value.fields.forEach((field) => {
-    formState[field.key] = saved?.credentials?.market === mode
-      ? saved.credentials[field.key] || ''
-      : ''
-  })
+  applySavedCredentialsToForm()
+  statusMessage.value = ''
+  statusTone.value = 'neutral'
+}
+
+const setBrokerEnvironment = (environment: BrokerEnvironment) => {
+  brokerEnvironment.value = environment
+  applySavedCredentialsToForm()
   statusMessage.value = ''
   statusTone.value = 'neutral'
 }
@@ -502,16 +659,16 @@ const activateCurrentConnection = async () => {
 
   try {
     if (selectedBroker.value.id === 'binance') {
-      const credentials: BinanceCredentials = {
+      const credentials: BinanceCredentials = withBinanceEnvironment({
         apiKey: formState.apiKey || '',
         apiSecret: formState.apiSecret || ''
-      }
+      }, brokerEnvironment.value)
       await testBinanceConnection(credentials)
     } else if (selectedBroker.value.id === 'bybit') {
-      const credentials: BybitCredentials = {
+      const credentials: BybitCredentials = withBybitEnvironment({
         apiKey: formState.apiKey || '',
         apiSecret: formState.apiSecret || ''
-      }
+      }, brokerEnvironment.value)
       await testBybitConnection(credentials)
       await importBybitTrades(credentials)
     } else if (selectedBroker.value.id === 'kraken') {
@@ -520,9 +677,13 @@ const activateCurrentConnection = async () => {
         apiSecret: formState.apiSecret || ''
       }
       if (krakenMarketMode.value === 'futures') {
-        await testKrakenFuturesConnection(credentials)
-        await importKrakenFuturesTrades(credentials)
+        const scopedCredentials = withKrakenFuturesEnvironment(credentials, brokerEnvironment.value)
+        await testKrakenFuturesConnection(scopedCredentials)
+        await importKrakenFuturesTrades(scopedCredentials)
       } else {
+        if (brokerEnvironment.value === 'demo') {
+          throw new Error('Kraken Demo is available through Futures API only. Switch Kraken to Futures or choose REAL for Spot.')
+        }
         await testKrakenConnection(credentials)
         await importKrakenTrades(credentials)
       }
@@ -530,11 +691,7 @@ const activateCurrentConnection = async () => {
 
     connectionMap.value[selectedBroker.value.id] = {
       brokerId: selectedBroker.value.id,
-      credentials: {
-        ...Object.fromEntries(selectedBroker.value.fields.map(field => [field.key, String(formState[field.key] || '').trim()])),
-        ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
-        targetStrategyId: importTargetStrategyId.value
-      },
+      credentials: getSavedCredentialsForCurrentSelection(),
       active: true,
       updatedAt: new Date().toISOString(),
       activatedAt: new Date().toISOString()

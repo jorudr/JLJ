@@ -1,9 +1,25 @@
 import { invoke } from '@tauri-apps/api/core'
 
+export type KrakenEnvironment = 'real' | 'demo'
+
+export const KRAKEN_DEMO_FUTURES_BASE_URL = 'https://demo-futures.kraken.com'
+
 export interface KrakenCredentials {
   apiKey: string
   apiSecret: string
   baseUrl?: string
+}
+
+export const withKrakenFuturesEnvironment = (
+  credentials: KrakenCredentials,
+  environment: KrakenEnvironment = 'real'
+): KrakenCredentials => {
+  if (environment !== 'demo') return credentials
+
+  return {
+    ...credentials,
+    baseUrl: KRAKEN_DEMO_FUTURES_BASE_URL
+  }
 }
 
 export interface KrakenSignedRequestOptions {

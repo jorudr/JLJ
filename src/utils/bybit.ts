@@ -1,9 +1,25 @@
 import { invoke } from '@tauri-apps/api/core'
 
+export type BybitEnvironment = 'real' | 'demo'
+
+export const BYBIT_DEMO_BASE_URL = 'https://api-demo.bybit.com'
+
 export interface BybitCredentials {
   apiKey: string
   apiSecret: string
   baseUrl?: string
+}
+
+export const withBybitEnvironment = (
+  credentials: BybitCredentials,
+  environment: BybitEnvironment = 'real'
+): BybitCredentials => {
+  if (environment !== 'demo') return credentials
+
+  return {
+    ...credentials,
+    baseUrl: BYBIT_DEMO_BASE_URL
+  }
 }
 
 export interface BybitSignedRequestOptions {

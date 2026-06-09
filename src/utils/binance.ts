@@ -1,12 +1,29 @@
 import { invoke } from '@tauri-apps/api/core'
 
 export type BinanceMarketScope = 'spot' | 'usdm-futures'
+export type BinanceEnvironment = 'real' | 'demo'
+
+export const BINANCE_DEMO_SPOT_BASE_URL = 'https://testnet.binance.vision'
+export const BINANCE_DEMO_USDM_FUTURES_BASE_URL = 'https://demo-fapi.binance.com'
 
 export interface BinanceCredentials {
   apiKey: string
   apiSecret: string
   baseUrl?: string
   futuresBaseUrl?: string
+}
+
+export const withBinanceEnvironment = (
+  credentials: BinanceCredentials,
+  environment: BinanceEnvironment = 'real'
+): BinanceCredentials => {
+  if (environment !== 'demo') return credentials
+
+  return {
+    ...credentials,
+    baseUrl: BINANCE_DEMO_SPOT_BASE_URL,
+    futuresBaseUrl: BINANCE_DEMO_USDM_FUTURES_BASE_URL
+  }
 }
 
 export interface BinanceSignedRequestOptions {

@@ -6,7 +6,7 @@
            style="-webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transform: translateZ(0);">
         
         
-          <div class="flex flex-col lg:flex-row gap-16 items-start">
+          <div class="flex flex-col w-full lg:flex-row gap-16 items-start justify-center">
              <!-- EDITOR PANEL -->
              <ExPanel class="w-full max-w-xl" noPadding variant="light">
                 <template #header>
@@ -113,15 +113,6 @@
                     </ExText>
                  </div>
                  
-                 <div class="p-6 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.02] dark:bg-nier-text-dark/[0.02] flex flex-col space-y-4">
-                    <span class="text-[9px] font-mono uppercase tracking-widest font-black opacity-50">System_Requirements</span>
-                    <ul class="space-y-2">
-                       <li v-for="req in ['Unique Identifier', 'Valid Telemetry Link', 'Archive Priority']" :key="req" class="flex items-center space-x-3">
-                          <div class="w-1 h-1 bg-nier-text-light dark:bg-nier-text-dark opacity-40"></div>
-                          <span class="text-[8px] font-mono uppercase tracking-widest opacity-40">{{ req }}</span>
-                       </li>
-                    </ul>
-                 </div>
              </div>
           </div>
 
