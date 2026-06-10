@@ -340,15 +340,23 @@
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
     <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && !showCapitalForecast && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500">
-       <OpenStrategyMetrics
-         :is-dark="isDark"
-         :minimal="true"
-         :metrics="complianceMetricsConfigs"
-         :values="complianceMetricsValues"
-         strategy-name="Protocol_Compliance"
-         :is-live="true"
-         :editable="false"
-       />
+       <ExPanel
+         variant="light"
+         :show-corners="true"
+         :no-padding="true"
+         class="!bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
+       >
+          <OpenStrategyMetrics
+            :is-dark="isDark"
+            :minimal="true"
+            :transparent="true"
+            :metrics="complianceMetricsConfigs"
+            :values="complianceMetricsValues"
+            strategy-name="Protocol_Compliance"
+            :is-live="true"
+            :editable="false"
+          />
+       </ExPanel>
     </div>
 
     <div

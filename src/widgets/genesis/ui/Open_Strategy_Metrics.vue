@@ -1,5 +1,5 @@
 <template>
-  <div class="osp-metrics-panel font-mono" :class="[isDark ? 'osp-dark' : 'osp-light', { 'osp-minimal': minimal }]">
+  <div class="osp-metrics-panel font-mono" :class="[isDark ? 'osp-dark' : 'osp-light', { 'osp-minimal': minimal, 'osp-transparent': transparent }]">
 
     <!-- PANEL HEADER -->
     <div class="osp-header" v-if="!minimal">
@@ -22,7 +22,7 @@
     </div>
 
     <!-- SCAN LINE ACCENT -->
-    <div class="osp-scanline"></div>
+    <div class="osp-scanline" v-if="!minimal"></div>
 
     <!-- DYNAMIC CATEGORY GROUPS -->
     <div class="osp-content">
@@ -113,6 +113,7 @@ interface Props {
   values?: any;
   editable?: boolean;
   minimal?: boolean;
+  transparent?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -123,7 +124,8 @@ const props = withDefaults(defineProps<Props>(), {
   metrics: () => [],
   values: () => ({}),
   editable: true,
-  minimal: false
+  minimal: false,
+  transparent: false
 })
 
 defineEmits(['edit'])
@@ -458,5 +460,22 @@ const groupedMetrics = computed(() => {
 }
 .osp-minimal .osp-kpi-inner {
   gap: 2px;
+}
+
+/* Transparent variant overrides */
+.osp-transparent.osp-metrics-panel {
+  background: transparent !important;
+  border: none !important;
+}
+.osp-transparent .osp-kpi-grid {
+  border-top: none !important;
+}
+.osp-transparent .osp-kpi-card {
+  background: transparent !important;
+  border-right-color: var(--osp-border) !important;
+  border-bottom-color: var(--osp-border) !important;
+}
+.osp-transparent .osp-kpi-card:hover {
+  background: var(--osp-bg-hover) !important;
 }
 </style>
