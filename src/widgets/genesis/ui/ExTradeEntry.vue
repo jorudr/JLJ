@@ -6,7 +6,6 @@ import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExText from '~/shared/ui/ExText.vue'
-import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
@@ -1757,9 +1756,6 @@ const submit = async () => {
        class="flex flex-col items-center h-full w-full overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-white dark:bg-[#0a0a0a] text-black dark:text-white"
         :class="{ dark: isDark }">
     
-
-    <DesignVignette :is-dark="isDark" />
-
     <!-- CME Metadata Notice Backdrop -->
     <Transition name="fade">
       <div v-if="currentAssetData?.contractSize && showCmeNotice" 
