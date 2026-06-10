@@ -313,38 +313,40 @@
          @click.stop>
       <div class="relative h-[620px] transition-[width] duration-500"
            :class="isPresetPanelCollapsed ? 'w-0' : 'w-80'">
-      <aside class="absolute left-0 top-0 h-[620px] w-80 border border-white/10 bg-[#0a0a0a]/90 p-4 backdrop-blur-xl transition-all duration-500"
+      <ExPanel variant="light" no-padding no-shadow
+             class="absolute left-0 top-0 h-[620px] w-80 transition-all duration-500"
              :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
-        <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
-          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-white/80">{{ t('genesis.tree.presets.title') }}</span>
-          <button class="font-mono text-[9px] font-bold uppercase tracking-widest text-white/35 transition-colors hover:text-white"
+        <div class="h-full w-full p-4 flex flex-col">
+        <div class="mb-4 flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
+          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-black/80 dark:text-white/80">{{ t('genesis.tree.presets.title') }}</span>
+          <button class="font-mono text-[9px] font-bold uppercase tracking-widest text-black/35 dark:text-white/35 transition-colors hover:text-black dark:hover:text-white"
                   @click="activePresetId = null">
             {{ t('genesis.tree.presets.clear') }}
           </button>
         </div>
         <input v-model="presetSearch"
-               class="mb-3 h-10 w-full border border-white/10 bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-white outline-none transition-colors placeholder:text-white/25 focus:border-white/45"
+               class="mb-3 h-10 w-full border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-black dark:text-white outline-none transition-colors placeholder:text-black/25 dark:placeholder:text-white/25 focus:border-black/45 dark:focus:border-white/45"
                :placeholder="t('genesis.tree.presets.searchPlaceholder')"
                @keydown.stop />
-        <div class="mb-3 border border-white/10 bg-white/[0.02] p-3">
-          <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-white/35">
+        <div class="mb-3 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-3">
+          <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
             {{ t('genesis.tree.controls.heatmap') }}
           </div>
           <div class="grid grid-cols-4 gap-1">
             <button v-for="mode in heatmapModes"
                     :key="mode.id"
                     class="relative overflow-hidden border px-2 py-2 font-mono text-[7px] font-black uppercase tracking-[0.12em] transition-all duration-300"
-                    :class="heatmapMode === mode.id ? heatmapButtonClass(mode.id) : 'border-white/10 bg-[#050505] text-white/35 hover:border-white/30 hover:text-white'"
+                    :class="heatmapMode === mode.id ? heatmapButtonClass(mode.id) : 'border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-[#050505] text-black/35 dark:text-white/35 hover:border-black/30 dark:hover:border-white/30 hover:text-black dark:hover:text-white'"
                     @click="heatmapMode = mode.id">
               <span class="relative z-10">{{ t(mode.labelKey) }}</span>
             </button>
           </div>
         </div>
-        <div class="mb-3 grid grid-cols-4 border border-white/10">
+        <div class="mb-3 grid grid-cols-4 border border-black/10 dark:border-white/10">
           <button v-for="tab in presetTabs"
                   :key="tab.id"
-                  class="border-r border-white/10 px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
-                  :class="activePresetTab === tab.id ? 'bg-white text-black' : 'bg-white/[0.02] text-white/35 hover:text-white'"
+                  class="border-r border-black/10 dark:border-white/10 px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
+                  :class="activePresetTab === tab.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-black/[0.02] dark:bg-white/[0.02] text-black/35 dark:text-white/35 hover:text-black dark:hover:text-white'"
                   @click="activePresetTab = tab.id">
             {{ t(tab.labelKey) }}
           </button>
@@ -353,7 +355,7 @@
           <button v-for="preset in filteredPresetOptions"
                   :key="preset.id"
                   class="group relative border px-4 py-3 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-30"
-                  :class="activePresetId === preset.id ? 'border-white bg-white text-black' : 'border-white/10 text-white/50 hover:border-white/35 hover:text-white'"
+                  :class="activePresetId === preset.id ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black' : 'border-black/10 dark:border-white/10 text-black/50 dark:text-white/50 hover:border-black/35 dark:hover:border-white/35 hover:text-black dark:hover:text-white'"
                   :disabled="preset.empty"
                   @click="activePresetId = activePresetId === preset.id ? null : preset.id">
             <span class="block font-mono text-[10px] font-black uppercase tracking-[0.16em]">{{ translatePresetLabel(preset.label) }}</span>
@@ -362,16 +364,17 @@
             </span>
           </button>
           <div v-if="filteredPresetOptions.length === 0"
-               class="border border-white/10 px-4 py-5 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
+               class="border border-black/10 dark:border-white/10 px-4 py-5 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">
             {{ t('genesis.tree.presets.noPresetsFound') }}
           </div>
         </div>
-      </aside>
-      <button class="absolute top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-r border-b border-white/20 bg-[#070707] transition-colors hover:bg-[#111] group/preset-tab"
+        </div>
+      </ExPanel>
+      <button class="absolute top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-r border-b border-black/20 dark:border-white/20 bg-white dark:bg-[#070707] transition-colors hover:bg-black/5 dark:hover:bg-[#111] group/preset-tab"
               :class="isPresetPanelCollapsed ? 'right-0' : '-right-6'"
               @click="isPresetPanelCollapsed = !isPresetPanelCollapsed">
-        <div class="h-16 w-[1px] bg-white/10 transition-all duration-300 group-hover/preset-tab:bg-white/40"></div>
-        <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-white/10 transition-colors group-hover/preset-tab:text-white/40">
+        <div class="h-16 w-[1px] bg-black/10 dark:bg-white/10 transition-all duration-300 group-hover/preset-tab:bg-black/40 dark:group-hover/preset-tab:bg-white/40"></div>
+        <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-black/10 dark:text-white/10 transition-colors group-hover/preset-tab:text-black/40 dark:group-hover/preset-tab:text-white/40">
           {{ isPresetPanelCollapsed ? t('genesis.tree.presets.handle.open') : t('genesis.tree.presets.handle.close') }}
         </span>
       </button>
@@ -638,7 +641,7 @@ const heatmapMetricColorClass = (node: any) => {
 }
 
 const heatmapButtonClass = (_mode: string) => {
-  return 'border-white bg-white text-black'
+  return 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
 }
 
 const nodeSurfaceClass = (node: any) => {
@@ -826,6 +829,9 @@ const connectorPath = (
     x: Number(child[childXKey]) + 1,
     y: Number(child[childYKey]) + 1
   }))
+  
+  if (!points.length || !points[0]) return ''
+
   const childY = points[0].y
   const busY = parentY + ((childY - parentY) / 2)
   const minX = Math.min(...points.map(point => point.x))
@@ -861,7 +867,10 @@ const conditionRowsPath = (
   const rows = Array.from(rowMap.entries())
     .sort(([rowA], [rowB]) => rowA - rowB)
     .map(([, row]) => row.sort((a, b) => a.x - b.x))
+    
   const firstRow = rows[0]
+  if (!firstRow || !firstRow.length || !firstRow[0]) return ''
+
   const firstRowY = firstRow[0].y
   const rootBusY = scenarioY + ((firstRowY - scenarioY) / 2)
   const rootMinX = Math.min(scenarioX, ...firstRow.map(point => point.x))
@@ -874,8 +883,12 @@ const conditionRowsPath = (
 
   rows.slice(1).forEach((row, rowIndex) => {
     const previousRow = rows[rowIndex]
+    if (!previousRow || !previousRow.length) return
+    
     const parentPoint = previousRow[Math.min(1, previousRow.length - 1)]
-    const rowY = row[0].y
+    if (!parentPoint) return
+    
+    const rowY = row[0]?.y ?? 0
     const rowBusY = parentPoint.y + ((rowY - parentPoint.y) / 2)
     const minX = Math.min(...row.map(point => point.x))
     const maxX = Math.max(...row.map(point => point.x))

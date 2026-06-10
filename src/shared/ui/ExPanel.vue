@@ -47,17 +47,16 @@ const bottomRightClasses = computed(() =>
   <div 
     :class="[
       'relative w-full border border-black/10 dark:border-white/10 flex flex-col',
-      variant === 'light' ? 'bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-md' : 'bg-white dark:bg-[#0a0a0a]',
+      variant === 'light' ? 'bg-white/50 dark:bg-[#0a0a0a]/50' : 'bg-white dark:bg-[#0a0a0a]',
       { 'p-0': noPadding },
       noShadow ? 'shadow-none dark:shadow-none' : 'shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
     ]"
-    :style="variant === 'light'
-      ? {
-          backdropFilter: 'blur(16px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(140%)'
-        }
-      : undefined"
+    style="transform: translateZ(0);"
   >
+    <div v-if="variant === 'light'" 
+         class="absolute inset-0 pointer-events-none -z-10"
+         style="backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); mask-image: linear-gradient(black, black); -webkit-mask-image: -webkit-linear-gradient(black, black);">
+    </div>
     <template v-if="showCorners">
       <ExGothicCorners :variant="variant" :opacity="0.9" />
     </template>

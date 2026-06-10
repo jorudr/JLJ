@@ -200,7 +200,7 @@
              </button>
  
              <ExPanel 
-               class="!bg-gray-50 dark:!bg-[#070707] !border-black/10 dark:!border-white/10"
+               class="!bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
                :no-shadow="true"
                :title="t('genesis.virtualLog.archivalRecord')"
                :show-corners="true"
