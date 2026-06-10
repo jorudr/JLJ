@@ -318,7 +318,7 @@
              :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
         <div class="h-full w-full p-4 flex flex-col">
         <div class="mb-4 flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
-          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-black/80 dark:text-white/80">{{ t('genesis.tree.presets.title') }}</span>
+          <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-black/80 dark:text-white/80">{{ t('genesis.tree.re.title') }}</span>
           <button class="font-mono text-[9px] font-bold uppercase tracking-widest text-black/35 dark:text-white/35 transition-colors hover:text-black dark:hover:text-white"
                   @click="activePresetId = null">
             {{ t('genesis.tree.presets.clear') }}

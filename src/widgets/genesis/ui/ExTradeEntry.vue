@@ -2989,42 +2989,34 @@ const submit = async () => {
     <Teleport to="body">
       <Transition name="nier-fade">
         <div v-if="isTemporalOpen" 
-             class="fixed inset-0 z-[2000] flex items-center justify-center p-20 bg-black/40 dark:bg-black/80">
-          <div class="relative w-full max-w-4xl bg-black border border-white/40 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
+             @click.self="isTemporalOpen = false"
+             class="fixed inset-0 z-[2000] flex items-center justify-center p-20 bg-black/20 dark:bg-black/40 backdrop-blur-md cursor-pointer">
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="false" class="w-full max-w-4xl shadow-[0_0_100px_rgba(0,0,0,0.8)] !border-black/20 dark:!border-white/20 cursor-auto">
             
-            <div class="flex items-center justify-between px-10 py-6 border-b border-white/10">
-              <div class="flex items-center gap-4">
-                <div class="w-2 h-2 bg-white rotate-45"></div>
-                <span class="text-xs uppercase tracking-[0.8em] font-black text-white">Temporal_Matrix_Protocol</span>
-              </div>
-
-              <button @click="isTemporalOpen = false" 
-                      class="group relative px-8 py-2 bg-white/5 border border-white/20 hover:bg-white hover:text-black transition-all duration-300">
-                <span class="text-[9px] font-black uppercase tracking-[0.4em]">Accept</span>
-              </button>
+            <div class="flex items-center justify-between px-4 py-2 border-b border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
             </div>
 
-            <div class="grid grid-cols-2 divide-x divide-white/5 h-[450px]">
+            <div class="grid grid-cols-2 divide-x divide-black/5 dark:divide-white/5 h-[450px]">
               <div class="flex flex-col p-10 gap-8">
                 <div class="flex flex-col gap-2">
-                  <span class="text-[9px] uppercase tracking-widest text-white/20">Active_Target</span>
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">Active_Target</span>
                   <div class="flex gap-2">
                     <button v-for="t in ['open', 'exit']" :key="t"
                             @click="activeTemporalTarget = t"
-                            class="flex-1 py-3 border border-white/20 text-[10px] uppercase tracking-[0.4em] transition-all"
-                            :class="activeTemporalTarget === t ? 'bg-white text-black' : 'bg-transparent text-white/40 hover:bg-white/5'">
+                            class="flex-1 py-3 border border-black/20 dark:border-white/20 text-[10px] uppercase tracking-[0.4em] transition-all"
+                            :class="activeTemporalTarget === t ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-transparent text-black/40 hover:bg-black/5 dark:text-white/40 dark:hover:bg-white/5'">
                       {{ t.toUpperCase() }}_ARCHIVE
                     </button>
                   </div>
                 </div>
 
-                <div class="flex flex-col gap-4 pt-4 border-t border-white/5">
+                <div class="flex flex-col gap-4 pt-4 border-t border-black/5 dark:border-white/5">
                   <button @click="activeTemporalTarget === 'open' ? openDate = new Date() : exitDate = new Date()" 
-                          class="w-full py-2 border border-white/10 text-[8px] uppercase tracking-widest text-white/60 hover:bg-white/10">
+                          class="w-full py-2 border border-black/10 dark:border-white/10 text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
                     Sync_to_Current_System_Time
                   </button>
                   <button @click="exitDate = new Date(openDate)" 
-                          class="w-full py-2 border border-white/10 text-[8px] uppercase tracking-widest text-white/60 hover:bg-white/10">
+                          class="w-full py-2 border border-black/10 dark:border-white/10 text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
                     Clone_Open_Protocol_to_Exit
                   </button>
                 </div>
@@ -3034,33 +3026,33 @@ const submit = async () => {
                 <div class="flex flex-col items-center gap-10">
                   <div class="flex items-center gap-4">
                     <div v-for="unit in ['day', 'month', 'year']" :key="unit" class="flex flex-col items-center gap-2">
-                      <button @click="adjustDate(activeTemporalTarget, unit, 1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-white"></div></button>
+                      <button @click="adjustDate(activeTemporalTarget, unit, 1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
                       <input v-model="tempDateParts[unit]"
                              :maxlength="unit === 'year' ? 4 : 2"
                              @input="e => handleManualDate(activeTemporalTarget, unit, e.target.value)"
-                             class="w-24 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-tighter text-white" />
-                      <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-white"></div></button>
-                      <span class="text-[7px] uppercase tracking-widest text-white/20">{{ unit }}</span>
+                             class="w-24 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-tighter text-black dark:text-white" />
+                      <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ unit }}</span>
                     </div>
                   </div>
 
-                  <div class="w-20 h-px bg-white/10"></div>
+                  <div class="w-20 h-px bg-black/10 dark:bg-white/10"></div>
 
                   <div class="flex items-center gap-6">
                     <div v-for="unit in ['hour', 'minute']" :key="unit" class="flex flex-col items-center gap-2">
-                      <button @click="adjustDate(activeTemporalTarget, unit, 1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-white"></div></button>
+                      <button @click="adjustDate(activeTemporalTarget, unit, 1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
                       <input v-model="tempDateParts[unit]"
                              maxlength="2"
                              @input="e => handleManualDate(activeTemporalTarget, unit, e.target.value)"
-                             class="w-20 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-widest text-white" />
-                      <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-white"></div></button>
-                      <span class="text-[7px] uppercase tracking-widest text-white/20">{{ unit }}</span>
+                             class="w-20 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-widest text-black dark:text-white" />
+                      <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px bg-black dark:bg-white"></div></button>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ unit }}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ExPanel>
         </div>
       </Transition>
     </Teleport>
