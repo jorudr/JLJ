@@ -2157,8 +2157,8 @@ const submit = async () => {
             </div>
 
             <div v-else class="grid grid-cols-2 gap-8">
-                 <div v-for="entry in journalEntries" :key="entry.id" 
-                      class="relative group flex flex-col border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] transition-all duration-500 hover:border-black/30 dark:hover:border-white/30">
+                 <ExPanel v-for="entry in journalEntries" :key="entry.id" variant="light" :no-padding="true" :show-corners="true" :no-shadow="true"
+                       class="group flex flex-col transition-all duration-500 hover:!border-black/30 dark:hover:!border-white/30 !border-black/10 dark:!border-white/10">
                     
                     <!-- Remove Button -->
                     <button @click.stop="removeJournalEntry(entry.id)" 
@@ -2236,11 +2236,7 @@ const submit = async () => {
                           </button>
                        </div>
                     </div>
- 
-                    <!-- Corner Brackets -->
-                    <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
-                    <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>
-                 </div>
+                  </ExPanel>
               </div>
           </div>
         </Transition>
