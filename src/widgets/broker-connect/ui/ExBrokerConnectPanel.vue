@@ -356,8 +356,7 @@ const selectedImportStrategyName = computed(() => {
 })
 
 const brokerEnvironmentOptions = computed<Array<{ id: BrokerEnvironment; label: string }>>(() => [
-  { id: 'real', label: 'REAL' },
-  { id: 'demo', label: 'DEMO' }
+  { id: 'real', label: 'REAL' }
 ])
 
 const selectedBrokerSupportsEnvironment = computed(() => {
@@ -1269,12 +1268,16 @@ const readKrakenFuturesFillTimestamp = (fill: KrakenFuturesFill) => {
 }
 
 const parseKrakenFuturesTimestamp = (value: string | number) => {
-  const parsed = Date.parse(String(value || ''))
-  if (Number.isFinite(parsed)) return parsed
+  const str = String(value || '').trim()
+  if (/^\d+(\.\d+)?$/.test(str)) {
+    const numeric = Number(str)
+    return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  }
 
-  const numeric = Number(value || 0)
-  if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
-  return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  const parsed = Date.parse(str)
+  if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
+
+  return Number.NaN
 }
 
 const hasIntradayTimestampPrecision = (value: string | number) => {

@@ -663,12 +663,16 @@ const safeParseDateStr = (val: string | number) => {
 }
 
 const parseKrakenSpotTimestamp = (value: number | string) => {
+  const str = String(value || '').trim()
+  if (/^\d+(\.\d+)?$/.test(str)) {
+    const numeric = Number(str)
+    return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  }
+
   const parsed = Date.parse(safeParseDateStr(value))
   if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
 
-  const numeric = Number(value || 0)
-  if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
-  return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  return Number.NaN
 }
 
 const readKrakenFuturesFillTimestamp = (fill: KrakenFuturesFill) => {
@@ -679,12 +683,16 @@ const readKrakenFuturesFillTimestamp = (fill: KrakenFuturesFill) => {
 }
 
 const parseKrakenFuturesTimestamp = (value: string | number) => {
+  const str = String(value || '').trim()
+  if (/^\d+(\.\d+)?$/.test(str)) {
+    const numeric = Number(str)
+    return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  }
+
   const parsed = Date.parse(safeParseDateStr(value))
   if (Number.isFinite(parsed) && !isNaN(parsed)) return parsed
 
-  const numeric = Number(value || 0)
-  if (!Number.isFinite(numeric) || numeric <= 0) return Number.NaN
-  return numeric > 1_000_000_000_000 ? numeric : numeric * 1000
+  return Number.NaN
 }
 
 const hasIntradayTimestampPrecision = (value: string | number) => {
