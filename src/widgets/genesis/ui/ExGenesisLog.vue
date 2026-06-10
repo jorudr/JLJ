@@ -378,7 +378,8 @@
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
-         <ExPanel v-if="showStrategyMenu" variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="mb-6 w-80 z-[200] pointer-events-auto !border-black/20 dark:!border-white/20">
+         <div class="absolute bottom-full mb-6 w-80 z-[200] pointer-events-auto" v-if="showStrategyMenu">
+           <ExPanel variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="!border-black/20 dark:!border-white/20">
             <!-- Topbar -->
             <div class="flex items-center justify-between px-3 py-1.5 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
             </div>
@@ -400,6 +401,7 @@
                </div>
             </div>
          </ExPanel>
+         </div>
        </Transition>
 
        <!-- The Pagination + Protocol Select Button Row -->

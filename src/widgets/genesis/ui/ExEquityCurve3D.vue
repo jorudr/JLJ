@@ -314,23 +314,22 @@
             </div>
 
             <Transition name="protocol-slide">
-              <div v-if="showStrategyMenu" 
-                   class="absolute top-full left-0 mt-4 w-64 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-[20px_20px_60px_rgba(0,0,0,0.2)] z-[100] pointer-events-auto overflow-hidden">
-                <div class="px-6 py-2 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-black/5 dark:bg-white/5">
-                  <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.4em]">Archival_Registry</span>
-                  <span class="text-[6px] font-mono opacity-20 uppercase">{{ strategies.length }}_PROTOCOLS</span>
-                </div>
-                <div class="max-h-64 overflow-y-auto custom-scrollbar">
-                  <div v-for="s in strategies" :key="s.id"
-                       @click.stop="selectedStrategyId = s.id; showStrategyMenu = false"
-                       class="group/item relative px-6 py-3 cursor-pointer transition-all duration-300 border-b border-black/5 dark:border-white/5 last:border-0"
-                       :class="selectedStrategyId === s.id ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03] text-black/60 dark:text-white/60'">
-                    <span class="text-[9px] font-mono tracking-[0.2em] uppercase font-bold group-hover/item:tracking-[0.3em] transition-all">
-                      {{ s.name }}
-                    </span>
-                    <div v-if="selectedStrategyId === s.id" class="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-white dark:bg-black rotate-45"></div>
+              <div v-if="showStrategyMenu" class="absolute top-full left-0 mt-4 w-64 z-[100] pointer-events-auto">
+                <ExPanel variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="!border-black/20 dark:!border-white/20">
+                  <div class="flex items-center justify-between px-3 py-1.5 border-b border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5">
                   </div>
-                </div>
+                  <div class="py-3">
+                    <div v-for="s in strategies" :key="s.id"
+                         @click.stop="selectedStrategyId = s.id; showStrategyMenu = false"
+                         class="group/item relative px-6 py-3 cursor-pointer transition-all duration-300 border-b border-black/5 dark:border-white/5 last:border-0"
+                         :class="selectedStrategyId === s.id ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03] text-black/60 dark:text-white/60'">
+                      <span class="text-[9px] font-mono tracking-[0.2em] uppercase font-bold group-hover/item:tracking-[0.3em] transition-all">
+                        {{ s.name }}
+                      </span>
+                      <div v-if="selectedStrategyId === s.id" class="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-white dark:bg-black rotate-45"></div>
+                    </div>
+                  </div>
+                </ExPanel>
               </div>
             </Transition>
           </div>
