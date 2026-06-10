@@ -321,13 +321,13 @@ const addNote = async () => {
        newNotes = [...currentNotes, newNote];
     }
     
-    await tradeStore.updateTrade(props.trade.strategyId, props.trade.id, {
-      notesList: newNotes
-    });
-    
     noteText.value = "";
     isCreatingNote.value = false;
     editingContentNoteId.value = null;
+
+    await tradeStore.updateTrade(props.trade.strategyId, props.trade.id, {
+      notesList: newNotes
+    });
   }
 };
 
@@ -1608,7 +1608,7 @@ const strategyExecutionMetrics = computed(() => {
        <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Analysis</span>
     </button>
 
-    <ExPanel class="h-full w-full" title="" telemetry="" variant="standard" noPadding>
+    <ExPanel class="h-full w-full" title="" telemetry="" variant="light" noPadding>
     <div v-if="isInitializing" class="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-white/80 dark:bg-[#070707]/80 backdrop-blur-md z-50 text-black dark:text-white">
       <div class="w-12 h-12 border-t-2 border-r-2 border-black dark:border-white rounded-full animate-spin"></div>
       <div class="flex flex-col items-center space-y-1">
@@ -2912,8 +2912,7 @@ const strategyExecutionMetrics = computed(() => {
                   </div>
 
                   <!-- NEW NOTE TEXTAREA -->
-                  <Transition name="fade">
-                    <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 border border-black/10 dark:border-white/10 relative">
+                  <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 border border-black/10 dark:border-white/10 relative">
                        <div class="absolute top-4 right-4 flex space-x-4">
                           <button @click="cancelNoteEdit" class="text-[10px] font-mono uppercase tracking-widest opacity-40 hover:opacity-100">Cancel</button>
                        </div>
@@ -2985,15 +2984,10 @@ const strategyExecutionMetrics = computed(() => {
                           </button>
                        </div>
                     </div>
-                  </Transition>
-
+                  
                   <!-- EXISTING NOTES LIST -->
-                  <div v-if="!isCreatingNote" class="flex flex-col space-y-6">
-                     <div v-if="!enrichedTrade?.notesList || enrichedTrade.notesList.length === 0" class="py-20 flex flex-col items-center justify-center opacity-20 space-y-4">
-                        <span class="text-[10px] font-mono uppercase tracking-[0.8em]">NO_NEURAL_RECORDS_FOUND</span>
-                     </div>
-                     
-                     <div v-else v-for="note in [...enrichedTrade.notesList].reverse()" :key="note.id" 
+                  <div class="flex flex-col space-y-6">
+                     <div v-for="note in [...(enrichedTrade?.notesList || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())" :key="note.id" 
                           class="flex flex-col p-6 border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.01] relative group/note cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
                           @click="toggleNote(note.id)"
                           @dblclick="startEditContent(note)">
@@ -3036,14 +3030,7 @@ const strategyExecutionMetrics = computed(() => {
       </div>
     </div>
 
-    <template #footer>
-      <div v-if="enrichedTrade && enrichedTrade.tradingStyle !== 'Main Diary' && enrichedTrade.strategyId !== 'MAIN_DIARY'" class="flex flex-col md:flex-row md:items-center justify-end space-y-4 md:space-y-0 shrink-0 py-2">
-        <!-- Neural reporting content -->
-      </div>
-      <div v-else class="flex items-center justify-center py-4 opacity-20">
-         <span class="text-[8px] font-mono uppercase tracking-[0.5em] animate-pulse">Awaiting_Strategy_Protocol_Initialization...</span>
-      </div>
-    </template>
+
   </ExPanel>
 
   <!-- DEEP DIVE EFFICIENCY MODAL -->
