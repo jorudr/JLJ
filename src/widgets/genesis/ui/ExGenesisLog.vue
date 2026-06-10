@@ -361,7 +361,7 @@
 
     <div
       v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible && canOpenCapitalForecast"
-      class="absolute left-1/2 top-8 -translate-x-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
+      class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
     >
       <ExPatternForecastPanel
         :visible="showCapitalForecast"

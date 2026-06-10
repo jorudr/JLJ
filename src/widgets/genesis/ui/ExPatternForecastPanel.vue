@@ -1,16 +1,10 @@
 <template>
-  <div class="flex h-[52rem] max-h-[82vh] flex-col overflow-hidden border border-black/10 bg-white/90 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-colors hover:bg-white dark:border-white/10 dark:bg-[#070707]/90 dark:hover:bg-[#070707]">
-    <div class="flex shrink-0 items-center justify-between border-b border-black/10 px-5 py-3 dark:border-white/10">
-      <div class="flex items-center gap-3">
-        <div class="h-1.5 w-1.5 rotate-45 bg-black dark:bg-white"></div>
-        <span class="font-mono text-[8px] font-black uppercase tracking-[0.45em] text-black/60 dark:text-white/60">
-          {{ locale === 'ru' ? 'Прогноз структурных паттернов' : 'Structural Pattern Forecast' }}
-        </span>
-      </div>
-      <span class="font-mono text-[8px] font-black uppercase tracking-[0.3em]" :class="confidenceClass">
-        {{ confidenceLabel }}
-      </span>
-    </div>
+  <ExPanel
+    variant="light"
+    :no-padding="true"
+    :no-shadow="true"
+    class="!h-[52rem] !max-h-[82vh] !bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
+  >
 
     <div v-if="loading" class="shrink-0 border-b border-black/10 px-5 py-3 dark:border-white/10">
       <div class="flex items-center justify-between gap-4">
@@ -31,27 +25,37 @@
 
     <div class="shrink-0 border-b border-black/10 px-5 py-2 dark:border-white/10">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
-          :class="activeTab === 'summary'
-            ? 'bg-black text-white dark:bg-white dark:text-black'
-            : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
-          @click="activeTab = 'summary'"
-        >
-          {{ locale === 'ru' ? 'Сводка' : 'Summary' }}
-        </button>
-        <button
-          type="button"
-          class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
-          :class="activeTab === 'settings'
-            ? 'bg-black text-white dark:bg-white dark:text-black'
-            : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
-          @click="activeTab = 'settings'"
-        >
-          {{ locale === 'ru' ? 'Настройки' : 'Settings' }}
-        </button>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
+              :class="activeTab === 'summary'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
+              @click="activeTab = 'summary'"
+            >
+              {{ locale === 'ru' ? 'Сводка' : 'Summary' }}
+            </button>
+            <button
+              type="button"
+              class="px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[0.28em] transition-colors"
+              :class="activeTab === 'settings'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-transparent text-black/45 hover:bg-black/5 dark:text-white/45 dark:hover:bg-white/5'"
+              @click="activeTab = 'settings'"
+            >
+              {{ locale === 'ru' ? 'Настройки' : 'Settings' }}
+            </button>
+          </div>
+
+          <!-- Confidence telemetry badge -->
+          <div class="flex items-center gap-2 border border-black/10 dark:border-white/10 px-2 py-1 bg-black/[0.02] dark:bg-white/[0.02]">
+            <div class="h-1.5 w-1.5 rotate-45 bg-black/40 dark:bg-white/40"></div>
+            <span class="font-mono text-[8px] font-black uppercase tracking-[0.25em]" :class="confidenceClass">
+              {{ confidenceLabel }}
+            </span>
+          </div>
         </div>
 
         <label class="flex cursor-pointer items-center gap-2 select-none">
@@ -429,13 +433,14 @@
         </div>
       </template>
     </div>
-  </div>
+  </ExPanel>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 import {
   calculatePatternForecast,
   createEmptyPatternForecast
