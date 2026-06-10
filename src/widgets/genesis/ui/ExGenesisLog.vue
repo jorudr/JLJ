@@ -378,19 +378,11 @@
        
        <!-- The Dropdown Menu -->
        <Transition name="protocol-slide">
-         <div v-if="showStrategyMenu" class="relative mb-6 w-80 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border border-black/20 dark:border-white/20 shadow-[0_-30px_60px_rgba(0,0,0,0.4)] z-[200] overflow-hidden pointer-events-auto">
-            <!-- Corner Brackets -->
-            <div class="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-black dark:border-white opacity-40"></div>
-            <div class="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-black dark:border-white opacity-40"></div>
-            
-            <!-- Header Registry -->
-            <div class="flex items-center justify-between px-6 py-3 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
-               <div class="flex items-center space-x-3">
-                  <div class="w-1 h-1 bg-black dark:bg-white rotate-45"></div>
-                  <span class="text-[8px] font-mono tracking-[0.4em] uppercase font-black text-black dark:text-white">{{ t('genesis.virtualLog.registryIndex') }}</span>
-               </div>
-               <span class="text-[7px] font-mono opacity-30 uppercase tracking-widest">{{ strategies.length }}_{{ t('genesis.virtualLog.protocols') }}</span>
+         <ExPanel v-if="showStrategyMenu" variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="mb-6 w-80 z-[200] pointer-events-auto !border-black/20 dark:!border-white/20">
+            <!-- Topbar -->
+            <div class="flex items-center justify-between px-3 py-1.5 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
             </div>
+
 
             <div class="max-h-80 overflow-y-auto custom-scrollbar py-2">
                <div v-for="s in strategies" :key="s.id" 
@@ -407,7 +399,7 @@
                   <div class="absolute bottom-0 left-0 h-px bg-black dark:bg-white w-0 group-hover/item:w-full transition-all duration-500 opacity-20"></div>
                </div>
             </div>
-         </div>
+         </ExPanel>
        </Transition>
 
        <!-- The Pagination + Protocol Select Button Row -->
