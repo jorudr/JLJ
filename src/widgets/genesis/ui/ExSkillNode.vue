@@ -80,57 +80,67 @@
            </div>
 
            <!-- Risk Management Panel -->
-            <div v-if="isRiskPanel" class="w-full cursor-pointer pointer-events-auto" @click.stop="$emit('click')">
-              <ExPanel variant="light" no-padding no-shadow class="w-full !border-red-500/30 dark:!border-red-400/30">
-                <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
-                  <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
-                    <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black text-white">Risk_Management</span>
+            <div
+              v-if="isRiskPanel"
+              class="cursor-pointer pointer-events-auto"
+              :style="riskPanelShellStyle"
+              @click.stop="$emit('click')">
+              <div :style="riskPanelScalerStyle">
+                <ExPanel
+                  variant="light"
+                  no-padding
+                  no-shadow
+                  class="w-[360px] min-h-[320px] !border-red-500/30 dark:!border-red-400/30">
+                  <div v-show="!isRiskPanelContentHidden" class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
+                    <div class="flex items-center gap-3">
+                      <div class="w-2 h-2 rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
+                      <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black text-white">Risk_Management</span>
+                    </div>
+                    <span class="text-[8px] font-mono uppercase tracking-[0.18em] text-red-500/70">Panel</span>
                   </div>
-                  <span class="text-[8px] font-mono uppercase tracking-[0.18em] text-red-500/70">Panel</span>
-                </div>
 
-                <div class="flex flex-col gap-3 p-4 pb-7">
-                  <label class="risk-panel-field">
-                    <span>Risk / Trade</span>
-                    <div class="risk-panel-control">
-                      <input v-model.number="riskParams.riskLossTrade" type="number" step="0.1" @change="commitRiskPanel" />
-                      <button @click="toggleRiskUnit('riskLossTradeUnit')" @mousedown.stop>{{ riskParams.riskLossTradeUnit }}</button>
-                    </div>
-                  </label>
+                  <div v-show="!isRiskPanelContentHidden" class="flex flex-col gap-3 p-4 pb-7">
+                    <label class="risk-panel-field">
+                      <span>Risk / Trade</span>
+                      <div class="risk-panel-control">
+                        <input v-model.number="riskParams.riskLossTrade" type="number" step="0.1" @change="commitRiskPanel" />
+                        <button @click="toggleRiskUnit('riskLossTradeUnit')" @mousedown.stop>{{ riskParams.riskLossTradeUnit }}</button>
+                      </div>
+                    </label>
 
-                  <label class="risk-panel-field">
-                    <span>Risk / Session</span>
-                    <div class="risk-panel-control">
-                      <input v-model.number="riskParams.riskLossDay" type="number" step="0.1" @change="commitRiskPanel" />
-                      <button @click="toggleRiskUnit('riskLossDayUnit')" @mousedown.stop>{{ riskParams.riskLossDayUnit }}</button>
-                    </div>
-                  </label>
+                    <label class="risk-panel-field">
+                      <span>Risk / Session</span>
+                      <div class="risk-panel-control">
+                        <input v-model.number="riskParams.riskLossDay" type="number" step="0.1" @change="commitRiskPanel" />
+                        <button @click="toggleRiskUnit('riskLossDayUnit')" @mousedown.stop>{{ riskParams.riskLossDayUnit }}</button>
+                      </div>
+                    </label>
 
-                  <label class="risk-panel-field">
-                    <span>Risk Reward</span>
-                    <div class="risk-panel-control">
-                      <span class="risk-panel-prefix">1:</span>
-                      <input v-model.number="riskParams.riskRR" type="number" step="0.1" @change="commitRiskPanel" />
-                    </div>
-                  </label>
+                    <label class="risk-panel-field">
+                      <span>Risk Reward</span>
+                      <div class="risk-panel-control">
+                        <span class="risk-panel-prefix">1:</span>
+                        <input v-model.number="riskParams.riskRR" type="number" step="0.1" @change="commitRiskPanel" />
+                      </div>
+                    </label>
 
-                  <label class="risk-panel-field">
-                    <span>Trading Style</span>
-                    <div class="risk-style-control">
-                      <button
-                        v-for="style in riskTradingStyles"
-                        :key="style"
-                        type="button"
-                        :class="{ 'is-active': riskParams.tradingStyle === style }"
-                        @click.stop="setRiskTradingStyle(style)"
-                        @mousedown.stop>
-                        {{ formatRiskTradingStyle(style) }}
-                      </button>
-                    </div>
-                  </label>
-                </div>
-              </ExPanel>
+                    <label class="risk-panel-field">
+                      <span>Trading Style</span>
+                      <div class="risk-style-control">
+                        <button
+                          v-for="style in riskTradingStyles"
+                          :key="style"
+                          type="button"
+                          :class="{ 'is-active': riskParams.tradingStyle === style }"
+                          @click.stop="setRiskTradingStyle(style)"
+                          @mousedown.stop>
+                          {{ formatRiskTradingStyle(style) }}
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+                </ExPanel>
+              </div>
             </div>
 
            <!-- Image Content Rendering -->
@@ -754,6 +764,20 @@ const isDrawingPanel = computed(() => props.node.type === 'drawing-panel')
 const isAudioNote = computed(() => props.node.type === 'audio-note')
 const isTablePanel = computed(() => props.node.type === 'table-panel')
 const isRiskPanel = computed(() => props.node.type === 'risk')
+const isRiskPanelContentHidden = computed(() => props.scale <= 0.25)
+const riskPanelVisualScale = computed(() => Math.min(Math.max(props.scale, 0.01), 1))
+const riskPanelBaseHeight = 320
+const riskPanelShellStyle = computed(() => ({
+  width: `${360 * riskPanelVisualScale.value}px`,
+  height: `${riskPanelBaseHeight * riskPanelVisualScale.value}px`,
+  overflow: 'visible'
+}))
+const riskPanelScalerStyle = computed(() => ({
+  width: '360px',
+  minHeight: `${riskPanelBaseHeight}px`,
+  transform: `scale(${riskPanelVisualScale.value})`,
+  transformOrigin: 'top left'
+}))
 const configNodeCode = computed(() => (props.node.label || 'CFG').slice(0, 3).toUpperCase())
 const riskTradingStyles = ['DAY_TRADING', 'SWING_TRADING', 'INVESTING']
 const riskParams = computed(() => {
@@ -788,7 +812,6 @@ const scenarioPanelSize = computed(() => (
 const nodeWidth = computed(() => {
   const getW = () => {
     if (props.node.type === 'image') return props.node.params?.width || 300
-    if (isRiskPanel.value) return 360
     if (isAudioNote.value) return scenarioPanelSize.value.width
     if (isTablePanel.value) return tablePanelSize.value.width
     if (isScenarioPanel.value) {
@@ -798,6 +821,7 @@ const nodeWidth = computed(() => {
     }
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
+  if (isRiskPanel.value) return `${360 * riskPanelVisualScale.value}px`
   return `${Math.round((getW() * props.scale) / 2) * 2}px`
 })
 const nodeHeight = computed(() => {
@@ -811,7 +835,7 @@ const nodeHeight = computed(() => {
     }
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
-  if (isRiskPanel.value) return 'auto'
+  if (isRiskPanel.value) return `${riskPanelBaseHeight * riskPanelVisualScale.value}px`
   return `${Math.round((getH() * props.scale) / 2) * 2}px`
 })
 
