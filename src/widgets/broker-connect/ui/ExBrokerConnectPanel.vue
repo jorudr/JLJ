@@ -1354,18 +1354,36 @@ const readBybitSpotFee = (order: BybitHistoricOrder) => {
 const deactivateCurrentConnection = async () => {
   const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
   const existing = connectionMap.value[key]
-  if (!existing) return
+  
+  // If no existing connection for the main key, but it's Kraken, we might still need to clear legacy/spot
+  if (!existing && selectedBroker.value.id !== 'kraken') return
 
   activationState.value = 'loading'
   statusTone.value = 'neutral'
   statusMessage.value = 'Deactivating connector...'
 
   try {
-    connectionMap.value[key] = {
-      ...existing,
-      active: false,
-      updatedAt: new Date().toISOString()
+    if (existing) {
+      connectionMap.value[key] = {
+        ...existing,
+        active: false,
+        updatedAt: new Date().toISOString()
+      }
     }
+    
+    // Explicitly deactivate all Kraken legacy modes to clear the green circle
+    if (selectedBroker.value.id === 'kraken') {
+      if (connectionMap.value['kraken']) {
+        connectionMap.value['kraken'].active = false
+      }
+      if (connectionMap.value['kraken-spot']) {
+        connectionMap.value['kraken-spot'].active = false
+      }
+      if (connectionMap.value['kraken-futures']) {
+        connectionMap.value['kraken-futures'].active = false
+      }
+    }
+
     await persistConnections()
     statusTone.value = 'success'
     statusMessage.value = `${selectedBroker.value.label} connector deactivated.`
