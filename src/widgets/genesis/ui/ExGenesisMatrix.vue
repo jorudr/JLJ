@@ -3635,7 +3635,6 @@ function startPan(e: MouseEvent) {
 function resetView() {
   viewState.value.panX = 0
   viewState.value.panY = 0
-  viewState.value.scale = 1
 }
 
 function focusRoot() {
