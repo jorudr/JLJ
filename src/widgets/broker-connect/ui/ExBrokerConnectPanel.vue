@@ -137,7 +137,7 @@
                   {{ statusMessage }}
                 </div>
 
-                <div class="grid gap-4" :class="isSelectedBrokerActive ? 'grid-cols-3' : 'grid-cols-2'">
+                <div class="grid grid-cols-2 gap-4">
                   <button class="border border-black/10 bg-white dark:bg-[#050505] px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:border-black hover:bg-black hover:text-white dark:border-white/10 dark:hover:border-white dark:hover:bg-white dark:hover:text-black shadow-sm"
                           @click="saveCurrentConnection">
                     {{ isRu ? 'Сохранить Ключи Локально' : 'Save Local Keys' }}
@@ -149,12 +149,6 @@
                           :disabled="!primaryActionEnabled || activationState === 'loading'"
                           @click="handlePrimaryAction">
                     {{ primaryActionLabel }}
-                  </button>
-                  <button v-if="isSelectedBrokerActive"
-                          class="border border-emerald-500/40 bg-emerald-500/10 px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600 transition-all hover:border-emerald-500 hover:bg-emerald-500 hover:text-white dark:text-emerald-400 dark:hover:text-black shadow-sm"
-                          :disabled="activationState === 'loading'"
-                          @click="handleManualSync">
-                    {{ activationState === 'loading' ? (isRu ? 'Синхронизация...' : 'Syncing...') : (isRu ? 'Синхронизировать Сделки' : 'Sync Trades') }}
                   </button>
                 </div>
 
@@ -655,7 +649,6 @@ const activateCurrentConnection = async () => {
         apiSecret: formState.apiSecret || ''
       }, brokerEnvironment.value)
       await testBybitConnection(credentials)
-      await importBybitTrades(credentials)
     } else if (selectedBroker.value.id === 'kraken') {
       const credentials: KrakenCredentials = {
         apiKey: formState.apiKey || '',
@@ -664,13 +657,11 @@ const activateCurrentConnection = async () => {
       if (krakenMarketMode.value === 'futures') {
         const scopedCredentials = withKrakenFuturesEnvironment(credentials, brokerEnvironment.value)
         await testKrakenFuturesConnection(scopedCredentials)
-        await importKrakenFuturesTrades(scopedCredentials)
       } else {
         if (brokerEnvironment.value === 'demo') {
           throw new Error('Kraken Demo is available through Futures API only. Switch Kraken to Futures or choose REAL for Spot.')
         }
         await testKrakenConnection(credentials)
-        await importKrakenTrades(credentials)
       }
     }
 
@@ -684,7 +675,7 @@ const activateCurrentConnection = async () => {
     }
     await persistConnections()
     statusTone.value = 'success'
-    statusMessage.value = `${selectedBroker.value.label} connector activated. Choose a diary strategy below for trade history import.`
+    statusMessage.value = `${selectedBroker.value.label} connector activated.`
   } catch (error: any) {
     statusTone.value = 'error'
     statusMessage.value = error?.message || 'Connector activation failed.'
