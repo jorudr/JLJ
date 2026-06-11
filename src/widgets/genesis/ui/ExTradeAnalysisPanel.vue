@@ -13,6 +13,7 @@ import ExImageEditor from './ExImageEditor.vue'
 import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
 
 interface Condition {
   id: string;
@@ -566,30 +567,19 @@ const percentileRank = computed(() => {
   return Math.round((lower / pnls.length) * 100);
 });
 
-const resolvedStyleNode = computed(() => {
-  if (!props.trade?.strategyId) return null;
-  
-  const findStyleRecursive = (targetId: string, depth: number): any => {
-    if (depth > 3) return null;
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId);
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean);
-    
-    // Check for direct style node (must have extraType or 'style' in label/riskType)
-    const styleNode = connectedNodes.find(n => 
-      (n.type === 'risk-element' && n.params?.riskType === 'style') || 
-      (n.label && n.label.toLowerCase().includes('style'))
-    );
-    if (styleNode) return styleNode;
-    
-    // Traverse one level deeper
-    for (const node of connectedNodes) {
-      const result = findStyleRecursive(node.id, depth + 1);
-      if (result) return result;
-    }
-    return null;
-  };
+const resolvedRiskManagement = computed(() => {
+  return resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, props.trade?.strategyId);
+});
 
-  return findStyleRecursive(props.trade.strategyId, 0);
+const resolvedStyleNode = computed(() => {
+  const risk = resolvedRiskManagement.value;
+  if (!risk.tradingStyle && risk.tradingStyleExtraType === null) return null;
+  return {
+    label: risk.tradingStyle || 'STYLE_UNDEFINED',
+    params: {
+      extraType: risk.tradingStyleExtraType
+    }
+  };
 });
 
 const resolvedTradingStyle = computed(() => {
@@ -1170,45 +1160,24 @@ const tradeDetailStats = computed(() => {
 });
 
 const resolvedRiskTradeNode = computed(() => {
-  if (!props.trade?.strategyId) return null;
-  
-  const findRiskTradeRecursive = (targetId: string, depth: number): any => {
-    if (depth > 3) return null;
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId);
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean);
-    
-    const riskTradeNode = connectedNodes.find(n => n.type === 'risk-element' && n.params?.riskType === 'trade');
-    if (riskTradeNode) return riskTradeNode;
-    
-    for (const node of connectedNodes) {
-      const result = findRiskTradeRecursive(node.id, depth + 1);
-      if (result) return result;
+  const risk = resolvedRiskManagement.value;
+  if (risk.riskPerTradeValue === null) return null;
+  return {
+    params: {
+      value: risk.riskPerTradeValue,
+      unit: risk.riskPerTradeUnit
     }
-    return null;
   };
-
-  return findRiskTradeRecursive(props.trade.strategyId, 0);
 });
 
 const resolvedRRNode = computed(() => {
-  if (!props.trade?.strategyId) return null;
-  
-  const findRRRecursive = (targetId: string, depth: number): any => {
-    if (depth > 3) return null;
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId);
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean);
-    
-    const rrNode = connectedNodes.find(n => n.type === 'risk-element' && n.params?.riskType === 'rr');
-    if (rrNode) return rrNode;
-    
-    for (const node of connectedNodes) {
-      const result = findRRRecursive(node.id, depth + 1);
-      if (result) return result;
+  const risk = resolvedRiskManagement.value;
+  if (risk.riskRewardRatio === null) return null;
+  return {
+    params: {
+      value: risk.riskRewardRatio
     }
-    return null;
   };
-
-  return findRRRecursive(props.trade.strategyId, 0);
 });
 
 const actualRR = computed(() => {

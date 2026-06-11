@@ -5,6 +5,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY, type GenesisEmotionItem } from '~/widgets/genesis/model/emotionLibrary'
+import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
 
 export interface GenesisTreeTradeSummary {
   id?: string
@@ -1056,29 +1057,8 @@ export const useGenesisTree = () => {
   const selectStrategy = (id: string) => {
     selectedStrategyId.value = id
 
-    const findStyleRecursive = (targetId: string, depth: number): any => {
-      if (depth > 3) return null
-
-      const directConnections = matrixConnections.value.filter(c => c.fromId === targetId)
-      const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean)
-
-      const styleNode = connectedNodes.find(n =>
-        (n.type === 'risk-element' && n.params?.riskType === 'style') ||
-        (n.label && n.label.toLowerCase().includes('style'))
-      )
-
-      if (styleNode) return styleNode
-
-      for (const node of connectedNodes) {
-        const result = findStyleRecursive(node.id, depth + 1)
-        if (result) return result
-      }
-
-      return null
-    }
-
-    const styleNode = findStyleRecursive(id, 0)
-    console.log(`[GENESIS_TREE] Protocol Selection: ${id} | Resolved Trading Style: ${styleNode?.label || 'UNDEFINED'}`)
+    const riskManagement = resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, id)
+    console.log(`[GENESIS_TREE] Protocol Selection: ${id} | Resolved Trading Style: ${riskManagement.tradingStyle || 'UNDEFINED'}`)
   }
 
   const formatCreationDate = (d: string | null | undefined) => {

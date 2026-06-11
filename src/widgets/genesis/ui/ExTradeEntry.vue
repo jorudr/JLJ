@@ -11,6 +11,7 @@ import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
+import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 
 const { locale } = useI18n()
 
@@ -207,6 +208,34 @@ const findNodeById = (list, id) => {
   }
   return null
 }
+
+const activeRiskManagement = computed(() => {
+  const allNodes = findAllNodes(matrixNodes.value)
+  const allConnections = findAllConnections(matrixNodes.value, matrixConnections.value)
+  return resolveRiskManagementForStrategy(allNodes, allConnections, selectedStrategyId.value)
+})
+
+const activeRiskPerTradeDollars = computed(() => {
+  const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  return riskValueToDollars(
+    activeRiskManagement.value.riskPerTradeValue,
+    activeRiskManagement.value.riskPerTradeUnit,
+    initialDeposit
+  )
+})
+
+const activeRiskSnapshot = computed(() => {
+  const risk = activeRiskManagement.value
+  if (!risk.sourceNode) return null
+  return {
+    riskPerTrade: risk.riskPerTradeValue,
+    riskPerTradeUnit: risk.riskPerTradeUnit,
+    riskPerSession: risk.riskPerSessionValue,
+    riskPerSessionUnit: risk.riskPerSessionUnit,
+    riskRewardRatio: risk.riskRewardRatio,
+    tradingStyle: risk.tradingStyle
+  }
+})
 
 const getReachableNodes = (startId, allNodes, allConnections) => {
   const visited = new Set([startId])
@@ -1713,6 +1742,10 @@ const submit = async () => {
     profitInCurrency: pnl.value,
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: selectedStrategyId.value,
+    risk: Number.isFinite(activeRiskPerTradeDollars.value) ? activeRiskPerTradeDollars.value : undefined,
+    riskReward: activeRiskManagement.value.riskRewardRatio || undefined,
+    tradingStyle: activeRiskManagement.value.tradingStyle || undefined,
+    riskManagement: activeRiskSnapshot.value || undefined,
     entryFee: +entryFee.value || 0,
     exitFee: +exitFee.value || 0,
     feeType: feeType.value,
@@ -2537,6 +2570,18 @@ const submit = async () => {
                 <div class="flex flex-col gap-0.5 text-left">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-emerald-500/60">Take_Profit</span>
                   <input v-model="takeProfit" type="number" placeholder="0.00" class="nier-input w-24 font-mono text-emerald-400"/>
+                </div>
+                <div class="flex flex-col gap-0.5 text-left min-w-[120px]">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/35">Panel_Risk</span>
+                  <span class="text-[10px] font-mono font-bold tracking-[0.18em] text-white">
+                    {{ activeRiskManagement.riskPerTradeValue ?? '--' }}{{ activeRiskManagement.riskPerTradeUnit }} / {{ activeRiskManagement.riskRewardRatio ? `1:${activeRiskManagement.riskRewardRatio}` : 'RR_--' }}
+                  </span>
+                </div>
+                <div class="flex flex-col gap-0.5 text-left min-w-[115px]">
+                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/35">Trade_Style</span>
+                  <span class="text-[10px] font-mono font-bold tracking-[0.18em] text-white truncate">
+                    {{ activeRiskManagement.tradingStyle || 'UNLINKED' }}
+                  </span>
                 </div>
               </div>
 

@@ -599,6 +599,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
+import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 
 const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
 
@@ -838,28 +839,7 @@ const currentTradesForList = computed(() => {
 
 const activeMatrixNodes = computed(() => {
   const stratId = selectedStrategyId.value;
-  if (!stratId) return { riskTrade: null, riskSession: null, style: null };
-
-  const findNodeRecursive = (targetId: string, depth: number, predicate: (n: any) => boolean): any => {
-    if (depth > 4) return null;
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId);
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean);
-    
-    const found = connectedNodes.find(predicate);
-    if (found) return found;
-    
-    for (const node of connectedNodes) {
-      const result = findNodeRecursive(node.id, depth + 1, predicate);
-      if (result) return result;
-    }
-    return null;
-  };
-
-  const riskTrade = findNodeRecursive(stratId, 0, n => n.type === 'risk-element' && n.params?.riskType === 'trade');
-  const riskSession = findNodeRecursive(stratId, 0, n => n.type === 'risk-element' && n.params?.riskType === 'day');
-  const style = findNodeRecursive(stratId, 0, n => (n.type === 'risk-element' && n.params?.riskType === 'style') || (n.label && n.label.toLowerCase().includes('style')));
-
-  return { riskTrade, riskSession, style };
+  return resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, stratId);
 });
 
 const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number, tradingStyle: number }>(() => {
@@ -870,38 +850,26 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
   let compliantSessionCount = 0;
   let compliantStyleCount = 0;
 
-  const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 0;
+  const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
 
-  let maxRiskDollars = 250;
-  if (activeMatrixNodes.value.riskTrade?.params) {
-    const p = activeMatrixNodes.value.riskTrade.params;
-    if (p.unit === '%') {
-      maxRiskDollars = (parseFloat(p.value) / 100) * initDep;
-    } else {
-      maxRiskDollars = parseFloat(p.value);
-    }
-  } else {
-    maxRiskDollars = Infinity;
-  }
+  const maxRiskDollars = riskValueToDollars(
+    activeMatrixNodes.value.riskPerTradeValue,
+    activeMatrixNodes.value.riskPerTradeUnit,
+    initDep
+  );
 
   const styleLimits: Record<number, { max?: number, min?: number }> = {
     0: { max: 1 },
     1: { min: 1, max: 14 },
     2: { min: 14 }
   };
-  const extraType = activeMatrixNodes.value.style?.params?.extraType;
+  const extraType = activeMatrixNodes.value.tradingStyleExtraType;
 
-  let maxSessionRiskDollars = 500;
-  if (activeMatrixNodes.value.riskSession?.params) {
-    const p = activeMatrixNodes.value.riskSession.params;
-    if (p.unit === '%') {
-      maxSessionRiskDollars = (parseFloat(p.value) / 100) * initDep;
-    } else {
-      maxSessionRiskDollars = parseFloat(p.value);
-    }
-  } else {
-    maxSessionRiskDollars = Infinity;
-  }
+  const maxSessionRiskDollars = riskValueToDollars(
+    activeMatrixNodes.value.riskPerSessionValue,
+    activeMatrixNodes.value.riskPerSessionUnit,
+    initDep
+  );
 
   const sessionRiskMap: Record<string, number> = {};
 
@@ -1521,28 +1489,8 @@ const loadMatrixData = async () => {
 const selectStrategy = (id: string) => {
   selectedStrategyId.value = id
   showStrategyMenu.value = false
-  
-  // Find style node recursively in flattened data
-  const findStyleRecursive = (targetId: string, depth: number): any => {
-    if (depth > 3) return null
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId)
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean)
-    
-    const styleNode = connectedNodes.find(n => 
-      (n.type === 'risk-element' && n.params?.riskType === 'style') || 
-      (n.label && n.label.toLowerCase().includes('style'))
-    )
-    if (styleNode) return styleNode
-    
-    for (const node of connectedNodes) {
-      const result = findStyleRecursive(node.id, depth + 1)
-      if (result) return result
-    }
-    return null
-  }
-
-  const styleNode = findStyleRecursive(id, 0)
-  console.log(`[GENESIS_LOG] Protocol Selection: ${id} | Resolved Trading Style: ${styleNode?.label || 'UNDEFINED'}`)
+  const riskManagement = resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, id)
+  console.log(`[GENESIS_LOG] Protocol Selection: ${id} | Resolved Trading Style: ${riskManagement.tradingStyle || 'UNDEFINED'}`)
 }
 
 const strategies = computed(() => tradeStore.strategies)
@@ -1558,33 +1506,14 @@ const selectedStrategyLabel = computed(() => {
 const shareCardProtocol = computed(() => {
   const stratId = selectedStrategyId.value
   if (!stratId || stratId === 'MAIN_DIARY') return 'ANY'
-  
-  const findStyleRecursive = (targetId: string, depth: number): any => {
-    if (depth > 3) return null
-    const directConnections = matrixConnections.value.filter(c => c.fromId === targetId)
-    const connectedNodes = directConnections.map(c => matrixNodes.value.find(n => n.id === c.toId)).filter(Boolean)
-    
-    const styleNode = connectedNodes.find(n => 
-      (n.type === 'risk-element' && n.params?.riskType === 'style') || 
-      (n.label && n.label.toLowerCase().includes('style'))
-    )
-    if (styleNode) return styleNode
-    
-    for (const node of connectedNodes) {
-      const result = findStyleRecursive(node.id, depth + 1)
-      if (result) return result
-    }
-    return null
-  }
-  
-  const styleNode = findStyleRecursive(stratId, 0)
-  if (!styleNode) return 'ANY'
-  
-  const label = styleNode.label.toUpperCase()
+
+  const label = resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, stratId).tradingStyle
+  if (!label) return 'ANY'
+
   if (label.includes('SWING')) return 'SWING'
   if (label.includes('INVEST')) return 'INVESTING'
   if (label.includes('DAY')) return 'DAYTRADING'
-  return styleNode.label
+  return label
 })
 
 const EMOTION_WEIGHTS_LOCAL = {

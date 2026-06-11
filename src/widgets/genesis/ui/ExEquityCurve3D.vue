@@ -1267,8 +1267,8 @@
           :historical-trades="getFilteredTrades()"
           :initial-equity="props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId)"
           :default-win-rate="strategyMetrics?.winRate || 50"
-          :default-r-r="strategyMetrics?.riskRewardRatio || 1.5"
-          :default-risk-per-trade="((strategyMetrics?.avgLoss || 0) / (props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId) || 10000)) * 100"
+          :default-r-r="activeRiskManagement.riskRewardRatio || strategyMetrics?.riskRewardRatio || 1.5"
+          :default-risk-per-trade="simulatorDefaultRiskPerTrade"
         />
       </Transition>
     </Teleport>
@@ -1295,6 +1295,7 @@ import ExBrokerConnectPanel from '~/widgets/broker-connect/ui/ExBrokerConnectPan
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
+import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import {
   isSyncableBrokerConnection,
   syncBrokerConnectionTrades,
@@ -1395,12 +1396,14 @@ const studentTPDF = (x: number, mean: number, scale: number, nu: number): number
 };
 
 const matrixNodes = ref<any[]>([])
+const matrixConnections = ref<any[]>([])
 const loadMatrixData = async () => {
   try {
     const appBootStore = useAppBootStore()
-    const data = appBootStore.genesisMatrixCache || await loadFromDisk<{ nodes: any[] }>('genesis_matrix_v2')
+    const data = appBootStore.genesisMatrixCache || await loadFromDisk<{ nodes: any[], connections?: any[] }>('genesis_matrix_v2')
     if (data && data.nodes) {
       matrixNodes.value = data.nodes
+      matrixConnections.value = data.connections || []
     }
   } catch (err) {
     console.error('Failed to load matrix data:', err)
@@ -1422,6 +1425,59 @@ const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }
 })
+
+const flattenMatrixNodes = (nodes: any[] = []) => {
+  const list: any[] = []
+  const walk = (items: any[] = []) => {
+    items.forEach((node: any) => {
+      list.push(node)
+      if (node.subGraph?.nodes) walk(node.subGraph.nodes)
+    })
+  }
+  walk(nodes)
+  return list
+}
+
+const flattenMatrixConnections = (nodes: any[] = [], rootConnections: any[] = []) => {
+  const list: any[] = [...(rootConnections || [])]
+  const walk = (items: any[] = []) => {
+    items.forEach((node: any) => {
+      if (!node.subGraph) return
+      list.push(...(node.subGraph.connections || []))
+      walk(node.subGraph.nodes || [])
+    })
+  }
+  walk(nodes)
+  return list
+}
+
+const activeRiskManagement = computed(() => {
+  return resolveRiskManagementForStrategy(
+    flattenMatrixNodes(matrixNodes.value),
+    flattenMatrixConnections(matrixNodes.value, matrixConnections.value),
+    selectedStrategyId.value
+  )
+})
+
+const activeRiskPerTradeDollars = computed(() => {
+  const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  return riskValueToDollars(
+    activeRiskManagement.value.riskPerTradeValue,
+    activeRiskManagement.value.riskPerTradeUnit,
+    initialDeposit
+  )
+})
+
+const simulatorDefaultRiskPerTrade = computed(() => {
+  const risk = activeRiskManagement.value
+  if (risk.riskPerTradeUnit === '%' && risk.riskPerTradeValue !== null) return risk.riskPerTradeValue
+
+  const capital = props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId.value) || 10000
+  const configuredRisk = activeRiskPerTradeDollars.value
+  if (Number.isFinite(configuredRisk) && capital > 0) return (configuredRisk / capital) * 100
+  return ((strategyMetrics.value?.avgLoss || 0) / capital) * 100
+})
+
 const showStrategyMenu = ref(false)
 const showInitialDepositModal = ref(false)
 const showBenchmarkModal = ref(false)
@@ -1903,6 +1959,12 @@ const calculateHurstStats = (values: number[]) => {
 const strategyMetrics = computed(() => {
   const currentTrades = getFilteredTrades()
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  const riskManagement = activeRiskManagement.value
+  const configuredRiskPerTrade = riskValueToDollars(
+    riskManagement.riskPerTradeValue,
+    riskManagement.riskPerTradeUnit,
+    initialDeposit
+  )
 
   const trades = [...currentTrades]
     .sort((a, b) => getTradeTimestamp(a) - getTradeTimestamp(b))
@@ -1930,7 +1992,7 @@ const strategyMetrics = computed(() => {
 
   const plannedRRs = trades.map(t => toFiniteNumber(t.riskReward ?? (t as any).rr, NaN)).filter(r => !isNaN(r) && r > 0);
   const plannedRRCount = plannedRRs.length;
-  const riskRewardRatio = plannedRRs.length > 0 ? plannedRRs.reduce((a,b)=>a+b,0)/plannedRRs.length : (payoffRatio || 1);
+  const riskRewardRatio = plannedRRs.length > 0 ? plannedRRs.reduce((a,b)=>a+b,0)/plannedRRs.length : (riskManagement.riskRewardRatio || payoffRatio || 1);
   const realizedRR = payoffRatio;
 
   const expectedValue = numTrades > 0 ? ((numWin/numTrades) * avgWin) - ((numLoss/numTrades) * avgLoss) : 0;
@@ -2038,7 +2100,9 @@ const strategyMetrics = computed(() => {
     if (entry > 0 && sl > 0) { totalRisk += Math.abs(entry - sl) * size; riskCount++; }
   });
   const riskPerTrade = riskCount > 0 ? totalRisk / riskCount : 0;
-  const riskUnitForRuin = riskPerTrade > 0 ? riskPerTrade : (avgLoss || (initialDeposit * 0.01));
+  const riskUnitForRuin = riskPerTrade > 0
+    ? riskPerTrade
+    : (Number.isFinite(configuredRiskPerTrade) ? configuredRiskPerTrade : (avgLoss || (initialDeposit * 0.01)));
 
   // --- ADVANCED METRICS CALCULATIONS --- //
   const returns = trades.map(t => initialDeposit > 0 ? t.pnlNum / initialDeposit : 0);
@@ -2425,6 +2489,8 @@ const strategyMetrics = computed(() => {
     avgProfitPerDay, avgProfitPerWeek, avgProfitPerMonth,
     activeSpanDays: spanDays, maxDrawdownNum, maxDrawdownPct, avgDrawdownPct, drawdownDurationStr, drawdownDurationDays: maxDDDurationDays,
     recoveryFactor, returnOnCapital, returnPerTrade, totalInitialRisk: totalRisk, riskDataTrades: riskCount, riskPerTrade,
+    configuredRiskPerTrade: Number.isFinite(configuredRiskPerTrade) ? configuredRiskPerTrade : null,
+    riskManagementTradingStyle: riskManagement.tradingStyle,
     initialDeposit, annualizedReturnPct: cagr, stdDevPct: annStdPct, downsideStdDevPct: annDownsideStdPct, strategyBeta: beta,
     positiveReturnsPct, negativeReturnsPct, allReturnsPct, p95ReturnPct, p05ReturnPct,
     // Advanced
