@@ -4,6 +4,7 @@ mod audio_recorder;
 mod benchmark;
 mod binance;
 mod bybit;
+mod ibkr;
 mod kraken;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,6 +21,7 @@ pub fn run() {
             benchmark::get_historical_curves,
             binance::binance_signed_request,
             bybit::bybit_signed_request,
+            ibkr::ibkr_fetch_xml,
             kraken::kraken_signed_request,
             kraken::kraken_futures_signed_request
         ])

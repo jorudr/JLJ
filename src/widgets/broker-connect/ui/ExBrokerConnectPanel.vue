@@ -276,12 +276,12 @@ const brokers = computed<BrokerDefinition[]>(() => [
     id: 'interactive-brokers',
     label: 'Interactive Brokers',
     assetClass: isRu.value ? 'Акции / Опционы / Форекс' : 'Stocks / Options / Forex',
-    description: isRu.value ? 'Заготовленный слот коннектора для истории торгов IBKR Client Portal или Flex Query.' : 'Prepared connector slot for IBKR Client Portal or Flex Query trade history.',
-    mode: isRu.value ? 'В Разработке' : 'Prepared',
-    canActivate: false,
+    description: isRu.value ? 'Импортируйте историю сделок из IBKR с помощью Flex Query.' : 'Import trade history from IBKR using Flex Query.',
+    mode: isRu.value ? 'Активно' : 'Live Activation',
+    canActivate: true,
     fields: [
-      { key: 'host', label: isRu.value ? 'URL Шлюза' : 'Gateway URL', placeholder: 'https://localhost:5000' },
-      { key: 'token', label: isRu.value ? 'Сессия / Flex Токен' : 'Session / Flex Token', placeholder: 'IBKR token', secret: true }
+      { key: 'token', label: isRu.value ? 'Flex Query Токен' : 'Flex Query Token', placeholder: 'IBKR Flex Token', secret: true },
+      { key: 'queryId', label: isRu.value ? 'Flex Query ID' : 'Flex Query ID', placeholder: '123456' }
     ]
   },
 ])

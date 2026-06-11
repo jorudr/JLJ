@@ -23,6 +23,8 @@ import {
   type BinanceFuturesTrade
 } from '~/utils/binance'
 import { resolveImportedAsset } from '~/utils/assetResolver'
+import { getIbkrFlexStatement } from '~/utils/interactiveBrokers'
+
 
 export interface StoredBrokerConnection {
   brokerId: string
@@ -55,7 +57,7 @@ export interface BrokerSyncResult {
 type ImportedTrade = DiaryEntry & { sourceExternalId: string; sourcePlatform: string }
 
 export const isSyncableBrokerConnection = (connection?: StoredBrokerConnection | null) => {
-  return Boolean(connection?.active && ['bybit', 'kraken', 'kraken-spot', 'kraken-futures', 'binance'].includes(connection.brokerId))
+  return Boolean(connection?.active && ['bybit', 'kraken', 'kraken-spot', 'kraken-futures', 'binance', 'interactive-brokers'].includes(connection.brokerId))
 }
 
 export const syncBrokerConnectionTrades = async (
@@ -65,6 +67,10 @@ export const syncBrokerConnectionTrades = async (
 ): Promise<BrokerSyncResult> => {
   if (connection.brokerId === 'binance') {
     return syncBinance(connection, strategyId, tradeStore)
+  }
+
+  if (connection.brokerId === 'interactive-brokers') {
+    return syncInteractiveBrokers(connection, strategyId, tradeStore)
   }
 
   if (connection.brokerId === 'bybit') {
@@ -1191,6 +1197,237 @@ const buildBinanceFuturesRoundTrips = (fills: BinanceFuturesTrade[]) => {
         source: 'binance-futures',
         sourceExternalId: `futures-close:${Array.from(cycle.closeLabels)[0]}`,
         sourcePlatform: 'Binance Futures'
+      } as ImportedTrade)
+    }
+  }
+
+  return roundTrips
+}
+
+const syncInteractiveBrokers = async (
+  connection: StoredBrokerConnection,
+  strategyId: string,
+  tradeStore: BrokerTradeStorePort
+): Promise<BrokerSyncResult> => {
+  const token = connection.credentials.apiKey || connection.credentials.token || ''
+  const queryId = connection.credentials.apiSecret || connection.credentials.queryId || ''
+  
+  if (!token || !queryId) {
+    throw new Error('Interactive Brokers requires a Flex Query Token and Query ID.')
+  }
+
+  const statementDoc = await getIbkrFlexStatement(token, queryId)
+  
+  const accountInfo = statementDoc.querySelector('AccountInformation')
+  const cashReport = statementDoc.querySelector('CashReport')
+  const openPositions = statementDoc.querySelector('OpenPositions')
+
+  console.log('[IBKR Flex] --- REPORT SECTIONS ---')
+  if (accountInfo) console.log('AccountInformation:', accountInfo.outerHTML)
+  if (cashReport) console.log('CashReport:', cashReport.outerHTML)
+  if (openPositions) console.log('OpenPositions:', openPositions.outerHTML)
+  console.log('-----------------------------------')
+
+  const trades = Array.from(statementDoc.querySelectorAll('Trade'))
+  
+  const parsedTrades = trades.map(node => {
+    const dateTimeStr = node.getAttribute('dateTime') || ''
+    const [datePart, timePart] = dateTimeStr.split(';')
+    let timestamp = 0
+    if (datePart && timePart) {
+      const isoStr = `${datePart.slice(0,4)}-${datePart.slice(4,6)}-${datePart.slice(6,8)}T${timePart.slice(0,2)}:${timePart.slice(2,4)}:${timePart.slice(4,6)}Z`
+      timestamp = new Date(isoStr).getTime()
+    }
+
+    return {
+      id: node.getAttribute('ibExecID') || node.getAttribute('tradeID') || String(Math.random()),
+      symbol: node.getAttribute('symbol') || '',
+      side: node.getAttribute('buySell') === 'BUY' ? 'buy' as const : 'sell' as const,
+      qty: Math.abs(Number(node.getAttribute('quantity') || 0)),
+      priceNum: Number(node.getAttribute('tradePrice') || 0),
+      feeNum: Math.abs(Number(node.getAttribute('ibCommission') || 0)),
+      timestamp,
+      market: node.getAttribute('assetCategory') || 'STK'
+    }
+  }).filter(t => t.symbol && t.qty > 0 && t.priceNum > 0 && Number.isFinite(t.timestamp))
+
+  const roundTrips = buildIbkrRoundTrips(parsedTrades)
+  const result = await importDedupedTrades(roundTrips, strategyId, tradeStore)
+
+  return {
+    ...result,
+    checkedCount: parsedTrades.length,
+    sourceLabel: 'Interactive Brokers'
+  }
+}
+
+const buildIbkrRoundTrips = (fills: Array<{ id: string, symbol: string, side: 'buy' | 'sell', qty: number, priceNum: number, feeNum: number, timestamp: number, market: string }>) => {
+  type OpenLot = { fillId: string; side: 'Long' | 'Short'; date: Date; remainingQty: number; price: number; fee: number; market: string }
+  const epsilon = 1e-10
+  const openLotsBySymbol = new Map<string, OpenLot[]>()
+  const activeCycleBySymbol = new Map<string, any>()
+  const roundTrips: ImportedTrade[] = []
+
+  fills
+    .sort((left, right) => left.timestamp - right.timestamp)
+    .forEach((fill) => {
+      const closingSide = fill.side === 'buy' ? 'Short' : 'Long'
+      const openingSide = fill.side === 'buy' ? 'Long' : 'Short'
+      
+      let lots = openLotsBySymbol.get(fill.symbol) || []
+      let remainingQty = fill.qty
+
+      while (remainingQty > epsilon && lots.length && lots[0]?.side === closingSide) {
+        let cycle = activeCycleBySymbol.get(fill.symbol)
+        if (!cycle) {
+          cycle = {
+            symbol: fill.symbol,
+            side: lots[0].side,
+            market: lots[0].market,
+            firstEntryDate: null,
+            lastExitDate: null,
+            closedQty: 0,
+            entryCost: 0,
+            allocatedEntryFee: 0,
+            exitRevenue: 0,
+            exitFee: 0,
+            consumedIds: new Set<string>(),
+            closeLabels: new Set<string>(),
+            executionsMap: new Map<string, any>()
+          }
+          activeCycleBySymbol.set(fill.symbol, cycle)
+        }
+
+        const currentLot = lots[0]!
+        const matchedQty = Math.min(currentLot.remainingQty, remainingQty)
+        const lotShare = matchedQty / currentLot.remainingQty
+        
+        cycle.firstEntryDate ||= currentLot.date
+        cycle.closedQty += matchedQty
+        cycle.entryCost += matchedQty * currentLot.price
+        cycle.allocatedEntryFee += currentLot.fee * lotShare
+        cycle.consumedIds.add(currentLot.fillId)
+
+        const entryExecId = `entry-${currentLot.fillId}`
+        if (cycle.executionsMap.has(entryExecId)) {
+          cycle.executionsMap.get(entryExecId).size += matchedQty
+        } else {
+          cycle.executionsMap.set(entryExecId, {
+            id: currentLot.fillId,
+            type: 'entry',
+            side: currentLot.side,
+            price: currentLot.price,
+            size: matchedQty,
+            date: new Date(currentLot.date),
+            label: 'SINGLE'
+          })
+        }
+
+        cycle.lastExitDate = new Date(fill.timestamp)
+        cycle.exitRevenue += matchedQty * fill.priceNum
+        cycle.exitFee += fill.feeNum * (matchedQty / fill.qty)
+        cycle.closeLabels.add(fill.id)
+
+        const exitExecId = `exit-${fill.id}`
+        if (cycle.executionsMap.has(exitExecId)) {
+          cycle.executionsMap.get(exitExecId).size += matchedQty
+        } else {
+          cycle.executionsMap.set(exitExecId, {
+            id: fill.id,
+            type: 'exit',
+            side: 'Close',
+            price: fill.priceNum,
+            size: matchedQty,
+            date: new Date(fill.timestamp),
+            label: 'SINGLE'
+          })
+        }
+
+        currentLot.remainingQty -= matchedQty
+        currentLot.fee -= currentLot.fee * lotShare
+        remainingQty -= matchedQty
+        if (currentLot.remainingQty <= epsilon) lots.shift()
+
+        if (lots.length === 0) {
+          const profit = cycle.side === 'Long'
+            ? cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+            : cycle.entryCost - cycle.exitRevenue - cycle.allocatedEntryFee - cycle.exitFee
+            
+          const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
+
+          roundTrips.push({
+            id: `ibkr-close-${Array.from(cycle.closeLabels)[0]}`,
+            date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+            dateExit: cycle.lastExitDate.toISOString() as any,
+            asset: cycle.symbol,
+            side: cycle.side,
+            entry: cycle.entryCost / cycle.closedQty,
+            exit: cycle.exitRevenue / cycle.closedQty,
+            size: cycle.closedQty,
+            entryFee: cycle.allocatedEntryFee,
+            exitFee: cycle.exitFee,
+            feeType: '$',
+            currency: 'USD',
+            assetType: cycle.market === 'CASH' ? 'Forex' : cycle.market === 'STK' || cycle.market === 'OPT' ? 'Stocks' : 'Crypto',
+            assetIcon: resolvedAsset.assetIcon,
+            profitInCurrency: profit,
+            result: profit,
+            executions: Array.from(cycle.executionsMap.values()),
+            notes: `Imported from IBKR.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}`,
+            source: 'interactive-brokers',
+            sourceExternalId: `ibkr-close:${Array.from(cycle.closeLabels)[0]}`,
+            sourcePlatform: 'Interactive Brokers'
+          } as ImportedTrade)
+
+          activeCycleBySymbol.delete(fill.symbol)
+        }
+      }
+
+      if (remainingQty > epsilon) {
+        lots.push({
+          fillId: fill.id,
+          side: openingSide,
+          date: new Date(fill.timestamp),
+          remainingQty,
+          price: fill.priceNum,
+          fee: fill.feeNum * (remainingQty / fill.qty),
+          market: fill.market
+        })
+      }
+
+      openLotsBySymbol.set(fill.symbol, lots)
+    })
+
+  for (const [symbol, cycle] of activeCycleBySymbol.entries()) {
+    if (cycle.closedQty > epsilon) {
+      const profit = cycle.side === 'Long'
+        ? cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
+        : cycle.entryCost - cycle.exitRevenue - cycle.allocatedEntryFee - cycle.exitFee
+        
+      const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
+
+      roundTrips.push({
+        id: `ibkr-close-${Array.from(cycle.closeLabels)[0]}`,
+        date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
+        dateExit: cycle.lastExitDate.toISOString() as any,
+        asset: cycle.symbol,
+        side: cycle.side,
+        entry: cycle.entryCost / cycle.closedQty,
+        exit: cycle.exitRevenue / cycle.closedQty,
+        size: cycle.closedQty,
+        entryFee: cycle.allocatedEntryFee,
+        exitFee: cycle.exitFee,
+        feeType: '$',
+        currency: 'USD',
+        assetType: cycle.market === 'CASH' ? 'Forex' : cycle.market === 'STK' || cycle.market === 'OPT' ? 'Stocks' : 'Crypto',
+        assetIcon: resolvedAsset.assetIcon,
+        profitInCurrency: profit,
+        result: profit,
+        executions: Array.from(cycle.executionsMap.values()),
+        notes: `Imported from IBKR.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}`,
+        source: 'interactive-brokers',
+        sourceExternalId: `ibkr-close:${Array.from(cycle.closeLabels)[0]}`,
+        sourcePlatform: 'Interactive Brokers'
       } as ImportedTrade)
     }
   }
