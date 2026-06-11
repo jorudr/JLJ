@@ -767,8 +767,8 @@ const scenarioDurationLabel = computed(() => {
     return isRu ? 'Нет истории сценария' : 'No scenario history';
   }
   return isRu
-    ? `Диапазон сценария (${stats.minDays.toFixed(1)}д - ${stats.maxDays.toFixed(1)}д)`
-    : `Scenario range (${stats.minDays.toFixed(1)}d - ${stats.maxDays.toFixed(1)}d)`;
+    ? `Диапазон сценария (${stats.minDays.toFixed(2)}д - ${stats.maxDays.toFixed(2)}д)`
+    : `Scenario range (${stats.minDays.toFixed(2)}d - ${stats.maxDays.toFixed(2)}d)`;
 });
 
 const durationText = computed(() => {
@@ -840,13 +840,13 @@ const styleAlertMessage = computed(() => {
 
   if (days < stats.minDays) {
     return isRu
-      ? `Предупреждение: Длительность исполнения (${durationText.value}) ниже исторического минимума сценария (${stats.minDays.toFixed(1)} дн.).`
-      : `Alert: Execution duration (${durationText.value}) is below the historical scenario minimum (${stats.minDays.toFixed(1)}d).`;
+      ? `Предупреждение: Длительность исполнения (${durationText.value}) ниже исторического минимума сценария (${stats.minDays.toFixed(2)} дн.).`
+      : `Alert: Execution duration (${durationText.value}) is below the historical scenario minimum (${stats.minDays.toFixed(2)}d).`;
   }
   if (days > stats.maxDays) {
     return isRu
-      ? `Предупреждение: Длительность исполнения (${durationText.value}) превышает исторический максимум сценария (${stats.maxDays.toFixed(1)} дн.).`
-      : `Alert: Execution duration (${durationText.value}) exceeds the historical scenario maximum (${stats.maxDays.toFixed(1)}d).`;
+      ? `Предупреждение: Длительность исполнения (${durationText.value}) превышает исторический максимум сценария (${stats.maxDays.toFixed(2)} дн.).`
+      : `Alert: Execution duration (${durationText.value}) exceeds the historical scenario maximum (${stats.maxDays.toFixed(2)}d).`;
   }
   return '';
 });
@@ -1461,9 +1461,9 @@ const strategyExecutionMetrics = computed(() => {
   const riskBudgetBudgetStr = riskBudgetDollars !== null
     ? (maxRiskTrade.value!.unit === '%'
       ? (isRu
-        ? `${maxRiskTrade.value!.value}% от баланса до сделки = $${maxRisk.toFixed(0)}`
-        : `${maxRiskTrade.value!.value}% of pre-trade balance = $${maxRisk.toFixed(0)}`)
-      : `$${maxRisk.toFixed(0)}`)
+        ? `${maxRiskTrade.value!.value}% от баланса до сделки = $${maxRisk.toFixed(2)}`
+        : `${maxRiskTrade.value!.value}% of pre-trade balance = $${maxRisk.toFixed(2)}`)
+      : `$${maxRisk.toFixed(2)}`)
     : 'No budget set';
   const riskBudgetText = riskBudgetDollars === null
     ? (isRu ? 'Бюджет матрицы не задан' : 'No matrix budget set')
@@ -1512,12 +1512,12 @@ const strategyExecutionMetrics = computed(() => {
 
     if (days < scenarioMinDays) {
       horizonSyncText = isRu
-        ? `Ниже диапазона сценария (${scenarioMinDays.toFixed(1)}д - ${scenarioMaxDays.toFixed(1)}д)`
-        : `Below scenario range (${scenarioMinDays.toFixed(1)}d - ${scenarioMaxDays.toFixed(1)}d)`;
+        ? `Ниже диапазона сценария (${scenarioMinDays.toFixed(2)}д - ${scenarioMaxDays.toFixed(2)}д)`
+        : `Below scenario range (${scenarioMinDays.toFixed(2)}d - ${scenarioMaxDays.toFixed(2)}d)`;
     } else if (days > scenarioMaxDays) {
       horizonSyncText = isRu
-        ? `Выше диапазона сценария (${scenarioMinDays.toFixed(1)}д - ${scenarioMaxDays.toFixed(1)}д)`
-        : `Above scenario range (${scenarioMinDays.toFixed(1)}d - ${scenarioMaxDays.toFixed(1)}d)`;
+        ? `Выше диапазона сценария (${scenarioMinDays.toFixed(2)}д - ${scenarioMaxDays.toFixed(2)}д)`
+        : `Above scenario range (${scenarioMinDays.toFixed(2)}d - ${scenarioMaxDays.toFixed(2)}d)`;
     } else {
       horizonSyncText = isRu ? 'Позиция в коридоре' : 'Position in Range';
     }
@@ -1753,7 +1753,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Required_Adherence</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.reqRatio === 100 ? 'text-emerald-400' : 'text-amber-400'">
-                                    {{ matrixAdherenceMetrics.reqRatio }}%
+                                    {{ (matrixAdherenceMetrics.reqRatio || 0).toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     {{ matrixAdherenceMetrics.reqText }}
@@ -1792,7 +1792,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Additional_Alpha</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.addAlpha >= 0 ? 'text-emerald-400' : 'text-rose-400'">
-                                    {{ matrixAdherenceMetrics.addAlpha >= 0 ? '+' : '' }}{{ matrixAdherenceMetrics.addAlpha.toFixed(1) }}%
+                                    {{ matrixAdherenceMetrics.addAlpha >= 0 ? '+' : '' }}{{ matrixAdherenceMetrics.addAlpha.toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     {{ matrixAdherenceMetrics.addCount }} Confirmations
@@ -1831,7 +1831,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Protocol_Strictness</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black text-black dark:text-white">
-                                    {{ matrixAdherenceMetrics.strictness.toFixed(1) }} / 10
+                                    {{ matrixAdherenceMetrics.strictness.toFixed(2) }} / 10
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     Weighted Rating
@@ -1949,7 +1949,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Cognitive_Stability</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.stability >= 70 ? 'text-emerald-400' : 'text-rose-400'">
-                                    {{ behaviouralMetrics.stability }}%
+                                    {{ (behaviouralMetrics.stability || 0).toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     Neural Telemetry
@@ -2066,7 +2066,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Friction_Density</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.frictionDensity === 0 ? 'text-emerald-400' : 'text-amber-400'">
-                                    {{ behaviouralMetrics.frictionDensity.toFixed(0) }}%
+                                    {{ behaviouralMetrics.frictionDensity.toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     {{ behaviouralMetrics.frictionCount }} Friction Markers
@@ -2114,7 +2114,7 @@ const strategyExecutionMetrics = computed(() => {
                                     </span>
                                  </div>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    vs avg <span class="font-black text-black dark:text-white">${{ strategyStats.avgPnl.toFixed(0) }}</span>
+                                    vs avg <span class="font-black text-black dark:text-white">${{ strategyStats.avgPnl.toFixed(2) }}</span>
                                  </span>
                               </div>
                            </div>
@@ -2228,11 +2228,11 @@ const strategyExecutionMetrics = computed(() => {
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
                                    <span class="text-xl font-mono font-black" :class="actualRR >= targetRR ? 'text-emerald-400' : 'text-amber-400'">
-                                      1:{{ actualRR.toFixed(1) }}
+                                      1:{{ actualRR.toFixed(2) }}
                                    </span>
                                  </div>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    {{ resolvedRRNode ? 'vs target' : 'vs avg' }} <span class="font-black text-black dark:text-white">1:{{ resolvedRRNode ? targetRR.toFixed(1) : strategyStats.avgRR.toFixed(1) }}</span>
+                                    {{ resolvedRRNode ? 'vs target' : 'vs avg' }} <span class="font-black text-black dark:text-white">1:{{ resolvedRRNode ? targetRR.toFixed(2) : strategyStats.avgRR.toFixed(2) }}</span>
                                  </span>
                               </div>
                            </div>
@@ -2507,7 +2507,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'text-emerald-400' : 'text-rose-400'">
-                                    {{ strategyExecutionMetrics.riskBudgetRatio.toFixed(0) }}%
+                                    {{ strategyExecutionMetrics.riskBudgetRatio.toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.riskBudgetText }}
@@ -2546,7 +2546,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-400' : 'text-amber-400'">
-                                    {{ strategyExecutionMetrics.tpCapture.toFixed(0) }}%
+                                    {{ strategyExecutionMetrics.tpCapture.toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.tpCaptureText }}
@@ -2663,7 +2663,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Horizon_Sync_Rating</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.horizonSync === 100 ? 'text-emerald-400' : 'text-rose-400'">
-                                    {{ strategyExecutionMetrics.horizonSync }}%
+                                    {{ (strategyExecutionMetrics.horizonSync || 0).toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.horizonSyncText }}
@@ -2780,7 +2780,7 @@ const strategyExecutionMetrics = computed(() => {
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Confidence_Index</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.executionGrade >= 80 ? 'text-emerald-400' : (strategyExecutionMetrics.executionGrade >= 60 ? 'text-amber-400' : 'text-rose-400')">
-                                    {{ strategyExecutionMetrics.executionGrade }} / 100
+                                    {{ (strategyExecutionMetrics.executionGrade || 0).toFixed(2) }} / 100
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.executionGradeText }}
