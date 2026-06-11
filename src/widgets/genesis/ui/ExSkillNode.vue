@@ -17,7 +17,9 @@
            <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
                 :class="[
                   node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
-                  isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]'),
+                  isRiskPanel ? '' : (
+                    isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]')
+                  ),
                   (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry' || isRiskPanel) ? 'border-none shadow-none' : ''
                 ]"
                 :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
@@ -36,7 +38,7 @@
                   ]"></div>
 
            <!-- Selection Brackets -->
-            <div v-if="isSelected" class="absolute -inset-4 pointer-events-none">
+            <div v-if="isSelected && !isRiskPanel" class="absolute -inset-4 pointer-events-none">
                <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
                <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
                <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
@@ -399,11 +401,13 @@
             <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', node)" @mouseup.stop="$emit('drop', node)"
                  @dblclick.stop="$emit('clear-input', node)"
                  :class="[
-                   isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100'
+                   isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100',
+                   isRiskPanel ? '!shadow-none dark:!shadow-none' : ''
                  ]"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -left-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black transition-all shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
             <div @mousedown.stop="$emit('start-output', node)"
                  @dblclick.stop="$emit('clear-output', node)"
+                 :class="isRiskPanel ? '!shadow-none dark:!shadow-none' : ''"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
             <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
                  class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70"
@@ -411,7 +415,7 @@
                  :style="node.params.priority === 'REQUIRED'
                    ? { boxShadow: '0 0 8px rgba(255,0,0,0.95), 0 0 18px rgba(255,0,0,0.55)' }
                    : { boxShadow: '0 0 8px rgba(0,212,255,0.95), 0 0 18px rgba(0,212,255,0.55)' }"></div>
-                       <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
+                       <div v-if="!isRiskPanel" class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
          </div>
        </template>
          <div class="flex flex-col space-y-2 p-1">
@@ -1564,10 +1568,15 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-panel-collapsed {
+  background: rgb(10 10 10 / 0.62);
   border-color: rgb(239 68 68 / 0.85) !important;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2), 0 0 22px rgb(239 68 68 / 0.28);
   overflow: hidden;
   position: relative;
+}
+
+:deep(.risk-panel-collapsed > div:first-child) {
+  display: none;
 }
 
 .risk-panel-hatch {
@@ -1706,21 +1715,21 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   height: 6px;
   left: 0;
   opacity: 0;
+  pointer-events: none;
   position: absolute;
   top: 0;
   transition: opacity 0.2s ease;
   width: 6px;
 }
 
-.risk-style-control button:hover {
-  background: rgb(255 255 255 / 0.07);
-  color: rgb(255 255 255 / 0.78);
-}
-
 .risk-style-control button.is-active {
   background: rgb(239 68 68 / 0.18);
   box-shadow: inset 0 0 0 1px rgb(239 68 68 / 0.45), 0 0 18px rgb(239 68 68 / 0.18);
   color: #fff;
+}
+
+.risk-style-control button:not(.is-active):hover {
+  color: rgb(255 255 255 / 0.78);
 }
 
 .risk-style-control button.is-active::before {
