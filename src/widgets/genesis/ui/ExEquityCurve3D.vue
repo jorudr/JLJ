@@ -5429,14 +5429,12 @@ const winratePoints3D = ref<CurvePoint[]>([])
 const isApiSyncing = ref(false)
 const apiSyncStatusMessage = ref('')
 
-const findCurrentStrategyApiConnections = async () => {
+const findAllActiveApiConnections = async () => {
   const connections = await loadFromDisk<Record<string, StoredBrokerConnection>>(BROKER_CONNECTIONS_STORAGE_KEY)
   if (!connections) return []
 
   return Object.values(connections).filter((connection) => {
-    if (!isSyncableBrokerConnection(connection)) return false
-    const targetStrategyId = connection.credentials?.targetStrategyId || 'MAIN_DIARY'
-    return targetStrategyId === selectedStrategyId.value
+    return isSyncableBrokerConnection(connection)
   })
 }
 
@@ -5463,9 +5461,9 @@ const syncCurrentStrategyApi = async () => {
   apiSyncStatusMessage.value = isRu.value ? 'API_SYNC_STARTING' : 'API_SYNC_STARTING'
 
   try {
-    const connections = await findCurrentStrategyApiConnections()
+    const connections = await findAllActiveApiConnections()
     if (connections.length === 0) {
-      apiSyncStatusMessage.value = isRu.value ? 'API_НЕ_ПОДКЛЮЧЕН_К_СТРАТЕГИИ' : 'NO_API_LINKED_TO_STRATEGY'
+      apiSyncStatusMessage.value = isRu.value ? 'НЕТ_АКТИВНЫХ_API_КЛЮЧЕЙ' : 'NO_ACTIVE_API_CONNECTIONS'
       return
     }
 
@@ -5476,7 +5474,8 @@ const syncCurrentStrategyApi = async () => {
     let sources: string[] = []
     
     for (const connection of connections) {
-      const result = await syncBrokerConnectionTrades(connection, selectedStrategyId.value, tradeStore)
+      const targetId = connection.credentials?.targetStrategyId || 'MAIN_DIARY'
+      const result = await syncBrokerConnectionTrades(connection, targetId, tradeStore)
       totalImported += result.importedCount
       totalDuplicates += result.duplicateCount
       sources.push(result.sourceLabel)

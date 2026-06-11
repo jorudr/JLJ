@@ -161,3 +161,54 @@ export const getBybitOrderHistory = async (
     }
   })
 }
+
+export interface BybitExecution {
+  symbol: string
+  orderId: string
+  orderLinkId: string
+  side: 'Buy' | 'Sell'
+  orderPrice: string
+  orderQty: string
+  leavesQty: string
+  orderType: string
+  stopOrderType: string
+  execFee: string
+  execId: string
+  execPrice: string
+  execQty: string
+  execType: string
+  execValue: string
+  execTime: string
+  isMaker: boolean
+  feeRate: string
+  tradeIv: string
+  markIv: string
+  markPrice: string
+  indexPrice: string
+  underlyingPrice: string
+  blockTradeId: string
+  closedSize: string
+}
+
+export const getBybitExecutionList = async (
+  credentials: BybitCredentials,
+  params: {
+    category: 'spot' | 'linear' | 'inverse' | 'option'
+    symbol?: string
+    startTime?: number
+    endTime?: number
+    execType?: 'Trade' | 'AdlTrade' | 'Funding' | 'BustTrade' | 'Settle'
+    limit?: number
+    cursor?: string
+  }
+) => {
+  return bybitSignedRequest<{ list: BybitExecution[], nextPageCursor?: string }>({
+    credentials,
+    method: 'GET',
+    path: '/v5/execution/list',
+    params: {
+      ...params,
+      limit: params.limit || 100
+    }
+  })
+}
