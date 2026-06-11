@@ -90,8 +90,10 @@
                   variant="light"
                   no-padding
                   no-shadow
-                  class="w-[360px] min-h-[320px] !border-red-500/30 dark:!border-red-400/30">
-                  <div v-show="!isRiskPanelContentHidden" class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
+                  class="w-[360px] min-h-[320px] !border-red-500/30 dark:!border-red-400/30"
+                  :class="{ 'risk-panel-collapsed': isRiskPanelContentHidden }">
+                  <div v-if="isRiskPanelContentHidden" class="risk-panel-hatch"></div>
+                  <div class="relative z-10 flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
                     <div class="flex items-center gap-3">
                       <div class="w-2 h-2 rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
                       <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black text-white">Risk_Management</span>
@@ -1559,6 +1561,27 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+.risk-panel-collapsed {
+  border-color: rgb(239 68 68 / 0.85) !important;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2), 0 0 22px rgb(239 68 68 / 0.28);
+  overflow: hidden;
+  position: relative;
+}
+
+.risk-panel-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(239 68 68 / 0.28) 0,
+    rgb(239 68 68 / 0.28) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+  inset: 30px 0 0 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
 }
 
 .risk-panel-field > span {
