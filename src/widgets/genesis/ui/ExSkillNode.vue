@@ -613,7 +613,8 @@
                   <div class="flex items-center space-x-3">
                      <span class="font-black tracking-[0.4em] uppercase font-sans" :style="{ fontSize: '13px' }">Comment {{ Number(idx) + 1 }}</span>
                   </div>
-                  <button @click.stop="removeComment(comment.id)"
+                  <button @mousedown.stop.prevent
+                          @click.stop="removeComment(comment.id)"
                           class="hover:scale-125 transition-transform p-1">
                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 1 L9 9 M9 1 L1 9" />

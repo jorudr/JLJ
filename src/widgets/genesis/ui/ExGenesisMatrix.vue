@@ -2549,6 +2549,7 @@ function addCommentToNode(nodeId: string) {
     })
     selectNode(nodeId)
     forceUpdate()
+    saveMatrixData()
   }
   nodeContextMenu.value = null
 }
