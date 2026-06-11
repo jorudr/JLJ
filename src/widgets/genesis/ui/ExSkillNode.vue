@@ -334,6 +334,12 @@
             <div @mousedown.stop="$emit('start-output', node)"
                  @dblclick.stop="$emit('clear-output', node)"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
+            <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
+                 class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70"
+                 :class="node.params.priority === 'REQUIRED' ? 'bg-[#ff0000]' : 'bg-[#00d4ff]'"
+                 :style="node.params.priority === 'REQUIRED'
+                   ? { boxShadow: '0 0 8px rgba(255,0,0,0.95), 0 0 18px rgba(255,0,0,0.55)' }
+                   : { boxShadow: '0 0 8px rgba(0,212,255,0.95), 0 0 18px rgba(0,212,255,0.55)' }"></div>
                        <div class="absolute inset-x-0 bottom-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 h-0 group-hover:h-full transition-all duration-700 -z-10"></div>
          </div>
        </template>
@@ -500,25 +506,6 @@
             <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-white/40 dark:border-nier-black/40"></div>
          </div>
        </div>
-
-      <!-- Priority Label -->
-      <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
-           v-show="scale > 0.25"
-           class="absolute bottom-full left-1/2 mb-2 flex flex-col items-center z-50 min-w-max"
-           :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'bottom center' }">
-         <div class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1 flex flex-col items-center"
-              :class="node.params.priority === 'REQUIRED' ? 'border-t-2 !border-t-red-500/60' : 'border-t-2 !border-t-blue-500/60'">
-            <ExText variant="telemetry" class="!opacity-100 font-black tracking-widest text-[10px]"
-                    :class="node.params.priority === 'REQUIRED' ? '!text-red-500 dark:!text-red-400' : '!text-blue-500 dark:!text-blue-400'">
-               {{ node.params.priority }}
-            </ExText>
-            <!-- Mini Corners -->
-            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-border-light dark:border-nier-border-dark"></div>
-            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-border-light dark:border-nier-border-dark"></div>
-         </div>
-      </div>
-
-
 
     <!-- TACTICAL COMMENTS -->
     <div v-if="isSelected && node.params?.comments?.length"
