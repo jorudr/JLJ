@@ -9,6 +9,7 @@ import {
 import {
   getKrakenFuturesFills,
   getKrakenTradesHistory,
+  getKrakenQueryOrders,
   withKrakenFuturesEnvironment,
   type KrakenFuturesFill,
   type KrakenTrade
@@ -46,7 +47,7 @@ export interface BrokerSyncResult {
 type ImportedTrade = DiaryEntry & { sourceExternalId: string; sourcePlatform: string }
 
 export const isSyncableBrokerConnection = (connection?: StoredBrokerConnection | null) => {
-  return Boolean(connection?.active && ['bybit', 'kraken'].includes(connection.brokerId))
+  return Boolean(connection?.active && ['bybit', 'kraken', 'kraken-spot', 'kraken-futures'].includes(connection.brokerId))
 }
 
 export const syncBrokerConnectionTrades = async (
@@ -58,10 +59,14 @@ export const syncBrokerConnectionTrades = async (
     return syncBybit(connection, strategyId, tradeStore)
   }
 
-  if (connection.brokerId === 'kraken') {
+  if (connection.brokerId === 'kraken' || connection.brokerId === 'kraken-spot') {
     return connection.credentials.market === 'futures'
       ? syncKrakenFutures(connection, strategyId, tradeStore)
       : syncKrakenSpot(connection, strategyId, tradeStore)
+  }
+
+  if (connection.brokerId === 'kraken-futures') {
+    return syncKrakenFutures(connection, strategyId, tradeStore)
   }
 
   throw new Error('This connector does not support direct trade sync yet.')
@@ -118,15 +123,31 @@ const syncKrakenSpot = async (
     throw new Error('Kraken Demo trade sync is available through Futures API only.')
   }
 
-  const response = await getKrakenTradesHistory({
+  const credentials = {
     apiKey: connection.credentials.apiKey || '',
     apiSecret: connection.credentials.apiSecret || ''
-  }, { type: 'all', trades: false })
+  }
+
+  const response = await getKrakenTradesHistory(credentials, { type: 'all', trades: true })
   const fills = Object.entries(response.trades || {}).map(([tradeId, trade]) => ({ ...trade, tradeId }))
   console.log('[BrokerSync][Kraken][Spot] Raw response:', response)
   console.log('[BrokerSync][Kraken][Spot] Parsed fills:', fills)
-  const result = await importDedupedTrades(buildKrakenSpotRoundTrips(fills), strategyId, tradeStore)
-  console.log('[BrokerSync][Kraken][Spot] Imported round trips:', result)
+
+  const orderIds = Array.from(new Set(fills.map(f => f.ordertxid).filter(Boolean)))
+  let ordersMap: Record<string, any> = {}
+  try {
+    if (orderIds.length > 0) {
+      ordersMap = await getKrakenQueryOrders(credentials, orderIds)
+      console.log('[BrokerSync][Kraken][Spot] Orders details map:', ordersMap)
+    }
+  } catch (err) {
+    console.error('[BrokerSync][Kraken][Spot] Failed to query orders details:', err)
+  }
+
+  const roundTrips = buildKrakenSpotRoundTrips(fills, ordersMap)
+  console.log('[BrokerSync][Kraken][Spot] Formed round trips:', roundTrips)
+  const result = await importDedupedTrades(roundTrips, strategyId, tradeStore)
+  console.log('[BrokerSync][Kraken][Spot] Imported round trips result:', result)
 
   return {
     ...result,
@@ -253,7 +274,29 @@ const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
   return buildLongSpotRoundTrips(fills, 'Bybit V5 Spot', 'bybit', 'spot-close')
 }
 
-const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string }>) => {
+const parseStopLossTakeProfitFromDescr = (closeDescr: string) => {
+  let stopLoss: number | undefined
+  let takeProfit: number | undefined
+
+  if (!closeDescr || typeof closeDescr !== 'string') return { stopLoss, takeProfit }
+
+  const slMatch = closeDescr.match(/stop\s*loss\s+(?:@\s*(?:limit|market)?\s*)?([0-9\.]+)/i)
+  if (slMatch && slMatch[1]) {
+    stopLoss = Number(slMatch[1])
+  }
+
+  const tpMatch = closeDescr.match(/take\s*profit\s+(?:@\s*(?:limit|market)?\s*)?([0-9\.]+)/i)
+  if (tpMatch && tpMatch[1]) {
+    takeProfit = Number(tpMatch[1])
+  }
+
+  return { stopLoss, takeProfit }
+}
+
+const buildKrakenSpotRoundTrips = (
+  fills: Array<KrakenTrade & { tradeId: string }>,
+  ordersMap: Record<string, any> = {}
+) => {
   const normalized = fills
     .map(fill => {
       const qty = Number(fill.vol || 0)
@@ -261,6 +304,7 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
       const price = Number(fill.price || 0) || (qty > 0 ? cost / qty : 0)
       return {
         id: fill.tradeId,
+        ordertxid: fill.ordertxid,
         symbol: normalizeKrakenPair(fill.pair),
         side: fill.type,
         qty,
@@ -272,16 +316,17 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
     })
     .filter(fill => fill.symbol && fill.qty > 0 && fill.price > 0)
 
-  return buildLongSpotRoundTrips(normalized, 'Kraken Spot', 'kraken', 'spot-close')
+  return buildLongSpotRoundTrips(normalized, 'Kraken Spot', 'kraken', 'spot-close', ordersMap)
 }
 
 const buildLongSpotRoundTrips = (
-  fills: Array<{ id: string | number; symbol: string; side: 'buy' | 'sell'; qty: number; price: number; fee: number; timestamp: number; rawLabel: string | number }>,
+  fills: Array<{ id: string | number; ordertxid?: string; symbol: string; side: 'buy' | 'sell'; qty: number; price: number; fee: number; timestamp: number; rawLabel: string | number }>,
   platform: string,
   source: string,
-  externalPrefix: string
+  externalPrefix: string,
+  ordersMap: Record<string, any> = {}
 ) => {
-  type OpenLot = { id: string | number; date: Date; remainingQty: number; price: number; fee: number }
+  type OpenLot = { id: string | number; ordertxid?: string; date: Date; remainingQty: number; price: number; fee: number }
   const epsilon = 1e-10
   const openLotsBySymbol = new Map<string, OpenLot[]>()
   const activeCycleBySymbol = new Map<string, any>()
@@ -301,14 +346,15 @@ const buildLongSpotRoundTrips = (
         exitFee: 0,
         consumedIds: new Set<string>(),
         closeLabels: new Set<string>(),
-        executionsMap: new Map<string, any>()
+        executionsMap: new Map<string, any>(),
+        firstEntryOrderId: null
       }
       activeCycleBySymbol.set(fill.symbol, cycle)
     }
 
     const lots = openLotsBySymbol.get(fill.symbol) || []
     if (fill.side === 'buy') {
-      lots.push({ id: fill.id, date: new Date(fill.timestamp).toISOString() as any, remainingQty: fill.qty, price: fill.price, fee: fill.fee })
+      lots.push({ id: fill.id, ordertxid: fill.ordertxid, date: new Date(fill.timestamp).toISOString() as any, remainingQty: fill.qty, price: fill.price, fee: fill.fee })
       openLotsBySymbol.set(fill.symbol, lots)
       return
     }
@@ -326,6 +372,9 @@ const buildLongSpotRoundTrips = (
       cycle.entryCost += matchedQty * currentLot.price
       cycle.allocatedEntryFee += currentLot.fee * lotShare
       cycle.consumedIds.add(String(currentLot.id))
+      if (!cycle.firstEntryOrderId && currentLot.ordertxid) {
+        cycle.firstEntryOrderId = currentLot.ordertxid
+      }
       
       consumedInThisFill += matchedQty
 
@@ -378,6 +427,15 @@ const buildLongSpotRoundTrips = (
       const profit = cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
       const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
       
+      let stopLoss: number | undefined
+      let takeProfit: number | undefined
+      if (cycle.firstEntryOrderId && ordersMap[cycle.firstEntryOrderId]) {
+        const order = ordersMap[cycle.firstEntryOrderId]
+        const parsed = parseStopLossTakeProfitFromDescr(order.descr?.close)
+        stopLoss = parsed.stopLoss
+        takeProfit = parsed.takeProfit
+      }
+
       roundTrips.push({
         id: `${source}-${externalPrefix}-${Array.from(cycle.closeLabels)[0]}`,
         date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
@@ -395,8 +453,10 @@ const buildLongSpotRoundTrips = (
         assetIcon: resolvedAsset.assetIcon,
         profitInCurrency: profit,
         result: profit,
+        stopLoss,
+        takeProfit,
         executions: Array.from(cycle.executionsMap.values()),
-        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}${stopLoss ? `\nStopLoss: ${stopLoss}` : ''}${takeProfit ? `\nTakeProfit: ${takeProfit}` : ''}`,
         source,
         sourceExternalId: `${externalPrefix}:${Array.from(cycle.closeLabels)[0]}`,
         sourcePlatform: platform
@@ -411,6 +471,15 @@ const buildLongSpotRoundTrips = (
       const profit = cycle.exitRevenue - cycle.entryCost - cycle.allocatedEntryFee - cycle.exitFee
       const resolvedAsset = resolveImportedAsset(cycle.symbol, 'crypto-broker')
       
+      let stopLoss: number | undefined
+      let takeProfit: number | undefined
+      if (cycle.firstEntryOrderId && ordersMap[cycle.firstEntryOrderId]) {
+        const order = ordersMap[cycle.firstEntryOrderId]
+        const parsed = parseStopLossTakeProfitFromDescr(order.descr?.close)
+        stopLoss = parsed.stopLoss
+        takeProfit = parsed.takeProfit
+      }
+
       roundTrips.push({
         id: `${source}-${externalPrefix}-${Array.from(cycle.closeLabels)[0]}`,
         date: (cycle.firstEntryDate ? (cycle.firstEntryDate instanceof Date ? cycle.firstEntryDate.toISOString() : cycle.firstEntryDate) : cycle.lastExitDate.toISOString()) as any,
@@ -428,8 +497,10 @@ const buildLongSpotRoundTrips = (
         assetIcon: resolvedAsset.assetIcon,
         profitInCurrency: profit,
         result: profit,
+        stopLoss,
+        takeProfit,
         executions: Array.from(cycle.executionsMap.values()),
-        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+        notes: `Imported from ${platform} round trip.\nOpenFills: ${Array.from(cycle.consumedIds).join(', ')}\nCloseFills: ${Array.from(cycle.closeLabels).join(', ')}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}${stopLoss ? `\nStopLoss: ${stopLoss}` : ''}${takeProfit ? `\nTakeProfit: ${takeProfit}` : ''}`,
         source,
         sourceExternalId: `${externalPrefix}:${Array.from(cycle.closeLabels)[0]}`,
         sourcePlatform: platform

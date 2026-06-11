@@ -33,7 +33,7 @@
                   <div class="flex flex-col items-start">
                     <span class="font-mono text-[10px] font-black uppercase tracking-[0.14em]">{{ broker.label }}</span>
                   </div>
-                  <span v-if="connectionMap[broker.id]?.active" class="absolute top-1.5 right-1.5 z-10 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                  <span v-if="isBrokerActiveForTopbar(broker.id)" class="absolute top-1.5 right-1.5 z-10 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
                 </button>
               </div>
             </div>
@@ -55,57 +55,12 @@
                   <p class="font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-60">
                     {{ selectedBroker.description }}
                   </p>
-                </div>
-
-                <div v-if="selectedBroker.id === 'kraken'"
-                     class="mb-8 grid grid-cols-2 border border-black/10 bg-white dark:border-white/10 dark:bg-[#050505]">
-                  <button class="h-12 border-r border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors dark:border-white/10"
-                          :class="krakenMarketMode === 'spot'
-                            ? 'bg-black text-white dark:bg-white dark:text-black'
-                            : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
-                          @click="setKrakenMarketMode('spot')">
-                    Spot
-                  </button>
-                  <button class="h-12 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors"
-                          :class="krakenMarketMode === 'futures'
-                            ? 'bg-black text-white dark:bg-white dark:text-black'
-                            : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
-                          @click="setKrakenMarketMode('futures')">
-                    Futures
-                  </button>
-                </div>
-
-                <div v-if="selectedBrokerSupportsEnvironment"
-                     class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
-                  <div class="flex items-center justify-between gap-4 mb-4">
-                    <div>
-                      <p class="font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-50">{{ isRu ? 'Среда Подключения' : 'Connection Environment' }}</p>
-                      <p class="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] opacity-60">
-                        {{ environmentSupportNote }}
-                      </p>
-                    </div>
-                    <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border border-black/10 dark:border-white/10">
-                      {{ selectedBrokerEnvironmentLabel }}
+                  <div v-if="selectedBroker.id === 'kraken'"
+                       class="mt-4 border border-red-500/20 bg-red-500/5 p-5 text-red-600 dark:text-red-400">
+                    <p class="font-mono text-[10px] font-black uppercase tracking-[0.14em] leading-relaxed">
+                      {{ isRu ? 'ВНИМАНИЕ: ПОДДЕРЖИВАЕТСЯ ТОЛЬКО KRAKEN FUTURES. СПОТ КЛЮЧИ НЕ ПОДДЕРЖИВАЮТСЯ.' : 'WARNING: ONLY KRAKEN FUTURES IS SUPPORTED. SPOT KEYS ARE NOT SUPPORTED.' }}
                     </p>
                   </div>
-
-                  <div class="grid grid-cols-2 border border-black/10 bg-white dark:border-white/10 dark:bg-[#050505]">
-                    <button
-                      v-for="option in brokerEnvironmentOptions"
-                      :key="option.id"
-                      class="h-12 border-r border-black/10 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-colors last:border-r-0 dark:border-white/10"
-                      :class="brokerEnvironment === option.id
-                        ? 'bg-black text-white dark:bg-white dark:text-black'
-                        : 'text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white'"
-                      @click="setBrokerEnvironment(option.id)"
-                    >
-                      {{ option.label }}
-                    </button>
-                  </div>
-
-                  <p v-if="isKrakenSpotDemoSelected" class="mt-4 font-mono text-[9px] font-black uppercase leading-relaxed tracking-[0.14em] text-amber-600 dark:text-amber-400">
-                    {{ isRu ? 'Kraken Demo доступен через Futures API. Переключите Kraken на Futures или выберите REAL для Spot.' : 'Kraken Demo is available through the Futures API. Switch Kraken to Futures or choose REAL for Spot.' }}
-                  </p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 mb-8">
@@ -234,6 +189,7 @@ import {
   testKrakenFuturesConnection,
   getKrakenTradesHistory,
   getKrakenFuturesFills,
+  getKrakenQueryOrders,
   withKrakenFuturesEnvironment,
   type KrakenCredentials,
   type KrakenTrade,
@@ -265,7 +221,7 @@ interface BrokerDefinition {
 }
 
 interface SavedConnection {
-  brokerId: BrokerId
+  brokerId: BrokerId | 'kraken-spot' | 'kraken-futures'
   credentials: Record<string, string>
   active: boolean
   updatedAt: string
@@ -313,8 +269,8 @@ const brokers = computed<BrokerDefinition[]>(() => [
   {
     id: 'kraken',
     label: 'Kraken',
-    assetClass: isRu.value ? 'Крипто Спот / Фьючерсы' : 'Crypto Spot / Futures',
-    description: isRu.value ? 'Коннектор Kraken (только чтение). Выберите Spot или Futures для загрузки соответствующей истории сделок.' : 'Read-only Kraken connector. Choose Spot or Futures to load the matching trade history.',
+    assetClass: isRu.value ? 'Крипто Деривативы (ТОЛЬКО FUTURES)' : 'Crypto Derivatives (ONLY FUTURES)',
+    description: isRu.value ? 'Коннектор Kraken (только чтение). ВНИМАНИЕ: Поддерживается только Futures API. Торговая история спота не импортируется.' : 'Read-only Kraken connector. WARNING: Only Futures API is supported. Spot trade history is not imported.',
     mode: isRu.value ? 'Активно' : 'Live Activation',
     canActivate: true,
     fields: [
@@ -343,8 +299,26 @@ const activationState = ref<'idle' | 'loading'>('idle')
 const statusMessage = ref('')
 const statusTone = ref<'neutral' | 'success' | 'error'>('neutral')
 const importTargetStrategyId = ref('MAIN_DIARY')
-const krakenMarketMode = ref<KrakenMarketMode>('spot')
+const krakenMarketMode = ref<KrakenMarketMode>('futures')
 const brokerEnvironment = ref<BrokerEnvironment>('real')
+
+const getStorageKeyForBrokerSelection = (brokerId: BrokerId) => {
+  if (brokerId === 'kraken') {
+    return krakenMarketMode.value === 'futures' ? 'kraken-futures' : 'kraken-spot'
+  }
+  return brokerId
+}
+
+const isBrokerActiveForTopbar = (brokerId: BrokerId) => {
+  if (brokerId === 'kraken') {
+    return Boolean(
+      connectionMap.value['kraken-spot']?.active ||
+      connectionMap.value['kraken-futures']?.active ||
+      connectionMap.value['kraken']?.active
+    )
+  }
+  return Boolean(connectionMap.value[brokerId]?.active)
+}
 
 
 const selectedBroker = computed(() => {
@@ -418,11 +392,13 @@ const savedConnectionMatchesSelection = (connection?: SavedConnection) => {
 
 
 const savedCurrentConnection = computed(() => {
-  return savedConnectionMatchesSelection(connectionMap.value[selectedBroker.value.id])
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  return savedConnectionMatchesSelection(connectionMap.value[key])
 })
 
 const isSelectedBrokerActive = computed(() => {
-  const saved = connectionMap.value[selectedBroker.value.id]
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  const saved = connectionMap.value[key]
   return Boolean(saved?.active && savedConnectionMatchesSelection(saved))
 })
 
@@ -502,7 +478,8 @@ const getSavedCredentialsForCurrentSelection = () => {
 }
 
 const applySavedCredentialsToForm = () => {
-  const saved = connectionMap.value[selectedBroker.value.id]
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  const saved = connectionMap.value[key]
   const shouldUseSaved = savedConnectionMatchesSelection(saved)
 
   selectedBroker.value.fields.forEach((field) => {
@@ -519,11 +496,9 @@ const resetFormForBroker = () => {
     delete formState[key]
   })
 
-  const saved = connectionMap.value[selectedBroker.value.id]
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  const saved = connectionMap.value[key]
   brokerEnvironment.value = readSavedConnectionEnvironment(saved)
-  if (selectedBroker.value.id === 'kraken') {
-    krakenMarketMode.value = (saved?.credentials?.market as KrakenMarketMode) || 'spot'
-  }
 
   applySavedCredentialsToForm()
 }
@@ -541,11 +516,12 @@ const persistConnections = async () => {
 
 const saveCurrentConnection = async () => {
   const credentials = getSavedCredentialsForCurrentSelection()
-  const existing = connectionMap.value[selectedBroker.value.id]
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  const existing = connectionMap.value[key]
   const keepActive = Boolean(existing?.active && savedConnectionMatchesSelection(existing))
 
-  connectionMap.value[selectedBroker.value.id] = {
-    brokerId: selectedBroker.value.id,
+  connectionMap.value[key] = {
+    brokerId: key,
     credentials,
     active: keepActive,
     updatedAt: new Date().toISOString(),
@@ -558,19 +534,29 @@ const saveCurrentConnection = async () => {
 
 const migrateKrakenFuturesConnection = async () => {
   const legacyConnections = connectionMap.value as Record<string, SavedConnection | undefined>
+  
+  // 1. Legacy 'kraken-futures' (if any remains)
   const legacyFutures = legacyConnections['kraken-futures']
-  if (!legacyFutures || connectionMap.value.kraken) return
-
-  connectionMap.value.kraken = {
-    ...legacyFutures,
-    brokerId: 'kraken',
-    credentials: {
-      ...legacyFutures.credentials,
-      market: 'futures'
-    }
+  if (legacyFutures && legacyFutures.brokerId === 'kraken') {
+    legacyFutures.brokerId = 'kraken-futures'
   }
-  delete legacyConnections['kraken-futures']
-  await persistConnections()
+
+  // 2. Split unified 'kraken' config into 'kraken-spot' and/or 'kraken-futures'
+  const unifiedKraken = legacyConnections['kraken']
+  if (unifiedKraken) {
+    const isFutures = unifiedKraken.credentials?.market === 'futures'
+    const targetKey = isFutures ? 'kraken-futures' : 'kraken-spot'
+    
+    // Move to target key if not already defined
+    if (!legacyConnections[targetKey]) {
+      legacyConnections[targetKey] = {
+        ...unifiedKraken,
+        brokerId: targetKey
+      }
+    }
+    delete legacyConnections['kraken']
+    await persistConnections()
+  }
 }
 
 const handlePrimaryAction = async () => {
@@ -588,7 +574,8 @@ const handleManualSync = async () => {
   if (!isSelectedBrokerActive.value) return
   activationState.value = 'loading'
   try {
-    const saved = connectionMap.value[selectedBroker.value.id]
+    const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+    const saved = connectionMap.value[key]
     const creds = saved?.credentials
     const environment = readSavedConnectionEnvironment(saved)
     if (selectedBroker.value.id === 'bybit' && creds) {
@@ -687,8 +674,9 @@ const activateCurrentConnection = async () => {
       }
     }
 
-    connectionMap.value[selectedBroker.value.id] = {
-      brokerId: selectedBroker.value.id,
+    const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+    connectionMap.value[key] = {
+      brokerId: key,
       credentials: getSavedCredentialsForCurrentSelection(),
       active: true,
       updatedAt: new Date().toISOString(),
@@ -801,11 +789,12 @@ const importBybitTrades = async (credentials: BybitCredentials) => {
 
 const importKrakenTrades = async (credentials: KrakenCredentials) => {
   statusMessage.value = 'Fetching trade history from Kraken...'
-  const response = await getKrakenTradesHistory(credentials, { type: 'all', trades: false })
+  const response = await getKrakenTradesHistory(credentials, { type: 'all', trades: true })
   const krakenTrades = Object.entries(response.trades || {}).map(([tradeId, trade]) => ({
     ...trade,
     tradeId
   }))
+  console.log('[ManualSync][Kraken] Raw trades (fills) from API:', krakenTrades)
 
   let importedCount = 0
   let duplicateCount = 0
@@ -817,7 +806,19 @@ const importKrakenTrades = async (credentials: KrakenCredentials) => {
     return [anyTrade.sourceExternalId || '', t] as const
   }).filter(([sourceId]) => Boolean(sourceId)))
 
-  const roundTrips = buildKrakenSpotRoundTrips(krakenTrades)
+  const orderIds = Array.from(new Set(krakenTrades.map(t => t.ordertxid).filter(Boolean)))
+  let ordersMap: Record<string, any> = {}
+  try {
+    if (orderIds.length > 0) {
+      ordersMap = await getKrakenQueryOrders(credentials, orderIds)
+      console.log('[ManualSync][Kraken] Orders details queried:', ordersMap)
+    }
+  } catch (err) {
+    console.error('Failed to query orders details during import:', err)
+  }
+
+  const roundTrips = buildKrakenSpotRoundTrips(krakenTrades, ordersMap)
+  console.log('[ManualSync][Kraken] Formed round trips:', roundTrips)
   for (const trade of roundTrips) {
     const existingTrade = existingBySourceId.get(trade.sourceExternalId)
     if (existingTrade?.id) {
@@ -995,9 +996,32 @@ const buildBybitSpotRoundTrips = (orders: BybitHistoricOrder[]) => {
   return roundTrips
 }
 
-const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string }>) => {
+const parseStopLossTakeProfitFromDescr = (closeDescr: string) => {
+  let stopLoss: number | undefined
+  let takeProfit: number | undefined
+
+  if (!closeDescr || typeof closeDescr !== 'string') return { stopLoss, takeProfit }
+
+  const slMatch = closeDescr.match(/stop\s*loss\s+(?:@\s*(?:limit|market)?\s*)?([0-9\.]+)/i)
+  if (slMatch && slMatch[1]) {
+    stopLoss = Number(slMatch[1])
+  }
+
+  const tpMatch = closeDescr.match(/take\s*profit\s+(?:@\s*(?:limit|market)?\s*)?([0-9\.]+)/i)
+  if (tpMatch && tpMatch[1]) {
+    takeProfit = Number(tpMatch[1])
+  }
+
+  return { stopLoss, takeProfit }
+}
+
+const buildKrakenSpotRoundTrips = (
+  fills: Array<KrakenTrade & { tradeId: string }>,
+  ordersMap: Record<string, any> = {}
+) => {
   type OpenLot = {
     tradeId: string
+    ordertxid?: string
     symbol: string
     date: Date
     remainingQty: number
@@ -1038,6 +1062,7 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
     if (fill.type === 'buy') {
       lots.push({
         tradeId: fill.tradeId,
+        ordertxid: fill.ordertxid,
         symbol: fill.symbol,
         date: new Date(fill.timestamp),
         remainingQty: fill.qty,
@@ -1053,6 +1078,7 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
     let entryCost = 0
     let allocatedEntryFee = 0
     let firstEntryDate: Date | null = null
+    let firstEntryOrderId: string | null = null
     const consumedTradeIds: string[] = []
 
     while (remainingSellQty > epsilon && lots.length) {
@@ -1062,6 +1088,9 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
 
       if (!firstEntryDate) {
         firstEntryDate = currentLot.date
+      }
+      if (!firstEntryOrderId && currentLot.ordertxid) {
+        firstEntryOrderId = currentLot.ordertxid
       }
 
       consumedQty += matchedQty
@@ -1090,6 +1119,15 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
     const profit = proceeds - entryCost - allocatedEntryFee - exitFee
     const resolvedAsset = resolveImportedAsset(fill.symbol, 'crypto-broker')
 
+    let stopLoss: number | undefined
+    let takeProfit: number | undefined
+    if (firstEntryOrderId && ordersMap[firstEntryOrderId]) {
+      const order = ordersMap[firstEntryOrderId]
+      const parsed = parseStopLossTakeProfitFromDescr(order.descr?.close)
+      stopLoss = parsed.stopLoss
+      takeProfit = parsed.takeProfit
+    }
+
     roundTrips.push({
       id: `kraken-spot-close-${fill.tradeId}`,
       date: firstEntryDate,
@@ -1106,7 +1144,9 @@ const buildKrakenSpotRoundTrips = (fills: Array<KrakenTrade & { tradeId: string 
       assetIcon: resolvedAsset.assetIcon,
       profitInCurrency: profit,
       result: profit,
-      notes: `Imported from Kraken spot round trip.\nOpenTrades: ${consumedTradeIds.join(', ')}\nCloseTrade: ${fill.tradeId}\nPair: ${fill.pair}\nOrderType: ${fill.ordertype}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}`,
+      stopLoss,
+      takeProfit,
+      notes: `Imported from Kraken spot round trip.\nOpenTrades: ${consumedTradeIds.join(', ')}\nCloseTrade: ${fill.tradeId}\nPair: ${fill.pair}\nOrderType: ${fill.ordertype}\nAssetMatch: ${resolvedAsset.matchSource || 'none'}${stopLoss ? `\nStopLoss: ${stopLoss}` : ''}${takeProfit ? `\nTakeProfit: ${takeProfit}` : ''}`,
       source: 'kraken',
       sourceExternalId: `spot-close:${fill.tradeId}`,
       sourcePlatform: 'Kraken Spot'
@@ -1321,7 +1361,8 @@ const readBybitSpotFee = (order: BybitHistoricOrder) => {
 }
 
 const deactivateCurrentConnection = async () => {
-  const existing = connectionMap.value[selectedBroker.value.id]
+  const key = getStorageKeyForBrokerSelection(selectedBroker.value.id)
+  const existing = connectionMap.value[key]
   if (!existing) return
 
   activationState.value = 'loading'
@@ -1329,7 +1370,7 @@ const deactivateCurrentConnection = async () => {
   statusMessage.value = 'Deactivating connector...'
 
   try {
-    connectionMap.value[selectedBroker.value.id] = {
+    connectionMap.value[key] = {
       ...existing,
       active: false,
       updatedAt: new Date().toISOString()

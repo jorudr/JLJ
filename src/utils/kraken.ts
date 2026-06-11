@@ -182,3 +182,18 @@ export const getKrakenTradesHistory = async (
     }
   })
 }
+
+export const getKrakenQueryOrders = async (
+  credentials: KrakenCredentials,
+  txids: string[]
+) => {
+  if (txids.length === 0) return {}
+  return krakenSignedRequest<Record<string, any>>({
+    credentials,
+    path: '/0/private/QueryOrders',
+    params: {
+      txid: txids.join(','),
+      trades: true
+    }
+  })
+}
