@@ -2622,7 +2622,7 @@ const submit = async () => {
              @click.self="showConditionLibrary = false"
              class="fixed inset-0 z-[10005] flex items-center justify-center p-20">
           
-            <ExPanel class="w-full max-w-4xl" noPadding variant="light">
+            <ExPanel class="w-full max-w-4xl" noPadding variant="light" :no-shadow="true">
               <template #header>
                 <div class="flex items-center justify-between w-full">
                   <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">Condition_Matrix_Protocol_v4.0</span>
@@ -2830,7 +2830,7 @@ const submit = async () => {
            @click.self="showEntryMethod = false"
            class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
         
-          <ExPanel class="w-full max-w-[500px]" noPadding variant="light">
+          <ExPanel class="w-full max-w-[500px]" noPadding variant="light" :no-shadow="true">
             <template #header>
               <div class="flex items-center justify-between w-full">
                 <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY_METHOD' }}</span>
@@ -2983,7 +2983,7 @@ const submit = async () => {
         <div v-if="isTemporalOpen" 
              @click.self="isTemporalOpen = false"
              class="fixed inset-0 z-[2000] flex items-center justify-center p-20 bg-black/20 dark:bg-black/40 backdrop-blur-md cursor-pointer">
-          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="false" class="w-full max-w-4xl shadow-[0_0_100px_rgba(0,0,0,0.8)] !border-black/20 dark:!border-white/20 cursor-auto">
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="w-full max-w-4xl !border-black/20 dark:!border-white/20 cursor-auto">
             
             <div class="flex items-center justify-between px-4 py-2 border-b border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
             </div>

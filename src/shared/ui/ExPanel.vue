@@ -46,19 +46,26 @@ const bottomRightClasses = computed(() =>
 <template>
   <div 
     :class="[
-      'relative w-full border border-black/10 dark:border-white/10 flex flex-col',
-      variant === 'light' ? 'bg-white/50 dark:bg-[#0a0a0a]/50' : 'bg-white dark:bg-[#0a0a0a]',
+      'relative isolate w-full border border-black/10 dark:border-white/10 flex flex-col',
+      variant === 'light' ? 'bg-transparent' : 'bg-white dark:bg-[#0a0a0a]',
       { 'p-0': noPadding },
       noShadow ? 'shadow-none dark:shadow-none' : 'shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
     ]"
-    :style="variant === 'light' ? 'backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); transform: translateZ(0); will-change: transform;' : 'transform: translateZ(0);'"
+    :style="'transform: translateZ(0);'"
   >
+    <div v-if="variant === 'light'" class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div
+        class="absolute -inset-4 bg-white/50 dark:bg-[#0a0a0a]/50"
+        style="backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); transform: translateZ(0); backface-visibility: hidden;"
+      ></div>
+    </div>
+
     <template v-if="showCorners">
       <ExGothicCorners :variant="variant" :opacity="0.9" />
     </template>
     
     <div v-if="title || $slots.header || $slots.telemetry || telemetry" :class="[
-      'flex items-center justify-between border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]',
+      'relative z-10 flex items-center justify-between border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]',
       variant === 'light' ? 'px-3 py-1.5' : 'px-6 py-3'
     ]">
       <div v-if="variant !== 'light'" :class="['flex items-center', variant === 'light' ? 'space-x-2' : 'space-x-4']">
@@ -83,11 +90,11 @@ const bottomRightClasses = computed(() =>
     </div>
 
     <!-- Content Area -->
-    <div :class="['flex-grow min-h-0 min-w-0 relative flex flex-col', noPadding ? '' : 'p-8']">
+    <div :class="['relative z-10 flex-grow min-h-0 min-w-0 flex flex-col', noPadding ? '' : 'p-8']">
       <slot></slot>
     </div>
 
-    <div v-if="$slots.footer" class="shrink-0 px-8 py-4 border-t border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.01] min-h-[72px] flex flex-col justify-center">
+    <div v-if="$slots.footer" class="relative z-10 shrink-0 px-8 py-4 border-t border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.01] min-h-[72px] flex flex-col justify-center">
       <slot name="footer"></slot>
     </div>
   </div>
