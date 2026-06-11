@@ -182,7 +182,7 @@
                        @clear-output="clearNodeOutputConnections"
                        @contextmenu="handleNodeContextMenu"
                        @merge="mergeNodes($event.fromId, $event.toId)"
-                       @moved="forceUpdate" />
+                       @moved="handleNodeMoved" />
         </div>
         </div>
       </div>
@@ -1023,109 +1023,11 @@
                     </div>
                  </div>
 
-               <!-- RISK TOOLS ( Strategic Parameters ) -->
-                  <div v-if="activeMenuCategory === 'RISK' && !isScenarioContext" class="flex flex-col items-center pointer-events-auto max-w-2xl px-4 w-full">
-                    <div class="flex flex-col items-center w-full space-y-3">
-                        <div class="flex items-center relative w-full px-16">
-                           <!-- Left Navigation -->
-                           <button @click="currentRiskStep = (currentRiskStep - 1 + riskStepsCount) % riskStepsCount"
-                                   class="absolute left-0 top-1/2 -translate-y-1/2 p-4 opacity-30 hover:opacity-100 hover:scale-125 transition-all text-nier-text-light dark:text-nier-text-dark z-10">
-                              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                 <path d="M15 18l-6-6 6-6" />
-                              </svg>
-                           </button>
-
-                           <!-- Risk Step 0: Max Loss / Trade -->
-                           <div v-if="currentRiskStep === 0" class="flex flex-col items-center w-full py-4 animate-in fade-in slide-in-from-left-8 duration-700">
-                              <span class="text-[10px] font-mono uppercase tracking-[0.5em] font-black mb-6 text-nier-text-light dark:text-nier-text-dark">01 // MAX_LOSS_PER_TRADE</span>
-                              <div class="relative space-x-4 w-full flex justify-center">
-                                 <ExInput v-model.number="riskLossTrade" type="number" step="0.1"
-                                        class="w-full hide-spinners text-center" />
-                                 <!-- Actions -->
-                                 <div class="flex items-center space-x-2">
-                                    <button @click="riskLossTradeUnit = riskLossTradeUnit === '%' ? '$' : '%'"
-                                            class="w-12 h-[34px] border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 text-[12px] font-mono font-bold hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all flex items-center justify-center">
-                                       {{ riskLossTradeUnit }}
-                                    </button>
-                                    <ExButton @click="addRiskParameter('trade')" variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light/40 dark:border-nier-border-dark/40">
-                                       <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
-                                    </ExButton>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <!-- Risk Step 1: Max Loss / Day -->
-                           <div v-if="currentRiskStep === 1" class="flex flex-col items-center w-full py-4 animate-in fade-in slide-in-from-right-8 duration-700">
-                              <span class="text-[10px] font-mono uppercase tracking-[0.5em] font-black mb-6 text-nier-text-light dark:text-nier-text-dark">02 // MAX_LOSS_PER_SESSION</span>
-                              <div class="relative space-x-4 w-full flex justify-center">
-                                 <ExInput v-model.number="riskLossDay" type="number"
-                                        class="w-full hide-spinners text-center" />
-                                 <!-- Actions -->
-                                 <div class="flex items-center space-x-2">
-                                    <button @click="riskLossDayUnit = riskLossDayUnit === '%' ? '$' : '%'"
-                                            class="w-12 h-[34px] border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 text-[12px] font-mono font-bold hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all flex items-center justify-center">
-                                       {{ riskLossDayUnit }}
-                                    </button>
-                                    <ExButton @click="addRiskParameter('day')" variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light/40 dark:border-nier-border-dark/40">
-                                       <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
-                                    </ExButton>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <!-- Risk Step 2: R/R Ratio -->
-                           <div v-if="currentRiskStep === 2" class="flex flex-col items-center w-full py-4 animate-in fade-in slide-in-from-right-8 duration-700">
-                              <span class="text-[10px] font-mono uppercase tracking-[0.5em] font-black mb-6 text-nier-text-light dark:text-nier-text-dark">03 // RISK_REWARD_RATIO</span>
-                              <div class="relative space-x-4 w-full flex justify-center">
-                                 <div class="flex items-center space-x-3 bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark px-6 h-[34px]">
-                                    <span class="text-[11px] font-mono opacity-40 tracking-widest whitespace-nowrap">TARGET_RATIO 1:</span>
-                                    <input v-model.number="riskRR" type="number" step="0.1"
-                                           class="w-full bg-transparent border-none p-0 text-[12px] font-mono text-center outline-none focus:ring-0 text-nier-text-light dark:text-nier-text-dark hide-spinners font-bold" />
-                                 </div>
-                                 <!-- Actions -->
-                                 <div class="flex items-center space-x-2">
-                                    <div class="w-12 h-[34px] flex items-center justify-center border border-nier-text-light/5 dark:border-nier-text-dark/5 text-[12px] font-mono opacity-20">R</div>
-                                    <ExButton @click="addRiskParameter('rr')" variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light/40 dark:border-nier-border-dark/40">
-                                       <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
-                                    </ExButton>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <!-- Risk Step 3: Trading Styles -->
-                           <div v-if="currentRiskStep === 3" class="flex flex-col items-center justify-center w-full animate-in fade-in py-4 slide-in-from-right-8 duration-700">
-                               <span class="text-[10px] font-mono uppercase tracking-[0.5em] font-black mb-6 text-nier-text-light dark:text-nier-text-dark text-center w-full">04 // TRADING_STYLE_ARCHIVE</span>
-                               <div class="flex space-x-6 justify-center w-full">
-                                  <ExNTtooltip v-for="(style, sIdx) in ['DAY_TRADING_STYLE', 'SWING_TRADING_STYLE', 'INVESTING_STYLE']" :key="style" :title="style.replace(/_/g, ' ')">
-                                    <template #trigger>
-                                      <button @click="addNode({ type: 'risk-element', label: style, params: { riskType: 'style', extraType: sIdx } })"
-                                              class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all hover:scale-110 hover:border-red-500 bg-red-500/5 backdrop-blur-md">
-                                         <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-red-500/20 group-hover:border-red-500/60 transition-colors"></div>
-                                         <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-red-500/20 group-hover:border-red-500/60 transition-colors"></div>
-                                         <span class="text-[14px] font-mono font-black text-red-500/60 group-hover:text-red-500 transition-colors">{{ style.slice(0, 2) }}</span>
-                                      </button>
-                                    </template>
-                                    <span class="text-xs">Initialize {{ style.replace(/_/g, ' ') }} protocol</span>
-                                  </ExNTtooltip>
-                               </div>
-                           </div>
-
-                           <!-- Right Navigation -->
-                           <button @click="currentRiskStep = (currentRiskStep + 1) % riskStepsCount"
-                                   class="absolute right-0 top-1/2 -translate-y-1/2 p-4 opacity-30 hover:opacity-100 hover:scale-125 transition-all text-nier-text-light dark:text-nier-text-dark z-10">
-                              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                 <path d="M9 18l6-6-6-6" />
-                              </svg>
-                           </button>
-                        </div>
-
-                        <!-- Pagination Dots (Tactical style) -->
-                        <div class="flex space-x-2 mt-4">
-                           <div v-for="i in riskStepsCount" :key="i"
-                                @click="currentRiskStep = i - 1"
-                                class="w-6 h-0.5 transition-all duration-500 cursor-pointer"
-                                :class="currentRiskStep === i - 1 ? 'bg-nier-text-light dark:bg-nier-text-dark' : 'bg-nier-text-light/10 dark:bg-nier-text-dark/10'"></div>
-                        </div>
+               <!-- RISK TOOLS -->
+                  <div v-if="activeMenuCategory === 'RISK' && !isScenarioContext" class="flex items-center justify-center pointer-events-auto px-4 w-full">
+                    <div class="flex items-center gap-3 border border-red-500/20 bg-red-500/[0.03] px-5 py-3">
+                      <div class="w-2 h-2 rotate-45 bg-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
+                      <span class="text-[9px] font-mono uppercase tracking-[0.32em] font-black text-nier-text-light dark:text-nier-text-dark">Risk_Management_Panel</span>
                     </div>
                  </div>
 
@@ -1532,6 +1434,10 @@ const bootProgress = ref(0)
 const personalIndicators = ref<any[]>([])
 const updateKey = ref(0)
 const forceUpdate = () => updateKey.value++
+const handleNodeMoved = () => {
+  forceUpdate()
+  saveMatrixData()
+}
 const isClearPanelOpen = ref(false)
 
 function clearBoard() {
@@ -2230,10 +2136,11 @@ watch(lastSelectedId, (newId) => {
   if (!newId) return
   const node = getNode(newId)
   if (node?.type === 'risk') {
-    // Keep internal refs for menu inputs
-    riskLossTrade.value = 1
-    riskLossDay.value = 5
-    riskRR.value = 3
+    riskLossTrade.value = node.params?.riskLossTrade ?? 1
+    riskLossTradeUnit.value = node.params?.riskLossTradeUnit || '%'
+    riskLossDay.value = node.params?.riskLossDay ?? 5
+    riskLossDayUnit.value = node.params?.riskLossDayUnit || '$'
+    riskRR.value = node.params?.riskRR ?? 3
   } else if (node?.type === 'scaling-entry') {
     scalingLots.value = node.params.lots || 1
     scalingStep.value = node.params.step || 0
@@ -2249,8 +2156,6 @@ const stepPresets = {
 const emotionLibrary = GENESIS_EMOTION_LIBRARY
 const activeIndicatorCategory = ref(indicatorData.categories[0]?.id || 'TREND')
 const indicatorSearchQuery = ref('')
-const currentRiskStep = ref(0)
-const riskStepsCount = 4
 const hoveredDescription = ref('')
 const mousePos = ref({ x: 0, y: 0 })
 
@@ -3232,7 +3137,9 @@ function addNode(type: any) {
          riskLossTrade: riskLossTrade.value,
          riskLossTradeUnit: riskLossTradeUnit.value,
          riskLossDay: riskLossDay.value,
-         riskRR: riskRR.value
+         riskLossDayUnit: riskLossDayUnit.value,
+         riskRR: riskRR.value,
+         tradingStyle: 'DAY_TRADING'
        } : {} )
      }
      
@@ -3276,7 +3183,9 @@ function addNode(type: any) {
         riskLossTrade: riskLossTrade.value,
         riskLossTradeUnit: riskLossTradeUnit.value,
         riskLossDay: riskLossDay.value,
-        riskRR: riskRR.value
+        riskLossDayUnit: riskLossDayUnit.value,
+        riskRR: riskRR.value,
+        tradingStyle: 'DAY_TRADING'
       } : {} )
     }
   }
@@ -3543,58 +3452,6 @@ function mergeNodes(indicatorId: string, configId: string) {
   
   saveMatrixData()
   selectNode(indicatorId)
-}
-
-function addRiskParameter(type: 'trade' | 'day' | 'rr') {
-  const parentId = lastSelectedId.value
-  const parentNode = parentId ? getNode(parentId) : null
-  if (!parentNode || parentNode.type !== 'risk') return
-
-  const connList = activeContextId.value && activeContextNode.value?.subGraph
-    ? activeContextNode.value.subGraph.connections
-    : rootConnections.value
-  const siblingCount = connList.filter(c => c.fromId === parentId && getNode(c.toId)?.type === 'risk-element').length
-
-  const id = 're' + Date.now().toString(36)
-  let label = ''
-  let params: any = { riskType: type }
-
-  if (type === 'trade') {
-    label = `RISK_PER_TRADE: ${riskLossTrade.value}${riskLossTradeUnit.value}`
-    params.value = riskLossTrade.value
-    params.unit = riskLossTradeUnit.value
-  } else if (type === 'day') {
-    const unitPrefix = riskLossDayUnit.value === '$' ? '$' : ''
-    const unitSuffix = riskLossDayUnit.value === '%' ? '%' : ''
-    label = `RISK_PER_SESSION: ${unitPrefix}${riskLossDay.value}${unitSuffix}`
-    params.value = riskLossDay.value
-    params.unit = riskLossDayUnit.value
-  } else if (type === 'rr') {
-    label = `RISK_REWARD_RATIO: 1:${riskRR.value}`
-    params.value = riskRR.value
-  }
-
-  const newNode: Node = {
-    id,
-    label,
-    type: 'risk-element',
-    x: parentNode.x + 180,
-    y: parentNode.y - 120 + (siblingCount * 80),
-    color: '#FF3333',
-    params
-  }
-
-  if (!parentId) return
-
-  if (activeContextId.value && activeContextNode.value) {
-    if (!activeContextNode.value.subGraph) activeContextNode.value.subGraph = { nodes: [], connections: [], zones: [] }
-    activeContextNode.value.subGraph.nodes.push(newNode)
-    activeContextNode.value.subGraph.connections.push({ fromId: parentId as string, toId: id })
-  } else {
-    rootNodes.value.push(newNode)
-    rootConnections.value.push({ fromId: parentId as string, toId: id })
-  }
-  selectNode(parentId)
 }
 
 function handleGlobalClick(e: MouseEvent) {

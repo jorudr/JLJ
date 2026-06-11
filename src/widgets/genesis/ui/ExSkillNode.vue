@@ -8,6 +8,7 @@
          height: nodeHeight
        }"
        @mousedown.stop="startDrag"
+       @click="$emit('click')"
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
@@ -17,7 +18,7 @@
                 :class="[
                   node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
                   isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]'),
-                  (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry') ? 'border-none shadow-none' : ''
+                  (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry' || isRiskPanel) ? 'border-none shadow-none' : ''
                 ]"
                 :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
                 @dblclick.stop="$emit('doubleclick')">
@@ -28,6 +29,7 @@
                     (node.type === 'step' || node.type === 'scaling-entry') ? 'rounded-full bg-nier-text-light dark:bg-nier-text-dark' : 'bg-nier-white/10 dark:bg-nier-black/10',
                     node.params?.needsConfig ? 'needs-config-pulse !bg-red-500/10' : '',
                     node.type === 'image' ? '!bg-transparent' : '',
+                    isRiskPanel ? '!bg-transparent' : '',
                     node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
                     node.params?.direction === 'SHORT' ? '!bg-red-500/50' : '',
                     node.type === 'risk-element' ? '!bg-red-500/5' : ''
@@ -41,7 +43,10 @@
                <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark animate-pulse"></div>
             </div>
 
-           <div class="absolute inset-0 w-full h-full flex flex-col items-center justify-center">
+           <div
+             :class="isRiskPanel
+               ? 'relative w-full flex flex-col items-center justify-center'
+               : 'absolute inset-0 w-full h-full flex flex-col items-center justify-center'">
 
            <!-- Skill Icon / Label / Image Content -->
            <div v-if="node.type === 'instrument' || ['indicator', 'pattern', 'smc', 'emotion-state', 'step', 'scaling-entry', 'risk-element'].includes(node.type)"
@@ -73,6 +78,60 @@
                 }}
               </div>
            </div>
+
+           <!-- Risk Management Panel -->
+            <div v-if="isRiskPanel" class="w-full cursor-pointer pointer-events-auto" @click.stop="$emit('click')">
+              <ExPanel variant="light" no-padding no-shadow class="w-full !border-red-500/30 dark:!border-red-400/30">
+                <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
+                  <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
+                    <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black text-white">Risk_Management</span>
+                  </div>
+                  <span class="text-[8px] font-mono uppercase tracking-[0.18em] text-red-500/70">Panel</span>
+                </div>
+
+                <div class="flex flex-col gap-3 p-4 pb-7">
+                  <label class="risk-panel-field">
+                    <span>Risk / Trade</span>
+                    <div class="risk-panel-control">
+                      <input v-model.number="riskParams.riskLossTrade" type="number" step="0.1" @change="commitRiskPanel" />
+                      <button @click="toggleRiskUnit('riskLossTradeUnit')" @mousedown.stop>{{ riskParams.riskLossTradeUnit }}</button>
+                    </div>
+                  </label>
+
+                  <label class="risk-panel-field">
+                    <span>Risk / Session</span>
+                    <div class="risk-panel-control">
+                      <input v-model.number="riskParams.riskLossDay" type="number" step="0.1" @change="commitRiskPanel" />
+                      <button @click="toggleRiskUnit('riskLossDayUnit')" @mousedown.stop>{{ riskParams.riskLossDayUnit }}</button>
+                    </div>
+                  </label>
+
+                  <label class="risk-panel-field">
+                    <span>Risk Reward</span>
+                    <div class="risk-panel-control">
+                      <span class="risk-panel-prefix">1:</span>
+                      <input v-model.number="riskParams.riskRR" type="number" step="0.1" @change="commitRiskPanel" />
+                    </div>
+                  </label>
+
+                  <label class="risk-panel-field">
+                    <span>Trading Style</span>
+                    <div class="risk-style-control">
+                      <button
+                        v-for="style in riskTradingStyles"
+                        :key="style"
+                        type="button"
+                        :class="{ 'is-active': riskParams.tradingStyle === style }"
+                        @click.stop="setRiskTradingStyle(style)"
+                        @mousedown.stop>
+                        {{ formatRiskTradingStyle(style) }}
+                      </button>
+                    </div>
+                  </label>
+                </div>
+              </ExPanel>
+            </div>
 
            <!-- Image Content Rendering -->
             <div v-if="node.type === 'image'" class="w-full h-full relative group/img overflow-visible">
@@ -299,7 +358,7 @@
            </div>
 
            <!-- Default SVGs for other types -->
-           <svg v-if="!node.params?.isConfig && !isScenarioPanel && !['placeholder', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image', 'audio-note'].includes(node.type)"
+           <svg v-if="!node.params?.isConfig && !isScenarioPanel && !['placeholder', 'risk', 'risk-element', 'scaling-entry', 'step', 'instrument', 'indicator', 'pattern', 'smc', 'emotion-state', 'image', 'audio-note'].includes(node.type)"
                class="w-[60%] h-[60%] opacity-60 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark"
                :class="{ 'opacity-100': isSelected }"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -636,7 +695,7 @@ const props = defineProps<{
   isDark?: boolean
 }>()
 
-const emit = defineEmits(['start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end'])
+const emit = defineEmits(['click', 'start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end'])
 
 function isTextEditingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -687,12 +746,25 @@ const headerScaleMult = computed(() => (props.scale <= 0.25 && props.node.type =
 const isScenarioContentNode = computed(() => (
   isScenarioPanel.value ||
   (props.node.type === 'image' && props.node.params?.shortCode === 'IMG') ||
-  isAudioNote.value
+  isAudioNote.value ||
+  props.node.type === 'risk'
 ))
 const isDrawingPanel = computed(() => props.node.type === 'drawing-panel')
 const isAudioNote = computed(() => props.node.type === 'audio-note')
 const isTablePanel = computed(() => props.node.type === 'table-panel')
+const isRiskPanel = computed(() => props.node.type === 'risk')
 const configNodeCode = computed(() => (props.node.label || 'CFG').slice(0, 3).toUpperCase())
+const riskTradingStyles = ['DAY_TRADING', 'SWING_TRADING', 'INVESTING']
+const riskParams = computed(() => {
+  if (!props.node.params) props.node.params = {}
+  if (props.node.params.riskLossTrade === undefined) props.node.params.riskLossTrade = 1
+  if (!props.node.params.riskLossTradeUnit) props.node.params.riskLossTradeUnit = '%'
+  if (props.node.params.riskLossDay === undefined) props.node.params.riskLossDay = 5
+  if (!props.node.params.riskLossDayUnit) props.node.params.riskLossDayUnit = '$'
+  if (props.node.params.riskRR === undefined) props.node.params.riskRR = 3
+  if (!props.node.params.tradingStyle) props.node.params.tradingStyle = 'DAY_TRADING'
+  return props.node.params
+})
 const tableRows = computed(() => (
   isTablePanel.value ? Math.max(1, Math.min(12, Number(props.node.params?.rows) || 3)) : 0
 ))
@@ -715,6 +787,7 @@ const scenarioPanelSize = computed(() => (
 const nodeWidth = computed(() => {
   const getW = () => {
     if (props.node.type === 'image') return props.node.params?.width || 300
+    if (isRiskPanel.value) return 360
     if (isAudioNote.value) return scenarioPanelSize.value.width
     if (isTablePanel.value) return tablePanelSize.value.width
     if (isScenarioPanel.value) {
@@ -737,6 +810,7 @@ const nodeHeight = computed(() => {
     }
     return props.node.type === 'scaling-entry' || props.node.type === 'step' ? 56 : 112
   }
+  if (isRiskPanel.value) return 'auto'
   return `${Math.round((getH() * props.scale) / 2) * 2}px`
 })
 
@@ -753,6 +827,24 @@ const audioCurrentTime = ref(0)
 const audioDuration = ref(0)
 let audioSeekTrackElement: HTMLElement | null = null
 let audioAnimationId = 0
+
+function commitRiskPanel() {
+  emit('moved')
+}
+
+function toggleRiskUnit(key: 'riskLossTradeUnit' | 'riskLossDayUnit') {
+  riskParams.value[key] = riskParams.value[key] === '%' ? '$' : '%'
+  commitRiskPanel()
+}
+
+function setRiskTradingStyle(style: string) {
+  riskParams.value.tradingStyle = style
+  commitRiskPanel()
+}
+
+function formatRiskTradingStyle(style: string) {
+  return style.replace('_TRADING', '').replace(/_/g, ' ')
+}
 
 function startAudioAnimationLoop() {
   const loop = () => {
@@ -1435,6 +1527,156 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   display: flex;
   height: 100%;
+}
+
+.risk-panel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.risk-panel-field > span {
+  color: rgb(255 255 255 / 0.72);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+:global(.dark) .risk-panel-field > span {
+  color: rgb(255 255 255 / 0.72);
+}
+
+.risk-panel-control,
+.risk-style-control {
+  align-items: center;
+  background: rgb(0 0 0 / 0.035);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  display: flex;
+  height: 38px;
+  min-width: 0;
+}
+
+:global(.dark) .risk-panel-control,
+:global(.dark) .risk-style-control {
+  background: rgb(255 255 255 / 0.035);
+  border-color: rgb(255 255 255 / 0.16);
+}
+
+.risk-panel-control input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  flex: 1 1 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 900;
+  min-width: 0;
+  outline: none;
+  padding: 0 10px;
+  text-align: center;
+}
+
+:global(.dark) .risk-panel-control input {
+  color: #fff;
+}
+
+.risk-panel-control input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.risk-panel-control input[type='number']::-webkit-inner-spin-button,
+.risk-panel-control input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.risk-panel-control button {
+  border-left: 1px solid rgb(255 255 255 / 0.16);
+  color: rgb(255 255 255 / 0.9);
+  flex: 0 0 34px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 900;
+  height: 100%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+:global(.dark) .risk-panel-control button {
+  border-left-color: rgb(255 255 255 / 0.14);
+}
+
+.risk-panel-control button:hover {
+  background: rgb(239 68 68 / 0.14);
+}
+
+.risk-panel-prefix {
+  border-right: 1px solid rgb(0 0 0 / 0.12);
+  color: rgb(255 255 255 / 0.78);
+  flex: 0 0 38px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 38px;
+  text-align: center;
+}
+
+:global(.dark) .risk-panel-prefix {
+  border-right-color: rgb(255 255 255 / 0.14);
+}
+
+.risk-style-control {
+  gap: 4px;
+  height: auto;
+  padding: 4px;
+}
+
+.risk-style-control button {
+  color: rgb(255 255 255 / 0.42);
+  flex: 1 1 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+  font-weight: 900;
+  height: 32px;
+  letter-spacing: 0.12em;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  position: relative;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.risk-style-control button::before {
+  border-left: 1px solid rgb(255 255 255 / 0.16);
+  border-top: 1px solid rgb(255 255 255 / 0.16);
+  content: '';
+  height: 6px;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  transition: opacity 0.2s ease;
+  width: 6px;
+}
+
+.risk-style-control button:hover {
+  background: rgb(255 255 255 / 0.07);
+  color: rgb(255 255 255 / 0.78);
+}
+
+.risk-style-control button.is-active {
+  background: rgb(239 68 68 / 0.18);
+  box-shadow: inset 0 0 0 1px rgb(239 68 68 / 0.45), 0 0 18px rgb(239 68 68 / 0.18);
+  color: #fff;
+}
+
+.risk-style-control button.is-active::before {
+  opacity: 1;
 }
 
 .table-stepper-button {
