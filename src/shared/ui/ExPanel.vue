@@ -55,8 +55,8 @@ const bottomRightClasses = computed(() =>
   >
     <div v-if="variant === 'light'" class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
       <div
-        class="absolute -inset-4 bg-white/50 dark:bg-[#0a0a0a]/50"
-        style="backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); transform: translateZ(0); backface-visibility: hidden;"
+        class="ex-panel-backdrop absolute -inset-4 bg-black/60"
+        style="backdrop-filter: blur(12px) saturate(140%); -webkit-backdrop-filter: blur(12px) saturate(140%); transform: translateZ(0); backface-visibility: hidden;"
       ></div>
     </div>
 

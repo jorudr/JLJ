@@ -3,13 +3,13 @@
     <Transition name="profile-overlay">
       <div
         v-if="open"
-        class="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 lg:p-10 bg-black/45 profile-overlay-backdrop"
+        class="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 lg:p-10 bg-black/45"
         @click.self="emit('close')"
       >
         <ExPanel
           variant="light"
           noPadding
-          class="!w-full !max-w-6xl !h-[74vh] !overflow-visible !border-white/10 !bg-[#0a0a0a]/80 text-white"
+          class="!w-full !max-w-6xl !h-[74vh] !overflow-visible !border-white/10 text-white"
         >
           <button
             @click="emit('close')"
@@ -320,11 +320,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.profile-overlay-backdrop {
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
 .profile-overlay-enter-active,
 .profile-overlay-leave-active {
   transition: opacity 0.25s ease;
