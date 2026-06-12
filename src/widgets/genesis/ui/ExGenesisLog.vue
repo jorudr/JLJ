@@ -851,12 +851,12 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
   let compliantStyleCount = 0;
 
   const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
+  
+  const riskUnit = activeMatrixNodes.value.riskPerTradeUnit;
+  const riskVal = activeMatrixNodes.value.riskPerTradeValue;
 
-  const maxRiskDollars = riskValueToDollars(
-    activeMatrixNodes.value.riskPerTradeValue,
-    activeMatrixNodes.value.riskPerTradeUnit,
-    initDep
-  );
+  const sessionRiskUnit = activeMatrixNodes.value.riskPerSessionUnit;
+  const sessionRiskVal = activeMatrixNodes.value.riskPerSessionValue;
 
   const styleLimits: Record<number, { max?: number, min?: number }> = {
     0: { max: 1 },
@@ -865,20 +865,25 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
   };
   const extraType = activeMatrixNodes.value.tradingStyleExtraType;
 
-  const maxSessionRiskDollars = riskValueToDollars(
-    activeMatrixNodes.value.riskPerSessionValue,
-    activeMatrixNodes.value.riskPerSessionUnit,
-    initDep
-  );
+  const sessionRiskMap: Record<string, { pnl: number, balanceAtStart: number }> = {};
 
-  const sessionRiskMap: Record<string, number> = {};
+  const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  let currentBalance = initDep;
 
-  trades.forEach(t => {
+  sortedTrades.forEach(t => {
+    const maxRiskDollars = riskValueToDollars(riskVal, riskUnit, currentBalance);
+
     // Risk Per Trade
     let actualRisk = Number((t as any).risk) || 0;
     if (actualRisk === 0 && t.entry && t.stopLoss) {
       actualRisk = Math.abs(Number(t.entry) - Number(t.stopLoss)) * (Number((t as any).size) || 1);
     }
+    
+    // Fallback if risk is 0 and trade was a loss
+    if (actualRisk === 0 && t.profitInCurrency !== undefined && t.profitInCurrency < 0) {
+      actualRisk = Math.abs(t.profitInCurrency);
+    }
+    
     if (actualRisk <= maxRiskDollars) compliantTradeCount++;
 
     // Trading Style
@@ -898,13 +903,20 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
     // Session Risk map
     const pnl = Number((t as any).profitInCurrency) || 0;
     const dateStr = new Date(t.date).toDateString();
-    sessionRiskMap[dateStr] = (sessionRiskMap[dateStr] || 0) + pnl;
+    
+    if (!sessionRiskMap[dateStr]) {
+      sessionRiskMap[dateStr] = { pnl: 0, balanceAtStart: currentBalance };
+    }
+    sessionRiskMap[dateStr].pnl += pnl;
+
+    currentBalance += pnl;
   });
 
   let validSessions = 0;
   const sessionKeys = Object.keys(sessionRiskMap);
   sessionKeys.forEach(k => {
-    if ((sessionRiskMap[k] || 0) >= -maxSessionRiskDollars) validSessions++;
+    const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionRiskMap[k].balanceAtStart);
+    if (sessionRiskMap[k].pnl >= -maxSessionRiskDollars) validSessions++;
   });
 
   return {

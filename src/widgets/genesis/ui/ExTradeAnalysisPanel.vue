@@ -1196,6 +1196,11 @@ const actualRiskDollars = computed(() => {
   const t = props.trade as any;
   if (!t) return 0;
 
+  const explicitRisk = Number(t.risk);
+  if (Number.isFinite(explicitRisk) && explicitRisk > 0) {
+    return explicitRisk;
+  }
+
   const entry = parseFloat(t.entry);
   const sl = parseFloat(t.stopLoss);
   let size = parseFloat(t.size);
