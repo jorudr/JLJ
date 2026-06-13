@@ -752,27 +752,24 @@ watch(isHudVisible, (val) => {
 })
 const showPaywall = ref(false)
 const canOpenCapitalForecast = computed(() => {
-  return false
+  return true
 })
 
 const openNodeMap = () => {
-  showPaywall.value = true
-  return
+  showNodeMap.value = true
 }
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
-  showPaywall.value = true
-  return
+  emit('openNote', payload)
 }
 
 const handleOpenTrade = (payload: { tradeId: string }) => {
-  showPaywall.value = true
-  return
+  emit('openTrade', payload)
 }
 
 const handleTreeOpenTradeArchive = (trade: { id?: string; strategyId?: string }) => {
-  showPaywall.value = true
-  return
+  if (!trade.id || !trade.strategyId) return
+  emit('openTrade', { tradeId: trade.id })
 }
 
 watch(showNodeMap, (val) => {
@@ -1034,11 +1031,7 @@ const complianceDotColor = computed(() => {
 })
 
 const toggleCapitalForecast = () => {
-  if (!canOpenCapitalForecast.value) {
-    showPaywall.value = true
-    showCapitalForecast.value = false
-    return
-  }
+
   showCapitalForecast.value = !showCapitalForecast.value
 }
 

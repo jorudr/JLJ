@@ -197,11 +197,6 @@ const canonicalizeActivityRoute = () => {
 const syncTabFromRoute = () => {
   activeTab.value = getRouteTab()
   
-  if (currentGenesisMode.value === 'matrix') {
-    showPaywall.value = true
-    clearMode()
-    return
-  }
 
   canonicalizeGenesisRoute()
   canonicalizeActivityRoute()
@@ -231,10 +226,6 @@ const handleDashboardNavigate = (tab) => {
 const handleGenesisSelect = (moduleId) => {
   const mode = modeMap[moduleId] || moduleId
   
-  if (mode === 'matrix') {
-    showPaywall.value = true
-    return
-  }
 
   router.push({
     path: `${genesisBasePath}/${mode}`,
