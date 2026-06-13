@@ -397,18 +397,36 @@
            </svg>
            </div>
 
-           <!-- Connection Points -->
-            <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', node)" @mouseup.stop="$emit('drop', node)"
+            <!-- Connection Points -->
+            <!-- Left (Passive) -->
+            <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', { node, port: 'left' })" @mouseup.stop="$emit('drop', { node, port: 'left' })"
                  @dblclick.stop="$emit('clear-input', node)"
                  :class="[
                    isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100',
                    isRiskPanel ? '!shadow-none dark:!shadow-none' : ''
                  ]"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -left-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black transition-all shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
-            <div @mousedown.stop="$emit('start-output', node)"
+            
+            <!-- Right (Active) -->
+            <div @mousedown.stop="$emit('start-output', { node, port: 'right' })"
                  @dblclick.stop="$emit('clear-output', node)"
                  :class="isRiskPanel ? '!shadow-none dark:!shadow-none' : ''"
                  class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] -right-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
+
+            <!-- Top (Passive) -->
+            <div v-if="!node.isRoot" @mousedown.stop="$emit('pickup-input', { node, port: 'top' })" @mouseup.stop="$emit('drop', { node, port: 'top' })"
+                 @dblclick.stop="$emit('clear-input', node)"
+                 :class="[
+                   isClosest ? 'opacity-100 scale-125' : 'opacity-0 group-hover:opacity-100',
+                   isRiskPanel ? '!shadow-none dark:!shadow-none' : ''
+                 ]"
+                 class="absolute left-1/2 -translate-x-1/2 w-[12px] h-[12px] -top-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black transition-all shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
+
+            <!-- Bottom (Active) -->
+            <div @mousedown.stop="$emit('start-output', { node, port: 'bottom' })"
+                 @dblclick.stop="$emit('clear-output', node)"
+                 :class="isRiskPanel ? '!shadow-none dark:!shadow-none' : ''"
+                 class="absolute left-1/2 -translate-x-1/2 w-[12px] h-[12px] -bottom-[6px] border-[2px] border-nier-text-light dark:border-nier-text-dark rotate-45 bg-nier-white dark:bg-nier-black opacity-0 group-hover:opacity-100 transition-all hover:bg-nier-text-light dark:hover:bg-nier-text-dark shadow-[0_0_20px_rgba(44,44,42,0.3)] dark:shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
             <div v-if="node.type === 'condition' && node.params?.priority && node.params.priority !== 'NONE'"
                  class="absolute -bottom-1 -right-1 w-2 h-2 rotate-45 border border-white/70"
                  :class="node.params.priority === 'REQUIRED' ? 'bg-[#ff0000]' : 'bg-[#00d4ff]'"
@@ -1643,6 +1661,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 
 .risk-panel-control input[type='number'] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .risk-panel-control input[type='number']::-webkit-inner-spin-button,

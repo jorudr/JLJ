@@ -152,7 +152,7 @@
 
           <!-- Active Drag Line -->
           <g v-if="activeWire" :transform="`scale(${viewState.scale})`">
-            <path :d="createCurvedPath(activeWire.from, activeWire.to)" 
+            <path :d="createCurvedPath(activeWire.from, activeWire.to, activeWire.fromPort)" 
                   stroke="currentColor" 
                   stroke-width="2" 
                   stroke-dasharray="4 8"
@@ -1390,6 +1390,8 @@ interface Node {
 interface Connection {
   fromId: string
   toId: string
+  fromPort?: 'left' | 'right' | 'top' | 'bottom'
+  toPort?: 'left' | 'right' | 'top' | 'bottom'
   label?: string
   bundleId?: string
   bundleStemX?: number
@@ -2471,7 +2473,11 @@ function getConnectionMidpoint(line: Connection) {
      
      const fromRadius = (from.type === 'scaling-entry' || from.type === 'step') ? 28 : 56
      const fromGap = (from.type === 'scaling-entry' || from.type === 'step') ? 2 : 6
-     const startX = from.x + (fromRadius + fromGap)
+     let startX = from.x + (fromRadius + fromGap)
+     let startY = from.y
+     if (line.fromPort === 'top') { startX = from.x; startY = from.y - fromRadius - fromGap }
+     else if (line.fromPort === 'bottom') { startX = from.x; startY = from.y + fromRadius + fromGap }
+     else if (line.fromPort === 'left') { startX = from.x - fromRadius - fromGap; startY = from.y }
      
      // REPLICATE DYNAMIC STEM CALCULATION
      const minChildX = getMinChildX(from.id)
@@ -2485,13 +2491,29 @@ function getConnectionMidpoint(line: Connection) {
      
      return { 
        x: startX + mainStemLen + bundleStemLen, 
-       y: from.y + bundleYOffset 
+       y: startY + bundleYOffset 
      }
   }
   
+  const fromRadius = (from.type === 'scaling-entry' || from.type === 'step') ? 28 : 56
+  const fromGap = (from.type === 'scaling-entry' || from.type === 'step') ? 2 : 6
+  let startX = from.x + fromRadius + fromGap
+  let startY = from.y
+  if (line.fromPort === 'top') { startX = from.x; startY = from.y - fromRadius - fromGap }
+  else if (line.fromPort === 'bottom') { startX = from.x; startY = from.y + fromRadius + fromGap }
+  else if (line.fromPort === 'left') { startX = from.x - fromRadius - fromGap; startY = from.y }
+  
+  const toRadius = (to.type === 'scaling-entry' || to.type === 'step') ? 28 : 56
+  const toGap = (to.type === 'scaling-entry' || to.type === 'step') ? 2 : 6
+  let endX = to.x - toRadius - toGap
+  let endY = to.y
+  if (line.toPort === 'top') { endX = to.x; endY = to.y - toRadius - toGap }
+  else if (line.toPort === 'bottom') { endX = to.x; endY = to.y + toRadius + toGap }
+  else if (line.toPort === 'right') { endX = to.x + toRadius + toGap; endY = to.y }
+
   return {
-    x: (from.x + to.x) / 2,
-    y: (from.y + to.y) / 2
+    x: (startX + endX) / 2,
+    y: (startY + endY) / 2
   }
 }
 
@@ -3649,13 +3671,16 @@ function focusRoot() {
 
 // --- WIRING --- //
 
-const activeWireRaw = ref<{ fromId: string, current: Point } | null>(null)
+const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', current: Point } | null>(null)
 
-function startWireDrag(node: Node) {
-  activeWireRaw.value = { fromId: node.id, current: { x: node.x, y: node.y } }
+function startWireDrag(payload: { node: Node, port?: 'left'|'right'|'top'|'bottom' } | Node) {
+  const node = 'node' in payload ? payload.node : payload
+  const port = 'port' in payload ? payload.port : 'right'
+  activeWireRaw.value = { fromId: node.id, fromPort: port, current: { x: node.x, y: node.y } }
 }
 
-function handlePickupInput(targetNode: Node) {
+function handlePickupInput(payload: { node: Node, port?: 'left'|'right'|'top'|'bottom' } | Node) {
+  const targetNode = 'node' in payload ? payload.node : payload
   // Find an existing connection to this node
   let connList = activeContextId.value && activeContextNode.value?.subGraph 
     ? activeContextNode.value.subGraph.connections 
@@ -3666,7 +3691,7 @@ function handlePickupInput(targetNode: Node) {
     const conn = connList[connIndex]
     if (conn) {
       // Start "unplugged" drag from the parent
-      activeWireRaw.value = { fromId: conn.fromId, current: { x: targetNode.x, y: targetNode.y } }
+      activeWireRaw.value = { fromId: conn.fromId, fromPort: conn.fromPort || 'right', current: { x: targetNode.x, y: targetNode.y } }
       // Remove it from the list
       connList.splice(connIndex, 1)
       cleanupLogicBundles()
@@ -3696,13 +3721,21 @@ function handleCanvasMouseMove(e: MouseEvent) {
   }
 }
 
-function completeWireDrop(targetNode: Node) {
+function completeWireDrop(payload: { node: Node, port?: 'left'|'right'|'top'|'bottom' } | Node) {
+  const targetNode = 'node' in payload ? payload.node : payload
+  const port = 'port' in payload ? payload.port : 'left'
   if (!activeWireRaw.value) return
   if (activeWireRaw.value.fromId !== targetNode.id) {
+    const newConn = { 
+      fromId: activeWireRaw.value.fromId, 
+      toId: targetNode.id,
+      fromPort: activeWireRaw.value.fromPort,
+      toPort: port
+    }
     if (activeContextId.value && activeContextNode.value?.subGraph) {
-      activeContextNode.value.subGraph.connections.push({ fromId: activeWireRaw.value.fromId, toId: targetNode.id })
+      activeContextNode.value.subGraph.connections.push(newConn)
     } else {
-      rootConnections.value.push({ fromId: activeWireRaw.value.fromId, toId: targetNode.id })
+      rootConnections.value.push(newConn)
     }
   }
   activeWireRaw.value = null
@@ -3800,8 +3833,26 @@ const activeWire = computed(() => {
   if (!activeWireRaw.value) return null
   const from = getNode(activeWireRaw.value.fromId)
   if (!from) return null
+  
+  const fromRadius = (from.type === 'scaling-entry' || from.type === 'step') ? 28 : 56
+  const fromGap = (from.type === 'scaling-entry' || from.type === 'step') ? 2 : 6
+  let startX = from.x + fromRadius + fromGap
+  let startY = from.y
+  
+  if (activeWireRaw.value.fromPort === 'top') {
+    startX = from.x
+    startY = from.y - fromRadius - fromGap
+  } else if (activeWireRaw.value.fromPort === 'bottom') {
+    startX = from.x
+    startY = from.y + fromRadius + fromGap
+  } else if (activeWireRaw.value.fromPort === 'left') {
+    startX = from.x - fromRadius - fromGap
+    startY = from.y
+  }
+
   return { 
-    from: { x: from.x + 62, y: from.y }, 
+    from: { x: startX, y: startY }, 
+    fromPort: activeWireRaw.value.fromPort,
     to: activeWireRaw.value.current
   }
 })
@@ -3913,8 +3964,15 @@ function createRootPath(fromId: string, toId: string) {
   const fromGap = (from.type === 'scaling-entry' || from.type === 'step') ? 2 : 6
   const toGap = (to.type === 'scaling-entry' || to.type === 'step') ? 2 : 6
 
-  const startPoint = { x: from.x + (fromRadius + fromGap), y: from.y }
-  const endPoint = { x: to.x - (toRadius + toGap), y: to.y }
+  let startPoint = { x: from.x + (fromRadius + fromGap), y: from.y }
+  if (conn?.fromPort === 'top') startPoint = { x: from.x, y: from.y - fromRadius - fromGap }
+  else if (conn?.fromPort === 'bottom') startPoint = { x: from.x, y: from.y + fromRadius + fromGap }
+  else if (conn?.fromPort === 'left') startPoint = { x: from.x - fromRadius - fromGap, y: from.y }
+
+  let endPoint = { x: to.x - (toRadius + toGap), y: to.y }
+  if (conn?.toPort === 'top') endPoint = { x: to.x, y: to.y - toRadius - toGap }
+  else if (conn?.toPort === 'bottom') endPoint = { x: to.x, y: to.y + toRadius + toGap }
+  else if (conn?.toPort === 'right') endPoint = { x: to.x + toRadius + toGap, y: to.y }
 
   if (conn?.bundleId) {
      const parentBundles = [...new Set(connections.value.filter(c => c.fromId === fromId && c.bundleId).map(c => c.bundleId))]
@@ -3935,7 +3993,7 @@ function createRootPath(fromId: string, toId: string) {
      return createDoubleForkPath(startPoint, endPoint, mainStemLen, bundleStemLen, startPoint.y + bundleYOffset)
   }
 
-  return createCurvedPath(startPoint, endPoint)
+  return createCurvedPath(startPoint, endPoint, conn?.fromPort || 'right', conn?.toPort || 'left')
 }
 
 function createDoubleForkPath(f: Point, t: Point, mainStemLen: number, bundleStemLen: number, bundleY: number) {
@@ -3971,10 +4029,24 @@ function createForkPath(f: Point, t: Point, stemLength: number) {
   return `M ${f.x} ${f.y} L ${junctionX} ${f.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${t.x} ${t.y}`
 }
 
-function createCurvedPath(f: Point, t: Point) {
-  const dx = t.x - f.x
-  const cp1 = { x: f.x + dx * 0.5, y: f.y }
-  const cp2 = { x: f.x + dx * 0.5, y: t.y }
+function createCurvedPath(f: Point, t: Point, fromPort: string = 'right', toPort: string = 'left') {
+  let cp1 = { x: f.x, y: f.y }
+  let cp2 = { x: t.x, y: t.y }
+  
+  const dx = Math.abs(t.x - f.x)
+  const dy = Math.abs(t.y - f.y)
+  const curveDist = Math.max(dx, dy) * 0.5
+
+  if (fromPort === 'right') cp1.x += curveDist
+  else if (fromPort === 'left') cp1.x -= curveDist
+  else if (fromPort === 'top') cp1.y -= curveDist
+  else if (fromPort === 'bottom') cp1.y += curveDist
+
+  if (toPort === 'left') cp2.x -= curveDist
+  else if (toPort === 'right') cp2.x += curveDist
+  else if (toPort === 'top') cp2.y -= curveDist
+  else if (toPort === 'bottom') cp2.y += curveDist
+
   return `M ${f.x} ${f.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${t.x} ${t.y}`
 }
 
