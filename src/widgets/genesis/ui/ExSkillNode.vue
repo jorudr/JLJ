@@ -14,16 +14,30 @@
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
      <ExNTtooltip :title="tooltipTitle" :disabled="isScenarioContentNode" class="w-full h-full">
        <template #trigger>
-           <div class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
-                :class="[
-                  node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
-                  isRiskPanel ? '' : (
-                    isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]')
-                  ),
-                  (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry' || isRiskPanel) ? 'border-none shadow-none' : ''
-                ]"
-                :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
-                @dblclick.stop="$emit('doubleclick')">
+          <!-- Editing Description Overlay -->
+          <div v-if="node.params?.isEditingDescription" class="w-full h-full relative pointer-events-auto z-50">
+            <ExPanel variant="light" :showCorners="true" noPadding class="w-full h-full">
+              <textarea
+                v-model="node.params.customDescription"
+                @blur="node.params.isEditingDescription = false"
+                v-autofocus
+                placeholder="ENTER_DESCRIPTION..."
+                class="w-full h-full bg-transparent text-nier-text-light dark:text-nier-text-dark p-4 text-[12px] font-mono tracking-widest outline-none resize-none"
+              ></textarea>
+            </ExPanel>
+          </div>
+
+          <!-- Normal Node View -->
+          <div v-else class="relative w-full h-full border-[2px] flex flex-col items-center justify-center transition-all duration-500"
+               :class="[
+                 node.type === 'placeholder' ? 'border-dashed border-[1px] opacity-80' : '',
+                 isRiskPanel ? '' : (
+                   isSelected ? (node.type === 'risk-element' ? 'border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.3)]' : 'border-nier-text-light dark:border-nier-text-dark shadow-[0_0_60px_rgba(44,44,42,0.3)] dark:shadow-[0_0_60px_rgba(255,255,255,0.3)]') : (node.type === 'risk-element' ? 'border-red-500/40 group-hover:border-red-500' : 'border-nier-border-light dark:border-nier-border-dark group-hover:border-nier-text-light dark:group-hover:border-nier-text-dark group-hover:shadow-[0_0_60px_rgba(44,44,42,0.2)] dark:group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]')
+                 ),
+                 (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry' || isRiskPanel) ? 'border-none shadow-none' : ''
+               ]"
+               :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
+               @dblclick.stop="$emit('doubleclick')">
 
              <!-- Separate Background Layer -->
              <div class="absolute inset-0 pointer-events-none -z-10 transition-colors duration-500"
@@ -478,23 +492,26 @@
              </div>
            </template>
            <!-- Default tooltip body for other node types -->
-           <div v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry'">
-             <p class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
-                <template v-if="node.type === 'scaling-entry'">
-                   <template v-if="locale === 'ru'">
-                      {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
-                   </template>
-                   <template v-else>
-                      {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
-                   </template>
-                </template>
-                <template v-else-if="node.type === 'smc'">
-                   {{ smcTooltipData?.description }}
-                </template>
-                <template v-else>
-                  {{ locale === 'ru' ? t(node.params.description || node.params.value || '') : (node.params.description || node.params.value || '') }}
-                </template>
-             </p>
+           <div v-else-if="node.params?.customDescription || node.params?.description || node.params?.value || node.type === 'scaling-entry'">
+              <p v-if="node.params?.customDescription" class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide whitespace-pre-wrap">
+                 {{ node.params.customDescription }}
+              </p>
+              <p v-else class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
+                 <template v-if="node.type === 'scaling-entry'">
+                    <template v-if="locale === 'ru'">
+                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                    </template>
+                    <template v-else>
+                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                    </template>
+                 </template>
+                 <template v-else-if="node.type === 'smc'">
+                    {{ smcTooltipData?.description }}
+                 </template>
+                 <template v-else>
+                   {{ locale === 'ru' ? t(node.params.description || node.params.value || '') : (node.params.description || node.params.value || '') }}
+                 </template>
+              </p>
            </div>
           <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
              <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
@@ -559,33 +576,39 @@
          </div>
       </div>
 
-     <!-- Custom Identity Label -->
-      <div v-if="['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName)"
+     <!-- Custom Labels Container -->
+      <div v-if="['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName || node.params?.customDescription || node.params?.isEditingDescription)"
            v-show="scale > 0.25"
-           class="absolute top-full left-1/2 mt-2 flex flex-col items-center z-50"
+           class="absolute top-full left-1/2 mt-2 flex flex-col items-center gap-2 z-50"
            :style="{ transform: `translate(-50%, 0) scale(${scale})`, transformOrigin: 'top center' }">
-       <!-- Editing Mode -->
-       <div v-if="node.params?.isEditingName" class="min-w-full w-max pointer-events-auto relative">
-          <ExInput
-            variant="terminal"
-            :modelValue="node.params.customName"
-            @update:modelValue="node.params.customName = $event.toUpperCase()"
-            @blur="node.params.isEditingName = false"
-            @keyup.enter="node.params.isEditingName = false"
-            v-autofocus
-            placeholder="ENTER_ID..."
-            class="bg-nier-white dark:bg-nier-black"
-          />
-       </div>
-        <!-- Display Mode -->
-        <div v-else-if="node.params?.customName"
-             class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1.5 flex flex-col items-center">
-           <ExText variant="telemetry" class="!opacity-100 font-black">{{ node.params.customName }}</ExText>
-           <!-- Mini Corners -->
-           <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-border-light dark:border-nier-border-dark"></div>
-           <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-border-light dark:border-nier-border-dark"></div>
-        </div>
-     </div>
+           
+       <!-- Custom Identity Label -->
+       <template v-if="node.params?.customName || node.params?.isEditingName">
+         <!-- Editing Mode -->
+         <div v-if="node.params?.isEditingName" class="min-w-full w-max pointer-events-auto relative">
+            <ExInput
+              variant="terminal"
+              :modelValue="node.params.customName"
+              @update:modelValue="node.params.customName = $event.toUpperCase()"
+              @blur="node.params.isEditingName = false"
+              @keyup.enter="node.params.isEditingName = false"
+              v-autofocus
+              placeholder="ENTER_ID..."
+              class="bg-nier-white dark:bg-nier-black"
+            />
+         </div>
+         <!-- Display Mode -->
+         <div v-else-if="node.params?.customName"
+              class="min-w-full w-max bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark shadow-[0_5px_15px_rgba(0,0,0,0.5)] pointer-events-none relative text-center px-4 py-1.5 flex flex-col items-center">
+            <ExText variant="telemetry" class="!opacity-100 font-black">{{ node.params.customName }}</ExText>
+            <!-- Mini Corners -->
+            <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-border-light dark:border-nier-border-dark"></div>
+            <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-border-light dark:border-nier-border-dark"></div>
+         </div>
+       </template>
+
+       <!-- End Custom Labels -->
+      </div>
 
       <!-- Emotion State Label -->
        <div v-if="node.type === 'emotion-state' && node.label"
@@ -834,6 +857,7 @@ const scenarioPanelSize = computed(() => (
         ) : { width: 260, height: 180 }
 ))
 const nodeWidth = computed(() => {
+  if (props.node.params?.isEditingDescription) return `${Math.round(400 * props.scale)}px`
   const getW = () => {
     if (props.node.type === 'image') return props.node.params?.width || 300
     if (isAudioNote.value) return scenarioPanelSize.value.width
@@ -849,6 +873,7 @@ const nodeWidth = computed(() => {
   return `${Math.round((getW() * props.scale) / 2) * 2}px`
 })
 const nodeHeight = computed(() => {
+  if (props.node.params?.isEditingDescription) return `${Math.round(250 * props.scale)}px`
   const getH = () => {
     if (props.node.type === 'image') return props.node.params?.height || 200
     if (isAudioNote.value) return scenarioPanelSize.value.height

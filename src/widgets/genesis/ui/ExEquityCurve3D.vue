@@ -478,36 +478,41 @@
     <!-- CLEAR CONFIRMATION MODAL -->
     <Transition name="protocol-slide">
       <div v-if="showClearConfirmation" 
-           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 px-6 transition-all"
+           class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6 transition-all"
            @click.self="showClearConfirmation = false">
-        <ExPanel variant="light" no-shadow noPadding class="!w-[450px] relative overflow-visible">
-          <template #header>&nbsp;</template>
-          
-          <div class="p-12 flex flex-col space-y-8 relative z-10">
-            <div class="flex flex-col">
-              <span class="text-[8px] font-mono text-red-500 uppercase">Critical_Data_Purge_Sequence</span>
-              <h2 class="text-xl font-mono tracking-widest uppercase font-black mt-2 text-black dark:text-white">PURGE_STRATEGY_DATA</h2>
-            </div>
+             <div class="w-full max-w-lg relative">
+                <ExPanel variant="light">
+                   <template #telemetry>
+                      <span class="sr-only">Purge panel controls</span>
+                   </template>
+                   <div class="flex flex-col space-y-6">
+                      <div class="flex items-start space-x-6">
+                         <div class="flex-shrink-0 w-12 h-12 border border-red-500/40 flex items-center justify-center text-red-500">
+                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                               <path d="M12 9v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                         </div>
+                         <div class="flex flex-col space-y-2">
+                            <span class="text-[14px] font-mono font-black tracking-widest text-black dark:text-white uppercase">Critical_System_Alert</span>
+                            <p class="text-[11px] font-mono text-black/60 dark:text-white/60 leading-relaxed uppercase tracking-widest">
+                               You are about to permanently erase all trade records associated with <span class="text-red-500 font-bold">[{{ selectedStrategy?.name }}]</span>. 
+                               <br><br>
+                               This operation will reify an empty state and is <span class="text-red-500 font-black">irreversible</span>.
+                            </p>
+                         </div>
+                      </div>
 
-            <p class="text-[10px] font-mono leading-relaxed text-black/60 dark:text-white/60 uppercase tracking-widest">
-              You are about to permanently erase all trade records associated with <span class="text-red-500 font-bold">[{{ selectedStrategy?.name }}]</span>. This operation will reify an empty state and cannot be rolled back.
-            </p>
-
-            <div class="flex flex-col space-y-3 pt-4">
-              <button @click="handleClearTrades" 
-                      class="w-full py-4 bg-red-600 text-white font-mono text-[10px] tracking-[0.5em] uppercase font-black hover:bg-red-700 transition-all shadow-[0_10px_20px_rgba(255,0,0,0.2)]">
-                CONFIRM_DESTRUCTION
-              </button>
-              <button @click="showClearConfirmation = false" 
-                      class="w-full py-3 border border-black/10 dark:border-white/10 text-black dark:text-white font-mono text-[8px] tracking-[0.4em] uppercase opacity-40 hover:opacity-100 transition-all">
-                ABORT_SEQUENCE
-              </button>
-            </div>
-          </div>
-
-          <!-- Glitch Overlay -->
-          <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-red-500 mix-blend-overlay"></div>
-        </ExPanel>
+                      <div class="flex justify-end space-x-4 pt-4 border-t border-black/10 dark:border-white/10">
+                         <ExButton @click="showClearConfirmation = false" variant="ghost" size="md">
+                            CANCEL
+                         </ExButton>
+                         <ExButton @click="handleClearTrades" variant="solid" size="md" class="!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 transition-colors">
+                            EXECUTE_PURGE
+                         </ExButton>
+                      </div>
+                   </div>
+                </ExPanel>
+             </div>
       </div>
     </Transition>
 
@@ -1286,6 +1291,7 @@ import { useAppBootStore } from '~/features/store/useAppBoot'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'

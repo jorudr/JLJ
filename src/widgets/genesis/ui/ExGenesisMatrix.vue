@@ -202,6 +202,7 @@
                 <!-- Segmented Blades -->
                 <div v-for="(btn, i) in [
                   { label: 'SET_IDENTITY', id: '0x01', condition: nodeContextMenu && ['condition', 'scenario', 'strategy'].includes(getNode(nodeContextMenu.nodeId)?.type || ''), action: () => nodeContextMenu && setNodeCustomName(nodeContextMenu.nodeId) },
+                  { label: 'SET_DESCRIPTION', id: '0x01_desc', condition: nodeContextMenu && ['condition', 'scenario', 'strategy'].includes(getNode(nodeContextMenu.nodeId)?.type || ''), action: () => nodeContextMenu && setNodeCustomDescription(nodeContextMenu.nodeId) },
                   { label: 'ADD_COMMENT', id: '0x02', action: () => nodeContextMenu && addCommentToNode(nodeContextMenu.nodeId) },
                   { 
                     label: nodeContextMenu && (function() {
@@ -2057,7 +2058,7 @@ function eraseDrawingAtPoint(point: { x: number; y: number }) {
 }
 
 // --- MENU STATE --- //
-const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'SYSTEM', 'CONFIG', 'LABELS']
+const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'LABELS', 'CONFIG', 'SYSTEM']
 const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO', 'TEXT_FORMAT', 'LABELS']
 const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   SCENARIO_DOCS: 'DOCS',
@@ -2580,6 +2581,16 @@ function setNodeCustomName(nodeId: string) {
   if (node) {
     if (!node.params) node.params = {}
     node.params.isEditingName = true
+    forceUpdate()
+  }
+  nodeContextMenu.value = null
+}
+
+function setNodeCustomDescription(nodeId: string) {
+  const node = getNode(nodeId)
+  if (node) {
+    if (!node.params) node.params = {}
+    node.params.isEditingDescription = true
     forceUpdate()
   }
   nodeContextMenu.value = null
