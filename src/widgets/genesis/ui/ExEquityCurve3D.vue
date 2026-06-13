@@ -1050,7 +1050,7 @@
 
         <!-- BROKER / EXCHANGE CONNECTORS -->
         <button v-if="!showMetricsPanel && !showDistribution3D"
-                @click="showPaywall = true"
+                @click="openBrokerConnect"
                 class="group relative flex items-center justify-center w-10 h-10 text-black dark:text-white opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -1495,9 +1495,22 @@ const showSimulator = ref(false)
 const showPaywall = ref(false)
 const showBrokerConnectPanel = ref(false)
 
+const isDemoMode = import.meta.env.VITE_APP_MODE === 'demo'
+
+const openBrokerConnect = () => {
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  showBrokerConnectPanel.value = true
+}
+
 const openSimulator = () => {
-  showPaywall.value = true;
-  return;
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  showDistribution3D.value = true
 }
 
 const showCalendarMode = ref(false)
@@ -1642,8 +1655,10 @@ const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.
 const robustnessWarningTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const handleRobustnessDiagnosticsClick = () => {
-  showPaywall.value = true;
-  return;
+  if (isDemoMode) {
+    showPaywall.value = true;
+    return;
+  }
   if (!hasEnoughTradesForDiagnostics.value) {
     // Always reset the timer so repeated clicks restart the 5s countdown
     if (robustnessWarningTimer.value !== null) clearTimeout(robustnessWarningTimer.value as any)

@@ -164,7 +164,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ExGenesisDiary from './ExGenesisDiary.vue'
-import ExGenesisMatrix from './ExGenesisMatrix.vue'
+import ExGenesisMatrix from '#premium/ExGenesisMatrix.vue'
 import ExGenesisVirtualLog from './ExGenesisVirtualLog.vue'
 import ExPaywallOverlay from './ExPaywallOverlay.vue'
 import { useThemeStore } from '@/features/store/useTheme'
@@ -217,13 +217,17 @@ const getModeFromRoute = () => {
   return null
 }
 
+const isDemoMode = import.meta.env.VITE_APP_MODE === 'demo'
+
 const syncModeFromRoute = () => {
   const mode = getModeFromRoute()
   
   if (mode === 'matrix') {
-    showPaywall.value = true
-    backToOrigin()
-    return
+    if (isDemoMode) {
+      showPaywall.value = true
+      backToOrigin()
+      return
+    }
   }
 
   currentMode.value = mode
@@ -234,8 +238,10 @@ const navigateToMode = (mode: 'diary' | 'matrix' | 'genesis-diary') => {
   console.log('[ExGenesis] navigateToMode called with mode:', mode)
 
   if (mode === 'matrix') {
-    showPaywall.value = true
-    return
+    if (isDemoMode) {
+      showPaywall.value = true
+      return
+    }
   }
 
   console.log('[ExGenesis] Access granted to mode:', mode)

@@ -755,24 +755,44 @@ const canOpenCapitalForecast = computed(() => {
   return false
 })
 
+const isDemoMode = import.meta.env.VITE_APP_MODE === 'demo'
+
 const openNodeMap = () => {
-  showPaywall.value = true
-  return
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  showNodeMap.value = true
 }
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
-  showPaywall.value = true
-  return
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  selectedTradeId.value = payload.tradeId
+  panelInitialNoteId.value = payload.noteId
+  showExtraDetails.value = true
 }
 
 const handleOpenTrade = (payload: { tradeId: string }) => {
-  showPaywall.value = true
-  return
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  selectedTradeId.value = payload.tradeId
+  showExtraDetails.value = true
 }
 
 const handleTreeOpenTradeArchive = (trade: { id?: string; strategyId?: string }) => {
-  showPaywall.value = true
-  return
+  if (isDemoMode) {
+    showPaywall.value = true
+    return
+  }
+  if (trade.id) {
+    selectedTradeId.value = trade.id
+    showExtraDetails.value = true
+  }
 }
 
 watch(showNodeMap, (val) => {
