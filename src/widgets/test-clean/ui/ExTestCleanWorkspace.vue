@@ -197,7 +197,7 @@ const canonicalizeActivityRoute = () => {
 const syncTabFromRoute = () => {
   activeTab.value = getRouteTab()
   
-  if (currentGenesisMode.value === 'matrix' && authStore.user?.type !== 'premium') {
+  if (currentGenesisMode.value === 'matrix') {
     showPaywall.value = true
     clearMode()
     return
@@ -231,7 +231,7 @@ const handleDashboardNavigate = (tab) => {
 const handleGenesisSelect = (moduleId) => {
   const mode = modeMap[moduleId] || moduleId
   
-  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
+  if (mode === 'matrix') {
     showPaywall.value = true
     return
   }

@@ -1496,11 +1496,8 @@ const showPaywall = ref(false)
 const showBrokerConnectPanel = ref(false)
 
 const openSimulator = () => {
-  if (authStore.user?.type !== 'premium') {
-    showPaywall.value = true
-    return
-  }
-  showSimulator.value = true
+  showPaywall.value = true;
+  return;
 }
 
 const showCalendarMode = ref(false)
@@ -1645,13 +1642,11 @@ const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.
 const robustnessWarningTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const handleRobustnessDiagnosticsClick = () => {
-  if (authStore.user?.type !== 'premium') {
-    showPaywall.value = true
-    return
-  }
+  showPaywall.value = true;
+  return;
   if (!hasEnoughTradesForDiagnostics.value) {
     // Always reset the timer so repeated clicks restart the 5s countdown
-    if (robustnessWarningTimer.value !== null) clearTimeout(robustnessWarningTimer.value)
+    if (robustnessWarningTimer.value !== null) clearTimeout(robustnessWarningTimer.value as any)
     showRobustnessWarning.value = true
     robustnessWarningTimer.value = setTimeout(() => {
       showRobustnessWarning.value = false

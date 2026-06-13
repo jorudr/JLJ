@@ -751,52 +751,28 @@ watch(isHudVisible, (val) => {
   emit('hudState', val)
 })
 const showPaywall = ref(false)
-const canOpenCapitalForecast = computed(() => authStore.user?.type === 'premium')
+const canOpenCapitalForecast = computed(() => {
+  return false
+})
 
 const openNodeMap = () => {
-  if (authStore.user?.type !== 'premium') {
-    showPaywall.value = true
-    return
-  }
-  showNodeMap.value = true
+  showPaywall.value = true
+  return
 }
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
-   if (authStore.user?.type !== 'premium') {
-     showPaywall.value = true
-     return
-   }
-   viewType.value = 'cube'
-   selectedTradeId.value = payload.tradeId
-   panelInitialPage.value = 5
-   panelInitialNoteId.value = payload.noteId
-   showExtraDetails.value = true
-   showNodeMap.value = true
+  showPaywall.value = true
+  return
 }
 
 const handleOpenTrade = (payload: { tradeId: string }) => {
-   if (authStore.user?.type !== 'premium') {
-     showPaywall.value = true
-     return
-   }
-   selectedTradeId.value = payload.tradeId
+  showPaywall.value = true
+  return
 }
 
 const handleTreeOpenTradeArchive = (trade: { id?: string; strategyId?: string }) => {
-   if (!trade.id) return
-   if (authStore.user?.type !== 'premium') {
-     showPaywall.value = true
-     return
-   }
-
-   if (trade.strategyId) {
-     selectedStrategyId.value = trade.strategyId
-   }
-   selectedTradeId.value = trade.id
-   panelInitialPage.value = 0
-   panelInitialNoteId.value = undefined
-   showExtraDetails.value = false
-   showNodeMap.value = false
+  showPaywall.value = true
+  return
 }
 
 watch(showNodeMap, (val) => {
@@ -893,10 +869,12 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
     }
     const durationDays = durationMins / 60 / 24;
     let styleCompliant = true;
-    if (extraType !== undefined && styleLimits[extraType]) {
-      const limit = styleLimits[extraType];
-      if (limit.min !== undefined && durationDays < limit.min) styleCompliant = false;
-      if (limit.max !== undefined && durationDays > limit.max) styleCompliant = false;
+    if (extraType != null && styleLimits[extraType as keyof typeof styleLimits]) {
+      const limit = styleLimits[extraType as keyof typeof styleLimits];
+      if (limit) {
+        if (limit.min !== undefined && durationDays < limit.min) styleCompliant = false;
+        if (limit.max !== undefined && durationDays > limit.max) styleCompliant = false;
+      }
     }
     if (styleCompliant) compliantStyleCount++;
 
@@ -915,8 +893,10 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
   let validSessions = 0;
   const sessionKeys = Object.keys(sessionRiskMap);
   sessionKeys.forEach(k => {
-    const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionRiskMap[k].balanceAtStart);
-    if (sessionRiskMap[k].pnl >= -maxSessionRiskDollars) validSessions++;
+    const sessionData = sessionRiskMap[k];
+    if (!sessionData) return;
+    const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionData.balanceAtStart);
+    if (sessionData.pnl >= -maxSessionRiskDollars) validSessions++;
   });
 
   return {

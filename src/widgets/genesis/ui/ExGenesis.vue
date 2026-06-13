@@ -220,7 +220,7 @@ const getModeFromRoute = () => {
 const syncModeFromRoute = () => {
   const mode = getModeFromRoute()
   
-  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
+  if (mode === 'matrix') {
     showPaywall.value = true
     backToOrigin()
     return
@@ -232,10 +232,8 @@ const syncModeFromRoute = () => {
 
 const navigateToMode = (mode: 'diary' | 'matrix' | 'genesis-diary') => {
   console.log('[ExGenesis] navigateToMode called with mode:', mode)
-  console.log('[ExGenesis] Current user type:', authStore.user?.type)
 
-  if (mode === 'matrix' && authStore.user?.type !== 'premium') {
-    console.log('[ExGenesis] Blocking access to matrix - user is not premium')
+  if (mode === 'matrix') {
     showPaywall.value = true
     return
   }

@@ -34,49 +34,54 @@ export const useAuthStore = defineStore('auth', {
                 this.user = null;
                 return;
             }
-            this.user = {
-                ...user,
-                type: user.type || 'common'
-            };
-            
+            let computedType = user.type || 'common';
+            let expiresAt = undefined;
+            let finalDisplayName = user.displayName;
+            let finalPhotoURL = user.photoURL;
+
             try {
                 const { doc, getDoc } = await import('firebase/firestore')
                 const { db } = await import('~/shared/firebase.client')
                 const userSnap = await getDoc(doc(db, 'users', user.uid))
                 if (userSnap.exists()) {
                     const data = userSnap.data()
-                    if (this.user && this.user.uid === user.uid) {
-                        let computedType = data.type || data.role || 'common'
-                        
-                        // Check expiration if present
-                        if (data.expiresAt) {
-                            let expiresAtMs = 0
-                            if (typeof data.expiresAt.toMillis === 'function') {
-                                expiresAtMs = data.expiresAt.toMillis()
-                            } else if (data.expiresAt instanceof Date) {
-                                expiresAtMs = data.expiresAt.getTime()
-                            } else if (typeof data.expiresAt === 'number') {
-                                expiresAtMs = data.expiresAt
-                            } else if (typeof data.expiresAt === 'string') {
-                                expiresAtMs = new Date(data.expiresAt).getTime()
-                            }
-                            
-                            // If the current time is past the expiration time, downgrade to common
-                            if (expiresAtMs > 0 && Date.now() > expiresAtMs) {
-                                computedType = 'common'
-                            }
+                    computedType = data.type || data.role || 'common'
+                    
+                    // Check expiration if present
+                    if (data.expiresAt) {
+                        let expiresAtMs = 0
+                        if (typeof data.expiresAt.toMillis === 'function') {
+                            expiresAtMs = data.expiresAt.toMillis()
+                        } else if (data.expiresAt instanceof Date) {
+                            expiresAtMs = data.expiresAt.getTime()
+                        } else if (typeof data.expiresAt === 'number') {
+                            expiresAtMs = data.expiresAt
+                        } else if (typeof data.expiresAt === 'string') {
+                            expiresAtMs = new Date(data.expiresAt).getTime()
                         }
-
-                        this.user.type = computedType
-                        this.user.expiresAt = data.expiresAt
                         
-                        if (data.displayName) this.user.displayName = data.displayName
-                        if (data.photoURL) this.user.photoURL = data.photoURL
+                        // If the current time is past the expiration time, downgrade to common
+                        if (expiresAtMs > 0 && Date.now() > expiresAtMs) {
+                            computedType = 'common'
+                        }
                     }
+
+                    expiresAt = data.expiresAt;
+                    
+                    if (data.displayName) finalDisplayName = data.displayName
+                    if (data.photoURL) finalPhotoURL = data.photoURL
                 }
             } catch (err) {
                 console.error('Failed to fetch user Firestore doc:', err)
             }
+
+            this.user = {
+                ...user,
+                displayName: finalDisplayName,
+                photoURL: finalPhotoURL,
+                type: computedType,
+                expiresAt
+            };
         },
         clearUser() {
             const auth = getAuth()
