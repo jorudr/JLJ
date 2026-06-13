@@ -580,8 +580,7 @@
                             </button>
                           </template>
                           <div class="flex flex-col gap-1 min-w-[180px]">
-                            <span class="text-[8px] font-mono opacity-40 uppercase">TELEMETRY_DESCRIPTION</span>
-                            <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || 'INITIALIZE_SIGNAL_INDICATOR' }}</p>
+                            <p class="text-[11px] font-mono font-bold leading-relaxed uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || 'INITIALIZE_SIGNAL_INDICATOR' }}</p>
                           </div>
                         </ExNTtooltip>
                       </div>
