@@ -1221,11 +1221,18 @@ const syncInteractiveBrokers = async (
   const accountInfo = statementDoc.querySelector('AccountInformation')
   const cashReport = statementDoc.querySelector('CashReport')
   const openPositions = statementDoc.querySelector('OpenPositions')
+  const tradesNode = statementDoc.querySelector('Trades')
 
   console.log('[IBKR Flex] --- REPORT SECTIONS ---')
   if (accountInfo) console.log('AccountInformation:', accountInfo.outerHTML)
   if (cashReport) console.log('CashReport:', cashReport.outerHTML)
   if (openPositions) console.log('OpenPositions:', openPositions.outerHTML)
+  if (tradesNode) {
+    console.log(`Trades XML snippet (first 1000 chars):`, tradesNode.outerHTML.slice(0, 1000))
+    console.log(`Trades: found ${statementDoc.querySelectorAll('Trade').length} trade(s) using 'Trade' selector`)
+  } else {
+    console.log('Trades: NOT FOUND (Check IBKR Flex Query configuration!)')
+  }
   console.log('-----------------------------------')
 
   const trades = Array.from(statementDoc.querySelectorAll('Trade'))
@@ -1237,6 +1244,13 @@ const syncInteractiveBrokers = async (
     if (datePart && timePart) {
       const isoStr = `${datePart.slice(0,4)}-${datePart.slice(4,6)}-${datePart.slice(6,8)}T${timePart.slice(0,2)}:${timePart.slice(2,4)}:${timePart.slice(4,6)}Z`
       timestamp = new Date(isoStr).getTime()
+    } else {
+      const fallbackDate = node.getAttribute('tradeDate') || ''
+      const fallbackTime = node.getAttribute('tradeTime') || '000000'
+      if (fallbackDate) {
+        const isoStr = `${fallbackDate.slice(0,4)}-${fallbackDate.slice(4,6)}-${fallbackDate.slice(6,8)}T${fallbackTime.slice(0,2)}:${fallbackTime.slice(2,4)}:${fallbackTime.slice(4,6)}Z`
+        timestamp = new Date(isoStr).getTime()
+      }
     }
 
     return {
