@@ -601,7 +601,7 @@ import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vu
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 
-const emit = defineEmits(['exit', 'nodeMapState', 'hudState'])
+const emit = defineEmits(['exit', 'nodeMapState', 'hudState', 'openNote', 'openTrade'])
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
