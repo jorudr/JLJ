@@ -1,14 +1,5 @@
-import { fileURLToPath } from 'node:url'
-
-const isDemoMode = process.env.VITE_APP_MODE === 'demo'
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  alias: {
-    '#premium': isDemoMode 
-      ? fileURLToPath(new URL('./src/dummies', import.meta.url))
-      : fileURLToPath(new URL('./src/widgets/genesis/ui', import.meta.url))
-  },
   srcDir: 'src/',
   ssr: false,
   devServer: {

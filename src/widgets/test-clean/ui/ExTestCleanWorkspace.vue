@@ -95,8 +95,8 @@ import ExText from '~/shared/ui/ExText.vue'
 import ExGenesisMenu from '~/widgets/genesis/ui/ExGenesisMenu.vue'
 import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
 
-import ExGenesisMatrix from '#premium/ExGenesisMatrix.vue'
-import ExEquityCurve3D from '#premium/ExEquityCurve3D.vue'
+import ExGenesisMatrix from '~/widgets/genesis/ui/ExGenesisMatrix.vue'
+import ExEquityCurve3D from '~/widgets/genesis/ui/ExEquityCurve3D.vue'
 import ExGenesisLog from '~/widgets/genesis/ui/ExGenesisLog.vue'
 import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
@@ -194,17 +194,13 @@ const canonicalizeActivityRoute = () => {
   }
 }
 
-const isDemoMode = import.meta.env.VITE_APP_MODE === 'demo'
-
 const syncTabFromRoute = () => {
   activeTab.value = getRouteTab()
   
   if (currentGenesisMode.value === 'matrix') {
-    if (isDemoMode) {
-      showPaywall.value = true
-      clearMode()
-      return
-    }
+    showPaywall.value = true
+    clearMode()
+    return
   }
 
   canonicalizeGenesisRoute()
@@ -236,10 +232,8 @@ const handleGenesisSelect = (moduleId) => {
   const mode = modeMap[moduleId] || moduleId
   
   if (mode === 'matrix') {
-    if (isDemoMode) {
-      showPaywall.value = true
-      return
-    }
+    showPaywall.value = true
+    return
   }
 
   router.push({
