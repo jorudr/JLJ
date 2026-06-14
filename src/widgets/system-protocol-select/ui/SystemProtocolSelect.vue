@@ -22,7 +22,7 @@
     </div>
 
     <!-- The Dropdown Menu -->
-    <Transition name="protocol-slide">
+    <Transition :name="props.menuPosition === 'top' ? 'dropdown-top' : 'dropdown-bottom'">
       <div class="absolute w-80 z-[200] pointer-events-auto" :class="menuPositionClass" v-if="showStrategyMenu">
         <ExPanel variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="!border-black/20 dark:!border-white/20">
          <!-- Topbar -->
@@ -87,3 +87,42 @@ const selectStrategy = (s: Strategy) => {
   showStrategyMenu.value = false
 }
 </script>
+
+<style scoped>
+.dropdown-bottom-enter-active,
+.dropdown-bottom-leave-active,
+.dropdown-top-enter-active,
+.dropdown-top-leave-active {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bottom Dropdown (Opens Downwards) */
+.dropdown-bottom-enter-from,
+.dropdown-bottom-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.97);
+  filter: blur(8px);
+}
+.dropdown-bottom-enter-to,
+.dropdown-bottom-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}
+
+/* Top Dropdown (Opens Upwards) */
+.dropdown-top-enter-from,
+.dropdown-top-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.97);
+  filter: blur(8px);
+}
+.dropdown-top-enter-to,
+.dropdown-top-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}
+</style>
