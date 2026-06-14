@@ -229,7 +229,7 @@
                     <div class="flex flex-col">
                       <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВХОД' : 'AVERAGE_ENTRY' }}</span>
                       <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.entryPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ formatFullPrice(selectedTrade?.entry) }}</span>
+                      <span class="font-mono font-bold text-black dark:text-white mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.entry)">{{ formatFullPrice(selectedTrade?.entry) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
                     </div>
 
@@ -237,7 +237,7 @@
                     <div class="flex flex-col">
                       <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ locale === 'ru' ? 'СРЕДНИЙ_ВЫХОД' : 'AVERAGE_EXIT' }}</span>
                       <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] text-black dark:text-white">{{ t('genesis.virtualLog.exitPrice') }}</span>
-                      <span class="text-xl font-mono font-bold text-black dark:text-white mt-2 leading-none">{{ formatFullPrice(selectedTrade?.exit) }}</span>
+                      <span class="font-mono font-bold text-black dark:text-white mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.exit)">{{ formatFullPrice(selectedTrade?.exit) }}</span>
                       <span class="text-[12px] font-mono opacity-50 text-black dark:text-white mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') }}</span>
                     </div>
 
@@ -761,6 +761,16 @@ const formatFullPrice = (value: unknown) => {
   const number = Number(value)
   if (!Number.isFinite(number)) return String(value)
   return Number.isInteger(number) ? String(number) : number.toString()
+}
+
+const getDynamicPriceClass = (price: unknown) => {
+  const str = formatFullPrice(price)
+  const len = str.length
+  if (len > 14) return 'text-[10px]'
+  if (len > 11) return 'text-xs'
+  if (len > 8) return 'text-sm'
+  if (len > 6) return 'text-base'
+  return 'text-xl'
 }
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
