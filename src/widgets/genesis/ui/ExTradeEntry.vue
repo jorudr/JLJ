@@ -1297,8 +1297,13 @@ const takeProfit = ref('')
 const openDate = ref(new Date())
 const exitDate = ref(new Date())
 
+const cloneDate = (date) => {
+  const cloned = new Date(date)
+  return Number.isNaN(cloned.getTime()) ? new Date() : cloned
+}
+
 const adjustDate = (target, unit, delta) => {
-  const d = new Date(target === 'open' ? openDate.value : exitDate.value)
+  const d = cloneDate(target === 'open' ? openDate.value : exitDate.value)
   if (unit === 'year') d.setFullYear(d.getFullYear() + delta)
   if (unit === 'month') {
     let m = d.getMonth() + delta
@@ -1329,15 +1334,15 @@ const adjustDate = (target, unit, delta) => {
     if (m < 0) m = 59
     d.setMinutes(m)
   }
-  if (target === 'open') openDate.value = new Date(d)
-  else exitDate.value = new Date(d)
+  if (target === 'open') openDate.value = cloneDate(d)
+  else exitDate.value = cloneDate(d)
   
   // After adjustment, we always sync to ensure UI is valid
   syncTempParts()
 }
 
 const formatPart = (date, unit) => {
-  const d = new Date(date)
+  const d = cloneDate(date)
   if (unit === 'year') return d.getFullYear()
   if (unit === 'month') return (d.getMonth() + 1).toString().padStart(2, '0')
   if (unit === 'day') return d.getDate().toString().padStart(2, '0')
@@ -1379,12 +1384,21 @@ const handleManualDate = (target, unit, val) => {
   if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) return
   if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return
 
-  const d = new Date(year, month - 1, 1, hour, minute)
+  const currentDate = cloneDate(target === 'open' ? openDate.value : exitDate.value)
+  const d = new Date(
+    year,
+    month - 1,
+    1,
+    hour,
+    minute,
+    currentDate.getSeconds(),
+    currentDate.getMilliseconds()
+  )
   const lastDay = new Date(year, month, 0).getDate()
   d.setDate(Math.min(day, lastDay))
 
-  if (target === 'open') openDate.value = d
-  else exitDate.value = d
+  if (target === 'open') openDate.value = cloneDate(d)
+  else exitDate.value = cloneDate(d)
 }
 
 // Equity Projection Logic
@@ -1509,7 +1523,14 @@ const equityCurveTrades = computed(() => {
 
 const isTemporalOpen = ref(false)
 const activeTemporalTarget = ref('open')
-const tempDateParts = ref({ day: '01', month: '01', year: '2024', hour: '00', minute: '00' })
+const _now = new Date()
+const tempDateParts = ref({
+  day: _now.getDate().toString().padStart(2, '0'),
+  month: (_now.getMonth() + 1).toString().padStart(2, '0'),
+  year: _now.getFullYear().toString(),
+  hour: _now.getHours().toString().padStart(2, '0'),
+  minute: _now.getMinutes().toString().padStart(2, '0')
+})
 
 const syncTempParts = () => {
   const d = activeTemporalTarget.value === 'open' ? openDate.value : exitDate.value
@@ -1578,6 +1599,9 @@ const submit = async () => {
   const finalEntry = entryMethodEnabled.value ? averageEntry.value : +entry.value
   const finalExit = exitMethodEnabled.value ? averageExit.value : +exit.value
   const finalSize = totalSize.value
+  const committedOpenDate = cloneDate(openDate.value)
+  const committedExitDate = cloneDate(exitDate.value)
+  const plannedRiskReward = activeRiskSnapshot.value?.riskRewardRatio ?? undefined
 
   if (!finalEntry || !finalExit || !finalSize) return
   if (commitState.value !== 'idle') return
@@ -1737,7 +1761,7 @@ const submit = async () => {
            side: side.value === 'long' ? 'Long' : 'Short',
            price: parseFloat(e.price) || 0,
            size: parseFloat(e.size) || 0,
-           date: openDate.value,
+           date: cloneDate(committedOpenDate),
            label: entryMethodType.value
          })
        }
@@ -1749,7 +1773,7 @@ const submit = async () => {
          side: side.value === 'long' ? 'Long' : 'Short',
          price: parseFloat(entry.value) || 0,
          size: parseFloat(size.value) || 0,
-         date: openDate.value,
+         date: cloneDate(committedOpenDate),
          label: 'SINGLE'
     })
   }
@@ -1763,7 +1787,7 @@ const submit = async () => {
            side: 'Close',
            price: parseFloat(e.price) || 0,
            size: parseFloat(e.size) || 0,
-           date: exitDate.value,
+           date: cloneDate(committedExitDate),
            label: 'EXIT_SCALE'
          })
        }
@@ -1775,7 +1799,7 @@ const submit = async () => {
          side: 'Close',
          price: parseFloat(exit.value) || 0,
          size: parseFloat(size.value) || 0,
-         date: exitDate.value,
+         date: cloneDate(committedExitDate),
          label: 'SINGLE'
     })
   }
@@ -1790,13 +1814,13 @@ const submit = async () => {
     executions: builtExecutions,
     stopLoss: +stopLoss.value,
     takeProfit: +takeProfit.value,
-    date: openDate.value,
-    dateExit: exitDate.value,
+    date: cloneDate(committedOpenDate),
+    dateExit: cloneDate(committedExitDate),
     profitInCurrency: pnl.value,
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: selectedStrategyId.value,
     risk: Number.isFinite(activeRiskPerTradeDollars.value) ? activeRiskPerTradeDollars.value : undefined,
-    riskReward: activeRiskManagement.value.riskRewardRatio || undefined,
+    riskReward: plannedRiskReward,
     tradingStyle: activeRiskManagement.value.tradingStyle || undefined,
     riskManagement: activeRiskSnapshot.value || undefined,
     entryFee: +entryFee.value || 0,

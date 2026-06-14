@@ -1817,6 +1817,21 @@ const toFiniteNumber = (value: unknown, fallback = 0): number => {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+const getTradeRiskReward = (trade: any): number | null => {
+  const entry = toFiniteNumber(trade?.entry, NaN)
+  const stopLoss = toFiniteNumber(trade?.stopLoss, NaN)
+  const takeProfit = toFiniteNumber(trade?.takeProfit, NaN)
+  if (![entry, stopLoss, takeProfit].every(value => Number.isFinite(value) && value > 0)) return null
+
+  const side = String(trade?.side || '').toLowerCase()
+  const isShort = side.includes('short')
+  const risk = isShort ? stopLoss - entry : entry - stopLoss
+  const reward = isShort ? entry - takeProfit : takeProfit - entry
+  const setupRR = risk > 0 ? reward / risk : 0
+
+  return setupRR > 0 ? setupRR : null
+}
+
 const getTradeTimestamp = (trade: any): number => {
   const time = new Date(trade?.dateExit || trade?.date || 0).getTime()
   return Number.isFinite(time) ? time : 0
@@ -1988,7 +2003,7 @@ const strategyMetrics = computed(() => {
 
   const payoffRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
 
-  const plannedRRs = trades.map(t => toFiniteNumber(t.riskReward ?? (t as any).rr, NaN)).filter(r => !isNaN(r) && r > 0);
+  const plannedRRs = trades.map(getTradeRiskReward).filter((r): r is number => r !== null);
   const plannedRRCount = plannedRRs.length;
   const riskRewardRatio = plannedRRs.length > 0 ? plannedRRs.reduce((a,b)=>a+b,0)/plannedRRs.length : (riskManagement.riskRewardRatio || payoffRatio || 1);
   const realizedRR = payoffRatio;
@@ -3012,9 +3027,9 @@ const primaryMetricsConfigs: MetricConfig[] = [
   {
     key: 'riskRewardRatio',
     label: 'Risk/Reward_Ratio',
-    sub: 'Planned Target RR',
-    desc: 'The average planned Risk/Reward ratio established at trade entry.',
-    formula: 'Σ(Planned RR) / Trades With Planned RR',
+    sub: 'Average Setup RR',
+    desc: 'The arithmetic mean setup Risk/Reward across trades with valid entry, stop-loss, and take-profit levels. Zero or invalid RR values are excluded.',
+    formula: 'Σ(Valid Trade RR) / Trades With Valid RR',
     valStr: m => `${m.riskRewardRatio.toFixed(2)}R`,
     colorClass: m => m.riskRewardRatio >= 2 ? 'text-emerald-400' : 'text-amber-400',
     colorVal: (m, isDark) => m.riskRewardRatio >= 2 ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#fbbf24' : '#d97706'),
@@ -4564,7 +4579,7 @@ const formulaTermConfigs: Record<string, FormulaTermConfig> = {
   'Losing Trades': { key: 'numLoss', format: 'number' },
   'Total Trades': { key: 'numTrades', format: 'number' },
   'Archived Trades': { key: 'numTrades', format: 'number' },
-  'Trades With Planned RR': { key: 'plannedRRCount', format: 'number' },
+  'Trades With Valid RR': { key: 'plannedRRCount', format: 'number' },
   'Trades With Entry+Exit Time': { key: 'holdingTrades', format: 'number' },
   'Trades With Risk Data': { key: 'riskDataTrades', format: 'number' },
   'Trades With MAE/MFE Data': { key: 'maeMfeDataTrades', format: 'number' },
@@ -4577,7 +4592,7 @@ const formulaTermConfigs: Record<string, FormulaTermConfig> = {
   'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
   'Win%': { key: 'winRate', format: 'percent' },
   'Loss%': { key: 'lossRate', format: 'percent' },
-  'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+  'Average Setup RR': { key: 'riskRewardRatio', format: 'number' },
   'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
   'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
   'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
@@ -4801,7 +4816,8 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
       ];
     case 'riskRewardRatio':
       return [
-        { name: 'Planned Risk/Reward', val: `${m.riskRewardRatio?.toFixed(2) ?? '1.00'}` },
+        { name: 'Average Setup RR', val: `${m.riskRewardRatio?.toFixed(2) ?? '1.00'}` },
+        { name: 'Trades With Valid RR', val: `${m.plannedRRCount ?? 0}` },
         { name: 'Realized Payoff Ratio', val: `${m.realizedRR?.toFixed(2) ?? '1.00'}` }
       ];
     case 'sharpeRatio':
@@ -4857,7 +4873,7 @@ const getMetricDeepDiveVariables = (key: string | null, m: any, bench: number, r
           'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
           'Win%': { key: 'winRate', format: 'percent' },
           'Loss%': { key: 'lossRate', format: 'percent' },
-          'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+          'Average Setup RR': { key: 'riskRewardRatio', format: 'number' },
           'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
           'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
           'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
@@ -5061,7 +5077,7 @@ const getMetricCalculationSteps = (key: string | null, m: any, bench: number, ri
           'Payoff Ratio': { key: 'payoffRatio', format: 'number' },
           'Win%': { key: 'winRate', format: 'percent' },
           'Loss%': { key: 'lossRate', format: 'percent' },
-          'Planned RR': { key: 'riskRewardRatio', format: 'number' },
+          'Average Setup RR': { key: 'riskRewardRatio', format: 'number' },
           'Maximum Drawdown %': { key: 'maxDrawdownPct', format: 'percent' },
           'Average Drawdown %': { key: 'avgDrawdownPct', format: 'percent' },
           'Maximum Drawdown': { key: 'maxDrawdownNum', format: 'currency' },
@@ -5214,7 +5230,7 @@ const getMetricRationale = (key: string | null): string => {
     avgLoss: "Defines the standard cost of invalidation per losing setup, essential for enforcing stop-loss sizing and capital preservation rules.",
     avgTrade: "Reveals the average expectancy per execution, showing if the strategy generates a positive edge when all outcomes are blended.",
     payoffRatio: "Evaluates risk-to-reward asymmetry; a higher payoff ratio means you can remain highly profitable even with a lower win rate.",
-    riskRewardRatio: "Measures the initial structural efficiency of trade setups, verifying if targets are wide enough relative to stop-losses.",
+    riskRewardRatio: "Measures the average setup Risk/Reward from valid trade price levels, excluding zero or invalid RR values.",
     realizedRR: "Contrasts planned risk limits against actual market capture, identifying slippage, execution drag, or premature trade management.",
     expectedValue: "Determines the long-term mathematical viability of the strategy; it must be positive for the account to grow over a large sample.",
     profitFactor: "Serves as a primary metric of efficiency, showing how many dollars are earned for every dollar lost. A value above 1.5 indicates a robust strategy.",
