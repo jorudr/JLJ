@@ -4,6 +4,7 @@ import allAssets from '~/shared/data/global_assets.json'
 import { loadFromDisk } from '~/shared/diskStorage'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
@@ -236,6 +237,57 @@ const activeRiskSnapshot = computed(() => {
     riskRewardRatio: risk.riskRewardRatio,
     tradingStyle: risk.tradingStyle
   }
+})
+
+// ─── Risk Violation Detection ────────────────────────────────────────────────
+const actualRR = computed(() => {
+  const e = +entry.value
+  const tp = +takeProfit.value
+  const sl = +stopLoss.value
+  if (!e || !tp || !sl || e === sl) return null
+  const reward = Math.abs(tp - e)
+  const risk = Math.abs(e - sl)
+  if (risk === 0) return null
+  return reward / risk
+})
+
+const actualRiskPercent = computed(() => {
+  const e = +entry.value
+  const sl = +stopLoss.value
+  const s = +size.value
+  if (!e || !sl || !s) return null
+  const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  const riskInAsset = Math.abs(e - sl) * s
+  return (riskInAsset / initialDeposit) * 100
+})
+
+const violatesRR = computed(() => {
+  const required = activeRiskManagement.value.riskRewardRatio
+  if (!required || actualRR.value === null) return false
+  return actualRR.value < required
+})
+
+const violatesRiskPerTrade = computed(() => {
+  const required = activeRiskManagement.value.riskPerTradeValue
+  const unit = activeRiskManagement.value.riskPerTradeUnit
+  if (!required) return false
+  const e = +entry.value
+  const sl = +stopLoss.value
+  const s = +size.value
+  if (!e || !sl || !s) return false
+  const riskInAsset = Math.abs(e - sl) * s
+  const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  const riskLimit = unit === '%' ? (required / 100) * initialDeposit : required
+  return riskInAsset > riskLimit
+})
+
+const riskViolationMessage = computed(() => {
+  const rrViol = violatesRR.value
+  const rptViol = violatesRiskPerTrade.value
+  if (rrViol && rptViol) return 'YOU VIOLATE BOTH RISK RULES'
+  if (rrViol) return 'YOU VIOLATE RISK REWARD RULE'
+  if (rptViol) return 'YOU VIOLATE RISK PER TRADE RULE'
+  return null
 })
 
 const getReachableNodes = (startId, allNodes, allConnections) => {
@@ -1890,6 +1942,53 @@ const submit = async () => {
                  <span class="text-[12px] font-mono font-bold text-emerald-500/80 tabular-nums">{{ (+takeProfit || 0).toFixed(2) }}</span>
               </div>
            </div>
+
+           <div class="w-px h-8 bg-black/10 dark:bg-white/10"></div>
+
+           <!-- Protocol Risk Group -->
+           <ExTooltip
+             :force-show="!!riskViolationMessage"
+             :is-dark="true"
+             variant="basic"
+             placement="bottom"
+             :title="riskViolationMessage || ''"
+           >
+             <template #trigger>
+               <div class="flex gap-8 cursor-default" :class="riskViolationMessage ? 'ring-1 ring-rose-500/30 px-2 -mx-2 py-1 -my-1 rounded-sm' : ''">
+                 <div class="flex flex-col">
+                    <span class="text-[7px] font-mono uppercase tracking-[0.3em] font-bold" :class="riskViolationMessage ? 'text-rose-400/80' : 'opacity-40'">Panel_Risk</span>
+                    <span class="text-[12px] font-mono font-bold text-black dark:text-white tabular-nums">
+                       {{ activeRiskManagement.riskPerTradeValue ?? '--' }}{{ activeRiskManagement.riskPerTradeUnit }} / {{ activeRiskManagement.riskRewardRatio ? `1:${activeRiskManagement.riskRewardRatio}` : 'RR_--' }}
+                    </span>
+                 </div>
+                 <div class="flex flex-col">
+                    <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] font-bold">Trade_Style</span>
+                    <span class="text-[12px] font-mono font-bold text-black dark:text-white truncate max-w-[100px]">
+                       {{ activeRiskManagement.tradingStyle || 'UNLINKED' }}
+                    </span>
+                 </div>
+               </div>
+             </template>
+             <div class="flex flex-col gap-2">
+               <div v-if="actualRR !== null" class="flex items-center justify-between gap-6">
+                 <span class="opacity-50 text-[11px]">Your Risk Reward:</span>
+                 <span class="font-black text-[11px]" :class="violatesRR ? 'text-rose-400' : 'text-emerald-400'">1 / {{ actualRR.toFixed(2) }}</span>
+               </div>
+               <div v-if="actualRiskPercent !== null" class="flex items-center justify-between gap-6">
+                 <span class="opacity-50 text-[11px]">Your Risk Per Trade:</span>
+                 <span class="font-black text-[11px]" :class="violatesRiskPerTrade ? 'text-rose-400' : 'text-emerald-400'">{{ actualRiskPercent.toFixed(2) }}%</span>
+               </div>
+               <div class="h-px bg-white/10 my-1"></div>
+               <div v-if="activeRiskManagement.riskRewardRatio" class="flex items-center justify-between gap-6">
+                 <span class="opacity-40 text-[10px]">Required R:R:</span>
+                 <span class="opacity-70 text-[10px]">1 / {{ activeRiskManagement.riskRewardRatio }}</span>
+               </div>
+               <div v-if="activeRiskManagement.riskPerTradeValue" class="flex items-center justify-between gap-6">
+                 <span class="opacity-40 text-[10px]">Max Risk Per Trade:</span>
+                 <span class="opacity-70 text-[10px]">{{ activeRiskManagement.riskPerTradeValue }}{{ activeRiskManagement.riskPerTradeUnit }}</span>
+               </div>
+             </div>
+           </ExTooltip>
         </div>
 
         <button @click="emit('close')" :disabled="commitState === 'loading'" class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -2529,18 +2628,6 @@ const submit = async () => {
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-emerald-500/60">Take_Profit</span>
                   <input v-model="takeProfit" type="number" placeholder="0.00" class="nier-input w-24 font-mono text-emerald-400"/>
                 </div>
-                <div class="flex flex-col gap-0.5 text-left min-w-[120px]">
-                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/35">Panel_Risk</span>
-                  <span class="text-[10px] font-mono font-bold tracking-[0.18em] text-white">
-                    {{ activeRiskManagement.riskPerTradeValue ?? '--' }}{{ activeRiskManagement.riskPerTradeUnit }} / {{ activeRiskManagement.riskRewardRatio ? `1:${activeRiskManagement.riskRewardRatio}` : 'RR_--' }}
-                  </span>
-                </div>
-                <div class="flex flex-col gap-0.5 text-left min-w-[115px]">
-                  <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/35">Trade_Style</span>
-                  <span class="text-[10px] font-mono font-bold tracking-[0.18em] text-white truncate">
-                    {{ activeRiskManagement.tradingStyle || 'UNLINKED' }}
-                  </span>
-                </div>
               </div>
 
               <div v-else-if="activeSector === 'time'" :key="'time'" class="flex items-center gap-12">
@@ -3124,6 +3211,23 @@ input[type=number] {
 }
 
 /* Transitions */
+.risk-warn-enter-active,
+.risk-warn-leave-active {
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.risk-warn-enter-from,
+.risk-warn-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  filter: blur(4px);
+}
+.risk-warn-enter-to,
+.risk-warn-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}
+
 .protocol-slide-enter-active, .protocol-slide-leave-active {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }

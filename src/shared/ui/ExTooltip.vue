@@ -31,18 +31,28 @@
           </div>
 
           <!-- BASIC VARIANT -->
-          <div v-else class="border border-theme-text/20 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[200px] flex flex-col space-y-2 text-theme-text relative"
-               style="background-color: var(--theme-bg); opacity: 1 !important;">
-            <div v-if="title" class="flex items-center justify-between border-b border-theme-border pb-2">
-              <span class="text-[11px] font-mono uppercase tracking-[0.3em] font-black">{{ title }}</span>
-              <div class="w-2 h-2 bg-theme-accent rotate-45"></div>
+          <div v-else class="flex flex-col" :class="placement === 'bottom' ? 'flex-col' : 'flex-col-reverse'">
+            <!-- Arrow stem: sibling of the box, sits outside it -->
+            <div class="flex" :style="{ paddingLeft: stemStyle.left, boxSizing: 'content-box' }">
+              <div
+                class="w-3 h-3 shrink-0 -ml-[6px]"
+                :class="placement === 'bottom'
+                  ? 'border-l border-t border-theme-text/20'
+                  : 'border-r border-b border-theme-text/20'"
+                :style="{ backgroundColor: 'var(--theme-bg)', transform: 'rotate(45deg)', marginBottom: placement === 'bottom' ? '-6px' : '0', marginTop: placement !== 'bottom' ? '-6px' : '0', opacity: 1 }"
+              ></div>
             </div>
-            <p class="text-[13px] font-mono leading-relaxed opacity-100">
-              <slot></slot>
-            </p>
-            <!-- Stem -->
-            <div class="w-3 h-3 border-r border-b border-theme-text/20 absolute -bottom-[6px]"
-                 :style="{ backgroundColor: 'var(--theme-bg)', opacity: '1', ...stemStyle }"></div>
+            <!-- The box -->
+            <div class="border border-theme-text/20 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[200px] flex flex-col space-y-2 text-theme-text relative"
+                 style="background-color: var(--theme-bg); opacity: 1 !important;">
+              <div v-if="title" class="flex items-center justify-between border-b border-theme-border pb-2">
+                <span class="text-[11px] font-mono uppercase tracking-[0.3em] font-black">{{ title }}</span>
+                <div class="w-2 h-2 bg-theme-accent rotate-45"></div>
+              </div>
+              <p class="text-[13px] font-mono leading-relaxed opacity-100">
+                <slot></slot>
+              </p>
+            </div>
           </div>
         </div>
       </Transition>
@@ -71,6 +81,11 @@ const props = defineProps({
   scale: {
     type: Number,
     default: 1
+  },
+  placement: {
+    type: String,
+    default: 'top',
+    validator: (v) => ['top', 'bottom'].includes(v)
   }
 })
 
@@ -104,12 +119,12 @@ watch(() => props.forceShow, (newVal) => {
 }, { immediate: true })
 
 const tooltipStyle = computed(() => {
-  // Center above the trigger element
+  // Center above/below the trigger element
   const centerX = triggerPos.value.x + (triggerPos.value.width / 2)
   const topY = triggerPos.value.y
+  const bottomY = triggerPos.value.y + triggerPos.value.height
   
-  // Base width doubled (800 for tactical, 560 for basic)
-  // Adjusted: 600 for tactical, 300 for basic
+  // Base width
   const w = props.variant === 'tactical' ? 600 : 300
   const margin = 16
   
@@ -121,6 +136,16 @@ const tooltipStyle = computed(() => {
     left = margin
   } else if (left + w > window.innerWidth - margin) {
     left = window.innerWidth - w - margin
+  }
+
+  if (props.placement === 'bottom') {
+    return {
+      left: `${left}px`,
+      top: `${bottomY}px`,
+      width: `${w}px`,
+      transform: `translateY(20px) scale(${props.scale})`,
+      transformOrigin: 'top center'
+    }
   }
 
   return {
