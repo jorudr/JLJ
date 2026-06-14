@@ -4,8 +4,7 @@
     <div class="flex items-center space-x-6 px-8 py-4 bg-white/5 dark:bg-black/5 border border-black/10 dark:border-white/10 relative group/hud backdrop-blur-md pointer-events-auto cursor-pointer"
          @click="showStrategyMenu = !showStrategyMenu">
        <!-- Corner Decor -->
-       <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/30 dark:border-white/30"></div>
-       <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/30 dark:border-white/30"></div>
+       <ExGothicCorners variant="light" opacity="0.3" class="text-black dark:text-white" />
 
        <div class="flex flex-col min-w-[220px] py-1">
           <span class="text-[7px] font-mono opacity-50 uppercase tracking-[0.5em] font-bold text-black dark:text-white">{{ t('genesis.virtualLog.systemProtocolSelect') || 'SYSTEM_PROTOCOL_SELECT' }}</span>
@@ -54,6 +53,7 @@
 import { ref, computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import type { Strategy } from '../models/types'
 
 const props = withDefaults(defineProps<{
