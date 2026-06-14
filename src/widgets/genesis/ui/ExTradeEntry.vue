@@ -12,6 +12,7 @@ import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
+import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
 
 const { locale } = useI18n()
 
@@ -1850,55 +1851,12 @@ const submit = async () => {
     <!-- TOP SECTION: STRATEGIC PANEL (REORDERED TO CORNERS) -->
     <div class="w-full flex justify-between items-start px-12 py-10 shrink-0">
       <!-- LEFT CORNER: PROTOCOL SELECT -->
-      <div class="relative flex flex-col z-[200]">
-        <!-- The Button -->
-        <div class="flex items-center space-x-6 px-8 py-4 bg-white/5 dark:bg-black/5 border border-black/10 dark:border-white/10 relative group/hud backdrop-blur-md pointer-events-auto cursor-pointer"
-             @click="showStrategyMenu = !showStrategyMenu">
-           <!-- Corner Decor -->
-           <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/30 dark:border-white/30"></div>
-           <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/30 dark:border-white/30"></div>
-
-           <div class="flex flex-col min-w-[220px] py-1">
-              <span class="text-[7px] font-mono opacity-50 uppercase tracking-[0.5em] font-bold text-black dark:text-white">SYSTEM_PROTOCOL_SELECT</span>
-              <div class="flex items-center justify-between mt-1">
-                 <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 bg-black dark:bg-white rotate-45 animate-pulse"></div>
-                    <span class="text-[11px] font-mono tracking-[0.3em] uppercase font-black leading-tight text-black dark:text-white" :class="isMatrixLoading ? 'animate-pulse' : ''">
-                      {{ isMatrixLoading ? 'LOADING_PROTOCOL...' : (selectedStrategy?.name || 'MAIN_DIARY') }}
-                    </span>
-                 </div>
-                 <div class="w-2 h-2 border-b-2 border-r-2 border-black/60 dark:border-white/60 rotate-45 ml-4 transition-transform duration-500" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-1' : ''"></div>
-              </div>
-           </div>
-        </div>
-
-        <!-- The Dropdown Menu -->
-        <Transition name="protocol-slide">
-          <div class="absolute top-full mt-6 w-80 z-[200] pointer-events-auto" v-if="showStrategyMenu">
-            <ExPanel variant="light" :no-padding="true" :no-shadow="true" :show-corners="true" class="!border-black/20 dark:!border-white/20">
-             <!-- Topbar -->
-             <div class="flex items-center justify-between px-3 py-1.5 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
-             </div>
-
-             <div class="max-h-80 overflow-y-auto custom-scrollbar py-2">
-                <div v-for="s in strategies" :key="s.id" 
-                     @click.stop="selectedStrategyId = s.id; showStrategyMenu = false" 
-                     class="group/item relative px-8 py-4 cursor-pointer transition-all duration-300"
-                     :class="selectedStrategyId === s.id ? 'bg-black dark:bg-white' : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03]'">
-                   
-                   <div v-if="selectedStrategyId === s.id" class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white dark:bg-black rotate-45 ml-4"></div>
-                   
-                   <span class="relative z-10 text-[10px] font-mono tracking-[0.3em] uppercase font-bold transition-colors duration-300"
-                         :class="selectedStrategyId === s.id ? 'text-white dark:text-black' : 'text-black/50 dark:text-white/50 group-hover/item:text-black dark:group-hover/item:text-white'">
-                      {{ s.name }}
-                   </span>
-                   <div class="absolute bottom-0 left-0 h-px bg-black dark:bg-white w-0 group-hover/item:w-full transition-all duration-500 opacity-20"></div>
-                </div>
-             </div>
-            </ExPanel>
-          </div>
-        </Transition>
-      </div>
+      <SystemProtocolSelect
+        v-model="selectedStrategyId"
+        :strategies="strategies"
+        :is-loading="isMatrixLoading"
+        menu-position="bottom"
+      />
 
       <!-- RIGHT CORNER: TACTICAL DATA SNAPSHOT -->
       <div class="flex items-center gap-6 relative z-[10010]">
