@@ -17,8 +17,7 @@
           class="fixed pointer-events-none z-[2147483647] transition-colors duration-500"
           :class="[isDark ? 'is-dark theme-tooltip-dark' : 'theme-tooltip-light']"
         >
-          <!-- TACTICAL VARIANT -->
-          <div v-if="variant === 'tactical'" class="theme-tooltip-panel border-2 p-7 shadow-[20px_20px_0_rgba(0,0,0,0.2)] min-w-[390px] relative">
+          <div v-if="variant === 'tactical'" class="theme-tooltip-panel border-2 p-7 min-w-[390px] relative shadow-[6px_6px_0_0_rgba(0,0,0,0.25)] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.5)]">
             <div class="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 theme-tooltip-divider"></div>
             <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 theme-tooltip-divider"></div>
             <div class="flex flex-col space-y-5">
@@ -41,8 +40,7 @@
                 :style="{ transform: 'rotate(45deg)', marginBottom: placement === 'bottom' ? '-6px' : '0', marginTop: placement !== 'bottom' ? '-6px' : '0', opacity: 1 }"
               ></div>
             </div>
-            <!-- The box -->
-            <div class="theme-tooltip-panel border p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[200px] flex flex-col space-y-2 relative">
+            <div class="theme-tooltip-panel border p-5 min-w-[200px] flex flex-col space-y-2 relative shadow-[6px_6px_0_0_rgba(0,0,0,0.25)] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.5)]">
               <div v-if="title" class="flex items-center justify-between border-b theme-tooltip-divider pb-2">
                 <span class="text-[11px] font-mono uppercase tracking-[0.3em] font-black">{{ title }}</span>
                 <div class="w-2 h-2 bg-current opacity-70 rotate-45"></div>

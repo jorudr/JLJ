@@ -18,7 +18,7 @@
           :style="tooltipStyle"
           class="fixed pointer-events-none z-[2147483647]"
         >
-          <div class="theme-tooltip-panel border p-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)] min-w-[320px] max-w-[450px] flex flex-col space-y-4 relative">
+          <div class="theme-tooltip-panel border p-6 min-w-[320px] max-w-[450px] flex flex-col space-y-4 relative shadow-[6px_6px_0_0_rgba(0,0,0,0.25)] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.5)]">
             <div v-if="title" class="flex items-center justify-between border-b theme-tooltip-divider pb-3">
               <span class="text-[10px] font-mono uppercase tracking-[0.4em] font-black">{{ title }}</span>
               <div class="w-2 h-2 bg-current opacity-70 rotate-45"></div>

@@ -1863,7 +1863,7 @@ const submit = async () => {
 
 <template>
   <div ref="scrollContainer" 
-       class="flex flex-col items-center h-full w-full overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 nier-bg-panel nier-text-primary"
+       class="flex flex-col items-center h-full w-full overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-theme-bg nier-text-primary"
         :class="{ dark: isDark }">
     
     <!-- CME Metadata Notice Backdrop -->

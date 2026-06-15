@@ -161,7 +161,7 @@
       <Teleport to="body">
         <Transition name="fade">
           <div v-if="menu.hoveredDescription.value" 
-               class="theme-tooltip-panel matrix-tooltip-panel fixed z-[2147483647] pointer-events-none px-5 py-4 border-l-[3px] shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-md max-w-sm overflow-hidden"
+               class="theme-tooltip-panel matrix-tooltip-panel fixed z-[2147483647] pointer-events-none px-5 py-4 border-l-[3px] backdrop-blur-md max-w-sm overflow-hidden shadow-[6px_6px_0_0_rgba(0,0,0,0.25)] dark:shadow-[6px_6px_0_0_rgba(0,0,0,0.5)]"
                :class="isDark ? 'theme-tooltip-dark' : 'theme-tooltip-light'"
                :style="menu.tooltipStyles.value">
              <div class="absolute inset-0 pointer-events-none opacity-5 animate-scan">
