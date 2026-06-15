@@ -115,7 +115,7 @@
                 </div>
                 <ExNTtooltip v-for="type in menu.indicatorTypes.value" :key="type.label" :title="type.label">
                   <template #trigger>
-                    <button @click="state.addNode(type)"
+                    <button @click="state.setPendingNode(type)"
                             @contextmenu.prevent="menu.activeIndicatorCategory.value === 'PERSONAL' && $emit('personal-contextmenu', $event, type)"
                             class="group relative flex h-12 w-12 flex-shrink-0 items-center justify-center border border-nier-border-light bg-nier-text-light/5 backdrop-blur-md transition-all hover:scale-110 hover:border-nier-text-light dark:border-nier-border-dark dark:bg-nier-text-dark/5 dark:hover:border-nier-text-dark">
                        <div class="font-mono text-[14px] font-black tracking-tighter opacity-40 transition-all group-hover:opacity-100">
@@ -168,7 +168,7 @@
                 <div class="flex space-x-3 overflow-x-auto pt-6 pb-8 w-full justify-start px-12 no-scrollbar scroll-smooth">
                   <ExNTtooltip v-for="emotion in state.emotionLibrary.filter((e: any) => e.type === state.activeEmotionTab.value.toLowerCase())" :key="emotion.label">
                     <template #trigger>
-                      <button @click="state.addNode({ label: emotion.label, type: 'emotion-state', params: { emotionType: emotion.type, description: emotion.description } })"
+                      <button @click="state.setPendingNode({ label: emotion.label, type: 'emotion-state', params: { emotionType: emotion.type, description: emotion.description } })"
                               class="group relative w-12 h-12 flex-shrink-0 border border-nier-text-light/20 bg-nier-text-light/5 text-nier-text-light backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-nier-text-light dark:border-nier-text-dark/20 dark:bg-nier-text-dark/5 dark:text-nier-text-dark dark:hover:border-nier-text-dark">
                          <span class="text-[12px] font-mono font-black tracking-tighter uppercase leading-none">
                            {{ emotion.label.slice(0, 2) }}
@@ -213,7 +213,7 @@
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="num in stepPresets.numeric" :key="num" :title="`Step ${num}`">
                            <template #trigger>
-                             <button @click="state.addNode({ type: 'step', label: num })"
+                             <button @click="state.setPendingNode({ type: 'step', label: num })"
                                      class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
                                <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
                                <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
@@ -234,7 +234,7 @@
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="alpha in stepPresets.alpha" :key="alpha" :title="`Step ${alpha}`">
                            <template #trigger>
-                             <button @click="state.addNode({ type: 'step', label: alpha })"
+                             <button @click="state.setPendingNode({ type: 'step', label: alpha })"
                                      class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
                                <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
                                <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
@@ -255,7 +255,7 @@
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="rom in stepPresets.roman" :key="rom" :title="`Step ${rom}`">
                            <template #trigger>
-                             <button @click="state.addNode({ type: 'step', label: rom })"
+                             <button @click="state.setPendingNode({ type: 'step', label: rom })"
                                      class="group relative min-w-[48px] px-3 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
                                <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
                                <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-white/20 dark:border-black/20 group-hover:border-white dark:group-hover:border-black opacity-20 group-hover:opacity-100 transition-opacity"></div>
@@ -279,10 +279,10 @@
              <!-- Custom Step Input -->
              <div class="flex items-center w-full max-w-sm space-x-2 border-t border-nier-text-light/5 dark:border-nier-text-dark/5 pt-6 justify-center">
                 <ExInput v-model="customStepInput"
-                       @keyup.enter="customStepInput ? state.addNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
+                       @keyup.enter="customStepInput ? state.setPendingNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
                        placeholder="IDENTIFY_SEQUENCE_ID..."
                        class="flex-1 hide-spinners" />
-                <ExButton @click="customStepInput ? state.addNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
+                <ExButton @click="customStepInput ? state.setPendingNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
                           variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light dark:border-nier-border-dark">
                    <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-text-dark dark:group-hover:text-nier-text-light transition-colors">+</span>
                 </ExButton>
@@ -293,7 +293,7 @@
           <div v-if="state.activeMenuCategory.value === 'LOGIC' && !state.isScenarioContext.value" class="flex space-x-6 pointer-events-auto">
             <ExNTtooltip v-for="type in skillTypes" :key="type.label" :title="type.label">
               <template #trigger>
-                <button @click="state.addNode(type)"
+                <button @click="state.setPendingNode(type)"
                         class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
                    <svg class="w-6 h-6 opacity-40 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark" 
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -329,7 +329,7 @@
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in labelTypes" :key="type.label" :title="t(type.label)">
                 <template #trigger>
-                  <button @click="state.addNode(type)"
+                  <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
                     <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t(type.params.menuLabel) }}</span>
@@ -355,7 +355,7 @@
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="type.label">
                 <template #trigger>
-                  <button @click="state.addNode(type)"
+                  <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
                     <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
@@ -381,7 +381,7 @@
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="type.label">
                 <template #trigger>
-                  <button @click="state.addNode(type)"
+                  <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
                     <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
@@ -478,7 +478,7 @@
           <div v-if="state.activeMenuCategory.value === 'METHODS' && !state.isScenarioContext.value" class="flex space-x-6 pointer-events-auto">
             <ExNTtooltip v-for="type in methodTypes" :key="type.label" :title="type.label">
               <template #trigger>
-                <button @click="state.addNode(type)"
+                <button @click="state.setPendingNode(type)"
                         class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
                    <svg class="w-6 h-6 opacity-40 group-hover:opacity-100 transition-opacity text-nier-text-light dark:text-nier-text-dark" 
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

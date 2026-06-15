@@ -95,7 +95,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   }
 
   function addAssetNode(asset: AssetInfo) {
-    state.addNode({
+    state.setPendingNode({
       label: asset.symbol,
       type: 'instrument',
       color: 'currentColor',
@@ -194,7 +194,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   function handleCreateCustomIndicator(indicator: any) {
     state.personalIndicators.value.push(indicator)
     activeIndicatorCategory.value = 'PERSONAL'
-    state.addNode(indicator)
+    state.setPendingNode(indicator)
   }
 
   function ensureTextPanelParams(node: Node) {

@@ -14,7 +14,8 @@
     <!-- TACTICAL GRID OVERLAY REMOVED AS PER REQUEST -->
 
     <!-- MAIN CANVAS -->
-    <div class="flex-grow relative overflow-hidden cursor-move" 
+    <div class="flex-grow relative overflow-hidden" 
+         :class="state.pendingNodeConfig.value ? 'cursor-crosshair' : 'cursor-move'"
          :ref="(el) => { canvas.canvasWrapper.value = el as HTMLElement }"
          @mousedown="canvas.startPan($event, zoneTools.isZoneToolActive.value, zoneTools.drawStart, zoneTools.drawCurrent)"
          @click="canvas.handleBackgroundClick"
@@ -246,6 +247,14 @@ onUnmounted(() => {
 })
 
 function handleGlobalKeydown(e: KeyboardEvent) {
+  if (state.pendingNodeConfig.value) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      state.pendingNodeConfig.value = null
+    }
+    return
+  }
+
   if (state.activeDrawingNodeId.value) {
     if (e.key === 'Escape') {
       e.preventDefault()

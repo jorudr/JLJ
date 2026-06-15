@@ -83,6 +83,14 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         target.closest('.pointer-events-auto:not(.absolute.inset-0)')) {
       return
     }
+
+    if (state.pendingNodeConfig.value) {
+      const worldPos = screenToWorld(e.clientX, e.clientY)
+      state.addNode({ ...state.pendingNodeConfig.value, x: worldPos.x, y: worldPos.y })
+      state.pendingNodeConfig.value = null
+      return
+    }
+
     state.selectNode(null)
   }
 

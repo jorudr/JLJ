@@ -84,6 +84,7 @@ const activeMenuCategory = ref<MenuCategory | null>('LOGIC')
 const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
 const personalIndicators = ref<any[]>([])
 const updateKey = ref(0)
+const pendingNodeConfig = ref<any | null>(null)
 
 export function useMatrixState() {
   const forceUpdate = () => updateKey.value++
@@ -319,8 +320,8 @@ export function useMatrixState() {
       id: 'node-' + Math.random().toString(36).substr(2, 9),
       label: config.label || 'NODE',
       type: config.type || 'unknown',
-      x: -viewState.value.panX / viewState.value.scale + 100,
-      y: -viewState.value.panY / viewState.value.scale + 100,
+      x: config.x !== undefined ? config.x : -viewState.value.panX / viewState.value.scale + 100,
+      y: config.y !== undefined ? config.y : -viewState.value.panY / viewState.value.scale + 100,
       color: config.color || 'currentColor',
       params: config.params || {},
       ...(config.subGraph ? { subGraph: config.subGraph } : {})
@@ -337,6 +338,12 @@ export function useMatrixState() {
     
     selectNode(newNode.id)
     saveMatrixData()
+  }
+
+  function setPendingNode(config: any) {
+    pendingNodeConfig.value = typeof config === 'string' 
+      ? { type: config, label: config.toUpperCase(), params: {} }
+      : config;
   }
 
   function removeNode(id: string) {
@@ -612,6 +619,7 @@ export function useMatrixState() {
     activeMenuCategory,
     activeEmotionTab,
     personalIndicators,
+    pendingNodeConfig,
     updateKey,
     forceUpdate,
     handleNodeMoved,
@@ -636,6 +644,7 @@ export function useMatrixState() {
     selectNode,
     getMenuCategoryForNode,
     addNode,
+    setPendingNode,
     removeNode,
     clearNodeInputConnections,
     clearNodeOutputConnections,
