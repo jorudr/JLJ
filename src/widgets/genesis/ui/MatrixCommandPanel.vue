@@ -166,7 +166,7 @@
                </div>
                
                 <div class="flex space-x-3 overflow-x-auto pt-6 pb-8 w-full justify-start px-12 no-scrollbar scroll-smooth">
-                  <ExNTtooltip v-for="emotion in state.emotionLibrary.filter((e: any) => e.type === state.activeEmotionTab.value.toLowerCase())" :key="emotion.label">
+                  <ExNTtooltip v-for="emotion in GENESIS_EMOTION_LIBRARY.filter((e: any) => e.type === state.activeEmotionTab.value.toLowerCase())" :key="emotion.label">
                     <template #trigger>
                       <button @click="state.setPendingNode({ label: emotion.label, type: 'emotion-state', params: { emotionType: emotion.type, description: emotion.description } })"
                               class="group relative w-12 h-12 flex-shrink-0 border border-nier-text-light/20 bg-nier-text-light/5 text-nier-text-light backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-nier-text-light dark:border-nier-text-dark/20 dark:bg-nier-text-dark/5 dark:text-nier-text-dark dark:hover:border-nier-text-dark">
@@ -698,6 +698,7 @@ import ExConditionCreator from '@/widgets/genesis/ui/ExConditionCreator.vue'
 import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import indicatorData from '@/shared/assets/indicators.json'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 
 const props = defineProps<{
   state: ReturnType<typeof useMatrixState>
