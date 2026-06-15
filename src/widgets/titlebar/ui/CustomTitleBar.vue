@@ -2,7 +2,7 @@
   <div 
     v-show="!isFullscreen"
     @mousedown="startDrag"
-    class="h-10 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-[99999] transition-colors bg-transparent"
+    class="h-10 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-[99999] transition-colors bg-theme-bg"
   >
     <div class="flex items-center h-full" @mousedown.stop>
       <div 

@@ -179,7 +179,7 @@
                       </button>
                     </template>
                     <div class="flex min-w-[180px] flex-col gap-2">
-                      <p class="font-mono text-[13px] font-black uppercase tracking-wide text-black dark:text-white">
+                      <p class="font-mono text-[13px] font-black uppercase tracking-wide nier-text-primary">
                         {{ emotion.label }}
                       </p>
                       <div class="h-px w-full bg-white/20"></div>

@@ -1,8 +1,8 @@
 <template>
   <div
-    class="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden"
-    :class="isDark ? 'is-dark dark theme-dark' : 'theme-light'"
-    style="background-color: var(--theme-bg); color: var(--theme-text); font-family: 'Cormorant Garamond', serif;"
+    class="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden theme-surface nier-text-primary"
+    :class="isDark ? 'is-dark' : ''"
+    style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Background Ambience -->
     <!-- <div class="absolute inset-0 opacity-20 pointer-events-none">
@@ -12,37 +12,36 @@
 
     <!-- Scan line -->
     <div class="absolute inset-0 pointer-events-none opacity-[0.23] overflow-hidden">
-      <div class="w-full h-px bg-theme-text animate-scan"></div>
+      <div class="w-full h-px nier-bg-inverted animate-scan"></div>
     </div>
 
     <!-- ── SIGN OUT (top-right, only when authenticated) ── -->
     <Transition name="fade-quick">
-      <button
-        v-if="isAuthenticated && phase === 'auth'"
-        @click="doSignOut"
-        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border px-4 py-2 transition-all duration-300"
-        style="border-color: var(--theme-text); color: var(--theme-text); opacity: 0.3;"
-        @mouseenter="(e) => (e.currentTarget as HTMLElement).style.opacity = '1'"
-        @mouseleave="(e) => (e.currentTarget as HTMLElement).style.opacity = '0.3'"
-      >Sign_Out</button>
+	      <button
+	        v-if="isAuthenticated && phase === 'auth'"
+	        @click="doSignOut"
+	        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-theme-border px-4 py-2 transition-all duration-300 text-theme-text opacity-30 hover:opacity-100"
+	        @mouseenter="(e) => (e.currentTarget as HTMLElement).style.opacity = '1'"
+	        @mouseleave="(e) => (e.currentTarget as HTMLElement).style.opacity = '0.3'"
+	      >Sign_Out</button>
     </Transition>
 
     <!-- Center Assembly -->
     <div class="relative flex flex-col items-center space-y-10 z-10 w-full max-w-sm px-8">
 
       <!-- Core Icon -->
-      <div class="relative w-20 h-20 flex items-center justify-center mb-2 shrink-0">
-        <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite] border-black/40 dark:border-white/40"></div>
-        <div class="absolute inset-3 border animate-[spin_6s_linear_infinite_reverse] border-black/60 dark:border-white/60"></div>
-        <div class="w-3 h-3 rotate-45 animate-pulse bg-black dark:bg-white"></div>
-        <div class="absolute -top-3 -left-3 w-5 h-5 border-t-2 border-l-2 border-black dark:border-white"></div>
-        <div class="absolute -bottom-3 -right-3 w-5 h-5 border-b-2 border-r-2 border-black dark:border-white"></div>
-      </div>
+	      <div class="relative w-20 h-20 flex items-center justify-center mb-2 shrink-0">
+	        <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite] border-theme-text/40"></div>
+	        <div class="absolute inset-3 border animate-[spin_6s_linear_infinite_reverse] border-theme-text/60"></div>
+	        <div class="w-3 h-3 rotate-45 animate-pulse nier-bg-inverted"></div>
+	        <div class="absolute -top-3 -left-3 w-5 h-5 border-t-2 border-l-2 border-theme-text"></div>
+	        <div class="absolute -bottom-3 -right-3 w-5 h-5 border-b-2 border-r-2 border-theme-text"></div>
+	      </div>
 
       <!-- Identity -->
       <div class="flex flex-col items-center space-y-1 text-center">
-        <h1 class="text-3xl tracking-[0.5em] uppercase font-light animate-glitch" style="color: var(--theme-text);">J.L.Jörmungandr</h1>
-        <p class="text-[8px] font-mono tracking-[0.6em] uppercase" style="color: var(--theme-text); opacity: 0.3;">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ_АНАЛИТИЧЕСКАЯ_ПЛАТФОРМА' : 'Universal_Analytical_Platform' }}</p>
+        <h1 class="text-3xl tracking-[0.5em] uppercase font-light animate-glitch" >J.L.Jörmungandr</h1>
+        <p class="text-[8px] font-mono tracking-[0.6em] uppercase opacity-30">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ_АНАЛИТИЧЕСКАЯ_ПЛАТФОРМА' : 'Universal_Analytical_Platform' }}</p>
       </div>
 
       <!-- ── PHASE SWITCHER ── -->
@@ -50,11 +49,11 @@
 
         <!-- ── AUTHENTICATED: boot prompt ── -->
         <div v-if="isAuthenticated && phase === 'auth'" key="authenticated" class="w-full flex flex-col items-center space-y-5">
-          <div class="w-full border p-4 flex items-center space-x-4" style="border-color: var(--theme-border); background: rgba(128,128,128,0.05);">
-            <div class="w-2 h-2 bg-white rounded-full animate-pulse shrink-0"></div>
+	          <div class="w-full border border-theme-border bg-theme-text/[0.05] p-4 flex items-center space-x-4">
+            <div class="w-2 h-2 nier-bg-inverted rounded-full animate-pulse shrink-0"></div>
             <div class="flex flex-col min-w-0">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.5;">Operator_Authenticated</span>
-              <span class="text-[11px] font-mono font-black uppercase tracking-widest truncate" style="color: var(--theme-text);">{{ authStore.user?.email }}</span>
+              <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-50">Operator_Authenticated</span>
+              <span class="text-[11px] font-mono font-black uppercase tracking-widest truncate" >{{ authStore.user?.email }}</span>
             </div>
           </div>
           <button
@@ -68,20 +67,20 @@
         <div v-else-if="!isAuthenticated && phase === 'auth'" key="auth-panel" class="w-full flex flex-col space-y-5">
 
           <!-- Tab switcher -->
-          <div class="flex border" style="border-color: var(--theme-text); opacity: 0.8;">
+	          <div class="flex border border-theme-border">
             <button
               @click="authTab = 'login'"
               class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
               :style="authTab === 'login'
-                ? activeTabStyle
-                : 'color: var(--theme-text); opacity: 0.4;'"
+	                ? activeTabStyle
+	                : 'color: var(--theme-muted);'"
             >Sign_In</button>
             <button
               @click="authTab = 'register'"
               class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
               :style="authTab === 'register'
-                ? activeTabStyle
-                : 'color: var(--theme-text); opacity: 0.4;'"
+	                ? activeTabStyle
+	                : 'color: var(--theme-muted);'"
             >Register</button>
           </div>
 
@@ -95,40 +94,37 @@
           <!-- Form -->
           <form @submit.prevent="authTab === 'login' ? doLogin() : doRegister()" class="flex flex-col space-y-4">
             <div class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; color: var(--theme-text);">Email_Address</span>
+              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Email_Address</span>
               <input
                 v-model="authEmail"
                 type="email"
                 required
                 autocomplete="email"
                 placeholder="OPERATOR@SYSTEM.IO"
-                class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all uppercase placeholder:opacity-20"
-                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
+	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all uppercase text-theme-text placeholder:opacity-20"
               />
             </div>
 
             <div class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; color: var(--theme-text);">Access_Code</span>
+              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Access_Code</span>
               <input
                 v-model="authPassword"
                 type="password"
                 required
                 autocomplete="current-password"
                 placeholder="••••••••"
-                class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
-                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
+	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20"
               />
             </div>
 
             <div v-if="authTab === 'register'" class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; color: var(--theme-text);">Confirm_Code</span>
+              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Confirm_Code</span>
               <input
                 v-model="authPasswordConfirm"
                 type="password"
                 required
                 placeholder="••••••••"
-                class="bg-transparent px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
-                style="border: 1px solid var(--theme-border); color: var(--theme-text);"
+	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20"
               />
             </div>
 
@@ -147,7 +143,7 @@
           <!-- Divider -->
           <div class="flex items-center space-x-4">
             <div class="flex-1 h-px" style="background: var(--theme-text); opacity: 0.1;"></div>
-            <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.3; color: var(--theme-text);">or</span>
+            <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.3; ">or</span>
             <div class="flex-1 h-px" style="background: var(--theme-text); opacity: 0.1;"></div>
           </div>
 
@@ -155,8 +151,7 @@
           <button
             @click="doGoogleLogin"
             :disabled="authLoading"
-            class="w-full py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40 hover:opacity-100"
-            style="border: 1px solid var(--theme-border); color: var(--theme-text); opacity: 0.6;"
+	            class="w-full border border-theme-border py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40 text-theme-text opacity-60 hover:opacity-100 hover:border-theme-text"
           >
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -172,8 +167,8 @@
         <div v-else-if="phase === 'boot'" key="boot" class="w-full flex flex-col items-center space-y-6">
           <div class="w-full flex flex-col space-y-3">
             <div class="flex justify-between items-end">
-              <span class="text-[9px] font-mono uppercase tracking-widest" style="opacity: 0.4; color: var(--theme-text);">System_Initialization</span>
-              <span class="text-[9px] font-mono font-black" style="color: var(--theme-text);">{{ Math.floor(progress) }}%</span>
+              <span class="text-[9px] font-mono uppercase tracking-widest" style="opacity: 0.4; ">System_Initialization</span>
+              <span class="text-[9px] font-mono font-black" >{{ Math.floor(progress) }}%</span>
             </div>
             <div class="h-px w-full relative overflow-hidden" style="background: var(--theme-text); opacity: 0.1;">
               <div
@@ -187,7 +182,7 @@
 
           <div class="h-8 overflow-hidden relative w-full">
             <Transition name="log-slide" mode="out-in">
-              <p :key="currentLog" class="text-center lowercase italic text-[10px] font-mono" style="opacity: 0.2; color: var(--theme-text);">
+              <p :key="currentLog" class="text-center lowercase italic text-[10px] font-mono" style="opacity: 0.2; ">
                 {{ currentLog }}
               </p>
             </Transition>
@@ -201,7 +196,7 @@
             class="px-10 py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all hover:opacity-90"
             :style="primaryButtonStyle"
           >{{ locale === 'ru' ? 'Продолжить' : 'Continue' }}</button>
-          <p class="text-[8px] font-mono lowercase italic" style="opacity: 0.2; color: var(--theme-text);">Operator authenticated. System ready.</p>
+          <p class="text-[8px] font-mono lowercase italic" style="opacity: 0.2; ">Operator authenticated. System ready.</p>
         </div>
 
       </Transition>
@@ -209,8 +204,8 @@
 
     <!-- Bottom Telemetry -->
     <div class="fixed bottom-10 left-0 right-0 px-12 flex justify-between items-center pointer-events-none">
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">ID: {{ pkg.version }} // VOSHE COMPANY D.O.O</span>
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; color: var(--theme-text);">ALPHA VERSION</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; ">ID: {{ pkg.version }} // VOSHE COMPANY D.O.O</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; ">ALPHA VERSION</span>
     </div>
   </div>
 </template>
@@ -239,7 +234,7 @@ const { locale } = useI18n()
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const primaryButtonStyle = computed(() => ({
-  background: isDark.value ? 'var(--theme-text)' : 'rgba(0, 0, 0, 0.8)',
+  background: 'var(--theme-text)',
   color: 'var(--theme-bg)'
 }))
 const activeTabStyle = computed(() => ({
@@ -451,17 +446,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.theme-dark {
-  --theme-bg: #0a0a0a;
-  --theme-text: rgba(255, 255, 255, 0.7);
-  --theme-border: rgba(255, 255, 255, 0.1);
-}
-.theme-light {
-  --theme-bg: #FFFFFF;
-  --theme-text: #2C3E50;
-  --theme-border: rgba(44, 62, 80, 0.1);
-}
-
 .step-fade-enter-active, .step-fade-leave-active {
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }

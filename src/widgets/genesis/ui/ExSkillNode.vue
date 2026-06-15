@@ -109,10 +109,10 @@
                   class="w-[360px] min-h-[320px] !border-red-500/30 dark:!border-red-400/30"
                   :class="{ 'risk-panel-collapsed': isRiskPanelContentHidden }">
                   <div v-if="isRiskPanelContentHidden" class="risk-panel-hatch"></div>
-                  <div class="relative z-10 flex items-center justify-between border-b border-black/10 dark:border-white/10 px-4 py-2 bg-red-500/[0.03]">
+                  <div class="relative z-10 flex items-center justify-between border-b nier-border-primary px-4 py-2 bg-red-500/[0.03]">
                     <div class="flex items-center gap-3">
                       <div class="w-2 h-2 rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
-                      <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black text-white">Risk_Management</span>
+                      <span class="text-[9px] font-mono uppercase tracking-[0.28em] font-black nier-text-primary">Risk_Management</span>
                     </div>
                     <span class="text-[8px] font-mono uppercase tracking-[0.18em] text-red-500/70">Panel</span>
                   </div>
@@ -482,7 +482,7 @@
            </template>
            <template v-else-if="node.type === 'emotion-state'">
              <div class="flex min-w-[180px] flex-col gap-2">
-               <p class="font-mono text-[13px] font-black uppercase tracking-wide text-black dark:text-white">
+               <p class="font-mono text-[13px] font-black uppercase tracking-wide nier-text-primary">
                  {{ emotionTooltipData.title }}
                </p>
                <div class="h-px w-full bg-white/20"></div>
@@ -1544,7 +1544,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   cursor: text;
 }
 
-:global(.dark) .matrix-text-rich {
+:global(html.dark) .matrix-text-rich {
   --matrix-text-default-color: #ffffff;
 }
 
@@ -1645,7 +1645,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-transform: uppercase;
 }
 
-:global(.dark) .risk-panel-field > span {
+:global(html.dark) .risk-panel-field > span {
   color: rgb(255 255 255 / 0.72);
 }
 
@@ -1659,8 +1659,8 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   min-width: 0;
 }
 
-:global(.dark) .risk-panel-control,
-:global(.dark) .risk-style-control {
+:global(html.dark) .risk-panel-control,
+:global(html.dark) .risk-style-control {
   background: rgb(255 255 255 / 0.035);
   border-color: rgb(255 255 255 / 0.16);
 }
@@ -1669,7 +1669,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   appearance: none;
   background: transparent;
   border: 0;
-  color: #fff;
+  color: #000;
   flex: 1 1 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
@@ -1680,7 +1680,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-align: center;
 }
 
-:global(.dark) .risk-panel-control input {
+:global(html.dark) .risk-panel-control input {
   color: #fff;
 }
 
@@ -1696,8 +1696,8 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-panel-control button {
-  border-left: 1px solid rgb(255 255 255 / 0.16);
-  color: rgb(255 255 255 / 0.9);
+  border-left: 1px solid rgb(0 0 0 / 0.16);
+  color: rgb(0 0 0 / 0.9);
   flex: 0 0 34px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
@@ -1706,8 +1706,9 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-:global(.dark) .risk-panel-control button {
+:global(html.dark) .risk-panel-control button {
   border-left-color: rgb(255 255 255 / 0.14);
+  color: rgb(255 255 255 / 0.9);
 }
 
 .risk-panel-control button:hover {
@@ -1716,7 +1717,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 
 .risk-panel-prefix {
   border-right: 1px solid rgb(0 0 0 / 0.12);
-  color: rgb(255 255 255 / 0.78);
+  color: rgb(0 0 0 / 0.78);
   flex: 0 0 38px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
@@ -1725,8 +1726,9 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-align: center;
 }
 
-:global(.dark) .risk-panel-prefix {
+:global(html.dark) .risk-panel-prefix {
   border-right-color: rgb(255 255 255 / 0.14);
+  color: rgb(255 255 255 / 0.78);
 }
 
 .risk-style-control {
@@ -1736,7 +1738,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-style-control button {
-  color: rgb(255 255 255 / 0.42);
+  color: rgb(0 0 0 / 0.6);
   flex: 1 1 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 9px;
@@ -1753,8 +1755,8 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-style-control button::before {
-  border-left: 1px solid rgb(255 255 255 / 0.16);
-  border-top: 1px solid rgb(255 255 255 / 0.16);
+  border-left: 1px solid rgb(0 0 0 / 0.16);
+  border-top: 1px solid rgb(0 0 0 / 0.16);
   content: '';
   height: 6px;
   left: 0;
@@ -1766,6 +1768,11 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   width: 6px;
 }
 
+:global(html.dark) .risk-style-control button::before {
+  border-left-color: rgb(255 255 255 / 0.16);
+  border-top-color: rgb(255 255 255 / 0.16);
+}
+
 .risk-style-control button.is-active {
   background: rgb(239 68 68 / 0.18);
   box-shadow: inset 0 0 0 1px rgb(239 68 68 / 0.45), 0 0 18px rgb(239 68 68 / 0.18);
@@ -1773,6 +1780,9 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-style-control button:not(.is-active):hover {
+  color: rgb(0 0 0 / 0.9);
+}
+:global(html.dark) .risk-style-control button:not(.is-active):hover {
   color: rgb(255 255 255 / 0.78);
 }
 

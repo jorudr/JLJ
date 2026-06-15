@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col p-12 max-w-7xl mx-auto space-y-12 relative">
     <!-- Update Notification Widget -->
-    <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] bg-black dark:bg-white p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
+    <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] nier-bg-inverted p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
       
       <!-- Animated Background Scanline -->
       <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 dark:via-black/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] ease-in-out"></div>
@@ -22,13 +22,13 @@
             <ExText variant="telemetry" class="!opacity-100 uppercase tracking-[0.2em] !text-white dark:!text-black font-bold">
               {{ t('dashboard.ui.newVersionAvailable') }}
             </ExText>
-            <span class="px-2 py-0.5 border border-theme-accent text-white dark:text-black text-[9px] font-mono font-bold shadow-[0_0_5px_rgba(var(--theme-accent-rgb),0.3)]" v-if="updateNotification.version">
+            <span class="px-2 py-0.5 border border-theme-accent nier-text-primary text-[9px] font-mono font-bold shadow-[0_0_5px_rgba(var(--theme-accent-rgb),0.3)]" v-if="updateNotification.version">
               v{{ updateNotification.version }}
             </span>
           </div>
           <div class="flex items-center space-x-2 mt-1.5 opacity-60">
-            <div class="h-[1px] w-12 bg-white dark:bg-black"></div>
-            <span class="text-[7.5px] font-mono tracking-widest text-white dark:text-black uppercase opacity-70">Your data will be saved.</span>
+            <div class="h-[1px] w-12 nier-bg-panel"></div>
+            <span class="text-[7.5px] font-mono tracking-widest nier-text-primary uppercase opacity-70">Your data will be saved.</span>
           </div>
         </div>
       </div>
@@ -43,10 +43,10 @@
         
         <button 
           @click="handleDownload(updateNotification.downloadLink)" 
-          class="relative px-8 py-3.5 bg-transparent border border-white/20 dark:border-black/20 text-white dark:text-black text-[10px] font-mono uppercase tracking-[0.25em] overflow-hidden group/btn hover:border-white dark:hover:border-black transition-colors duration-300 cursor-pointer"
+          class="relative px-8 py-3.5 bg-transparent border border-white/20 dark:border-black/20 nier-text-primary text-[10px] font-mono uppercase tracking-[0.25em] overflow-hidden group/btn hover:border-white dark:hover:border-black transition-colors duration-300 cursor-pointer"
         >
           <!-- Button background slide -->
-          <div class="absolute inset-0 bg-white dark:bg-black transform scale-x-0 group-hover/btn:scale-x-100 transition-transform duration-500 origin-left"></div>
+          <div class="absolute inset-0 nier-bg-panel transform scale-x-0 group-hover/btn:scale-x-100 transition-transform duration-500 origin-left"></div>
           
           <span class="relative z-10 flex items-center space-x-3 group-hover/btn:text-black dark:group-hover/btn:text-white transition-colors duration-500 font-bold">
             <span>{{ t('dashboard.ui.download') }}</span>
@@ -235,7 +235,7 @@
                 <!-- Diamond Icon -->
                 <div class="relative w-4 h-4 mb-8">
                   <div class="absolute inset-0 bg-emerald-500 rotate-45 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.6)]"></div>
-                  <div class="absolute inset-1 bg-white dark:bg-[#0a0a0a] rotate-45"></div>
+                  <div class="absolute inset-1 nier-bg-panel rotate-45"></div>
                   <div class="absolute inset-[3px] bg-emerald-500 rotate-45"></div>
                 </div>
 
@@ -248,12 +248,12 @@
                 <ExText class="text-center mb-12 !text-[11px] !leading-[2.5] uppercase tracking-widest text-black/70 dark:text-white/60">
                   <span v-if="locale === 'ru'">
                     ПРОТОКОЛ АУТЕНТИФИКАЦИИ УСПЕШНО ЗАВЕРШЕН.<br/><br/>
-                    <span class="text-black dark:text-white font-bold tracking-[0.4em]">ПРЕМИУМ-СТАТУС ПОДТВЕРЖДЕН.</span><br/><br/>
+                    <span class="nier-text-primary font-bold tracking-[0.4em]">ПРЕМИУМ-СТАТУС ПОДТВЕРЖДЕН.</span><br/><br/>
                     ПОЛНЫЙ ДОСТУП К МАТРИЦЕ ГЕНЕЗИСА И ПРОДВИНУТОЙ АНАЛИТИКЕ ДНЕВНИКА АКТИВИРОВАН.
                   </span>
                   <span v-else>
                     AUTHENTICATION PROTOCOL SUCCESSFULLY COMPLETED.<br/><br/>
-                    <span class="text-black dark:text-white font-bold tracking-[0.4em]">PREMIUM STATUS CONFIRMED.</span><br/><br/>
+                    <span class="nier-text-primary font-bold tracking-[0.4em]">PREMIUM STATUS CONFIRMED.</span><br/><br/>
                     FULL ACCESS TO THE GENESIS MATRIX AND ADVANCED DIARY ANALYTICS HAS BEEN ACTIVATED.
                   </span>
                 </ExText>

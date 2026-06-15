@@ -6,26 +6,12 @@
     <div v-if="state.isCommentDragging.value" class="fixed inset-0 z-[99999] cursor-move pointer-events-auto"></div>
 
     <!-- TACTICAL CORNER BRACKETS -->
-    <div class="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 border-black/10 dark:border-white/10 opacity-50 z-[100] pointer-events-none"></div>
+    <div class="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
+    <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
+    <div class="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
+    <div class="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
     
-    <!-- TACTICAL GRID OVERLAY (Stays Static with pan offset) -->
-    <!-- TACTICAL GRID OVERLAY (Scales with View) -->
-    <div class="absolute inset-0 pointer-events-none opacity-[0.01]" :style="state.contentTransform.value">
-       <svg class="w-full h-full">
-         <defs>
-           <pattern id="grid" :width="100 * state.viewState.value.scale" :height="100 * state.viewState.value.scale" patternUnits="userSpaceOnUse">
-             <path :d="`M ${100 * state.viewState.value.scale} 0 L 0 0 0 ${100 * state.viewState.value.scale}`" 
-                   fill="none" 
-                   stroke="currentColor" 
-                   :stroke-width="Math.max(0.5, 0.5 / state.viewState.value.scale)"/>
-           </pattern>
-         </defs>
-         <rect width="100%" height="100%" fill="url(#grid)" />
-       </svg>
-    </div>
+    <!-- TACTICAL GRID OVERLAY REMOVED AS PER REQUEST -->
 
     <!-- MAIN CANVAS -->
     <div class="flex-grow relative overflow-hidden cursor-move" 
@@ -175,29 +161,30 @@
       <Teleport to="body">
         <Transition name="fade">
           <div v-if="menu.hoveredDescription.value" 
-               class="fixed z-[2147483647] pointer-events-none px-5 py-4 border-l-[3px] border-nier-text-light dark:border-nier-text-dark shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-md max-w-sm overflow-hidden text-nier-text-light dark:text-nier-text-dark bg-nier-white dark:bg-nier-black"
+               class="theme-tooltip-panel matrix-tooltip-panel fixed z-[2147483647] pointer-events-none px-5 py-4 border-l-[3px] shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-md max-w-sm overflow-hidden"
+               :class="isDark ? 'theme-tooltip-dark' : 'theme-tooltip-light'"
                :style="menu.tooltipStyles.value">
              <div class="absolute inset-0 pointer-events-none opacity-5 animate-scan">
-               <div class="w-full h-[1px] bg-white translate-y-[-100%]"></div>
+               <div class="w-full h-[1px] bg-current translate-y-[-100%]"></div>
              </div>
              <div class="flex flex-col space-y-3 relative">
                 <div class="flex items-center space-x-3">
-                   <div class="w-1.5 h-1.5 bg-white rotate-45"></div>
-                   <span class="text-[9px] font-mono tracking-[0.3em] text-white font-black uppercase">
+                   <div class="w-1.5 h-1.5 bg-current rotate-45"></div>
+                   <span class="text-[9px] font-mono tracking-[0.3em] font-black uppercase">
                       [ SYSTEM_INTEL_v1.07 ]
                    </span>
                 </div>
-                <div class="w-full h-[1px] bg-white/10"></div>
-                <span class="text-[11px] font-mono tracking-widest text-[#dadada] uppercase leading-relaxed font-bold italic">
+                <div class="w-full h-px border-t theme-tooltip-divider"></div>
+                <span class="text-[11px] font-mono tracking-widest uppercase leading-relaxed font-bold italic opacity-80">
                    {{ menu.hoveredDescription.value }}
                 </span>
                 <div class="flex items-center space-x-2 pt-2 opacity-20">
-                   <div v-for="i in 5" :key="i" class="w-1 h-1 bg-white"></div>
+                   <div v-for="i in 5" :key="i" class="w-1 h-1 bg-current"></div>
                 </div>
              </div>
-             <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/40"></div>
-             <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/40"></div>
-             <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/40"></div>
+             <div class="absolute top-0 right-0 w-2 h-2 border-t border-r theme-tooltip-divider"></div>
+             <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l theme-tooltip-divider"></div>
+             <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r theme-tooltip-divider"></div>
           </div>
         </Transition>
       </Teleport>

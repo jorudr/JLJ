@@ -1,6 +1,6 @@
 <template>
   <div ref="workspaceRoot" class="ethereal-void h-full min-h-full relative overflow-hidden transition-all duration-1000"
-       :class="[isDark ? 'is-dark dark theme-dark' : 'theme-light']">
+       :class="{ 'is-dark': isDark }">
 
     <Transition name="fade">
        <ExInitialization v-if="!hasInitialized" @initiate="handleInitializationComplete" />
@@ -10,8 +10,7 @@
     <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
     <!-- <DesignVignette :is-dark="isDark" /> -->
      <div 
-        class="absolute inset-0 opacity-[0.2] transition-opacity duration-1000"
-        :class="isDark ? 'grid-dark' : 'grid-light'"
+        class="absolute inset-0 opacity-[0.2] transition-opacity duration-1000 theme-grid"
       ></div>
    
     <div
@@ -318,47 +317,9 @@ onUnmounted(() => {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
-.grid-light {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.25) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.grid-dark {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-/* THEME DEFINITIONS - SYNCED WITH TEST.VUE */
-.theme-dark {
-  --theme-bg: #0a0a0a;
-  --theme-text: rgba(255, 255, 255, 0.7);
-  --theme-border: rgba(255, 255, 255, 0.1);
-  --theme-border-strong: rgba(255, 255, 255, 0.25);
-}
-
-.theme-light {
-  --theme-bg: #f3f3f3;
-  --theme-text: #2C3E50;
-  --theme-border: rgba(44, 62, 80, 0.1);
-  --theme-border-strong: rgba(44, 62, 80, 0.25);
-}
-
 .ethereal-void {
-  background-color: var(--theme-bg);
-  color: var(--theme-text);
   font-family: 'Cormorant Garamond', serif;
-  transition: background-color 1s ease, color 1s ease;
 }
-
-/* Base resets using theme tokens */
-body {
-  background-color: var(--theme-bg);
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-}
-
-.bg-theme-bg { background-color: var(--theme-bg); }
-.text-theme-text { color: var(--theme-text); }
-.border-theme-border { border-color: var(--theme-border); }
-.border-theme-text { border-color: var(--theme-text); }
 
 /* Animation: Page Reify */
 .page-reify-enter-active,

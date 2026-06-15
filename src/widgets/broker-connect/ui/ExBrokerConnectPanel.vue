@@ -10,7 +10,7 @@
       </button>
 
       <ExPanel variant="light" no-padding class="!w-[800px] !max-w-[96vw] transition-all duration-500">
-        <div class="flex h-[640px] max-h-[90vh] text-black dark:text-white overflow-hidden relative">
+        <div class="flex h-[640px] max-h-[90vh] nier-text-primary overflow-hidden relative">
           <div class="w-full h-full flex flex-col absolute inset-0">
             
             <!-- TOPBAR BROKER SELECTOR -->
@@ -23,10 +23,10 @@
                           ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
                           : 'border-black/10 bg-white/40 text-black/55 hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45 dark:hover:border-white/30 dark:hover:text-white'"
                         @click="selectedBrokerId = broker.id">
-                  <div class="absolute -top-px -left-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
-                  <div class="absolute -bottom-px -left-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
-                  <div class="absolute -top-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
-                  <div class="absolute -bottom-px -right-px w-1 h-1 bg-black dark:bg-white opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -top-px -left-px w-1 h-1 nier-bg-inverted opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -bottom-px -left-px w-1 h-1 nier-bg-inverted opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -top-px -right-px w-1 h-1 nier-bg-inverted opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
+                  <div class="absolute -bottom-px -right-px w-1 h-1 nier-bg-inverted opacity-0 transition-opacity" :class="selectedBrokerId === broker.id ? 'opacity-100' : 'group-hover:opacity-50'"></div>
                   
                   <img :src="`/brokers/${broker.logoId || broker.id}.svg`" class="w-5 h-5 object-contain transition-all"
                        :class="selectedBrokerId === broker.id ? 'grayscale-0 opacity-100' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'" :alt="broker.label" />
@@ -41,8 +41,8 @@
             <!-- MAIN FORM AREA -->
             <div class="flex flex-1 overflow-y-auto relative">
               <div class="px-8 py-10 w-full max-w-3xl mx-auto flex flex-col">
-                <div class="flex items-center gap-5 mb-8 pb-8 border-b border-black/10 dark:border-white/10">
-                  <div class="w-16 h-16 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-center p-3">
+                <div class="flex items-center gap-5 mb-8 pb-8 border-b nier-border-primary">
+                  <div class="w-16 h-16 border nier-border-primary bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-center p-3">
                     <img :src="`/brokers/${selectedBroker.logoId || selectedBroker.id}.svg`" class="w-full h-full object-contain grayscale-0" :alt="selectedBroker.label" />
                   </div>
                   <div>
@@ -84,7 +84,7 @@
                         {{ isRu ? 'Выберите, куда этот коннектор должен загружать историю торгов.' : 'Choose where this connector should load trading history.' }}
                       </p>
                     </div>
-                    <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border border-black/10 dark:border-white/10">
+                    <p class="font-mono text-[10px] font-black uppercase tracking-widest bg-black/5 dark:bg-white/5 px-3 py-1 border nier-border-primary">
                       {{ selectedImportStrategyName }}
                     </p>
                   </div>
