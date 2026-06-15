@@ -52,7 +52,7 @@
       <ExNTtooltip>
         <template #trigger>
           <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node nier-border-primary hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md"
-               :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-zinc-100 dark:bg-[#0a0a0a]'"
+               :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'"
                @pointerdown.stop>
             <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
             <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
@@ -651,10 +651,10 @@ const heatmapButtonClass = (_mode: string) => {
 const nodeSurfaceClass = (node: any) => {
   if (isNodeHighlighted(node)) return 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
   if ((node?.treeKey || node?.id) === selectedTreeNodeKey.value) {
-    return `${getHeatmapClass(node) || 'bg-zinc-100 dark:bg-[#0a0a0a]'} !border-white`
+    return `${getHeatmapClass(node) || 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'} !border-white`
   }
 
-  return getHeatmapClass(node) || 'bg-zinc-100 dark:bg-[#0a0a0a]'
+  return getHeatmapClass(node) || 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'
 }
 
 const tradePnlClass = (trade: any) => {

@@ -16,9 +16,38 @@ export default defineNuxtConfig({
           innerHTML: `
             (function () {
               try {
-                var isDark = localStorage.getItem('dark') === 'true';
+                var isDark = false;
+                var themeStr = localStorage.getItem('user_theme_settings_v1');
+                if (themeStr) {
+                  try {
+                    var theme = JSON.parse(themeStr);
+                    if (theme.themeMode === 'dark') isDark = true;
+                    else if (theme.themeMode === 'light') isDark = false;
+                    else if (theme.themeMode === 'system') {
+                      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    } else if (theme.isDark !== undefined) {
+                      isDark = theme.isDark;
+                    }
+                    
+                    if (theme.themeName && theme.themeName !== 'Default') {
+                       document.documentElement.style.setProperty('--content-bg', isDark ? '#000000' : (theme.isGradient ? 'linear-gradient(' + theme.gradientAngle + 'deg, ' + theme.gradientStart + ', ' + theme.gradientEnd + ')' : theme.contentBg));
+                    }
+                  } catch (err) {}
+                } else {
+                   var darkLocal = localStorage.getItem('dark');
+                   if (darkLocal !== null) {
+                      isDark = darkLocal === 'true';
+                   } else {
+                      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                   }
+                }
+
                 if (isDark) {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.classList.add('theme-dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('theme-light');
                 }
               } catch (e) {}
             })();
