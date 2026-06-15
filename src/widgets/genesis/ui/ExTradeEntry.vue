@@ -2519,26 +2519,26 @@ const submit = async () => {
         
         <!-- NIER SECTOR TABS AND SWITCHER -->
       <div class="flex justify-between items-end w-full px-2 max-w-5xl">
-        <div class="flex gap-0.5 bg-black dark:bg-black p-1 border-t border-l border-r border-white/30">
+        <div class="flex gap-0.5 bg-black/60 p-1 border-t border-l border-r border-white/30">
           <button 
             v-for="sector in sectors" 
             :key="sector.id"
             @click="activeSector = sector.id"
             class="px-5 py-1.5 transition-all duration-300 relative group"
-            :class="activeSector === sector.id ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'"
+            :class="activeSector === sector.id ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'"
           >
             <span class="text-[8px] uppercase tracking-[0.4em] font-black relative z-10">{{ sector.id === 'fee' && locale === 'ru' ? 'КОМИССИИ' : sector.label }}</span>
           </button>
         </div>
 
-        <div class="flex gap-0.5 bg-black dark:bg-black p-1 border-t border-l border-r border-white/30 shrink-0">
-          <button @click="resultMode = 'auto'" :class="resultMode === 'auto' ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'АВТО' : 'AUTO' }}</button>
-          <button @click="resultMode = 'manual'" :class="resultMode === 'manual' ? 'bg-white text-black' : 'bg-[#111] text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'РУЧНАЯ' : 'MANUAL' }}</button>
+        <div class="flex gap-0.5 bg-black/60 p-1 border-t border-l border-r border-white/30 shrink-0">
+          <button @click="resultMode = 'auto'" :class="resultMode === 'auto' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'АВТО' : 'AUTO' }}</button>
+          <button @click="resultMode = 'manual'" :class="resultMode === 'manual' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'РУЧНАЯ' : 'MANUAL' }}</button>
         </div>
       </div>
 
       <!-- MAIN CHASSIS -->
-      <div class="relative flex items-center bg-[#0a0a0a] border border-white/30 px-8 h-16 max-w-5xl w-full transition-all duration-500 shadow-[0_32px_64px_rgba(0,0,0,0.5)]">
+      <div class="relative flex items-center bg-[#0a0a0a]/80 border border-white/30 px-8 h-16 max-w-5xl w-full transition-all duration-500 ">
         
         <div class="absolute inset-0 pointer-events-none opacity-[0.08] overflow-hidden">
           <div class="w-full h-px bg-white animate-scan"></div>
