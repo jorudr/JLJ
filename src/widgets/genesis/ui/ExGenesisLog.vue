@@ -191,7 +191,7 @@
        <Transition name="panel-slide" mode="out-in">
           <div v-if="selectedTrade && !showExtraDetails && !showNodeMap && !isTradeEntryOpen" 
                key="trade-archive-insight"
-               class="fixed right-12 top-1/2 -translate-y-1/2 w-[440px] z-[10005] transition-colors duration-500">
+               class="fixed right-12 top-1/2 -translate-y-1/2 w-[440px] z-[10005] transition-colors duration-500 shadow-[16px_16px_0_0_rgba(0,0,0,0.25)] dark:shadow-[16px_16px_0_0_rgba(0,0,0,0.5)]">
              
              <!-- CLOSE HANDLE (LEFT EDGE) -->
              <button @click="selectedTradeId = null"
