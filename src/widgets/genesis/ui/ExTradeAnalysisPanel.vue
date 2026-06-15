@@ -1186,7 +1186,7 @@ const actualRR = computed(() => {
 
 const targetRR = computed(() => {
   if (resolvedRRNode.value?.params?.value !== undefined) {
-    const val = parseFloat(resolvedRRNode.value.params.value);
+    const val = parseFloat(String(resolvedRRNode.value.params.value));
     if (!isNaN(val)) return val;
   }
   return strategyStats.value.avgRR || 0;
@@ -1237,7 +1237,7 @@ const actualRiskPct = computed(() => {
 const maxRiskTrade = computed(() => {
   if (!resolvedRiskTradeNode.value?.params) return null;
   const p = resolvedRiskTradeNode.value.params;
-  const val = parseFloat(p.value);
+  const val = parseFloat(String(p.value));
   if (isNaN(val)) return null;
   return {
     value: val,
@@ -1577,7 +1577,7 @@ const strategyExecutionMetrics = computed(() => {
   <div ref="analysisPanelRoot" class="relative h-full w-full">
     <!-- CLOSE HANDLE (RIGHT EDGE) -->
     <button @click="emit('close')"
-            class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-100 dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-gray-200 dark:hover:bg-[#111] transition-colors z-[100]">
+            class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors z-[100]">
        <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
        <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Analysis</span>
     </button>
