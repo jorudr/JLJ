@@ -351,8 +351,8 @@
               <span class="text-6xl font-mono nier-text-primary tracking-tighter font-bold drop-shadow-sm">
                 {{ displayBalance }}
               </span>
-              <button class="pointer-events-auto flex h-10 w-10 items-center justify-center border border-black/10 bg-white/50 text-black/45 transition-all hover:border-black/40 hover:text-black disabled:cursor-not-allowed disabled:opacity-25 dark:border-white/10 dark:bg-white/[0.02] dark:text-white/45 dark:hover:border-white/40 dark:hover:text-white"
-                      :class="isApiSyncing ? 'border-black/40 text-black dark:border-white/40 dark:text-white' : ''"
+              <button class="pointer-events-auto flex h-10 w-10 items-center justify-center border border-white/20 bg-[#0a0a0a]/80 backdrop-blur-xl text-white/45 transition-all hover:border-white/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
+                      :class="isApiSyncing ? 'border-white/40 text-white' : ''"
                       :disabled="isApiSyncing"
                       :title="apiSyncButtonTitle"
                       @click="syncCurrentStrategyApi">
@@ -871,19 +871,19 @@
     <!-- BOTTOM TACTICAL CONTROL PANEL -->
     <div v-if="!isTradeEntryOpen" 
          class="absolute bottom-12 left-0 right-0 z-40 flex items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto flex items-center space-x-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border nier-border-primary p-2 relative">
+      <div class="pointer-events-auto flex items-center space-x-2 bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/20 p-2 relative">
         <!-- Corner Accents -->
-        <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
-        <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>
+        <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-white/40"></div>
+        <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-white/40"></div>
         
         <!-- CENTER TACTICAL ADD BUTTON (MOVED TO START) -->
         <button @click="isTradeEntryOpen = true"
-                class="group relative flex items-center justify-center w-12 h-12 nier-bg-inverted nier-text-primary hover:bg-black/80 dark:hover:bg-white/80 transition-all shadow-[0_0_20px_rgba(0,0,0,0.2)] border border-black dark:border-white">
+                class="group relative flex items-center justify-center w-12 h-12 bg-white text-black hover:bg-white/80 transition-all  border border-white">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 transition-transform group-hover:rotate-90 duration-300">
             <line x1="12" y1="6" x2="12" y2="18"></line>
             <line x1="6" y1="12" x2="18" y2="12"></line>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none  border border-white/20">
             [ LOG_NEW_TRADE ]
           </div>
         </button>
@@ -891,8 +891,8 @@
         <!-- TOGGLE METRICS / EQUITY CURVE -->
         <button v-if="!showDistribution3D && !showWinrateCurve"
                 @click="showMetricsPanel = !showMetricsPanel; showDistribution3D = false" 
-                class="group relative flex items-center justify-center w-10 h-10 nier-text-primary opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showMetricsPanel ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5"
+                :class="showMetricsPanel ? 'bg-white/10 opacity-100 border-white/20' : ''">
           <svg v-if="!showMetricsPanel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <rect x="3" y="3" width="7" height="7"></rect>
             <rect x="14" y="3" width="7" height="7"></rect>
@@ -902,7 +902,7 @@
           <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             {{ showMetricsPanel ? '[ VIEW_EQUITY_CURVE ]' : '[ OPEN_STRATEGY_METRICS ]' }}
           </div>
         </button>
@@ -911,12 +911,12 @@
         <button v-if="showMetricsPanel && !showWinrateCurve"
                 @click="isEditMode = !isEditMode" 
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border"
-                :class="isEditMode ? 'nier-bg-inverted nier-text-primary border-black dark:border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-100' : 'border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'">
+                :class="isEditMode ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-100' : 'border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             {{ isEditMode ? '[ EXIT_EDIT_MODE ]' : '[ EDIT_MODE ]' }}
           </div>
         </button>
@@ -926,8 +926,8 @@
                 @click="handleRobustnessDiagnosticsClick"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border"
                 :class="[
-                  showDistribution3D ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent nier-text-primary',
-                  hasEnoughTradesForDiagnostics ? 'opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5' : 'opacity-25 cursor-not-allowed'
+                  showDistribution3D ? 'bg-white/10 opacity-100 border-white/20' : 'border-transparent text-white',
+                  hasEnoughTradesForDiagnostics ? 'opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5' : 'opacity-25 cursor-not-allowed'
                 ]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M3 3v16a2 2 0 0 0 2 2h16" />
@@ -937,7 +937,7 @@
             <path d="M3 12c3-4 6-8 10-8s7 6 9 10" stroke-dasharray="3,3" />
           </svg>
           <!-- Normal hover label -->
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20">
             {{ hasEnoughTradesForDiagnostics ? '[ ROBUSTNESS_DIAGNOSTICS ]' : '[ MIN. 20 TRADES REQUIRED ]' }}
           </div>
         </button>
@@ -945,8 +945,8 @@
         <!-- BOOTSTRAP / PNL HISTOGRAM TOGGLE -->
         <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="toggleRobustnessHistogram"
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showRobustnessHistogram ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5"
+                :class="showRobustnessHistogram ? 'bg-white/10 opacity-100 border-white/20' : ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M4 19V5" />
             <path d="M4 19h16" />
@@ -954,7 +954,7 @@
             <rect x="11" y="8" width="2.5" height="11" />
             <rect x="15" y="10" width="2.5" height="9" />
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20">
             {{ showRobustnessHistogram ? '[ VIEW_FITTED_PDF ]' : '[ VIEW_PNL_HISTOGRAM ]' }}
           </div>
         </button>
@@ -962,8 +962,8 @@
         <!-- QQ PLOT TOGGLE (Only when Robustness Diagnostics is active) -->
         <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="showQQPlot = !showQQPlot; if (showQQPlot) { showRobustnessExplanations = false; showRobustnessHistogram = false }"
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showQQPlot ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5"
+                :class="showQQPlot ? 'bg-white/10 opacity-100 border-white/20' : ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-dasharray="3,3" />
             <circle cx="7" cy="17" r="1.5" fill="currentColor" />
@@ -971,7 +971,7 @@
             <circle cx="14" cy="10" r="1.5" fill="currentColor" />
             <circle cx="17" cy="7" r="1.5" fill="currentColor" />
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20">
             {{ showQQPlot ? '[ VIEW_FITTED_PDF ]' : '[ VIEW_QQ_PLOT ]' }}
           </div>
         </button>
@@ -979,27 +979,27 @@
         <!-- EXPLANATIONS & SIMULATIONS -->
         <button v-if="showDistribution3D && !showWinrateCurve"
                 @click="showRobustnessExplanations = !showRobustnessExplanations; if (showRobustnessExplanations) { showQQPlot = false; showRobustnessHistogram = false }"
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showRobustnessExplanations ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5"
+                :class="showRobustnessExplanations ? 'bg-white/10 opacity-100 border-white/20' : ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.2)] border border-white/20">
             {{ showRobustnessExplanations ? '[ HIDE_EXPLANATIONS ]' : '[ VIEW_EXPLANATIONS ]' }}
           </div>
         </button>
 
         <!-- RE-CENTER VIEW -->
         <button @click="resetView" 
-                class="group relative flex items-center justify-center w-10 h-10 nier-text-primary opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="16"></line>
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             [ RE-CENTER_VIEW ]
           </div>
         </button>
@@ -1008,11 +1008,11 @@
         <!-- SET INITIAL DEPOSIT -->
         <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
                 @click="showInitialDepositModal = true" 
-                class="group relative flex items-center justify-center w-10 h-10 nier-text-primary opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             [ SET_INITIAL_DEPOSIT ]
           </div>
         </button>
@@ -1020,13 +1020,13 @@
         <!-- EQUITY CURVE SIMULATOR -->
         <button v-if="!showMetricsPanel && !showDistribution3D && !showWinrateCurve"
                 @click="openSimulator" 
-                class="group relative flex items-center justify-center w-10 h-10 nier-text-primary opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M3 3v18h18" />
             <path d="M7 14l3-3 4 4 6-6" />
             <path d="M7 10l3-4 4 6 6-4" opacity="0.4" />
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             [ EQUITY_CURVE_SIMULATOR ]
           </div>
         </button>
@@ -1034,8 +1034,8 @@
         <!-- WINRATE TARGET MENU BUTTON -->
         <button v-if="!showMetricsPanel && !showDistribution3D && !showCalendarMode"
                 @click="showWinrateMenu = true" 
-                class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                :class="showWinrateMenu ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 nier-text-primary' : 'border-transparent nier-text-primary opacity-60 hover:opacity-100'">
+                class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-white/10 hover:bg-white/5"
+                :class="showWinrateMenu ? 'bg-white/10 opacity-100 border-white/20 text-white' : 'border-transparent text-white opacity-60 hover:opacity-100'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <line x1="8" y1="6" x2="21" y2="6"></line>
             <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -1044,7 +1044,7 @@
             <line x1="3" y1="12" x2="3.01" y2="12"></line>
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             {{ isRu ? '[ ВЫБОР_ЦЕЛИ_СИСТЕМЫ ]' : '[ SELECT_SYSTEM_TARGET ]' }}
           </div>
         </button>
@@ -1052,12 +1052,12 @@
         <!-- BROKER / EXCHANGE CONNECTORS -->
         <button v-if="!showMetricsPanel && !showDistribution3D"
                 @click="showBrokerConnectPanel = true"
-                class="group relative flex items-center justify-center w-10 h-10 nier-text-primary opacity-60 hover:opacity-100 border border-transparent hover:border-black/10 dark:hover:border-white/10 transition-all hover:bg-black/5 dark:hover:bg-white/5">
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
-          <div class="absolute bottom-full mb-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             {{ isRu ? '[ ПОДКЛЮЧИТЬ_БРОКЕР_API ]' : '[ CONNECT_BROKER_API ]' }}
           </div>
         </button>
@@ -1080,23 +1080,23 @@
     <!-- RIGHT PANEL -->
     <div v-if="!showMetricsPanel && !showRobustnessExplanations"
          class="absolute right-12 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border nier-border-primary p-2 relative">
+      <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/20 p-2 relative">
         <!-- Corner Accents -->
-        <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-black/40 dark:border-white/40"></div>
-        <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-black/40 dark:border-white/40"></div>
+        <div class="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-white/40"></div>
+        <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-white/40"></div>
         
         <template v-if="!showDistribution3D">
           <!-- CALENDAR MODE TOGGLE -->
           <button @click="showCalendarMode = !showCalendarMode" 
-                  class="group relative flex items-center justify-center w-10 h-10 nier-text-primary transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  :class="showCalendarMode ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
+                  class="group relative flex items-center justify-center w-10 h-10 text-white transition-all border hover:border-white/10 hover:bg-white/5"
+                  :class="showCalendarMode ? 'bg-white/10 opacity-100 border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <div class="absolute right-full mr-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
               {{ showCalendarMode ? '[ VIEW_EQUITY_CURVE ]' : '[ VIEW_CALENDAR_MODE ]' }}
             </div>
           </button>
@@ -1104,10 +1104,10 @@
           <!-- WINRATE CURVE TOGGLE -->
           <button v-if="!showCalendarMode"
                   @click="showWinrateCurve = !showWinrateCurve"
-                  class="group relative flex items-center justify-center w-10 h-10 nier-text-primary transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  :class="showWinrateCurve ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
+                  class="group relative flex items-center justify-center w-10 h-10 text-white transition-all border hover:border-white/10 hover:bg-white/5"
+                  :class="showWinrateCurve ? 'bg-white/10 opacity-100 border-white/20' : 'border-transparent opacity-60 hover:opacity-100'">
             <span class="text-[11px] font-black font-mono">%</span>
-            <div class="absolute right-full mr-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
               {{ showWinrateCurve ? '[ HIDE_WINRATE_CURVE ]' : '[ SHOW_WINRATE_CURVE ]' }}
             </div>
           </button>
@@ -1115,22 +1115,22 @@
           <!-- VALUE MODE TOGGLE (only in calendar mode) -->
           <button v-if="showCalendarMode"
                   @click="calendarValueMode = calendarValueMode === 'currency' ? 'percentage' : 'currency'"
-                  class="group relative flex items-center justify-center w-10 h-10 nier-text-primary transition-all border border-transparent opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5">
+                  class="group relative flex items-center justify-center w-10 h-10 text-white transition-all border border-transparent opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5">
             <span class="text-[11px] font-black font-mono">{{ calendarValueMode === 'currency' ? '%' : '$' }}</span>
-            <div class="absolute right-full mr-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
               {{ calendarValueMode === 'currency' ? '[ SHOW_PERCENT ]' : '[ SHOW_CURRENCY ]' }}
             </div>
           </button>
 
           <!-- BENCHMARK / RISK-FREE RATE TOGGLE -->
           <button @click="showBenchmarkCurves = !showBenchmarkCurves"
-                  class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  :class="showBenchmarkCurves ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20 nier-text-primary' : 'border-transparent nier-text-primary opacity-60 hover:opacity-100'">
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border hover:border-white/10 hover:bg-white/5"
+                  :class="showBenchmarkCurves ? 'bg-white/10 opacity-100 border-white/20 text-white' : 'border-transparent text-white opacity-60 hover:opacity-100'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
               <path d="M2 17L6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
             </svg>
-            <div class="absolute right-full mr-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
               {{ showBenchmarkCurves ? '[ HIDE_BENCHMARKS ]' : '[ SHOW_BENCHMARKS ]' }}
             </div>
           </button>
@@ -1139,12 +1139,12 @@
         <template v-else-if="showDistribution3D && !showRobustnessHistogram && !showQQPlot">
           <!-- NORMAL DIST TOGGLE -->
           <button @click="showRobustnessNormalDist = !showRobustnessNormalDist; if (showRobustnessNormalDist) showRobustnessTDist = false"
-                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  :class="showRobustnessNormalDist ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5"
+                  :class="showRobustnessNormalDist ? 'bg-white/10 opacity-100 border-white/20' : ''">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
               <path d="M4 16c2-4 4-8 8-8s6 4 8 8" stroke-dasharray="3,3" />
             </svg>
-            <div class="absolute right-full mr-3 px-3 py-1.5 nier-bg-inverted nier-text-primary text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20 dark:border-black/20">
+            <div class="absolute right-full mr-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
               {{ showRobustnessNormalDist ? '[ HIDE_NORMAL_DIST ]' : '[ SHOW_NORMAL_DIST ]' }}
             </div>
           </button>
