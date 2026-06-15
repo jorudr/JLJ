@@ -1583,7 +1583,7 @@ const strategyExecutionMetrics = computed(() => {
     </button>
 
     <ExPanel class="h-full w-full" title="" telemetry="" variant="light" noPadding>
-    <div v-if="isInitializing" class="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-white/80 dark:bg-[#070707]/80 backdrop-blur-md z-50 nier-text-primary">
+    <div v-if="isInitializing" class="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-[#e8e0d3]/90 dark:bg-[#070707]/80 backdrop-blur-md z-50 nier-text-primary">
       <div class="w-12 h-12 border-t-2 border-r-2 border-black dark:border-white rounded-full animate-spin"></div>
       <div class="flex flex-col items-center space-y-1">
         <span class="text-xs font-mono font-black uppercase tracking-[0.4em] opacity-80">Loading_Matrix_Data</span>

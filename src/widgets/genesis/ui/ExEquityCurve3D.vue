@@ -550,7 +550,7 @@
           
           <!-- SIDE-MOUNTED CLOSE TAB -->
           <button @click="selectedDeepDiveMetricKey = null"
-                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#F9F6F0] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
+                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#e8e0d3] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
              <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
              <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Description</span>
           </button>
@@ -629,7 +629,7 @@
           
           <!-- SIDE-MOUNTED CLOSE TAB -->
           <button @click="showAddModal = false"
-                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#F9F6F0] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
+                  class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#e8e0d3] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
              <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
              <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Archive</span>
           </button>
@@ -717,7 +717,7 @@
             <div class="w-full max-w-4xl relative">
               <!-- SIDE-MOUNTED CLOSE TAB -->
               <button @click="showWinrateMenu = false"
-                      class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#F9F6F0] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
+                      class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-[#e8e0d3] dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
                  <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
                  <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Menu</span>
               </button>
@@ -7019,8 +7019,8 @@ const update = () => {
       const isHovered = hoveredMetricIndex.value === i
       const metricTone = getMetricToneColor(cfg, mVals)
       ctx.fillStyle = isHovered 
-        ? (isDark ? `rgba(255, 255, 255, 0.12)` : `rgba(0, 0, 0, 0.08)`)
-        : (isDark ? `rgba(15, 15, 15, ${0.75 * depthAlpha})` : `rgba(255, 255, 255, ${0.85 * depthAlpha})`)
+        ? (isDark ? `rgba(255, 255, 255, 0.12)` : `rgba(10, 10, 10, 0.9)`)
+        : (isDark ? `rgba(15, 15, 15, ${0.75 * depthAlpha})` : `rgba(10, 10, 10, ${0.8 * depthAlpha})`)
       ctx.fill()
       
       if (isEditMode.value && dragTargetIndex.value === i && draggingMetricIndex.value !== null) {
@@ -7049,7 +7049,7 @@ const update = () => {
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)'
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'
       ctx.font = 'bold 45px monospace'
       ctx.fillText(cfg.label.replace('_', ' '), 0, -65)
       
@@ -7071,7 +7071,7 @@ const update = () => {
       ctx.font = `bold ${Math.round(baseFontSize * 10)}px monospace`
       ctx.fillText(valString, 0, 40)
       
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'
       ctx.font = '30px monospace'
       ctx.fillText(cfg.sub, 0, 130)
 
