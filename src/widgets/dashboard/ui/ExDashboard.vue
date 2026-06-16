@@ -105,7 +105,7 @@
                   v-if="userMenuOpen"
                   ref="menuRef"
                   :style="menuStyle"
-                  class="fixed z-[9999] min-w-[200px] border border-theme-border bg-theme-bg shadow-[0_16px_40px_rgba(0,0,0,0.4)]"
+                  class="fixed z-[9999] min-w-[200px] border border-theme-border bg-theme-bg shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
                 >
                   <!-- User info strip -->
                   <div class="px-5 py-3 border-b border-theme-border">
@@ -139,19 +139,6 @@
               </Transition>
             </Teleport>
           </div>
-
-          <!-- Report Feature -->
-          <button
-            @click="navigateTo('/report')"
-            class="opacity-40 hover:opacity-100 hover:text-red-400 transition-all duration-300"
-            title="Submit a report"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </button>
 
           <!-- Theme Toggle -->
           <!-- <button
