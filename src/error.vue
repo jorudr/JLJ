@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F9F6F0] bg-center bg-cover dark:bg-none dark:bg-[#050505]">
+  <div class="min-h-screen flex flex-col bg-[#FFFFFF] bg-center bg-cover dark:bg-none dark:bg-[#050505]">
   
     
     <main class="flex-grow flex flex-col items-center justify-center text-center px-4">

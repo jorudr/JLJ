@@ -156,7 +156,7 @@
       <MatrixDrawingPanel :drawing="drawing" />
 
       <!-- BOOT OVERLAY -->
-      <MatrixBootOverlay :is-initializing="boot.isInitializing.value" :boot-progress="boot.bootProgress.value" />
+      <MatrixBootOverlay :is-initializing="boot.isInitializing.value" :boot-progress="boot.bootProgress.value" :is-dark="isDark" />
 
       <!-- FLOATING TOOLTIP -->
       <Teleport to="body">

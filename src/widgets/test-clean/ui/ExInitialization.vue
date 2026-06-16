@@ -1,9 +1,11 @@
 <template>
   <div
-    class="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden theme-surface nier-text-primary"
-    :class="isDark ? 'is-dark' : ''"
+    class="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden ethereal-void theme-surface nier-text-primary"
+    :class="[isDark ? 'is-dark dark theme-dark' : 'theme-light']"
     style="font-family: 'Cormorant Garamond', serif;"
   >
+    <!-- Ethereal Background -->
+    <EtherealBackground :is-dark="isDark" :is-assembled="phase === 'ready'" :show-bloom="false" />
     <!-- Background Ambience -->
     <!-- <div class="absolute inset-0 opacity-20 pointer-events-none">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--theme-text)_0%,transparent_70%)] opacity-5"></div>
@@ -212,6 +214,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import pkg from '../../../../package.json'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {

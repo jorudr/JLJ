@@ -52,7 +52,7 @@
       <ExNTtooltip>
         <template #trigger>
           <div class="relative w-16 h-16 border flex items-center justify-center cursor-pointer transition-all duration-500 group/node nier-border-primary hover:border-black dark:hover:border-white shadow-[0_0_40px_rgba(0,0,0,0.05)] backdrop-blur-md"
-               :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'"
+               :class="isRootHighlighted ? 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]' : 'bg-[#ffffff] dark:bg-[#0a0a0a]'"
                @pointerdown.stop>
             <div v-if="!isHeatmapActive" class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border border-white/70 bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.35)]"></div>
             <div class="absolute left-1 top-1 h-1.5 w-1.5 border-l border-t transition-colors duration-500"
@@ -387,7 +387,7 @@
            @pointerdown.stop
            @pointermove.stop
            @click.stop>
-        <button class="absolute -left-6 top-1/2 flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-l border-b border-black/20 dark:border-white/20 bg-[#F9F6F0] dark:bg-[#070707] transition-colors hover:bg-black/5 dark:hover:bg-[#111] group/node-detail"
+        <button class="absolute -left-6 top-1/2 flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-l border-b border-black/20 dark:border-white/20 bg-[#FFFFFF] dark:bg-[#070707] transition-colors hover:bg-black/5 dark:hover:bg-[#111] group/node-detail"
                 @click="closeSelectedTreeNode">
           <div class="h-16 w-[1px] bg-black/10 dark:bg-white/10 transition-all duration-300 group-hover/node-detail:bg-black/40 dark:group-hover/node-detail:bg-white/40"></div>
           <span class="absolute -rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-black/10 dark:text-white/10 transition-colors group-hover/node-detail:text-black/40 dark:group-hover/node-detail:text-white/40">
@@ -651,10 +651,10 @@ const heatmapButtonClass = (_mode: string) => {
 const nodeSurfaceClass = (node: any) => {
   if (isNodeHighlighted(node)) return 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
   if ((node?.treeKey || node?.id) === selectedTreeNodeKey.value) {
-    return `${getHeatmapClass(node) || 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'} !border-white`
+    return `${getHeatmapClass(node) || 'bg-[#ffffff] dark:bg-[#0a0a0a]'} !border-white`
   }
 
-  return getHeatmapClass(node) || 'bg-[#dcd4c8] dark:bg-[#0a0a0a]'
+  return getHeatmapClass(node) || 'bg-[#ffffff] dark:bg-[#0a0a0a]'
 }
 
 const tradePnlClass = (trade: any) => {

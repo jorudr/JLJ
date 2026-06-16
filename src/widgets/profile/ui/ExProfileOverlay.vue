@@ -176,85 +176,6 @@
                   </div>
                 </div>
 
-                <div class="space-y-4 pt-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-40">{{ locale === 'ru' ? 'Фоновое изображение' : 'Background image' }}</span>
-                    <span class="text-[8px] font-mono uppercase tracking-[0.25em] opacity-30">{{ locale === 'ru' ? 'Загрузка' : 'Upload' }}</span>
-                  </div>
-
-                  <label class="block border nier-border-primary bg-black/[0.03] dark:bg-white/[0.03] px-4 py-4 cursor-pointer hover:border-black/30 dark:hover:border-white/30 transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleBackgroundUpload"
-                    />
-                    <div class="flex items-center justify-between gap-4">
-                      <div class="flex flex-col space-y-1 min-w-0">
-                        <span class="text-[10px] font-mono uppercase tracking-[0.3em] nier-text-primary font-black">{{ locale === 'ru' ? 'Выбрать изображение' : 'Choose image' }}</span>
-                        <span class="text-[8px] font-mono uppercase tracking-[0.25em] opacity-35 truncate">
-                          {{ backgroundFileName || (locale === 'ru' ? 'Файл не выбран' : 'No file selected') }}
-                        </span>
-                      </div>
-                      <span class="px-3 py-1 border nier-border-primary text-[8px] font-mono uppercase tracking-[0.25em] text-black/70 dark:text-white/70 shrink-0">
-                        {{ locale === 'ru' ? 'Обзор' : 'Browse' }}
-                      </span>
-                    </div>
-                  </label>
-
-                  <div class="border nier-border-primary overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
-                    <div class="px-4 py-3 border-b nier-border-primary flex items-center justify-between">
-                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-40">{{ locale === 'ru' ? 'Превью' : 'Preview' }}</span>
-                      <span class="text-[8px] font-mono uppercase tracking-[0.25em] opacity-30">{{ locale === 'ru' ? 'Обои' : 'Wallpaper' }}</span>
-                    </div>
-                    <div class="h-28 bg-cover bg-center bg-[#0a0a0a]" :style="backgroundImageStyle">
-                      <div class="h-full w-full bg-black/35"></div>
-                    </div>
-                  </div>
-
-                  <div class="border nier-border-primary overflow-hidden bg-black/[0.03] dark:bg-white/[0.03] mt-4" v-if="themeStore.settings.bgImage">
-                    <div class="px-4 py-3 border-b nier-border-primary flex items-center justify-between">
-                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] opacity-40">{{ locale === 'ru' ? 'Настройки фона' : 'Background Settings' }}</span>
-                    </div>
-                    <div class="p-4 space-y-5">
-                      <!-- Blur -->
-                      <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                          <label class="text-[9px] font-mono uppercase tracking-[0.3em] nier-text-primary">{{ locale === 'ru' ? 'Размытие' : 'Blur' }}</label>
-                          <span class="text-[9px] font-mono opacity-50">{{ themeStore.settings.bgImageBlur }}px</span>
-                        </div>
-                        <ExSlider :min="0" :max="40" v-model="themeStore.settings.bgImageBlur" @input="themeStore.applyTheme()" @change="themeStore.save()" class="w-full mt-2" />
-                      </div>
-                      
-                      <!-- Zoom -->
-                      <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                          <label class="text-[9px] font-mono uppercase tracking-[0.3em] nier-text-primary">{{ locale === 'ru' ? 'Масштаб' : 'Zoom' }}</label>
-                          <span class="text-[9px] font-mono opacity-50">{{ themeStore.settings.bgImageZoom }}%</span>
-                        </div>
-                        <ExSlider :min="100" :max="150" v-model="themeStore.settings.bgImageZoom" @input="themeStore.applyTheme()" @change="themeStore.save()" class="w-full mt-2" />
-                      </div>
-
-                      <!-- Opacity / Fade -->
-                      <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                          <label class="text-[9px] font-mono uppercase tracking-[0.3em] nier-text-primary">{{ locale === 'ru' ? 'Непрозрачность' : 'Opacity' }}</label>
-                          <span class="text-[9px] font-mono opacity-50">{{ themeStore.settings.bgImageOpacity }}%</span>
-                        </div>
-                        <ExSlider :min="0" :max="100" v-model="themeStore.settings.bgImageOpacity" @input="themeStore.applyTheme()" @change="themeStore.save()" class="w-full mt-2" />
-                      </div>
-
-                      <!-- Brightness -->
-                      <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                          <label class="text-[9px] font-mono uppercase tracking-[0.3em] nier-text-primary">{{ locale === 'ru' ? 'Яркость' : 'Brightness' }}</label>
-                          <span class="text-[9px] font-mono opacity-50">{{ themeStore.settings.bgImageBrightness }}%</span>
-                        </div>
-                        <ExSlider :min="0" :max="200" v-model="themeStore.settings.bgImageBrightness" @input="themeStore.applyTheme()" @change="themeStore.save()" class="w-full mt-2" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </main>
           </div>
@@ -269,7 +190,6 @@ import { computed, ref, onBeforeUnmount, watch } from 'vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useProfile } from '~/widgets/profile/model/useProfile'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import ExSlider from '~/shared/ui/ExSlider.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 
 const themeStore = useThemeStore()
@@ -352,32 +272,7 @@ const appearanceTones = computed(() => [
   { name: locale.value === 'ru' ? 'Мята' : 'Mint', value: '#6ee7b7' }
 ])
 
-const backgroundFileName = ref('')
 
-const backgroundImageStyle = computed(() => ({
-  backgroundImage: themeStore.settings.bgImage ? `url(${themeStore.settings.bgImage})` : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0))',
-  filter: `blur(${themeStore.settings.bgImageBlur}px) brightness(${themeStore.settings.bgImageBrightness / 100})`,
-  opacity: themeStore.settings.bgImageOpacity / 100,
-  transform: `scale(${themeStore.settings.bgImageZoom / 100})`
-}))
-
-const handleBackgroundUpload = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const base64 = e.target?.result as string
-    themeStore.setTheme({
-      bgImage: base64,
-      isImageBg: true,
-      themeName: 'Custom'
-    })
-    backgroundFileName.value = file.name
-  }
-  reader.readAsDataURL(file)
-}
 
 const hydrateProfile = async () => {
   await loadProfile()

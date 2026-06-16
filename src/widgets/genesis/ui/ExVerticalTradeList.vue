@@ -54,7 +54,7 @@
           <Transition name="fade">
             <div
               v-if="openFilterId === filter.id"
-              class="absolute top-full mt-1 w-80 max-w-[calc(100vw-3rem)] bg-[#f3f0e8]/95 dark:bg-[#070707]/95 border border-black/20 dark:border-white/20 shadow-xl backdrop-blur-md p-3 z-50"
+              class="absolute top-full mt-1 w-80 max-w-[calc(100vw-3rem)] bg-white/95 dark:bg-[#070707]/95 border border-black/20 dark:border-white/20 shadow-xl backdrop-blur-md p-3 z-50"
               :class="filter.id === 'profit' || filter.id === 'time' || filter.id === 'duration' ? 'right-0 left-auto' : 'left-0'"
             >
               <div v-if="filter.id !== 'profit'" class="flex items-center justify-between pb-2 border-b nier-border-primary">

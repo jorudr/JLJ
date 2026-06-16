@@ -2,26 +2,26 @@
   <div 
     v-show="!isFullscreen"
     @mousedown="startDrag"
-    class="h-10 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-[99999] transition-colors bg-theme-bg"
+    class="h-10 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-[99999] transition-colors bg-black"
   >
     <div class="flex items-center h-full" @mousedown.stop>
       <div 
         @click="minimize" 
-        class="inline-flex justify-center items-center w-12 h-full hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer transition-colors"
+        class="inline-flex justify-center items-center w-12 h-full hover:bg-white/10 cursor-pointer transition-colors"
       >
-        <Icon name="lucide:minus" class="w-4 h-4 text-[var(--text-heading)]" />
+        <Icon name="lucide:minus" class="w-4 h-4 text-white/90" />
       </div>
       <div 
         @click="toggleFullscreen" 
-        class="inline-flex justify-center items-center w-12 h-full hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer transition-colors"
+        class="inline-flex justify-center items-center w-12 h-full hover:bg-white/10 cursor-pointer transition-colors"
       >
-        <Icon name="lucide:maximize" class="w-3.5 h-3.5 text-[var(--text-heading)]" />
+        <Icon name="lucide:maximize" class="w-3.5 h-3.5 text-white/90" />
       </div>
       <div 
         @click="close" 
         class="inline-flex justify-center items-center w-12 h-full hover:bg-red-500 hover:text-white cursor-pointer group transition-colors"
       >
-        <Icon name="lucide:x" class="w-4 h-4 text-[var(--text-heading)] group-hover:text-white" />
+        <Icon name="lucide:x" class="w-4 h-4 text-white/90 group-hover:text-white" />
       </div>
     </div>
   </div>

@@ -8,7 +8,7 @@
 
     <EtherealBackground :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
     <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
-    <!-- <DesignVignette :is-dark="isDark" /> -->
+    <DesignVignette :is-dark="isDark" />
      <div 
         class="absolute inset-0 opacity-[0.2] transition-opacity duration-1000 theme-grid"
       ></div>

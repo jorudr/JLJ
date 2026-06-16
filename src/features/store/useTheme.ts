@@ -24,10 +24,10 @@ export interface ThemeSettings {
 const DEFAULT_THEME: ThemeSettings = {
   headerBg: 'transparent',
   footerBg: 'transparent',
-  contentBg: '#E8E0D3',
+  contentBg: '#FFFFFF',
   isGradient: false,
   gradientAngle: 135,
-  gradientStart: '#E8E0D3',
+  gradientStart: '#FFFFFF',
   gradientEnd: '#e2e8f0',
   themeName: 'Default',
   isDark: false,
@@ -50,7 +50,14 @@ export const useThemeStore = defineStore('theme', {
       const localStr = localStorage.getItem(STORAGE_KEY)
       if (localStr) {
         try {
-          initialSettings = { ...initialSettings, ...JSON.parse(localStr) }
+          const parsed = JSON.parse(localStr)
+          if (parsed.contentBg === '#E8E0D3' || parsed.contentBg === '#e8e0d3' || parsed.contentBg === '#f4f4f2' || parsed.contentBg === '#F9F6F0' || parsed.contentBg === '#f9f6f0') {
+            parsed.contentBg = '#FFFFFF'
+          }
+          if (parsed.gradientStart === '#E8E0D3' || parsed.gradientStart === '#e8e0d3' || parsed.gradientStart === '#f4f4f2' || parsed.gradientStart === '#F9F6F0' || parsed.gradientStart === '#f9f6f0') {
+            parsed.gradientStart = '#FFFFFF'
+          }
+          initialSettings = { ...initialSettings, ...parsed }
         } catch (e) {}
       } else {
         const darkLocal = localStorage.getItem('dark')
@@ -77,7 +84,16 @@ export const useThemeStore = defineStore('theme', {
       this.applyTheme()
 
       const saved = await loadFromDisk<ThemeSettings>(STORAGE_KEY)
+      let needsSave = false
       if (saved) {
+        if (saved.contentBg === '#E8E0D3' || saved.contentBg === '#e8e0d3' || saved.contentBg === '#f4f4f2' || saved.contentBg === '#F9F6F0' || saved.contentBg === '#f9f6f0') {
+          saved.contentBg = '#FFFFFF'
+          needsSave = true
+        }
+        if (saved.gradientStart === '#E8E0D3' || saved.gradientStart === '#e8e0d3' || saved.gradientStart === '#f4f4f2' || saved.gradientStart === '#F9F6F0' || saved.gradientStart === '#f9f6f0') {
+          saved.gradientStart = '#FFFFFF'
+          needsSave = true
+        }
         this.settings = { ...this.settings, ...saved }
       }
 
@@ -96,6 +112,9 @@ export const useThemeStore = defineStore('theme', {
       }
 
       this.applyTheme()
+      if (needsSave) {
+        this.save()
+      }
       this.isLoaded = true
       this.isReady = true
 
@@ -217,12 +236,12 @@ export const useThemeStore = defineStore('theme', {
     },
 
     applyThemeTokens(root: HTMLElement, contentBackground: string, isDark: boolean) {
-      const fallbackBg = isDark ? '#000000' : '#E8E0D3'
+      const fallbackBg = isDark ? '#000000' : '#FFFFFF'
       const themeBg = isDark ? fallbackBg : this.normalizeHexColor(contentBackground, fallbackBg)
       const themePanel = isDark ? '#050505' : themeBg
       const themeText = isDark ? '#F9F6F0' : '#2c2c2a'
       const themeAccent = isDark ? '#c7b98f' : '#8d7f61'
-      const tooltipBg = isDark ? '#0a0a0a' : '#EFE8DC'
+      const tooltipBg = isDark ? '#0a0a0a' : '#F9F9F9'
       const tooltipText = themeText
 
       const bgRgb = this.hexToRgbChannels(themeBg)
@@ -281,7 +300,7 @@ export const useThemeStore = defineStore('theme', {
 
       if (this.settings.themeName === 'Default') {
         const nativeIsDark = this.settings.isDark
-        const contentBg = nativeIsDark ? '#000000' : '#E8E0D3'
+        const contentBg = nativeIsDark ? '#000000' : '#FFFFFF'
         this.settings.contentBg = contentBg
         this.settings.headerBg = 'transparent'
         this.settings.footerBg = 'transparent'
@@ -331,7 +350,7 @@ export const useThemeStore = defineStore('theme', {
       } else if (this.settings.isGradient) {
         const gradient = `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientStart}, ${this.settings.gradientEnd})`
         root.style.setProperty('--content-bg', gradient)
-        this.applyThemeTokens(root, '#E8E0D3', false)
+        this.applyThemeTokens(root, '#FFFFFF', false)
       } else {
         root.style.setProperty('--content-bg', this.settings.contentBg)
         this.applyThemeTokens(root, this.settings.contentBg, false)

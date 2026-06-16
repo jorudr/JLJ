@@ -23,7 +23,7 @@ export default {
                 },
                 'nier': {
                     'black': '#0a0a0a',
-                    'white': '#F9F6F0',
+                    'white': '#FFFFFF',
                     'text': {
                         'light': '#2c2c2a',
                         'dark': '#ffffff'

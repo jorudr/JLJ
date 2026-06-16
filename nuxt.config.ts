@@ -21,6 +21,12 @@ export default defineNuxtConfig({
                 if (themeStr) {
                   try {
                     var theme = JSON.parse(themeStr);
+                    if (theme.contentBg === '#E8E0D3' || theme.contentBg === '#e8e0d3' || theme.contentBg === '#f4f4f2' || theme.contentBg === '#F9F6F0' || theme.contentBg === '#f9f6f0') {
+                      theme.contentBg = '#FFFFFF';
+                    }
+                    if (theme.gradientStart === '#E8E0D3' || theme.gradientStart === '#e8e0d3' || theme.gradientStart === '#f4f4f2' || theme.gradientStart === '#F9F6F0' || theme.gradientStart === '#f9f6f0') {
+                      theme.gradientStart = '#FFFFFF';
+                    }
                     if (theme.themeMode === 'dark') isDark = true;
                     else if (theme.themeMode === 'light') isDark = false;
                     else if (theme.themeMode === 'system') {

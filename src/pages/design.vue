@@ -1439,7 +1439,7 @@ const getDiaryHeatmapFontClasses = (trade: any) => {
 }
 
 .theme-light {
-  --theme-bg: #f4f4f2; /* Nier-style aged paper/light gray */
+  --theme-bg: #FFFFFF; /* Snow white */
   --theme-text: #2c2c2a;
   --theme-border: rgba(0, 0, 0, 0.1);
   --theme-border-strong: rgba(0, 0, 0, 0.25);
