@@ -52,7 +52,6 @@ export type MenuCategory =
   | 'SCALING'
   | 'RISK'
   | 'SYSTEM'
-  | 'CONFIG'
   | 'TEXT_FORMAT'
   | 'SCENARIO_DOCS'
   | 'SCENARIO_VISUALS'
@@ -296,7 +295,6 @@ export function useMatrixState() {
       return 'SCENARIO_DOCS'
     }
     if (node.type === 'text-panel') return 'TEXT_FORMAT'
-    if (node.params?.needsConfig) return 'CONFIG'
     if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
       return 'INDICATORS'
     } else if (node.type === 'emotion') {
@@ -316,6 +314,11 @@ export function useMatrixState() {
       ? { type: typeOrConfig, label: typeOrConfig.toUpperCase(), params: {} }
       : typeOrConfig;
       
+    const params = config.params ? { ...config.params } : {}
+    if (config.description && !params.description) {
+      params.description = config.description
+    }
+
     const newNode: Node = {
       id: 'node-' + Math.random().toString(36).substr(2, 9),
       label: config.label || 'NODE',
@@ -323,7 +326,7 @@ export function useMatrixState() {
       x: config.x !== undefined ? config.x : -viewState.value.panX / viewState.value.scale + 100,
       y: config.y !== undefined ? config.y : -viewState.value.panY / viewState.value.scale + 100,
       color: config.color || 'currentColor',
-      params: config.params || {},
+      params: params,
       ...(config.subGraph ? { subGraph: config.subGraph } : {})
     }
     
@@ -429,53 +432,11 @@ export function useMatrixState() {
   }
 
   function mergeNodes(indicatorId: string, configId: string) {
-    const indicator = getNode(indicatorId)
-    const config = getNode(configId)
-    if (!indicator || !config) return
-
-    const originalIndicatorLabel = indicator.label
-    indicator.label = `${indicator.label} + ${config.label}`
-    indicator.params.needsConfig = false
-    
-    delete indicator.params.canMerge
-    delete indicator.params.mergePartnerId
-    delete indicator.params.isIndicatorSide
-
-    indicator.params.description = `${originalIndicatorLabel} : ${config.params.description || 'REIFIED_PROTOCOL'}`
-
-    removeNode(configId)
-    saveMatrixData()
-    selectNode(indicatorId)
+    // Config logic removed
   }
 
   function refreshMergeStatus() {
-    const currentNodes = nodes.value
-    const currentConns = connections.value
-    
-    if (!currentNodes) return
-
-    currentNodes.forEach(node => {
-      if (node.params) {
-        delete node.params.canMerge
-        delete node.params.mergePartnerId
-        delete node.params.isIndicatorSide
-      }
-    })
-
-    currentConns.forEach(conn => {
-      const from = currentNodes.find(n => n.id === conn.fromId)
-      const to = currentNodes.find(n => n.id === conn.toId)
-      
-      if (from?.params?.needsConfig && to?.params?.isConfig) {
-        from.params.canMerge = true
-        from.params.mergePartnerId = to.id
-        from.params.isIndicatorSide = true
-        
-        to.params.canMerge = true
-        to.params.mergePartnerId = from.id
-        to.params.isIndicatorSide = false
-      }
-    })
+    // Config logic removed
   }
 
   const buildLogicalStructure = (parentId: string, allNodes: any[], allConnections: any[]) => {

@@ -14,7 +14,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
-
+import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 const { locale } = useI18n()
 
 const emit = defineEmits(['addTrade', 'updateTrade', 'close'])
@@ -835,7 +835,7 @@ const getScenarioConditions = (scenarioId) => {
   // Helper to get indicator data
   const getIndicatorData = (nodeId, parentCond) => {
      const n = findNodeById(matrixNodes.value, nodeId)
-                    if (!n || n.params?.needsConfig || n.type === 'placeholder') return null
+                    if (!n || n.type === 'placeholder') return null
      
      return {
         id: n.id,
@@ -888,8 +888,8 @@ const getScenarioConditions = (scenarioId) => {
       // Fallback: Just get all indicators connected to this condition flatly
       const indicatorIds = allConnections.filter(c => c.fromId === cond.id).map(c => c.toId)
       const indicators = [
-         ...allNodes.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig && n.type !== 'placeholder'),
-         ...(cond.subGraph?.nodes || []).filter(n => !n.params?.needsConfig && n.type !== 'placeholder')
+         ...allNodes.filter(n => indicatorIds.includes(n.id) && n.type !== 'placeholder'),
+         ...(cond.subGraph?.nodes || []).filter(n => n.type !== 'placeholder')
       ]
       
       indicators.forEach(i => {
@@ -1865,7 +1865,7 @@ const submit = async () => {
   <div ref="scrollContainer" 
        class="flex flex-col items-center h-full w-full overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-theme-bg nier-text-primary"
         :class="{ dark: isDark }">
-    
+     <DesignVignette :is-dark="isDark" />
     <!-- CME Metadata Notice Backdrop -->
     <Transition name="fade">
       <div v-if="currentAssetData?.contractSize && showCmeNotice" 

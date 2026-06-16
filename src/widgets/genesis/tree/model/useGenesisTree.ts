@@ -580,7 +580,7 @@ export const useGenesisTree = () => {
 
     const pushNode = (node: any) => {
       if (!node || !node.id) return
-      if (node.type === 'placeholder' || node.params?.needsConfig) return
+      if (node.type === 'placeholder') return
       if (node.id === conditionId) return
       collected.push(node)
     }

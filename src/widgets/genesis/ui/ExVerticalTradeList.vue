@@ -1315,7 +1315,7 @@ const getScenarioConditions = (scenarioId: string) => {
                subNodes.find((node: any) => node.id === nodeId) ||
                (parentCond.subGraph?.nodes || []).find((node: any) => node.id === nodeId)
                
-     if (!n || n.params?.needsConfig) return null
+     if (!n || n.type === 'placeholder') return null
      
      return {
         id: n.id,
@@ -1369,9 +1369,9 @@ const getScenarioConditions = (scenarioId: string) => {
         ...subConns.filter((c: any) => c.fromId === cond.id).map((c: any) => c.toId)
       ]
       const indicators = [
-        ...matrixNodes.value.filter(n => indicatorIds.includes(n.id) && !n.params?.needsConfig),
-        ...subNodes.filter((n: any) => indicatorIds.includes(n.id) && !n.params?.needsConfig),
-        ...(cond.subGraph?.nodes || []).filter((n: any) => !n.params?.needsConfig)
+        ...matrixNodes.value.filter(n => indicatorIds.includes(n.id)),
+        ...subNodes.filter((n: any) => indicatorIds.includes(n.id)),
+        ...(cond.subGraph?.nodes || [])
       ]
       
       indicators.forEach(i => {

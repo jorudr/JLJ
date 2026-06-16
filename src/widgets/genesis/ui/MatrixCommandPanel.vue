@@ -132,25 +132,7 @@
               </div>
           </div>
 
-          <!-- CONFIG TOOLS -->
-          <div v-if="state.activeMenuCategory.value === 'CONFIG' && !state.isScenarioContext.value" class="flex flex-col items-center pointer-events-auto px-4 w-full pt-4 pb-4">
-              <div class="flex flex-col items-center space-y-4">
-                 <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">{{ locale === 'ru' ? 'Требуется_Протокол_Конфигурации' : 'Configuration_Protocol_Required' }}</span>
-                 <div class="w-12 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-                 
-                 <ExButton @click="menu.isConfigSetterOpen.value = true" variant="ghost" class="w-12 h-12 border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
-                    <span class="text-[20px] font-black">+</span>
-                 </ExButton>
-                 
-                 <span class="text-[7px] font-mono tracking-widest uppercase opacity-20">{{ locale === 'ru' ? 'Создать_Новый_Набор_Конфигурации' : 'Initialize_New_Configuration_Set' }}</span>
-              </div>
 
-              <!-- Config Setter Component -->
-              <ExConfigSetter :is-open="menu.isConfigSetterOpen.value" 
-                               :color="state.effectiveSelectedNode.value?.params?.color || undefined"
-                               @close="menu.isConfigSetterOpen.value = false"
-                               @create="menu.handleCreateConfig" />
-          </div>
 
           <!-- EMOTIONS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'EMOTIONS' && !state.isScenarioContext.value" class="flex flex-col items-center pointer-events-auto px-4 w-full">
@@ -752,9 +734,8 @@ function shouldShowCommandCategory(category: MenuCategory) {
   if (props.state.isScenarioContext.value) return scenarioCommandCategories.includes(category)
   const selected = props.state.effectiveSelectedNode.value
   return (
-    (category !== 'INDICATORS' && category !== 'EMOTIONS' && category !== 'SCALING' && category !== 'RISK' && category !== 'CONFIG') ||
-    (!!selected && ['condition', 'indicator', 'pattern', 'smc'].includes(selected.type || '') && category === 'INDICATORS' && !selected.params?.needsConfig) ||
-    (!!selected && selected.params?.needsConfig && category === 'CONFIG') ||
+    (category !== 'INDICATORS' && category !== 'EMOTIONS' && category !== 'SCALING' && category !== 'RISK') ||
+    (!!selected && ['condition', 'indicator', 'pattern', 'smc'].includes(selected.type || '') && category === 'INDICATORS') ||
     (!!selected && (selected.type === 'emotion' || selected.type === 'emotion-state') && category === 'EMOTIONS') ||
     (!!selected && (selected.type === 'pyramiding' || selected.type === 'averaging') && category === 'SCALING') ||
     (!!selected && selected.type === 'risk' && category === 'RISK')

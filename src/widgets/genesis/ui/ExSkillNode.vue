@@ -36,14 +36,14 @@
                  ),
                  (node.type === 'image' || node.type === 'step' || node.type === 'scaling-entry' || isRiskPanel) ? 'border-none shadow-none' : ''
                ]"
-               :style="node.params?.needsConfig ? {} : (displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {})"
+               :style="displayColor ? { borderColor: displayColor, boxShadow: isSelected ? `0 0 60px ${displayColor}40` : `0 0 30px ${displayColor}20` } : {}"
                @dblclick.stop="$emit('doubleclick')">
 
              <!-- Separate Background Layer -->
              <div class="absolute inset-0 pointer-events-none -z-10 transition-colors duration-500"
                   :class="[
                     (node.type === 'step' || node.type === 'scaling-entry') ? 'rounded-full bg-nier-text-light dark:bg-nier-text-dark' : 'bg-nier-white/10 dark:bg-nier-black/10',
-                    node.params?.needsConfig ? 'needs-config-pulse !bg-red-500/10' : '',
+                    '',
                     node.type === 'image' ? '!bg-transparent' : '',
                     isRiskPanel ? '!bg-transparent' : '',
                     node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
@@ -516,7 +516,7 @@
           <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
              <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
              <span v-if="node.type === 'condition'">{{ locale === 'ru' ? 'ПРИОРИТЕТ' : 'PRIORITY' }}: {{ node.params?.priority === 'REQUIRED' ? (locale === 'ru' ? 'ОБЯЗАТЕЛЬНО' : 'REQUIRED') : node.params?.priority === 'ADDITIONAL' ? (locale === 'ru' ? 'ДОПОЛНИТЕЛЬНО' : 'ADDITIONAL') : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
-             <span>{{ locale === 'ru' ? 'СТАТУС' : 'STATUS' }}: {{ node.params?.needsConfig ? (locale === 'ru' ? 'ОЖИДАЕТ_НАСТРОЙКИ' : 'AWAITING_REIFICATION') : (locale === 'ru' ? 'АКТИВИРОВАНО' : 'REIFIED') }}</span>
+             <span>{{ locale === 'ru' ? 'СТАТУС' : 'STATUS' }}: {{ locale === 'ru' ? 'АКТИВИРОВАНО' : 'REIFIED' }}</span>
            </div>
         </div>
      </ExNTtooltip>

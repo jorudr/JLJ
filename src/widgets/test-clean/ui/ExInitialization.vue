@@ -11,7 +11,7 @@
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--theme-text)_0%,transparent_70%)] opacity-5"></div>
       <div class="absolute top-0 left-0 w-full h-full bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.5)_100%)]"></div>
     </div> -->
-
+    <DesignVignette :is-dark="isDark" />
     <!-- Scan line -->
     <div class="absolute inset-0 pointer-events-none opacity-[0.23] overflow-hidden">
       <div class="w-full h-px nier-bg-inverted animate-scan"></div>
@@ -230,6 +230,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { auth as firebaseAuth, db } from '~/shared/firebase.client'
 import { useThemeStore } from '~/features/store/useTheme'
+import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 const emit = defineEmits(['initiate'])
 const { locale } = useI18n()

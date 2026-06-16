@@ -124,21 +124,7 @@
          </div>
       </div>
 
-      <!-- CONFIGURATION WARNING BANNER -->
-      <Transition name="slide-down">
-        <div v-if="state.effectiveSelectedNode.value?.params?.needsConfig"
-             class="absolute top-12 left-1/2 -translate-x-1/2 z-[200] pointer-events-none"
-             style="animation: config-banner-pulse 2s ease-in-out infinite;">
-          <div class="tactical-corners relative flex items-center justify-center gap-4 px-6 py-3 bg-red-600 border-2 border-red-500 shadow-[0_10px_40px_rgba(239,68,68,0.45)] min-w-max">
-            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-scan-h pointer-events-none overflow-hidden"></div>
-            <div class="w-2 h-2 bg-white rotate-45 flex-shrink-0 animate-pulse"></div>
-            <span class="text-[11px] font-mono font-black tracking-[0.4em] -mr-[0.4em] text-white uppercase whitespace-nowrap">
-              INDICATOR_REQUIRES_CONFIGURATION — SELECT CONFIG TAB BELOW
-            </span>
-            <div class="w-2 h-2 bg-white rotate-45 flex-shrink-0 animate-pulse"></div>
-          </div>
-        </div>
-      </Transition>
+
 
       <!-- COMMAND PANEL (HUD bottom) -->
       <MatrixCommandPanel :state="state" :menu="menu" :audio="audio" :active-tab="activeTab" :is-dark="isDark" 
