@@ -134,7 +134,6 @@ const close = async () => {
       rgb(var(--theme-bg-rgb) / 0.12) 62%,
       transparent
     );
-  border-bottom: 1px solid rgb(var(--theme-border-rgb) / 0.12);
   backdrop-filter: blur(10px) saturate(130%);
   -webkit-backdrop-filter: blur(10px) saturate(130%);
 }
