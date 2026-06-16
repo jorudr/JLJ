@@ -117,11 +117,11 @@ onUnmounted(() => {
 :root {
   --header-bg: transparent;
   --footer-bg: transparent;
-  --content-bg: #E8E0D3;
-  --theme-bg: #E8E0D3;
-  --theme-bg-rgb: 232 224 211;
-  --theme-panel: rgba(232, 224, 211, 0.92);
-  --theme-panel-rgb: 232 224 211;
+  --content-bg: #FFFFFF;
+  --theme-bg: #FFFFFF;
+  --theme-bg-rgb: 255 255 255;
+  --theme-panel: rgba(255, 255, 255, 0.92);
+  --theme-panel-rgb: 255 255 255;
   --theme-text: #2c2c2a;
   --theme-text-rgb: 44 44 42;
   --theme-muted: rgba(44, 44, 42, 0.58);
@@ -131,7 +131,7 @@ onUnmounted(() => {
   --theme-accent: #8d7f61;
   --theme-accent-rgb: 141 127 97;
   --theme-grid-dot: rgba(44, 44, 42, 0.24);
-  --theme-tooltip-bg: #EFE8DC;
+  --theme-tooltip-bg: #F9F9F9;
   --theme-tooltip-text: #2c2c2a;
   --theme-tooltip-muted: rgba(44, 44, 42, 0.62);
   --theme-tooltip-border: rgba(44, 44, 42, 0.18);
@@ -298,7 +298,7 @@ html.dark body {
 }
 
 .theme-tooltip-light {
-  --theme-tooltip-bg: #EFE8DC;
+  --theme-tooltip-bg: #F9F9F9;
   --theme-tooltip-text: #2c2c2a;
   --theme-tooltip-muted: rgba(44, 44, 42, 0.62);
   --theme-tooltip-border: rgba(44, 44, 42, 0.18);

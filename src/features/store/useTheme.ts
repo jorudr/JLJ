@@ -43,9 +43,25 @@ const STORAGE_KEY = 'user_theme_settings_v1'
 
 export const useThemeStore = defineStore('theme', {
   state: () => {
-    const isDark = typeof window !== 'undefined' ? localStorage.getItem('dark') === 'true' : false
+    let initialSettings = { ...DEFAULT_THEME }
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem(STORAGE_KEY)
+      if (localStr) {
+        try {
+          initialSettings = { ...initialSettings, ...JSON.parse(localStr) }
+        } catch (e) {}
+      } else {
+        const darkLocal = localStorage.getItem('dark')
+        if (darkLocal !== null) {
+          initialSettings.isDark = darkLocal === 'true'
+          initialSettings.themeMode = initialSettings.isDark ? 'dark' : 'light'
+        } else {
+          initialSettings.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        }
+      }
+    }
     return {
-      settings: { ...DEFAULT_THEME, isDark } as ThemeSettings,
+      settings: initialSettings as ThemeSettings,
       isLoaded: false,
       isReady: false
     }
@@ -140,6 +156,9 @@ export const useThemeStore = defineStore('theme', {
     },
 
     async save() {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings))
+      }
       await saveToDisk(STORAGE_KEY, this.settings)
     },
 
