@@ -8,9 +8,10 @@
       v-if="themeStore.settings.isImageBg && themeStore.settings.bgImage"
       class="fixed inset-0 pointer-events-none transition-all duration-[800ms] ease-in-out bg-center bg-cover"
       :style="{ 
-        backgroundImage: 'var(--bg-image)', 
-        filter: 'blur(var(--bg-image-blur)) brightness(var(--bg-image-brightness))',
-        opacity: 'var(--bg-image-opacity)',
+        backgroundImage: `url('${themeStore.settings.bgImage}')`, 
+        filter: `blur(${themeStore.settings.bgImageBlur}px) brightness(${themeStore.settings.bgImageBrightness / 100})`,
+        opacity: themeStore.settings.bgImageOpacity / 100,
+        transform: `scale(${themeStore.settings.bgImageZoom / 100})`,
         zIndex: 0
       }"
     ></div>

@@ -17,6 +17,7 @@ export interface ThemeSettings {
   bgImageBlur: number
   bgImageOpacity: number
   bgImageBrightness: number
+  bgImageZoom: number
   isImageBg: boolean
 }
 
@@ -36,6 +37,7 @@ const DEFAULT_THEME: ThemeSettings = {
   bgImageBlur: 0,
   bgImageOpacity: 50,
   bgImageBrightness: 100,
+  bgImageZoom: 100,
   isImageBg: false
 }
 
@@ -157,7 +159,11 @@ export const useThemeStore = defineStore('theme', {
 
     async save() {
       if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings))
+        try {
+          // Omit bgImage from localStorage to prevent QuotaExceededError (5MB limit)
+          const { bgImage, ...minimalSettings } = this.settings
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalSettings))
+        } catch (e) {}
       }
       await saveToDisk(STORAGE_KEY, this.settings)
     },
@@ -253,16 +259,12 @@ export const useThemeStore = defineStore('theme', {
       const root = document.documentElement
 
       // Apply Background Image Layer (Universal)
-      if (this.settings.isImageBg && this.settings.bgImage) {
-        root.style.setProperty('--bg-image', `url(${this.settings.bgImage})`)
-        root.style.setProperty('--bg-image-blur', `${this.settings.bgImageBlur}px`)
-        root.style.setProperty('--bg-image-opacity', `${this.settings.bgImageOpacity / 100}`)
-        root.style.setProperty('--bg-image-brightness', `${this.settings.bgImageBrightness / 100}`)
-      } else {
+      if (!this.settings.isImageBg || !this.settings.bgImage) {
         root.style.removeProperty('--bg-image')
         root.style.removeProperty('--bg-image-blur')
         root.style.removeProperty('--bg-image-opacity')
         root.style.removeProperty('--bg-image-brightness')
+        root.style.removeProperty('--bg-image-zoom')
       }
 
       // Resolve isDark dynamically based on themeMode
