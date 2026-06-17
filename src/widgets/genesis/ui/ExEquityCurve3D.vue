@@ -1166,97 +1166,13 @@
     </div>
 
     <!-- CALENDAR OVERLAY -->
-    <Transition name="fade">
-      <div v-if="showCalendarMode" class="absolute inset-0 z-[100] bg-theme-bg pointer-events-auto flex flex-col font-mono nier-text-primary">
-        <div class="relative flex flex-col items-center h-full pt-24 pb-8 px-12 w-full max-w-4xl mx-auto">
-          <!-- CALENDAR HEADER -->
-          <div class="flex-shrink-0 flex items-center justify-center w-full mb-6 border-b nier-border-primary pb-6">
-            <h2 class="text-3xl font-black tracking-[0.2em] uppercase">{{ currentCalendarMonthName }}</h2>
-          </div>
-
-          <!-- CALENDAR GRID -->
-          <div class="w-full flex-1 min-h-0 flex flex-col">
-            <div class="flex-shrink-0 grid grid-cols-7 gap-4 mb-4 text-center text-[10px] uppercase tracking-widest opacity-50">
-              <div v-for="d in calendarDaysOfWeek" :key="d">{{ d }}</div>
-            </div>
-            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2">
-              <div class="grid grid-cols-7 gap-4 pb-4">
-                <div v-for="(day, idx) in calendarDays" :key="idx" 
-                   class="calendar-day-cell relative aspect-square border transition-all duration-300"
-                   :class="[
-                     !day.isInMonth ? 'border-transparent bg-transparent' : 
-                     day.tradesCount === 0 ? 'border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5' :
-                     day.pnl > 0 ? 'border-black/30 dark:border-white/30 bg-black/10 dark:bg-white/10' :
-                     day.pnl < 0 ? 'border-red-500/30 bg-red-500/10' :
-                     'border-yellow-500/30 bg-yellow-500/10'
-                   ]"
-                   @mouseenter="showCalendarDayTooltip($event, day)"
-                   @mousemove="moveCalendarDayTooltip($event, day)"
-                   @mouseleave="hideCalendarDayTooltip">
-                <template v-if="day.isInMonth">
-                  <div class="absolute top-2 right-2 text-[10px] opacity-40 font-bold" :class="{ 'nier-text-primary opacity-100': day.isToday }">{{ day.dayNum }}</div>
-                  
-                  <div v-if="day.tradesCount > 0" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span class="calendar-day-result font-black"
-                          :title="formatCalendarDayValue(day)"
-                          :class="day.pnl > 0 ? 'nier-text-primary' : day.pnl < 0 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'">
-                      {{ formatCalendarDayValue(day) }}
-                    </span>
-                    <span class="text-[9px] uppercase tracking-widest opacity-50 mt-1">{{ day.tradesCount }} TRADES</span>
-                  </div>
-                </template>
-              </div>
-            </div>
-            </div>
-          </div>
-
-          <!-- CALENDAR FOOTER -->
-          <div class="flex-shrink-0 flex items-center justify-center w-full mt-6">
-            <!-- Pagination — centered -->
-            <div class="flex items-center space-x-2">
-              <button @click="prevCalendarMonth" 
-                      class="w-7 h-7 flex items-center justify-center border border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-20"
-                      :disabled="currentCalendarMonthIndex <= 0">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-              </button>
-              <button @click="nextCalendarMonth" 
-                      class="w-7 h-7 flex items-center justify-center border border-black/20 dark:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-20"
-                      :disabled="currentCalendarMonthIndex >= calendarMonthsList.length - 1">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <Teleport to="body">
-      <Transition name="tooltip-dist-fade">
-        <div v-if="hoveredCalendarDayTooltip"
-             class="theme-tooltip-panel fixed z-[2147483647] pointer-events-none border px-5 py-4 min-w-[240px] shadow-[0_12px_30px_rgba(0,0,0,0.22)]"
-             :style="{ left: hoveredCalendarDayTooltip.x + 'px', top: hoveredCalendarDayTooltip.y + 'px' }">
-          <div class="flex items-center justify-between mb-3 pb-2 border-b border-black/10 dark:border-white/10">
-            <div class="text-[10px] font-mono uppercase tracking-[0.32em] opacity-40">{{ hoveredCalendarDayTooltip.date }}</div>
-            <div class="text-[13px] font-mono font-black tracking-[0.12em] whitespace-nowrap ml-4"
-                 :class="hoveredCalendarDayTooltip.pnl > 0 ? 'nier-text-primary' : hoveredCalendarDayTooltip.pnl < 0 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'">
-              {{ hoveredCalendarDayTooltip.value }}
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <div v-for="(trade, idx) in hoveredCalendarDayTooltip.trades" :key="idx"
-                 class="flex items-center justify-between text-[11px] font-mono gap-4">
-              <div class="flex items-center space-x-3">
-                <span class="opacity-40">{{ new Date(trade.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
-                <span class="opacity-80 font-bold">{{ trade.asset || 'UNKNOWN' }}</span>
-              </div>
-              <span class="font-black whitespace-nowrap" :class="(trade.profitInCurrency || 0) > 0 ? 'text-emerald-500' : (trade.profitInCurrency || 0) < 0 ? 'text-rose-500' : 'text-white'">
-                {{ (trade.profitInCurrency || 0) > 0 ? '+' : '' }}{{ (trade.profitInCurrency || 0).toFixed(2) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ExCalendarMode 
+      v-if="showCalendarMode"
+      :trades="getFilteredTrades()"
+      :initial-deposit="props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId) || 10000"
+      :value-mode="calendarValueMode"
+      :locale="locale"
+    />
 
     <Teleport to="body">
       <Transition name="page-reify">
@@ -1309,6 +1225,7 @@ import ExTooltip from '~/shared/ui/ExTooltip.vue'
 import ExEquityCurveSimulator from './ExEquityCurveSimulator.vue'
 import ExPaywallOverlay from './ExPaywallOverlay.vue'
 import ExBrokerConnectPanel from '~/widgets/broker-connect/ui/ExBrokerConnectPanel.vue'
+import ExCalendarMode from './components/ExCalendarMode.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { SP500_BENCHMARK_RATE } from '~/shared/constants'
@@ -1649,9 +1566,7 @@ const selectedWinrateTarget = computed(() => {
   if (!selectedWinrateNodeId.value) return null
   return winrateMenuNodes.value.find(node => node.id === selectedWinrateNodeId.value) || null
 })
-const currentCalendarMonthStr = ref('') // Format: 'YYYY-MM'
 const calendarValueMode = ref<'currency' | 'percentage'>('currency')
-const hoveredCalendarDayTooltip = ref<{ x: number; y: number; value: string; date: string; pnl: number, trades: any[] } | null>(null)
 
 const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.length >= 20)
 
@@ -7602,174 +7517,6 @@ onMounted(() => {
   void hydrateData().catch(err => {
     console.error('[ExEquityCurve3D] Failed to hydrate deferred data:', err)
   })
-})
-
-// --- CALENDAR DAY BLOCKS LOGIC ---
-
-interface CalendarDay {
-  dateStr: string
-  dayNum: number
-  pnl: number
-  pnlPercent: number
-  tradesCount: number
-  isToday: boolean
-  isInMonth: boolean
-  trades: any[]
-}
-
-// Group all trades by YYYY-MM
-const calendarMonthsList = computed(() => {
-  const months = new Set<string>()
-  const currentTrades = getFilteredTrades()
-  currentTrades.forEach(trade => {
-    const dVal = trade.dateExit || trade.date
-    const date = dVal instanceof Date ? dVal : new Date(dVal)
-    const ym = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    months.add(ym)
-  })
-  const sorted = Array.from(months).sort()
-  return sorted
-})
-
-watch(calendarMonthsList, (newList) => {
-  if (newList.length > 0 && !currentCalendarMonthStr.value) {
-    currentCalendarMonthStr.value = newList[newList.length - 1]!
-  } else if (newList.length === 0) {
-    currentCalendarMonthStr.value = ''
-  }
-}, { immediate: true })
-
-const currentCalendarMonthIndex = computed(() => {
-  return calendarMonthsList.value.indexOf(currentCalendarMonthStr.value)
-})
-
-const nextCalendarMonth = () => {
-  const idx = currentCalendarMonthIndex.value
-  if (idx < calendarMonthsList.value.length - 1) {
-    currentCalendarMonthStr.value = calendarMonthsList.value[idx + 1]!
-  }
-}
-
-const prevCalendarMonth = () => {
-  const idx = currentCalendarMonthIndex.value
-  if (idx > 0) {
-    currentCalendarMonthStr.value = calendarMonthsList.value[idx - 1]!
-  }
-}
-
-const currentCalendarMonthName = computed(() => {
-  if (!currentCalendarMonthStr.value) {
-    return locale.value === 'ru' ? 'НЕТ ДАННЫХ' : 'NO DATA'
-  }
-  const [y, m] = currentCalendarMonthStr.value.split('-')
-  const date = new Date(parseInt(y!), parseInt(m!) - 1, 1)
-  const loc = locale.value === 'ru' ? 'ru-RU' : 'en-US'
-  return date.toLocaleString(loc, { month: 'long', year: 'numeric' })
-})
-
-const calendarDaysOfWeek = computed(() => {
-  return locale.value === 'ru' 
-    ? ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
-    : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-})
-
-function formatCalendarDayValue(day: CalendarDay) {
-  const sign = day.pnl > 0 ? '+' : ''
-  if (calendarValueMode.value === 'currency') {
-    return `${sign}${day.pnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`
-  }
-  return `${sign}${day.pnlPercent.toFixed(2)}%`
-}
-
-function setCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
-  if (!day.isInMonth || day.tradesCount <= 0) {
-    hoveredCalendarDayTooltip.value = null
-    return
-  }
-  hoveredCalendarDayTooltip.value = {
-    x: event.clientX + 16,
-    y: event.clientY + 16,
-    value: formatCalendarDayValue(day),
-    date: day.dateStr,
-    pnl: day.pnl,
-    trades: day.trades || []
-  }
-}
-
-function showCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
-  setCalendarDayTooltip(event, day)
-}
-
-function moveCalendarDayTooltip(event: MouseEvent, day: CalendarDay) {
-  setCalendarDayTooltip(event, day)
-}
-
-function hideCalendarDayTooltip() {
-  hoveredCalendarDayTooltip.value = null
-}
-
-const calendarDays = computed(() => {
-  if (!currentCalendarMonthStr.value) return []
-  const [y, m] = currentCalendarMonthStr.value.split('-')
-  const year = parseInt(y!)
-  const month = parseInt(m!) - 1
-  
-  // Get trades for this month
-  const currentTrades = getFilteredTrades()
-  const tradesForMonth = currentTrades.filter(trade => {
-    const dVal = trade.dateExit || trade.date
-    const date = dVal instanceof Date ? dVal : new Date(dVal)
-    return date.getFullYear() === year && date.getMonth() === month
-  })
-  
-  // Map day -> stats
-  const dayStats = new Map<number, { pnl: number, count: number, trades: any[] }>()
-  tradesForMonth.forEach(trade => {
-    const dVal = trade.dateExit || trade.date
-    const date = dVal instanceof Date ? dVal : new Date(dVal)
-    const day = date.getDate()
-    
-    if (!dayStats.has(day)) {
-      dayStats.set(day, { pnl: 0, count: 0, trades: [] })
-    }
-    const stat = dayStats.get(day)!
-    stat.pnl += (trade.profitInCurrency || 0)
-    stat.count++
-    stat.trades.push(trade)
-  })
-
-  // Build grid
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const firstDayOfWeek = new Date(year, month, 1).getDay() // 0 = Sunday
-  
-  const days: CalendarDay[] = []
-  
-  // Pad beginning
-  const startPad = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1 // Make Monday = 0
-  for (let i = 0; i < startPad; i++) {
-    days.push({ dateStr: '', dayNum: 0, pnl: 0, pnlPercent: 0, tradesCount: 0, isToday: false, isInMonth: false, trades: [] })
-  }
-  
-  const today = new Date()
-  const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId.value) || 10000
-  
-  for (let i = 1; i <= daysInMonth; i++) {
-    const stat = dayStats.get(i)
-    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === i
-    const pnl = stat ? stat.pnl : 0
-    days.push({
-      dateStr: `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`,
-      dayNum: i,
-      pnl,
-      pnlPercent: (pnl / initialDeposit) * 100,
-      tradesCount: stat ? stat.count : 0,
-      isToday,
-      isInMonth: true,
-      trades: stat ? stat.trades : []
-    })
-  }
-  
-  return days
 })
 
 // --- END CALENDAR LOGIC ---
