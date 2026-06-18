@@ -11,6 +11,14 @@
          <button @click.stop="$emit('reset-view')" class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
            [R]
          </button>
+         <button
+           type="button"
+           @click.stop="toggleGitPanel"
+           class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
+           title="Git"
+         >
+           <Icon name="lucide:git-branch" class="w-4 h-4" />
+         </button>
          <button @click.stop="isManualOpen = true" 
                  class="tactical-button relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
@@ -114,24 +122,37 @@
       </div>
     </Transition>
   </Teleport>
+
+  <ExMatrixGitPanel :is-open="isGitPanelOpen" @close="setGitPanelOpen(false)" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
+import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 
 defineProps<{
   viewState: { scale: number }
   isScenarioContext: boolean
 }>()
 
-defineEmits(['reset-view', 'update-scale'])
+const emit = defineEmits(['reset-view', 'update-scale', 'git-panel-state'])
 
 const { locale } = useI18n()
 
 const isManualOpen = ref(false)
+const isGitPanelOpen = ref(false)
 const activeManualSection = ref(0)
+
+function setGitPanelOpen(value: boolean) {
+  isGitPanelOpen.value = value
+  emit('git-panel-state', value)
+}
+
+function toggleGitPanel() {
+  setGitPanelOpen(!isGitPanelOpen.value)
+}
 
 const manualSectionsEn = [
   {

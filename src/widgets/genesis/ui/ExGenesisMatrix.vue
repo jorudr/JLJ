@@ -116,7 +116,8 @@
 
       <!-- VIEWPORT TELEMETRY -->
       <MatrixTelemetry :view-state="state.viewState.value" :is-scenario-context="!!state.isScenarioContext.value"
-                       @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s" />
+                       @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s"
+                       @git-panel-state="isGitPanelOpen = $event" />
 
       <!-- OFFSCREEN STRATEGY INDICATORS -->
       <div v-for="indicator in strategyIndicators" :key="indicator.id" 
@@ -171,7 +172,7 @@
 
 
       <!-- COMMAND PANEL (HUD bottom) -->
-      <MatrixCommandPanel :state="state" :menu="menu" :audio="audio" :active-tab="activeTab" :is-dark="isDark" 
+      <MatrixCommandPanel v-if="!isGitPanelOpen" :state="state" :menu="menu" :audio="audio" :active-tab="activeTab" :is-dark="isDark" 
                           :active-wire="canvas.activeWire.value"
                           :is-zone-tool-active="zoneTools.isZoneToolActive.value"
                           :selected-zone-type="zoneTools.selectedZoneType.value"
@@ -258,6 +259,7 @@ const boot = useMatrixBoot()
 const zoneTools = useMatrixZones(state)
 const uploads = useMatrixUploads(state)
 const pathMath = usePathMath(state)
+const isGitPanelOpen = ref(false)
 
 const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
 const getPageLabel = (page: any, index: number) => {
