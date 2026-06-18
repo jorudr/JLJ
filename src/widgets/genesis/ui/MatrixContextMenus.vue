@@ -166,6 +166,33 @@
          </div>
       </Transition>
     </Teleport>
+
+    <!-- MATRIX PAGE CONTEXT MENU Overlay -->
+    <Teleport to="body">
+      <Transition name="nt-tooltip-fade">
+         <div v-if="menu.pageContextMenu.value"
+              class="fixed z-[100000001] pointer-events-auto context-menu-container"
+              :style="{ left: menu.pageContextMenu.value.x + 'px', top: menu.pageContextMenu.value.y + 'px' }"
+              @click.stop>
+
+            <div class="flex flex-col space-y-1.5">
+              <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark rotate-45 absolute -left-1 -top-1 animate-pulse"></div>
+
+              <div class="group relative">
+                <button @click="state.removeMatrixPage(menu.pageContextMenu.value.pageId); menu.pageContextMenu.value = null"
+                        class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-3 min-w-[190px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden">
+                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">REMOVE_BOARD</span>
+                  <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
+                  <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
+                </button>
+                <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Strategy_Page_Erasure</span>
+                </div>
+              </div>
+            </div>
+         </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 

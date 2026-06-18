@@ -141,6 +141,8 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
 
   async function syncStrategies(matrixStrategies: { id: string; name: string }[]) {
     let changed = false
+    const matrixStrategyIds = new Set(matrixStrategies.map(ms => ms.id))
+
     matrixStrategies.forEach(ms => {
       const existing = strategies.value.find(s => s.id === ms.id)
       if (!existing) {
@@ -157,6 +159,16 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
         changed = true
       }
     })
+
+    if (matrixStrategyIds.size > 0) {
+      const syncedStrategies = strategies.value.filter(strategy => (
+        strategy.id === 'MAIN_DIARY' || matrixStrategyIds.has(strategy.id)
+      ))
+      if (syncedStrategies.length !== strategies.value.length) {
+        strategies.value = syncedStrategies
+        changed = true
+      }
+    }
 
     if (!hiddenTradeIdsByStrategy.value['MAIN_DIARY']) {
       hiddenTradeIdsByStrategy.value['MAIN_DIARY'] = []

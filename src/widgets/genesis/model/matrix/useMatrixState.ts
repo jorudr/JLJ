@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { saveToDisk, loadFromDisk } from '@/shared/diskStorage'
 import { useStrategyTradesStore } from '@/features/store/useStrategyTrades'
 import { useAppBootStore } from '~/features/store/useAppBoot'
+import { getMatrixStrategyName, isStrategyNode } from './useMatrixStrategies'
 
 export const STORAGE_KEY = 'genesis_matrix_v2'
 
@@ -40,6 +41,18 @@ export interface Zone {
   height: number
   label: string
 }
+export interface MatrixPage {
+  id: string
+  name: string
+  nodes: Node[]
+  connections: Connection[]
+  zones: Zone[]
+  view?: {
+    panX: number
+    panY: number
+    scale: number
+  }
+}
 
 export type MenuCategory =
   | 'LOGIC'
@@ -62,6 +75,8 @@ export type MenuCategory =
 const rootNodes = ref<Node[]>([])
 const rootConnections = ref<Connection[]>([])
 const rootZones = ref<Zone[]>([])
+const matrixPages = ref<MatrixPage[]>([])
+const activePageId = ref<string | null>(null)
 
 const navigationStack = ref<string[]>([])
 const savedScales = new Map<string, number>()
@@ -83,8 +98,121 @@ const personalIndicators = ref<any[]>([])
 const updateKey = ref(0)
 const pendingNodeConfig = ref<any | null>(null)
 
+function createPageId() {
+  return 'page-' + Math.random().toString(36).substr(2, 9)
+}
+
+function createMatrixPage(name = 'Strategy Page'): MatrixPage {
+  return {
+    id: createPageId(),
+    name,
+    nodes: [],
+    connections: [],
+    zones: [],
+    view: {
+      panX: typeof window !== 'undefined' ? window.innerWidth / 2 : 400,
+      panY: typeof window !== 'undefined' ? window.innerHeight / 2 : 300,
+      scale: 0.5
+    }
+  }
+}
+
+function normalizeNode(node: any): Node {
+  return node?.type === 'system' ? { ...node, type: 'strategy' } : node
+}
+
+function getStrategyCount(nodes: Node[]) {
+  return nodes.filter(isStrategyNode).length
+}
+
 export function useMatrixState() {
   const forceUpdate = () => updateKey.value++
+
+  const activePage = computed(() => (
+    matrixPages.value.find(page => page.id === activePageId.value) || matrixPages.value[0] || null
+  ))
+
+  function syncActivePageFromRoot() {
+    const page = activePage.value
+    if (!page) return
+    page.nodes = rootNodes.value
+    page.connections = rootConnections.value
+    page.zones = rootZones.value
+    page.view = {
+      panX: viewState.value.panX,
+      panY: viewState.value.panY,
+      scale: viewState.value.scale
+    }
+  }
+
+  function applyPage(page: MatrixPage) {
+    rootNodes.value = page.nodes
+    rootConnections.value = page.connections
+    rootZones.value = page.zones
+    viewState.value.panX = page.view?.panX ?? (typeof window !== 'undefined' ? window.innerWidth / 2 : 400)
+    viewState.value.panY = page.view?.panY ?? (typeof window !== 'undefined' ? window.innerHeight / 2 : 300)
+    viewState.value.scale = page.view?.scale ?? 0.5
+    navigationStack.value = []
+    savedScales.clear()
+    lastSelectedId.value = null
+    activeMenuCategory.value = 'LOGIC'
+    activeTextNodeId.value = null
+  }
+
+  function ensurePages() {
+    if (matrixPages.value.length === 0) {
+      const page = createMatrixPage('Strategy Page 1')
+      matrixPages.value = [page]
+      activePageId.value = page.id
+      applyPage(page)
+    } else if (!activePageId.value || !matrixPages.value.some(page => page.id === activePageId.value)) {
+      activePageId.value = matrixPages.value[0]!.id
+      applyPage(matrixPages.value[0]!)
+    }
+  }
+
+  function switchMatrixPage(pageId: string) {
+    const nextPage = matrixPages.value.find(page => page.id === pageId)
+    if (!nextPage || nextPage.id === activePageId.value) return
+    syncActivePageFromRoot()
+    activePageId.value = nextPage.id
+    applyPage(nextPage)
+    saveMatrixData()
+  }
+
+  function addMatrixPage(name?: string) {
+    syncActivePageFromRoot()
+    const page = createMatrixPage(name || `Strategy Page ${matrixPages.value.length + 1}`)
+    matrixPages.value.push(page)
+    activePageId.value = page.id
+    applyPage(page)
+    saveMatrixData()
+    return page
+  }
+
+  function removeMatrixPage(pageId: string) {
+    syncActivePageFromRoot()
+    const targetIndex = matrixPages.value.findIndex(page => page.id === pageId)
+    if (targetIndex === -1) return
+
+    matrixPages.value.splice(targetIndex, 1)
+
+    if (matrixPages.value.length === 0) {
+      activePageId.value = null
+      ensurePages()
+      saveMatrixData()
+      return
+    }
+
+    const nextPage = matrixPages.value[Math.max(0, targetIndex - 1)] || matrixPages.value[0]!
+    activePageId.value = nextPage.id
+    applyPage(nextPage)
+    saveMatrixData()
+  }
+
+  function currentPageHasStrategy() {
+    return getStrategyCount(rootNodes.value) > 0
+  }
 
   const handleNodeMoved = () => {
     forceUpdate()
@@ -311,6 +439,27 @@ export function useMatrixState() {
     const config = typeof typeOrConfig === 'string' 
       ? { type: typeOrConfig, label: typeOrConfig.toUpperCase(), params: {} }
       : typeOrConfig;
+
+    if (isStrategyNode(config)) {
+      if (activeContextId.value) return
+      if (currentPageHasStrategy()) {
+        const nextPage = addMatrixPage(`Strategy Page ${matrixPages.value.length + 1}`)
+        nextPage.nodes.push({
+          id: 'node-' + Math.random().toString(36).substr(2, 9),
+          label: config.label || 'Strategy',
+          type: config.type || 'strategy',
+          x: config.x !== undefined ? config.x : 100,
+          y: config.y !== undefined ? config.y : 100,
+          color: config.color || 'currentColor',
+          params: config.params ? { ...config.params } : {},
+          ...(config.subGraph ? { subGraph: config.subGraph } : {})
+        })
+        applyPage(nextPage)
+        selectNode(nextPage.nodes[0]?.id || null)
+        saveMatrixData()
+        return
+      }
+    }
       
     const params = config.params ? { ...config.params } : {}
     if (config.description && !params.description) {
@@ -342,9 +491,13 @@ export function useMatrixState() {
   }
 
   function setPendingNode(config: any) {
-    pendingNodeConfig.value = typeof config === 'string' 
+    const nextConfig = typeof config === 'string' 
       ? { type: config, label: config.toUpperCase(), params: {} }
       : config;
+    if (isStrategyNode(nextConfig) && currentPageHasStrategy()) {
+      addMatrixPage(`Strategy Page ${matrixPages.value.length + 1}`)
+    }
+    pendingNodeConfig.value = nextConfig
   }
 
   function removeNode(id: string) {
@@ -421,6 +574,9 @@ export function useMatrixState() {
     rootNodes.value = []
     rootConnections.value = []
     rootZones.value = []
+    matrixPages.value = []
+    activePageId.value = null
+    ensurePages()
     navigationStack.value = []
     savedScales.clear()
     lastSelectedId.value = null
@@ -484,18 +640,145 @@ export function useMatrixState() {
     return newNode
   }
 
+  function makePageName(index: number, strategy?: Node) {
+    const strategyName = strategy ? getMatrixStrategyName(strategy) : ''
+    return strategyName && strategyName !== 'Strategy'
+      ? strategyName
+      : `Strategy Page ${index + 1}`
+  }
+
+  function splitLegacyDataIntoPages(saved: any): MatrixPage[] {
+    const savedNodes = (saved.nodes || []).map(normalizeNode)
+    const savedConnections = saved.connections || []
+    const savedZones = saved.zones || []
+    const strategyNodes = savedNodes.filter(isStrategyNode)
+
+    if (strategyNodes.length <= 1) {
+      return [{
+        id: 'page-main',
+        name: makePageName(0, strategyNodes[0]),
+        nodes: savedNodes,
+        connections: savedConnections,
+        zones: savedZones,
+        view: saved.view
+      }]
+    }
+
+    const assignedNodeIds = new Set<string>()
+    const pages = strategyNodes.map((strategy, index) => {
+      const pageNodeIds = new Set<string>([strategy.id])
+      const queue = [strategy.id]
+
+      while (queue.length > 0) {
+        const currentId = queue.shift()!
+        savedConnections.forEach((connection: Connection) => {
+          const nextId = connection.fromId === currentId
+            ? connection.toId
+            : connection.toId === currentId
+              ? connection.fromId
+              : null
+          if (!nextId || pageNodeIds.has(nextId)) return
+          const nextNode = savedNodes.find((node: Node) => node.id === nextId)
+          if (!nextNode || (isStrategyNode(nextNode) && nextNode.id !== strategy.id)) return
+          pageNodeIds.add(nextId)
+          queue.push(nextId)
+        })
+      }
+
+      pageNodeIds.forEach(id => assignedNodeIds.add(id))
+
+      const pageNodes = savedNodes.filter((node: Node) => pageNodeIds.has(node.id))
+      const pageConnections = savedConnections.filter((connection: Connection) => (
+        pageNodeIds.has(connection.fromId) && pageNodeIds.has(connection.toId)
+      ))
+      const pageZones = savedZones.filter((zone: Zone) => pageNodes.some((node: Node) => (
+        node.x >= zone.x &&
+        node.x <= zone.x + zone.width &&
+        node.y >= zone.y &&
+        node.y <= zone.y + zone.height
+      )))
+
+      return {
+        id: `page-${strategy.id}`,
+        name: makePageName(index, strategy),
+        nodes: pageNodes,
+        connections: pageConnections,
+        zones: pageZones,
+        view: index === 0 ? saved.view : undefined
+      }
+    })
+
+    const unassignedNodes = savedNodes.filter((node: Node) => !assignedNodeIds.has(node.id))
+    if (unassignedNodes.length > 0 && pages[0]) {
+      const firstPageNodeIds = new Set(pages[0].nodes.map(node => node.id))
+      unassignedNodes.forEach((node: Node) => {
+        pages[0]!.nodes.push(node)
+        firstPageNodeIds.add(node.id)
+      })
+      pages[0].connections = savedConnections.filter((connection: Connection) => (
+        firstPageNodeIds.has(connection.fromId) && firstPageNodeIds.has(connection.toId)
+      ))
+      pages[0].zones = savedZones
+    }
+
+    return pages
+  }
+
+  function normalizeSavedPages(saved: any): MatrixPage[] {
+    if (Array.isArray(saved.pages) && saved.pages.length > 0) {
+      return saved.pages.flatMap((page: any, index: number) => {
+        const pageNodes = (page.nodes || []).map(normalizeNode)
+        if (getStrategyCount(pageNodes) > 1) {
+          return splitLegacyDataIntoPages({
+            nodes: pageNodes,
+            connections: page.connections || [],
+            zones: page.zones || [],
+            view: page.view
+          }).map((splitPage, splitIndex) => ({
+            ...splitPage,
+            id: `${page.id || `page-${index + 1}`}-${splitPage.id}`,
+            name: splitPage.name || `${page.name || `Strategy Page ${index + 1}`} ${splitIndex + 1}`
+          }))
+        }
+        const strategy = pageNodes.find(isStrategyNode)
+        return [{
+          id: page.id || createPageId(),
+          name: page.name || makePageName(index, strategy),
+          nodes: pageNodes,
+          connections: page.connections || [],
+          zones: page.zones || [],
+          view: page.view
+        }]
+      })
+    }
+
+    return splitLegacyDataIntoPages(saved)
+  }
+
   let saveTimeout: any = null
   const saveMatrixData = async () => {
     if (saveTimeout) clearTimeout(saveTimeout)
     saveTimeout = setTimeout(async () => {
-      const processedNodes = rootNodes.value
-        .map(n => processNodeTree(n, rootNodes.value, rootConnections.value))
-        .filter(n => n.type !== 'placeholder')
+      syncActivePageFromRoot()
+
+      const processedPages = matrixPages.value.map((page) => {
+        const processedNodes = page.nodes
+          .map(n => processNodeTree(n, page.nodes, page.connections))
+          .filter(n => n.type !== 'placeholder')
+        return {
+          ...page,
+          nodes: processedNodes,
+          connections: page.connections,
+          zones: page.zones
+        }
+      })
 
       const data = {
-        nodes: processedNodes,
-        connections: rootConnections.value,
-        zones: rootZones.value,
+        pages: processedPages,
+        activePageId: activePageId.value,
+        nodes: processedPages.flatMap(page => page.nodes),
+        connections: processedPages.flatMap(page => page.connections),
+        zones: processedPages.flatMap(page => page.zones),
         view: {
           panX: viewState.value.panX,
           panY: viewState.value.panY,
@@ -513,14 +796,14 @@ export function useMatrixState() {
     try {
       const appBootStore = useAppBootStore()
       const saved = appBootStore.genesisMatrixCache || await loadFromDisk<any>(STORAGE_KEY)
-      if (saved && saved.nodes?.length > 0) {
-        rootNodes.value = saved.nodes.map((n: any) => {
-          if (n.type === 'system') return { ...n, type: 'strategy' }
-          return n
-        })
+      if (saved && ((Array.isArray(saved.pages) && saved.pages.length > 0) || saved.nodes?.length > 0)) {
+        matrixPages.value = normalizeSavedPages(saved)
+        activePageId.value = saved.activePageId && matrixPages.value.some(page => page.id === saved.activePageId)
+          ? saved.activePageId
+          : matrixPages.value[0]?.id || null
+        ensurePages()
+        if (activePage.value) applyPage(activePage.value)
         
-        if (saved.connections) rootConnections.value = saved.connections
-        if (saved.zones) rootZones.value = saved.zones
         if (saved.view) {
           viewState.value.panX = saved.view.panX ?? viewState.value.panX
           viewState.value.panY = saved.view.panY ?? viewState.value.panY
@@ -534,9 +817,9 @@ export function useMatrixState() {
       }
     } catch (err) {
       console.warn('[GenesisPersistence] fallback:', err)
-      rootNodes.value = []
-      rootConnections.value = []
-      rootZones.value = []
+      matrixPages.value = []
+      activePageId.value = null
+      ensurePages()
     }
   }
 
@@ -557,6 +840,8 @@ export function useMatrixState() {
     rootNodes,
     rootConnections,
     rootZones,
+    matrixPages,
+    activePageId,
     navigationStack,
     viewState,
     lastSelectedId,
@@ -572,6 +857,7 @@ export function useMatrixState() {
     handleNodeMoved,
     activeContextId,
     activeContextNode,
+    activePage,
     isScenarioContext,
     nodes,
     connections,
@@ -588,6 +874,10 @@ export function useMatrixState() {
     navigateTo,
     goBack,
     jumpTo,
+    switchMatrixPage,
+    addMatrixPage,
+    removeMatrixPage,
+    currentPageHasStrategy,
     selectNode,
     getMenuCategoryForNode,
     addNode,

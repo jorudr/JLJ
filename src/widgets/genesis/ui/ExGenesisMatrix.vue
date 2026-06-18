@@ -10,6 +10,31 @@
     <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
     <div class="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
     <div class="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
+
+    <!-- STRATEGY PAGE SWITCHER -->
+    <div v-if="state.navigationStack.value.length === 0"
+         class="absolute top-6 left-1/2 -translate-x-1/2 z-[180] flex items-center gap-2 pointer-events-auto">
+      <button v-for="(page, index) in state.matrixPages.value"
+              :key="page.id"
+              @click="state.switchMatrixPage(page.id)"
+              @contextmenu.prevent.stop="menu.handlePageContextMenu($event, page.id)"
+              class="group relative h-9 min-w-[120px] border px-4 bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl transition-all"
+              :class="state.activePageId.value === page.id
+                ? 'border-nier-text-light dark:border-nier-text-dark opacity-100'
+                : 'border-nier-border-light dark:border-nier-border-dark opacity-35 hover:opacity-100'">
+        <span class="block text-[8px] font-mono uppercase tracking-[0.28em] font-black truncate max-w-[160px]">
+          {{ getPageLabel(page, index) }}
+        </span>
+        <span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] font-mono uppercase tracking-[0.18em] opacity-40 whitespace-nowrap">
+          {{ getPageStrategyCount(page) }}/1 Strategy
+        </span>
+      </button>
+      <button @click="state.addMatrixPage()"
+              class="h-9 w-9 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl text-[14px] font-mono font-black opacity-50 hover:opacity-100 transition-all"
+              title="Create empty strategy page">
+        +
+      </button>
+    </div>
     
     <!-- TACTICAL GRID OVERLAY REMOVED AS PER REQUEST -->
 
@@ -19,6 +44,7 @@
          :ref="(el) => { canvas.canvasWrapper.value = el as HTMLElement }"
          @mousedown="canvas.startPan($event, zoneTools.isZoneToolActive.value, zoneTools.drawStart, zoneTools.drawCurrent)"
          @click="canvas.handleBackgroundClick"
+         @contextmenu.prevent="handleBoardContextMenu"
          @mousemove="canvas.handleCanvasMouseMove($event, zoneTools.drawStart, zoneTools.drawCurrent)"
          @mouseup="canvas.handleCanvasMouseUp(zoneTools)">
       
@@ -219,6 +245,7 @@ import { useMatrixBoot } from '../model/matrix/useMatrixBoot'
 import { useMatrixZones } from '../model/matrix/useMatrixZones'
 import { useMatrixUploads } from '../model/matrix/useMatrixUploads'
 import { usePathMath } from '../model/matrix/usePathMath'
+import { getMatrixStrategyName, isStrategyNode } from '../model/matrix/useMatrixStrategies'
 
 import { initAssetService } from '@/shared/api/asset.service'
 
@@ -231,6 +258,12 @@ const boot = useMatrixBoot()
 const zoneTools = useMatrixZones(state)
 const uploads = useMatrixUploads(state)
 const pathMath = usePathMath(state)
+
+const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
+const getPageLabel = (page: any, index: number) => {
+  const strategyNode = (page.nodes || []).find(isStrategyNode)
+  return strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
+}
 
 const windowSize = ref({ width: typeof window !== 'undefined' ? window.innerWidth : 1000, height: typeof window !== 'undefined' ? window.innerHeight : 1000 })
 const updateWindowSize = () => {
@@ -350,7 +383,24 @@ function handleGlobalClick(e: MouseEvent) {
     menu.nodeContextMenu.value = null
     menu.connectionContextMenu.value = null
     menu.personalCondContextMenu.value = null
+    menu.pageContextMenu.value = null
   }
+}
+
+function handleBoardContextMenu(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (
+    target.closest('.skill-chip') ||
+    target.closest('.tactical-button') ||
+    target.closest('.zone-card') ||
+    target.closest('.context-menu-container') ||
+    target.closest('.pointer-events-auto:not(.absolute.inset-0)')
+  ) {
+    return
+  }
+  const pageId = state.activePageId.value
+  if (!pageId || state.navigationStack.value.length > 0) return
+  menu.handlePageContextMenu(e, pageId)
 }
 
 function handleNodeDive(node: any) {

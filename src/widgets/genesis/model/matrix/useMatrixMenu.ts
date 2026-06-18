@@ -44,6 +44,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const nodeContextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
   const connectionContextMenu = ref<{ x: number, y: number, connection: Connection } | null>(null)
   const personalCondContextMenu = ref<{ x: number, y: number, indicator: any } | null>(null)
+  const pageContextMenu = ref<{ x: number, y: number, pageId: string } | null>(null)
 
   // Watch lastSelectedId to sync values
   watch(state.lastSelectedId, (newId) => {
@@ -312,10 +313,16 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
 
   // Context Menu Actions
   function handleNodeContextMenu(payload: { x: number, y: number, nodeId: string }) {
+    connectionContextMenu.value = null
+    personalCondContextMenu.value = null
+    pageContextMenu.value = null
     nodeContextMenu.value = payload
   }
 
   function handleConnectionClick(e: MouseEvent, connection: Connection) {
+    nodeContextMenu.value = null
+    personalCondContextMenu.value = null
+    pageContextMenu.value = null
     connectionContextMenu.value = {
       x: e.clientX,
       y: e.clientY,
@@ -324,10 +331,24 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   }
 
   function handlePersonalCondContextMenu(e: MouseEvent, indicator: any) {
+    nodeContextMenu.value = null
+    connectionContextMenu.value = null
+    pageContextMenu.value = null
     personalCondContextMenu.value = {
       x: e.clientX,
       y: e.clientY,
       indicator
+    }
+  }
+
+  function handlePageContextMenu(e: MouseEvent, pageId: string) {
+    nodeContextMenu.value = null
+    connectionContextMenu.value = null
+    personalCondContextMenu.value = null
+    pageContextMenu.value = {
+      x: e.clientX,
+      y: e.clientY,
+      pageId
     }
   }
 
@@ -555,6 +576,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     nodeContextMenu,
     connectionContextMenu,
     personalCondContextMenu,
+    pageContextMenu,
     updateMousePos,
     tooltipStyles,
     handleAssetSearch,
@@ -575,6 +597,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     handleNodeContextMenu,
     handleConnectionClick,
     handlePersonalCondContextMenu,
+    handlePageContextMenu,
     removePersonalCondition,
     addCommentToNode,
     setNodeCustomName,
