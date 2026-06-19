@@ -89,6 +89,35 @@ function formatChangeTime(createdAt: number) {
   return `${hours} hour${hours === 1 ? '' : 's'} ago`
 }
 
+function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentId: string, prefix: string) {
+  subchanges.forEach((subchange, index) => {
+    const isLast = index === subchanges.length - 1
+    const connector = isLast ? '`-' : '+-'
+    rows.push({
+      toggleId: subchange.id,
+      parentId,
+      parts: [
+        { text: '|   ' },
+        { text: prefix, class: 'tree-muted' },
+        { text: connector, class: 'tree-muted' },
+        { text: ' ' },
+        { text: subchange.label, class: 'tree-subkey' },
+        { text: ': ' },
+        { text: subchange.value, class: 'tree-subvalue' }
+      ]
+    })
+
+    if (subchange.subchanges?.length) {
+      appendNestedSubchangeRows(
+        rows,
+        subchange.subchanges,
+        subchange.id,
+        `${prefix}${isLast ? '    ' : '|   '}`
+      )
+    }
+  })
+}
+
 const treeRows = computed<TreeRow[]>(() => {
   const rows: TreeRow[] = [
     {
@@ -155,24 +184,12 @@ const treeRows = computed<TreeRow[]>(() => {
       })
 
       if (subchange.subchanges) {
-        subchange.subchanges.forEach((subsub, subsubIndex) => {
-          const isLastSubSub = subsubIndex === subchange.subchanges!.length - 1
-          const subConnector = isLastSubSub ? '`-' : '+-'
-          const prefix = subIndex === event.subchanges.length - 1 ? '    ' : '|   '
-          rows.push({
-            toggleId: subsub.id,
-            parentId: subchange.id,
-            parts: [
-              { text: '|   ' },
-              { text: prefix, class: 'tree-muted' },
-              { text: subConnector, class: 'tree-muted' },
-              { text: ' ' },
-              { text: subsub.label, class: 'tree-subkey' },
-              { text: ': ' },
-              { text: subsub.value, class: 'tree-subvalue' }
-            ]
-          })
-        })
+        appendNestedSubchangeRows(
+          rows,
+          subchange.subchanges,
+          subchange.id,
+          subIndex === event.subchanges.length - 1 ? '    ' : '|   '
+        )
       }
     })
 
@@ -186,15 +203,38 @@ const treeRows = computed<TreeRow[]>(() => {
   return rows
 })
 
+function isChangeDisabled(id?: string) {
+  if (!id) return false
+  if (disabledChanges.value.has(id)) return true
+  return changeTree.collectLinkedChangeIds(id).some(linkedId => disabledChanges.value.has(linkedId))
+}
+
 function isTreeRowOff(row: TreeRow) {
-  return !!((row.toggleId && disabledChanges.value.has(row.toggleId)) || (row.parentId && disabledChanges.value.has(row.parentId)))
+  return !!((row.toggleId && isChangeDisabled(row.toggleId)) || (row.parentId && isChangeDisabled(row.parentId)))
+}
+
+function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: boolean) {
+  const linkedIds = changeTree.collectLinkedChangeIds(toggledId)
+
+  if (turningOn) {
+    next.delete(toggledId)
+    linkedIds.forEach(linkedId => next.delete(linkedId))
+  } else {
+    next.add(toggledId)
+    linkedIds.forEach(linkedId => next.add(linkedId))
+  }
+
+  disabledChanges.value = next
 }
 
 function toggleTreeRow(id?: string) {
   if (!id) return
 
   const next = new Set(disabledChanges.value)
-  if (next.has(id)) {
+  const turningOn = isChangeDisabled(id)
+  if (turningOn && !next.has(id)) next.add(id)
+
+  if (turningOn) {
     // Turning ON
     for (let eventIndex = 0; eventIndex < changeTree.events.value.length; eventIndex++) {
       const event = changeTree.events.value[eventIndex]
@@ -255,12 +295,12 @@ function toggleTreeRow(id?: string) {
             }
           }
           
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           return
         } else if (event.type === 'delete') {
           next.delete(id)
           changeTree.setChangeEnabled(id, true)
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           if (event.targetId) {
             changeTree.disableNodeDependents(event.targetId, event.node)
           }
@@ -268,7 +308,7 @@ function toggleTreeRow(id?: string) {
         } else if (event.type === 'add') {
           next.delete(id)
           changeTree.setChangeEnabled(id, true)
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           if (event.targetId) {
             changeTree.enableNodeDependents(event.targetId, event.node)
           }
@@ -276,7 +316,7 @@ function toggleTreeRow(id?: string) {
         }
         next.delete(id)
         changeTree.setChangeEnabled(id, true)
-        disabledChanges.value = next
+        commitDisabledChanges(next, id, turningOn)
         return
       }
 
@@ -333,7 +373,7 @@ function toggleTreeRow(id?: string) {
           next.delete(event.id)
           changeTree.setChangeEnabled(event.id, true)
         }
-        disabledChanges.value = next
+        commitDisabledChanges(next, id, turningOn)
         return
       }
     }
@@ -397,13 +437,13 @@ function toggleTreeRow(id?: string) {
               }
             }
           }
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           return
         } else if (event.type === 'add') {
           // Execute fallback to turn off the add event itself
           next.add(id)
           changeTree.setChangeEnabled(id, false)
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           
           // Then disable all its dependent changes
           if (event.targetId) {
@@ -413,7 +453,7 @@ function toggleTreeRow(id?: string) {
         } else if (event.type === 'delete') {
           next.add(id)
           changeTree.setChangeEnabled(id, false)
-          disabledChanges.value = next
+          commitDisabledChanges(next, id, turningOn)
           if (event.targetId) {
             changeTree.enableNodeDependents(event.targetId, event.node)
           }
@@ -475,7 +515,7 @@ function toggleTreeRow(id?: string) {
           }
         }
 
-        disabledChanges.value = next
+        commitDisabledChanges(next, id, turningOn)
         return
       }
     }
@@ -483,7 +523,7 @@ function toggleTreeRow(id?: string) {
     next.add(id)
     changeTree.setChangeEnabled(id, false)
   }
-  disabledChanges.value = next
+  commitDisabledChanges(next, id, turningOn)
 }
 
 </script>

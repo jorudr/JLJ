@@ -195,6 +195,27 @@ export function useMatrixState() {
     }
   }
 
+  function createPlaceholderResolveAction(beforeNode: Node, afterNode: Node, container = createActiveContainerAccess()) {
+    const beforeSnapshot = cloneMatrixValue(beforeNode)
+    const afterSnapshot = cloneMatrixValue(afterNode)
+    const applySnapshot = (snapshot: Node) => {
+      const nextNodes = container.getNodes().map(item =>
+        item.id === snapshot.id ? cloneMatrixValue(snapshot) : item
+      )
+      if (!nextNodes.some(item => item.id === snapshot.id)) {
+        nextNodes.push(cloneMatrixValue(snapshot))
+      }
+      container.setNodes(nextNodes)
+      forceUpdate()
+      saveMatrixData()
+    }
+
+    return {
+      undo: () => applySnapshot(beforeSnapshot),
+      redo: () => applySnapshot(afterSnapshot)
+    }
+  }
+
   const activePage = computed(() => (
     matrixPages.value.find(page => page.id === activePageId.value) || matrixPages.value[0] || null
   ))
@@ -569,12 +590,27 @@ export function useMatrixState() {
     if (lastSelectedId.value) {
       const selectedNode = getNode(lastSelectedId.value)
       if (selectedNode && selectedNode.type === 'placeholder') {
+        const beforeNode = cloneMatrixValue(selectedNode)
+        const container = createActiveContainerAccess()
+        const logicConnection = container.getConnections().find(conn => {
+          const label = (conn.label || '').toLowerCase()
+          return conn.toId === selectedNode.id && (label === 'and' || label === 'or')
+        })
+
         selectedNode.type = nextConfig.type || 'unknown'
         selectedNode.label = nextConfig.label || 'NODE'
         selectedNode.color = nextConfig.color || 'currentColor'
         selectedNode.params = { ...(selectedNode.params || {}), ...(nextConfig.params || {}) }
         if (nextConfig.description) {
            selectedNode.params.description = nextConfig.description
+        }
+
+        const afterNode = cloneMatrixValue(selectedNode)
+        const resolveAction = createPlaceholderResolveAction(beforeNode, afterNode, container)
+        if (logicConnection) {
+          changeTree.recordLogicPlaceholderNodeAdded(afterNode, logicConnection, resolveAction)
+        } else {
+          changeTree.recordNodeAdded(afterNode, resolveAction)
         }
         
         selectNode(selectedNode.id)
