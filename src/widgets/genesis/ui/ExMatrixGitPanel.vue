@@ -11,7 +11,7 @@
             :key="index"
             class="tree-row"
             :class="{
-              'tree-row-clickable': row.toggleId && !row.isTerminated,
+              'tree-row-clickable': (row.toggleId || row.onClick) && !row.isTerminated,
               'tree-row-off': isTreeRowOff(row) || row.isTerminated,
               'opacity-50 pointer-events-none': row.isTerminated
             }"
@@ -55,6 +55,7 @@ type TreeRow = {
   toggleId?: string
   parentIds?: string[]
   isTerminated?: boolean
+  onClick?: () => void
 }
 
 const themeStore = useThemeStore()
@@ -64,6 +65,7 @@ const state = useMatrixState()
 const disabledChanges = changeTree.disabledChanges
 const workspace = 'genesis-matrix'
 const line = 'strategy'
+const expandedParents = ref<Set<string>>(new Set())
 
 const eventTypeClasses: Record<MatrixChangeType, string> = {
   add: 'tree-add',
@@ -100,8 +102,14 @@ function formatTreeText(text: string, maxLength: number = 35) {
 }
 
 function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds: string[], prefix: string) {
-  subchanges.forEach((subchange, index) => {
-    const isLast = index === subchanges.length - 1
+  const parentId = parentIds[parentIds.length - 1] || ''
+  const hasTooMany = subchanges.length > 3
+  const isExpanded = expandedParents.value.has(parentId)
+
+  const visibleSubs = hasTooMany && !isExpanded ? subchanges.slice(0, 3) : subchanges
+
+  visibleSubs.forEach((subchange, index) => {
+    const isLast = index === visibleSubs.length - 1 && !(hasTooMany && !isExpanded)
     const connector = isLast ? '`-' : '+-'
     rows.push({
       toggleId: subchange.id,
@@ -126,6 +134,36 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
       )
     }
   })
+
+  if (hasTooMany) {
+    if (!isExpanded) {
+      rows.push({
+        parentIds,
+        onClick: () => {
+          expandedParents.value.add(parentId)
+        },
+        parts: [
+          { text: '|   ' },
+          { text: prefix, class: 'tree-muted' },
+          { text: '`--- ', class: 'tree-muted' },
+          { text: '... (expand ' + (subchanges.length - 3) + ' more changes)', class: 'tree-subkey' }
+        ]
+      })
+    } else {
+      rows.push({
+        parentIds,
+        onClick: () => {
+          expandedParents.value.delete(parentId)
+        },
+        parts: [
+          { text: '|   ' },
+          { text: prefix, class: 'tree-muted' },
+          { text: '`--- ', class: 'tree-muted' },
+          { text: '... (collapse changes)', class: 'tree-subkey' }
+        ]
+      })
+    }
+  }
 }
 
 const treeRows = computed<TreeRow[]>(() => {
@@ -145,8 +183,11 @@ const treeRows = computed<TreeRow[]>(() => {
   ]
 
   const visibleEvents = [...changeTree.events.value].reverse()
+  const hasTooManyEvents = visibleEvents.length > 3
+  const isMainExpanded = expandedParents.value.has('main-timeline')
+  const eventsToShow = hasTooManyEvents && !isMainExpanded ? visibleEvents.slice(0, 3) : visibleEvents
 
-  visibleEvents.forEach((event, eventIndex) => {
+  eventsToShow.forEach((event, eventIndex) => {
     const eventClass = eventTypeClasses[event.type]
     const isVersionEvent = event.type === 'version'
     rows.push({
@@ -177,41 +218,101 @@ const treeRows = computed<TreeRow[]>(() => {
       ]
     })
 
-    if (!isVersionEvent) event.subchanges.forEach((subchange, subIndex) => {
-      const isLastSub = subIndex === event.subchanges.length - 1 && !(subchange.subchanges?.length)
-      const connector = isLastSub ? '`-' : '+-'
-      
-      const isDomainNodeChange = subchange.label === 'node_added' || subchange.label === 'node_removed'
-      const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
-      
-      rows.push({
-        toggleId: subchange.id,
-        parentIds: [event.id],
-        isTerminated,
-        parts: [
-          { text: '|   ' },
-          { text: connector, class: 'tree-muted' },
-          { text: ' ' },
-          { text: subchange.label, class: 'tree-subkey' },
-          { text: ': ' },
-          { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
-        ]
+    if (!isVersionEvent) {
+      const subchanges = event.subchanges
+      const hasTooMany = subchanges.length > 3
+      const isExpanded = expandedParents.value.has(event.id)
+      const visibleSubs = hasTooMany && !isExpanded ? subchanges.slice(0, 3) : subchanges
+
+      visibleSubs.forEach((subchange, subIndex) => {
+        const isLastSub = subIndex === visibleSubs.length - 1 && !(subchange.subchanges?.length) && !(hasTooMany && !isExpanded)
+        const connector = isLastSub ? '`-' : '+-'
+        
+        const isDomainNodeChange = subchange.label === 'node_added' || subchange.label === 'node_removed'
+        const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
+        
+        rows.push({
+          toggleId: subchange.id,
+          parentIds: [event.id],
+          isTerminated,
+          parts: [
+            { text: '|   ' },
+            { text: connector, class: 'tree-muted' },
+            { text: ' ' },
+            { text: subchange.label, class: 'tree-subkey' },
+            { text: ': ' },
+            { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
+          ]
+        })
+
+        if (subchange.subchanges) {
+          appendNestedSubchangeRows(
+            rows,
+            subchange.subchanges,
+            [event.id, subchange.id],
+            subIndex === visibleSubs.length - 1 && !(hasTooMany && !isExpanded) ? '    ' : '|   '
+          )
+        }
       })
 
-      if (subchange.subchanges) {
-        appendNestedSubchangeRows(
-          rows,
-          subchange.subchanges,
-          [event.id, subchange.id],
-          subIndex === event.subchanges.length - 1 ? '    ' : '|   '
-        )
+      if (hasTooMany) {
+        if (!isExpanded) {
+          rows.push({
+            parentIds: [event.id],
+            onClick: () => {
+              expandedParents.value.add(event.id)
+            },
+            parts: [
+              { text: '|   ' },
+              { text: '`--- ', class: 'tree-muted' },
+              { text: '... (expand ' + (subchanges.length - 3) + ' more changes)', class: 'tree-subkey' }
+            ]
+          })
+        } else {
+          rows.push({
+            parentIds: [event.id],
+            onClick: () => {
+              expandedParents.value.delete(event.id)
+            },
+            parts: [
+              { text: '|   ' },
+              { text: '`--- ', class: 'tree-muted' },
+              { text: '... (collapse changes)', class: 'tree-subkey' }
+            ]
+          })
+        }
       }
-    })
+    }
 
-    if (eventIndex < visibleEvents.length - 1) {
+    if (eventIndex < eventsToShow.length - 1 || (hasTooManyEvents && !isMainExpanded)) {
       rows.push({ parts: [{ text: '|' }] })
     }
   })
+
+  if (hasTooManyEvents) {
+    if (!isMainExpanded) {
+      rows.push({
+        onClick: () => {
+          expandedParents.value.add('main-timeline')
+        },
+        parts: [
+          { text: 'o ' },
+          { text: '... (expand ' + (visibleEvents.length - 3) + ' older changes)', class: 'tree-subkey' }
+        ]
+      })
+    } else {
+      rows.push({
+        onClick: () => {
+          expandedParents.value.delete('main-timeline')
+        },
+        parts: [
+          { text: 'o ' },
+          { text: '... (collapse changes)', class: 'tree-subkey' }
+        ]
+      })
+    }
+    rows.push({ parts: [{ text: '|' }] })
+  }
 
   rows.push({ parts: [{ text: 'o ' }, { text: `${line} timeline`, class: 'tree-current' }] })
 
@@ -233,6 +334,10 @@ function isTreeRowOff(row: TreeRow) {
 
 function handleRowClick(row: TreeRow) {
   if (row.isTerminated) return
+  if (row.onClick) {
+    row.onClick()
+    return
+  }
   if (row.toggleId) toggleTreeRow(row.toggleId)
 }
 
