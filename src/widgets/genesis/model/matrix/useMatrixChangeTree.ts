@@ -176,6 +176,18 @@ export function useMatrixChangeTree() {
     )
   }
 
+  function recordConnectionDeleted(connection: { fromId: string, toId: string }, fromNode?: any, toNode?: any, action?: MatrixChangeAction) {
+    const sourceNode = fromNode || { id: connection.fromId, label: connection.fromId }
+    const targetNode = toNode || { id: connection.toId, label: connection.toId }
+
+    addSubchange(
+      ensureNodeParent(sourceNode),
+      'removed',
+      readableNodeLine(targetNode),
+      action
+    )
+  }
+
   function recordBoardCleared(action?: MatrixChangeAction) {
     addEvent({
       type: 'clear',
@@ -247,6 +259,7 @@ export function useMatrixChangeTree() {
     recordCommentTextChanged,
     recordCommentRemoved,
     recordConnectionLabelChanged,
-    updateConnectionAction
+    updateConnectionAction,
+    recordConnectionDeleted
   }
 }

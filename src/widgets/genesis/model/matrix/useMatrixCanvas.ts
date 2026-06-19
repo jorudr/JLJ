@@ -218,6 +218,43 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     zones.drawStart.value = null
     zones.drawCurrent.value = null
     zones.isZoneToolActive.value = false
+    
+    if (activeWireRaw.value && activeWireRaw.value.originalToId) {
+      const connInfo = { 
+        fromId: activeWireRaw.value.fromId, 
+        toId: activeWireRaw.value.originalToId, 
+        fromPort: activeWireRaw.value.originalFromPort, 
+        toPort: activeWireRaw.value.originalToPort 
+      }
+      const connectionSnapshot = cloneMatrixValue(connInfo)
+      
+      changeTree.recordConnectionDeleted(connInfo, state.getNode(connInfo.fromId), state.getNode(connInfo.toId), {
+        undo: () => {
+          const exists = state.connections.value.some(conn => (
+            conn.fromId === connectionSnapshot.fromId &&
+            conn.toId === connectionSnapshot.toId &&
+            conn.fromPort === connectionSnapshot.fromPort &&
+            conn.toPort === connectionSnapshot.toPort
+          ))
+          if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+          state.forceUpdate()
+          state.saveMatrixData()
+        },
+        redo: () => {
+          state.connections.value = state.connections.value.filter(conn => !(
+            conn.fromId === connectionSnapshot.fromId &&
+            conn.toId === connectionSnapshot.toId &&
+            conn.fromPort === connectionSnapshot.fromPort &&
+            conn.toPort === connectionSnapshot.toPort
+          ))
+          state.cleanupLogicBundles()
+          state.forceUpdate()
+          state.saveMatrixData()
+        }
+      })
+      state.saveMatrixData()
+    }
+    
     activeWireRaw.value = null 
   }
 
