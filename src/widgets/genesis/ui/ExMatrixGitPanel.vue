@@ -3,7 +3,7 @@
     <Transition name="fade">
       <div
         v-if="isOpen"
-        class="tree-scroll-shell fixed right-10 top-0 z-[99999] h-screen pointer-events-auto"
+        class="tree-scroll-shell fixed right-10 z-[99999] pointer-events-auto"
       >
         <div class="terminal-tree" :class="isDark ? 'tree-theme-dark' : 'tree-theme-light'">
           <button
@@ -771,9 +771,14 @@ function toggleTreeRow(id?: string) {
                 if (next.has(otherEv.id)) {
                   next.delete(otherEv.id)
                   changeTree.setChangeEnabled(otherEv.id, true)
-                  otherEv.subchanges.forEach(sub => {
+                  // Recursively re-enable all nested subchanges
+                  const stack = [...otherEv.subchanges]
+                  while (stack.length) {
+                    const sub = stack.shift()
+                    if (!sub) continue
                     if (next.has(sub.id)) { next.delete(sub.id); changeTree.setChangeEnabled(sub.id, true) }
-                  })
+                    if (sub.subchanges?.length) stack.unshift(...sub.subchanges)
+                  }
                 }
               }
             })
@@ -851,7 +856,9 @@ function toggleTreeRow(id?: string) {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
+  top: 64px;
+  bottom: 64px;
+  max-height: calc(100vh - 128px);
   overflow-y: auto;
   overflow-x: visible;
   scrollbar-width: none;
@@ -862,7 +869,7 @@ function toggleTreeRow(id?: string) {
 .tree-scroll-shell::before,
 .tree-scroll-shell::after {
   content: "";
-  flex: 1 0 24px;
+  flex: 1 0 16px;
 }
 
 .tree-scroll-shell::-webkit-scrollbar {

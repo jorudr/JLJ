@@ -649,12 +649,26 @@ export function useMatrixChangeTree() {
     if (parentEvent && !disabledChanges.value.has(parentEvent.id)) {
       const next = new Set(disabledChanges.value)
       next.add(parentEvent.id)
-      parentEvent.subchanges.forEach(sub => {
+
+      // Recursively collect all descendant subchange IDs
+      const stack = [...parentEvent.subchanges]
+      while (stack.length) {
+        const sub = stack.shift()
+        if (!sub) continue
         if (!next.has(sub.id)) next.add(sub.id)
-      })
+        if (sub.subchanges?.length) stack.unshift(...sub.subchanges)
+      }
+
       disabledChanges.value = next
-      
-      parentEvent.subchanges.forEach(sub => setChangeEnabled(sub.id, false))
+
+      // Recursively call setChangeEnabled false on all descendants
+      function disableSubtree(subs: MatrixSubchange[]) {
+        subs.forEach(sub => {
+          setChangeEnabled(sub.id, false)
+          if (sub.subchanges?.length) disableSubtree(sub.subchanges)
+        })
+      }
+      disableSubtree(parentEvent.subchanges)
       setChangeEnabled(parentEvent.id, false)
     }
   }

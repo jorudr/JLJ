@@ -83,6 +83,9 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
       }
     })
 
+    // Immediately disable the ADD_DOMAIN event for this domain so the tree is consistent
+    changeTree.disableDomainAddEvent(id)
+
     state.zones.value = state.zones.value.filter(z => z.id !== id)
     state.saveMatrixData()
     evaluateDomainMemberships()
