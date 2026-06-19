@@ -117,6 +117,7 @@ function ensureConnectionParent(connection: { fromId: string, toId: string }) {
 export function useMatrixChangeTree() {
   function resetChanges() {
     events.value = []
+    sequence = 0
   }
 
   function setChangeEnabled(id: string, enabled: boolean) {
@@ -164,18 +165,15 @@ export function useMatrixChangeTree() {
   }
 
   function recordConnectionCreated(connection: { fromId: string, toId: string }, fromNode?: any, toNode?: any, action?: MatrixChangeAction) {
-    addEvent({
-      type: 'connect',
-      title: 'CONNECT_NODES',
-      node: `${readableNodeName(fromNode) || connection.fromId} -> ${readableNodeName(toNode) || connection.toId}`,
-      targetId: connectionId(connection),
-      targetKind: 'connection',
-      action,
-      subchanges: [
-        { id: nextId('sub'), label: 'from', value: readableNodeLine(fromNode || { id: connection.fromId, label: connection.fromId }) },
-        { id: nextId('sub'), label: 'to', value: readableNodeLine(toNode || { id: connection.toId, label: connection.toId }) }
-      ]
-    })
+    const sourceNode = fromNode || { id: connection.fromId, label: connection.fromId }
+    const targetNode = toNode || { id: connection.toId, label: connection.toId }
+
+    addSubchange(
+      ensureNodeParent(sourceNode),
+      'to',
+      readableNodeLine(targetNode),
+      action
+    )
   }
 
   function recordBoardCleared(action?: MatrixChangeAction) {

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isScenarioContext" class="absolute top-32 left-12 flex flex-col space-y-8 z-[40]">
+  <div v-if="!isScenarioContext" class="absolute top-32 left-12 flex flex-col space-y-8 z-[40] pointer-events-none">
      <div class="flex items-center space-x-6">
         <div class="flex flex-col border-l border-nier-text-light/20 dark:border-nier-text-dark/20 pl-4 py-1">
            <span class="text-[8px] font-mono tracking-widest opacity-40 uppercase">
@@ -8,19 +8,36 @@
            <span class="text-[12px] font-mono tracking-widest opacity-80 uppercase">{{ (viewState.scale * 100).toFixed(0) }}% // FOCUS</span>
         </div>
         
-         <button @click.stop="$emit('reset-view')" class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
+         <button @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
            [R]
          </button>
-         <button
-           type="button"
-           @click.stop="toggleGitPanel"
-           class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
-           title="Git"
-         >
-           <Icon name="lucide:git-branch" class="w-4 h-4" />
-         </button>
+         <div class="relative pointer-events-auto">
+           <button
+             type="button"
+             @click.stop="toggleGitPanel"
+             @contextmenu.prevent.stop="toggleGitMenu"
+             class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
+             title="Git"
+           >
+             <Icon name="lucide:git-branch" class="w-4 h-4" />
+           </button>
+
+           <div
+             v-if="isGitMenuOpen"
+             class="absolute left-0 top-10 z-[100001] min-w-[190px] border border-nier-text-light/20 bg-nier-white/95 shadow-[8px_8px_0_rgba(0,0,0,0.12)] dark:border-nier-text-dark/20 dark:bg-nier-black/95 dark:shadow-[8px_8px_0_rgba(255,255,255,0.06)]"
+             @click.stop
+           >
+             <button
+               type="button"
+               class="block w-full px-4 py-3 text-left font-mono text-[8px] font-black uppercase tracking-[0.28em] text-nier-text-light transition-colors hover:bg-nier-text-light/10 dark:text-nier-text-dark dark:hover:bg-nier-text-dark/10"
+               @click.stop="clearChangeTree"
+             >
+               {{ locale === 'ru' ? 'Очистить дерево' : 'Clear Tree' }}
+             </button>
+           </div>
+         </div>
          <button @click.stop="isManualOpen = true" 
-                 class="tactical-button relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
+                 class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 group-hover:scale-110 transition-transform">
              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
@@ -31,7 +48,7 @@
            v-if="canCreateStrategyVersion"
            type="button"
            @click.stop="handleStrategyVersionRequest"
-           class="tactical-button h-8 border border-current px-3 bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 font-mono text-[8px] font-black uppercase tracking-[0.28em] whitespace-nowrap shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           class="tactical-button pointer-events-auto h-8 border border-current px-3 bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 font-mono text-[8px] font-black uppercase tracking-[0.28em] whitespace-nowrap shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
          >
            {{ locale === 'ru' ? 'Создать версию' : 'Create Version' }}
          </button>
@@ -47,7 +64,7 @@
                         ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black opacity-100' 
                         : 'opacity-30 hover:opacity-100 hover:bg-nier-text-light/5 dark:hover:bg-nier-text-dark/5'
                    ]"
-                   class="w-12 h-5 border border-nier-text-light/20 dark:border-nier-text-dark/20 text-[9px] font-mono tracking-tighter transition-all flex items-center justify-center relative overflow-hidden group/zoom">
+                   class="pointer-events-auto w-12 h-5 border border-nier-text-light/20 dark:border-nier-text-dark/20 text-[9px] font-mono tracking-tighter transition-all flex items-center justify-center relative overflow-hidden group/zoom">
               <div v-if="Math.round(viewState.scale * 100) === zoom" class="absolute inset-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 animate-pulse"></div>
               {{ zoom }}%
               <div class="absolute right-0 top-0 w-1 h-1 bg-current opacity-20"></div>
@@ -154,6 +171,7 @@ const changeTree = useMatrixChangeTree()
 
 const isManualOpen = ref(false)
 const isGitPanelOpen = ref(false)
+const isGitMenuOpen = ref(false)
 const activeManualSection = ref(0)
 
 function setGitPanelOpen(value: boolean) {
@@ -162,7 +180,17 @@ function setGitPanelOpen(value: boolean) {
 }
 
 function toggleGitPanel() {
+  isGitMenuOpen.value = false
   setGitPanelOpen(!isGitPanelOpen.value)
+}
+
+function toggleGitMenu() {
+  isGitMenuOpen.value = !isGitMenuOpen.value
+}
+
+function clearChangeTree() {
+  changeTree.resetChanges()
+  isGitMenuOpen.value = false
 }
 
 function handleStrategyVersionRequest() {
