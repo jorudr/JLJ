@@ -424,17 +424,23 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       const commentSnapshot = cloneMatrixValue(comment)
       changeTree.recordCommentAdded(node, comment, {
         undo: () => {
-          node.params.comments = (node.params.comments || []).filter((item: any) => item.id !== commentSnapshot.id)
-          state.forceUpdate()
-          state.saveMatrixData()
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            globalNode.params.comments = (globalNode.params.comments || []).filter((item: any) => item.id !== commentSnapshot.id)
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
         },
         redo: () => {
-          if (!(node.params.comments || []).some((item: any) => item.id === commentSnapshot.id)) {
-            if (!node.params.comments) node.params.comments = []
-            node.params.comments.push(cloneMatrixValue(commentSnapshot))
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            if (!(globalNode.params.comments || []).some((item: any) => item.id === commentSnapshot.id)) {
+              if (!globalNode.params.comments) globalNode.params.comments = []
+              globalNode.params.comments.push(cloneMatrixValue(commentSnapshot))
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
           }
-          state.forceUpdate()
-          state.saveMatrixData()
         }
       })
       state.selectNode(nodeId)

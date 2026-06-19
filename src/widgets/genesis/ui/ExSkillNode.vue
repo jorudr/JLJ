@@ -731,9 +731,11 @@ import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
+import { useMatrixState } from '../model/matrix/useMatrixState'
 
 const { locale, t } = useI18n()
 const changeTree = useMatrixChangeTree()
+const state = useMatrixState()
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()
@@ -1086,14 +1088,21 @@ watch(
     const nextValue = String(props.node.params?.customName || '').trim()
     const previousValue = identityDraftStart.value.trim()
     if (nextValue && nextValue !== previousValue) {
+      const nodeId = props.node.id
       changeTree.recordNodeIdentityChanged(props.node, nextValue, {
         undo: () => {
-          props.node.params.customName = previousValue
-          emit('moved')
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            globalNode.params.customName = previousValue
+            emit('moved')
+          }
         },
         redo: () => {
-          props.node.params.customName = nextValue
-          emit('moved')
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            globalNode.params.customName = nextValue
+            emit('moved')
+          }
         }
       })
       emit('moved')
@@ -1113,14 +1122,21 @@ watch(
     const nextValue = String(props.node.params?.customDescription || '').trim()
     const previousValue = descriptionDraftStart.value.trim()
     if (nextValue && nextValue !== previousValue) {
+      const nodeId = props.node.id
       changeTree.recordNodeDescriptionChanged(props.node, nextValue, {
         undo: () => {
-          props.node.params.customDescription = previousValue
-          emit('moved')
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            globalNode.params.customDescription = previousValue
+            emit('moved')
+          }
         },
         redo: () => {
-          props.node.params.customDescription = nextValue
-          emit('moved')
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            globalNode.params.customDescription = nextValue
+            emit('moved')
+          }
         }
       })
       emit('moved')
@@ -1454,14 +1470,17 @@ const commitCommentEdit = (comment: any) => {
   if (nextText && nextText !== String(previousText).trim()) {
     const commentId = comment.id
     const previousTextValue = String(previousText)
+    const nodeId = props.node.id
     changeTree.recordCommentTextChanged(props.node, comment, {
       undo: () => {
-        const targetComment = (props.node.params?.comments || []).find((item: any) => item.id === commentId)
+        const globalNode = state.getNode(nodeId)
+        const targetComment = (globalNode?.params?.comments || []).find((item: any) => item.id === commentId)
         if (targetComment) targetComment.text = previousTextValue
         emit('moved')
       },
       redo: () => {
-        const targetComment = (props.node.params?.comments || []).find((item: any) => item.id === commentId)
+        const globalNode = state.getNode(nodeId)
+        const targetComment = (globalNode?.params?.comments || []).find((item: any) => item.id === commentId)
         if (targetComment) targetComment.text = nextText
         emit('moved')
       }
@@ -1482,17 +1501,24 @@ const removeComment = (id: string) => {
 
   const removedCommentSnapshot = JSON.parse(JSON.stringify(commentToRemove))
   props.node.params.comments = props.node.params.comments.filter((c: Comment) => c.id !== id)
+  const nodeId = props.node.id
   changeTree.recordCommentRemoved(props.node, removedCommentSnapshot, {
     undo: () => {
-      if (!props.node.params.comments) props.node.params.comments = []
-      if (!props.node.params.comments.some((comment: Comment) => comment.id === removedCommentSnapshot.id)) {
-        props.node.params.comments.push(JSON.parse(JSON.stringify(removedCommentSnapshot)))
+      const globalNode = state.getNode(nodeId)
+      if (globalNode) {
+        if (!globalNode.params.comments) globalNode.params.comments = []
+        if (!globalNode.params.comments.some((comment: Comment) => comment.id === removedCommentSnapshot.id)) {
+          globalNode.params.comments.push(JSON.parse(JSON.stringify(removedCommentSnapshot)))
+        }
+        emit('moved')
       }
-      emit('moved')
     },
     redo: () => {
-      props.node.params.comments = (props.node.params.comments || []).filter((comment: Comment) => comment.id !== removedCommentSnapshot.id)
-      emit('moved')
+      const globalNode = state.getNode(nodeId)
+      if (globalNode && globalNode.params) {
+        globalNode.params.comments = (globalNode.params.comments || []).filter((comment: Comment) => comment.id !== removedCommentSnapshot.id)
+        emit('moved')
+      }
     }
   })
   emit('moved')
