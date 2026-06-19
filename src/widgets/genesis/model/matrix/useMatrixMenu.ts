@@ -474,13 +474,50 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     const node = state.getNode(nodeId)
     if (node) {
       if (!node.params) node.params = {}
-      if (!node.params.direction || node.params.direction === 'NONE') {
-        node.params.direction = 'LONG'
-      } else if (node.params.direction === 'LONG') {
-        node.params.direction = 'SHORT'
+      const oldDirection = node.params.direction || 'NONE'
+      let newDirection = 'NONE'
+      if (oldDirection === 'NONE') {
+        newDirection = 'LONG'
+      } else if (oldDirection === 'LONG') {
+        newDirection = 'SHORT'
       } else {
-        node.params.direction = 'NONE'
+        newDirection = 'NONE'
       }
+      
+      if (newDirection === 'NONE') {
+        delete node.params.direction
+      } else {
+        node.params.direction = newDirection
+      }
+      
+      changeTree.recordNodeDirectionChanged(node, newDirection, {
+        undo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            const val = newDirection === 'NONE' ? oldDirection : 'NONE'
+            if (val === 'NONE') {
+              delete globalNode.params.direction
+            } else {
+              globalNode.params.direction = val
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        },
+        redo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            if (newDirection === 'NONE') {
+              delete globalNode.params.direction
+            } else {
+              globalNode.params.direction = newDirection
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        }
+      })
+      
       state.forceUpdate()
       state.saveMatrixData()
     }
@@ -491,7 +528,42 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     const node = state.getNode(nodeId)
     if (node) {
       if (!node.params) node.params = {}
-      node.params.phase = phase
+      const oldPhase = node.params.phase || 'NONE'
+      
+      if (phase === 'NONE') {
+        delete node.params.phase
+      } else {
+        node.params.phase = phase
+      }
+      
+      changeTree.recordNodePhaseChanged(node, phase, {
+        undo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            const val = phase === 'NONE' ? oldPhase : 'NONE'
+            if (val === 'NONE') {
+              delete globalNode.params.phase
+            } else {
+              globalNode.params.phase = val
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        },
+        redo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            if (phase === 'NONE') {
+              delete globalNode.params.phase
+            } else {
+              globalNode.params.phase = phase
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        }
+      })
+      
       state.saveMatrixData()
       state.forceUpdate()
     }
@@ -504,8 +576,42 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       if (!node.params) node.params = {}
       const phases = ['NONE', 'ENTRY', 'EXIT']
       const currentPhase = node.params.phase || 'NONE'
-      const nextPhase = phases[(phases.indexOf(currentPhase) + 1) % phases.length]
-      node.params.phase = nextPhase
+      const nextPhase = phases[(phases.indexOf(currentPhase) + 1) % phases.length] || 'NONE'
+      
+      if (nextPhase === 'NONE') {
+        delete node.params.phase
+      } else {
+        node.params.phase = nextPhase
+      }
+      
+      changeTree.recordNodePhaseChanged(node, nextPhase, {
+        undo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            const val = nextPhase === 'NONE' ? currentPhase : 'NONE'
+            if (val === 'NONE') {
+              delete globalNode.params.phase
+            } else {
+              globalNode.params.phase = val
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        },
+        redo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            if (nextPhase === 'NONE') {
+              delete globalNode.params.phase
+            } else {
+              globalNode.params.phase = nextPhase
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        }
+      })
+      
       state.saveMatrixData()
       state.forceUpdate()
     }
@@ -518,8 +624,42 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       if (!node.params) node.params = {}
       const priorities = ['NONE', 'REQUIRED', 'ADDITIONAL']
       const currentPriority = node.params.priority || 'NONE'
-      const nextPriority = priorities[(priorities.indexOf(currentPriority) + 1) % priorities.length]
-      node.params.priority = nextPriority
+      const nextPriority = priorities[(priorities.indexOf(currentPriority) + 1) % priorities.length] || 'NONE'
+      
+      if (nextPriority === 'NONE') {
+        delete node.params.priority
+      } else {
+        node.params.priority = nextPriority
+      }
+      
+      changeTree.recordNodePriorityChanged(node, nextPriority, {
+        undo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            const val = nextPriority === 'NONE' ? currentPriority : 'NONE'
+            if (val === 'NONE') {
+              delete globalNode.params.priority
+            } else {
+              globalNode.params.priority = val
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        },
+        redo: () => {
+          const globalNode = state.getNode(nodeId)
+          if (globalNode && globalNode.params) {
+            if (nextPriority === 'NONE') {
+              delete globalNode.params.priority
+            } else {
+              globalNode.params.priority = nextPriority
+            }
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        }
+      })
+      
       state.saveMatrixData()
       state.forceUpdate()
     }

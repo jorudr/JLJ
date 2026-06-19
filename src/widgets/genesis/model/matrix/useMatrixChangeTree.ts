@@ -72,6 +72,8 @@ function addSubchange(parent: MatrixChangeEvent, label: string, value: string, t
   } else if (typeof targetIdOrAction === 'string') {
     targetId = targetIdOrAction
     action = actionOpt
+  } else if (targetIdOrAction === undefined && actionOpt) {
+    action = actionOpt
   }
 
   parent.subchanges.push({
@@ -284,8 +286,6 @@ export function useMatrixChangeTree() {
   }
 
   function recordNodeIdentityChanged(node: any, value: string, action?: MatrixChangeAction) {
-    addSubchange(ensureNodeParent(node), 'identity', value, action)
-    
     // Retroactively update the node's readable name in all previous events and subchanges
     const targetId = node.id
     const newLine = readableNodeLine(node)
@@ -306,6 +306,75 @@ export function useMatrixChangeTree() {
       })
     })
     events.value = [...events.value]
+    
+    // Add the actual subchange for the identity update
+    addSubchange(
+      ensureNodeParent(node),
+      'identity',
+      value,
+      undefined,
+      action
+    )
+  }
+
+  function recordNodeDirectionChanged(node: any, value: string, action?: MatrixChangeAction) {
+    const parentEvent = ensureNodeParent(node)
+    if (value === 'NONE') {
+      addSubchange(parentEvent, 'direction_removed', value, undefined, action)
+    } else {
+      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'direction' || s.label === 'direction_removed')
+      if (lastSub && lastSub.label === 'direction') {
+        lastSub.value = value
+        const originalUndo = lastSub.action?.undo
+        lastSub.action = {
+          undo: originalUndo || action?.undo,
+          redo: action?.redo
+        }
+        events.value = [...events.value]
+      } else {
+        addSubchange(parentEvent, 'direction', value, undefined, action)
+      }
+    }
+  }
+
+  function recordNodePhaseChanged(node: any, value: string, action?: MatrixChangeAction) {
+    const parentEvent = ensureNodeParent(node)
+    if (value === 'NONE') {
+      addSubchange(parentEvent, 'phase_removed', value, undefined, action)
+    } else {
+      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'phase' || s.label === 'phase_removed')
+      if (lastSub && lastSub.label === 'phase') {
+        lastSub.value = value
+        const originalUndo = lastSub.action?.undo
+        lastSub.action = {
+          undo: originalUndo || action?.undo,
+          redo: action?.redo
+        }
+        events.value = [...events.value]
+      } else {
+        addSubchange(parentEvent, 'phase', value, undefined, action)
+      }
+    }
+  }
+
+  function recordNodePriorityChanged(node: any, value: string, action?: MatrixChangeAction) {
+    const parentEvent = ensureNodeParent(node)
+    if (value === 'NONE') {
+      addSubchange(parentEvent, 'priority_removed', value, undefined, action)
+    } else {
+      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'priority' || s.label === 'priority_removed')
+      if (lastSub && lastSub.label === 'priority') {
+        lastSub.value = value
+        const originalUndo = lastSub.action?.undo
+        lastSub.action = {
+          undo: originalUndo || action?.undo,
+          redo: action?.redo
+        }
+        events.value = [...events.value]
+      } else {
+        addSubchange(parentEvent, 'priority', value, undefined, action)
+      }
+    }
   }
 
   function recordNodeDescriptionChanged(node: any, value: string, action?: MatrixChangeAction) {
@@ -331,10 +400,9 @@ export function useMatrixChangeTree() {
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
     const parentEvent = findParentEvent('node', fromId)
     if (parentEvent) {
-      // Uniquely identify the connection by targetId (toId)
-      const subchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.targetId === toId)
-      if (subchange) {
-        subchange.action = action
+      const sub = parentEvent.subchanges.find(s => s.targetId === toId && s.label === 'to')
+      if (sub) {
+        sub.action = action
       }
     }
   }
@@ -352,6 +420,9 @@ export function useMatrixChangeTree() {
     recordConnectionDeleted,
     recordStrategyVersionCreated,
     recordNodeIdentityChanged,
+    recordNodeDirectionChanged,
+    recordNodePhaseChanged,
+    recordNodePriorityChanged,
     recordNodeDescriptionChanged,
     recordCommentAdded,
     recordCommentTextChanged,
