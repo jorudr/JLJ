@@ -50,6 +50,70 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     }
   }
 
+  function connectionKey(connection: Connection) {
+    return [
+      connection.fromId,
+      connection.toId,
+      connection.fromPort || '',
+      connection.toPort || ''
+    ].join('->')
+  }
+
+  function createScopedMatrixPatchAction(beforeNodes: Node[], beforeConnections: Connection[], afterNodes: Node[], afterConnections: Connection[]) {
+    const beforeNodeMap = new Map<string, Node>(beforeNodes.map(node => [node.id, cloneMatrixValue(node)] as [string, Node]))
+    const afterNodeMap = new Map<string, Node>(afterNodes.map(node => [node.id, cloneMatrixValue(node)] as [string, Node]))
+    const touchedNodeIds = new Set<string>()
+
+    beforeNodeMap.forEach((beforeNode, id) => {
+      const afterNode = afterNodeMap.get(id)
+      if (!afterNode || JSON.stringify(beforeNode) !== JSON.stringify(afterNode)) touchedNodeIds.add(id)
+    })
+    afterNodeMap.forEach((afterNode, id) => {
+      const beforeNode = beforeNodeMap.get(id)
+      if (!beforeNode || JSON.stringify(beforeNode) !== JSON.stringify(afterNode)) touchedNodeIds.add(id)
+    })
+
+    const beforeConnectionMap = new Map<string, Connection>(beforeConnections.map(connection => [connectionKey(connection), cloneMatrixValue(connection)] as [string, Connection]))
+    const afterConnectionMap = new Map<string, Connection>(afterConnections.map(connection => [connectionKey(connection), cloneMatrixValue(connection)] as [string, Connection]))
+    const touchedConnectionKeys = new Set<string>()
+
+    beforeConnectionMap.forEach((beforeConnection, key) => {
+      const afterConnection = afterConnectionMap.get(key)
+      if (!afterConnection || JSON.stringify(beforeConnection) !== JSON.stringify(afterConnection)) touchedConnectionKeys.add(key)
+    })
+    afterConnectionMap.forEach((afterConnection, key) => {
+      const beforeConnection = beforeConnectionMap.get(key)
+      if (!beforeConnection || JSON.stringify(beforeConnection) !== JSON.stringify(afterConnection)) touchedConnectionKeys.add(key)
+    })
+
+    const applyPatch = (nodeMap: Map<string, Node>, connectionMap: Map<string, Connection>) => {
+      state.nodes.value = [
+        ...state.nodes.value.filter(node => !touchedNodeIds.has(node.id)),
+        ...Array.from(touchedNodeIds)
+          .map(id => nodeMap.get(id))
+          .filter((node): node is Node => !!node)
+          .map(node => cloneMatrixValue(node))
+      ]
+
+      state.connections.value = [
+        ...state.connections.value.filter(connection => !touchedConnectionKeys.has(connectionKey(connection))),
+        ...Array.from(touchedConnectionKeys)
+          .map(key => connectionMap.get(key))
+          .filter((connection): connection is Connection => !!connection)
+          .map(connection => cloneMatrixValue(connection))
+      ]
+
+      state.cleanupLogicBundles()
+      state.forceUpdate()
+      state.saveMatrixData()
+    }
+
+    return {
+      undo: () => applyPatch(beforeNodeMap, beforeConnectionMap),
+      redo: () => applyPatch(afterNodeMap, afterConnectionMap)
+    }
+  }
+
   const assetSearchQuery = ref('')
   const assetResults = ref<AssetInfo[]>([])
   const isSearchingAssets = ref(false)
@@ -758,20 +822,13 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       const labelMemberNode = label && ['and', 'or'].includes(label.toLowerCase())
         ? state.getNode(conn.toId)
         : null
-      changeTree.recordConnectionLabelChanged(conn, label, {
-        undo: () => {
-          state.nodes.value = cloneMatrixValue(beforeNodes)
-          state.connections.value = cloneMatrixValue(beforeConnections)
-          state.forceUpdate()
-          state.saveMatrixData()
-        },
-        redo: () => {
-          state.nodes.value = cloneMatrixValue(afterNodes)
-          state.connections.value = cloneMatrixValue(afterConnections)
-          state.forceUpdate()
-          state.saveMatrixData()
-        }
-      }, labelMemberNode, labelMemberNode ? createDirectConnectionAddAction(conn) : undefined)
+      changeTree.recordConnectionLabelChanged(
+        conn,
+        label,
+        createScopedMatrixPatchAction(beforeNodes, beforeConnections, afterNodes, afterConnections),
+        labelMemberNode,
+        labelMemberNode ? createDirectConnectionAddAction(conn) : undefined
+      )
       state.saveMatrixData()
     }
     connectionContextMenu.value = null

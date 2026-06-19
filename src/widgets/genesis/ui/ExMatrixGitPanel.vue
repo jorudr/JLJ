@@ -243,12 +243,21 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
 }
 
 function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) {
+  const { parentId, eventId } = changeTree.getLogicLabelParentIds(id)
   const relatedIds = [
     ...changeTree.collectDescendantChangeIds(id),
     ...changeTree.collectLinkedChangeIds(id)
   ]
 
   if (turningOn) {
+    if (eventId && next.has(eventId)) {
+      next.delete(eventId)
+      changeTree.setChangeOwnActionEnabled(eventId, true)
+    }
+    if (parentId && next.has(parentId)) {
+      next.delete(parentId)
+      changeTree.setChangeOwnActionEnabled(parentId, true)
+    }
     next.delete(id)
     relatedIds.forEach(childId => next.delete(childId))
     changeTree.setChangeEnabled(id, true)
@@ -269,9 +278,26 @@ function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean
 
   if (turningOn) {
     next.delete(id)
-    if (parentLabelId && next.has(parentLabelId) && changeTree.hasEnabledLogicLabelAddNodes(parentLabelId, next)) {
-      next.delete(parentLabelId)
-      changeTree.setChangeOwnActionEnabled(parentLabelId, true)
+    if (parentLabelId) {
+      const { parentId, eventId } = changeTree.getLogicLabelParentIds(parentLabelId)
+      const initialAddNodeId = changeTree.getInitialLogicLabelAddNodeId(parentLabelId)
+      const shouldEnableLabel = initialAddNodeId !== id || changeTree.hasEnabledLogicLabelAddNodes(parentLabelId, next)
+      if (eventId && next.has(eventId)) {
+        next.delete(eventId)
+        changeTree.setChangeOwnActionEnabled(eventId, true)
+      }
+      if (parentId && next.has(parentId)) {
+        next.delete(parentId)
+        changeTree.setChangeOwnActionEnabled(parentId, true)
+      }
+      if (next.has(parentLabelId) && shouldEnableLabel) {
+        next.delete(parentLabelId)
+        changeTree.setChangeOwnActionEnabled(parentLabelId, true)
+      }
+      if (initialAddNodeId && initialAddNodeId !== id && next.has(initialAddNodeId)) {
+        next.delete(initialAddNodeId)
+        changeTree.setChangeEnabled(initialAddNodeId, true)
+      }
     }
     changeTree.setChangeEnabled(id, true)
     linkedIds.forEach(linkedId => {

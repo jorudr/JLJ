@@ -182,6 +182,20 @@ function getParentLogicLabelId(id: string) {
   return parent?.label === 'link_label' ? parent.id : undefined
 }
 
+function getLogicLabelParentIds(labelId: string) {
+  const context = findChangeContext(labelId)
+  const parentId = context?.parent?.id
+  const eventId = context?.event?.id
+  return { parentId, eventId }
+}
+
+function getInitialLogicLabelAddNodeId(labelId: string) {
+  const context = findChangeContext(labelId)
+  const addNodes = ((context?.change as MatrixSubchange | undefined)?.subchanges || [])
+    .filter(subchange => subchange.label === 'ADD_NODE')
+  return addNodes[0]?.id
+}
+
 function hasEnabledLogicLabelAddNodes(labelId: string, disabledIds: Set<string>) {
   const context = findChangeContext(labelId)
   const subchanges = (context?.change as MatrixSubchange | undefined)?.subchanges || []
@@ -577,6 +591,8 @@ export function useMatrixChangeTree() {
     disabledChanges,
     collectDescendantChangeIds,
     collectLinkedChangeIds,
+    getInitialLogicLabelAddNodeId,
+    getLogicLabelParentIds,
     getParentLogicLabelId,
     hasEnabledLogicLabelAddNodes,
     isInitialLogicLabelAddNode,
