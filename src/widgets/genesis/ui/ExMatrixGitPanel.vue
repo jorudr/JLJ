@@ -51,7 +51,7 @@ type TreePart = {
 type TreeRow = {
   parts: TreePart[]
   toggleId?: string
-  parentId?: string
+  parentIds?: string[]
 }
 
 const themeStore = useThemeStore()
@@ -89,13 +89,13 @@ function formatChangeTime(createdAt: number) {
   return `${hours} hour${hours === 1 ? '' : 's'} ago`
 }
 
-function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentId: string, prefix: string) {
+function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds: string[], prefix: string) {
   subchanges.forEach((subchange, index) => {
     const isLast = index === subchanges.length - 1
     const connector = isLast ? '`-' : '+-'
     rows.push({
       toggleId: subchange.id,
-      parentId,
+      parentIds,
       parts: [
         { text: '|   ' },
         { text: prefix, class: 'tree-muted' },
@@ -111,7 +111,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentId:
       appendNestedSubchangeRows(
         rows,
         subchange.subchanges,
-        subchange.id,
+        [...parentIds, subchange.id],
         `${prefix}${isLast ? '    ' : '|   '}`
       )
     }
@@ -172,7 +172,7 @@ const treeRows = computed<TreeRow[]>(() => {
       const connector = isLastSub ? '`-' : '+-'
       rows.push({
         toggleId: subchange.id,
-        parentId: event.id,
+        parentIds: [event.id],
         parts: [
           { text: '|   ' },
           { text: connector, class: 'tree-muted' },
@@ -187,7 +187,7 @@ const treeRows = computed<TreeRow[]>(() => {
         appendNestedSubchangeRows(
           rows,
           subchange.subchanges,
-          subchange.id,
+          [event.id, subchange.id],
           subIndex === event.subchanges.length - 1 ? '    ' : '|   '
         )
       }
@@ -210,7 +210,10 @@ function isChangeDisabled(id?: string) {
 }
 
 function isTreeRowOff(row: TreeRow) {
-  return !!((row.toggleId && isChangeDisabled(row.toggleId)) || (row.parentId && isChangeDisabled(row.parentId)))
+  return !!(
+    (row.toggleId && isChangeDisabled(row.toggleId)) ||
+    row.parentIds?.some(parentId => isChangeDisabled(parentId))
+  )
 }
 
 function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: boolean) {
