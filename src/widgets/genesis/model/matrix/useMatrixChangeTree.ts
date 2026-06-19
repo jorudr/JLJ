@@ -76,7 +76,7 @@ function addEvent(event: Omit<MatrixChangeEvent, 'id' | 'createdAt' | 'subchange
   return nextEvent
 }
 
-function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction, payload?: any) {
+function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction, payload?: any): MatrixSubchange | undefined {
   const normalizedValue = String(value || '').trim()
   if (!normalizedValue) return
 
@@ -92,7 +92,7 @@ function addSubchange(parent: MatrixChangeEvent, label: string, value: string, t
     action = actionOpt
   }
 
-  const subchange = {
+  const subchange: MatrixSubchange = {
     id: nextId('sub'),
     label,
     value: normalizedValue,
@@ -598,8 +598,8 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'comment_removed', comment?.text || 'comment', action)
   }
 
-  function recordDomainAdded(domain: any, action?: MatrixChangeAction) {
-    addEvent({
+  function recordDomainAdded(domain: any, containedNodes: any[], action?: MatrixChangeAction) {
+    const parentEvent = addEvent({
       type: 'add',
       title: 'ADD_DOMAIN',
       node: readableDomainLine(domain),
@@ -615,6 +615,22 @@ export function useMatrixChangeTree() {
         }
       ]
     })
+
+    if (containedNodes && containedNodes.length > 0) {
+      let holderSub = addSubchange(parentEvent, 'NODES_HOLDER', 'NODES_HOLDER', domain.id)
+      if (holderSub) {
+        holderSub.subchanges = []
+        containedNodes.forEach(node => {
+          const subId = nextId('sub')
+          holderSub!.subchanges!.push({
+            id: subId,
+            label: 'default',
+            value: readableNodeName(node),
+            targetId: node.id
+          })
+        })
+      }
+    }
   }
 
   function recordDomainDeleted(domain: any, action?: MatrixChangeAction) {
@@ -647,7 +663,25 @@ export function useMatrixChangeTree() {
     const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
     if (!parentEvent) return
     
-    addSubchange(parentEvent, isAdded ? 'node_added' : 'node_removed', nodeLabel, nodeId)
+    let holderSub = parentEvent.subchanges.find(s => s.label === 'NODES_HOLDER')
+    if (!holderSub) {
+      holderSub = addSubchange(parentEvent, 'NODES_HOLDER', 'NODES_HOLDER', domainId)
+    }
+
+    if (holderSub) {
+      if (!holderSub.subchanges) {
+        holderSub.subchanges = []
+      }
+      
+      const subId = nextId('sub')
+      holderSub.subchanges.push({
+        id: subId,
+        label: isAdded ? 'add' : 'remove',
+        value: nodeLabel,
+        targetId: nodeId
+      })
+      events.value = [...events.value]
+    }
   }
 
   function getDomainState(domainId: string) {
@@ -656,7 +690,7 @@ export function useMatrixChangeTree() {
 
     if (disabledChanges.value.has(parentEvent.id)) return null
 
-    const changerSub = parentEvent.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+    const changerSub = parentEvent.subchanges.find(s => s.label === 'SESSION_CHANGER' || s.label === 'TYPE_CHANGER' || s.label === 'TYPE/SESSION_CHANGER')
     let lastActiveTo: any = undefined
     if (changerSub && changerSub.subchanges) {
       for (const sub of changerSub.subchanges) {
@@ -679,9 +713,10 @@ export function useMatrixChangeTree() {
     const parentEvent = ensureDomainParent(domain)
     parentEvent.node = readableDomainLine(domain)
 
-    let changerSub = parentEvent.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+    const labelName = domain.type === 'session' ? 'SESSION_CHANGER' : 'TYPE_CHANGER'
+    let changerSub = parentEvent.subchanges.find(s => s.label === 'SESSION_CHANGER' || s.label === 'TYPE_CHANGER' || s.label === 'TYPE/SESSION_CHANGER')
     if (!changerSub) {
-      changerSub = addSubchange(parentEvent, 'TYPE/SESSION_CHANGER', 'TYPE/SESSION_CHANGER', domain.id)
+      changerSub = addSubchange(parentEvent, labelName, labelName, domain.id)
     }
 
     if (changerSub) {

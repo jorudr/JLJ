@@ -111,9 +111,14 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
   visibleSubs.forEach((subchange, index) => {
     const isLast = index === visibleSubs.length - 1 && !(hasTooMany && !isExpanded)
     const connector = isLast ? '`-' : '+-'
+
+    const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
+    const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
+
     rows.push({
       toggleId: subchange.id,
       parentIds,
+      isTerminated,
       parts: [
         { text: '|   ' },
         { text: prefix, class: 'tree-muted' },
@@ -121,7 +126,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
         { text: ' ' },
         { text: subchange.label, class: 'tree-subkey' },
         { text: ': ' },
-        { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35), class: 'tree-subvalue' }
+        { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
       ]
     })
 
@@ -228,7 +233,7 @@ const treeRows = computed<TreeRow[]>(() => {
         const isLastSub = subIndex === visibleSubs.length - 1 && !(subchange.subchanges?.length) && !(hasTooMany && !isExpanded)
         const connector = isLastSub ? '`-' : '+-'
         
-        const isDomainNodeChange = subchange.label === 'node_added' || subchange.label === 'node_removed'
+        const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
         const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
         
         rows.push({

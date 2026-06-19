@@ -94,10 +94,11 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     
     let nextValue = ''
     if (zone.type === 'session') {
-      const parts = zone.label.split(' ')
-      const prefix = parts.slice(0, -1).join(' ') || 'SESSION'
-      const num = parseInt(parts[parts.length - 1] || '0')
-      nextValue = `${prefix} ${num + 1}`
+      const sessions = ['SYDNEY', 'TOKYO', 'LONDON', 'NEW_YORK']
+      const currentVal = String(zone.label || '').trim().toUpperCase().replace(' ', '_')
+      const currentIndex = sessions.indexOf(currentVal)
+      const nextIndex = (currentIndex === -1 ? 0 : currentIndex + 1) % sessions.length
+      nextValue = sessions[nextIndex] || 'SYDNEY'
     } else {
       const cycle = ['entry', 'in-trade', 'exit']
       const currentIndex = cycle.indexOf(zone.type)

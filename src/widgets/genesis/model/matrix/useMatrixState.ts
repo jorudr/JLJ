@@ -1139,7 +1139,7 @@ export function useMatrixState() {
         let activeValue: string | null = null
 
         if (!next.has(event.id)) {
-          const changerSub = event.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+          const changerSub = event.subchanges.find(s => s.label === 'SESSION_CHANGER' || s.label === 'TYPE_CHANGER' || s.label === 'TYPE/SESSION_CHANGER')
           let lastActiveTo: any = undefined
           if (changerSub && changerSub.subchanges) {
             for (const sub of changerSub.subchanges) {

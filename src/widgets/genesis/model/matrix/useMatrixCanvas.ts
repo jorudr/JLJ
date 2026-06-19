@@ -213,7 +213,13 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         }
         state.zones.value = [...state.zones.value, newZone]
         const zoneSnapshot = cloneMatrixValue(newZone)
-        changeTree.recordDomainAdded(newZone, {
+        const containedNodes = state.nodes.value.filter(node => {
+          return node.x >= newZone.x && 
+                 node.x <= newZone.x + newZone.width && 
+                 node.y >= newZone.y && 
+                 node.y <= newZone.y + newZone.height
+        })
+        changeTree.recordDomainAdded(newZone, containedNodes, {
           undo: () => {
             state.zones.value = state.zones.value.filter(zone => zone.id !== zoneSnapshot.id)
             state.forceUpdate()
