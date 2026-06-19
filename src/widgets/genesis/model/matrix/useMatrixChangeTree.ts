@@ -217,6 +217,27 @@ export function useMatrixChangeTree() {
 
   function recordNodeIdentityChanged(node: any, value: string, action?: MatrixChangeAction) {
     addSubchange(ensureNodeParent(node), 'identity', value, action)
+    
+    // Retroactively update the node's readable name in all previous events and subchanges
+    const targetId = node.id
+    const newLine = readableNodeLine(node)
+    const newName = readableNodeName(node)
+
+    events.value.forEach(event => {
+      if (event.targetKind === 'node' && event.targetId === targetId) {
+        event.node = newLine
+      }
+      
+      event.subchanges.forEach(sub => {
+        if (sub.targetId === targetId && (sub.label === 'to' || sub.label === 'removed')) {
+          sub.value = newLine
+        }
+        if (event.targetId === targetId && sub.label === 'removed' && !sub.targetId) {
+          sub.value = newName
+        }
+      })
+    })
+    events.value = [...events.value]
   }
 
   function recordNodeDescriptionChanged(node: any, value: string, action?: MatrixChangeAction) {
