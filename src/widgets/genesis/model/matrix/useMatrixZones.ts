@@ -2,13 +2,41 @@ import { ref, computed } from 'vue'
 import type { useMatrixState, Zone } from './useMatrixState'
 import { useMatrixChangeTree } from './useMatrixChangeTree'
 
+const domainMemberships = ref<Record<string, Set<string>>>({})
+
+type DomainMembershipEvaluationOptions = {
+  movedNodeId?: string
+  previousPosition?: { x: number, y: number }
+  currentPosition?: { x: number, y: number }
+}
+
 export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
   const changeTree = useMatrixChangeTree()
   const isZoneToolActive = ref(false)
   const selectedZoneType = ref<Zone['type']>('session')
-  const domainMemberships = ref<Record<string, Set<string>>>({})
 
-  function evaluateDomainMemberships() {
+  function initializeDomainMembership(domainId: string, nodeIds: string[]) {
+    domainMemberships.value[domainId] = new Set(nodeIds)
+  }
+
+  function createNodePositionAction(nodeId: string, previousPosition?: { x: number, y: number }, currentPosition?: { x: number, y: number }) {
+    const applyPosition = (position?: { x: number, y: number }) => {
+      if (!position) return
+      const node = state.getNode(nodeId)
+      if (!node) return
+      node.x = position.x
+      node.y = position.y
+      state.forceUpdate()
+      state.saveMatrixData()
+    }
+
+    return {
+      undo: () => applyPosition(previousPosition),
+      redo: () => applyPosition(currentPosition)
+    }
+  }
+
+  function evaluateDomainMemberships(options: DomainMembershipEvaluationOptions = {}) {
     state.zones.value.forEach(zone => {
       if (!domainMemberships.value[zone.id]) {
         domainMemberships.value[zone.id] = new Set()
@@ -25,14 +53,36 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
       currentMembers.forEach(nodeId => {
         if (!previousMembers.has(nodeId)) {
           const node = state.getNode(nodeId)
-          if (node) changeTree.recordDomainNodeChanged(zone.id, nodeId, true, node.label || node.id)
+          if (node) {
+            const previousPosition = options.movedNodeId === nodeId ? options.previousPosition : { x: node.x, y: node.y }
+            const currentPosition = options.movedNodeId === nodeId ? options.currentPosition : { x: node.x, y: node.y }
+            changeTree.recordDomainNodeChanged(
+              zone.id,
+              nodeId,
+              true,
+              node.label || node.id,
+              createNodePositionAction(nodeId, previousPosition, currentPosition),
+              { fromPosition: previousPosition, toPosition: currentPosition }
+            )
+          }
         }
       })
       
       previousMembers.forEach(nodeId => {
         if (!currentMembers.has(nodeId)) {
           const node = state.getNode(nodeId)
-          if (node) changeTree.recordDomainNodeChanged(zone.id, nodeId, false, node.label || node.id)
+          if (node) {
+            const previousPosition = options.movedNodeId === nodeId ? options.previousPosition : { x: node.x, y: node.y }
+            const currentPosition = options.movedNodeId === nodeId ? options.currentPosition : { x: node.x, y: node.y }
+            changeTree.recordDomainNodeChanged(
+              zone.id,
+              nodeId,
+              false,
+              node.label || node.id,
+              createNodePositionAction(nodeId, previousPosition, currentPosition),
+              { fromPosition: previousPosition, toPosition: currentPosition }
+            )
+          }
         }
       })
       
@@ -87,6 +137,7 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     changeTree.disableDomainAddEvent(id)
 
     state.zones.value = state.zones.value.filter(z => z.id !== id)
+    delete domainMemberships.value[id]
     state.saveMatrixData()
     evaluateDomainMemberships()
   }
@@ -208,6 +259,7 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     drawCurrent,
     activateZoneTool,
     removeZone,
+    initializeDomainMembership,
     evaluateDomainMemberships,
     handleZoneCycle,
     startZoneDrag,

@@ -598,7 +598,7 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'comment_removed', comment?.text || 'comment', action)
   }
 
-  function recordDomainAdded(domain: any, containedNodes: any[], action?: MatrixChangeAction) {
+  function recordDomainAdded(domain: any, containedNodes: any[], action?: MatrixChangeAction, nodeActionFactory?: (node: any) => MatrixChangeAction | undefined) {
     const parentEvent = addEvent({
       type: 'add',
       title: 'ADD_DOMAIN',
@@ -622,11 +622,17 @@ export function useMatrixChangeTree() {
         holderSub.subchanges = []
         containedNodes.forEach(node => {
           const subId = nextId('sub')
+          const position = { x: node.x, y: node.y }
           holderSub!.subchanges!.push({
             id: subId,
-            label: 'default',
+            label: 'add',
             value: readableNodeName(node),
-            targetId: node.id
+            targetId: node.id,
+            action: nodeActionFactory?.(node),
+            payload: {
+              fromPosition: position,
+              toPosition: position
+            }
           })
         })
       }
@@ -673,7 +679,7 @@ export function useMatrixChangeTree() {
     }
   }
 
-  function recordDomainNodeChanged(domainId: string, nodeId: string, isAdded: boolean, nodeLabel: string) {
+  function recordDomainNodeChanged(domainId: string, nodeId: string, isAdded: boolean, nodeLabel: string, action?: MatrixChangeAction, payload?: any) {
     const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
     if (!parentEvent) return
     
@@ -692,7 +698,9 @@ export function useMatrixChangeTree() {
         id: subId,
         label: isAdded ? 'add' : 'remove',
         value: nodeLabel,
-        targetId: nodeId
+        targetId: nodeId,
+        action,
+        payload
       })
       events.value = [...events.value]
     }

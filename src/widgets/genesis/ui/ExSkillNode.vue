@@ -1417,7 +1417,11 @@ const startDrag = (e: MouseEvent) => {
     isDragging.value = false
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
-    zones.evaluateDomainMemberships()
+    zones.evaluateDomainMemberships({
+      movedNodeId: props.node.id,
+      previousPosition: { x: initialX, y: initialY },
+      currentPosition: { x: props.node.x, y: props.node.y }
+    })
   }
 
   window.addEventListener('mousemove', move)

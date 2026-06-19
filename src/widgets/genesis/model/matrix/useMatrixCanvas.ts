@@ -219,6 +219,7 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
                  node.y >= newZone.y && 
                  node.y <= newZone.y + newZone.height
         })
+        zones.initializeDomainMembership(newZone.id, containedNodes.map(node => node.id))
         changeTree.recordDomainAdded(newZone, containedNodes, {
           undo: () => {
             state.zones.value = state.zones.value.filter(zone => zone.id !== zoneSnapshot.id)
@@ -232,6 +233,20 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
             zones.evaluateDomainMemberships()
             state.forceUpdate()
             state.saveMatrixData()
+          }
+        }, (node: Node) => {
+          const position = { x: node.x, y: node.y }
+          const applyPosition = () => {
+            const currentNode = state.getNode(node.id)
+            if (!currentNode) return
+            currentNode.x = position.x
+            currentNode.y = position.y
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+          return {
+            undo: applyPosition,
+            redo: applyPosition
           }
         })
         zones.evaluateDomainMemberships()
