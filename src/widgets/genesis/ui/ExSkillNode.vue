@@ -1104,7 +1104,7 @@ function commitLabelTextDraft() {
       globalNode.params.value = nextValue
       emit('moved')
     }
-  })
+  }, { nextHtml, nextValue, previousHtml, previousValue })
   labelTextDraftStart.value = { html: nextHtml, value: nextValue }
   hasLabelTextDraft.value = false
 }

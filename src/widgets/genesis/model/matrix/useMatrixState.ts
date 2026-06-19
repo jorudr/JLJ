@@ -1044,6 +1044,8 @@ export function useMatrixState() {
         nodes: processedPages.flatMap(page => page.nodes),
         connections: processedPages.flatMap(page => page.connections),
         zones: processedPages.flatMap(page => page.zones),
+        events: changeTree.events.value,
+        disabledChanges: Array.from(changeTree.disabledChanges.value),
         view: {
           panX: viewState.value.panX,
           panY: viewState.value.panY,
@@ -1073,6 +1075,16 @@ export function useMatrixState() {
           viewState.value.panX = saved.view.panX ?? viewState.value.panX
           viewState.value.panY = saved.view.panY ?? viewState.value.panY
           viewState.value.scale = saved.view.scale ?? viewState.value.scale
+        }
+        if (saved.events && Array.isArray(saved.events)) {
+          changeTree.events.value = saved.events
+        } else {
+          changeTree.events.value = []
+        }
+        if (saved.disabledChanges && Array.isArray(saved.disabledChanges)) {
+          changeTree.disabledChanges.value = new Set(saved.disabledChanges)
+        } else {
+          changeTree.disabledChanges.value = new Set()
         }
         if (saved.personalIndicators) {
           personalIndicators.value = saved.personalIndicators

@@ -702,6 +702,10 @@ function toggleTreeRow(id?: string) {
       
       if (lastActiveSub && lastActiveSub.action?.redo) {
         lastActiveSub.action.redo()
+      } else if (lastActiveSub && lastActiveSub.payload) {
+        if (!node.params) node.params = {}
+        node.params.html = lastActiveSub.payload.nextHtml
+        node.params.value = lastActiveSub.payload.nextValue
       } else {
         if (!node.params) node.params = {}
         node.params.html = ''

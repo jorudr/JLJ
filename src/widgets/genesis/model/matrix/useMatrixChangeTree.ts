@@ -15,6 +15,7 @@ export type MatrixSubchange = {
   action?: MatrixChangeAction
   subchanges?: MatrixSubchange[]
   linkedIds?: string[]
+  payload?: any
 }
 
 export type MatrixChangeEvent = {
@@ -28,6 +29,7 @@ export type MatrixChangeEvent = {
   subchanges: MatrixSubchange[]
   action?: MatrixChangeAction
   linkedIds?: string[]
+  payload?: any
 }
 
 const events = ref<MatrixChangeEvent[]>([])
@@ -74,7 +76,7 @@ function addEvent(event: Omit<MatrixChangeEvent, 'id' | 'createdAt' | 'subchange
   return nextEvent
 }
 
-function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction) {
+function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction, payload?: any) {
   const normalizedValue = String(value || '').trim()
   if (!normalizedValue) return
 
@@ -95,7 +97,8 @@ function addSubchange(parent: MatrixChangeEvent, label: string, value: string, t
     label,
     value: normalizedValue,
     targetId,
-    action
+    action,
+    payload
   }
   parent.subchanges.push(subchange)
   events.value = [...events.value]
@@ -579,8 +582,8 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'description', value, action)
   }
 
-  function recordNodeLabelTextChanged(node: any, value: string, action?: MatrixChangeAction) {
-    addSubchange(ensureNodeParent(node), 'text', value || 'empty', action)
+  function recordNodeLabelTextChanged(node: any, value: string, action?: MatrixChangeAction, payload?: any) {
+    addSubchange(ensureNodeParent(node), 'text', value || 'empty', action, undefined, payload)
   }
 
   function recordCommentAdded(node: any, comment: any, action?: MatrixChangeAction) {
