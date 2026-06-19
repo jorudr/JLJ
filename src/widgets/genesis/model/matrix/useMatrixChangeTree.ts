@@ -221,6 +221,17 @@ export function useMatrixChangeTree() {
     addSubchange(ensureConnectionParent(connection), 'link_label', label ? label.toUpperCase() : 'CLEAR', action)
   }
 
+  function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
+    const parentEvent = findParentEvent('node', fromId)
+    if (parentEvent) {
+      const targetLine = readableNodeLine(targetNode)
+      const subchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.value === targetLine)
+      if (subchange) {
+        subchange.action = action
+      }
+    }
+  }
+
   return {
     events,
     resetChanges,
@@ -235,6 +246,7 @@ export function useMatrixChangeTree() {
     recordCommentAdded,
     recordCommentTextChanged,
     recordCommentRemoved,
-    recordConnectionLabelChanged
+    recordConnectionLabelChanged,
+    updateConnectionAction
   }
 }

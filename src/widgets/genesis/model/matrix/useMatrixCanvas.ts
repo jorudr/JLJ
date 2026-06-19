@@ -14,7 +14,7 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     return JSON.parse(JSON.stringify(value))
   }
   
-  const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', current: Point } | null>(null)
+  const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', originalFromPort?: 'left'|'right'|'top'|'bottom', originalToId?: string, originalToPort?: 'left'|'right'|'top'|'bottom', current: Point } | null>(null)
 
   const screenToWorld = (clientX: number, clientY: number) => {
     if (!canvasWrapper.value) return { x: 0, y: 0 }
@@ -132,7 +132,14 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     if (connIndex !== -1) {
       const conn = connList[connIndex]
       if (conn) {
-        activeWireRaw.value = { fromId: conn.fromId, fromPort: conn.fromPort || 'right', current: { x: targetNode.x, y: targetNode.y } }
+        activeWireRaw.value = { 
+          fromId: conn.fromId, 
+          fromPort: conn.fromPort || 'right', 
+          originalFromPort: conn.fromPort || 'right',
+          originalToId: conn.toId,
+          originalToPort: conn.toPort || 'left',
+          current: { x: targetNode.x, y: targetNode.y } 
+        }
         connList.splice(connIndex, 1)
         state.cleanupLogicBundles()
         state.saveMatrixData()
@@ -153,7 +160,9 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
       }
       state.connections.value.push(newConn)
       const connectionSnapshot = cloneMatrixValue(newConn)
-      changeTree.recordConnectionCreated(newConn, state.getNode(newConn.fromId), targetNode, {
+      const isPortChange = activeWireRaw.value.originalToId === targetNode.id
+      
+      const action = {
         undo: () => {
           state.connections.value = state.connections.value.filter(conn => !(
             conn.fromId === connectionSnapshot.fromId &&
@@ -176,7 +185,13 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
           state.forceUpdate()
           state.saveMatrixData()
         }
-      })
+      }
+
+      if (!isPortChange) {
+        changeTree.recordConnectionCreated(newConn, state.getNode(newConn.fromId), targetNode, action)
+      } else {
+        changeTree.updateConnectionAction(newConn.fromId, newConn.toId, targetNode, action)
+      }
       state.saveMatrixData()
     }
     activeWireRaw.value = null
