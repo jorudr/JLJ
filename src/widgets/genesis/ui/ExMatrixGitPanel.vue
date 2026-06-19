@@ -326,8 +326,8 @@ function toggleTreeRow(id?: string) {
 
       const subIndex = event.subchanges.findIndex(sub => sub.id === id)
       if (subIndex !== -1) {
-        // Turn OFF this subchange and all subsequent ones in the same event
-        for (let i = subIndex; i < event.subchanges.length; i++) {
+        // Turn OFF this subchange and all previous ones in the same event
+        for (let i = 0; i <= subIndex; i++) {
           const subId = event.subchanges[i]?.id
           if (subId && !next.has(subId)) {
             next.add(subId)
