@@ -612,7 +612,7 @@
                  class="group relative flex flex-col items-center transition-all duration-300"
                  :class="state.activeMenuCategory.value === cat ? 'opacity-100' : 'opacity-30 hover:opacity-100'">
             
-            <span class="text-[10px] font-mono tracking-[0.4em] uppercase font-black transition-all group-hover:tracking-[0.6em]"
+            <span class="text-[10px] font-mono tracking-[0.4em] uppercase font-black transition-colors"
                   :class="{ 'text-nier-text-light dark:text-nier-text-dark': state.activeMenuCategory.value === cat }">
               {{ getCommandCategoryLabel(cat) }}
             </span>
@@ -732,6 +732,10 @@ function getCommandCategoryLabel(category: MenuCategory) {
 function shouldShowCommandCategory(category: MenuCategory) {
   if (category === 'TEXT_FORMAT') return !!props.state.activeTextNode.value
   if (props.state.isScenarioContext.value) return scenarioCommandCategories.includes(category)
+  
+  if (props.state.activeMenuCategory.value === 'INDICATORS' && (category === 'SYSTEM' || category === 'LABELS')) {
+    return false
+  }
   const selected = props.state.effectiveSelectedNode.value
   return (
     (category !== 'INDICATORS' && category !== 'EMOTIONS' && category !== 'SCALING' && category !== 'RISK') ||
