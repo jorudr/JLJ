@@ -27,6 +27,14 @@
              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
            </svg>
          </button>
+         <button
+           v-if="canCreateStrategyVersion"
+           type="button"
+           @click.stop="handleStrategyVersionRequest"
+           class="tactical-button h-8 border border-current px-3 bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 font-mono text-[8px] font-black uppercase tracking-[0.28em] whitespace-nowrap shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+         >
+           {{ locale === 'ru' ? 'Создать версию' : 'Create Version' }}
+         </button>
      </div>
 
      <!-- FOCUS SELECTOR STRIP -->
@@ -51,7 +59,7 @@
   <!-- MANUAL OVERLAY -->
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="isManualOpen" class="fixed inset-0 z-[99999] bg-transparent" @click="isManualOpen = false">
+      <div v-if="isManualOpen" class="fixed inset-0 z-[100000] bg-transparent" @click="isManualOpen = false">
         <div @click.stop class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl">
           <ExPanel :title="locale === 'ru' ? 'МАТРИЦА ГЕНЕЗИСА // РУКОВОДСТВО' : 'GENESIS MATRIX // MANUAL'" variant="light" :showCorners="true" :noPadding="true" class="w-full shadow-2xl relative">
             
@@ -131,15 +139,18 @@ import { ref, computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
+import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
 
 defineProps<{
   viewState: { scale: number }
   isScenarioContext: boolean
+  canCreateStrategyVersion?: boolean
 }>()
 
 const emit = defineEmits(['reset-view', 'update-scale', 'git-panel-state'])
 
 const { locale } = useI18n()
+const changeTree = useMatrixChangeTree()
 
 const isManualOpen = ref(false)
 const isGitPanelOpen = ref(false)
@@ -152,6 +163,10 @@ function setGitPanelOpen(value: boolean) {
 
 function toggleGitPanel() {
   setGitPanelOpen(!isGitPanelOpen.value)
+}
+
+function handleStrategyVersionRequest() {
+  changeTree.recordStrategyVersionCreated()
 }
 
 const manualSectionsEn = [

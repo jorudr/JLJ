@@ -20,6 +20,7 @@
               <textarea
                 v-model="node.params.customDescription"
                 @blur="node.params.isEditingDescription = false"
+                @keyup.enter.shift="node.params.isEditingDescription = false"
                 v-autofocus
                 placeholder="ENTER_DESCRIPTION..."
                 class="w-full h-full bg-transparent text-nier-text-light dark:text-nier-text-dark p-4 text-[12px] font-mono tracking-widest outline-none resize-none"
@@ -684,8 +685,8 @@
                   <!-- Editing State -->
                   <div v-if="comment.isEditing" class="flex-1 p-6">
                      <textarea v-model="comment.text"
-                               @blur="comment.isEditing = false"
-                               @keyup.enter.shift="comment.isEditing = false"
+                               @blur="commitCommentEdit(comment)"
+                               @keyup.enter.shift="commitCommentEdit(comment)"
                                @input="adjustTextareaHeight($event)"
                                v-autofocus
                                placeholder="ENTRY_DATA_REQUIRED..."
@@ -694,7 +695,7 @@
                   </div>
 
                   <!-- Display State -->
-                  <div v-else @click="comment.isEditing = true"
+                  <div v-else @click="beginCommentEdit(comment)"
                        class="flex-1 p-6 overflow-y-auto custom-scrollbar cursor-pointer">
                      <p class="font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed"
                         :style="{ fontSize: '22px' }">
@@ -729,8 +730,10 @@ import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
+import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
 
 const { locale, t } = useI18n()
+const changeTree = useMatrixChangeTree()
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()
@@ -789,6 +792,9 @@ interface Comment { id: string, text: string, x: number, y: number, isEditing: b
 
 const isDragging = ref(false)
 const imageError = ref(false)
+const identityDraftStart = ref('')
+const descriptionDraftStart = ref('')
+const commentDraftStart = new Map<string, string>()
 const scenarioPanelTypes = [
   'text-panel',
   'drawing-panel',
@@ -1069,7 +1075,69 @@ watch(
   }
 )
 
+watch(
+  () => props.node.params?.isEditingName,
+  (isEditing, wasEditing) => {
+    if (isEditing) {
+      identityDraftStart.value = props.node.params?.customName || ''
+      return
+    }
+    if (!wasEditing) return
+    const nextValue = String(props.node.params?.customName || '').trim()
+    const previousValue = identityDraftStart.value.trim()
+    if (nextValue && nextValue !== previousValue) {
+      changeTree.recordNodeIdentityChanged(props.node, nextValue, {
+        undo: () => {
+          props.node.params.customName = previousValue
+          emit('moved')
+        },
+        redo: () => {
+          props.node.params.customName = nextValue
+          emit('moved')
+        }
+      })
+      emit('moved')
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.node.params?.isEditingDescription,
+  (isEditing, wasEditing) => {
+    if (isEditing) {
+      descriptionDraftStart.value = props.node.params?.customDescription || ''
+      return
+    }
+    if (!wasEditing) return
+    const nextValue = String(props.node.params?.customDescription || '').trim()
+    const previousValue = descriptionDraftStart.value.trim()
+    if (nextValue && nextValue !== previousValue) {
+      changeTree.recordNodeDescriptionChanged(props.node, nextValue, {
+        undo: () => {
+          props.node.params.customDescription = previousValue
+          emit('moved')
+        },
+        redo: () => {
+          props.node.params.customDescription = nextValue
+          emit('moved')
+        }
+      })
+      emit('moved')
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.isSelected,
+  (isSelected, wasSelected) => {
+    if (wasSelected && !isSelected) commitOpenCommentEdits()
+  }
+)
+
 onBeforeUnmount(() => {
+  commitOpenCommentEdits()
   commitTableDraft()
   stopAudioPlayback()
   stopAudioSeekDrag()
@@ -1371,6 +1439,42 @@ const startCommentDrag = (e: MouseEvent, comment: any) => {
   window.addEventListener('mouseup', stop)
 }
 
+
+const beginCommentEdit = (comment: any) => {
+  commentDraftStart.set(comment.id, comment.text || '')
+  comment.isEditing = true
+}
+
+const commitCommentEdit = (comment: any) => {
+  const previousText = commentDraftStart.get(comment.id) ?? comment.text ?? ''
+  comment.isEditing = false
+  commentDraftStart.delete(comment.id)
+
+  const nextText = String(comment.text || '').trim()
+  if (nextText && nextText !== String(previousText).trim()) {
+    const commentId = comment.id
+    const previousTextValue = String(previousText)
+    changeTree.recordCommentTextChanged(props.node, comment, {
+      undo: () => {
+        const targetComment = (props.node.params?.comments || []).find((item: any) => item.id === commentId)
+        if (targetComment) targetComment.text = previousTextValue
+        emit('moved')
+      },
+      redo: () => {
+        const targetComment = (props.node.params?.comments || []).find((item: any) => item.id === commentId)
+        if (targetComment) targetComment.text = nextText
+        emit('moved')
+      }
+    })
+    emit('moved')
+  }
+}
+
+const commitOpenCommentEdits = () => {
+  ;(props.node.params?.comments || []).forEach((comment: any) => {
+    if (comment.isEditing) commitCommentEdit(comment)
+  })
+}
 
 const removeComment = (id: string) => {
   props.node.params.comments = props.node.params.comments.filter((c: Comment) => c.id !== id)

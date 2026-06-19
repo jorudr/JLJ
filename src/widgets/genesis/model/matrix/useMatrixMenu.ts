@@ -3,11 +3,53 @@ import type { useMatrixState, Node, Connection, MenuCategory } from './useMatrix
 import { searchAssets, type AssetInfo } from '@/shared/api/asset.service'
 import indicatorData from '@/shared/assets/indicators.json'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useMatrixChangeTree } from './useMatrixChangeTree'
 
 export type TextFormatPreset = 'h' | 'p' | 'quote'
 
 export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const { locale, t } = useI18n()
+  const changeTree = useMatrixChangeTree()
+  const cloneMatrixValue = <T>(value: T): T => {
+    if (typeof structuredClone === 'function') return structuredClone(value)
+    return JSON.parse(JSON.stringify(value))
+  }
+
+  function createDirectNodeAddAction(node: Node) {
+    return {
+      undo: () => {
+        state.nodes.value = state.nodes.value.filter(item => item.id !== node.id)
+        state.connections.value = state.connections.value.filter(conn => conn.fromId !== node.id && conn.toId !== node.id)
+        state.forceUpdate()
+        state.saveMatrixData()
+      },
+      redo: () => {
+        if (!state.nodes.value.some(item => item.id === node.id)) {
+          state.nodes.value.push(cloneMatrixValue(node))
+        }
+        state.forceUpdate()
+        state.saveMatrixData()
+      }
+    }
+  }
+
+  function createDirectConnectionAddAction(connection: Connection) {
+    const connectionSnapshot = cloneMatrixValue(connection)
+    return {
+      undo: () => {
+        state.connections.value = state.connections.value.filter(conn => !(conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId))
+        state.cleanupLogicBundles()
+        state.forceUpdate()
+        state.saveMatrixData()
+      },
+      redo: () => {
+        const exists = state.connections.value.some(conn => conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId)
+        if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+        state.forceUpdate()
+        state.saveMatrixData()
+      }
+    }
+  }
 
   const assetSearchQuery = ref('')
   const assetResults = ref<AssetInfo[]>([])
@@ -151,7 +193,10 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
 
     if (!parentId) return
     state.nodes.value.push(newNode)
-    state.connections.value.push({ fromId: parentId, toId: id })
+    const newConnection = { fromId: parentId, toId: id }
+    state.connections.value.push(newConnection)
+    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode))
+    changeTree.recordConnectionCreated(newConnection, parentNode, newNode, createDirectConnectionAddAction(newConnection))
     state.selectNode(parentId)
     state.saveMatrixData()
   }
@@ -186,7 +231,10 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     }
 
     state.nodes.value.push(newNode)
-    state.connections.value.push({ fromId: lastSelected.id, toId: id })
+    const newConnection = { fromId: lastSelected.id, toId: id }
+    state.connections.value.push(newConnection)
+    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode))
+    changeTree.recordConnectionCreated(newConnection, lastSelected, newNode, createDirectConnectionAddAction(newConnection))
     isConfigSetterOpen.value = false
     state.saveMatrixData()
     state.selectNode(id)
@@ -364,7 +412,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     const node = state.getNode(nodeId)
     if (node) {
       if (!node.params.comments) node.params.comments = []
-      node.params.comments.push({
+      const comment = {
         id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
         text: '[ LOG_INITIALIZED ]',
         x: 300,
@@ -372,6 +420,23 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
         width: 450,
         height: 280,
         isEditing: false
+      }
+      node.params.comments.push(comment)
+      const commentSnapshot = cloneMatrixValue(comment)
+      changeTree.recordCommentAdded(node, comment, {
+        undo: () => {
+          node.params.comments = (node.params.comments || []).filter((item: any) => item.id !== commentSnapshot.id)
+          state.forceUpdate()
+          state.saveMatrixData()
+        },
+        redo: () => {
+          if (!(node.params.comments || []).some((item: any) => item.id === commentSnapshot.id)) {
+            if (!node.params.comments) node.params.comments = []
+            node.params.comments.push(cloneMatrixValue(commentSnapshot))
+          }
+          state.forceUpdate()
+          state.saveMatrixData()
+        }
       })
       state.selectNode(nodeId)
       state.forceUpdate()
@@ -459,6 +524,8 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   function setConnectionLabel(label: string | null) {
     if (connectionContextMenu.value) {
       const conn = connectionContextMenu.value.connection
+      const beforeNodes = cloneMatrixValue(state.nodes.value)
+      const beforeConnections = cloneMatrixValue(state.connections.value)
       if (label === null) {
         delete conn.label
         delete conn.bundleId
@@ -541,6 +608,22 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
           delete conn.bundleId
         }
       }
+      const afterNodes = cloneMatrixValue(state.nodes.value)
+      const afterConnections = cloneMatrixValue(state.connections.value)
+      changeTree.recordConnectionLabelChanged(conn, label, {
+        undo: () => {
+          state.nodes.value = cloneMatrixValue(beforeNodes)
+          state.connections.value = cloneMatrixValue(beforeConnections)
+          state.forceUpdate()
+          state.saveMatrixData()
+        },
+        redo: () => {
+          state.nodes.value = cloneMatrixValue(afterNodes)
+          state.connections.value = cloneMatrixValue(afterConnections)
+          state.forceUpdate()
+          state.saveMatrixData()
+        }
+      })
       state.saveMatrixData()
     }
     connectionContextMenu.value = null

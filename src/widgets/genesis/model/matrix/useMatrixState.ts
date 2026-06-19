@@ -3,6 +3,7 @@ import { saveToDisk, loadFromDisk } from '@/shared/diskStorage'
 import { useStrategyTradesStore } from '@/features/store/useStrategyTrades'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { getMatrixStrategyName, isStrategyNode } from './useMatrixStrategies'
+import { useMatrixChangeTree } from './useMatrixChangeTree'
 
 export const STORAGE_KEY = 'genesis_matrix_v2'
 
@@ -126,7 +127,74 @@ function getStrategyCount(nodes: Node[]) {
 }
 
 export function useMatrixState() {
+  const changeTree = useMatrixChangeTree()
   const forceUpdate = () => updateKey.value++
+
+  const cloneMatrixValue = <T>(value: T): T => {
+    if (typeof structuredClone === 'function') return structuredClone(value)
+    return JSON.parse(JSON.stringify(value))
+  }
+
+  function createActiveContainerAccess() {
+    const contextNode = activeContextId.value && activeContextNode.value ? activeContextNode.value : null
+    if (contextNode) {
+      if (!contextNode.subGraph) contextNode.subGraph = { nodes: [], connections: [], zones: [] }
+      return {
+        getNodes: () => contextNode.subGraph!.nodes,
+        setNodes: (nextNodes: Node[]) => { contextNode.subGraph!.nodes = nextNodes },
+        getConnections: () => contextNode.subGraph!.connections,
+        setConnections: (nextConnections: Connection[]) => { contextNode.subGraph!.connections = nextConnections }
+      }
+    }
+
+    return {
+      getNodes: () => rootNodes.value,
+      setNodes: (nextNodes: Node[]) => { rootNodes.value = nextNodes },
+      getConnections: () => rootConnections.value,
+      setConnections: (nextConnections: Connection[]) => { rootConnections.value = nextConnections }
+    }
+  }
+
+  function createNodeAddAction(node: Node, container = createActiveContainerAccess()) {
+    return {
+      undo: () => {
+        container.setNodes(container.getNodes().filter(item => item.id !== node.id))
+        container.setConnections(container.getConnections().filter(conn => conn.fromId !== node.id && conn.toId !== node.id))
+        forceUpdate()
+        saveMatrixData()
+      },
+      redo: () => {
+        if (!container.getNodes().some(item => item.id === node.id)) {
+          container.setNodes([...container.getNodes(), cloneMatrixValue(node)])
+        }
+        forceUpdate()
+        saveMatrixData()
+      }
+    }
+  }
+
+  function createNodeDeleteAction(node: Node, removedConnections: Connection[], container = createActiveContainerAccess()) {
+    const nodeSnapshot = cloneMatrixValue(node)
+    const connectionSnapshots = cloneMatrixValue(removedConnections)
+    return {
+      undo: () => {
+        if (!container.getNodes().some(item => item.id === nodeSnapshot.id)) {
+          container.setNodes([...container.getNodes(), cloneMatrixValue(nodeSnapshot)])
+        }
+        const existingKeys = new Set(container.getConnections().map(conn => `${conn.fromId}->${conn.toId}`))
+        const restoredConnections = connectionSnapshots.filter(conn => !existingKeys.has(`${conn.fromId}->${conn.toId}`))
+        container.setConnections([...container.getConnections(), ...cloneMatrixValue(restoredConnections)])
+        forceUpdate()
+        saveMatrixData()
+      },
+      redo: () => {
+        container.setNodes(container.getNodes().filter(item => item.id !== nodeSnapshot.id))
+        container.setConnections(container.getConnections().filter(conn => conn.fromId !== nodeSnapshot.id && conn.toId !== nodeSnapshot.id))
+        forceUpdate()
+        saveMatrixData()
+      }
+    }
+  }
 
   const activePage = computed(() => (
     matrixPages.value.find(page => page.id === activePageId.value) || matrixPages.value[0] || null
@@ -444,7 +512,7 @@ export function useMatrixState() {
       if (activeContextId.value) return
       if (currentPageHasStrategy()) {
         const nextPage = addMatrixPage(`Strategy Page ${matrixPages.value.length + 1}`)
-        nextPage.nodes.push({
+        const newStrategyNode: Node = {
           id: 'node-' + Math.random().toString(36).substr(2, 9),
           label: config.label || 'Strategy',
           type: config.type || 'strategy',
@@ -453,9 +521,11 @@ export function useMatrixState() {
           color: config.color || 'currentColor',
           params: config.params ? { ...config.params } : {},
           ...(config.subGraph ? { subGraph: config.subGraph } : {})
-        })
+        }
+        nextPage.nodes.push(newStrategyNode)
         applyPage(nextPage)
         selectNode(nextPage.nodes[0]?.id || null)
+        changeTree.recordNodeAdded(newStrategyNode, createNodeAddAction(newStrategyNode))
         saveMatrixData()
         return
       }
@@ -487,6 +557,7 @@ export function useMatrixState() {
     }
     
     selectNode(newNode.id)
+    changeTree.recordNodeAdded(newNode, createNodeAddAction(newNode))
     saveMatrixData()
   }
 
@@ -502,6 +573,9 @@ export function useMatrixState() {
 
   function removeNode(id: string) {
     const nodeToRemove = getNode(id)
+    const container = createActiveContainerAccess()
+    const removedConnections = container.getConnections().filter(c => c.fromId === id || c.toId === id)
+    const deleteAction = nodeToRemove ? createNodeDeleteAction(nodeToRemove, removedConnections, container) : undefined
     if (nodeToRemove?.type === 'condition' && activeMenuCategory.value === 'INDICATORS') {
       activeMenuCategory.value = null
     }
@@ -518,6 +592,7 @@ export function useMatrixState() {
       rootConnections.value = rootConnections.value.filter(c => c.fromId !== id && c.toId !== id)
     }
     cleanupLogicBundles()
+    if (nodeToRemove) changeTree.recordNodeDeleted(nodeToRemove, deleteAction)
     saveMatrixData()
   }
 
@@ -570,6 +645,13 @@ export function useMatrixState() {
   function clearBoard() {
     const strategyTradesStore = useStrategyTradesStore()
     strategyTradesStore.purgeAllStrategies()
+    const snapshot = {
+      rootNodes: cloneMatrixValue(rootNodes.value),
+      rootConnections: cloneMatrixValue(rootConnections.value),
+      rootZones: cloneMatrixValue(rootZones.value),
+      matrixPages: cloneMatrixValue(matrixPages.value),
+      activePageId: activePageId.value
+    }
 
     rootNodes.value = []
     rootConnections.value = []
@@ -580,6 +662,32 @@ export function useMatrixState() {
     navigationStack.value = []
     savedScales.clear()
     lastSelectedId.value = null
+    changeTree.recordBoardCleared({
+      undo: () => {
+        rootNodes.value = cloneMatrixValue(snapshot.rootNodes)
+        rootConnections.value = cloneMatrixValue(snapshot.rootConnections)
+        rootZones.value = cloneMatrixValue(snapshot.rootZones)
+        matrixPages.value = cloneMatrixValue(snapshot.matrixPages)
+        activePageId.value = snapshot.activePageId
+        navigationStack.value = []
+        savedScales.clear()
+        forceUpdate()
+        saveMatrixData()
+      },
+      redo: () => {
+        rootNodes.value = []
+        rootConnections.value = []
+        rootZones.value = []
+        matrixPages.value = []
+        activePageId.value = null
+        ensurePages()
+        navigationStack.value = []
+        savedScales.clear()
+        lastSelectedId.value = null
+        forceUpdate()
+        saveMatrixData()
+      }
+    })
     saveMatrixData()
   }
 

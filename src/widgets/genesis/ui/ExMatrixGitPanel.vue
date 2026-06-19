@@ -3,9 +3,9 @@
     <Transition name="fade">
       <div
         v-if="isOpen"
-        class="fixed right-10 top-1/2 z-[99999] -translate-y-1/2 pointer-events-auto"
+        class="tree-scroll-shell fixed right-10 top-0 z-[99999] h-screen pointer-events-auto"
       >
-        <div class="terminal-tree">
+        <div class="terminal-tree" :class="isDark ? 'tree-theme-dark' : 'tree-theme-light'">
           <button
             v-for="(row, index) in treeRows"
             :key="index"
@@ -32,6 +32,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useThemeStore } from '~/features/store/useTheme'
+import { useMatrixChangeTree, type MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
 
 defineProps<{
   isOpen: boolean
@@ -52,131 +54,72 @@ type TreeRow = {
   parentId?: string
 }
 
-type MatrixChangeType = 'add' | 'delete' | 'connect'
-
-type MatrixSubchange = {
-  id: string
-  label: string
-  value: string
-}
-
-type MatrixChangeEvent = {
-  id: string
-  type: MatrixChangeType
-  title: string
-  node: string
-  time: string
-  subchanges: MatrixSubchange[]
-}
-
-type MatrixChangeTree = {
-  workspace: string
-  line: string
-  events: MatrixChangeEvent[]
-}
-
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.settings.isDark)
 const disabledChanges = ref(new Set<string>())
-
-const changeTree: MatrixChangeTree = {
-  workspace: 'genesis-matrix',
-  line: 'main',
-  events: [
-    {
-      id: 'chg-add-01',
-      type: 'add',
-      title: 'ADD_NODE',
-      node: 'strategy: London Breakout Core',
-      time: '24 seconds ago',
-      subchanges: [
-        { id: 'chg-add-01:name', label: 'name', value: 'London Breakout Core' },
-        { id: 'chg-add-01:description', label: 'description', value: 'Primary strategy node for session expansion.' },
-        { id: 'chg-add-01:comment', label: 'comment', value: 'Created from git panel mock tree.' }
-      ]
-    },
-    {
-      id: 'chg-connect-01',
-      type: 'connect',
-      title: 'CONNECT_NODES',
-      node: 'strategy -> scenario',
-      time: '26 seconds ago',
-      subchanges: [
-        { id: 'chg-connect-01:from', label: 'from', value: 'London Breakout Core.output' },
-        { id: 'chg-connect-01:to', label: 'to', value: 'Volatility Expansion.input' },
-        { id: 'chg-connect-01:comment', label: 'comment', value: 'Main route attached to active main line.' }
-      ]
-    },
-    {
-      id: 'chg-add-02',
-      type: 'add',
-      title: 'ADD_NODE',
-      node: 'condition: NY Open Filter',
-      time: '27 seconds ago',
-      subchanges: [
-        { id: 'chg-add-02:name', label: 'name', value: 'NY Open Filter' },
-        { id: 'chg-add-02:description', label: 'description', value: 'Checks first impulse after liquidity sweep.' },
-        { id: 'chg-add-02:comment', label: 'comment', value: 'Subchange belongs only to this condition node.' }
-      ]
-    },
-    {
-      id: 'chg-delete-01',
-      type: 'delete',
-      title: 'DELETE_NODE',
-      node: 'label: Draft Risk Note',
-      time: '31 seconds ago',
-      subchanges: [
-        { id: 'chg-delete-01:removed', label: 'removed', value: 'Draft Risk Note' },
-        { id: 'chg-delete-01:reason', label: 'reason', value: 'Superseded by risk node description.' },
-        { id: 'chg-delete-01:comment', label: 'comment', value: 'Deletion is tracked as a primary vertical event.' }
-      ]
-    },
-    {
-      id: 'chg-connect-02',
-      type: 'connect',
-      title: 'CONNECT_NODES',
-      node: 'condition -> risk',
-      time: '35 seconds ago',
-      subchanges: [
-        { id: 'chg-connect-02:from', label: 'from', value: 'NY Open Filter.output' },
-        { id: 'chg-connect-02:to', label: 'to', value: 'Risk Gate.input' },
-        { id: 'chg-connect-02:comment', label: 'comment', value: 'Creates final validation edge.' }
-      ]
-    }
-  ]
-}
+const changeTree = useMatrixChangeTree()
+const workspace = 'genesis-matrix'
+const line = 'strategy'
 
 const eventTypeClasses: Record<MatrixChangeType, string> = {
   add: 'tree-add',
   delete: 'tree-delete',
-  connect: 'tree-connect'
+  connect: 'tree-connect',
+  version: 'tree-version',
+  clear: 'tree-delete',
+  update: 'tree-current'
 }
 
 const eventTypeMarkers: Record<MatrixChangeType, string> = {
   add: '+',
   delete: '-',
-  connect: '~'
+  connect: '~',
+  version: 'v',
+  clear: '!',
+  update: '*'
+}
+
+function formatChangeTime(createdAt: number) {
+  const seconds = Math.max(0, Math.floor((Date.now() - createdAt) / 1000))
+  if (seconds < 5) return 'just now'
+  if (seconds < 60) return `${seconds} seconds ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  const hours = Math.floor(minutes / 60)
+  return `${hours} hour${hours === 1 ? '' : 's'} ago`
 }
 
 const treeRows = computed<TreeRow[]>(() => {
   const rows: TreeRow[] = [
     {
       parts: [
-        { text: `${changeTree.workspace} // `, class: 'tree-muted' },
-        { text: changeTree.line, class: 'tree-current' }
+        { text: `${workspace} // `, class: 'tree-muted' },
+        { text: line, class: 'tree-current' }
       ]
     },
     {
       parts: [
         { text: '*', class: 'tree-head' },
-        { text: ` ${changeTree.line}_change_timeline` }
+        { text: ` ${line}_change_timeline` }
       ]
     }
   ]
 
-  changeTree.events.forEach((event, eventIndex) => {
+  const visibleEvents = [...changeTree.events.value].reverse()
+
+  visibleEvents.forEach((event, eventIndex) => {
     const eventClass = eventTypeClasses[event.type]
+    const isVersionEvent = event.type === 'version'
     rows.push({
       toggleId: event.id,
-      parts: [
+      parts: isVersionEvent ? [
+        { text: '|==[', class: 'tree-version-frame' },
+        { text: eventTypeMarkers[event.type], class: eventClass },
+        { text: '] ', class: 'tree-version-frame' },
+        { text: event.title, class: eventClass },
+        { text: '  ' },
+        { text: event.node, class: 'tree-node tree-version-node' }
+      ] : [
         { text: 'o ' },
         { text: eventTypeMarkers[event.type], class: eventClass },
         { text: ' ' },
@@ -185,9 +128,17 @@ const treeRows = computed<TreeRow[]>(() => {
         { text: event.node, class: 'tree-node' }
       ]
     })
-    rows.push({ parts: [{ text: `|   ${event.time}`, class: 'tree-muted' }] })
+    rows.push({
+      parts: isVersionEvent ? [
+        { text: '|   ', class: 'tree-muted' },
+        { text: 'checkpoint ', class: 'tree-version-frame' },
+        { text: formatChangeTime(event.createdAt), class: 'tree-muted' }
+      ] : [
+        { text: `|   ${formatChangeTime(event.createdAt)}`, class: 'tree-muted' }
+      ]
+    })
 
-    event.subchanges.forEach((subchange, subIndex) => {
+    if (!isVersionEvent) event.subchanges.forEach((subchange, subIndex) => {
       const connector = subIndex === event.subchanges.length - 1 ? '`-' : '+-'
       rows.push({
         toggleId: subchange.id,
@@ -203,13 +154,12 @@ const treeRows = computed<TreeRow[]>(() => {
       })
     })
 
-    if (eventIndex < changeTree.events.length - 1) {
+    if (eventIndex < visibleEvents.length - 1) {
       rows.push({ parts: [{ text: '|' }] })
     }
   })
 
-  rows.push({ parts: [{ text: 'o ' }, { text: `${changeTree.line} timeline`, class: 'tree-current' }] })
-  rows.push({ parts: [{ text: '| 2 minutes ago', class: 'tree-muted' }] })
+  rows.push({ parts: [{ text: 'o ' }, { text: `${line} timeline`, class: 'tree-current' }] })
 
   return rows
 })
@@ -224,24 +174,57 @@ function toggleTreeRow(id?: string) {
   const next = new Set(disabledChanges.value)
   if (next.has(id)) {
     next.delete(id)
+    changeTree.setChangeEnabled(id, true)
   } else {
     next.add(id)
+    changeTree.setChangeEnabled(id, false)
   }
   disabledChanges.value = next
 }
+
 </script>
 
 <style scoped>
+.tree-scroll-shell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.tree-scroll-shell::before,
+.tree-scroll-shell::after {
+  content: "";
+  flex: 1 0 24px;
+}
+
+.tree-scroll-shell::-webkit-scrollbar {
+  display: none;
+}
+
 .terminal-tree {
   width: max-content;
-  color: rgb(230 230 230 / 0.94);
   font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
   font-size: clamp(10px, 1.18vw, 14px);
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1.35;
-  text-shadow: 0 0 8px rgb(255 255 255 / 0.12);
+  text-shadow: 0 0 8px rgb(0 0 0 / 0.08);
   white-space: pre;
+}
+
+.tree-theme-light {
+  color: rgb(34 34 32 / 0.94) !important;
+}
+
+.tree-theme-dark {
+  color: rgb(249 246 240 / 0.94) !important;
+  text-shadow: 0 0 8px rgb(255 255 255 / 0.12);
 }
 
 .tree-row {
@@ -266,6 +249,10 @@ function toggleTreeRow(id?: string) {
 
 .tree-row-clickable:hover {
   filter: brightness(1.2);
+  text-shadow: 0 0 14px rgb(0 0 0 / 0.14);
+}
+
+.tree-theme-dark .tree-row-clickable:hover {
   text-shadow: 0 0 14px rgb(255 255 255 / 0.22);
 }
 
@@ -277,44 +264,104 @@ function toggleTreeRow(id?: string) {
 }
 
 .tree-off-label {
-  color: rgb(246 76 98 / 0.92);
+  color: rgb(246 76 98 / 0.92) !important;
   text-decoration: none;
 }
 
-.tree-muted {
-  color: rgb(178 178 178 / 0.68);
+.tree-theme-light .tree-muted {
+  color: rgb(34 34 32 / 0.52) !important;
 }
 
-.tree-head {
-  color: rgb(246 76 98);
+.tree-theme-dark .tree-muted {
+  color: rgb(249 246 240 / 0.56) !important;
 }
 
-.tree-node {
-  color: rgb(111 84 210);
+.tree-theme-light .tree-head,
+.tree-theme-dark .tree-head {
+  color: rgb(246 76 98) !important;
 }
 
-.tree-current {
-  color: rgb(52 170 178);
+.tree-theme-light .tree-node {
+  color: rgb(34 34 32 / 0.94) !important;
 }
 
-.tree-add {
-  color: rgb(64 201 128);
+.tree-theme-dark .tree-node {
+  color: rgb(249 246 240 / 0.94) !important;
 }
 
-.tree-delete {
-  color: rgb(246 76 98);
+.tree-theme-light .tree-current,
+.tree-theme-dark .tree-current {
+  color: rgb(215 175 95) !important;
 }
 
-.tree-connect {
-  color: rgb(74 166 236);
+.tree-theme-light .tree-add,
+.tree-theme-dark .tree-add {
+  color: rgb(156 119 255) !important;
 }
 
-.tree-subkey {
-  color: rgb(215 175 95);
+.tree-theme-light .tree-delete,
+.tree-theme-dark .tree-delete {
+  color: rgb(246 76 98) !important;
 }
 
-.tree-subvalue {
-  color: rgb(215 215 215 / 0.86);
+.tree-theme-light .tree-connect,
+.tree-theme-dark .tree-connect {
+  color: rgb(246 76 98) !important;
+}
+
+.tree-theme-light .tree-version {
+  color: rgb(126 24 36) !important;
+  text-shadow:
+    -1px 0 rgb(246 250 247 / 0.82),
+    0 1px rgb(246 250 247 / 0.82),
+    1px 0 rgb(246 250 247 / 0.82),
+    0 -1px rgb(246 250 247 / 0.82);
+}
+
+.tree-theme-dark .tree-version {
+  color: rgb(170 42 55) !important;
+  text-shadow:
+    -1px 0 rgb(9 13 15 / 0.92),
+    0 1px rgb(9 13 15 / 0.92),
+    1px 0 rgb(9 13 15 / 0.92),
+    0 -1px rgb(9 13 15 / 0.92),
+    0 0 12px rgb(170 42 55 / 0.34);
+}
+
+.tree-theme-light .tree-version-frame {
+  color: rgb(126 24 36 / 0.88) !important;
+  text-shadow:
+    -1px 0 rgb(246 250 247 / 0.82),
+    0 1px rgb(246 250 247 / 0.82),
+    1px 0 rgb(246 250 247 / 0.82),
+    0 -1px rgb(246 250 247 / 0.82);
+}
+
+.tree-theme-dark .tree-version-frame {
+  color: rgb(170 42 55 / 0.9) !important;
+  text-shadow:
+    -1px 0 rgb(9 13 15 / 0.92),
+    0 1px rgb(9 13 15 / 0.92),
+    1px 0 rgb(9 13 15 / 0.92),
+    0 -1px rgb(9 13 15 / 0.92),
+    0 0 12px rgb(170 42 55 / 0.28);
+}
+
+.tree-version-node {
+  font-weight: 800;
+}
+
+.tree-theme-light .tree-subkey,
+.tree-theme-dark .tree-subkey {
+  color: rgb(215 175 95) !important;
+}
+
+.tree-theme-light .tree-subvalue {
+  color: rgb(34 34 32 / 0.84) !important;
+}
+
+.tree-theme-dark .tree-subvalue {
+  color: rgb(249 246 240 / 0.86) !important;
 }
 
 .fade-enter-active,

@@ -116,6 +116,7 @@
 
       <!-- VIEWPORT TELEMETRY -->
       <MatrixTelemetry :view-state="state.viewState.value" :is-scenario-context="!!state.isScenarioContext.value"
+                       :can-create-strategy-version="canCreateStrategyVersion"
                        @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s"
                        @git-panel-state="isGitPanelOpen = $event" />
 
@@ -266,6 +267,15 @@ const getPageLabel = (page: any, index: number) => {
   const strategyNode = (page.nodes || []).find(isStrategyNode)
   return strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
 }
+
+const canCreateStrategyVersion = computed(() => {
+  const nodes = state.nodes.value
+  const strategyCount = nodes.filter(isStrategyNode).length
+  const scenarioCount = nodes.filter(node => node.type === 'scenario').length
+  const conditionCount = nodes.filter(node => node.type === 'condition' || node.type === 'conditions').length
+
+  return strategyCount === 1 && scenarioCount >= 1 && conditionCount >= 1
+})
 
 const windowSize = ref({ width: typeof window !== 'undefined' ? window.innerWidth : 1000, height: typeof window !== 'undefined' ? window.innerHeight : 1000 })
 const updateWindowSize = () => {

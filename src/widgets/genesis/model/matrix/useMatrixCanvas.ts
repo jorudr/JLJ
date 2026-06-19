@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import type { useMatrixState, Point, Node } from './useMatrixState'
+import { useMatrixChangeTree } from './useMatrixChangeTree'
 
 export function isTextEditingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -8,6 +9,11 @@ export function isTextEditingTarget(target: EventTarget | null) {
 
 export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
   const canvasWrapper = ref<HTMLElement | null>(null)
+  const changeTree = useMatrixChangeTree()
+  const cloneMatrixValue = <T>(value: T): T => {
+    if (typeof structuredClone === 'function') return structuredClone(value)
+    return JSON.parse(JSON.stringify(value))
+  }
   
   const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', current: Point } | null>(null)
 
@@ -147,6 +153,31 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         toPort: port
       }
       state.connections.value.push(newConn)
+      const connectionSnapshot = cloneMatrixValue(newConn)
+      changeTree.recordConnectionCreated(newConn, state.getNode(newConn.fromId), targetNode, {
+        undo: () => {
+          state.connections.value = state.connections.value.filter(conn => !(
+            conn.fromId === connectionSnapshot.fromId &&
+            conn.toId === connectionSnapshot.toId &&
+            conn.fromPort === connectionSnapshot.fromPort &&
+            conn.toPort === connectionSnapshot.toPort
+          ))
+          state.cleanupLogicBundles()
+          state.forceUpdate()
+          state.saveMatrixData()
+        },
+        redo: () => {
+          const exists = state.connections.value.some(conn => (
+            conn.fromId === connectionSnapshot.fromId &&
+            conn.toId === connectionSnapshot.toId &&
+            conn.fromPort === connectionSnapshot.fromPort &&
+            conn.toPort === connectionSnapshot.toPort
+          ))
+          if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+          state.forceUpdate()
+          state.saveMatrixData()
+        }
+      })
       state.saveMatrixData()
     }
     activeWireRaw.value = null
