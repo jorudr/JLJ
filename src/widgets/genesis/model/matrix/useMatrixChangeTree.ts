@@ -654,31 +654,54 @@ export function useMatrixChangeTree() {
     const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
     if (!parentEvent) return null
 
-    const activeSubchanges = parentEvent.subchanges.filter(s => !disabledChanges.value.has(s.id))
-    const lastActive = activeSubchanges[activeSubchanges.length - 1]
-    return lastActive ? lastActive.value : null
+    if (disabledChanges.value.has(parentEvent.id)) return null
+
+    const changerSub = parentEvent.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+    let lastActiveTo: any = undefined
+    if (changerSub && changerSub.subchanges) {
+      for (const sub of changerSub.subchanges) {
+        if (sub.label === 'to' && !disabledChanges.value.has(sub.id)) {
+          lastActiveTo = sub
+        }
+      }
+    }
+
+    if (lastActiveTo) {
+      return lastActiveTo.value
+    }
+
+    const initialSub = parentEvent.subchanges.find(s => s.label === 'session' || s.label === 'domain')
+    return initialSub ? initialSub.value : null
   }
 
   function recordDomainChanged(domain: any, value: string, action?: MatrixChangeAction) {
-    const normalizedValue = String(value || readableDomainValue(domain)).toUpperCase()
+    const normalizedValue = value || readableDomainValue(domain)
     const parentEvent = ensureDomainParent(domain)
     parentEvent.node = readableDomainLine(domain)
 
-    for (let index = parentEvent.subchanges.length - 1; index >= 0; index--) {
-      const subchange = parentEvent.subchanges[index]
-      if (!subchange || subchange.value !== normalizedValue) continue
-      disabledChanges.value.delete(subchange.id)
-      parentEvent.subchanges.splice(index, 1)
+    let changerSub = parentEvent.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+    if (!changerSub) {
+      changerSub = addSubchange(parentEvent, 'TYPE/SESSION_CHANGER', 'TYPE/SESSION_CHANGER', domain.id)
     }
 
-    disabledChanges.value = new Set(disabledChanges.value)
-    addSubchange(
-      parentEvent,
-      domain.type === 'session' ? 'session' : 'domain',
-      normalizedValue,
-      domain.id,
-      action
-    )
+    if (changerSub) {
+      if (!changerSub.subchanges) {
+        changerSub.subchanges = []
+      }
+
+      const subId = nextId('sub')
+      const nestedSub: MatrixSubchange = {
+        id: subId,
+        label: 'to',
+        value: normalizedValue,
+        targetId: domain.id,
+        action,
+        payload: { value: normalizedValue }
+      }
+      
+      changerSub.subchanges.push(nestedSub)
+      events.value = [...events.value]
+    }
   }
 
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string, bundleId?: string }, label: string | null, action?: MatrixChangeAction, memberNode?: any, memberAction?: MatrixChangeAction) {

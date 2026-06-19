@@ -1086,6 +1086,7 @@ export function useMatrixState() {
         } else {
           changeTree.disabledChanges.value = new Set()
         }
+        applyTreeStateToMatrix(changeTree.disabledChanges.value)
         if (saved.personalIndicators) {
           personalIndicators.value = saved.personalIndicators
         }
@@ -1098,6 +1099,83 @@ export function useMatrixState() {
       activePageId.value = null
       ensurePages()
     }
+  }
+
+  function applyTreeStateToMatrix(next: Set<string>) {
+    nodes.value.forEach(node => {
+      if (node.type === 'text-panel') {
+        let lastActiveSub: any = undefined
+        for (const event of changeTree.events.value) {
+          if (event.targetKind === 'node' && event.targetId === node.id) {
+            if (next.has(event.id)) continue
+            
+            for (const sub of event.subchanges) {
+              if (sub.label === 'text' && !next.has(sub.id)) {
+                lastActiveSub = sub
+              }
+            }
+          }
+        }
+        
+        if (lastActiveSub && lastActiveSub.action?.redo) {
+          lastActiveSub.action.redo()
+        } else if (lastActiveSub && lastActiveSub.payload) {
+          if (!node.params) node.params = {}
+          node.params.html = lastActiveSub.payload.nextHtml
+          node.params.value = lastActiveSub.payload.nextValue
+        } else {
+          if (!node.params) node.params = {}
+          node.params.html = ''
+          node.params.value = ''
+        }
+      }
+    })
+
+    zones.value.forEach(zone => {
+      const event = changeTree.events.value.find(
+        e => e.targetKind === 'domain' && e.targetId === zone.id && e.type === 'add'
+      )
+      if (event) {
+        let activeValue: string | null = null
+
+        if (!next.has(event.id)) {
+          const changerSub = event.subchanges.find(s => s.label === 'TYPE/SESSION_CHANGER')
+          let lastActiveTo: any = undefined
+          if (changerSub && changerSub.subchanges) {
+            for (const sub of changerSub.subchanges) {
+              if (sub.label === 'to' && !next.has(sub.id)) {
+                lastActiveTo = sub
+              }
+            }
+          }
+          
+          if (lastActiveTo) {
+            activeValue = lastActiveTo.value
+          } else {
+            const initialSub = event.subchanges.find(
+              s => s.label === 'session' || s.label === 'domain'
+            )
+            if (initialSub) {
+              activeValue = initialSub.value
+            }
+          }
+        }
+
+        if (activeValue) {
+          const val = activeValue.toLowerCase()
+          if (['entry', 'in-trade', 'exit'].includes(val)) {
+            zone.type = val as any
+            zone.label = `SECTOR_${activeValue.toUpperCase()}`
+          } else {
+            zone.type = 'session'
+            zone.label = activeValue
+          }
+        }
+      }
+    })
+
+    forceUpdate()
+    saveMatrixData()
   }
 
   // Set up standard watchers
@@ -1168,6 +1246,7 @@ export function useMatrixState() {
     mergeNodes,
     refreshMergeStatus,
     saveMatrixData,
-    restoreData
+    restoreData,
+    applyTreeStateToMatrix
   }
 }

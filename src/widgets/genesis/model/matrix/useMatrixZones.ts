@@ -91,56 +91,34 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
   function handleZoneCycle(id: string) {
     const zone = state.zones.value.find(z => z.id === id)
     if (!zone) return
-    const beforeType = zone.type
-    const beforeLabel = zone.label
     
+    let nextValue = ''
     if (zone.type === 'session') {
       const parts = zone.label.split(' ')
       const prefix = parts.slice(0, -1).join(' ') || 'SESSION'
       const num = parseInt(parts[parts.length - 1] || '0')
-      zone.label = `${prefix} ${num + 1}`
-      
-      changeTree.recordDomainChanged(zone, zone.label, {
-        undo: () => setTimeout(() => updateDomainState(id), 0),
-        redo: () => setTimeout(() => updateDomainState(id), 0)
-      })
-      state.forceUpdate()
-      state.saveMatrixData()
+      nextValue = `${prefix} ${num + 1}`
     } else {
       const cycle = ['entry', 'in-trade', 'exit']
       const currentIndex = cycle.indexOf(zone.type)
       const nextType = cycle[(currentIndex + 1) % cycle.length]!
-      
-      changeTree.disableDomainAddEvent(zone.id)
-      
-      const newZone = { ...zone, type: nextType as any, label: `SECTOR_${nextType.toUpperCase()}` }
-      
-      state.zones.value = state.zones.value.filter(z => z.id !== zone.id)
-      
-      changeTree.recordDomainAdded(newZone, {
-        undo: () => {
-          state.zones.value = state.zones.value.filter(z => z.id !== zone.id)
-          state.saveMatrixData()
-          state.forceUpdate()
-        },
-        redo: () => {
-          if (!state.zones.value.some(z => z.id === zone.id)) {
-            state.zones.value.push(newZone)
-          }
-          state.saveMatrixData()
-          state.forceUpdate()
-        }
-      })
-      
-      state.zones.value.push(newZone)
-      
-      // Forcefully clear the membership cache so it discovers all contained nodes as fresh 'node_added' subchanges!
-      domainMemberships.value[zone.id] = new Set()
-      evaluateDomainMemberships()
-      
-      state.forceUpdate()
-      state.saveMatrixData()
+      nextValue = nextType
     }
+    
+    if (zone.type === 'session') {
+      zone.label = nextValue
+    } else {
+      zone.type = nextValue as any
+      zone.label = `SECTOR_${nextValue.toUpperCase()}`
+    }
+    
+    changeTree.recordDomainChanged(zone, nextValue, {
+      undo: () => setTimeout(() => updateDomainState(id), 0),
+      redo: () => setTimeout(() => updateDomainState(id), 0)
+    })
+    
+    state.forceUpdate()
+    state.saveMatrixData()
   }
 
   function startZoneDrag(e: MouseEvent, zone: Zone) {

@@ -370,38 +370,7 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
 function applyNextState(next: Set<string>) {
   disabledChanges.value = next
   changeTree.disabledChanges.value = next
-
-  state.nodes.value.forEach(node => {
-    if (node.type === 'text-panel') {
-      let lastActiveSub: any = undefined
-      for (const event of changeTree.events.value) {
-        if (event.targetKind === 'node' && event.targetId === node.id) {
-          if (next.has(event.id)) continue
-          
-          for (const sub of event.subchanges) {
-            if (sub.label === 'text' && !next.has(sub.id)) {
-              lastActiveSub = sub
-            }
-          }
-        }
-      }
-      
-      if (lastActiveSub && lastActiveSub.action?.redo) {
-        lastActiveSub.action.redo()
-      } else if (lastActiveSub && lastActiveSub.payload) {
-        if (!node.params) node.params = {}
-        node.params.html = lastActiveSub.payload.nextHtml
-        node.params.value = lastActiveSub.payload.nextValue
-      } else {
-        if (!node.params) node.params = {}
-        node.params.html = ''
-        node.params.value = ''
-      }
-    }
-  })
-  
-  state.forceUpdate()
-  state.saveMatrixData()
+  state.applyTreeStateToMatrix(next)
 }
 
 function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) {
