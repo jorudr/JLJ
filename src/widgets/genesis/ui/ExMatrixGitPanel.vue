@@ -219,6 +219,22 @@ function toggleTreeRow(id?: string) {
           
           disabledChanges.value = next
           return
+        } else if (event.type === 'delete') {
+          next.delete(id)
+          changeTree.setChangeEnabled(id, true)
+          disabledChanges.value = next
+          if (event.targetId) {
+            changeTree.disableNodeDependents(event.targetId, event.node)
+          }
+          return
+        } else if (event.type === 'add') {
+          next.delete(id)
+          changeTree.setChangeEnabled(id, true)
+          disabledChanges.value = next
+          if (event.targetId) {
+            changeTree.enableNodeDependents(event.targetId, event.node)
+          }
+          return
         }
         next.delete(id)
         changeTree.setChangeEnabled(id, true)
@@ -290,38 +306,26 @@ function toggleTreeRow(id?: string) {
           disabledChanges.value = next
           return
         } else if (event.type === 'add') {
-          // If we are turning off a node addition, we must also turn off all its dependent changes
-          // such as connections to it, or any modifications to it
-          const targetNodeStr = event.node
-          for (const ev of changeTree.events.value) {
-            if (!ev) continue
-            
-            // Turn off subchanges connecting to this node
-            for (const sub of ev.subchanges) {
-              if ((sub.label === 'to' || sub.label === 'removed') && (sub.targetId === event.targetId || (!sub.targetId && sub.value === targetNodeStr))) {
-                if (sub.id && !next.has(sub.id)) {
-                  next.add(sub.id)
-                  changeTree.setChangeEnabled(sub.id, false)
-                }
-              }
-            }
-            
-            // Turn off events modifying or originating from this node
-            if (ev.targetKind === 'node' && ev.targetId === event.targetId && ev.id !== event.id) {
-              if (!next.has(ev.id)) {
-                next.add(ev.id)
-                changeTree.setChangeEnabled(ev.id, false)
-              }
-              for (const sub of ev.subchanges) {
-                if (sub.id && !next.has(sub.id)) {
-                  next.add(sub.id)
-                  changeTree.setChangeEnabled(sub.id, false)
-                }
-              }
-            }
+          // Execute fallback to turn off the add event itself
+          next.add(id)
+          changeTree.setChangeEnabled(id, false)
+          disabledChanges.value = next
+          
+          // Then disable all its dependent changes
+          if (event.targetId) {
+            changeTree.disableNodeDependents(event.targetId, event.node)
           }
+          return
+        } else if (event.type === 'delete') {
+          next.add(id)
+          changeTree.setChangeEnabled(id, false)
+          disabledChanges.value = next
+          if (event.targetId) {
+            changeTree.enableNodeDependents(event.targetId, event.node)
+          }
+          return
         }
-        break // Not a clear event, break out and use fallback
+        break // Not a clear/add event, break out and use fallback
       }
 
       const subIndex = event.subchanges.findIndex(sub => sub.id === id)

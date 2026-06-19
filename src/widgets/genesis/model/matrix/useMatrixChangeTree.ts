@@ -153,6 +153,66 @@ export function useMatrixChangeTree() {
     else subchange.action?.undo?.()
   }
 
+  function disableNodeDependents(targetId: string, nodeStr: string) {
+    const next = new Set(disabledChanges.value)
+    events.value.forEach(ev => {
+      // Turn off subchanges connecting to this node
+      ev.subchanges.forEach(sub => {
+        if ((sub.label === 'to' || sub.label === 'removed') && (sub.targetId === targetId || (!sub.targetId && sub.value === nodeStr))) {
+          if (sub.id && !next.has(sub.id)) {
+            next.add(sub.id)
+            setChangeEnabled(sub.id, false)
+          }
+        }
+      })
+      
+      // Turn off events modifying or originating from this node (including ADD_NODE)
+      if (ev.targetKind === 'node' && ev.targetId === targetId && ev.type !== 'delete') {
+        if (!next.has(ev.id)) {
+          next.add(ev.id)
+          setChangeEnabled(ev.id, false)
+        }
+        ev.subchanges.forEach(sub => {
+          if (sub.id && !next.has(sub.id)) {
+            next.add(sub.id)
+            setChangeEnabled(sub.id, false)
+          }
+        })
+      }
+    })
+    disabledChanges.value = next
+  }
+
+  function enableNodeDependents(targetId: string, nodeStr: string) {
+    const next = new Set(disabledChanges.value)
+    events.value.forEach(ev => {
+      // Turn on events modifying or originating from this node (including ADD_NODE)
+      if (ev.targetKind === 'node' && ev.targetId === targetId && ev.type !== 'delete') {
+        if (next.has(ev.id)) {
+          next.delete(ev.id)
+          setChangeEnabled(ev.id, true)
+        }
+        ev.subchanges.forEach(sub => {
+          if (next.has(sub.id)) {
+            next.delete(sub.id)
+            setChangeEnabled(sub.id, true)
+          }
+        })
+      }
+      
+      // Turn on subchanges connecting to this node
+      ev.subchanges.forEach(sub => {
+        if ((sub.label === 'to' || sub.label === 'removed') && (sub.targetId === targetId || (!sub.targetId && sub.value === nodeStr))) {
+          if (next.has(sub.id)) {
+            next.delete(sub.id)
+            setChangeEnabled(sub.id, true)
+          }
+        }
+      })
+    })
+    disabledChanges.value = next
+  }
+
   function recordNodeAdded(node: any, action?: MatrixChangeAction) {
     addEvent({
       type: 'add',
@@ -176,6 +236,7 @@ export function useMatrixChangeTree() {
         { id: nextId('sub'), label: 'removed', value: readableNodeName(node) }
       ]
     })
+    disableNodeDependents(node.id, readableNodeLine(node))
   }
 
   function recordConnectionCreated(connection: { fromId: string, toId: string }, fromNode?: any, toNode?: any, action?: MatrixChangeAction) {
@@ -276,6 +337,8 @@ export function useMatrixChangeTree() {
     disabledChanges,
     resetChanges,
     setChangeEnabled,
+    disableNodeDependents,
+    enableNodeDependents,
     recordNodeAdded,
     recordNodeDeleted,
     recordConnectionCreated,
