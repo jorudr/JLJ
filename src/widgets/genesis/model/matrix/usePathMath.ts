@@ -241,8 +241,14 @@ export function usePathMath(state: ReturnType<typeof useMatrixState>) {
   }
 
   function shouldShowLabel(line: Connection) {
+    if (!state.getNode(line.fromId) || !state.getNode(line.toId)) return false
     if (!line.label || !line.bundleId) return true
-    const siblings = state.connections.value.filter(c => c.fromId === line.fromId && c.bundleId === line.bundleId)
+    const siblings = state.connections.value.filter(c =>
+      c.fromId === line.fromId &&
+      c.bundleId === line.bundleId &&
+      state.getNode(c.fromId) &&
+      state.getNode(c.toId)
+    )
     return siblings[0] === line
   }
 

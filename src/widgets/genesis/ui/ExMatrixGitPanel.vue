@@ -221,9 +221,13 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
 
   if (turningOn) {
     next.delete(toggledId)
+    const linkedIdsToEnable: string[] = []
     linkedIds.forEach(linkedId => {
       if (!next.has(linkedId)) return
       next.delete(linkedId)
+      linkedIdsToEnable.push(linkedId)
+    })
+    linkedIdsToEnable.forEach(linkedId => {
       changeTree.setChangeEnabled(linkedId, true)
     })
   } else {
@@ -238,12 +242,79 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
   disabledChanges.value = next
 }
 
+function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) {
+  const relatedIds = [
+    ...changeTree.collectDescendantChangeIds(id),
+    ...changeTree.collectLinkedChangeIds(id)
+  ]
+
+  if (turningOn) {
+    next.delete(id)
+    relatedIds.forEach(childId => next.delete(childId))
+    changeTree.setChangeEnabled(id, true)
+    changeTree.collectLinkedChangeIds(id).forEach(linkedId => changeTree.setChangeEnabled(linkedId, true))
+  } else {
+    next.add(id)
+    relatedIds.forEach(childId => next.add(childId))
+    changeTree.setChangeEnabled(id, false)
+    changeTree.collectLinkedChangeIds(id).forEach(linkedId => changeTree.setChangeEnabled(linkedId, false))
+  }
+
+  disabledChanges.value = next
+}
+
+function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean) {
+  const parentLabelId = changeTree.getParentLogicLabelId(id)
+  const linkedIds = changeTree.collectLinkedChangeIds(id)
+
+  if (turningOn) {
+    next.delete(id)
+    if (parentLabelId && next.has(parentLabelId) && changeTree.hasEnabledLogicLabelAddNodes(parentLabelId, next)) {
+      next.delete(parentLabelId)
+      changeTree.setChangeOwnActionEnabled(parentLabelId, true)
+    }
+    changeTree.setChangeEnabled(id, true)
+    linkedIds.forEach(linkedId => {
+      next.delete(linkedId)
+      changeTree.setChangeEnabled(linkedId, true)
+    })
+  } else {
+    if (parentLabelId && changeTree.isInitialLogicLabelAddNode(id)) {
+      toggleLogicLabelRow(parentLabelId, next, false)
+      return
+    }
+
+    next.add(id)
+    changeTree.setChangeEnabled(id, false)
+    linkedIds.forEach(linkedId => {
+      next.add(linkedId)
+      changeTree.setChangeEnabled(linkedId, false)
+    })
+    if (parentLabelId && !changeTree.hasEnabledLogicLabelAddNodes(parentLabelId, next)) {
+      next.add(parentLabelId)
+      changeTree.setChangeOwnActionEnabled(parentLabelId, false)
+    }
+  }
+
+  disabledChanges.value = next
+}
+
 function toggleTreeRow(id?: string) {
   if (!id) return
 
   const next = new Set(disabledChanges.value)
   const turningOn = isChangeDisabled(id)
   if (turningOn && !next.has(id)) next.add(id)
+
+  if (changeTree.isLogicLabelChange(id)) {
+    toggleLogicLabelRow(id, next, turningOn)
+    return
+  }
+
+  if (changeTree.isLogicLabelAddNode(id)) {
+    toggleLogicAddNodeRow(id, next, turningOn)
+    return
+  }
 
   if (turningOn) {
     // Turning ON
@@ -360,12 +431,21 @@ function toggleTreeRow(id?: string) {
             changeTree.setChangeEnabled(sub.id, true)
           }
           if (i === subIndex && subsubIndex !== -1 && sub.subchanges) {
-            for (let j = 0; j <= subsubIndex; j++) {
-              const ss = sub.subchanges[j]
-              if (!ss) continue
-              if (ss.id && next.has(ss.id)) {
-                next.delete(ss.id)
-                changeTree.setChangeEnabled(ss.id, true)
+            const selectedNested = sub.subchanges[subsubIndex]
+            const isLogicAddNode = sub.label === 'link_label' && selectedNested?.label === 'ADD_NODE'
+            if (isLogicAddNode) {
+              if (selectedNested?.id && next.has(selectedNested.id)) {
+                next.delete(selectedNested.id)
+                changeTree.setChangeEnabled(selectedNested.id, true)
+              }
+            } else {
+              for (let j = 0; j <= subsubIndex; j++) {
+                const ss = sub.subchanges[j]
+                if (!ss) continue
+                if (ss.id && next.has(ss.id)) {
+                  next.delete(ss.id)
+                  changeTree.setChangeEnabled(ss.id, true)
+                }
               }
             }
           } else if (sub.subchanges) {
@@ -496,12 +576,21 @@ function toggleTreeRow(id?: string) {
         if (subsubIndex !== -1) {
           const sub = event.subchanges[subIndex]
           if (sub && sub.subchanges) {
-            for (let j = subsubIndex; j >= 0; j--) {
-              const ss = sub.subchanges[j]
-              if (!ss) continue
-              if (ss.id && !next.has(ss.id)) {
-                next.add(ss.id)
-                changeTree.setChangeEnabled(ss.id, false)
+            const selectedNested = sub.subchanges[subsubIndex]
+            const isLogicAddNode = sub.label === 'link_label' && selectedNested?.label === 'ADD_NODE'
+            if (isLogicAddNode) {
+              if (selectedNested?.id && !next.has(selectedNested.id)) {
+                next.add(selectedNested.id)
+                changeTree.setChangeEnabled(selectedNested.id, false)
+              }
+            } else {
+              for (let j = subsubIndex; j >= 0; j--) {
+                const ss = sub.subchanges[j]
+                if (!ss) continue
+                if (ss.id && !next.has(ss.id)) {
+                  next.add(ss.id)
+                  changeTree.setChangeEnabled(ss.id, false)
+                }
               }
             }
           }

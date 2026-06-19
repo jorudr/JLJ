@@ -755,6 +755,9 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       }
       const afterNodes = cloneMatrixValue(state.nodes.value)
       const afterConnections = cloneMatrixValue(state.connections.value)
+      const labelMemberNode = label && ['and', 'or'].includes(label.toLowerCase())
+        ? state.getNode(conn.toId)
+        : null
       changeTree.recordConnectionLabelChanged(conn, label, {
         undo: () => {
           state.nodes.value = cloneMatrixValue(beforeNodes)
@@ -768,7 +771,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
           state.forceUpdate()
           state.saveMatrixData()
         }
-      })
+      }, labelMemberNode, labelMemberNode ? createDirectConnectionAddAction(conn) : undefined)
       state.saveMatrixData()
     }
     connectionContextMenu.value = null

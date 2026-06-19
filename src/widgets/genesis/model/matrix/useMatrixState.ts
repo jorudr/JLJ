@@ -172,32 +172,65 @@ export function useMatrixState() {
     }
   }
 
-  function createNodeDeleteAction(node: Node, removedConnections: Connection[], container = createActiveContainerAccess()) {
-    const nodeSnapshot = cloneMatrixValue(node)
-    const connectionSnapshots = cloneMatrixValue(removedConnections)
+  function createSnapshotAction(beforeNodes: Node[], beforeConnections: Connection[], afterNodes: Node[], afterConnections: Connection[], container = createActiveContainerAccess()) {
+    const beforeNodeSnapshots = cloneMatrixValue(beforeNodes)
+    const beforeConnectionSnapshots = cloneMatrixValue(beforeConnections)
+    const afterNodeSnapshots = cloneMatrixValue(afterNodes)
+    const afterConnectionSnapshots = cloneMatrixValue(afterConnections)
     return {
       undo: () => {
-        if (!container.getNodes().some(item => item.id === nodeSnapshot.id)) {
-          container.setNodes([...container.getNodes(), cloneMatrixValue(nodeSnapshot)])
-        }
-        const existingKeys = new Set(container.getConnections().map(conn => `${conn.fromId}->${conn.toId}`))
-        const restoredConnections = connectionSnapshots.filter(conn => !existingKeys.has(`${conn.fromId}->${conn.toId}`))
-        container.setConnections([...container.getConnections(), ...cloneMatrixValue(restoredConnections)])
+        container.setNodes(cloneMatrixValue(beforeNodeSnapshots))
+        container.setConnections(cloneMatrixValue(beforeConnectionSnapshots))
         forceUpdate()
         saveMatrixData()
       },
       redo: () => {
-        container.setNodes(container.getNodes().filter(item => item.id !== nodeSnapshot.id))
-        container.setConnections(container.getConnections().filter(conn => conn.fromId !== nodeSnapshot.id && conn.toId !== nodeSnapshot.id))
+        container.setNodes(cloneMatrixValue(afterNodeSnapshots))
+        container.setConnections(cloneMatrixValue(afterConnectionSnapshots))
         forceUpdate()
         saveMatrixData()
       }
     }
   }
 
+  function isLogicConnection(connection: Connection) {
+    const label = connection.label?.toLowerCase()
+    return !!connection.bundleId && (label === 'and' || label === 'or')
+  }
+
+  function collapseLogicChainAroundRemovedNode(nodeId: string, sourceConnections: Connection[], nextConnections: Connection[]) {
+    const incomingLogic = sourceConnections.filter(conn => conn.toId === nodeId && isLogicConnection(conn))
+    const outgoingLogic = sourceConnections.filter(conn => conn.fromId === nodeId && isLogicConnection(conn))
+    if (!incomingLogic.length || !outgoingLogic.length) return nextConnections
+
+    const existingKeys = new Set(nextConnections.map(conn => `${conn.fromId}->${conn.toId}`))
+    const rewiredConnections: Connection[] = []
+
+    incomingLogic.forEach(incoming => {
+      outgoingLogic.forEach(outgoing => {
+        const key = `${incoming.fromId}->${outgoing.toId}`
+        if (incoming.fromId === outgoing.toId || existingKeys.has(key)) return
+        existingKeys.add(key)
+        rewiredConnections.push({
+          ...cloneMatrixValue(outgoing),
+          fromId: incoming.fromId,
+          fromPort: incoming.fromPort,
+          toPort: outgoing.toPort,
+          label: outgoing.label || incoming.label,
+          bundleId: outgoing.bundleId || incoming.bundleId,
+          bundleStemX: outgoing.bundleStemX ?? incoming.bundleStemX,
+          bundleStemY: outgoing.bundleStemY ?? incoming.bundleStemY
+        })
+      })
+    })
+
+    return [...nextConnections, ...rewiredConnections]
+  }
+
   function createPlaceholderResolveAction(beforeNode: Node, afterNode: Node, container = createActiveContainerAccess()) {
     const targetId = beforeNode.id
     const afterSnapshot = cloneMatrixValue(afterNode)
+    const afterConnectionSnapshots = cloneMatrixValue(container.getConnections().filter(conn => conn.fromId === targetId || conn.toId === targetId))
     const applySnapshot = (snapshot: Node) => {
       const nextNodes = container.getNodes().map(item =>
         item.id === snapshot.id ? cloneMatrixValue(snapshot) : item
@@ -205,12 +238,18 @@ export function useMatrixState() {
       if (!nextNodes.some(item => item.id === snapshot.id)) {
         nextNodes.push(cloneMatrixValue(snapshot))
       }
+      const existingKeys = new Set(container.getConnections().map(conn => `${conn.fromId}->${conn.toId}`))
+      const restoredConnections = afterConnectionSnapshots.filter(conn => !existingKeys.has(`${conn.fromId}->${conn.toId}`))
+      if (restoredConnections.length) {
+        container.setConnections([...container.getConnections(), ...cloneMatrixValue(restoredConnections)])
+      }
       container.setNodes(nextNodes)
       forceUpdate()
       saveMatrixData()
     }
     const removeResolvedNode = () => {
       container.setNodes(container.getNodes().filter(item => item.id !== targetId))
+      container.setConnections(container.getConnections().filter(conn => conn.fromId !== targetId && conn.toId !== targetId))
       forceUpdate()
       saveMatrixData()
     }
@@ -631,8 +670,8 @@ export function useMatrixState() {
   function removeNode(id: string) {
     const nodeToRemove = getNode(id)
     const container = createActiveContainerAccess()
-    const removedConnections = container.getConnections().filter(c => c.fromId === id || c.toId === id)
-    const deleteAction = nodeToRemove ? createNodeDeleteAction(nodeToRemove, removedConnections, container) : undefined
+    const beforeNodes = cloneMatrixValue(container.getNodes())
+    const beforeConnections = cloneMatrixValue(container.getConnections())
     if (nodeToRemove?.type === 'condition' && activeMenuCategory.value === 'INDICATORS') {
       activeMenuCategory.value = null
     }
@@ -641,14 +680,18 @@ export function useMatrixState() {
       activeMenuCategory.value = null
     }
 
-    if (activeContextId.value && activeContextNode.value?.subGraph) {
-      activeContextNode.value.subGraph.nodes = activeContextNode.value.subGraph.nodes.filter(n => n.id !== id)
-      activeContextNode.value.subGraph.connections = activeContextNode.value.subGraph.connections.filter(c => c.fromId !== id && c.toId !== id)
-    } else {
-      rootNodes.value = rootNodes.value.filter(n => n.id !== id)
-      rootConnections.value = rootConnections.value.filter(c => c.fromId !== id && c.toId !== id)
-    }
+    const nextNodes = container.getNodes().filter(n => n.id !== id)
+    const nextConnections = collapseLogicChainAroundRemovedNode(
+      id,
+      container.getConnections(),
+      container.getConnections().filter(c => c.fromId !== id && c.toId !== id)
+    )
+    container.setNodes(nextNodes)
+    container.setConnections(nextConnections)
     cleanupLogicBundles()
+    const deleteAction = nodeToRemove
+      ? createSnapshotAction(beforeNodes, beforeConnections, container.getNodes(), container.getConnections(), container)
+      : undefined
     if (nodeToRemove) changeTree.recordNodeDeleted(nodeToRemove, deleteAction)
     saveMatrixData()
   }
@@ -685,16 +728,13 @@ export function useMatrixState() {
     })
     
     bundles.forEach((conns) => {
-      if (conns.length <= 1) {
-        conns.forEach(c => {
-          delete c.bundleId
-          if (c.label?.toLowerCase() === 'and' || c.label?.toLowerCase() === 'or') {
-            delete c.label
-          }
-          delete c.bundleStemX
-          delete c.bundleStemY
-        })
-      }
+      conns.forEach(c => {
+        const label = c.label?.toLowerCase()
+        if (label === 'and' || label === 'or') return
+        delete c.bundleId
+        delete c.bundleStemX
+        delete c.bundleStemY
+      })
     })
     forceUpdate()
   }
