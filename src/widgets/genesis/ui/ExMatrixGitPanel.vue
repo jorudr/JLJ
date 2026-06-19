@@ -173,9 +173,48 @@ function toggleTreeRow(id?: string) {
 
   const next = new Set(disabledChanges.value)
   if (next.has(id)) {
+    // Turning ON
+    for (const event of changeTree.events.value) {
+      const subIndex = event.subchanges.findIndex(sub => sub.id === id)
+      if (subIndex !== -1) {
+        // Turn ON this subchange and all previous ones in the same event
+        for (let i = 0; i <= subIndex; i++) {
+          const subId = event.subchanges[i]?.id
+          if (subId && next.has(subId)) {
+            next.delete(subId)
+            changeTree.setChangeEnabled(subId, true)
+          }
+        }
+        // Also turn on the parent event if it's currently disabled
+        if (next.has(event.id)) {
+          next.delete(event.id)
+          changeTree.setChangeEnabled(event.id, true)
+        }
+        disabledChanges.value = next
+        return
+      }
+    }
+    // Fallback for events
     next.delete(id)
     changeTree.setChangeEnabled(id, true)
   } else {
+    // Turning OFF
+    for (const event of changeTree.events.value) {
+      const subIndex = event.subchanges.findIndex(sub => sub.id === id)
+      if (subIndex !== -1) {
+        // Turn OFF this subchange and all subsequent ones in the same event
+        for (let i = subIndex; i < event.subchanges.length; i++) {
+          const subId = event.subchanges[i]?.id
+          if (subId && !next.has(subId)) {
+            next.add(subId)
+            changeTree.setChangeEnabled(subId, false)
+          }
+        }
+        disabledChanges.value = next
+        return
+      }
+    }
+    // Fallback for events
     next.add(id)
     changeTree.setChangeEnabled(id, false)
   }
