@@ -93,7 +93,7 @@ function formatChangeTime(createdAt: number) {
   return `${hours} hour${hours === 1 ? '' : 's'} ago`
 }
 
-function formatTreeText(text: string, maxLength: number = 15) {
+function formatTreeText(text: string, maxLength: number = 35) {
   if (!text) return ''
   const flat = String(text).replace(/[\r\n]+/g, ' ')
   return flat.length > maxLength ? flat.substring(0, maxLength) + '...' : flat
