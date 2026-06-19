@@ -11,7 +11,6 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
   const canvasWrapper = ref<HTMLElement | null>(null)
   const changeTree = useMatrixChangeTree()
   const cloneMatrixValue = <T>(value: T): T => {
-    if (typeof structuredClone === 'function') return structuredClone(value)
     return JSON.parse(JSON.stringify(value))
   }
   

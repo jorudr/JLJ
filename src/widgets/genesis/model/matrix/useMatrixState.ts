@@ -131,7 +131,6 @@ export function useMatrixState() {
   const forceUpdate = () => updateKey.value++
 
   const cloneMatrixValue = <T>(value: T): T => {
-    if (typeof structuredClone === 'function') return structuredClone(value)
     return JSON.parse(JSON.stringify(value))
   }
 
