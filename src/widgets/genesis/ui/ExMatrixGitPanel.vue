@@ -274,18 +274,20 @@ function toggleTreeRow(id?: string) {
       if (event.id === id) {
         if (event.type === 'clear') {
           // Turn off this clear event and ALL subsequent events & subchanges
-          for (let i = eventIndex; i < changeTree.events.value.length; i++) {
+          for (let i = changeTree.events.value.length - 1; i >= eventIndex; i--) {
             const ev = changeTree.events.value[i]
             if (!ev) continue
-            if (!next.has(ev.id)) {
-              next.add(ev.id)
-              changeTree.setChangeEnabled(ev.id, false)
-            }
-            for (const sub of ev.subchanges) {
+            for (let j = ev.subchanges.length - 1; j >= 0; j--) {
+              const sub = ev.subchanges[j]
+              if (!sub) continue
               if (sub.id && !next.has(sub.id)) {
                 next.add(sub.id)
                 changeTree.setChangeEnabled(sub.id, false)
               }
+            }
+            if (!next.has(ev.id)) {
+              next.add(ev.id)
+              changeTree.setChangeEnabled(ev.id, false)
             }
           }
           // Turn ON all events before this clear event
@@ -331,7 +333,7 @@ function toggleTreeRow(id?: string) {
       const subIndex = event.subchanges.findIndex(sub => sub.id === id)
       if (subIndex !== -1) {
         // Turn OFF this subchange and all previous ones in the same event
-        for (let i = 0; i <= subIndex; i++) {
+        for (let i = subIndex; i >= 0; i--) {
           const subId = event.subchanges[i]?.id
           if (subId && !next.has(subId)) {
             next.add(subId)

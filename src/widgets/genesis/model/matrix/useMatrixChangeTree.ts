@@ -155,31 +155,38 @@ export function useMatrixChangeTree() {
 
   function disableNodeDependents(targetId: string, nodeStr: string) {
     const next = new Set(disabledChanges.value)
-    events.value.forEach(ev => {
+    for (let evIndex = events.value.length - 1; evIndex >= 0; evIndex--) {
+      const ev = events.value[evIndex]
+      if (!ev) continue
+      
+      // Turn off events modifying or originating from this node (including ADD_NODE)
+      if (ev.targetKind === 'node' && ev.targetId === targetId && ev.type !== 'delete') {
+        for (let i = ev.subchanges.length - 1; i >= 0; i--) {
+          const sub = ev.subchanges[i]
+          if (!sub) continue
+          if (sub.id && !next.has(sub.id)) {
+            next.add(sub.id)
+            setChangeEnabled(sub.id, false)
+          }
+        }
+        if (!next.has(ev.id)) {
+          next.add(ev.id)
+          setChangeEnabled(ev.id, false)
+        }
+      }
+      
       // Turn off subchanges connecting to this node
-      ev.subchanges.forEach(sub => {
+      for (let i = ev.subchanges.length - 1; i >= 0; i--) {
+        const sub = ev.subchanges[i]
+        if (!sub) continue
         if ((sub.label === 'to' || sub.label === 'removed') && (sub.targetId === targetId || (!sub.targetId && sub.value === nodeStr))) {
           if (sub.id && !next.has(sub.id)) {
             next.add(sub.id)
             setChangeEnabled(sub.id, false)
           }
         }
-      })
-      
-      // Turn off events modifying or originating from this node (including ADD_NODE)
-      if (ev.targetKind === 'node' && ev.targetId === targetId && ev.type !== 'delete') {
-        if (!next.has(ev.id)) {
-          next.add(ev.id)
-          setChangeEnabled(ev.id, false)
-        }
-        ev.subchanges.forEach(sub => {
-          if (sub.id && !next.has(sub.id)) {
-            next.add(sub.id)
-            setChangeEnabled(sub.id, false)
-          }
-        })
       }
-    })
+    }
     disabledChanges.value = next
   }
 
