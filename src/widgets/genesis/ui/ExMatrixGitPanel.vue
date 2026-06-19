@@ -139,7 +139,8 @@ const treeRows = computed<TreeRow[]>(() => {
     })
 
     if (!isVersionEvent) event.subchanges.forEach((subchange, subIndex) => {
-      const connector = subIndex === event.subchanges.length - 1 ? '`-' : '+-'
+      const isLastSub = subIndex === event.subchanges.length - 1 && !(subchange.subchanges?.length)
+      const connector = isLastSub ? '`-' : '+-'
       rows.push({
         toggleId: subchange.id,
         parentId: event.id,
@@ -152,6 +153,27 @@ const treeRows = computed<TreeRow[]>(() => {
           { text: subchange.value, class: 'tree-subvalue' }
         ]
       })
+
+      if (subchange.subchanges) {
+        subchange.subchanges.forEach((subsub, subsubIndex) => {
+          const isLastSubSub = subsubIndex === subchange.subchanges!.length - 1
+          const subConnector = isLastSubSub ? '`-' : '+-'
+          const prefix = subIndex === event.subchanges.length - 1 ? '    ' : '|   '
+          rows.push({
+            toggleId: subsub.id,
+            parentId: subchange.id,
+            parts: [
+              { text: '|   ' },
+              { text: prefix, class: 'tree-muted' },
+              { text: subConnector, class: 'tree-muted' },
+              { text: ' ' },
+              { text: subsub.label, class: 'tree-subkey' },
+              { text: ': ' },
+              { text: subsub.value, class: 'tree-subvalue' }
+            ]
+          })
+        })
+      }
     })
 
     if (eventIndex < visibleEvents.length - 1) {
@@ -194,6 +216,14 @@ function toggleTreeRow(id?: string) {
                 next.add(sub.id)
                 changeTree.setChangeEnabled(sub.id, false)
               }
+              if (sub.subchanges) {
+                for (const ss of sub.subchanges) {
+                  if (ss.id && !next.has(ss.id)) {
+                    next.add(ss.id)
+                    changeTree.setChangeEnabled(ss.id, false)
+                  }
+                }
+              }
             }
           }
           
@@ -213,6 +243,14 @@ function toggleTreeRow(id?: string) {
               if (sub.id && next.has(sub.id)) {
                 next.delete(sub.id)
                 changeTree.setChangeEnabled(sub.id, true)
+              }
+              if (sub.subchanges) {
+                for (const ss of sub.subchanges) {
+                  if (ss.id && next.has(ss.id)) {
+                    next.delete(ss.id)
+                    changeTree.setChangeEnabled(ss.id, true)
+                  }
+                }
               }
             }
           }
@@ -242,17 +280,55 @@ function toggleTreeRow(id?: string) {
         return
       }
 
-      const subIndex = event.subchanges.findIndex(sub => sub.id === id)
+      let subIndex = -1
+      let subsubIndex = -1
+      for (let i = 0; i < event.subchanges.length; i++) {
+        const currentSub = event.subchanges[i]
+        if (!currentSub) continue
+        if (currentSub.id === id) {
+          subIndex = i
+          break
+        }
+        if (currentSub.subchanges) {
+          const ssIdx = currentSub.subchanges.findIndex(ss => ss.id === id)
+          if (ssIdx !== -1) {
+            subIndex = i
+            subsubIndex = ssIdx
+            break
+          }
+        }
+      }
+
       if (subIndex !== -1) {
         // Turn ON this subchange and all previous ones in the same event
         for (let i = 0; i <= subIndex; i++) {
-          const subId = event.subchanges[i]?.id
-          if (subId && next.has(subId)) {
-            next.delete(subId)
-            changeTree.setChangeEnabled(subId, true)
+          const sub = event.subchanges[i]
+          if (!sub) continue
+          if (sub.id && next.has(sub.id)) {
+            next.delete(sub.id)
+            changeTree.setChangeEnabled(sub.id, true)
+          }
+          if (i === subIndex && subsubIndex !== -1 && sub.subchanges) {
+            for (let j = 0; j <= subsubIndex; j++) {
+              const ss = sub.subchanges[j]
+              if (!ss) continue
+              if (ss.id && next.has(ss.id)) {
+                next.delete(ss.id)
+                changeTree.setChangeEnabled(ss.id, true)
+              }
+            }
+          } else if (sub.subchanges) {
+            for (const ss of sub.subchanges) {
+              if (!ss) continue
+              if (ss.id && next.has(ss.id)) {
+                next.delete(ss.id)
+                changeTree.setChangeEnabled(ss.id, true)
+              }
+            }
           }
         }
-        // Also turn on the parent event if it's currently disabled
+        
+        // Ensure the parent event is ON
         if (next.has(event.id)) {
           next.delete(event.id)
           changeTree.setChangeEnabled(event.id, true)
@@ -280,6 +356,14 @@ function toggleTreeRow(id?: string) {
             for (let j = ev.subchanges.length - 1; j >= 0; j--) {
               const sub = ev.subchanges[j]
               if (!sub) continue
+              if (sub.subchanges) {
+                for (const ss of sub.subchanges) {
+                  if (ss.id && !next.has(ss.id)) {
+                    next.add(ss.id)
+                    changeTree.setChangeEnabled(ss.id, false)
+                  }
+                }
+              }
               if (sub.id && !next.has(sub.id)) {
                 next.add(sub.id)
                 changeTree.setChangeEnabled(sub.id, false)
@@ -302,6 +386,14 @@ function toggleTreeRow(id?: string) {
               if (sub.id && next.has(sub.id)) {
                 next.delete(sub.id)
                 changeTree.setChangeEnabled(sub.id, true)
+              }
+              if (sub.subchanges) {
+                for (const ss of sub.subchanges) {
+                  if (ss.id && next.has(ss.id)) {
+                    next.delete(ss.id)
+                    changeTree.setChangeEnabled(ss.id, true)
+                  }
+                }
               }
             }
           }
@@ -330,16 +422,59 @@ function toggleTreeRow(id?: string) {
         break // Not a clear/add event, break out and use fallback
       }
 
-      const subIndex = event.subchanges.findIndex(sub => sub.id === id)
-      if (subIndex !== -1) {
-        // Turn OFF this subchange and all previous ones in the same event
-        for (let i = subIndex; i >= 0; i--) {
-          const subId = event.subchanges[i]?.id
-          if (subId && !next.has(subId)) {
-            next.add(subId)
-            changeTree.setChangeEnabled(subId, false)
+      let subIndex = -1
+      let subsubIndex = -1
+      for (let i = 0; i < event.subchanges.length; i++) {
+        const currentSub = event.subchanges[i]
+        if (!currentSub) continue
+        if (currentSub.id === id) {
+          subIndex = i
+          break
+        }
+        if (currentSub.subchanges) {
+          const ssIdx = currentSub.subchanges.findIndex(ss => ss.id === id)
+          if (ssIdx !== -1) {
+            subIndex = i
+            subsubIndex = ssIdx
+            break
           }
         }
+      }
+
+      if (subIndex !== -1) {
+        if (subsubIndex !== -1) {
+          const sub = event.subchanges[subIndex]
+          if (sub && sub.subchanges) {
+            for (let j = subsubIndex; j >= 0; j--) {
+              const ss = sub.subchanges[j]
+              if (!ss) continue
+              if (ss.id && !next.has(ss.id)) {
+                next.add(ss.id)
+                changeTree.setChangeEnabled(ss.id, false)
+              }
+            }
+          }
+        } else {
+          for (let i = subIndex; i >= 0; i--) {
+            const sub = event.subchanges[i]
+            if (!sub) continue
+            if (sub.subchanges) {
+              for (let j = sub.subchanges.length - 1; j >= 0; j--) {
+                const ss = sub.subchanges[j]
+                if (!ss) continue
+                if (ss.id && !next.has(ss.id)) {
+                  next.add(ss.id)
+                  changeTree.setChangeEnabled(ss.id, false)
+                }
+              }
+            }
+            if (sub.id && !next.has(sub.id)) {
+              next.add(sub.id)
+              changeTree.setChangeEnabled(sub.id, false)
+            }
+          }
+        }
+
         disabledChanges.value = next
         return
       }

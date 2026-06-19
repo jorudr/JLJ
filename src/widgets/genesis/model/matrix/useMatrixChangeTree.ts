@@ -13,6 +13,7 @@ export type MatrixSubchange = {
   value: string
   targetId?: string
   action?: MatrixChangeAction
+  subchanges?: MatrixSubchange[]
 }
 
 export type MatrixChangeEvent = {
@@ -141,18 +142,50 @@ export function useMatrixChangeTree() {
     if (event) {
       if (enabled) {
         event.action?.redo?.()
-        event.subchanges.forEach(subchange => subchange.action?.redo?.())
+        event.subchanges.forEach(subchange => {
+          subchange.action?.redo?.()
+          subchange.subchanges?.forEach(subsub => subsub.action?.redo?.())
+        })
       } else {
-        ;[...event.subchanges].reverse().forEach(subchange => subchange.action?.undo?.())
+        ;[...event.subchanges].reverse().forEach(subchange => {
+          if (subchange.subchanges) {
+            ;[...subchange.subchanges].reverse().forEach(subsub => subsub.action?.undo?.())
+          }
+          subchange.action?.undo?.()
+        })
         event.action?.undo?.()
       }
       return
     }
 
-    const subchange = events.value.flatMap(item => item.subchanges).find(item => item.id === id)
+    let subchange: MatrixSubchange | undefined
+    for (const item of events.value) {
+      for (const sub of item.subchanges) {
+        if (sub.id === id) {
+          subchange = sub
+          break
+        }
+        if (sub.subchanges) {
+          const subsub = sub.subchanges.find(s => s.id === id)
+          if (subsub) {
+            subchange = subsub
+            break
+          }
+        }
+      }
+      if (subchange) break
+    }
+
     if (!subchange) return
-    if (enabled) subchange.action?.redo?.()
-    else subchange.action?.undo?.()
+    if (enabled) {
+      subchange.action?.redo?.()
+      subchange.subchanges?.forEach(subsub => subsub.action?.redo?.())
+    } else {
+      if (subchange.subchanges) {
+        ;[...subchange.subchanges].reverse().forEach(subsub => subsub.action?.undo?.())
+      }
+      subchange.action?.undo?.()
+    }
   }
 
   function disableNodeDependents(targetId: string, nodeStr: string) {
@@ -394,7 +427,22 @@ export function useMatrixChangeTree() {
   }
 
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string }, label: string | null, action?: MatrixChangeAction) {
-    addSubchange(ensureConnectionParent(connection), 'link_label', label ? label.toUpperCase() : 'CLEAR', action)
+    const sourceNode = { id: connection.fromId, label: connection.fromId }
+    const parentEvent = ensureNodeParent(sourceNode)
+    const toSubchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.targetId === connection.toId)
+    
+    if (toSubchange) {
+      if (!toSubchange.subchanges) toSubchange.subchanges = []
+      toSubchange.subchanges.push({
+        id: nextId('sub'),
+        label: 'link_label',
+        value: label ? label.toUpperCase() : 'CLEAR',
+        action
+      })
+      events.value = [...events.value]
+    } else {
+      addSubchange(ensureConnectionParent(connection), 'link_label', label ? label.toUpperCase() : 'CLEAR', action)
+    }
   }
 
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
