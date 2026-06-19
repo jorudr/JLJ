@@ -1102,6 +1102,54 @@ export function useMatrixState() {
   }
 
   function applyTreeStateToMatrix(next: Set<string>) {
+    const nodeHolderStates = new Map<string, {
+      fallbackPosition?: { x: number, y: number }
+      activePosition?: { x: number, y: number }
+    }>()
+
+    changeTree.events.value.forEach(event => {
+      if (event.targetKind !== 'domain' || event.type !== 'add') return
+      const isEventEnabled = !next.has(event.id)
+
+      event.subchanges.forEach(subchange => {
+        if (subchange.label !== 'NODES_HOLDER' || !subchange.subchanges?.length) return
+        const isHolderEnabled = isEventEnabled && !next.has(subchange.id)
+
+        subchange.subchanges.forEach(nodeChange => {
+          if (nodeChange.label !== 'add' && nodeChange.label !== 'remove') return
+          if (!nodeChange.targetId) return
+
+          const isNodeChangeEnabled = isHolderEnabled && !next.has(nodeChange.id)
+          const state = nodeHolderStates.get(nodeChange.targetId) || {}
+
+          if (!state.fallbackPosition && nodeChange.payload?.fromPosition) {
+            state.fallbackPosition = {
+              x: nodeChange.payload.fromPosition.x,
+              y: nodeChange.payload.fromPosition.y
+            }
+          }
+
+          if (isNodeChangeEnabled && nodeChange.payload?.toPosition) {
+            state.activePosition = {
+              x: nodeChange.payload.toPosition.x,
+              y: nodeChange.payload.toPosition.y
+            }
+          }
+
+          nodeHolderStates.set(nodeChange.targetId, state)
+        })
+      })
+    })
+
+    nodeHolderStates.forEach((holderState, nodeId) => {
+      const position = holderState.activePosition || holderState.fallbackPosition
+      if (!position) return
+      const node = getNode(nodeId)
+      if (!node) return
+      node.x = position.x
+      node.y = position.y
+    })
+
     nodes.value.forEach(node => {
       if (node.type === 'text-panel') {
         let lastActiveSub: any = undefined
