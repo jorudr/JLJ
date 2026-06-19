@@ -661,32 +661,7 @@ export function useMatrixState() {
     navigationStack.value = []
     savedScales.clear()
     lastSelectedId.value = null
-    changeTree.recordBoardCleared({
-      undo: () => {
-        rootNodes.value = cloneMatrixValue(snapshot.rootNodes)
-        rootConnections.value = cloneMatrixValue(snapshot.rootConnections)
-        rootZones.value = cloneMatrixValue(snapshot.rootZones)
-        matrixPages.value = cloneMatrixValue(snapshot.matrixPages)
-        activePageId.value = snapshot.activePageId
-        navigationStack.value = []
-        savedScales.clear()
-        forceUpdate()
-        saveMatrixData()
-      },
-      redo: () => {
-        rootNodes.value = []
-        rootConnections.value = []
-        rootZones.value = []
-        matrixPages.value = []
-        activePageId.value = null
-        ensurePages()
-        navigationStack.value = []
-        savedScales.clear()
-        lastSelectedId.value = null
-        forceUpdate()
-        saveMatrixData()
-      }
-    })
+    changeTree.resetChanges()
     saveMatrixData()
   }
 
@@ -772,7 +747,7 @@ export function useMatrixState() {
     }
 
     const assignedNodeIds = new Set<string>()
-    const pages = strategyNodes.map((strategy, index) => {
+    const pages = strategyNodes.map((strategy: Node, index: number) => {
       const pageNodeIds = new Set<string>([strategy.id])
       const queue = [strategy.id]
 
@@ -817,7 +792,7 @@ export function useMatrixState() {
 
     const unassignedNodes = savedNodes.filter((node: Node) => !assignedNodeIds.has(node.id))
     if (unassignedNodes.length > 0 && pages[0]) {
-      const firstPageNodeIds = new Set(pages[0].nodes.map(node => node.id))
+      const firstPageNodeIds = new Set(pages[0].nodes.map((node: Node) => node.id))
       unassignedNodes.forEach((node: Node) => {
         pages[0]!.nodes.push(node)
         firstPageNodeIds.add(node.id)

@@ -708,7 +708,7 @@ const executePurge = () => {
 }
 
 // Category lists
-const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'LABELS', 'CONFIG', 'SYSTEM']
+const defaultCommandCategories: MenuCategory[] = ['LOGIC', 'METHODS', 'DATA', 'DOMAINS', 'INDICATORS', 'EMOTIONS', 'STEPS', 'SCALING', 'RISK', 'LABELS', 'SYSTEM']
 const scenarioCommandCategories: MenuCategory[] = ['SCENARIO_DOCS', 'SCENARIO_VISUALS', 'SCENARIO_AUDIO', 'TEXT_FORMAT', 'LABELS']
 const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   SCENARIO_DOCS: 'DOCS',

@@ -56,8 +56,8 @@ type TreeRow = {
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
-const disabledChanges = ref(new Set<string>())
 const changeTree = useMatrixChangeTree()
+const disabledChanges = changeTree.disabledChanges
 const workspace = 'genesis-matrix'
 const line = 'strategy'
 
@@ -174,7 +174,58 @@ function toggleTreeRow(id?: string) {
   const next = new Set(disabledChanges.value)
   if (next.has(id)) {
     // Turning ON
-    for (const event of changeTree.events.value) {
+    for (let eventIndex = 0; eventIndex < changeTree.events.value.length; eventIndex++) {
+      const event = changeTree.events.value[eventIndex]
+      if (!event) continue
+      
+      // If we are turning on the event itself
+      if (event.id === id) {
+        if (event.type === 'clear') {
+          // Turn OFF all events before this clear event
+          for (let i = 0; i < eventIndex; i++) {
+            const ev = changeTree.events.value[i]
+            if (!ev) continue
+            if (!next.has(ev.id)) {
+              next.add(ev.id)
+              changeTree.setChangeEnabled(ev.id, false)
+            }
+            for (const sub of ev.subchanges) {
+              if (sub.id && !next.has(sub.id)) {
+                next.add(sub.id)
+                changeTree.setChangeEnabled(sub.id, false)
+              }
+            }
+          }
+          
+          // Execute the clear board logic first
+          next.delete(id)
+          changeTree.setChangeEnabled(id, true)
+
+          // Turn ON all events after this clear event
+          for (let i = eventIndex + 1; i < changeTree.events.value.length; i++) {
+            const ev = changeTree.events.value[i]
+            if (!ev) continue
+            if (next.has(ev.id)) {
+              next.delete(ev.id)
+              changeTree.setChangeEnabled(ev.id, true)
+            }
+            for (const sub of ev.subchanges) {
+              if (sub.id && next.has(sub.id)) {
+                next.delete(sub.id)
+                changeTree.setChangeEnabled(sub.id, true)
+              }
+            }
+          }
+          
+          disabledChanges.value = next
+          return
+        }
+        next.delete(id)
+        changeTree.setChangeEnabled(id, true)
+        disabledChanges.value = next
+        return
+      }
+
       const subIndex = event.subchanges.findIndex(sub => sub.id === id)
       if (subIndex !== -1) {
         // Turn ON this subchange and all previous ones in the same event
@@ -199,7 +250,49 @@ function toggleTreeRow(id?: string) {
     changeTree.setChangeEnabled(id, true)
   } else {
     // Turning OFF
-    for (const event of changeTree.events.value) {
+    for (let eventIndex = 0; eventIndex < changeTree.events.value.length; eventIndex++) {
+      const event = changeTree.events.value[eventIndex]
+      if (!event) continue
+      
+      // If we are turning off the event itself
+      if (event.id === id) {
+        if (event.type === 'clear') {
+          // Turn off this clear event and ALL subsequent events & subchanges
+          for (let i = eventIndex; i < changeTree.events.value.length; i++) {
+            const ev = changeTree.events.value[i]
+            if (!ev) continue
+            if (!next.has(ev.id)) {
+              next.add(ev.id)
+              changeTree.setChangeEnabled(ev.id, false)
+            }
+            for (const sub of ev.subchanges) {
+              if (sub.id && !next.has(sub.id)) {
+                next.add(sub.id)
+                changeTree.setChangeEnabled(sub.id, false)
+              }
+            }
+          }
+          // Turn ON all events before this clear event
+          for (let i = 0; i < eventIndex; i++) {
+            const ev = changeTree.events.value[i]
+            if (!ev) continue
+            if (next.has(ev.id)) {
+              next.delete(ev.id)
+              changeTree.setChangeEnabled(ev.id, true)
+            }
+            for (const sub of ev.subchanges) {
+              if (sub.id && next.has(sub.id)) {
+                next.delete(sub.id)
+                changeTree.setChangeEnabled(sub.id, true)
+              }
+            }
+          }
+          disabledChanges.value = next
+          return
+        }
+        break // Not a clear event, break out and use fallback
+      }
+
       const subIndex = event.subchanges.findIndex(sub => sub.id === id)
       if (subIndex !== -1) {
         // Turn OFF this subchange and all subsequent ones in the same event

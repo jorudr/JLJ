@@ -27,6 +27,7 @@ export type MatrixChangeEvent = {
 }
 
 const events = ref<MatrixChangeEvent[]>([])
+const disabledChanges = ref(new Set<string>())
 let sequence = 0
 
 function nextId(prefix = 'chg') {
@@ -117,6 +118,7 @@ function ensureConnectionParent(connection: { fromId: string, toId: string }) {
 export function useMatrixChangeTree() {
   function resetChanges() {
     events.value = []
+    disabledChanges.value.clear()
     sequence = 0
   }
 
@@ -188,16 +190,6 @@ export function useMatrixChangeTree() {
     )
   }
 
-  function recordBoardCleared(action?: MatrixChangeAction) {
-    addEvent({
-      type: 'clear',
-      title: 'CLEAR_BOARD',
-      node: 'genesis matrix',
-      targetKind: 'board',
-      action
-    })
-  }
-
   function recordStrategyVersionCreated(versionLabel?: string, action?: MatrixChangeAction) {
     const versionNumber = events.value.filter(event => event.type === 'version').length + 1
     addEvent({
@@ -246,12 +238,13 @@ export function useMatrixChangeTree() {
 
   return {
     events,
+    disabledChanges,
     resetChanges,
     setChangeEnabled,
     recordNodeAdded,
     recordNodeDeleted,
     recordConnectionCreated,
-    recordBoardCleared,
+    recordConnectionDeleted,
     recordStrategyVersionCreated,
     recordNodeIdentityChanged,
     recordNodeDescriptionChanged,
@@ -259,7 +252,6 @@ export function useMatrixChangeTree() {
     recordCommentTextChanged,
     recordCommentRemoved,
     recordConnectionLabelChanged,
-    updateConnectionAction,
-    recordConnectionDeleted
+    updateConnectionAction
   }
 }
