@@ -737,6 +737,10 @@ function shouldShowCommandCategory(category: MenuCategory) {
     return false
   }
 
+  if (category === 'INDICATORS' && props.state.activeMenuCategory.value !== 'INDICATORS') {
+    return false
+  }
+
   const rawSelected = props.state.lastSelectedId.value ? props.state.getNode(props.state.lastSelectedId.value) : null;
   if (rawSelected?.type === 'placeholder') {
     if (category === 'SYSTEM') return false;
