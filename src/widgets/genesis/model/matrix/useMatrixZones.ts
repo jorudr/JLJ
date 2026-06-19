@@ -1,9 +1,45 @@
 import { ref, computed } from 'vue'
 import type { useMatrixState, Zone } from './useMatrixState'
+import { useMatrixChangeTree } from './useMatrixChangeTree'
 
 export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
+  const changeTree = useMatrixChangeTree()
   const isZoneToolActive = ref(false)
-  const selectedZoneType = ref<'entry' | 'in-trade' | 'exit' | 'session'>('entry')
+  const selectedZoneType = ref<Zone['type']>('session')
+  const domainMemberships = ref<Record<string, Set<string>>>({})
+
+  function evaluateDomainMemberships() {
+    state.zones.value.forEach(zone => {
+      if (!domainMemberships.value[zone.id]) {
+        domainMemberships.value[zone.id] = new Set()
+      }
+      
+      const currentMembers = new Set(
+        state.nodes.value
+          .filter(node => node.x >= zone.x && node.x <= zone.x + zone.width && node.y >= zone.y && node.y <= zone.y + zone.height)
+          .map(node => node.id)
+      )
+      
+      const previousMembers = domainMemberships.value[zone.id]!
+      
+      currentMembers.forEach(nodeId => {
+        if (!previousMembers.has(nodeId)) {
+          const node = state.getNode(nodeId)
+          if (node) changeTree.recordDomainNodeChanged(zone.id, nodeId, true, node.label || node.id)
+        }
+      })
+      
+      previousMembers.forEach(nodeId => {
+        if (!currentMembers.has(nodeId)) {
+          const node = state.getNode(nodeId)
+          if (node) changeTree.recordDomainNodeChanged(zone.id, nodeId, false, node.label || node.id)
+        }
+      })
+      
+      domainMemberships.value[zone.id] = currentMembers
+    })
+  }
+
   const drawStart = ref<{ x: number, y: number } | null>(null)
   const drawCurrent = ref<{ x: number, y: number } | null>(null)
 
@@ -12,25 +48,99 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     selectedZoneType.value = type
   }
 
+  function updateDomainState(id: string) {
+    const currentZone = state.zones.value.find(item => item.id === id)
+    if (!currentZone) return
+    const activeValue = changeTree.getDomainState(id)
+    if (activeValue) {
+      if (['entry', 'in-trade', 'exit'].includes(activeValue.toLowerCase())) {
+        currentZone.type = activeValue.toLowerCase() as any
+        currentZone.label = `SECTOR_${activeValue.toUpperCase()}`
+      } else {
+        currentZone.type = 'session'
+        currentZone.label = activeValue
+      }
+    }
+    state.forceUpdate()
+    state.saveMatrixData()
+  }
+
   function removeZone(id: string) {
+    const zone = state.zones.value.find(z => z.id === id)
+    if (!zone) return
+    const index = state.zones.value.findIndex(z => z.id === id)
+
+    changeTree.recordDomainDeleted(zone, {
+      undo: () => {
+        state.zones.value.splice(index, 0, zone)
+        state.forceUpdate()
+        state.saveMatrixData()
+      },
+      redo: () => {
+        state.zones.value = state.zones.value.filter(z => z.id !== id)
+        state.forceUpdate()
+        state.saveMatrixData()
+      }
+    })
+
     state.zones.value = state.zones.value.filter(z => z.id !== id)
+    state.saveMatrixData()
+    evaluateDomainMemberships()
   }
 
   function handleZoneCycle(id: string) {
     const zone = state.zones.value.find(z => z.id === id)
     if (!zone) return
+    const beforeType = zone.type
+    const beforeLabel = zone.label
     
     if (zone.type === 'session') {
-      const sessions = ['SYDNEY', 'TOKYO', 'LONDON', 'NEW_YORK']
-      const currentIndex = sessions.indexOf(zone.label)
-      zone.label = sessions[(currentIndex + 1) % sessions.length]!
+      const parts = zone.label.split(' ')
+      const prefix = parts.slice(0, -1).join(' ') || 'SESSION'
+      const num = parseInt(parts[parts.length - 1] || '0')
+      zone.label = `${prefix} ${num + 1}`
+      
+      changeTree.recordDomainChanged(zone, zone.label, {
+        undo: () => setTimeout(() => updateDomainState(id), 0),
+        redo: () => setTimeout(() => updateDomainState(id), 0)
+      })
+      state.forceUpdate()
+      state.saveMatrixData()
     } else {
-      const types: Array<Zone['type']> = ['entry', 'in-trade', 'exit']
-      const currentIndex = types.indexOf(zone.type)
-      zone.type = types[(currentIndex + 1) % types.length]!
-      zone.label = `SECTOR_${zone.type.toUpperCase()}`
+      const cycle = ['entry', 'in-trade', 'exit']
+      const currentIndex = cycle.indexOf(zone.type)
+      const nextType = cycle[(currentIndex + 1) % cycle.length]!
+      
+      changeTree.disableDomainAddEvent(zone.id)
+      
+      const newZone = { ...zone, type: nextType as any, label: `SECTOR_${nextType.toUpperCase()}` }
+      
+      state.zones.value = state.zones.value.filter(z => z.id !== zone.id)
+      
+      changeTree.recordDomainAdded(newZone, {
+        undo: () => {
+          state.zones.value = state.zones.value.filter(z => z.id !== zone.id)
+          state.saveMatrixData()
+          state.forceUpdate()
+        },
+        redo: () => {
+          if (!state.zones.value.some(z => z.id === zone.id)) {
+            state.zones.value.push(newZone)
+          }
+          state.saveMatrixData()
+          state.forceUpdate()
+        }
+      })
+      
+      state.zones.value.push(newZone)
+      
+      // Forcefully clear the membership cache so it discovers all contained nodes as fresh 'node_added' subchanges!
+      domainMemberships.value[zone.id] = new Set()
+      evaluateDomainMemberships()
+      
+      state.forceUpdate()
+      state.saveMatrixData()
     }
-    state.forceUpdate()
   }
 
   function startZoneDrag(e: MouseEvent, zone: Zone) {
@@ -69,6 +179,7 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
       window.removeEventListener('mousemove', move)
       window.removeEventListener('mouseup', stop)
       state.saveMatrixData()
+      evaluateDomainMemberships()
     }
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', stop)
@@ -88,6 +199,7 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     const stop = () => {
       window.removeEventListener('mousemove', move)
       window.removeEventListener('mouseup', stop)
+      evaluateDomainMemberships()
     }
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', stop)
@@ -114,6 +226,7 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
     drawCurrent,
     activateZoneTool,
     removeZone,
+    evaluateDomainMemberships,
     handleZoneCycle,
     startZoneDrag,
     startZoneResize,

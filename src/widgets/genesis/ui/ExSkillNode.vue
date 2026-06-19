@@ -732,10 +732,12 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
 import { useMatrixState } from '../model/matrix/useMatrixState'
+import { useMatrixZones } from '../model/matrix/useMatrixZones'
 
 const { locale, t } = useI18n()
 const changeTree = useMatrixChangeTree()
 const state = useMatrixState()
+const zones = useMatrixZones(state)
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()
@@ -796,6 +798,8 @@ const isDragging = ref(false)
 const imageError = ref(false)
 const identityDraftStart = ref('')
 const descriptionDraftStart = ref('')
+const labelTextDraftStart = ref({ html: '', value: '' })
+const hasLabelTextDraft = ref(false)
 const commentDraftStart = new Map<string, string>()
 const scenarioPanelTypes = [
   'text-panel',
@@ -806,6 +810,7 @@ const scenarioPanelTypes = [
   'file-attachment',
 ]
 const isScenarioPanel = computed(() => scenarioPanelTypes.includes(props.node.type))
+const isLabelTextPanel = computed(() => props.node.type === 'text-panel' && props.node.params?.shortCode === 'LBL')
 
 const headerScaleMult = computed(() => (props.scale <= 0.25 && props.node.type === 'text-panel') ? 2.5 : 1)
 
@@ -1055,6 +1060,55 @@ function updateTextPanelHtml(event: Event) {
   emit('moved')
 }
 
+function captureLabelTextDraft() {
+  if (!isLabelTextPanel.value) return
+  labelTextDraftStart.value = {
+    html: String(props.node.params?.html || ''),
+    value: String(props.node.params?.value || '')
+  }
+  hasLabelTextDraft.value = true
+}
+
+function commitLabelTextDraft() {
+  if (!isLabelTextPanel.value) return
+  if (!hasLabelTextDraft.value) return
+
+  if (textEditorElement.value) {
+    if (!props.node.params) props.node.params = {}
+    props.node.params.html = textEditorElement.value.innerHTML
+    props.node.params.value = textEditorElement.value.innerText
+  }
+
+  const previousHtml = labelTextDraftStart.value.html
+  const previousValue = labelTextDraftStart.value.value
+  const nextHtml = String(props.node.params?.html || '')
+  const nextValue = String(props.node.params?.value || '')
+  
+  if (previousValue.trim() === nextValue.trim()) return
+
+  const nodeId = props.node.id
+  changeTree.recordNodeLabelTextChanged(props.node, nextValue, {
+    undo: () => {
+      const globalNode = state.getNode(nodeId)
+      if (!globalNode) return
+      if (!globalNode.params) globalNode.params = {}
+      globalNode.params.html = previousHtml
+      globalNode.params.value = previousValue
+      emit('moved')
+    },
+    redo: () => {
+      const globalNode = state.getNode(nodeId)
+      if (!globalNode) return
+      if (!globalNode.params) globalNode.params = {}
+      globalNode.params.html = nextHtml
+      globalNode.params.value = nextValue
+      emit('moved')
+    }
+  })
+  labelTextDraftStart.value = { html: nextHtml, value: nextValue }
+  hasLabelTextDraft.value = false
+}
+
 watch(
   () => [props.node.id, props.node.params?.html, props.node.params?.value],
   syncTextEditorFromNode,
@@ -1148,11 +1202,15 @@ watch(
 watch(
   () => props.isSelected,
   (isSelected, wasSelected) => {
+    if (isSelected) captureLabelTextDraft()
+    if (wasSelected && !isSelected) commitLabelTextDraft()
     if (wasSelected && !isSelected) commitOpenCommentEdits()
-  }
+  },
+  { immediate: true }
 )
 
 onBeforeUnmount(() => {
+  commitLabelTextDraft()
   commitOpenCommentEdits()
   commitTableDraft()
   stopAudioPlayback()
@@ -1359,6 +1417,7 @@ const startDrag = (e: MouseEvent) => {
     isDragging.value = false
     window.removeEventListener('mousemove', move)
     window.removeEventListener('mouseup', stop)
+    zones.evaluateDomainMemberships()
   }
 
   window.addEventListener('mousemove', move)

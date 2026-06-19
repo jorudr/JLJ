@@ -212,6 +212,25 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
           label: zones.selectedZoneType.value === 'session' ? 'SYDNEY' : `SECTOR_${zones.selectedZoneType.value.toUpperCase()}`
         }
         state.zones.value = [...state.zones.value, newZone]
+        const zoneSnapshot = cloneMatrixValue(newZone)
+        changeTree.recordDomainAdded(newZone, {
+          undo: () => {
+            state.zones.value = state.zones.value.filter(zone => zone.id !== zoneSnapshot.id)
+            state.forceUpdate()
+            state.saveMatrixData()
+          },
+          redo: () => {
+            if (!state.zones.value.some(zone => zone.id === zoneSnapshot.id)) {
+              state.zones.value = [...state.zones.value, cloneMatrixValue(zoneSnapshot)]
+            }
+            zones.evaluateDomainMemberships()
+            state.forceUpdate()
+            state.saveMatrixData()
+          }
+        })
+        zones.evaluateDomainMemberships()
+        state.forceUpdate()
+        state.saveMatrixData()
       }
     }
     

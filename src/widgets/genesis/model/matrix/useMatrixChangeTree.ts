@@ -24,7 +24,7 @@ export type MatrixChangeEvent = {
   node: string
   createdAt: number
   targetId?: string
-  targetKind?: 'node' | 'connection' | 'board' | 'version'
+  targetKind?: 'node' | 'connection' | 'board' | 'version' | 'domain'
   subchanges: MatrixSubchange[]
   action?: MatrixChangeAction
   linkedIds?: string[]
@@ -45,6 +45,15 @@ function readableNodeName(node: any) {
 
 function readableNodeLine(node: any) {
   return `${node?.type || 'node'}: ${readableNodeName(node)}`
+}
+
+function readableDomainValue(domain: any) {
+  if (domain?.type === 'session') return String(domain?.label || 'SESSION').toUpperCase()
+  return String(domain?.type || domain?.label || 'domain').toUpperCase()
+}
+
+function readableDomainLine(domain: any) {
+  return `domain: ${readableDomainValue(domain)}`
 }
 
 function connectionId(connection: { fromId: string, toId: string }) {
@@ -111,6 +120,27 @@ function ensureNodeParent(node: any) {
     createdAt: Date.now(),
     targetId: node.id,
     targetKind: 'node',
+    subchanges: []
+  }
+  events.value = [...events.value, event]
+  return event
+}
+
+function ensureDomainParent(domain: any) {
+  const existing = findParentEvent('domain', domain.id)
+  if (existing) {
+    existing.node = readableDomainLine(domain)
+    return existing
+  }
+
+  const event: MatrixChangeEvent = {
+    id: nextId(),
+    type: 'add',
+    title: 'ADD_DOMAIN',
+    node: readableDomainLine(domain),
+    createdAt: Date.now(),
+    targetId: domain.id,
+    targetKind: 'domain',
     subchanges: []
   }
   events.value = [...events.value, event]
@@ -549,6 +579,10 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'description', value, action)
   }
 
+  function recordNodeLabelTextChanged(node: any, value: string, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'text', value || 'empty', action)
+  }
+
   function recordCommentAdded(node: any, comment: any, action?: MatrixChangeAction) {
     addSubchange(ensureNodeParent(node), 'comment_added', comment?.text || 'comment', action)
   }
@@ -559,6 +593,89 @@ export function useMatrixChangeTree() {
 
   function recordCommentRemoved(node: any, comment: any, action?: MatrixChangeAction) {
     addSubchange(ensureNodeParent(node), 'comment_removed', comment?.text || 'comment', action)
+  }
+
+  function recordDomainAdded(domain: any, action?: MatrixChangeAction) {
+    addEvent({
+      type: 'add',
+      title: 'ADD_DOMAIN',
+      node: readableDomainLine(domain),
+      targetId: domain.id,
+      targetKind: 'domain',
+      action,
+      subchanges: [
+        {
+          id: nextId('sub'),
+          label: domain.type === 'session' ? 'session' : 'domain',
+          value: readableDomainValue(domain),
+          targetId: domain.id
+        }
+      ]
+    })
+  }
+
+  function recordDomainDeleted(domain: any, action?: MatrixChangeAction) {
+    addEvent({
+      type: 'delete',
+      title: 'DELETE_DOMAIN',
+      node: readableDomainLine(domain),
+      targetId: domain.id,
+      targetKind: 'domain',
+      action
+    })
+  }
+
+  function disableDomainAddEvent(domainId: string) {
+    const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
+    if (parentEvent && !disabledChanges.value.has(parentEvent.id)) {
+      const next = new Set(disabledChanges.value)
+      next.add(parentEvent.id)
+      parentEvent.subchanges.forEach(sub => {
+        if (!next.has(sub.id)) next.add(sub.id)
+      })
+      disabledChanges.value = next
+      
+      parentEvent.subchanges.forEach(sub => setChangeEnabled(sub.id, false))
+      setChangeEnabled(parentEvent.id, false)
+    }
+  }
+
+  function recordDomainNodeChanged(domainId: string, nodeId: string, isAdded: boolean, nodeLabel: string) {
+    const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
+    if (!parentEvent) return
+    
+    addSubchange(parentEvent, isAdded ? 'node_added' : 'node_removed', nodeLabel, nodeId)
+  }
+
+  function getDomainState(domainId: string) {
+    const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
+    if (!parentEvent) return null
+
+    const activeSubchanges = parentEvent.subchanges.filter(s => !disabledChanges.value.has(s.id))
+    const lastActive = activeSubchanges[activeSubchanges.length - 1]
+    return lastActive ? lastActive.value : null
+  }
+
+  function recordDomainChanged(domain: any, value: string, action?: MatrixChangeAction) {
+    const normalizedValue = String(value || readableDomainValue(domain)).toUpperCase()
+    const parentEvent = ensureDomainParent(domain)
+    parentEvent.node = readableDomainLine(domain)
+
+    for (let index = parentEvent.subchanges.length - 1; index >= 0; index--) {
+      const subchange = parentEvent.subchanges[index]
+      if (!subchange || subchange.value !== normalizedValue) continue
+      disabledChanges.value.delete(subchange.id)
+      parentEvent.subchanges.splice(index, 1)
+    }
+
+    disabledChanges.value = new Set(disabledChanges.value)
+    addSubchange(
+      parentEvent,
+      domain.type === 'session' ? 'session' : 'domain',
+      normalizedValue,
+      domain.id,
+      action
+    )
   }
 
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string, bundleId?: string }, label: string | null, action?: MatrixChangeAction, memberNode?: any, memberAction?: MatrixChangeAction) {
@@ -647,9 +764,16 @@ export function useMatrixChangeTree() {
     recordNodePhaseChanged,
     recordNodePriorityChanged,
     recordNodeDescriptionChanged,
+    recordNodeLabelTextChanged,
     recordCommentAdded,
     recordCommentTextChanged,
     recordCommentRemoved,
+    recordDomainAdded,
+    recordDomainDeleted,
+    disableDomainAddEvent,
+    recordDomainNodeChanged,
+    getDomainState,
+    recordDomainChanged,
     recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
     updateConnectionAction

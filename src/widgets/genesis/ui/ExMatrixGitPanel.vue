@@ -11,11 +11,12 @@
             :key="index"
             class="tree-row"
             :class="{
-              'tree-row-clickable': row.toggleId,
-              'tree-row-off': isTreeRowOff(row)
+              'tree-row-clickable': row.toggleId && !row.isTerminated,
+              'tree-row-off': isTreeRowOff(row) || row.isTerminated,
+              'opacity-50 pointer-events-none': row.isTerminated
             }"
             type="button"
-            @click.stop="toggleTreeRow(row.toggleId)"
+            @click.stop="handleRowClick(row)"
           >
             <span
               v-for="(part, partIndex) in row.parts"
@@ -34,6 +35,7 @@
 import { computed, ref } from 'vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useMatrixChangeTree, type MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
+import { useMatrixState } from '../model/matrix/useMatrixState'
 
 defineProps<{
   isOpen: boolean
@@ -52,11 +54,13 @@ type TreeRow = {
   parts: TreePart[]
   toggleId?: string
   parentIds?: string[]
+  isTerminated?: boolean
 }
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const changeTree = useMatrixChangeTree()
+const state = useMatrixState()
 const disabledChanges = changeTree.disabledChanges
 const workspace = 'genesis-matrix'
 const line = 'strategy'
@@ -89,6 +93,12 @@ function formatChangeTime(createdAt: number) {
   return `${hours} hour${hours === 1 ? '' : 's'} ago`
 }
 
+function formatTreeText(text: string, maxLength: number = 15) {
+  if (!text) return ''
+  const flat = String(text).replace(/[\r\n]+/g, ' ')
+  return flat.length > maxLength ? flat.substring(0, maxLength) + '...' : flat
+}
+
 function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds: string[], prefix: string) {
   subchanges.forEach((subchange, index) => {
     const isLast = index === subchanges.length - 1
@@ -103,7 +113,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
         { text: ' ' },
         { text: subchange.label, class: 'tree-subkey' },
         { text: ': ' },
-        { text: subchange.value, class: 'tree-subvalue' }
+        { text: formatTreeText(subchange.value), class: 'tree-subvalue' }
       ]
     })
 
@@ -170,16 +180,21 @@ const treeRows = computed<TreeRow[]>(() => {
     if (!isVersionEvent) event.subchanges.forEach((subchange, subIndex) => {
       const isLastSub = subIndex === event.subchanges.length - 1 && !(subchange.subchanges?.length)
       const connector = isLastSub ? '`-' : '+-'
+      
+      const isDomainNodeChange = subchange.label === 'node_added' || subchange.label === 'node_removed'
+      const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
+      
       rows.push({
         toggleId: subchange.id,
         parentIds: [event.id],
+        isTerminated,
         parts: [
           { text: '|   ' },
           { text: connector, class: 'tree-muted' },
           { text: ' ' },
           { text: subchange.label, class: 'tree-subkey' },
           { text: ': ' },
-          { text: subchange.value, class: 'tree-subvalue' }
+          { text: formatTreeText(subchange.value) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
         ]
       })
 
@@ -214,6 +229,11 @@ function isTreeRowOff(row: TreeRow) {
     (row.toggleId && isChangeDisabled(row.toggleId)) ||
     row.parentIds?.some(parentId => isChangeDisabled(parentId))
   )
+}
+
+function handleRowClick(row: TreeRow) {
+  if (row.isTerminated) return
+  if (row.toggleId) toggleTreeRow(row.toggleId)
 }
 
 function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: boolean) {
@@ -416,6 +436,18 @@ function toggleTreeRow(id?: string) {
         } else if (event.type === 'add') {
           next.delete(id)
           changeTree.setChangeEnabled(id, true)
+          
+          if (event.targetKind === 'domain' && event.targetId) {
+            changeTree.events.value.forEach(otherEv => {
+              if (otherEv.id !== event.id && otherEv.type === 'add' && otherEv.targetKind === 'domain' && otherEv.targetId === event.targetId) {
+                if (!next.has(otherEv.id)) {
+                  next.add(otherEv.id)
+                  changeTree.setChangeEnabled(otherEv.id, false)
+                }
+              }
+            })
+          }
+          
           commitDisabledChanges(next, id, turningOn)
           if (event.targetId) {
             changeTree.enableNodeDependents(event.targetId, event.node)
@@ -448,48 +480,63 @@ function toggleTreeRow(id?: string) {
       }
 
       if (subIndex !== -1) {
-        // Turn ON this subchange and all previous ones in the same event
-        for (let i = 0; i <= subIndex; i++) {
-          const sub = event.subchanges[i]
-          if (!sub) continue
-          if (sub.id && next.has(sub.id)) {
-            next.delete(sub.id)
-            changeTree.setChangeEnabled(sub.id, true)
-          }
-          if (i === subIndex && subsubIndex !== -1 && sub.subchanges) {
-            const selectedNested = sub.subchanges[subsubIndex]
-            const isLogicAddNode = sub.label === 'link_label' && selectedNested?.label === 'ADD_NODE'
-            if (isLogicAddNode) {
-              if (selectedNested?.id && next.has(selectedNested.id)) {
-                next.delete(selectedNested.id)
-                changeTree.setChangeEnabled(selectedNested.id, true)
-              }
-            } else {
-              for (let j = 0; j <= subsubIndex; j++) {
-                const ss = sub.subchanges[j]
-                if (!ss) continue
-                if (ss.id && next.has(ss.id)) {
-                  next.delete(ss.id)
-                  changeTree.setChangeEnabled(ss.id, true)
-                }
-              }
+        const sub = event.subchanges[subIndex]
+        if (!sub) return
+        
+        if (turningOn) {
+          // Turning ON
+          if (subsubIndex !== -1) {
+            // Turning ON a sub-subchange
+            const selectedNested = sub.subchanges![subsubIndex]
+            if (selectedNested?.id && next.has(selectedNested.id)) {
+              next.delete(selectedNested.id)
+              changeTree.setChangeEnabled(selectedNested.id, true)
             }
-          } else if (sub.subchanges) {
-            for (const ss of sub.subchanges) {
-              if (!ss) continue
-              if (ss.id && next.has(ss.id)) {
-                next.delete(ss.id)
-                changeTree.setChangeEnabled(ss.id, true)
+            // Also turn ON the parent subchange
+            if (sub.id && next.has(sub.id)) {
+              next.delete(sub.id)
+              changeTree.setChangeEnabled(sub.id, true)
+            }
+          } else {
+            // Turning ON a subchange
+            if (sub.id && next.has(sub.id)) {
+              next.delete(sub.id)
+              changeTree.setChangeEnabled(sub.id, true)
+            }
+          }
+          
+          // Ensure the parent event is ON
+          if (next.has(event.id)) {
+            next.delete(event.id)
+            changeTree.setChangeEnabled(event.id, true)
+          }
+        } else {
+          // Turning OFF
+          if (subsubIndex !== -1) {
+            // Turning OFF a sub-subchange
+            const selectedNested = sub.subchanges![subsubIndex]
+            if (selectedNested?.id && !next.has(selectedNested.id)) {
+              next.add(selectedNested.id)
+              changeTree.setChangeEnabled(selectedNested.id, false)
+            }
+          } else {
+            // Turning OFF a subchange
+            if (sub.id && !next.has(sub.id)) {
+              next.add(sub.id)
+              changeTree.setChangeEnabled(sub.id, false)
+            }
+            // Also turn OFF all its sub-subchanges
+            if (sub.subchanges) {
+              for (const ss of sub.subchanges) {
+                if (ss.id && !next.has(ss.id)) {
+                  next.add(ss.id)
+                  changeTree.setChangeEnabled(ss.id, false)
+                }
               }
             }
           }
         }
         
-        // Ensure the parent event is ON
-        if (next.has(event.id)) {
-          next.delete(event.id)
-          changeTree.setChangeEnabled(event.id, true)
-        }
         commitDisabledChanges(next, id, turningOn)
         return
       }
@@ -599,44 +646,29 @@ function toggleTreeRow(id?: string) {
       }
 
       if (subIndex !== -1) {
+        const sub = event.subchanges[subIndex]
+        if (!sub) return
+        
         if (subsubIndex !== -1) {
-          const sub = event.subchanges[subIndex]
-          if (sub && sub.subchanges) {
-            const selectedNested = sub.subchanges[subsubIndex]
-            const isLogicAddNode = sub.label === 'link_label' && selectedNested?.label === 'ADD_NODE'
-            if (isLogicAddNode) {
-              if (selectedNested?.id && !next.has(selectedNested.id)) {
-                next.add(selectedNested.id)
-                changeTree.setChangeEnabled(selectedNested.id, false)
-              }
-            } else {
-              for (let j = subsubIndex; j >= 0; j--) {
-                const ss = sub.subchanges[j]
-                if (!ss) continue
-                if (ss.id && !next.has(ss.id)) {
-                  next.add(ss.id)
-                  changeTree.setChangeEnabled(ss.id, false)
-                }
-              }
-            }
+          // Turning OFF a sub-subchange
+          const selectedNested = sub.subchanges![subsubIndex]
+          if (selectedNested?.id && !next.has(selectedNested.id)) {
+            next.add(selectedNested.id)
+            changeTree.setChangeEnabled(selectedNested.id, false)
           }
         } else {
-          for (let i = subIndex; i >= 0; i--) {
-            const sub = event.subchanges[i]
-            if (!sub) continue
-            if (sub.subchanges) {
-              for (let j = sub.subchanges.length - 1; j >= 0; j--) {
-                const ss = sub.subchanges[j]
-                if (!ss) continue
-                if (ss.id && !next.has(ss.id)) {
-                  next.add(ss.id)
-                  changeTree.setChangeEnabled(ss.id, false)
-                }
+          // Turning OFF a subchange
+          if (sub.id && !next.has(sub.id)) {
+            next.add(sub.id)
+            changeTree.setChangeEnabled(sub.id, false)
+          }
+          // Also turn OFF all its sub-subchanges
+          if (sub.subchanges) {
+            for (const ss of sub.subchanges) {
+              if (ss.id && !next.has(ss.id)) {
+                next.add(ss.id)
+                changeTree.setChangeEnabled(ss.id, false)
               }
-            }
-            if (sub.id && !next.has(sub.id)) {
-              next.add(sub.id)
-              changeTree.setChangeEnabled(sub.id, false)
             }
           }
         }
@@ -649,7 +681,37 @@ function toggleTreeRow(id?: string) {
     next.add(id)
     changeTree.setChangeEnabled(id, false)
   }
-  commitDisabledChanges(next, id, turningOn)
+  
+  // Apply changes to changeTree state
+  changeTree.disabledChanges.value = next
+
+  // Dynamically recompute the visible text for text-panel nodes
+  // based on the last active 'text' subchange in the tree.
+  state.nodes.value.forEach(node => {
+    if (node.type === 'text-panel') {
+      let lastActiveSub: any = undefined
+      for (const event of changeTree.events.value) {
+        if (event.targetKind === 'node' && event.targetId === node.id) {
+          for (const sub of event.subchanges) {
+            if (sub.label === 'text' && !next.has(sub.id)) {
+              lastActiveSub = sub
+            }
+          }
+        }
+      }
+      
+      if (lastActiveSub && lastActiveSub.action?.redo) {
+        lastActiveSub.action.redo()
+      } else {
+        if (!node.params) node.params = {}
+        node.params.html = ''
+        node.params.value = ''
+      }
+    }
+  })
+  
+  state.forceUpdate()
+  state.saveMatrixData()
 }
 
 </script>
