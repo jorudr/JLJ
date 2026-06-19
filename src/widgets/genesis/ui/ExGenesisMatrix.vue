@@ -352,6 +352,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  state.cleanupUnresolvedLogicPlaceholders()
   window.removeEventListener('resize', updateWindowSize)
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('click', handleGlobalClick)

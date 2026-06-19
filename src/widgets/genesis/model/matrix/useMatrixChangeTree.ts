@@ -242,6 +242,20 @@ function setSubchangeEnabled(subchange: MatrixSubchange, enabled: boolean) {
   }
 }
 
+function updateSubchangeNodeLine(subchanges: MatrixSubchange[], targetId: string, newLine: string, newName: string, eventTargetId?: string) {
+  subchanges.forEach(subchange => {
+    if (subchange.targetId === targetId && ['to', 'removed', 'ADD_NODE'].includes(subchange.label)) {
+      subchange.value = newLine
+    }
+    if (eventTargetId === targetId && subchange.label === 'removed' && !subchange.targetId) {
+      subchange.value = newName
+    }
+    if (subchange.subchanges?.length) {
+      updateSubchangeNodeLine(subchange.subchanges, targetId, newLine, newName, eventTargetId)
+    }
+  })
+}
+
 function findLogicLabelSubchange(connection: { fromId: string, toId: string, label?: string, bundleId?: string }) {
   const parentEvent = findParentEvent('node', connection.fromId)
   if (!parentEvent) return
@@ -456,15 +470,8 @@ export function useMatrixChangeTree() {
       if (event.targetKind === 'node' && event.targetId === targetId) {
         event.node = newLine
       }
-      
-      event.subchanges.forEach(sub => {
-        if (sub.targetId === targetId && (sub.label === 'to' || sub.label === 'removed')) {
-          sub.value = newLine
-        }
-        if (event.targetId === targetId && sub.label === 'removed' && !sub.targetId) {
-          sub.value = newName
-        }
-      })
+
+      updateSubchangeNodeLine(event.subchanges, targetId, newLine, newName, event.targetId)
     })
     events.value = [...events.value]
     
@@ -576,6 +583,32 @@ export function useMatrixChangeTree() {
     }
   }
 
+  function removeLatestConnectionLabelChange(targetId: string) {
+    for (let eventIndex = events.value.length - 1; eventIndex >= 0; eventIndex--) {
+      const event = events.value[eventIndex]
+      if (!event) continue
+
+      for (let subIndex = event.subchanges.length - 1; subIndex >= 0; subIndex--) {
+        const subchange = event.subchanges[subIndex]
+        if (!subchange?.subchanges?.length) continue
+
+        for (let nestedIndex = subchange.subchanges.length - 1; nestedIndex >= 0; nestedIndex--) {
+          const nested = subchange.subchanges[nestedIndex]
+          if (!nested || nested.label !== 'link_label' || nested.targetId !== targetId) continue
+
+          const removedIds = [nested.id, ...collectDescendantChangeIds(nested.id)]
+          removedIds.forEach(id => disabledChanges.value.delete(id))
+          disabledChanges.value = new Set(disabledChanges.value)
+          subchange.subchanges.splice(nestedIndex, 1)
+          events.value = [...events.value]
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
     const parentEvent = findParentEvent('node', fromId)
     if (parentEvent) {
@@ -618,6 +651,7 @@ export function useMatrixChangeTree() {
     recordCommentTextChanged,
     recordCommentRemoved,
     recordConnectionLabelChanged,
+    removeLatestConnectionLabelChange,
     updateConnectionAction
   }
 }

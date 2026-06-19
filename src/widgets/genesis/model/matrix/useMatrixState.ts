@@ -739,6 +739,91 @@ export function useMatrixState() {
     forceUpdate()
   }
 
+  function cleanupUnresolvedLogicPlaceholdersInContainer(
+    containerNodes: Node[],
+    containerConnections: Connection[]
+  ): { nodes: Node[], connections: Connection[], changed: boolean } {
+    let changed = false
+    const placeholderIds = new Set(containerNodes.filter(node => node.type === 'placeholder').map(node => node.id))
+    const unresolvedPlaceholderIds = new Set<string>()
+    const affectedBundleKeys = new Set<string>()
+
+    containerConnections.forEach(connection => {
+      const label = connection.label?.toLowerCase()
+      if (!connection.bundleId || (label !== 'and' && label !== 'or') || !placeholderIds.has(connection.toId)) return
+      unresolvedPlaceholderIds.add(connection.toId)
+      affectedBundleKeys.add(`${connection.fromId}_${connection.bundleId}`)
+      changeTree.removeLatestConnectionLabelChange(connection.bundleId)
+    })
+
+    let nextNodes = containerNodes
+    let nextConnections = containerConnections
+
+    if (unresolvedPlaceholderIds.size) {
+      changed = true
+      nextNodes = containerNodes.filter(node => !unresolvedPlaceholderIds.has(node.id))
+      nextConnections = containerConnections.filter(connection => (
+        !unresolvedPlaceholderIds.has(connection.fromId) &&
+        !unresolvedPlaceholderIds.has(connection.toId)
+      ))
+
+      affectedBundleKeys.forEach(bundleKey => {
+        const bundleConnections = nextConnections.filter(connection => (
+          connection.bundleId &&
+          `${connection.fromId}_${connection.bundleId}` === bundleKey
+        ))
+        if (bundleConnections.length > 1) return
+
+        bundleConnections.forEach(connection => {
+          delete connection.label
+          delete connection.bundleId
+          delete connection.bundleStemX
+          delete connection.bundleStemY
+        })
+      })
+    }
+
+    nextNodes.forEach(node => {
+      if (!node.subGraph) return
+      const result = cleanupUnresolvedLogicPlaceholdersInContainer(
+        node.subGraph.nodes || [],
+        node.subGraph.connections || []
+      )
+      if (!result.changed) return
+      changed = true
+      node.subGraph.nodes = result.nodes
+      node.subGraph.connections = result.connections
+    })
+
+    return { nodes: nextNodes, connections: nextConnections, changed }
+  }
+
+  function cleanupUnresolvedLogicPlaceholders() {
+    syncActivePageFromRoot()
+
+    let changed = false
+    matrixPages.value.forEach(page => {
+      const result = cleanupUnresolvedLogicPlaceholdersInContainer(page.nodes, page.connections)
+      if (!result.changed) return
+      changed = true
+      page.nodes = result.nodes
+      page.connections = result.connections
+    })
+
+    if (!changed) return false
+
+    const page = activePage.value
+    if (page) {
+      rootNodes.value = page.nodes
+      rootConnections.value = page.connections
+      rootZones.value = page.zones
+    }
+
+    forceUpdate()
+    saveMatrixData()
+    return true
+  }
+
   function clearBoard() {
     const strategyTradesStore = useStrategyTradesStore()
     strategyTradesStore.purgeAllStrategies()
@@ -1066,6 +1151,7 @@ export function useMatrixState() {
     clearNodeInputConnections,
     clearNodeOutputConnections,
     cleanupLogicBundles,
+    cleanupUnresolvedLogicPlaceholders,
     clearBoard,
     mergeNodes,
     refreshMergeStatus,
