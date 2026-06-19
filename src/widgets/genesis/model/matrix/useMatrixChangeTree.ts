@@ -122,8 +122,13 @@ export function useMatrixChangeTree() {
   function setChangeEnabled(id: string, enabled: boolean) {
     const event = events.value.find(item => item.id === id)
     if (event) {
-      if (enabled) event.action?.redo?.()
-      else event.action?.undo?.()
+      if (enabled) {
+        event.action?.redo?.()
+        event.subchanges.forEach(subchange => subchange.action?.redo?.())
+      } else {
+        ;[...event.subchanges].reverse().forEach(subchange => subchange.action?.undo?.())
+        event.action?.undo?.()
+      }
       return
     }
 
@@ -210,6 +215,10 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'comment_text', comment?.text || 'comment', action)
   }
 
+  function recordCommentRemoved(node: any, comment: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'comment_removed', comment?.text || 'comment', action)
+  }
+
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string }, label: string | null, action?: MatrixChangeAction) {
     addSubchange(ensureConnectionParent(connection), 'link_label', label ? label.toUpperCase() : 'CLEAR', action)
   }
@@ -227,6 +236,7 @@ export function useMatrixChangeTree() {
     recordNodeDescriptionChanged,
     recordCommentAdded,
     recordCommentTextChanged,
+    recordCommentRemoved,
     recordConnectionLabelChanged
   }
 }

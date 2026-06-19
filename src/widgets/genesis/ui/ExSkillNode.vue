@@ -1477,7 +1477,24 @@ const commitOpenCommentEdits = () => {
 }
 
 const removeComment = (id: string) => {
+  const commentToRemove = (props.node.params.comments || []).find((c: Comment) => c.id === id)
+  if (!commentToRemove) return
+
+  const removedCommentSnapshot = JSON.parse(JSON.stringify(commentToRemove))
   props.node.params.comments = props.node.params.comments.filter((c: Comment) => c.id !== id)
+  changeTree.recordCommentRemoved(props.node, removedCommentSnapshot, {
+    undo: () => {
+      if (!props.node.params.comments) props.node.params.comments = []
+      if (!props.node.params.comments.some((comment: Comment) => comment.id === removedCommentSnapshot.id)) {
+        props.node.params.comments.push(JSON.parse(JSON.stringify(removedCommentSnapshot)))
+      }
+      emit('moved')
+    },
+    redo: () => {
+      props.node.params.comments = (props.node.params.comments || []).filter((comment: Comment) => comment.id !== removedCommentSnapshot.id)
+      emit('moved')
+    }
+  })
   emit('moved')
 }
 
