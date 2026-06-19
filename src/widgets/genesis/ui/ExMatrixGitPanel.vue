@@ -113,7 +113,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
         { text: ' ' },
         { text: subchange.label, class: 'tree-subkey' },
         { text: ': ' },
-        { text: formatTreeText(subchange.value), class: 'tree-subvalue' }
+        { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35), class: 'tree-subvalue' }
       ]
     })
 
@@ -194,7 +194,7 @@ const treeRows = computed<TreeRow[]>(() => {
           { text: ' ' },
           { text: subchange.label, class: 'tree-subkey' },
           { text: ': ' },
-          { text: formatTreeText(subchange.value) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
+          { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
         ]
       })
 
@@ -259,7 +259,44 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
     })
   }
 
+  applyNextState(next)
+}
+
+function applyNextState(next: Set<string>) {
   disabledChanges.value = next
+  changeTree.disabledChanges.value = next
+
+  state.nodes.value.forEach(node => {
+    if (node.type === 'text-panel') {
+      let lastActiveSub: any = undefined
+      for (const event of changeTree.events.value) {
+        if (event.targetKind === 'node' && event.targetId === node.id) {
+          if (next.has(event.id)) continue
+          
+          for (const sub of event.subchanges) {
+            if (sub.label === 'text' && !next.has(sub.id)) {
+              lastActiveSub = sub
+            }
+          }
+        }
+      }
+      
+      if (lastActiveSub && lastActiveSub.action?.redo) {
+        lastActiveSub.action.redo()
+      } else if (lastActiveSub && lastActiveSub.payload) {
+        if (!node.params) node.params = {}
+        node.params.html = lastActiveSub.payload.nextHtml
+        node.params.value = lastActiveSub.payload.nextValue
+      } else {
+        if (!node.params) node.params = {}
+        node.params.html = ''
+        node.params.value = ''
+      }
+    }
+  })
+  
+  state.forceUpdate()
+  state.saveMatrixData()
 }
 
 function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) {
@@ -289,7 +326,7 @@ function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) 
     changeTree.collectLinkedChangeIds(id).forEach(linkedId => changeTree.setChangeEnabled(linkedId, false))
   }
 
-  disabledChanges.value = next
+  applyNextState(next)
 }
 
 function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean) {
@@ -342,7 +379,7 @@ function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean
     }
   }
 
-  disabledChanges.value = next
+  applyNextState(next)
 }
 
 function toggleTreeRow(id?: string) {
@@ -681,41 +718,8 @@ function toggleTreeRow(id?: string) {
     next.add(id)
     changeTree.setChangeEnabled(id, false)
   }
-  
-  // Apply changes to changeTree state
-  changeTree.disabledChanges.value = next
 
-  // Dynamically recompute the visible text for text-panel nodes
-  // based on the last active 'text' subchange in the tree.
-  state.nodes.value.forEach(node => {
-    if (node.type === 'text-panel') {
-      let lastActiveSub: any = undefined
-      for (const event of changeTree.events.value) {
-        if (event.targetKind === 'node' && event.targetId === node.id) {
-          for (const sub of event.subchanges) {
-            if (sub.label === 'text' && !next.has(sub.id)) {
-              lastActiveSub = sub
-            }
-          }
-        }
-      }
-      
-      if (lastActiveSub && lastActiveSub.action?.redo) {
-        lastActiveSub.action.redo()
-      } else if (lastActiveSub && lastActiveSub.payload) {
-        if (!node.params) node.params = {}
-        node.params.html = lastActiveSub.payload.nextHtml
-        node.params.value = lastActiveSub.payload.nextValue
-      } else {
-        if (!node.params) node.params = {}
-        node.params.html = ''
-        node.params.value = ''
-      }
-    }
-  })
-  
-  state.forceUpdate()
-  state.saveMatrixData()
+  commitDisabledChanges(next, id, turningOn)
 }
 
 </script>
