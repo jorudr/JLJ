@@ -11,6 +11,7 @@ export type MatrixSubchange = {
   id: string
   label: string
   value: string
+  targetId?: string
   action?: MatrixChangeAction
 }
 
@@ -59,14 +60,25 @@ function addEvent(event: Omit<MatrixChangeEvent, 'id' | 'createdAt' | 'subchange
   ]
 }
 
-function addSubchange(parent: MatrixChangeEvent, label: string, value: string, action?: MatrixChangeAction) {
+function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction) {
   const normalizedValue = String(value || '').trim()
   if (!normalizedValue) return
+
+  let targetId: string | undefined
+  let action: MatrixChangeAction | undefined
+
+  if (targetIdOrAction && typeof targetIdOrAction === 'object') {
+    action = targetIdOrAction as MatrixChangeAction
+  } else if (typeof targetIdOrAction === 'string') {
+    targetId = targetIdOrAction
+    action = actionOpt
+  }
 
   parent.subchanges.push({
     id: nextId('sub'),
     label,
     value: normalizedValue,
+    targetId,
     action
   })
   events.value = [...events.value]
@@ -174,6 +186,7 @@ export function useMatrixChangeTree() {
       ensureNodeParent(sourceNode),
       'to',
       readableNodeLine(targetNode),
+      connection.toId,
       action
     )
   }
@@ -186,6 +199,7 @@ export function useMatrixChangeTree() {
       ensureNodeParent(sourceNode),
       'removed',
       readableNodeLine(targetNode),
+      connection.toId,
       action
     )
   }
@@ -228,8 +242,8 @@ export function useMatrixChangeTree() {
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
     const parentEvent = findParentEvent('node', fromId)
     if (parentEvent) {
-      const targetLine = readableNodeLine(targetNode)
-      const subchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.value === targetLine)
+      // Uniquely identify the connection by targetId (toId)
+      const subchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.targetId === toId)
       if (subchange) {
         subchange.action = action
       }
