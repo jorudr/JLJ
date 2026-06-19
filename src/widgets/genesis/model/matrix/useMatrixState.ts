@@ -471,9 +471,7 @@ export function useMatrixState() {
     
     if (node?.type === 'placeholder') {
       activeTextNodeId.value = null
-      const parentConn = connections.value.find(c => c.toId === id)
-      const parentNode = parentConn ? getNode(parentConn.fromId) : null
-      activeMenuCategory.value = getMenuCategoryForNode(parentNode || null)
+      activeMenuCategory.value = 'INDICATORS'
     } else {
       if (node?.type !== 'text-panel') activeTextNodeId.value = null
       activeMenuCategory.value = getMenuCategoryForNode(node || null)
@@ -567,6 +565,25 @@ export function useMatrixState() {
     if (isStrategyNode(nextConfig) && currentPageHasStrategy()) {
       addMatrixPage(`Strategy Page ${matrixPages.value.length + 1}`)
     }
+
+    if (lastSelectedId.value) {
+      const selectedNode = getNode(lastSelectedId.value)
+      if (selectedNode && selectedNode.type === 'placeholder') {
+        selectedNode.type = nextConfig.type || 'unknown'
+        selectedNode.label = nextConfig.label || 'NODE'
+        selectedNode.color = nextConfig.color || 'currentColor'
+        selectedNode.params = { ...(selectedNode.params || {}), ...(nextConfig.params || {}) }
+        if (nextConfig.description) {
+           selectedNode.params.description = nextConfig.description
+        }
+        
+        selectNode(selectedNode.id)
+        forceUpdate()
+        saveMatrixData()
+        return
+      }
+    }
+
     pendingNodeConfig.value = nextConfig
   }
 

@@ -736,6 +736,13 @@ function shouldShowCommandCategory(category: MenuCategory) {
   if (props.state.activeMenuCategory.value === 'INDICATORS' && (category === 'SYSTEM' || category === 'LABELS')) {
     return false
   }
+
+  const rawSelected = props.state.lastSelectedId.value ? props.state.getNode(props.state.lastSelectedId.value) : null;
+  if (rawSelected?.type === 'placeholder') {
+    if (category === 'SYSTEM') return false;
+    if (category === 'INDICATORS') return true;
+  }
+
   const selected = props.state.effectiveSelectedNode.value
   return (
     (category !== 'INDICATORS' && category !== 'EMOTIONS' && category !== 'SCALING' && category !== 'RISK') ||
