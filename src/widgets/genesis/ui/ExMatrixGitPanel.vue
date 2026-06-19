@@ -544,18 +544,40 @@ function toggleTreeRow(id?: string) {
         } else if (event.type === 'delete') {
           next.delete(id)
           changeTree.setChangeEnabled(id, true)
-          commitDisabledChanges(next, id, turningOn)
+          // Turning ON delete: find the matching ADD event and disable it
           if (event.targetId) {
+            changeTree.events.value.forEach(otherEv => {
+              if (otherEv.id !== event.id && otherEv.type === 'add' && otherEv.targetId === event.targetId) {
+                if (!next.has(otherEv.id)) {
+                  next.add(otherEv.id)
+                  changeTree.setChangeEnabled(otherEv.id, false)
+                  otherEv.subchanges.forEach(sub => {
+                    if (!next.has(sub.id)) { next.add(sub.id); changeTree.setChangeEnabled(sub.id, false) }
+                  })
+                }
+              }
+            })
             changeTree.disableNodeDependents(event.targetId, event.node)
           }
+          commitDisabledChanges(next, id, turningOn)
           return
         } else if (event.type === 'add') {
           next.delete(id)
           changeTree.setChangeEnabled(id, true)
           
-          if (event.targetKind === 'domain' && event.targetId) {
+          // Turning ON add: disable any other ADD events for this same target (dedup)
+          if (event.targetId) {
             changeTree.events.value.forEach(otherEv => {
-              if (otherEv.id !== event.id && otherEv.type === 'add' && otherEv.targetKind === 'domain' && otherEv.targetId === event.targetId) {
+              if (otherEv.id !== event.id && otherEv.type === 'add' && otherEv.targetId === event.targetId) {
+                if (!next.has(otherEv.id)) {
+                  next.add(otherEv.id)
+                  changeTree.setChangeEnabled(otherEv.id, false)
+                }
+              }
+            })
+            // Turning ON add: find the matching DELETE event and re-enable it (turn it off)
+            changeTree.events.value.forEach(otherEv => {
+              if (otherEv.id !== event.id && otherEv.type === 'delete' && otherEv.targetId === event.targetId) {
                 if (!next.has(otherEv.id)) {
                   next.add(otherEv.id)
                   changeTree.setChangeEnabled(otherEv.id, false)
@@ -720,23 +742,44 @@ function toggleTreeRow(id?: string) {
           commitDisabledChanges(next, id, turningOn)
           return
         } else if (event.type === 'add') {
-          // Execute fallback to turn off the add event itself
+          // Turning OFF add: disable the event itself and dependents
           next.add(id)
           changeTree.setChangeEnabled(id, false)
+          // Also re-enable any DELETE for the same target (the thing is now 'not added', so delete should be off/inactive)
+          if (event.targetId) {
+            changeTree.events.value.forEach(otherEv => {
+              if (otherEv.id !== event.id && otherEv.type === 'delete' && otherEv.targetId === event.targetId) {
+                if (next.has(otherEv.id)) {
+                  next.delete(otherEv.id)
+                  changeTree.setChangeEnabled(otherEv.id, true)
+                }
+              }
+            })
+          }
           commitDisabledChanges(next, id, turningOn)
-          
-          // Then disable all its dependent changes
           if (event.targetId) {
             changeTree.disableNodeDependents(event.targetId, event.node)
           }
           return
         } else if (event.type === 'delete') {
+          // Turning OFF delete: bring back the ADD event for the same target
           next.add(id)
           changeTree.setChangeEnabled(id, false)
-          commitDisabledChanges(next, id, turningOn)
           if (event.targetId) {
+            changeTree.events.value.forEach(otherEv => {
+              if (otherEv.id !== event.id && otherEv.type === 'add' && otherEv.targetId === event.targetId) {
+                if (next.has(otherEv.id)) {
+                  next.delete(otherEv.id)
+                  changeTree.setChangeEnabled(otherEv.id, true)
+                  otherEv.subchanges.forEach(sub => {
+                    if (next.has(sub.id)) { next.delete(sub.id); changeTree.setChangeEnabled(sub.id, true) }
+                  })
+                }
+              }
+            })
             changeTree.enableNodeDependents(event.targetId, event.node)
           }
+          commitDisabledChanges(next, id, turningOn)
           return
         }
         break // Not a clear/add event, break out and use fallback
