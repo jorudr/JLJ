@@ -218,10 +218,18 @@ function commitDisabledChanges(next: Set<string>, toggledId: string, turningOn: 
 
   if (turningOn) {
     next.delete(toggledId)
-    linkedIds.forEach(linkedId => next.delete(linkedId))
+    linkedIds.forEach(linkedId => {
+      if (!next.has(linkedId)) return
+      next.delete(linkedId)
+      changeTree.setChangeEnabled(linkedId, true)
+    })
   } else {
     next.add(toggledId)
-    linkedIds.forEach(linkedId => next.add(linkedId))
+    linkedIds.forEach(linkedId => {
+      if (next.has(linkedId)) return
+      next.add(linkedId)
+      changeTree.setChangeEnabled(linkedId, false)
+    })
   }
 
   disabledChanges.value = next

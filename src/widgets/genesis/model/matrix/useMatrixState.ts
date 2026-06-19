@@ -196,7 +196,7 @@ export function useMatrixState() {
   }
 
   function createPlaceholderResolveAction(beforeNode: Node, afterNode: Node, container = createActiveContainerAccess()) {
-    const beforeSnapshot = cloneMatrixValue(beforeNode)
+    const targetId = beforeNode.id
     const afterSnapshot = cloneMatrixValue(afterNode)
     const applySnapshot = (snapshot: Node) => {
       const nextNodes = container.getNodes().map(item =>
@@ -209,9 +209,14 @@ export function useMatrixState() {
       forceUpdate()
       saveMatrixData()
     }
+    const removeResolvedNode = () => {
+      container.setNodes(container.getNodes().filter(item => item.id !== targetId))
+      forceUpdate()
+      saveMatrixData()
+    }
 
     return {
-      undo: () => applySnapshot(beforeSnapshot),
+      undo: removeResolvedNode,
       redo: () => applySnapshot(afterSnapshot)
     }
   }
