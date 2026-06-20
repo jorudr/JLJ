@@ -99,6 +99,23 @@ export function useExGenesisMatrixUndo() {
     [state.rootNodes, state.rootConnections, state.rootZones],
     () => {
       if (isUndoing.value) return
+      
+      // Pause pushing if user is actively editing a text field like description/name/comment.
+      // This prevents capturing intermediate keystrokes, ensuring that hitting undo 
+      // completely reverts to the state before editing began.
+      const isEditingAnything = state.rootNodes.value.some((node: any) => {
+        if (node.params?.isEditingName || node.params?.isEditingDescription) return true
+        if (node.params?.comments && Array.isArray(node.params.comments)) {
+          if (node.params.comments.some((c: any) => c.isEditing)) return true
+        }
+        return false
+      })
+
+      if (isEditingAnything) {
+        if (timeout) clearTimeout(timeout)
+        return
+      }
+
       if (timeout) clearTimeout(timeout)
       // Debounce the saves to avoid recording intermediate drag states excessively
       timeout = setTimeout(() => {
