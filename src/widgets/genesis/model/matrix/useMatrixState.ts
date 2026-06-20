@@ -1187,34 +1187,73 @@ export function useMatrixState() {
       node.y = position.y
     })
 
-    nodes.value.forEach(node => {
-      if (node.type === 'text-panel') {
-        let lastActiveSub: any = undefined
-        for (const event of changeTree.events.value) {
-          if (event.targetKind === 'node' && event.targetId === node.id) {
-            if (next.has(event.id)) continue
-            
-            for (const sub of event.subchanges) {
-              if (sub.label === 'text' && !next.has(sub.id)) {
-                lastActiveSub = sub
-              }
+    const getNodeContentReplay = (nodeId: string, label: string) => {
+      let firstChange: any = undefined
+      let lastActiveChange: any = undefined
+
+      changeTree.events.value.forEach(event => {
+        if (event.targetKind !== 'node' || !event.targetId) return
+
+        const visit = (subchanges: any[], scopedNodeId: string, parentEnabled: boolean) => {
+          subchanges.forEach(subchange => {
+            const isEnabled = parentEnabled && !next.has(subchange.id)
+            const nextNodeId = subchange.label === 'ADD_NODE' && subchange.targetId
+              ? subchange.targetId
+              : scopedNodeId
+
+            if (nextNodeId === nodeId && subchange.label === label) {
+              if (!firstChange) firstChange = subchange
+              if (isEnabled) lastActiveChange = subchange
             }
-          }
+            if (subchange.subchanges?.length) {
+              visit(subchange.subchanges, nextNodeId, isEnabled)
+            }
+          })
         }
-        
-        if (lastActiveSub && lastActiveSub.action?.redo) {
-          lastActiveSub.action.redo()
-        } else if (lastActiveSub && lastActiveSub.payload) {
-          if (!node.params) node.params = {}
-          node.params.html = lastActiveSub.payload.nextHtml
-          node.params.value = lastActiveSub.payload.nextValue
-        } else {
-          if (!node.params) node.params = {}
-          node.params.html = ''
-          node.params.value = ''
+
+        visit(event.subchanges, event.targetId, !next.has(event.id))
+      })
+
+      return { firstChange, lastActiveChange }
+    }
+
+    const applyContentReplay = (node: Node) => {
+      if (!node.params) node.params = {}
+
+      if (node.type === 'text-panel') {
+        const { firstChange, lastActiveChange } = getNodeContentReplay(node.id, 'text')
+        if (firstChange) {
+          const source = lastActiveChange?.payload
+            ? lastActiveChange.payload
+            : firstChange.payload
+          node.params.html = lastActiveChange
+            ? String(source?.nextHtml ?? node.params.html ?? '')
+            : String(source?.previousHtml ?? '')
+          node.params.value = lastActiveChange
+            ? String(source?.nextValue ?? lastActiveChange.value ?? '')
+            : String(source?.previousValue ?? '')
+        }
+      } else if (node.type === 'embed-panel') {
+        const { firstChange, lastActiveChange } = getNodeContentReplay(node.id, 'url')
+        if (firstChange) {
+          node.params.embedUrl = lastActiveChange
+            ? String(lastActiveChange.payload?.nextValue ?? lastActiveChange.value ?? '')
+            : String(firstChange.payload?.previousValue ?? '')
+        }
+      } else if (node.type === 'table-panel') {
+        const { firstChange, lastActiveChange } = getNodeContentReplay(node.id, 'table')
+        const snapshot = lastActiveChange?.payload?.nextSnapshot || firstChange?.payload?.previousSnapshot
+        if (snapshot) {
+          node.params.rows = snapshot.rows
+          node.params.cols = snapshot.cols
+          node.params.table = cloneMatrixValue(snapshot.table)
         }
       }
-    })
+
+      node.subGraph?.nodes?.forEach(applyContentReplay)
+    }
+
+    rootNodes.value.forEach(applyContentReplay)
 
     zones.value.forEach(zone => {
       const event = changeTree.events.value.find(

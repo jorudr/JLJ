@@ -283,6 +283,7 @@
 
                <div v-else-if="node.type === 'embed-panel'" class="flex-1 min-h-0 p-3 flex flex-col gap-2">
                   <input v-model="node.params.embedUrl"
+                         @focus="startEmbedUrlEditing"
                          @mousedown.stop
                          @click.stop
                          placeholder="https://..."
@@ -323,7 +324,7 @@
                         <input v-for="cell in tableCells"
                                :key="`${cell.row}-${cell.col}`"
                                :value="tableDraft[cell.row]?.[cell.col] || ''"
-                               @focus="isEditingTable = true"
+                               @focus="startTableEditing"
                                @input="updateTableCell(cell.row, cell.col, $event)"
                                @blur="finishTableEditing"
                                @mousedown.stop
@@ -800,6 +801,9 @@ const identityDraftStart = ref('')
 const descriptionDraftStart = ref('')
 const labelTextDraftStart = ref({ html: '', value: '' })
 const hasLabelTextDraft = ref(false)
+const embedUrlDraftStart = ref('')
+const hasEmbedUrlDraft = ref(false)
+const tableContentDraftStart = ref<{ rows: number; cols: number; table: string[][] } | null>(null)
 const commentDraftStart = new Map<string, string>()
 const scenarioPanelTypes = [
   'text-panel',
@@ -810,7 +814,7 @@ const scenarioPanelTypes = [
   'file-attachment',
 ]
 const isScenarioPanel = computed(() => scenarioPanelTypes.includes(props.node.type))
-const isLabelTextPanel = computed(() => props.node.type === 'text-panel' && props.node.params?.shortCode === 'LBL')
+const isTrackedTextPanel = computed(() => props.node.type === 'text-panel')
 
 const headerScaleMult = computed(() => (props.scale <= 0.25 && props.node.type === 'text-panel') ? 2.5 : 1)
 
@@ -1061,7 +1065,7 @@ function updateTextPanelHtml(event: Event) {
 }
 
 function captureLabelTextDraft() {
-  if (!isLabelTextPanel.value) return
+  if (!isTrackedTextPanel.value) return
   labelTextDraftStart.value = {
     html: String(props.node.params?.html || ''),
     value: String(props.node.params?.value || '')
@@ -1070,7 +1074,7 @@ function captureLabelTextDraft() {
 }
 
 function commitLabelTextDraft() {
-  if (!isLabelTextPanel.value) return
+  if (!isTrackedTextPanel.value) return
   if (!hasLabelTextDraft.value) return
 
   if (textEditorElement.value) {
@@ -1084,7 +1088,10 @@ function commitLabelTextDraft() {
   const nextHtml = String(props.node.params?.html || '')
   const nextValue = String(props.node.params?.value || '')
   
-  if (previousValue.trim() === nextValue.trim()) return
+  if (previousValue.trim() === nextValue.trim()) {
+    hasLabelTextDraft.value = false
+    return
+  }
 
   const nodeId = props.node.id
   changeTree.recordNodeLabelTextChanged(props.node, nextValue, {
@@ -1109,6 +1116,40 @@ function commitLabelTextDraft() {
   hasLabelTextDraft.value = false
 }
 
+function captureEmbedUrlDraft() {
+  if (props.node.type !== 'embed-panel' || hasEmbedUrlDraft.value) return
+  embedUrlDraftStart.value = String(props.node.params?.embedUrl || '')
+  hasEmbedUrlDraft.value = true
+}
+
+function startEmbedUrlEditing() {
+  emit('click')
+  captureEmbedUrlDraft()
+}
+
+function commitEmbedUrlDraft() {
+  if (props.node.type !== 'embed-panel' || !hasEmbedUrlDraft.value) return
+  const previousValue = embedUrlDraftStart.value
+  const nextValue = String(props.node.params?.embedUrl || '')
+  hasEmbedUrlDraft.value = false
+  if (previousValue.trim() === nextValue.trim()) return
+
+  const nodeId = props.node.id
+  const applyValue = (value: string) => {
+    const globalNode = state.getNode(nodeId)
+    if (!globalNode) return
+    if (!globalNode.params) globalNode.params = {}
+    globalNode.params.embedUrl = value
+    state.forceUpdate()
+    state.saveMatrixData()
+  }
+
+  changeTree.recordNodeEmbedUrlChanged(props.node, nextValue, {
+    undo: () => applyValue(previousValue),
+    redo: () => applyValue(nextValue)
+  }, { previousValue, nextValue })
+}
+
 watch(
   () => [props.node.id, props.node.params?.html, props.node.params?.value],
   syncTextEditorFromNode,
@@ -1129,6 +1170,15 @@ watch(
     if (isEditingTable.value) return
     syncTableDraft()
   }
+)
+
+watch(
+  () => props.node.params?.table,
+  () => {
+    if (!isTablePanel.value || isEditingTable.value) return
+    tableDraft.value = cloneTableShape(props.node.params?.table, tableRows.value, tableCols.value)
+  },
+  { deep: true }
 )
 
 watch(
@@ -1202,17 +1252,26 @@ watch(
 watch(
   () => props.isSelected,
   (isSelected, wasSelected) => {
-    if (isSelected) captureLabelTextDraft()
-    if (wasSelected && !isSelected) commitLabelTextDraft()
-    if (wasSelected && !isSelected) commitOpenCommentEdits()
+    if (isSelected) {
+      captureLabelTextDraft()
+      captureEmbedUrlDraft()
+      captureTableContentDraft()
+    }
+    if (wasSelected && !isSelected) {
+      commitLabelTextDraft()
+      commitEmbedUrlDraft()
+      commitTableContentDraft()
+      commitOpenCommentEdits()
+    }
   },
   { immediate: true }
 )
 
 onBeforeUnmount(() => {
   commitLabelTextDraft()
+  commitEmbedUrlDraft()
+  commitTableContentDraft()
   commitOpenCommentEdits()
-  commitTableDraft()
   stopAudioPlayback()
   stopAudioSeekDrag()
 })
@@ -1265,6 +1324,54 @@ function cloneTableShape(source: any[][] = [], rows = tableRows.value, cols = ta
   ))
 }
 
+function createTableContentSnapshot() {
+  ensureTableShape()
+  const rows = Math.max(1, Math.min(12, Number(props.node.params.rows) || 3))
+  const cols = Math.max(1, Math.min(8, Number(props.node.params.cols) || 3))
+  return {
+    rows,
+    cols,
+    table: cloneTableShape(props.node.params.table, rows, cols)
+  }
+}
+
+function captureTableContentDraft() {
+  if (!isTablePanel.value || tableContentDraftStart.value) return
+  tableContentDraftStart.value = createTableContentSnapshot()
+}
+
+function commitTableContentDraft() {
+  if (!isTablePanel.value || !tableContentDraftStart.value) return
+  commitTableDraft()
+  const previousSnapshot = tableContentDraftStart.value
+  const nextSnapshot = createTableContentSnapshot()
+  tableContentDraftStart.value = null
+  if (JSON.stringify(previousSnapshot) === JSON.stringify(nextSnapshot)) return
+
+  const nodeId = props.node.id
+  const applySnapshot = (snapshot: { rows: number; cols: number; table: string[][] }) => {
+    const globalNode = state.getNode(nodeId)
+    if (!globalNode) return
+    if (!globalNode.params) globalNode.params = {}
+    globalNode.params.rows = snapshot.rows
+    globalNode.params.cols = snapshot.cols
+    globalNode.params.table = cloneTableShape(snapshot.table, snapshot.rows, snapshot.cols)
+    state.forceUpdate()
+    state.saveMatrixData()
+  }
+
+  changeTree.recordNodeTableChanged(props.node, JSON.stringify(nextSnapshot.table), {
+    undo: () => applySnapshot(previousSnapshot),
+    redo: () => applySnapshot(nextSnapshot)
+  }, { previousSnapshot, nextSnapshot })
+}
+
+function startTableEditing() {
+  emit('click')
+  captureTableContentDraft()
+  isEditingTable.value = true
+}
+
 function syncTableDraft() {
   if (!isTablePanel.value) return
   ensureTableShape()
@@ -1304,6 +1411,8 @@ function updateTableCell(row: number, col: number, e: Event) {
 }
 
 function resizeTable(rowDelta: number, colDelta: number) {
+  emit('click')
+  captureTableContentDraft()
   commitTableDraft()
   props.node.params.rows = Math.max(1, Math.min(12, (Number(props.node.params.rows) || 3) + rowDelta))
   props.node.params.cols = Math.max(1, Math.min(8, (Number(props.node.params.cols) || 3) + colDelta))

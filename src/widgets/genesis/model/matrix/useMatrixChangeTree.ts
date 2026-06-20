@@ -859,6 +859,14 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'text', value || 'empty', action, undefined, payload)
   }
 
+  function recordNodeEmbedUrlChanged(node: any, value: string, action?: MatrixChangeAction, payload?: any) {
+    addSubchange(ensureNodeParent(node), 'url', value || 'empty', action, undefined, payload)
+  }
+
+  function recordNodeTableChanged(node: any, value: string, action?: MatrixChangeAction, payload?: any) {
+    addSubchange(ensureNodeParent(node), 'table', value || 'empty', action, undefined, payload)
+  }
+
   function recordCommentAdded(node: any, comment: any, action?: MatrixChangeAction) {
     addSubchange(ensureNodeParent(node), 'comment_added', comment?.text || 'comment', action)
   }
@@ -1135,6 +1143,8 @@ export function useMatrixChangeTree() {
     recordNodePriorityChanged,
     recordNodeDescriptionChanged,
     recordNodeLabelTextChanged,
+    recordNodeEmbedUrlChanged,
+    recordNodeTableChanged,
     recordCommentAdded,
     recordCommentTextChanged,
     recordCommentRemoved,
