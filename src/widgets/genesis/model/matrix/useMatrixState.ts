@@ -496,7 +496,7 @@ export function useMatrixState() {
   })
 
   function getNode(id: string) {
-    return findNodeById(rootNodes.value, id)
+    return nodes.value.find(node => node.id === id) || findNodeById(rootNodes.value, id)
   }
 
   function findNodeById(list: Node[], id: string): Node | null {
@@ -511,6 +511,12 @@ export function useMatrixState() {
   }
 
   function navigateTo(newStack: string[]) {
+    const currentPath = navigationStack.value.join('/')
+    const nextPath = newStack.join('/')
+    if (currentPath !== nextPath) {
+      cleanupUnresolvedLogicPlaceholders()
+    }
+
     const currentKey = navigationStack.value.join('/') || 'root'
     savedScales.set(currentKey, viewState.value.scale)
     
@@ -550,7 +556,7 @@ export function useMatrixState() {
     
     if (node?.type === 'placeholder') {
       activeTextNodeId.value = null
-      activeMenuCategory.value = 'INDICATORS'
+      activeMenuCategory.value = isScenarioContext.value ? 'SCENARIO_DOCS' : 'INDICATORS'
     } else {
       if (node?.type !== 'text-panel') activeTextNodeId.value = null
       activeMenuCategory.value = getMenuCategoryForNode(node || null)
@@ -646,10 +652,10 @@ export function useMatrixState() {
     }
 
     if (lastSelectedId.value) {
-      const selectedNode = getNode(lastSelectedId.value)
+      const container = createActiveContainerAccess()
+      const selectedNode = container.getNodes().find(node => node.id === lastSelectedId.value)
       if (selectedNode && selectedNode.type === 'placeholder') {
         const beforeNode = cloneMatrixValue(selectedNode)
-        const container = createActiveContainerAccess()
         const logicConnection = container.getConnections().find(conn => {
           const label = (conn.label || '').toLowerCase()
           return conn.toId === selectedNode.id && (label === 'and' || label === 'or')
@@ -660,7 +666,7 @@ export function useMatrixState() {
         selectedNode.color = nextConfig.color || 'currentColor'
         selectedNode.params = { ...(selectedNode.params || {}), ...(nextConfig.params || {}) }
         if (nextConfig.description) {
-           selectedNode.params.description = nextConfig.description
+          selectedNode.params.description = nextConfig.description
         }
 
         const afterNode = cloneMatrixValue(selectedNode)
@@ -670,7 +676,8 @@ export function useMatrixState() {
         } else {
           changeTree.recordNodeAdded(afterNode, resolveAction, activeContextNode.value || undefined)
         }
-        
+
+        resolveAction.redo()
         selectNode(selectedNode.id)
         forceUpdate()
         saveMatrixData()
@@ -902,7 +909,7 @@ export function useMatrixState() {
 
   const processNodeTree = (node: any, allNodes: any[], allConnections: any[]): any => {
     const structure = buildLogicalStructure(node.id, allNodes, allConnections)
-    const newNode = {
+    const processedNode = {
       ...node,
       params: {
         ...node.params,
@@ -910,13 +917,18 @@ export function useMatrixState() {
       }
     }
 
-    if (newNode.subGraph && newNode.subGraph.nodes) {
-      newNode.subGraph.nodes = newNode.subGraph.nodes
-        .map((n: any) => processNodeTree(n, newNode.subGraph!.nodes, newNode.subGraph!.connections))
-        .filter((n: any) => n.type !== 'placeholder')
+    if (node.subGraph?.nodes) {
+      processedNode.subGraph = {
+        ...node.subGraph,
+        nodes: node.subGraph.nodes
+          .map((childNode: any) => processNodeTree(childNode, node.subGraph.nodes, node.subGraph.connections || []))
+          .filter((childNode: any) => childNode.type !== 'placeholder'),
+        connections: [...(node.subGraph.connections || [])],
+        zones: [...(node.subGraph.zones || [])]
+      }
     }
 
-    return newNode
+    return processedNode
   }
 
   function makePageName(index: number, strategy?: Node) {

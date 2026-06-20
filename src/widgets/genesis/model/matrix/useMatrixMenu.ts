@@ -738,9 +738,55 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       const conn = connectionContextMenu.value.connection
       const beforeNodes = cloneMatrixValue(state.nodes.value)
       const beforeConnections = cloneMatrixValue(state.connections.value)
+      let changeConnection = conn
       if (label === null) {
-        delete conn.label
-        delete conn.bundleId
+        const oldLabel = conn.label?.toLowerCase()
+        const oldBundleId = conn.bundleId
+        if (oldBundleId && (oldLabel === 'and' || oldLabel === 'or')) {
+          const bundleConnections = state.connections.value.filter(connection => (
+            connection.fromId === conn.fromId && connection.bundleId === oldBundleId
+          ))
+          const generatedNodeIds = new Set(
+            bundleConnections
+              .map(connection => state.getNode(connection.toId))
+              .filter((node): node is Node => !!node && (
+                node.type === 'placeholder' ||
+                (
+                  node.params?.generatedByLogicLabel === true &&
+                  node.params?.logicBundleId === oldBundleId &&
+                  node.params?.logicSourceId === conn.fromId
+                )
+              ))
+              .map(node => node.id)
+          )
+          const survivingConnection = bundleConnections.find(connection => !generatedNodeIds.has(connection.toId))
+            || bundleConnections[0]
+          bundleConnections.forEach(connection => {
+            if (connection !== survivingConnection) generatedNodeIds.add(connection.toId)
+          })
+          changeConnection = cloneMatrixValue(survivingConnection || conn)
+
+          state.nodes.value = state.nodes.value.filter(node => !generatedNodeIds.has(node.id))
+          state.connections.value = state.connections.value
+            .filter(connection => (
+              !generatedNodeIds.has(connection.fromId) &&
+              !generatedNodeIds.has(connection.toId)
+            ))
+            .map(connection => {
+              if (connection.fromId !== conn.fromId || connection.bundleId !== oldBundleId) return connection
+              const nextConnection = { ...connection }
+              delete nextConnection.label
+              delete nextConnection.bundleId
+              delete nextConnection.bundleStemX
+              delete nextConnection.bundleStemY
+              return nextConnection
+            })
+        } else {
+          delete conn.label
+          delete conn.bundleId
+          delete conn.bundleStemX
+          delete conn.bundleStemY
+        }
       } else {
         const lowerLabel = label.toLowerCase()
         const isLogic = lowerLabel === 'and' || lowerLabel === 'or'
@@ -752,7 +798,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
             const bundleId = conn.bundleId || ('b' + Date.now().toString(36))
             conn.bundleId = bundleId
             
-            const id = 'n' + Date.now().toString(36)
+            const id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
             const fromNode = state.getNode(conn.fromId)
             const toNode = state.getNode(conn.toId)
             const offset = 120
@@ -764,7 +810,11 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
               x: toNode ? toNode.x : (fromNode ? fromNode.x + 200 : 200),
               y: toNode ? toNode.y + offset : (fromNode ? fromNode.y + offset : 200),
               color: 'currentColor',
-              params: {}
+              params: {
+                generatedByLogicLabel: true,
+                logicBundleId: bundleId,
+                logicSourceId: conn.fromId
+              }
             }
             
             state.nodes.value.push(newNode)
@@ -789,7 +839,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
             conn.bundleStemX = 0
             conn.bundleStemY = 0
             
-            const id = 'n' + Date.now().toString(36)
+            const id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
             const fromNode = state.getNode(conn.fromId)
             const toNode = state.getNode(conn.toId)
             const offset = 120
@@ -801,7 +851,11 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
               x: toNode ? toNode.x : (fromNode ? fromNode.x + 200 : 200),
               y: toNode ? toNode.y + offset : (fromNode ? fromNode.y + offset : 200),
               color: 'currentColor',
-              params: {}
+              params: {
+                generatedByLogicLabel: true,
+                logicBundleId: bundleId,
+                logicSourceId: conn.fromId
+              }
             }
             
             state.nodes.value.push(newNode)
@@ -826,7 +880,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
         ? state.getNode(conn.toId)
         : null
       changeTree.recordConnectionLabelChanged(
-        conn,
+        changeConnection,
         label,
         createScopedMatrixPatchAction(beforeNodes, beforeConnections, afterNodes, afterConnections),
         labelMemberNode,
