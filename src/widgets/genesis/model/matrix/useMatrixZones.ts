@@ -58,9 +58,8 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
             const currentPosition = options.movedNodeId === nodeId ? options.currentPosition : { x: node.x, y: node.y }
             changeTree.recordDomainNodeChanged(
               zone.id,
-              nodeId,
+              node,
               true,
-              node.label || node.id,
               createNodePositionAction(nodeId, previousPosition, currentPosition),
               { fromPosition: previousPosition, toPosition: currentPosition }
             )
@@ -76,9 +75,8 @@ export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
             const currentPosition = options.movedNodeId === nodeId ? options.currentPosition : { x: node.x, y: node.y }
             changeTree.recordDomainNodeChanged(
               zone.id,
-              nodeId,
+              node,
               false,
-              node.label || node.id,
               createNodePositionAction(nodeId, previousPosition, currentPosition),
               { fromPosition: previousPosition, toPosition: currentPosition }
             )

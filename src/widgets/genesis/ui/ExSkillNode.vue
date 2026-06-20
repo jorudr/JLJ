@@ -1158,7 +1158,7 @@ watch(
             emit('moved')
           }
         }
-      })
+      }, previousValue)
       emit('moved')
     }
   },

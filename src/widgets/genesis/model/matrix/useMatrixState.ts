@@ -1102,6 +1102,14 @@ export function useMatrixState() {
   }
 
   function applyTreeStateToMatrix(next: Set<string>) {
+    const activeNodeIdentities = changeTree.syncNodeIdentityLabels(next)
+    activeNodeIdentities.forEach((identity, nodeId) => {
+      const node = getNode(nodeId)
+      if (!node) return
+      if (!node.params) node.params = {}
+      node.params.customName = identity
+    })
+
     const nodeHolderStates = new Map<string, {
       fallbackPosition?: { x: number, y: number }
       activePosition?: { x: number, y: number }

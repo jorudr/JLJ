@@ -45,8 +45,19 @@ function readableNodeName(node: any) {
   return node?.params?.customName || node?.params?.identityName || node?.params?.name || node?.label || node?.id || 'node'
 }
 
+function defaultNodeName(node: any) {
+  return node?.params?.name || node?.label || node?.id || 'node'
+}
+
 function readableNodeLine(node: any) {
   return `${node?.type || 'node'}: ${readableNodeName(node)}`
+}
+
+function nodeIdentityPayload(node: any) {
+  return {
+    nodeType: node?.type || 'node',
+    defaultName: defaultNodeName(node)
+  }
 }
 
 function readableDomainValue(domain: any) {
@@ -113,7 +124,15 @@ function findParentEvent(targetKind: MatrixChangeEvent['targetKind'], targetId: 
 
 function ensureNodeParent(node: any) {
   const existing = findParentEvent('node', node.id)
-  if (existing) return existing
+  if (existing) {
+    if (!existing.payload?.nodeIdentity) {
+      existing.payload = {
+        ...existing.payload,
+        nodeIdentity: nodeIdentityPayload(node)
+      }
+    }
+    return existing
+  }
 
   const event: MatrixChangeEvent = {
     id: nextId(),
@@ -123,7 +142,10 @@ function ensureNodeParent(node: any) {
     createdAt: Date.now(),
     targetId: node.id,
     targetKind: 'node',
-    subchanges: []
+    subchanges: [],
+    payload: {
+      nodeIdentity: nodeIdentityPayload(node)
+    }
   }
   events.value = [...events.value, event]
   return event
@@ -277,7 +299,7 @@ function setSubchangeEnabled(subchange: MatrixSubchange, enabled: boolean) {
 
 function updateSubchangeNodeLine(subchanges: MatrixSubchange[], targetId: string, newLine: string, newName: string, eventTargetId?: string) {
   subchanges.forEach(subchange => {
-    if (subchange.targetId === targetId && ['to', 'removed', 'ADD_NODE'].includes(subchange.label)) {
+    if (subchange.targetId === targetId && ['to', 'removed', 'ADD_NODE', 'add', 'remove'].includes(subchange.label)) {
       subchange.value = newLine
     }
     if (eventTargetId === targetId && subchange.label === 'removed' && !subchange.targetId) {
@@ -287,6 +309,68 @@ function updateSubchangeNodeLine(subchanges: MatrixSubchange[], targetId: string
       updateSubchangeNodeLine(subchange.subchanges, targetId, newLine, newName, eventTargetId)
     }
   })
+}
+
+function syncNodeIdentityLabels(disabledIds: Set<string>) {
+  const identityStates = new Map<string, {
+    nodeType: string
+    defaultName: string
+    baselineIdentity: string
+    activeIdentity: string
+  }>()
+
+  events.value.forEach(event => {
+    if (event.targetKind !== 'node' || !event.targetId) return
+
+    const visit = (subchanges: MatrixSubchange[], parentEnabled: boolean) => {
+      subchanges.forEach(subchange => {
+        const isEnabled = parentEnabled && !disabledIds.has(subchange.id)
+
+        if (subchange.label === 'identity') {
+          const identityPayload = subchange.payload || {}
+          const eventMetadata = event.payload?.nodeIdentity || {}
+          const existingState = identityStates.get(event.targetId!)
+          const baselineIdentity = existingState?.baselineIdentity
+            ?? String(identityPayload.previousValue ?? '')
+          const state = existingState || {
+            nodeType: String(identityPayload.nodeType || eventMetadata.nodeType || event.node.split(':')[0] || 'node'),
+            defaultName: String(identityPayload.defaultName || eventMetadata.defaultName || event.node.split(':').slice(1).join(':').trim() || event.targetId),
+            baselineIdentity,
+            activeIdentity: baselineIdentity
+          }
+
+          if (isEnabled) {
+            state.activeIdentity = String(identityPayload.nextValue ?? subchange.value)
+          }
+          identityStates.set(event.targetId!, state)
+        }
+
+        if (subchange.subchanges?.length) {
+          visit(subchange.subchanges, isEnabled)
+        }
+      })
+    }
+
+    visit(event.subchanges, !disabledIds.has(event.id))
+  })
+
+  identityStates.forEach((state, targetId) => {
+    const activeName = state.activeIdentity || state.defaultName
+    const activeLine = `${state.nodeType}: ${activeName}`
+
+    events.value.forEach(event => {
+      if (event.targetKind === 'node' && event.targetId === targetId) {
+        event.node = activeLine
+      }
+      updateSubchangeNodeLine(event.subchanges, targetId, activeLine, activeName, event.targetId)
+    })
+  })
+
+  if (identityStates.size) events.value = [...events.value]
+
+  return new Map(
+    Array.from(identityStates.entries()).map(([targetId, state]) => [targetId, state.activeIdentity])
+  )
 }
 
 function findLogicLabelSubchange(connection: { fromId: string, toId: string, label?: string, bundleId?: string }) {
@@ -429,7 +513,10 @@ export function useMatrixChangeTree() {
       node: readableNodeLine(node),
       targetId: node.id,
       targetKind: 'node',
-      action
+      action,
+      payload: {
+        nodeIdentity: nodeIdentityPayload(node)
+      }
     })
   }
 
@@ -493,29 +580,21 @@ export function useMatrixChangeTree() {
     })
   }
 
-  function recordNodeIdentityChanged(node: any, value: string, action?: MatrixChangeAction) {
-    // Retroactively update the node's readable name in all previous events and subchanges
-    const targetId = node.id
-    const newLine = readableNodeLine(node)
-    const newName = readableNodeName(node)
-
-    events.value.forEach(event => {
-      if (event.targetKind === 'node' && event.targetId === targetId) {
-        event.node = newLine
-      }
-
-      updateSubchangeNodeLine(event.subchanges, targetId, newLine, newName, event.targetId)
-    })
-    events.value = [...events.value]
-    
-    // Add the actual subchange for the identity update
+  function recordNodeIdentityChanged(node: any, value: string, action?: MatrixChangeAction, previousValue = '') {
+    const parentEvent = ensureNodeParent(node)
     addSubchange(
-      ensureNodeParent(node),
+      parentEvent,
       'identity',
       value,
       undefined,
-      action
+      action,
+      {
+        ...nodeIdentityPayload(node),
+        previousValue,
+        nextValue: value
+      }
     )
+    syncNodeIdentityLabels(disabledChanges.value)
   }
 
   function recordNodeDirectionChanged(node: any, value: string, action?: MatrixChangeAction) {
@@ -626,7 +705,7 @@ export function useMatrixChangeTree() {
           holderSub!.subchanges!.push({
             id: subId,
             label: 'add',
-            value: readableNodeName(node),
+            value: readableNodeLine(node),
             targetId: node.id,
             action: nodeActionFactory?.(node),
             payload: {
@@ -679,7 +758,7 @@ export function useMatrixChangeTree() {
     }
   }
 
-  function recordDomainNodeChanged(domainId: string, nodeId: string, isAdded: boolean, nodeLabel: string, action?: MatrixChangeAction, payload?: any) {
+  function recordDomainNodeChanged(domainId: string, node: any, isAdded: boolean, action?: MatrixChangeAction, payload?: any) {
     const parentEvent = [...events.value].reverse().find(event => event.targetKind === 'domain' && event.targetId === domainId && event.type === 'add')
     if (!parentEvent) return
     
@@ -697,8 +776,8 @@ export function useMatrixChangeTree() {
       holderSub.subchanges.push({
         id: subId,
         label: isAdded ? 'add' : 'remove',
-        value: nodeLabel,
-        targetId: nodeId,
+        value: readableNodeLine(node),
+        targetId: node.id,
         action,
         payload
       })
@@ -832,6 +911,7 @@ export function useMatrixChangeTree() {
     isLogicLabelAddNode,
     isLogicLabelChange,
     setChangeOwnActionEnabled,
+    syncNodeIdentityLabels,
     resetChanges,
     setChangeEnabled,
     disableNodeDependents,
