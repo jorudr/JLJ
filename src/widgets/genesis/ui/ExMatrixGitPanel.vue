@@ -513,8 +513,8 @@ function toggleDefaultLogicRemovalRow(id: string, logicLabelId: string, next: Se
   } else {
     next.add(id)
     labelTreeIds.forEach(labelId => next.delete(labelId))
-    changeTree.setChangeEnabled(logicLabelId, true)
     changeTree.setChangeEnabled(id, false)
+    changeTree.setChangeEnabled(logicLabelId, true)
   }
 
   applyNextState(next)

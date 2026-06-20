@@ -437,12 +437,15 @@ export function useMatrixState() {
     const groups: any[] = []
     const processed = new Set<string>()
     const parentSeen = new Set<string>()
-    
-    connections.value.forEach(conn => {
+    const visibleConnections = connections.value.filter(conn => (
+      !!getNode(conn.fromId) && !!getNode(conn.toId)
+    ))
+
+    visibleConnections.forEach(conn => {
       if (conn.bundleId) {
         const key = conn.fromId + '_b_' + conn.bundleId
         if (processed.has(key)) return
-        const siblings = connections.value.filter(c => c.fromId === conn.fromId && c.bundleId === conn.bundleId)
+        const siblings = visibleConnections.filter(c => c.fromId === conn.fromId && c.bundleId === conn.bundleId)
         groups.push({
           type: 'bundle',
           id: key,
