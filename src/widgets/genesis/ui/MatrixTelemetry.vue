@@ -148,7 +148,7 @@
     </Transition>
   </Teleport>
 
-  <ExMatrixGitPanel :is-open="isGitPanelOpen" @close="setGitPanelOpen(false)" />
+  <ExMatrixGitPanel :is-open="gitPanelOpen" @close="setGitPanelOpen(false)" />
 </template>
 
 <script setup lang="ts">
@@ -158,10 +158,11 @@ import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
 
-defineProps<{
+const props = defineProps<{
   viewState: { scale: number }
   isScenarioContext: boolean
   canCreateStrategyVersion?: boolean
+  gitPanelOpen: boolean
 }>()
 
 const emit = defineEmits(['reset-view', 'update-scale', 'git-panel-state'])
@@ -170,18 +171,16 @@ const { locale } = useI18n()
 const changeTree = useMatrixChangeTree()
 
 const isManualOpen = ref(false)
-const isGitPanelOpen = ref(false)
 const isGitMenuOpen = ref(false)
 const activeManualSection = ref(0)
 
 function setGitPanelOpen(value: boolean) {
-  isGitPanelOpen.value = value
   emit('git-panel-state', value)
 }
 
 function toggleGitPanel() {
   isGitMenuOpen.value = false
-  setGitPanelOpen(!isGitPanelOpen.value)
+  setGitPanelOpen(!props.gitPanelOpen)
 }
 
 function toggleGitMenu() {
