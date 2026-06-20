@@ -1210,8 +1210,12 @@ export function useMatrixState() {
   }
 
   async function createStrategyVersion() {
-    const versionNumber = strategyVersions.value.length + 1
+    const versionNumber = strategyVersions.value.reduce((highest, version) => {
+      const match = version.label.match(/v(\d+)$/i)
+      return Math.max(highest, match ? Number(match[1]) : 0)
+    }, 0) + 1
     const label = `Strategy v${versionNumber}`
+    changeTree.clearStrategyVersionCheckpoints()
     changeTree.recordStrategyVersionCreated(label)
     const snapshot = captureStrategySnapshot()
     const now = Date.now()
@@ -1259,6 +1263,29 @@ export function useMatrixState() {
     selectedStrategyVersionId.value = version.id
     applyStrategySnapshot(version.snapshot)
     refreshAnonymousStrategyVersion(version.snapshot)
+    await saveMatrixData(true)
+  }
+
+  async function removeStrategyVersion(versionId: string) {
+    const versionIndex = strategyVersions.value.findIndex(version => version.id === versionId)
+    if (versionIndex === -1) return
+
+    const wasSelected = selectedStrategyVersionId.value === versionId
+    strategyVersions.value = strategyVersions.value.filter(version => version.id !== versionId)
+
+    if (wasSelected && strategyVersions.value.length) {
+      const fallbackVersion = strategyVersions.value[strategyVersions.value.length - 1]!
+      selectedStrategyVersionId.value = fallbackVersion.id
+      applyStrategySnapshot(fallbackVersion.snapshot)
+      refreshAnonymousStrategyVersion(fallbackVersion.snapshot)
+    } else if (wasSelected) {
+      selectedStrategyVersionId.value = null
+      changeTree.clearStrategyVersionCheckpoints()
+      refreshAnonymousStrategyVersion(captureStrategySnapshot())
+    } else {
+      refreshAnonymousStrategyVersion(captureStrategySnapshot())
+    }
+
     await saveMatrixData(true)
   }
 
@@ -1646,6 +1673,7 @@ export function useMatrixState() {
     updateSelectedStrategyVersion,
     clearStrategyVersionChanges,
     selectStrategyVersion,
+    removeStrategyVersion,
     saveMatrixData,
     restoreData,
     applyTreeStateToMatrix,

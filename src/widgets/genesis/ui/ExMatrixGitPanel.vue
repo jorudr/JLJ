@@ -30,6 +30,7 @@
               class="version-selector-option"
               :class="{ 'is-selected': version.id === state.selectedStrategyVersionId.value }"
               @click.stop="selectVersion(version.id)"
+              @contextmenu.prevent.stop="openVersionContextMenu($event, version.id)"
             >
               <span>{{ version.id === state.selectedStrategyVersionId.value ? '>' : ' ' }}</span>
               <span>{{ version.label }}</span>
@@ -61,10 +62,39 @@
       </div>
     </Transition>
   </Teleport>
+
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="versionContextMenu"
+        class="fixed z-[100000001] pointer-events-auto context-menu-container"
+        :style="{ left: `${versionContextMenu.x}px`, top: `${versionContextMenu.y}px` }"
+        @click.stop
+      >
+        <div class="flex flex-col space-y-1.5">
+          <div class="absolute -left-1 -top-1 h-2 w-2 rotate-45 bg-nier-text-light animate-pulse dark:bg-nier-text-dark"></div>
+          <div class="group relative">
+            <button
+              type="button"
+              class="relative flex w-[280px] max-w-[calc(100vw-48px)] items-center justify-between overflow-hidden border border-red-500/30 bg-nier-white px-6 py-3 text-left transition-all duration-500 hover:translate-x-4 hover:border-red-500 hover:bg-red-500/10 dark:bg-nier-black"
+              @click.stop="removeVersion(versionContextMenu.versionId)"
+            >
+              <span class="font-mono text-[9px] font-black uppercase tracking-[0.5em] text-red-500 group-hover:text-red-400">REMOVE_VERSION</span>
+              <span class="font-mono text-[7px] text-red-500 opacity-40">[DEL]</span>
+              <div class="absolute inset-y-0 left-0 w-0 bg-red-500 transition-all duration-500 group-hover:w-1.5"></div>
+            </button>
+            <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
+              <span class="font-mono text-[7px] uppercase tracking-[0.3em] text-red-500">Warning: Strategy_Version_Erasure</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useMatrixChangeTree, type MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
 import { useMatrixState } from '../model/matrix/useMatrixState'
@@ -99,13 +129,39 @@ const workspace = 'genesis-matrix'
 const line = 'strategy'
 const expandedParents = ref<Set<string>>(new Set())
 const isVersionMenuOpen = ref(false)
+const versionContextMenu = ref<{ x: number; y: number; versionId: string } | null>(null)
 const savedVersions = computed(() => [...state.strategyVersions.value].reverse())
 const selectedVersionLabel = computed(() => state.selectedStrategyVersion.value?.label || 'Select Version')
 
 async function selectVersion(versionId: string) {
   await state.selectStrategyVersion(versionId)
   isVersionMenuOpen.value = false
+  versionContextMenu.value = null
 }
+
+function openVersionContextMenu(event: MouseEvent, versionId: string) {
+  const menuWidthWithHover = Math.min(296, window.innerWidth - 32)
+  const menuHeight = 68
+  const viewportMargin = 16
+  versionContextMenu.value = {
+    x: Math.max(viewportMargin, Math.min(event.clientX, window.innerWidth - menuWidthWithHover - viewportMargin)),
+    y: Math.max(viewportMargin, Math.min(event.clientY, window.innerHeight - menuHeight - viewportMargin)),
+    versionId
+  }
+}
+
+async function removeVersion(versionId: string) {
+  await state.removeStrategyVersion(versionId)
+  versionContextMenu.value = null
+  if (!state.strategyVersions.value.length) isVersionMenuOpen.value = false
+}
+
+function closeVersionContextMenu() {
+  versionContextMenu.value = null
+}
+
+onMounted(() => window.addEventListener('click', closeVersionContextMenu))
+onBeforeUnmount(() => window.removeEventListener('click', closeVersionContextMenu))
 
 const eventTypeClasses: Record<MatrixChangeType, string> = {
   add: 'tree-add',

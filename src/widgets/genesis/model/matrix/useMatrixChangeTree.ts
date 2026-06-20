@@ -270,6 +270,9 @@ export function useMatrixChangeTree() {
   function recordStrategyVersionUpdated(versionLabel?: string) {
     appendStrategyVersionCheckpoint('UPDATE_STRATEGY_VERSION', versionLabel)
   }
+  function clearStrategyVersionCheckpoints() {
+    events.value = events.value.filter(event => event.type !== 'version')
+  }
   function recordNodeIdentityChanged(node: any, value: string, ...args: any[]) {
     setFinalNodeValue(node, 'identity', value)
   }
@@ -330,6 +333,7 @@ export function useMatrixChangeTree() {
     recordConnectionDeleted,
     recordStrategyVersionCreated,
     recordStrategyVersionUpdated,
+    clearStrategyVersionCheckpoints,
     recordNodeIdentityChanged,
     recordNodeDirectionChanged,
     recordNodePriorityChanged,
