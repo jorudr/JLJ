@@ -217,8 +217,6 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
         info: asset.description
       }
     })
-    assetSearchQuery.value = ''
-    assetResults.value = []
   }
 
   function toggleMenuCategory(category: MenuCategory) {
@@ -489,7 +487,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       }
       node.params.comments.push(comment)
       const commentSnapshot = cloneMatrixValue(comment)
-      changeTree.recordCommentAdded(node, comment, {
+      changeTree.recordNodeCommentAdded(node, comment, {
         undo: () => {
           const globalNode = state.getNode(nodeId)
           if (globalNode && globalNode.params) {

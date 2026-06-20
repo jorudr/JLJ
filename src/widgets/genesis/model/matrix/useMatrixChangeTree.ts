@@ -65,6 +65,8 @@ export function useMatrixChangeTree() {
   function recordNodeTableChanged(...args: any[]) {}
   function recordCommentTextChanged(...args: any[]) {}
   function recordCommentRemoved(...args: any[]) {}
+  function recordNodePhaseChanged(...args: any[]) {}
+  function recordConnectionLabelChanged(...args: any[]) {}
   function removeLatestConnectionLabelChange(...args: any[]) {}
   
   function syncNodeIdentityLabels(next: Set<string>): Map<string, string> {
@@ -101,6 +103,8 @@ export function useMatrixChangeTree() {
     recordNodeTableChanged,
     recordCommentTextChanged,
     recordCommentRemoved,
+    recordNodePhaseChanged,
+    recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
     syncNodeIdentityLabels,
     resetChanges

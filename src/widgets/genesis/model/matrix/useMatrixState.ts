@@ -580,6 +580,9 @@ export function useMatrixState() {
     if (node.type === 'text-panel') {
       return activeTextNodeId.value === node.id ? 'TEXT_FORMAT' : 'LABELS'
     }
+    if (node.type === 'instrument') {
+      return 'DATA'
+    }
     if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
       return 'INDICATORS'
     } else if (node.type === 'emotion') {
@@ -654,7 +657,6 @@ export function useMatrixState() {
 
   function setPendingNode(config: any) {
     pendingNodeConfig.value = config
-    activeMenuCategory.value = null
     const nextConfig = typeof config === 'string' 
       ? { type: config, label: config.toUpperCase(), params: {} }
       : config;

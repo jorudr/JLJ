@@ -546,7 +546,9 @@
           <!-- DATA TOOLS (Instrument Search) -->
           <div v-if="state.activeMenuCategory.value === 'DATA' && !state.isScenarioContext.value" class="flex flex-col items-center pointer-events-auto max-w-lg w-full">
             <!-- Search Results -->
-            <div v-if="menu.assetResults.value.length > 0" class="flex space-x-4 mb-4 overflow-x-auto pb-2 w-full max-w-full justify-start px-4 no-scrollbar">
+            <div class="grid transition-all duration-500 ease-in-out w-full" :class="menu.assetResults.value.length > 0 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+              <div class="overflow-hidden w-full">
+                <div class="flex space-x-4 mb-4 overflow-x-auto pb-2 w-full max-w-full justify-start px-4 no-scrollbar">
                <ExNTtooltip v-for="asset in menu.assetResults.value" :key="asset.symbol" :title="asset.symbol">
                   <template #trigger>
                     <button @click="menu.addAssetNode(asset)"
@@ -567,6 +569,8 @@
                     <span class="opacity-40 text-[9px] mt-1">ASSET_TICKER: {{ asset.symbol }}</span>
                   </div>
                </ExNTtooltip>
+                </div>
+              </div>
             </div>
 
             <!-- Tactical Input -->
