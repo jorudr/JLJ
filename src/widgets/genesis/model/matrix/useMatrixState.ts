@@ -569,11 +569,17 @@ export function useMatrixState() {
   function getMenuCategoryForNode(node: Node | null): MenuCategory | null {
     if (!node) return null
     if (isScenarioContext.value) {
-      if (node.type === 'text-panel') return 'TEXT_FORMAT'
-      if (['checklist-panel', 'embed-panel', 'table-panel', 'image', 'drawing-panel', 'file-attachment', 'audio-note'].includes(node.type)) return null
+      if (node.type === 'text-panel') {
+        return activeTextNodeId.value === node.id ? 'TEXT_FORMAT' : 'SCENARIO_DOCS'
+      }
+      if (['checklist-panel', 'embed-panel', 'table-panel'].includes(node.type)) return 'SCENARIO_DOCS'
+      if (['image', 'drawing-panel', 'file-attachment'].includes(node.type)) return 'SCENARIO_VISUALS'
+      if (node.type === 'audio-note') return 'SCENARIO_AUDIO'
       return 'SCENARIO_DOCS'
     }
-    if (node.type === 'text-panel') return 'TEXT_FORMAT'
+    if (node.type === 'text-panel') {
+      return activeTextNodeId.value === node.id ? 'TEXT_FORMAT' : 'LABELS'
+    }
     if (node.type === 'condition' || node.type === 'indicator' || node.type === 'pattern' || node.type === 'smc') {
       return 'INDICATORS'
     } else if (node.type === 'emotion') {
