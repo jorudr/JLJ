@@ -101,6 +101,7 @@
             <div
               v-if="isRiskPanel"
               class="cursor-pointer pointer-events-auto"
+              :class="isDark ? 'risk-panel-theme-dark' : 'risk-panel-theme-light'"
               :style="riskPanelShellStyle"
               @click.stop="$emit('click')">
               <div :style="riskPanelScalerStyle">
@@ -1226,7 +1227,7 @@ watch(
     if (!wasEditing) return
     const nextValue = String(props.node.params?.customName || '').trim()
     const previousValue = identityDraftStart.value.trim()
-    if (nextValue && nextValue !== previousValue) {
+    if (nextValue !== previousValue) {
       const nodeId = props.node.id
       changeTree.recordNodeIdentityChanged(props.node, nextValue, {
         undo: () => {
@@ -1260,7 +1261,7 @@ watch(
     if (!wasEditing) return
     const nextValue = String(props.node.params?.customDescription || '').trim()
     const previousValue = descriptionDraftStart.value.trim()
-    if (nextValue && nextValue !== previousValue) {
+    if (nextValue !== previousValue) {
       const nodeId = props.node.id
       changeTree.recordNodeDescriptionChanged(props.node, nextValue, {
         undo: () => {
@@ -2053,7 +2054,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-panel-field > span {
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(0 0 0 / 0.72);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 8px;
   font-weight: 800;
@@ -2061,7 +2062,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-transform: uppercase;
 }
 
-:global(html.dark) .risk-panel-field > span {
+.risk-panel-theme-dark .risk-panel-field > span {
   color: rgb(255 255 255 / 0.72);
 }
 
@@ -2075,8 +2076,8 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   min-width: 0;
 }
 
-:global(html.dark) .risk-panel-control,
-:global(html.dark) .risk-style-control {
+.risk-panel-theme-dark .risk-panel-control,
+.risk-panel-theme-dark .risk-style-control {
   background: rgb(255 255 255 / 0.035);
   border-color: rgb(255 255 255 / 0.16);
 }
@@ -2096,7 +2097,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-align: center;
 }
 
-:global(html.dark) .risk-panel-control input {
+.risk-panel-theme-dark .risk-panel-control input {
   color: #fff;
 }
 
@@ -2122,7 +2123,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-:global(html.dark) .risk-panel-control button {
+.risk-panel-theme-dark .risk-panel-control button {
   border-left-color: rgb(255 255 255 / 0.14);
   color: rgb(255 255 255 / 0.9);
 }
@@ -2142,7 +2143,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   text-align: center;
 }
 
-:global(html.dark) .risk-panel-prefix {
+.risk-panel-theme-dark .risk-panel-prefix {
   border-right-color: rgb(255 255 255 / 0.14);
   color: rgb(255 255 255 / 0.78);
 }
@@ -2170,6 +2171,10 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   white-space: nowrap;
 }
 
+.risk-panel-theme-dark .risk-style-control button {
+  color: rgb(255 255 255 / 0.72);
+}
+
 .risk-style-control button::before {
   border-left: 1px solid rgb(0 0 0 / 0.16);
   border-top: 1px solid rgb(0 0 0 / 0.16);
@@ -2184,7 +2189,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   width: 6px;
 }
 
-:global(html.dark) .risk-style-control button::before {
+.risk-panel-theme-dark .risk-style-control button::before {
   border-left-color: rgb(255 255 255 / 0.16);
   border-top-color: rgb(255 255 255 / 0.16);
 }
@@ -2198,7 +2203,7 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 .risk-style-control button:not(.is-active):hover {
   color: rgb(0 0 0 / 0.9);
 }
-:global(html.dark) .risk-style-control button:not(.is-active):hover {
+.risk-panel-theme-dark .risk-style-control button:not(.is-active):hover {
   color: rgb(255 255 255 / 0.78);
 }
 

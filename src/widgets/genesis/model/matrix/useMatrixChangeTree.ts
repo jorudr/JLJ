@@ -13,6 +13,14 @@ export type MatrixChangeEvent = {
   subchanges: any[]
 }
 
+type MatrixChangeContainer = MatrixChangeEvent | {
+  id: string
+  label: string
+  value: string
+  targetId?: string
+  subchanges: any[]
+}
+
 const events = ref<MatrixChangeEvent[]>([])
 const RESOURCE_GROUP_ID = 'instruments-domains'
 
@@ -93,6 +101,48 @@ export function useMatrixChangeTree() {
     ]
   }
 
+  function findAddNodeContainer(targetId: string): MatrixChangeContainer | undefined {
+    for (const event of events.value) {
+      if (event.title === 'ADD_NODE' && event.targetId === targetId) return event
+
+      const stack = [...event.subchanges]
+      while (stack.length) {
+        const subchange = stack.shift()
+        if (!subchange) continue
+        if (subchange.targetId === targetId) return subchange
+        if (subchange.subchanges?.length) stack.unshift(...subchange.subchanges)
+      }
+    }
+  }
+
+  function setFinalNodeValue(node: any, label: string, value: any) {
+    const parent = findAddNodeContainer(node.id)
+    if (!parent) return
+
+    const normalizedValue = String(value ?? '').trim()
+    const shouldRemove = !normalizedValue || normalizedValue.toUpperCase() === 'NONE'
+    const existingIndex = parent.subchanges.findIndex(change => change.label === label)
+
+    if (shouldRemove) {
+      parent.subchanges = parent.subchanges.filter(change => change.label !== label)
+    } else if (existingIndex !== -1) {
+      parent.subchanges[existingIndex].value = normalizedValue
+      parent.subchanges = parent.subchanges.filter((change, index) => (
+        change.label !== label || index === existingIndex
+      ))
+    } else {
+      parent.subchanges.push({
+        id: changeId('sub'),
+        label,
+        value: normalizedValue,
+        targetId: node.id,
+        subchanges: []
+      })
+    }
+
+    events.value = [...events.value]
+  }
+
   function recordNodeAdded(node: any, ...args: any[]) {
     // Valid types for git panel
     const validTypes = [
@@ -135,9 +185,15 @@ export function useMatrixChangeTree() {
   function recordConnectionCreated(...args: any[]) {}
   function recordConnectionDeleted(...args: any[]) {}
   function recordStrategyVersionCreated(...args: any[]) {}
-  function recordNodeIdentityChanged(...args: any[]) {}
-  function recordNodeDirectionChanged(...args: any[]) {}
-  function recordNodePriorityChanged(...args: any[]) {}
+  function recordNodeIdentityChanged(node: any, value: string, ...args: any[]) {
+    setFinalNodeValue(node, 'identity', value)
+  }
+  function recordNodeDirectionChanged(node: any, value: string, ...args: any[]) {
+    setFinalNodeValue(node, 'direction', value)
+  }
+  function recordNodePriorityChanged(node: any, value: string, ...args: any[]) {
+    setFinalNodeValue(node, 'priority', value)
+  }
   function recordNodeCommentAdded(...args: any[]) {}
   function recordNodeCommentChanged(...args: any[]) {}
   function recordZoneCreated(...args: any[]) {}
@@ -147,14 +203,23 @@ export function useMatrixChangeTree() {
   // Additional stubs required by ExSkillNode.vue and useMatrixState.ts
   function recordNodeLabelTextChanged(...args: any[]) {}
   function recordNodeEmbedUrlChanged(...args: any[]) {}
-  function recordNodeDescriptionChanged(...args: any[]) {}
+  function recordNodeDescriptionChanged(node: any, value: string, ...args: any[]) {
+    setFinalNodeValue(node, 'description', value)
+  }
   function recordChecklistItemAdded(...args: any[]) {}
   function recordChecklistItemRemoved(...args: any[]) {}
   function recordChecklistItemTextChanged(...args: any[]) {}
   function recordNodeTableChanged(...args: any[]) {}
   function recordCommentTextChanged(...args: any[]) {}
   function recordCommentRemoved(...args: any[]) {}
-  function recordNodePhaseChanged(...args: any[]) {}
+  function recordNodePhaseChanged(node: any, value: string, ...args: any[]) {
+    setFinalNodeValue(node, 'type', value)
+  }
+  function recordDomainChanged(domain: any, value: string, ...args: any[]) {
+    const label = domain.type === 'session' ? 'session' : 'type'
+    setFinalNodeValue(domain, label === 'session' ? 'type' : 'session', '')
+    setFinalNodeValue(domain, label, value)
+  }
   function recordConnectionLabelChanged(...args: any[]) {}
   function removeLatestConnectionLabelChange(...args: any[]) {}
   
@@ -194,6 +259,7 @@ export function useMatrixChangeTree() {
     recordCommentTextChanged,
     recordCommentRemoved,
     recordNodePhaseChanged,
+    recordDomainChanged,
     recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
     syncNodeIdentityLabels,
