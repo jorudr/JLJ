@@ -51,6 +51,13 @@ export function useMatrixUploads(state: ReturnType<typeof useMatrixState>) {
     const file = (e.target as HTMLInputElement).files?.[0]
     if (!file || !uploadingFileNodeId.value) return
 
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Only PDF files are supported.')
+      if (fileInput.value) fileInput.value.value = ''
+      uploadingFileNodeId.value = null
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (event) => {
       const node = state.getNode(uploadingFileNodeId.value!)

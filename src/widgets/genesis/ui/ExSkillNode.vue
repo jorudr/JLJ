@@ -342,11 +342,11 @@
                </div>
 
                <div v-else-if="node.type === 'file-attachment'" class="flex-1 min-h-0 p-3 flex flex-col items-center justify-center gap-3">
-                  <div class="w-10 h-10 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
-                     <span class="text-[10px] font-mono font-black">FILE</span>
+                  <div class="px-3 py-1.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
+                     <span class="text-[10px] font-mono font-black">FILE_ATTACHMENT (PDF)</span>
                   </div>
                   <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double_Click_To_Attach' }}</span>
-                  <a v-if="node.params.fileDataUrl" :href="node.params.fileDataUrl" :download="node.params.fileName" @mousedown.stop @click.stop class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</a>
+                  <button v-if="node.params.fileDataUrl" @mousedown.stop @click.stop="isPdfModalOpen = true" class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</button>
                </div>
 
                <div v-else v-show="scale > 0.25" class="flex-1 w-full min-h-0 relative overflow-hidden">
@@ -724,6 +724,33 @@
        </div>
     </div>
 
+      <!-- PDF Viewer Modal -->
+      <Teleport to="body">
+        <Transition name="fade">
+          <div v-if="isPdfModalOpen" class="fixed inset-0 z-[2147483000] flex items-center justify-center p-8 pointer-events-auto" @mousedown.stop @click.stop="isPdfModalOpen = false">
+            <div class="relative w-full max-w-5xl h-full max-h-[85vh] flex flex-col" @click.stop>
+              <ExPanel variant="light" :show-corners="true" no-padding class="w-full h-full flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] relative z-10">
+                  <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
+                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">PDF_Document_Viewer</span>
+                  </div>
+                  <button @click.stop="isPdfModalOpen = false" class="text-[9px] font-mono uppercase opacity-60 hover:opacity-100 flex items-center gap-2">
+                    <span class="opacity-50">[</span> Close <span class="opacity-50">]</span>
+                  </button>
+                </div>
+                
+                <!-- Content -->
+                <div class="flex-1 min-h-0 bg-white relative z-10">
+                  <iframe :src="node.params.fileDataUrl" class="w-full h-full border-none" title="PDF Viewer"></iframe>
+                </div>
+              </ExPanel>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+
   </div>
 </template>
 
@@ -745,6 +772,7 @@ const { locale, t } = useI18n()
 const changeTree = useMatrixChangeTree()
 const state = useMatrixState()
 const zones = useMatrixZones(state)
+const isPdfModalOpen = ref(false)
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()

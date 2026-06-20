@@ -82,7 +82,7 @@
               </div>
            </div>
            <input type="file" :ref="(el) => { uploads.imageInput.value = el as HTMLInputElement }" class="hidden" accept="image/*" @change="uploads.handleImageUpload" />
-           <input type="file" :ref="(el) => { uploads.fileInput.value = el as HTMLInputElement }" class="hidden" @change="uploads.handleGenericFileUpload" />
+           <input type="file" :ref="(el) => { uploads.fileInput.value = el as HTMLInputElement }" class="hidden" accept="application/pdf" @change="uploads.handleGenericFileUpload" />
         </div>
 
         <!-- SVG CONNECTIONS (THE ROOTS) -->
