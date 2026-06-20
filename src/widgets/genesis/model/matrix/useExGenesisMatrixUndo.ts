@@ -25,7 +25,8 @@ export function useExGenesisMatrixUndo() {
     return {
       rootNodes: JSON.parse(JSON.stringify(state.rootNodes.value)),
       rootConnections: JSON.parse(JSON.stringify(state.rootConnections.value)),
-      rootZones: JSON.parse(JSON.stringify(state.rootZones.value))
+      rootZones: JSON.parse(JSON.stringify(state.rootZones.value)),
+      treeEvents: JSON.parse(JSON.stringify(state.changeTree.events.value))
     }
   }
 
@@ -65,6 +66,9 @@ export function useExGenesisMatrixUndo() {
       state.rootNodes.value = previousState.rootNodes
       state.rootConnections.value = previousState.rootConnections
       state.rootZones.value = previousState.rootZones
+      if (previousState.treeEvents) {
+        state.changeTree.events.value = previousState.treeEvents
+      }
       state.forceUpdate()
       state.saveMatrixData()
     }

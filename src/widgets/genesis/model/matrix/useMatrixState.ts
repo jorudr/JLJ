@@ -653,6 +653,8 @@ export function useMatrixState() {
   }
 
   function setPendingNode(config: any) {
+    pendingNodeConfig.value = config
+    activeMenuCategory.value = null
     const nextConfig = typeof config === 'string' 
       ? { type: config, label: config.toUpperCase(), params: {} }
       : config;
@@ -1139,7 +1141,7 @@ export function useMatrixState() {
 
   function applyTreeStateToMatrix(next: Set<string>) {
     const activeNodeIdentities = changeTree.syncNodeIdentityLabels(next)
-    activeNodeIdentities.forEach((identity, nodeId) => {
+    activeNodeIdentities.forEach((identity: any, nodeId: any) => {
       const node = getNode(nodeId)
       if (!node) return
       if (!node.params) node.params = {}
@@ -1159,7 +1161,7 @@ export function useMatrixState() {
         if (subchange.label !== 'NODES_HOLDER' || !subchange.subchanges?.length) return
         const isHolderEnabled = isEventEnabled && !next.has(subchange.id)
 
-        subchange.subchanges.forEach(nodeChange => {
+        subchange.subchanges.forEach((nodeChange: any) => {
           if (nodeChange.label !== 'add' && nodeChange.label !== 'remove') return
           if (!nodeChange.targetId) return
 

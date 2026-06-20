@@ -38,39 +38,57 @@ export const ensureDataDir = async (): Promise<string> => {
 };
 
 /**
- * Saves a JSON object to a file in the JLJData directory.
+ * Saves a JSON object to a file in the JLJData directory or falls back to localStorage.
  * @param fileName Name of the file (without .json extension)
  * @param data Data to save
  */
 export const saveToDisk = async (fileName: string, data: any): Promise<void> => {
     try {
-        const dataPath = await ensureDataDir();
-        const path = await join(dataPath, `${fileName}.json`);
-        const content = JSON.stringify(data, null, 2);
-        await writeTextFile(path, content);
+        const isTauri = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__;
+        if (isTauri) {
+            const dataPath = await ensureDataDir();
+            const path = await join(dataPath, `${fileName}.json`);
+            const content = JSON.stringify(data, null, 2);
+            await writeTextFile(path, content);
+        } else {
+            localStorage.setItem(fileName, JSON.stringify(data));
+        }
     } catch (error: any) {
         console.error(`[DiskStorage] Error saving ${fileName}:`, error);
-        await message(`Failed to save ${fileName}: ${error.message || error}`, { title: 'Save Error', kind: 'error' });
+        try {
+            localStorage.setItem(fileName, JSON.stringify(data));
+        } catch (e) {
+            console.error('[DiskStorage] LocalStorage fallback failed:', e);
+        }
     }
 };
 
 /**
- * Loads a JSON object from a file in the JLJData directory.
+ * Loads a JSON object from a file in the JLJData directory or falls back to localStorage.
  * @param fileName Name of the file (without .json extension)
  */
 export const loadFromDisk = async <T>(fileName: string): Promise<T | null> => {
     try {
-        const dataPath = await ensureDataDir();
-        const path = await join(dataPath, `${fileName}.json`);
-        const fileExists = await exists(path);
-        if (!fileExists) return null;
-        
-        const content = await readTextFile(path);
-        return JSON.parse(content) as T;
+        const isTauri = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__;
+        if (isTauri) {
+            const dataPath = await ensureDataDir();
+            const path = await join(dataPath, `${fileName}.json`);
+            const fileExists = await exists(path);
+            if (!fileExists) {
+                const localData = localStorage.getItem(fileName);
+                return localData ? JSON.parse(localData) as T : null;
+            }
+            
+            const content = await readTextFile(path);
+            return JSON.parse(content) as T;
+        } else {
+            const localData = localStorage.getItem(fileName);
+            return localData ? JSON.parse(localData) as T : null;
+        }
     } catch (error: any) {
         console.error(`Error loading ${fileName} from disk:`, error);
-        await message(`Failed to load ${fileName}: ${error.message || error}`, { title: 'Load Error', kind: 'error' });
-        return null;
+        const localData = localStorage.getItem(fileName);
+        return localData ? JSON.parse(localData) as T : null;
     }
 };
 

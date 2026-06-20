@@ -49,7 +49,8 @@
                     isRiskPanel ? '!bg-transparent' : '',
                     node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
                     node.params?.direction === 'SHORT' ? '!bg-red-500/50' : '',
-                    node.type === 'risk-element' ? '!bg-red-500/5' : ''
+                    node.type === 'risk-element' ? '!bg-red-500/5' : '',
+                    node.type === 'instrument' ? 'dark:!bg-white/50' : ''
                   ]"></div>
 
            <!-- Selection Brackets -->
