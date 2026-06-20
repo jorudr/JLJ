@@ -15,16 +15,17 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   }
 
   function createDirectNodeAddAction(node: Node) {
+    const container = state.createActiveContainerAccess()
     return {
       undo: () => {
-        state.nodes.value = state.nodes.value.filter(item => item.id !== node.id)
-        state.connections.value = state.connections.value.filter(conn => conn.fromId !== node.id && conn.toId !== node.id)
+        container.setNodes(container.getNodes().filter(item => item.id !== node.id))
+        container.setConnections(container.getConnections().filter(conn => conn.fromId !== node.id && conn.toId !== node.id))
         state.forceUpdate()
         state.saveMatrixData()
       },
       redo: () => {
-        if (!state.nodes.value.some(item => item.id === node.id)) {
-          state.nodes.value.push(cloneMatrixValue(node))
+        if (!container.getNodes().some(item => item.id === node.id)) {
+          container.setNodes([...container.getNodes(), cloneMatrixValue(node)])
         }
         state.forceUpdate()
         state.saveMatrixData()
@@ -34,16 +35,17 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
 
   function createDirectConnectionAddAction(connection: Connection) {
     const connectionSnapshot = cloneMatrixValue(connection)
+    const container = state.createActiveContainerAccess()
     return {
       undo: () => {
-        state.connections.value = state.connections.value.filter(conn => !(conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId))
-        state.cleanupLogicBundles()
+        container.setConnections(container.getConnections().filter(conn => !(conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId)))
+        state.cleanupLogicBundles(container)
         state.forceUpdate()
         state.saveMatrixData()
       },
       redo: () => {
-        const exists = state.connections.value.some(conn => conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId)
-        if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+        const exists = container.getConnections().some(conn => conn.fromId === connectionSnapshot.fromId && conn.toId === connectionSnapshot.toId)
+        if (!exists) container.setConnections([...container.getConnections(), cloneMatrixValue(connectionSnapshot)])
         state.forceUpdate()
         state.saveMatrixData()
       }
@@ -60,6 +62,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   }
 
   function createScopedMatrixPatchAction(beforeNodes: Node[], beforeConnections: Connection[], afterNodes: Node[], afterConnections: Connection[]) {
+    const container = state.createActiveContainerAccess()
     const beforeNodeMap = new Map<string, Node>(beforeNodes.map(node => [node.id, cloneMatrixValue(node)] as [string, Node]))
     const afterNodeMap = new Map<string, Node>(afterNodes.map(node => [node.id, cloneMatrixValue(node)] as [string, Node]))
     const touchedNodeIds = new Set<string>()
@@ -87,23 +90,23 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     })
 
     const applyPatch = (nodeMap: Map<string, Node>, connectionMap: Map<string, Connection>) => {
-      state.nodes.value = [
-        ...state.nodes.value.filter(node => !touchedNodeIds.has(node.id)),
+      container.setNodes([
+        ...container.getNodes().filter(node => !touchedNodeIds.has(node.id)),
         ...Array.from(touchedNodeIds)
           .map(id => nodeMap.get(id))
           .filter((node): node is Node => !!node)
           .map(node => cloneMatrixValue(node))
-      ]
+      ])
 
-      state.connections.value = [
-        ...state.connections.value.filter(connection => !touchedConnectionKeys.has(connectionKey(connection))),
+      container.setConnections([
+        ...container.getConnections().filter(connection => !touchedConnectionKeys.has(connectionKey(connection))),
         ...Array.from(touchedConnectionKeys)
           .map(key => connectionMap.get(key))
           .filter((connection): connection is Connection => !!connection)
           .map(connection => cloneMatrixValue(connection))
-      ]
+      ])
 
-      state.cleanupLogicBundles()
+      state.cleanupLogicBundles(container)
       state.forceUpdate()
       state.saveMatrixData()
     }
@@ -258,7 +261,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     state.nodes.value.push(newNode)
     const newConnection = { fromId: parentId, toId: id }
     state.connections.value.push(newConnection)
-    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode))
+    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode), state.activeContextNode.value || undefined)
     changeTree.recordConnectionCreated(newConnection, parentNode, newNode, createDirectConnectionAddAction(newConnection))
     state.selectNode(parentId)
     state.saveMatrixData()
@@ -296,7 +299,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     state.nodes.value.push(newNode)
     const newConnection = { fromId: lastSelected.id, toId: id }
     state.connections.value.push(newConnection)
-    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode))
+    changeTree.recordNodeAdded(newNode, createDirectNodeAddAction(newNode), state.activeContextNode.value || undefined)
     changeTree.recordConnectionCreated(newConnection, lastSelected, newNode, createDirectConnectionAddAction(newConnection))
     isConfigSetterOpen.value = false
     state.saveMatrixData()

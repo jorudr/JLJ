@@ -135,14 +135,29 @@ export function useMatrixState() {
   }
 
   function createActiveContainerAccess() {
-    const contextNode = activeContextId.value && activeContextNode.value ? activeContextNode.value : null
-    if (contextNode) {
-      if (!contextNode.subGraph) contextNode.subGraph = { nodes: [], connections: [], zones: [] }
+    const contextNodeId = activeContextId.value
+    if (contextNodeId) {
+      const resolveContextNode = () => findNodeById(rootNodes.value, contextNodeId)
+      const ensureContextGraph = () => {
+        const contextNode = resolveContextNode()
+        if (contextNode && !contextNode.subGraph) {
+          contextNode.subGraph = { nodes: [], connections: [], zones: [] }
+        }
+        return contextNode?.subGraph
+      }
+
+      ensureContextGraph()
       return {
-        getNodes: () => contextNode.subGraph!.nodes,
-        setNodes: (nextNodes: Node[]) => { contextNode.subGraph!.nodes = nextNodes },
-        getConnections: () => contextNode.subGraph!.connections,
-        setConnections: (nextConnections: Connection[]) => { contextNode.subGraph!.connections = nextConnections }
+        getNodes: () => ensureContextGraph()?.nodes || [],
+        setNodes: (nextNodes: Node[]) => {
+          const graph = ensureContextGraph()
+          if (graph) graph.nodes = nextNodes
+        },
+        getConnections: () => ensureContextGraph()?.connections || [],
+        setConnections: (nextConnections: Connection[]) => {
+          const graph = ensureContextGraph()
+          if (graph) graph.connections = nextConnections
+        }
       }
     }
 
@@ -359,8 +374,7 @@ export function useMatrixState() {
   })
 
   const isScenarioContext = computed(() => {
-    const t = activeContextNode.value?.type
-    return t && t !== 'strategy'
+    return !!activeContextNode.value
   })
 
   // Viewport context getters/setters
@@ -482,7 +496,7 @@ export function useMatrixState() {
   })
 
   function getNode(id: string) {
-    return nodes.value.find((n: Node) => n.id === id)
+    return findNodeById(rootNodes.value, id)
   }
 
   function findNodeById(list: Node[], id: string): Node | null {
@@ -619,7 +633,7 @@ export function useMatrixState() {
     }
     
     selectNode(newNode.id)
-    changeTree.recordNodeAdded(newNode, createNodeAddAction(newNode))
+    changeTree.recordNodeAdded(newNode, createNodeAddAction(newNode), activeContextNode.value || undefined)
     saveMatrixData()
   }
 
@@ -654,7 +668,7 @@ export function useMatrixState() {
         if (logicConnection) {
           changeTree.recordLogicPlaceholderNodeAdded(afterNode, logicConnection, resolveAction)
         } else {
-          changeTree.recordNodeAdded(afterNode, resolveAction)
+          changeTree.recordNodeAdded(afterNode, resolveAction, activeContextNode.value || undefined)
         }
         
         selectNode(selectedNode.id)
@@ -692,7 +706,7 @@ export function useMatrixState() {
     const deleteAction = nodeToRemove
       ? createSnapshotAction(beforeNodes, beforeConnections, container.getNodes(), container.getConnections(), container)
       : undefined
-    if (nodeToRemove) changeTree.recordNodeDeleted(nodeToRemove, deleteAction)
+    if (nodeToRemove) changeTree.recordNodeDeleted(nodeToRemove, deleteAction, activeContextNode.value || undefined)
     saveMatrixData()
   }
 
@@ -716,10 +730,10 @@ export function useMatrixState() {
     saveMatrixData()
   }
 
-  function cleanupLogicBundles() {
+  function cleanupLogicBundles(container = createActiveContainerAccess()) {
     const bundles = new Map<string, Connection[]>()
     
-    connections.value.forEach(c => {
+    container.getConnections().forEach(c => {
       if (c.bundleId) {
         const key = `${c.fromId}_${c.bundleId}`
         if (!bundles.has(key)) bundles.set(key, [])
@@ -1251,6 +1265,7 @@ export function useMatrixState() {
     rootNodes,
     rootConnections,
     rootZones,
+    createActiveContainerAccess,
     matrixPages,
     activePageId,
     navigationStack,

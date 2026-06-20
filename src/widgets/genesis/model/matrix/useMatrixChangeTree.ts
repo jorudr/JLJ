@@ -87,7 +87,7 @@ function addEvent(event: Omit<MatrixChangeEvent, 'id' | 'createdAt' | 'subchange
   return nextEvent
 }
 
-function addSubchange(parent: MatrixChangeEvent, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction, payload?: any): MatrixSubchange | undefined {
+function addSubchange(parent: MatrixChangeEvent | MatrixSubchange, label: string, value: string, targetIdOrAction?: string | MatrixChangeAction, actionOpt?: MatrixChangeAction, payload?: any): MatrixSubchange | undefined {
   const normalizedValue = String(value || '').trim()
   if (!normalizedValue) return
 
@@ -122,8 +122,35 @@ function findParentEvent(targetKind: MatrixChangeEvent['targetKind'], targetId: 
     .find(event => event.targetKind === targetKind && event.targetId === targetId && event.type !== 'delete')
 }
 
+function findNestedNodeAdd(targetId: string) {
+  for (let eventIndex = events.value.length - 1; eventIndex >= 0; eventIndex--) {
+    const event = events.value[eventIndex]
+    if (!event) continue
+    const stack = [...event.subchanges].reverse()
+
+    while (stack.length) {
+      const subchange = stack.pop()
+      if (!subchange) continue
+      if (subchange.label === 'ADD_NODE' && subchange.targetId === targetId) return subchange
+      if (subchange.subchanges?.length) stack.push(...[...subchange.subchanges].reverse())
+    }
+  }
+}
+
+function findNodeChangeParent(targetId: string): MatrixChangeEvent | MatrixSubchange | undefined {
+  const addEvent = [...events.value]
+    .reverse()
+    .find(event => event.targetKind === 'node' && event.targetId === targetId && event.type === 'add')
+  if (addEvent) return addEvent
+
+  const nestedAdd = findNestedNodeAdd(targetId)
+  if (nestedAdd) return nestedAdd
+
+  return findParentEvent('node', targetId)
+}
+
 function ensureNodeParent(node: any) {
-  const existing = findParentEvent('node', node.id)
+  const existing = findNodeChangeParent(node.id)
   if (existing) {
     if (!existing.payload?.nodeIdentity) {
       existing.payload = {
@@ -299,7 +326,7 @@ function setSubchangeEnabled(subchange: MatrixSubchange, enabled: boolean) {
 
 function updateSubchangeNodeLine(subchanges: MatrixSubchange[], targetId: string, newLine: string, newName: string, eventTargetId?: string) {
   subchanges.forEach(subchange => {
-    if (subchange.targetId === targetId && ['to', 'removed', 'ADD_NODE', 'add', 'remove'].includes(subchange.label)) {
+    if (subchange.targetId === targetId && ['to', 'removed', 'ADD_NODE', 'REMOVE_NODE', 'add', 'remove'].includes(subchange.label)) {
       subchange.value = newLine
     }
     if (eventTargetId === targetId && subchange.label === 'removed' && !subchange.targetId) {
@@ -320,21 +347,27 @@ function syncNodeIdentityLabels(disabledIds: Set<string>) {
   }>()
 
   events.value.forEach(event => {
-    if (event.targetKind !== 'node' || !event.targetId) return
+    const eventTargetId = event.targetId
+    if (event.targetKind !== 'node' || !eventTargetId) return
 
-    const visit = (subchanges: MatrixSubchange[], parentEnabled: boolean) => {
+    const visit = (subchanges: MatrixSubchange[], parentEnabled: boolean, scopedNodeId: string, scopedMetadata: any) => {
       subchanges.forEach(subchange => {
         const isEnabled = parentEnabled && !disabledIds.has(subchange.id)
+        const nextNodeId = subchange.label === 'ADD_NODE' && subchange.targetId
+          ? subchange.targetId
+          : scopedNodeId
+        const nextMetadata = subchange.label === 'ADD_NODE'
+          ? (subchange.payload?.nodeIdentity || scopedMetadata)
+          : scopedMetadata
 
         if (subchange.label === 'identity') {
           const identityPayload = subchange.payload || {}
-          const eventMetadata = event.payload?.nodeIdentity || {}
-          const existingState = identityStates.get(event.targetId!)
+          const existingState = identityStates.get(nextNodeId)
           const baselineIdentity = existingState?.baselineIdentity
             ?? String(identityPayload.previousValue ?? '')
           const state = existingState || {
-            nodeType: String(identityPayload.nodeType || eventMetadata.nodeType || event.node.split(':')[0] || 'node'),
-            defaultName: String(identityPayload.defaultName || eventMetadata.defaultName || event.node.split(':').slice(1).join(':').trim() || event.targetId),
+            nodeType: String(identityPayload.nodeType || nextMetadata?.nodeType || event.node.split(':')[0] || 'node'),
+            defaultName: String(identityPayload.defaultName || nextMetadata?.defaultName || event.node.split(':').slice(1).join(':').trim() || nextNodeId),
             baselineIdentity,
             activeIdentity: baselineIdentity
           }
@@ -342,16 +375,16 @@ function syncNodeIdentityLabels(disabledIds: Set<string>) {
           if (isEnabled) {
             state.activeIdentity = String(identityPayload.nextValue ?? subchange.value)
           }
-          identityStates.set(event.targetId!, state)
+          identityStates.set(nextNodeId, state)
         }
 
         if (subchange.subchanges?.length) {
-          visit(subchange.subchanges, isEnabled)
+          visit(subchange.subchanges, isEnabled, nextNodeId, nextMetadata)
         }
       })
     }
 
-    visit(event.subchanges, !disabledIds.has(event.id))
+    visit(event.subchanges, !disabledIds.has(event.id), eventTargetId, event.payload?.nodeIdentity)
   })
 
   identityStates.forEach((state, targetId) => {
@@ -374,8 +407,8 @@ function syncNodeIdentityLabels(disabledIds: Set<string>) {
 }
 
 function findLogicLabelSubchange(connection: { fromId: string, toId: string, label?: string, bundleId?: string }) {
-  const parentEvent = findParentEvent('node', connection.fromId)
-  if (!parentEvent) return
+  const parentChange = findNodeChangeParent(connection.fromId)
+  if (!parentChange) return
 
   const bundleId = connection.bundleId
   const isLogicValue = (value: string) => {
@@ -383,8 +416,8 @@ function findLogicLabelSubchange(connection: { fromId: string, toId: string, lab
     return normalized === 'and' || normalized === 'or'
   }
 
-  for (let i = parentEvent.subchanges.length - 1; i >= 0; i--) {
-    const subchange = parentEvent.subchanges[i]
+  for (let i = parentChange.subchanges.length - 1; i >= 0; i--) {
+    const subchange = parentChange.subchanges[i]
     if (!subchange?.subchanges?.length) continue
 
     for (let j = subchange.subchanges.length - 1; j >= 0; j--) {
@@ -506,7 +539,52 @@ export function useMatrixChangeTree() {
     disabledChanges.value = next
   }
 
-  function recordNodeAdded(node: any, action?: MatrixChangeAction) {
+  function ensureNodeContentEvent(ownerNode: any) {
+    const existing = [...events.value]
+      .reverse()
+      .find(event => event.title === 'NODE_CONTENT' && event.targetKind === 'node' && event.targetId === ownerNode.id)
+    const contentEvent = existing || addEvent({
+        type: 'update',
+        title: 'NODE_CONTENT',
+        node: readableNodeLine(ownerNode),
+        targetId: ownerNode.id,
+        targetKind: 'node',
+        payload: {
+          nodeIdentity: nodeIdentityPayload(ownerNode)
+        }
+      })
+
+    contentEvent.node = readableNodeLine(ownerNode)
+    const ownerAddChange = findNodeChangeParent(ownerNode.id)
+    if (ownerAddChange && ownerAddChange.id !== contentEvent.id) {
+      ownerAddChange.linkedIds = Array.from(new Set([
+        ...(ownerAddChange.linkedIds || []),
+        contentEvent.id
+      ]))
+    }
+
+    return contentEvent
+  }
+
+  function recordNodeAdded(node: any, action?: MatrixChangeAction, ownerNode?: any) {
+    if (ownerNode) {
+      const parentEvent = ensureNodeContentEvent(ownerNode)
+      const nestedAdd: MatrixSubchange = {
+        id: nextId('sub'),
+        label: 'ADD_NODE',
+        value: readableNodeLine(node),
+        targetId: node.id,
+        action,
+        subchanges: [],
+        payload: {
+          nodeIdentity: nodeIdentityPayload(node)
+        }
+      }
+      parentEvent.subchanges.push(nestedAdd)
+      events.value = [...events.value]
+      return nestedAdd
+    }
+
     return addEvent({
       type: 'add',
       title: 'ADD_NODE',
@@ -528,7 +606,24 @@ export function useMatrixChangeTree() {
     return addLogicLabelNodeSubchange(labelSubchange, node, action)
   }
 
-  function recordNodeDeleted(node: any, action?: MatrixChangeAction) {
+  function recordNodeDeleted(node: any, action?: MatrixChangeAction, ownerNode?: any) {
+    if (ownerNode) {
+      const parentEvent = ensureNodeContentEvent(ownerNode)
+      const nestedRemove: MatrixSubchange = {
+        id: nextId('sub'),
+        label: 'REMOVE_NODE',
+        value: readableNodeLine(node),
+        targetId: node.id,
+        action,
+        payload: {
+          nodeIdentity: nodeIdentityPayload(node)
+        }
+      }
+      parentEvent.subchanges.push(nestedRemove)
+      events.value = [...events.value]
+      return nestedRemove
+    }
+
     addEvent({
       type: 'delete',
       title: 'DELETE_NODE',
@@ -842,8 +937,8 @@ export function useMatrixChangeTree() {
 
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string, bundleId?: string }, label: string | null, action?: MatrixChangeAction, memberNode?: any, memberAction?: MatrixChangeAction) {
     const sourceNode = { id: connection.fromId, label: connection.fromId }
-    const parentEvent = ensureNodeParent(sourceNode)
-    const toSubchange = [...parentEvent.subchanges].reverse().find(s => s.label === 'to' && s.targetId === connection.toId)
+    const parentChange = ensureNodeParent(sourceNode)
+    const toSubchange = [...parentChange.subchanges].reverse().find(s => s.label === 'to' && s.targetId === connection.toId)
     
     if (toSubchange) {
       if (!toSubchange.subchanges) toSubchange.subchanges = []
@@ -863,25 +958,33 @@ export function useMatrixChangeTree() {
   }
 
   function removeLatestConnectionLabelChange(targetId: string) {
+    const removeFromSubchanges = (subchanges: MatrixSubchange[]): boolean => {
+      for (let index = subchanges.length - 1; index >= 0; index--) {
+        const subchange = subchanges[index]
+        if (!subchange) continue
+
+        if (subchange.label === 'link_label' && subchange.targetId === targetId) {
+          const removedIds = [subchange.id, ...collectDescendantChangeIds(subchange.id)]
+          removedIds.forEach(id => disabledChanges.value.delete(id))
+          subchanges.splice(index, 1)
+          return true
+        }
+
+        if (subchange.subchanges?.length && removeFromSubchanges(subchange.subchanges)) {
+          return true
+        }
+      }
+      return false
+    }
+
     for (let eventIndex = events.value.length - 1; eventIndex >= 0; eventIndex--) {
       const event = events.value[eventIndex]
       if (!event) continue
 
-      for (let subIndex = event.subchanges.length - 1; subIndex >= 0; subIndex--) {
-        const subchange = event.subchanges[subIndex]
-        if (!subchange?.subchanges?.length) continue
-
-        for (let nestedIndex = subchange.subchanges.length - 1; nestedIndex >= 0; nestedIndex--) {
-          const nested = subchange.subchanges[nestedIndex]
-          if (!nested || nested.label !== 'link_label' || nested.targetId !== targetId) continue
-
-          const removedIds = [nested.id, ...collectDescendantChangeIds(nested.id)]
-          removedIds.forEach(id => disabledChanges.value.delete(id))
-          disabledChanges.value = new Set(disabledChanges.value)
-          subchange.subchanges.splice(nestedIndex, 1)
-          events.value = [...events.value]
-          return true
-        }
+      if (removeFromSubchanges(event.subchanges)) {
+        disabledChanges.value = new Set(disabledChanges.value)
+        events.value = [...events.value]
+        return true
       }
     }
 
@@ -889,9 +992,9 @@ export function useMatrixChangeTree() {
   }
 
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
-    const parentEvent = findParentEvent('node', fromId)
-    if (parentEvent) {
-      const sub = parentEvent.subchanges.find(s => s.targetId === toId && s.label === 'to')
+    const parentChange = findNodeChangeParent(fromId)
+    if (parentChange) {
+      const sub = parentChange.subchanges.find(s => s.targetId === toId && s.label === 'to')
       if (sub) {
         sub.action = action
       }

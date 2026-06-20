@@ -419,10 +419,8 @@ function handleBoardContextMenu(e: MouseEvent) {
 function handleNodeDive(node: any) {
   const divableTypes = ['strategy', 'scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc']
   if (divableTypes.includes(node.type)) {
-    if (node.type === 'scenario' || node.type === 'condition') {
-      state.activeMenuCategory.value = null
-      state.pendingNodeConfig.value = null
-    }
+    state.activeMenuCategory.value = null
+    state.pendingNodeConfig.value = null
     if (!node.subGraph) {
        node.subGraph = { nodes: [], connections: [], zones: [] }
     }

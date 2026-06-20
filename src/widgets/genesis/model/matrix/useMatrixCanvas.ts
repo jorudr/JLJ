@@ -161,27 +161,28 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
       state.connections.value.push(newConn)
       const connectionSnapshot = cloneMatrixValue(newConn)
       const isPortChange = activeWireRaw.value.originalToId === targetNode.id
+      const container = state.createActiveContainerAccess()
       
       const action = {
         undo: () => {
-          state.connections.value = state.connections.value.filter(conn => !(
+          container.setConnections(container.getConnections().filter(conn => !(
             conn.fromId === connectionSnapshot.fromId &&
             conn.toId === connectionSnapshot.toId &&
             conn.fromPort === connectionSnapshot.fromPort &&
             conn.toPort === connectionSnapshot.toPort
-          ))
-          state.cleanupLogicBundles()
+          )))
+          state.cleanupLogicBundles(container)
           state.forceUpdate()
           state.saveMatrixData()
         },
         redo: () => {
-          const exists = state.connections.value.some(conn => (
+          const exists = container.getConnections().some(conn => (
             conn.fromId === connectionSnapshot.fromId &&
             conn.toId === connectionSnapshot.toId &&
             conn.fromPort === connectionSnapshot.fromPort &&
             conn.toPort === connectionSnapshot.toPort
           ))
-          if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+          if (!exists) container.setConnections([...container.getConnections(), cloneMatrixValue(connectionSnapshot)])
           state.forceUpdate()
           state.saveMatrixData()
         }
@@ -267,27 +268,28 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         toPort: activeWireRaw.value.originalToPort 
       }
       const connectionSnapshot = cloneMatrixValue(connInfo)
+      const container = state.createActiveContainerAccess()
       
       changeTree.recordConnectionDeleted(connInfo, state.getNode(connInfo.fromId), state.getNode(connInfo.toId), {
         undo: () => {
-          const exists = state.connections.value.some(conn => (
+          const exists = container.getConnections().some(conn => (
             conn.fromId === connectionSnapshot.fromId &&
             conn.toId === connectionSnapshot.toId &&
             conn.fromPort === connectionSnapshot.fromPort &&
             conn.toPort === connectionSnapshot.toPort
           ))
-          if (!exists) state.connections.value.push(cloneMatrixValue(connectionSnapshot))
+          if (!exists) container.setConnections([...container.getConnections(), cloneMatrixValue(connectionSnapshot)])
           state.forceUpdate()
           state.saveMatrixData()
         },
         redo: () => {
-          state.connections.value = state.connections.value.filter(conn => !(
+          container.setConnections(container.getConnections().filter(conn => !(
             conn.fromId === connectionSnapshot.fromId &&
             conn.toId === connectionSnapshot.toId &&
             conn.fromPort === connectionSnapshot.fromPort &&
             conn.toPort === connectionSnapshot.toPort
-          ))
-          state.cleanupLogicBundles()
+          )))
+          state.cleanupLogicBundles(container)
           state.forceUpdate()
           state.saveMatrixData()
         }
