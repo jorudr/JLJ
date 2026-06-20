@@ -143,7 +143,69 @@ export function useMatrixChangeTree() {
     events.value = [...events.value]
   }
 
+  function scalingLotsValue(node: any) {
+    const suffix = node.params?.lotsMode === 'PERCENT' ? '%' : ' lots'
+    return `${node.params?.lots ?? 0}${suffix}`
+  }
+
+  function scalingDistanceValue(node: any) {
+    return `${node.params?.step ?? 0}${node.params?.unit || '%'}`
+  }
+
+  function recordScalingEntryChanged(node: any) {
+    setFinalNodeValue(node, 'lots', scalingLotsValue(node))
+    setFinalNodeValue(node, 'distance', scalingDistanceValue(node))
+  }
+
+  function recordScalingEntryAdded(node: any) {
+    if (findAddNodeContainer(node.id)) {
+      recordScalingEntryChanged(node)
+      return
+    }
+
+    const parentId = node.params?.parentId
+    let parent = parentId ? findAddNodeContainer(parentId) : undefined
+    if (!parent && parentId) {
+      appendAddNodeEvent({
+        id: parentId,
+        type: node.params?.parentType || 'method',
+        label: node.params?.parentLabel || node.params?.parentType || 'Method'
+      })
+      parent = findAddNodeContainer(parentId)
+    }
+    if (!parent) return
+
+    parent.subchanges.push({
+      id: changeId('sub'),
+      label: 'SCALING_ENTRY',
+      value: String(node.params?.posNumber ?? node.label ?? node.id),
+      targetId: node.id,
+      subchanges: [
+        {
+          id: changeId('sub'),
+          label: 'lots',
+          value: scalingLotsValue(node),
+          targetId: node.id,
+          subchanges: []
+        },
+        {
+          id: changeId('sub'),
+          label: 'distance',
+          value: scalingDistanceValue(node),
+          targetId: node.id,
+          subchanges: []
+        }
+      ]
+    })
+    events.value = [...events.value]
+  }
+
   function recordNodeAdded(node: any, ...args: any[]) {
+    if (node.type === 'scaling-entry') {
+      recordScalingEntryAdded(node)
+      return
+    }
+
     // Valid types for git panel
     const validTypes = [
       'strategy', 'condition', 'scenario', 'indicator', 
@@ -172,9 +234,15 @@ export function useMatrixChangeTree() {
   function recordNodeDeleted(node: any, ...args: any[]) {
     events.value = events.value.flatMap(event => {
       if (event.targetId === node.id) return []
-      if (event.targetId !== RESOURCE_GROUP_ID) return [event]
-      const subchanges = event.subchanges.filter(change => change.targetId !== node.id)
-      return subchanges.length ? [{ ...event, subchanges }] : []
+      const removeNestedNode = (subchanges: any[]): any[] => subchanges
+        .filter(change => change.targetId !== node.id)
+        .map(change => ({
+          ...change,
+          subchanges: removeNestedNode(change.subchanges || [])
+        }))
+      const subchanges = removeNestedNode(event.subchanges)
+      if (event.targetId === RESOURCE_GROUP_ID && !subchanges.length) return []
+      return [{ ...event, subchanges }]
     })
   }
 
@@ -260,6 +328,7 @@ export function useMatrixChangeTree() {
     recordCommentRemoved,
     recordNodePhaseChanged,
     recordDomainChanged,
+    recordScalingEntryChanged,
     recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
     syncNodeIdentityLabels,

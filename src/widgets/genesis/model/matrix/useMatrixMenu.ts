@@ -251,7 +251,9 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
         step: scalingStep.value,
         unit: scalingUnit.value,
         lotsMode: scalingMode.value,
-        parentType: parentNode.type
+        parentType: parentNode.type,
+        parentLabel: parentNode.label,
+        parentId
       }
     }
 
@@ -268,10 +270,18 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   function updateScalingEntry() {
     const node = state.effectiveSelectedNode.value
     if (!node || node.type !== 'scaling-entry') return
+    if (!node.params.parentId) {
+      const parentConnection = state.connections.value.find(connection => (
+        connection.toId === node.id &&
+        ['pyramiding', 'averaging'].includes(state.getNode(connection.fromId)?.type || '')
+      ))
+      if (parentConnection) node.params.parentId = parentConnection.fromId
+    }
     node.params.lots = scalingLots.value
     node.params.step = scalingStep.value
     node.params.unit = scalingUnit.value
     node.params.lotsMode = scalingMode.value
+    changeTree.recordScalingEntryChanged(node)
     state.saveMatrixData()
     state.forceUpdate()
   }
