@@ -1112,7 +1112,8 @@ export function useMatrixState() {
           viewState.value.scale = saved.view.scale ?? viewState.value.scale
         }
         if (saved.events && Array.isArray(saved.events)) {
-          changeTree.events.value = saved.events
+          const sanitizeSubs = (subs: any[]): any[] => (subs || []).map((s: any) => ({ ...s, subchanges: sanitizeSubs(s.subchanges) }))
+          changeTree.events.value = saved.events.map((ev: any) => ({ ...ev, subchanges: sanitizeSubs(ev.subchanges) }))
         } else {
           changeTree.events.value = []
         }
