@@ -260,6 +260,7 @@ import { useMatrixZones } from '../model/matrix/useMatrixZones'
 import { useMatrixUploads } from '../model/matrix/useMatrixUploads'
 import { usePathMath } from '../model/matrix/usePathMath'
 import { getMatrixStrategyName, isStrategyNode } from '../model/matrix/useMatrixStrategies'
+import { useExGenesisMatrixUndo } from '../model/matrix/useExGenesisMatrixUndo'
 
 import { initAssetService } from '@/shared/api/asset.service'
 
@@ -272,6 +273,7 @@ const boot = useMatrixBoot()
 const zoneTools = useMatrixZones(state)
 const uploads = useMatrixUploads(state)
 const pathMath = usePathMath(state)
+const undoManager = useExGenesisMatrixUndo()
 const isGitPanelOpen = ref(false)
 
 const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
