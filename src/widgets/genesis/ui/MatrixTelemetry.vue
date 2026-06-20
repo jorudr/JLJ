@@ -47,10 +47,26 @@
          <button
            v-if="canCreateStrategyVersion"
            type="button"
-           @click.stop="handleStrategyVersionRequest"
+           @click.stop="$emit('strategy-version-create')"
            class="tactical-button pointer-events-auto h-8 border border-current px-3 bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 font-mono text-[8px] font-black uppercase tracking-[0.28em] whitespace-nowrap shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
          >
            {{ locale === 'ru' ? 'Создать версию' : 'Create Version' }}
+         </button>
+         <button
+           v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges"
+           type="button"
+           @click.stop="$emit('strategy-version-update')"
+           class="tactical-button pointer-events-auto h-8 border border-current px-3 bg-nier-text-light/10 dark:bg-nier-text-dark/10 hover:bg-nier-text-light/20 dark:hover:bg-nier-text-dark/20 transition-all font-mono text-[8px] font-black uppercase tracking-[0.24em] whitespace-nowrap"
+         >
+           {{ locale === 'ru' ? 'Обновить версию' : 'Update Version' }}
+         </button>
+         <button
+           v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges"
+           type="button"
+           @click.stop="$emit('strategy-version-clear')"
+           class="tactical-button pointer-events-auto h-8 border border-red-700/70 px-3 text-red-700 dark:text-red-400 hover:bg-red-700/10 transition-all font-mono text-[8px] font-black uppercase tracking-[0.24em] whitespace-nowrap"
+         >
+           {{ locale === 'ru' ? 'Сбросить изменения' : 'Clear Changes' }}
          </button>
      </div>
 
@@ -162,10 +178,19 @@ const props = defineProps<{
   viewState: { scale: number }
   isScenarioContext: boolean
   canCreateStrategyVersion?: boolean
+  hasSelectedStrategyVersion?: boolean
+  hasStrategyVersionChanges?: boolean
   gitPanelOpen: boolean
 }>()
 
-const emit = defineEmits(['reset-view', 'update-scale', 'git-panel-state'])
+const emit = defineEmits([
+  'reset-view',
+  'update-scale',
+  'git-panel-state',
+  'strategy-version-create',
+  'strategy-version-update',
+  'strategy-version-clear'
+])
 
 const { locale } = useI18n()
 const changeTree = useMatrixChangeTree()
@@ -190,10 +215,6 @@ function toggleGitMenu() {
 function clearChangeTree() {
   changeTree.resetChanges()
   isGitMenuOpen.value = false
-}
-
-function handleStrategyVersionRequest() {
-  changeTree.recordStrategyVersionCreated()
 }
 
 const manualSectionsEn = [

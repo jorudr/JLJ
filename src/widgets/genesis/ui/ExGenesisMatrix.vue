@@ -117,8 +117,13 @@
       <!-- VIEWPORT TELEMETRY -->
       <MatrixTelemetry :view-state="state.viewState.value" :is-scenario-context="!!state.isScenarioContext.value"
                        :can-create-strategy-version="canCreateStrategyVersion"
+                       :has-selected-strategy-version="!!state.selectedStrategyVersion.value"
+                       :has-strategy-version-changes="state.hasStrategyVersionChanges.value"
                        :git-panel-open="isGitPanelOpen"
                        @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s"
+                       @strategy-version-create="state.createStrategyVersion"
+                       @strategy-version-update="state.updateSelectedStrategyVersion"
+                       @strategy-version-clear="state.clearStrategyVersionChanges"
                        @git-panel-state="isGitPanelOpen = $event" />
 
       <!-- OFFSCREEN STRATEGY INDICATORS -->

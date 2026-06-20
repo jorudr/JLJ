@@ -22,6 +22,7 @@ type MatrixChangeContainer = MatrixChangeEvent | {
 }
 
 const events = ref<MatrixChangeEvent[]>([])
+const disabledChanges = ref(new Set<string>())
 const RESOURCE_GROUP_ID = 'instruments-domains'
 
 export function useMatrixChangeTree() {
@@ -252,7 +253,23 @@ export function useMatrixChangeTree() {
   }
   function recordConnectionCreated(...args: any[]) {}
   function recordConnectionDeleted(...args: any[]) {}
-  function recordStrategyVersionCreated(...args: any[]) {}
+  function appendStrategyVersionCheckpoint(title: string, versionLabel?: string) {
+    events.value.push({
+      id: changeId(),
+      type: 'version',
+      title,
+      node: versionLabel || 'strategy version',
+      createdAt: Date.now(),
+      targetKind: 'version',
+      subchanges: []
+    })
+  }
+  function recordStrategyVersionCreated(versionLabel?: string) {
+    appendStrategyVersionCheckpoint('SET_STRATEGY_VERSION', versionLabel)
+  }
+  function recordStrategyVersionUpdated(versionLabel?: string) {
+    appendStrategyVersionCheckpoint('UPDATE_STRATEGY_VERSION', versionLabel)
+  }
   function recordNodeIdentityChanged(node: any, value: string, ...args: any[]) {
     setFinalNodeValue(node, 'identity', value)
   }
@@ -301,7 +318,7 @@ export function useMatrixChangeTree() {
 
   return {
     events,
-    disabledChanges: ref(new Set<string>()),
+    disabledChanges,
     recordNodeAdded,
     recordDomainAdded,
     recordNodeDeleted,
@@ -309,6 +326,7 @@ export function useMatrixChangeTree() {
     recordConnectionCreated,
     recordConnectionDeleted,
     recordStrategyVersionCreated,
+    recordStrategyVersionUpdated,
     recordNodeIdentityChanged,
     recordNodeDirectionChanged,
     recordNodePriorityChanged,

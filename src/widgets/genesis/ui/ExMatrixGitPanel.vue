@@ -5,6 +5,38 @@
         v-if="isOpen"
         class="tree-scroll-shell fixed right-10 z-[99999] pointer-events-auto"
       >
+        <div
+          v-if="savedVersions.length"
+          class="version-selector"
+          :class="isDark ? 'version-theme-dark' : 'version-theme-light'"
+        >
+          <button
+            type="button"
+            class="version-selector-trigger"
+            :aria-expanded="isVersionMenuOpen"
+            @click.stop="isVersionMenuOpen = !isVersionMenuOpen"
+          >
+            <span class="version-selector-mark">[v]</span>
+            <span>{{ selectedVersionLabel }}</span>
+            <span v-if="state.hasStrategyVersionChanges.value" class="version-selector-dirty">*</span>
+            <span class="tree-muted">{{ isVersionMenuOpen ? '[-]' : '[+]' }}</span>
+          </button>
+
+          <div v-if="isVersionMenuOpen" class="version-selector-menu">
+            <button
+              v-for="version in savedVersions"
+              :key="version.id"
+              type="button"
+              class="version-selector-option"
+              :class="{ 'is-selected': version.id === state.selectedStrategyVersionId.value }"
+              @click.stop="selectVersion(version.id)"
+            >
+              <span>{{ version.id === state.selectedStrategyVersionId.value ? '>' : ' ' }}</span>
+              <span>{{ version.label }}</span>
+            </button>
+          </div>
+        </div>
+
         <div class="terminal-tree" :class="isDark ? 'tree-theme-dark' : 'tree-theme-light'">
           <button
             v-for="(row, index) in treeRows"
@@ -66,6 +98,14 @@ const disabledChanges = changeTree.disabledChanges
 const workspace = 'genesis-matrix'
 const line = 'strategy'
 const expandedParents = ref<Set<string>>(new Set())
+const isVersionMenuOpen = ref(false)
+const savedVersions = computed(() => [...state.strategyVersions.value].reverse())
+const selectedVersionLabel = computed(() => state.selectedStrategyVersion.value?.label || 'Select Version')
+
+async function selectVersion(versionId: string) {
+  await state.selectStrategyVersion(versionId)
+  isVersionMenuOpen.value = false
+}
 
 const eventTypeClasses: Record<MatrixChangeType, string> = {
   add: 'tree-add',
@@ -371,6 +411,81 @@ function handleRowClick(row: TreeRow) {
 </script>
 
 <style scoped>
+.version-selector {
+  align-self: flex-end;
+  font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  margin-bottom: 10px;
+  position: relative;
+  width: max-content;
+  z-index: 4;
+}
+
+.version-theme-light {
+  color: rgb(34 34 32 / 0.94);
+}
+
+.version-theme-dark {
+  color: rgb(249 246 240 / 0.94);
+}
+
+.version-selector-trigger,
+.version-selector-option {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.version-selector-trigger {
+  align-items: center;
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 7px;
+  height: 24px;
+  padding: 0;
+}
+
+.version-selector-mark,
+.version-selector-dirty {
+  color: rgb(170 42 55);
+}
+
+.version-selector-menu {
+  background: rgb(246 250 247 / 0.96);
+  border: 1px solid rgb(34 34 32 / 0.22);
+  box-shadow: 6px 6px 0 rgb(34 34 32 / 0.1);
+  min-width: 180px;
+  padding: 4px 0;
+  position: absolute;
+  right: 0;
+  top: 27px;
+}
+
+.version-theme-dark .version-selector-menu {
+  background: rgb(9 13 15 / 0.96);
+  border-color: rgb(249 246 240 / 0.22);
+  box-shadow: 6px 6px 0 rgb(249 246 240 / 0.06);
+}
+
+.version-selector-option {
+  display: flex;
+  font-size: 10px;
+  font-weight: 700;
+  gap: 8px;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.version-selector-option:hover,
+.version-selector-option.is-selected {
+  background: rgb(126 24 36 / 0.12);
+  color: rgb(170 42 55);
+}
+
 .tree-scroll-shell {
   box-sizing: border-box;
   display: flex;

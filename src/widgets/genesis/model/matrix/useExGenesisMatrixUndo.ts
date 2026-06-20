@@ -63,11 +63,15 @@ export function useExGenesisMatrixUndo() {
     // Revert to previous state
     const previousState = buffer[buffer.length - 1]
     if (previousState) {
+      const versionCheckpoints = state.changeTree.events.value.filter(event => event.type === 'version')
       state.rootNodes.value = previousState.rootNodes
       state.rootConnections.value = previousState.rootConnections
       state.rootZones.value = previousState.rootZones
       if (previousState.treeEvents) {
-        state.changeTree.events.value = previousState.treeEvents
+        const restoredEvents = previousState.treeEvents.filter((event: any) => event.type !== 'version')
+        state.changeTree.events.value = [...restoredEvents, ...versionCheckpoints]
+          .filter((event, index, allEvents) => allEvents.findIndex(item => item.id === event.id) === index)
+          .sort((left, right) => left.createdAt - right.createdAt)
       }
       state.forceUpdate()
       state.saveMatrixData()

@@ -55,6 +55,29 @@ export interface MatrixPage {
   }
 }
 
+export interface MatrixStrategySnapshot {
+  pages: MatrixPage[]
+  activePageId: string | null
+  events: any[]
+  disabledChanges: string[]
+}
+
+export interface MatrixStrategyVersion {
+  id: string
+  label: string
+  createdAt: number
+  updatedAt: number
+  snapshot: MatrixStrategySnapshot
+}
+
+export interface MatrixAnonymousVersion {
+  id: 'anonymous'
+  baseVersionId: string | null
+  updatedAt: number
+  hasChanges: boolean
+  snapshot: MatrixStrategySnapshot
+}
+
 export type MenuCategory =
   | 'LOGIC'
   | 'METHODS'
@@ -98,6 +121,11 @@ const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
 const personalIndicators = ref<any[]>([])
 const updateKey = ref(0)
 const pendingNodeConfig = ref<any | null>(null)
+const strategyVersions = ref<MatrixStrategyVersion[]>([])
+const selectedStrategyVersionId = ref<string | null>(null)
+const anonymousStrategyVersion = ref<MatrixAnonymousVersion | null>(null)
+const hasStrategyVersionChanges = ref(false)
+let matrixPersistQueue: Promise<void> = Promise.resolve()
 
 function createPageId() {
   return 'page-' + Math.random().toString(36).substr(2, 9)
@@ -129,6 +157,9 @@ function getStrategyCount(nodes: Node[]) {
 export function useMatrixState() {
   const changeTree = useMatrixChangeTree()
   const forceUpdate = () => updateKey.value++
+  const selectedStrategyVersion = computed(() => (
+    strategyVersions.value.find(version => version.id === selectedStrategyVersionId.value) || null
+  ))
 
   const cloneMatrixValue = <T>(value: T): T => {
     return JSON.parse(JSON.stringify(value))
@@ -879,6 +910,10 @@ export function useMatrixState() {
     savedScales.clear()
     lastSelectedId.value = null
     changeTree.resetChanges()
+    strategyVersions.value = []
+    selectedStrategyVersionId.value = null
+    anonymousStrategyVersion.value = null
+    hasStrategyVersionChanges.value = false
     saveMatrixData()
   }
 
@@ -1059,42 +1094,200 @@ export function useMatrixState() {
     return splitLegacyDataIntoPages(saved)
   }
 
-  let saveTimeout: any = null
-  const saveMatrixData = async () => {
-    if (saveTimeout) clearTimeout(saveTimeout)
-    saveTimeout = setTimeout(async () => {
-      syncActivePageFromRoot()
+  function buildPersistedPages() {
+    syncActivePageFromRoot()
+    return matrixPages.value.map(page => ({
+      ...page,
+      nodes: page.nodes
+        .map(node => processNodeTree(node, page.nodes, page.connections))
+        .filter(node => node.type !== 'placeholder'),
+      connections: page.connections,
+      zones: page.zones
+    }))
+  }
 
-      const processedPages = matrixPages.value.map((page) => {
-        const processedNodes = page.nodes
-          .map(n => processNodeTree(n, page.nodes, page.connections))
-          .filter(n => n.type !== 'placeholder')
-        return {
-          ...page,
-          nodes: processedNodes,
-          connections: page.connections,
-          zones: page.zones
-        }
-      })
+  function captureStrategySnapshot(processedPages = buildPersistedPages()): MatrixStrategySnapshot {
+    return cloneMatrixValue({
+      pages: processedPages,
+      activePageId: activePageId.value,
+      events: changeTree.events.value,
+      disabledChanges: Array.from(changeTree.disabledChanges.value)
+    })
+  }
 
-      const data = {
-        pages: processedPages,
-        activePageId: activePageId.value,
-        nodes: processedPages.flatMap(page => page.nodes),
-        connections: processedPages.flatMap(page => page.connections),
-        zones: processedPages.flatMap(page => page.zones),
-        events: changeTree.events.value,
-        disabledChanges: Array.from(changeTree.disabledChanges.value),
-        view: {
-          panX: viewState.value.panX,
-          panY: viewState.value.panY,
-          scale: viewState.value.scale
-        },
-        personalIndicators: personalIndicators.value
+  function canonicalStrategySnapshot(snapshot: MatrixStrategySnapshot) {
+    const canonical = cloneMatrixValue(snapshot) as any
+    delete canonical.activePageId
+
+    const normalizeNodeForComparison = (node: any) => {
+      delete node.x
+      delete node.y
+      if (node.params) {
+        delete node.params.isEditingName
+        delete node.params.isEditingDescription
+        delete node.params.logicalStructure
       }
-      const appBootStore = useAppBootStore()
-      appBootStore.genesisMatrixCache = data
-      await saveToDisk(STORAGE_KEY, data)
+      node.subGraph?.nodes?.forEach(normalizeNodeForComparison)
+      node.subGraph?.connections?.forEach((connection: any) => {
+        delete connection.bundleStemX
+        delete connection.bundleStemY
+      })
+      node.subGraph?.zones?.forEach((zone: any) => {
+        delete zone.x
+        delete zone.y
+        delete zone.width
+        delete zone.height
+      })
+    }
+
+    canonical.pages?.forEach((page: any) => {
+      delete page.view
+      page.nodes?.forEach(normalizeNodeForComparison)
+      page.connections?.forEach((connection: any) => {
+        delete connection.bundleStemX
+        delete connection.bundleStemY
+      })
+      page.zones?.forEach((zone: any) => {
+        delete zone.x
+        delete zone.y
+        delete zone.width
+        delete zone.height
+      })
+    })
+
+    canonical.events?.forEach((event: any) => delete event.createdAt)
+    return canonical
+  }
+
+  function strategySnapshotsMatch(left: MatrixStrategySnapshot, right: MatrixStrategySnapshot) {
+    return JSON.stringify(canonicalStrategySnapshot(left)) === JSON.stringify(canonicalStrategySnapshot(right))
+  }
+
+  function refreshAnonymousStrategyVersion(snapshot = captureStrategySnapshot()) {
+    const selectedVersion = selectedStrategyVersion.value
+    const hasChanges = !!selectedVersion && !strategySnapshotsMatch(snapshot, selectedVersion.snapshot)
+    hasStrategyVersionChanges.value = hasChanges
+    anonymousStrategyVersion.value = {
+      id: 'anonymous',
+      baseVersionId: selectedVersion?.id || null,
+      updatedAt: Date.now(),
+      hasChanges,
+      snapshot: cloneMatrixValue(snapshot)
+    }
+  }
+
+  function applyStrategySnapshot(snapshot: MatrixStrategySnapshot) {
+    matrixPages.value = normalizeSavedPages({ pages: cloneMatrixValue(snapshot.pages) })
+    activePageId.value = snapshot.activePageId && matrixPages.value.some(page => page.id === snapshot.activePageId)
+      ? snapshot.activePageId
+      : matrixPages.value[0]?.id || null
+    ensurePages()
+    if (activePage.value) applyPage(activePage.value)
+    changeTree.events.value = cloneMatrixValue(snapshot.events || [])
+    changeTree.disabledChanges.value = new Set(snapshot.disabledChanges || [])
+    navigationStack.value = []
+    lastSelectedId.value = null
+    forceUpdate()
+  }
+
+  async function createStrategyVersion() {
+    const versionNumber = strategyVersions.value.length + 1
+    const label = `Strategy v${versionNumber}`
+    changeTree.recordStrategyVersionCreated(label)
+    const snapshot = captureStrategySnapshot()
+    const now = Date.now()
+    const version: MatrixStrategyVersion = {
+      id: `strategy-version-${now.toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      label,
+      createdAt: now,
+      updatedAt: now,
+      snapshot
+    }
+    strategyVersions.value = [...strategyVersions.value, version]
+    selectedStrategyVersionId.value = version.id
+    refreshAnonymousStrategyVersion(snapshot)
+    await saveMatrixData(true)
+  }
+
+  async function updateSelectedStrategyVersion() {
+    const selectedId = selectedStrategyVersionId.value
+    const versionIndex = strategyVersions.value.findIndex(version => version.id === selectedId)
+    if (versionIndex === -1) return
+    const currentVersion = strategyVersions.value[versionIndex]!
+    changeTree.recordStrategyVersionUpdated(currentVersion.label)
+    const snapshot = captureStrategySnapshot()
+    strategyVersions.value[versionIndex] = {
+      ...currentVersion,
+      updatedAt: Date.now(),
+      snapshot
+    }
+    strategyVersions.value = [...strategyVersions.value]
+    refreshAnonymousStrategyVersion(snapshot)
+    await saveMatrixData(true)
+  }
+
+  async function clearStrategyVersionChanges() {
+    const version = selectedStrategyVersion.value
+    if (!version) return
+    applyStrategySnapshot(version.snapshot)
+    refreshAnonymousStrategyVersion(version.snapshot)
+    await saveMatrixData(true)
+  }
+
+  async function selectStrategyVersion(versionId: string) {
+    const version = strategyVersions.value.find(item => item.id === versionId)
+    if (!version) return
+    selectedStrategyVersionId.value = version.id
+    applyStrategySnapshot(version.snapshot)
+    refreshAnonymousStrategyVersion(version.snapshot)
+    await saveMatrixData(true)
+  }
+
+  let saveTimeout: any = null
+  const persistMatrixData = async () => {
+    const processedPages = buildPersistedPages()
+    const currentSnapshot = captureStrategySnapshot(processedPages)
+    refreshAnonymousStrategyVersion(currentSnapshot)
+
+    const data = {
+      pages: processedPages,
+      activePageId: activePageId.value,
+      nodes: processedPages.flatMap(page => page.nodes),
+      connections: processedPages.flatMap(page => page.connections),
+      zones: processedPages.flatMap(page => page.zones),
+      events: currentSnapshot.events,
+      disabledChanges: currentSnapshot.disabledChanges,
+      view: {
+        panX: viewState.value.panX,
+        panY: viewState.value.panY,
+        scale: viewState.value.scale
+      },
+      personalIndicators: personalIndicators.value,
+      strategyVersioning: {
+        schemaVersion: 1,
+        selectedVersionId: selectedStrategyVersionId.value,
+        versions: cloneMatrixValue(strategyVersions.value),
+        anonymous: cloneMatrixValue(anonymousStrategyVersion.value)
+      }
+    }
+    const appBootStore = useAppBootStore()
+    appBootStore.genesisMatrixCache = data
+    matrixPersistQueue = matrixPersistQueue
+      .catch(() => undefined)
+      .then(() => saveToDisk(STORAGE_KEY, data))
+    await matrixPersistQueue
+  }
+
+  const saveMatrixData = async (immediate = false) => {
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = null
+    if (immediate) {
+      await persistMatrixData()
+      return
+    }
+    saveTimeout = setTimeout(() => {
+      saveTimeout = null
+      void persistMatrixData()
     }, 1000)
   }
 
@@ -1126,7 +1319,33 @@ export function useMatrixState() {
         } else {
           changeTree.disabledChanges.value = new Set()
         }
+        const savedVersioning = saved.strategyVersioning
+        if (savedVersioning?.schemaVersion === 1 && Array.isArray(savedVersioning.versions)) {
+          strategyVersions.value = savedVersioning.versions
+            .filter((version: any) => version?.id && version?.snapshot?.pages)
+            .map((version: any) => ({
+              id: String(version.id),
+              label: String(version.label || 'Strategy Version'),
+              createdAt: Number(version.createdAt) || Date.now(),
+              updatedAt: Number(version.updatedAt) || Number(version.createdAt) || Date.now(),
+              snapshot: {
+                pages: normalizeSavedPages({ pages: version.snapshot.pages }),
+                activePageId: version.snapshot.activePageId || null,
+                events: cloneMatrixValue(version.snapshot.events || []),
+                disabledChanges: [...(version.snapshot.disabledChanges || [])]
+              }
+            }))
+          selectedStrategyVersionId.value = strategyVersions.value.some(
+            version => version.id === savedVersioning.selectedVersionId
+          ) ? savedVersioning.selectedVersionId : null
+          anonymousStrategyVersion.value = savedVersioning.anonymous || null
+        } else {
+          strategyVersions.value = []
+          selectedStrategyVersionId.value = null
+          anonymousStrategyVersion.value = null
+        }
         applyTreeStateToMatrix(changeTree.disabledChanges.value)
+        refreshAnonymousStrategyVersion(captureStrategySnapshot())
         if (saved.personalIndicators) {
           personalIndicators.value = saved.personalIndicators
         }
@@ -1137,6 +1356,10 @@ export function useMatrixState() {
       console.warn('[GenesisPersistence] fallback:', err)
       matrixPages.value = []
       activePageId.value = null
+      strategyVersions.value = []
+      selectedStrategyVersionId.value = null
+      anonymousStrategyVersion.value = null
+      hasStrategyVersionChanges.value = false
       ensurePages()
     }
   }
@@ -1318,6 +1541,14 @@ export function useMatrixState() {
     saveMatrixData()
   }, { deep: true })
 
+  watch(changeTree.events, () => {
+    void saveMatrixData(true)
+  }, { deep: true })
+
+  watch(() => Array.from(changeTree.disabledChanges.value), () => {
+    void saveMatrixData(true)
+  })
+
   watch([() => viewState.value.panX, () => viewState.value.panY, () => viewState.value.scale], () => {
     if (isScenarioContext.value && viewState.value.scale !== 1) {
       viewState.value.scale = 1
@@ -1343,6 +1574,11 @@ export function useMatrixState() {
     activeEmotionTab,
     personalIndicators,
     pendingNodeConfig,
+    strategyVersions,
+    selectedStrategyVersionId,
+    selectedStrategyVersion,
+    anonymousStrategyVersion,
+    hasStrategyVersionChanges,
     updateKey,
     forceUpdate,
     handleNodeMoved,
@@ -1381,6 +1617,10 @@ export function useMatrixState() {
     clearBoard,
     mergeNodes,
     refreshMergeStatus,
+    createStrategyVersion,
+    updateSelectedStrategyVersion,
+    clearStrategyVersionChanges,
+    selectStrategyVersion,
     saveMatrixData,
     restoreData,
     applyTreeStateToMatrix,
