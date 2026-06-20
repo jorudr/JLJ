@@ -115,6 +115,11 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
     const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
     const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
 
+    let displayValue = subchange.value;
+    if (subchange.label === 'table') {
+      displayValue = 'table change';
+    }
+
     rows.push({
       toggleId: subchange.id,
       parentIds,
@@ -126,7 +131,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
         { text: ' ' },
         { text: subchange.label, class: 'tree-subkey' },
         { text: ': ' },
-        { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
+        { text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
       ]
     })
 
@@ -236,6 +241,12 @@ const treeRows = computed<TreeRow[]>(() => {
         const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
         const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
         
+        let displayValue = subchange.value;
+        if (subchange.label === 'table') {
+          const index = event.subchanges.filter(s => s.label === 'table').findIndex(s => s.id === subchange.id);
+          displayValue = `table change ${index + 1}`;
+        }
+
         rows.push({
           toggleId: subchange.id,
           parentIds: [event.id],
@@ -246,7 +257,7 @@ const treeRows = computed<TreeRow[]>(() => {
             { text: ' ' },
             { text: subchange.label, class: 'tree-subkey' },
             { text: ': ' },
-            { text: formatTreeText(subchange.value, subchange.label === 'text' ? 15 : 35) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
+            { text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
           ]
         })
 

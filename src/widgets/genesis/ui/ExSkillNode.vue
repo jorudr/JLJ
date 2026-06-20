@@ -262,17 +262,23 @@
                </div>
 
                <div v-else-if="node.type === 'checklist-panel'" class="flex-1 min-h-0 px-3 py-2 overflow-y-auto custom-scrollbar space-y-2">
-                  <div v-for="item in node.params.items || []" :key="item.id" class="flex items-center gap-2">
+                  <div v-for="item in node.params.items || []" :key="item.id" class="flex items-center gap-2 group/checkitem">
                      <button @mousedown.stop
-                             @click.stop="item.done = !item.done"
+                             @click.stop="toggleChecklistItem(item)"
                              class="w-3.5 h-3.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center flex-shrink-0">
                         <div v-if="item.done" class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45"></div>
                      </button>
-                     <input v-model="item.text"
+                     <input :value="item.text"
+                            @input="updateChecklistItemText(item, $event)"
                             @mousedown.stop
                             @click.stop
                             class="flex-1 min-w-0 bg-transparent outline-none text-[9px] font-mono uppercase tracking-wide text-nier-text-light dark:text-nier-text-dark"
                             :class="item.done ? 'line-through opacity-35' : ''" />
+                     <button @mousedown.stop
+                             @click.stop="removeChecklistItem(item)"
+                             class="w-3.5 h-3.5 flex items-center justify-center opacity-0 group-hover/checkitem:opacity-50 hover:!opacity-100 transition-opacity">
+                       <span class="text-[8px] font-mono leading-none scale-125">×</span>
+                     </button>
                   </div>
                   <button @mousedown.stop
                           @click.stop="addChecklistItem"
@@ -1291,11 +1297,73 @@ function formatPanelStroke(stroke: any) {
 
 function addChecklistItem() {
   if (!Array.isArray(props.node.params.items)) props.node.params.items = []
-  props.node.params.items.push({
+  const newItem = {
     id: 'c' + Date.now().toString(36),
     text: 'NEW_CHECK',
     done: false
-  })
+  }
+  props.node.params.items.push(newItem)
+
+  changeTree.recordChecklistItemAdded(
+    props.node,
+    newItem,
+    {
+      undo: () => {
+        props.node.params.items = props.node.params.items.filter((i: any) => i.id !== newItem.id)
+      },
+      redo: () => {
+        const exists = props.node.params.items.find((i: any) => i.id === newItem.id)
+        if (!exists) props.node.params.items.push(newItem)
+      }
+    }
+  )
+}
+
+function removeChecklistItem(item: any) {
+  const index = props.node.params.items.findIndex((i: any) => i.id === item.id)
+  if (index !== -1) {
+    const copy = { ...item }
+    props.node.params.items.splice(index, 1)
+
+    changeTree.recordChecklistItemRemoved(
+      props.node,
+      copy,
+      {
+        undo: () => {
+          const exists = props.node.params.items.find((i: any) => i.id === copy.id)
+          if (!exists) props.node.params.items.splice(index, 0, copy)
+        },
+        redo: () => {
+          props.node.params.items = props.node.params.items.filter((i: any) => i.id !== copy.id)
+        }
+      }
+    )
+  }
+}
+
+function toggleChecklistItem(item: any) {
+  item.done = !item.done
+}
+
+function updateChecklistItemText(item: any, event: Event) {
+  const val = (event.target as HTMLInputElement).value
+  const prev = item.text
+  item.text = val
+
+  changeTree.recordChecklistItemTextChanged(
+    props.node,
+    item,
+    {
+      undo: () => {
+        const target = props.node.params.items.find((i: any) => i.id === item.id)
+        if (target) target.text = prev
+      },
+      redo: () => {
+        const target = props.node.params.items.find((i: any) => i.id === item.id)
+        if (target) target.text = val
+      }
+    }
+  )
 }
 
 function ensureTableShape() {

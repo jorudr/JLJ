@@ -111,6 +111,7 @@ function addSubchange(parent: MatrixChangeEvent | MatrixSubchange, label: string
     action,
     payload
   }
+  if (!parent.subchanges) parent.subchanges = []
   parent.subchanges.push(subchange)
   events.value = [...events.value]
   return subchange
@@ -480,6 +481,7 @@ function findLogicLabelSubchange(connection: { fromId: string, toId: string, lab
     return normalized === 'and' || normalized === 'or'
   }
 
+  if (!parentChange.subchanges) return
   for (let i = parentChange.subchanges.length - 1; i >= 0; i--) {
     const subchange = parentChange.subchanges[i]
     if (!subchange?.subchanges?.length) continue
@@ -796,7 +798,7 @@ export function useMatrixChangeTree() {
     if (value === 'NONE') {
       addSubchange(parentEvent, 'direction_removed', value, undefined, action)
     } else {
-      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'direction' || s.label === 'direction_removed')
+      const lastSub = [...(parentEvent.subchanges || [])].reverse().find(s => s.label === 'direction' || s.label === 'direction_removed')
       if (lastSub && lastSub.label === 'direction') {
         lastSub.value = value
         const originalUndo = lastSub.action?.undo
@@ -816,7 +818,7 @@ export function useMatrixChangeTree() {
     if (value === 'NONE') {
       addSubchange(parentEvent, 'phase_removed', value, undefined, action)
     } else {
-      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'phase' || s.label === 'phase_removed')
+      const lastSub = [...(parentEvent.subchanges || [])].reverse().find(s => s.label === 'phase' || s.label === 'phase_removed')
       if (lastSub && lastSub.label === 'phase') {
         lastSub.value = value
         const originalUndo = lastSub.action?.undo
@@ -836,7 +838,7 @@ export function useMatrixChangeTree() {
     if (value === 'NONE') {
       addSubchange(parentEvent, 'priority_removed', value, undefined, action)
     } else {
-      const lastSub = [...parentEvent.subchanges].reverse().find(s => s.label === 'priority' || s.label === 'priority_removed')
+      const lastSub = [...(parentEvent.subchanges || [])].reverse().find(s => s.label === 'priority' || s.label === 'priority_removed')
       if (lastSub && lastSub.label === 'priority') {
         lastSub.value = value
         const originalUndo = lastSub.action?.undo
@@ -877,6 +879,30 @@ export function useMatrixChangeTree() {
 
   function recordCommentRemoved(node: any, comment: any, action?: MatrixChangeAction) {
     addSubchange(ensureNodeParent(node), 'comment_removed', comment?.text || 'comment', action)
+  }
+
+  function recordChecklistItemAdded(node: any, item: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'ADD_ITEM', item.text || 'NEW_CHECK', item.id, action)
+  }
+
+  function recordChecklistItemRemoved(node: any, item: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'REMOVE_ITEM', item.text || 'NEW_CHECK', item.id, action)
+  }
+
+  function recordChecklistItemTextChanged(node: any, item: any, action?: MatrixChangeAction) {
+    const parentEvent = ensureNodeParent(node)
+    const lastSub = [...(parentEvent.subchanges || [])].reverse().find(s => s.label === 'ITEM_TEXT' && s.targetId === item.id)
+    if (lastSub) {
+      lastSub.value = item.text
+      const originalUndo = lastSub.action?.undo
+      lastSub.action = {
+        undo: originalUndo || action?.undo,
+        redo: action?.redo
+      }
+      events.value = [...events.value]
+    } else {
+      addSubchange(parentEvent, 'ITEM_TEXT', item.text, item.id, action)
+    }
   }
 
   function recordDomainAdded(domain: any, containedNodes: any[], action?: MatrixChangeAction, nodeActionFactory?: (node: any) => MatrixChangeAction | undefined) {
@@ -1045,7 +1071,7 @@ export function useMatrixChangeTree() {
   function recordConnectionLabelChanged(connection: { fromId: string, toId: string, label?: string, bundleId?: string }, label: string | null, action?: MatrixChangeAction, memberNode?: any, memberAction?: MatrixChangeAction) {
     const sourceNode = { id: connection.fromId, label: connection.fromId }
     const parentChange = ensureNodeParent(sourceNode)
-    const toSubchange = [...parentChange.subchanges].reverse().find(s => s.label === 'to' && s.targetId === connection.toId)
+    const toSubchange = [...(parentChange.subchanges || [])].reverse().find(s => s.label === 'to' && s.targetId === connection.toId)
     
     if (toSubchange) {
       if (!toSubchange.subchanges) toSubchange.subchanges = []
@@ -1101,7 +1127,7 @@ export function useMatrixChangeTree() {
   function updateConnectionAction(fromId: string, toId: string, targetNode: any, action: MatrixChangeAction) {
     const parentChange = findNodeChangeParent(fromId)
     if (parentChange) {
-      const sub = parentChange.subchanges.find(s => s.targetId === toId && s.label === 'to')
+      const sub = parentChange.subchanges?.find(s => s.targetId === toId && s.label === 'to')
       if (sub) {
         sub.action = action
       }
@@ -1148,6 +1174,9 @@ export function useMatrixChangeTree() {
     recordCommentAdded,
     recordCommentTextChanged,
     recordCommentRemoved,
+    recordChecklistItemAdded,
+    recordChecklistItemRemoved,
+    recordChecklistItemTextChanged,
     recordDomainAdded,
     recordDomainDeleted,
     disableDomainAddEvent,
