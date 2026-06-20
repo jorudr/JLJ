@@ -295,6 +295,9 @@ export function useMatrixChangeTree() {
   function recordChecklistItemRemoved(...args: any[]) {}
   function recordChecklistItemTextChanged(...args: any[]) {}
   function recordNodeTableChanged(...args: any[]) {}
+  function recordNodeScreenshotChanged(...args: any[]) {}
+  function recordNodeFileAttachmentChanged(...args: any[]) {}
+  function recordNodeDrawingChanged(...args: any[]) {}
   function recordCommentTextChanged(...args: any[]) {}
   function recordCommentRemoved(...args: any[]) {}
   function recordNodePhaseChanged(node: any, value: string, ...args: any[]) {
@@ -342,6 +345,9 @@ export function useMatrixChangeTree() {
     recordChecklistItemRemoved,
     recordChecklistItemTextChanged,
     recordNodeTableChanged,
+    recordNodeScreenshotChanged,
+    recordNodeFileAttachmentChanged,
+    recordNodeDrawingChanged,
     recordCommentTextChanged,
     recordCommentRemoved,
     recordNodePhaseChanged,

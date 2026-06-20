@@ -60,6 +60,12 @@ export interface MatrixStrategySnapshot {
   activePageId: string | null
   events: any[]
   disabledChanges: string[]
+  view: {
+    panX: number
+    panY: number
+    scale: number
+  }
+  personalIndicators: any[]
 }
 
 export interface MatrixStrategyVersion {
@@ -1111,13 +1117,20 @@ export function useMatrixState() {
       pages: processedPages,
       activePageId: activePageId.value,
       events: changeTree.events.value,
-      disabledChanges: Array.from(changeTree.disabledChanges.value)
+      disabledChanges: Array.from(changeTree.disabledChanges.value),
+      view: {
+        panX: viewState.value.panX,
+        panY: viewState.value.panY,
+        scale: viewState.value.scale
+      },
+      personalIndicators: personalIndicators.value
     })
   }
 
   function canonicalStrategySnapshot(snapshot: MatrixStrategySnapshot) {
     const canonical = cloneMatrixValue(snapshot) as any
     delete canonical.activePageId
+    delete canonical.view
 
     const normalizeNodeForComparison = (node: any) => {
       delete node.x
@@ -1183,6 +1196,12 @@ export function useMatrixState() {
       : matrixPages.value[0]?.id || null
     ensurePages()
     if (activePage.value) applyPage(activePage.value)
+    if (snapshot.view) {
+      viewState.value.panX = snapshot.view.panX
+      viewState.value.panY = snapshot.view.panY
+      viewState.value.scale = snapshot.view.scale
+    }
+    personalIndicators.value = cloneMatrixValue(snapshot.personalIndicators || [])
     changeTree.events.value = cloneMatrixValue(snapshot.events || [])
     changeTree.disabledChanges.value = new Set(snapshot.disabledChanges || [])
     navigationStack.value = []
@@ -1332,7 +1351,13 @@ export function useMatrixState() {
                 pages: normalizeSavedPages({ pages: version.snapshot.pages }),
                 activePageId: version.snapshot.activePageId || null,
                 events: cloneMatrixValue(version.snapshot.events || []),
-                disabledChanges: [...(version.snapshot.disabledChanges || [])]
+                disabledChanges: [...(version.snapshot.disabledChanges || [])],
+                view: cloneMatrixValue(version.snapshot.view || saved.view || {
+                  panX: 0,
+                  panY: 0,
+                  scale: 0.5
+                }),
+                personalIndicators: cloneMatrixValue(version.snapshot.personalIndicators || saved.personalIndicators || [])
               }
             }))
           selectedStrategyVersionId.value = strategyVersions.value.some(
@@ -1344,11 +1369,11 @@ export function useMatrixState() {
           selectedStrategyVersionId.value = null
           anonymousStrategyVersion.value = null
         }
-        applyTreeStateToMatrix(changeTree.disabledChanges.value)
-        refreshAnonymousStrategyVersion(captureStrategySnapshot())
         if (saved.personalIndicators) {
           personalIndicators.value = saved.personalIndicators
         }
+        applyTreeStateToMatrix(changeTree.disabledChanges.value)
+        refreshAnonymousStrategyVersion(captureStrategySnapshot())
       } else {
         throw new Error('No saved nodes found')
       }
