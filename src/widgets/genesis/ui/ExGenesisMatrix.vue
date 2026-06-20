@@ -292,8 +292,11 @@ const canCreateStrategyVersion = computed(() => {
   const strategyCount = nodes.filter(isStrategyNode).length
   const scenarioCount = nodes.filter(node => node.type === 'scenario').length
   const conditionCount = nodes.filter(node => node.type === 'condition' || node.type === 'conditions').length
+  const canCreateSnapshot = state.strategyVersions.value.length === 0 || (
+    !!state.selectedStrategyVersion.value && state.hasStrategyVersionChanges.value
+  )
 
-  return strategyCount === 1 && scenarioCount >= 1 && conditionCount >= 1
+  return strategyCount === 1 && scenarioCount >= 1 && conditionCount >= 1 && canCreateSnapshot
 })
 
 const windowSize = ref({ width: typeof window !== 'undefined' ? window.innerWidth : 1000, height: typeof window !== 'undefined' ? window.innerHeight : 1000 })

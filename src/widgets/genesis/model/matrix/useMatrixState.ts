@@ -1210,6 +1210,12 @@ export function useMatrixState() {
   }
 
   async function createStrategyVersion() {
+    const currentSnapshot = captureStrategySnapshot()
+    if (strategyVersions.value.length > 0) {
+      const selectedVersion = selectedStrategyVersion.value
+      if (!selectedVersion || strategySnapshotsMatch(currentSnapshot, selectedVersion.snapshot)) return
+    }
+
     const versionNumber = strategyVersions.value.reduce((highest, version) => {
       const match = version.label.match(/v(\d+)$/i)
       return Math.max(highest, match ? Number(match[1]) : 0)
