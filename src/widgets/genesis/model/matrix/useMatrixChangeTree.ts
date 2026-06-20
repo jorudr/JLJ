@@ -286,6 +286,31 @@ function getNodeDependentSubchangeIds(id: string) {
   return dependentIds
 }
 
+function getRemovalDisabledLogicLabelId(id: string) {
+  const change = findChangeContext(id)?.change as MatrixSubchange | undefined
+  return change?.label === 'removed' && change.payload?.disablesLogicLabel
+    ? change.payload.logicLabelId as string
+    : undefined
+}
+
+function isLogicLabelSuppressedByRemoval(labelId: string, disabledIds: Set<string>) {
+  for (const event of events.value) {
+    const stack = [...event.subchanges]
+    while (stack.length) {
+      const subchange = stack.shift()
+      if (!subchange) continue
+      if (
+        subchange.label === 'removed' &&
+        subchange.payload?.disablesLogicLabel &&
+        subchange.payload.logicLabelId === labelId &&
+        !disabledIds.has(subchange.id)
+      ) return true
+      if (subchange.subchanges?.length) stack.unshift(...subchange.subchanges)
+    }
+  }
+  return false
+}
+
 function isLogicLabelAddNode(id: string) {
   const context = findChangeContext(id)
   return (context?.change as MatrixSubchange | undefined)?.label === 'ADD_NODE' && context?.parent?.label === 'link_label'
@@ -690,17 +715,52 @@ export function useMatrixChangeTree() {
     )
   }
 
-  function recordConnectionDeleted(connection: { fromId: string, toId: string }, fromNode?: any, toNode?: any, action?: MatrixChangeAction) {
+  function recordConnectionDeleted(connection: { fromId: string, toId: string, label?: string, bundleId?: string }, fromNode?: any, toNode?: any, action?: MatrixChangeAction) {
     const sourceNode = fromNode || { id: connection.fromId, label: connection.fromId }
     const targetNode = toNode || { id: connection.toId, label: connection.toId }
+    const logicLabel = connection.bundleId ? findLogicLabelSubchange(connection) : undefined
+    const logicMembers = logicLabel?.subchanges?.filter(subchange => subchange.label === 'ADD_NODE') || []
+    const memberIndex = logicMembers.findIndex(subchange => subchange.targetId === connection.toId)
 
-    addSubchange(
+    if (logicLabel && memberIndex > 0) {
+      if (!logicLabel.subchanges) logicLabel.subchanges = []
+      logicLabel.subchanges.push({
+        id: nextId('sub'),
+        label: 'removed',
+        value: readableNodeLine(targetNode),
+        targetId: connection.toId,
+        action,
+        payload: {
+          connection: { ...connection }
+        }
+      })
+      events.value = [...events.value]
+      return
+    }
+
+    const removedSubchange = addSubchange(
       ensureNodeParent(sourceNode),
       'removed',
       readableNodeLine(targetNode),
       connection.toId,
-      action
+      action,
+      logicLabel && memberIndex === 0
+        ? {
+            connection: { ...connection },
+            disablesLogicLabel: true,
+            logicLabelId: logicLabel.id
+          }
+        : undefined
     )
+
+    if (removedSubchange && logicLabel && memberIndex === 0) {
+      const next = new Set(disabledChanges.value)
+      next.add(logicLabel.id)
+      collectDescendantChangeIds(logicLabel.id).forEach(descendantId => next.add(descendantId))
+      disabledChanges.value = next
+      setChangeEnabled(logicLabel.id, false)
+      action?.redo?.()
+    }
   }
 
   function recordStrategyVersionCreated(versionLabel?: string, action?: MatrixChangeAction) {
@@ -1055,6 +1115,8 @@ export function useMatrixChangeTree() {
     isNodeContentAddNode,
     getNodeContentEventId,
     getNodeDependentSubchangeIds,
+    getRemovalDisabledLogicLabelId,
+    isLogicLabelSuppressedByRemoval,
     setChangeOwnActionEnabled,
     syncNodeIdentityLabels,
     resetChanges,

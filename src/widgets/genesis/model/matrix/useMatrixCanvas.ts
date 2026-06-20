@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import type { useMatrixState, Point, Node } from './useMatrixState'
+import type { useMatrixState, Point, Node, Connection } from './useMatrixState'
 import { useMatrixChangeTree } from './useMatrixChangeTree'
 
 export function isTextEditingTarget(target: EventTarget | null) {
@@ -14,7 +14,7 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     return JSON.parse(JSON.stringify(value))
   }
   
-  const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', originalFromPort?: 'left'|'right'|'top'|'bottom', originalToId?: string, originalToPort?: 'left'|'right'|'top'|'bottom', current: Point } | null>(null)
+  const activeWireRaw = ref<{ fromId: string, fromPort?: 'left'|'right'|'top'|'bottom', originalFromPort?: 'left'|'right'|'top'|'bottom', originalToId?: string, originalToPort?: 'left'|'right'|'top'|'bottom', originalLabel?: string, originalBundleId?: string, originalBundleStemX?: number, originalBundleStemY?: number, originalBundleConnections?: Connection[], current: Point } | null>(null)
 
   const screenToWorld = (clientX: number, clientY: number) => {
     if (!canvasWrapper.value) return { x: 0, y: 0 }
@@ -138,6 +138,13 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
           originalFromPort: conn.fromPort || 'right',
           originalToId: conn.toId,
           originalToPort: conn.toPort || 'left',
+          originalLabel: conn.label,
+          originalBundleId: conn.bundleId,
+          originalBundleStemX: conn.bundleStemX,
+          originalBundleStemY: conn.bundleStemY,
+          originalBundleConnections: conn.bundleId
+            ? cloneMatrixValue(connList.filter(connection => connection.fromId === conn.fromId && connection.bundleId === conn.bundleId))
+            : undefined,
           current: { x: targetNode.x, y: targetNode.y } 
         }
         connList.splice(connIndex, 1)
@@ -156,7 +163,11 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         fromId: activeWireRaw.value.fromId, 
         toId: targetNode.id,
         fromPort: activeWireRaw.value.fromPort,
-        toPort: port
+        toPort: port,
+        ...(activeWireRaw.value.originalLabel ? { label: activeWireRaw.value.originalLabel } : {}),
+        ...(activeWireRaw.value.originalBundleId ? { bundleId: activeWireRaw.value.originalBundleId } : {}),
+        ...(activeWireRaw.value.originalBundleStemX !== undefined ? { bundleStemX: activeWireRaw.value.originalBundleStemX } : {}),
+        ...(activeWireRaw.value.originalBundleStemY !== undefined ? { bundleStemY: activeWireRaw.value.originalBundleStemY } : {})
       }
       state.connections.value.push(newConn)
       const connectionSnapshot = cloneMatrixValue(newConn)
@@ -265,35 +276,78 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
         fromId: activeWireRaw.value.fromId, 
         toId: activeWireRaw.value.originalToId, 
         fromPort: activeWireRaw.value.originalFromPort, 
-        toPort: activeWireRaw.value.originalToPort 
+        toPort: activeWireRaw.value.originalToPort,
+        label: activeWireRaw.value.originalLabel,
+        bundleId: activeWireRaw.value.originalBundleId,
+        bundleStemX: activeWireRaw.value.originalBundleStemX,
+        bundleStemY: activeWireRaw.value.originalBundleStemY
       }
       const connectionSnapshot = cloneMatrixValue(connInfo)
+      const bundleSnapshot = cloneMatrixValue(activeWireRaw.value.originalBundleConnections || [])
+      const shouldCollapseBundle = !!connectionSnapshot.bundleId && bundleSnapshot.length === 2
+      const bundleTargetIds = new Set(bundleSnapshot.map(connection => connection.toId))
       const container = state.createActiveContainerAccess()
-      
-      changeTree.recordConnectionDeleted(connInfo, state.getNode(connInfo.fromId), state.getNode(connInfo.toId), {
+      const isSameConnection = (connection: Connection, snapshot: Connection) => (
+        connection.fromId === snapshot.fromId &&
+        connection.toId === snapshot.toId &&
+        (connection.fromPort || 'right') === (snapshot.fromPort || 'right') &&
+        (connection.toPort || 'left') === (snapshot.toPort || 'left')
+      )
+      const isDefaultBundleConnection = bundleSnapshot.length > 1 && isSameConnection(bundleSnapshot[0]!, connectionSnapshot)
+      const shouldRestoreWholeBundle = shouldCollapseBundle || isDefaultBundleConnection
+
+      const deleteAction = {
         undo: () => {
-          const exists = container.getConnections().some(conn => (
-            conn.fromId === connectionSnapshot.fromId &&
-            conn.toId === connectionSnapshot.toId &&
-            conn.fromPort === connectionSnapshot.fromPort &&
-            conn.toPort === connectionSnapshot.toPort
-          ))
+          if (shouldRestoreWholeBundle) {
+            container.setConnections([
+              ...container.getConnections().filter(conn => !(
+                conn.fromId === connectionSnapshot.fromId && bundleTargetIds.has(conn.toId)
+              )),
+              ...cloneMatrixValue(bundleSnapshot)
+            ])
+            state.forceUpdate()
+            state.saveMatrixData()
+            return
+          }
+
+          const exists = container.getConnections().some(conn => isSameConnection(conn, connectionSnapshot))
           if (!exists) container.setConnections([...container.getConnections(), cloneMatrixValue(connectionSnapshot)])
           state.forceUpdate()
           state.saveMatrixData()
         },
         redo: () => {
-          container.setConnections(container.getConnections().filter(conn => !(
-            conn.fromId === connectionSnapshot.fromId &&
-            conn.toId === connectionSnapshot.toId &&
-            conn.fromPort === connectionSnapshot.fromPort &&
-            conn.toPort === connectionSnapshot.toPort
-          )))
-          state.cleanupLogicBundles(container)
+          if (isDefaultBundleConnection) {
+            container.setConnections(container.getConnections().filter(conn => !(
+              conn.fromId === connectionSnapshot.fromId && bundleTargetIds.has(conn.toId)
+            )))
+            state.forceUpdate()
+            state.saveMatrixData()
+            return
+          }
+
+          const nextConnections = container.getConnections().filter(conn => !isSameConnection(conn, connectionSnapshot))
+
+          if (shouldCollapseBundle) {
+            container.setConnections(nextConnections.map(conn => {
+              if (conn.fromId !== connectionSnapshot.fromId || conn.bundleId !== connectionSnapshot.bundleId) return conn
+              const plainConnection = { ...conn }
+              delete plainConnection.label
+              delete plainConnection.bundleId
+              delete plainConnection.bundleStemX
+              delete plainConnection.bundleStemY
+              return plainConnection
+            }))
+          } else {
+            container.setConnections(nextConnections)
+            state.cleanupLogicBundles(container)
+          }
           state.forceUpdate()
           state.saveMatrixData()
         }
-      })
+      }
+
+      deleteAction.redo()
+      changeTree.recordConnectionDeleted(connInfo, state.getNode(connInfo.fromId), state.getNode(connInfo.toId), deleteAction)
       state.saveMatrixData()
     }
     

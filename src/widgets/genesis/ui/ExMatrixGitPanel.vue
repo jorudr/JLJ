@@ -379,6 +379,8 @@ function applyNextState(next: Set<string>) {
 }
 
 function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) {
+  if (turningOn && changeTree.isLogicLabelSuppressedByRemoval(id, next)) return
+
   const { parentId, eventId } = changeTree.getLogicLabelParentIds(id)
   const relatedIds = [
     ...changeTree.collectDescendantChangeIds(id),
@@ -410,6 +412,7 @@ function toggleLogicLabelRow(id: string, next: Set<string>, turningOn: boolean) 
 
 function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean) {
   const parentLabelId = changeTree.getParentLogicLabelId(id)
+  if (turningOn && parentLabelId && changeTree.isLogicLabelSuppressedByRemoval(parentLabelId, next)) return
   const linkedIds = changeTree.collectLinkedChangeIds(id)
 
   if (turningOn) {
@@ -496,12 +499,39 @@ function toggleNodeContentAddRow(id: string, next: Set<string>, turningOn: boole
   applyNextState(next)
 }
 
+function toggleDefaultLogicRemovalRow(id: string, logicLabelId: string, next: Set<string>, turningOn: boolean) {
+  const labelTreeIds = [
+    logicLabelId,
+    ...changeTree.collectDescendantChangeIds(logicLabelId)
+  ]
+
+  if (turningOn) {
+    next.delete(id)
+    labelTreeIds.forEach(labelId => next.add(labelId))
+    changeTree.setChangeEnabled(logicLabelId, false)
+    changeTree.setChangeEnabled(id, true)
+  } else {
+    next.add(id)
+    labelTreeIds.forEach(labelId => next.delete(labelId))
+    changeTree.setChangeEnabled(logicLabelId, true)
+    changeTree.setChangeEnabled(id, false)
+  }
+
+  applyNextState(next)
+}
+
 function toggleTreeRow(id?: string) {
   if (!id) return
 
   const next = new Set(disabledChanges.value)
   const turningOn = isChangeDisabled(id)
   if (turningOn && !next.has(id)) next.add(id)
+  const disabledLogicLabelId = changeTree.getRemovalDisabledLogicLabelId(id)
+
+  if (disabledLogicLabelId) {
+    toggleDefaultLogicRemovalRow(id, disabledLogicLabelId, next, turningOn)
+    return
+  }
 
   if (changeTree.isLogicLabelChange(id)) {
     toggleLogicLabelRow(id, next, turningOn)
