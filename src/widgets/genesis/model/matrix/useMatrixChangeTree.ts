@@ -247,6 +247,45 @@ function isLogicLabelChange(id: string) {
   return (findChangeContext(id)?.change as MatrixSubchange | undefined)?.label === 'link_label'
 }
 
+function isNodeContentAddNode(id: string) {
+  const context = findChangeContext(id)
+  return (
+    (context?.change as MatrixSubchange | undefined)?.label === 'ADD_NODE' &&
+    context?.event?.title === 'NODE_CONTENT' &&
+    !context?.parent
+  )
+}
+
+function getNodeContentEventId(id: string) {
+  const context = findChangeContext(id)
+  return isNodeContentAddNode(id) ? context?.event?.id : undefined
+}
+
+function getNodeDependentSubchangeIds(id: string) {
+  const targetId = (findChangeContext(id)?.change as MatrixSubchange | undefined)?.targetId
+  if (!targetId) return []
+
+  const dependentIds: string[] = []
+  events.value.forEach(event => {
+    const stack = [...event.subchanges]
+    while (stack.length) {
+      const subchange = stack.shift()
+      if (!subchange) continue
+      if (
+        subchange.id !== id &&
+        subchange.targetId === targetId &&
+        (subchange.label === 'to' || subchange.label === 'removed')
+      ) {
+        dependentIds.push(subchange.id)
+        continue
+      }
+      if (subchange.subchanges?.length) stack.unshift(...subchange.subchanges)
+    }
+  })
+
+  return dependentIds
+}
+
 function isLogicLabelAddNode(id: string) {
   const context = findChangeContext(id)
   return (context?.change as MatrixSubchange | undefined)?.label === 'ADD_NODE' && context?.parent?.label === 'link_label'
@@ -1013,6 +1052,9 @@ export function useMatrixChangeTree() {
     isInitialLogicLabelAddNode,
     isLogicLabelAddNode,
     isLogicLabelChange,
+    isNodeContentAddNode,
+    getNodeContentEventId,
+    getNodeDependentSubchangeIds,
     setChangeOwnActionEnabled,
     syncNodeIdentityLabels,
     resetChanges,

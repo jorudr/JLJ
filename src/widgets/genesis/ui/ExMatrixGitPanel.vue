@@ -461,6 +461,41 @@ function toggleLogicAddNodeRow(id: string, next: Set<string>, turningOn: boolean
   applyNextState(next)
 }
 
+function toggleNodeContentAddRow(id: string, next: Set<string>, turningOn: boolean) {
+  const eventId = changeTree.getNodeContentEventId(id)
+  const descendantIds = changeTree.collectDescendantChangeIds(id)
+  const linkedIds = changeTree.collectLinkedChangeIds(id)
+  const dependentIds = changeTree.getNodeDependentSubchangeIds(id)
+  const dependentTreeIds = dependentIds.flatMap(dependentId => [
+    dependentId,
+    ...changeTree.collectDescendantChangeIds(dependentId)
+  ])
+
+  if (turningOn) {
+    if (eventId && next.has(eventId)) {
+      next.delete(eventId)
+      changeTree.setChangeOwnActionEnabled(eventId, true)
+    }
+    next.delete(id)
+    descendantIds.forEach(descendantId => next.delete(descendantId))
+    linkedIds.forEach(linkedId => next.delete(linkedId))
+    changeTree.setChangeEnabled(id, true)
+    linkedIds.forEach(linkedId => changeTree.setChangeEnabled(linkedId, true))
+    dependentTreeIds.forEach(dependentId => next.delete(dependentId))
+    dependentIds.forEach(dependentId => changeTree.setChangeEnabled(dependentId, true))
+  } else {
+    dependentTreeIds.forEach(dependentId => next.add(dependentId))
+    dependentIds.forEach(dependentId => changeTree.setChangeEnabled(dependentId, false))
+    next.add(id)
+    descendantIds.forEach(descendantId => next.add(descendantId))
+    linkedIds.forEach(linkedId => next.add(linkedId))
+    changeTree.setChangeEnabled(id, false)
+    linkedIds.forEach(linkedId => changeTree.setChangeEnabled(linkedId, false))
+  }
+
+  applyNextState(next)
+}
+
 function toggleTreeRow(id?: string) {
   if (!id) return
 
@@ -475,6 +510,11 @@ function toggleTreeRow(id?: string) {
 
   if (changeTree.isLogicLabelAddNode(id)) {
     toggleLogicAddNodeRow(id, next, turningOn)
+    return
+  }
+
+  if (changeTree.isNodeContentAddNode(id)) {
+    toggleNodeContentAddRow(id, next, turningOn)
     return
   }
 
