@@ -889,6 +889,18 @@ export function useMatrixChangeTree() {
     addSubchange(ensureNodeParent(node), 'REMOVE_ITEM', item.text || 'NEW_CHECK', item.id, action)
   }
 
+  function recordNodeScreenshotChanged(node: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'screenshot', 'screenshot change', undefined, action)
+  }
+
+  function recordNodeDrawingChanged(node: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'drawing_panel', 'drawing_panel change', undefined, action)
+  }
+
+  function recordNodeFileAttachmentChanged(node: any, action?: MatrixChangeAction) {
+    addSubchange(ensureNodeParent(node), 'file_attachment', 'file_attachment change', undefined, action)
+  }
+
   function recordChecklistItemTextChanged(node: any, item: any, action?: MatrixChangeAction) {
     const parentEvent = ensureNodeParent(node)
     const lastSub = [...(parentEvent.subchanges || [])].reverse().find(s => s.label === 'ITEM_TEXT' && s.targetId === item.id)
@@ -1177,6 +1189,9 @@ export function useMatrixChangeTree() {
     recordChecklistItemAdded,
     recordChecklistItemRemoved,
     recordChecklistItemTextChanged,
+    recordNodeScreenshotChanged,
+    recordNodeDrawingChanged,
+    recordNodeFileAttachmentChanged,
     recordDomainAdded,
     recordDomainDeleted,
     disableDomainAddEvent,

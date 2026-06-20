@@ -115,24 +115,35 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
     const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
     const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
 
+    const hideLabel = ['table', 'screenshot', 'drawing_panel', 'file_attachment'].includes(subchange.label);
     let displayValue = subchange.value;
     if (subchange.label === 'table') {
       displayValue = 'table change';
+    } else if (subchange.label === 'screenshot') {
+      displayValue = 'screenshot change';
+    } else if (subchange.label === 'drawing_panel') {
+      displayValue = 'drawing_panel change';
+    } else if (subchange.label === 'file_attachment') {
+      displayValue = 'file_attachment change';
     }
+
+    const parts = [
+      { text: '|   ' },
+      { text: prefix, class: 'tree-muted' },
+      { text: connector, class: 'tree-muted' },
+      { text: ' ' },
+    ];
+    if (!hideLabel) {
+      parts.push({ text: subchange.label, class: 'tree-subkey' });
+      parts.push({ text: ': ' });
+    }
+    parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
 
     rows.push({
       toggleId: subchange.id,
       parentIds,
       isTerminated,
-      parts: [
-        { text: '|   ' },
-        { text: prefix, class: 'tree-muted' },
-        { text: connector, class: 'tree-muted' },
-        { text: ' ' },
-        { text: subchange.label, class: 'tree-subkey' },
-        { text: ': ' },
-        { text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
-      ]
+      parts
     })
 
     if (subchange.subchanges?.length) {
@@ -241,24 +252,35 @@ const treeRows = computed<TreeRow[]>(() => {
         const isDomainNodeChange = subchange.label === 'default' || subchange.label === 'add' || subchange.label === 'remove' || subchange.label === 'node_added' || subchange.label === 'node_removed'
         const isTerminated = !!(isDomainNodeChange && subchange.targetId && !state.nodes.value.some(n => n.id === subchange.targetId))
         
+        const hideLabel = ['table', 'screenshot', 'drawing_panel', 'file_attachment'].includes(subchange.label);
         let displayValue = subchange.value;
         if (subchange.label === 'table') {
           const index = event.subchanges.filter(s => s.label === 'table').findIndex(s => s.id === subchange.id);
           displayValue = `table change ${index + 1}`;
+        } else if (subchange.label === 'screenshot') {
+          displayValue = 'screenshot change';
+        } else if (subchange.label === 'drawing_panel') {
+          displayValue = 'drawing_panel change';
+        } else if (subchange.label === 'file_attachment') {
+          displayValue = 'file_attachment change';
         }
+
+        const parts = [
+          { text: '|   ' },
+          { text: connector, class: 'tree-muted' },
+          { text: ' ' },
+        ];
+        if (!hideLabel) {
+          parts.push({ text: subchange.label, class: 'tree-subkey' });
+          parts.push({ text: ': ' });
+        }
+        parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
 
         rows.push({
           toggleId: subchange.id,
           parentIds: [event.id],
           isTerminated,
-          parts: [
-            { text: '|   ' },
-            { text: connector, class: 'tree-muted' },
-            { text: ' ' },
-            { text: subchange.label, class: 'tree-subkey' },
-            { text: ': ' },
-            { text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' }
-          ]
+          parts
         })
 
         if (subchange.subchanges) {

@@ -11,6 +11,7 @@ export function useMatrixDrawing(state: ReturnType<typeof useMatrixState>) {
   const drawingTool = ref<'brush' | 'eraser'>('brush')
   const drawingColor = ref('#2c2c2a')
   const drawingSize = ref(4)
+  const prevStrokesForUndo = ref<any[]>([])
 
   const activeDrawingNode = computed(() => state.activeDrawingNode.value)
 
@@ -31,11 +32,31 @@ export function useMatrixDrawing(state: ReturnType<typeof useMatrixState>) {
 
   function openDrawingFullscreen(node: Node) {
     ensureDrawingParams(node)
+    prevStrokesForUndo.value = JSON.parse(JSON.stringify(node.params.strokes))
     state.activeDrawingNodeId.value = node.id
     state.activeMenuCategory.value = null
   }
 
   function closeDrawingFullscreen() {
+    const node = state.activeDrawingNode.value
+    if (node) {
+      const nextStrokes = JSON.parse(JSON.stringify(node.params.strokes))
+      const prevStrokes = prevStrokesForUndo.value
+      
+      if (JSON.stringify(prevStrokes) !== JSON.stringify(nextStrokes)) {
+        state.changeTree.recordNodeDrawingChanged(node, {
+          undo: () => {
+            node.params.strokes = prevStrokes
+            state.forceUpdate()
+          },
+          redo: () => {
+            node.params.strokes = nextStrokes
+            state.forceUpdate()
+          }
+        })
+      }
+    }
+
     state.activeDrawingNodeId.value = null
     activeDrawingStrokeId.value = null
     isDrawingPointerDown.value = false

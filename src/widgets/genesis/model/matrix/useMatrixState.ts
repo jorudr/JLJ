@@ -1378,6 +1378,7 @@ export function useMatrixState() {
     refreshMergeStatus,
     saveMatrixData,
     restoreData,
-    applyTreeStateToMatrix
+    applyTreeStateToMatrix,
+    changeTree
   }
 }
