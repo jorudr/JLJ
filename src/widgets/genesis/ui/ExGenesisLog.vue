@@ -148,42 +148,8 @@
                </div>
                <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
-
-            <button @click="viewType = 'tree'" 
-                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
-                    :class="viewType === 'tree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
-                    title="Tree View">
-               <svg v-if="viewType === 'tree'" class="w-4 h-4 transition-all duration-500 nier-text-primary scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M12 5v14"></path>
-                  <path d="M12 9H7"></path>
-                  <path d="M12 13h5"></path>
-                  <path d="M7 9v4"></path>
-                  <path d="M17 13v4"></path>
-                  <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
-                  <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
-                  <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
-               </svg>
-               <svg v-else class="w-4 h-4 nier-text-primary transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M12 5v14"></path>
-                  <path d="M12 9H7"></path>
-                  <path d="M12 13h5"></path>
-                  <path d="M7 9v4"></path>
-                  <path d="M17 13v4"></path>
-                  <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
-                  <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
-                  <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
-               </svg>
-               <div v-if="viewType === 'tree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
          </div>
       </div>
-
-      <ExGenesisTree
-        v-if="viewType === 'tree'"
-        @switch-view="viewType = $event"
-        @open-trade-archive="handleTreeOpenTradeArchive"
-      />
-
     </div>
 
     <!-- TACTICAL PROTOCOL INSIGHT (FIXED RIGHT - ARCHIVE) -->
@@ -375,7 +341,7 @@
     </div>
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible && viewType !== 'tree' && !isTradeEntryOpen" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
 
@@ -562,7 +528,6 @@ import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
-import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
 
@@ -693,7 +658,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list' | 'tree'>('cube')
+const viewType = ref<'cube' | 'list'>('cube')
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
 
@@ -730,11 +695,6 @@ const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
 
 const handleOpenTrade = (payload: { tradeId: string }) => {
   emit('openTrade', payload)
-}
-
-const handleTreeOpenTradeArchive = (trade: { id?: string; strategyId?: string }) => {
-  if (!trade.id || !trade.strategyId) return
-  emit('openTrade', { tradeId: trade.id })
 }
 
 watch(showNodeMap, (val) => {

@@ -51,6 +51,24 @@
              {{ strategyVersions.length }}
            </span>
          </button>
+         <button
+           type="button"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
+           title="Tree View"
+           aria-label="Toggle Tree View"
+           @click.stop="$emit('toggle-tree')"
+         >
+           <svg class="w-4 h-4 transition-all duration-500 scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 5v14"></path>
+              <path d="M12 9H7"></path>
+              <path d="M12 13h5"></path>
+              <path d="M7 9v4"></path>
+              <path d="M17 13v4"></path>
+              <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
+              <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
+              <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
+           </svg>
+         </button>
          <button @click.stop="openManual" 
                  class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
@@ -212,7 +230,8 @@ const emit = defineEmits([
   'git-panel-state',
   'strategy-version-create',
   'strategy-version-update',
-  'strategy-version-clear'
+  'strategy-version-clear',
+  'toggle-tree'
 ])
 
 const { locale } = useI18n()
