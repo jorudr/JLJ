@@ -162,7 +162,7 @@ export const useGenesisTree = () => {
 
   const isMatrixLoading = ref(false)
 
-  const { nodes: activeNodes, connections: activeConnections } = useMatrixState()
+  const { nodes: activeNodes, connections: activeConnections, strategyVersions, selectedStrategyVersionId } = useMatrixState()
 
   const matrixNodes = computed(() => {
     const allNodes: any[] = []
@@ -213,7 +213,38 @@ export const useGenesisTree = () => {
   })
 
   const getTradesForStrategyInTime = (strategyId: string) => {
-    return tradeStore.getTradesForStrategy(strategyId)
+    const allTrades = tradeStore.getTradesForStrategy(strategyId)
+    const versions = strategyVersions.value
+
+    if (!versions || versions.length === 0) {
+      return allTrades
+    }
+
+    const currentIndex = versions.findIndex(v => v.id === selectedStrategyVersionId.value)
+    const effectiveIndex = currentIndex === -1 ? versions.length - 1 : currentIndex
+
+    let startTime = -Infinity
+    let endTime = Infinity
+
+    if (effectiveIndex > 0) {
+      const v = versions[effectiveIndex]
+      if (v && v.createdAt) {
+        startTime = new Date(v.createdAt).getTime()
+      }
+    }
+
+    if (effectiveIndex < versions.length - 1) {
+      const vNext = versions[effectiveIndex + 1]
+      if (vNext && vNext.createdAt) {
+        endTime = new Date(vNext.createdAt).getTime()
+      }
+    }
+
+    return allTrades.filter(trade => {
+      const timestamp = getTradeTimestamp(trade)
+      if (!timestamp) return false
+      return timestamp >= startTime && timestamp < endTime
+    })
   }
 
   const globalTreeTrades = computed(() => {
