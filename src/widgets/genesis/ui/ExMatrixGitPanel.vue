@@ -470,8 +470,9 @@ function handleRowClick(row: TreeRow) {
   min-width: 180px;
   padding: 4px 0;
   position: absolute;
-  right: 0;
+  right: 8px;
   top: 27px;
+  z-index: 50;
 }
 
 .version-theme-dark .version-selector-menu {
