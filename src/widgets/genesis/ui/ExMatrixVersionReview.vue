@@ -37,8 +37,15 @@
                           <Icon name="lucide:git-commit-horizontal" class="h-4 w-4 shrink-0 opacity-55" />
                           <span class="diff-version-title truncate font-mono text-[14px] font-black uppercase tracking-[0.18em]">{{ getVersionTitle(version) }}</span>
                         </div>
-                        <div class="mt-1 pl-7 font-mono text-[10px] uppercase tracking-[0.16em] opacity-35">
-                          {{ formatTimestamp(version.updatedAt) }}
+                        <div class="mt-1 pl-7 flex flex-col gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em] opacity-40">
+                          <div>
+                            <span class="opacity-50 mr-2">{{ locale === 'ru' ? 'СОЗДАН:' : 'CREATED:' }}</span>
+                            <span>{{ formatTimestamp(version.createdAt || version.updatedAt) }}</span>
+                          </div>
+                          <div v-if="version.updatedAt && version.updatedAt !== version.createdAt">
+                            <span class="opacity-50 mr-2">{{ locale === 'ru' ? 'ОБНОВЛЕН:' : 'UPDATED:' }}</span>
+                            <span>{{ formatTimestamp(version.updatedAt) }}</span>
+                          </div>
                         </div>
                       </div>
                       <div class="flex shrink-0 items-center gap-4 font-mono text-[11px] font-black">
@@ -163,7 +170,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExSkillNode from './ExSkillNode.vue'
 import { useThemeStore } from '~/features/store/useTheme'
@@ -180,6 +188,7 @@ defineEmits<{
 }>()
 
 const themeStore = useThemeStore()
+const { locale } = useI18n()
 const isDark = computed(() => themeStore.settings.isDark)
 const expandedVersions = ref(new Set<string>())
 
@@ -478,7 +487,8 @@ const reviewVersions = computed(() => {
 })
 
 function formatTimestamp(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
+  const currentLocale = locale.value === 'ru' ? 'ru-RU' : 'en-US'
+  return new Intl.DateTimeFormat(currentLocale, {
     year: 'numeric',
     month: 'short',
     day: '2-digit',

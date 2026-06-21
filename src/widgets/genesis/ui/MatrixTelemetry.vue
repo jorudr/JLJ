@@ -56,7 +56,7 @@
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
            title="Tree View"
            aria-label="Toggle Tree View"
-           @click.stop="$emit('toggle-tree')"
+           @click.stop="toggleTree"
          >
            <svg class="w-4 h-4 transition-all duration-500 scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 5v14"></path>
@@ -274,7 +274,13 @@ function openVersionReview() {
 
 function openManual() {
   isVersionReviewOpen.value = false
+  setGitPanelOpen(false)
   isManualOpen.value = true
+}
+
+function toggleTree() {
+  setGitPanelOpen(false)
+  emit('toggle-tree')
 }
 
 const manualSectionsEn = [
