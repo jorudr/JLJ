@@ -325,18 +325,6 @@ function flattenSubchanges(subchanges: any[], depth = 0, rows: FlatSubchange[] =
         depth: depth + 1,
         order: rows.length
       })
-      const hasDirection = (subchange.subchanges || []).some(
-        (child: any) => String(child.label).toLowerCase() === 'direction'
-      )
-      if (!hasDirection) {
-        rows.push({
-          id: `${subchange.id}:direction-default`,
-          label: 'direction',
-          value: 'NONE',
-          depth: depth + 1,
-          order: rows.length
-        })
-      }
     }
     flattenSubchanges(subchange.subchanges || [], depth + 1, rows)
   })
@@ -346,9 +334,6 @@ function flattenSubchanges(subchanges: any[], depth = 0, rows: FlatSubchange[] =
 function eventRows(event: MatrixChangeEvent) {
   const rows = flattenSubchanges(event.subchanges || [])
   if (event.title !== 'ADD_NODE') return rows
-  const hasDirection = rows.some(
-    row => row.depth === 0 && row.label.toLowerCase() === 'direction'
-  )
   return [
     {
       id: `${event.id}:node-type`,
@@ -357,13 +342,6 @@ function eventRows(event: MatrixChangeEvent) {
       depth: 0,
       order: -1
     },
-    ...(!hasDirection ? [{
-      id: `${event.id}:direction-default`,
-      label: 'direction',
-      value: 'NONE',
-      depth: 0,
-      order: -2
-    }] : []),
     ...rows
   ]
 }
@@ -407,27 +385,6 @@ function mergedEventDetails(previous: MatrixChangeEvent, current: MatrixChangeEv
   previousRows.forEach(row => {
     if (!currentById.has(row.id)) details.push(detailFromRow(row, 'removed'))
   })
-
-  if (previous.node !== current.node) {
-    details.unshift(
-      {
-        key: `${current.id}:node:previous`,
-        kind: 'removed',
-        marker: '-',
-        label: 'node',
-        value: previous.node,
-        depth: 0
-      },
-      {
-        key: `${current.id}:node:current`,
-        kind: 'modified',
-        marker: '~',
-        label: 'node',
-        value: current.node,
-        depth: 0
-      }
-    )
-  }
 
   return details
 }
