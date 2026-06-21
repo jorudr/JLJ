@@ -36,7 +36,22 @@
              </button>
            </div>
          </div>
-         <button @click.stop="isManualOpen = true" 
+         <button
+           type="button"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
+           title="Version Review"
+           aria-label="Open strategy version review"
+           @click.stop="openVersionReview"
+         >
+           <Icon name="lucide:history" class="w-4 h-4" />
+           <span
+             v-if="strategyVersions.length"
+             class="absolute -right-1 -top-1 flex h-3 min-w-3 items-center justify-center bg-nier-text-light px-0.5 font-mono text-[6px] leading-none text-nier-white dark:bg-nier-text-dark dark:text-nier-black"
+           >
+             {{ strategyVersions.length }}
+           </span>
+         </button>
+         <button @click.stop="openManual" 
                  class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 group-hover:scale-110 transition-transform">
@@ -165,6 +180,11 @@
   </Teleport>
 
   <ExMatrixGitPanel :is-open="gitPanelOpen" @close="setGitPanelOpen(false)" />
+  <ExMatrixVersionReview
+    :is-open="isVersionReviewOpen"
+    :versions="strategyVersions"
+    @close="isVersionReviewOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -172,7 +192,9 @@ import { ref, computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
+import ExMatrixVersionReview from './ExMatrixVersionReview.vue'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
+import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 
 const props = defineProps<{
   viewState: { scale: number }
@@ -180,6 +202,7 @@ const props = defineProps<{
   canCreateStrategyVersion?: boolean
   hasSelectedStrategyVersion?: boolean
   hasStrategyVersionChanges?: boolean
+  strategyVersions?: MatrixStrategyVersion[]
   gitPanelOpen: boolean
 }>()
 
@@ -197,7 +220,10 @@ const changeTree = useMatrixChangeTree()
 
 const isManualOpen = ref(false)
 const isGitMenuOpen = ref(false)
+const isVersionReviewOpen = ref(false)
 const activeManualSection = ref(0)
+
+const strategyVersions = computed(() => props.strategyVersions || [])
 
 function setGitPanelOpen(value: boolean) {
   emit('git-panel-state', value)
@@ -205,6 +231,7 @@ function setGitPanelOpen(value: boolean) {
 
 function toggleGitPanel() {
   isGitMenuOpen.value = false
+  isVersionReviewOpen.value = false
   setGitPanelOpen(!props.gitPanelOpen)
 }
 
@@ -215,6 +242,18 @@ function toggleGitMenu() {
 function clearChangeTree() {
   changeTree.resetChanges()
   isGitMenuOpen.value = false
+}
+
+function openVersionReview() {
+  isGitMenuOpen.value = false
+  isManualOpen.value = false
+  setGitPanelOpen(false)
+  isVersionReviewOpen.value = true
+}
+
+function openManual() {
+  isVersionReviewOpen.value = false
+  isManualOpen.value = true
 }
 
 const manualSectionsEn = [

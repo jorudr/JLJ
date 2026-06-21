@@ -119,6 +119,7 @@
                        :can-create-strategy-version="canCreateStrategyVersion"
                        :has-selected-strategy-version="!!state.selectedStrategyVersion.value"
                        :has-strategy-version-changes="state.hasStrategyVersionChanges.value"
+                       :strategy-versions="state.strategyVersions.value"
                        :git-panel-open="isGitPanelOpen"
                        @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s"
                        @strategy-version-create="state.createStrategyVersion"
@@ -161,17 +162,6 @@
                   </button>
                   <span v-if="idx < state.breadcrumbs.value.length - 1" class="mx-4 opacity-10 text-[10px]">/</span>
                </div>
-               <div class="h-5 w-px bg-nier-border-light dark:bg-nier-border-dark opacity-50"></div>
-               <button
-                 type="button"
-                 class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center transition-colors hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10"
-                 :class="isGitPanelOpen ? 'opacity-100' : 'opacity-40 hover:opacity-100'"
-                 title="Git"
-                 aria-label="Open Git change tree"
-                 @click.stop="isGitPanelOpen = !isGitPanelOpen"
-               >
-                 <Icon name="lucide:git-branch" class="w-4 h-4" />
-               </button>
             </div>
             <div class="mt-2 text-[7px] font-mono tracking-[0.6em] uppercase opacity-20 italic">
                Diagnostic_Neural_Path // Sub_Sequence_Active
@@ -441,6 +431,7 @@ function handleBoardContextMenu(e: MouseEvent) {
 function handleNodeDive(node: any) {
   const divableTypes = ['strategy', 'scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc']
   if (divableTypes.includes(node.type)) {
+    isGitPanelOpen.value = false
     state.activeMenuCategory.value = null
     state.pendingNodeConfig.value = null
     if (!node.subGraph) {
