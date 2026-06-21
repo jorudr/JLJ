@@ -228,11 +228,7 @@ function toggleVersion(versionId: string) {
 function visibleVersionChanges(version: { id: string; changes: ReviewChange[] }) {
   if (version.changes.length <= 2 || isVersionExpanded(version.id)) return version.changes
 
-  const changed = version.changes.filter(change => change.kind !== 'unchanged')
-  if (changed.length >= 2) return changed.slice(-2)
-
-  const unchanged = version.changes.filter(change => change.kind === 'unchanged')
-  return [...changed, ...unchanged.slice(0, 2 - changed.length)]
+  return version.changes.slice(0, 2)
 }
 
 function changeStatus(kind: ReviewKind) {
