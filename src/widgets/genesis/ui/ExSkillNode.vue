@@ -772,8 +772,8 @@ import { useMatrixState } from '../model/matrix/useMatrixState'
 import { useMatrixZones } from '../model/matrix/useMatrixZones'
 
 const { locale, t } = useI18n()
-const changeTree = useMatrixChangeTree()
 const state = useMatrixState()
+const changeTree = state.changeTree
 const zones = useMatrixZones(state)
 const isPdfModalOpen = ref(false)
 

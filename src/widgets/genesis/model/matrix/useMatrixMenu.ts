@@ -9,7 +9,7 @@ export type TextFormatPreset = 'h' | 'p' | 'quote'
 
 export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const { locale, t } = useI18n()
-  const changeTree = useMatrixChangeTree()
+  const changeTree = state.changeTree
   const cloneMatrixValue = <T>(value: T): T => {
     return JSON.parse(JSON.stringify(value))
   }

@@ -11,7 +11,7 @@ type DomainMembershipEvaluationOptions = {
 }
 
 export function useMatrixZones(state: ReturnType<typeof useMatrixState>) {
-  const changeTree = useMatrixChangeTree()
+  const changeTree = state.changeTree
   const isZoneToolActive = ref(false)
   const selectedZoneType = ref<Zone['type']>('session')
 

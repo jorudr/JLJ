@@ -9,7 +9,7 @@ export function isTextEditingTarget(target: EventTarget | null) {
 
 export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
   const canvasWrapper = ref<HTMLElement | null>(null)
-  const changeTree = useMatrixChangeTree()
+  const changeTree = state.changeTree
   const cloneMatrixValue = <T>(value: T): T => {
     return JSON.parse(JSON.stringify(value))
   }

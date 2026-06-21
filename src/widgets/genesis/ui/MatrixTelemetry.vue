@@ -212,6 +212,7 @@ import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 import ExMatrixVersionReview from './ExMatrixVersionReview.vue'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
+import { useMatrixState } from '../model/matrix/useMatrixState'
 import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 
 const props = defineProps<{
@@ -235,7 +236,8 @@ const emit = defineEmits([
 ])
 
 const { locale } = useI18n()
-const changeTree = useMatrixChangeTree()
+const state = useMatrixState()
+const changeTree = state.changeTree
 
 const isManualOpen = ref(false)
 const isGitMenuOpen = ref(false)

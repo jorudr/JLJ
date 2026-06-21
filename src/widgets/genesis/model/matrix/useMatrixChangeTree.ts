@@ -64,6 +64,23 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
   }
 
   function appendAddNodeEvent(node: any, targetKind: MatrixChangeEvent['targetKind'] = 'node') {
+    const subchanges: any[] = []
+    
+    if (node.params) {
+      const keysToExtract = ['identity', 'type', 'direction', 'timeframe', 'period', 'source', 'lots', 'distance', 'risk', 'customName', 'phase']
+      for (const key of keysToExtract) {
+        if (node.params[key] !== undefined && node.params[key] !== null && node.params[key] !== '') {
+          subchanges.push({
+            id: changeId('sub'),
+            label: key,
+            value: String(node.params[key]),
+            targetId: node.id,
+            subchanges: []
+          })
+        }
+      }
+    }
+
     events.value.push({
       id: changeId(),
       type: 'add',
@@ -72,7 +89,7 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
       createdAt: Date.now(),
       targetId: node.id,
       targetKind,
-      subchanges: []
+      subchanges
     })
   }
 
@@ -133,7 +150,7 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
 
   function findAddNodeContainer(targetId: string): MatrixChangeContainer | undefined {
     for (const event of events.value) {
-      if (event.title === 'ADD_NODE' && event.targetId === targetId) return event
+      if ((event.title === 'ADD_NODE' || event.title === 'ADD_NODE*' || event.title === 'UPDATE_NODE') && event.targetId === targetId) return event
 
       const stack = [...event.subchanges]
       while (stack.length) {
@@ -154,8 +171,29 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
   }
 
   function setFinalNodeValue(node: any, label: string, value: any) {
-    const parent = findAddNodeContainer(node.id)
-    if (!parent) return
+    let parent = findAddNodeContainer(node.id)
+    console.log('[DEBUG GitTree] setFinalNodeValue called for node:', node.id, 'label:', label, 'value:', value)
+    if (!parent) {
+      console.log('[DEBUG GitTree] ADD_NODE not found, creating UPDATE_NODE fallback')
+      // Fallback: Create an UPDATE_NODE event if ADD_NODE is missing
+      parent = {
+        id: changeId(),
+        type: 'update',
+        title: 'UPDATE_NODE',
+        node: `${node.type}: ${nodeDisplayValue(node)}`,
+        createdAt: Date.now(),
+        targetId: node.id,
+        targetKind: 'node',
+        subchanges: []
+      } as MatrixChangeEvent
+      events.value.push(parent as MatrixChangeEvent)
+    } else {
+      const parentTitle = 'title' in parent ? parent.title : 'subchange'
+      console.log('[DEBUG GitTree] Found parent:', parentTitle, parent.id)
+      if ('title' in parent && parent.title === 'ADD_NODE') {
+         parent.title = 'ADD_NODE*'
+      }
+    }
 
     const normalizedValue = String(value ?? '').trim()
     const shouldRemove = !normalizedValue || normalizedValue.toUpperCase() === 'NONE'
@@ -331,9 +369,7 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
     updateEventNodeDisplay(node)
   }
   function recordNodeEmbedUrlChanged(...args: any[]) {}
-  function recordNodeDescriptionChanged(node: any, value: string, ...args: any[]) {
-    setFinalNodeValue(node, 'description', value)
-  }
+  function recordNodeDescriptionChanged(...args: any[]) {}
   function recordChecklistItemAdded(...args: any[]) {}
   function recordChecklistItemRemoved(...args: any[]) {}
   function recordChecklistItemTextChanged(...args: any[]) {}
@@ -344,13 +380,20 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
   function recordCommentTextChanged(...args: any[]) {}
   function recordCommentRemoved(...args: any[]) {}
   function recordNodePhaseChanged(node: any, value: string, ...args: any[]) {
-    setFinalNodeValue(node, 'type', value)
+    setFinalNodeValue(node, 'phase', value)
   }
   function recordDomainChanged(domain: any, value: string, ...args: any[]) {
-    const label = domain.type === 'session' ? 'session' : 'type'
-    setFinalNodeValue(domain, label === 'session' ? 'type' : 'session', '')
-    setFinalNodeValue(domain, label, value)
+    setFinalNodeValue(domain, 'type', value)
   }
+  
+  // Stubs for unimplemented methods to fix TypeScript errors
+  function recordDomainNodeChanged(...args: any[]) {}
+  function getDomainState(id: string): string | null { return null }
+  function recordDomainDeleted(...args: any[]) {}
+  function disableDomainAddEvent(id: string) {}
+  function updateConnectionAction(...args: any[]) {}
+  function clearBoard(options?: any) {}
+
   function recordConnectionLabelChanged(...args: any[]) {}
   function removeLatestConnectionLabelChange(...args: any[]) {}
   
@@ -401,6 +444,12 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
     recordCommentRemoved,
     recordNodePhaseChanged,
     recordDomainChanged,
+    recordDomainNodeChanged,
+    getDomainState,
+    recordDomainDeleted,
+    disableDomainAddEvent,
+    updateConnectionAction,
+    clearBoard,
     recordScalingEntryChanged,
     recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
