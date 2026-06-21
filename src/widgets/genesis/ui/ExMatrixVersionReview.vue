@@ -62,7 +62,7 @@
                           {{ change.marker }}
                         </div>
                         <div class="min-w-0 px-10 py-4">
-                          <div v-if="change.title === 'ADD_NODE' && change.nodeObject" class="mt-3 mb-2">
+                          <div v-if="change.title.startsWith('ADD_NODE') && change.nodeObject" class="mt-3 mb-2">
                              <div class="flex items-center gap-4 p-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] relative overflow-hidden group/preview shadow-inner">
                                <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(150,150,150,0.05)_25%,rgba(150,150,150,0.05)_50%,transparent_50%,transparent_75%,rgba(150,150,150,0.05)_75%,rgba(150,150,150,0.05)_100%)] bg-[length:10px_10px] opacity-50 pointer-events-none"></div>
                                <!-- Fake terminal brackets -->
@@ -103,10 +103,10 @@
                               {{ changeStatus(change.kind) }}
                             </span>
                           </div>
-                          <template v-if="change.details.filter(d => !(change.title === 'ADD_NODE' && d.label === 'type')).length">
+                          <template v-if="change.details.filter(d => !(change.title.startsWith('ADD_NODE') && d.label === 'type')).length">
                             <div class="mt-1.5 space-y-0.5">
                               <div
-                                v-for="detail in change.details.filter(d => !(change.title === 'ADD_NODE' && d.label === 'type'))"
+                                v-for="detail in change.details.filter(d => !(change.title.startsWith('ADD_NODE') && d.label === 'type'))"
                                 :key="detail.key"
                               class="grid grid-cols-[58px_minmax(0,1fr)] break-words"
                               :class="{ 'diff-detail-removed': detail.kind === 'removed' }"
