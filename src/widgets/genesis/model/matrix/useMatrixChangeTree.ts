@@ -116,6 +116,14 @@ export function useMatrixChangeTree() {
     }
   }
 
+  function updateEventNodeDisplay(node: any) {
+    const parent = findAddNodeContainer(node.id)
+    if (parent && 'node' in parent) {
+      parent.node = `${node.type}: ${nodeDisplayValue(node)}`
+      events.value = [...events.value]
+    }
+  }
+
   function setFinalNodeValue(node: any, label: string, value: any) {
     const parent = findAddNodeContainer(node.id)
     if (!parent) return
@@ -275,6 +283,7 @@ export function useMatrixChangeTree() {
   }
   function recordNodeIdentityChanged(node: any, value: string, ...args: any[]) {
     setFinalNodeValue(node, 'identity', value)
+    updateEventNodeDisplay(node)
   }
   function recordNodeDirectionChanged(node: any, value: string, ...args: any[]) {
     setFinalNodeValue(node, 'direction', value)
@@ -289,7 +298,9 @@ export function useMatrixChangeTree() {
   function recordZoneTypeChanged(...args: any[]) {}
 
   // Additional stubs required by ExSkillNode.vue and useMatrixState.ts
-  function recordNodeLabelTextChanged(...args: any[]) {}
+  function recordNodeLabelTextChanged(node: any, ...args: any[]) {
+    updateEventNodeDisplay(node)
+  }
   function recordNodeEmbedUrlChanged(...args: any[]) {}
   function recordNodeDescriptionChanged(node: any, value: string, ...args: any[]) {
     setFinalNodeValue(node, 'description', value)

@@ -22,15 +22,9 @@
 
           <ExPanel variant="light" :show-corners="true" :no-padding="true" class="version-review-panel h-full w-full">
             <div class="flex h-full min-h-0 flex-col text-nier-text-light dark:text-nier-text-dark">
-              <header class="flex h-12 shrink-0 items-center border-b border-black/10 px-[30px] dark:border-white/10">
-                <div class="flex items-center gap-3">
-                  <span class="h-2 w-2 rotate-45 bg-current opacity-55"></span>
-                  <span class="font-mono text-[10px] font-black uppercase tracking-[0.32em]">Version_Review</span>
-                  <span class="font-mono text-[8px] uppercase tracking-[0.2em] opacity-35">{{ versions.length }} checkpoints</span>
-                </div>
-              </header>
+              <header class="h-6 shrink-0 border-b border-black/10 dark:border-white/10"></header>
 
-              <div class="version-review-scroll min-h-0 flex-1 overflow-y-auto px-[30px] py-5">
+              <div class="version-review-scroll min-h-0 flex-1 overflow-y-auto px-12 py-8">
                 <div v-if="reviewVersions.length" class="flex flex-col gap-5">
                   <article
                     v-for="version in reviewVersions"
