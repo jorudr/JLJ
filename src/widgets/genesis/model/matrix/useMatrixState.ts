@@ -1325,7 +1325,17 @@ export function useMatrixState() {
     await saveMatrixData(true)
   }
 
-  async function selectStrategyVersion(versionId: string) {
+  async function selectStrategyVersion(versionId: string | null) {
+    if (versionId === null) {
+      selectedStrategyVersionId.value = null
+      const snapshot = anonymousStrategyVersion.value?.snapshot
+      if (snapshot) {
+        applyStrategySnapshot(snapshot)
+      }
+      await saveMatrixData(true)
+      return
+    }
+
     const version = strategyVersions.value.find(item => item.id === versionId)
     if (!version) return
     selectedStrategyVersionId.value = version.id

@@ -6,6 +6,7 @@ import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY, type GenesisEmotionItem } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
+import { useMatrixState } from '../../model/matrix/useMatrixState'
 
 export interface GenesisTreeTradeSummary {
   id?: string
@@ -159,9 +160,37 @@ export const useGenesisTree = () => {
   const appBootStore = useAppBootStore()
   const { locale, t } = useI18n()
 
-  const matrixNodes = shallowRef<any[]>([])
-  const matrixConnections = shallowRef<any[]>([])
-  const isMatrixLoading = ref(true)
+  const isMatrixLoading = ref(false)
+
+  const { nodes: activeNodes, connections: activeConnections } = useMatrixState()
+
+  const matrixNodes = computed(() => {
+    const allNodes: any[] = []
+    const flatten = (nodesList: any[]) => {
+      nodesList.forEach(n => {
+        allNodes.push(n)
+        if (n.subGraph && n.subGraph.nodes) {
+          flatten(n.subGraph.nodes)
+        }
+      })
+    }
+    flatten(activeNodes.value || [])
+    return allNodes
+  })
+
+  const matrixConnections = computed(() => {
+    const allConns: any[] = []
+    const flatten = (nodesList: any[], connsList: any[]) => {
+      connsList.forEach(c => allConns.push(c))
+      nodesList.forEach(n => {
+        if (n.subGraph && n.subGraph.connections) {
+          flatten(n.subGraph.nodes || [], n.subGraph.connections)
+        }
+      })
+    }
+    flatten(activeNodes.value || [], activeConnections.value || [])
+    return allConns
+  })
 
   const selectedStrategyId = computed<string | null>({
     get: () => tradeStore.selectedStrategyId,
@@ -215,35 +244,7 @@ export const useGenesisTree = () => {
     }))
   })
 
-  const loadMatrixData = async () => {
-    isMatrixLoading.value = true
-    try {
-      const data = (appBootStore.genesisMatrixCache || await loadFromDisk('genesis_matrix_v2')) as any
-      if (data) {
-        appBootStore.genesisMatrixCache = data
-        const allNodes: any[] = []
-        const allConns: any[] = []
 
-        const flatten = (nodesList: any[], connsList: any[]) => {
-          nodesList.forEach(n => {
-            allNodes.push(n)
-            if (n.subGraph) {
-              flatten(n.subGraph.nodes || [], n.subGraph.connections || [])
-            }
-          })
-          connsList.forEach(c => allConns.push(c))
-        }
-
-        flatten(data.nodes || [], data.connections || [])
-        matrixNodes.value = allNodes
-        matrixConnections.value = allConns
-      }
-    } catch (err) {
-      console.error('Failed to load matrix data:', err)
-    } finally {
-      isMatrixLoading.value = false
-    }
-  }
 
   const strategies = computed(() => {
     return matrixNodes.value
@@ -1070,7 +1071,7 @@ export const useGenesisTree = () => {
     }).toUpperCase()
   }
 
-  onMounted(loadMatrixData)
+
 
   return {
     authStore,

@@ -289,7 +289,8 @@
     </template>
     </div> <!-- Close panLayerStyle -->
 
-    <div class="absolute left-8 top-8 z-[90] pointer-events-auto"
+    <!-- RECENTER BUTTON -->
+    <div class="absolute right-8 bottom-8 z-[90] pointer-events-auto"
          @pointerdown.stop
          @pointermove.stop
          @click.stop>
@@ -304,6 +305,29 @@
         </svg>
         <div class="absolute left-1 top-1 h-1 w-1 border-l border-t border-white/30"></div>
         <div class="absolute bottom-1 right-1 h-1 w-1 border-b border-r border-white/30"></div>
+      </button>
+    </div>
+
+    <!-- VERSIONS PAGINATION (Bottom Center) -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[90] pointer-events-auto flex items-center gap-4 bg-[#0a0a0a]/90 backdrop-blur-md border border-white/10 p-2 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+         v-if="strategyVersions.length > 0">
+      <button class="w-8 h-8 flex items-center justify-center border border-white/10 text-white/55 hover:text-white hover:border-white/35 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              :disabled="!hasPrevVersion"
+              @click="navigateVersion('prev')">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="flex flex-col items-center min-w-[140px]">
+        <span class="font-mono text-[10px] font-black uppercase tracking-widest text-white/80 truncate max-w-[120px]">
+          {{ currentVersionLabel }}
+        </span>
+        <span class="font-mono text-[8px] font-bold uppercase tracking-widest text-white/40 mt-0.5">
+          {{ currentVersionIndex + 1 }} / {{ strategyVersions.length }}
+        </span>
+      </div>
+      <button class="w-8 h-8 flex items-center justify-center border border-white/10 text-white/55 hover:text-white hover:border-white/35 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              :disabled="!hasNextVersion"
+              @click="navigateVersion('next')">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
 
@@ -482,6 +506,7 @@ import { computed, ref } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
+import { useMatrixState } from '../../model/matrix/useMatrixState'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useThemeStore } from '~/features/store/useTheme'
 
@@ -578,7 +603,7 @@ const resetView = () => {
 const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
   selectedTreeNode.value = node
   selectedTreeNodeType.value = type
-  selectedTreeNodeKey.value = node?.treeKey || node?.id || null
+  selectedTreeNodeKey.value = node.treeKey || node.id || null
 }
 
 const closeSelectedTreeNode = () => {
@@ -586,6 +611,31 @@ const closeSelectedTreeNode = () => {
   selectedTreeNodeType.value = null
   selectedTreeNodeKey.value = null
 }
+
+const { strategyVersions, selectedStrategyVersionId, selectStrategyVersion } = useMatrixState()
+
+const currentVersionIndex = computed(() => {
+  const index = strategyVersions.value.findIndex(v => v.id === selectedStrategyVersionId.value)
+  return index === -1 ? Math.max(0, strategyVersions.value.length - 1) : index
+})
+
+const hasPrevVersion = computed(() => currentVersionIndex.value > 0)
+const hasNextVersion = computed(() => currentVersionIndex.value < strategyVersions.value.length - 1)
+
+const currentVersionLabel = computed(() => {
+  const v = strategyVersions.value[currentVersionIndex.value]
+  return v ? v.label : 'UNKNOWN'
+})
+
+const navigateVersion = (direction: 'prev' | 'next') => {
+  let nextIndex = direction === 'prev' ? currentVersionIndex.value - 1 : currentVersionIndex.value + 1
+  if (nextIndex < 0) nextIndex = 0
+  if (nextIndex >= strategyVersions.value.length) nextIndex = strategyVersions.value.length - 1
+
+  const v = strategyVersions.value[nextIndex]
+  if (v) selectStrategyVersion(v.id)
+}
+
 
 const openTradeArchive = (trade: { id?: string, strategyId?: string } | null | undefined) => {
   if (!trade?.id) return
