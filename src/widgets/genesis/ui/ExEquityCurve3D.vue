@@ -200,7 +200,7 @@
             <div class="flex items-center space-x-3 mb-2 cursor-pointer group/strat pointer-events-auto" @click="showStrategyMenu = !showStrategyMenu">
               <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45 transition-all duration-500" :class="showStrategyMenu ? 'scale-150 rotate-[225deg]' : 'animate-pulse'"></div>
               <span class="text-[10px] font-mono tracking-[0.5em] uppercase font-black nier-text-primary transition-opacity group-hover/strat:opacity-100" :class="showStrategyMenu ? 'opacity-100' : 'opacity-40'">
-                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }} // v1.0
+                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }} // {{ strategyVersionSuffix }}
               </span>
               <div class="w-2 h-2 border-b border-r border-black/40 dark:border-white/40 rotate-45 transition-transform duration-500 ml-2" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-0.5' : ''"></div>
             </div>
@@ -908,6 +908,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useAppBootStore } from '~/features/store/useAppBoot'
+import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -950,6 +951,17 @@ const benchmarkMetricsByStrategy = ref<Record<string, StrategyBenchmarkMetrics>>
 
 const themeStore = useThemeStore()
 const tradeStore = useStrategyTradesStore()
+const appBootStore = useAppBootStore()
+const matrixState = useMatrixState()
+
+const strategyVersionSuffix = computed(() => {
+  const vId = matrixState.selectedStrategyVersionId.value
+  const versionInfo = vId ? matrixState.strategyVersions.value.find((v: any) => v.id === vId) : null
+  const versionMatch = versionInfo?.label?.match(/(v\d+)/i)
+  return versionMatch ? versionMatch[1] : 'v1.0'
+})
+
+const renderContainer = ref<HTMLElement | null>(null)
 const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru')
 const route = useRoute()
