@@ -62,7 +62,35 @@
                           {{ change.marker }}
                         </div>
                         <div class="min-w-0 px-6 py-2.5">
-                          <div class="flex min-w-0 items-baseline gap-2">
+                          <div v-if="change.title === 'ADD_NODE' && change.nodeObject" class="mt-3 mb-2">
+                             <div class="flex items-center gap-4 p-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] relative overflow-hidden group/preview shadow-inner">
+                               <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(150,150,150,0.05)_25%,rgba(150,150,150,0.05)_50%,transparent_50%,transparent_75%,rgba(150,150,150,0.05)_75%,rgba(150,150,150,0.05)_100%)] bg-[length:10px_10px] opacity-50 pointer-events-none"></div>
+                               <!-- Fake terminal brackets -->
+                               <div class="absolute top-1.5 left-1.5 w-1.5 h-1.5 border-t border-l border-black/20 dark:border-white/20"></div>
+                               <div class="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 border-b border-r border-black/20 dark:border-white/20"></div>
+
+                               <div class="w-16 h-20 relative shrink-0 ml-1">
+                                 <ExSkillNode
+                                   :node="change.nodeObject"
+                                   :scale="0.45"
+                                   :is-dark="isDark"
+                                   :is-preview="true"
+                                   :style="`position: absolute !important; left: 50% !important; top: ${change.nodeObject.params?.customName ? '38%' : '50%'} !important; transform: translate(-50%, -50%) !important;`"
+                                 />
+                               </div>
+                               <div class="flex flex-col gap-0.5 relative z-10 flex-1 min-w-0">
+                                 <span class="font-mono text-[10px] tracking-widest uppercase font-black" :class="`diff-marker-${change.kind}`">
+                                   [+] REIFIED_NODE
+                                 </span>
+                                 <div class="flex items-baseline gap-2">
+                                    <span class="diff-node-type shrink-0 text-[11px]">{{ change.nodeType }}</span>
+                                    <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate text-[11px]">{{ change.nodeName }}</span>
+                                 </div>
+                                 <span class="font-mono text-[7px] tracking-[0.2em] uppercase opacity-40 mt-0.5">System Object Initialized</span>
+                               </div>
+                             </div>
+                          </div>
+                          <div v-else class="flex min-w-0 items-baseline gap-2">
                             <span class="shrink-0 font-bold" :class="`diff-event-${change.tone}`">{{ change.title }}</span>
                             <span class="opacity-25">::</span>
                             <span class="diff-node-type shrink-0">{{ change.nodeType }}</span>
@@ -135,6 +163,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import ExPanel from '@/shared/ui/ExPanel.vue'
+import ExSkillNode from './ExSkillNode.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 import type { MatrixChangeEvent, MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
@@ -161,6 +190,7 @@ type ReviewChange = {
   nodeType: string
   nodeName: string
   details: ReviewDetail[]
+  nodeObject?: any
 }
 
 type ReviewKind = ReviewChange['kind']
@@ -404,7 +434,7 @@ function mergedEventDetails(previous: MatrixChangeEvent, current: MatrixChangeEv
   return details
 }
 
-function reviewChange(event: MatrixChangeEvent, kind: ReviewKind, key: string, details: ReviewDetail[]): ReviewChange {
+function reviewChange(event: MatrixChangeEvent, kind: ReviewKind, key: string, details: ReviewDetail[], nodesById: Map<string, any>): ReviewChange {
   return {
     key,
     kind,
@@ -412,7 +442,8 @@ function reviewChange(event: MatrixChangeEvent, kind: ReviewKind, key: string, d
     tone: eventTones[event.type as Exclude<MatrixChangeType, 'version'>] || 'current',
     title: event.title,
     ...splitNode(event.node),
-    details
+    details,
+    nodeObject: event.targetId ? nodesById.get(event.targetId) : undefined
   }
 }
 
@@ -423,6 +454,10 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
   const previousById = new Map(previousEvents.map(event => [event.id, event]))
   const changes: ReviewChange[] = []
 
+  const currentNodesById = new Map<string, any>((version.snapshot.pages || []).flatMap(p => p.nodes || []).map(n => [n.id, n]))
+  const previousNodesById = new Map<string, any>((previousVersion?.snapshot.pages || []).flatMap(p => p.nodes || []).map(n => [n.id, n]))
+  const mergedNodesById = new Map<string, any>([...previousNodesById, ...currentNodesById])
+
   previousEvents.forEach(event => {
     const current = currentById.get(event.id)
     if (!current) {
@@ -430,7 +465,8 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
         event,
         'removed',
         `${version.id}:remove:${event.id}`,
-        allEventDetails(event, 'removed')
+        allEventDetails(event, 'removed'),
+        mergedNodesById
       ))
       return
     }
@@ -442,14 +478,15 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
       `${version.id}:${changed ? 'modify' : 'keep'}:${current.id}`,
       changed
         ? mergedEventDetails(event, current)
-        : allEventDetails(current, 'unchanged')
+        : allEventDetails(current, 'unchanged'),
+      mergedNodesById
     ))
   })
 
   currentEvents.forEach(event => {
     if (previousById.has(event.id)) return
     const kind = eventKinds[event.type as Exclude<MatrixChangeType, 'version'>] || 'modified'
-    changes.push(reviewChange(event, kind, `${version.id}:add:${event.id}`, allEventDetails(event, kind)))
+    changes.push(reviewChange(event, kind, `${version.id}:add:${event.id}`, allEventDetails(event, kind), mergedNodesById))
   })
 
   return changes

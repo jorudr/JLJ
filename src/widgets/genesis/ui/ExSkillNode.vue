@@ -1,5 +1,6 @@
 <template>
-  <div class="skill-chip absolute cursor-pointer group pointer-events-auto"
+  <div class="skill-chip absolute"
+       :class="isPreview ? 'pointer-events-none !cursor-default' : 'cursor-pointer group pointer-events-auto'"
        :style="{
          left: Math.round(node.x * scale) + 'px',
          top: Math.round(node.y * scale) + 'px',
@@ -12,7 +13,7 @@
        @contextmenu.prevent="$emit('contextmenu', { x: $event.clientX, y: $event.clientY, nodeId: node.id })">
 
      <!-- NIER STYLE SKILL CHIP (Reified with Design System) -->
-     <ExNTtooltip :title="tooltipTitle" :disabled="isScenarioContentNode" class="w-full h-full">
+     <ExNTtooltip :title="tooltipTitle" :disabled="isScenarioContentNode || isPreview" class="w-full h-full">
        <template #trigger>
           <!-- Editing Description Overlay -->
           <div v-if="node.params?.isEditingDescription" class="w-full h-full relative pointer-events-auto z-50">
@@ -795,6 +796,7 @@ const props = defineProps<{
   isClosest?: boolean
   isSelected?: boolean
   isDark?: boolean
+  isPreview?: boolean
 }>()
 
 const emit = defineEmits(['click', 'start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end'])
