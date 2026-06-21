@@ -183,6 +183,12 @@ const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const expandedVersions = ref(new Set<string>())
 
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    expandedVersions.value = new Set()
+  }
+})
+
 type ReviewChange = {
   key: string
   kind: 'added' | 'removed' | 'modified' | 'unchanged'
@@ -409,8 +415,8 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
   const previousById = new Map(previousEvents.map(event => [event.id, event]))
   const changes: ReviewChange[] = []
 
-  const currentNodesById = new Map<string, any>((version.snapshot.pages || []).flatMap(p => p.nodes || []).map(n => [n.id, n]))
-  const previousNodesById = new Map<string, any>((previousVersion?.snapshot.pages || []).flatMap(p => p.nodes || []).map(n => [n.id, n]))
+  const currentNodesById = new Map<string, any>((version.snapshot.nodes || []).map(n => [n.id, n]))
+  const previousNodesById = new Map<string, any>((previousVersion?.snapshot.nodes || []).map(n => [n.id, n]))
   const mergedNodesById = new Map<string, any>([...previousNodesById, ...currentNodesById])
 
   previousEvents.forEach(event => {
