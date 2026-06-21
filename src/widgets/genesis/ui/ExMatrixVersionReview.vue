@@ -35,7 +35,7 @@
                       <div class="min-w-0">
                         <div class="flex items-center gap-3">
                           <Icon name="lucide:git-commit-horizontal" class="h-4 w-4 shrink-0 opacity-55" />
-                          <span class="diff-version-title truncate font-mono text-[14px] font-black uppercase tracking-[0.18em]">{{ version.label }}</span>
+                          <span class="diff-version-title truncate font-mono text-[14px] font-black uppercase tracking-[0.18em]">{{ getVersionTitle(version) }}</span>
                         </div>
                         <div class="mt-1 pl-7 font-mono text-[10px] uppercase tracking-[0.16em] opacity-35">
                           {{ formatTimestamp(version.updatedAt) }}
@@ -229,6 +229,17 @@ function toggleVersion(versionId: string) {
   if (next.has(versionId)) next.delete(versionId)
   else next.add(versionId)
   expandedVersions.value = next
+}
+
+function getVersionTitle(version: any) {
+  const strategyNode = (version.snapshot?.nodes || []).find((n: any) => n.type === 'strategy')
+  const identity = strategyNode?.params?.identity || strategyNode?.params?.customName || strategyNode?.params?.identityName
+  if (identity) {
+    const versionMatch = version.label.match(/(V\d+)$/i)
+    const suffix = versionMatch ? ` ${versionMatch[1]}` : ''
+    return `${identity}${suffix}`
+  }
+  return version.label
 }
 
 function visibleVersionChanges(version: { id: string; changes: ReviewChange[] }) {

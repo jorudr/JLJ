@@ -33,7 +33,7 @@
             >
               <div class="flex items-center gap-1.5 min-w-0">
                 <span class="shrink-0">{{ version.id === state.selectedStrategyVersionId.value ? '>' : '\xa0' }}</span>
-                <span class="truncate">{{ version.label }}</span>
+                <span class="truncate">{{ getVersionTitle(version) }}</span>
               </div>
               <div
                 class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-red-500/80 hover:text-red-500 hover:font-bold font-mono tracking-widest text-[10px] bg-inherit"
@@ -109,7 +109,20 @@ const line = 'strategy'
 const expandedParents = ref<Set<string>>(new Set())
 const isVersionMenuOpen = ref(false)
 const savedVersions = computed(() => [...state.strategyVersions.value].reverse())
-const selectedVersionLabel = computed(() => state.selectedStrategyVersion.value?.label || 'Select Version')
+
+function getVersionTitle(version: any) {
+  if (!version) return 'Select Version'
+  const strategyNode = (version.snapshot?.nodes || []).find((n: any) => n.type === 'strategy')
+  const identity = strategyNode?.params?.identity || strategyNode?.params?.customName || strategyNode?.params?.identityName
+  if (identity) {
+    const versionMatch = version.label.match(/(V\d+)$/i)
+    const suffix = versionMatch ? ` ${versionMatch[1]}` : ''
+    return `${identity}${suffix}`
+  }
+  return version.label
+}
+
+const selectedVersionLabel = computed(() => getVersionTitle(state.selectedStrategyVersion.value))
 
 async function selectVersion(versionId: string) {
   await state.selectStrategyVersion(versionId)
