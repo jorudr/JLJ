@@ -101,8 +101,8 @@ type TreeRow = {
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
-const changeTree = useMatrixChangeTree()
 const state = useMatrixState()
+const changeTree = state.changeTree
 const disabledChanges = changeTree.disabledChanges
 const workspace = 'genesis-matrix'
 const line = 'strategy'

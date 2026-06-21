@@ -784,6 +784,7 @@ export function useMatrixState() {
 
         resolveAction.redo()
         selectNode(selectedNode.id)
+        pendingNodeConfig.value = null
         forceUpdate()
         saveMatrixData()
         return

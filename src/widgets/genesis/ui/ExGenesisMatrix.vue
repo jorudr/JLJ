@@ -13,12 +13,12 @@
 
     <!-- STRATEGY PAGE SWITCHER -->
     <div v-if="state.navigationStack.value.length === 0"
-         class="absolute top-6 left-1/2 -translate-x-1/2 z-[180] flex items-center gap-2 pointer-events-auto">
+         class="absolute top-6 left-1/2 -translate-x-1/2 transform-gpu z-[180] flex items-center gap-2 pointer-events-auto">
       <button v-for="(page, index) in state.matrixPages.value"
               :key="page.id"
               @click="state.switchMatrixPage(page.id)"
               @contextmenu.prevent.stop="menu.handlePageContextMenu($event, page.id)"
-              class="group relative h-9 min-w-[120px] border px-4 bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl transition-all"
+              class="group relative h-9 min-w-[120px] border px-4 bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl transition-opacity duration-300"
               :class="state.activePageId.value === page.id
                 ? 'border-nier-text-light dark:border-nier-text-dark opacity-100'
                 : 'border-nier-border-light dark:border-nier-border-dark opacity-35 hover:opacity-100'">
