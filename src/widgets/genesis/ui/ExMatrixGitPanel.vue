@@ -27,12 +27,21 @@
               v-for="version in savedVersions"
               :key="version.id"
               type="button"
-              class="version-selector-option"
+              class="version-selector-option group relative !flex items-center justify-between !pr-8"
               :class="{ 'is-selected': version.id === state.selectedStrategyVersionId.value }"
               @click.stop="selectVersion(version.id)"
             >
-              <span>{{ version.id === state.selectedStrategyVersionId.value ? '>' : ' ' }}</span>
-              <span>{{ version.label }}</span>
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="shrink-0">{{ version.id === state.selectedStrategyVersionId.value ? '>' : '\xa0' }}</span>
+                <span class="truncate">{{ version.label }}</span>
+              </div>
+              <div
+                class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-red-500/80 hover:text-red-500 hover:font-bold font-mono tracking-widest text-[10px] bg-inherit"
+                title="Delete version"
+                @click.stop="state.removeStrategyVersion(version.id)"
+              >
+                [X]
+              </div>
             </button>
           </div>
         </div>

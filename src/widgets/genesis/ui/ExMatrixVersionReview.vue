@@ -24,14 +24,14 @@
             <div class="flex h-full min-h-0 flex-col text-nier-text-light dark:text-nier-text-dark">
               <header class="h-6 shrink-0 border-b border-black/10 dark:border-white/10"></header>
 
-              <div class="version-review-scroll min-h-0 flex-1 overflow-y-auto px-12 py-8">
-                <div v-if="reviewVersions.length" class="flex flex-col gap-5">
+              <div class="version-review-scroll min-h-0 flex-1 overflow-y-auto px-20 py-12">
+                <div v-if="reviewVersions.length" class="flex flex-col gap-12">
                   <article
                     v-for="version in reviewVersions"
                     :key="version.id"
                     class="version-diff overflow-hidden border border-black/15 dark:border-white/15"
                   >
-                    <div class="flex items-center justify-between px-6 py-3">
+                    <div class="flex items-center justify-between px-10 py-5">
                       <div class="min-w-0">
                         <div class="flex items-center gap-3">
                           <Icon name="lucide:git-commit-horizontal" class="h-4 w-4 shrink-0 opacity-55" />
@@ -56,12 +56,12 @@
                         :class="`diff-row-${change.kind}`"
                       >
                         <div
-                          class="flex justify-center border-r border-black/10 py-2 font-black dark:border-white/10"
+                          class="flex justify-center border-r border-black/10 py-4 font-black dark:border-white/10"
                           :class="`diff-marker-${change.kind}`"
                         >
                           {{ change.marker }}
                         </div>
-                        <div class="min-w-0 px-6 py-2.5">
+                        <div class="min-w-0 px-10 py-4">
                           <div v-if="change.title === 'ADD_NODE' && change.nodeObject" class="mt-3 mb-2">
                              <div class="flex items-center gap-4 p-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] relative overflow-hidden group/preview shadow-inner">
                                <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(150,150,150,0.05)_25%,rgba(150,150,150,0.05)_50%,transparent_50%,transparent_75%,rgba(150,150,150,0.05)_75%,rgba(150,150,150,0.05)_100%)] bg-[length:10px_10px] opacity-50 pointer-events-none"></div>
