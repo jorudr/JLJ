@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, computed, type Ref } from 'vue'
 
 export type MatrixChangeType = 'add' | 'delete' | 'connect' | 'version' | 'clear' | 'update'
 
@@ -21,11 +21,40 @@ type MatrixChangeContainer = MatrixChangeEvent | {
   subchanges: any[]
 }
 
-const events = ref<MatrixChangeEvent[]>([])
-const disabledChanges = ref(new Set<string>())
+// Global dictionary to store events and disabled changes per page
+const eventsByPage = ref<Record<string, MatrixChangeEvent[]>>({})
+const disabledChangesByPage = ref<Record<string, Set<string>>>({})
+
 const RESOURCE_GROUP_ID = 'instruments-domains'
 
-export function useMatrixChangeTree() {
+export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
+  const events = computed({
+    get: () => {
+      const id = activePageId?.value || 'default'
+      if (!eventsByPage.value[id]) {
+        eventsByPage.value[id] = []
+      }
+      return eventsByPage.value[id]
+    },
+    set: (val) => {
+      const id = activePageId?.value || 'default'
+      eventsByPage.value[id] = val
+    }
+  })
+
+  const disabledChanges = computed({
+    get: () => {
+      const id = activePageId?.value || 'default'
+      if (!disabledChangesByPage.value[id]) {
+        disabledChangesByPage.value[id] = new Set<string>()
+      }
+      return disabledChangesByPage.value[id]
+    },
+    set: (val) => {
+      const id = activePageId?.value || 'default'
+      disabledChangesByPage.value[id] = val
+    }
+  })
   function changeId(prefix = 'chg') {
     return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5)
   }
@@ -330,12 +359,17 @@ export function useMatrixChangeTree() {
   }
 
   function resetChanges() {
-    events.value = []
+    const id = activePageId?.value || 'default'
+    eventsByPage.value[id] = []
   }
 
   return {
     events,
+    eventsByPage,
     disabledChanges,
+    disabledChangesByPage,
+    changeId,
+    appendAddNodeEvent,
     recordNodeAdded,
     recordDomainAdded,
     recordNodeDeleted,
