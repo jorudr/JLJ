@@ -103,10 +103,11 @@
                               {{ changeStatus(change.kind) }}
                             </span>
                           </div>
-                          <div v-if="change.details.length" class="mt-1.5 space-y-0.5">
-                            <div
-                              v-for="detail in change.details"
-                              :key="detail.key"
+                          <template v-if="change.details.filter(d => !(change.title === 'ADD_NODE' && d.label === 'type')).length">
+                            <div class="mt-1.5 space-y-0.5">
+                              <div
+                                v-for="detail in change.details.filter(d => !(change.title === 'ADD_NODE' && d.label === 'type'))"
+                                :key="detail.key"
                               class="grid grid-cols-[58px_minmax(0,1fr)] break-words"
                               :class="{ 'diff-detail-removed': detail.kind === 'removed' }"
                             >
@@ -123,7 +124,8 @@
                                 <span class="diff-detail-value">{{ detail.value }}</span>
                               </span>
                             </div>
-                          </div>
+                            </div>
+                          </template>
                         </div>
                       </div>
 
