@@ -200,7 +200,7 @@
             <div class="flex items-center space-x-3 mb-2 cursor-pointer group/strat pointer-events-auto" @click="showStrategyMenu = !showStrategyMenu">
               <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45 transition-all duration-500" :class="showStrategyMenu ? 'scale-150 rotate-[225deg]' : 'animate-pulse'"></div>
               <span class="text-[10px] font-mono tracking-[0.5em] uppercase font-black nier-text-primary transition-opacity group-hover/strat:opacity-100" :class="showStrategyMenu ? 'opacity-100' : 'opacity-40'">
-                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }} // {{ strategyVersionSuffix }}
+                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }}{{ selectedStrategy?.id !== 'MAIN_DIARY' ? ' // ' + strategyVersionSuffix : '' }}
               </span>
               <div class="w-2 h-2 border-b border-r border-black/40 dark:border-white/40 rotate-45 transition-transform duration-500 ml-2" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-0.5' : ''"></div>
             </div>

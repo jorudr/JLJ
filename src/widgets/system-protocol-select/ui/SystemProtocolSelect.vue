@@ -83,7 +83,8 @@ const selectedStrategyName = computed(() => {
   const vId = matrixState.selectedStrategyVersionId.value
   const versionInfo = vId ? matrixState.strategyVersions.value.find((v: any) => v.id === vId) : null
   const versionMatch = versionInfo?.label?.match(/(V\d+)$/i)
-  if (versionMatch) {
+  
+  if (versionMatch && strat.id !== 'MAIN_DIARY') {
     suffix = ` // ${versionMatch[1]}`
   }
 
