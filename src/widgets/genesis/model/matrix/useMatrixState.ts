@@ -78,6 +78,7 @@ export interface MatrixStrategyVersion {
   createdAt: number
   updatedAt: number
   snapshot: MatrixStrategySnapshot
+  draft?: MatrixStrategySnapshot
 }
 
 export interface MatrixAnonymousVersion {
@@ -1238,6 +1239,15 @@ export function useMatrixState() {
     const selectedVersion = selectedStrategyVersion.value
     const hasChanges = !!selectedVersion && !strategySnapshotsMatch(snapshot, selectedVersion.snapshot)
     hasStrategyVersionChanges.value = hasChanges
+
+    if (selectedVersion) {
+       if (hasChanges) {
+           selectedVersion.draft = cloneMatrixValue(snapshot)
+       } else {
+           delete selectedVersion.draft
+       }
+    }
+
     anonymousStrategyVersion.value = {
       id: 'anonymous',
       baseVersionId: selectedVersion?.id || null,
@@ -1277,6 +1287,9 @@ export function useMatrixState() {
     if (strategyVersions.value.length > 0) {
       const selectedVersion = selectedStrategyVersion.value
       if (!selectedVersion || strategySnapshotsMatch(currentSnapshot, selectedVersion.snapshot)) return
+      
+      // Clear the draft on the current version since these changes are now committed to a new branch
+      delete selectedVersion.draft
     }
 
     const versionNumber = strategyVersions.value.reduce((highest, version) => {
@@ -1311,7 +1324,8 @@ export function useMatrixState() {
     strategyVersions.value[versionIndex] = {
       ...currentVersion,
       updatedAt: Date.now(),
-      snapshot
+      snapshot,
+      draft: undefined
     }
     strategyVersions.value = [...strategyVersions.value]
     refreshAnonymousStrategyVersion(snapshot)
@@ -1321,6 +1335,7 @@ export function useMatrixState() {
   async function clearStrategyVersionChanges() {
     const version = selectedStrategyVersion.value
     if (!version) return
+    delete version.draft
     applyStrategySnapshot(version.snapshot)
     refreshAnonymousStrategyVersion(version.snapshot)
     await saveMatrixData(true)
@@ -1340,8 +1355,10 @@ export function useMatrixState() {
     const version = strategyVersions.value.find(item => item.id === versionId)
     if (!version) return
     selectedStrategyVersionId.value = version.id
-    applyStrategySnapshot(version.snapshot)
-    refreshAnonymousStrategyVersion(version.snapshot)
+    
+    const snapshotToApply = version.draft || version.snapshot
+    applyStrategySnapshot(snapshotToApply)
+    refreshAnonymousStrategyVersion(snapshotToApply)
     await saveMatrixData(true)
   }
 
