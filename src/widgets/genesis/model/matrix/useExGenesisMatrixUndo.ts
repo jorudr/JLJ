@@ -1,16 +1,22 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useMatrixState } from './useMatrixState'
 
-const STORAGE_KEY = 'ex_genesis_matrix_undo_buffer'
+const STORAGE_KEY_PREFIX = 'ex_genesis_matrix_undo_buffer'
 const MAX_HISTORY = 5
 
 export function useExGenesisMatrixUndo() {
   const state = useMatrixState()
   const isUndoing = ref(false)
 
+  const getStorageKey = () => {
+    const pageId = state.activePageId.value || 'default';
+    const versionId = state.selectedStrategyVersionId.value || 'current';
+    return `${STORAGE_KEY_PREFIX}_${pageId}_${versionId}`;
+  }
+
   const getBuffer = (): any[] => {
     try {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
+      const stored = sessionStorage.getItem(getStorageKey())
       return stored ? JSON.parse(stored) : []
     } catch {
       return []
@@ -18,7 +24,7 @@ export function useExGenesisMatrixUndo() {
   }
 
   const saveBuffer = (buffer: any[]) => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(buffer))
+    sessionStorage.setItem(getStorageKey(), JSON.stringify(buffer))
   }
 
   const captureSnapshot = () => {
@@ -127,6 +133,15 @@ export function useExGenesisMatrixUndo() {
       }, 300)
     },
     { deep: true }
+  )
+
+  watch(
+    () => [state.activePageId.value, state.selectedStrategyVersionId.value],
+    () => {
+      if (getBuffer().length === 0) {
+        pushSnapshot()
+      }
+    }
   )
 
   onMounted(() => {
