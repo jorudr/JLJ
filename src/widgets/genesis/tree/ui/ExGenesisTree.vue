@@ -338,7 +338,7 @@
       <div class="relative h-[620px] transition-[width] duration-500"
            :class="isPresetPanelCollapsed ? 'w-0' : 'w-80'">
       <ExPanel variant="light" no-padding no-shadow
-             class="absolute left-0 top-0 h-[620px] w-80 transition-all duration-500"
+             class="absolute left-0 top-0 h-[620px] w-80 transition-all duration-500 !bg-white dark:!bg-[#0a0a0a]"
              :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
         <div class="h-full w-full p-4 flex flex-col">
         <div class="mb-4 flex items-center justify-between border-b nier-border-primary pb-3">
@@ -419,7 +419,7 @@
           </span>
         </button>
 
-        <ExPanel variant="light" no-padding class="!border-black/20 dark:!border-white/20">
+        <ExPanel variant="light" no-padding class="!border-black/20 dark:!border-white/20 !bg-white dark:!bg-[#0a0a0a]">
         <div class="p-5 nier-text-primary">
           <div class="mb-5 border-b nier-border-primary pb-4">
             <div class="mb-2 flex items-center justify-between">
