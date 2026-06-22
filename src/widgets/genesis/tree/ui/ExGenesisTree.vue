@@ -5,7 +5,7 @@
        @pointermove="movePan"
        @pointerup="endPan"
        @pointercancel="endPan">
-    <div class="absolute inset-0" :style="panLayerStyle">
+    <div class="absolute inset-0" :style="panLayerStyle" :key="`tree-render-${treeRenderKey}`">
       <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]">
       <svg class="overflow-visible" width="2" height="2">
         <path :d="emotionConnectorPath"
@@ -502,7 +502,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
@@ -612,7 +612,14 @@ const closeSelectedTreeNode = () => {
   selectedTreeNodeKey.value = null
 }
 
-const { strategyVersions, selectedStrategyVersionId, selectStrategyVersion } = useMatrixState()
+const { strategyVersions, selectedStrategyVersionId, selectStrategyVersion, updateKey } = useMatrixState()
+
+const treeRenderKey = ref(0)
+watch([selectedStrategyVersionId, updateKey], () => {
+  nextTick(() => {
+    treeRenderKey.value++
+  })
+}, { deep: true })
 
 const currentVersionIndex = computed(() => {
   const index = strategyVersions.value.findIndex(v => v.id === selectedStrategyVersionId.value)

@@ -164,6 +164,20 @@ export const useGenesisTree = () => {
 
   const { nodes: activeNodes, connections: activeConnections, strategyVersions, selectedStrategyVersionId } = useMatrixState()
 
+  const selectedVersionSnapshot = computed(() => {
+    const versions = strategyVersions.value
+    if (!versions || versions.length === 0) {
+      // Fallback to activeNodes if there are no versions at all (e.g., brand new state)
+      return { nodes: activeNodes.value || [], connections: activeConnections.value || [] }
+    }
+    
+    const currentIndex = versions.findIndex(v => v.id === selectedStrategyVersionId.value)
+    const effectiveIndex = currentIndex === -1 ? Math.max(0, versions.length - 1) : currentIndex
+    const version = versions[effectiveIndex]
+    
+    return version?.snapshot || { nodes: [], connections: [] }
+  })
+
   const matrixNodes = computed(() => {
     const allNodes: any[] = []
     const flatten = (nodesList: any[]) => {
@@ -174,7 +188,7 @@ export const useGenesisTree = () => {
         }
       })
     }
-    flatten(activeNodes.value || [])
+    flatten(selectedVersionSnapshot.value.nodes || [])
     return allNodes
   })
 
@@ -188,7 +202,7 @@ export const useGenesisTree = () => {
         }
       })
     }
-    flatten(activeNodes.value || [], activeConnections.value || [])
+    flatten(selectedVersionSnapshot.value.nodes || [], selectedVersionSnapshot.value.connections || [])
     return allConns
   })
 
@@ -512,6 +526,47 @@ export const useGenesisTree = () => {
   const treeStructure = computed(() => {
     // We explicitly depend on selectedStrategyVersionId so changing versions forces a rebuild
     const _versionTracker = selectedStrategyVersionId.value
+
+    function normalizeNodeForDiff(node: any) {
+      if (!node) return {}
+      const { position, width, height, selected, dragging, positionAbsolute, ...rest } = node
+      return rest
+    }
+
+    function normalizeConnForDiff(conn: any) {
+      if (!conn) return {}
+      const { selected, ...rest } = conn
+      return rest
+    }
+
+    const currentIdx = strategyVersions.value.findIndex(v => v.id === selectedStrategyVersionId.value)
+    const activeIdx = currentIdx === -1 ? Math.max(0, strategyVersions.value.length - 1) : currentIdx
+    const currentVersion = strategyVersions.value[activeIdx]
+    const prevVersion = activeIdx > 0 ? strategyVersions.value[activeIdx - 1] : undefined
+
+    const isNodeChanged = (nodeId: string) => {
+      if (!currentVersion || !prevVersion) return true
+      
+      const currentSnapshot = currentVersion.draft || currentVersion.snapshot
+      const prevSnapshot = prevVersion.snapshot
+
+      const current = currentSnapshot.nodes?.find((n: any) => n.id === nodeId)
+      const prev = prevSnapshot.nodes?.find((n: any) => n.id === nodeId)
+      if (!prev && current) return true
+      if (current && prev && JSON.stringify(normalizeNodeForDiff(current)) !== JSON.stringify(normalizeNodeForDiff(prev))) return true
+      
+      const currentConns = currentSnapshot.connections?.filter((c: any) => c.fromId === nodeId || c.toId === nodeId) || []
+      const prevConns = prevSnapshot.connections?.filter((c: any) => c.fromId === nodeId || c.toId === nodeId) || []
+      
+      if (currentConns.length !== prevConns.length) return true
+      
+      const currentConnStrings = currentConns.map((c: any) => JSON.stringify(normalizeConnForDiff(c))).sort()
+      const prevConnStrings = prevConns.map((c: any) => JSON.stringify(normalizeConnForDiff(c))).sort()
+      
+      if (JSON.stringify(currentConnStrings) !== JSON.stringify(prevConnStrings)) return true
+
+      return false
+    }
     
     const nodes = strategies.value.filter(s => s.id !== 'MAIN_DIARY')
     const horizontalGap = 92
@@ -522,10 +577,13 @@ export const useGenesisTree = () => {
     const contentY = 360
     let leafCursor = 0
 
-    const treeNodes = nodes.map((strat) => {
-      const rawScenarios = collectScenarioNodes(strat.id)
+    const treeNodes: any[] = []
 
-      const scenarios = rawScenarios.map((sc) => {
+    for (const strat of nodes) {
+      const rawScenarios = collectScenarioNodes(strat.id)
+      const scenarios: any[] = []
+
+      for (const sc of rawScenarios) {
         const conditionNodes = collectConditionNodes(sc.id)
 
         const conditions = conditionNodes.map((cond) => {
@@ -538,7 +596,7 @@ export const useGenesisTree = () => {
           }
         })
 
-        const contentNodes = conditionNodes.flatMap((cond) =>
+        let contentNodes = conditionNodes.flatMap((cond) =>
           collectConditionContentNodes(cond.id).map((content) => ({
             ...content,
             conditionId: cond.id,
@@ -547,6 +605,14 @@ export const useGenesisTree = () => {
             typeLabel: 'CONDITION'
           }))
         )
+
+        contentNodes = contentNodes.filter(content => isNodeChanged(content.id) || isNodeChanged(content.conditionId))
+
+        const isScenChanged = isNodeChanged(sc.id)
+        const hasChangedConditions = conditions.some(c => isNodeChanged(c.id))
+        if (!isScenChanged && !hasChangedConditions && contentNodes.length === 0) {
+          continue
+        }
 
         const scenarioLeafCount = Math.max(Math.min(contentNodes.length, maxConditionColumns), 1)
         const contents = contentNodes.map((content, contentIdx) => {
@@ -568,7 +634,7 @@ export const useGenesisTree = () => {
 
         leafCursor += scenarioLeafCount
 
-        return {
+        scenarios.push({
           ...sc,
           treeKey: `${strat.id}:${sc.id}`,
           displayName: getScenarioDisplayName(sc),
@@ -578,38 +644,44 @@ export const useGenesisTree = () => {
           contents,
           globalX: scenarioX,
           globalY: scenarioY
-        }
-      })
+        })
+      }
+
+      const isStratChanged = isNodeChanged(strat.id)
+      if (!isStratChanged && scenarios.length === 0) {
+        continue
+      }
 
       if (scenarios.length === 0) {
         const strategyX = leafCursor * horizontalGap
         leafCursor += 1
 
-        return {
+        treeNodes.push({
           ...strat,
           treeKey: strat.id,
           x: strategyX,
           y: strategyY,
           scenarios
-        }
+        })
+        continue
       }
 
       const strategyX = scenarios.reduce((sum, scenario) => sum + scenario.globalX, 0) / scenarios.length
 
-      return {
+      treeNodes.push({
         ...strat,
         treeKey: strat.id,
         x: strategyX,
         y: strategyY,
         scenarios
-      }
-    })
+      })
+    }
 
     const centerOffset = ((Math.max(leafCursor, 1) - 1) * horizontalGap) / 2
     treeNodes.forEach((node) => {
       node.x -= centerOffset
 
-      node.scenarios.forEach((scenario) => {
+      node.scenarios.forEach((scenario: any) => {
         scenario.globalX -= centerOffset
 
         ;(scenario.conditions || []).forEach((condition: any) => {
@@ -693,11 +765,11 @@ export const useGenesisTree = () => {
       // Strategy level stats (compared to global trades for frequency)
       cache.set(strat.id, buildLabels(strategyTrades, globalTreeTrades.value))
       
-      strat.scenarios.forEach(sc => {
+      strat.scenarios.forEach((sc: any) => {
          const scTrades = tradesByNodeId.get(sc.id) || []
          cache.set(sc.treeKey || sc.id, buildLabels(scTrades, strategyTrades))
          
-         sc.contents?.forEach(content => {
+         sc.contents?.forEach((content: any) => {
              const cTrades = tradesByNodeId.get(content.id) || []
              cache.set(content.treeKey || content.id, buildLabels(cTrades, strategyTrades))
          })
@@ -743,10 +815,10 @@ export const useGenesisTree = () => {
     return treeStructure.value.map(strat => ({
       ...strat,
       ...(cache.get(strat.id) || {}),
-      scenarios: strat.scenarios.map(sc => ({
+      scenarios: strat.scenarios.map((sc: any) => ({
          ...sc,
          ...(cache.get(sc.treeKey || sc.id) || {}),
-         contents: sc.contents?.map(content => ({
+         contents: sc.contents?.map((content: any) => ({
              ...content,
              ...(cache.get(content.treeKey || content.id) || {})
          }))
