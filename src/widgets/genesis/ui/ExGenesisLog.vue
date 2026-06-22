@@ -515,6 +515,7 @@ import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import { calculateTacticalHistory } from '~/shared/utils/tacticalHistory'
+import { tradeMatchesProtocol } from '~/shared/utils/scenarioConditionScope'
 import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
@@ -1347,15 +1348,8 @@ const matrixConnections = shallowRef<any[]>([])
 const isMatrixLoading = ref(true)
 const showStrategyMenu = ref(false)
 
-const getStats = (id: string, allTrades: any[]) => {
-  const presentIn = allTrades.filter(tr => 
-    tr.boardScenarioEntry?.id === id || 
-    tr.boardScenarioExit?.id === id ||
-    tr.boardConditions?.some((c: any) => (typeof c === 'string' ? c === id : c.id === id)) ||
-    tr.boardScenarioEntry?.info?.conditions?.some((c: any) => c.id === id) ||
-    tr.boardScenarioExit?.info?.conditions?.some((c: any) => c.id === id) ||
-    (tr.emotions && Array.isArray(tr.emotions) && tr.emotions.includes(id))
-  )
+const getStats = (id: string, allTrades: any[], scenarioId?: string | null) => {
+  const presentIn = allTrades.filter(tr => tradeMatchesProtocol(tr, id, scenarioId))
   const count = presentIn.length
   const freq = allTrades.length > 0 ? count / allTrades.length : 0
   
@@ -1369,8 +1363,8 @@ const getStats = (id: string, allTrades: any[]) => {
   return { freq, pf }
 }
 
-const getHistory = (id: string, allTrades: any[]) => {
-  return calculateTacticalHistory(id, allTrades)
+const getHistory = (id: string, allTrades: any[], scenarioId?: string | null) => {
+  return calculateTacticalHistory(id, allTrades, scenarioId)
 }
 
 
@@ -1500,8 +1494,8 @@ const mappedTradeForAnalysis = computed(() => {
         history: sHistory,
         conditions: ((s as any).info?.conditions || []).map((c: any) => {
           const cId = typeof c === 'object' ? c.id : String(c)
-          const cStats = getStats(cId, allTrades)
-          const cHistory = getHistory(cId, allTrades)
+          const cStats = getStats(cId, allTrades, s.id)
+          const cHistory = getHistory(cId, allTrades, s.id)
           return {
             id: cId,
             name: typeof c === 'object' ? c.info?.name : String(c),

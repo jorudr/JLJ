@@ -154,6 +154,11 @@ export interface GenesisTreeEmotionNode extends GenesisEmotionItem {
   recentTrades?: GenesisTreeTradeSummary[]
 }
 
+interface GenesisTreeTradeConditionRef {
+  scenarioId: string | null
+  conditionId: string
+}
+
 export const useGenesisTree = () => {
   const tradeStore = useStrategyTradesStore()
   const authStore = useAuthStore()
@@ -175,7 +180,7 @@ export const useGenesisTree = () => {
     const effectiveIndex = currentIndex === -1 ? Math.max(0, versions.length - 1) : currentIndex
     const version = versions[effectiveIndex]
     
-    return version?.snapshot || { nodes: [], connections: [] }
+    return version?.draft || version?.snapshot || { nodes: [], connections: [] }
   })
 
   const matrixNodes = computed(() => {
@@ -220,39 +225,39 @@ export const useGenesisTree = () => {
     return Number.isFinite(timestamp) ? timestamp : 0
   }
 
-  const allVisibleStrategyTrades = computed(() => {
-    return tradeStore.strategies
-      .filter(strategy => strategy.id !== 'MAIN_DIARY')
-      .flatMap(strategy => tradeStore.getTradesForStrategy(strategy.id))
-  })
+  const getVersionTimestamp = (version: any) => {
+    const rawTimestamp = version?.createdAt
+    const timestamp = typeof rawTimestamp === 'number'
+      ? rawTimestamp
+      : new Date(rawTimestamp).getTime()
+
+    return Number.isFinite(timestamp) ? timestamp : null
+  }
+
+  const getSelectedVersionWindow = () => {
+    const versions = strategyVersions.value || []
+    if (versions.length === 0) {
+      return { startTime: -Infinity, endTime: Infinity }
+    }
+
+    const selectedIndex = versions.findIndex(version => version.id === selectedStrategyVersionId.value)
+    const effectiveIndex = selectedIndex === -1 ? versions.length - 1 : selectedIndex
+    const isFirstVersion = effectiveIndex === 0
+    const isLastVersion = effectiveIndex === versions.length - 1
+
+    return {
+      startTime: isFirstVersion
+        ? -Infinity
+        : getVersionTimestamp(versions[effectiveIndex]) ?? -Infinity,
+      endTime: isLastVersion
+        ? Infinity
+        : getVersionTimestamp(versions[effectiveIndex + 1]) ?? Infinity
+    }
+  }
 
   const getTradesForStrategyInTime = (strategyId: string) => {
     const allTrades = tradeStore.getTradesForStrategy(strategyId)
-    const versions = strategyVersions.value
-
-    if (!versions || versions.length === 0) {
-      return allTrades
-    }
-
-    const currentIndex = versions.findIndex(v => v.id === selectedStrategyVersionId.value)
-    const effectiveIndex = currentIndex === -1 ? versions.length - 1 : currentIndex
-
-    let startTime = -Infinity
-    let endTime = Infinity
-
-    if (effectiveIndex > 0) {
-      const v = versions[effectiveIndex]
-      if (v && v.createdAt) {
-        startTime = new Date(v.createdAt).getTime()
-      }
-    }
-
-    if (effectiveIndex < versions.length - 1) {
-      const vNext = versions[effectiveIndex + 1]
-      if (vNext && vNext.createdAt) {
-        endTime = new Date(vNext.createdAt).getTime()
-      }
-    }
+    const { startTime, endTime } = getSelectedVersionWindow()
 
     return allTrades.filter(trade => {
       const timestamp = getTradeTimestamp(trade)
@@ -260,6 +265,12 @@ export const useGenesisTree = () => {
       return timestamp >= startTime && timestamp < endTime
     })
   }
+
+  const allVisibleStrategyTrades = computed(() => {
+    return tradeStore.strategies
+      .filter(strategy => strategy.id !== 'MAIN_DIARY')
+      .flatMap(strategy => getTradesForStrategyInTime(strategy.id))
+  })
 
   const globalTreeTrades = computed(() => {
     return allVisibleStrategyTrades.value
@@ -486,6 +497,45 @@ export const useGenesisTree = () => {
     }
 
     return Array.from(new Map(collected.map(node => [node.id, node])).values())
+  }
+
+  const expandTradeConditionIds = (condition: any) => {
+    const rawId = typeof condition === 'string' ? condition : condition?.id
+    if (!rawId) return []
+
+    const conditionId = String(rawId)
+    const node = getNodeById(conditionId)
+
+    if (node?.type === 'condition') {
+      return collectConditionContentNodes(conditionId).map(content => content.id)
+    }
+
+    return [conditionId]
+  }
+
+  const getTradeScenarioConditionRefs = (trade: any): GenesisTreeTradeConditionRef[] => {
+    const refs = new Map<string, GenesisTreeTradeConditionRef>()
+    const pushConditions = (scenarioId: string | null, conditions: any[]) => {
+      ;(conditions || []).forEach(condition => {
+        expandTradeConditionIds(condition).forEach(conditionId => {
+          const key = `${scenarioId || 'UNSCOPED'}:${conditionId}`
+          refs.set(key, { scenarioId, conditionId })
+        })
+      })
+    }
+
+    const entryScenarioId = trade.boardScenarioEntry?.id || trade.boardScenarioEntryId || null
+    const exitScenarioId = trade.boardScenarioExit?.id || trade.boardScenarioExitId || null
+
+    pushConditions(entryScenarioId, trade.boardScenarioEntry?.info?.conditions || [])
+    pushConditions(exitScenarioId, trade.boardScenarioExit?.info?.conditions || [])
+    pushConditions(null, trade.boardConditions || [])
+
+    return [...refs.values()]
+  }
+
+  const getScenarioConditionKey = (scenarioId: string, conditionId: string) => {
+    return `${scenarioId}:${conditionId}`
   }
 
   const collectScenarioNodes = (rootId: string, depth = 0, visited = new Set<string>()): any[] => {
@@ -747,30 +797,57 @@ export const useGenesisTree = () => {
     tree.forEach(strat => {
       const strategyTrades = getTradesForStrategyInTime(strat.id)
       
-      // O(1) Pre-indexing trades by Node ID
-      const tradesByNodeId = new Map<string, any[]>()
+      const tradesByScenarioId = new Map<string, Set<any>>()
+      const tradesByScenarioCondition = new Map<string, Set<any>>()
+      const scenarioIdsByConditionId = new Map<string, Set<string>>()
+
+      strat.scenarios.forEach((scenario: any) => {
+        ;(scenario.contents || []).forEach((content: any) => {
+          if (!scenarioIdsByConditionId.has(content.id)) {
+            scenarioIdsByConditionId.set(content.id, new Set())
+          }
+          scenarioIdsByConditionId.get(content.id)!.add(scenario.id)
+        })
+      })
+
+      const addTrade = (index: Map<string, Set<any>>, key: string, trade: any) => {
+        if (!key) return
+        if (!index.has(key)) index.set(key, new Set())
+        index.get(key)!.add(trade)
+      }
+
       strategyTrades.forEach(tr => {
-         const addTrade = (id: string) => {
-            if (!id) return
-            if (!tradesByNodeId.has(id)) tradesByNodeId.set(id, [])
-            tradesByNodeId.get(id)!.push(tr)
-         }
-         if (tr.boardScenarioEntry?.id) addTrade(tr.boardScenarioEntry.id)
-         if (tr.boardScenarioExit?.id) addTrade(tr.boardScenarioExit.id)
-         tr.boardConditions?.forEach((c: any) => addTrade(typeof c === 'string' ? c : c.id))
-         tr.boardScenarioEntry?.info?.conditions?.forEach((c: any) => addTrade(c.id))
-         tr.boardScenarioExit?.info?.conditions?.forEach((c: any) => addTrade(c.id))
+         const entryScenarioId = tr.boardScenarioEntry?.id || tr.boardScenarioEntryId
+         const exitScenarioId = tr.boardScenarioExit?.id || tr.boardScenarioExitId
+         if (entryScenarioId) addTrade(tradesByScenarioId, entryScenarioId, tr)
+         if (exitScenarioId) addTrade(tradesByScenarioId, exitScenarioId, tr)
+
+         getTradeScenarioConditionRefs(tr).forEach(({ scenarioId, conditionId }) => {
+           if (scenarioId) {
+             addTrade(tradesByScenarioCondition, getScenarioConditionKey(scenarioId, conditionId), tr)
+             return
+           }
+
+           // Legacy boardConditions have no scenario context. They are safe to
+           // attribute only when the condition appears in exactly one branch.
+           const matchingScenarioIds = scenarioIdsByConditionId.get(conditionId)
+           if (matchingScenarioIds?.size === 1) {
+             const [onlyScenarioId] = matchingScenarioIds
+             addTrade(tradesByScenarioCondition, getScenarioConditionKey(onlyScenarioId, conditionId), tr)
+           }
+         })
       })
       
       // Strategy level stats (compared to global trades for frequency)
       cache.set(strat.id, buildLabels(strategyTrades, globalTreeTrades.value))
       
       strat.scenarios.forEach((sc: any) => {
-         const scTrades = tradesByNodeId.get(sc.id) || []
+         const scTrades = Array.from(tradesByScenarioId.get(sc.id) || [])
          cache.set(sc.treeKey || sc.id, buildLabels(scTrades, strategyTrades))
          
          sc.contents?.forEach((content: any) => {
-             const cTrades = tradesByNodeId.get(content.id) || []
+             const conditionKey = getScenarioConditionKey(sc.id, content.id)
+             const cTrades = Array.from(tradesByScenarioCondition.get(conditionKey) || [])
              cache.set(content.treeKey || content.id, buildLabels(cTrades, strategyTrades))
          })
       })
@@ -851,32 +928,6 @@ export const useGenesisTree = () => {
     }))
   })
 
-  const getTradeConditionIds = (trade: any) => {
-    const ids = new Set<string>()
-    const pushCondition = (condition: any) => {
-      const rawId = typeof condition === 'string' ? condition : condition?.id
-      if (!rawId) return
-
-      const id = String(rawId)
-      const node = getNodeById(id)
-
-      if (node?.type === 'condition') {
-        collectConditionContentNodes(id).forEach((content) => {
-          ids.add(content.id)
-        })
-        return
-      }
-
-      ids.add(id)
-    }
-
-    ;(trade.boardConditions || []).forEach(pushCondition)
-    ;(trade.boardScenarioEntry?.info?.conditions || []).forEach(pushCondition)
-    ;(trade.boardScenarioExit?.info?.conditions || []).forEach(pushCondition)
-
-    return [...ids]
-  }
-
   const treePresetOptions = computed<GenesisTreePresetOption[]>(() => {
     const treeNodes = strategyNodePositions.value
     const strategyMetricNodes = treeNodes.map(strategy => ({
@@ -931,20 +982,26 @@ export const useGenesisTree = () => {
       { key: 'condition', label: 'Conditions', nodes: conditionMetricNodesByStrategy, perStrategy: true },
       { key: 'emotion', label: 'Emotions', nodes: emotionMetricNodes, perStrategy: false }
     ]
-    const visibleConditionIds = new Set(
-      treeNodes.flatMap(strategy => strategy.scenarios.flatMap(scenario => (scenario.contents || []).map(content => content.id)))
-    )
-    const conditionTreeKeysByStrategy = new Map<string, Map<string, string[]>>()
+    const conditionTreeKeysByStrategy = new Map<string, Map<string, string>>()
     treeNodes.forEach((strategy) => {
-      const conditionMap = new Map<string, string[]>()
+      const conditionMap = new Map<string, string>()
+      const treeKeysByConditionId = new Map<string, string[]>()
 
       strategy.scenarios.forEach((scenario) => {
         ;(scenario.contents || []).forEach((content) => {
-          conditionMap.set(content.id, [
-            ...(conditionMap.get(content.id) || []),
-            content.treeKey || content.id
+          const treeKey = content.treeKey || content.id
+          conditionMap.set(getScenarioConditionKey(scenario.id, content.id), treeKey)
+          treeKeysByConditionId.set(content.id, [
+            ...(treeKeysByConditionId.get(content.id) || []),
+            treeKey
           ])
         })
+      })
+
+      treeKeysByConditionId.forEach((treeKeys, conditionId) => {
+        if (treeKeys.length === 1) {
+          conditionMap.set(getScenarioConditionKey('UNSCOPED', conditionId), treeKeys[0])
+        }
       })
 
       conditionTreeKeysByStrategy.set(strategy.id, conditionMap)
@@ -956,16 +1013,15 @@ export const useGenesisTree = () => {
       const conditionMap = conditionTreeKeysByStrategy.get(strategy.id) || new Map()
 
       getTradesForStrategyInTime(strategy.id).forEach((trade) => {
-        const rawIds = getTradeConditionIds(trade)
-          .filter(id => visibleConditionIds.has(id))
+        const ids = Array.from(new Set(getTradeScenarioConditionRefs(trade)
+          .map(({ scenarioId, conditionId }) => getScenarioConditionKey(scenarioId || 'UNSCOPED', conditionId))
+          .filter(key => conditionMap.has(key))
+          .map(key => conditionMap.get(key)!)
+          .filter(Boolean)))
           .sort()
-
-        if (rawIds.length < 2) return
-
-        const ids = rawIds.flatMap(id => conditionMap.get(id) || [])
         if (ids.length < 2) return
 
-        const key = rawIds.join('|')
+        const key = ids.join('|')
         const existing = comboStats.get(key) || { ids, count: 0, netProfit: 0 }
         existing.count += 1
         existing.netProfit += Number(trade.profitInCurrency || 0)

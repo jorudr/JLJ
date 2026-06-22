@@ -7,7 +7,7 @@ const { locale } = useI18n();
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
-const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 </script>
 
 <template>
@@ -111,7 +111,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                        </div>
 
                           <!-- SELECTION GLOW -->
-                          <div v-if="activeConditions.has(cond.id)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
+                          <div v-if="isConditionActive(cond.id, selectedRegistryScenarioId)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
 
 
                        <!-- Second Level: Logic Clusters & Indicators -->
@@ -131,19 +131,19 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                                         @click="toggleCondition(item.id, selectedRegistryScenarioId)"
                                         class="flex items-start gap-3 p-3 border transition-all cursor-pointer group/item overflow-hidden relative"
                                         :class="[
-                                          activeConditions.has(item.id) ? 'nier-bg-inverted border-black dark:border-white' : 'bg-black/[0.01] dark:bg-white/[0.01] border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10',
+                                          isConditionActive(item.id, selectedRegistryScenarioId) ? 'nier-bg-inverted border-black dark:border-white' : 'bg-black/[0.01] dark:bg-white/[0.01] border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10',
                                           mismatchedNodeIds.has(item.id) ? '!border-red-500/20 !bg-red-500/5 !pointer-events-none' : ''
                                         ]">
                                       <div class="w-1 h-1 border rotate-45 mt-1.5 transition-colors"
                                            :class="[
-                                             activeConditions.has(item.id) ? 'nier-bg-panel border-white dark:border-black' : 'border-black/20 dark:border-white/20 group-hover/item:bg-black/40 dark:group-hover/item:bg-white/40',
+                                             isConditionActive(item.id, selectedRegistryScenarioId) ? 'nier-bg-panel border-white dark:border-black' : 'border-black/20 dark:border-white/20 group-hover/item:bg-black/40 dark:group-hover/item:bg-white/40',
                                              mismatchedNodeIds.has(item.id) ? '!bg-red-500 !border-red-500' : ''
                                            ]"></div>
                                       <div class="flex flex-col relative z-10">
                                          <div class="flex items-center gap-2">
                                             <span class="text-[9px] font-mono font-bold tracking-widest uppercase transition-colors"
                                                   :class="[
-                                                    activeConditions.has(item.id) ? 'nier-text-primary' : 'text-black/80 dark:text-white/90 group-hover/item:text-black dark:group-hover/item:text-white',
+                                                    isConditionActive(item.id, selectedRegistryScenarioId) ? 'nier-text-primary' : 'text-black/80 dark:text-white/90 group-hover/item:text-black dark:group-hover/item:text-white',
                                                     mismatchedNodeIds.has(item.id) ? '!text-red-500' : ''
                                                   ]">{{ item.label }}</span>
                                             <span v-if="item.priority && item.priority !== 'NONE'" 
@@ -153,9 +153,9 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                                             </span>
                                          </div>
                                          <span class="text-[9px] font-mono uppercase tracking-tighter truncate transition-colors"
-                                               :class="activeConditions.has(item.id) ? 'text-white/40 dark:text-black/40' : 'text-black/60 dark:text-white/75'">{{ item.description || 'No telemetry.' }}</span>
+                                               :class="isConditionActive(item.id, selectedRegistryScenarioId) ? 'text-white/40 dark:text-black/40' : 'text-black/60 dark:text-white/75'">{{ item.description || 'No telemetry.' }}</span>
                                       </div>
-                                      <div v-if="activeConditions.has(item.id)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
+                                      <div v-if="isConditionActive(item.id, selectedRegistryScenarioId)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
                                    </div>
                                 </div>
                              </template>
@@ -165,12 +165,12 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                                 <div @click="toggleCondition(unit.item.id, selectedRegistryScenarioId)"
                                      class="flex items-start gap-3 p-3 border transition-all cursor-pointer group/item w-1/2 overflow-hidden relative"
                                      :class="[
-                                       activeConditions.has(unit.item.id) ? 'nier-bg-inverted border-black dark:border-white' : 'bg-black/[0.01] dark:bg-white/[0.01] border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10',
+                                       isConditionActive(unit.item.id, selectedRegistryScenarioId) ? 'nier-bg-inverted border-black dark:border-white' : 'bg-black/[0.01] dark:bg-white/[0.01] border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10',
                                        mismatchedNodeIds.has(unit.item.id) ? '!border-red-500/20 !bg-red-500/5 !pointer-events-none' : ''
                                      ]">
                                    <div class="w-1 h-1 border rotate-45 mt-1.5 transition-colors"
                                         :class="[
-                                          activeConditions.has(unit.item.id) ? 'nier-bg-panel border-white dark:border-black' : 'border-black/20 dark:border-white/20 group-hover/item:bg-black/40 dark:group-hover/item:bg-white/40',
+                                          isConditionActive(unit.item.id, selectedRegistryScenarioId) ? 'nier-bg-panel border-white dark:border-black' : 'border-black/20 dark:border-white/20 group-hover/item:bg-black/40 dark:group-hover/item:bg-white/40',
                                           mismatchedNodeIds.has(unit.item.id) ? '!bg-red-500 !border-red-500' : ''
                                         ]"></div>
                                    <div class="flex flex-col flex-1 min-w-0 relative z-10">
@@ -178,7 +178,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                                          <div class="flex items-center gap-2">
                                             <span class="text-[9px] font-mono font-black tracking-widest uppercase transition-colors"
                                                   :class="[
-                                                    activeConditions.has(unit.item.id) ? 'nier-text-primary' : 'text-black/80 dark:text-white/90 group-hover/item:text-black dark:group-hover/item:text-white',
+                                                    isConditionActive(unit.item.id, selectedRegistryScenarioId) ? 'nier-text-primary' : 'text-black/80 dark:text-white/90 group-hover/item:text-black dark:group-hover/item:text-white',
                                                     mismatchedNodeIds.has(unit.item.id) ? '!text-red-500' : ''
                                                   ]">{{ unit.item.label }}</span>
                                             <span v-if="unit.item.priority && unit.item.priority !== 'NONE'" 
@@ -188,12 +188,12 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                                             </span>
                                          </div>
                                          <span v-if="unit.item.direction" class="text-[6px] font-mono uppercase tracking-widest transition-colors"
-                                               :class="activeConditions.has(unit.item.id) ? 'text-white/40 dark:text-black/40' : 'text-amber-500/30'">{{ unit.item.direction }}</span>
+                                               :class="isConditionActive(unit.item.id, selectedRegistryScenarioId) ? 'text-white/40 dark:text-black/40' : 'text-amber-500/30'">{{ unit.item.direction }}</span>
                                       </div>
                                       <span class="text-[9px] font-mono uppercase tracking-tighter truncate mt-0.5 transition-colors"
-                                            :class="activeConditions.has(unit.item.id) ? 'text-white/40 dark:text-black/40' : 'text-black/60 dark:text-white/75'">{{ unit.item.description || 'Primary indicator.' }}</span>
+                                            :class="isConditionActive(unit.item.id, selectedRegistryScenarioId) ? 'text-white/40 dark:text-black/40' : 'text-black/60 dark:text-white/75'">{{ unit.item.description || 'Primary indicator.' }}</span>
                                    </div>
-                                   <div v-if="activeConditions.has(unit.item.id)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
+                                   <div v-if="isConditionActive(unit.item.id, selectedRegistryScenarioId)" class="absolute inset-0 bg-black/[0.02] animate-pulse"></div>
                                 </div>
                              </template>
 

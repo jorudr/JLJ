@@ -407,7 +407,7 @@
 
     <Transition name="tree-detail-panel">
       <div v-if="selectedTreeNode"
-           class="absolute right-8 top-1/2 z-[90] w-[360px] -translate-y-1/2 nier-text-primary pointer-events-auto"
+           class="absolute right-8 top-1/2 z-[90] max-h-[calc(100vh-4rem)] w-[360px] -translate-y-1/2 nier-text-primary pointer-events-auto"
            @pointerdown.stop
            @pointermove.stop
            @click.stop>
@@ -419,7 +419,7 @@
           </span>
         </button>
 
-        <ExPanel variant="light" no-padding class="!border-black/20 dark:!border-white/20 !bg-white dark:!bg-[#0a0a0a]">
+        <ExPanel variant="light" no-padding class="max-h-[calc(100vh-4rem)] overflow-hidden !border-black/20 dark:!border-white/20 !bg-white dark:!bg-[#0a0a0a]">
         <div class="p-5 nier-text-primary">
           <div class="mb-5 border-b nier-border-primary pb-4">
             <div class="mb-2 flex items-center justify-between">
@@ -476,10 +476,10 @@
             <div class="mb-3 font-mono text-[8px] font-black uppercase tracking-[0.3em] text-black/45 dark:text-white/45">
               {{ t('genesis.tree.details.recentTrades') }}
             </div>
-            <div class="flex flex-col gap-2">
+            <div class="flex max-h-[104px] flex-col gap-2 overflow-y-auto overscroll-contain pb-2 pr-1 [scrollbar-gutter:stable]">
               <button v-for="trade in (selectedTreeNode.recentTrades || [])"
                       :key="trade.id || `${trade.asset}-${trade.date}-${trade.pnl}`"
-                      class="flex items-center justify-between border nier-border-primary bg-black/[0.01] dark:bg-white/[0.02] px-3 py-2 text-left transition-colors hover:border-black/35 dark:hover:border-white/35 disabled:cursor-default disabled:hover:border-black/10 dark:disabled:hover:border-white/10"
+                      class="flex shrink-0 items-center justify-between border nier-border-primary bg-black/[0.01] dark:bg-white/[0.02] px-3 py-2 text-left transition-colors hover:border-black/35 dark:hover:border-white/35 disabled:cursor-default disabled:hover:border-black/10 dark:disabled:hover:border-white/10"
                       :disabled="!trade.id"
                       @click="openTradeArchive(trade)">
                 <div>
@@ -489,7 +489,7 @@
                 <span class="font-mono text-[10px] font-black" :class="tradePnlClass(trade)">{{ trade.pnlLabel }}</span>
               </button>
               <div v-if="!(selectedTreeNode.recentTrades || []).length"
-                   class="border nier-border-primary px-3 py-4 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-black/25 dark:text-white/25">
+                   class="shrink-0 border nier-border-primary px-3 py-4 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-black/25 dark:text-white/25">
                 {{ t('genesis.tree.details.noTrades') }}
               </div>
             </div>
@@ -614,11 +614,39 @@ const closeSelectedTreeNode = () => {
 
 const { strategyVersions, selectedStrategyVersionId, selectStrategyVersion, updateKey } = useMatrixState()
 
+const findCurrentTreeNode = (treeKey: string) => {
+  for (const strategy of strategyNodePositions.value) {
+    if ((strategy.treeKey || strategy.id) === treeKey) return strategy
+
+    for (const scenario of strategy.scenarios || []) {
+      if ((scenario.treeKey || scenario.id) === treeKey) return scenario
+
+      const content = (scenario.contents || []).find((item: any) => (item.treeKey || item.id) === treeKey)
+      if (content) return content
+    }
+  }
+
+  for (const block of emotionBlocks.value) {
+    const emotion = block.emotions.find(item => (item.treeKey || item.id) === treeKey)
+    if (emotion) return emotion
+  }
+
+  return null
+}
+
 const treeRenderKey = ref(0)
-watch([selectedStrategyVersionId, updateKey], () => {
-  nextTick(() => {
-    treeRenderKey.value++
-  })
+watch([selectedStrategyVersionId, updateKey], async () => {
+  await nextTick()
+  treeRenderKey.value++
+
+  if (!selectedTreeNodeKey.value) return
+
+  const currentNode = findCurrentTreeNode(selectedTreeNodeKey.value)
+  if (currentNode) {
+    selectedTreeNode.value = currentNode
+  } else {
+    closeSelectedTreeNode()
+  }
 }, { deep: true })
 
 const currentVersionIndex = computed(() => {

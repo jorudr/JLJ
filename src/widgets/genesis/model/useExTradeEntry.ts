@@ -435,14 +435,23 @@ onMounted(() => {
     const reconstructConditions = (scenario) => {
       const conds = scenario?.info?.conditions || scenario?.conditions
       if (!conds) return
+      const scenarioId = scenario?.id || null
+      const activate = (conditionId) => {
+        activeConditions.value.add(conditionId)
+        if (scenarioId) {
+          const scenarioIds = activeConditionScenarioIds.value.get(conditionId) || new Set()
+          scenarioIds.add(scenarioId)
+          activeConditionScenarioIds.value.set(conditionId, scenarioIds)
+        }
+      }
       conds.forEach(cond => {
         if (cond.indicatorUnits) {
           cond.indicatorUnits.forEach(unit => {
-            if (unit.type === 'bundle') unit.items?.forEach(i => activeConditions.value.add(i.id))
-            else if (unit.type === 'single' && unit.item) activeConditions.value.add(unit.item.id)
+            if (unit.type === 'bundle') unit.items?.forEach(i => activate(i.id))
+            else if (unit.type === 'single' && unit.item) activate(unit.item.id)
           })
         } else if (cond.id) {
-          activeConditions.value.add(cond.id)
+          activate(cond.id)
         }
       })
     }
@@ -585,11 +594,43 @@ const mismatchedNodeIds = computed(() => {
 const hasVectorMismatch = computed(() => mismatchedNodeIds.value.size > 0)
 
 const activeConditions = ref(new Set())
+const activeConditionScenarioIds = ref(new Map())
+const isConditionActive = (id, scenarioId = null) => {
+  if (!activeConditions.value.has(id)) return false
+  if (!scenarioId) return true
+
+  const activeScenarioIds = activeConditionScenarioIds.value.get(id)
+  return !activeScenarioIds?.size || activeScenarioIds.has(scenarioId)
+}
+
 const toggleCondition = (id, scenarioId = null) => {
   if (mismatchedNodeIds.value.has(id)) return
 
   // 1. Identify which scenario this condition belongs to
   const targetScenarioId = scenarioId || selectedRegistryScenarioId.value
+  if (targetScenarioId) selectedRegistryScenarioId.value = targetScenarioId
+
+  const activateCondition = (conditionId) => {
+    activeConditions.value.add(conditionId)
+    if (targetScenarioId) {
+      const scenarioIds = activeConditionScenarioIds.value.get(conditionId) || new Set()
+      scenarioIds.add(targetScenarioId)
+      activeConditionScenarioIds.value.set(conditionId, scenarioIds)
+    }
+  }
+  const deactivateCondition = (conditionId, scenarioToRemove = targetScenarioId) => {
+    const scenarioIds = activeConditionScenarioIds.value.get(conditionId)
+    if (scenarioToRemove && scenarioIds?.size) {
+      scenarioIds.delete(scenarioToRemove)
+      if (scenarioIds.size > 0) {
+        activeConditionScenarioIds.value.set(conditionId, scenarioIds)
+        return
+      }
+    }
+
+    activeConditions.value.delete(conditionId)
+    activeConditionScenarioIds.value.delete(conditionId)
+  }
 
   // 2. Scenario Exclusivity Logic: Clear conditions from other scenarios of the same type
   if (targetScenarioId) {
@@ -612,7 +653,7 @@ const toggleCondition = (id, scenarioId = null) => {
     allScens.forEach(s => {
       if (s.id !== targetScenarioId && getScenarioType(s.id) === targetType) {
         const conds = getActiveConditionsInScenario(s.id)
-        conds.forEach(cid => activeConditions.value.delete(cid))
+        conds.forEach(cid => deactivateCondition(cid, s.id))
       }
     })
   }
@@ -620,11 +661,11 @@ const toggleCondition = (id, scenarioId = null) => {
   // 3. Normal Toggle Logic
   const systemProtocolIds = ['cond-exit-tp', 'cond-exit-sl', 'cond-exit-fl']
   if (systemProtocolIds.includes(id)) {
-    if (activeConditions.value.has(id)) {
-      activeConditions.value.delete(id)
+    if (isConditionActive(id, targetScenarioId)) {
+      deactivateCondition(id)
     } else {
-      systemProtocolIds.forEach(rid => activeConditions.value.delete(rid))
-      activeConditions.value.add(id)
+      systemProtocolIds.forEach(rid => deactivateCondition(rid, null))
+      activateCondition(id)
     }
     return
   }
@@ -643,7 +684,7 @@ const toggleCondition = (id, scenarioId = null) => {
     if (targetBundle) break
   }
 
-  const isCurrentlyActive = activeConditions.value.has(id)
+  const isCurrentlyActive = isConditionActive(id, targetScenarioId)
 
   if (targetBundle) {
     const itemIds = targetBundle.items.map(i => i.id)
@@ -651,22 +692,22 @@ const toggleCondition = (id, scenarioId = null) => {
 
     if (logic === 'OR') {
       if (isCurrentlyActive) {
-        activeConditions.value.delete(id)
+        deactivateCondition(id)
       } else {
-        itemIds.forEach(iid => activeConditions.value.delete(iid))
-        activeConditions.value.add(id)
+        itemIds.forEach(itemId => deactivateCondition(itemId))
+        activateCondition(id)
       }
     } else if (logic === 'AND') {
       if (isCurrentlyActive) {
-        itemIds.forEach(iid => activeConditions.value.delete(iid))
+        itemIds.forEach(itemId => deactivateCondition(itemId))
       } else {
-        itemIds.forEach(iid => activeConditions.value.add(iid))
+        itemIds.forEach(itemId => activateCondition(itemId))
       }
     } else {
-      isCurrentlyActive ? activeConditions.value.delete(id) : activeConditions.value.add(id)
+      isCurrentlyActive ? deactivateCondition(id) : activateCondition(id)
     }
   } else {
-    isCurrentlyActive ? activeConditions.value.delete(id) : activeConditions.value.add(id)
+    isCurrentlyActive ? deactivateCondition(id) : activateCondition(id)
   }
 }
 
@@ -697,51 +738,50 @@ const filteredLibraryScenarios = computed(() => {
 const flatLibraryConditions = computed(() => {
   const allScenarios = [...entryScenarios.value, ...exitScenarios.value]
   const allConds = []
-  const seenIds = new Set()
+  const seenKeys = new Set()
   
   allScenarios.forEach(scen => {
     const nodeDir = (scen.params?.direction || 'NONE').toUpperCase();
     const tradeSide = side.value.toUpperCase();
     const isMismatched = nodeDir !== 'NONE' && nodeDir !== tradeSide;
+    const scenarioName = String(scen.params?.customName || scen.label || scen.id).toUpperCase();
+    const isDefaultScenario = String(scen.id).startsWith('default-');
+
+    const pushCondition = (condition) => {
+      if (!condition?.id) return;
+      const scopedKey = `${scen.id}:${condition.id}`;
+      if (seenKeys.has(scopedKey)) return;
+
+      const conditionName = condition.name || condition.label || '';
+      const tooltipName = isDefaultScenario ? conditionName : `${conditionName} (${scenarioName})`;
+      const isSearchMatch = !registrySearchQuery.value ||
+        tooltipName.toLowerCase().includes(registrySearchQuery.value.toLowerCase());
+
+      if (!isSearchMatch) return;
+
+      allConds.push({
+        ...condition,
+        id: condition.id,
+        name: conditionName,
+        tooltipName,
+        scenarioName,
+        isDefaultScenario,
+        isMismatched,
+        scenarioId: scen.id
+      });
+      seenKeys.add(scopedKey);
+    };
 
     getScenarioConditions(scen.id).forEach(c => {
       if (c.indicatorUnits) {
         c.indicatorUnits.forEach(unit => {
           const items = unit.type === 'bundle' ? unit.items : [unit.item];
           items.forEach(item => {
-            if (!item || !item.id) return;
-            if (!seenIds.has(item.id)) {
-              const isSearchMatch = !registrySearchQuery.value || 
-                                    item.label.toLowerCase().includes(registrySearchQuery.value.toLowerCase());
-              if (isSearchMatch) {
-                allConds.push({ 
-                  ...item, 
-                  id: item.id,
-                  name: item.label,
-                  isMismatched, 
-                  scenarioId: scen.id 
-                })
-                seenIds.add(item.id)
-              }
-            }
+            pushCondition(item ? { ...item, name: item.label } : null);
           })
         })
       } else {
-        if (!c.id) return;
-        if (!seenIds.has(c.id)) {
-          const isSearchMatch = !registrySearchQuery.value || 
-                                (c.name || '').toLowerCase().includes(registrySearchQuery.value.toLowerCase());
-          if (isSearchMatch) {
-            allConds.push({ 
-              ...c, 
-              id: c.id,
-              name: c.name,
-              isMismatched, 
-              scenarioId: scen.id 
-            })
-            seenIds.add(c.id)
-          }
-        }
+        pushCondition(c);
       }
     })
   })
@@ -770,15 +810,15 @@ const getActiveConditionsInScenario = (scenarioId) => {
   const conditions = getScenarioConditions(scenarioId)
   const activeIds = []
   conditions.forEach(cond => {
-    if (activeConditions.value.has(cond.id)) activeIds.push(cond.id)
+    if (isConditionActive(cond.id, scenarioId)) activeIds.push(cond.id)
     if (cond.indicatorUnits) {
       cond.indicatorUnits.forEach(unit => {
         if (unit.type === 'bundle') {
           unit.items?.forEach(i => {
-            if (activeConditions.value.has(i.id)) activeIds.push(i.id)
+            if (isConditionActive(i.id, scenarioId)) activeIds.push(i.id)
           })
         } else if (unit.type === 'single' && unit.item) {
-          if (activeConditions.value.has(unit.item.id)) activeIds.push(unit.item.id)
+          if (isConditionActive(unit.item.id, scenarioId)) activeIds.push(unit.item.id)
         }
       })
     }
@@ -1573,6 +1613,7 @@ const resetForm = () => {
   stopLoss.value = ''
   takeProfit.value = ''
   activeConditions.value.clear()
+  activeConditionScenarioIds.value.clear()
   selectedEmotions.value = []
   journalEntries.value = []
   openDate.value = new Date()
@@ -1623,13 +1664,14 @@ const submit = async () => {
     const activeResults = []
     
     scenarioConds.forEach(c => {
+       let conditionAdded = false
        // We traverse the indicator units within each condition node
        // and extract ONLY the specifically selected indicators.
        if (c.indicatorUnits) {
           c.indicatorUnits.forEach(u => {
              if (u.type === 'bundle') {
                 u.items?.forEach(i => {
-                   if (activeConditions.value.has(i.id)) {
+                   if (isConditionActive(i.id, scenId)) {
                       activeResults.push({
                          id: i.id,
                          info: { 
@@ -1638,10 +1680,11 @@ const submit = async () => {
                             priority: i.priority || c.priority || 'NONE'
                          }
                       })
+                      conditionAdded = true
                    }
                 })
              } else if (u.type === 'single' && u.item) {
-                if (activeConditions.value.has(u.item.id)) {
+                if (isConditionActive(u.item.id, scenId)) {
                    activeResults.push({
                       id: u.item.id,
                       info: { 
@@ -1650,6 +1693,7 @@ const submit = async () => {
                          priority: u.item.priority || c.priority || 'NONE'
                       }
                    })
+                   conditionAdded = true
                 }
              }
           })
@@ -1657,7 +1701,7 @@ const submit = async () => {
 
        // Special case: If the condition node itself is the selected entity 
        // (e.g. standalone condition with no internal indicators), we add it.
-       if (activeResults.length === 0 && activeConditions.value.has(c.id)) {
+       if (!conditionAdded && isConditionActive(c.id, scenId)) {
           activeResults.push({
              id: c.id,
              info: { 
@@ -1923,6 +1967,7 @@ const submit = async () => {
     mismatchedNodeIds,
     hasVectorMismatch,
     activeConditions,
+    isConditionActive,
     toggleCondition,
     showConditionLibrary,
     showEmotionSelector,

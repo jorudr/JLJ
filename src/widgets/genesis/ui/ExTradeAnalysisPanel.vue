@@ -14,6 +14,7 @@ import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
+import { tradeMatchesProtocol } from '~/shared/utils/scenarioConditionScope'
 
 interface Condition {
   id: string;
@@ -613,25 +614,10 @@ const calcPF = (tradeList: any[]) => {
   return gLoss === 0 ? (gProf > 0 ? 99.9 : 0) : gProf / gLoss;
 };
 
-const calcStats = (trades: any[], id: string) => {
+const calcStats = (trades: any[], id: string, scenarioId?: string | null) => {
   if (trades.length === 0) return { freq: 0, pf: 1.0 };
 
-  const presentIn = trades.filter(tr => {
-    const te = tr as any;
-    return te.boardScenarioEntry?.id === id ||
-           te.boardScenarioExit?.id === id ||
-           te.boardScenarioEntryId === id ||
-           te.boardScenarioExitId === id ||
-           te.boardConditions?.some((c: any) => (typeof c === 'string' ? c === id : c.id === id)) ||
-           te.boardScenarioEntry?.info?.conditions?.some((c: any) => c.id === id) ||
-           te.boardScenarioExit?.info?.conditions?.some((c: any) => c.id === id) ||
-           // Also check props.trade style structures (scenarios array)
-           te.scenarios?.some((s: any) => s.id === id || s.conditions?.some((c: any) => c.id === id)) ||
-           te.emotions?.includes(id) ||
-           te.emotionsEntry?.includes(id) ||
-           te.emotionsDuring?.includes(id) ||
-           te.emotionsExit?.includes(id);
-  });
+  const presentIn = trades.filter(tr => tradeMatchesProtocol(tr, id, scenarioId));
 
   const freq = presentIn.length / trades.length;
   const pf = calcPF(presentIn);
@@ -654,21 +640,21 @@ const liveTradesList = computed(() => {
   });
 });
 
-const getProtocolStats = (id: string) => {
+const getProtocolStats = (id: string, scenarioId?: string | null) => {
   const list = liveTradesList.value;
   if (list.length === 0) return { freq: 0, pf: 1.0 };
   // Current Global State (including all trades)
-  return calcStats(list, id);
+  return calcStats(list, id, scenarioId);
 };
 
-const getProtocolStatsBefore = (id: string) => {
+const getProtocolStatsBefore = (id: string, scenarioId?: string | null) => {
   const list = liveTradesList.value;
   if (list.length <= 1) return { freq: 0, pf: 1.0 };
   
   // Previous Global State (all trades except the very last one in the timeline)
   // This calculates if the absolute most recent activity moved the needle up or down globally
   const filtered = list.slice(0, list.length - 1);
-  return calcStats(filtered, id);
+  return calcStats(filtered, id, scenarioId);
 };
 
 const enrichedTrade = computed(() => {
@@ -695,8 +681,8 @@ const enrichedTrade = computed(() => {
         profitability: sStats.pf,
         prevProfitability: sPrev?.pf ?? undefined,
         conditions: (s.conditions || []).map(c => {
-          const cStats = getProtocolStats(c.id);
-          const cPrev  = getProtocolStatsBefore(c.id);
+          const cStats = getProtocolStats(c.id, s.id);
+          const cPrev  = getProtocolStatsBefore(c.id, s.id);
           return {
             ...c,
             frequency: cStats.freq,

@@ -7,7 +7,7 @@ const { locale } = useI18n();
 
 import ExPanel from '~/shared/ui/ExPanel.vue';
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
-const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 </script>
 
 <template>
@@ -57,21 +57,21 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
               
               <!-- FLAT CONDITION LIST (ONLY FOR 'ALL') -->
               <div v-if="libraryFilter === 'ALL'" class="flex flex-wrap gap-4">
-                <ExNTtooltip v-for="cond in flatLibraryConditions" :key="cond.id" :title="cond.isMismatched ? 'WRONG_DIRECTION' : cond.name">
+                <ExNTtooltip v-for="cond in flatLibraryConditions" :key="`${cond.scenarioId}:${cond.id}`" :title="cond.isMismatched ? `WRONG_DIRECTION / ${cond.tooltipName}` : cond.tooltipName">
                   <template #trigger>
                      <div @click="!cond.isMismatched && toggleCondition(cond.id, cond.scenarioId)"
                           class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center transition-all duration-500 group/node"
                           :class="[
                             cond.isMismatched 
                               ? 'bg-red-500/10 border-red-500/30 cursor-not-allowed'
-                              : (activeConditions.has(cond.id) 
+                              : (isConditionActive(cond.id, cond.scenarioId)
                                 ? 'nier-bg-inverted border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
                                 : (cond.priority === 'REQUIRED' ? 'bg-red-500/[0.05] border-red-500/30 hover:border-red-500' : cond.priority === 'ADDITIONAL' ? 'bg-blue-500/[0.05] border-blue-500/30 hover:border-blue-500' : 'bg-black/[0.02] dark:bg-white/[0.02] nier-border-primary hover:border-black dark:hover:border-white'))
                           ]">
                         
                         <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
                              :class="[
-                               cond.isMismatched ? 'border-red-500/30' : (activeConditions.has(cond.id) ? 'border-white/40 dark:border-black/40' : 'nier-border-primary')
+                               cond.isMismatched ? 'border-red-500/30' : (isConditionActive(cond.id, cond.scenarioId) ? 'border-white/40 dark:border-black/40' : 'nier-border-primary')
                              ]"></div>
 
                         <!-- PRIORITY ACCENT / BADGE -->
@@ -83,12 +83,12 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
 
                         <span class="text-[14px] font-mono font-black tracking-tighter uppercase transition-colors"
                               :class="[
-                                cond.isMismatched ? 'text-red-500/50' : (activeConditions.has(cond.id) ? 'nier-text-primary' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white')
+                                cond.isMismatched ? 'text-red-500/50' : (isConditionActive(cond.id, cond.scenarioId) ? 'nier-text-primary' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white')
                               ]">
                           {{ (cond.name || '').slice(0, 3) }}
                         </span>
 
-                        <div v-if="activeConditions.has(cond.id)" 
+                        <div v-if="isConditionActive(cond.id, cond.scenarioId)"
                              class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500"
                              :class="entryConditions.some(e => e.id === cond.id) ? 'bg-blue-500' : 'bg-amber-500'"></div>
                      </div>
@@ -172,14 +172,14 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                        <div @click="toggleCondition(cond.id, scen.id)"
                             class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"
                             :class="[
-                              activeConditions.has(cond.id) 
+                              isConditionActive(cond.id, scen.id)
                                 ? 'nier-bg-inverted border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
                                 : (cond.priority === 'REQUIRED' ? 'bg-red-500/[0.05] border-red-500/30 hover:border-red-500' : cond.priority === 'ADDITIONAL' ? 'bg-blue-500/[0.05] border-blue-500/30 hover:border-blue-500' : 'bg-black/[0.02] dark:bg-white/[0.02] nier-border-primary hover:border-black dark:hover:border-white')
                             ]">
                           
                           <!-- CORNER ACCENT -->
                           <div class="absolute top-1 left-1 w-1 h-1 border-t border-l transition-colors duration-500"
-                               :class="activeConditions.has(cond.id) ? 'border-white/40 dark:border-black/40' : 'nier-border-primary'"></div>
+                               :class="isConditionActive(cond.id, scen.id) ? 'border-white/40 dark:border-black/40' : 'nier-border-primary'"></div>
 
                           <!-- PRIORITY ACCENT / BADGE -->
                           <div v-if="cond.priority && cond.priority !== 'NONE'"
@@ -189,12 +189,12 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                           </div>
 
                           <span class="text-[14px] font-mono font-black tracking-tighter uppercase"
-                                :class="activeConditions.has(cond.id) ? 'nier-text-primary' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
+                                :class="isConditionActive(cond.id, scen.id) ? 'nier-text-primary' : 'text-black/40 dark:text-white/40 group-hover/node:text-black dark:group-hover/node:text-white'">
                             {{ (cond.name || '').slice(0, 3) }}
                           </span>
 
                           <!-- ACTIVE INDICATOR -->
-                          <div v-if="activeConditions.has(cond.id)" 
+                          <div v-if="isConditionActive(cond.id, scen.id)"
                                class="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 border-2 border-white dark:border-black shadow-sm transition-colors duration-500"
                                :class="entryConditions.some(e => e.id === cond.id) ? 'bg-blue-500' : 'bg-amber-500'"></div>
                        </div>
