@@ -7,6 +7,11 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY, type GenesisEmotionItem } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
 import { useMatrixState } from '../../model/matrix/useMatrixState'
+import {
+  filterTradesBySelectedStrategyVersion,
+  getSelectedStrategyVersionSnapshot,
+  getTradeVersionTimestamp
+} from '~/shared/utils/strategyVersionScope'
 
 export interface GenesisTreeTradeSummary {
   id?: string
@@ -176,11 +181,7 @@ export const useGenesisTree = () => {
       return { nodes: activeNodes.value || [], connections: activeConnections.value || [] }
     }
     
-    const currentIndex = versions.findIndex(v => v.id === selectedStrategyVersionId.value)
-    const effectiveIndex = currentIndex === -1 ? Math.max(0, versions.length - 1) : currentIndex
-    const version = versions[effectiveIndex]
-    
-    return version?.draft || version?.snapshot || { nodes: [], connections: [] }
+    return getSelectedStrategyVersionSnapshot(versions, selectedStrategyVersionId.value) || { nodes: [], connections: [] }
   })
 
   const matrixNodes = computed(() => {
@@ -219,51 +220,16 @@ export const useGenesisTree = () => {
   })
 
   const getTradeTimestamp = (trade: any) => {
-    const rawDate = trade?.dateExit || trade?.date || trade?.timestamp || trade?.createdAt
-    const timestamp = rawDate ? new Date(rawDate).getTime() : NaN
-
-    return Number.isFinite(timestamp) ? timestamp : 0
-  }
-
-  const getVersionTimestamp = (version: any) => {
-    const rawTimestamp = version?.createdAt
-    const timestamp = typeof rawTimestamp === 'number'
-      ? rawTimestamp
-      : new Date(rawTimestamp).getTime()
-
-    return Number.isFinite(timestamp) ? timestamp : null
-  }
-
-  const getSelectedVersionWindow = () => {
-    const versions = strategyVersions.value || []
-    if (versions.length === 0) {
-      return { startTime: -Infinity, endTime: Infinity }
-    }
-
-    const selectedIndex = versions.findIndex(version => version.id === selectedStrategyVersionId.value)
-    const effectiveIndex = selectedIndex === -1 ? versions.length - 1 : selectedIndex
-    const isFirstVersion = effectiveIndex === 0
-    const isLastVersion = effectiveIndex === versions.length - 1
-
-    return {
-      startTime: isFirstVersion
-        ? -Infinity
-        : getVersionTimestamp(versions[effectiveIndex]) ?? -Infinity,
-      endTime: isLastVersion
-        ? Infinity
-        : getVersionTimestamp(versions[effectiveIndex + 1]) ?? Infinity
-    }
+    return getTradeVersionTimestamp(trade)
   }
 
   const getTradesForStrategyInTime = (strategyId: string) => {
     const allTrades = tradeStore.getTradesForStrategy(strategyId)
-    const { startTime, endTime } = getSelectedVersionWindow()
-
-    return allTrades.filter(trade => {
-      const timestamp = getTradeTimestamp(trade)
-      if (!timestamp) return false
-      return timestamp >= startTime && timestamp < endTime
-    })
+    return filterTradesBySelectedStrategyVersion(
+      allTrades,
+      strategyVersions.value || [],
+      selectedStrategyVersionId.value
+    )
   }
 
   const allVisibleStrategyTrades = computed(() => {

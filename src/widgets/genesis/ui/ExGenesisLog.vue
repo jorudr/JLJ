@@ -507,9 +507,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
-import { loadFromDisk } from '~/shared/diskStorage'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
@@ -531,6 +530,11 @@ import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
+import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
+import {
+  filterTradesBySelectedStrategyVersion,
+  getSelectedStrategyVersionSnapshot
+} from '~/shared/utils/strategyVersionScope'
 
 const emit = defineEmits(['exit', 'nodeMapState', 'hudState', 'openNote', 'openTrade'])
 
@@ -538,6 +542,56 @@ const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
+const {
+  nodes: matrixStateNodes,
+  connections: matrixStateConnections,
+  strategyVersions,
+  selectedStrategyVersionId
+} = useMatrixState()
+
+const selectedMatrixSnapshot = computed(() => {
+  return getSelectedStrategyVersionSnapshot(strategyVersions.value || [], selectedStrategyVersionId.value)
+})
+
+const matrixNodes = computed(() => {
+  const allNodes: any[] = []
+  const flatten = (nodes: any[]) => {
+    nodes.forEach(node => {
+      allNodes.push(node)
+      if (node.subGraph?.nodes) flatten(node.subGraph.nodes)
+    })
+  }
+
+  flatten(selectedMatrixSnapshot.value?.nodes || matrixStateNodes.value || [])
+  return allNodes
+})
+
+const matrixConnections = computed(() => {
+  const allConnections: any[] = []
+  const flatten = (nodes: any[], connections: any[]) => {
+    allConnections.push(...connections)
+    nodes.forEach(node => {
+      if (node.subGraph) {
+        flatten(node.subGraph.nodes || [], node.subGraph.connections || [])
+      }
+    })
+  }
+
+  flatten(
+    selectedMatrixSnapshot.value?.nodes || matrixStateNodes.value || [],
+    selectedMatrixSnapshot.value?.connections || matrixStateConnections.value || []
+  )
+  return allConnections
+})
+
+const scopeTradesToSelectedVersion = <T,>(trades: T[]) => {
+  if (selectedStrategyId.value === 'MAIN_DIARY') return trades
+  return filterTradesBySelectedStrategyVersion(
+    trades,
+    strategyVersions.value || [],
+    selectedStrategyVersionId.value
+  )
+}
 
 const showShareCardModal = ref(false)
 const isGeneratingPng = ref(false)
@@ -739,11 +793,11 @@ const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${un
 
 
 const currentTrades = computed(() => {
-  return tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  return scopeTradesToSelectedVersion(tradeStore.getTradesForStrategy(selectedStrategyId.value))
 })
 
 const currentTradesForList = computed(() => {
-  return tradeStore.getAllTradesForStrategy(selectedStrategyId.value)
+  return scopeTradesToSelectedVersion(tradeStore.getAllTradesForStrategy(selectedStrategyId.value))
 })
 
 const activeMatrixNodes = computed(() => {
@@ -1343,8 +1397,6 @@ const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()
 }
 
-const matrixNodes = shallowRef<any[]>([])
-const matrixConnections = shallowRef<any[]>([])
 const isMatrixLoading = ref(true)
 const showStrategyMenu = ref(false)
 
@@ -1369,36 +1421,6 @@ const getHistory = (id: string, allTrades: any[], scenarioId?: string | null) =>
 
 
 
-
-const loadMatrixData = async () => {
-  isMatrixLoading.value = true
-  try {
-    const data = await loadFromDisk('genesis_matrix_v2') as any
-    if (data) {
-      const allNodes: any[] = []
-      const allConns: any[] = []
-      
-      const flatten = (nodesList: any[], connsList: any[]) => {
-        nodesList.forEach(n => {
-          allNodes.push(n)
-          if (n.subGraph) {
-            flatten(n.subGraph.nodes || [], n.subGraph.connections || [])
-          }
-        })
-        connsList.forEach(c => allConns.push(c))
-      }
-      
-      flatten(data.nodes || [], data.connections || [])
-      
-      matrixNodes.value = allNodes
-      matrixConnections.value = allConns
-    }
-  } catch (err) {
-    console.error('Failed to load matrix data:', err)
-  } finally {
-    isMatrixLoading.value = false
-  }
-}
 
 const selectStrategy = (id: string) => {
   selectedStrategyId.value = id
@@ -1763,12 +1785,12 @@ const navigateFace = (dir: number) => {
 
 // Extract expensive path computation out of RAF loop
 const chronologicalPathNodes = computed(() => {
-  const currentTrades = tradeStore.getTradesForStrategy(selectedStrategyId.value)
+  const scopedTrades = currentTrades.value
   const allTradeNodes = facesTrades.value.flat().filter(n => !n.isNote)
   const nodeMap = new Map(allTradeNodes.map(n => [n.id, n]))
   
   // Use exact diary order
-  return currentTrades.map(t => nodeMap.get(t.id!)).filter(Boolean) as TradeNode[]
+  return scopedTrades.map(t => nodeMap.get(t.id!)).filter(Boolean) as TradeNode[]
 })
 
 let rafId: number
@@ -2135,7 +2157,7 @@ const handleWheel = (e: WheelEvent) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown)
-  loadMatrixData()
+  isMatrixLoading.value = false
   tradeStore.init().then(() => {
     initTrades()
     switchFace(0)

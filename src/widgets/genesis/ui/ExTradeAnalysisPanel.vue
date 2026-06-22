@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useThemeStore } from '~/features/store/useTheme'
-import { loadFromDisk } from '~/shared/diskStorage'
 import ExPanel from "~/shared/ui/ExPanel.vue"
 import ExHeading from "~/shared/ui/ExHeading.vue"
 import ExText from "~/shared/ui/ExText.vue"
@@ -15,6 +14,11 @@ import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
 import { tradeMatchesProtocol } from '~/shared/utils/scenarioConditionScope'
+import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
+import {
+  filterTradesBySelectedStrategyVersion,
+  getSelectedStrategyVersionSnapshot
+} from '~/shared/utils/strategyVersionScope'
 
 interface Condition {
   id: string;
@@ -90,8 +94,47 @@ useDomI18n(analysisPanelRoot, 'genesis.dom', { includeBody: true });
 const { locale } = useI18n();
 
 const tradeStore = useStrategyTradesStore();
-const matrixNodes = shallowRef<any[]>([]);
-const matrixConnections = shallowRef<any[]>([]);
+const {
+  nodes: matrixStateNodes,
+  connections: matrixStateConnections,
+  strategyVersions,
+  selectedStrategyVersionId
+} = useMatrixState();
+
+const selectedMatrixSnapshot = computed(() => {
+  return getSelectedStrategyVersionSnapshot(strategyVersions.value || [], selectedStrategyVersionId.value);
+});
+
+const matrixNodes = computed(() => {
+  const allNodes: any[] = [];
+  const flatten = (nodes: any[]) => {
+    nodes.forEach(node => {
+      allNodes.push(node);
+      if (node.subGraph?.nodes) flatten(node.subGraph.nodes);
+    });
+  };
+
+  flatten(selectedMatrixSnapshot.value?.nodes || matrixStateNodes.value || []);
+  return allNodes;
+});
+
+const matrixConnections = computed(() => {
+  const allConnections: any[] = [];
+  const flatten = (nodes: any[], connections: any[]) => {
+    allConnections.push(...connections);
+    nodes.forEach(node => {
+      if (node.subGraph) {
+        flatten(node.subGraph.nodes || [], node.subGraph.connections || []);
+      }
+    });
+  };
+
+  flatten(
+    selectedMatrixSnapshot.value?.nodes || matrixStateNodes.value || [],
+    selectedMatrixSnapshot.value?.connections || matrixStateConnections.value || []
+  );
+  return allConnections;
+});
 
 const showEmotionSelector = ref(false);
 const selectedEmotions = ref<string[]>([]);
@@ -506,36 +549,16 @@ watch(() => props.trade?.id, () => {
   syncNotes();
 }, { immediate: true });
 
-const loadMatrixData = async () => {
-  try {
-    const data = await loadFromDisk('genesis_matrix_v2') as any;
-    if (data) {
-      const allNodes: any[] = [];
-      const allConns: any[] = [];
-      
-      const flatten = (nodesList: any[], connsList: any[]) => {
-        nodesList.forEach(n => {
-          allNodes.push(n);
-          if (n.subGraph) {
-            flatten(n.subGraph.nodes || [], n.subGraph.connections || []);
-          }
-        });
-        connsList.forEach(c => allConns.push(c));
-      };
-      
-      flatten(data.nodes || [], data.connections || []);
-      
-      matrixNodes.value = allNodes;
-      matrixConnections.value = allConns;
-    }
-  } catch (err) {
-    console.error('Failed to load matrix data in panel:', err);
-  }
-};
-
 const allTrades = computed(() => {
   if (!props.trade?.strategyId) return [];
-  return tradeStore.getTradesForStrategy(props.trade.strategyId);
+  const trades = tradeStore.getTradesForStrategy(props.trade.strategyId);
+  if (props.trade.strategyId === 'MAIN_DIARY') return trades;
+
+  return filterTradesBySelectedStrategyVersion(
+    trades,
+    strategyVersions.value || [],
+    selectedStrategyVersionId.value
+  );
 });
 
 const getNormalizedPnl = (tr: any) => {
@@ -718,7 +741,7 @@ const scenarioDurationStats = computed(() => {
   const scenarioId = trade.boardScenarioEntry?.id;
   if (!scenarioId) return { minDays: 0, maxDays: 0, count: 0 };
 
-  const relatedTrades = tradeStore.getTradesForStrategy(trade.strategyId).filter((t: any) => {
+  const relatedTrades = allTrades.value.filter((t: any) => {
     if (t?.id === trade.id) return false;
     return t?.boardScenarioEntry?.id === scenarioId;
   });
@@ -838,7 +861,6 @@ const isInitializing = ref(true);
 
 onMounted(async () => {
   isInitializing.value = true;
-  await loadMatrixData();
   isInitializing.value = false;
   
   const duration = 1500; // 1.5s
@@ -1003,8 +1025,7 @@ const balanceBeforeTrade = computed(() => {
     return Number.isFinite(val) ? val : 0;
   };
 
-  const priorTrades = tradeStore
-    .getTradesForStrategy(strategyId)
+  const priorTrades = allTrades.value
     .filter((trade: any) => {
       if (currentTradeId && trade?.id === currentTradeId) return false;
       const tradeExitTs = new Date(trade?.dateExit || trade?.date || 0).getTime();
@@ -1025,8 +1046,7 @@ import ExEquityCurve2D from './ExEquityCurve2D.vue'
 
 const reportTrades = computed(() => {
   if (!props.trade) return [];
-  const strategyId = props.trade.strategyId || 'MAIN_DIARY';
-  const historyTrades = tradeStore.getTradesForStrategy(strategyId);
+  const historyTrades = allTrades.value;
   
   const currentTradeTime = new Date(props.trade.dateExit || props.trade.date || Date.now()).getTime();
   
@@ -1088,7 +1108,7 @@ const currentTpDistPct = computed(() => {
 
 const strategyStats = computed(() => {
   if (!props.trade?.strategyId) return { avgPnl: 0, avgDuration: 0, avgRR: 0, avgVelocity: 0, avgAdherence: 0, avgSlDistPct: 0, avgTpDistPct: 0 };
-  const trades = tradeStore.getTradesForStrategy(props.trade.strategyId);
+  const trades = allTrades.value;
   if (trades.length === 0) return { avgPnl: 0, avgDuration: 0, avgRR: 0, avgVelocity: 0, avgAdherence: 0, avgSlDistPct: 0, avgTpDistPct: 0 };
   
   const totalPnl = trades.reduce((acc, t) => acc + (t.profitInCurrency || t.result || 0), 0);
@@ -1330,7 +1350,7 @@ const matrixAdherenceMetrics = computed(() => {
 
   const strictness = Math.min(10, (reqConditions.length * 2.5) + (addConditions.length * 1.5) || 8.5);
   const condPnl = conditions.length > 0 ? tr.pnl / conditions.length : tr.pnl;
-  const historicalRuleCounts = tradeStore.getTradesForStrategy(tr?.strategyId || '')
+  const historicalRuleCounts = allTrades.value
     .filter((trade: any) => !scenarioId || trade?.boardScenarioEntry?.id === scenarioId)
     .map(getRuleCount)
     .filter((count: number) => count > 0);

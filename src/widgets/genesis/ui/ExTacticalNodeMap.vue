@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, isRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, isRef, watch } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
+import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
 
 const { t } = useI18n()
 
@@ -96,11 +98,10 @@ const viewState = ref({
 })
 
 const tradeStore = useStrategyTradesStore()
+const { strategyVersions, selectedStrategyVersionId } = useMatrixState()
 const equityModalOpen = ref(false)
 const analyticsModalOpen = ref(props.openAnalyticsOnMount || false)
 const activeAnalyticsPage = ref(props.initialPage || 3)
-
-import { watch } from 'vue'
 
 watch(() => props.initialPage, (newVal) => {
   if (newVal) activeAnalyticsPage.value = newVal
@@ -112,11 +113,22 @@ watch(() => props.openAnalyticsOnMount, (newVal) => {
     analyticsModalOpen.value = true
   }
 }, { immediate: true })
+const allTrades = computed(() => {
+  if (!props.trade?.strategyId) return []
+  const trades = tradeStore.getTradesForStrategy(props.trade.strategyId)
+  if (props.trade.strategyId === 'MAIN_DIARY') return trades
+
+  return filterTradesBySelectedStrategyVersion(
+    trades,
+    strategyVersions.value || [],
+    selectedStrategyVersionId.value
+  )
+})
+
 const equityTrades = computed(() => {
   if (!props.trade) return []
-  const strategyId = props.trade.strategyId || 'MAIN_DIARY'
-  const historyTrades = tradeStore.getTradesForStrategy(strategyId)
-  
+  const historyTrades = allTrades.value
+
   const currentTradeTime = new Date(props.trade.dateExit || props.trade.date || Date.now()).getTime()
   
   // Combine and ensure current trade is marked as projection for the curve to show it as "impact"
@@ -143,11 +155,6 @@ const equityTrades = computed(() => {
 const currentInitialDeposit = computed(() => {
   if (!props.trade) return 1000
   return tradeStore.getInitialDeposit(props.trade.strategyId || 'MAIN_DIARY')
-})
-
-const allTrades = computed(() => {
-  if (!props.trade?.strategyId) return []
-  return tradeStore.getTradesForStrategy(props.trade.strategyId)
 })
 
 const getNormalizedPnl = (tr: any) => {
