@@ -251,32 +251,6 @@ export const useGenesisTree = () => {
     return allVisibleStrategyTrades.value
   })
 
-  const emotionBlocks = computed<GenesisTreeEmotionBlock[]>(() => {
-    const blockConfig = [
-      { id: 'positive' as const, label: 'POSITIVE', x: -230, y: -220, colorClass: 'text-emerald-300', accentClass: 'bg-emerald-400' },
-      { id: 'neutral' as const, label: 'NEUTRAL', x: 0, y: -220, colorClass: 'text-black dark:text-white/70', accentClass: 'bg-black/20 dark:bg-white/45' },
-      { id: 'negative' as const, label: 'NEGATIVE', x: 230, y: -220, colorClass: 'text-rose-300', accentClass: 'bg-rose-400' }
-    ]
-
-    return blockConfig.map((block) => ({
-      ...block,
-      emotions: GENESIS_EMOTION_LIBRARY
-        .filter((emotion) => emotion.type === block.id)
-        .map((emotion) => ({
-          ...emotion,
-          id: emotion.label,
-          treeKey: `emotion-${emotion.label}`,
-          name: emotion.label.toUpperCase(),
-          displayName: emotion.label.toUpperCase(),
-          shortName: emotion.label.replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase(),
-          typeLabel: 'EMOTION',
-          ...getPerformanceLabels(emotion.label)
-        }))
-    }))
-  })
-
-
-
   const strategies = computed(() => {
     return matrixNodes.value
       .filter(n => n.type === 'strategy' || n.type === 'system')
@@ -369,18 +343,6 @@ export const useGenesisTree = () => {
     return new Set(aliases[key] || [key])
   }
 
-  const tradeHasEmotion = (trade: any, id: string) => {
-    const aliases = emotionAliases(id)
-    const emotionValues = [
-      ...(Array.isArray(trade?.emotions) ? trade.emotions : []),
-      ...(Array.isArray(trade?.emotionsEntry) ? trade.emotionsEntry : []),
-      ...(Array.isArray(trade?.emotionsDuring) ? trade.emotionsDuring : []),
-      ...(Array.isArray(trade?.emotionsExit) ? trade.emotionsExit : [])
-    ]
-
-    return emotionValues.some((emotion) => aliases.has(normalizeEmotionKey(emotion)))
-  }
-
   const collectLogicalNodeIds = (structure: any[]): string[] => {
     const ids: string[] = []
 
@@ -409,72 +371,6 @@ export const useGenesisTree = () => {
     visit(structure)
 
     return Array.from(new Set(ids))
-  }
-
-  const getReachableNodes = (startId: string) => {
-    const visited = new Set<string>([startId])
-    const queue = [startId]
-    const reachable: any[] = []
-
-    while (queue.length > 0) {
-      const currId = queue.shift()
-      if (!currId) continue
-
-      const childrenIds = matrixConnections.value
-        .filter(c => c.fromId === currId)
-        .map(c => c.toId)
-
-      for (const childId of childrenIds) {
-        if (visited.has(childId)) continue
-        visited.add(childId)
-        queue.push(childId)
-
-        const node = getNodeById(childId)
-        if (node) reachable.push(node)
-      }
-    }
-
-    return reachable
-  }
-
-  const getStats = (id: string, allTrades: any[]) => {
-    const presentIn = allTrades.filter(tr =>
-      tr.boardScenarioEntry?.id === id ||
-      tr.boardScenarioExit?.id === id ||
-      tr.boardConditions?.some((c: any) => (typeof c === 'string' ? c === id : c.id === id)) ||
-      tr.boardScenarioEntry?.info?.conditions?.some((c: any) => c.id === id) ||
-      tr.boardScenarioExit?.info?.conditions?.some((c: any) => c.id === id) ||
-      tradeHasEmotion(tr, id)
-    )
-    const count = presentIn.length
-    const freq = allTrades.length > 0 ? count / allTrades.length : 0
-
-    let gProf = 0
-    let gLoss = 0
-    let wins = 0
-    let netPnl = 0
-    presentIn.forEach((tr) => {
-      const p = tr.profitInCurrency || 0
-      netPnl += p
-      if (p > 0) gProf += p
-      else gLoss += Math.abs(p)
-      if (p > 0) wins += 1
-    })
-    const pf = count === 0 ? 0 : gLoss === 0 ? (gProf > 0 ? Infinity : 0) : gProf / gLoss
-    const winrate = count > 0 ? wins / count : 0
-    const sortedByPnl = [...presentIn].sort((a, b) => Number(b.profitInCurrency || 0) - Number(a.profitInCurrency || 0))
-    const sortedByDate = [...presentIn].sort((a, b) => getTradeTimestamp(b) - getTradeTimestamp(a))
-
-    return {
-      freq,
-      pf,
-      winrate,
-      count,
-      netPnl,
-      bestTrade: sortedByPnl[0] || null,
-      worstTrade: sortedByPnl[sortedByPnl.length - 1] || null,
-      recentTrades: sortedByDate.slice(0, 5)
-    }
   }
 
   const formatMoney = (value: number) => {
@@ -511,70 +407,6 @@ export const useGenesisTree = () => {
     if (value >= 1.5) return 'text-emerald-400'
     if (value >= 1) return 'text-amber-400'
     return 'text-rose-400'
-  }
-
-  const getPerformanceLabels = (id: string, tradesScope = globalTreeTrades.value) => {
-    const stats = getStats(id, tradesScope)
-
-    return {
-      frequencyLabel: `${Math.round(stats.freq * 100)}%`,
-      profitFactorRatioLabel: Number.isFinite(stats.pf) ? stats.pf.toFixed(2) : '∞',
-      winrateLabel: `${Math.round(stats.winrate * 100)}%`,
-      tradeCountLabel: `${stats.count}`,
-      netPnlLabel: formatMoney(stats.netPnl),
-      frequencyColorClass: getRatioColorClass(stats.freq, 0.6, 0.3),
-      profitFactorRatioColorClass: getProfitFactorColorClass(stats.pf),
-      winrateColorClass: getRatioColorClass(stats.winrate, 0.55, 0.4),
-      frequencyValue: stats.freq,
-      profitFactorRatioValue: stats.pf,
-      winrateValue: stats.winrate,
-      tradeCount: stats.count,
-      netPnlValue: stats.netPnl,
-      bestTrade: summarizeTrade(stats.bestTrade),
-      worstTrade: summarizeTrade(stats.worstTrade),
-      recentTrades: stats.recentTrades.map(summarizeTrade).filter(Boolean) as GenesisTreeTradeSummary[]
-    }
-  }
-
-  const getStrategyPerformanceLabels = (strategyId: string) => {
-    const strategyTrades = getTradesForStrategyInTime(strategyId)
-    const totalTrades = globalTreeTrades.value.length
-    const freq = totalTrades > 0 ? strategyTrades.length / totalTrades : 0
-
-    let gProf = 0
-    let gLoss = 0
-    let wins = 0
-    let netPnl = 0
-    strategyTrades.forEach((trade) => {
-      const p = trade.profitInCurrency || 0
-      netPnl += p
-      if (p > 0) gProf += p
-      else gLoss += Math.abs(p)
-      if (p > 0) wins += 1
-    })
-    const pf = strategyTrades.length === 0 ? 0 : gLoss === 0 ? (gProf > 0 ? Infinity : 0) : gProf / gLoss
-    const winrate = strategyTrades.length > 0 ? wins / strategyTrades.length : 0
-    const sortedByPnl = [...strategyTrades].sort((a, b) => Number(b.profitInCurrency || 0) - Number(a.profitInCurrency || 0))
-    const sortedByDate = [...strategyTrades].sort((a, b) => getTradeTimestamp(b) - getTradeTimestamp(a))
-
-    return {
-      frequencyLabel: `${Math.round(freq * 100)}%`,
-      profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : '∞',
-      winrateLabel: `${Math.round(winrate * 100)}%`,
-      tradeCountLabel: `${strategyTrades.length}`,
-      netPnlLabel: formatMoney(netPnl),
-      frequencyColorClass: getRatioColorClass(freq, 0.6, 0.3),
-      profitFactorRatioColorClass: getProfitFactorColorClass(pf),
-      winrateColorClass: getRatioColorClass(winrate, 0.55, 0.4),
-      frequencyValue: freq,
-      profitFactorRatioValue: pf,
-      winrateValue: winrate,
-      tradeCount: strategyTrades.length,
-      netPnlValue: netPnl,
-      bestTrade: summarizeTrade(sortedByPnl[0]),
-      worstTrade: summarizeTrade(sortedByPnl[sortedByPnl.length - 1]),
-      recentTrades: sortedByDate.slice(0, 5).map(summarizeTrade).filter(Boolean) as GenesisTreeTradeSummary[]
-    }
   }
 
   const collectConditionNodes = (scenarioId: string) => {
@@ -675,7 +507,12 @@ export const useGenesisTree = () => {
     return [...discovered.values()]
   }
 
-  const strategyNodePositions = computed<GenesisTreeStrategyNode[]>(() => {
+  // --- OPTIMIZED ARCHITECTURE: SEPARATING LAYOUT FROM STATISTICS ---
+
+  const treeStructure = computed(() => {
+    // We explicitly depend on selectedStrategyVersionId so changing versions forces a rebuild
+    const _versionTracker = selectedStrategyVersionId.value
+    
     const nodes = strategies.value.filter(s => s.id !== 'MAIN_DIARY')
     const horizontalGap = 92
     const contentRowGap = 92
@@ -686,7 +523,6 @@ export const useGenesisTree = () => {
     let leafCursor = 0
 
     const treeNodes = nodes.map((strat) => {
-      const strategyTrades = getTradesForStrategyInTime(strat.id)
       const rawScenarios = collectScenarioNodes(strat.id)
 
       const scenarios = rawScenarios.map((sc) => {
@@ -708,8 +544,7 @@ export const useGenesisTree = () => {
             conditionId: cond.id,
             displayName: getConditionContentDisplayName(content),
             shortName: getConditionContentShortName(content),
-            typeLabel: 'CONDITION',
-            ...getPerformanceLabels(content.id, strategyTrades)
+            typeLabel: 'CONDITION'
           }))
         )
 
@@ -739,7 +574,6 @@ export const useGenesisTree = () => {
           displayName: getScenarioDisplayName(sc),
           shortName: getScenarioShortName(sc),
           typeLabel: getScenarioTypeLabel(sc),
-          ...getPerformanceLabels(sc.id, strategyTrades),
           conditions,
           contents,
           globalX: scenarioX,
@@ -765,7 +599,6 @@ export const useGenesisTree = () => {
       return {
         ...strat,
         treeKey: strat.id,
-        ...getStrategyPerformanceLabels(strat.id),
         x: strategyX,
         y: strategyY,
         scenarios
@@ -790,6 +623,160 @@ export const useGenesisTree = () => {
     })
 
     return treeNodes
+  })
+
+  const nodeStatsCache = computed(() => {
+    const cache = new Map<string, any>()
+    const tree = treeStructure.value
+    
+    // Explicit dependencies for reactivity
+    const _tradesTracker = tradeStore.strategies
+    const _versionTracker = selectedStrategyVersionId.value
+    
+    // Helper to calculate statistics quickly from a subset of trades
+    const buildLabels = (subset: any[], totalTradesScope: any[]) => {
+      const count = subset.length
+      const freq = totalTradesScope.length > 0 ? count / totalTradesScope.length : 0
+      
+      let gProf = 0, gLoss = 0, wins = 0, netPnl = 0
+      subset.forEach((tr) => {
+        const p = Number(tr.profitInCurrency || 0)
+        netPnl += p
+        if (p > 0) { gProf += p; wins += 1 }
+        else gLoss += Math.abs(p)
+      })
+      
+      const pf = count === 0 ? 0 : gLoss === 0 ? (gProf > 0 ? Infinity : 0) : gProf / gLoss
+      const winrate = count > 0 ? wins / count : 0
+      
+      const sortedByPnl = [...subset].sort((a, b) => Number(b.profitInCurrency || 0) - Number(a.profitInCurrency || 0))
+      const sortedByDate = [...subset].sort((a, b) => getTradeTimestamp(b) - getTradeTimestamp(a))
+
+      return {
+        frequencyLabel: `${Math.round(freq * 100)}%`,
+        profitFactorRatioLabel: Number.isFinite(pf) ? pf.toFixed(2) : '∞',
+        winrateLabel: `${Math.round(winrate * 100)}%`,
+        tradeCountLabel: `${count}`,
+        netPnlLabel: formatMoney(netPnl),
+        frequencyColorClass: getRatioColorClass(freq, 0.6, 0.3),
+        profitFactorRatioColorClass: getProfitFactorColorClass(pf),
+        winrateColorClass: getRatioColorClass(winrate, 0.55, 0.4),
+        frequencyValue: freq,
+        profitFactorRatioValue: pf,
+        winrateValue: winrate,
+        tradeCount: count,
+        netPnlValue: netPnl,
+        bestTrade: summarizeTrade(sortedByPnl[0]),
+        worstTrade: summarizeTrade(sortedByPnl[sortedByPnl.length - 1]),
+        recentTrades: sortedByDate.slice(0, 5).map(summarizeTrade).filter(Boolean) as GenesisTreeTradeSummary[]
+      }
+    }
+
+    tree.forEach(strat => {
+      const strategyTrades = getTradesForStrategyInTime(strat.id)
+      
+      // O(1) Pre-indexing trades by Node ID
+      const tradesByNodeId = new Map<string, any[]>()
+      strategyTrades.forEach(tr => {
+         const addTrade = (id: string) => {
+            if (!id) return
+            if (!tradesByNodeId.has(id)) tradesByNodeId.set(id, [])
+            tradesByNodeId.get(id)!.push(tr)
+         }
+         if (tr.boardScenarioEntry?.id) addTrade(tr.boardScenarioEntry.id)
+         if (tr.boardScenarioExit?.id) addTrade(tr.boardScenarioExit.id)
+         tr.boardConditions?.forEach((c: any) => addTrade(typeof c === 'string' ? c : c.id))
+         tr.boardScenarioEntry?.info?.conditions?.forEach((c: any) => addTrade(c.id))
+         tr.boardScenarioExit?.info?.conditions?.forEach((c: any) => addTrade(c.id))
+      })
+      
+      // Strategy level stats (compared to global trades for frequency)
+      cache.set(strat.id, buildLabels(strategyTrades, globalTreeTrades.value))
+      
+      strat.scenarios.forEach(sc => {
+         const scTrades = tradesByNodeId.get(sc.id) || []
+         cache.set(sc.treeKey || sc.id, buildLabels(scTrades, strategyTrades))
+         
+         sc.contents?.forEach(content => {
+             const cTrades = tradesByNodeId.get(content.id) || []
+             cache.set(content.treeKey || content.id, buildLabels(cTrades, strategyTrades))
+         })
+      })
+    })
+
+    // Emotion Pre-indexing globally
+    const globalTrades = globalTreeTrades.value
+    const tradesByEmotionAlias = new Map<string, any[]>()
+    
+    globalTrades.forEach(tr => {
+        const emotionValues = [
+          ...(Array.isArray(tr?.emotions) ? tr.emotions : []),
+          ...(Array.isArray(tr?.emotionsEntry) ? tr.emotionsEntry : []),
+          ...(Array.isArray(tr?.emotionsDuring) ? tr.emotionsDuring : []),
+          ...(Array.isArray(tr?.emotionsExit) ? tr.emotionsExit : [])
+        ]
+        const uniqueEmotions = new Set(emotionValues.map(normalizeEmotionKey))
+        uniqueEmotions.forEach(emo => {
+            if (!tradesByEmotionAlias.has(emo)) tradesByEmotionAlias.set(emo, [])
+            tradesByEmotionAlias.get(emo)!.push(tr)
+        })
+    })
+
+    GENESIS_EMOTION_LIBRARY.forEach(emotion => {
+       const aliases = emotionAliases(emotion.label)
+       const presentTrades = new Set<any>()
+       aliases.forEach(alias => {
+           const trs = tradesByEmotionAlias.get(alias) || []
+           trs.forEach(tr => presentTrades.add(tr))
+       })
+       cache.set(`emotion-${emotion.label}`, buildLabels(Array.from(presentTrades), globalTrades))
+    })
+
+    return cache
+  })
+
+  // --- FINAL MERGED PROPERTIES ---
+
+  const strategyNodePositions = computed<GenesisTreeStrategyNode[]>(() => {
+    const cache = nodeStatsCache.value
+    
+    return treeStructure.value.map(strat => ({
+      ...strat,
+      ...(cache.get(strat.id) || {}),
+      scenarios: strat.scenarios.map(sc => ({
+         ...sc,
+         ...(cache.get(sc.treeKey || sc.id) || {}),
+         contents: sc.contents?.map(content => ({
+             ...content,
+             ...(cache.get(content.treeKey || content.id) || {})
+         }))
+      }))
+    }))
+  })
+
+  const emotionBlocks = computed<GenesisTreeEmotionBlock[]>(() => {
+    const cache = nodeStatsCache.value
+    const blockConfig = [
+      { id: 'positive' as const, label: 'POSITIVE', x: -230, y: -220, colorClass: 'text-emerald-300', accentClass: 'bg-emerald-400' },
+      { id: 'neutral' as const, label: 'NEUTRAL', x: 0, y: -220, colorClass: 'text-black dark:text-white/70', accentClass: 'bg-black/20 dark:bg-white/45' },
+      { id: 'negative' as const, label: 'NEGATIVE', x: 230, y: -220, colorClass: 'text-rose-300', accentClass: 'bg-rose-400' }
+    ]
+
+    return blockConfig.map((block) => ({
+      ...block,
+      emotions: GENESIS_EMOTION_LIBRARY
+        .filter((emotion) => emotion.type === block.id)
+        .map((emotion) => ({
+          ...emotion,
+          id: emotion.label,
+          treeKey: `emotion-${emotion.label}`,
+          name: emotion.label.toUpperCase(),
+          displayName: emotion.label.toUpperCase(),
+          shortName: emotion.label.replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase(),
+          typeLabel: 'EMOTION',
+          ...(cache.get(`emotion-${emotion.label}`) || {})
+        }))
+    }))
   })
 
   const getTradeConditionIds = (trade: any) => {
@@ -827,32 +814,24 @@ export const useGenesisTree = () => {
       pf: strategy.profitFactorRatioValue || 0
     }))
     const scenarioMetricNodesByStrategy = treeNodes.flatMap(strategy => {
-      const strategyTrades = getTradesForStrategyInTime(strategy.id)
-
       return strategy.scenarios.map((scenario) => {
-        const stats = getStats(scenario.id, strategyTrades)
-
         return {
           id: scenario.treeKey || scenario.id,
           strategyId: strategy.id,
-          frequency: stats.freq,
-          winrate: stats.winrate,
-          pf: stats.pf
+          frequency: scenario.frequencyValue || 0,
+          winrate: scenario.winrateValue || 0,
+          pf: scenario.profitFactorRatioValue || 0
         }
       })
     })
     const conditionMetricNodesByStrategy = treeNodes.flatMap(strategy => {
-      const strategyTrades = getTradesForStrategyInTime(strategy.id)
-
       return strategy.scenarios.flatMap(scenario => (scenario.contents || []).map((content) => {
-        const stats = getStats(content.id, strategyTrades)
-
         return {
           id: content.treeKey || content.id,
           strategyId: strategy.id,
-          frequency: stats.freq,
-          winrate: stats.winrate,
-          pf: stats.pf
+          frequency: content.frequencyValue || 0,
+          winrate: content.winrateValue || 0,
+          pf: content.profitFactorRatioValue || 0
         }
       }))
     })
@@ -955,7 +934,7 @@ export const useGenesisTree = () => {
       const allMetricNodes = group.nodes
       const maxPerGroup = (metric: 'frequency' | 'winrate' | 'pf') => {
         if (!group.perStrategy) {
-          return maxGroupBy(nodesWithTrades.map(node => ({ value: node[metric], ids: [node.id] })))
+          return maxGroupBy(nodesWithTrades.map(node => ({ value: node[metric] || 0, ids: [node.id] })))
         }
 
         const nodesByStrategy = nodesWithTrades.reduce<Record<string, any[]>>((acc, node: any) => {
@@ -964,7 +943,7 @@ export const useGenesisTree = () => {
           return acc
         }, {})
         const winners = Object.values(nodesByStrategy).flatMap((nodes) => {
-          const winner = maxGroupBy(nodes.map(node => ({ value: node[metric], ids: [node.id] })))
+          const winner = maxGroupBy(nodes.map(node => ({ value: node[metric] || 0, ids: [node.id] })))
           return winner ? [winner] : []
         })
 
@@ -977,7 +956,7 @@ export const useGenesisTree = () => {
       }
       const minPerGroup = (metric: 'winrate' | 'pf') => {
         if (!group.perStrategy) {
-          return minGroupBy(allMetricNodes.map(node => ({ value: node[metric], ids: [node.id] })))
+          return minGroupBy(allMetricNodes.map(node => ({ value: node[metric] || 0, ids: [node.id] })))
         }
 
         const nodesByStrategy = allMetricNodes.reduce<Record<string, any[]>>((acc, node: any) => {
@@ -986,7 +965,7 @@ export const useGenesisTree = () => {
           return acc
         }, {})
         const losers = Object.values(nodesByStrategy).flatMap((nodes) => {
-          const loser = minGroupBy(nodes.map(node => ({ value: node[metric], ids: [node.id] })))
+          const loser = minGroupBy(nodes.map(node => ({ value: node[metric] || 0, ids: [node.id] })))
           return loser ? [loser] : []
         })
 
@@ -1101,8 +1080,6 @@ export const useGenesisTree = () => {
       year: 'numeric'
     }).toUpperCase()
   }
-
-
 
   return {
     authStore,
