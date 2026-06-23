@@ -9,7 +9,7 @@ import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskMa
 import { useMatrixState } from '../../model/matrix/useMatrixState'
 import {
   filterTradesBySelectedStrategyVersion,
-  getSelectedStrategyVersionSnapshot,
+  getSelectedStrategyVersionIndex,
   getTradeVersionTimestamp
 } from '~/shared/utils/strategyVersionScope'
 
@@ -180,8 +180,12 @@ export const useGenesisTree = () => {
       // Fallback to activeNodes if there are no versions at all (e.g., brand new state)
       return { nodes: activeNodes.value || [], connections: activeConnections.value || [] }
     }
-    
-    return getSelectedStrategyVersionSnapshot(versions, selectedStrategyVersionId.value) || { nodes: [], connections: [] }
+
+    const selectedIndex = getSelectedStrategyVersionIndex(versions, selectedStrategyVersionId.value)
+
+    // Version Review is based on committed snapshots. Matrix Tree follows the
+    // same source and must not render a draft before Update Version is pressed.
+    return versions[selectedIndex]?.snapshot || { nodes: [], connections: [] }
   })
 
   const matrixNodes = computed(() => {
