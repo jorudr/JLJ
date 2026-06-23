@@ -642,17 +642,23 @@ export const useGenesisTree = () => {
 
     const centerOffset = ((Math.max(leafCursor, 1) - 1) * horizontalGap) / 2
     treeNodes.forEach((node) => {
-      node.x -= centerOffset
+      const centeredStrategyX = node.x - centerOffset
+      const subtreeOffset = treeNodes.length === 1 ? -centeredStrategyX : 0
+
+      // Matrix Tree has a single strategy root. Keep it directly below USR even
+      // when an asymmetric scenario/condition layout shifts the leaf centroid,
+      // and move its entire subtree by the same amount.
+      node.x = centeredStrategyX + subtreeOffset
 
       node.scenarios.forEach((scenario: any) => {
-        scenario.globalX -= centerOffset
+        scenario.globalX = scenario.globalX - centerOffset + subtreeOffset
 
         ;(scenario.conditions || []).forEach((condition: any) => {
           condition.globalX = scenario.globalX
         })
 
         ;(scenario.contents || []).forEach((content: any) => {
-          content.globalX -= centerOffset
+          content.globalX = content.globalX - centerOffset + subtreeOffset
         })
       })
     })
