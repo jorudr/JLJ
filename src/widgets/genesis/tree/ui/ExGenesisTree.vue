@@ -635,7 +635,7 @@ const findCurrentTreeNode = (treeKey: string) => {
 }
 
 const treeRenderKey = ref(0)
-watch([selectedStrategyVersionId, updateKey], async () => {
+watch([selectedStrategyVersionId, updateKey, strategyVersions], async () => {
   await nextTick()
   treeRenderKey.value++
 

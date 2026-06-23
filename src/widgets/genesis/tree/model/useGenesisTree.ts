@@ -540,49 +540,9 @@ export const useGenesisTree = () => {
   // --- OPTIMIZED ARCHITECTURE: SEPARATING LAYOUT FROM STATISTICS ---
 
   const treeStructure = computed(() => {
-    // We explicitly depend on selectedStrategyVersionId so changing versions forces a rebuild
+    // Rebuild the complete selected snapshot. Version diffs belong to Version Review;
+    // the Matrix Tree must always represent every branch that exists in the version.
     const _versionTracker = selectedStrategyVersionId.value
-
-    function normalizeNodeForDiff(node: any) {
-      if (!node) return {}
-      const { position, width, height, selected, dragging, positionAbsolute, ...rest } = node
-      return rest
-    }
-
-    function normalizeConnForDiff(conn: any) {
-      if (!conn) return {}
-      const { selected, ...rest } = conn
-      return rest
-    }
-
-    const currentIdx = strategyVersions.value.findIndex(v => v.id === selectedStrategyVersionId.value)
-    const activeIdx = currentIdx === -1 ? Math.max(0, strategyVersions.value.length - 1) : currentIdx
-    const currentVersion = strategyVersions.value[activeIdx]
-    const prevVersion = activeIdx > 0 ? strategyVersions.value[activeIdx - 1] : undefined
-
-    const isNodeChanged = (nodeId: string) => {
-      if (!currentVersion || !prevVersion) return true
-      
-      const currentSnapshot = currentVersion.draft || currentVersion.snapshot
-      const prevSnapshot = prevVersion.snapshot
-
-      const current = currentSnapshot.nodes?.find((n: any) => n.id === nodeId)
-      const prev = prevSnapshot.nodes?.find((n: any) => n.id === nodeId)
-      if (!prev && current) return true
-      if (current && prev && JSON.stringify(normalizeNodeForDiff(current)) !== JSON.stringify(normalizeNodeForDiff(prev))) return true
-      
-      const currentConns = currentSnapshot.connections?.filter((c: any) => c.fromId === nodeId || c.toId === nodeId) || []
-      const prevConns = prevSnapshot.connections?.filter((c: any) => c.fromId === nodeId || c.toId === nodeId) || []
-      
-      if (currentConns.length !== prevConns.length) return true
-      
-      const currentConnStrings = currentConns.map((c: any) => JSON.stringify(normalizeConnForDiff(c))).sort()
-      const prevConnStrings = prevConns.map((c: any) => JSON.stringify(normalizeConnForDiff(c))).sort()
-      
-      if (JSON.stringify(currentConnStrings) !== JSON.stringify(prevConnStrings)) return true
-
-      return false
-    }
     
     const nodes = strategies.value.filter(s => s.id !== 'MAIN_DIARY')
     const horizontalGap = 92
@@ -612,7 +572,7 @@ export const useGenesisTree = () => {
           }
         })
 
-        let contentNodes = conditionNodes.flatMap((cond) =>
+        const contentNodes = conditionNodes.flatMap((cond) =>
           collectConditionContentNodes(cond.id).map((content) => ({
             ...content,
             conditionId: cond.id,
@@ -621,14 +581,6 @@ export const useGenesisTree = () => {
             typeLabel: 'CONDITION'
           }))
         )
-
-        contentNodes = contentNodes.filter(content => isNodeChanged(content.id) || isNodeChanged(content.conditionId))
-
-        const isScenChanged = isNodeChanged(sc.id)
-        const hasChangedConditions = conditions.some(c => isNodeChanged(c.id))
-        if (!isScenChanged && !hasChangedConditions && contentNodes.length === 0) {
-          continue
-        }
 
         const scenarioLeafCount = Math.max(Math.min(contentNodes.length, maxConditionColumns), 1)
         const contents = contentNodes.map((content, contentIdx) => {
@@ -661,11 +613,6 @@ export const useGenesisTree = () => {
           globalX: scenarioX,
           globalY: scenarioY
         })
-      }
-
-      const isStratChanged = isNodeChanged(strat.id)
-      if (!isStratChanged && scenarios.length === 0) {
-        continue
       }
 
       if (scenarios.length === 0) {
