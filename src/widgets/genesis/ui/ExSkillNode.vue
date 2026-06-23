@@ -2037,6 +2037,10 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   position: relative;
 }
 
+.risk-panel-theme-light .risk-panel-collapsed {
+  background: rgb(255 255 255);
+}
+
 :deep(.risk-panel-collapsed > div:first-child) {
   display: none;
 }
