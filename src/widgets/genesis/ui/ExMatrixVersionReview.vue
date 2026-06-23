@@ -69,7 +69,7 @@
                           {{ change.marker }}
                         </div>
                         <div class="min-w-0 px-10 py-4">
-                          <div v-if="change.title.startsWith('ADD_NODE') && change.nodeObject" class="mt-3 mb-2">
+                          <div v-if="showsNodePreview(change)" class="mt-3 mb-2">
                              <div class="flex items-center gap-4 p-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] relative overflow-hidden group/preview shadow-inner">
                                <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(150,150,150,0.05)_25%,rgba(150,150,150,0.05)_50%,transparent_50%,transparent_75%,rgba(150,150,150,0.05)_75%,rgba(150,150,150,0.05)_100%)] bg-[length:10px_10px] opacity-50 pointer-events-none"></div>
                                <!-- Fake terminal brackets -->
@@ -104,13 +104,15 @@
                                </div>
                                <div class="flex flex-col gap-0.5 relative z-10 flex-1 min-w-0">
                                  <span class="font-mono text-[10px] tracking-widest uppercase font-black" :class="`diff-marker-${change.kind}`">
-                                   [+] REIFIED_NODE
+                                   {{ change.title === 'UPDATE_NODE' ? '[~] UPDATED_NODE' : '[+] REIFIED_NODE' }}
                                  </span>
                                  <div class="flex items-baseline gap-2">
                                     <span class="diff-node-type shrink-0 text-[11px]">{{ change.nodeType }}</span>
                                     <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate text-[11px]">{{ change.nodeName }}</span>
                                  </div>
-                                 <span class="font-mono text-[7px] tracking-[0.2em] uppercase opacity-40 mt-0.5">System Object Initialized</span>
+                                 <span class="font-mono text-[7px] tracking-[0.2em] uppercase opacity-40 mt-0.5">
+                                   {{ change.title === 'UPDATE_NODE' ? 'System Object Updated' : 'System Object Initialized' }}
+                                 </span>
                                </div>
                              </div>
                           </div>
@@ -272,6 +274,13 @@ function visibleVersionChanges(version: { id: string; changes: ReviewChange[] })
   if (version.changes.length <= 2 || isVersionExpanded(version.id)) return version.changes
 
   return version.changes.slice(0, 2)
+}
+
+function showsNodePreview(change: ReviewChange) {
+  return !!change.nodeObject && (
+    change.title.startsWith('ADD_NODE') ||
+    (change.title === 'UPDATE_NODE' && change.nodeObject.type === 'risk')
+  )
 }
 
 function changeStatus(kind: ReviewKind) {
