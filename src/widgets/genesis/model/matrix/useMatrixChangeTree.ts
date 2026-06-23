@@ -63,6 +63,22 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
     return node.params?.customName || node.params?.identityName || node.label || node.id
   }
 
+  function riskManagementValues(node: any) {
+    const params = node.params || {}
+    const tradeValue = params.riskLossTrade ?? 1
+    const tradeUnit = params.riskLossTradeUnit || '%'
+    const sessionValue = params.riskLossDay ?? 5
+    const sessionUnit = params.riskLossDayUnit || '$'
+    const riskReward = params.riskRR ?? 3
+
+    return [
+      { label: 'risk per trade', value: tradeUnit === '$' ? `$${tradeValue}` : `${tradeValue}%` },
+      { label: 'risk per session', value: sessionUnit === '$' ? `$${sessionValue}` : `${sessionValue}%` },
+      { label: 'risk reward ratio', value: `1:${riskReward}` },
+      { label: 'trading style', value: params.tradingStyle || 'DAY_TRADING' }
+    ]
+  }
+
   function appendAddNodeEvent(node: any, targetKind: MatrixChangeEvent['targetKind'] = 'node') {
     const subchanges: any[] = []
     
@@ -79,6 +95,18 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
           })
         }
       }
+    }
+
+    if (node.type === 'risk') {
+      riskManagementValues(node).forEach(field => {
+        subchanges.push({
+          id: changeId('sub'),
+          label: field.label,
+          value: field.value,
+          targetId: node.id,
+          subchanges: []
+        })
+      })
     }
 
     events.value.push({
@@ -231,6 +259,12 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
   function recordScalingEntryChanged(node: any) {
     setFinalNodeValue(node, 'lots', scalingLotsValue(node))
     setFinalNodeValue(node, 'distance', scalingDistanceValue(node))
+  }
+
+  function recordRiskManagementChanged(node: any) {
+    riskManagementValues(node).forEach(field => {
+      setFinalNodeValue(node, field.label, field.value)
+    })
   }
 
   function recordScalingEntryAdded(node: any) {
@@ -451,6 +485,7 @@ export function useMatrixChangeTree(activePageId?: Ref<string | null>) {
     updateConnectionAction,
     clearBoard,
     recordScalingEntryChanged,
+    recordRiskManagementChanged,
     recordConnectionLabelChanged,
     removeLatestConnectionLabelChange,
     syncNodeIdentityLabels,

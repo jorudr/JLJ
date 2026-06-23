@@ -958,6 +958,7 @@ let audioSeekTrackElement: HTMLElement | null = null
 let audioAnimationId = 0
 
 function commitRiskPanel() {
+  changeTree.recordRiskManagementChanged(props.node)
   emit('moved')
 }
 

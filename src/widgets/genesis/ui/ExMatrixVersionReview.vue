@@ -76,8 +76,25 @@
                                <div class="absolute top-1.5 left-1.5 w-1.5 h-1.5 border-t border-l border-black/20 dark:border-white/20"></div>
                                <div class="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 border-b border-r border-black/20 dark:border-white/20"></div>
 
-                               <div class="w-16 h-20 relative shrink-0 ml-1">
+                               <div class="w-16 h-20 relative shrink-0 ml-1 flex items-center justify-center">
+                                 <div
+                                   v-if="change.nodeObject.type === 'risk'"
+                                   class="relative flex h-16 w-16 items-center justify-center border border-black/20 bg-black/[0.03] dark:border-white/20 dark:bg-white/[0.03]"
+                                 >
+                                   <svg
+                                     class="h-8 w-8 opacity-55 nier-text-primary"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.5"
+                                   >
+                                     <path d="M12 5v8M12 18v0.01" stroke-width="2.5" stroke-linecap="round" />
+                                   </svg>
+                                   <div class="absolute left-1 top-1 h-2 w-2 border-l border-t border-black/25 dark:border-white/25"></div>
+                                   <div class="absolute bottom-1 right-1 h-2 w-2 border-b border-r border-black/25 dark:border-white/25"></div>
+                                 </div>
                                  <ExSkillNode
+                                   v-else
                                    :node="change.nodeObject"
                                    :scale="0.45"
                                    :is-dark="isDark"
@@ -294,10 +311,30 @@ const eventTones: Record<Exclude<MatrixChangeType, 'version'>, ReviewChange['ton
   update: 'current'
 }
 
+function riskReviewFields(node: any) {
+  const params = node?.params || {}
+  const tradeValue = params.riskLossTrade ?? 1
+  const tradeUnit = params.riskLossTradeUnit || '%'
+  const sessionValue = params.riskLossDay ?? 5
+  const sessionUnit = params.riskLossDayUnit || '$'
+
+  return [
+    { label: 'risk per trade', value: tradeUnit === '$' ? `$${tradeValue}` : `${tradeValue}%` },
+    { label: 'risk per session', value: sessionUnit === '$' ? `$${sessionValue}` : `${sessionValue}%` },
+    { label: 'risk reward ratio', value: `1:${params.riskRR ?? 3}` },
+    { label: 'trading style', value: params.tradingStyle || 'DAY_TRADING' }
+  ].map(field => ({
+    id: `risk-field:${field.label}`,
+    label: field.label,
+    value: field.value,
+    targetId: node.id,
+    subchanges: []
+  }))
+}
+
 function treeEvents(version?: MatrixStrategyVersion) {
-  return (version?.snapshot.events || []).filter(
-    (event: MatrixChangeEvent) => event.type !== 'version'
-  ) as MatrixChangeEvent[]
+  return (version?.snapshot.events || [])
+    .filter((event: MatrixChangeEvent) => event.type !== 'version') as MatrixChangeEvent[]
 }
 
 function eventComparable(event: MatrixChangeEvent) {
@@ -428,16 +465,64 @@ function reviewChange(event: MatrixChangeEvent, kind: ReviewKind, key: string, d
   }
 }
 
-function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: MatrixStrategyVersion) {
-  const currentEvents = treeEvents(version)
-  const previousEvents = treeEvents(previousVersion)
-  const currentById = new Map(currentEvents.map(event => [event.id, event]))
-  const previousById = new Map(previousEvents.map(event => [event.id, event]))
-  const changes: ReviewChange[] = []
+function isRiskEvent(event: MatrixChangeEvent, nodesById: Map<string, any>) {
+  const targetNode = event.targetId ? nodesById.get(event.targetId) : null
+  return targetNode?.type === 'risk' || /^risk(?:-management)?:/i.test(event.node)
+}
 
+function riskVersionEvent(node: any, type: 'add' | 'delete' | 'update', title: string): MatrixChangeEvent {
+  return {
+    id: 'risk-management',
+    type,
+    title,
+    node: `risk: ${node.params?.customName || node.label || 'Risk'}`,
+    createdAt: 0,
+    targetId: node.id,
+    targetKind: 'node',
+    subchanges: riskReviewFields(node)
+  }
+}
+
+function buildRiskVersionChange(
+  version: MatrixStrategyVersion,
+  currentRiskNode: any,
+  previousRiskNode: any,
+  nodesById: Map<string, any>
+) {
+  if (!currentRiskNode && !previousRiskNode) return null
+
+  if (!previousRiskNode) {
+    const current = riskVersionEvent(currentRiskNode, 'add', 'ADD_NODE')
+    return reviewChange(current, 'added', `${version.id}:risk:add`, allEventDetails(current, 'added'), nodesById)
+  }
+
+  if (!currentRiskNode) {
+    const previous = riskVersionEvent(previousRiskNode, 'delete', 'DELETE_NODE')
+    return reviewChange(previous, 'removed', `${version.id}:risk:remove`, allEventDetails(previous, 'removed'), nodesById)
+  }
+
+  const previous = riskVersionEvent(previousRiskNode, 'update', 'UPDATE_NODE')
+  const current = riskVersionEvent(currentRiskNode, 'update', 'UPDATE_NODE')
+  const changed = JSON.stringify(previous.subchanges.map(field => field.value)) !== JSON.stringify(current.subchanges.map(field => field.value))
+
+  return reviewChange(
+    current,
+    changed ? 'modified' : 'unchanged',
+    `${version.id}:risk:${changed ? 'modify' : 'keep'}`,
+    changed ? mergedEventDetails(previous, current) : allEventDetails(current, 'unchanged'),
+    nodesById
+  )
+}
+
+function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: MatrixStrategyVersion) {
   const currentNodesById = new Map<string, any>((version.snapshot.nodes || []).map(n => [n.id, n]))
   const previousNodesById = new Map<string, any>((previousVersion?.snapshot.nodes || []).map(n => [n.id, n]))
   const mergedNodesById = new Map<string, any>([...previousNodesById, ...currentNodesById])
+  const currentEvents = treeEvents(version).filter(event => !isRiskEvent(event, currentNodesById))
+  const previousEvents = treeEvents(previousVersion).filter(event => !isRiskEvent(event, previousNodesById))
+  const currentById = new Map(currentEvents.map(event => [event.id, event]))
+  const previousById = new Map(previousEvents.map(event => [event.id, event]))
+  const changes: ReviewChange[] = []
 
   previousEvents.forEach(event => {
     const current = currentById.get(event.id)
@@ -469,6 +554,11 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
     const kind = eventKinds[event.type as Exclude<MatrixChangeType, 'version'>] || 'modified'
     changes.push(reviewChange(event, kind, `${version.id}:add:${event.id}`, allEventDetails(event, kind), mergedNodesById))
   })
+
+  const currentRiskNode = [...currentNodesById.values()].find(node => node.type === 'risk')
+  const previousRiskNode = [...previousNodesById.values()].find(node => node.type === 'risk')
+  const riskChange = buildRiskVersionChange(version, currentRiskNode, previousRiskNode, mergedNodesById)
+  if (riskChange) changes.push(riskChange)
 
   return changes
 }
