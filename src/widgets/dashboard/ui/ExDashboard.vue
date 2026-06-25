@@ -142,7 +142,7 @@
           </div>
 
           <!-- Theme Toggle -->
-          <!-- <button
+          <button
             class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
             @click="themeStore.toggleDark"
           >
@@ -153,7 +153,7 @@
                 class="block"
               />
             </template>
-          </button> -->
+          </button>
         </div>
 
       </div>
