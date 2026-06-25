@@ -70,7 +70,7 @@ export function useMatrixUploads(state: ReturnType<typeof useMatrixState>) {
 
         node.params.fileName = file.name
         node.params.fileSize = file.size
-        node.params.fileType = file.type || 'application/octet-stream'
+        node.params.fileType = 'application/pdf'
         node.params.fileDataUrl = event.target?.result as string
 
         state.changeTree.recordNodeFileAttachmentChanged(node, {
@@ -84,7 +84,7 @@ export function useMatrixUploads(state: ReturnType<typeof useMatrixState>) {
           redo: () => {
             node.params.fileName = file.name
             node.params.fileSize = file.size
-            node.params.fileType = file.type || 'application/octet-stream'
+            node.params.fileType = 'application/pdf'
             node.params.fileDataUrl = event.target?.result as string
             state.forceUpdate()
           }

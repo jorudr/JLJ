@@ -297,8 +297,17 @@
                          @click.stop
                          placeholder="https://..."
                          class="h-8 bg-transparent border border-nier-border-light dark:border-nier-border-dark px-2 text-[9px] font-mono outline-none text-nier-text-light dark:text-nier-text-dark" />
-                  <div class="flex-1 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex items-center justify-center overflow-hidden">
-                     <span class="text-[8px] font-mono tracking-[0.25em] uppercase opacity-35 break-all px-3 text-center">{{ node.params.embedUrl || 'Embed_URL' }}</span>
+                  <div class="flex-1 min-h-0 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex items-center justify-center overflow-hidden">
+                     <img
+                       v-if="embedImageUrl && !embedImageError"
+                       :src="embedImageUrl"
+                       :alt="node.params.embedUrl || 'Embed preview'"
+                       draggable="false"
+                       class="matrix-embed-preview-image h-full w-full object-contain p-1.5 select-none"
+                       @error="embedImageError = true" />
+                     <span v-else class="text-[8px] font-mono tracking-[0.25em] uppercase opacity-35 break-all px-3 text-center">
+                       {{ embedImageUrl ? 'Image_Preview_Unavailable' : 'Embed_URL' }}
+                     </span>
                   </div>
                </div>
 
@@ -345,11 +354,18 @@
                </div>
 
                <div v-else-if="node.type === 'file-attachment'" class="flex-1 min-h-0 p-3 flex flex-col items-center justify-center gap-3">
-                  <div class="px-3 py-1.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
+                  <div v-if="!node.params.fileDataUrl" class="px-3 py-1.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
                      <span class="text-[10px] font-mono font-black">FILE_ATTACHMENT (PDF)</span>
                   </div>
                   <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double_Click_To_Attach' }}</span>
-                  <button v-if="node.params.fileDataUrl" @mousedown.stop @click.stop="isPdfModalOpen = true" class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100">Open</button>
+                  <button
+                    v-if="node.params.fileDataUrl"
+                    type="button"
+                    @mousedown.stop
+                    @click.stop="$emit('open-file', node)"
+                    class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100 transition-opacity">
+                    OPEN
+                  </button>
                </div>
 
                <div v-else v-show="scale > 0.25" class="flex-1 w-full min-h-0 relative overflow-hidden">
@@ -727,33 +743,6 @@
        </div>
     </div>
 
-      <!-- PDF Viewer Modal -->
-      <Teleport to="body">
-        <Transition name="fade">
-          <div v-if="isPdfModalOpen" class="fixed inset-0 z-[2147483000] flex items-center justify-center p-8 pointer-events-auto" @mousedown.stop @click.stop="isPdfModalOpen = false">
-            <div class="relative w-full max-w-5xl h-full max-h-[85vh] flex flex-col" @click.stop>
-              <ExPanel variant="light" :show-corners="true" no-padding class="w-full h-full flex flex-col">
-                <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] relative z-10">
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
-                    <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">PDF_Document_Viewer</span>
-                  </div>
-                  <button @click.stop="isPdfModalOpen = false" class="text-[9px] font-mono uppercase opacity-60 hover:opacity-100 flex items-center gap-2">
-                    <span class="opacity-50">[</span> Close <span class="opacity-50">]</span>
-                  </button>
-                </div>
-                
-                <!-- Content -->
-                <div class="flex-1 min-h-0 bg-white relative z-10">
-                  <iframe :src="node.params.fileDataUrl" class="w-full h-full border-none" title="PDF Viewer"></iframe>
-                </div>
-              </ExPanel>
-            </div>
-          </div>
-        </Transition>
-      </Teleport>
-
   </div>
 </template>
 
@@ -775,7 +764,6 @@ const { locale, t } = useI18n()
 const state = useMatrixState()
 const changeTree = state.changeTree
 const zones = useMatrixZones(state)
-const isPdfModalOpen = ref(false)
 
 const vAutofocus = {
   mounted: (el: HTMLElement) => el.focus()
@@ -799,7 +787,7 @@ const props = defineProps<{
   isPreview?: boolean
 }>()
 
-const emit = defineEmits(['click', 'start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end'])
+const emit = defineEmits(['click', 'start-output', 'pickup-input', 'drop', 'remove', 'moved', 'doubleclick', 'clear-input', 'clear-output', 'contextmenu', 'merge', 'comment-drag-start', 'comment-drag-end', 'open-file'])
 
 function isTextEditingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -835,6 +823,7 @@ interface Comment { id: string, text: string, x: number, y: number, isEditing: b
 
 const isDragging = ref(false)
 const imageError = ref(false)
+const embedImageError = ref(false)
 const identityDraftStart = ref('')
 const descriptionDraftStart = ref('')
 const labelTextDraftStart = ref({ html: '', value: '' })
@@ -868,6 +857,9 @@ const isTablePanel = computed(() => props.node.type === 'table-panel')
 const isRiskPanel = computed(() => props.node.type === 'risk')
 const isRiskPanelContentHidden = computed(() => props.scale <= 0.25)
 const riskPanelVisualScale = computed(() => Math.min(Math.max(props.scale, 0.01), 1))
+const embedImageUrl = computed(() => (
+  typeof props.node.params?.embedUrl === 'string' ? props.node.params.embedUrl.trim() : ''
+))
 const riskPanelBaseHeight = 320
 const riskPanelShellStyle = computed(() => ({
   width: `${360 * riskPanelVisualScale.value}px`,
@@ -908,6 +900,7 @@ const scenarioPanelSize = computed(() => (
       isTablePanel.value ? tablePanelSize.value : 
         isScenarioPanel.value ? (
           props.node.type === 'text-panel' ? { width: 420, height: 200 } :
+          props.node.type === 'embed-panel' ? { width: 420, height: 280 } :
           { width: 260, height: 180 }
         ) : { width: 260, height: 180 }
 ))
@@ -1218,6 +1211,13 @@ watch(
     tableDraft.value = cloneTableShape(props.node.params?.table, tableRows.value, tableCols.value)
   },
   { deep: true }
+)
+
+watch(
+  () => [props.node.id, props.node.params?.embedUrl],
+  () => {
+    embedImageError.value = false
+  }
 )
 
 watch(
@@ -1977,6 +1977,13 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   font-size: 2em;
   font-weight: 800;
   line-height: 1.15;
+}
+
+.matrix-embed-preview-image {
+  image-rendering: auto !important;
+  -ms-interpolation-mode: bicubic;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .matrix-text-rich :deep(p) {
