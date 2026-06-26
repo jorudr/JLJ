@@ -2,6 +2,11 @@ import { ref, computed, watch } from 'vue'
 import type { useMatrixState, Node, Connection, MenuCategory } from './useMatrixState'
 import { searchAssets, type AssetInfo } from '@/shared/api/asset.service'
 import indicatorData from '@/shared/assets/indicators.json'
+import {
+  loadFundamentalIndicatorCategory,
+  syncFundamentalIndicatorCategory,
+  type MatrixIndicatorCategory
+} from '@/shared/api/fundamentalIndicators.service'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useMatrixChangeTree } from './useMatrixChangeTree'
 
@@ -134,8 +139,11 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const riskLossDay = ref(5)
   const riskRR = ref(3)
 
-  const activeIndicatorCategory = ref(indicatorData.categories[0]?.id || 'TREND')
+  const indicatorCategories = ref<MatrixIndicatorCategory[]>(indicatorData.categories as MatrixIndicatorCategory[])
+  const activeIndicatorCategory = ref(indicatorCategories.value[0]?.id || 'TREND')
   const indicatorSearchQuery = ref('')
+  const isSyncingFundamentalIndicators = ref(false)
+  const fundamentalIndicatorSyncStatus = ref<'idle' | 'synced' | 'fallback' | 'error'>('idle')
   const hoveredDescription = ref('')
   const mousePos = ref({ x: 0, y: 0 })
 
@@ -320,6 +328,55 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     state.setPendingNode(indicator)
   }
 
+  function upsertIndicatorCategory(category: MatrixIndicatorCategory) {
+    const normalizedId = category.id.toUpperCase()
+    const nextCategory = {
+      ...category,
+      id: normalizedId,
+      indicators: category.indicators || []
+    }
+    const index = indicatorCategories.value.findIndex(item => item.id === normalizedId)
+    if (index >= 0) {
+      indicatorCategories.value = indicatorCategories.value.map((item, itemIndex) => (
+        itemIndex === index ? nextCategory : item
+      ))
+    } else {
+      indicatorCategories.value = [...indicatorCategories.value, nextCategory]
+    }
+  }
+
+  async function hydrateFundamentalIndicators() {
+    try {
+      const category = await loadFundamentalIndicatorCategory()
+      upsertIndicatorCategory(category)
+      fundamentalIndicatorSyncStatus.value = category.indicators.some(indicator => indicator.params?.source === 'fallback')
+        ? 'fallback'
+        : 'synced'
+    } catch (error) {
+      console.warn('[MatrixIndicators] Failed to hydrate fundamental indicators:', error)
+      fundamentalIndicatorSyncStatus.value = 'error'
+    }
+  }
+
+  async function syncFundamentalIndicators() {
+    isSyncingFundamentalIndicators.value = true
+    try {
+      const category = await syncFundamentalIndicatorCategory()
+      upsertIndicatorCategory(category)
+      activeIndicatorCategory.value = category.id
+      fundamentalIndicatorSyncStatus.value = category.indicators.some(indicator => indicator.params?.source === 'fallback')
+        ? 'fallback'
+        : 'synced'
+    } catch (error) {
+      console.warn('[MatrixIndicators] Fundamental indicator sync failed:', error)
+      fundamentalIndicatorSyncStatus.value = 'error'
+    } finally {
+      isSyncingFundamentalIndicators.value = false
+    }
+  }
+
+  void hydrateFundamentalIndicators()
+
   function ensureTextPanelParams(node: Node) {
     if (!node.params) node.params = {}
     if (typeof node.params.value !== 'string') node.params.value = ''
@@ -421,7 +478,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const indicatorTypes = computed(() => {
     const query = indicatorSearchQuery.value.toUpperCase()
     if (query) {
-      const system = indicatorData.categories.flatMap(c => c.indicators)
+      const system = indicatorCategories.value.flatMap(c => c.indicators)
       const personal = state.personalIndicators.value
       return [...system, ...personal].filter((i: any) => 
         i.label.includes(query) || (i.description || '').toUpperCase().includes(query)
@@ -430,7 +487,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     if (activeIndicatorCategory.value === 'PERSONAL') {
       return state.personalIndicators.value
     }
-    return indicatorData.categories.find(c => c.id === activeIndicatorCategory.value)?.indicators || []
+    return indicatorCategories.value.find(c => c.id === activeIndicatorCategory.value)?.indicators || []
   })
 
   // Context Menu Actions
@@ -914,8 +971,11 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     riskLossDayUnit,
     riskLossDay,
     riskRR,
+    indicatorCategories,
     activeIndicatorCategory,
     indicatorSearchQuery,
+    isSyncingFundamentalIndicators,
+    fundamentalIndicatorSyncStatus,
     hoveredDescription,
     mousePos,
     activeTextColor,
@@ -939,6 +999,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     updateScalingEntry,
     handleCreateConfig,
     handleCreateCustomIndicator,
+    syncFundamentalIndicators,
     saveTextSelection,
     restoreTextSelection,
     syncActiveTextHtml,
