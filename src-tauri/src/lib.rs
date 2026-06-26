@@ -30,7 +30,8 @@ pub fn run() {
             kraken::kraken_futures_signed_request,
             patch::patch_get_state,
             patch::patch_verify_active,
-            patch::patch_clear_active
+            patch::patch_clear_active,
+            patch::patch_install_from_upload
         ])
         .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
             let _ = app.emit("single-instance", (args, cwd));

@@ -205,56 +205,6 @@
 
     <ExProfileOverlay :open="showProfileOverlay" @close="closeProfileOverlay" />
 
-    <!-- Premium Unlocked Overlay -->
-    <Teleport to="body">
-      <Transition name="premium-modal">
-        <div v-if="showPremiumUnlocked" 
-             class="fixed inset-0 z-[10050] flex flex-col items-center justify-center p-8 backdrop-blur-xl bg-white/30 dark:bg-black/60 transition-all duration-700"
-             @click.self="dismissPremiumUnlocked">
-          
-          <div class="w-full max-w-lg transform scale-100 transition-all duration-700">
-            <ExPanel 
-              :title="locale === 'ru' ? 'СИСТЕМНОЕ УВЕДОМЛЕНИЕ' : 'SYSTEM NOTIFICATION'" 
-              :telemetry="locale === 'ru' ? 'ПРИВИЛЕГИИ' : 'PRIVILEGES'"
-              variant="standard"
-            >
-              <div class="flex flex-col items-center py-8">
-                <!-- Diamond Icon -->
-                <div class="relative w-4 h-4 mb-8">
-                  <div class="absolute inset-0 bg-emerald-500 rotate-45 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.6)]"></div>
-                  <div class="absolute inset-1 nier-bg-panel rotate-45"></div>
-                  <div class="absolute inset-[3px] bg-emerald-500 rotate-45"></div>
-                </div>
-
-                <ExHeading level="h2" variant="cinematic" class="!text-2xl mb-6 text-center text-emerald-600 dark:text-emerald-400">
-                  {{ locale === 'ru' ? 'ДОСТУП ПРЕДОСТАВЛЕН' : 'ACCESS GRANTED' }}
-                </ExHeading>
-                
-                <div class="relative h-px w-24 bg-gradient-to-r from-transparent via-black/20 dark:via-white/20 to-transparent mb-8"></div>
-
-                <ExText class="text-center mb-12 !text-[11px] !leading-[2.5] uppercase tracking-widest text-black/70 dark:text-white/60">
-                  <span v-if="locale === 'ru'">
-                    ПРОТОКОЛ АУТЕНТИФИКАЦИИ УСПЕШНО ЗАВЕРШЕН.<br/><br/>
-                    <span class="nier-text-primary font-bold tracking-[0.4em]">ПРЕМИУМ-СТАТУС ПОДТВЕРЖДЕН.</span><br/><br/>
-                    ПОЛНЫЙ ДОСТУП К МАТРИЦЕ ГЕНЕЗИСА И ПРОДВИНУТОЙ АНАЛИТИКЕ ДНЕВНИКА АКТИВИРОВАН.
-                  </span>
-                  <span v-else>
-                    AUTHENTICATION PROTOCOL SUCCESSFULLY COMPLETED.<br/><br/>
-                    <span class="nier-text-primary font-bold tracking-[0.4em]">PREMIUM STATUS CONFIRMED.</span><br/><br/>
-                    FULL ACCESS TO THE GENESIS MATRIX AND ADVANCED DIARY ANALYTICS HAS BEEN ACTIVATED.
-                  </span>
-                </ExText>
-                
-                <ExButton class="w-full" variant="tactical" @click="dismissPremiumUnlocked">
-                  {{ locale === 'ru' ? 'ПОДТВЕРДИТЬ' : 'CONFIRM' }}
-                </ExButton>
-              </div>
-            </ExPanel>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
   </div>
 </template>
 
@@ -271,8 +221,6 @@ import ExHeading from "~/shared/ui/ExHeading.vue"
 import ExText from "~/shared/ui/ExText.vue"
 import ExTag from "~/shared/ui/ExTag.vue"
 import ExIdentity from "~/shared/ui/ExIdentity.vue"
-import ExPanel from "~/shared/ui/ExPanel.vue"
-import ExButton from "~/shared/ui/ExButton.vue"
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
@@ -345,9 +293,6 @@ const updateNotification = ref({ showUpdate: false, downloadLink: '', version: '
 const patchState = ref<{ patchLevel?: string | null; patchId?: string | null } | null>(null)
 const patchBadge = computed(() => patchState.value?.patchLevel?.replace(/^hotfix\./i, '') || '')
 let unsubUpdate: any = null
-let unsubUser: any = null
-const showPremiumUnlocked = ref(false)
-const premiumUpdatedAt = ref<number | null>(null)
 
 const handleDownload = async (url: string) => {
   if (!url) return
@@ -376,45 +321,11 @@ onMounted(() => {
       updateNotification.value = docSnap.data() as any
     }
   })
-
-  if (authStore.user?.uid) {
-    const userId = authStore.user.uid
-    unsubUser = onSnapshot(doc(db, 'users', userId), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data()
-        if (data.type === 'premium' || data.role === 'premium') {
-          let fsUpdatedAt = 0
-          if (data.updatedAt) {
-            if (typeof data.updatedAt.toMillis === 'function') {
-              fsUpdatedAt = data.updatedAt.toMillis()
-            } else if (data.updatedAt instanceof Date) {
-              fsUpdatedAt = data.updatedAt.getTime()
-            } else if (typeof data.updatedAt === 'number') {
-              fsUpdatedAt = data.updatedAt
-            } else if (typeof data.updatedAt === 'string') {
-              fsUpdatedAt = new Date(data.updatedAt).getTime()
-            }
-          }
-          
-          if (fsUpdatedAt > 0) {
-            const ackKey = `premium_ack_time_${userId}`
-            const localAck = localStorage.getItem(ackKey)
-            
-            if (localAck !== String(fsUpdatedAt)) {
-              premiumUpdatedAt.value = fsUpdatedAt
-              showPremiumUnlocked.value = true
-            }
-          }
-        }
-      }
-    })
-  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleOutsideClick)
   if (unsubUpdate) unsubUpdate()
-  if (unsubUser) unsubUser()
 })
 
 const displayName = computed(() => {
@@ -444,15 +355,6 @@ const dashboardModules = [
   }
 ]
 
-// Premium Unlocked Logic
-const dismissPremiumUnlocked = () => {
-  if (authStore.user && premiumUpdatedAt.value) {
-    const ackKey = `premium_ack_time_${authStore.user.uid}`
-    localStorage.setItem(ackKey, String(premiumUpdatedAt.value))
-  }
-  showPremiumUnlocked.value = false
-}
-
 </script>
 
 <style scoped>
@@ -466,22 +368,4 @@ const dismissPremiumUnlocked = () => {
   transform: translateY(-6px);
 }
 
-.premium-modal-enter-active,
-.premium-modal-leave-active {
-  transition: opacity 0.8s ease, backdrop-filter 0.8s ease;
-}
-.premium-modal-enter-active > div,
-.premium-modal-leave-active > div {
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.premium-modal-enter-from,
-.premium-modal-leave-to {
-  opacity: 0;
-  backdrop-filter: blur(0px);
-}
-.premium-modal-enter-from > div,
-.premium-modal-leave-to > div {
-  transform: scale(0.95) translateY(10px);
-  opacity: 0;
-}
 </style>

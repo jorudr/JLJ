@@ -214,16 +214,24 @@
                         <button
                           type="button"
                           class="border nier-border-primary px-5 py-3 text-[9px] font-mono uppercase tracking-[0.32em] font-black transition-colors duration-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
-                          :disabled="!selectedPatchFile || patchInstallState === 'installing'"
+                          :disabled="!selectedPatchFile || patchInstallState === 'installing' || patchInstallState === 'clearing'"
                           @click="installSelectedPatch"
                         >
                           {{ patchInstallState === 'installing' ? (locale === 'ru' ? 'Загрузка' : 'Uploading') : (locale === 'ru' ? 'Установить' : 'Install') }}
                         </button>
                         <button
+                          type="button"
+                          class="border border-red-500/25 bg-red-500/5 px-5 py-3 text-[9px] font-mono uppercase tracking-[0.32em] font-black text-red-700 transition-colors duration-300 hover:bg-red-500/10 dark:text-red-300 disabled:cursor-not-allowed disabled:opacity-35"
+                          :disabled="patchInstallState === 'installing' || patchInstallState === 'clearing'"
+                          @click="clearActivePatch"
+                        >
+                          {{ patchInstallState === 'clearing' ? (locale === 'ru' ? 'Очистка' : 'Clearing') : (locale === 'ru' ? 'Удалить активный' : 'Clear active') }}
+                        </button>
+                        <button
                           v-if="selectedPatchFile"
                           type="button"
                           class="text-[9px] font-mono uppercase tracking-[0.28em] opacity-45 transition-opacity hover:opacity-90"
-                          :disabled="patchInstallState === 'installing'"
+                          :disabled="patchInstallState === 'installing' || patchInstallState === 'clearing'"
                           @click="resetPatchUpload"
                         >
                           {{ locale === 'ru' ? 'Сбросить' : 'Reset' }}
@@ -307,7 +315,7 @@ const saveLabel = computed(() => locale.value === 'ru' ? 'СОХРАНИТЬ' : 
 const savingLabel = computed(() => locale.value === 'ru' ? 'СОХРАНЕНИЕ' : 'SAVING')
 
 type ProfileOverlayTab = 'profile' | 'appearance' | 'patch'
-type PatchInstallState = 'idle' | 'ready' | 'installing' | 'success' | 'error'
+type PatchInstallState = 'idle' | 'ready' | 'installing' | 'clearing' | 'success' | 'cleared' | 'error'
 
 const activeTab = ref<ProfileOverlayTab>('profile')
 
@@ -394,7 +402,9 @@ const patchFileSummary = computed(() => {
 
 const patchStatusLabel = computed(() => {
   if (patchInstallState.value === 'installing') return locale.value === 'ru' ? 'Загрузка патча' : 'Uploading patch'
+  if (patchInstallState.value === 'clearing') return locale.value === 'ru' ? 'Очистка патча' : 'Clearing patch'
   if (patchInstallState.value === 'success') return locale.value === 'ru' ? 'Установлен' : 'Installed'
+  if (patchInstallState.value === 'cleared') return locale.value === 'ru' ? 'Удалён' : 'Cleared'
   if (patchInstallState.value === 'error') return locale.value === 'ru' ? 'Ошибка' : 'Failed'
   if (selectedPatchFile.value) return locale.value === 'ru' ? 'Готов к установке' : 'Ready to install'
   return locale.value === 'ru' ? 'Ожидание файла' : 'Waiting for file'
@@ -475,6 +485,25 @@ async function installSelectedPatch() {
       : (locale.value === 'ru'
         ? `Не удалось установить патч: ${rawMessage}`
         : `Failed to install patch: ${rawMessage}`)
+  }
+}
+
+async function clearActivePatch() {
+  patchInstallState.value = 'clearing'
+  patchInstallMessage.value = locale.value === 'ru' ? 'Удаление активного патча...' : 'Clearing active patch...'
+
+  try {
+    await invoke('patch_clear_active')
+    selectedPatchFile.value = null
+    patchInstallState.value = 'cleared'
+    patchInstallMessage.value = locale.value === 'ru'
+      ? 'Активный патч удалён. Перезапустите приложение, чтобы вернуться к основной версии.'
+      : 'Active patch cleared. Restart the app to return to the base version.'
+  } catch (err) {
+    patchInstallState.value = 'error'
+    patchInstallMessage.value = locale.value === 'ru'
+      ? `Не удалось удалить активный патч: ${String(err || '')}`
+      : `Failed to clear active patch: ${String(err || '')}`
   }
 }
 
