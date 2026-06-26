@@ -17,7 +17,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
         <Transition name="sector-swap" mode="out-in">
           <div v-if="viewMode === 'tactical'" key="tactical" class="flex flex-col space-y-12">
             <!-- CONDITION CONFIGURATION PANEL (LEGACY DESCRIPTION AESTHETIC) -->
-            <div v-if="selectedRegistryScenarioId" class="flex flex-col space-y-12 animate-in fade-in zoom-in-95 duration-1000 max-w-5xl mx-auto">
+            <div v-if="selectedRegistryScenarioId && selectedRegistryScenarioId !== 'default-exit-system'" class="flex flex-col space-y-12 animate-in fade-in zoom-in-95 duration-1000 max-w-5xl mx-auto">
                
                <!-- Protocol Briefing Header -->
                <div class="flex flex-col space-y-6 border-b border-black/5 dark:border-white/5 pb-10">
