@@ -19,6 +19,24 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     return JSON.parse(JSON.stringify(value))
   }
 
+  function stripFundamentalIndicatorSource(indicator: any) {
+    if (!indicator?.params?.fundamental) return indicator
+    const params = { ...(indicator.params || {}) }
+    delete params.source
+    return {
+      ...indicator,
+      params
+    }
+  }
+
+  function sanitizeIndicatorCategory(category: MatrixIndicatorCategory): MatrixIndicatorCategory {
+    if (String(category.id || '').toUpperCase() !== 'FUNDAMENTAL') return category
+    return {
+      ...category,
+      indicators: (category.indicators || []).map(stripFundamentalIndicatorSource)
+    }
+  }
+
   function createDirectNodeAddAction(node: Node) {
     const container = state.createActiveContainerAccess()
     return {
@@ -139,7 +157,9 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const riskLossDay = ref(5)
   const riskRR = ref(3)
 
-  const indicatorCategories = ref<MatrixIndicatorCategory[]>(indicatorData.categories as MatrixIndicatorCategory[])
+  const indicatorCategories = ref<MatrixIndicatorCategory[]>(
+    (indicatorData.categories as MatrixIndicatorCategory[]).map(sanitizeIndicatorCategory)
+  )
   const activeIndicatorCategory = ref(indicatorCategories.value[0]?.id || 'TREND')
   const indicatorSearchQuery = ref('')
   const isSyncingFundamentalIndicators = ref(false)
@@ -330,11 +350,11 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
 
   function upsertIndicatorCategory(category: MatrixIndicatorCategory) {
     const normalizedId = category.id.toUpperCase()
-    const nextCategory = {
+    const nextCategory = sanitizeIndicatorCategory({
       ...category,
       id: normalizedId,
       indicators: category.indicators || []
-    }
+    })
     const index = indicatorCategories.value.findIndex(item => item.id === normalizedId)
     if (index >= 0) {
       indicatorCategories.value = indicatorCategories.value.map((item, itemIndex) => (
@@ -349,7 +369,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     try {
       const category = await loadFundamentalIndicatorCategory()
       upsertIndicatorCategory(category)
-      fundamentalIndicatorSyncStatus.value = category.indicators.some(indicator => indicator.params?.source === 'fallback')
+      fundamentalIndicatorSyncStatus.value = category.source === 'fallback'
         ? 'fallback'
         : 'synced'
     } catch (error) {
@@ -364,7 +384,7 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       const category = await syncFundamentalIndicatorCategory()
       upsertIndicatorCategory(category)
       activeIndicatorCategory.value = category.id
-      fundamentalIndicatorSyncStatus.value = category.indicators.some(indicator => indicator.params?.source === 'fallback')
+      fundamentalIndicatorSyncStatus.value = category.source === 'fallback'
         ? 'fallback'
         : 'synced'
     } catch (error) {

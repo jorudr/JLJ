@@ -210,8 +210,24 @@ function createMatrixPage(name = 'Strategy Page'): MatrixPage {
   }
 }
 
+function sanitizeNodeParams(params: any = {}) {
+  const nextParams = { ...params }
+  if (nextParams.fundamental) {
+    delete nextParams.source
+  }
+  return nextParams
+}
+
 function normalizeNode(node: any): Node {
-  return node?.type === 'system' ? { ...node, type: 'strategy' } : node
+  const normalized = node?.type === 'system' ? { ...node, type: 'strategy' } : { ...node }
+  normalized.params = sanitizeNodeParams(normalized.params)
+  if (normalized.subGraph?.nodes) {
+    normalized.subGraph = {
+      ...normalized.subGraph,
+      nodes: normalized.subGraph.nodes.map(normalizeNode)
+    }
+  }
+  return normalized
 }
 
 function getStrategyCount(nodes: Node[]) {
@@ -751,7 +767,7 @@ export function useMatrixState() {
           x: config.x !== undefined ? config.x : 100,
           y: config.y !== undefined ? config.y : 100,
           color: config.color || 'currentColor',
-          params: config.params ? { ...config.params } : {},
+          params: sanitizeNodeParams(config.params),
           ...(config.subGraph ? { subGraph: config.subGraph } : {})
         }
         nextPage.nodes.push(newStrategyNode)
@@ -763,7 +779,7 @@ export function useMatrixState() {
       }
     }
       
-    const params = config.params ? { ...config.params } : {}
+    const params = sanitizeNodeParams(config.params)
     if (config.description && !params.description) {
       params.description = config.description
     }
@@ -815,7 +831,7 @@ export function useMatrixState() {
         selectedNode.type = nextConfig.type || 'unknown'
         selectedNode.label = nextConfig.label || 'NODE'
         selectedNode.color = nextConfig.color || 'currentColor'
-        selectedNode.params = { ...(selectedNode.params || {}), ...(nextConfig.params || {}) }
+        selectedNode.params = sanitizeNodeParams({ ...(selectedNode.params || {}), ...(nextConfig.params || {}) })
         if (nextConfig.description) {
           selectedNode.params.description = nextConfig.description
         }
@@ -1068,7 +1084,7 @@ export function useMatrixState() {
     const processedNode = {
       ...node,
       params: {
-        ...node.params,
+        ...sanitizeNodeParams(node.params),
         logicalStructure: structure
       }
     }
