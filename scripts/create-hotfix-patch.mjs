@@ -100,10 +100,26 @@ if (args.minisignKey) {
   }
   const result = spawnSync('minisign', minisignArgs, { stdio: 'inherit' })
   if (result.status !== 0) fail('minisign failed')
+} else if (args.tauriSignerKeyPath || process.env.TAURI_SIGNING_PRIVATE_KEY_PATH) {
+  const keyPath = args.tauriSignerKeyPath || process.env.TAURI_SIGNING_PRIVATE_KEY_PATH
+  const password = args.tauriSignerPassword ?? process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+  const generatedSignaturePath = `${manifestPath}.sig`
+  rmSync(generatedSignaturePath, { force: true })
+
+  const signerArgs = ['tauri', 'signer', 'sign', '--private-key-path', keyPath]
+  if (password !== undefined) {
+    signerArgs.push('--password', password)
+  }
+  signerArgs.push(manifestPath)
+
+  const result = spawnSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', signerArgs, { stdio: 'inherit' })
+  if (result.status !== 0) fail('tauri signer failed')
+  if (!existsSync(generatedSignaturePath)) fail(`tauri signer did not create ${generatedSignaturePath}`)
+  writeFileSync(signaturePath, normalizeTauriSignature(readFileSync(generatedSignaturePath, 'utf8')))
 } else if (args.signature) {
   writeFileSync(signaturePath, readFileSync(args.signature))
 } else {
-  fail('Provide --minisign-key or --signature. Patches must be signed.')
+  fail('Provide --minisign-key, --tauri-signer-key-path, TAURI_SIGNING_PRIVATE_KEY_PATH, or --signature. Patches must be signed.')
 }
 
 const zip = new JSZip()
@@ -191,6 +207,18 @@ function fail(message) {
   process.exit(1)
 }
 
+function normalizeTauriSignature(signatureText) {
+  const trimmed = signatureText.trim()
+  try {
+    const decoded = Buffer.from(trimmed, 'base64').toString('utf8')
+    if (decoded.includes('untrusted comment:') && decoded.includes('trusted comment:')) {
+      return `${decoded.trim()}\n`
+    }
+  } catch {}
+
+  return `${trimmed}\n`
+}
+
 function printHelp() {
   console.log(`
 Create a signed JLJ .jljpatch package.
@@ -204,6 +232,18 @@ Resource patch example:
     --base-dir artifacts/1.0.4/public \\
     --fixed-dir .output/public \\
     --minisign-key "$MINISIGN_KEY_PATH" \\
+    --out dist/JLJ-1.0.4-hotfix.1.jljpatch
+
+Tauri signer example:
+  node scripts/create-hotfix-patch.mjs \\
+    --base-version 1.0.4 \\
+    --patch-id 1.0.4-hotfix.1 \\
+    --to-patch-level hotfix.1 \\
+    --platform windows-x64,macos-universal \\
+    --base-dir artifacts/1.0.4/public \\
+    --fixed-dir .output/public \\
+    --tauri-signer-key-path .secrets/hotfix/jlj-hotfix.key \\
+    --tauri-signer-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \\
     --out dist/JLJ-1.0.4-hotfix.1.jljpatch
 
 Native operations can be appended with --operations native-ops.json and --extra-payload-dir path/to/payload.

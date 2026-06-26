@@ -45,6 +45,22 @@ npm run hotfix:package -- \
   --out dist/hotfix/JLJ-1.0.4-hotfix.1.jljpatch
 ```
 
+If the standalone `minisign` CLI is not installed, use the Tauri signer key
+instead:
+
+```bash
+npm run hotfix:package -- \
+  --base-version 1.0.4 \
+  --patch-id 1.0.4-hotfix.1 \
+  --to-patch-level hotfix.1 \
+  --platform windows-x64,macos-universal \
+  --base-dir artifacts/1.0.4/public \
+  --fixed-dir .output/public \
+  --tauri-signer-key-path .secrets/hotfix/jlj-hotfix.key \
+  --tauri-signer-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" \
+  --out dist/hotfix/JLJ-1.0.4-hotfix.1.jljpatch
+```
+
 `--base-dir` should point to the original `.output/public` for the public base
 version. If it is omitted, every file in `--fixed-dir` is packaged as a replace
 operation.
