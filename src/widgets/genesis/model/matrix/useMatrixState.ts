@@ -1,6 +1,5 @@
 import { ref, computed, watch } from 'vue'
 import { saveToDisk, loadFromDisk } from '@/shared/diskStorage'
-import { useStrategyTradesStore } from '@/features/store/useStrategyTrades'
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { getMatrixStrategyName, isStrategyNode } from './useMatrixStrategies'
 import { useMatrixChangeTree, type MatrixChangeEvent } from './useMatrixChangeTree'
@@ -1014,8 +1013,6 @@ export function useMatrixState() {
   }
 
   function clearBoard() {
-    const strategyTradesStore = useStrategyTradesStore()
-    strategyTradesStore.purgeAllStrategies()
     const snapshot = {
       rootNodes: cloneMatrixValue(rootNodes.value),
       rootConnections: cloneMatrixValue(rootConnections.value),
