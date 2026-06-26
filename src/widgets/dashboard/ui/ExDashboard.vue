@@ -67,7 +67,7 @@
         <div class="flex items-center space-x-4">
            <ExTag>v{{ pkg.version.toUpperCase().replace('-', '_') }}</ExTag>
            <ExTag v-if="patchBadge">HOTFIX_{{ patchBadge }}</ExTag>
-         
+           <ExTag>TACTICAL_PATCH_CANARY</ExTag>
         </div>
       </div>
 
