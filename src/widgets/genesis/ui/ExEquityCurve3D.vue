@@ -1175,14 +1175,22 @@ const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
 
 const getFilteredTrades = (strategyId?: string) => {
   const sId = strategyId || selectedStrategyId.value
-  const baseTrades = props.trades || tradeStore.getTradesForStrategy(sId) || []
+  const propTrades = Array.isArray(props.trades) ? props.trades : null
+  const propTradesHaveStrategy = propTrades?.some((trade: any) => !!trade?.strategyId) ?? false
+  const baseTrades = propTrades
+    ? (
+        propTradesHaveStrategy
+          ? propTrades.filter((trade: any) => trade?.strategyId ? trade.strategyId === sId : sId === 'MAIN_DIARY')
+          : (sId === 'MAIN_DIARY' || props.mode === 'standalone' ? propTrades : tradeStore.getTradesForStrategy(sId))
+      )
+    : tradeStore.getTradesForStrategy(sId) || []
   if (selectedWinrateNodeId.value && sId === selectedStrategyId.value) {
     return baseTrades.filter((t: any) => tradeMatchesWinrateTarget(t, selectedWinrateNodeId.value!))
   }
   return baseTrades
 }
 
-const getCurrentWinrateTrades = () => props.trades || tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
+const getCurrentWinrateTrades = () => getFilteredTrades(selectedStrategyId.value)
 
 const addWinrateTarget = (targets: Map<string, WinrateTargetNode>, target: Partial<WinrateTargetNode> | null | undefined) => {
   if (!target?.id) return
@@ -2692,9 +2700,13 @@ watch(() => themeStore.settings.isDark, () => {
 }, { immediate: true })
 
 // --- INITIALIZATION --- //
+let equityCurveGeneration = 0
+
 const initData = () => {
-  const currentTrades = getFilteredTrades()
-  const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId.value)
+  const generation = ++equityCurveGeneration
+  const strategyId = selectedStrategyId.value || 'MAIN_DIARY'
+  const currentTrades = getFilteredTrades(strategyId)
+  const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(strategyId)
   depositInput.value = initialDeposit
   
   const sortedTrades = [...currentTrades].sort((a, b) => {
@@ -2829,10 +2841,12 @@ const initData = () => {
         const endTs = Math.floor(endDateTime / 1000)
         const curves: { benchmark: { timestamp: number, value: number }[], risk_free: { timestamp: number, value: number }[] } = 
           await invoke('get_historical_curves', {
-            strategyId: selectedStrategyId.value || 'MAIN_DIARY',
+            strategyId,
             startTs,
             endTs
           })
+
+        if (generation !== equityCurveGeneration || strategyId !== selectedStrategyId.value) return
           
         let prevX = -200
         const newBenchPoints: CurvePoint[] = [{ x: -200, y: startY, z: 0, value: initialDeposit, dateLabel: 'DEPOSIT' }]
@@ -2927,15 +2941,22 @@ const handleClearTrades = async () => {
   initData()
 }
 
-watch(selectedStrategyId, async () => {
+watch(selectedStrategyId, async (strategyId) => {
   revealProgress.value = 0
-  applyBenchmarkMetricsForStrategy(selectedStrategyId.value)
-  await fetchRealtimeMetrics([selectedStrategyId.value])
+  hoveredCurveIndex.value = null
+  hoveredDistributionTooltip.value = null
+  applyBenchmarkMetricsForStrategy(strategyId)
+  initData()
+  await fetchRealtimeMetrics([strategyId])
+  if (strategyId !== selectedStrategyId.value) return
   initData()
 })
 
 watch([() => props.trades, () => tradeStore.tradesByStrategy[selectedStrategyId.value], () => tradeStore.hiddenTradeIdsByStrategy[selectedStrategyId.value]], async () => {
-  await fetchRealtimeMetrics([selectedStrategyId.value])
+  const strategyId = selectedStrategyId.value
+  initData()
+  await fetchRealtimeMetrics([strategyId])
+  if (strategyId !== selectedStrategyId.value) return
   initData()
 }, { deep: true })
 
