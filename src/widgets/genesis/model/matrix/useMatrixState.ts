@@ -5,6 +5,9 @@ import { getMatrixStrategyName, isStrategyNode } from './useMatrixStrategies'
 import { useMatrixChangeTree, type MatrixChangeEvent } from './useMatrixChangeTree'
 
 export const STORAGE_KEY = 'genesis_matrix_v2'
+const MATRIX_LEGACY_HEAVY_BACKUP_KEY = `${STORAGE_KEY}_legacy_heavy_backup`
+const MAX_RESTORED_MATRIX_BYTES = 80 * 1024 * 1024
+const MAX_RESTORED_MATRIX_NODES = 2500
 
 export interface Point { x: number; y: number }
 export interface Node {
@@ -209,8 +212,86 @@ function createMatrixPage(name = 'Strategy Page'): MatrixPage {
   }
 }
 
+const VALID_ZONE_TYPES = new Set(['entry', 'in-trade', 'exit', 'session'])
+const VALID_PORTS = new Set(['left', 'right', 'top', 'bottom'])
+
+const toFiniteNumber = (value: any, fallback: number) => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+const estimateJsonBytes = (value: any) => {
+  try {
+    return new Blob([JSON.stringify(value)]).size
+  } catch {
+    try {
+      return JSON.stringify(value).length
+    } catch {
+      return Number.MAX_SAFE_INTEGER
+    }
+  }
+}
+
+function repairZones(zones: any[]): Zone[] {
+  if (!Array.isArray(zones)) return []
+
+  return zones
+    .filter(zone => zone && typeof zone === 'object')
+    .map((zone, index) => ({
+      id: typeof zone.id === 'string' && zone.id.trim() ? zone.id : `zone-${Date.now()}-${index}`,
+      type: VALID_ZONE_TYPES.has(zone.type) ? zone.type : 'entry',
+      x: toFiniteNumber(zone.x, 0),
+      y: toFiniteNumber(zone.y, 0),
+      width: Math.max(20, toFiniteNumber(zone.width, 240)),
+      height: Math.max(20, toFiniteNumber(zone.height, 160)),
+      label: typeof zone.label === 'string' ? zone.label : ''
+    }))
+}
+
+function repairConnections(connections: any[], nodes: Node[]): Connection[] {
+  if (!Array.isArray(connections)) return []
+
+  const nodeIds = new Set(nodes.map(node => node.id))
+  const seen = new Set<string>()
+
+  return connections.reduce<Connection[]>((result, connection) => {
+    if (!connection || typeof connection !== 'object') return result
+    if (!nodeIds.has(connection.fromId) || !nodeIds.has(connection.toId)) return result
+
+    const key = [
+      connection.fromId,
+      connection.toId,
+      connection.fromPort || '',
+      connection.toPort || '',
+      connection.bundleId || '',
+      connection.label || ''
+    ].join('::')
+
+    if (seen.has(key)) return result
+    seen.add(key)
+
+    const repaired: Connection = {
+      fromId: connection.fromId,
+      toId: connection.toId
+    }
+
+    if (VALID_PORTS.has(connection.fromPort)) repaired.fromPort = connection.fromPort
+    if (VALID_PORTS.has(connection.toPort)) repaired.toPort = connection.toPort
+    if (typeof connection.label === 'string' && connection.label.trim()) repaired.label = connection.label
+    if (typeof connection.bundleId === 'string' && connection.bundleId.trim()) repaired.bundleId = connection.bundleId
+    if (Number.isFinite(Number(connection.bundleStemX))) repaired.bundleStemX = Number(connection.bundleStemX)
+    if (Number.isFinite(Number(connection.bundleStemY))) repaired.bundleStemY = Number(connection.bundleStemY)
+
+    result.push(repaired)
+    return result
+  }, [])
+}
+
 function sanitizeNodeParams(params: any = {}) {
   const nextParams = { ...params }
+  delete nextParams.logicalStructure
   if (nextParams.fundamental) {
     delete nextParams.source
   }
@@ -219,14 +300,32 @@ function sanitizeNodeParams(params: any = {}) {
 
 function normalizeNode(node: any): Node {
   const normalized = node?.type === 'system' ? { ...node, type: 'strategy' } : { ...node }
+  normalized.id = typeof normalized.id === 'string' && normalized.id.trim()
+    ? normalized.id
+    : `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  normalized.label = typeof normalized.label === 'string' ? normalized.label : 'Node'
+  normalized.type = typeof normalized.type === 'string' ? normalized.type : 'unknown'
+  normalized.x = toFiniteNumber(normalized.x, 0)
+  normalized.y = toFiniteNumber(normalized.y, 0)
+  normalized.color = typeof normalized.color === 'string' ? normalized.color : '#8b8b8b'
   normalized.params = sanitizeNodeParams(normalized.params)
   if (normalized.subGraph?.nodes) {
+    const subNodes = normalizeNodes(normalized.subGraph.nodes)
     normalized.subGraph = {
       ...normalized.subGraph,
-      nodes: normalized.subGraph.nodes.map(normalizeNode)
+      nodes: subNodes,
+      connections: repairConnections(normalized.subGraph.connections, subNodes),
+      zones: repairZones(normalized.subGraph.zones)
     }
   }
   return normalized
+}
+
+function normalizeNodes(nodes: any[]): Node[] {
+  if (!Array.isArray(nodes)) return []
+  return nodes
+    .filter(node => node && typeof node === 'object' && node.type !== 'placeholder')
+    .map(normalizeNode)
 }
 
 function getStrategyCount(nodes: Node[]) {
@@ -238,17 +337,25 @@ function clonePlainValue<T>(value: T): T {
 }
 
 function normalizeStrategySnapshot(snapshot: any, fallback: any = {}): MatrixStrategySnapshot {
+  const sourceNodes = snapshot?.nodes || snapshot?.pages?.[0]?.nodes || []
+  const nodes = normalizeNodes(sourceNodes)
+  const view = clonePlainValue(snapshot?.view || fallback.view || {
+    panX: 0,
+    panY: 0,
+    scale: 0.5
+  })
+
   return {
-    nodes: clonePlainValue(snapshot?.nodes || snapshot?.pages?.[0]?.nodes || []),
-    connections: clonePlainValue(snapshot?.connections || snapshot?.pages?.[0]?.connections || []),
-    zones: clonePlainValue(snapshot?.zones || snapshot?.pages?.[0]?.zones || []),
+    nodes,
+    connections: repairConnections(snapshot?.connections || snapshot?.pages?.[0]?.connections || [], nodes),
+    zones: repairZones(snapshot?.zones || snapshot?.pages?.[0]?.zones || []),
     events: clonePlainValue(snapshot?.events || []),
     disabledChanges: [...(snapshot?.disabledChanges || [])],
-    view: clonePlainValue(snapshot?.view || fallback.view || {
-      panX: 0,
-      panY: 0,
-      scale: 0.5
-    }),
+    view: {
+      panX: toFiniteNumber(view.panX, 0),
+      panY: toFiniteNumber(view.panY, 0),
+      scale: clamp(toFiniteNumber(view.scale, 0.5), 0.1, 3)
+    },
     personalIndicators: clonePlainValue(snapshot?.personalIndicators || fallback.personalIndicators || [])
   }
 }
@@ -1088,13 +1195,15 @@ export function useMatrixState() {
     }
 
     if (node.subGraph?.nodes) {
+      const processedSubNodes = node.subGraph.nodes
+        .map((childNode: any) => processNodeTree(childNode, node.subGraph.nodes, node.subGraph.connections || []))
+        .filter((childNode: any) => childNode.type !== 'placeholder')
+
       processedNode.subGraph = {
         ...node.subGraph,
-        nodes: node.subGraph.nodes
-          .map((childNode: any) => processNodeTree(childNode, node.subGraph.nodes, node.subGraph.connections || []))
-          .filter((childNode: any) => childNode.type !== 'placeholder'),
-        connections: [...(node.subGraph.connections || [])],
-        zones: [...(node.subGraph.zones || [])]
+        nodes: processedSubNodes,
+        connections: repairConnections(node.subGraph.connections || [], processedSubNodes),
+        zones: repairZones(node.subGraph.zones || [])
       }
     }
 
@@ -1109,9 +1218,9 @@ export function useMatrixState() {
   }
 
   function splitLegacyDataIntoPages(saved: any): MatrixPage[] {
-    const savedNodes = (saved.nodes || []).map(normalizeNode)
-    const savedConnections = saved.connections || []
-    const savedZones = saved.zones || []
+    const savedNodes = normalizeNodes(saved.nodes || [])
+    const savedConnections = repairConnections(saved.connections || [], savedNodes)
+    const savedZones = repairZones(saved.zones || [])
     const strategyNodes = savedNodes.filter(isStrategyNode)
 
     if (strategyNodes.length <= 1) {
@@ -1188,12 +1297,12 @@ export function useMatrixState() {
   function normalizeSavedPages(saved: any): MatrixPage[] {
     if (Array.isArray(saved.pages) && saved.pages.length > 0) {
       return saved.pages.flatMap((page: any, index: number) => {
-        const pageNodes = (page.nodes || []).map(normalizeNode)
+        const pageNodes = normalizeNodes(page.nodes || [])
         if (getStrategyCount(pageNodes) > 1) {
           return splitLegacyDataIntoPages({
             nodes: pageNodes,
-            connections: page.connections || [],
-            zones: page.zones || [],
+            connections: repairConnections(page.connections || [], pageNodes),
+            zones: repairZones(page.zones || []),
             view: page.view
           }).map((splitPage, splitIndex) => ({
             ...splitPage,
@@ -1214,8 +1323,8 @@ export function useMatrixState() {
           id: page.id || createPageId(),
           name: page.name || makePageName(index, strategy),
           nodes: pageNodes,
-          connections: page.connections || [],
-          zones: page.zones || [],
+          connections: repairConnections(page.connections || [], pageNodes),
+          zones: repairZones(page.zones || []),
           events: Array.isArray(page.events) ? page.events : [],
           disabledChanges: Array.isArray(page.disabledChanges) ? page.disabledChanges : [],
           strategyVersions: pageVersions,
@@ -1231,28 +1340,36 @@ export function useMatrixState() {
 
   function buildPersistedPages() {
     syncActivePageFromRoot()
-    return matrixPages.value.map(page => ({
-      ...page,
-      nodes: page.nodes
+    return matrixPages.value.map(page => {
+      const processedNodes = page.nodes
         .map(node => processNodeTree(node, page.nodes, page.connections))
-        .filter(node => node.type !== 'placeholder'),
-      connections: page.connections,
-      zones: page.zones,
-      events: changeTree.eventsByPage.value[page.id] || [],
-      disabledChanges: Array.from(changeTree.disabledChangesByPage.value[page.id] || new Set()),
-      strategyVersions: cloneMatrixValue(strategyVersionsByPage.value[page.id] || []),
-      selectedStrategyVersionId: selectedStrategyVersionIdByPage.value[page.id] ?? null,
-      anonymousStrategyVersion: cloneMatrixValue(anonymousStrategyVersionByPage.value[page.id] || null)
-    }))
+        .filter(node => node.type !== 'placeholder')
+      const processedConnections = repairConnections(page.connections, processedNodes)
+
+      return {
+        ...page,
+        nodes: processedNodes,
+        connections: processedConnections,
+        zones: repairZones(page.zones),
+        events: changeTree.eventsByPage.value[page.id] || [],
+        disabledChanges: Array.from(changeTree.disabledChangesByPage.value[page.id] || new Set()),
+        strategyVersions: (strategyVersionsByPage.value[page.id] || [])
+          .map((version: any) => normalizeStrategyVersion(version, page))
+          .filter(Boolean) as MatrixStrategyVersion[],
+        selectedStrategyVersionId: selectedStrategyVersionIdByPage.value[page.id] ?? null,
+        anonymousStrategyVersion: normalizeAnonymousStrategyVersion(anonymousStrategyVersionByPage.value[page.id], page)
+      }
+    })
   }
 
   function captureStrategySnapshot(): MatrixStrategySnapshot {
     syncActivePageFromRoot()
     const active = activePage.value
+    const snapshotNodes = active?.nodes.map(node => processNodeTree(node, active.nodes, active.connections)).filter(node => node.type !== 'placeholder') || []
     return cloneMatrixValue({
-      nodes: active?.nodes.map(node => processNodeTree(node, active.nodes, active.connections)).filter(node => node.type !== 'placeholder') || [],
-      connections: active?.connections || [],
-      zones: active?.zones || [],
+      nodes: snapshotNodes,
+      connections: repairConnections(active?.connections || [], snapshotNodes),
+      zones: repairZones(active?.zones || []),
       events: changeTree.events.value,
       disabledChanges: Array.from(changeTree.disabledChanges.value),
       view: {
@@ -1512,7 +1629,46 @@ export function useMatrixState() {
       const appBootStore = useAppBootStore()
       const saved = appBootStore.genesisMatrixCache || await loadFromDisk<any>(STORAGE_KEY)
       if (saved && ((Array.isArray(saved.pages) && saved.pages.length > 0) || saved.nodes?.length > 0)) {
-        matrixPages.value = normalizeSavedPages(saved)
+        const normalizedPages = normalizeSavedPages(saved)
+        const restoredNodeCount = normalizedPages.reduce((total, page) => total + page.nodes.length, 0)
+        const restoredPayloadPreview = {
+          ...saved,
+          pages: normalizedPages,
+          nodes: normalizedPages.flatMap(page => page.nodes),
+          connections: normalizedPages.flatMap(page => page.connections),
+          zones: normalizedPages.flatMap(page => page.zones),
+          personalIndicators: Array.isArray(saved.personalIndicators) ? saved.personalIndicators : []
+        }
+        const originalBytes = estimateJsonBytes(saved)
+        const restoredBytes = estimateJsonBytes(restoredPayloadPreview)
+        const shouldQuarantine = restoredNodeCount > MAX_RESTORED_MATRIX_NODES || restoredBytes > MAX_RESTORED_MATRIX_BYTES
+
+        if (shouldQuarantine) {
+          console.warn('[GenesisPersistence] legacy matrix payload is too large; preserving it in a legacy backup and loading an empty board.', {
+            nodes: restoredNodeCount,
+            bytes: restoredBytes
+          })
+
+          await saveToDisk(MATRIX_LEGACY_HEAVY_BACKUP_KEY, saved)
+
+          matrixPages.value = []
+          activePageId.value = null
+          strategyVersions.value = []
+          selectedStrategyVersionId.value = null
+          anonymousStrategyVersion.value = null
+          hasStrategyVersionChanges.value = false
+          strategyVersionsByPage.value = {}
+          selectedStrategyVersionIdByPage.value = {}
+          anonymousStrategyVersionByPage.value = {}
+          hasStrategyVersionChangesByPage.value = {}
+          changeTree.resetChanges()
+          personalIndicators.value = []
+          ensurePages()
+          await persistMatrixData()
+          return
+        }
+
+        matrixPages.value = normalizedPages
         activePageId.value = saved.activePageId && matrixPages.value.some(page => page.id === saved.activePageId)
           ? saved.activePageId
           : matrixPages.value[0]?.id || null
@@ -1520,9 +1676,9 @@ export function useMatrixState() {
         if (activePage.value) applyPage(activePage.value)
         
         if (saved.view) {
-          viewState.value.panX = saved.view.panX ?? viewState.value.panX
-          viewState.value.panY = saved.view.panY ?? viewState.value.panY
-          viewState.value.scale = saved.view.scale ?? viewState.value.scale
+          viewState.value.panX = toFiniteNumber(saved.view.panX, viewState.value.panX)
+          viewState.value.panY = toFiniteNumber(saved.view.panY, viewState.value.panY)
+          viewState.value.scale = clamp(toFiniteNumber(saved.view.scale, viewState.value.scale), 0.1, 3)
         }
         const sanitizeSubs = (subs: any[]): any[] => (subs || []).map((s: any) => ({ ...s, subchanges: sanitizeSubs(s.subchanges) }))
         
@@ -1576,6 +1732,14 @@ export function useMatrixState() {
         }
         applyTreeStateToMatrix(changeTree.disabledChanges.value)
         refreshAnonymousStrategyVersion(captureStrategySnapshot())
+
+        appBootStore.genesisMatrixCache = restoredPayloadPreview
+        if (originalBytes !== restoredBytes) {
+          if (originalBytes > restoredBytes * 1.5 || originalBytes > MAX_RESTORED_MATRIX_BYTES) {
+            await saveToDisk(MATRIX_LEGACY_HEAVY_BACKUP_KEY, saved)
+          }
+          await persistMatrixData()
+        }
       } else {
         throw new Error('No saved nodes found')
       }
