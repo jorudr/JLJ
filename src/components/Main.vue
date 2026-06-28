@@ -391,7 +391,7 @@
           <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <!-- macOS Download Button -->
             <a 
-              href="/versions/mac/JLJ_1.0.5_universal.dmg"
+              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_universal.dmg"
               download
               class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
             >
@@ -403,7 +403,7 @@
 
             <!-- Windows Download Button -->
             <a 
-              href="/versions/win/JLJ_1.0.5_x64-setup.exe"
+              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_x64-setup.exe"
               download
               class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
             >
