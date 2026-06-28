@@ -22,6 +22,7 @@ pub const ACTIVE_SIGNATURE_FILE: &str = "active-manifest.minisig";
 pub const ACTIVE_WEB_DIR: &str = "active-web";
 pub const PATCH_PROTOCOL: &str = "jljpatch";
 pub const PATCH_PUBLIC_KEY: &str = include_str!("../tauri.conf.json.pub");
+const DELETE_TOMBSTONES_DIR: &str = ".deleted";
 const PATCH_MANIFEST_ENTRY: &str = "manifest.json";
 const PATCH_SIGNATURE_ENTRY: &str = "manifest.minisig";
 
@@ -515,6 +516,7 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
     {
         let target_rel = sanitize_relative_path(&operation.target)?;
         let target = staging_web.join(&target_rel);
+        let tombstone = deleted_resource_tombstone_path(staging_web, &target_rel);
 
         match operation.op {
             PatchOpKind::Delete => {
@@ -522,6 +524,12 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                     fs::remove_file(&target)
                         .map_err(|err| format!("delete {}: {err}", target.display()))?;
                 }
+                if let Some(parent) = tombstone.parent() {
+                    fs::create_dir_all(parent)
+                        .map_err(|err| format!("create delete tombstone dir: {err}"))?;
+                }
+                fs::write(&tombstone, b"deleted")
+                    .map_err(|err| format!("write delete tombstone {}: {err}", tombstone.display()))?;
             }
             PatchOpKind::Replace => {
                 let payload = read_payload(archive, operation)?;
@@ -542,6 +550,10 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                 if let Some(parent) = target.parent() {
                     fs::create_dir_all(parent)
                         .map_err(|err| format!("create target dir: {err}"))?;
+                }
+                if tombstone.exists() {
+                    fs::remove_file(&tombstone)
+                        .map_err(|err| format!("remove delete tombstone {}: {err}", tombstone.display()))?;
                 }
                 fs::write(&target, payload)
                     .map_err(|err| format!("write {}: {err}", target.display()))?;
@@ -568,6 +580,10 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                 let mut new = Vec::new();
                 bsdiff::patch(&old, &mut patch.as_slice(), &mut new)
                     .map_err(|err| format!("apply bsdiff to {}: {err}", target.display()))?;
+                if tombstone.exists() {
+                    fs::remove_file(&tombstone)
+                        .map_err(|err| format!("remove delete tombstone {}: {err}", tombstone.display()))?;
+                }
                 fs::write(&target, new)
                     .map_err(|err| format!("write {}: {err}", target.display()))?;
             }
@@ -661,9 +677,6 @@ pub fn navigate_to_active_resource_patch<R: Runtime>(app: &tauri::App<R>) {
     if !verify.active || !verify.valid {
         return;
     }
-    if !active_web_dir_from_root(&root).join("index.html").exists() {
-        return;
-    }
 
     if let Some(window) = app.get_webview_window("main") {
         if let Ok(url) = tauri::Url::parse("jljpatch://localhost/index.html") {
@@ -711,12 +724,20 @@ fn resolve_patch_protocol<R: Runtime>(
         return Ok((bytes, mime));
     }
 
+    if deleted_resource_tombstone_path(&active_web, &relative).exists() {
+        return Err(http::StatusCode::NOT_FOUND);
+    }
+
     let asset_path = relative.to_string_lossy().replace('\\', "/");
     if let Some(asset) = app.asset_resolver().get(asset_path) {
         return Ok((asset.bytes.to_vec(), asset.mime_type.to_string()));
     }
 
     Err(http::StatusCode::NOT_FOUND)
+}
+
+fn deleted_resource_tombstone_path(active_web: &Path, relative: &Path) -> PathBuf {
+    active_web.join(DELETE_TOMBSTONES_DIR).join(relative)
 }
 
 pub fn sanitize_relative_path(path: &str) -> Result<PathBuf, String> {
