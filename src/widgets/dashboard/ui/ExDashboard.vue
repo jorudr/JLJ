@@ -66,7 +66,6 @@
         <ExHeading level="h1" variant="cinematic" class="!text-3xl">{{ t('dashboard.title') }}</ExHeading>
         <div class="flex items-center space-x-4">
            <ExTag>v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
-           <ExTag v-if="patchBadge">HOTFIX_{{ patchBadge }}</ExTag>
         </div>
       </div>
 
@@ -214,7 +213,6 @@ import { getAuth, signOut } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '~/shared/firebase.client'
 import { open } from '@tauri-apps/plugin-shell'
-import { invoke } from '@tauri-apps/api/core'
 import { useI18n } from '~/shared/i18n/useI18n'
 import tauriConfig from '../../../../src-tauri/tauri.conf.json'
 import ExHeading from "~/shared/ui/ExHeading.vue"
@@ -291,8 +289,6 @@ const handleOutsideClick = (e: MouseEvent) => {
   }
 }
 const updateNotification = ref({ showUpdate: false, downloadLink: '', version: '' })
-const patchState = ref<{ patchLevel?: string | null; patchId?: string | null } | null>(null)
-const patchBadge = computed(() => patchState.value?.patchLevel?.replace(/^hotfix\./i, '') || '')
 let unsubUpdate: any = null
 
 const handleDownload = async (url: string) => {
@@ -307,15 +303,6 @@ const handleDownload = async (url: string) => {
 
 onMounted(() => {
   document.addEventListener('mousedown', handleOutsideClick)
-
-  invoke('patch_get_state')
-    .then((state: any) => {
-      patchState.value = state
-    })
-    .catch((err) => {
-      console.debug('Patch state unavailable outside Tauri runtime:', err)
-    })
-
 
   unsubUpdate = onSnapshot(doc(db, 'app_settings', 'update_notification'), (docSnap) => {
     if (docSnap.exists()) {
