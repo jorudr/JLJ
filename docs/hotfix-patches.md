@@ -45,8 +45,8 @@ npm run hotfix:package -- \
   --out dist/hotfix/JLJ-1.0.4-hotfix.1.jljpatch
 ```
 
-If the standalone `minisign` CLI is not installed, use the Tauri signer key
-instead:
+For production, use the Tauri signer key that matches
+`src-tauri/tauri.conf.json.pub`:
 
 ```bash
 npm run hotfix:package -- \
@@ -109,9 +109,8 @@ Pass `--extra-payload-dir path/to/payload` so those files are included under
 
 Required:
 
-- `MINISIGN_PRIVATE_KEY`: private key text or path material used by the workflow
-  to sign `manifest.json`.
-- `MINISIGN_PRIVATE_KEY_PASSWORD`: if the key is password-protected.
+- `HOTFIX_PRIVATE_KEY`: contents of `.secrets/hotfix/jlj-hotfix.key`.
+- `HOTFIX_PRIVATE_KEY_PASSWORD`: contents of `.secrets/hotfix/jlj-hotfix.password`.
 - Existing Tauri release secrets for full app releases remain unchanged.
 
 Never commit private signing keys. `*.key`, `*.minisig`, and `.hotfix-work/` are

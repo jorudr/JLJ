@@ -53,22 +53,13 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - name: install minisign
-        shell: bash
-        run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            brew install minisign
-          else
-            choco install minisign -y
-          fi
-
-      - name: restore minisign key
+      - name: restore hotfix signing key
         shell: bash
         env:
-          MINISIGN_PRIVATE_KEY: ${{ secrets.MINISIGN_PRIVATE_KEY }}
+          HOTFIX_PRIVATE_KEY: ${{ secrets.HOTFIX_PRIVATE_KEY }}
         run: |
           mkdir -p "$RUNNER_TEMP/jlj-hotfix"
-          printf "%s" "$MINISIGN_PRIVATE_KEY" > "$RUNNER_TEMP/jlj-hotfix/minisign.key"
+          printf "%s" "$HOTFIX_PRIVATE_KEY" > "$RUNNER_TEMP/jlj-hotfix/jlj-hotfix.key"
 
       - name: download base frontend
         shell: bash
@@ -87,7 +78,7 @@ jobs:
       - name: create signed jljpatch
         shell: bash
         env:
-          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.HOTFIX_PRIVATE_KEY_PASSWORD }}
         run: |
           mkdir -p dist/hotfix
           FROM_PATCH_ARGS=()
@@ -102,7 +93,7 @@ jobs:
             "${FROM_PATCH_ARGS[@]}" \
             --base-dir artifacts/base \
             --fixed-dir .output/public \
-            --minisign-key "$RUNNER_TEMP/jlj-hotfix/minisign.key" \
+            --tauri-signer-key-path "$RUNNER_TEMP/jlj-hotfix/jlj-hotfix.key" \
             --out "dist/hotfix/JLJ-${{ inputs.patch_id }}-${{ matrix.patch_platform }}.jljpatch"
 
       - name: collect patcher
