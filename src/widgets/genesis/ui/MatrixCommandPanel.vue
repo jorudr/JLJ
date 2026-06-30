@@ -623,11 +623,11 @@
       </div>
 
       <!-- BOTTOM SELECTORS -->
-      <div class="w-full flex items-center justify-center space-x-8 px-6 py-4 border-t border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.02] dark:bg-nier-dark/[0.02]">
+      <div class="command-category-scroll w-full flex items-center justify-center gap-8 overflow-x-auto px-6 py-4 border-t border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.02] dark:bg-nier-dark/[0.02]">
          <button v-for="cat in commandLinkCategories" :key="cat"
                  v-show="shouldShowCommandCategory(cat)"
                  @click="menu.toggleMenuCategory(cat)"
-                 class="group relative flex flex-col items-center transition-all duration-300"
+                 class="group relative flex shrink-0 flex-col items-center transition-all duration-300"
                  :class="state.activeMenuCategory.value === cat ? 'opacity-100' : 'opacity-30 hover:opacity-100'">
             
             <span class="text-[10px] font-mono tracking-[0.4em] uppercase font-black transition-colors"
@@ -800,8 +800,10 @@ function getCommandCategoryLabel(category: MenuCategory) {
 function shouldShowCommandCategory(category: MenuCategory) {
   if (category === 'TEXT_FORMAT') return !!props.state.activeTextNode.value
   if (props.state.isScenarioContext.value) return scenarioCommandCategories.includes(category)
+
+  const rawSelected = props.state.lastSelectedId.value ? props.state.getNode(props.state.lastSelectedId.value) : null;
   
-  if (props.state.activeMenuCategory.value === 'INDICATORS' && (category === 'SYSTEM' || category === 'LABELS')) {
+  if (props.state.activeMenuCategory.value === 'INDICATORS' && rawSelected?.type !== 'placeholder' && (category === 'SYSTEM' || category === 'LABELS')) {
     return false
   }
 
@@ -809,10 +811,10 @@ function shouldShowCommandCategory(category: MenuCategory) {
     return false
   }
 
-  const rawSelected = props.state.lastSelectedId.value ? props.state.getNode(props.state.lastSelectedId.value) : null;
   if (rawSelected?.type === 'placeholder') {
     if (category === 'SYSTEM') return false;
     if (category === 'INDICATORS') return true;
+    if (category === 'LABELS') return true;
   }
 
   const selected = props.state.effectiveSelectedNode.value
@@ -1020,6 +1022,15 @@ const skillTypes = computed(() => {
   pointer-events: auto;
   transform: translateY(0);
   visibility: visible;
+}
+
+.command-category-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.command-category-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .fade-enter-active, .fade-leave-active {
