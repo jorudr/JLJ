@@ -1,5 +1,5 @@
 <template>
-  <div class="matrix-tree w-full h-screen relative flex flex-col overflow-hidden text-nier-text-light dark:text-nier-text-dark select-none"
+  <div class="matrix-tree w-full h-full relative flex flex-col overflow-hidden text-nier-text-light dark:text-nier-text-dark select-none"
        @mousemove="menu.updateMousePos">
 
     <!-- GLOBAL DRAG OVERLAY TO PREVENT HOVER/CLICKS ON UNDERLYING ELEMENTS -->

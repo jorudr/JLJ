@@ -1,5 +1,5 @@
 <template>
-  <div ref="workspaceRoot" class="ethereal-void h-full min-h-full relative overflow-hidden transition-all duration-1000"
+  <div ref="workspaceRoot" class="ethereal-void h-full min-h-0 relative overflow-hidden transition-all duration-1000"
        :class="{ 'is-dark': isDark }">
 
     <Transition name="fade">
@@ -14,8 +14,8 @@
       ></div>
    
     <div
-      class="relative z-10 flex inset-0 h-full"
-      :class="activeTab === 'forum' ? 'items-start justify-center py-0' : 'items-center justify-center py-20'"
+      class="relative z-10 flex inset-0 h-full min-h-0"
+      :class="activeTab === 'forum' || activeTab === 'genesis' ? 'items-start justify-center py-0' : 'items-center justify-center py-20'"
     >
        <Transition name="page-reify" mode="out-in">
          <!-- Dashboard Hub (No Tab) -->
@@ -24,37 +24,133 @@
          </div>
 
          <!-- Genesis Module -->
-          <div v-else-if="isAssembled && activeTab === 'genesis'" key="genesis" class="w-full h-screen">
+          <div v-else-if="isAssembled && activeTab === 'genesis'" key="genesis" class="w-full h-full min-h-0 relative overflow-hidden">
+             <div
+               class="w-full min-h-0 transition-[height] duration-500 ease-[var(--nier-ease)]"
+               :style="{ height: isGenesisBottomBarHidden ? '100%' : `calc(100% - ${genesisBottomBarHeight}px)` }"
+             >
              <Transition name="page-reify" mode="out-in">
-                <!-- Menu -->
-                <div v-if="!currentGenesisMode" key="menu" class="w-full h-full pt-10">
-                   <ExGenesisMenu @select="handleGenesisSelect" @back="goToHub" />
+                <!-- Equity Curve -->
+                <div v-if="currentGenesisMode === 'diary'" key="diary" class="w-full h-full">
+                   <ExEquityCurve3D @exit="goToHub" />
                 </div>
 
                 <!-- Matrix -->
-                <div v-else-if="currentGenesisMode === 'matrix'" key="matrix" class="w-full h-screen">
-                   <ExGenesisMatrix :active-tab="activeTab" :is-dark="isDark" @exit="clearMode" />
-                </div>
-
-                <!-- Diary -->
-                <div v-else-if="currentGenesisMode === 'diary'" key="diary" class="w-full h-full">
-                   <ExEquityCurve3D @exit="clearMode" />
+                <div v-else-if="currentGenesisMode === 'matrix'" key="matrix" class="w-full h-full">
+                   <ExGenesisMatrix :active-tab="activeTab" :is-dark="isDark" @exit="goToHub" />
                 </div>
 
                 <!-- Log -->
                 <div v-else-if="currentGenesisMode === 'log'" key="log" class="w-full h-full">
-                   <ExGenesisLog @exit="clearMode" @nodeMapState="isNodeMapActive = $event" @hudState="isHudActive = $event" />
-                </div>
-
-                <!-- Default Placeholder -->
-                <div v-else key="fallback" class="w-full h-full flex flex-col items-center justify-center space-y-8">
-                   <ExHeading level="h2" variant="cinematic" class="!text-3xl uppercase tracking-[0.2em]">Module_{{ currentGenesisMode }}_Reification</ExHeading>
-                   <ExText class="opacity-40 italic">Structural matrix not yet stabilized in laboratory environment.</ExText>
-                   <button @click="clearMode" class="mt-8 px-8 py-3 border border-theme-text/20 hover:border-theme-text transition-colors text-[10px] font-mono tracking-[0.4em] uppercase">
-                     [ ESC_TO_MODULE_ORIGIN ]
-                   </button>
+                   <ExGenesisLog @exit="goToHub" @nodeMapState="isNodeMapActive = $event" @hudState="isHudActive = $event" />
                 </div>
              </Transition>
+             </div>
+
+             <div
+               v-if="isGenesisBottomBarHidden"
+               class="fixed bottom-0 left-1/2 z-[6999] -translate-x-1/2"
+             >
+               <button
+                 type="button"
+                 class="genesis-bottom-show-line"
+                 aria-label="Show Genesis bottom bar"
+                 title="Show Genesis bottom bar"
+                 @click="showGenesisBottomBar"
+               ></button>
+             </div>
+
+             <nav
+               class="genesis-bottom-bar absolute bottom-0 left-0 z-[7000] flex w-full items-center justify-between border-t border-theme-border bg-theme-bg/90 px-4 backdrop-blur-md transition-transform duration-500 ease-[var(--nier-ease)]"
+               :class="isGenesisBottomBarHidden ? 'translate-y-full' : 'translate-y-0'"
+               :style="{ height: `${genesisBottomBarHeight}px` }"
+               aria-label="Genesis pages"
+             >
+               <div class="flex h-full items-center gap-2">
+                 <button
+                   v-for="item in genesisModeItems"
+                   :key="item.id"
+                   type="button"
+                   class="genesis-bottom-icon-button group"
+                   :class="currentGenesisMode === item.id
+                     ? 'text-theme-text opacity-100'
+                     : 'text-theme-text opacity-35 hover:opacity-100'"
+                   :aria-label="item.title"
+                   :title="item.title"
+                   :aria-current="currentGenesisMode === item.id ? 'page' : undefined"
+                   @click="switchGenesisMode(item.id)"
+                 >
+                   <svg
+                     v-if="item.id === 'diary'"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M3.5 17.5H21" />
+                     <path d="M4 15.5 8 11l3 2.5 4.5-7 4.5 4" />
+                     <path d="M8 11v6.5M15.5 6.5v11" opacity=".45" />
+                   </svg>
+
+                   <svg
+                     v-else-if="item.id === 'matrix'"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M4 4h16v16H4z" />
+                     <path d="M4 9.5h16M4 14.5h16M9.5 4v16M14.5 4v16" opacity=".7" />
+                     <path d="M9.5 9.5h5v5h-5z" />
+                   </svg>
+
+                   <svg
+                     v-else
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M7 3.5h8l3 3V20H7z" />
+                     <path d="M15 3.5V7h3" />
+                     <path d="M10 11h5M10 14h4M10 17h6" opacity=".7" />
+                   </svg>
+                 </button>
+               </div>
+
+               <button
+                 type="button"
+                 class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                 aria-label="Hide Genesis bottom bar"
+                 title="Hide Genesis bottom bar"
+                 @click="hideGenesisBottomBar"
+               >
+                 <svg
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="1.7"
+                   stroke-linecap="square"
+                   stroke-linejoin="miter"
+                   class="h-5 w-5"
+                   aria-hidden="true"
+                 >
+                   <path d="M5 8.5 12 15.5 19 8.5" />
+                   <path d="M5 18.5H19" opacity=".55" />
+                 </svg>
+               </button>
+             </nav>
           </div>
 
          <!-- Forum Module -->
@@ -73,7 +169,8 @@
      <button 
        v-if="activeTab && !isNodeMapActive && isHudActive" 
        @click="goBack"
-       class="fixed bottom-8 right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity cursor-pointer z-[5000] outline-none"
+       class="fixed right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-all cursor-pointer z-[5000] outline-none"
+       :class="activeTab === 'genesis' && !isGenesisBottomBarHidden ? 'bottom-20' : 'bottom-8'"
      >
        Click Left Arrow to Go back
      </button>
@@ -89,9 +186,6 @@ import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import TesseractCanvas from '~/widgets/style/ui/TesseractCanvas.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
-import ExHeading from '~/shared/ui/ExHeading.vue'
-import ExText from '~/shared/ui/ExText.vue'
-import ExGenesisMenu from '~/widgets/genesis/ui/ExGenesisMenu.vue'
 import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
 
 import ExGenesisMatrix from '~/widgets/genesis/ui/ExGenesisMatrix.vue'
@@ -116,11 +210,20 @@ const route = useRoute()
 const router = useRouter()
 
 const genesisBasePath = '/genesis'
+const defaultGenesisMode = 'diary'
+const genesisBottomBarHeight = 56
 const validTabs = ['activity', 'forum', 'genesis', 'matrix']
-const modeMap = {
-  diary: 'log',
+const genesisModeItems = [
+  { id: 'diary', title: 'Ex Equity Curve 3D' },
+  { id: 'matrix', title: 'Ex Genesis Matrix' },
+  { id: 'log', title: 'Ex Genesis Log' }
+]
+const genesisModeAliases = {
+  diary: 'diary',
+  'equity-curve': 'diary',
   'genesis-diary': 'diary',
-  matrix: 'matrix'
+  matrix: 'matrix',
+  log: 'log'
 }
 
 const workspaceStore = useWorkspaceStore()
@@ -130,6 +233,7 @@ const activeTab = ref('')
 const showPaywall = ref(false)
 const workspaceRoot = ref(null)
 const isHudActive = ref(true)
+const isGenesisBottomBarHidden = ref(false)
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
@@ -144,12 +248,18 @@ const getRouteMode = () => {
   return typeof queryMode === 'string' ? queryMode : ''
 }
 
-const currentGenesisMode = computed(() => getRouteMode())
+const normalizeGenesisMode = (mode) => genesisModeAliases[mode] || ''
+const routeGenesisMode = computed(() => getRouteMode())
+const currentGenesisMode = computed(() => {
+  const normalizedMode = normalizeGenesisMode(routeGenesisMode.value)
+  if (normalizedMode) return normalizedMode
+  return isGenesisPath.value || route.query.tab === 'genesis' ? defaultGenesisMode : ''
+})
 
 const getRouteTab = () => {
   const queryTab = route.query.tab
   if (typeof queryTab === 'string' && validTabs.includes(queryTab)) return queryTab
-  if (isGenesisPath.value || currentGenesisMode.value) return 'genesis'
+  if (isGenesisPath.value || routeGenesisMode.value) return 'genesis'
   return ''
 }
 
@@ -167,14 +277,10 @@ const canonicalizeGenesisRoute = () => {
   if (activeTab.value !== 'genesis') return
 
   const mode = currentGenesisMode.value
-  const targetPath = mode ? `${genesisBasePath}/${mode}` : genesisBasePath
+  const targetPath = `${genesisBasePath}/${mode || defaultGenesisMode}`
   const query = { ...route.query, tab: 'genesis' }
 
-  if (mode) {
-    query.mode = mode
-  } else {
-    delete query.mode
-  }
+  query.mode = mode || defaultGenesisMode
 
   if (route.path !== targetPath || route.query.tab !== 'genesis' || route.query.mode !== query.mode) {
     router.replace({ path: targetPath, query })
@@ -213,7 +319,9 @@ const handleDashboardNavigate = (tab) => {
 
   let path = '/'
   if (tab === 'genesis') {
-    path = genesisBasePath
+    path = `${genesisBasePath}/${defaultGenesisMode}`
+    query.mode = defaultGenesisMode
+    isGenesisBottomBarHidden.value = false
   }
 
   router.push({
@@ -222,9 +330,8 @@ const handleDashboardNavigate = (tab) => {
   })
 }
 
-const handleGenesisSelect = (moduleId) => {
-  const mode = modeMap[moduleId] || moduleId
-  
+const switchGenesisMode = (modeId) => {
+  const mode = normalizeGenesisMode(modeId) || defaultGenesisMode
 
   router.push({
     path: `${genesisBasePath}/${mode}`,
@@ -237,17 +344,20 @@ const handleGenesisSelect = (moduleId) => {
 }
 
 const clearMode = () => {
-  const query = { ...route.query, tab: 'genesis' }
-  delete query.mode
+  switchGenesisMode(defaultGenesisMode)
+}
 
-  router.push({
-    path: genesisBasePath,
-    query
-  })
+const hideGenesisBottomBar = () => {
+  isGenesisBottomBarHidden.value = true
+}
+
+const showGenesisBottomBar = () => {
+  isGenesisBottomBarHidden.value = false
 }
 
 const goToHub = () => {
   activeTab.value = ''
+  isGenesisBottomBarHidden.value = false
   const query = { ...route.query }
   delete query.tab
   delete query.mode
@@ -265,7 +375,7 @@ watch(activeTab, (newTab) => {
 }, { immediate: true })
 
 const goBack = () => {
-  if (currentGenesisMode.value) {
+  if (activeTab.value === 'genesis' && currentGenesisMode.value !== defaultGenesisMode) {
     clearMode()
   } else if (activeTab.value) {
     goToHub()
@@ -345,4 +455,44 @@ onUnmounted(() => {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--theme-border-strong); }
+
+.genesis-bottom-bar {
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.genesis-bottom-icon-button {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  transition: opacity 240ms ease, color 240ms ease, transform 240ms ease;
+}
+
+.genesis-bottom-icon-button:hover {
+  transform: translateY(-1px);
+}
+
+.genesis-bottom-show-line {
+  display: block;
+  width: 96px;
+  height: 14px;
+  position: relative;
+}
+
+.genesis-bottom-show-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #fff;
+  opacity: 0.78;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.genesis-bottom-show-line:hover::after {
+  opacity: 1;
+  transform: translateY(-2px);
+}
 </style>
