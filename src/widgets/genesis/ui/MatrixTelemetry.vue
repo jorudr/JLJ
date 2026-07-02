@@ -1,45 +1,43 @@
 <template>
-  <div v-if="!isScenarioContext" class="absolute top-32 left-12 flex flex-col space-y-8 z-[40] pointer-events-none">
-     <div class="flex items-center space-x-6">
-        <div class="flex flex-col border-l border-nier-text-light/20 dark:border-nier-text-dark/20 pl-4 py-1">
-           <span class="text-[8px] font-mono tracking-widest opacity-40 uppercase">
-             Viewport_Telemetry
-           </span>
-           <span class="text-[12px] font-mono tracking-widest opacity-80 uppercase">{{ (viewState.scale * 100).toFixed(0) }}% // FOCUS</span>
-        </div>
-        
+  <div v-if="!isScenarioContext" class="absolute top-32 left-2 flex items-start gap-3 z-[40] pointer-events-none">
+     <div class="relative ml-3 flex flex-col items-center gap-2">
+       <div class="matrix-tool">
          <button @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
            [R]
          </button>
+         <span class="matrix-tool-tooltip">Reset View</span>
+       </div>
+       <div class="matrix-tool">
          <div class="relative pointer-events-auto">
            <button
              type="button"
              @click.stop="toggleGitPanel"
              @contextmenu.prevent.stop="toggleGitMenu"
              class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
-             title="Git"
+             aria-label="Git Panel"
            >
              <Icon name="lucide:git-branch" class="w-4 h-4" />
            </button>
-
-           <div
-             v-if="isGitMenuOpen"
-             class="absolute left-0 top-10 z-[100001] min-w-[190px] border border-nier-text-light/20 bg-nier-white/95 shadow-[8px_8px_0_rgba(0,0,0,0.12)] dark:border-nier-text-dark/20 dark:bg-nier-black/95 dark:shadow-[8px_8px_0_rgba(255,255,255,0.06)]"
-             @click.stop
-           >
-             <button
-               type="button"
-               class="block w-full px-4 py-3 text-left font-mono text-[8px] font-black uppercase tracking-[0.28em] text-nier-text-light transition-colors hover:bg-nier-text-light/10 dark:text-nier-text-dark dark:hover:bg-nier-text-dark/10"
-               @click.stop="clearChangeTree"
-             >
-               {{ locale === 'ru' ? 'Очистить дерево' : 'Clear Tree' }}
-             </button>
-           </div>
          </div>
+         <span class="matrix-tool-tooltip">Git Panel</span>
+       </div>
+       <div
+         v-if="isGitMenuOpen"
+         class="pointer-events-auto absolute left-12 top-10 z-[100001] min-w-[190px] border border-nier-text-light/20 bg-nier-white/95 shadow-[8px_8px_0_rgba(0,0,0,0.12)] dark:border-nier-text-dark/20 dark:bg-nier-black/95 dark:shadow-[8px_8px_0_rgba(255,255,255,0.06)]"
+         @click.stop
+       >
+         <button
+           type="button"
+           class="block w-full px-4 py-3 text-left font-mono text-[8px] font-black uppercase tracking-[0.28em] text-nier-text-light transition-colors hover:bg-nier-text-light/10 dark:text-nier-text-dark dark:hover:bg-nier-text-dark/10"
+           @click.stop="clearChangeTree"
+         >
+           {{ locale === 'ru' ? 'Очистить дерево' : 'Clear Tree' }}
+         </button>
+       </div>
+       <div class="matrix-tool">
          <button
            type="button"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           title="Version Review"
            aria-label="Open strategy version review"
            @click.stop="openVersionReview"
          >
@@ -51,10 +49,12 @@
              {{ strategyVersions.length }}
            </span>
          </button>
+         <span class="matrix-tool-tooltip">Version Review</span>
+       </div>
+       <div class="matrix-tool">
          <button
            type="button"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           title="Tree View"
            aria-label="Toggle Tree View"
            @click.stop="toggleTree"
          >
@@ -69,6 +69,9 @@
               <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
            </svg>
          </button>
+         <span class="matrix-tool-tooltip">Tree View</span>
+       </div>
+       <div class="matrix-tool">
          <button @click.stop="openManual" 
                  class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
@@ -77,34 +80,50 @@
              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
            </svg>
          </button>
+         <span class="matrix-tool-tooltip">Manual</span>
+       </div>
+       <div v-if="canCreateStrategyVersion" class="matrix-tool">
          <button
-           v-if="canCreateStrategyVersion"
            type="button"
            @click.stop="$emit('strategy-version-create')"
-           class="tactical-button pointer-events-auto h-8 border border-current px-3 bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 font-mono text-[8px] font-black uppercase tracking-[0.28em] whitespace-nowrap shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           :aria-label="locale === 'ru' ? 'Создать версию' : 'Create Version'"
          >
-           {{ locale === 'ru' ? 'Создать версию' : 'Create Version' }}
+           <Icon name="lucide:bookmark-plus" class="w-4 h-4" />
          </button>
+         <span class="matrix-tool-tooltip">Create Version</span>
+       </div>
+       <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
          <button
-           v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges"
            type="button"
            @click.stop="$emit('strategy-version-update')"
-           class="tactical-button pointer-events-auto h-8 border border-current px-3 bg-nier-text-light/10 dark:bg-nier-text-dark/10 hover:bg-nier-text-light/20 dark:hover:bg-nier-text-dark/20 transition-all font-mono text-[8px] font-black uppercase tracking-[0.24em] whitespace-nowrap"
+           class="tactical-button pointer-events-auto w-32 min-h-8 border border-current px-3 py-2 bg-nier-text-light/10 dark:bg-nier-text-dark/10 hover:bg-nier-text-light/20 dark:hover:bg-nier-text-dark/20 transition-all font-mono text-[8px] font-black uppercase tracking-[0.18em] leading-tight"
          >
            {{ locale === 'ru' ? 'Обновить версию' : 'Update Version' }}
          </button>
+         <span class="matrix-tool-tooltip">Update Version</span>
+       </div>
+       <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
          <button
-           v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges"
            type="button"
            @click.stop="$emit('strategy-version-clear')"
-           class="tactical-button pointer-events-auto h-8 border border-red-700/70 px-3 text-red-700 dark:text-red-400 hover:bg-red-700/10 transition-all font-mono text-[8px] font-black uppercase tracking-[0.24em] whitespace-nowrap"
+           class="tactical-button pointer-events-auto w-32 min-h-8 border border-red-700/70 px-3 py-2 text-red-700 dark:text-red-400 hover:bg-red-700/10 transition-all font-mono text-[8px] font-black uppercase tracking-[0.18em] leading-tight"
          >
            {{ locale === 'ru' ? 'Сбросить изменения' : 'Clear Changes' }}
          </button>
+         <span class="matrix-tool-tooltip">Clear Changes</span>
+       </div>
      </div>
 
-     <!-- FOCUS SELECTOR STRIP -->
-     <div class="flex flex-col space-y-2 pl-4 border-l border-nier-text-light/10 dark:border-nier-text-dark/10">
+     <div class="flex flex-col gap-6 border-l border-nier-text-light/20 dark:border-nier-text-dark/20 pl-4 py-1">
+        <div class="flex flex-col">
+           <span class="text-[8px] font-mono tracking-widest opacity-40 uppercase">
+             Viewport_Telemetry
+           </span>
+           <span class="text-[12px] font-mono tracking-widest opacity-80 uppercase">{{ (viewState.scale * 100).toFixed(0) }}% // FOCUS</span>
+        </div>
+
+        <!-- FOCUS SELECTOR STRIP -->
         <div class="flex flex-col space-y-1">
            <button v-for="zoom in [25, 50, 75, 100, 150, 200]" :key="zoom"
                    @click.stop="$emit('update-scale', zoom / 100)"
@@ -465,3 +484,44 @@ const manualSections = computed(() => {
   return locale.value === 'ru' ? manualSectionsRu : manualSectionsEn
 })
 </script>
+
+<style scoped>
+.matrix-tool {
+  position: relative;
+  pointer-events: auto;
+}
+
+.matrix-tool-tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid rgb(44 44 42 / 0.18);
+  background: rgb(249 249 249 / 0.96);
+  color: #2c2c2a;
+  padding: 4px 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 100002;
+}
+
+.matrix-tool:hover .matrix-tool-tooltip,
+.matrix-tool:focus-within .matrix-tool-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+:global(.dark) .matrix-tool-tooltip {
+  border-color: rgb(249 246 240 / 0.18);
+  background: rgb(10 10 10 / 0.96);
+  color: #f9f6f0;
+}
+</style>
