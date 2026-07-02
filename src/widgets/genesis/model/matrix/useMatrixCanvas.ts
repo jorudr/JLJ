@@ -10,6 +10,7 @@ export function isTextEditingTarget(target: EventTarget | null) {
 export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
   const canvasWrapper = ref<HTMLElement | null>(null)
   const changeTree = state.changeTree
+  const suppressNextBackgroundClick = ref(false)
   const cloneMatrixValue = <T>(value: T): T => {
     return JSON.parse(JSON.stringify(value))
   }
@@ -31,11 +32,15 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     drawStart: { value: Point | null }, 
     drawCurrent: { value: Point | null }
   ) => {
+    if (e.button !== 0) return
     if (isTextEditingTarget(e.target)) return
 
     if ((e.target as HTMLElement).closest('.skill-chip') || 
         (e.target as HTMLElement).closest('.tactical-button') ||
         (e.target as HTMLElement).closest('.pointer-events-auto:not(.absolute.inset-0)')) return
+
+    e.preventDefault()
+    window.getSelection()?.removeAllRanges()
 
     if (isZoneToolActive) {
       const worldPos = screenToWorld(e.clientX, e.clientY)
@@ -54,6 +59,11 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
     
     const moveWindow = (mE: MouseEvent) => {
       if (!state.viewState.value.isPanning) return
+      mE.preventDefault()
+      window.getSelection()?.removeAllRanges()
+      if (Math.abs(mE.clientX - startX) > 3 || Math.abs(mE.clientY - startY) > 3) {
+        suppressNextBackgroundClick.value = true
+      }
       pendingPan = {
         x: initialPanX + (mE.clientX - startX),
         y: initialPanY + (mE.clientY - startY)
@@ -104,6 +114,13 @@ export function useMatrixCanvas(state: ReturnType<typeof useMatrixState>) {
   }
 
   const handleBackgroundClick = (e: MouseEvent) => {
+    if (suppressNextBackgroundClick.value) {
+      suppressNextBackgroundClick.value = false
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+
     const target = e.target as HTMLElement
     if (target.closest('.skill-chip') || 
         target.closest('.tactical-button') || 
