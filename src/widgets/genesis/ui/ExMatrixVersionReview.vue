@@ -320,6 +320,25 @@ const eventTones: Record<Exclude<MatrixChangeType, 'version'>, ReviewChange['ton
   update: 'current'
 }
 
+const reviewNodeEventTypes = new Set([
+  'strategy',
+  'condition',
+  'scenario',
+  'indicator',
+  'pattern',
+  'smc',
+  'data',
+  'methods',
+  'risk',
+  'risk-management',
+  'emotion',
+  'instrument',
+  'pyramiding',
+  'averaging',
+  'domain',
+  'scaling-entry'
+])
+
 function riskReviewFields(node: any) {
   const params = node?.params || {}
   const tradeValue = params.riskLossTrade ?? 1
@@ -378,6 +397,14 @@ function formatTreeValue(label: string, value: unknown) {
 function nodeTypeValue(node: string) {
   const separator = node.indexOf(':')
   return separator === -1 ? 'node' : node.slice(0, separator).trim()
+}
+
+function isReviewNodeEvent(event: MatrixChangeEvent, nodesById: Map<string, any>) {
+  if (event.targetKind && event.targetKind !== 'node') return true
+  if (!event.targetId) return true
+  const targetNode = event.targetId ? nodesById.get(event.targetId) : null
+  const type = targetNode?.type || nodeTypeValue(event.node)
+  return reviewNodeEventTypes.has(type)
 }
 
 function flattenSubchanges(subchanges: any[], depth = 0, rows: FlatSubchange[] = []) {
@@ -527,8 +554,14 @@ function buildVersionChanges(version: MatrixStrategyVersion, previousVersion?: M
   const currentNodesById = new Map<string, any>((version.snapshot.nodes || []).map(n => [n.id, n]))
   const previousNodesById = new Map<string, any>((previousVersion?.snapshot.nodes || []).map(n => [n.id, n]))
   const mergedNodesById = new Map<string, any>([...previousNodesById, ...currentNodesById])
-  const currentEvents = treeEvents(version).filter(event => !isRiskEvent(event, currentNodesById))
-  const previousEvents = treeEvents(previousVersion).filter(event => !isRiskEvent(event, previousNodesById))
+  const currentEvents = treeEvents(version).filter(event => (
+    !isRiskEvent(event, currentNodesById) &&
+    isReviewNodeEvent(event, currentNodesById)
+  ))
+  const previousEvents = treeEvents(previousVersion).filter(event => (
+    !isRiskEvent(event, previousNodesById) &&
+    isReviewNodeEvent(event, previousNodesById)
+  ))
   const currentById = new Map(currentEvents.map(event => [event.id, event]))
   const previousById = new Map(previousEvents.map(event => [event.id, event]))
   const changes: ReviewChange[] = []

@@ -147,6 +147,24 @@ const eventTypeMarkers: Record<MatrixChangeType, string> = {
   update: '*'
 }
 
+const visibleNodeEventTypes = new Set([
+  'strategy',
+  'condition',
+  'scenario',
+  'indicator',
+  'pattern',
+  'smc',
+  'data',
+  'methods',
+  'risk',
+  'risk-management',
+  'emotion',
+  'instrument',
+  'pyramiding',
+  'averaging',
+  'domain'
+])
+
 function formatChangeTime(createdAt: number) {
   const seconds = Math.max(0, Math.floor((Date.now() - createdAt) / 1000))
   if (seconds < 5) return 'just now'
@@ -155,6 +173,12 @@ function formatChangeTime(createdAt: number) {
   if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
   const hours = Math.floor(minutes / 60)
   return `${hours} hour${hours === 1 ? '' : 's'} ago`
+}
+
+function isVisibleGitEvent(event: any) {
+  if (event.targetKind !== 'node' || !event.targetId) return true
+  const node = state.getNode(event.targetId)
+  return !!node && visibleNodeEventTypes.has(node.type)
 }
 
 function formatTreeText(text: string, maxLength: number = 35) {
@@ -265,7 +289,7 @@ const treeRows = computed<TreeRow[]>(() => {
     }
   ]
 
-  const visibleEvents = [...changeTree.events.value].reverse()
+  const visibleEvents = [...changeTree.events.value].filter(isVisibleGitEvent).reverse()
   const hasTooManyEvents = visibleEvents.length > 3
   const isMainExpanded = expandedParents.value.has('main-timeline')
   const eventsToShow = hasTooManyEvents && !isMainExpanded ? visibleEvents.slice(0, 3) : visibleEvents
