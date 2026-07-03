@@ -162,7 +162,8 @@ const visibleNodeEventTypes = new Set([
   'instrument',
   'pyramiding',
   'averaging',
-  'domain'
+  'domain',
+  'scaling-entry'
 ])
 
 function formatChangeTime(createdAt: number) {

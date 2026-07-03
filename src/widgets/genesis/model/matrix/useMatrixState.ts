@@ -6,8 +6,28 @@ import { useMatrixChangeTree, type MatrixChangeEvent } from './useMatrixChangeTr
 
 export const STORAGE_KEY = 'genesis_matrix_v2'
 const MATRIX_LEGACY_HEAVY_BACKUP_KEY = `${STORAGE_KEY}_legacy_heavy_backup`
+const MATRIX_GIT_HISTORY_BACKUP_KEY = `${STORAGE_KEY}_matrix_git_history`
+const MATRIX_VERSION_REVIEW_BACKUP_KEY = `${STORAGE_KEY}_version_review_history`
 const MAX_RESTORED_MATRIX_BYTES = 80 * 1024 * 1024
 const MAX_RESTORED_MATRIX_NODES = 2500
+const MATRIX_GIT_NODE_EVENT_TYPES = new Set([
+  'strategy',
+  'condition',
+  'scenario',
+  'indicator',
+  'pattern',
+  'smc',
+  'data',
+  'methods',
+  'risk',
+  'risk-management',
+  'emotion',
+  'instrument',
+  'pyramiding',
+  'averaging',
+  'domain',
+  'scaling-entry'
+])
 
 export interface Point { x: number; y: number }
 export interface Node {
@@ -1338,6 +1358,53 @@ export function useMatrixState() {
     return splitLegacyDataIntoPages(saved)
   }
 
+  function matrixEventNodeType(event: MatrixChangeEvent, nodesById: Map<string, Node>) {
+    const targetNode = event.targetId ? nodesById.get(event.targetId) : null
+    if (targetNode?.type) return targetNode.type
+    const separator = event.node.indexOf(':')
+    return separator === -1 ? event.node.trim() : event.node.slice(0, separator).trim()
+  }
+
+  function collectNodeMap(nodes: Node[], map = new Map<string, Node>()) {
+    nodes.forEach(node => {
+      if (!node?.id) return
+      map.set(node.id, node)
+      if (node.subGraph?.nodes?.length) {
+        collectNodeMap(node.subGraph.nodes, map)
+      }
+    })
+    return map
+  }
+
+  function filterMatrixGitEvents(events: MatrixChangeEvent[], nodes: Node[]) {
+    const nodesById = collectNodeMap(nodes)
+    return (events || []).filter(event => {
+      if (event.targetKind && event.targetKind !== 'node') return true
+      if (!event.targetId) return true
+      return MATRIX_GIT_NODE_EVENT_TYPES.has(matrixEventNodeType(event, nodesById))
+    })
+  }
+
+  function collectEventChangeIds(events: MatrixChangeEvent[]) {
+    const ids = new Set<string>()
+    const visit = (subchanges: any[] = []) => {
+      subchanges.forEach(subchange => {
+        if (subchange?.id) ids.add(subchange.id)
+        if (subchange?.subchanges?.length) visit(subchange.subchanges)
+      })
+    }
+    events.forEach(event => {
+      if (event.id) ids.add(event.id)
+      visit(event.subchanges || [])
+    })
+    return ids
+  }
+
+  function filterDisabledChangesForEvents(disabledChanges: string[], events: MatrixChangeEvent[]) {
+    const changeIds = collectEventChangeIds(events)
+    return (disabledChanges || []).filter(id => changeIds.has(id))
+  }
+
   function buildPersistedPages() {
     syncActivePageFromRoot()
     return matrixPages.value.map(page => {
@@ -1345,14 +1412,19 @@ export function useMatrixState() {
         .map(node => processNodeTree(node, page.nodes, page.connections))
         .filter(node => node.type !== 'placeholder')
       const processedConnections = repairConnections(page.connections, processedNodes)
+      const persistedEvents = filterMatrixGitEvents(changeTree.eventsByPage.value[page.id] || [], processedNodes)
+      const persistedDisabledChanges = filterDisabledChangesForEvents(
+        Array.from(changeTree.disabledChangesByPage.value[page.id] || new Set()),
+        persistedEvents
+      )
 
       return {
         ...page,
         nodes: processedNodes,
         connections: processedConnections,
         zones: repairZones(page.zones),
-        events: changeTree.eventsByPage.value[page.id] || [],
-        disabledChanges: Array.from(changeTree.disabledChangesByPage.value[page.id] || new Set()),
+        events: persistedEvents,
+        disabledChanges: persistedDisabledChanges,
         strategyVersions: (strategyVersionsByPage.value[page.id] || [])
           .map((version: any) => normalizeStrategyVersion(version, page))
           .filter(Boolean) as MatrixStrategyVersion[],
@@ -1366,12 +1438,13 @@ export function useMatrixState() {
     syncActivePageFromRoot()
     const active = activePage.value
     const snapshotNodes = active?.nodes.map(node => processNodeTree(node, active.nodes, active.connections)).filter(node => node.type !== 'placeholder') || []
+    const snapshotEvents = filterMatrixGitEvents(changeTree.events.value, snapshotNodes)
     return cloneMatrixValue({
       nodes: snapshotNodes,
       connections: repairConnections(active?.connections || [], snapshotNodes),
       zones: repairZones(active?.zones || []),
-      events: changeTree.events.value,
-      disabledChanges: Array.from(changeTree.disabledChanges.value),
+      events: snapshotEvents,
+      disabledChanges: filterDisabledChangesForEvents(Array.from(changeTree.disabledChanges.value), snapshotEvents),
       view: {
         panX: viewState.value.panX,
         panY: viewState.value.panY,
@@ -1573,7 +1646,140 @@ export function useMatrixState() {
       refreshAnonymousStrategyVersion(captureStrategySnapshot())
     }
 
+    await persistMatrixHistoryBackups({ allowEmptyVersionReview: true })
     await saveMatrixData(true)
+  }
+
+  function findBackupPageByIdOrName(backupPages: any[] = [], page: MatrixPage) {
+    return backupPages.find(item => item.id === page.id) ||
+      backupPages.find(item => item.name && item.name === page.name) ||
+      null
+  }
+
+  function buildMatrixGitHistoryBackupPayload() {
+    syncActivePageFromRoot()
+    return {
+      schemaVersion: 1,
+      updatedAt: Date.now(),
+      activePageId: activePageId.value,
+      pages: matrixPages.value.map(page => {
+        const events = filterMatrixGitEvents(changeTree.eventsByPage.value[page.id] || page.events || [], page.nodes || [])
+        return {
+          id: page.id,
+          name: page.name,
+          events: cloneMatrixValue(events),
+          disabledChanges: filterDisabledChangesForEvents(
+            Array.from(changeTree.disabledChangesByPage.value[page.id] || new Set(page.disabledChanges || [])),
+            events
+          )
+        }
+      })
+    }
+  }
+
+  function buildVersionReviewBackupPayload() {
+    syncActivePageFromRoot()
+    return {
+      schemaVersion: 1,
+      updatedAt: Date.now(),
+      activePageId: activePageId.value,
+      pages: matrixPages.value.map(page => ({
+        id: page.id,
+        name: page.name,
+        strategyVersions: cloneMatrixValue(strategyVersionsByPage.value[page.id] || page.strategyVersions || []),
+        selectedStrategyVersionId: selectedStrategyVersionIdByPage.value[page.id] ?? page.selectedStrategyVersionId ?? null,
+        anonymousStrategyVersion: cloneMatrixValue(anonymousStrategyVersionByPage.value[page.id] || page.anonymousStrategyVersion || null)
+      }))
+    }
+  }
+
+  async function mergeMatrixGitHistoryBackup(payload: any) {
+    const existing = await loadFromDisk<any>(MATRIX_GIT_HISTORY_BACKUP_KEY)
+    const existingPages = existing?.pages || []
+    const pages = payload.pages.map((page: any) => {
+      if (page.events?.length) return page
+      const fallback = findBackupPageByIdOrName(existingPages, page)
+      const matrixPage = matrixPages.value.find(item => item.id === page.id || item.name === page.name)
+      const fallbackEvents = matrixPage ? filterMatrixGitEvents(fallback?.events || [], matrixPage.nodes || []) : []
+      return fallbackEvents.length ? {
+        ...page,
+        events: fallbackEvents,
+        disabledChanges: filterDisabledChangesForEvents(fallback?.disabledChanges || [], fallbackEvents)
+      } : page
+    })
+    return { ...(existing || {}), ...payload, pages }
+  }
+
+  async function mergeVersionReviewBackup(payload: any, allowEmptyVersionReview = false) {
+    const existing = await loadFromDisk<any>(MATRIX_VERSION_REVIEW_BACKUP_KEY)
+    const existingPages = existing?.pages || []
+    const pages = payload.pages.map((page: any) => {
+      if (page.strategyVersions?.length || allowEmptyVersionReview) return page
+      const fallback = findBackupPageByIdOrName(existingPages, page)
+      return fallback?.strategyVersions?.length
+        ? {
+            ...page,
+            strategyVersions: fallback.strategyVersions,
+            selectedStrategyVersionId: fallback.selectedStrategyVersionId ?? page.selectedStrategyVersionId,
+            anonymousStrategyVersion: fallback.anonymousStrategyVersion ?? page.anonymousStrategyVersion
+          }
+        : page
+    })
+    return { ...(existing || {}), ...payload, pages }
+  }
+
+  async function persistMatrixHistoryBackups(options: { allowEmptyVersionReview?: boolean } = {}) {
+    const gitPayload = await mergeMatrixGitHistoryBackup(buildMatrixGitHistoryBackupPayload())
+    const versionPayload = await mergeVersionReviewBackup(
+      buildVersionReviewBackupPayload(),
+      options.allowEmptyVersionReview === true
+    )
+    await Promise.all([
+      saveToDisk(MATRIX_GIT_HISTORY_BACKUP_KEY, gitPayload),
+      saveToDisk(MATRIX_VERSION_REVIEW_BACKUP_KEY, versionPayload)
+    ])
+  }
+
+  async function restoreMatrixHistoryBackups() {
+    const [gitBackup, versionBackup] = await Promise.all([
+      loadFromDisk<any>(MATRIX_GIT_HISTORY_BACKUP_KEY),
+      loadFromDisk<any>(MATRIX_VERSION_REVIEW_BACKUP_KEY)
+    ])
+    let restored = false
+
+    matrixPages.value.forEach(page => {
+      const pageEvents = changeTree.eventsByPage.value[page.id] || page.events || []
+      if (!pageEvents.length) {
+        const backupPage = findBackupPageByIdOrName(gitBackup?.pages || [], page)
+        const backupEvents = filterMatrixGitEvents(backupPage?.events || [], page.nodes || [])
+        if (backupEvents.length) {
+          changeTree.eventsByPage.value[page.id] = cloneMatrixValue(backupEvents)
+          page.events = cloneMatrixValue(backupEvents)
+          const disabled = filterDisabledChangesForEvents(backupPage?.disabledChanges || [], backupEvents)
+          changeTree.disabledChangesByPage.value[page.id] = new Set(disabled)
+          page.disabledChanges = disabled
+          restored = true
+        }
+      }
+
+      const pageVersions = strategyVersionsByPage.value[page.id] || page.strategyVersions || []
+      if (!pageVersions.length) {
+        const backupPage = findBackupPageByIdOrName(versionBackup?.pages || [], page)
+        if (backupPage?.strategyVersions?.length) {
+          const versions = cloneMatrixValue(backupPage.strategyVersions)
+          strategyVersionsByPage.value[page.id] = versions
+          page.strategyVersions = versions
+          selectedStrategyVersionIdByPage.value[page.id] = backupPage.selectedStrategyVersionId &&
+            versions.some((version: MatrixStrategyVersion) => version.id === backupPage.selectedStrategyVersionId)
+              ? backupPage.selectedStrategyVersionId
+              : null
+          anonymousStrategyVersionByPage.value[page.id] = cloneMatrixValue(backupPage.anonymousStrategyVersion || null)
+          restored = true
+        }
+      }
+    })
+
+    return restored
   }
 
   let saveTimeout: any = null
@@ -1607,7 +1813,10 @@ export function useMatrixState() {
     appBootStore.genesisMatrixCache = data
     matrixPersistQueue = matrixPersistQueue
       .catch(() => undefined)
-      .then(() => saveToDisk(STORAGE_KEY, data))
+      .then(async () => {
+        await saveToDisk(STORAGE_KEY, data)
+        await persistMatrixHistoryBackups()
+      })
     await matrixPersistQueue
   }
 
@@ -1730,11 +1939,12 @@ export function useMatrixState() {
         if (saved.personalIndicators) {
           personalIndicators.value = saved.personalIndicators
         }
+        const restoredMatrixHistory = await restoreMatrixHistoryBackups()
         applyTreeStateToMatrix(changeTree.disabledChanges.value)
         refreshAnonymousStrategyVersion(captureStrategySnapshot())
 
         appBootStore.genesisMatrixCache = restoredPayloadPreview
-        if (originalBytes !== restoredBytes) {
+        if (restoredMatrixHistory || originalBytes !== restoredBytes) {
           if (originalBytes > restoredBytes * 1.5 || originalBytes > MAX_RESTORED_MATRIX_BYTES) {
             await saveToDisk(MATRIX_LEGACY_HEAVY_BACKUP_KEY, saved)
           }
