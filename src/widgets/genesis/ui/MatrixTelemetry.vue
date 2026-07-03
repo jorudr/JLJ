@@ -1,5 +1,8 @@
 <template>
-  <div v-if="!isScenarioContext" class="absolute top-32 left-2 flex items-start gap-3 z-[40] pointer-events-none">
+  <div
+    v-if="!isScenarioContext"
+    class="matrix-telemetry absolute top-32 left-2 flex items-start gap-3 z-[40] pointer-events-none"
+    :class="{ 'is-dark': isDark }">
      <div class="relative ml-3 flex flex-col items-center gap-2">
        <div class="matrix-tool">
          <button @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
@@ -14,12 +17,12 @@
              @click.stop="toggleGitPanel"
              @contextmenu.prevent.stop="toggleGitMenu"
              class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
-             aria-label="Git Panel"
+             aria-label="Changes Control"
            >
              <Icon name="lucide:git-branch" class="w-4 h-4" />
            </button>
          </div>
-         <span class="matrix-tool-tooltip">Git Panel</span>
+         <span class="matrix-tool-tooltip">Changes Control</span>
        </div>
        <div
          v-if="isGitMenuOpen"
@@ -128,8 +131,9 @@
            <button v-for="zoom in [25, 50, 75, 100, 150, 200]" :key="zoom"
                    @click.stop="$emit('update-scale', zoom / 100)"
                    :class="[
+                      'matrix-zoom-button',
                       Math.round(viewState.scale * 100) === zoom 
-                        ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black opacity-100' 
+                        ? 'is-active bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black opacity-100'
                         : 'opacity-30 hover:opacity-100 hover:bg-nier-text-light/5 dark:hover:bg-nier-text-dark/5'
                    ]"
                    class="pointer-events-auto w-12 h-5 border border-nier-text-light/20 dark:border-nier-text-dark/20 text-[9px] font-mono tracking-tighter transition-all flex items-center justify-center relative overflow-hidden group/zoom">
@@ -237,6 +241,7 @@ import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 const props = defineProps<{
   viewState: { scale: number }
   isScenarioContext: boolean
+  isDark?: boolean
   canCreateStrategyVersion?: boolean
   hasSelectedStrategyVersion?: boolean
   hasStrategyVersionChanges?: boolean
@@ -491,6 +496,58 @@ const manualSections = computed(() => {
   pointer-events: auto;
 }
 
+.matrix-tool .tactical-button {
+  opacity: 1 !important;
+  background-color: #ffffff !important;
+  color: rgb(44 44 42 / 0.52);
+}
+
+.matrix-tool .tactical-button:hover {
+  background-color: #ffffff !important;
+  color: #2c2c2a;
+}
+
+.matrix-telemetry.is-dark .matrix-tool .tactical-button {
+  background-color: #000000 !important;
+  color: rgb(249 246 240 / 0.58);
+}
+
+.matrix-telemetry.is-dark .matrix-tool .tactical-button:hover {
+  background-color: #000000 !important;
+  color: #f9f6f0;
+}
+
+.matrix-zoom-button {
+  opacity: 1 !important;
+  background-color: #ffffff !important;
+  color: rgb(44 44 42 / 0.52);
+}
+
+.matrix-zoom-button:hover {
+  background-color: #ffffff !important;
+  color: #2c2c2a;
+}
+
+.matrix-zoom-button.is-active {
+  background-color: #2c2c2a !important;
+  color: #ffffff;
+}
+
+.matrix-telemetry.is-dark .matrix-zoom-button {
+  background-color: #000000 !important;
+  color: rgb(249 246 240 / 0.58);
+}
+
+.matrix-telemetry.is-dark .matrix-zoom-button:hover {
+  background-color: #000000 !important;
+  color: #f9f6f0;
+}
+
+.matrix-telemetry.is-dark .matrix-zoom-button.is-active {
+  background-color: #f9f6f0 !important;
+  color: #000000;
+}
+
 .matrix-tool-tooltip {
   position: absolute;
   left: calc(100% + 10px);
@@ -499,9 +556,9 @@ const manualSections = computed(() => {
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;
-  border: 1px solid rgb(44 44 42 / 0.18);
-  background: rgb(249 249 249 / 0.96);
-  color: #2c2c2a;
+  border: 1px solid rgb(249 246 240 / 0.18);
+  background: rgb(10 10 10 / 0.96);
+  color: #f9f6f0;
   padding: 4px 7px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 9px;
@@ -519,9 +576,4 @@ const manualSections = computed(() => {
   transform: translateY(-50%) translateX(0);
 }
 
-:global(.dark) .matrix-tool-tooltip {
-  border-color: rgb(249 246 240 / 0.18);
-  background: rgb(10 10 10 / 0.96);
-  color: #f9f6f0;
-}
 </style>

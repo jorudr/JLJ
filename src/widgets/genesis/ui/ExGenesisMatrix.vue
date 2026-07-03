@@ -123,6 +123,7 @@
 
       <!-- VIEWPORT TELEMETRY -->
       <MatrixTelemetry :view-state="state.viewState.value" :is-scenario-context="!!state.isScenarioContext.value"
+                       :is-dark="isDark"
                        :can-create-strategy-version="canCreateStrategyVersion"
                        :has-selected-strategy-version="!!state.selectedStrategyVersion.value"
                        :has-strategy-version-changes="state.hasStrategyVersionChanges.value"
