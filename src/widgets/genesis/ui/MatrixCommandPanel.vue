@@ -131,12 +131,19 @@
                   <template #trigger>
                     <button @click="state.setPendingNode(type)"
                             @contextmenu.prevent="menu.activeIndicatorCategory.value === 'PERSONAL' && $emit('personal-contextmenu', $event, type)"
-                            class="group relative flex h-12 w-12 flex-shrink-0 items-center justify-center border border-nier-border-light bg-nier-text-light/5 backdrop-blur-md transition-all hover:border-nier-text-light hover:bg-nier-text-light/10 hover:shadow-[0_0_0_1px_currentColor,0_10px_24px_rgba(0,0,0,0.16)] dark:border-nier-border-dark dark:bg-nier-text-dark/5 dark:hover:border-nier-text-dark dark:hover:bg-nier-text-dark/10">
+                            :class="[
+                              menu.activeIndicatorCategory.value === 'PERSONAL' || type.params?.isCustom
+                                ? 'border-nier-text-light/10 bg-nier-text-light/[0.025] dark:border-nier-text-dark/10 dark:bg-nier-text-dark/[0.025]'
+                                : 'border-nier-border-light bg-nier-text-light/5 dark:border-nier-border-dark dark:bg-nier-text-dark/5'
+                            ]"
+                            class="group relative flex h-12 w-12 flex-shrink-0 items-center justify-center border backdrop-blur-md transition-all hover:border-nier-text-light hover:bg-nier-text-light/10 hover:shadow-[0_0_0_1px_currentColor,0_10px_24px_rgba(0,0,0,0.16)] dark:hover:border-nier-text-dark dark:hover:bg-nier-text-dark/10">
                        <div class="font-mono text-[14px] font-black tracking-tighter opacity-40 transition-all group-hover:opacity-100">
                          {{ type.label.slice(0, 3).toUpperCase() }}
                        </div>
-                       <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-                       <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
+                       <div :class="menu.activeIndicatorCategory.value === 'PERSONAL' || type.params?.isCustom ? 'opacity-10' : 'opacity-20'"
+                            class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark"></div>
+                       <div :class="menu.activeIndicatorCategory.value === 'PERSONAL' || type.params?.isCustom ? 'opacity-10' : 'opacity-20'"
+                            class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark"></div>
                     </button>
                   </template>
                   <div class="flex flex-col gap-1 min-w-[180px]">
@@ -962,22 +969,11 @@ const scenarioVisualTypes = [
 ]
 
 const skillTypes = computed(() => {
-  const selectedNode = props.state.effectiveSelectedNode.value
-  const contextNode = props.state.activeContextId.value ? props.state.getNode(props.state.activeContextId.value) : null
-  
-  const isScenarioActive = (
-    (selectedNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(selectedNode.type)) ||
-    (contextNode && ['scenario', 'condition', 'instrument', 'indicator', 'pattern', 'smc'].includes(contextNode.type))
-  )
-  
   const base: { label: string; type: string; color: string; description?: string }[] = [
     { label: 'Strategy', type: 'strategy', color: 'currentColor' },
-    { label: 'Scenario', type: 'scenario', color: 'currentColor' }
+    { label: 'Scenario', type: 'scenario', color: 'currentColor' },
+    { label: 'Condition', type: 'condition', color: 'currentColor' }
   ]
-
-  if (isScenarioActive) {
-    base.push({ label: 'Condition', type: 'condition', color: 'currentColor' })
-  }
   
   base.push({ label: 'Emotion', type: 'emotion', color: 'currentColor' })
   base.push({ label: 'Risk', type: 'risk', color: 'currentColor', description: 'Risk management protocol defining loss constraints and exposure limits.' })
