@@ -258,7 +258,9 @@ export const useGenesisTree = () => {
   const getNodeById = (id: string) => matrixNodes.value.find(n => n.id === id)
 
   const getScenarioDisplayName = (node: any) => {
-    const name = node?.params?.customName || node?.label || node?.name || node?.id || 'Scenario'
+    const identity = String(node?.params?.customName || '').trim()
+    if (identity) return `${identity} (SCENARIO)`.toUpperCase()
+    const name = node?.label || node?.name || node?.id || 'Scenario'
     return String(name).toUpperCase()
   }
 
@@ -286,7 +288,9 @@ export const useGenesisTree = () => {
   }
 
   const getConditionDisplayName = (node: any) => {
-    const name = node?.params?.customName || node?.label || node?.name || node?.id || 'Condition'
+    const identity = String(node?.params?.customName || '').trim()
+    if (identity) return `${identity} (CONDITION)`.toUpperCase()
+    const name = node?.label || node?.name || node?.id || 'Condition'
     return String(name).toUpperCase()
   }
 

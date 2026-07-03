@@ -919,6 +919,8 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
             state.connections.value.push({
               fromId: conn.fromId,
               toId: id,
+              fromPort: conn.fromPort,
+              toPort: conn.toPort,
               label: lowerLabel,
               bundleId: bundleId,
               bundleStemX: conn.bundleStemX,
@@ -960,6 +962,8 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
             state.connections.value.push({
               fromId: conn.fromId,
               toId: id,
+              fromPort: conn.fromPort,
+              toPort: conn.toPort,
               label: lowerLabel,
               bundleId: bundleId,
               bundleStemX: 0,
