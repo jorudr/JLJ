@@ -345,6 +345,7 @@ import { useMatrixUploads } from '../model/matrix/useMatrixUploads'
 import { usePathMath } from '../model/matrix/usePathMath'
 import { getMatrixStrategyName, isStrategyNode } from '../model/matrix/useMatrixStrategies'
 import { useExGenesisMatrixUndo } from '../model/matrix/useExGenesisMatrixUndo'
+import { collectMatrixImageUrls, preloadImageUrls } from '../model/matrix/useMatrixImagePreload'
 
 import { initAssetService } from '@/shared/api/asset.service'
 
@@ -379,6 +380,11 @@ const canCreateStrategyVersion = computed(() => {
 
   return strategyCount === 1 && scenarioCount >= 1 && conditionCount >= 1 && canCreateSnapshot
 })
+
+async function preloadRestoredMatrixImages() {
+  const urls = collectMatrixImageUrls(state.matrixPages.value.flatMap((page: any) => page.nodes || []))
+  await preloadImageUrls(urls, { timeoutMs: 3000, concurrency: 8 })
+}
 
 const windowSize = ref({ width: typeof window !== 'undefined' ? window.innerWidth : 1000, height: typeof window !== 'undefined' ? window.innerHeight : 1000 })
 const updateWindowSize = () => {
@@ -452,8 +458,13 @@ onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
   document.addEventListener('selectionchange', menu.saveTextSelection)
 
-  boot.startBootAnimation()
-  await state.restoreData()
+  boot.startBootAnimation(undefined, { autoStop: false })
+  try {
+    await state.restoreData()
+    await preloadRestoredMatrixImages()
+  } finally {
+    boot.stopBootAnimation()
+  }
 })
 
 onUnmounted(() => {
