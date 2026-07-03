@@ -129,27 +129,86 @@
                  </button>
                </div>
 
-               <button
-                 type="button"
-                 class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                 aria-label="Hide Genesis bottom bar"
-                 title="Hide Genesis bottom bar"
-                 @click="hideGenesisBottomBar"
-               >
-                 <svg
-                   viewBox="0 0 24 24"
-                   fill="none"
-                   stroke="currentColor"
-                   stroke-width="1.7"
-                   stroke-linecap="square"
-                   stroke-linejoin="miter"
-                   class="h-5 w-5"
-                   aria-hidden="true"
+               <div class="flex h-full items-center gap-2">
+                 <button
+                   type="button"
+                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                   aria-label="Open tactical dashboard"
+                   @click="goToHub"
                  >
-                   <path d="M5 8.5 12 15.5 19 8.5" />
-                   <path d="M5 18.5H19" opacity=".55" />
-                 </svg>
-               </button>
+                   <svg
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M4 4h7v7H4z" />
+                     <path d="M13 4h7v5h-7z" />
+                     <path d="M13 11h7v9h-7z" />
+                     <path d="M4 13h7v7H4z" />
+                   </svg>
+                 </button>
+
+                 <button
+                   type="button"
+                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                   :aria-label="themeStore.settings.isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+                   @click="themeStore.toggleDark"
+                 >
+                   <svg
+                     v-if="themeStore.settings.isDark"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <circle cx="12" cy="12" r="4" />
+                     <path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" />
+                   </svg>
+                   <svg
+                     v-else
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4z" />
+                   </svg>
+                 </button>
+
+                 <button
+                   type="button"
+                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                   aria-label="Hide Genesis bottom bar"
+                   @click="hideGenesisBottomBar"
+                 >
+                   <svg
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M5 8.5 12 15.5 19 8.5" />
+                     <path d="M5 18.5H19" opacity=".55" />
+                   </svg>
+                 </button>
+               </div>
              </nav>
           </div>
 
@@ -165,22 +224,12 @@
        </Transition>
     </div>
 
-     <!-- Global Bottom Right Label -->
-     <button 
-       v-if="activeTab && !isNodeMapActive && isHudActive" 
-       @click="goBack"
-       class="fixed right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-all cursor-pointer z-[5000] outline-none"
-       :class="activeTab === 'genesis' && !isGenesisBottomBarHidden ? 'bottom-20' : 'bottom-8'"
-     >
-       Click Left Arrow to Go back
-     </button>
-
     <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
+import { ref, watch, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
@@ -343,10 +392,6 @@ const switchGenesisMode = (modeId) => {
   })
 }
 
-const clearMode = () => {
-  switchGenesisMode(defaultGenesisMode)
-}
-
 const hideGenesisBottomBar = () => {
   isGenesisBottomBarHidden.value = true
 }
@@ -374,25 +419,6 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
-const goBack = () => {
-  if (activeTab.value === 'genesis' && currentGenesisMode.value !== defaultGenesisMode) {
-    clearMode()
-  } else if (activeTab.value) {
-    goToHub()
-  }
-}
-
-const handleGlobalKeydown = (e) => {
-  // Prevent back navigation if user is typing in an input field
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
-    return
-  }
-  
-  if (e.key === 'ArrowLeft') {
-    goBack()
-  }
-}
-
 const handleInitializationComplete = () => {
   hasInitialized.value = true
   
@@ -414,12 +440,7 @@ const handleSignedOut = () => {
   router.replace({ path: '/' })
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKeydown)
-})
-
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
   document.body.style.overflow = ''
   document.body.style.height = ''
 })
