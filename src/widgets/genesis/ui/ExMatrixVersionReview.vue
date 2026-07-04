@@ -11,12 +11,12 @@
           <button
             type="button"
             class="absolute -right-6 top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-y border-r border-black/20 bg-theme-bg transition-colors hover:bg-theme-surface dark:border-white/20 dark:bg-[#070707] dark:hover:bg-[#111] group/close-tab"
-            aria-label="Close version review"
+            :aria-label="reviewText('closeReview')"
             @click="$emit('close')"
           >
             <div class="h-16 w-px bg-black/10 transition-all duration-300 group-hover/close-tab:bg-black/40 dark:bg-white/10 dark:group-hover/close-tab:bg-white/40"></div>
             <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-black/10 transition-colors group-hover/close-tab:text-black/40 dark:text-white/10 dark:group-hover/close-tab:text-white/40">
-              Close_Review
+              {{ reviewText('closeReviewShort') }}
             </span>
           </button>
 
@@ -104,20 +104,20 @@
                                </div>
                                <div class="flex flex-col gap-0.5 relative z-10 flex-1 min-w-0">
                                  <span class="font-mono text-[10px] tracking-widest uppercase font-black" :class="`diff-marker-${change.kind}`">
-                                   {{ change.title === 'UPDATE_NODE' ? '[~] UPDATED_NODE' : '[+] REIFIED_NODE' }}
+                                   {{ nodePreviewTitle(change) }}
                                  </span>
                                  <div class="flex items-baseline gap-2">
                                     <span class="diff-node-type shrink-0 text-[11px]">{{ change.nodeType }}</span>
                                     <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate text-[11px]">{{ change.nodeName }}</span>
                                  </div>
                                  <span class="font-mono text-[7px] tracking-[0.2em] uppercase opacity-40 mt-0.5">
-                                   {{ change.title === 'UPDATE_NODE' ? 'System Object Updated' : 'System Object Initialized' }}
+                                   {{ nodePreviewSubtitle(change) }}
                                  </span>
                                </div>
                              </div>
                           </div>
                           <div v-else class="flex min-w-0 items-baseline gap-2">
-                            <span class="shrink-0 font-bold" :class="`diff-event-${change.tone}`">{{ change.title }}</span>
+                            <span class="shrink-0 font-bold" :class="`diff-event-${change.tone}`">{{ eventTitle(change.title) }}</span>
                             <span class="opacity-25">::</span>
                             <span class="diff-node-type shrink-0">{{ change.nodeType }}</span>
                             <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate">{{ change.nodeName }}</span>
@@ -145,7 +145,7 @@
                               </span>
                               <span :style="{ paddingLeft: `${detail.depth * 14}px` }">
                                 <span class="diff-tree-glyph">{{ detail.depth ? '`- ' : '|- ' }}</span>
-                                <span class="diff-detail-key">{{ detail.label }}</span>
+                                <span class="diff-detail-key">{{ detailLabel(detail.label) }}</span>
                                 <span class="diff-tree-glyph">: </span>
                                 <span class="diff-detail-value">{{ detail.value }}</span>
                               </span>
@@ -166,18 +166,18 @@
                           :name="isVersionExpanded(version.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'"
                           class="h-3.5 w-3.5"
                         />
-                        {{ isVersionExpanded(version.id) ? 'Collapse version' : `Show ${version.changes.length - 2} more events` }}
+                        {{ expandLabel(version) }}
                       </button>
                     </div>
 
                     <div v-else class="px-6 py-8 text-center font-mono text-[11px] uppercase tracking-[0.24em] opacity-30">
-                      No tree changes from previous version
+                      {{ reviewText('noTreeChanges') }}
                     </div>
                   </article>
                 </div>
 
                 <div v-else class="flex h-full items-center justify-center font-mono text-[9px] uppercase tracking-[0.3em] opacity-30">
-                  No saved versions
+                  {{ reviewText('noSavedVersions') }}
                 </div>
               </div>
             </div>
@@ -259,6 +259,70 @@ function toggleVersion(versionId: string) {
   expandedVersions.value = next
 }
 
+const reviewTextMap: Record<string, { en: string; ru: string }> = {
+  closeReview: { en: 'Close version review', ru: 'Закрыть обзор версий' },
+  closeReviewShort: { en: 'Close_Review', ru: 'Закрыть_Обзор' },
+  noTreeChanges: { en: 'No tree changes from previous version', ru: 'Нет изменений дерева с предыдущей версии' },
+  noSavedVersions: { en: 'No saved versions', ru: 'Нет сохраненных версий' },
+  collapseVersion: { en: 'Collapse version', ru: 'Свернуть версию' },
+  showMoreEvents: { en: 'Show {count} more events', ru: 'Показать еще {count} событий' },
+  updatedNode: { en: '[~] UPDATED_NODE', ru: '[~] ОБНОВЛЕН_УЗЕЛ' },
+  reifiedNode: { en: '[+] REIFIED_NODE', ru: '[+] СОЗДАН_УЗЕЛ' },
+  systemObjectUpdated: { en: 'System Object Updated', ru: 'Системный объект обновлен' },
+  systemObjectInitialized: { en: 'System Object Initialized', ru: 'Системный объект инициализирован' }
+}
+
+const eventTitleMap: Record<string, { en: string; ru: string }> = {
+  ADD_NODE: { en: 'ADD_NODE', ru: 'ДОБАВЛЕН_УЗЕЛ' },
+  UPDATE_NODE: { en: 'UPDATE_NODE', ru: 'ОБНОВЛЕН_УЗЕЛ' },
+  DELETE_NODE: { en: 'DELETE_NODE', ru: 'УДАЛЕН_УЗЕЛ' },
+  CONNECT_NODE: { en: 'CONNECT_NODE', ru: 'СВЯЗАН_УЗЕЛ' },
+  CONNECT_NODES: { en: 'CONNECT_NODES', ru: 'СВЯЗАНЫ_УЗЛЫ' },
+  CLEAR_NODE: { en: 'CLEAR_NODE', ru: 'ОЧИЩЕН_УЗЕЛ' },
+  CLEAR_TREE: { en: 'CLEAR_TREE', ru: 'ОЧИЩЕНО_ДЕРЕВО' }
+}
+
+const detailLabelMap: Record<string, { en: string; ru: string }> = {
+  type: { en: 'type', ru: 'тип' },
+  'risk per trade': { en: 'risk per trade', ru: 'риск на сделку' },
+  'risk per session': { en: 'risk per session', ru: 'риск на сессию' },
+  'risk reward ratio': { en: 'risk reward ratio', ru: 'соотношение риск/прибыль' },
+  'trading style': { en: 'trading style', ru: 'стиль торговли' },
+  table: { en: 'table', ru: 'таблица' },
+  screenshot: { en: 'screenshot', ru: 'скриншот' },
+  drawing_panel: { en: 'drawing_panel', ru: 'панель_рисования' },
+  file_attachment: { en: 'file_attachment', ru: 'файл_вложение' },
+  change: { en: 'change', ru: 'изменение' }
+}
+
+function reviewText(key: string, params: Record<string, string | number> = {}) {
+  const copy = reviewTextMap[key]?.[locale.value === 'ru' ? 'ru' : 'en'] || key
+  return Object.entries(params).reduce((result, [name, value]) => {
+    return result.replace(`{${name}}`, String(value))
+  }, copy)
+}
+
+function eventTitle(title: string) {
+  return eventTitleMap[title]?.[locale.value === 'ru' ? 'ru' : 'en'] || title
+}
+
+function detailLabel(label: string) {
+  return detailLabelMap[label]?.[locale.value === 'ru' ? 'ru' : 'en'] || label
+}
+
+function nodePreviewTitle(change: ReviewChange) {
+  return change.title === 'UPDATE_NODE' ? reviewText('updatedNode') : reviewText('reifiedNode')
+}
+
+function nodePreviewSubtitle(change: ReviewChange) {
+  return change.title === 'UPDATE_NODE' ? reviewText('systemObjectUpdated') : reviewText('systemObjectInitialized')
+}
+
+function expandLabel(version: { id: string; changes: ReviewChange[] }) {
+  if (isVersionExpanded(version.id)) return reviewText('collapseVersion')
+  return reviewText('showMoreEvents', { count: version.changes.length - 2 })
+}
+
 function getVersionTitle(version: any) {
   const strategyNode = (version.snapshot?.nodes || []).find((n: any) => n.type === 'strategy')
   const identity = strategyNode?.params?.identity || strategyNode?.params?.customName || strategyNode?.params?.identityName
@@ -284,16 +348,16 @@ function showsNodePreview(change: ReviewChange) {
 }
 
 function changeStatus(kind: ReviewKind) {
-  if (kind === 'added') return 'NEW'
-  if (kind === 'removed') return 'REMOVED'
-  if (kind === 'modified') return 'CHANGED'
+  if (kind === 'added') return locale.value === 'ru' ? 'НОВЫЙ' : 'NEW'
+  if (kind === 'removed') return locale.value === 'ru' ? 'УДАЛЕН' : 'REMOVED'
+  if (kind === 'modified') return locale.value === 'ru' ? 'ИЗМЕНЕН' : 'CHANGED'
   return ''
 }
 
 function detailStatus(detail: ReviewDetail) {
-  if (detail.kind === 'added') return '+ NEW'
-  if (detail.kind === 'removed') return '- OLD'
-  if (detail.kind === 'modified') return '~ NEW'
+  if (detail.kind === 'added') return locale.value === 'ru' ? '+ НОВЫЙ' : '+ NEW'
+  if (detail.kind === 'removed') return locale.value === 'ru' ? '- СТАРЫЙ' : '- OLD'
+  if (detail.kind === 'modified') return locale.value === 'ru' ? '~ НОВЫЙ' : '~ NEW'
   return ''
 }
 
@@ -386,10 +450,10 @@ function splitNode(node: string) {
 }
 
 function formatTreeValue(label: string, value: unknown) {
-  if (label === 'table') return 'table change'
-  if (label === 'screenshot') return 'screenshot change'
-  if (label === 'drawing_panel') return 'drawing_panel change'
-  if (label === 'file_attachment') return 'file_attachment change'
+  if (label === 'table') return locale.value === 'ru' ? 'изменение таблицы' : 'table change'
+  if (label === 'screenshot') return locale.value === 'ru' ? 'изменение скриншота' : 'screenshot change'
+  if (label === 'drawing_panel') return locale.value === 'ru' ? 'изменение панели рисования' : 'drawing_panel change'
+  if (label === 'file_attachment') return locale.value === 'ru' ? 'изменение вложенного файла' : 'file_attachment change'
   const flat = String(value ?? '').replace(/[\r\n]+/g, ' ')
   return flat.length > 140 ? `${flat.slice(0, 140)}...` : flat
 }
