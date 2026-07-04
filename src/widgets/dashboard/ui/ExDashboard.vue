@@ -193,17 +193,27 @@
       </div>
     </header>
 
-    <!-- 2. Central Application Mark -->
-    <main class="absolute inset-0 z-10 flex items-center justify-center px-8 pointer-events-none">
-      <div class="dashboard-core-logo flex flex-col items-center text-center">
-        <div class="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
-          <div class="absolute inset-0 border-2 border-theme-text/40 animate-[spin_10s_linear_infinite]"></div>
-          <div class="absolute inset-4 border border-theme-text/60 animate-[spin_6s_linear_infinite_reverse]"></div>
-          <div class="h-2 w-2 rotate-45 animate-pulse nier-bg-inverted"></div>
-          <div class="absolute -left-2 -top-2 h-3 w-3 border-l-2 border-t-2 border-theme-text"></div>
-          <div class="absolute -bottom-2 -right-2 h-3 w-3 border-b-2 border-r-2 border-theme-text"></div>
+    <!-- 2. Central Stage -->
+    <main class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center px-8">
+      <Transition name="dashboard-center-fade" mode="out-in">
+        <div
+          v-if="activeDashboardPanel === 'activity'"
+          key="activity-monitor"
+          class="dashboard-activity-stage pointer-events-auto h-full w-full"
+        >
+          <ExActivityMonitor @exit="activeDashboardPanel = null" />
         </div>
-      </div>
+
+        <div v-else key="dashboard-logo" class="dashboard-core-logo pointer-events-none flex flex-col items-center text-center">
+          <div class="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
+            <div class="absolute inset-0 border-2 border-theme-text/40 animate-[spin_10s_linear_infinite]"></div>
+            <div class="absolute inset-4 border border-theme-text/60 animate-[spin_6s_linear_infinite_reverse]"></div>
+            <div class="h-2 w-2 rotate-45 animate-pulse nier-bg-inverted"></div>
+            <div class="absolute -left-2 -top-2 h-3 w-3 border-l-2 border-t-2 border-theme-text"></div>
+            <div class="absolute -bottom-2 -right-2 h-3 w-3 border-b-2 border-r-2 border-theme-text"></div>
+          </div>
+        </div>
+      </Transition>
     </main>
 
     <!-- 3. Bottom Navigation Bar -->
@@ -216,8 +226,9 @@
         :key="module.id"
         variant="ghost"
         size="none"
-        class="dashboard-page-button min-h-10 flex-1 !border-transparent !bg-transparent px-4 py-2 text-center text-[9px] tracking-[0.26em] opacity-50 hover:opacity-100"
-        @click="$emit('navigate', module.id)"
+        class="dashboard-page-button min-h-10 flex-1 !border-transparent !bg-transparent px-4 py-2 text-center text-[9px] tracking-[0.26em]"
+        :class="activeDashboardPanel === module.id ? ['is-active opacity-100', themeStore.settings.isDark ? 'is-active-dark' : ''] : 'opacity-50 hover:opacity-100'"
+        @click="handleDashboardModuleClick(module.id)"
       >
         {{ t(module.titleKey) }}
       </ExButton>
@@ -244,6 +255,7 @@ import ExIdentity from "~/shared/ui/ExIdentity.vue"
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
+import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 
 const props = withDefaults(defineProps<{
   isMusicMuted?: boolean
@@ -264,6 +276,7 @@ const identityRef = ref<HTMLElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 const showProfileOverlay = ref(false)
+const activeDashboardPanel = ref<string | null>(null)
 
 const toggleMenu = () => {
   if (!userMenuOpen.value && identityRef.value) {
@@ -371,6 +384,16 @@ const dashboardModules = [
   }
 ]
 
+const handleDashboardModuleClick = (moduleId: string) => {
+  if (moduleId === 'activity') {
+    activeDashboardPanel.value = activeDashboardPanel.value === 'activity' ? null : 'activity'
+    return
+  }
+
+  activeDashboardPanel.value = null
+  emit('navigate', moduleId)
+}
+
 </script>
 
 <style scoped>
@@ -385,6 +408,43 @@ const dashboardModules = [
 
 .dashboard-page-button:active {
   transform: translateY(0);
+}
+
+.dashboard-page-button.is-active {
+  box-shadow: 0 0 18px rgb(var(--theme-accent-rgb) / 0.18);
+  color: var(--theme-text);
+}
+
+.dashboard-page-button.is-active :deep(> div) {
+  transform: translateX(0) !important;
+}
+
+.dashboard-page-button.is-active :deep(> span) {
+  color: rgb(255 255 255) !important;
+}
+
+.dashboard-page-button.is-active-dark :deep(> span) {
+  color: rgb(5 5 5) !important;
+}
+
+.dashboard-center-stage {
+  padding-bottom: 84px;
+  padding-top: 84px;
+}
+
+.dashboard-activity-stage {
+  max-width: min(1180px, calc(100vw - 64px));
+}
+
+.dashboard-center-fade-enter-active,
+.dashboard-center-fade-leave-active {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.dashboard-center-fade-enter-from,
+.dashboard-center-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .dashboard-icon-toggle {
