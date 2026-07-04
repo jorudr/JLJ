@@ -37,7 +37,7 @@
               </div>
               <div
                 class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-red-500/80 hover:text-red-500 hover:font-bold font-mono tracking-widest text-[10px] bg-inherit"
-                title="Delete version"
+                :title="gitText('deleteVersion')"
                 @click.stop="state.removeStrategyVersion(version.id)"
               >
                 [X]
@@ -64,7 +64,7 @@
               :key="partIndex"
               :class="part.class"
             >{{ part.text }}</span>
-            <span v-if="row.toggleId && isTreeRowOff(row)" class="tree-off-label"> [off]</span>
+            <span v-if="row.toggleId && isTreeRowOff(row)" class="tree-off-label"> [{{ gitText('off') }}]</span>
           </button>
         </div>
       </div>
@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useThemeStore } from '~/features/store/useTheme'
+import { useI18n } from '~/shared/i18n/useI18n'
 import { useMatrixChangeTree, type MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
 import { useMatrixState } from '../model/matrix/useMatrixState'
 
@@ -100,6 +101,7 @@ type TreeRow = {
 }
 
 const themeStore = useThemeStore()
+const { locale } = useI18n()
 const isDark = computed(() => themeStore.settings.isDark)
 const state = useMatrixState()
 const changeTree = state.changeTree
@@ -111,7 +113,7 @@ const isVersionMenuOpen = ref(false)
 const savedVersions = computed(() => [...state.strategyVersions.value].reverse())
 
 function getVersionTitle(version: any) {
-  if (!version) return 'Select Version'
+  if (!version) return gitText('selectVersion')
   const strategyNode = (version.snapshot?.nodes || []).find((n: any) => n.type === 'strategy')
   const identity = strategyNode?.params?.identity || strategyNode?.params?.customName || strategyNode?.params?.identityName
   if (identity) {
@@ -168,12 +170,150 @@ const visibleNodeEventTypes = new Set([
 
 function formatChangeTime(createdAt: number) {
   const seconds = Math.max(0, Math.floor((Date.now() - createdAt) / 1000))
-  if (seconds < 5) return 'just now'
-  if (seconds < 60) return `${seconds} seconds ago`
+  if (seconds < 5) return gitText('justNow')
+  if (seconds < 60) return locale.value === 'ru' ? `${seconds} сек назад` : `${seconds} seconds ago`
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  if (minutes < 60) return locale.value === 'ru' ? `${minutes} мин назад` : `${minutes} minute${minutes === 1 ? '' : 's'} ago`
   const hours = Math.floor(minutes / 60)
-  return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  return locale.value === 'ru' ? `${hours} ч назад` : `${hours} hour${hours === 1 ? '' : 's'} ago`
+}
+
+const gitTextMap: Record<string, { en: string; ru: string }> = {
+  selectVersion: { en: 'Select Version', ru: 'Выбрать версию' },
+  deleteVersion: { en: 'Delete version', ru: 'Удалить версию' },
+  justNow: { en: 'just now', ru: 'только что' },
+  checkpoint: { en: 'checkpoint ', ru: 'контрольная точка ' },
+  changeTimeline: { en: 'change_timeline', ru: 'лента_изменений' },
+  timeline: { en: 'timeline', ru: 'лента' },
+  terminated: { en: 'terminated', ru: 'завершено' },
+  expandChanges: { en: '... (expand {count} more changes)', ru: '... (развернуть еще {count} изменений)' },
+  expandOlderChanges: { en: '... (expand {count} older changes)', ru: '... (развернуть еще {count} старых изменений)' },
+  collapseChanges: { en: '... (collapse changes)', ru: '... (свернуть изменения)' },
+  tableChange: { en: 'table change', ru: 'изменение таблицы' },
+  tableChangeIndexed: { en: 'table change {index}', ru: 'изменение таблицы {index}' },
+  screenshotChange: { en: 'screenshot change', ru: 'изменение скриншота' },
+  drawingPanelChange: { en: 'drawing_panel change', ru: 'изменение панели рисования' },
+  fileAttachmentChange: { en: 'file_attachment change', ru: 'изменение вложенного файла' },
+  off: { en: 'off', ru: 'выкл' }
+}
+
+const eventTitleMap: Record<string, { en: string; ru: string }> = {
+  ADD_NODE: { en: 'ADD_NODE', ru: 'УЗЕЛ СОЗДАН' },
+  'ADD_NODE*': { en: 'ADD_NODE*', ru: 'УЗЕЛ СОЗДАН*' },
+  UPDATE_NODE: { en: 'UPDATE_NODE', ru: 'УЗЕЛ ОБНОВЛЕН' },
+  DELETE_NODE: { en: 'DELETE_NODE', ru: 'УЗЕЛ УДАЛЕН' },
+  SET_STRATEGY_VERSION: { en: 'SET_STRATEGY_VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ СОЗДАНА' },
+  UPDATE_STRATEGY_VERSION: { en: 'UPDATE_STRATEGY_VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ ОБНОВЛЕНА' }
+}
+
+const labelMap: Record<string, { en: string; ru: string }> = {
+  identity: { en: 'identity', ru: 'идентичность' },
+  type: { en: 'type', ru: 'тип' },
+  direction: { en: 'direction', ru: 'направление' },
+  timeframe: { en: 'timeframe', ru: 'таймфрейм' },
+  period: { en: 'period', ru: 'период' },
+  source: { en: 'source', ru: 'источник' },
+  lots: { en: 'lots', ru: 'лоты' },
+  distance: { en: 'distance', ru: 'дистанция' },
+  risk: { en: 'risk', ru: 'риск' },
+  customName: { en: 'custom name', ru: 'имя' },
+  custom_name: { en: 'custom name', ru: 'имя' },
+  phase: { en: 'phase', ru: 'фаза' },
+  'risk per trade': { en: 'risk per trade', ru: 'риск на сделку' },
+  'risk per session': { en: 'risk per session', ru: 'риск на сессию' },
+  'risk reward ratio': { en: 'risk reward ratio', ru: 'соотношение риск/прибыль' },
+  'trading style': { en: 'trading style', ru: 'стиль торговли' },
+  SCALING_ENTRY: { en: 'SCALING_ENTRY', ru: 'МАСШТАБИРУЮЩИЙ_ВХОД' },
+  NODES_HOLDER: { en: 'NODES_HOLDER', ru: 'КОНТЕЙНЕР_УЗЛОВ' },
+  add: { en: 'add', ru: 'создан' },
+  remove: { en: 'remove', ru: 'удален' },
+  node_added: { en: 'node_added', ru: 'узел_создан' },
+  node_removed: { en: 'node_removed', ru: 'узел_удален' },
+  default: { en: 'default', ru: 'по_умолчанию' },
+  collapsed: { en: 'collapsed', ru: 'свернуто' },
+  expanded: { en: 'expanded', ru: 'развернуто' },
+  table: { en: 'table', ru: 'таблица' },
+  screenshot: { en: 'screenshot', ru: 'скриншот' },
+  drawing_panel: { en: 'drawing_panel', ru: 'панель_рисования' },
+  file_attachment: { en: 'file_attachment', ru: 'файл_вложение' },
+  ITEM_TEXT: { en: 'ITEM_TEXT', ru: 'ТЕКСТ_ЭЛЕМЕНТА' },
+  text: { en: 'text', ru: 'текст' }
+}
+
+const valueMap: Record<string, { en: string; ru: string }> = {
+  collapsed: { en: 'collapsed', ru: 'свернуто' },
+  expanded: { en: 'expanded', ru: 'развернуто' },
+  true: { en: 'true', ru: 'да' },
+  false: { en: 'false', ru: 'нет' },
+  REQUIRED: { en: 'REQUIRED', ru: 'ОБЯЗАТЕЛЬНО' },
+  ADDITIONAL: { en: 'ADDITIONAL', ru: 'ДОПОЛНИТЕЛЬНО' },
+  ENTRY: { en: 'ENTRY', ru: 'ВХОД' },
+  EXIT: { en: 'EXIT', ru: 'ВЫХОД' },
+  DAY_TRADING: { en: 'DAY_TRADING', ru: 'ДЕЙТРЕЙДИНГ' }
+}
+
+const nodeTypeMap: Record<string, { en: string; ru: string }> = {
+  strategy: { en: 'strategy', ru: 'стратегия' },
+  condition: { en: 'condition', ru: 'условие' },
+  scenario: { en: 'scenario', ru: 'сценарий' },
+  indicator: { en: 'indicator', ru: 'индикатор' },
+  pattern: { en: 'pattern', ru: 'паттерн' },
+  smc: { en: 'smc', ru: 'smc' },
+  data: { en: 'data', ru: 'данные' },
+  methods: { en: 'methods', ru: 'методы' },
+  risk: { en: 'risk', ru: 'риск' },
+  'risk-management': { en: 'risk-management', ru: 'риск-менеджмент' },
+  emotion: { en: 'emotion', ru: 'эмоция' },
+  instrument: { en: 'instrument', ru: 'инструмент' },
+  pyramiding: { en: 'pyramiding', ru: 'пирамидинг' },
+  averaging: { en: 'averaging', ru: 'усреднение' },
+  domain: { en: 'domain', ru: 'домен' },
+  'scaling-entry': { en: 'scaling-entry', ru: 'масштабирование' },
+  node: { en: 'node', ru: 'узел' }
+}
+
+function localized(map: Record<string, { en: string; ru: string }>, key: string) {
+  return map[key]?.[locale.value === 'ru' ? 'ru' : 'en'] || key
+}
+
+function gitText(key: string, params: Record<string, string | number> = {}) {
+  const copy = localized(gitTextMap, key)
+  return Object.entries(params).reduce((result, [name, value]) => {
+    return result.replace(`{${name}}`, String(value))
+  }, copy)
+}
+
+function eventTitle(title: string) {
+  return localized(eventTitleMap, title)
+}
+
+function detailLabel(label: string) {
+  return localized(labelMap, label)
+}
+
+function detailValue(value: unknown) {
+  const raw = String(value ?? '')
+  return localized(valueMap, raw)
+}
+
+function eventNodeLabel(node: string) {
+  const separator = node.indexOf(':')
+  if (separator === -1) return node
+  const nodeType = node.slice(0, separator).trim()
+  const nodeName = node.slice(separator + 1)
+  return `${localized(nodeTypeMap, nodeType)}:${nodeName}`
+}
+
+function displaySpecialValue(label: string, value: unknown, index?: number) {
+  if (label === 'table') {
+    return index !== undefined
+      ? gitText('tableChangeIndexed', { index: index + 1 })
+      : gitText('tableChange')
+  }
+  if (label === 'screenshot') return gitText('screenshotChange')
+  if (label === 'drawing_panel') return gitText('drawingPanelChange')
+  if (label === 'file_attachment') return gitText('fileAttachmentChange')
+  return detailValue(value)
 }
 
 function isVisibleGitEvent(event: any) {
@@ -182,7 +322,7 @@ function isVisibleGitEvent(event: any) {
   return !!node && visibleNodeEventTypes.has(node.type)
 }
 
-function formatTreeText(text: string, maxLength: number = 35) {
+function formatTreeText(text: unknown, maxLength: number = 35) {
   if (!text) return ''
   const flat = String(text).replace(/[\r\n]+/g, ' ')
   return flat.length > maxLength ? flat.substring(0, maxLength) + '...' : flat
@@ -204,15 +344,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
 
     const hideLabel = ['table', 'screenshot', 'drawing_panel', 'file_attachment'].includes(subchange.label);
     let displayValue = subchange.value;
-    if (subchange.label === 'table') {
-      displayValue = 'table change';
-    } else if (subchange.label === 'screenshot') {
-      displayValue = 'screenshot change';
-    } else if (subchange.label === 'drawing_panel') {
-      displayValue = 'drawing_panel change';
-    } else if (subchange.label === 'file_attachment') {
-      displayValue = 'file_attachment change';
-    }
+    displayValue = displaySpecialValue(subchange.label, subchange.value)
 
     const parts = [
       { text: '|   ' },
@@ -221,10 +353,10 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
       { text: ' ' },
     ];
     if (!hideLabel) {
-      parts.push({ text: subchange.label, class: 'tree-subkey' });
+      parts.push({ text: detailLabel(subchange.label), class: 'tree-subkey' });
       parts.push({ text: ': ' });
     }
-    parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
+    parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ` (${gitText('terminated')})` : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
 
     rows.push({
       toggleId: subchange.id,
@@ -254,7 +386,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
           { text: '|   ' },
           { text: prefix, class: 'tree-muted' },
           { text: '`--- ', class: 'tree-muted' },
-          { text: '... (expand ' + (subchanges.length - 3) + ' more changes)', class: 'tree-subkey' }
+          { text: gitText('expandChanges', { count: subchanges.length - 3 }), class: 'tree-subkey' }
         ]
       })
     } else {
@@ -267,7 +399,7 @@ function appendNestedSubchangeRows(rows: TreeRow[], subchanges: any[], parentIds
           { text: '|   ' },
           { text: prefix, class: 'tree-muted' },
           { text: '`--- ', class: 'tree-muted' },
-          { text: '... (collapse changes)', class: 'tree-subkey' }
+          { text: gitText('collapseChanges'), class: 'tree-subkey' }
         ]
       })
     }
@@ -285,7 +417,7 @@ const treeRows = computed<TreeRow[]>(() => {
     {
       parts: [
         { text: '*', class: 'tree-head' },
-        { text: ` ${line}_change_timeline` }
+        { text: ` ${line}_${gitText('changeTimeline')}` }
       ]
     }
   ]
@@ -304,22 +436,22 @@ const treeRows = computed<TreeRow[]>(() => {
         { text: '|==[', class: 'tree-version-frame' },
         { text: eventTypeMarkers[event.type], class: eventClass },
         { text: '] ', class: 'tree-version-frame' },
-        { text: event.title, class: eventClass },
+        { text: eventTitle(event.title), class: eventClass },
         { text: '  ' },
-        { text: event.node, class: 'tree-node tree-version-node' }
+        { text: eventNodeLabel(event.node), class: 'tree-node tree-version-node' }
       ] : [
         { text: 'o ' },
         { text: eventTypeMarkers[event.type], class: eventClass },
         { text: ' ' },
-        { text: event.title, class: eventClass },
+        { text: eventTitle(event.title), class: eventClass },
         { text: '  ' },
-        { text: event.node, class: 'tree-node' }
+        { text: eventNodeLabel(event.node), class: 'tree-node' }
       ]
     })
     rows.push({
       parts: isVersionEvent ? [
         { text: '|   ', class: 'tree-muted' },
-        { text: 'checkpoint ', class: 'tree-version-frame' },
+        { text: gitText('checkpoint'), class: 'tree-version-frame' },
         { text: formatChangeTime(event.createdAt), class: 'tree-muted' }
       ] : [
         { text: `|   ${formatChangeTime(event.createdAt)}`, class: 'tree-muted' }
@@ -343,13 +475,9 @@ const treeRows = computed<TreeRow[]>(() => {
         let displayValue = subchange.value;
         if (subchange.label === 'table') {
           const index = event.subchanges.filter(s => s.label === 'table').findIndex(s => s.id === subchange.id);
-          displayValue = `table change ${index + 1}`;
-        } else if (subchange.label === 'screenshot') {
-          displayValue = 'screenshot change';
-        } else if (subchange.label === 'drawing_panel') {
-          displayValue = 'drawing_panel change';
-        } else if (subchange.label === 'file_attachment') {
-          displayValue = 'file_attachment change';
+          displayValue = displaySpecialValue(subchange.label, subchange.value, index);
+        } else {
+          displayValue = displaySpecialValue(subchange.label, subchange.value);
         }
 
         const parts = [
@@ -358,10 +486,10 @@ const treeRows = computed<TreeRow[]>(() => {
           { text: ' ' },
         ];
         if (!hideLabel) {
-          parts.push({ text: subchange.label, class: 'tree-subkey' });
+          parts.push({ text: detailLabel(subchange.label), class: 'tree-subkey' });
           parts.push({ text: ': ' });
         }
-        parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ' (terminated)' : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
+        parts.push({ text: formatTreeText(displayValue, subchange.label === 'ITEM_TEXT' ? 10 : (subchange.label === 'text' ? 15 : 35)) + (isTerminated ? ` (${gitText('terminated')})` : ''), class: isTerminated ? 'tree-muted' : 'tree-subvalue' });
 
         rows.push({
           toggleId: subchange.id,
@@ -390,7 +518,7 @@ const treeRows = computed<TreeRow[]>(() => {
             parts: [
               { text: '|   ' },
               { text: '`--- ', class: 'tree-muted' },
-              { text: '... (expand ' + (subchanges.length - 3) + ' more changes)', class: 'tree-subkey' }
+              { text: gitText('expandChanges', { count: subchanges.length - 3 }), class: 'tree-subkey' }
             ]
           })
         } else {
@@ -402,7 +530,7 @@ const treeRows = computed<TreeRow[]>(() => {
             parts: [
               { text: '|   ' },
               { text: '`--- ', class: 'tree-muted' },
-              { text: '... (collapse changes)', class: 'tree-subkey' }
+              { text: gitText('collapseChanges'), class: 'tree-subkey' }
             ]
           })
         }
@@ -422,7 +550,7 @@ const treeRows = computed<TreeRow[]>(() => {
         },
         parts: [
           { text: 'o ' },
-          { text: '... (expand ' + (visibleEvents.length - 3) + ' older changes)', class: 'tree-subkey' }
+          { text: gitText('expandOlderChanges', { count: visibleEvents.length - 3 }), class: 'tree-subkey' }
         ]
       })
     } else {
@@ -432,14 +560,14 @@ const treeRows = computed<TreeRow[]>(() => {
         },
         parts: [
           { text: 'o ' },
-          { text: '... (collapse changes)', class: 'tree-subkey' }
+          { text: gitText('collapseChanges'), class: 'tree-subkey' }
         ]
       })
     }
     rows.push({ parts: [{ text: '|' }] })
   }
 
-  rows.push({ parts: [{ text: 'o ' }, { text: `${line} timeline`, class: 'tree-current' }] })
+  rows.push({ parts: [{ text: 'o ' }, { text: `${line} ${gitText('timeline')}`, class: 'tree-current' }] })
 
   return rows
 })
