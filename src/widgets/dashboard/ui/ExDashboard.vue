@@ -172,15 +172,16 @@
       class="dashboard-bottom-nav absolute bottom-2 left-1/2 z-[200] flex w-[min(920px,calc(100vw-48px))] -translate-x-1/2 items-center justify-center gap-2 bg-theme-bg/85 p-2 backdrop-blur-md"
       aria-label="Tactical dashboard pages"
     >
-      <button
+      <ExButton
         v-for="module in dashboardModules"
         :key="module.id"
-        type="button"
-        class="dashboard-page-button min-h-10 flex-1 border border-transparent px-4 py-2 text-center font-mono text-[9px] font-black uppercase tracking-[0.26em] text-theme-text opacity-45 transition-all duration-300 hover:border-theme-border hover:bg-theme-text/[0.04] hover:opacity-100"
+        variant="ghost"
+        size="none"
+        class="dashboard-page-button min-h-10 flex-1 !border-transparent !bg-transparent px-4 py-2 text-center text-[9px] tracking-[0.26em] opacity-50 hover:opacity-100"
         @click="$emit('navigate', module.id)"
       >
         {{ t(module.titleKey) }}
-      </button>
+      </ExButton>
     </nav>
 
     <ExProfileOverlay :open="showProfileOverlay" @close="closeProfileOverlay" />
@@ -199,6 +200,7 @@ import tauriConfig from '../../../../src-tauri/tauri.conf.json'
 import ExHeading from "~/shared/ui/ExHeading.vue"
 import ExText from "~/shared/ui/ExText.vue"
 import ExTag from "~/shared/ui/ExTag.vue"
+import ExButton from "~/shared/ui/ExButton.vue"
 import ExIdentity from "~/shared/ui/ExIdentity.vue"
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
@@ -327,6 +329,19 @@ const dashboardModules = [
 </script>
 
 <style scoped>
+.dashboard-page-button {
+  transition: opacity 260ms ease, transform 260ms ease, box-shadow 260ms ease;
+}
+
+.dashboard-page-button:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 -1px 0 var(--theme-text);
+}
+
+.dashboard-page-button:active {
+  transform: translateY(0);
+}
+
 .menu-drop-enter-active,
 .menu-drop-leave-active {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
