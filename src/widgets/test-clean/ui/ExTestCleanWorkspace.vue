@@ -54,8 +54,7 @@
                <button
                  type="button"
                  class="genesis-bottom-show-line"
-                 aria-label="Show Genesis bottom bar"
-                 title="Show Genesis bottom bar"
+                 :aria-label="genesisBottomTooltip('show')"
                  @click="showGenesisBottomBar"
                ></button>
              </div>
@@ -71,7 +70,7 @@
                    <button
                      type="button"
                      class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                     aria-label="Tactical Dashboard"
+                     :aria-label="genesisBottomTooltip('dashboard')"
                      @click="goToHub"
                    >
                      <svg
@@ -89,7 +88,7 @@
                        <path d="M17 12H8" />
                      </svg>
                    </button>
-                   <span class="genesis-bottom-tooltip tooltip-left">Tactical Dashboard</span>
+                   <span class="genesis-bottom-tooltip tooltip-left">{{ genesisBottomTooltip('dashboard') }}</span>
                  </div>
                </div>
 
@@ -105,8 +104,7 @@
                    :class="currentGenesisMode === item.id
                      ? 'text-theme-text opacity-100'
                      : 'text-theme-text opacity-35 hover:opacity-100'"
-                   :aria-label="item.title"
-                   :title="item.title"
+                   :aria-label="genesisBottomTooltip(item.id)"
                    :aria-current="currentGenesisMode === item.id ? 'page' : undefined"
                    @click="switchGenesisMode(item.id)"
                  >
@@ -157,7 +155,7 @@
                      <path d="M10 11h5M10 14h4M10 17h6" opacity=".7" />
                    </svg>
                  </button>
-                 <span class="genesis-bottom-tooltip">{{ item.title }}</span>
+                 <span class="genesis-bottom-tooltip">{{ genesisBottomTooltip(item.id) }}</span>
                  </div>
                </div>
 
@@ -166,7 +164,7 @@
                    <button
                      type="button"
                      class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                     :aria-label="themeStore.settings.isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+                     :aria-label="genesisBottomTooltip('theme')"
                      @click="themeStore.toggleDark"
                    >
                      <svg
@@ -198,7 +196,7 @@
                      </svg>
                    </button>
                    <span class="genesis-bottom-tooltip tooltip-right">
-                     {{ themeStore.settings.isDark ? 'Light Theme' : 'Dark Theme' }}
+                     {{ genesisBottomTooltip('theme') }}
                    </span>
                  </div>
 
@@ -206,7 +204,7 @@
                    <button
                      type="button"
                      class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                     aria-label="Hide Bottom Bar"
+                     :aria-label="genesisBottomTooltip('hide')"
                      @click="hideGenesisBottomBar"
                    >
                      <svg
@@ -223,7 +221,7 @@
                        <path d="M5 18.5H19" opacity=".55" />
                      </svg>
                    </button>
-                   <span class="genesis-bottom-tooltip tooltip-right">Hide Bar</span>
+                   <span class="genesis-bottom-tooltip tooltip-right">{{ genesisBottomTooltip('hide') }}</span>
                  </div>
                </div>
              </nav>
@@ -266,7 +264,9 @@ import { useWorkspaceStore } from '~/widgets/test-clean/model/useWorkspace'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { storeToRefs } from 'pinia'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
+import { useI18n } from '~/shared/i18n/useI18n'
 const themeStore = useThemeStore()
+const { locale } = useI18n()
 const isDark = computed({
   get: () => themeStore.settings.isDark,
   set: () => themeStore.toggleDark()
@@ -284,6 +284,28 @@ const genesisModeItems = [
   { id: 'matrix', title: 'Ex Genesis Matrix' },
   { id: 'log', title: 'Ex Genesis Log' }
 ]
+
+const genesisBottomTooltip = (key) => {
+  const ru = {
+    dashboard: 'Тактическая панель',
+    diary: 'Кривая капитала',
+    matrix: 'Матрица генезиса',
+    log: 'Журнал генезиса',
+    theme: themeStore.settings.isDark ? 'Светлая тема' : 'Темная тема',
+    hide: 'Скрыть панель',
+    show: 'Показать панель'
+  }
+  const en = {
+    dashboard: 'Tactical Dashboard',
+    diary: 'Ex Equity Curve 3D',
+    matrix: 'Ex Genesis Matrix',
+    log: 'Ex Genesis Log',
+    theme: themeStore.settings.isDark ? 'Light Theme' : 'Dark Theme',
+    hide: 'Hide Bar',
+    show: 'Show Bar'
+  }
+  return (locale.value === 'ru' ? ru : en)[key] || key
+}
 const genesisModeAliases = {
   diary: 'diary',
   'equity-curve': 'diary',

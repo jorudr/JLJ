@@ -910,8 +910,8 @@ const riskPanelScalerStyle = computed(() => ({
 }))
 const configNodeCode = computed(() => (props.node.label || 'CFG').slice(0, 3).toUpperCase())
 const matrixNodeTypeSuffix = computed(() => {
-  if (props.node.type === 'scenario') return 'Scenario'
-  if (props.node.type === 'condition') return 'Condition'
+  if (props.node.type === 'scenario') return locale.value === 'ru' ? 'СЦЕНАРИЙ' : 'SCENARIO'
+  if (props.node.type === 'condition') return locale.value === 'ru' ? 'УСЛОВИЕ' : 'CONDITION'
   return props.node.type
 })
 const matrixNodeDisplayLabel = computed(() => {

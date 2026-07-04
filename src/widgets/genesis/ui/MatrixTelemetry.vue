@@ -5,10 +5,10 @@
     :class="{ 'is-dark': isDark }">
      <div class="relative ml-3 flex flex-col items-center gap-2">
        <div class="matrix-tool">
-         <button @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono">
+         <button type="button" @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono" :aria-label="matrixToolLabel('reset')">
            [R]
          </button>
-         <span class="matrix-tool-tooltip">Reset View</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('reset') }}</span>
        </div>
        <div class="matrix-tool">
          <div class="relative pointer-events-auto">
@@ -17,12 +17,12 @@
              @click.stop="toggleGitPanel"
              @contextmenu.prevent.stop="toggleGitMenu"
              class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
-             aria-label="Changes Control"
+             :aria-label="matrixToolLabel('changes')"
            >
              <Icon name="lucide:git-branch" class="w-4 h-4" />
            </button>
          </div>
-         <span class="matrix-tool-tooltip">Changes Control</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('changes') }}</span>
        </div>
        <div
          v-if="isGitMenuOpen"
@@ -41,7 +41,7 @@
          <button
            type="button"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           aria-label="Open strategy version review"
+           :aria-label="matrixToolLabel('versionReview')"
            @click.stop="openVersionReview"
          >
            <Icon name="lucide:history" class="w-4 h-4" />
@@ -52,13 +52,13 @@
              {{ strategyVersions.length }}
            </span>
          </button>
-         <span class="matrix-tool-tooltip">Version Review</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('versionReview') }}</span>
        </div>
        <div class="matrix-tool">
          <button
            type="button"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           aria-label="Toggle Tree View"
+           :aria-label="matrixToolLabel('tree')"
            @click.stop="toggleTree"
          >
            <svg class="w-4 h-4 transition-all duration-500 scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -72,10 +72,10 @@
               <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
            </svg>
          </button>
-         <span class="matrix-tool-tooltip">Tree View</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('tree') }}</span>
        </div>
        <div class="matrix-tool">
-         <button @click.stop="openManual" 
+         <button type="button" @click.stop="openManual" :aria-label="matrixToolLabel('manual')"
                  class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
            <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 group-hover:scale-110 transition-transform">
@@ -83,18 +83,18 @@
              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
            </svg>
          </button>
-         <span class="matrix-tool-tooltip">Manual</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('manual') }}</span>
        </div>
        <div v-if="canCreateStrategyVersion" class="matrix-tool">
          <button
            type="button"
            @click.stop="$emit('strategy-version-create')"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
-           :aria-label="locale === 'ru' ? 'Создать версию' : 'Create Version'"
+           :aria-label="matrixToolLabel('createVersion')"
          >
            <Icon name="lucide:bookmark-plus" class="w-4 h-4" />
          </button>
-         <span class="matrix-tool-tooltip">Create Version</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('createVersion') }}</span>
        </div>
        <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
          <button
@@ -104,7 +104,7 @@
          >
            {{ locale === 'ru' ? 'Обновить версию' : 'Update Version' }}
          </button>
-         <span class="matrix-tool-tooltip">Update Version</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('updateVersion') }}</span>
        </div>
        <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
          <button
@@ -114,7 +114,7 @@
          >
            {{ locale === 'ru' ? 'Сбросить изменения' : 'Clear Changes' }}
          </button>
-         <span class="matrix-tool-tooltip">Clear Changes</span>
+         <span class="matrix-tool-tooltip">{{ matrixToolLabel('clearChanges') }}</span>
        </div>
      </div>
 
@@ -269,6 +269,30 @@ const isVersionReviewOpen = ref(false)
 const activeManualSection = ref(0)
 
 const strategyVersions = computed(() => props.strategyVersions || [])
+
+function matrixToolLabel(key: string) {
+  const ru: Record<string, string> = {
+    reset: 'Сбросить вид',
+    changes: 'Контроль изменений',
+    versionReview: 'Обзор версий',
+    tree: 'Дерево',
+    manual: 'Руководство',
+    createVersion: 'Создать версию',
+    updateVersion: 'Обновить версию',
+    clearChanges: 'Сбросить изменения'
+  }
+  const en: Record<string, string> = {
+    reset: 'Reset View',
+    changes: 'Changes Control',
+    versionReview: 'Version Review',
+    tree: 'Tree View',
+    manual: 'Manual',
+    createVersion: 'Create Version',
+    updateVersion: 'Update Version',
+    clearChanges: 'Clear Changes'
+  }
+  return (locale.value === 'ru' ? ru : en)[key] || key
+}
 
 function setGitPanelOpen(value: boolean) {
   emit('git-panel-state', value)

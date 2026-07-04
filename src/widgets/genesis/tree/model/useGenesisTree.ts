@@ -259,7 +259,7 @@ export const useGenesisTree = () => {
 
   const getScenarioDisplayName = (node: any) => {
     const identity = String(node?.params?.customName || '').trim()
-    if (identity) return `${identity} (SCENARIO)`.toUpperCase()
+    if (identity) return `${identity} (${locale.value === 'ru' ? 'СЦЕНАРИЙ' : 'SCENARIO'})`.toUpperCase()
     const name = node?.label || node?.name || node?.id || 'Scenario'
     return String(name).toUpperCase()
   }
@@ -289,7 +289,7 @@ export const useGenesisTree = () => {
 
   const getConditionDisplayName = (node: any) => {
     const identity = String(node?.params?.customName || '').trim()
-    if (identity) return `${identity} (CONDITION)`.toUpperCase()
+    if (identity) return `${identity} (${locale.value === 'ru' ? 'УСЛОВИЕ' : 'CONDITION'})`.toUpperCase()
     const name = node?.label || node?.name || node?.id || 'Condition'
     return String(name).toUpperCase()
   }
