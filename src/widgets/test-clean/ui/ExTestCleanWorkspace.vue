@@ -67,33 +67,39 @@
                aria-label="Genesis pages"
              >
                <div class="absolute left-4 flex h-full items-center">
-                 <button
-                   type="button"
-                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                   aria-label="Open tactical dashboard"
-                   @click="goToHub"
-                 >
-                   <svg
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="square"
-                     stroke-linejoin="miter"
-                     class="h-5 w-5"
-                     aria-hidden="true"
+                 <div class="genesis-bottom-tool">
+                   <button
+                     type="button"
+                     class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                     aria-label="Tactical Dashboard"
+                     @click="goToHub"
                    >
-                     <path d="M9 4.5H5.5v15H9" />
-                     <path d="M13 8l4 4-4 4" />
-                     <path d="M17 12H8" />
-                   </svg>
-                 </button>
+                     <svg
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="1.7"
+                       stroke-linecap="square"
+                       stroke-linejoin="miter"
+                       class="h-5 w-5"
+                       aria-hidden="true"
+                     >
+                       <path d="M9 4.5H5.5v15H9" />
+                       <path d="M13 8l4 4-4 4" />
+                       <path d="M17 12H8" />
+                     </svg>
+                   </button>
+                   <span class="genesis-bottom-tooltip tooltip-left">Tactical Dashboard</span>
+                 </div>
                </div>
 
                <div class="flex h-full items-center justify-center gap-2">
-                 <button
+                 <div
                    v-for="item in genesisModeItems"
                    :key="item.id"
+                   class="genesis-bottom-tool"
+                 >
+                 <button
                    type="button"
                    class="genesis-bottom-icon-button group"
                    :class="currentGenesisMode === item.id
@@ -151,64 +157,74 @@
                      <path d="M10 11h5M10 14h4M10 17h6" opacity=".7" />
                    </svg>
                  </button>
+                 <span class="genesis-bottom-tooltip">{{ item.title }}</span>
+                 </div>
                </div>
 
                <div class="absolute right-4 flex h-full items-center gap-2">
-                 <button
-                   type="button"
-                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                   :aria-label="themeStore.settings.isDark ? 'Switch to light theme' : 'Switch to dark theme'"
-                   @click="themeStore.toggleDark"
-                 >
-                   <svg
-                     v-if="themeStore.settings.isDark"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="square"
-                     stroke-linejoin="miter"
-                     class="h-5 w-5"
-                     aria-hidden="true"
+                 <div class="genesis-bottom-tool">
+                   <button
+                     type="button"
+                     class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                     :aria-label="themeStore.settings.isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+                     @click="themeStore.toggleDark"
                    >
-                     <circle cx="12" cy="12" r="4" />
-                     <path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" />
-                   </svg>
-                   <svg
-                     v-else
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="square"
-                     stroke-linejoin="miter"
-                     class="h-5 w-5"
-                     aria-hidden="true"
-                   >
-                     <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4z" />
-                   </svg>
-                 </button>
+                     <svg
+                       v-if="themeStore.settings.isDark"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="1.7"
+                       stroke-linecap="square"
+                       stroke-linejoin="miter"
+                       class="h-5 w-5"
+                       aria-hidden="true"
+                     >
+                       <circle cx="12" cy="12" r="4" />
+                       <path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" />
+                     </svg>
+                     <svg
+                       v-else
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="1.7"
+                       stroke-linecap="square"
+                       stroke-linejoin="miter"
+                       class="h-5 w-5"
+                       aria-hidden="true"
+                     >
+                       <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4z" />
+                     </svg>
+                   </button>
+                   <span class="genesis-bottom-tooltip tooltip-right">
+                     {{ themeStore.settings.isDark ? 'Light Theme' : 'Dark Theme' }}
+                   </span>
+                 </div>
 
-                 <button
-                   type="button"
-                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                   aria-label="Hide Genesis bottom bar"
-                   @click="hideGenesisBottomBar"
-                 >
-                   <svg
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="square"
-                     stroke-linejoin="miter"
-                     class="h-5 w-5"
-                     aria-hidden="true"
+                 <div class="genesis-bottom-tool">
+                   <button
+                     type="button"
+                     class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                     aria-label="Hide Bottom Bar"
+                     @click="hideGenesisBottomBar"
                    >
-                     <path d="M5 8.5 12 15.5 19 8.5" />
-                     <path d="M5 18.5H19" opacity=".55" />
-                   </svg>
-                 </button>
+                     <svg
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       stroke-width="1.7"
+                       stroke-linecap="square"
+                       stroke-linejoin="miter"
+                       class="h-5 w-5"
+                       aria-hidden="true"
+                     >
+                       <path d="M5 8.5 12 15.5 19 8.5" />
+                       <path d="M5 18.5H19" opacity=".55" />
+                     </svg>
+                   </button>
+                   <span class="genesis-bottom-tooltip tooltip-right">Hide Bar</span>
+                 </div>
                </div>
              </nav>
           </div>
@@ -492,6 +508,59 @@ onUnmounted(() => {
 
 .genesis-bottom-icon-button:hover {
   transform: translateY(-1px);
+}
+
+.genesis-bottom-tool {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.genesis-bottom-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 7010;
+  max-width: min(240px, calc(100vw - 32px));
+  transform: translateX(-50%) translateY(4px);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  padding: 5px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: uppercase;
+  transition: opacity 140ms ease, transform 140ms ease;
+  white-space: nowrap;
+}
+
+.genesis-bottom-tooltip.tooltip-left {
+  left: 0;
+  transform: translateX(0) translateY(4px);
+}
+
+.genesis-bottom-tooltip.tooltip-right {
+  right: 0;
+  left: auto;
+  transform: translateX(0) translateY(4px);
+}
+
+.genesis-bottom-tool:hover .genesis-bottom-tooltip,
+.genesis-bottom-tool:focus-within .genesis-bottom-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.genesis-bottom-tool:hover .genesis-bottom-tooltip.tooltip-left,
+.genesis-bottom-tool:focus-within .genesis-bottom-tooltip.tooltip-left,
+.genesis-bottom-tool:hover .genesis-bottom-tooltip.tooltip-right,
+.genesis-bottom-tool:focus-within .genesis-bottom-tooltip.tooltip-right {
+  transform: translateX(0) translateY(0);
 }
 
 .genesis-bottom-show-line {
