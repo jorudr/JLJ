@@ -347,6 +347,7 @@ import { usePathMath } from '../model/matrix/usePathMath'
 import { getMatrixStrategyName, isStrategyNode } from '../model/matrix/useMatrixStrategies'
 import { useExGenesisMatrixUndo } from '../model/matrix/useExGenesisMatrixUndo'
 import { collectMatrixImageUrls, preloadImageUrls } from '../model/matrix/useMatrixImagePreload'
+import { useAppBootStore } from '~/features/store/useAppBoot'
 
 import { initAssetService } from '@/shared/api/asset.service'
 
@@ -360,6 +361,7 @@ const zoneTools = useMatrixZones(state)
 const uploads = useMatrixUploads(state)
 const pathMath = usePathMath(state)
 const undoManager = useExGenesisMatrixUndo()
+const appBootStore = useAppBootStore()
 const isGitPanelOpen = ref(false)
 const isTreeOpen = ref(false)
 const activeFilePreviewNode = ref<any | null>(null)
@@ -459,10 +461,19 @@ onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
   document.addEventListener('selectionchange', menu.saveTextSelection)
 
+  if (appBootStore.isGenesisMatrixSessionRestored && state.hasMatrixSessionData()) {
+    boot.stopBootAnimation()
+    return
+  }
+
   boot.startBootAnimation(undefined, { autoStop: false })
   try {
     await state.restoreData()
-    await preloadRestoredMatrixImages()
+    if (!appBootStore.areGenesisMatrixImagesPreloaded) {
+      await preloadRestoredMatrixImages()
+      appBootStore.areGenesisMatrixImagesPreloaded = true
+    }
+    appBootStore.isGenesisMatrixSessionRestored = true
   } finally {
     boot.stopBootAnimation()
   }

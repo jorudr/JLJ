@@ -1174,6 +1174,10 @@ export function useMatrixState() {
     // Config logic removed
   }
 
+  function hasMatrixSessionData() {
+    return matrixPages.value.length > 0 || rootNodes.value.length > 0 || activePageId.value !== null
+  }
+
   const buildLogicalStructure = (parentId: string, allNodes: any[], allConnections: any[]) => {
     const conns = allConnections.filter(c => c.fromId === parentId)
     const bundles: Record<string, any> = {}
@@ -2226,6 +2230,7 @@ export function useMatrixState() {
     removeStrategyVersion,
     saveMatrixData,
     restoreData,
+    hasMatrixSessionData,
     applyTreeStateToMatrix,
     changeTree
   }

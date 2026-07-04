@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 export function useMatrixBoot() {
-  const isInitializing = ref(true)
+  const isInitializing = ref(false)
   const bootProgress = ref(0)
   let bootInterval: any = null
 

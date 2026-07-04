@@ -11,6 +11,8 @@ export const useAppBootStore = defineStore('appBoot', () => {
   
   // Caches
   const genesisMatrixCache = ref<any>(null)
+  const isGenesisMatrixSessionRestored = ref(false)
+  const areGenesisMatrixImagesPreloaded = ref(false)
   
   async function executeBootSequence(userId: string) {
     isBooting.value = true
@@ -56,6 +58,8 @@ export const useAppBootStore = defineStore('appBoot', () => {
     bootProgress,
     currentLog,
     genesisMatrixCache,
+    isGenesisMatrixSessionRestored,
+    areGenesisMatrixImagesPreloaded,
     executeBootSequence
   }
 })
