@@ -61,12 +61,36 @@
              </div>
 
              <nav
-               class="genesis-bottom-bar absolute bottom-0 left-0 z-[7000] flex w-full items-center justify-between border-t border-theme-border bg-theme-bg/90 px-4 backdrop-blur-md transition-transform duration-500 ease-[var(--nier-ease)]"
+               class="genesis-bottom-bar absolute bottom-0 left-0 z-[7000] flex w-full items-center justify-center border-t border-theme-border bg-theme-bg/90 px-4 backdrop-blur-md transition-transform duration-500 ease-[var(--nier-ease)]"
                :class="isGenesisBottomBarHidden ? 'translate-y-full' : 'translate-y-0'"
                :style="{ height: `${genesisBottomBarHeight}px` }"
                aria-label="Genesis pages"
              >
-               <div class="flex h-full items-center gap-2">
+               <div class="absolute left-4 flex h-full items-center">
+                 <button
+                   type="button"
+                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
+                   aria-label="Open tactical dashboard"
+                   @click="goToHub"
+                 >
+                   <svg
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="square"
+                     stroke-linejoin="miter"
+                     class="h-5 w-5"
+                     aria-hidden="true"
+                   >
+                     <path d="M9 4.5H5.5v15H9" />
+                     <path d="M13 8l4 4-4 4" />
+                     <path d="M17 12H8" />
+                   </svg>
+                 </button>
+               </div>
+
+               <div class="flex h-full items-center justify-center gap-2">
                  <button
                    v-for="item in genesisModeItems"
                    :key="item.id"
@@ -129,30 +153,7 @@
                  </button>
                </div>
 
-               <div class="flex h-full items-center gap-2">
-                 <button
-                   type="button"
-                   class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                   aria-label="Open tactical dashboard"
-                   @click="goToHub"
-                 >
-                   <svg
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="square"
-                     stroke-linejoin="miter"
-                     class="h-5 w-5"
-                     aria-hidden="true"
-                   >
-                     <path d="M4 4h7v7H4z" />
-                     <path d="M13 4h7v5h-7z" />
-                     <path d="M13 11h7v9h-7z" />
-                     <path d="M4 13h7v7H4z" />
-                   </svg>
-                 </button>
-
+               <div class="absolute right-4 flex h-full items-center gap-2">
                  <button
                    type="button"
                    class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
