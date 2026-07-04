@@ -325,6 +325,107 @@ const isGenesisBottomBarHidden = ref(false)
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
+const isDashboardHubActive = computed(() => hasInitialized.value && isAssembled.value && !activeTab.value)
+
+let dashboardScore = null
+const dashboardScoreVolume = 0.03
+const dashboardScoreFadeInMs = 1800
+const dashboardScoreFadeOutMs = 900
+let dashboardScoreFadeFrame = 0
+
+const ensureDashboardScore = () => {
+  if (typeof window === 'undefined' || typeof Audio === 'undefined') return null
+  if (!dashboardScore && window.__exDashboardScore instanceof HTMLAudioElement) {
+    dashboardScore = window.__exDashboardScore
+  }
+  if (!dashboardScore) {
+    const audio = new Audio('/audio/score.mp3')
+    audio.loop = true
+    audio.preload = 'auto'
+    audio.volume = 0
+    dashboardScore = audio
+    window.__exDashboardScore = audio
+  }
+  dashboardScore.loop = true
+  dashboardScore.volume = Math.min(dashboardScore.volume, dashboardScoreVolume)
+  return dashboardScore
+}
+
+const cancelDashboardScoreFade = () => {
+  if (!dashboardScoreFadeFrame || typeof window === 'undefined') return
+  window.cancelAnimationFrame(dashboardScoreFadeFrame)
+  dashboardScoreFadeFrame = 0
+}
+
+const fadeDashboardScore = (targetVolume, durationMs, onComplete) => {
+  const audio = ensureDashboardScore()
+  if (!audio || typeof window === 'undefined') return
+
+  cancelDashboardScoreFade()
+  const fromVolume = audio.volume
+  const startedAt = window.performance.now()
+
+  const step = (timestamp) => {
+    const progress = durationMs <= 0 ? 1 : Math.min(1, (timestamp - startedAt) / durationMs)
+    audio.volume = fromVolume + (targetVolume - fromVolume) * progress
+
+    if (progress < 1) {
+      dashboardScoreFadeFrame = window.requestAnimationFrame(step)
+      return
+    }
+
+    dashboardScoreFadeFrame = 0
+    onComplete?.()
+  }
+
+  dashboardScoreFadeFrame = window.requestAnimationFrame(step)
+}
+
+const playDashboardScore = async (fadeIn = true) => {
+  const audio = ensureDashboardScore()
+  if (!audio) return
+
+  cancelDashboardScoreFade()
+  audio.loop = true
+  audio.volume = Math.min(audio.volume, dashboardScoreVolume)
+  if (audio.paused) {
+    audio.volume = fadeIn ? 0 : audio.volume
+    try {
+      await audio.play()
+    } catch {
+      return
+    }
+  }
+
+  if (fadeIn) {
+    fadeDashboardScore(dashboardScoreVolume, dashboardScoreFadeInMs)
+  } else {
+    audio.volume = Math.min(audio.volume, dashboardScoreVolume)
+  }
+}
+
+const primeDashboardScore = () => {
+  const audio = ensureDashboardScore()
+  if (!audio) return
+  audio.volume = 0
+  audio.play().catch(() => {})
+}
+
+const stopDashboardScore = (fadeOut = true) => {
+  const audio = dashboardScore
+  if (!audio) return
+
+  if (!fadeOut) {
+    cancelDashboardScoreFade()
+    audio.pause()
+    audio.volume = 0
+    return
+  }
+
+  fadeDashboardScore(0, dashboardScoreFadeOutMs, () => {
+    audio.pause()
+  })
+}
 
 const getRouteMode = () => {
   const workspaceParams = route.params.workspace
@@ -458,7 +559,16 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
+watch(isDashboardHubActive, (isActive) => {
+  if (isActive) {
+    playDashboardScore(true)
+  } else {
+    stopDashboardScore(true)
+  }
+}, { immediate: true })
+
 const handleInitializationComplete = () => {
+  if (!activeTab.value) primeDashboardScore()
   hasInitialized.value = true
   
   setTimeout(() => {
@@ -470,6 +580,7 @@ const handleInitializationComplete = () => {
 }
 
 const handleSignedOut = () => {
+  stopDashboardScore(false)
   hasInitialized.value = false
   isAssembled.value = false
   showBloom.value = true
@@ -480,6 +591,7 @@ const handleSignedOut = () => {
 }
 
 onUnmounted(() => {
+  stopDashboardScore(false)
   document.body.style.overflow = ''
   document.body.style.height = ''
 })
