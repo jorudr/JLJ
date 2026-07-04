@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col p-12 max-w-7xl mx-auto space-y-12 relative">
+  <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden px-6 py-1.5 lg:px-10 lg:py-2">
     <!-- Update Notification Widget -->
     <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] nier-bg-inverted p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
       
@@ -61,17 +61,14 @@
     </div>
 
     <!-- 1. Header / Global Status -->
-    <header class="flex justify-between items-start z-[200] relative">
-      <div class="flex flex-col space-y-2">
-        <ExHeading level="h1" variant="cinematic" class="!text-3xl">{{ t('dashboard.title') }}</ExHeading>
-        <div class="flex items-center space-x-4">
-           <ExTag>v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
-        </div>
+    <header class="dashboard-top-bar absolute left-6 right-6 top-1.5 z-[200] flex min-h-14 items-center justify-between bg-theme-bg/85 px-4 py-2 backdrop-blur-md lg:left-10 lg:right-10 lg:top-2 lg:px-5">
+      <div class="flex min-w-0 items-center gap-4">
+        <ExTag class="shrink-0">v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
       </div>
 
-      <div class="flex items-center space-x-12">
+      <div class="flex shrink-0 items-center gap-4 sm:gap-8">
         <!-- Language Selector -->
-        <div class="flex items-center space-x-4 border-r border-theme-border pr-8">
+        <div class="flex items-center gap-3 border-r border-theme-border pr-4 sm:gap-4 sm:pr-6">
           <button 
             v-for="l in ['en', 'ru']" 
             :key="l"
@@ -86,7 +83,7 @@
 
 
         <!-- Utility Group: Identity, Report, Theme -->
-        <div class="flex items-center space-x-6">
+        <div class="flex items-center gap-4 sm:gap-6">
           <!-- User Identity (clickable → sign-out popover) -->
           <div class="relative" ref="identityRef">
             <button @click="toggleMenu" class="focus:outline-none cursor-pointer">
@@ -157,50 +154,34 @@
       </div>
     </header>
 
-    <!-- 2. The Module Grid (Central Hub) -->
-    <main class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-8 z-10">
-      <div v-for="module in dashboardModules" :key="module.id" class="relative group h-full ">
-        <button 
-          @click="$emit('navigate', module.id)"
-          class="w-full h-full text-left flex flex-col p-8 border border-theme-border bg-theme-bg/40 backdrop-blur-sm transition-all duration-700 hover:border-theme-text/40 hover:bg-theme-bg/60 relative overflow-hidden"
-        >
-          <!-- Background Accents -->
-          <div class="absolute -top-12 -right-12 w-32 h-32 border border-theme-text opacity-60 rotate-45 group-hover:rotate-[135deg] transition-transform duration-1000"></div>
-          
-          <div class="flex flex-col h-full space-y-8 relative z-10">
-            <div class="flex justify-between items-start">
-               <div class="w-10 h-10 border border-theme-border flex items-center justify-center group-hover:border-theme-text transition-colors">
-                  <ExText variant="telemetry" class="!opacity-100 text-[#2C3E50]/45 dark:text-white/40 group-hover:text-[#2C3E50] dark:group-hover:text-white/90">{{ module.code }}</ExText>
-               </div>
-               <div class="w-1.5 h-1.5 bg-theme-accent rotate-45 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-
-            <div class="flex flex-col space-y-2">
-              <ExHeading level="h3" variant="cinematic" class="!text-xl !opacity-100 text-[#2C3E50]/60 dark:text-white/50 group-hover:text-[#2C3E50] dark:group-hover:text-white/90 transition-all duration-700 whitespace-pre-line">{{ t(module.titleKey) }}</ExHeading>
-              <ExText variant="small" class="!opacity-100 leading-relaxed text-[#2C3E50]/45 dark:text-white/40">{{ t(module.descriptionKey) }}</ExText>
-            </div>
-
-            <div class="mt-auto pt-6 border-t border-theme-border opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-               <div class="flex items-center space-x-2">
-                  <div class="w-1 h-1 bg-theme-text"></div>
-                  <ExText variant="telemetry" class="!opacity-100 tracking-widest text-[#2C3E50]/45 dark:text-white/45">{{ t('dashboard.ui.accessProtocol') }}</ExText>
-               </div>
-            </div>
-          </div>
-          
-          <!-- Hover Edge Slide -->
-          <div class="absolute bottom-0 left-0 w-full h-0.5 bg-theme-text transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left"></div>
-        </button>
+    <!-- 2. Central Application Mark -->
+    <main class="absolute inset-0 z-10 flex items-center justify-center px-8 pointer-events-none">
+      <div class="dashboard-core-logo flex flex-col items-center text-center">
+        <div class="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
+          <div class="absolute inset-0 border-2 border-theme-text/40 animate-[spin_10s_linear_infinite]"></div>
+          <div class="absolute inset-4 border border-theme-text/60 animate-[spin_6s_linear_infinite_reverse]"></div>
+          <div class="h-2 w-2 rotate-45 animate-pulse nier-bg-inverted"></div>
+          <div class="absolute -left-2 -top-2 h-3 w-3 border-l-2 border-t-2 border-theme-text"></div>
+          <div class="absolute -bottom-2 -right-2 h-3 w-3 border-b-2 border-r-2 border-theme-text"></div>
+        </div>
       </div>
     </main>
 
-    <!-- 3. Bottom Utility Bar -->
-    <footer class="flex justify-between items-center z-10 opacity-100 pt-8 border-t border-theme-border">
-      
-      <div class="flex space-x-4">
-         <div v-for="i in 4" :key="i" class="w-1 h-1 border border-theme-text rotate-45"></div>
-      </div>
-    </footer>
+    <!-- 3. Bottom Navigation Bar -->
+    <nav
+      class="dashboard-bottom-nav absolute bottom-2 left-1/2 z-[200] flex w-[min(920px,calc(100vw-48px))] -translate-x-1/2 items-center justify-center gap-2 bg-theme-bg/85 p-2 backdrop-blur-md"
+      aria-label="Tactical dashboard pages"
+    >
+      <button
+        v-for="module in dashboardModules"
+        :key="module.id"
+        type="button"
+        class="dashboard-page-button min-h-10 flex-1 border border-transparent px-4 py-2 text-center font-mono text-[9px] font-black uppercase tracking-[0.26em] text-theme-text opacity-45 transition-all duration-300 hover:border-theme-border hover:bg-theme-text/[0.04] hover:opacity-100"
+        @click="$emit('navigate', module.id)"
+      >
+        {{ t(module.titleKey) }}
+      </button>
+    </nav>
 
     <ExProfileOverlay :open="showProfileOverlay" @close="closeProfileOverlay" />
 
