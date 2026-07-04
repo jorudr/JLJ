@@ -81,19 +81,6 @@
               </div>
            </button>
         </div>
-        <!-- Facet Navigation -->
-        <div v-if="activeFaceIndices.length > 1 && isHudVisible" class="absolute bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-6 pointer-events-auto transition-all duration-300" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
-           <div class="flex items-center space-x-12">
-              <div class="flex flex-col items-center">
-                 <div class="flex space-x-2 mt-2">
-                    <div v-for="faceIdx in activeFaceIndices" :key="faceIdx"
-                         class="w-1.5 h-1.5 border border-slate-500 transition-all rotate-45"
-                         :class="faceIdx === currentFace ? 'bg-white border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-transparent opacity-20'">
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
         <!-- Cube Search Query Overlay -->
         <Transition name="fade">
           <div v-if="showCubeSearchText && cubeSearchQuery && isHudVisible" class="absolute inset-0 flex items-center justify-center pointer-events-none z-[50]">
@@ -345,6 +332,12 @@
        
        <!-- The Dropdown Menu -->
 
+       <div v-if="viewType === 'cube' && activeFaceIndices.length > 1" class="mb-4 flex items-center justify-center space-x-2 pointer-events-auto">
+          <div v-for="faceIdx in activeFaceIndices" :key="faceIdx"
+               class="w-1.5 h-1.5 border border-slate-500 transition-all rotate-45"
+               :class="faceIdx === currentFace ? 'bg-white border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-transparent opacity-20'">
+          </div>
+       </div>
 
        <!-- The Pagination + Protocol Select Button Row -->
        <div class="flex items-center space-x-4">
