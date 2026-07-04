@@ -61,7 +61,7 @@
     </div>
 
     <!-- 1. Header / Global Status -->
-    <header class="dashboard-top-bar absolute left-6 right-6 top-1.5 z-[200] flex min-h-14 items-center justify-between bg-theme-bg/85 px-4 py-2 backdrop-blur-md lg:left-10 lg:right-10 lg:top-2 lg:px-5">
+    <header class="dashboard-top-bar absolute left-6 right-6 top-1.5 z-[200] flex min-h-14 items-center justify-between px-4 py-2 backdrop-blur-md lg:left-10 lg:right-10 lg:top-2 lg:px-5">
       <div class="flex min-w-0 items-center gap-4">
         <ExTag class="shrink-0">v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
       </div>
@@ -136,9 +136,48 @@
             </Teleport>
           </div>
 
+          <!-- Music Toggle -->
+          <button
+            type="button"
+            class="dashboard-icon-toggle opacity-30 hover:opacity-100 transition-all duration-300"
+            :aria-label="props.isMusicMuted ? (locale === 'ru' ? 'Включить музыку' : 'Enable music') : (locale === 'ru' ? 'Отключить музыку' : 'Disable music')"
+            @click="$emit('toggle-music')"
+          >
+            <svg
+              v-if="props.isMusicMuted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="square"
+              stroke-linejoin="miter"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M11 5 6 9H3v6h3l5 4V5z" />
+              <path d="m17 9 4 4" />
+              <path d="m21 9-4 4" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="square"
+              stroke-linejoin="miter"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M11 5 6 9H3v6h3l5 4V5z" />
+              <path d="M15 9.5a4 4 0 0 1 0 5" />
+              <path d="M18 7a8 8 0 0 1 0 10" />
+            </svg>
+          </button>
+
           <!-- Theme Toggle -->
           <button
-            class="w-5 opacity-30 hover:opacity-100 transition-all duration-300"
+            class="dashboard-icon-toggle opacity-30 hover:opacity-100 transition-all duration-300"
             @click="themeStore.toggleDark"
           >
             <template v-if="themeStore.isReady">
@@ -169,7 +208,7 @@
 
     <!-- 3. Bottom Navigation Bar -->
     <nav
-      class="dashboard-bottom-nav absolute bottom-2 left-1/2 z-[200] flex w-[min(920px,calc(100vw-48px))] -translate-x-1/2 items-center justify-center gap-2 bg-theme-bg/85 p-2 backdrop-blur-md"
+      class="dashboard-bottom-nav absolute bottom-2 left-1/2 z-[200] flex w-[min(920px,calc(100vw-48px))] -translate-x-1/2 items-center justify-center gap-2 p-2 backdrop-blur-md"
       aria-label="Tactical dashboard pages"
     >
       <ExButton
@@ -206,7 +245,13 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
 
-const emit = defineEmits(['navigate', 'signed-out'])
+const props = withDefaults(defineProps<{
+  isMusicMuted?: boolean
+}>(), {
+  isMusicMuted: false
+})
+
+const emit = defineEmits(['navigate', 'signed-out', 'toggle-music'])
 
 const { t, locale, setLocale } = useI18n()
 const authStore = useAuthStore()
@@ -340,6 +385,21 @@ const dashboardModules = [
 
 .dashboard-page-button:active {
   transform: translateY(0);
+}
+
+.dashboard-icon-toggle {
+  align-items: center;
+  color: var(--theme-text);
+  display: inline-flex;
+  height: 20px;
+  justify-content: center;
+  width: 20px;
+}
+
+.dashboard-icon-toggle img {
+  display: block;
+  height: 20px;
+  width: 20px;
 }
 
 .menu-drop-enter-active,

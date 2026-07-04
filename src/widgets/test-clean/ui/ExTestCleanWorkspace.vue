@@ -20,7 +20,12 @@
        <Transition name="page-reify" mode="out-in">
          <!-- Dashboard Hub (No Tab) -->
          <div v-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
-            <ExDashboard @navigate="handleDashboardNavigate" @signed-out="handleSignedOut" />
+            <ExDashboard
+              :is-music-muted="isDashboardMusicMuted"
+              @navigate="handleDashboardNavigate"
+              @signed-out="handleSignedOut"
+              @toggle-music="toggleDashboardMusic"
+            />
          </div>
 
          <!-- Genesis Module -->
@@ -322,10 +327,12 @@ const showPaywall = ref(false)
 const workspaceRoot = ref(null)
 const isHudActive = ref(true)
 const isGenesisBottomBarHidden = ref(false)
+const isDashboardMusicMuted = ref(false)
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
 const isDashboardHubActive = computed(() => hasInitialized.value && isAssembled.value && !activeTab.value)
+const shouldPlayDashboardScore = computed(() => isDashboardHubActive.value && !isDashboardMusicMuted.value)
 
 let dashboardScore = null
 const dashboardScoreVolume = 0.03
@@ -382,6 +389,7 @@ const fadeDashboardScore = (targetVolume, durationMs, onComplete) => {
 }
 
 const playDashboardScore = async (fadeIn = true) => {
+  if (isDashboardMusicMuted.value) return
   const audio = ensureDashboardScore()
   if (!audio) return
 
@@ -405,6 +413,7 @@ const playDashboardScore = async (fadeIn = true) => {
 }
 
 const primeDashboardScore = () => {
+  if (isDashboardMusicMuted.value) return
   const audio = ensureDashboardScore()
   if (!audio) return
   audio.volume = 0
@@ -425,6 +434,17 @@ const stopDashboardScore = (fadeOut = true) => {
   fadeDashboardScore(0, dashboardScoreFadeOutMs, () => {
     audio.pause()
   })
+}
+
+const toggleDashboardMusic = () => {
+  isDashboardMusicMuted.value = !isDashboardMusicMuted.value
+  if (isDashboardMusicMuted.value) {
+    stopDashboardScore(true)
+    return
+  }
+  if (isDashboardHubActive.value) {
+    playDashboardScore(true)
+  }
 }
 
 const getRouteMode = () => {
@@ -559,8 +579,8 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
-watch(isDashboardHubActive, (isActive) => {
-  if (isActive) {
+watch(shouldPlayDashboardScore, (shouldPlay) => {
+  if (shouldPlay) {
     playDashboardScore(true)
   } else {
     stopDashboardScore(true)
