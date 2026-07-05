@@ -1071,31 +1071,46 @@ const reportTrades = computed(() => {
   });
 });
 
+const parsePositiveTradePrice = (value: any) => {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.NaN;
+};
+
+const getTradeDirection = (trade: any): 'LONG' | 'SHORT' | null => {
+  const raw = String(trade?.side || trade?.direction || '').toUpperCase();
+  if (raw.includes('SHORT')) return 'SHORT';
+  if (raw.includes('LONG')) return 'LONG';
+  return null;
+};
+
+const getDirectionalStopDistance = (entry: number, stopLoss: number, direction: 'LONG' | 'SHORT' | null) => {
+  if (!Number.isFinite(entry) || !Number.isFinite(stopLoss)) return Number.NaN;
+  if (direction === 'SHORT') return stopLoss > entry ? stopLoss - entry : Number.NaN;
+  if (direction === 'LONG') return stopLoss < entry ? entry - stopLoss : Number.NaN;
+  return Math.abs(entry - stopLoss);
+};
+
+const getDirectionalTargetDistance = (entry: number, takeProfit: number, direction: 'LONG' | 'SHORT' | null) => {
+  if (!Number.isFinite(entry) || !Number.isFinite(takeProfit)) return Number.NaN;
+  if (direction === 'SHORT') return takeProfit < entry ? entry - takeProfit : Number.NaN;
+  if (direction === 'LONG') return takeProfit > entry ? takeProfit - entry : Number.NaN;
+  return Math.abs(takeProfit - entry);
+};
+
 const getSlDistPct = (t: any) => {
-  if (!t) return 0;
-  const entry = parseFloat(t.entry);
-  const sl = parseFloat(t.stopLoss);
-  if (!isNaN(entry) && !isNaN(sl) && entry > 0 && sl > 0) {
-    return (Math.abs(entry - sl) / entry) * 100;
-  }
-  return 0;
+  if (!t) return Number.NaN;
+  const entry = parsePositiveTradePrice(t.entry);
+  const sl = parsePositiveTradePrice(t.stopLoss);
+  const distance = getDirectionalStopDistance(entry, sl, getTradeDirection(t));
+  return Number.isFinite(distance) && entry > 0 ? (distance / entry) * 100 : Number.NaN;
 };
 
 const getTpDistPct = (t: any) => {
-  if (!t) return 0;
-  const entry = parseFloat(t.entry);
-  let tp = parseFloat(t.takeProfit);
-  if (isNaN(tp) || tp <= 0) {
-    const exit = parseFloat(t.exit);
-    const pnl = t.profitInCurrency ?? t.pnl ?? 0;
-    if (!isNaN(exit) && exit > 0 && pnl > 0) {
-      tp = exit;
-    }
-  }
-  if (!isNaN(entry) && !isNaN(tp) && entry > 0 && tp > 0) {
-    return (Math.abs(tp - entry) / entry) * 100;
-  }
-  return 0;
+  if (!t) return Number.NaN;
+  const entry = parsePositiveTradePrice(t.entry);
+  const tp = parsePositiveTradePrice(t.takeProfit);
+  const distance = getDirectionalTargetDistance(entry, tp, getTradeDirection(t));
+  return Number.isFinite(distance) && entry > 0 ? (distance / entry) * 100 : Number.NaN;
 };
 
 const currentSlDistPct = computed(() => {
@@ -1124,11 +1139,11 @@ const strategyStats = computed(() => {
 
   const totalDurationHours = totalDurationMs / (1000 * 60 * 60);
 
-  const validSlTrades = trades.filter(t => getSlDistPct(t) > 0);
+  const validSlTrades = trades.filter(t => Number.isFinite(getSlDistPct(t)));
   const totalSlDist = validSlTrades.reduce((acc, t) => acc + getSlDistPct(t), 0);
   const avgSlDistPct = validSlTrades.length > 0 ? totalSlDist / validSlTrades.length : 0;
 
-  const validTpTrades = trades.filter(t => getTpDistPct(t) > 0);
+  const validTpTrades = trades.filter(t => Number.isFinite(getTpDistPct(t)));
   const totalTpDist = validTpTrades.reduce((acc, t) => acc + getTpDistPct(t), 0);
   const avgTpDistPct = validTpTrades.length > 0 ? totalTpDist / validTpTrades.length : 0;
 
@@ -1193,20 +1208,16 @@ const targetRR = computed(() => {
   return strategyStats.value.avgRR || 0;
 });
 
-const actualRiskDollars = computed(() => {
+const plannedStopRiskDollars = computed(() => {
   const t = props.trade as any;
-  if (!t) return 0;
+  if (!t) return Number.NaN;
 
-  const explicitRisk = Number(t.risk);
-  if (Number.isFinite(explicitRisk) && explicitRisk > 0) {
-    return explicitRisk;
-  }
-
-  const entry = parseFloat(t.entry);
-  const sl = parseFloat(t.stopLoss);
+  const entry = parsePositiveTradePrice(t.entry);
+  const sl = parsePositiveTradePrice(t.stopLoss);
+  const stopDistance = getDirectionalStopDistance(entry, sl, getTradeDirection(t));
   let size = parseFloat(t.size);
 
-  if (!isNaN(entry) && !isNaN(sl) && entry > 0) {
+  if (Number.isFinite(stopDistance)) {
     if (isNaN(size) || size <= 0) {
       const sizeCurr = parseFloat(t.sizeInCurrency);
       if (!isNaN(sizeCurr) && sizeCurr > 0) {
@@ -1214,25 +1225,38 @@ const actualRiskDollars = computed(() => {
       }
     }
     if (!isNaN(size) && size > 0) {
-      return Math.abs(entry - sl) * size;
+      return stopDistance * size;
     }
   }
 
+  return Number.NaN;
+});
+
+const realizedRiskDollars = computed(() => {
+  const t = props.trade as any;
+  if (!t) return 0;
   const pnl = t.profitInCurrency ?? t.pnl ?? 0;
-  const rr = t.rr ?? t.riskReward ?? 0;
+  return pnl < 0 ? Math.abs(Number(pnl) || 0) : 0;
+});
 
-  if (pnl < 0) {
-    return Math.abs(pnl);
-  } else if (pnl > 0 && rr > 0) {
-    return pnl / rr;
-  }
-
-  return 0;
+const actualRiskDollars = computed(() => {
+  return plannedStopRiskDollars.value;
 });
 
 const actualRiskPct = computed(() => {
   if (balanceBeforeTrade.value <= 0) return 0;
   return (actualRiskDollars.value / balanceBeforeTrade.value) * 100;
+});
+
+const plannedStopRiskPct = computed(() => {
+  if (balanceBeforeTrade.value <= 0) return 0;
+  if (!Number.isFinite(plannedStopRiskDollars.value)) return Number.NaN;
+  return (plannedStopRiskDollars.value / balanceBeforeTrade.value) * 100;
+});
+
+const realizedRiskPct = computed(() => {
+  if (balanceBeforeTrade.value <= 0) return 0;
+  return (realizedRiskDollars.value / balanceBeforeTrade.value) * 100;
 });
 
 const maxRiskTrade = computed(() => {
@@ -1243,6 +1267,82 @@ const maxRiskTrade = computed(() => {
   return {
     value: val,
     unit: p.unit || '$'
+  };
+});
+
+const riskBudgetDollars = computed(() => {
+  if (!maxRiskTrade.value) return null;
+  if (maxRiskTrade.value.unit === '%') {
+    return (maxRiskTrade.value.value / 100) * balanceBeforeTrade.value;
+  }
+  return maxRiskTrade.value.value;
+});
+
+const tradeRiskAudit = computed(() => {
+  const budget = riskBudgetDollars.value;
+  const planned = plannedStopRiskDollars.value;
+  const realized = realizedRiskDollars.value;
+  const hasPlannedRisk = Number.isFinite(planned);
+  const comparablePlanned = hasPlannedRisk ? planned : 0;
+  const worst = Math.max(comparablePlanned, realized);
+  const plannedRatio = budget && budget > 0 && hasPlannedRisk ? (planned / budget) * 100 : Number.NaN;
+  const realizedRatio = budget && budget > 0 ? (realized / budget) * 100 : 0;
+  const worstRatio = budget && budget > 0 ? (worst / budget) * 100 : 0;
+  const plannedOk = hasPlannedRisk && (budget === null || planned <= budget);
+  const realizedOk = budget === null || realized <= budget;
+  const isRu = locale.value === 'ru';
+
+  let status = isRu ? 'В лимите' : 'Within limit';
+  let hint = isRu
+    ? 'Риск по stop loss и фактический убыток находятся в пределах Risk Per Trade.'
+    : 'Stop-loss risk and realized loss are within the Risk Per Trade budget.';
+
+  if (!hasPlannedRisk && !realizedOk) {
+    status = isRu ? 'Нет стопа + факт за лимитом' : 'No stop + realized breach';
+    hint = isRu
+      ? 'Stop loss не установлен, а фактический убыток превысил Risk Per Trade.'
+      : 'Stop loss is not set and realized loss exceeded Risk Per Trade.';
+  } else if (!hasPlannedRisk) {
+    status = isRu ? 'Stop loss не задан' : 'Stop loss missing';
+    hint = isRu
+      ? 'Planned risk невозможно посчитать без установленного stop loss.'
+      : 'Planned risk cannot be calculated without a stop loss.';
+  } else if (!plannedOk && !realizedOk) {
+    status = isRu ? 'Двойное превышение' : 'Double breach';
+    hint = isRu
+      ? 'И стоп был выставлен за пределами лимита, и фактический убыток превысил Risk Per Trade.'
+      : 'Both stop placement and realized loss exceeded the Risk Per Trade budget.';
+  } else if (!plannedOk) {
+    status = isRu ? 'Стоп за лимитом' : 'Stop risk breach';
+    hint = isRu
+      ? 'Расстояние от entry до stop loss с учетом размера позиции превышает Risk Per Trade.'
+      : 'The entry-to-stop distance, adjusted by position size, exceeds Risk Per Trade.';
+  } else if (!realizedOk) {
+    status = isRu ? 'Факт за лимитом' : 'Realized breach';
+    hint = isRu
+      ? 'Стоп был в лимите, но реализованный убыток превысил Risk Per Trade. Проверьте ручной выход, проскальзывание или изменение стопа.'
+      : 'Stop risk was within budget, but realized loss exceeded Risk Per Trade. Check manual exit, slippage, or stop changes.';
+  } else if (hasPlannedRisk && realized > planned && planned > 0) {
+    status = isRu ? 'Факт хуже стопа' : 'Worse than stop';
+    hint = isRu
+      ? 'Фактический убыток больше риска по stop loss, даже если общий лимит не превышен.'
+      : 'Realized loss is larger than the stop-loss risk, even though the total budget was not breached.';
+  }
+
+  return {
+    budget,
+    planned,
+    realized,
+    worst,
+    plannedRatio,
+    realizedRatio,
+    worstRatio,
+    plannedOk,
+    realizedOk,
+    hasPlannedRisk,
+    ok: plannedOk && realizedOk && !(hasPlannedRisk && realized > planned && planned > 0),
+    status,
+    hint
   };
 });
 
@@ -1331,9 +1431,13 @@ const reportMetricModes: Array<{ id: 'simple' | 'advanced'; label: string }> = [
 const activeMetricTab = ref('all'); // 'all', 'adherence', 'behavioural', 'execution'
 
 const formatCurrency = (value: number) => {
+  if (!Number.isFinite(value)) return 'N/A';
   const safe = Number.isFinite(value) ? value : 0;
   return `${safe < 0 ? '-' : ''}$${Math.abs(safe).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
+
+const formatRiskCurrency = (value: number) => Number.isFinite(value) ? `$${value.toFixed(2)}` : 'N/A';
+const formatRiskPercent = (value: number) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A';
 
 const formatRatio = (value: number) => {
   const safe = Number.isFinite(value) && value > 0 ? value : 0;
@@ -1530,17 +1634,17 @@ const strategyExecutionMetrics = computed(() => {
     executionGrade: 100, executionGradeText: 'Flawless Execution'
   };
 
-  const entry = parseFloat(tr.entry) || 0;
-  const exit = parseFloat(tr.exit) || 0;
-  const sl = parseFloat(tr.stopLoss) || 0;
-  let tp = parseFloat(tr.takeProfit) || 0;
+  const entry = parsePositiveTradePrice(tr.entry);
+  const exit = parsePositiveTradePrice(tr.exit);
+  const sl = parsePositiveTradePrice(tr.stopLoss);
+  const tp = parsePositiveTradePrice(tr.takeProfit);
   const pnl = tr.profitInCurrency ?? tr.pnl ?? 0;
-  const isLong = String(tr.side || '').toUpperCase() === 'LONG';
+  const direction = getTradeDirection(tr);
+  const isLong = direction !== 'SHORT';
 
   let slDrag = 0;
   let slDragText = 'No SL Breached';
-  if (entry > 0 && sl > 0 && exit > 0) {
-    const isLong = String(tr.side || '').toUpperCase() === 'LONG';
+  if (Number.isFinite(entry) && Number.isFinite(sl) && Number.isFinite(exit)) {
     if (pnl < 0) {
       const diff = isLong ? (exit - sl) : (sl - exit);
       slDrag = diff * (parseFloat(tr.size) || 1);
@@ -1548,44 +1652,35 @@ const strategyExecutionMetrics = computed(() => {
     }
   }
 
-  const actualRisk = actualRiskDollars.value;
+  const actualRisk = tradeRiskAudit.value.worst;
   const isRu = locale.value === 'ru';
-  // Resolve risk budget from genesis matrix risk_per_trade node
-  let riskBudgetDollars: number | null = null;
-  if (maxRiskTrade.value) {
-    if (maxRiskTrade.value.unit === '%') {
-      riskBudgetDollars = (maxRiskTrade.value.value / 100) * balanceBeforeTrade.value;
-    } else {
-      riskBudgetDollars = maxRiskTrade.value.value;
-    }
-  }
-  const maxRisk = riskBudgetDollars ?? 250;
+  const resolvedBudgetDollars = riskBudgetDollars.value;
+  const maxRisk = resolvedBudgetDollars ?? 250;
   const riskBudgetRatio = maxRisk > 0 ? Math.min(200, (actualRisk / maxRisk) * 100) : 0;
-  const riskBudgetBudgetStr = riskBudgetDollars !== null
+  const riskBudgetBudgetStr = resolvedBudgetDollars !== null
     ? (maxRiskTrade.value!.unit === '%'
       ? (isRu
         ? `${maxRiskTrade.value!.value}% от баланса до сделки = $${maxRisk.toFixed(2)}`
         : `${maxRiskTrade.value!.value}% of pre-trade balance = $${maxRisk.toFixed(2)}`)
       : `$${maxRisk.toFixed(2)}`)
     : 'No budget set';
-  const riskBudgetText = riskBudgetDollars === null
+  const riskBudgetText = resolvedBudgetDollars === null
     ? (isRu ? 'Бюджет матрицы не задан' : 'No matrix budget set')
-    : (actualRisk <= maxRisk
-      ? (isRu ? `В пределах лимита · Бюджет: ${riskBudgetBudgetStr}` : `Compliant · Budget: ${riskBudgetBudgetStr}`)
-      : (isRu ? `Превышен · Бюджет: ${riskBudgetBudgetStr}` : `Exceeded · Budget: ${riskBudgetBudgetStr}`));
+    : `${tradeRiskAudit.value.status} · ${isRu ? 'стоп' : 'stop'} ${formatRiskCurrency(tradeRiskAudit.value.planned)} · ${isRu ? 'факт' : 'realized'} ${formatRiskCurrency(tradeRiskAudit.value.realized)} · ${isRu ? 'бюджет' : 'budget'} ${riskBudgetBudgetStr}`;
 
-  if (tp <= 0 && pnl > 0 && exit > 0) tp = exit;
-  let tpCapture = 100;
+  let tpCapture = Number.NaN;
   let tpCaptureText = 'Full Target Achieved';
-  if (entry > 0 && tp > 0 && exit > 0) {
-    const plannedDist = Math.abs(tp - entry);
+  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
+    const plannedDist = getDirectionalTargetDistance(entry, tp, direction);
     const actualDist = isLong
       ? Math.max(0, exit - entry)
       : Math.max(0, entry - exit);
-    if (plannedDist > 0) {
+    if (Number.isFinite(plannedDist) && plannedDist > 0) {
       tpCapture = Math.min(100, (actualDist / plannedDist) * 100);
       tpCaptureText = tpCapture < 100 ? 'Premature Exit' : 'Full Target Achieved';
     }
+  } else {
+    tpCaptureText = 'No TP Data';
   }
 
   const realizedRR = actualRR.value || 1;
@@ -1595,12 +1690,17 @@ const strategyExecutionMetrics = computed(() => {
 
   let unrealizedLeft = 0;
   let unrealizedLeftText = 'Full Target Captured';
-  if (entry > 0 && tp > 0 && exit > 0) {
-    const plannedPnL = Math.abs(tp - entry) * (parseFloat(tr.size) || (Math.abs(pnl) / Math.abs(exit - entry)));
+  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
+    const targetDistance = getDirectionalTargetDistance(entry, tp, direction);
+    const exitDistance = Math.abs(exit - entry);
+    const plannedPnL = Number.isFinite(targetDistance) ? targetDistance * (parseFloat(tr.size) || (exitDistance > 0 ? Math.abs(pnl) / exitDistance : 0)) : Number.NaN;
     if (plannedPnL > pnl) {
       unrealizedLeft = plannedPnL - pnl;
       unrealizedLeftText = 'Target Unreached';
     }
+  } else {
+    unrealizedLeft = Number.NaN;
+    unrealizedLeftText = 'No TP Data';
   }
 
   const days = duration.value / 24;
@@ -1650,7 +1750,7 @@ const strategyExecutionMetrics = computed(() => {
   const alphaDecayText = alphaDecay > 0 ? `Bypassed ${alphaDecay} Required Rules` : 'Zero Degradation';
 
   const adherenceScore = matrixAdherenceMetrics.value.reqRatio;
-  const tpScore = tpCapture;
+  const tpScore = Number.isFinite(tpCapture) ? tpCapture : 100;
   const riskScore = actualRisk <= maxRisk ? 100 : Math.max(0, 100 - ((actualRisk - maxRisk) / maxRisk) * 100);
   const stabilityScore = behaviouralMetrics.value.stability;
   const executionGrade = Math.round((adherenceScore * 0.3) + (tpScore * 0.3) + (riskScore * 0.2) + (stabilityScore * 0.2));
@@ -1689,31 +1789,22 @@ const simpleMetricInsights = computed(() => {
 
   const requiredStats = requiredConditionStats.value;
 
-  let riskValue = formatCurrency(actualRiskDollars.value);
-  let riskSuffix = isRu ? 'расчетный риск сделки' : 'calculated trade risk';
-  let riskBenchmarkLabel = isRu ? 'лимит' : 'limit';
-  let riskBenchmarkValue = isRu ? 'не задан' : 'not set';
-  let riskHint = '';
+  const riskAudit = tradeRiskAudit.value;
+  let riskValue = formatCurrency(riskAudit.planned);
+  let riskSuffix = isRu ? 'риск по stop loss от entry' : 'stop-loss risk from entry';
+  let riskBenchmarkLabel = isRu ? 'факт' : 'realized';
+  let riskBenchmarkValue = formatCurrency(riskAudit.realized);
+  let riskHint = riskAudit.hint;
   if (maxRiskTrade.value?.unit === '%') {
     const maxPct = maxRiskTrade.value.value;
-    riskValue = `${actualRiskPct.value.toFixed(2)}%`;
-    riskSuffix = isRu ? 'от капитала в этой сделке' : 'of capital in this trade';
-    riskBenchmarkValue = `${maxPct.toFixed(2)}%`;
-    riskHint = actualRiskPct.value > maxPct
-      ? (isRu ? 'Уменьшите риск сделки до лимита стратегии.' : 'Reduce trade risk back to the strategy limit.')
-      : (actualRiskPct.value < maxPct * 0.5
-        ? (isRu ? 'Вы можете увеличить риск, если сетап действительно соответствует протоколу.' : 'You can increase risk if the setup genuinely matches the protocol.')
-        : '');
+    riskValue = formatRiskPercent(plannedStopRiskPct.value);
+    riskSuffix = isRu ? 'по stop loss от капитала' : 'stop risk of capital';
+    riskBenchmarkLabel = isRu ? 'факт' : 'realized';
+    riskBenchmarkValue = `${realizedRiskPct.value.toFixed(2)}% / ${maxPct.toFixed(2)}%`;
   } else if (maxRiskTrade.value) {
-    const maxDollars = maxRiskTrade.value.value;
-    riskValue = formatCurrency(actualRiskDollars.value);
-    riskSuffix = isRu ? 'риска на сделку' : 'risk on this trade';
-    riskBenchmarkValue = formatCurrency(maxDollars);
-    riskHint = actualRiskDollars.value > maxDollars
-      ? (isRu ? 'Уменьшите размер позиции или подтяните stop loss к лимиту.' : 'Reduce position size or move the stop loss back within the limit.')
-      : (actualRiskDollars.value < maxDollars * 0.5
-        ? (isRu ? 'Есть запас по риску, если качество сделки это оправдывает.' : 'There is unused risk budget if trade quality justifies it.')
-        : '');
+    riskValue = formatCurrency(riskAudit.planned);
+    riskSuffix = isRu ? 'по stop loss на сделку' : 'stop risk on this trade';
+    riskBenchmarkValue = `${formatCurrency(riskAudit.realized)} / ${formatCurrency(maxRiskTrade.value.value)}`;
   }
 
   const rrHint = targetRR.value > 0 && actualRR.value > 0 && actualRR.value < targetRR.value
@@ -1758,7 +1849,7 @@ const simpleMetricInsights = computed(() => {
       benchmarkLabel: riskBenchmarkLabel,
       benchmarkValue: riskBenchmarkValue,
       hint: riskHint,
-      tone: maxRiskTrade.value && (maxRiskTrade.value.unit === '%' ? actualRiskPct.value > maxRiskTrade.value.value : actualRiskDollars.value > maxRiskTrade.value.value) ? 'negative' : 'positive'
+      tone: riskAudit.ok ? 'positive' : 'negative'
     },
     {
       id: 'rr',
@@ -2596,46 +2687,56 @@ const simpleMetricInsights = computed(() => {
                         </div>
                      </ExTooltip>
 
-                     <!-- ACTUAL VS MAX RISK -->
+                     <!-- PLANNED VS REALIZED RISK -->
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Max_Risk</span>
-                              <div class="flex flex-col justify-center space-y-0.5 py-1">
-                                 <div class="flex items-baseline space-x-2">
-                                   <span v-if="maxRiskTrade?.unit === '%'" class="text-xl font-mono font-black" :class="actualRiskPct <= maxRiskTrade.value ? 'text-emerald-400' : 'text-rose-400'">
-                                      {{ actualRiskPct.toFixed(2) }}%
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Planned_vs_Realized_Risk</span>
+                              <div class="flex flex-col justify-center space-y-1 py-1">
+                                 <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                                   <span class="text-lg font-mono font-black" :class="tradeRiskAudit.plannedOk ? 'text-emerald-400' : 'text-rose-400'">
+                                      S: {{ formatRiskCurrency(tradeRiskAudit.planned) }}
                                    </span>
-                                   <span v-else class="text-xl font-mono font-black" :class="!maxRiskTrade || actualRiskDollars <= maxRiskTrade.value ? 'text-emerald-400' : 'text-rose-400'">
-                                      ${{ actualRiskDollars.toFixed(2) }}
+                                   <span class="text-lg font-mono font-black" :class="tradeRiskAudit.realizedOk ? 'text-emerald-400' : 'text-rose-400'">
+                                      R: {{ formatRiskCurrency(tradeRiskAudit.realized) }}
                                    </span>
                                  </div>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                    vs max <span class="font-black nier-text-primary">{{ maxRiskTrade ? (maxRiskTrade.unit === '%' ? maxRiskTrade.value + '%' : '$' + maxRiskTrade.value) : 'N/A' }}</span>
+                                    {{ tradeRiskAudit.status }} · max <span class="font-black nier-text-primary">{{ riskBudgetDollars !== null ? '$' + riskBudgetDollars.toFixed(2) : 'N/A' }}</span>
                                  </span>
                               </div>
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>{{ maxRiskTrade ? 'Compares the actual monetary or percentage risk of the trade against the matrix maximum risk threshold.' : 'The realized monetary risk calculated from entry, stop loss, and position size.' }}</div>
+                           <div>Audits both planned stop-loss risk and realized loss against the Risk Per Trade budget, catching manual exits that lose more than the planned stop.</div>
                            <div class="pt-2 border-t nier-border-primary">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold nier-text-primary tracking-tighter">
-                                 |Entry Price - Stop Loss| * Position Size
+                                 Stop Risk = |Entry - Stop Loss| * Size · Realized Risk = max(0, -PnL)
                               </code>
+                           </div>
+                           <div class="pt-2 border-t nier-border-primary grid grid-cols-2 gap-2">
+                              <div class="border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] p-2">
+                                 <span class="text-[8px] opacity-40 block uppercase tracking-widest font-black">Stop Risk</span>
+                                 <span class="text-[12px] font-black" :class="tradeRiskAudit.plannedOk ? 'text-emerald-500' : 'text-rose-500'">{{ formatRiskCurrency(tradeRiskAudit.planned) }}</span>
+                              </div>
+                              <div class="border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] p-2">
+                                 <span class="text-[8px] opacity-40 block uppercase tracking-widest font-black">Realized Loss</span>
+                                 <span class="text-[12px] font-black" :class="tradeRiskAudit.realizedOk ? 'text-emerald-500' : 'text-rose-500'">{{ formatRiskCurrency(tradeRiskAudit.realized) }}</span>
+                              </div>
                            </div>
                            <div>
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
                               <div class="text-[9px] space-y-0.5 bg-black/[0.02] dark:bg-white/[0.02] p-1 rounded border border-black/5 dark:border-white/5 font-medium">
-                                 <div class="flex justify-between"><span class="opacity-70">&lt;= Max Risk</span><span class="text-emerald-500 font-bold">Compliant</span></div>
-                                 <div class="flex justify-between"><span class="opacity-70">&gt; Max Risk</span><span class="text-rose-500 font-bold">Breach Warning</span></div>
+                                 <div class="flex justify-between"><span class="opacity-70">Stop & Realized &lt;= Risk Per Trade</span><span class="text-emerald-500 font-bold">Compliant</span></div>
+                                 <div class="flex justify-between"><span class="opacity-70">Either value &gt; Risk Per Trade</span><span class="text-rose-500 font-bold">Breach Warning</span></div>
                               </div>
                            </div>
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="(!maxRiskTrade || (maxRiskTrade.unit === '%' ? actualRiskPct <= maxRiskTrade.value : actualRiskDollars <= maxRiskTrade.value)) ? 'text-emerald-500' : 'text-rose-500'">
-                                 {{ (!maxRiskTrade || (maxRiskTrade.unit === '%' ? actualRiskPct <= maxRiskTrade.value : actualRiskDollars <= maxRiskTrade.value)) ? 'Good' : 'Bad' }}
+                                    :class="tradeRiskAudit.ok ? 'text-emerald-500' : 'text-rose-500'">
+                                 {{ tradeRiskAudit.status }}
                               </span>
                            </div>
                         </div>
@@ -2725,7 +2826,7 @@ const simpleMetricInsights = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Stop_Loss_Distance</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
-                                 <span class="text-xl font-mono font-black nier-text-primary">{{ currentSlDistPct.toFixed(2) }}%</span>
+                                 <span class="text-xl font-mono font-black nier-text-primary">{{ formatRiskPercent(currentSlDistPct) }}</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     vs avg <span class="font-black nier-text-primary">{{ strategyStats.avgSlDistPct.toFixed(2) }}%</span>
                                  </span>
@@ -2750,8 +2851,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="currentSlDistPct <= strategyStats.avgSlDistPct ? 'text-emerald-500' : 'text-amber-500'">
-                                 {{ currentSlDistPct <= strategyStats.avgSlDistPct ? 'Good' : 'Sub-Optimal' }}
+                                    :class="Number.isFinite(currentSlDistPct) && currentSlDistPct <= strategyStats.avgSlDistPct ? 'text-emerald-500' : 'text-amber-500'">
+                                 {{ Number.isFinite(currentSlDistPct) ? (currentSlDistPct <= strategyStats.avgSlDistPct ? 'Good' : 'Sub-Optimal') : 'N/A' }}
                               </span>
                            </div>
                         </div>
@@ -2763,7 +2864,7 @@ const simpleMetricInsights = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Take_Profit_Distance</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
-                                 <span class="text-xl font-mono font-black nier-text-primary">{{ currentTpDistPct.toFixed(2) }}%</span>
+                                 <span class="text-xl font-mono font-black nier-text-primary">{{ formatRiskPercent(currentTpDistPct) }}</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
                                     vs avg <span class="font-black nier-text-primary">{{ strategyStats.avgTpDistPct.toFixed(2) }}%</span>
                                  </span>
@@ -2788,8 +2889,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="currentTpDistPct >= strategyStats.avgTpDistPct ? 'text-emerald-500' : 'text-amber-500'">
-                                 {{ currentTpDistPct >= strategyStats.avgTpDistPct ? 'Good' : 'Sub-Optimal' }}
+                                    :class="Number.isFinite(currentTpDistPct) && currentTpDistPct >= strategyStats.avgTpDistPct ? 'text-emerald-500' : 'text-amber-500'">
+                                 {{ Number.isFinite(currentTpDistPct) ? (currentTpDistPct >= strategyStats.avgTpDistPct ? 'Good' : 'Sub-Optimal') : 'N/A' }}
                               </span>
                            </div>
                         </div>
@@ -2840,7 +2941,7 @@ const simpleMetricInsights = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
-                                 <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'text-emerald-400' : 'text-rose-400'">
+                                 <span class="text-xl font-mono font-black" :class="tradeRiskAudit.ok ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ strategyExecutionMetrics.riskBudgetRatio.toFixed(2) }}%
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
@@ -2850,12 +2951,22 @@ const simpleMetricInsights = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares the actual trade risk (|Entry Price - Stop Loss| × Position Size) against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
+                           <div>Compares the worst value between planned stop risk and realized loss against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
                            <div class="pt-2 border-t nier-border-primary">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold nier-text-primary tracking-tighter">
-                                 (|Entry Price - Stop Loss| × Position Size) / Risk Budget × 100
+                                 max(Stop Risk, Realized Loss) / Risk Budget × 100
                               </code>
+                           </div>
+                           <div class="pt-2 border-t nier-border-primary grid grid-cols-2 gap-2">
+                              <div class="border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] p-2">
+                                 <span class="text-[8px] opacity-40 block uppercase tracking-widest font-black">Stop Risk</span>
+                                 <span class="text-[12px] font-black" :class="tradeRiskAudit.plannedOk ? 'text-emerald-500' : 'text-rose-500'">{{ formatRiskCurrency(tradeRiskAudit.planned) }}</span>
+                              </div>
+                              <div class="border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] p-2">
+                                 <span class="text-[8px] opacity-40 block uppercase tracking-widest font-black">Realized Loss</span>
+                                 <span class="text-[12px] font-black" :class="tradeRiskAudit.realizedOk ? 'text-emerald-500' : 'text-rose-500'">{{ formatRiskCurrency(tradeRiskAudit.realized) }}</span>
+                              </div>
                            </div>
                            <div>
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Benchmark</span>
@@ -2867,8 +2978,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'text-emerald-500' : 'text-rose-500'">
-                                 {{ strategyExecutionMetrics.actualRisk <= strategyExecutionMetrics.maxRisk ? 'Good' : 'Breach' }}
+                                    :class="tradeRiskAudit.ok ? 'text-emerald-500' : 'text-rose-500'">
+                                 {{ tradeRiskAudit.status }}
                               </span>
                            </div>
                         </div>
@@ -2879,8 +2990,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
-                                 <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-400' : 'text-amber-400'">
-                                    {{ strategyExecutionMetrics.tpCapture.toFixed(2) }}%
+                                 <span class="text-xl font-mono font-black" :class="Number.isFinite(strategyExecutionMetrics.tpCapture) && strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-400' : 'text-amber-400'">
+                                    {{ formatRiskPercent(strategyExecutionMetrics.tpCapture) }}
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.tpCaptureText }}
@@ -2906,8 +3017,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-500' : 'text-amber-500'">
-                                 {{ strategyExecutionMetrics.tpCapture === 100 ? 'Perfect' : 'Sub-Optimal' }}
+                                    :class="Number.isFinite(strategyExecutionMetrics.tpCapture) && strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-500' : 'text-amber-500'">
+                                 {{ Number.isFinite(strategyExecutionMetrics.tpCapture) ? (strategyExecutionMetrics.tpCapture === 100 ? 'Perfect' : 'Sub-Optimal') : 'N/A' }}
                               </span>
                            </div>
                         </div>
@@ -2957,8 +3068,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="flex flex-col space-y-1 group cursor-pointer">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Unrealized_Alpha_Left</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
-                                 <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-400' : 'text-amber-400'">
-                                    ${{ strategyExecutionMetrics.unrealizedLeft.toFixed(2) }}
+                                 <span class="text-xl font-mono font-black" :class="Number.isFinite(strategyExecutionMetrics.unrealizedLeft) && strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-400' : 'text-amber-400'">
+                                    {{ formatRiskCurrency(strategyExecutionMetrics.unrealizedLeft) }}
                                  </span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60 truncate">
                                     {{ strategyExecutionMetrics.unrealizedLeftText }}
@@ -2984,8 +3095,8 @@ const simpleMetricInsights = computed(() => {
                            <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
                               <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">Evaluation</span>
                               <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5"
-                                    :class="strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-500' : 'text-amber-500'">
-                                 {{ strategyExecutionMetrics.unrealizedLeft === 0 ? 'Perfect' : 'Sub-Optimal' }}
+                                    :class="Number.isFinite(strategyExecutionMetrics.unrealizedLeft) && strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-500' : 'text-amber-500'">
+                                 {{ Number.isFinite(strategyExecutionMetrics.unrealizedLeft) ? (strategyExecutionMetrics.unrealizedLeft === 0 ? 'Perfect' : 'Sub-Optimal') : 'N/A' }}
                               </span>
                            </div>
                         </div>
