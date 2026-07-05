@@ -1345,6 +1345,21 @@ const conditionIdentity = (condition: any) => {
   return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '').toLowerCase();
 };
 
+const conditionProtocolId = (condition: any) => {
+  if (typeof condition === 'string') return condition;
+  return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '');
+};
+
+const conditionDisplayName = (condition: any) => {
+  if (typeof condition === 'string') return condition;
+  return String(condition?.info?.customName ?? condition?.info?.name ?? condition?.name ?? condition?.label ?? condition?.id ?? 'REQUIRED');
+};
+
+const conditionDescription = (condition: any) => {
+  if (typeof condition === 'string') return '';
+  return String(condition?.info?.description ?? condition?.description ?? condition?.info?.logic ?? '');
+};
+
 const getEntryRequiredConditionSnapshot = (trade: any) => {
   const directSnapshot = trade?.boardRequiredConditionsEntry;
   if (Array.isArray(directSnapshot) && directSnapshot.length > 0) return directSnapshot;
@@ -1356,13 +1371,46 @@ const getEntryRequiredConditionSnapshot = (trade: any) => {
   return legacyConditions.filter((c: any) => c?.info?.priority === 'REQUIRED' || c?.priority === 'REQUIRED');
 };
 
+const getEntryExecutedConditions = (trade: any) => {
+  const scenarioExecuted = trade?.boardScenarioEntry?.info?.conditions;
+  return Array.isArray(trade?.boardConditions) && trade.boardConditions.length > 0
+    ? trade.boardConditions
+    : (Array.isArray(scenarioExecuted) ? scenarioExecuted : []);
+};
+
+const isRequiredConditionsExpanded = ref(false);
+
+const requiredConditionRows = computed(() => {
+  const tr = props.trade as any;
+  const required = getEntryRequiredConditionSnapshot(tr);
+  const executedKeys = new Set(getEntryExecutedConditions(tr).map(conditionIdentity).filter(Boolean));
+
+  return required
+    .map((condition: any, index: number) => {
+      const id = conditionProtocolId(condition);
+      const identity = conditionIdentity(condition);
+      if (!id && !identity) return null;
+
+      const name = conditionDisplayName(condition);
+      const selected = executedKeys.has(identity);
+
+      return {
+        id: id || identity || `required-${index}`,
+        name,
+        description: conditionDescription(condition),
+        selected,
+        statusLabel: selected
+          ? (locale.value === 'ru' ? 'выбрано' : 'selected')
+          : (locale.value === 'ru' ? 'пропущено' : 'missing')
+      };
+    })
+    .filter(Boolean);
+});
+
 const requiredConditionStats = computed(() => {
   const tr = props.trade as any;
   const required = getEntryRequiredConditionSnapshot(tr);
-  const scenarioExecuted = tr?.boardScenarioEntry?.info?.conditions;
-  const executed = Array.isArray(tr?.boardConditions) && tr.boardConditions.length > 0
-    ? tr.boardConditions
-    : (Array.isArray(scenarioExecuted) ? scenarioExecuted : []);
+  const executed = getEntryExecutedConditions(tr);
 
   if (required.length === 0) {
     return { used: 0, total: 0 };
@@ -1942,6 +1990,62 @@ const simpleMetricInsights = computed(() => {
                       <p v-if="item.hint" class="mt-2 max-w-3xl text-[10px] font-mono uppercase leading-relaxed tracking-[0.16em] opacity-50">
                         {{ item.hint }}
                       </p>
+                      <div v-if="item.id === 'required' && requiredConditionRows.length > 0" class="mt-4">
+                        <button
+                          type="button"
+                          class="group/required-expand inline-flex items-center gap-3 border nier-border-primary px-3 py-2 text-[8px] font-mono font-black uppercase tracking-[0.24em] opacity-70 transition-all duration-300 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+                          @click.stop="isRequiredConditionsExpanded = !isRequiredConditionsExpanded"
+                        >
+                          <span class="relative h-3 w-3">
+                            <span class="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-current"></span>
+                            <span
+                              class="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-300"
+                              :class="isRequiredConditionsExpanded ? 'scale-y-0' : 'scale-y-100'"
+                            ></span>
+                          </span>
+                          <span>
+                            {{ isRequiredConditionsExpanded ? (locale === 'ru' ? 'Скрыть условия' : 'Hide conditions') : (locale === 'ru' ? 'Показать условия' : 'Show conditions') }}
+                          </span>
+                        </button>
+
+                        <div
+                          v-if="isRequiredConditionsExpanded"
+                          class="mt-3 flex flex-col border-t nier-border-primary"
+                        >
+                          <div
+                            v-for="condition in requiredConditionRows"
+                            :key="condition.id"
+                            class="group/required-row relative grid grid-cols-[18px_minmax(0,1fr)_auto] items-start gap-3 border-b nier-border-primary px-2 py-3 transition-all duration-300"
+                            :class="condition.selected
+                              ? 'bg-emerald-500/[0.06] text-emerald-700 dark:bg-emerald-400/[0.08] dark:text-emerald-300'
+                              : 'text-black/35 dark:text-white/35'"
+                          >
+                            <span
+                              class="mt-1 h-2.5 w-2.5 rotate-45 border transition-all duration-300"
+                              :class="condition.selected
+                                ? 'border-emerald-500 bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.45)]'
+                                : 'border-current bg-transparent opacity-45'"
+                            ></span>
+                            <span class="min-w-0">
+                              <span class="block truncate text-[10px] font-mono font-black uppercase tracking-[0.22em]">
+                                {{ condition.name }}
+                              </span>
+                              <span
+                                v-if="condition.description"
+                                class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.16em] opacity-45"
+                              >
+                                {{ condition.description }}
+                              </span>
+                            </span>
+                            <span
+                              class="shrink-0 text-[8px] font-mono font-black uppercase tracking-[0.2em]"
+                              :class="condition.selected ? 'opacity-90' : 'opacity-40'"
+                            >
+                              {{ condition.statusLabel }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div class="col-start-2 flex items-center md:col-start-auto md:justify-end">
