@@ -1849,6 +1849,7 @@ const simpleMetricInsights = computed(() => {
       benchmarkLabel: riskBenchmarkLabel,
       benchmarkValue: riskBenchmarkValue,
       hint: riskHint,
+      benchmarkTone: riskAudit.realizedOk ? 'positive' : 'negative',
       tone: riskAudit.ok ? 'positive' : 'negative'
     },
     {
@@ -2143,7 +2144,7 @@ const simpleMetricInsights = computed(() => {
                       <div class="inline-flex items-center gap-2 border nier-border-primary px-3 py-2 text-[9px] font-mono uppercase tracking-[0.18em] opacity-70 transition-all duration-300 group-hover:opacity-100">
                         <span class="opacity-45">{{ item.benchmarkLabel }}</span>
                         <span class="font-black"
-                              :class="item.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (item.tone === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')">
+                              :class="(item.benchmarkTone || item.tone) === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : ((item.benchmarkTone || item.tone) === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')">
                           {{ item.benchmarkValue }}
                         </span>
                       </div>
