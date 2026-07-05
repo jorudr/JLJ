@@ -201,11 +201,11 @@
                       <div class="flex flex-col mt-2 space-y-2">
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.stopLoss') }}</span>
-                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatFullPrice(selectedTrade?.stopLoss) }}</span>
+                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.stopLoss) }}</span>
                         </div>
                         <div class="flex items-baseline justify-between">
                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.takeProfit') }}</span>
-                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatFullPrice(selectedTrade?.takeProfit) }}</span>
+                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.takeProfit) }}</span>
                         </div>
                       </div>
                     </div>
@@ -769,6 +769,13 @@ const formatFullPrice = (value: unknown) => {
   if (value === undefined || value === null || value === '') return '0'
   const number = Number(value)
   if (!Number.isFinite(number)) return String(value)
+  return Number.isInteger(number) ? String(number) : number.toString()
+}
+
+const formatOptionalTradePrice = (value: unknown) => {
+  if (value === undefined || value === null || value === '') return 'NaN'
+  const number = Number(value)
+  if (!Number.isFinite(number) || number === 0) return 'NaN'
   return Number.isInteger(number) ? String(number) : number.toString()
 }
 
