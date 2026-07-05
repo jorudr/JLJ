@@ -670,45 +670,8 @@ const toggleCondition = (id, scenarioId = null) => {
     return
   }
 
-  // Find bundle context
-  let targetBundle = null
-  for (const cond of currentRegistryScenarioConditions.value) {
-    if (cond.indicatorUnits) {
-      for (const unit of cond.indicatorUnits) {
-        if (unit.type === 'bundle' && unit.items?.some(i => i.id === id)) {
-          targetBundle = unit
-          break
-        }
-      }
-    }
-    if (targetBundle) break
-  }
-
   const isCurrentlyActive = isConditionActive(id, targetScenarioId)
-
-  if (targetBundle) {
-    const itemIds = targetBundle.items.map(i => i.id)
-    const logic = targetBundle.logic?.toUpperCase()
-
-    if (logic === 'OR') {
-      if (isCurrentlyActive) {
-        deactivateCondition(id)
-      } else {
-        itemIds.forEach(itemId => deactivateCondition(itemId))
-        activateCondition(id)
-      }
-    } else if (logic === 'AND') {
-      if (isCurrentlyActive) {
-        itemIds.forEach(itemId => deactivateCondition(itemId))
-      } else {
-        itemIds.forEach(itemId => activateCondition(itemId))
-      }
-    } else {
-      isCurrentlyActive ? deactivateCondition(id) : activateCondition(id)
-    }
-  } else {
-    isCurrentlyActive ? deactivateCondition(id) : activateCondition(id)
-  }
+  isCurrentlyActive ? deactivateCondition(id) : activateCondition(id)
 }
 
 const showConditionLibrary = ref(false)
