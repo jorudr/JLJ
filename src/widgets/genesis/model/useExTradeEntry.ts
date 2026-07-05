@@ -968,6 +968,21 @@ const getScenarioRequiredConditionsSnapshot = (scenarioId) => {
     }))
 }
 
+const getRequiredConditionsSnapshotForScenarios = (scenarios = []) => {
+  const seen = new Set()
+  const snapshot = []
+
+  scenarios.forEach(scenario => {
+    getScenarioRequiredConditionsSnapshot(scenario?.id).forEach(condition => {
+      if (!condition?.id || seen.has(condition.id)) return
+      seen.add(condition.id)
+      snapshot.push(condition)
+    })
+  })
+
+  return snapshot
+}
+
 // Sector Navigation
 const activeSector = ref('core')
 const sectors = [
@@ -1772,8 +1787,12 @@ const submit = async () => {
   if (activeEntry?.id) processConds(activeEntry.id)
   if (activeExit?.id) processConds(activeExit.id)
 
-  const boardRequiredConditionsEntry = getScenarioRequiredConditionsSnapshot(activeEntry?.id)
-  const boardRequiredConditionsExit = getScenarioRequiredConditionsSnapshot((activeExit || activeMini)?.id)
+  const boardRequiredConditionsEntry = activeEntry?.id
+    ? getScenarioRequiredConditionsSnapshot(activeEntry.id)
+    : getRequiredConditionsSnapshotForScenarios(entryScenarios.value)
+  const boardRequiredConditionsExit = (activeExit || activeMini)?.id
+    ? getScenarioRequiredConditionsSnapshot((activeExit || activeMini).id)
+    : getRequiredConditionsSnapshotForScenarios(exitScenarios.value)
 
   const builtExecutions = []
   if (entryMethodEnabled.value) {
@@ -1971,6 +1990,7 @@ const submit = async () => {
     handleMouseLeaveInsight,
     getScenarioConditions,
     getFlattenedScenarioConditions,
+    getRequiredConditionsSnapshotForScenarios,
     activeSector,
     sectors,
     side,
