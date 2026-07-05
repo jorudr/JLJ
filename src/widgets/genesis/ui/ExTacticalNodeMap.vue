@@ -416,6 +416,11 @@ function handleNodeHover(e: MouseEvent, node: any) {
   tooltipPos.value = { x: e.clientX, y: e.clientY }
 }
 
+function handleNodeMove(e: MouseEvent) {
+  if (!hoveredNode.value) return
+  tooltipPos.value = { x: e.clientX, y: e.clientY }
+}
+
 function handleNodeLeave() {
   hoverTimeout = setTimeout(() => {
     hoveredNode.value = null
@@ -718,6 +723,7 @@ const emotionalStatus = computed(() => {
         <!-- Scenario Hub: Entry -->
         <div v-if="entryHubData" class="absolute node-element group cursor-pointer" style="left: 150px; top: 300px;" 
              @mouseenter="handleNodeHover($event, entryHubData)"
+             @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
                :class="[isDark ? 'bg-[#0a0a0a]/10 border-2 border-nier-border-dark group-hover:border-nier-text-dark' : 'bg-white/10 border-2 border-nier-border-light group-hover:border-nier-text-light']">
@@ -754,6 +760,7 @@ const emotionalStatus = computed(() => {
         <!-- Scenario Hub: Exit -->
         <div v-if="exitHubData" class="absolute node-element group cursor-pointer" style="left: 1200px; top: 700px;" 
              @mouseenter="handleNodeHover($event, exitHubData)"
+             @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
                :class="[isDark ? 'bg-[#0a0a0a]/10 border-2 border-nier-border-dark group-hover:border-nier-text-dark' : 'bg-white/10 border-2 border-nier-border-light group-hover:border-nier-text-light']">
@@ -793,6 +800,7 @@ const emotionalStatus = computed(() => {
              :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
+             @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="flex flex-col mr-8">
             <span class="text-[11px] font-mono uppercase tracking-widest font-black" :class="isDark ? 'text-white' : 'text-black'">{{ cond.name }}</span>
@@ -824,6 +832,7 @@ const emotionalStatus = computed(() => {
              :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
+             @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           
           <div class="flex flex-col space-y-1">
@@ -941,6 +950,7 @@ const emotionalStatus = computed(() => {
                       isDark ? 'bg-[#0a0a0a]/40 border-white/10 hover:border-white' : 'bg-white/40 border-black/10 hover:border-black'
                     ]"
                     @mouseenter="handleNodeHover($event, emotion)"
+                    @mousemove="handleNodeMove"
                     @mouseleave="handleNodeLeave">
                   <!-- Mini Corners -->
                   <div class="absolute -top-[1px] -left-[1px] w-1.5 h-1.5 border-t border-l opacity-40" :class="isDark ? 'border-white' : 'border-black'"></div>
