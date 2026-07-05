@@ -2017,13 +2017,13 @@ const simpleMetricInsights = computed(() => {
                             :key="condition.id"
                             class="group/required-row relative grid grid-cols-[18px_minmax(0,1fr)_auto] items-start gap-3 border-b nier-border-primary px-2 py-3 transition-all duration-300"
                             :class="condition.selected
-                              ? 'bg-emerald-500/[0.06] text-emerald-700 dark:bg-emerald-400/[0.08] dark:text-emerald-300'
+                              ? 'bg-black/[0.06] text-black dark:bg-white/[0.08] dark:text-white'
                               : 'text-black/35 dark:text-white/35'"
                           >
                             <span
                               class="mt-1 h-2.5 w-2.5 rotate-45 border transition-all duration-300"
                               :class="condition.selected
-                                ? 'border-emerald-500 bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.45)]'
+                                ? 'border-black bg-black shadow-[0_0_14px_rgba(0,0,0,0.25)] dark:border-white dark:bg-white dark:shadow-[0_0_16px_rgba(255,255,255,0.35)]'
                                 : 'border-current bg-transparent opacity-45'"
                             ></span>
                             <span class="min-w-0">
