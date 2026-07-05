@@ -953,7 +953,7 @@ const getScenarioConditions = (scenarioId) => {
   return tacticalUnits
 }
 
-const getFlattenedScenarioConditions = (scenarioId) => {
+  const getFlattenedScenarioConditions = (scenarioId) => {
   const conds = getScenarioConditions(scenarioId)
   const flattened = []
   const seenIds = new Set()
@@ -989,6 +989,20 @@ const getFlattenedScenarioConditions = (scenarioId) => {
     }
   })
   return flattened
+}
+
+const getScenarioRequiredConditionsSnapshot = (scenarioId) => {
+  if (!scenarioId) return []
+  return getFlattenedScenarioConditions(scenarioId)
+    .filter(c => c?.priority === 'REQUIRED' || c?.info?.priority === 'REQUIRED')
+    .map(c => ({
+      id: c.id,
+      info: {
+        name: (c.name || c.label || c.info?.name || '').toUpperCase(),
+        description: c.description || c.info?.description || '',
+        priority: 'REQUIRED'
+      }
+    }))
 }
 
 // Sector Navigation
@@ -1718,6 +1732,7 @@ const submit = async () => {
   // Helper to format scenario info
   const formatScen = (s, allTrades, side) => {
     if (!s) return null
+    const requiredConds = getScenarioRequiredConditionsSnapshot(s.id)
     
     // Virtual Scenario Handling for System Protocols
     if (s.id === 'default-exit-system') {
@@ -1733,7 +1748,8 @@ const submit = async () => {
           info: {
             name: first.info.name,
             description: first.info.description,
-            conditions: enrichedConds
+            conditions: enrichedConds,
+            requiredConditions: requiredConds
           }
         }
       }
@@ -1748,7 +1764,8 @@ const submit = async () => {
       info: {
         name: (s.params?.customName || s.label || '').toUpperCase(),
         description: s.params?.description || s.params?.value || '',
-        conditions: activeConds
+        conditions: activeConds,
+        requiredConditions: requiredConds
       }
     }
   }
@@ -1791,6 +1808,9 @@ const submit = async () => {
 
   if (activeEntry?.id) processConds(activeEntry.id)
   if (activeExit?.id) processConds(activeExit.id)
+
+  const boardRequiredConditionsEntry = getScenarioRequiredConditionsSnapshot(activeEntry?.id)
+  const boardRequiredConditionsExit = getScenarioRequiredConditionsSnapshot((activeExit || activeMini)?.id)
 
   const builtExecutions = []
   if (entryMethodEnabled.value) {
@@ -1870,6 +1890,8 @@ const submit = async () => {
     emotions: [...selectedEmotions.value],
     boardScenarioEntry: formatScen(activeEntry, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
     boardScenarioExit: formatScen(activeExit || activeMini, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
+    boardRequiredConditionsEntry,
+    boardRequiredConditionsExit,
     images: journalEntries.value.map(e => ({
       url: e.image,
       name: e.name || getArchiveNodeName(e.id),

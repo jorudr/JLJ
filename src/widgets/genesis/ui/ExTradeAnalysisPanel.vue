@@ -1341,22 +1341,31 @@ const formatRatio = (value: number) => {
 };
 
 const conditionIdentity = (condition: any) => {
-  if (typeof condition === 'string') return condition;
+  if (typeof condition === 'string') return condition.toLowerCase();
   return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '').toLowerCase();
+};
+
+const getEntryRequiredConditionSnapshot = (trade: any) => {
+  const directSnapshot = trade?.boardRequiredConditionsEntry;
+  if (Array.isArray(directSnapshot) && directSnapshot.length > 0) return directSnapshot;
+
+  const scenarioSnapshot = trade?.boardScenarioEntry?.info?.requiredConditions;
+  if (Array.isArray(scenarioSnapshot) && scenarioSnapshot.length > 0) return scenarioSnapshot;
+
+  const legacyConditions = trade?.boardScenarioEntry?.info?.conditions || [];
+  return legacyConditions.filter((c: any) => c?.info?.priority === 'REQUIRED' || c?.priority === 'REQUIRED');
 };
 
 const requiredConditionStats = computed(() => {
   const tr = props.trade as any;
-  const conditions = tr?.boardScenarioEntry?.info?.conditions || [];
-  const required = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
-  const executed = Array.isArray(tr?.boardConditions) ? tr.boardConditions : [];
+  const required = getEntryRequiredConditionSnapshot(tr);
+  const scenarioExecuted = tr?.boardScenarioEntry?.info?.conditions;
+  const executed = Array.isArray(tr?.boardConditions) && tr.boardConditions.length > 0
+    ? tr.boardConditions
+    : (Array.isArray(scenarioExecuted) ? scenarioExecuted : []);
 
   if (required.length === 0) {
     return { used: 0, total: 0 };
-  }
-
-  if (executed.length === 0) {
-    return { used: required.length, total: required.length };
   }
 
   const executedKeys = new Set(executed.map(conditionIdentity).filter(Boolean));
@@ -1370,7 +1379,7 @@ const matrixAdherenceMetrics = computed(() => {
   if (!tr) return { reqRatio: 0, reqText: '0/0', addCount: 0, addAlpha: 0, strictness: 0, condPnl: 0, complexity: 1.0 };
 
   const conditions = tr.boardScenarioEntry?.info?.conditions || [];
-  const reqConditions = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
+  const reqConditions = getEntryRequiredConditionSnapshot(tr);
   const addConditions = conditions.filter((c: any) => c?.info?.priority === 'ADDITIONAL');
   const scenarioId = tr.boardScenarioEntry?.id;
   const getRuleCount = (trade: any) => {
@@ -1380,8 +1389,9 @@ const matrixAdherenceMetrics = computed(() => {
     return 0;
   };
 
-  const reqRatio = reqConditions.length > 0 ? 100 : (conditions.length > 0 ? 0 : 100);
-  const reqText = `${reqConditions.length} Fulfilled`;
+  const requiredStats = requiredConditionStats.value;
+  const reqRatio = requiredStats.total > 0 ? (requiredStats.used / requiredStats.total) * 100 : (conditions.length > 0 ? 0 : 100);
+  const reqText = requiredStats.total > 0 ? `${requiredStats.used}/${requiredStats.total} Fulfilled` : '0/0';
 
   const avgPnl = strategyStats.value.avgPnl || 0;
   const pnlDiff = tr.pnl - avgPnl;
@@ -1581,10 +1591,12 @@ const strategyExecutionMetrics = computed(() => {
   ]);
   const hasNegative = emotions.map(getEmotionName).some((e: string) => negativeSet.has(e));
   const conditions = tr.boardScenarioEntry?.info?.conditions || [];
-  const reqConditions = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
-  const executedConditions = tr.boardConditions || [];
+  const reqConditions = getEntryRequiredConditionSnapshot(tr);
+  const executedConditions = Array.isArray(tr.boardConditions) && tr.boardConditions.length > 0
+    ? tr.boardConditions
+    : conditions;
   const missingRequiredRules = reqConditions.filter((req: any) =>
-    !executedConditions.some((exec: any) => (typeof exec === 'string' ? exec === req.id : exec?.id === req.id))
+    !executedConditions.some((exec: any) => conditionIdentity(exec) === conditionIdentity(req))
   ).length;
   const alphaDecay = hasNegative ? missingRequiredRules : 0;
   const alphaDecayText = alphaDecay > 0 ? `Bypassed ${alphaDecay} Required Rules` : 'Zero Degradation';
