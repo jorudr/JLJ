@@ -173,6 +173,14 @@ const getNormalizedPnl = (tr: any) => {
   return val
 }
 
+const getEmotionName = (emotion: any) => {
+  if (!emotion) return ''
+  if (typeof emotion === 'string') return emotion
+  if (typeof emotion === 'object' && emotion.name) return String(emotion.name)
+  if (typeof emotion === 'object' && emotion.id) return String(emotion.id)
+  return String(emotion)
+}
+
 const EMOTION_WEIGHTS_LOCAL: Record<string, number> = {
   'CONFIDENCE': 10, 'PATIENCE': 15, 'DISCIPLINE': 20,
   'FOMO': -20, 'GREED': -25, 'REVENGE': -30, 'FEAR': -15, 'TILT': -40, 'ANXIETY': -15
@@ -287,6 +295,7 @@ const entryHubData = computed(() => {
   const prevPf = pfHistory[pfHistory.length - 2] || lastPf
   
   return {
+    id: s.id,
     name: s.name || 'ENTRY_SCENARIO',
     freq: lastFreq.toFixed(1) + '%',
     freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
@@ -309,6 +318,7 @@ const exitHubData = computed(() => {
   const prevPf = pfHistory[pfHistory.length - 2] || lastPf
 
   return {
+    id: s.id,
     name: s.name || 'EXIT_SCENARIO',
     freq: lastFreq.toFixed(1) + '%',
     freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
@@ -321,6 +331,7 @@ const exitHubData = computed(() => {
 const displayEmotions = computed(() => {
   if (props.trade?.emotions) {
     return props.trade.emotions.map((e: any) => {
+      const name = getEmotionName(e)
       const pfHistory = e.history?.pf || Array.from({ length: 21 }, () => 1.0)
       const freqHistory = e.history?.freq || Array.from({ length: 21 }, () => 100)
       
@@ -330,7 +341,8 @@ const displayEmotions = computed(() => {
       const prevPf = pfHistory[pfHistory.length - 2] || lastPf
 
       return { 
-        name: e.name, 
+        id: name,
+        name,
         freq: lastFreq.toFixed(1) + '%', 
         freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const, 
         pf: lastPf.toFixed(2), 
@@ -339,7 +351,14 @@ const displayEmotions = computed(() => {
       }
     })
   }
-  return props.pickedEmotions || []
+  return (props.pickedEmotions || []).map((emotion: any) => {
+    const name = getEmotionName(emotion)
+    return {
+      ...emotion,
+      id: emotion.id || name,
+      name
+    }
+  })
 })
 
 // CHART VIEW STATE (TradingView-style interaction)
