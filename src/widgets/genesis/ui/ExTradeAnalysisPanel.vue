@@ -1423,12 +1423,13 @@ const tacticalAdvice = computed(() => {
 // -------------------------------------------------------------
 // ADVANCED METRIC TAB FILTERING & TELEMETRY CALCULATIONS
 // -------------------------------------------------------------
-const activeReportMetricMode = ref<'simple' | 'advanced'>('advanced');
+const activeReportMetricMode = ref<'simple' | 'advanced'>('simple');
 const reportMetricModes: Array<{ id: 'simple' | 'advanced'; label: string }> = [
   { id: 'simple', label: 'Simple' },
   { id: 'advanced', label: 'Advanced' }
 ];
 const activeMetricTab = ref('all'); // 'all', 'adherence', 'behavioural', 'execution'
+const isTradeScoreExpanded = ref(false);
 
 const formatCurrency = (value: number) => {
   if (!Number.isFinite(value)) return 'N/A';
@@ -1438,6 +1439,57 @@ const formatCurrency = (value: number) => {
 
 const formatRiskCurrency = (value: number) => Number.isFinite(value) ? `$${value.toFixed(2)}` : 'N/A';
 const formatRiskPercent = (value: number) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A';
+
+const NODE_MAPPING_EMOTION_WEIGHTS: Record<string, number> = {
+  CONFIDENCE: 10,
+  PATIENCE: 15,
+  DISCIPLINE: 20,
+  FOMO: -20,
+  GREED: -25,
+  REVENGE: -30,
+  FEAR: -15,
+  TILT: -40,
+  ANXIETY: -15
+};
+
+const getNodeMappingEmotionScore = (trade: any) => {
+  if (!Array.isArray(trade?.emotions)) return 0;
+  return trade.emotions.reduce((sum: number, emotion: any) => {
+    const key = String(typeof emotion === 'string' ? emotion : (emotion?.name || '')).toUpperCase();
+    return sum + (NODE_MAPPING_EMOTION_WEIGHTS[key] || 0);
+  }, 0);
+};
+
+const getNodeMappingTradeScore = (trade: any) => {
+  return getNormalizedPnl(trade) + getNodeMappingEmotionScore(trade);
+};
+
+const tradeScoreBreakdown = computed(() => {
+  const tr = props.trade as any;
+  if (!tr) {
+    return { percentile: 0, pnlScore: 0, emotionScore: 0, rawScore: 0, comparedTrades: 0, lowerTrades: 0 };
+  }
+
+  const pnlScore = getNormalizedPnl(tr);
+  const emotionScore = getNodeMappingEmotionScore(tr);
+  const rawScore = pnlScore + emotionScore;
+  const scoredTrades = liveTradesList.value
+    .map((trade: any) => getNodeMappingTradeScore(trade))
+    .filter((score: number) => Number.isFinite(score))
+    .sort((a: number, b: number) => a - b);
+  const lowerTrades = scoredTrades.filter((score: number) => score < rawScore).length;
+  const computedPercentile = scoredTrades.length > 0 ? Math.round((lowerTrades / scoredTrades.length) * 100) : 0;
+  const propPercentile = Number((tr as any)?.percentileRank);
+
+  return {
+    percentile: Number.isFinite(propPercentile) ? propPercentile : computedPercentile,
+    pnlScore,
+    emotionScore,
+    rawScore,
+    comparedTrades: scoredTrades.length,
+    lowerTrades
+  };
+});
 
 const formatRatio = (value: number) => {
   const safe = Number.isFinite(value) && value > 0 ? value : 0;
@@ -1812,8 +1864,20 @@ const simpleMetricInsights = computed(() => {
       ? 'Увеличьте R/R через более точное смещение stop loss и take profit.'
       : 'Improve R/R by adjusting stop loss and take profit placement.')
     : '';
+  const scoreBreakdown = tradeScoreBreakdown.value;
 
   return [
+    {
+      id: 'score',
+      label: isRu ? 'Общий score сделки' : 'Trade Score',
+      prefix: isRu ? 'Лучше чем' : 'Better than',
+      value: `${scoreBreakdown.percentile}%`,
+      suffix: isRu ? 'сделок в node mapping' : 'of trades in node mapping',
+      benchmarkLabel: isRu ? 'raw score' : 'raw score',
+      benchmarkValue: formatCurrency(scoreBreakdown.rawScore),
+      hint: '',
+      tone: scoreBreakdown.percentile >= 70 ? 'positive' : (scoreBreakdown.percentile >= 40 ? 'warning' : 'negative')
+    },
     {
       id: 'pnl',
       label: isRu ? 'Результат сделки' : 'Trade Result',
@@ -2082,6 +2146,43 @@ const simpleMetricInsights = computed(() => {
                       <p v-if="item.hint" class="mt-2 max-w-3xl text-[10px] font-mono uppercase leading-relaxed tracking-[0.16em] opacity-50">
                         {{ item.hint }}
                       </p>
+                      <div v-if="item.id === 'score'" class="mt-4">
+                        <button
+                          type="button"
+                          class="group/score-expand inline-flex items-center gap-3 border nier-border-primary px-3 py-2 text-[8px] font-mono font-black uppercase tracking-[0.24em] opacity-70 transition-all duration-300 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+                          @click.stop="isTradeScoreExpanded = !isTradeScoreExpanded"
+                        >
+                          <span class="relative h-3 w-3">
+                            <span class="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-current"></span>
+                            <span
+                              class="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-300"
+                              :class="isTradeScoreExpanded ? 'scale-y-0' : 'scale-y-100'"
+                            ></span>
+                          </span>
+                          <span>
+                            {{ isTradeScoreExpanded ? (locale === 'ru' ? 'Скрыть состав' : 'Hide score') : (locale === 'ru' ? 'Показать состав' : 'Show score') }}
+                          </span>
+                        </button>
+
+                        <div v-if="isTradeScoreExpanded" class="mt-3 flex flex-col border-t nier-border-primary">
+                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'PnL компонент' : 'PnL component' }}</span>
+                            <span class="text-[10px] font-mono font-black" :class="tradeScoreBreakdown.pnlScore >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'">{{ formatCurrency(tradeScoreBreakdown.pnlScore) }}</span>
+                          </div>
+                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Эмоциональная поправка' : 'Emotional adjustment' }}</span>
+                            <span class="text-[10px] font-mono font-black" :class="tradeScoreBreakdown.emotionScore >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'">{{ tradeScoreBreakdown.emotionScore >= 0 ? '+' : '' }}{{ tradeScoreBreakdown.emotionScore }}</span>
+                          </div>
+                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Итоговый raw score' : 'Final raw score' }}</span>
+                            <span class="text-[10px] font-mono font-black nier-text-primary">{{ formatCurrency(tradeScoreBreakdown.rawScore) }}</span>
+                          </div>
+                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Сравнение' : 'Comparison' }}</span>
+                            <span class="text-[10px] font-mono font-black nier-text-primary">{{ tradeScoreBreakdown.lowerTrades }}/{{ tradeScoreBreakdown.comparedTrades }}</span>
+                          </div>
+                        </div>
+                      </div>
                       <div v-if="item.id === 'required' && requiredConditionRows.length > 0" class="mt-4">
                         <button
                           type="button"
