@@ -426,10 +426,7 @@ const showPF = ref(true)
 const hoveredNode = ref<any>(null)
 const tooltipPos = ref({ x: 0, y: 0 })
 
-let hoverTimeout: any = null
-
 function handleNodeHover(e: MouseEvent, node: any) {
-  if (hoverTimeout) clearTimeout(hoverTimeout)
   const newNode = isRef(node) ? node.value : node
   hoveredNode.value = newNode
   tooltipPos.value = { x: e.clientX, y: e.clientY }
@@ -441,19 +438,7 @@ function handleNodeMove(e: MouseEvent) {
 }
 
 function handleNodeLeave() {
-  hoverTimeout = setTimeout(() => {
-    hoveredNode.value = null
-  }, 200)
-}
-
-function handleTooltipHover() {
-  if (hoverTimeout) clearTimeout(hoverTimeout)
-}
-
-function handleTooltipLeave() {
-  hoverTimeout = setTimeout(() => {
-    hoveredNode.value = null
-  }, 200)
+  hoveredNode.value = null
 }
 
 // INTERACTION HANDLERS
@@ -924,8 +909,6 @@ const emotionalStatus = computed(() => {
       :node="hoveredNode"
       :position="tooltipPos"
       :is-dark="isDark"
-      @mouseenter="handleTooltipHover"
-      @mouseleave="handleTooltipLeave"
     />
 
     <!-- Bottom Emotional Rank Stability Index -->
