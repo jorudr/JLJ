@@ -1323,7 +1323,46 @@ const tacticalAdvice = computed(() => {
 // -------------------------------------------------------------
 // ADVANCED METRIC TAB FILTERING & TELEMETRY CALCULATIONS
 // -------------------------------------------------------------
+const activeReportMetricMode = ref<'simple' | 'advanced'>('advanced');
+const reportMetricModes: Array<{ id: 'simple' | 'advanced'; label: string }> = [
+  { id: 'simple', label: 'Simple' },
+  { id: 'advanced', label: 'Advanced' }
+];
 const activeMetricTab = ref('all'); // 'all', 'adherence', 'behavioural', 'execution'
+
+const formatCurrency = (value: number) => {
+  const safe = Number.isFinite(value) ? value : 0;
+  return `${safe < 0 ? '-' : ''}$${Math.abs(safe).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const formatRatio = (value: number) => {
+  const safe = Number.isFinite(value) && value > 0 ? value : 0;
+  return `1:${safe.toFixed(2)}`;
+};
+
+const conditionIdentity = (condition: any) => {
+  if (typeof condition === 'string') return condition;
+  return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '').toLowerCase();
+};
+
+const requiredConditionStats = computed(() => {
+  const tr = props.trade as any;
+  const conditions = tr?.boardScenarioEntry?.info?.conditions || [];
+  const required = conditions.filter((c: any) => c?.info?.priority === 'REQUIRED');
+  const executed = Array.isArray(tr?.boardConditions) ? tr.boardConditions : [];
+
+  if (required.length === 0) {
+    return { used: 0, total: 0 };
+  }
+
+  if (executed.length === 0) {
+    return { used: required.length, total: required.length };
+  }
+
+  const executedKeys = new Set(executed.map(conditionIdentity).filter(Boolean));
+  const used = required.filter((req: any) => executedKeys.has(conditionIdentity(req))).length;
+  return { used, total: required.length };
+});
 
 // Tab A: Matrix Adherence Metrics
 const matrixAdherenceMetrics = computed(() => {
@@ -1572,6 +1611,109 @@ const strategyExecutionMetrics = computed(() => {
   };
 });
 
+const simpleMetricInsights = computed(() => {
+  const tr = props.trade as any;
+  const isRu = locale.value === 'ru';
+  if (!tr) return [];
+
+  const currentPnl = getNormalizedPnl(tr);
+  const sameStrategyTrades = allTrades.value.filter((trade: any) => trade?.id !== tr.id);
+  const baselineTrades = sameStrategyTrades.length > 0 ? sameStrategyTrades : allTrades.value;
+  const normalizedPnls = baselineTrades
+    .map((trade: any) => getNormalizedPnl(trade))
+    .filter((value: number) => Number.isFinite(value));
+  const winningPnls = normalizedPnls.filter((value: number) => value > 0);
+  const losingPnls = normalizedPnls.filter((value: number) => value < 0);
+  const avgWin = winningPnls.length ? winningPnls.reduce((sum: number, value: number) => sum + value, 0) / winningPnls.length : 0;
+  const avgLoss = losingPnls.length ? losingPnls.reduce((sum: number, value: number) => sum + value, 0) / losingPnls.length : 0;
+
+  const requiredStats = requiredConditionStats.value;
+
+  let riskValue = formatCurrency(actualRiskDollars.value);
+  let riskSuffix = isRu ? 'расчетный риск сделки' : 'calculated trade risk';
+  let riskBenchmarkLabel = isRu ? 'лимит' : 'limit';
+  let riskBenchmarkValue = isRu ? 'не задан' : 'not set';
+  let riskHint = '';
+  if (maxRiskTrade.value?.unit === '%') {
+    const maxPct = maxRiskTrade.value.value;
+    riskValue = `${actualRiskPct.value.toFixed(2)}%`;
+    riskSuffix = isRu ? 'от капитала в этой сделке' : 'of capital in this trade';
+    riskBenchmarkValue = `${maxPct.toFixed(2)}%`;
+    riskHint = actualRiskPct.value > maxPct
+      ? (isRu ? 'Уменьшите риск сделки до лимита стратегии.' : 'Reduce trade risk back to the strategy limit.')
+      : (actualRiskPct.value < maxPct * 0.5
+        ? (isRu ? 'Вы можете увеличить риск, если сетап действительно соответствует протоколу.' : 'You can increase risk if the setup genuinely matches the protocol.')
+        : '');
+  } else if (maxRiskTrade.value) {
+    const maxDollars = maxRiskTrade.value.value;
+    riskValue = formatCurrency(actualRiskDollars.value);
+    riskSuffix = isRu ? 'риска на сделку' : 'risk on this trade';
+    riskBenchmarkValue = formatCurrency(maxDollars);
+    riskHint = actualRiskDollars.value > maxDollars
+      ? (isRu ? 'Уменьшите размер позиции или подтяните stop loss к лимиту.' : 'Reduce position size or move the stop loss back within the limit.')
+      : (actualRiskDollars.value < maxDollars * 0.5
+        ? (isRu ? 'Есть запас по риску, если качество сделки это оправдывает.' : 'There is unused risk budget if trade quality justifies it.')
+        : '');
+  }
+
+  const rrHint = targetRR.value > 0 && actualRR.value > 0 && actualRR.value < targetRR.value
+    ? (isRu
+      ? 'Увеличьте R/R через более точное смещение stop loss и take profit.'
+      : 'Improve R/R by adjusting stop loss and take profit placement.')
+    : '';
+
+  return [
+    {
+      id: 'pnl',
+      label: isRu ? 'Результат сделки' : 'Trade Result',
+      prefix: currentPnl >= 0 ? (isRu ? 'Прибыль' : 'Profit') : (isRu ? 'Убыток' : 'Loss'),
+      value: formatCurrency(currentPnl),
+      suffix: isRu ? 'по текущей сделке' : 'on the current trade',
+      benchmarkLabel: currentPnl >= 0 ? (isRu ? 'средняя прибыльная' : 'avg win') : (isRu ? 'средняя убыточная' : 'avg loss'),
+      benchmarkValue: currentPnl >= 0 ? formatCurrency(avgWin) : formatCurrency(avgLoss),
+      hint: '',
+      tone: currentPnl >= 0 ? 'positive' : 'negative'
+    },
+    {
+      id: 'required',
+      label: isRu ? 'Обязательные условия' : 'Required Conditions',
+      prefix: requiredStats.total > 0 ? (isRu ? 'Использовано' : 'Used') : (isRu ? 'Список' : 'List'),
+      value: requiredStats.total > 0 ? `${requiredStats.used}/${requiredStats.total}` : 'N/A',
+      suffix: requiredStats.total > 0 ? (isRu ? 'required условий' : 'required conditions') : (isRu ? 'required условий не найден' : 'required conditions not found'),
+      benchmarkLabel: isRu ? 'статус' : 'status',
+      benchmarkValue: requiredStats.total > 0 && requiredStats.used < requiredStats.total
+        ? (isRu ? 'пропуск' : 'missing')
+        : (isRu ? 'полно' : 'complete'),
+      hint: requiredStats.total > 0 && requiredStats.used < requiredStats.total
+        ? (isRu ? 'Проверьте, какие required условия были пропущены перед следующим входом.' : 'Review which required conditions were skipped before the next entry.')
+        : '',
+      tone: requiredStats.total > 0 && requiredStats.used < requiredStats.total ? 'warning' : 'positive'
+    },
+    {
+      id: 'risk',
+      label: isRu ? 'Риск сделки' : 'Trade Risk',
+      prefix: isRu ? 'Риск' : 'Risk',
+      value: riskValue,
+      suffix: riskSuffix,
+      benchmarkLabel: riskBenchmarkLabel,
+      benchmarkValue: riskBenchmarkValue,
+      hint: riskHint,
+      tone: maxRiskTrade.value && (maxRiskTrade.value.unit === '%' ? actualRiskPct.value > maxRiskTrade.value.value : actualRiskDollars.value > maxRiskTrade.value.value) ? 'negative' : 'positive'
+    },
+    {
+      id: 'rr',
+      label: 'Risk/Reward',
+      prefix: 'Risk/Reward',
+      value: formatRatio(actualRR.value),
+      suffix: isRu ? 'фактическое соотношение' : 'realized ratio',
+      benchmarkLabel: isRu ? 'цель' : 'target',
+      benchmarkValue: targetRR.value > 0 ? formatRatio(targetRR.value) : 'N/A',
+      hint: rrHint,
+      tone: targetRR.value > 0 && actualRR.value < targetRR.value ? 'warning' : 'positive'
+    }
+  ];
+});
+
 </script>
 
 <template>
@@ -1733,6 +1875,76 @@ const strategyExecutionMetrics = computed(() => {
                 </div>
 
                 <!-- BOTTOM SECTION: PERFORMANCE_BENCHMARK (Detailed Grid) -->
+                <div class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
+                  <div class="flex flex-col">
+                    <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">Performance_Benchmark</span>
+                    <span class="text-[10px] font-mono uppercase tracking-[0.22em] opacity-60 nier-text-primary">
+                      {{ activeReportMetricMode === 'simple' ? 'Readable diagnostic brief' : 'Advanced telemetry grid' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center border nier-border-primary bg-black/[0.02] dark:bg-white/[0.02] p-1 shrink-0">
+                    <button
+                      v-for="mode in reportMetricModes"
+                      :key="mode.id"
+                      @click="activeReportMetricMode = mode.id"
+                      class="relative min-w-[96px] px-4 py-2 text-[9px] font-mono font-black uppercase tracking-[0.22em] transition-all duration-300"
+                      :class="activeReportMetricMode === mode.id
+                        ? 'nier-bg-inverted nier-text-primary shadow-sm'
+                        : 'text-black/45 dark:text-white/45 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'">
+                      {{ mode.label }}
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="activeReportMetricMode === 'simple'" class="pb-6">
+                  <div
+                    v-for="(item, index) in simpleMetricInsights"
+                    :key="item.id"
+                    class="group relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 border-b nier-border-primary px-4 py-4 transition-all duration-300 first:border-t hover:bg-black/[0.025] dark:hover:bg-white/[0.025] md:grid-cols-[42px_minmax(0,1fr)_minmax(148px,auto)] md:px-5"
+                  >
+                    <div class="absolute left-0 top-1/2 h-6 w-px -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                         :class="item.tone === 'positive' ? 'bg-emerald-500' : (item.tone === 'negative' ? 'bg-rose-500' : 'bg-amber-500')"></div>
+
+                    <div class="flex items-center justify-center">
+                      <div class="relative flex h-7 w-7 items-center justify-center text-[9px] font-mono font-black opacity-45 transition-all duration-300 group-hover:opacity-100">
+                        <div class="absolute inset-0 rotate-45 border nier-border-primary transition-transform duration-300 group-hover:scale-110"></div>
+                        <span class="relative">{{ index + 1 }}</span>
+                      </div>
+                    </div>
+
+                    <div class="min-w-0">
+                      <div class="mb-2 flex items-center gap-3">
+                        <span class="text-[8px] font-mono font-black uppercase tracking-[0.32em] opacity-35 transition-opacity group-hover:opacity-60">
+                          {{ item.label }}
+                        </span>
+                        <span class="h-px min-w-8 flex-1 bg-current opacity-10"></span>
+                      </div>
+                      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span class="text-[11px] font-mono uppercase tracking-[0.2em] opacity-45">{{ item.prefix }}</span>
+                        <span class="text-2xl font-mono font-black tracking-normal md:text-3xl"
+                              :class="item.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (item.tone === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')">
+                          {{ item.value }}
+                        </span>
+                        <span class="text-[12px] font-mono uppercase tracking-[0.12em] opacity-70">{{ item.suffix }}</span>
+                      </div>
+                      <p v-if="item.hint" class="mt-2 max-w-3xl text-[10px] font-mono uppercase leading-relaxed tracking-[0.16em] opacity-50">
+                        {{ item.hint }}
+                      </p>
+                    </div>
+
+                    <div class="col-start-2 flex items-center md:col-start-auto md:justify-end">
+                      <div class="inline-flex items-center gap-2 border nier-border-primary px-3 py-2 text-[9px] font-mono uppercase tracking-[0.18em] opacity-70 transition-all duration-300 group-hover:opacity-100">
+                        <span class="opacity-45">{{ item.benchmarkLabel }}</span>
+                        <span class="font-black"
+                              :class="item.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (item.tone === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')">
+                          {{ item.benchmarkValue }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else>
                 <!-- METRICS FILTER TABS -->
                 <div class="flex items-center space-x-2 border-b nier-border-primary pb-3 mb-4 overflow-x-auto custom-scrollbar">
                   <button v-for="tab in [
@@ -2821,6 +3033,7 @@ const strategyExecutionMetrics = computed(() => {
                      </ExTooltip>
                   </div>
 
+                </div>
 
                </div>
 
