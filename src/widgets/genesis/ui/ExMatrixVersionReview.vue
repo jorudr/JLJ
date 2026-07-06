@@ -31,11 +31,17 @@
                     :key="version.id"
                     class="version-diff overflow-hidden border border-black/15 dark:border-white/15"
                   >
-                    <div class="flex items-center justify-between px-10 py-5">
+                    <div class="flex items-center justify-between gap-6 px-10 py-5">
                       <div class="min-w-0">
                         <div class="flex items-center gap-3">
                           <Icon name="lucide:git-commit-horizontal" class="h-4 w-4 shrink-0 opacity-55" />
                           <span class="diff-version-title truncate font-mono text-[14px] font-black uppercase tracking-[0.18em]">{{ getVersionTitle(version) }}</span>
+                          <span
+                            v-if="isSelectedVersion(version.id)"
+                            class="version-selected-badge shrink-0 font-mono text-[8px] font-black uppercase tracking-[0.2em]"
+                          >
+                            {{ reviewText('currentVersion') }}
+                          </span>
                         </div>
                         <div class="mt-1 pl-7 flex flex-col gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em] opacity-40">
                           <div>
@@ -48,10 +54,31 @@
                           </div>
                         </div>
                       </div>
-                      <div class="flex shrink-0 items-center gap-4 font-mono text-[11px] font-black">
-                        <span class="diff-marker-added">+{{ version.added }}</span>
-                        <span class="diff-marker-removed">-{{ version.removed }}</span>
-                        <span class="diff-marker-modified">~{{ version.modified }}</span>
+                      <div class="flex shrink-0 items-center gap-5">
+                        <div class="flex items-center gap-4 font-mono text-[11px] font-black">
+                          <span class="diff-marker-added">+{{ version.added }}</span>
+                          <span class="diff-marker-removed">-{{ version.removed }}</span>
+                          <span class="diff-marker-modified">~{{ version.modified }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button
+                            type="button"
+                            class="version-action-button is-select"
+                            :class="{ 'is-selected': isSelectButtonActive(version.id) }"
+                            :aria-label="reviewText('selectVersion')"
+                            @click.stop="selectVersion(version.id)"
+                          >
+                            <Icon :name="isSelectButtonActive(version.id) ? 'lucide:check' : 'lucide:mouse-pointer-click'" class="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            class="version-action-button is-danger"
+                            :aria-label="reviewText('deleteVersion')"
+                            @click.stop="deleteVersion(version.id)"
+                          >
+                            <Icon name="lucide:trash-2" class="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -186,15 +213,69 @@
       </div>
     </Transition>
   </Teleport>
+
+  <Teleport to="body">
+    <Transition name="version-review-fade">
+      <div
+        v-if="pendingDeleteVersion"
+        class="fixed inset-0 z-[10000000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        @click="cancelDeleteVersion"
+      >
+        <div class="w-full max-w-lg" @click.stop>
+          <ExPanel variant="light">
+            <template #telemetry>
+              <span class="sr-only">Version delete confirmation controls</span>
+            </template>
+            <div class="flex flex-col space-y-6">
+              <div class="flex items-start space-x-6">
+                <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-red-500/40 text-red-500">
+                  <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 9v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div class="flex flex-col space-y-2">
+                  <span class="font-mono text-[14px] font-black uppercase tracking-widest text-nier-text-light dark:text-nier-text-dark">
+                    Critical_System_Alert
+                  </span>
+                  <p class="font-mono text-[11px] uppercase leading-relaxed tracking-widest text-nier-text-light/60 dark:text-nier-text-dark/60">
+                    {{ reviewText('deleteWarningIntro', { version: getVersionTitle(pendingDeleteVersion) }) }}
+                    <br><br>
+                    {{ reviewText('deleteWarningBody') }}
+                    <br><br>
+                    <span class="font-black text-red-500">{{ reviewText('irreversible') }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex justify-end space-x-4 border-t border-nier-border-light pt-4 dark:border-nier-border-dark">
+                <ExButton @click="cancelDeleteVersion" variant="ghost" size="md">
+                  {{ reviewText('cancel') }}
+                </ExButton>
+                <ExButton
+                  @click="confirmDeleteVersion"
+                  variant="solid"
+                  size="md"
+                  class="!border-red-500 !bg-red-500 !text-white transition-colors hover:!bg-red-600"
+                >
+                  {{ reviewText('executeDelete') }}
+                </ExButton>
+              </div>
+            </div>
+          </ExPanel>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
+import ExButton from '@/shared/ui/ExButton.vue'
 import ExSkillNode from './ExSkillNode.vue'
 import { useThemeStore } from '~/features/store/useTheme'
-import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
+import { useMatrixState, type MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 import type { MatrixChangeEvent, MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
 
 const props = defineProps<{
@@ -208,12 +289,17 @@ defineEmits<{
 
 const themeStore = useThemeStore()
 const { locale } = useI18n()
+const state = useMatrixState()
 const isDark = computed(() => themeStore.settings.isDark)
 const expandedVersions = ref(new Set<string>())
+const pendingDeleteVersionId = ref<string | null>(null)
+const pendingDeleteVersion = computed(() => props.versions.find(version => version.id === pendingDeleteVersionId.value) || null)
 
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
     expandedVersions.value = new Set()
+  } else {
+    pendingDeleteVersionId.value = null
   }
 })
 
@@ -259,11 +345,46 @@ function toggleVersion(versionId: string) {
   expandedVersions.value = next
 }
 
+function isSelectedVersion(versionId: string) {
+  return state.selectedStrategyVersionId.value === versionId
+}
+
+function isSelectButtonActive(versionId: string) {
+  return props.versions.length === 1 || isSelectedVersion(versionId)
+}
+
+async function selectVersion(versionId: string) {
+  await state.selectStrategyVersion(versionId)
+}
+
+async function deleteVersion(versionId: string) {
+  pendingDeleteVersionId.value = versionId
+}
+
+function cancelDeleteVersion() {
+  pendingDeleteVersionId.value = null
+}
+
+async function confirmDeleteVersion() {
+  const versionId = pendingDeleteVersionId.value
+  if (!versionId) return
+  pendingDeleteVersionId.value = null
+  await state.removeStrategyVersion(versionId)
+}
+
 const reviewTextMap: Record<string, { en: string; ru: string }> = {
   closeReview: { en: 'Close version review', ru: 'Закрыть обзор версий' },
   closeReviewShort: { en: 'Close_Review', ru: 'Закрыть_Обзор' },
   noTreeChanges: { en: 'No tree changes from previous version', ru: 'Нет изменений дерева с предыдущей версии' },
   noSavedVersions: { en: 'No saved versions', ru: 'Нет сохраненных версий' },
+  selectVersion: { en: 'Select version', ru: 'Выбрать версию' },
+  currentVersion: { en: 'Current', ru: 'Текущая' },
+  deleteVersion: { en: 'Delete version', ru: 'Удалить версию' },
+  deleteWarningIntro: { en: 'Initiating this protocol will permanently delete version: {version}.', ru: 'Запуск этого протокола полностью удалит версию: {version}.' },
+  deleteWarningBody: { en: 'The version snapshot and its review history backup will be purged from the current matrix archive.', ru: 'Снимок версии и его backup истории обзора будут очищены из текущего архива матрицы.' },
+  irreversible: { en: 'This action is irreversible.', ru: 'Это действие необратимо.' },
+  cancel: { en: 'CANCEL', ru: 'ОТМЕНА' },
+  executeDelete: { en: 'EXECUTE_DELETE', ru: 'УДАЛИТЬ_ВЕРСИЮ' },
   collapseVersion: { en: 'Collapse version', ru: 'Свернуть версию' },
   showMoreEvents: { en: 'Show {count} more events', ru: 'Показать еще {count} событий' },
   updatedNode: { en: '[~] UPDATED_NODE', ru: '[~] ОБНОВЛЕН_УЗЕЛ' },
@@ -730,6 +851,60 @@ function formatTimestamp(timestamp: number) {
   color: rgb(126 24 36);
 }
 
+.version-selected-badge {
+  border: 1px solid rgb(34 34 32 / 0.18);
+  color: rgb(34 34 32 / 0.58);
+  padding: 3px 6px;
+}
+
+.version-action-button {
+  display: inline-flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(34 34 32 / 0.18);
+  background: rgb(255 255 255 / 0.36);
+  color: rgb(34 34 32 / 0.52);
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+.version-action-button.is-select {
+  border-color: rgb(0 0 0 / 0.28);
+  background: rgb(0 0 0 / 0.38);
+  color: rgb(255 255 255 / 0.92);
+}
+
+.version-action-button.is-select:hover {
+  border-color: rgb(0 0 0 / 0.54);
+  background: rgb(0 0 0 / 0.52);
+  color: #ffffff;
+}
+
+.version-action-button:hover,
+.version-action-button.is-selected {
+  border-color: rgb(34 34 32 / 0.44);
+  background: rgb(34 34 32 / 0.08);
+  color: rgb(34 34 32 / 0.95);
+}
+
+.version-action-button.is-select.is-selected,
+.version-action-button.is-select.is-selected:hover {
+  border-color: rgb(255 255 255 / 0.92);
+  background: #ffffff;
+  color: #000000;
+}
+
+.version-action-button.is-danger {
+  color: rgb(190 45 62 / 0.68);
+}
+
+.version-action-button.is-danger:hover {
+  border-color: rgb(246 76 98 / 0.62);
+  background: rgb(246 76 98 / 0.08);
+  color: rgb(246 76 98);
+}
+
 .diff-event-add {
   color: rgb(156 119 255);
 }
@@ -783,6 +958,53 @@ function formatTimestamp(timestamp: number) {
 
 .version-review-theme.is-dark .diff-version-title {
   color: rgb(170 42 55);
+}
+
+.version-review-theme.is-dark .version-selected-badge {
+  border-color: rgb(249 246 240 / 0.18);
+  color: rgb(249 246 240 / 0.6);
+}
+
+.version-review-theme.is-dark .version-action-button {
+  border-color: rgb(249 246 240 / 0.18);
+  background: rgb(0 0 0 / 0.34);
+  color: rgb(249 246 240 / 0.58);
+}
+
+.version-review-theme.is-dark .version-action-button.is-select {
+  border-color: rgb(249 246 240 / 0.18);
+  background: rgb(0 0 0 / 0.46);
+  color: rgb(249 246 240 / 0.92);
+}
+
+.version-review-theme.is-dark .version-action-button.is-select:hover {
+  border-color: rgb(249 246 240 / 0.42);
+  background: rgb(0 0 0 / 0.64);
+  color: #ffffff;
+}
+
+.version-review-theme.is-dark .version-action-button:hover,
+.version-review-theme.is-dark .version-action-button.is-selected {
+  border-color: rgb(249 246 240 / 0.46);
+  background: rgb(249 246 240 / 0.08);
+  color: rgb(249 246 240 / 0.96);
+}
+
+.version-review-theme.is-dark .version-action-button.is-select.is-selected,
+.version-review-theme.is-dark .version-action-button.is-select.is-selected:hover {
+  border-color: rgb(255 255 255 / 0.94);
+  background: #ffffff;
+  color: #000000;
+}
+
+.version-review-theme.is-dark .version-action-button.is-danger {
+  color: rgb(248 113 113 / 0.72);
+}
+
+.version-review-theme.is-dark .version-action-button.is-danger:hover {
+  border-color: rgb(248 113 113 / 0.62);
+  background: rgb(248 113 113 / 0.1);
+  color: rgb(248 113 113);
 }
 
 .version-review-theme.is-dark .diff-node-type,

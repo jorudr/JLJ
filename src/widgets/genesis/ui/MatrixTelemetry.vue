@@ -11,33 +11,6 @@
          <span class="matrix-tool-tooltip">{{ matrixToolLabel('reset') }}</span>
        </div>
        <div class="matrix-tool">
-         <div class="relative pointer-events-auto">
-           <button
-             type="button"
-             @click.stop="toggleGitPanel"
-             @contextmenu.prevent.stop="toggleGitMenu"
-             class="tactical-button w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100"
-             :aria-label="matrixToolLabel('changes')"
-           >
-             <Icon name="lucide:git-branch" class="w-4 h-4" />
-           </button>
-         </div>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('changes') }}</span>
-       </div>
-       <div
-         v-if="isGitMenuOpen"
-         class="pointer-events-auto absolute left-12 top-10 z-[100001] min-w-[190px] border border-nier-text-light/20 bg-nier-white/95 shadow-[8px_8px_0_rgba(0,0,0,0.12)] dark:border-nier-text-dark/20 dark:bg-nier-black/95 dark:shadow-[8px_8px_0_rgba(255,255,255,0.06)]"
-         @click.stop
-       >
-         <button
-           type="button"
-           class="block w-full px-4 py-3 text-left font-mono text-[8px] font-black uppercase tracking-[0.28em] text-nier-text-light transition-colors hover:bg-nier-text-light/10 dark:text-nier-text-dark dark:hover:bg-nier-text-dark/10"
-           @click.stop="clearChangeTree"
-         >
-           {{ locale === 'ru' ? 'Очистить дерево' : 'Clear Tree' }}
-         </button>
-       </div>
-       <div class="matrix-tool">
          <button
            type="button"
            class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
@@ -100,9 +73,10 @@
          <button
            type="button"
            @click.stop="$emit('strategy-version-update')"
-           class="tactical-button pointer-events-auto w-32 min-h-8 border border-current px-3 py-2 bg-nier-text-light/10 dark:bg-nier-text-dark/10 hover:bg-nier-text-light/20 dark:hover:bg-nier-text-dark/20 transition-all font-mono text-[8px] font-black uppercase tracking-[0.18em] leading-tight"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           :aria-label="matrixToolLabel('updateVersion')"
          >
-           {{ locale === 'ru' ? 'Обновить версию' : 'Update Version' }}
+           <Icon name="lucide:refresh-cw" class="w-4 h-4" />
          </button>
          <span class="matrix-tool-tooltip">{{ matrixToolLabel('updateVersion') }}</span>
        </div>
@@ -110,9 +84,10 @@
          <button
            type="button"
            @click.stop="$emit('strategy-version-clear')"
-           class="tactical-button pointer-events-auto w-32 min-h-8 border border-red-700/70 px-3 py-2 text-red-700 dark:text-red-400 hover:bg-red-700/10 transition-all font-mono text-[8px] font-black uppercase tracking-[0.18em] leading-tight"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-red-700/70 text-red-700 dark:text-red-400 flex items-center justify-center hover:bg-red-700/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           :aria-label="matrixToolLabel('clearChanges')"
          >
-           {{ locale === 'ru' ? 'Сбросить изменения' : 'Clear Changes' }}
+           <Icon name="lucide:undo-2" class="w-4 h-4" />
          </button>
          <span class="matrix-tool-tooltip">{{ matrixToolLabel('clearChanges') }}</span>
        </div>
@@ -234,8 +209,6 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 import ExMatrixVersionReview from './ExMatrixVersionReview.vue'
-import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
-import { useMatrixState } from '../model/matrix/useMatrixState'
 import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 
 const props = defineProps<{
@@ -260,11 +233,8 @@ const emit = defineEmits([
 ])
 
 const { locale } = useI18n()
-const state = useMatrixState()
-const changeTree = state.changeTree
 
 const isManualOpen = ref(false)
-const isGitMenuOpen = ref(false)
 const isVersionReviewOpen = ref(false)
 const activeManualSection = ref(0)
 
@@ -273,7 +243,6 @@ const strategyVersions = computed(() => props.strategyVersions || [])
 function matrixToolLabel(key: string) {
   const ru: Record<string, string> = {
     reset: 'Сбросить вид',
-    changes: 'Контроль изменений',
     versionReview: 'Обзор версий',
     tree: 'Дерево',
     manual: 'Руководство',
@@ -283,7 +252,6 @@ function matrixToolLabel(key: string) {
   }
   const en: Record<string, string> = {
     reset: 'Reset View',
-    changes: 'Changes Control',
     versionReview: 'Version Review',
     tree: 'Tree View',
     manual: 'Manual',
@@ -298,23 +266,7 @@ function setGitPanelOpen(value: boolean) {
   emit('git-panel-state', value)
 }
 
-function toggleGitPanel() {
-  isGitMenuOpen.value = false
-  isVersionReviewOpen.value = false
-  setGitPanelOpen(!props.gitPanelOpen)
-}
-
-function toggleGitMenu() {
-  isGitMenuOpen.value = !isGitMenuOpen.value
-}
-
-function clearChangeTree() {
-  changeTree.resetChanges()
-  isGitMenuOpen.value = false
-}
-
 function openVersionReview() {
-  isGitMenuOpen.value = false
   isManualOpen.value = false
   setGitPanelOpen(false)
   isVersionReviewOpen.value = true
