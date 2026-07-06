@@ -2068,15 +2068,23 @@ const renderDistributionChart = () => {
   ctx.restore()
 
   const faces: Array<{ depth: number, points: Point2D[], fill: string, stroke: string }> = []
+  const waveTime = performance.now() * 0.001
   bars.forEach((bar, index) => {
     const xCenter = (index - (bars.length - 1) / 2) * slot
-    const h = (bar.height / 100) * maxWorldHeight
-    const x0 = xCenter - barWidth / 2
-    const x1 = xCenter + barWidth / 2
+    const randomPhase = (Math.sin(index * 12.9898) * 43758.5453) % (Math.PI * 2)
+    const pulseA = Math.max(0, Math.sin(waveTime * (0.75 + (index % 5) * 0.11) + randomPhase))
+    const pulseB = Math.max(0, Math.sin(waveTime * (1.18 + (index % 7) * 0.07) + randomPhase * 1.7))
+    const wavePulse = Math.max(pulseA, pulseB * 0.7)
+    const waveBoost = 1 + Math.pow(wavePulse, 10) * 0.04
+    const h = (bar.height / 100) * maxWorldHeight * waveBoost
+    const animatedBarWidth = barWidth * (1 + (waveBoost - 1) * 0.65)
+    const animatedBarDepth = barDepth * (1 + (waveBoost - 1) * 0.65)
+    const x0 = xCenter - animatedBarWidth / 2
+    const x1 = xCenter + animatedBarWidth / 2
     const y0 = 0
     const y1 = -h
-    const z0 = -barDepth / 2
-    const z1 = barDepth / 2
+    const z0 = -animatedBarDepth / 2
+    const z1 = animatedBarDepth / 2
     const active = hoveredDistributionBar.value?.id === bar.id
     const vertices = {
       fbl: { x: x0, y: y0, z: z1 },
