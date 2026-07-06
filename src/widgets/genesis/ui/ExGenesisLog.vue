@@ -110,8 +110,8 @@
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <div class="relative z-10 flex h-full w-full flex-col px-10 py-20 md:px-20 md:py-28">
-          <div class="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-black/10 pb-5 dark:border-white/10">
+        <div class="relative z-10 flex h-full w-full flex-col py-20 md:py-28">
+          <div class="mx-10 mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-black/10 pb-5 dark:border-white/10 md:mx-20">
             <div class="flex flex-col gap-2">
               <span class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
                 {{ locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_СДЕЛОК' : 'TRADE_DISTRIBUTION' }}
@@ -936,15 +936,31 @@ const tradeDistributionStats = computed(() => {
 })
 
 const distributionCanvasRef = ref<HTMLCanvasElement | null>(null)
-const distributionRotation = ref({ x: 0, y: 0.7 })
-const distributionTargetRotation = ref({ x: 0, y: 0.7 })
-const distributionScale = ref(1)
+const INITIAL_DISTRIBUTION_ROTATION = { x: 0.087, y: 0 }
+const INITIAL_DISTRIBUTION_SCALE = 1.35
+const distributionRotation = ref({ ...INITIAL_DISTRIBUTION_ROTATION })
+const distributionTargetRotation = ref({ ...INITIAL_DISTRIBUTION_ROTATION })
+const distributionScale = ref(INITIAL_DISTRIBUTION_SCALE)
 const isDistributionDragging = ref(false)
 const didDistributionDrag = ref(false)
 const distributionLastMousePos = ref({ x: 0, y: 0 })
 const distributionMousePos = ref({ x: 0, y: 0 })
 const hoveredDistributionBar = ref<any | null>(null)
 const distributionHitAreas: Array<{ bar: any, x1: number, y1: number, x2: number, y2: number, depth: number }> = []
+
+const resetDistributionView = () => {
+  distributionRotation.value = { ...INITIAL_DISTRIBUTION_ROTATION }
+  distributionTargetRotation.value = { ...INITIAL_DISTRIBUTION_ROTATION }
+  distributionScale.value = INITIAL_DISTRIBUTION_SCALE
+  hoveredDistributionBar.value = null
+  isDistributionDragging.value = false
+  didDistributionDrag.value = false
+  distributionHitAreas.length = 0
+}
+
+watch(viewType, (next) => {
+  if (next === 'distribution') resetDistributionView()
+})
 
 const distributionTooltipStyle = computed(() => {
   const canvas = distributionCanvasRef.value
@@ -1940,7 +1956,7 @@ const projectDistributionPoint = (p: Point3D, width: number, height: number): Po
   const scale = focalLength / (focalLength + z)
   return {
     x: p.x * scale + width / 2,
-    y: p.y * scale + height * 0.62,
+    y: p.y * scale + height * 0.68,
     opacity: Math.max(0.18, (900 - z) / 1300),
     depth: p.z
   }
@@ -2005,7 +2021,7 @@ const renderDistributionChart = () => {
   distributionHitAreas.length = 0
   if (!bars.length) return
 
-  const chartWidth = Math.min(860, Math.max(280, width * 0.72))
+  const chartWidth = Math.max(320, width * 0.92)
   const slot = Math.min(26, Math.max(2.4, chartWidth / bars.length))
   const barWidth = Math.max(1.4, slot * 0.68)
   const barDepth = Math.min(30, Math.max(8, slot * 1.25))
