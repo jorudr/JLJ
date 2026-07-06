@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { toRefs } from 'vue'
 import { useExRobustness } from '../../model/useExRobustness'
+import { useI18n } from '~/shared/i18n/useI18n'
 
 const props = defineProps<{
   diagnosticStats: any
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const { diagnosticStats, strategyMetrics, filteredTrades } = toRefs(props)
+const { locale } = useI18n()
 
 const getFilteredTradesFn = () => filteredTrades.value
 
@@ -25,6 +27,23 @@ const {
   robustnessUiLayerSummary,
   robustnessExplanationSequence
 } = useExRobustness(diagnosticStats, strategyMetrics, getFilteredTradesFn)
+
+const diagnosticTextMap: Record<string, { en: string; ru: string }> = {
+  viewExplanation: { en: 'VIEW_EXPLANATION', ru: 'ПОЯСНЕНИЕ_ДИАГНОСТИКИ' },
+  distributionMetrics: { en: 'I. DISTRIBUTION_METRICS', ru: 'I. МЕТРИКИ_РЕЗУЛЬТАТОВ' },
+  bootstrapStability: { en: 'II. BOOTSTRAP_STABILITY', ru: 'II. УСТОЙЧИВОСТЬ_ПОВТОРНОЙ_ПРОВЕРКИ' },
+  distributionFits: { en: 'III. DISTRIBUTION_FITS', ru: 'III. СРАВНЕНИЕ_МОДЕЛЕЙ' },
+  optimalFit: { en: '[ OPTIMAL_FIT ]', ru: '[ ЛУЧШЕЕ_СОВПАДЕНИЕ ]' },
+  suboptimal: { en: '[ SUBOPTIMAL ]', ru: '[ СЛАБЕЕ ]' },
+  normalityHypothesis: { en: 'IV. NORMALITY_HYPOTHESIS', ru: 'IV. ПРОВЕРКА_СТАБИЛЬНОСТИ' },
+  rollingLayer: { en: 'V. ROLLING_LAYER_DYNAMICS', ru: 'V. ТЕКУЩАЯ_ДИНАМИКА' },
+  robustnessAction: { en: 'VI. ROBUSTNESS_ACTION', ru: 'VI. СЛЕДУЮЩИЙ_ШАГ' },
+  diagnosticTrace: { en: 'VII. DIAGNOSTIC_TRACE', ru: 'VII. ХОД_ДИАГНОСТИКИ' }
+}
+
+function diagnosticText(key: string) {
+  return diagnosticTextMap[key]?.[locale.value === 'ru' ? 'ru' : 'en'] || key
+}
 </script>
 
 <template>
@@ -33,7 +52,7 @@ const {
       
       <!-- HEADER -->
       <header class="mb-20 border-b border-black/20 dark:border-white/20 pb-12">
-        <div class="text-[9px] uppercase tracking-[0.45em] opacity-40 mb-6">VIEW_EXPLANATION</div>
+        <div class="text-[9px] uppercase tracking-[0.45em] opacity-40 mb-6">{{ diagnosticText('viewExplanation') }}</div>
         <h1 class="text-3xl uppercase tracking-widest font-black mb-6" :style="{ color: robustnessExplanation.tone }">
           {{ robustnessExplanation.verdict }}
         </h1>
@@ -47,7 +66,7 @@ const {
         
         <!-- METRICS -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">I. DISTRIBUTION_METRICS</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('distributionMetrics') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
             <div v-for="item in robustnessExplanationVariables" :key="item.name" class="flex items-end justify-between group border-b border-black/5 dark:border-white/5 pb-2">
               <span class="opacity-50 group-hover:opacity-100 transition-opacity">{{ item.name }}</span>
@@ -58,7 +77,7 @@ const {
 
         <!-- BOOTSTRAP STABILITY -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">II. BOOTSTRAP_STABILITY</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('bootstrapStability') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12 mb-8">
             <div v-for="item in robustnessBootstrapSummary" :key="item.name" class="flex items-end justify-between group border-b border-black/5 dark:border-white/5 pb-2">
               <span class="opacity-50 group-hover:opacity-100 transition-opacity">{{ item.name }}</span>
@@ -70,7 +89,7 @@ const {
 
         <!-- DISTRIBUTION FITS -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">III. DISTRIBUTION_FITS</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('distributionFits') }}</h2>
           <div class="flex flex-col border-t border-l border-r nier-border-primary">
             <div v-for="fit in robustnessDistributionFits" :key="fit.name" 
                  class="grid grid-cols-4 items-center p-5 border-b"
@@ -82,7 +101,7 @@ const {
               <div class="opacity-60 text-right">AIC: <span class="font-bold nier-text-primary opacity-100 ml-2 text-sm">{{ fit.aic }}</span></div>
               <div class="opacity-60 text-right">BIC: <span class="font-bold nier-text-primary opacity-100 ml-2 text-sm">{{ fit.bic }}</span></div>
               <div class="text-right" :class="fit.isBest ? 'opacity-100 font-bold' : 'opacity-40'">
-                {{ fit.isBest ? '[ OPTIMAL_FIT ]' : '[ SUBOPTIMAL ]' }}
+                {{ fit.isBest ? diagnosticText('optimalFit') : diagnosticText('suboptimal') }}
               </div>
             </div>
           </div>
@@ -91,7 +110,7 @@ const {
 
         <!-- NORMALITY TESTS -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">IV. NORMALITY_HYPOTHESIS</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('normalityHypothesis') }}</h2>
           <div class="flex flex-col gap-6 mb-10">
             <div v-for="test in robustnessNormalityTests" :key="test.name" class="flex flex-col gap-3">
               <div class="flex items-center gap-6">
@@ -111,7 +130,7 @@ const {
 
         <!-- ROLLING LAYER -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">V. ROLLING_LAYER_DYNAMICS</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('rollingLayer') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
             <div v-for="item in robustnessUiLayerSummary" :key="item.name" class="flex items-end justify-between group border-b border-black/5 dark:border-white/5 pb-2">
               <span class="opacity-50 group-hover:opacity-100 transition-opacity">{{ item.name }}</span>
@@ -122,7 +141,7 @@ const {
 
         <!-- ACTION -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">VI. ROBUSTNESS_ACTION</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('robustnessAction') }}</h2>
           <div class="p-6 border border-black/15 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.03]">
             <p class="leading-loose font-bold" :style="{ color: robustnessExplanation.tone }">> {{ robustnessExplanation.action }}</p>
           </div>
@@ -130,7 +149,7 @@ const {
 
         <!-- TRACE -->
         <section>
-          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">VII. DIAGNOSTIC_TRACE</h2>
+          <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('diagnosticTrace') }}</h2>
           <pre class="whitespace-pre-wrap normal-case tracking-normal leading-loose opacity-60 border-l border-black/20 dark:border-white/20 pl-6">{{ robustnessExplanationSequence }}</pre>
         </section>
 
