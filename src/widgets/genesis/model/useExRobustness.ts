@@ -17,7 +17,7 @@ export function useExRobustness(
     const skew = stats.skewness || 0
     const kurt = stats.kurtosis || 0
     const isFatTailed = stats.preferredModel === "Student's t" || kurt > 1.5
-    const distribution = isFatTailed ? "Student's t / fat-tailed" : 'Normal-like'
+    const distribution = isFatTailed ? 'Many unusually large trades' : 'Normal-like'
     const sampleSize = stats.pnls?.length || 0
     const unmanagedRatio = sampleSize > 0 ? (stats.unmanagedRiskCount || 0) / sampleSize : 0
     const hasNoRiskModel = unmanagedRatio >= 0.5 || (stats.stopLossCoveragePct || 0) < 50
@@ -26,9 +26,9 @@ export function useExRobustness(
     if (hasNoRiskModel && (isFatTailed || hasTailOutliers)) {
       return {
         distribution,
-        verdict: 'Unmanaged fat-tail profile',
-        diagnosis: 'The return stream has large tail events while most trades lack protective stop or target data. A positive average can be dominated by a few outliers, so the curve is not robust without explicit loss limits.',
-        action: 'Add stop-loss data first. Keep position size small. Retest without the biggest winner before scaling up.',
+        verdict: 'Large trades without enough risk control',
+        diagnosis: 'Several trades are much larger than the typical trade, and many trades do not have stop-loss or take-profit data. This means the average result can look good only because of a few unusual trades, while the downside is not clearly limited.',
+        action: 'Add stop-loss data first. Keep position size small. Check whether the strategy is still profitable if the single best trade is ignored before increasing size.',
         tone: '#fb7185'
       }
     }
@@ -36,9 +36,9 @@ export function useExRobustness(
     if (skew < -0.5) {
       return {
         distribution,
-        verdict: 'Negative skew detected',
-        diagnosis: 'The left tail is heavier than the right tail. The strategy is probably collecting frequent small gains while exposing the account to rare but oversized losses.',
-        action: 'Review the losing trades. Tighten stops or exits. Use smaller position size until the worst loss is acceptable.',
+        verdict: 'Losses are larger than wins',
+        diagnosis: 'The losing side is heavier than the winning side. The strategy may be taking many small wins, but one bad loss can erase a lot of progress.',
+        action: 'Review the biggest losing trades. Tighten stops or exits. Use smaller position size until the worst realistic loss is acceptable.',
         tone: '#fb7185'
       }
     }
@@ -46,9 +46,9 @@ export function useExRobustness(
     if (isFatTailed && skew > 0.5) {
       return {
         distribution,
-        verdict: 'Right-skewed tail dependency',
-        diagnosis: 'The right tail is profitable, but the distribution is still fat-tailed. The strategy may look attractive because of rare oversized winners rather than stable repeatable expectancy.',
-        action: 'Retest without the biggest winner. Keep risk per trade fixed. Wait for more trades before increasing size.',
+        verdict: 'Result depends on a few big winners',
+        diagnosis: 'The biggest winning trades help the strategy a lot, but results are not yet smooth. The strategy may look strong because of rare large wins, not because most trades are consistently good.',
+        action: 'Check the result again after ignoring the single best winning trade. Keep risk per trade fixed. Wait for more trades before increasing size.',
         tone: stats.mean < 0 ? '#fb7185' : '#fbbf24'
       }
     }
@@ -56,9 +56,9 @@ export function useExRobustness(
     if (skew > 0.5) {
       return {
         distribution,
-        verdict: 'Positive skew profile',
-        diagnosis: 'The right tail is dominant. This usually fits trend-following or breakout logic where many small losses can be paid by a few large winners.',
-        action: 'Keep risk per trade steady. Let winners run. Judge the strategy on a bigger sample, not one trade.',
+        verdict: 'Big winners are helping the strategy',
+        diagnosis: 'Large winning trades are doing most of the work. This can be normal for trend-following or breakout systems, where several small losses are paid for by a few strong wins.',
+        action: 'Keep risk per trade steady. Let winning trades reach their plan. Judge the strategy on many trades, not on one strong winner.',
         tone: stats.mean < 0 ? '#fb7185' : '#34d399'
       }
     }
@@ -66,17 +66,17 @@ export function useExRobustness(
     if (isFatTailed) {
       return {
         distribution,
-        verdict: 'Fat tails are present',
-        diagnosis: "Returns are better described by a Student's t shape than by a calm normal curve. Outliers are part of the system, not noise.",
-        action: 'Keep extra cash aside. Avoid leverage. Test the worst losing streak and size trades for that case.',
+        verdict: 'Unusually large trades are present',
+        diagnosis: 'The trade results include more unusually large wins or losses than a calm strategy would normally have. These trades should be treated as part of the strategy, not ignored as random noise.',
+        action: 'Keep extra cash aside. Avoid leverage. Test what happens during the worst losing streak and size trades for that case.',
         tone: '#fbbf24'
       }
     }
 
     return {
       distribution,
-      verdict: 'Calm diversified distribution',
-      diagnosis: 'The return shape is close to normal. This points to calmer, more diversified behavior with fewer structural tail shocks.',
+      verdict: 'Stable trade result pattern',
+      diagnosis: 'The trade results look relatively balanced. There are fewer unusually large wins or losses, so the strategy is easier to judge from the average trade.',
       action: 'Keep the current rules. Do not over-tune the strategy. Recheck after more trades.',
       tone: colors.value.accent
     }
@@ -90,11 +90,11 @@ export function useExRobustness(
       { name: 'Preferred Distribution', val: stats.preferredModel || 'Normal' },
       { name: 'Mean Trade Result', val: `$${stats.mean.toFixed(2)}` },
       { name: 'Standard Deviation', val: `$${stats.std.toFixed(2)}` },
-      { name: 'Skewness', val: `${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)}` },
-      { name: 'Excess Kurtosis', val: `${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}` },
+      { name: 'Win/Loss Imbalance', val: `${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)}` },
+      { name: 'Large Trade Frequency', val: `${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}` },
       { name: 'PnL Range', val: `$${stats.minPnl.toFixed(0)} / $${stats.maxPnl.toFixed(0)}` },
-      { name: 'IQR Tail Outliers', val: `${stats.tailOutlierCount}` },
-      { name: 'Largest Tail Distance', val: `${stats.largestTailSigma.toFixed(2)}σ` },
+      { name: 'Unusually Large Trades', val: `${stats.tailOutlierCount}` },
+      { name: 'Largest Trade Distance', val: `${stats.largestTailSigma.toFixed(2)}σ` },
       { name: 'Stop-Loss Coverage', val: `${stats.stopLossCoveragePct.toFixed(0)}%` },
       { name: 'Take-Profit Coverage', val: `${stats.takeProfitCoveragePct.toFixed(0)}%` },
       { name: 'Unmanaged Trades', val: `${stats.unmanagedRiskCount}` },
@@ -118,14 +118,14 @@ export function useExRobustness(
         ]
       },
       {
-        name: "Student's t",
+        name: 'Large-trade model',
         isBest: !normalWins,
         aic: stats.tParams.aic.toFixed(2),
         bic: stats.tParams.bic.toFixed(2),
         params: [
           { name: 'Mean', val: `$${stats.tParams.mean.toFixed(2)}` },
-          { name: 'Scale', val: `$${stats.tParams.scale.toFixed(2)}` },
-          { name: 'Degrees of Freedom', val: stats.tParams.nu.toFixed(2) },
+          { name: 'Typical Swing Size', val: `$${stats.tParams.scale.toFixed(2)}` },
+          { name: 'Large Trade Sensitivity', val: stats.tParams.nu.toFixed(2) },
           { name: 'Log Likelihood', val: stats.tParams.logL.toFixed(2) }
         ]
       }
@@ -136,15 +136,15 @@ export function useExRobustness(
     const stats = diagnosticStats.value
     const deltaBic = stats.normalParams.bic - stats.tParams.bic
     if (stats.pnls.length < 5) {
-      return 'The sample is still thin, so AIC/BIC should be treated as directional evidence rather than a final model selection.'
+      return 'There are still too few trades for a confident model choice. Treat this as an early warning, not a final conclusion.'
     }
     if (deltaBic > 2) {
-      return `Student's t is preferred by BIC by ${deltaBic.toFixed(2)} points. The strategy should be managed as fat-tailed: outliers and capital reserve matter more than average trade comfort.`
+      return `The data fits a model with more unusually large trades better than a calm normal model by ${deltaBic.toFixed(2)} BIC points. Manage this strategy with extra reserve cash and do not rely only on the average trade.`
     }
     if (deltaBic < -2) {
-      return `Normal fit is preferred by BIC by ${Math.abs(deltaBic).toFixed(2)} points. The current distribution looks calmer, but skew and sample size still decide risk policy.`
+      return `The calm normal model fits better by ${Math.abs(deltaBic).toFixed(2)} BIC points. Results look more stable for now, but still check loss size and sample size before increasing risk.`
     }
-    return `AIC/BIC are close. Treat the model comparison as inconclusive and keep both normal fit and tail-aware controls visible.`
+    return 'The model scores are close. The result is not clear yet, so keep both views visible and continue checking for unusually large trades.'
   })
 
   const robustnessNormalityTests = computed(() => {
@@ -160,39 +160,39 @@ export function useExRobustness(
 
     return [
       {
-        name: 'Jarque-Bera Normality Proxy',
+        name: 'Balanced Result Shape Check',
         result: `${jarqueBera.toFixed(2)} ${jbPass ? 'PASS' : 'REJECT'}`,
-        note: 'H0: returns are compatible with normal skew/kurtosis.',
+        note: 'Checks whether the trade results look balanced enough to use a simple normal curve as a reference.',
         pass: jbPass
       },
       {
-        name: 'Skewness Symmetry Check',
+        name: 'Win/Loss Balance Check',
         result: `${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)} ${skewPass ? 'PASS' : 'WATCH'}`,
-        note: 'Large negative skew is the highest practical risk flag.',
+        note: 'Warns when losses are much larger than wins or wins are doing most of the work.',
         pass: skewPass
       },
       {
-        name: 'Excess Kurtosis Tail Check',
-        result: `${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)} ${kurtPass ? 'PASS' : 'FAT_TAIL'}`,
-        note: 'Positive excess kurtosis means outlier frequency is elevated.',
+        name: 'Large Trade Frequency Check',
+        result: `${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)} ${kurtPass ? 'PASS' : 'LARGE_TRADES'}`,
+        note: 'Shows whether unusually large wins or losses appear more often than expected.',
         pass: kurtPass
       },
       {
         name: 'QQ-Plot Alignment Check',
         result: qqPass ? 'ALIGNED' : 'TAIL_DEVIATION',
-        note: 'Uses the same quantile source as the QQ projection view.',
+        note: 'Checks whether real trades follow the expected curve or bend away at the largest wins and losses.',
         pass: qqPass
       },
       {
-        name: 'IQR Tail Outlier Check',
-        result: `${stats.tailOutlierCount || 0} ${outlierPass ? 'PASS' : 'OUTLIER_RISK'}`,
-        note: 'Flags trades outside the interquartile tail fence and beyond the visible fitted domain.',
+        name: 'Unusually Large Trade Check',
+        result: `${stats.tailOutlierCount || 0} ${outlierPass ? 'PASS' : 'CHECK_BIG_TRADES'}`,
+        note: 'Counts trades that are much larger than the usual range of this strategy.',
         pass: outlierPass
       },
       {
         name: 'Risk Management Coverage Check',
         result: `${(stats.stopLossCoveragePct || 0).toFixed(0)}% ${riskPass ? 'PASS' : 'NO_RISK_MODEL'}`,
-        note: 'Robustness requires explicit stop-loss coverage, especially when tail events dominate expectancy.',
+        note: 'Checks whether enough trades have stop-loss data, especially when a few large trades can change the whole result.',
         pass: riskPass
       }
     ]
@@ -202,52 +202,52 @@ export function useExRobustness(
     const tests = robustnessNormalityTests.value
     const failed = tests.filter(t => !t.pass)
     if (failed.length === 0) {
-      return 'Hypothesis verdict: no major distribution break is visible yet. Normal-fit views are usable, but keep monitoring tails as the sample grows.'
+      return 'Hypothesis verdict: no major warning is visible yet. The normal curve view is usable, but keep checking whether future trades become unusually large.'
     }
 
     const stats = diagnosticStats.value
-    const hasNormalityFailure = failed.some(t => t.name === 'Jarque-Bera Normality Proxy')
+    const hasNormalityFailure = failed.some(t => t.name === 'Balanced Result Shape Check')
     const hasRiskModelFailure = failed.some(t => t.name === 'Risk Management Coverage Check')
     const hasTailFailure = failed.some(t =>
-      t.name === 'Excess Kurtosis Tail Check' ||
-      t.name === 'IQR Tail Outlier Check' ||
+      t.name === 'Large Trade Frequency Check' ||
+      t.name === 'Unusually Large Trade Check' ||
       t.name === 'QQ-Plot Alignment Check'
     )
-    const hasShapeFailure = failed.some(t => t.name === 'Skewness Symmetry Check')
+    const hasShapeFailure = failed.some(t => t.name === 'Win/Loss Balance Check')
 
     if (hasRiskModelFailure && hasTailFailure && hasShapeFailure) {
-      return `Hypothesis verdict: fragile profile. Tails, skew, and weak risk controls are all active, so average PnL is misleading. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+      return `Hypothesis verdict: fragile profile. Loss/win imbalance, unusually large trades, and weak risk controls are all active. The average PnL can be misleading. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
     }
 
     if (hasRiskModelFailure && hasTailFailure) {
-      return `Hypothesis verdict: unmanaged tail risk. Outliers are present and risk coverage is weak, so the strategy needs controls before the average trade means much. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+      return `Hypothesis verdict: large-trade risk is not controlled. Some trades are much bigger than usual and risk coverage is weak, so improve controls before trusting the average trade. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
     }
 
     if (hasRiskModelFailure && hasShapeFailure) {
-      return `Hypothesis verdict: asymmetric and under-controlled. The return shape is tilted, but the risk model is too thin to trust the edge. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
+      return `Hypothesis verdict: uneven results and weak controls. Wins and losses are not balanced, and the risk model is too thin to trust the edge. Stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%.`
     }
 
     if (hasRiskModelFailure) {
-      return `Hypothesis verdict: risk model missing. The distribution may look acceptable, but robustness is limited until stop-loss coverage improves from ${stats.stopLossCoveragePct.toFixed(0)}%.`
+      return `Hypothesis verdict: risk model missing. Results may look acceptable, but confidence is limited until stop-loss coverage improves from ${stats.stopLossCoveragePct.toFixed(0)}%.`
     }
 
     if (hasTailFailure && hasShapeFailure) {
-      return 'Hypothesis verdict: non-normal profile. Outliers and skew are both visible, so evaluate the strategy by tail behavior, not by average return.'
+      return 'Hypothesis verdict: unstable result shape. Some trades are unusually large and wins/losses are not balanced, so do not judge the strategy only by average return.'
     }
 
     if (hasTailFailure) {
-      return 'Hypothesis verdict: fat-tail behavior. A few extreme trades are shaping the result, so stress-test the tails before trusting expectancy.'
+      return 'Hypothesis verdict: a few unusually large trades are shaping the result. Check whether the strategy still works if the best trade or worst trade is removed.'
     }
 
     if (hasShapeFailure) {
-      return 'Hypothesis verdict: asymmetric returns. The edge may depend on one side of the curve, so validate skew before increasing size.'
+      return 'Hypothesis verdict: uneven wins and losses. The edge may depend too much on either big winners or avoiding big losers, so validate this before increasing size.'
     }
 
     if (hasNormalityFailure) {
-      return 'Hypothesis verdict: normality is statistically weak. Keep the normal curve as a reference only, and confirm the edge with more trades.'
+      return 'Hypothesis verdict: the simple normal curve is not a strong fit. Use it as a visual reference only and confirm the edge with more trades.'
     }
 
-    return 'Hypothesis verdict: mixed warning. The sample is not clean enough for high confidence, so treat the edge as provisional.'
+    return 'Hypothesis verdict: mixed warning. The sample is not clear enough for high confidence, so treat the edge as unconfirmed.'
   })
 
   const robustnessBootstrapSummary = computed(() => {
@@ -265,12 +265,12 @@ export function useExRobustness(
   const robustnessBootstrapInterpretation = computed(() => {
     const bs = diagnosticStats.value.bootstrapCI
     if (bs.lower > 0) {
-      return 'The bootstrap interval stays above zero. The observed edge survives resampling, but position sizing should still respect tail diagnostics.'
+      return 'The resampling range stays above zero. The edge still looks positive after many re-checks, but position size should still respect the large-trade warnings.'
     }
     if (bs.upper < 0) {
-      return 'The bootstrap interval stays below zero. The strategy currently fails the resampled expectancy test and should be reworked.'
+      return 'The resampling range stays below zero. The strategy currently looks negative after repeated checks and should be reworked.'
     }
-    return 'The bootstrap interval crosses zero. The edge is not statistically stable yet; collect more trades or reduce risk until the interval clears positive territory.'
+    return 'The resampling range crosses zero. The edge is not stable yet; collect more trades or reduce risk until the range stays positive.'
   })
 
   const robustnessReturnHeatmap = computed(() => {
@@ -303,8 +303,8 @@ export function useExRobustness(
       { name: 'Rolling Sigma', val: `${m.stdDevPct.toFixed(2)}%` },
       { name: 'Rolling Drawdown', val: `${m.rollingDrawdown.toFixed(1)}%` },
       { name: 'Rolling Win Rate', val: `${m.rollingWinRate.toFixed(1)}%` },
-      { name: 'Distribution Robustness', val: `${m.distributionRobustness.toFixed(1)}` },
-      { name: 'Outlier Impact', val: `${m.outlierImpactRatio.toFixed(1)}%` },
+      { name: 'Result Pattern Strength', val: `${m.distributionRobustness.toFixed(1)}` },
+      { name: 'Big Trade Impact', val: `${m.outlierImpactRatio.toFixed(1)}%` },
       { name: 'Risk Coverage', val: `${stats.stopLossCoveragePct.toFixed(0)}% SL / ${stats.takeProfitCoveragePct.toFixed(0)}% TP` },
       { name: 'Heatmap Cells', val: `${robustnessReturnHeatmap.value.length}` }
     ]
@@ -312,8 +312,8 @@ export function useExRobustness(
 
   const robustnessVisualizationStatus = computed(() => {
     return [
-      { name: 'Histogram Overlay Selector', val: 'Normal / t overlay available' },
-      { name: 'QQ-Plot vs Normal', val: `${diagnosticStats.value.qqPoints?.length || 0} quantiles` },
+      { name: 'Histogram Overlay Selector', val: 'Calm / large-trade overlay available' },
+      { name: 'Trade Result Curve Check', val: `${diagnosticStats.value.qqPoints?.length || 0} points` },
       { name: 'Rolling Metrics', val: 'Sharpe, sigma, drawdown, win rate' },
       { name: 'Calendar Heatmap', val: 'Weekday / month return matrix' }
     ]
@@ -324,14 +324,14 @@ export function useExRobustness(
     const normalBic = stats.normalParams?.bic ?? 0
     const tBic = stats.tParams?.bic ?? 0
     const modelReason = stats.preferredModel === "Student's t"
-      ? `Student's t BIC (${tBic.toFixed(2)}) is lower than Normal BIC (${normalBic.toFixed(2)}), so tail risk deserves priority.`
-      : `Normal BIC (${normalBic.toFixed(2)}) is competitive with Student's t BIC (${tBic.toFixed(2)}), so the profile is treated as calmer unless skew/kurtosis disagrees.`
+      ? `The large-trade model score (${tBic.toFixed(2)}) is better than the calm normal score (${normalBic.toFixed(2)}), so unusually large trades deserve priority.`
+      : `The calm normal score (${normalBic.toFixed(2)}) is competitive with the large-trade score (${tBic.toFixed(2)}), so the profile is treated as calmer unless win/loss imbalance or large trades disagree.`
 
     return [
       `1. Fit check: ${modelReason}`,
-      `2. Curve domain: fitted PDFs span $${stats.curveDomain.min.toFixed(0)} to $${stats.curveDomain.max.toFixed(0)}, covering observed PnL from $${stats.minPnl.toFixed(0)} to $${stats.maxPnl.toFixed(0)}.`,
-      `3. Dispersion check: standard deviation is $${stats.std.toFixed(2)}, so average trade expectations should be judged against this volatility band.`,
-      `4. Shape check: skewness is ${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)} and excess kurtosis is ${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}.`,
+      `2. Curve range: the diagnostic view covers $${stats.curveDomain.min.toFixed(0)} to $${stats.curveDomain.max.toFixed(0)}, while real trades range from $${stats.minPnl.toFixed(0)} to $${stats.maxPnl.toFixed(0)}.`,
+      `3. Dispersion check: standard deviation is $${stats.std.toFixed(2)}, so compare the average trade against the normal swing size of this strategy.`,
+      `4. Shape check: win/loss imbalance is ${stats.skewness >= 0 ? '+' : ''}${stats.skewness.toFixed(2)} and large-trade frequency is ${stats.kurtosis >= 0 ? '+' : ''}${stats.kurtosis.toFixed(2)}.`,
       `5. Risk check: stop-loss coverage is ${stats.stopLossCoveragePct.toFixed(0)}%, take-profit coverage is ${stats.takeProfitCoveragePct.toFixed(0)}%, and ${stats.unmanagedRiskCount} trades are unmanaged.`,
       `6. Verdict: ${robustnessExplanation.value.verdict}.`,
       `7. Action: ${robustnessExplanation.value.action}`
