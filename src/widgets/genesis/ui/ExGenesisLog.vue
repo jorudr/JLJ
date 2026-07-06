@@ -103,6 +103,69 @@
          </div>
       </div>
 
+      <!-- PNL DISTRIBUTION LAYER -->
+      <div
+        v-if="viewType === 'distribution'"
+        class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
+      >
+        <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
+        <div class="relative z-10 flex h-full w-full flex-col px-10 py-20 md:px-20 md:py-28">
+          <div class="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-black/10 pb-5 dark:border-white/10">
+            <div class="flex flex-col gap-2">
+              <span class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
+                {{ locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_СДЕЛОК' : 'TRADE_DISTRIBUTION' }}
+              </span>
+              <span class="text-xs font-mono uppercase tracking-[0.25em] opacity-70">
+                {{ locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО УБЫТКА К МАКСИМАЛЬНОЙ ПРИБЫЛИ' : 'MAX LOSS TO MAX PROFIT' }}
+              </span>
+            </div>
+            <div class="grid grid-cols-3 gap-5 text-right font-mono uppercase">
+              <div>
+                <div class="text-[8px] tracking-[0.3em] text-rose-500/70">{{ locale === 'ru' ? 'УБЫТОК' : 'LOSS' }}</div>
+                <div class="mt-1 text-sm font-black text-rose-500">{{ formatDistributionCurrency(tradeDistributionStats.min) }}</div>
+              </div>
+              <div>
+                <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }}</div>
+                <div class="mt-1 text-sm font-black nier-text-primary">{{ tradeDistributionStats.count }}</div>
+              </div>
+              <div>
+                <div class="text-[8px] tracking-[0.3em] text-emerald-500/70">{{ locale === 'ru' ? 'ПРИБЫЛЬ' : 'PROFIT' }}</div>
+                <div class="mt-1 text-sm font-black text-emerald-500">{{ formatDistributionCurrency(tradeDistributionStats.max) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="tradeDistributionBars.length" class="relative min-h-0 flex-1">
+            <canvas
+              ref="distributionCanvasRef"
+              class="absolute inset-0 h-full w-full cursor-grab active:cursor-grabbing"
+              @mousedown.stop="handleDistributionMouseDown"
+              @mousemove.stop="handleDistributionMouseMove"
+              @mouseup.stop="handleDistributionMouseUp"
+              @mouseleave.stop="handleDistributionMouseLeave"
+              @wheel.stop="handleDistributionWheel"
+            ></canvas>
+            <div
+              v-if="hoveredDistributionBar"
+              class="pointer-events-none absolute z-20 max-w-[220px] border border-black/10 bg-white px-3 py-2 text-left font-mono text-[9px] uppercase tracking-[0.18em] text-black shadow-xl dark:border-white/10 dark:bg-black dark:text-white"
+              :style="distributionTooltipStyle"
+            >
+              <div class="truncate font-black">{{ hoveredDistributionBar.asset }}</div>
+              <div class="mt-1" :class="hoveredDistributionBar.pnl < 0 ? 'text-rose-500' : hoveredDistributionBar.pnl > 0 ? 'text-emerald-500' : 'opacity-50'">
+                {{ formatDistributionCurrency(hoveredDistributionBar.pnl) }}
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="flex flex-1 items-center justify-center">
+            <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
+              {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ГРАФИКА' : 'NO_TRADES_FOR_CHART' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- BOTTOM LEFT: VIEW TOGGLE -->
       <div
         v-if="isHudVisible && !isTradeEntryOpen"
@@ -134,6 +197,26 @@
                   <div class="w-5 h-[1.5px] bg-current opacity-30"></div>
                </div>
                <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
+            </button>
+
+            <button @click="viewType = 'distribution'"
+                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
+                    :class="viewType === 'distribution' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
+               <svg class="w-5 h-5 transition-all duration-700"
+                    :class="viewType === 'distribution' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  <path d="M4 19h16"></path>
+                  <path d="M6 16V9"></path>
+                  <path d="M10 16V5"></path>
+                  <path d="M14 16v-3"></path>
+                  <path d="M18 16V7"></path>
+               </svg>
+               <div v-if="viewType === 'distribution'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
          </div>
       </div>
@@ -706,7 +789,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list'>('cube')
+const viewType = ref<'cube' | 'list' | 'distribution'>('cube')
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
 
@@ -798,6 +881,81 @@ const currentTrades = computed(() => {
 
 const currentTradesForList = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getAllTradesForStrategy(selectedStrategyId.value))
+})
+
+const getTradePnlValue = (trade: any) => {
+  const raw = trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0
+  const value = typeof raw === 'string' ? Number.parseFloat(raw) : Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+const formatDistributionCurrency = (value: number) => {
+  const sign = value > 0 ? '+' : ''
+  return `${sign}$${value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
+}
+
+const tradeDistributionBars = computed(() => {
+  const sortedTrades = [...filteredTrades.value]
+    .map((trade) => ({
+      trade,
+      pnl: getTradePnlValue(trade)
+    }))
+    .sort((a, b) => a.pnl - b.pnl)
+
+  const maxAbsPnl = Math.max(1, ...sortedTrades.map(item => Math.abs(item.pnl)))
+
+  return sortedTrades.map((item, index) => {
+    const normalized = Math.abs(item.pnl) / maxAbsPnl
+    const height = Math.max(3, normalized * 100)
+    const asset = String(item.trade?.asset || 'UNKNOWN').toUpperCase()
+    return {
+      id: item.trade?.id || `${asset}-${index}`,
+      trade: item.trade,
+      pnl: item.pnl,
+      asset,
+      height,
+      opacity: Math.min(1, 0.45 + normalized * 0.55),
+      label: `${asset} ${formatDistributionCurrency(item.pnl)}`
+    }
+  })
+})
+
+const tradeDistributionStats = computed(() => {
+  const values = tradeDistributionBars.value.map(bar => bar.pnl)
+  if (!values.length) {
+    return { count: 0, min: 0, max: 0 }
+  }
+  return {
+    count: values.length,
+    min: Math.min(...values),
+    max: Math.max(...values)
+  }
+})
+
+const distributionCanvasRef = ref<HTMLCanvasElement | null>(null)
+const distributionRotation = ref({ x: 0, y: 0.7 })
+const distributionTargetRotation = ref({ x: 0, y: 0.7 })
+const distributionScale = ref(1)
+const isDistributionDragging = ref(false)
+const didDistributionDrag = ref(false)
+const distributionLastMousePos = ref({ x: 0, y: 0 })
+const distributionMousePos = ref({ x: 0, y: 0 })
+const hoveredDistributionBar = ref<any | null>(null)
+const distributionHitAreas: Array<{ bar: any, x1: number, y1: number, x2: number, y2: number, depth: number }> = []
+
+const distributionTooltipStyle = computed(() => {
+  const canvas = distributionCanvasRef.value
+  const width = canvas?.clientWidth || 260
+  const height = canvas?.clientHeight || 180
+  const left = Math.min(Math.max(distributionMousePos.value.x + 14, 12), Math.max(12, width - 226))
+  const top = Math.min(Math.max(distributionMousePos.value.y - 58, 12), Math.max(12, height - 74))
+  return {
+    left: `${left}px`,
+    top: `${top}px`
+  }
 })
 
 const activeMatrixNodes = computed(() => {
@@ -1776,6 +1934,190 @@ const project = (p: Point3D, width: number, height: number): Point2D => {
   }
 }
 
+const projectDistributionPoint = (p: Point3D, width: number, height: number): Point2D => {
+  const focalLength = 900
+  const z = Math.max(-850, p.z)
+  const scale = focalLength / (focalLength + z)
+  return {
+    x: p.x * scale + width / 2,
+    y: p.y * scale + height * 0.62,
+    opacity: Math.max(0.18, (900 - z) / 1300),
+    depth: p.z
+  }
+}
+
+const getDistributionFaceColor = (pnl: number, face: 'front' | 'side' | 'top', active: boolean) => {
+  const boost = active ? 0.14 : 0
+  if (pnl < 0) {
+    if (face === 'top') return `rgba(251, 113, 133, ${0.34 + boost})`
+    if (face === 'side') return `rgba(190, 18, 60, ${0.26 + boost})`
+    return `rgba(244, 63, 94, ${0.38 + boost})`
+  }
+  if (pnl > 0) {
+    if (face === 'top') return `rgba(110, 231, 183, ${0.34 + boost})`
+    if (face === 'side') return `rgba(5, 150, 105, ${0.26 + boost})`
+    return `rgba(16, 185, 129, ${0.38 + boost})`
+  }
+  return isDark.value ? `rgba(255, 255, 255, ${0.16 + boost})` : `rgba(0, 0, 0, ${0.14 + boost})`
+}
+
+const drawDistributionPoly = (
+  ctx: CanvasRenderingContext2D,
+  points: Point2D[],
+  fill: string,
+  stroke: string
+) => {
+  if (!points.length) return
+  ctx.beginPath()
+  ctx.moveTo(points[0]!.x, points[0]!.y)
+  points.slice(1).forEach(point => ctx.lineTo(point.x, point.y))
+  ctx.closePath()
+  ctx.fillStyle = fill
+  ctx.fill()
+  ctx.strokeStyle = stroke
+  ctx.lineWidth = 0.65
+  ctx.stroke()
+}
+
+const renderDistributionChart = () => {
+  const canvas = distributionCanvasRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const width = canvas.clientWidth
+  const height = canvas.clientHeight
+  if (width <= 0 || height <= 0) return
+
+  if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+    canvas.width = Math.floor(width * dpr)
+    canvas.height = Math.floor(height * dpr)
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, width, height)
+
+  distributionRotation.value.x += (distributionTargetRotation.value.x - distributionRotation.value.x) * 0.08
+  distributionRotation.value.y += (distributionTargetRotation.value.y - distributionRotation.value.y) * 0.08
+
+  const bars = tradeDistributionBars.value
+  distributionHitAreas.length = 0
+  if (!bars.length) return
+
+  const chartWidth = Math.min(860, Math.max(280, width * 0.72))
+  const slot = Math.min(26, Math.max(2.4, chartWidth / bars.length))
+  const barWidth = Math.max(1.4, slot * 0.68)
+  const barDepth = Math.min(30, Math.max(8, slot * 1.25))
+  const maxWorldHeight = Math.min(300, Math.max(120, height * 0.42))
+  const worldScale = distributionScale.value
+  const stroke = isDark.value ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'
+
+  const transform = (point: Point3D) => {
+    let p = rotateY(point, distributionRotation.value.y)
+    p = rotateX(p, distributionRotation.value.x)
+    p.x *= worldScale
+    p.y *= worldScale
+    p.z *= worldScale
+    return p
+  }
+  const projectLocal = (point: Point3D) => projectDistributionPoint(transform(point), width, height)
+
+  ctx.save()
+  const gridColor = isDark.value ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const axisColor = isDark.value ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'
+  const gridHalfWidth = chartWidth / 2 + 40
+  const gridDepth = 130
+  ctx.lineWidth = 0.7
+  for (let i = -4; i <= 4; i++) {
+    const x = (gridHalfWidth / 4) * i
+    const a = projectLocal({ x, y: 0, z: -gridDepth })
+    const b = projectLocal({ x, y: 0, z: gridDepth })
+    ctx.strokeStyle = i === 0 ? axisColor : gridColor
+    ctx.beginPath()
+    ctx.moveTo(a.x, a.y)
+    ctx.lineTo(b.x, b.y)
+    ctx.stroke()
+  }
+  for (let i = -2; i <= 2; i++) {
+    const z = (gridDepth / 2) * i
+    const a = projectLocal({ x: -gridHalfWidth, y: 0, z })
+    const b = projectLocal({ x: gridHalfWidth, y: 0, z })
+    ctx.strokeStyle = i === 0 ? axisColor : gridColor
+    ctx.beginPath()
+    ctx.moveTo(a.x, a.y)
+    ctx.lineTo(b.x, b.y)
+    ctx.stroke()
+  }
+  ctx.restore()
+
+  const faces: Array<{ depth: number, points: Point2D[], fill: string, stroke: string }> = []
+  bars.forEach((bar, index) => {
+    const xCenter = (index - (bars.length - 1) / 2) * slot
+    const h = (bar.height / 100) * maxWorldHeight
+    const x0 = xCenter - barWidth / 2
+    const x1 = xCenter + barWidth / 2
+    const y0 = 0
+    const y1 = -h
+    const z0 = -barDepth / 2
+    const z1 = barDepth / 2
+    const active = hoveredDistributionBar.value?.id === bar.id
+    const vertices = {
+      fbl: { x: x0, y: y0, z: z1 },
+      fbr: { x: x1, y: y0, z: z1 },
+      ftl: { x: x0, y: y1, z: z1 },
+      ftr: { x: x1, y: y1, z: z1 },
+      bbl: { x: x0, y: y0, z: z0 },
+      bbr: { x: x1, y: y0, z: z0 },
+      btl: { x: x0, y: y1, z: z0 },
+      btr: { x: x1, y: y1, z: z0 }
+    }
+    const screenVertices = Object.fromEntries(
+      Object.entries(vertices).map(([key, value]) => [key, projectLocal(value)])
+    ) as Record<keyof typeof vertices, Point2D>
+    const allScreen = Object.values(screenVertices)
+    const xValues = allScreen.map(point => point.x)
+    const yValues = allScreen.map(point => point.y)
+    distributionHitAreas.push({
+      bar,
+      x1: Math.min(...xValues) - 5,
+      y1: Math.min(...yValues) - 5,
+      x2: Math.max(...xValues) + 5,
+      y2: Math.max(...yValues) + 5,
+      depth: allScreen.reduce((sum, point) => sum + point.depth, 0) / allScreen.length
+    })
+
+    const faceGroups: Array<{ kind: 'front' | 'side' | 'top', points: Point2D[] }> = [
+      { kind: 'front', points: [screenVertices.fbl, screenVertices.fbr, screenVertices.ftr, screenVertices.ftl] },
+      { kind: 'side', points: [screenVertices.fbr, screenVertices.bbr, screenVertices.btr, screenVertices.ftr] },
+      { kind: 'side', points: [screenVertices.bbl, screenVertices.fbl, screenVertices.ftl, screenVertices.btl] },
+      { kind: 'top', points: [screenVertices.ftl, screenVertices.ftr, screenVertices.btr, screenVertices.btl] }
+    ]
+    faceGroups.forEach(face => {
+      faces.push({
+        depth: face.points.reduce((sum, point) => sum + point.depth, 0) / face.points.length,
+        points: face.points,
+        fill: getDistributionFaceColor(bar.pnl, face.kind, active),
+        stroke
+      })
+    })
+  })
+
+  faces
+    .sort((a, b) => b.depth - a.depth)
+    .forEach(face => drawDistributionPoly(ctx, face.points, face.fill, face.stroke))
+
+  const hovered = hoveredDistributionBar.value
+  if (hovered) {
+    const area = distributionHitAreas.find(item => item.bar.id === hovered.id)
+    if (area) {
+      ctx.strokeStyle = isDark.value ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.62)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(area.x1, area.y1, area.x2 - area.x1, area.y2 - area.y1)
+    }
+  }
+}
+
 const navigateFace = (dir: number) => {
   if (isTransitioning.value || activeFaceIndices.value.length === 0) return
   const currentIndex = activeFaceIndices.value.indexOf(currentFace.value)
@@ -1795,6 +2137,17 @@ const chronologicalPathNodes = computed(() => {
 
 let rafId: number
 const update = () => {
+  if (viewType.value === 'distribution') {
+    renderDistributionChart()
+    rafId = requestAnimationFrame(update)
+    return
+  }
+
+  if (viewType.value !== 'cube') {
+    rafId = requestAnimationFrame(update)
+    return
+  }
+
   const canvas = canvasRef.value
   if (!canvas) {
     rafId = requestAnimationFrame(update)
@@ -2153,6 +2506,56 @@ const handleMouseUp = () => {
 const handleWheel = (e: WheelEvent) => {
   e.preventDefault()
   viewScale.value = Math.max(0.5, Math.min(6, viewScale.value - e.deltaY * 0.001))
+}
+
+const updateDistributionHover = (e: MouseEvent) => {
+  const rect = distributionCanvasRef.value?.getBoundingClientRect()
+  if (!rect) return
+  const mouseX = e.clientX - rect.left
+  const mouseY = e.clientY - rect.top
+  distributionMousePos.value = { x: mouseX, y: mouseY }
+
+  const hit = distributionHitAreas
+    .filter(area => mouseX >= area.x1 && mouseX <= area.x2 && mouseY >= area.y1 && mouseY <= area.y2)
+    .sort((a, b) => a.depth - b.depth)[0]
+  hoveredDistributionBar.value = hit?.bar || null
+}
+
+const handleDistributionMouseDown = (e: MouseEvent) => {
+  isDistributionDragging.value = true
+  didDistributionDrag.value = false
+  distributionLastMousePos.value = { x: e.clientX, y: e.clientY }
+  updateDistributionHover(e)
+}
+
+const handleDistributionMouseMove = (e: MouseEvent) => {
+  updateDistributionHover(e)
+  if (!isDistributionDragging.value) return
+
+  const dx = e.clientX - distributionLastMousePos.value.x
+  const dy = e.clientY - distributionLastMousePos.value.y
+  if (Math.abs(dx) + Math.abs(dy) > 3) didDistributionDrag.value = true
+  distributionTargetRotation.value.y += dx * 0.01
+  distributionTargetRotation.value.x += dy * 0.004
+  distributionLastMousePos.value = { x: e.clientX, y: e.clientY }
+}
+
+const handleDistributionMouseUp = () => {
+  if (!didDistributionDrag.value && hoveredDistributionBar.value?.trade?.id) {
+    selectedTradeId.value = hoveredDistributionBar.value.trade.id
+    showExtraDetails.value = false
+  }
+  isDistributionDragging.value = false
+}
+
+const handleDistributionMouseLeave = () => {
+  isDistributionDragging.value = false
+  hoveredDistributionBar.value = null
+}
+
+const handleDistributionWheel = (e: WheelEvent) => {
+  e.preventDefault()
+  distributionScale.value = Math.max(0.65, Math.min(2.2, distributionScale.value - e.deltaY * 0.001))
 }
 
 onMounted(() => {
