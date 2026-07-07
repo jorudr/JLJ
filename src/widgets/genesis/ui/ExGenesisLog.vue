@@ -640,6 +640,70 @@
     </Transition>
   </Teleport>
 
+  <Teleport to="body">
+    <Transition name="fade-blur">
+      <div
+        v-if="showCapitalForecastIntro"
+        class="fixed inset-0 z-[10040] flex items-center justify-center bg-black/45 p-8 backdrop-blur-md"
+        @click.self="rejectCapitalForecastIntro"
+      >
+        <ExPanel
+          variant="light"
+          :no-padding="true"
+          :no-shadow="true"
+          :show-corners="true"
+          class="w-full max-w-[560px] !border-black/15 dark:!border-white/15"
+        >
+          <div class="px-8 py-7 nier-text-primary">
+            <div class="mb-5 flex items-center justify-between gap-6 border-b border-black/10 pb-4 dark:border-white/10">
+              <div>
+                <div class="text-[8px] font-mono uppercase tracking-[0.42em] opacity-45">
+                  {{ locale === 'ru' ? 'ПРОГНОЗ_ПАТТЕРНОВ' : 'PATTERN_FORECAST' }}
+                </div>
+                <h2 class="mt-2 text-lg font-mono font-black uppercase tracking-[0.18em]">
+                  {{ locale === 'ru' ? 'Предупреждение перед запуском' : 'Forecast Preview Notice' }}
+                </h2>
+              </div>
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center border nier-border-primary">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 17l5-5 4 4 8-9"></path>
+                  <path d="M17 7h3v3"></path>
+                </svg>
+              </div>
+            </div>
+
+            <div class="space-y-4 font-mono text-[11px] uppercase tracking-[0.12em] leading-loose opacity-75">
+              <p>
+                {{ locale === 'ru'
+                  ? 'Pattern Forecast анализирует историю сделок, текущий протокол и повторяющиеся рыночные паттерны, чтобы показать вероятные сценарии развития капитала.'
+                  : 'Pattern Forecast analyzes your trade history, active protocol, and recurring market patterns to show possible capital development scenarios.' }}
+              </p>
+              <p>
+                {{ locale === 'ru'
+                  ? 'Функция помогает увидеть, где стратегия может усиливаться или ослабевать, какие группы сделок похожи между собой и какие риски стоит проверить до следующего решения.'
+                  : 'It helps reveal where the strategy may strengthen or weaken, which trade groups behave similarly, and what risks deserve attention before the next decision.' }}
+              </p>
+              <p class="opacity-55">
+                {{ locale === 'ru'
+                  ? 'Это аналитический прогноз, а не торговая рекомендация. Используйте его как дополнительный слой проверки.'
+                  : 'This is an analytical forecast, not trading advice. Use it as an additional review layer.' }}
+              </p>
+            </div>
+
+            <div class="mt-7 flex items-center justify-end gap-3">
+              <ExButton variant="ghost" class="!px-5 !py-2 text-[10px] uppercase tracking-[0.24em]" @click="rejectCapitalForecastIntro">
+                {{ locale === 'ru' ? 'Отклонить' : 'Decline' }}
+              </ExButton>
+              <ExButton variant="solid" class="!px-5 !py-2 text-[10px] uppercase tracking-[0.24em]" @click="acceptCapitalForecastIntro">
+                {{ locale === 'ru' ? 'Принять' : 'Accept' }}
+              </ExButton>
+            </div>
+          </div>
+        </ExPanel>
+      </div>
+    </Transition>
+  </Teleport>
+
   <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
 </template>
 
@@ -733,6 +797,7 @@ const scopeTradesToSelectedVersion = <T,>(trades: T[]) => {
 const showShareCardModal = ref(false)
 const isGeneratingPng = ref(false)
 const showCapitalForecast = ref(false)
+const showCapitalForecastIntro = ref(false)
 const patternForecastLoading = ref(false)
 
 const tradeEfficiency = computed(() => {
@@ -1316,8 +1381,26 @@ const complianceDotColor = computed(() => {
 })
 
 const toggleCapitalForecast = () => {
+  if (!canOpenCapitalForecast.value) {
+    showPaywall.value = true
+    return
+  }
 
-  showCapitalForecast.value = !showCapitalForecast.value
+  if (showCapitalForecast.value) {
+    showCapitalForecast.value = false
+    return
+  }
+
+  showCapitalForecastIntro.value = true
+}
+
+const acceptCapitalForecastIntro = () => {
+  showCapitalForecastIntro.value = false
+  showCapitalForecast.value = true
+}
+
+const rejectCapitalForecastIntro = () => {
+  showCapitalForecastIntro.value = false
 }
 
 const calculateRR = (trade: any) => {
