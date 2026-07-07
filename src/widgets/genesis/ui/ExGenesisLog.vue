@@ -672,22 +672,52 @@
               </div>
             </div>
 
-            <div class="space-y-4 font-mono text-[11px] uppercase tracking-[0.12em] leading-loose opacity-75">
-              <p>
-                {{ locale === 'ru'
-                  ? 'Pattern Forecast анализирует историю сделок, текущий протокол и повторяющиеся рыночные паттерны, чтобы показать вероятные сценарии развития капитала.'
-                  : 'Pattern Forecast analyzes your trade history, active protocol, and recurring market patterns to show possible capital development scenarios.' }}
-              </p>
-              <p>
-                {{ locale === 'ru'
-                  ? 'Функция помогает увидеть, где стратегия может усиливаться или ослабевать, какие группы сделок похожи между собой и какие риски стоит проверить до следующего решения.'
-                  : 'It helps reveal where the strategy may strengthen or weaken, which trade groups behave similarly, and what risks deserve attention before the next decision.' }}
-              </p>
-              <p class="opacity-55">
-                {{ locale === 'ru'
-                  ? 'Это аналитический прогноз, а не торговая рекомендация. Используйте его как дополнительный слой проверки.'
-                  : 'This is an analytical forecast, not trading advice. Use it as an additional review layer.' }}
-              </p>
+            <div class="font-mono text-[10px] uppercase tracking-[0.12em] leading-relaxed">
+              <div class="grid grid-cols-2 gap-3 border-b border-black/10 pb-4 dark:border-white/10">
+                <div>
+                  <div class="opacity-40">{{ locale === 'ru' ? 'ВАШИ_СДЕЛКИ' : 'YOUR_TRADES' }}</div>
+                  <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.userTrades }}</div>
+                </div>
+                <div>
+                  <div class="opacity-40">{{ locale === 'ru' ? 'ИСТОРИИ_ТРЕЙДЕРОВ' : 'TRADER_HISTORIES' }}</div>
+                  <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.historicalProfiles }}</div>
+                </div>
+              </div>
+
+              <ol class="mt-5 space-y-3">
+                <li class="grid grid-cols-[32px_1fr] gap-3">
+                  <span class="font-black opacity-35">01</span>
+                  <span>
+                    {{ locale === 'ru'
+                      ? `Берем ваши закрытые сделки: сейчас ${patternForecastIntroStats.userTrades}, минимум для запуска ${patternForecastIntroStats.minTrades}.`
+                      : `We read your closed trades: ${patternForecastIntroStats.userTrades} now, ${patternForecastIntroStats.minTrades} minimum to run.` }}
+                  </span>
+                </li>
+                <li class="grid grid-cols-[32px_1fr] gap-3">
+                  <span class="font-black opacity-35">02</span>
+                  <span>
+                    {{ locale === 'ru'
+                      ? `Сравниваем вашу динамику, риск, длительность сделок, серии win/loss и структурные блоки с ${patternForecastIntroStats.historicalProfiles} историями других трейдеров.`
+                      : `We compare your performance path, risk, trade duration, win/loss streaks, and structural blocks with ${patternForecastIntroStats.historicalProfiles} histories from other traders.` }}
+                  </span>
+                </li>
+                <li class="grid grid-cols-[32px_1fr] gap-3">
+                  <span class="font-black opacity-35">03</span>
+                  <span>
+                    {{ locale === 'ru'
+                      ? `Выбираем до ${patternForecastIntroStats.maxMatches} ближайших исторических совпадений и строим прогноз на ${patternForecastIntroStats.horizonsLabel} следующих сделок.`
+                      : `We select up to ${patternForecastIntroStats.maxMatches} closest historical matches and build a forecast for the next ${patternForecastIntroStats.horizonsLabel} trades.` }}
+                  </span>
+                </li>
+                <li class="grid grid-cols-[32px_1fr] gap-3 opacity-70">
+                  <span class="font-black opacity-45">04</span>
+                  <span>
+                    {{ locale === 'ru'
+                      ? 'На выходе вы получите вероятный диапазон капитала, confidence, похожие исторические сценарии и слабые места модели. Это проверка сценария, не торговый сигнал.'
+                      : 'Output: probable capital range, confidence, similar historical scenarios, and weak points in the model. This is scenario review, not a trade signal.' }}
+                  </span>
+                </li>
+              </ol>
             </div>
 
             <div class="mt-7 flex items-center justify-end gap-3">
@@ -726,6 +756,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
+import { PATTERN_FORECAST_LIMITS } from '~/widgets/genesis/model/patternForecast'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
@@ -1018,6 +1049,22 @@ const currentTrades = computed(() => {
 const currentTradesForList = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getAllTradesForStrategy(selectedStrategyId.value))
 })
+
+const patternForecastClosedTradesCount = computed(() => {
+  return currentTrades.value.filter((trade: any) => {
+    return Number.isFinite(new Date(trade?.date).getTime()) &&
+      Number.isFinite(new Date(trade?.dateExit).getTime()) &&
+      Number.isFinite(Number(trade?.profitInCurrency))
+  }).length
+})
+
+const patternForecastIntroStats = computed(() => ({
+  userTrades: patternForecastClosedTradesCount.value,
+  minTrades: PATTERN_FORECAST_LIMITS.minUserTrades,
+  historicalProfiles: PATTERN_FORECAST_LIMITS.historicalProfiles,
+  maxMatches: PATTERN_FORECAST_LIMITS.maxMatches,
+  horizonsLabel: PATTERN_FORECAST_LIMITS.horizons.join('/')
+}))
 
 const getTradePnlValue = (trade: any) => {
   const raw = trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0
