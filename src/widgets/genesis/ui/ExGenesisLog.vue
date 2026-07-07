@@ -114,24 +114,45 @@
           <div class="mx-10 mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-black/10 pb-5 dark:border-white/10 md:mx-20">
             <div class="flex flex-col gap-2">
               <span class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
-                {{ locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_СДЕЛОК' : 'TRADE_DISTRIBUTION' }}
+                {{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_СДЕЛОК' : 'TRADE_DISTRIBUTION') : (locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_SCORE' : 'SCORE_DISTRIBUTION') }}
               </span>
               <span class="text-xs font-mono uppercase tracking-[0.25em] opacity-70">
-                {{ locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО УБЫТКА К МАКСИМАЛЬНОЙ ПРИБЫЛИ' : 'MAX LOSS TO MAX PROFIT' }}
+                {{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО УБЫТКА К МАКСИМАЛЬНОЙ ПРИБЫЛИ' : 'MAX LOSS TO MAX PROFIT') : (locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО SCORE К МИНИМАЛЬНОМУ' : 'MAX SCORE TO MIN SCORE') }}
               </span>
             </div>
-            <div class="grid grid-cols-3 gap-5 text-right font-mono uppercase">
-              <div>
-                <div class="text-[8px] tracking-[0.3em] text-rose-500/70">{{ locale === 'ru' ? 'УБЫТОК' : 'LOSS' }}</div>
-                <div class="mt-1 text-sm font-black text-rose-500">{{ formatDistributionCurrency(tradeDistributionStats.min) }}</div>
+            <div class="flex flex-wrap items-end justify-end gap-6">
+              <div class="flex items-center border nier-border-primary bg-white/5 p-1 text-[9px] font-mono uppercase tracking-[0.24em] dark:bg-black/5">
+                <button
+                  class="px-3 py-2 transition-all"
+                  :class="distributionMetricMode === 'pnl' ? 'nier-bg-inverted nier-text-inverted' : 'opacity-45 hover:opacity-100'"
+                  @click="distributionMetricMode = 'pnl'"
+                >
+                  PnL
+                </button>
+                <button
+                  :disabled="isMainDiaryStrategy"
+                  class="px-3 py-2 transition-all"
+                  :class="isMainDiaryStrategy
+                    ? 'cursor-not-allowed opacity-20'
+                    : (distributionMetricMode === 'score' ? 'nier-bg-inverted nier-text-inverted' : 'opacity-45 hover:opacity-100')"
+                  @click="distributionMetricMode = 'score'"
+                >
+                  Score
+                </button>
               </div>
-              <div>
-                <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }}</div>
-                <div class="mt-1 text-sm font-black nier-text-primary">{{ tradeDistributionStats.count }}</div>
-              </div>
-              <div>
-                <div class="text-[8px] tracking-[0.3em] text-emerald-500/70">{{ locale === 'ru' ? 'ПРИБЫЛЬ' : 'PROFIT' }}</div>
-                <div class="mt-1 text-sm font-black text-emerald-500">{{ formatDistributionCurrency(tradeDistributionStats.max) }}</div>
+              <div class="grid grid-cols-3 gap-5 text-right font-mono uppercase">
+                <div>
+                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-rose-500/70' : 'text-white/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'УБЫТОК' : 'LOSS') : (locale === 'ru' ? 'МАКС_SCORE' : 'MAX_SCORE') }}</div>
+                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'text-rose-500' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.min : tradeDistributionStats.max, distributionMetricMode === 'score') }}</div>
+                </div>
+                <div>
+                  <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }}</div>
+                  <div class="mt-1 text-sm font-black nier-text-primary">{{ tradeDistributionStats.count }}</div>
+                </div>
+                <div>
+                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-white/70' : 'text-rose-500/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'ПРИБЫЛЬ' : 'PROFIT') : (locale === 'ru' ? 'МИН_SCORE' : 'MIN_SCORE') }}</div>
+                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'nier-text-primary' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.max : tradeDistributionStats.min, distributionMetricMode === 'score') }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -152,8 +173,8 @@
               :style="distributionTooltipStyle"
             >
               <div class="truncate font-black">{{ hoveredDistributionBar.asset }}</div>
-              <div class="mt-1" :class="hoveredDistributionBar.pnl < 0 ? 'text-rose-500' : hoveredDistributionBar.pnl > 0 ? 'text-emerald-500' : 'opacity-50'">
-                {{ formatDistributionCurrency(hoveredDistributionBar.pnl) }}
+              <div class="mt-1" :class="distributionMetricMode === 'score' ? 'nier-text-primary' : (hoveredDistributionBar.value < 0 ? 'text-rose-500' : 'nier-text-primary')">
+                {{ formatDistributionValue(hoveredDistributionBar.value, distributionMetricMode === 'score') }}
               </div>
             </div>
           </div>
@@ -425,7 +446,7 @@
        <!-- The Pagination + Protocol Select Button Row -->
        <div class="flex items-center space-x-4">
           <!-- Left Pagination Arrow -->
-          <button @click="prevCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
+          <button v-if="viewType === 'cube'" @click="prevCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
              <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-black/30 dark:border-white/30"></div>
              <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-black/30 dark:border-white/30"></div>
              <div class="w-2 h-2 border-t-2 border-l-2 border-black dark:border-white -rotate-45 group-hover/arrow:-translate-x-0.5 transition-transform"></div>
@@ -441,7 +462,7 @@
           />
 
           <!-- Right Pagination Arrow -->
-          <button @click="nextCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
+          <button v-if="viewType === 'cube'" @click="nextCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
              <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-black/30 dark:border-white/30"></div>
              <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-black/30 dark:border-white/30"></div>
              <div class="w-2 h-2 border-t-2 border-r-2 border-black dark:border-white rotate-45 group-hover/arrow:translate-x-0.5 transition-transform"></div>
@@ -899,6 +920,8 @@ const getTradePnlValue = (trade: any) => {
   return Number.isFinite(value) ? value : 0
 }
 
+const distributionMetricMode = ref<'pnl' | 'score'>('pnl')
+
 const formatDistributionCurrency = (value: number) => {
   const sign = value > 0 ? '+' : ''
   return `${sign}$${value.toLocaleString(undefined, {
@@ -907,34 +930,82 @@ const formatDistributionCurrency = (value: number) => {
   })}`
 }
 
+const formatDistributionValue = (value: number, withMetricLabel = false) => {
+  if (distributionMetricMode.value === 'score') {
+    const score = Math.min(Math.max(Math.round(value), 0), 100)
+    return `${withMetricLabel ? 'SCORE ' : ''}${score}%`
+  }
+  return formatDistributionCurrency(value)
+}
+
+const tradeOverallScoreMap = computed(() => {
+  const strategyId = selectedStrategyId.value
+  const deposit = tradeStore.getInitialDeposit(strategyId) || 1000
+  const scoredTrades = currentTrades.value
+    .map((trade) => ({
+      id: String(trade?.id || ''),
+      rawScore: getTradeScore(trade, deposit)
+    }))
+    .filter(item => item.id && Number.isFinite(item.rawScore))
+
+  if (scoredTrades.length === 0) return new Map<string, number>()
+
+  const rawScores = scoredTrades.map(item => item.rawScore).sort((a, b) => a - b)
+
+  return new Map(scoredTrades.map((item) => {
+    const lowerScores = rawScores.filter(score => score < item.rawScore).length
+    const overallScore = Math.round((lowerScores / scoredTrades.length) * 100)
+    return [item.id, Math.min(Math.max(overallScore, 0), 100)]
+  }))
+})
+
+const getTradeOverallScorePercent = (trade: any) => {
+  const id = String(trade?.id || '')
+  if (!id) return 0
+  return tradeOverallScoreMap.value.get(id) ?? 0
+}
+
 const tradeDistributionBars = computed(() => {
+  const getDistributionValue = (trade: any) => {
+    if (distributionMetricMode.value === 'score') {
+      return getTradeOverallScorePercent(trade)
+    }
+    return getTradePnlValue(trade)
+  }
+
   const sortedTrades = [...filteredTrades.value]
     .map((trade) => ({
       trade,
-      pnl: getTradePnlValue(trade)
+      pnl: getTradePnlValue(trade),
+      value: getDistributionValue(trade)
     }))
-    .sort((a, b) => a.pnl - b.pnl)
+    .sort((a, b) => distributionMetricMode.value === 'score' ? b.value - a.value : a.value - b.value)
 
-  const maxAbsPnl = Math.max(1, ...sortedTrades.map(item => Math.abs(item.pnl)))
+  const maxAbsValue = Math.max(1, ...sortedTrades.map(item => Math.abs(item.value)))
 
   return sortedTrades.map((item, index) => {
-    const normalized = Math.abs(item.pnl) / maxAbsPnl
+    const normalized = distributionMetricMode.value === 'score'
+      ? Math.min(Math.max(item.value / 100, 0), 1)
+      : Math.abs(item.value) / maxAbsValue
     const height = Math.max(3, normalized * 100)
     const asset = String(item.trade?.asset || 'UNKNOWN').toUpperCase()
     return {
       id: item.trade?.id || `${asset}-${index}`,
       trade: item.trade,
       pnl: item.pnl,
+      value: item.value,
       asset,
       height,
-      opacity: Math.min(1, 0.45 + normalized * 0.55),
-      label: `${asset} ${formatDistributionCurrency(item.pnl)}`
+      opacity: distributionMetricMode.value === 'score'
+        ? Math.min(1, 0.18 + normalized * 0.72)
+        : Math.min(1, 0.45 + normalized * 0.55),
+      label: `${asset} ${formatDistributionValue(item.value, distributionMetricMode.value === 'score')}`
     }
   })
 })
 
 const tradeDistributionStats = computed(() => {
-  const values = tradeDistributionBars.value.map(bar => bar.pnl)
+  const values = tradeDistributionBars.value.map(bar => bar.value)
   if (!values.length) {
     return { count: 0, min: 0, max: 0 }
   }
@@ -1579,6 +1650,14 @@ const selectedStrategyId = computed({
   set: (val) => { tradeStore.selectedStrategyId = val }
 })
 
+const isMainDiaryStrategy = computed(() => selectedStrategyId.value === 'MAIN_DIARY')
+
+watch(isMainDiaryStrategy, (isMainDiary) => {
+  if (isMainDiary && distributionMetricMode.value === 'score') {
+    distributionMetricMode.value = 'pnl'
+  }
+}, { immediate: true })
+
 const formatCubeTradeAssetLabel = (asset?: string) => {
   return String(asset || '').toUpperCase()
 }
@@ -1974,15 +2053,27 @@ const projectDistributionPoint = (p: Point3D, width: number, height: number): Po
   }
 }
 
-const getDistributionFaceColor = (pnl: number, face: 'front' | 'side' | 'top', active: boolean) => {
+const getDistributionFaceColor = (pnl: number, face: 'front' | 'back' | 'side' | 'top' | 'bottom', active: boolean, scoreOpacity?: number) => {
   const boost = active ? 0.14 : 0
+  if (distributionMetricMode.value === 'score') {
+    const opacity = Math.min(1, (scoreOpacity ?? 0.45) + boost)
+    if (face === 'top') return `rgba(255, 255, 255, ${Math.min(1, opacity + 0.08)})`
+    if (face === 'bottom') return `rgba(255, 255, 255, ${Math.max(0.06, opacity - 0.2)})`
+    if (face === 'back') return `rgba(255, 255, 255, ${Math.max(0.07, opacity - 0.16)})`
+    if (face === 'side') return `rgba(255, 255, 255, ${Math.max(0.08, opacity - 0.12)})`
+    return `rgba(255, 255, 255, ${opacity})`
+  }
   if (pnl < 0) {
     if (face === 'top') return `rgba(251, 113, 133, ${0.34 + boost})`
+    if (face === 'bottom') return `rgba(127, 29, 29, ${0.18 + boost})`
+    if (face === 'back') return `rgba(159, 18, 57, ${0.24 + boost})`
     if (face === 'side') return `rgba(190, 18, 60, ${0.26 + boost})`
     return `rgba(244, 63, 94, ${0.38 + boost})`
   }
   if (pnl > 0) {
     if (face === 'top') return `rgba(110, 231, 183, ${0.34 + boost})`
+    if (face === 'bottom') return `rgba(6, 78, 59, ${0.18 + boost})`
+    if (face === 'back') return `rgba(4, 120, 87, ${0.24 + boost})`
     if (face === 'side') return `rgba(5, 150, 105, ${0.26 + boost})`
     return `rgba(16, 185, 129, ${0.38 + boost})`
   }
@@ -2123,17 +2214,19 @@ const renderDistributionChart = () => {
       depth: allScreen.reduce((sum, point) => sum + point.depth, 0) / allScreen.length
     })
 
-    const faceGroups: Array<{ kind: 'front' | 'side' | 'top', points: Point2D[] }> = [
-      { kind: 'front', points: [screenVertices.fbl, screenVertices.fbr, screenVertices.ftr, screenVertices.ftl] },
+    const faceGroups: Array<{ kind: 'front' | 'back' | 'side' | 'top' | 'bottom', points: Point2D[] }> = [
+      { kind: 'back', points: [screenVertices.fbl, screenVertices.ftl, screenVertices.ftr, screenVertices.fbr] },
+      { kind: 'front', points: [screenVertices.bbl, screenVertices.bbr, screenVertices.btr, screenVertices.btl] },
       { kind: 'side', points: [screenVertices.fbr, screenVertices.bbr, screenVertices.btr, screenVertices.ftr] },
       { kind: 'side', points: [screenVertices.bbl, screenVertices.fbl, screenVertices.ftl, screenVertices.btl] },
-      { kind: 'top', points: [screenVertices.ftl, screenVertices.ftr, screenVertices.btr, screenVertices.btl] }
+      { kind: 'top', points: [screenVertices.ftl, screenVertices.ftr, screenVertices.btr, screenVertices.btl] },
+      { kind: 'bottom', points: [screenVertices.bbl, screenVertices.fbl, screenVertices.fbr, screenVertices.bbr] }
     ]
     faceGroups.forEach(face => {
       faces.push({
         depth: face.points.reduce((sum, point) => sum + point.depth, 0) / face.points.length,
         points: face.points,
-        fill: getDistributionFaceColor(bar.pnl, face.kind, active),
+        fill: getDistributionFaceColor(bar.value, face.kind, active, bar.opacity),
         stroke
       })
     })
