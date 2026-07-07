@@ -821,10 +821,20 @@ const openNodeMap = () => {
 }
 
 const handleOpenNote = (payload: { tradeId: string; noteId: string }) => {
+  selectedTradeId.value = payload.tradeId
+  panelInitialPage.value = 5
+  panelInitialNoteId.value = payload.noteId
+  showExtraDetails.value = true
+  showNodeMap.value = true
   emit('openNote', payload)
 }
 
 const handleOpenTrade = (payload: { tradeId: string }) => {
+  selectedTradeId.value = payload.tradeId
+  panelInitialPage.value = undefined
+  panelInitialNoteId.value = undefined
+  showExtraDetails.value = false
+  showNodeMap.value = false
   emit('openTrade', payload)
 }
 
@@ -1510,7 +1520,9 @@ const resetAllFilters = () => {
 
 const selectedTrade = computed(() => {
   if (!selectedTradeId.value) return null
-  return currentTrades.value.find(t => t.id === selectedTradeId.value) || null
+  return currentTrades.value.find(t => t.id === selectedTradeId.value) ||
+    currentTradesForList.value.find(t => t.id === selectedTradeId.value) ||
+    null
 })
 
 watch(selectedTradeId, () => {
