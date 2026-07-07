@@ -121,25 +121,6 @@
               </span>
             </div>
             <div class="flex flex-wrap items-end justify-end gap-6">
-              <div class="flex items-center border nier-border-primary bg-white/5 p-1 text-[9px] font-mono uppercase tracking-[0.24em] dark:bg-black/5">
-                <button
-                  class="px-3 py-2 transition-all"
-                  :class="distributionMetricMode === 'pnl' ? 'nier-bg-inverted nier-text-inverted' : 'opacity-45 hover:opacity-100'"
-                  @click="distributionMetricMode = 'pnl'"
-                >
-                  PnL
-                </button>
-                <button
-                  :disabled="isMainDiaryStrategy"
-                  class="px-3 py-2 transition-all"
-                  :class="isMainDiaryStrategy
-                    ? 'cursor-not-allowed opacity-20'
-                    : (distributionMetricMode === 'score' ? 'nier-bg-inverted nier-text-inverted' : 'opacity-45 hover:opacity-100')"
-                  @click="distributionMetricMode = 'score'"
-                >
-                  Score
-                </button>
-              </div>
               <div class="grid grid-cols-3 gap-5 text-right font-mono uppercase">
                 <div>
                   <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-rose-500/70' : 'text-white/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'УБЫТОК' : 'LOSS') : (locale === 'ru' ? 'МАКС' : 'MAX') }}</div>
@@ -193,15 +174,15 @@
         class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
       >
-         <div class="flex items-center space-x-2 p-1.5 border nier-border-primary bg-white/5 dark:bg-black/5 backdrop-blur-xl relative">
+         <div class="relative flex items-center gap-2 border nier-border-primary bg-white/5 p-1.5 backdrop-blur-xl dark:bg-black/5">
             <!-- Brackets -->
             <div class="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-black/40 dark:border-white/40"></div>
             <div class="absolute -bottom-px -right-px w-1.5 h-1.5 border-b border-r border-black/40 dark:border-white/40"></div>
 
             <button @click="viewType = 'cube'" 
-                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
+                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
                     :class="viewType === 'cube' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <div class="w-4 h-4 border-2 transition-all duration-700 relative flex items-center justify-center"
+               <div class="relative flex h-4 w-4 shrink-0 items-center justify-center border-2 transition-all duration-700"
                     :class="viewType === 'cube' ? 'border-white dark:border-black rotate-[135deg] scale-110' : 'border-black/40 dark:border-white/40 group-hover:border-black dark:group-hover:border-white group-hover:rotate-45'">
                   <div class="w-1 h-1 bg-current rotate-45"></div>
                </div>
@@ -209,9 +190,9 @@
             </button>
 
             <button @click="viewType = 'list'" 
-                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
+                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
                     :class="viewType === 'list' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <div class="flex flex-col items-center space-y-1.5 transition-all duration-700"
+               <div class="flex shrink-0 flex-col items-center space-y-1.5 transition-all duration-700"
                     :class="viewType === 'list' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'">
                   <div class="w-5 h-[1.5px] bg-current"></div>
                   <div class="w-5 h-[1.5px] bg-current opacity-60"></div>
@@ -221,9 +202,9 @@
             </button>
 
             <button @click="viewType = 'distribution'"
-                    class="w-12 h-12 flex items-center justify-center transition-all duration-500 relative group overflow-hidden"
+                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
                     :class="viewType === 'distribution' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <svg class="w-5 h-5 transition-all duration-700"
+               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
                     :class="viewType === 'distribution' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -240,6 +221,65 @@
                <div v-if="viewType === 'distribution'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
          </div>
+      </div>
+
+      <!-- BOTTOM RIGHT: DISTRIBUTION METRIC MODE -->
+      <div
+        v-if="isHudVisible && !isTradeEntryOpen && viewType === 'distribution'"
+        class="absolute bottom-12 right-12 z-[10000] pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
+      >
+        <div class="relative flex items-center gap-2 border nier-border-primary bg-white/5 p-1.5 font-mono text-[9px] uppercase tracking-[0.24em] backdrop-blur-xl dark:bg-black/5">
+          <div class="absolute -top-px -left-px h-1.5 w-1.5 border-l border-t border-black/40 dark:border-white/40"></div>
+          <div class="absolute -bottom-px -right-px h-1.5 w-1.5 border-b border-r border-black/40 dark:border-white/40"></div>
+          <button
+            aria-label="PnL"
+            class="flex h-12 w-12 items-center justify-center p-0 transition-all duration-500"
+            :class="distributionMetricMode === 'pnl' ? 'nier-bg-inverted nier-text-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'opacity-45 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/5'"
+            @click="distributionMetricMode = 'pnl'"
+          >
+            <svg
+              class="h-5 w-5 shrink-0 transition-transform duration-500"
+              :class="distributionMetricMode === 'pnl' ? 'scale-110' : ''"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 19h16"></path>
+              <path d="M6 16l3.5-5 3.5 3 5-8"></path>
+              <path d="M18 6h-4"></path>
+              <path d="M18 6v4"></path>
+            </svg>
+          </button>
+          <button
+            :disabled="isMainDiaryStrategy"
+            aria-label="Score"
+            class="flex h-12 w-12 items-center justify-center p-0 transition-all duration-500"
+            :class="isMainDiaryStrategy
+              ? 'cursor-not-allowed opacity-20'
+              : (distributionMetricMode === 'score' ? 'nier-bg-inverted nier-text-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'opacity-45 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/5')"
+            @click="distributionMetricMode = 'score'"
+          >
+            <svg
+              class="h-5 w-5 shrink-0 transition-transform duration-500"
+              :class="distributionMetricMode === 'score' ? 'scale-110' : ''"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="8"></circle>
+              <path d="M8.5 15.5l7-7"></path>
+              <circle cx="9" cy="9" r="1"></circle>
+              <circle cx="15" cy="15" r="1"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
