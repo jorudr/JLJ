@@ -161,17 +161,43 @@
                       :class="group.side === 'left' ? 'text-right' : 'text-left'"
                       @click="handleOpenTrade({ tradeId: trade.id })"
                     >
-                      <div class="flex items-center justify-between gap-3" :class="group.side === 'left' ? 'flex-row-reverse' : ''">
-                        <div class="min-w-0">
-                          <div class="truncate text-[10px] font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</div>
-                          <div class="mt-0.5 text-[7px] tracking-[0.22em] opacity-45">{{ trade.time }}</div>
+                      <div
+                        class="flex min-w-0 items-center justify-between gap-4"
+                        :class="group.side === 'left' ? 'flex-row-reverse' : ''"
+                      >
+                        <div
+                          class="flex min-w-0 items-center gap-2"
+                          :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
+                        >
+                          <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white/10 dark:bg-black/70">
+                            <img
+                              v-if="trade.assetIcon"
+                              :src="trade.assetIcon"
+                              class="h-full w-full object-contain"
+                              alt=""
+                              @error="hideBrokenAssetIcon"
+                            />
+                          </span>
+                          <span class="min-w-0">
+                            <span class="block truncate text-xs font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</span>
+                            <span class="mt-1 block text-[9px] tracking-[0.22em] opacity-45">{{ trade.time }}</span>
+                          </span>
+                          <span
+                            class="shrink-0 border px-1.5 py-0.5 text-[7px] font-black tracking-[0.18em]"
+                            :class="trade.side === 'SHORT'
+                              ? 'border-rose-500/30 text-rose-500'
+                              : 'border-emerald-500/30 text-emerald-500'"
+                          >
+                            {{ trade.side }}
+                          </span>
                         </div>
-                        <div class="shrink-0 text-[8px] font-black tracking-[0.18em]" :class="trade.side === 'SHORT' ? 'text-rose-500' : 'nier-text-primary'">
-                          {{ trade.side }}
+                        <div
+                          class="shrink-0 text-base font-black leading-none tracking-[0.12em]"
+                          :style="{ color: trade.resultColor }"
+                          :class="group.side === 'left' ? 'text-left' : 'text-right'"
+                        >
+                          {{ trade.resultPct }} <span class="block pt-1 text-[9px] opacity-55">{{ trade.resultCurrency }}</span>
                         </div>
-                      </div>
-                      <div class="mt-2 text-[9px] font-black tracking-[0.16em]" :class="trade.pnl >= 0 ? 'nier-text-primary' : 'text-rose-500'">
-                        {{ trade.resultPct }} <span class="opacity-45">({{ trade.resultCurrency }})</span>
                       </div>
                     </button>
                   </div>
@@ -1225,6 +1251,47 @@ const getTradeResultPercent = (trade: any) => {
   return deposit > 0 ? (pnl / deposit) * 100 : Number.NaN
 }
 
+const normalizeAssetSymbol = (asset: unknown) => String(asset || '').trim().toUpperCase()
+
+const getAssetSymbolVariants = (asset: unknown) => {
+  const symbol = normalizeAssetSymbol(asset)
+  const compact = symbol.replace(/[^A-Z0-9]/g, '')
+  const variants = new Set([symbol, compact])
+
+  if (/^[A-Z]{6}$/.test(compact)) {
+    variants.add(`${compact.slice(0, 3)}/${compact.slice(3)}`)
+  }
+
+  return variants
+}
+
+const resolveTimeTreeAssetIcon = (trade: any) => {
+  const variants = getAssetSymbolVariants(trade?.asset || trade?.symbol || trade?.ticker)
+  const assetData = (globalAssets as any[]).find((asset) => {
+    const symbol = normalizeAssetSymbol(asset?.symbol)
+    const name = normalizeAssetSymbol(asset?.name)
+    const compactSymbol = symbol.replace(/[^A-Z0-9]/g, '')
+    return variants.has(symbol) || variants.has(name) || variants.has(compactSymbol)
+  })
+
+  if (assetData?.icon) return assetData.icon
+
+  const symbol = normalizeAssetSymbol(trade?.asset || trade?.symbol || trade?.ticker)
+  return getIconForAsset(symbol, trade?.assetType || 'Crypto')
+}
+
+const getTimeTreeResultColor = (value: number) => {
+  if (!Number.isFinite(value) || value === 0) return 'currentColor'
+  const intensity = Math.min(Math.abs(value) / 5, 1)
+  if (value > 0) return `hsl(145 72% ${42 + intensity * 16}%)`
+  return `hsl(350 78% ${48 + intensity * 12}%)`
+}
+
+const hideBrokenAssetIcon = (event: Event) => {
+  const image = event.currentTarget as HTMLImageElement | null
+  if (image) image.style.display = 'none'
+}
+
 const timeTreeGroups = computed(() => {
   const groups = new Map<string, { key: string, timestamp: number, trades: any[] }>()
 
@@ -1236,13 +1303,16 @@ const timeTreeGroups = computed(() => {
       groups.set(key, { key, timestamp, trades: [] })
     }
     const pnl = getTradePnlValue(trade)
+    const resultValue = getTradeResultPercent(trade)
     groups.get(key)!.trades.push({
       id: String(trade?.id || `${key}-${groups.get(key)!.trades.length}`),
       asset: String(trade?.asset || 'UNKNOWN').toUpperCase(),
+      assetIcon: resolveTimeTreeAssetIcon(trade),
       side: getTimeTreeSide(trade?.side),
       pnl,
-      resultPct: formatSignedPercent(getTradeResultPercent(trade)),
+      resultPct: formatSignedPercent(resultValue),
       resultCurrency: formatDistributionCurrency(pnl),
+      resultColor: getTimeTreeResultColor(resultValue),
       time: formatTimeTreeTime(timestamp),
       timestamp
     })
