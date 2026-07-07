@@ -142,16 +142,16 @@
               </div>
               <div class="grid grid-cols-3 gap-5 text-right font-mono uppercase">
                 <div>
-                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-rose-500/70' : 'text-white/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'УБЫТОК' : 'LOSS') : (locale === 'ru' ? 'МАКС_SCORE' : 'MAX_SCORE') }}</div>
-                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'text-rose-500' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.min : tradeDistributionStats.max, distributionMetricMode === 'score') }}</div>
+                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-rose-500/70' : 'text-white/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'УБЫТОК' : 'LOSS') : (locale === 'ru' ? 'МАКС' : 'MAX') }}</div>
+                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'text-rose-500' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.min : tradeDistributionStats.max) }}</div>
                 </div>
                 <div>
                   <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }}</div>
                   <div class="mt-1 text-sm font-black nier-text-primary">{{ tradeDistributionStats.count }}</div>
                 </div>
                 <div>
-                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-white/70' : 'text-rose-500/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'ПРИБЫЛЬ' : 'PROFIT') : (locale === 'ru' ? 'МИН_SCORE' : 'MIN_SCORE') }}</div>
-                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'nier-text-primary' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.max : tradeDistributionStats.min, distributionMetricMode === 'score') }}</div>
+                  <div class="text-[8px] tracking-[0.3em]" :class="distributionMetricMode === 'pnl' ? 'text-white/70' : 'text-rose-500/70'">{{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'ПРИБЫЛЬ' : 'PROFIT') : (locale === 'ru' ? 'МИН' : 'MIN') }}</div>
+                  <div class="mt-1 text-sm font-black" :class="distributionMetricMode === 'pnl' ? 'nier-text-primary' : 'nier-text-primary'">{{ formatDistributionValue(distributionMetricMode === 'pnl' ? tradeDistributionStats.max : tradeDistributionStats.min) }}</div>
                 </div>
               </div>
             </div>
