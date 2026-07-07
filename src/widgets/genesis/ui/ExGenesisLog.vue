@@ -103,6 +103,98 @@
          </div>
       </div>
 
+      <!-- TIME TREE VIEW LAYER -->
+      <div
+        v-if="viewType === 'timeTree'"
+        class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
+      >
+        <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
+        <div class="relative z-10 flex h-full w-full flex-col px-8 py-14 md:px-16 md:py-20">
+          <div class="mb-6 flex items-end justify-between gap-6 border-b border-black/10 pb-4 dark:border-white/10">
+            <div>
+              <div class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
+                {{ locale === 'ru' ? 'ДЕРЕВО_ВРЕМЕНИ' : 'TIME_TREE' }}
+              </div>
+              <div class="mt-2 text-xs font-mono uppercase tracking-[0.25em] opacity-70">
+                {{ locale === 'ru' ? 'СДЕЛКИ_ПО_ДНЯМ_И_ВРЕМЕНИ' : 'TRADES_BY_DAY_AND_TIME' }}
+              </div>
+            </div>
+            <div class="text-right font-mono uppercase">
+              <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'ДНЕЙ' : 'DAYS' }}</div>
+              <div class="mt-1 text-sm font-black nier-text-primary">{{ timeTreeGroups.length }}</div>
+            </div>
+          </div>
+
+          <div v-if="timeTreeGroups.length" class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+            <div class="relative mx-auto w-full max-w-7xl pb-24 pt-2">
+              <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15 dark:bg-white/15"></div>
+
+              <div
+                v-for="(group, index) in timeTreeGroups"
+                :key="group.key"
+                class="relative grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] items-start gap-y-5 py-4"
+              >
+                <div
+                  class="relative min-w-0"
+                  :class="group.side === 'left' ? 'col-start-1 pr-6' : 'col-start-3 pl-6'"
+                >
+                  <div
+                    class="flex flex-col gap-1.5"
+                    :class="group.side === 'left' ? 'items-end text-right' : 'items-start text-left'"
+                  >
+                    <div class="mb-0.5 font-mono uppercase tracking-[0.22em]">
+                      <div class="text-[8px] opacity-45">{{ group.weekday }}</div>
+                      <div class="relative mt-0.5 text-[10px] font-black nier-text-primary">
+                        <div
+                          class="absolute top-1/2 h-px -translate-y-1/2 bg-black/20 dark:bg-white/20"
+                          :class="group.side === 'left' ? 'right-[-32px] w-6' : 'left-[-32px] w-6'"
+                        ></div>
+                        {{ group.label }}
+                      </div>
+                    </div>
+
+                    <button
+                      v-for="trade in group.trades"
+                      :key="trade.id"
+                      class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
+                      :class="group.side === 'left' ? 'text-right' : 'text-left'"
+                      @click="handleOpenTrade({ tradeId: trade.id })"
+                    >
+                      <div class="flex items-center justify-between gap-3" :class="group.side === 'left' ? 'flex-row-reverse' : ''">
+                        <div class="min-w-0">
+                          <div class="truncate text-[10px] font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</div>
+                          <div class="mt-0.5 text-[7px] tracking-[0.22em] opacity-45">{{ trade.time }}</div>
+                        </div>
+                        <div class="shrink-0 text-[8px] font-black tracking-[0.18em]" :class="trade.side === 'SHORT' ? 'text-rose-500' : 'nier-text-primary'">
+                          {{ trade.side }}
+                        </div>
+                      </div>
+                      <div class="mt-2 text-[9px] font-black tracking-[0.16em]" :class="trade.pnl >= 0 ? 'nier-text-primary' : 'text-rose-500'">
+                        {{ trade.resultPct }} <span class="opacity-45">({{ trade.resultCurrency }})</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="col-start-2 row-start-1 flex justify-center pt-3">
+                  <div class="relative flex h-8 w-8 items-center justify-center border nier-border-primary bg-white/85 font-mono text-[10px] font-black backdrop-blur-xl dark:bg-black/75">
+                    <div class="absolute h-1.5 w-1.5 rotate-45 nier-bg-inverted"></div>
+                    <span class="relative z-10 opacity-0">{{ index + 1 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="flex flex-1 items-center justify-center">
+            <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
+              {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ДЕРЕВА' : 'NO_TRADES_FOR_TREE' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- PNL DISTRIBUTION LAYER -->
       <div
         v-if="viewType === 'distribution'"
@@ -199,6 +291,28 @@
                   <div class="w-5 h-[1.5px] bg-current opacity-30"></div>
                </div>
                <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
+            </button>
+
+            <button @click="viewType = 'timeTree'"
+                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
+                    :class="viewType === 'timeTree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
+               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
+                    :class="viewType === 'timeTree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  <path d="M12 3v18"></path>
+                  <path d="M12 7H7l-3 3"></path>
+                  <path d="M12 12h5l3-3"></path>
+                  <path d="M12 17H7l-3-3"></path>
+                  <circle cx="12" cy="7" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="17" r="1.5"></circle>
+               </svg>
+               <div v-if="viewType === 'timeTree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
 
             <button @click="viewType = 'distribution'"
@@ -946,7 +1060,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list' | 'distribution'>('cube')
+const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution'>('cube')
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
 
@@ -1048,6 +1162,101 @@ const currentTrades = computed(() => {
 
 const currentTradesForList = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getAllTradesForStrategy(selectedStrategyId.value))
+})
+
+const getTradeTimelineTimestamp = (trade: any) => {
+  const rawDate = trade?.date || trade?.createdAt || trade?.dateExit
+  const timestamp = new Date(rawDate).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+const formatTimeTreeDayKey = (timestamp: number) => {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const formatTimeTreeDayLabel = (timestamp: number) => {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).replace('.', '')
+}
+
+const formatTimeTreeWeekday = (timestamp: number) => {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    weekday: 'short'
+  }).replace('.', '')
+}
+
+const formatTimeTreeTime = (timestamp: number) => {
+  if (!timestamp) return '--:--'
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+}
+
+const getTimeTreeSide = (side: unknown) => {
+  const normalized = String(side || '').toLowerCase()
+  if (normalized.includes('short') || normalized.includes('sell')) return 'SHORT'
+  return 'LONG'
+}
+
+const formatSignedPercent = (value: number) => {
+  if (!Number.isFinite(value)) return 'NaN%'
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${value.toFixed(2)}%`
+}
+
+const getTradeResultPercent = (trade: any) => {
+  const explicitResult = Number(trade?.result)
+  if (Number.isFinite(explicitResult)) return explicitResult
+
+  const pnl = getTradePnlValue(trade)
+  const strategyId = trade?.strategyId || selectedStrategyId.value
+  const deposit = tradeStore.getInitialDeposit(strategyId) || 1000
+  return deposit > 0 ? (pnl / deposit) * 100 : Number.NaN
+}
+
+const timeTreeGroups = computed(() => {
+  const groups = new Map<string, { key: string, timestamp: number, trades: any[] }>()
+
+  currentTradesForList.value.forEach((trade: any) => {
+    const timestamp = getTradeTimelineTimestamp(trade)
+    if (!timestamp) return
+    const key = formatTimeTreeDayKey(timestamp)
+    if (!groups.has(key)) {
+      groups.set(key, { key, timestamp, trades: [] })
+    }
+    const pnl = getTradePnlValue(trade)
+    groups.get(key)!.trades.push({
+      id: String(trade?.id || `${key}-${groups.get(key)!.trades.length}`),
+      asset: String(trade?.asset || 'UNKNOWN').toUpperCase(),
+      side: getTimeTreeSide(trade?.side),
+      pnl,
+      resultPct: formatSignedPercent(getTradeResultPercent(trade)),
+      resultCurrency: formatDistributionCurrency(pnl),
+      time: formatTimeTreeTime(timestamp),
+      timestamp
+    })
+  })
+
+  return Array.from(groups.values())
+    .sort((left, right) => left.timestamp - right.timestamp)
+    .map((group, index) => ({
+      key: group.key,
+      side: index % 2 === 0 ? 'left' : 'right',
+      label: formatTimeTreeDayLabel(group.timestamp),
+      weekday: formatTimeTreeWeekday(group.timestamp),
+      trades: group.trades.sort((left, right) => left.timestamp - right.timestamp)
+    }))
 })
 
 const patternForecastClosedTradesCount = computed(() => {
