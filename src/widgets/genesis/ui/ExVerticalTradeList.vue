@@ -785,6 +785,21 @@ const profitTierSearch = ref('')
 const customProfitMin = ref<number | null>(null)
 const customProfitMax = ref<number | null>(null)
 
+const getConditionFilterName = (condition: any) => {
+  if (typeof condition === 'string') return condition
+  return condition?.info?.name || condition?.name || condition?.label || condition?.id || ''
+}
+
+const isVisibleConditionFilterName = (name: unknown) => {
+  const normalized = String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+
+  if (!normalized) return false
+  return !/(^|_)(and|or)_?protocol($|_)/.test(normalized)
+}
+
 type ProfitTierOption = {
   id: string
   label: string
@@ -1427,40 +1442,39 @@ const scenariosList = computed(() => {
 
 const conditionsList = computed(() => {
   const items = new Map<string, string>()
+  const addConditionName = (condition: any) => {
+    const name = getConditionFilterName(condition)
+    if (isVisibleConditionFilterName(name)) items.set(name, name)
+  }
   const sourceTrades = (props.trades && props.trades.length > 0) ? props.trades : mockTrades.value
   sourceTrades.forEach((t: any) => {
     if (t.boardScenarioEntry?.info?.conditions && Array.isArray(t.boardScenarioEntry.info.conditions)) {
-      t.boardScenarioEntry.info.conditions.forEach((c: any) => {
-        const name = c.info?.name || c.name || c.label
-        if (name) items.set(name, name)
-      })
+      t.boardScenarioEntry.info.conditions.forEach(addConditionName)
     }
     if (t.conditions && Array.isArray(t.conditions)) {
-      t.conditions.forEach((c: any) => {
-        const name = c.info?.name || c.name || c.label || (typeof c === 'string' ? c : '')
-        if (name) items.set(name, name)
-      })
+      t.conditions.forEach(addConditionName)
     }
     if (t.boardConditions && Array.isArray(t.boardConditions)) {
-      t.boardConditions.forEach((c: any) => {
-        const name = c.info?.name || c.name || c.label || (typeof c === 'string' ? c : '')
-        if (name) items.set(name, name)
-      })
+      t.boardConditions.forEach(addConditionName)
     }
     if (t.condition && typeof t.condition === 'string') {
-      items.set(t.condition, t.condition)
+      addConditionName(t.condition)
     }
   })
 
   strategyScenarios.value.forEach(scen => {
     getScenarioConditions(scen.id).forEach(c => {
-      const name = c.info?.name || c.name
-      if (name) items.set(name, name)
+      addConditionName(c)
     })
   })
 
   const list = Array.from(items.values()).sort().map(s => ({ id: s, label: s }))
   return [{ id: 'ALL', label: 'ALL' }, ...list]
+})
+
+watch(conditionsList, (list) => {
+  const visibleIds = new Set(list.map(item => item.id))
+  selectedCondition.value = selectedCondition.value.filter(id => visibleIds.has(id) && isVisibleConditionFilterName(id))
 })
 
 const assetsList = computed(() => {
@@ -1602,19 +1616,20 @@ const filteredTrades = computed(() => {
     if (selectedCondition.value.length > 0) {
       let tradeConds: string[] = []
       if (trade.boardScenarioEntry?.info?.conditions && Array.isArray(trade.boardScenarioEntry.info.conditions)) {
-        tradeConds.push(...trade.boardScenarioEntry.info.conditions.map((c: any) => c.info?.name || c.name || c.label || '').filter(Boolean))
+        tradeConds.push(...trade.boardScenarioEntry.info.conditions.map(getConditionFilterName).filter(isVisibleConditionFilterName))
       }
       if (trade.conditions && Array.isArray(trade.conditions)) {
-        tradeConds.push(...trade.conditions.map((c: any) => c.info?.name || c.name || c.label || (typeof c === 'string' ? c : '')).filter(Boolean))
+        tradeConds.push(...trade.conditions.map(getConditionFilterName).filter(isVisibleConditionFilterName))
       }
       if (trade.boardConditions && Array.isArray(trade.boardConditions)) {
-        tradeConds.push(...trade.boardConditions.map((c: any) => c.info?.name || c.name || c.label || (typeof c === 'string' ? c : '')).filter(Boolean))
+        tradeConds.push(...trade.boardConditions.map(getConditionFilterName).filter(isVisibleConditionFilterName))
       }
       if (tradeConds.length === 0 && trade.condition) {
-        tradeConds.push(typeof trade.condition === 'string' ? trade.condition : (trade.condition.info?.name || trade.condition.name || ''))
+        const fallbackCondition = getConditionFilterName(trade.condition)
+        if (isVisibleConditionFilterName(fallbackCondition)) tradeConds.push(fallbackCondition)
       }
       
-      tradeConds = Array.from(new Set(tradeConds.filter(Boolean)))
+      tradeConds = Array.from(new Set(tradeConds.filter(isVisibleConditionFilterName)))
       
       if (conditionMatchMode.value === 'EXACT') {
         if (tradeConds.length !== selectedCondition.value.length) return false
