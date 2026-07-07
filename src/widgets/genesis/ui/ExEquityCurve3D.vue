@@ -53,13 +53,20 @@
     <Transition name="protocol-slide">
       <div v-if="showDistribution3D && !showRobustnessExplanations && !showSimulator"
            class="absolute top-12 left-1/2 z-30 w-[min(560px,calc(100vw-320px))] -translate-x-1/2 pointer-events-none">
-        <div class="relative border border-black/15 dark:border-white/15 bg-white/95 dark:bg-[#0a0a0a]/95 px-7 py-4 nier-text-primary shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
-          <div class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border border-black dark:border-white nier-bg-panel"></div>
-          <div class="text-center text-[9px] font-mono uppercase tracking-[0.42em] opacity-55">Next step</div>
-          <div class="mt-3 text-center text-base font-semibold leading-6" :style="{ color: robustnessExplanation.tone }">
-            {{ formatSentenceCase(robustnessExplanation.action.replace('Recommended action: ', '')) }}
+        <ExPanel
+          variant="light"
+          :no-padding="true"
+          :no-shadow="true"
+          :show-corners="true"
+          class="!border-black/15 dark:!border-white/15"
+        >
+          <div class="px-7 py-4 bg-white/75 dark:bg-[#0a0a0a]/75 nier-text-primary">
+            <div class="text-center text-[9px] font-mono uppercase tracking-[0.42em] opacity-55">Next step</div>
+            <div class="mt-3 text-center text-base font-semibold leading-6" :style="{ color: robustnessExplanation.tone }">
+              {{ formatSentenceCase(robustnessExplanation.action.replace('Recommended action: ', '')) }}
+            </div>
           </div>
-        </div>
+        </ExPanel>
       </div>
     </Transition>
 

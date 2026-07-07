@@ -2,6 +2,7 @@
 import { toRefs } from 'vue'
 import { useExRobustness } from '../../model/useExRobustness'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const props = defineProps<{
   diagnosticStats: any
@@ -142,9 +143,17 @@ function diagnosticText(key: string) {
         <!-- ACTION -->
         <section>
           <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('robustnessAction') }}</h2>
-          <div class="p-6 border border-black/15 dark:border-white/15 bg-black/[0.03] dark:bg-white/[0.03]">
-            <p class="leading-loose font-bold" :style="{ color: robustnessExplanation.tone }">> {{ robustnessExplanation.action }}</p>
-          </div>
+          <ExPanel
+            variant="light"
+            :no-padding="true"
+            :no-shadow="true"
+            :show-corners="true"
+            class="!border-black/15 dark:!border-white/15"
+          >
+            <div class="p-6 bg-black/[0.03] dark:bg-white/[0.03]">
+              <p class="leading-loose font-bold" :style="{ color: robustnessExplanation.tone }">> {{ robustnessExplanation.action }}</p>
+            </div>
+          </ExPanel>
         </section>
 
         <!-- TRACE -->
