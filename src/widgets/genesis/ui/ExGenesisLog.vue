@@ -91,133 +91,135 @@
         </Transition>
       </div>
 
-      <!-- LIST VIEW LAYER -->
       <div
-        v-if="viewType === 'list'"
-        class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
-        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
-      >
-         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-         <div class="relative z-10 w-full h-full overflow-y-auto custom-scrollbar px-12 md:px-24 py-24 md:py-32">
-           <ExVerticalTradeList :trades="currentTradesForList" @open-note="handleOpenNote" @open-trade="handleOpenTrade" />
-         </div>
-      </div>
-
-      <!-- TIME TREE VIEW LAYER -->
-      <div
-        v-if="viewType === 'timeTree'"
+        v-if="viewType === 'list' || viewType === 'timeTree'"
         class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
         <div class="relative z-10 flex h-full w-full flex-col px-8 py-14 md:px-16 md:py-20">
-          <div class="mb-6 flex items-end justify-between gap-6 border-b border-black/10 pb-4 dark:border-white/10">
-            <div>
-              <div class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
-                {{ locale === 'ru' ? 'ДЕРЕВО_ВРЕМЕНИ' : 'TIME_TREE' }}
-              </div>
-              <div class="mt-2 text-xs font-mono uppercase tracking-[0.25em] opacity-70">
-                {{ locale === 'ru' ? 'СДЕЛКИ_ПО_ДНЯМ_И_ВРЕМЕНИ' : 'TRADES_BY_DAY_AND_TIME' }}
-              </div>
-            </div>
-            <div class="text-right font-mono uppercase">
-              <div class="text-[8px] tracking-[0.3em] opacity-40">{{ locale === 'ru' ? 'ДНЕЙ' : 'DAYS' }}</div>
-              <div class="mt-1 text-sm font-black nier-text-primary">{{ timeTreeGroups.length }}</div>
-            </div>
+          <div class="mb-5 shrink-0">
+            <ExVerticalTradeList
+              :trades="currentTradesForList"
+              :filters-only="true"
+              :view-mode="viewType === 'list' ? 'list' : 'timeTree'"
+              @list-view-mode-change="setListViewMode"
+              @filtered-trades-change="handleTimeTreeFilteredTrades"
+            />
           </div>
 
-          <div v-if="timeTreeGroups.length" class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-            <div class="relative mx-auto w-full max-w-7xl pb-24 pt-2">
-              <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15 dark:bg-white/15"></div>
+          <Transition name="page-reify" mode="out-in">
+            <div
+              v-if="viewType === 'list'"
+              key="vertical-list-content"
+              class="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-4 md:px-8"
+            >
+              <ExVerticalTradeList
+                :trades="timeTreeSourceTrades"
+                :hide-filters="true"
+                view-mode="list"
+                @open-note="handleOpenNote"
+                @open-trade="handleOpenTrade"
+              />
+            </div>
 
-              <div
-                v-for="(group, index) in timeTreeGroups"
-                :key="group.key"
-                class="relative grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] items-start gap-y-5 py-4"
-              >
+            <div
+              v-else
+              key="time-tree-content"
+              class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar"
+            >
+              <div v-if="timeTreeGroups.length" class="relative mx-auto w-full max-w-7xl pb-24 pt-2">
+                <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15 dark:bg-white/15"></div>
+
                 <div
-                  class="relative min-w-0"
-                  :class="group.side === 'left' ? 'col-start-1 pr-6' : 'col-start-3 pl-6'"
+                  v-for="(group, index) in timeTreeGroups"
+                  :key="group.key"
+                  class="relative grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] items-start gap-y-5 py-4"
                 >
                   <div
-                    class="flex flex-col gap-1.5"
-                    :class="group.side === 'left' ? 'items-end text-right' : 'items-start text-left'"
+                    class="relative min-w-0"
+                    :class="group.side === 'left' ? 'col-start-1 pr-6' : 'col-start-3 pl-6'"
                   >
-                    <div class="mb-0.5 font-mono uppercase tracking-[0.22em]">
-                      <div class="text-[8px] opacity-45">{{ group.weekday }}</div>
-                      <div class="relative mt-0.5 text-[10px] font-black nier-text-primary">
-                        <div
-                          class="absolute top-1/2 h-px -translate-y-1/2 bg-black/20 dark:bg-white/20"
-                          :class="group.side === 'left' ? 'right-[-32px] w-6' : 'left-[-32px] w-6'"
-                        ></div>
-                        {{ group.label }}
-                      </div>
-                    </div>
-
-                    <button
-                      v-for="trade in group.trades"
-                      :key="trade.id"
-                      class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
-                      :class="group.side === 'left' ? 'text-right' : 'text-left'"
-                      @click="handleOpenTrade({ tradeId: trade.id })"
+                    <div
+                      class="flex flex-col gap-1.5"
+                      :class="group.side === 'left' ? 'items-end text-right' : 'items-start text-left'"
                     >
-                      <div
-                        class="flex min-w-0 items-center justify-between gap-4"
-                        :class="group.side === 'left' ? 'flex-row-reverse' : ''"
+                      <div class="mb-0.5 font-mono uppercase tracking-[0.22em]">
+                        <div class="text-[8px] opacity-45">{{ group.weekday }}</div>
+                        <div class="relative mt-0.5 text-[10px] font-black nier-text-primary">
+                          <div
+                            class="absolute top-1/2 h-px -translate-y-1/2 bg-black/20 dark:bg-white/20"
+                            :class="group.side === 'left' ? 'right-[-32px] w-6' : 'left-[-32px] w-6'"
+                          ></div>
+                          {{ group.label }}
+                        </div>
+                      </div>
+
+                      <button
+                        v-for="trade in group.trades"
+                        :key="trade.id"
+                        class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
+                        :class="group.side === 'left' ? 'text-right' : 'text-left'"
+                        @click="handleOpenTrade({ tradeId: trade.id })"
                       >
                         <div
-                          class="flex min-w-0 items-center gap-2"
-                          :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
+                          class="flex min-w-0 items-center justify-between gap-4"
+                          :class="group.side === 'left' ? 'flex-row-reverse' : ''"
                         >
-                          <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white/10 dark:bg-black/70">
-                            <img
-                              v-if="trade.assetIcon"
-                              :src="trade.assetIcon"
-                              class="h-full w-full object-contain"
-                              alt=""
-                              @error="hideBrokenAssetIcon"
-                            />
-                          </span>
-                          <span class="min-w-0">
-                            <span class="block truncate text-xs font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</span>
-                            <span class="mt-1 block text-[9px] tracking-[0.22em] opacity-45">{{ trade.time }}</span>
-                          </span>
-                          <span
-                            class="shrink-0 border px-1.5 py-0.5 text-[7px] font-black tracking-[0.18em]"
-                            :class="trade.side === 'SHORT'
-                              ? 'border-rose-500/30 text-rose-500'
-                              : 'border-emerald-500/30 text-emerald-500'"
+                          <div
+                            class="flex min-w-0 items-center gap-2"
+                            :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
                           >
-                            {{ trade.side }}
-                          </span>
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white/10 dark:bg-black/70">
+                              <img
+                                v-if="trade.assetIcon"
+                                :src="trade.assetIcon"
+                                class="h-full w-full object-contain"
+                                alt=""
+                                @error="hideBrokenAssetIcon"
+                              />
+                            </span>
+                            <span class="min-w-0">
+                              <span class="block truncate text-xs font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</span>
+                              <span class="mt-1 block text-[9px] tracking-[0.22em] opacity-45">{{ trade.time }}</span>
+                            </span>
+                            <span
+                              class="shrink-0 border px-1.5 py-0.5 text-[7px] font-black tracking-[0.18em]"
+                              :class="trade.side === 'SHORT'
+                                ? 'border-rose-500/30 text-rose-500'
+                                : 'border-emerald-500/30 text-emerald-500'"
+                            >
+                              {{ trade.side }}
+                            </span>
+                          </div>
+                          <div
+                            class="shrink-0 text-base font-black leading-none tracking-[0.12em]"
+                            :style="{ color: trade.resultColor }"
+                            :class="group.side === 'left' ? 'text-left' : 'text-right'"
+                          >
+                            {{ trade.resultPct }} <span class="block pt-1 text-[9px] opacity-55">{{ trade.resultCurrency }}</span>
+                          </div>
                         </div>
-                        <div
-                          class="shrink-0 text-base font-black leading-none tracking-[0.12em]"
-                          :style="{ color: trade.resultColor }"
-                          :class="group.side === 'left' ? 'text-left' : 'text-right'"
-                        >
-                          {{ trade.resultPct }} <span class="block pt-1 text-[9px] opacity-55">{{ trade.resultCurrency }}</span>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div class="col-start-2 row-start-1 flex justify-center pt-3">
-                  <div class="relative flex h-8 w-8 items-center justify-center border nier-border-primary bg-white/85 font-mono text-[10px] font-black backdrop-blur-xl dark:bg-black/75">
-                    <div class="absolute h-1.5 w-1.5 rotate-45 nier-bg-inverted"></div>
-                    <span class="relative z-10 opacity-0">{{ index + 1 }}</span>
+                  <div class="col-start-2 row-start-1 flex justify-center pt-3">
+                    <div class="relative flex h-8 w-8 items-center justify-center border nier-border-primary bg-white/85 font-mono text-[10px] font-black backdrop-blur-xl dark:bg-black/75">
+                      <div class="absolute h-1.5 w-1.5 rotate-45 nier-bg-inverted"></div>
+                      <span class="relative z-10 opacity-0">{{ index + 1 }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div v-else class="flex flex-1 items-center justify-center">
-            <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
-              {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ДЕРЕВА' : 'NO_TRADES_FOR_TREE' }}
+              <div v-else class="flex h-full items-center justify-center">
+                <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
+                  {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ДЕРЕВА' : 'NO_TRADES_FOR_TREE' }}
+                </div>
+              </div>
             </div>
-          </div>
+          </Transition>
         </div>
       </div>
 
@@ -307,38 +309,16 @@
                <div v-if="viewType === 'cube'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
 
-            <button @click="viewType = 'list'" 
+            <button @click="viewType = 'timeTree'"
                     class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'list' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
+                    :class="viewType === 'list' || viewType === 'timeTree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
                <div class="flex shrink-0 flex-col items-center space-y-1.5 transition-all duration-700"
-                    :class="viewType === 'list' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'">
+                    :class="viewType === 'list' || viewType === 'timeTree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'">
                   <div class="w-5 h-[1.5px] bg-current"></div>
                   <div class="w-5 h-[1.5px] bg-current opacity-60"></div>
                   <div class="w-5 h-[1.5px] bg-current opacity-30"></div>
                </div>
-               <div v-if="viewType === 'list'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
-
-            <button @click="viewType = 'timeTree'"
-                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'timeTree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
-                    :class="viewType === 'timeTree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round">
-                  <path d="M12 3v18"></path>
-                  <path d="M12 7H7l-3 3"></path>
-                  <path d="M12 12h5l3-3"></path>
-                  <path d="M12 17H7l-3-3"></path>
-                  <circle cx="12" cy="7" r="1.5"></circle>
-                  <circle cx="12" cy="12" r="1.5"></circle>
-                  <circle cx="12" cy="17" r="1.5"></circle>
-               </svg>
-               <div v-if="viewType === 'timeTree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
+               <div v-if="viewType === 'list' || viewType === 'timeTree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
 
             <button @click="viewType = 'distribution'"
@@ -1190,8 +1170,20 @@ const currentTradesForList = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getAllTradesForStrategy(selectedStrategyId.value))
 })
 
+const timeTreeFilteredTrades = ref<any[] | null>(null)
+
+const setListViewMode = (mode: 'list' | 'timeTree') => {
+  viewType.value = mode
+}
+
+const handleTimeTreeFilteredTrades = (trades: any[]) => {
+  timeTreeFilteredTrades.value = Array.isArray(trades) ? trades : []
+}
+
+const timeTreeSourceTrades = computed(() => timeTreeFilteredTrades.value ?? currentTradesForList.value)
+
 const getTradeTimelineTimestamp = (trade: any) => {
-  const rawDate = trade?.date || trade?.createdAt || trade?.dateExit
+  const rawDate = trade?.date || trade?.dateObj || trade?.createdAt || trade?.dateExit || trade?.dateEntryStr || trade?.dateTime
   const timestamp = new Date(rawDate).getTime()
   return Number.isFinite(timestamp) ? timestamp : 0
 }
@@ -1295,7 +1287,7 @@ const hideBrokenAssetIcon = (event: Event) => {
 const timeTreeGroups = computed(() => {
   const groups = new Map<string, { key: string, timestamp: number, trades: any[] }>()
 
-  currentTradesForList.value.forEach((trade: any) => {
+  timeTreeSourceTrades.value.forEach((trade: any) => {
     const timestamp = getTradeTimelineTimestamp(trade)
     if (!timestamp) return
     const key = formatTimeTreeDayKey(timestamp)
@@ -1308,7 +1300,7 @@ const timeTreeGroups = computed(() => {
       id: String(trade?.id || `${key}-${groups.get(key)!.trades.length}`),
       asset: String(trade?.asset || 'UNKNOWN').toUpperCase(),
       assetIcon: resolveTimeTreeAssetIcon(trade),
-      side: getTimeTreeSide(trade?.side),
+      side: getTimeTreeSide(trade?.side || trade?.direction),
       pnl,
       resultPct: formatSignedPercent(resultValue),
       resultCurrency: formatDistributionCurrency(pnl),

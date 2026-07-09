@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col space-y-6 font-mono select-none nier-text-primary">
+  <div class="flex flex-col font-mono select-none nier-text-primary" :class="showFilters ? 'space-y-6' : ''">
     <!-- FILTER BAR -->
-    <div ref="filterBarRef" class="relative z-30 flex flex-col gap-3 pb-4 border-b nier-border-primary">
+    <div v-if="showFilters" ref="filterBarRef" class="relative z-30 flex flex-col gap-3 pb-4 border-b nier-border-primary">
       <div class="flex items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3 min-w-0">
           <span class="font-black uppercase tracking-widest">{{ locale === 'ru' ? 'Фильтры' : 'Filters' }}</span>
@@ -11,6 +11,24 @@
           </button>
         </div>
         <div class="flex items-center space-x-3 shrink-0">
+          <div class="flex items-center gap-1 pr-3 border-r nier-border-primary">
+            <button
+              @click="emit('list-view-mode-change', 'list')"
+              class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
+              :class="activeListViewMode === 'list' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
+              :title="locale === 'ru' ? 'Вертикальный список' : 'Vertical list'"
+            >
+              LIST
+            </button>
+            <button
+              @click="emit('list-view-mode-change', 'timeTree')"
+              class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
+              :class="activeListViewMode === 'timeTree' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
+              :title="locale === 'ru' ? 'Дерево времени' : 'Time tree'"
+            >
+              TREE
+            </button>
+          </div>
           <div class="flex items-center gap-1 pr-3 border-r nier-border-primary">
             <button
               @click="setResultDisplayMode('currency')"
@@ -237,7 +255,7 @@
     </div>
 
     <!-- VERTICAL TRADE REGISTRY -->
-    <div class="flex flex-col space-y-3 font-mono text-xs pt-2 select-none">
+    <div v-if="!filtersOnly" class="flex flex-col space-y-3 font-mono text-xs pt-2 select-none">
       <!-- TABLE CONTROLS & HEADER GRID -->
       <div class="flex items-center justify-between pb-1 text-[10px] opacity-60 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
@@ -478,19 +496,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 
 const { locale } = useI18n()
 
 const props = defineProps<{
   trades?: any[]
+  filtersOnly?: boolean
+  hideFilters?: boolean
+  viewMode?: 'list' | 'timeTree'
 }>()
 
 const emit = defineEmits<{
   (e: 'open-note', payload: { tradeId: string; noteId: string }): void
   (e: 'open-trade', payload: { tradeId: string }): void
+  (e: 'filtered-trades-change', payload: any[]): void
+  (e: 'list-view-mode-change', payload: 'list' | 'timeTree'): void
 }>()
+
+const filtersOnly = computed(() => props.filtersOnly === true)
+const showFilters = computed(() => props.hideFilters !== true)
+const activeListViewMode = computed(() => props.viewMode || 'list')
 
 const expandedTradeId = ref<string | null>(null)
 const colorMode = ref<'monochrome' | 'colorful'>('monochrome')
@@ -606,15 +633,21 @@ const setResultDisplayMode = (mode: 'currency' | 'percent') => {
 
 const activeFilterChips = computed(() => {
   const chips: { id: string, type: string, label: string }[] = []
-  if (selectedScenario.value !== 'ALL') chips.push({ id: 'scenario', type: 'SCENARIO', label: scenariosList.value.find(x => x.id === selectedScenario.value)?.label || selectedScenario.value })
+  selectedScenario.value.forEach(scenarioId => {
+    chips.push({ id: `scenario-${scenarioId}`, type: 'SCENARIO', label: scenariosList.value.find(x => x.id === scenarioId)?.label || scenarioId })
+  })
   if (selectedCondition.value.length > 0) {
     selectedCondition.value.forEach(condId => {
       chips.push({ id: `condition-${condId}`, type: 'CONDITION', label: conditionsList.value.find(x => x.id === condId)?.label || condId })
     })
   }
   if (selectedDirection.value !== 'ALL') chips.push({ id: 'direction', type: 'DIRECTION', label: directionList.value.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value })
-  if (selectedAsset.value !== 'ALL') chips.push({ id: 'asset', type: 'ASSET', label: assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value })
-  if (selectedStatus.value !== 'ALL') chips.push({ id: 'status', type: 'STATUS', label: statusList.value.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value })
+  selectedAsset.value.forEach(assetId => {
+    chips.push({ id: `asset-${assetId}`, type: 'ASSET', label: assetsList.value.find(x => x.id === assetId)?.label || assetId })
+  })
+  selectedStatus.value.forEach(statusId => {
+    chips.push({ id: `status-${statusId}`, type: 'STATUS', label: statusList.value.find(x => x.id === statusId)?.label || statusId })
+  })
   if (selectedProfitTier.value !== 'ALL') {
     const label = selectedProfitTier.value === 'CUSTOM'
       ? `${customProfitMin.value !== null && customProfitMin.value !== '' as any ? customProfitMin.value : '-∞'}${resultMetricLabel.value} .. ${customProfitMax.value !== null && customProfitMax.value !== '' as any ? customProfitMax.value : '+∞'}${resultMetricLabel.value}`
@@ -629,14 +662,23 @@ const activeFilterChips = computed(() => {
 })
 
 const removeFilterChip = (id: string) => {
-  if (id === 'scenario') selectedScenario.value = 'ALL'
+  if (id.startsWith('scenario-')) {
+    const scenarioId = id.replace('scenario-', '')
+    selectedScenario.value = selectedScenario.value.filter(x => x !== scenarioId)
+  }
   if (id.startsWith('condition-')) {
     const condId = id.replace('condition-', '')
     selectedCondition.value = selectedCondition.value.filter(x => x !== condId)
   }
   if (id === 'direction') selectedDirection.value = 'ALL'
-  if (id === 'asset') selectedAsset.value = 'ALL'
-  if (id === 'status') selectedStatus.value = 'ALL'
+  if (id.startsWith('asset-')) {
+    const assetId = id.replace('asset-', '')
+    selectedAsset.value = selectedAsset.value.filter(x => x !== assetId)
+  }
+  if (id.startsWith('status-')) {
+    const statusId = id.replace('status-', '')
+    selectedStatus.value = selectedStatus.value.filter(x => x !== statusId)
+  }
   if (id === 'profitTier') {
     selectedProfitTier.value = 'ALL'
     customProfitMin.value = null
@@ -756,11 +798,11 @@ const setManualDuration = (edge: 'min' | 'max', event: Event) => {
   }
 }
 
-const selectedScenario = ref('ALL')
+const selectedScenario = ref<string[]>([])
 const selectedCondition = ref<string[]>([])
 const conditionMatchMode = ref<'INCLUDED' | 'EXACT'>('INCLUDED')
-const selectedAsset = ref('ALL')
-const selectedStatus = ref('ALL')
+const selectedAsset = ref<string[]>([])
+const selectedStatus = ref<string[]>([])
 const selectedDirection = ref('ALL')
 const yearFrom = ref<number | null>(null)
 const yearTo = ref<number | null>(null)
@@ -1088,10 +1130,10 @@ const mockTrades = ref([
 
 const activeFilterCount = computed(() => {
   let count = 0
-  if (selectedScenario.value !== 'ALL') count++
+  if (selectedScenario.value.length > 0) count += selectedScenario.value.length
   if (selectedCondition.value.length > 0) count += selectedCondition.value.length
-  if (selectedAsset.value !== 'ALL') count++
-  if (selectedStatus.value !== 'ALL') count++
+  if (selectedAsset.value.length > 0) count += selectedAsset.value.length
+  if (selectedStatus.value.length > 0) count += selectedStatus.value.length
   if (selectedDirection.value !== 'ALL') count++
   if (hasYearRangeFilter.value) count++
   if (selectedProfitTier.value !== 'ALL') count++
@@ -1102,10 +1144,10 @@ const activeFilterCount = computed(() => {
 })
 
 const resetAllFilters = () => {
-  selectedScenario.value = 'ALL'
+  selectedScenario.value = []
   selectedCondition.value = []
-  selectedAsset.value = 'ALL'
-  selectedStatus.value = 'ALL'
+  selectedAsset.value = []
+  selectedStatus.value = []
   selectedDirection.value = 'ALL'
   yearFrom.value = null
   yearTo.value = null
@@ -1494,12 +1536,27 @@ const assetsList = computed(() => {
   return [{ id: 'ALL', label: 'ALL' }, ...list]
 })
 
+watch(scenariosList, (list) => {
+  const visibleIds = new Set(list.map(item => item.id))
+  selectedScenario.value = selectedScenario.value.filter(id => visibleIds.has(id))
+})
+
+watch(assetsList, (list) => {
+  const visibleIds = new Set(list.map(item => item.id))
+  selectedAsset.value = selectedAsset.value.filter(id => visibleIds.has(id))
+})
+
+watch(statusList, (list) => {
+  const visibleIds = new Set(list.map(item => item.id))
+  selectedStatus.value = selectedStatus.value.filter(id => visibleIds.has(id))
+})
+
 const filterDropdowns = computed(() => [
-  { id: 'scenarios', label: locale.value === 'ru' ? 'Сценарии' : 'Scenarios', type: 'options', options: scenariosList.value, isActive: selectedScenario.value !== 'ALL' },
+  { id: 'scenarios', label: locale.value === 'ru' ? 'Сценарии' : 'Scenarios', type: 'options', options: scenariosList.value, isActive: selectedScenario.value.length > 0 },
   { id: 'conditions', label: locale.value === 'ru' ? 'Условия' : 'Conditions', type: 'options', options: conditionsList.value.filter(i => i.id !== 'ALL'), isActive: selectedCondition.value.length > 0 },
   { id: 'direction', label: locale.value === 'ru' ? 'Направление' : 'Direction', type: 'options', options: directionList.value, isActive: selectedDirection.value !== 'ALL' },
-  { id: 'asset', label: locale.value === 'ru' ? 'Актив' : 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value !== 'ALL' },
-  { id: 'status', label: locale.value === 'ru' ? 'Статус' : 'Status', type: 'options', options: statusList.value, isActive: selectedStatus.value !== 'ALL' },
+  { id: 'asset', label: locale.value === 'ru' ? 'Актив' : 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value.length > 0 },
+  { id: 'status', label: locale.value === 'ru' ? 'Статус' : 'Status', type: 'options', options: statusList.value, isActive: selectedStatus.value.length > 0 },
   { id: 'profit', label: locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier', type: 'custom', options: [], isActive: selectedProfitTier.value !== 'ALL' },
   { id: 'year', label: locale.value === 'ru' ? 'Диапазон лет' : 'Year Range', type: 'range', options: [], isActive: hasYearRangeFilter.value },
   { id: 'day', label: locale.value === 'ru' ? 'Диапазон дней' : 'Day Range', type: 'range', options: [], isActive: hasDayRangeFilter.value },
@@ -1508,11 +1565,11 @@ const filterDropdowns = computed(() => [
 ])
 
 const filterButtonLabel = (id: string) => {
-  if (id === 'scenarios') return selectedScenario.value === 'ALL' ? (locale.value === 'ru' ? 'Сценарии' : 'Scenarios') : scenariosList.value.find(x => x.id === selectedScenario.value)?.label || selectedScenario.value
+  if (id === 'scenarios') return selectedScenario.value.length === 0 ? (locale.value === 'ru' ? 'Сценарии' : 'Scenarios') : `${locale.value === 'ru' ? 'Сценарии' : 'Scenarios'} (${selectedScenario.value.length})`
   if (id === 'conditions') return selectedCondition.value.length === 0 ? (locale.value === 'ru' ? 'Условия' : 'Conditions') : `${locale.value === 'ru' ? 'Условия' : 'Conditions'} (${selectedCondition.value.length})`
   if (id === 'direction') return selectedDirection.value === 'ALL' ? (locale.value === 'ru' ? 'Направление' : 'Direction') : directionList.value.find(x => x.id === selectedDirection.value)?.label || selectedDirection.value
-  if (id === 'asset') return selectedAsset.value === 'ALL' ? (locale.value === 'ru' ? 'Актив' : 'Asset') : assetsList.value.find(x => x.id === selectedAsset.value)?.label || selectedAsset.value
-  if (id === 'status') return selectedStatus.value === 'ALL' ? (locale.value === 'ru' ? 'Статус' : 'Status') : statusList.value.find(x => x.id === selectedStatus.value)?.label || selectedStatus.value
+  if (id === 'asset') return selectedAsset.value.length === 0 ? (locale.value === 'ru' ? 'Актив' : 'Asset') : `${locale.value === 'ru' ? 'Актив' : 'Asset'} (${selectedAsset.value.length})`
+  if (id === 'status') return selectedStatus.value.length === 0 ? (locale.value === 'ru' ? 'Статус' : 'Status') : `${locale.value === 'ru' ? 'Статус' : 'Status'} (${selectedStatus.value.length})`
   if (id === 'profit') return selectedProfitTier.value === 'ALL' ? (locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier') : selectedProfitTier.value === 'CUSTOM' ? (locale.value === 'ru' ? 'Польз. Прибыль' : 'Custom Profit') : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
   if (id === 'year') return hasYearRangeFilter.value ? `${locale.value === 'ru' ? 'Год' : 'Year'} ${formatRangeLabel(yearFrom.value, yearTo.value)}` : (locale.value === 'ru' ? 'Диапазон лет' : 'Year Range')
   if (id === 'day') return hasDayRangeFilter.value ? `${locale.value === 'ru' ? 'День' : 'Day'} ${formatRangeLabel(dayFrom.value, dayTo.value)}` : (locale.value === 'ru' ? 'Диапазон дней' : 'Day Range')
@@ -1522,15 +1579,22 @@ const filterButtonLabel = (id: string) => {
 }
 
 const isDropdownOptionActive = (filterId: string, optionId: string) => {
-  if (filterId === 'scenarios') return selectedScenario.value === optionId
+  if (filterId === 'scenarios') return optionId === 'ALL' ? selectedScenario.value.length === 0 : selectedScenario.value.includes(optionId)
   if (filterId === 'conditions') return selectedCondition.value.includes(optionId)
   if (filterId === 'direction') return selectedDirection.value === optionId
-  if (filterId === 'asset') return selectedAsset.value === optionId
-  if (filterId === 'status') return selectedStatus.value === optionId
+  if (filterId === 'asset') return optionId === 'ALL' ? selectedAsset.value.length === 0 : selectedAsset.value.includes(optionId)
+  if (filterId === 'status') return optionId === 'ALL' ? selectedStatus.value.length === 0 : selectedStatus.value.includes(optionId)
   return false
 }
 
 const selectDropdownOption = (filterId: string, optionId: string) => {
+  const toggleMultiOption = (current: string[], id: string) => {
+    if (id === 'ALL') return []
+    return current.includes(id)
+      ? current.filter(x => x !== id)
+      : [...current, id]
+  }
+
   if (filterId === 'conditions') {
     selectedCondition.value = selectedCondition.value.includes(optionId)
       ? selectedCondition.value.filter(x => x !== optionId)
@@ -1538,18 +1602,18 @@ const selectDropdownOption = (filterId: string, optionId: string) => {
     return
   }
 
-  if (filterId === 'scenarios') selectedScenario.value = selectedScenario.value === optionId ? 'ALL' : optionId
+  if (filterId === 'scenarios') selectedScenario.value = toggleMultiOption(selectedScenario.value, optionId)
   if (filterId === 'direction') selectedDirection.value = selectedDirection.value === optionId ? 'ALL' : optionId
-  if (filterId === 'asset') selectedAsset.value = selectedAsset.value === optionId ? 'ALL' : optionId
-  if (filterId === 'status') selectedStatus.value = selectedStatus.value === optionId ? 'ALL' : optionId
+  if (filterId === 'asset') selectedAsset.value = toggleMultiOption(selectedAsset.value, optionId)
+  if (filterId === 'status') selectedStatus.value = toggleMultiOption(selectedStatus.value, optionId)
 }
 
 const resetFilterById = (id: string) => {
-  if (id === 'scenarios') selectedScenario.value = 'ALL'
+  if (id === 'scenarios') selectedScenario.value = []
   if (id === 'conditions') selectedCondition.value = []
   if (id === 'direction') selectedDirection.value = 'ALL'
-  if (id === 'asset') selectedAsset.value = 'ALL'
-  if (id === 'status') selectedStatus.value = 'ALL'
+  if (id === 'asset') selectedAsset.value = []
+  if (id === 'status') selectedStatus.value = []
   if (id === 'profit') {
     selectedProfitTier.value = 'ALL'
     customProfitMin.value = null
@@ -1604,14 +1668,16 @@ const getTradeTimeMinutes = (trade: any) => {
 const filteredTrades = computed(() => {
   return activeTrades.value.filter((trade: any) => {
     if (!showHiddenTrades.value && isTradeHidden(trade)) return false
-    if (selectedScenario.value !== 'ALL') {
-      const isExitScen = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION'].includes(selectedScenario.value)
-      if (isExitScen) {
-        const exitName = trade.boardScenarioExit?.info?.name || trade.condition
-        if (exitName !== selectedScenario.value) return false
-      } else {
-        if (trade.scenario !== selectedScenario.value) return false
-      }
+    if (selectedScenario.value.length > 0) {
+      const matchesScenario = selectedScenario.value.some((scenarioId) => {
+        const isExitScen = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION'].includes(scenarioId)
+        if (isExitScen) {
+          const exitName = trade.boardScenarioExit?.info?.name || trade.condition
+          return exitName === scenarioId
+        }
+        return trade.scenario === scenarioId
+      })
+      if (!matchesScenario) return false
     }
     if (selectedCondition.value.length > 0) {
       let tradeConds: string[] = []
@@ -1638,8 +1704,8 @@ const filteredTrades = computed(() => {
         if (!selectedCondition.value.every(c => tradeConds.includes(c))) return false
       }
     }
-    if (selectedAsset.value !== 'ALL' && trade.asset !== selectedAsset.value) return false
-    if (selectedStatus.value !== 'ALL' && trade.status !== selectedStatus.value) return false
+    if (selectedAsset.value.length > 0 && !selectedAsset.value.includes(trade.asset)) return false
+    if (selectedStatus.value.length > 0 && !selectedStatus.value.includes(trade.status)) return false
     if (selectedDirection.value !== 'ALL' && trade.direction !== selectedDirection.value) return false
     
     if (hasYearRangeFilter.value && !isWithinRange(getTradeYear(trade), yearFrom.value, yearTo.value)) return false
@@ -1673,6 +1739,10 @@ const filteredTrades = computed(() => {
     return true
   })
 })
+
+watch(filteredTrades, (trades) => {
+  emit('filtered-trades-change', trades)
+}, { immediate: true })
 
 const selectedTradeIds = ref<string[]>([])
 
