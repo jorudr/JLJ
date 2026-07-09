@@ -1074,7 +1074,7 @@ const downloadCardPng = async () => {
 
 const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution'>('cube')
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
-const listColorMode = ref<'monochrome' | 'colorful'>('monochrome')
+const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
 

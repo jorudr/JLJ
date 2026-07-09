@@ -329,7 +329,11 @@
               <button class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0 cursor-pointer" :class="selectedTradeIds.includes(trade.id) ? 'nier-bg-inverted nier-text-inverted opacity-100' : 'opacity-30'">
                 <span v-if="selectedTradeIds.includes(trade.id)" class="text-[8px] font-bold">✓</span>
               </button>
-              <span class="w-1 h-1 rounded-full shrink-0" :class="colorMode === 'colorful' ? (trade.status === 'WIN' ? 'bg-green-500' : trade.status === 'LOSS' ? 'bg-red-500' : 'bg-yellow-500') : (trade.status === 'WIN' ? 'bg-black dark:bg-[#F9F6F0]' : trade.status === 'LOSS' ? 'bg-black/30 dark:bg-white/30' : 'bg-black/60 dark:bg-white/60')"></span>
+              <span
+                class="w-1 h-1 rounded-full shrink-0"
+                :class="colorMode === 'colorful' ? '' : (trade.status === 'WIN' ? 'bg-black dark:bg-[#F9F6F0]' : trade.status === 'LOSS' ? 'bg-black/30 dark:bg-white/30' : 'bg-black/60 dark:bg-white/60')"
+                :style="colorMode === 'colorful' ? { backgroundColor: resultColorValue(trade) } : undefined"
+              ></span>
               <span class="font-bold uppercase tracking-widest">{{ trade.direction }}</span>
               <span v-if="isTradeHidden(trade)" class="text-[8px] uppercase tracking-[0.24em] opacity-45">
                 {{ locale === 'ru' ? 'скрыто' : 'hidden' }}
@@ -346,7 +350,7 @@
               </span>
             </div>
             <span class="opacity-40 text-right tracking-wider truncate">{{ trade.duration }}</span>
-            <span class="font-bold text-right tracking-wider" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
+            <span class="font-bold text-right tracking-wider" :style="{ color: resultColorValue(trade) }">{{ formatTradeResult(trade) }}</span>
             <button @click.stop="toggleTradeExpand(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="View details">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="expandedTradeId === trade.id ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
@@ -379,7 +383,7 @@
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
-                  <span class="font-bold mt-0.5 text-xs" :class="resultColorClass(trade)">{{ formatTradeResult(trade) }}</span>
+                  <span class="font-bold mt-0.5 text-xs" :style="{ color: resultColorValue(trade) }">{{ formatTradeResult(trade) }}</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
@@ -523,7 +527,7 @@ const showFilters = computed(() => props.hideFilters !== true)
 const activeListViewMode = computed(() => props.viewMode || 'list')
 
 const expandedTradeId = ref<string | null>(null)
-const colorMode = ref<'monochrome' | 'colorful'>(props.colorMode || 'monochrome')
+const colorMode = ref<'monochrome' | 'colorful'>(props.colorMode || 'colorful')
 const resultDisplayMode = ref<'currency' | 'percent'>(props.resultDisplayMode || 'percent')
 const openFilterId = ref<string | null>(null)
 const filterBarRef = ref<HTMLElement | null>(null)
@@ -635,10 +639,17 @@ const formatTradeResult = (trade: any) => {
   return `${sign}${Number(value).toFixed(2)}%`
 }
 
-const resultColorClass = (trade: any) => {
-  if (colorMode.value !== 'colorful') return ''
+const getSharedResultColor = (value: number) => {
+  if (!Number.isFinite(value) || value === 0) return 'currentColor'
+  const intensity = Math.min(Math.abs(value) / 5, 1)
+  if (value > 0) return `hsl(145 72% ${42 + intensity * 16}%)`
+  return `hsl(350 78% ${48 + intensity * 12}%)`
+}
+
+const resultColorValue = (trade: any) => {
+  if (colorMode.value !== 'colorful') return 'currentColor'
   const value = getResultMetricValue(trade)
-  return value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'text-yellow-500'
+  return getSharedResultColor(value)
 }
 
 const setResultDisplayMode = (mode: 'currency' | 'percent') => {
