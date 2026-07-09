@@ -1,8 +1,11 @@
 <template>
-  <div class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16">
+  <div
+    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16"
+    :class="{ 'exforum-transparent-bg': isForumLightTheme }"
+  >
     <!-- Inner Shadows -->
-    <div class="forum-edge-shadow forum-edge-shadow-top"></div>
-    <div class="forum-edge-shadow forum-edge-shadow-bottom"></div>
+    <div v-if="showForumEdgeShadows" class="forum-edge-shadow forum-edge-shadow-top"></div>
+    <div v-if="showForumEdgeShadows" class="forum-edge-shadow forum-edge-shadow-bottom"></div>
     
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
@@ -161,6 +164,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useThemeStore } from '~/features/store/useTheme'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExNodeContent from '~/entities/exnode/ui/ExNodeContent.vue'
@@ -168,9 +172,12 @@ import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 
 const route = useRoute()
 const router = useRouter()
+const themeStore = useThemeStore()
 
 // Archival State
 const searchQuery = ref('')
+const isForumLightTheme = computed(() => !themeStore.settings.isDark)
+const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
 
 // Pagination Logic
 const currentPage = computed(() => Number(route.query.page) || 1)
@@ -254,6 +261,10 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   
   background-color: var(--theme-bg) !important;
   color: var(--theme-text) !important;
+}
+
+.force-light-theme.exforum-transparent-bg {
+  background-color: transparent !important;
 }
 
 .force-light-theme * {
