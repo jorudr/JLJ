@@ -103,7 +103,10 @@
               :trades="currentTradesForList"
               :filters-only="true"
               :view-mode="viewType === 'list' ? 'list' : 'timeTree'"
+              :result-display-mode="listResultDisplayMode"
+              :color-mode="listColorMode"
               @list-view-mode-change="setListViewMode"
+              @display-settings-change="handleListDisplaySettingsChange"
               @filtered-trades-change="handleTimeTreeFilteredTrades"
             />
           </div>
@@ -118,6 +121,9 @@
                 :trades="timeTreeSourceTrades"
                 :hide-filters="true"
                 view-mode="list"
+                :result-display-mode="listResultDisplayMode"
+                :color-mode="listColorMode"
+                @display-settings-change="handleListDisplaySettingsChange"
                 @open-note="handleOpenNote"
                 @open-trade="handleOpenTrade"
               />
@@ -194,11 +200,11 @@
                           </div>
                           <div
                             class="shrink-0 text-base font-black leading-none tracking-[0.12em]"
-                            :style="{ color: trade.resultColor }"
-                            :class="group.side === 'left' ? 'text-left' : 'text-right'"
-                          >
-                            {{ trade.resultPct }} <span class="block pt-1 text-[9px] opacity-55">{{ trade.resultCurrency }}</span>
-                          </div>
+                          :style="{ color: trade.resultColor }"
+                          :class="group.side === 'left' ? 'text-left' : 'text-right'"
+                        >
+                            {{ trade.resultLabel }}
+                        </div>
                         </div>
                       </button>
                     </div>
@@ -1067,6 +1073,8 @@ const downloadCardPng = async () => {
 }
 
 const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution'>('cube')
+const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
+const listColorMode = ref<'monochrome' | 'colorful'>('monochrome')
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
 
@@ -1180,6 +1188,11 @@ const handleTimeTreeFilteredTrades = (trades: any[]) => {
   timeTreeFilteredTrades.value = Array.isArray(trades) ? trades : []
 }
 
+const handleListDisplaySettingsChange = (settings: { resultDisplayMode: 'currency' | 'percent'; colorMode: 'monochrome' | 'colorful' }) => {
+  listResultDisplayMode.value = settings.resultDisplayMode
+  listColorMode.value = settings.colorMode
+}
+
 const timeTreeSourceTrades = computed(() => timeTreeFilteredTrades.value ?? currentTradesForList.value)
 
 const getTradeTimelineTimestamp = (trade: any) => {
@@ -1273,10 +1286,16 @@ const resolveTimeTreeAssetIcon = (trade: any) => {
 }
 
 const getTimeTreeResultColor = (value: number) => {
+  if (listColorMode.value !== 'colorful') return 'currentColor'
   if (!Number.isFinite(value) || value === 0) return 'currentColor'
   const intensity = Math.min(Math.abs(value) / 5, 1)
   if (value > 0) return `hsl(145 72% ${42 + intensity * 16}%)`
   return `hsl(350 78% ${48 + intensity * 12}%)`
+}
+
+const formatTimeTreeResult = (percentValue: number, currencyValue: number) => {
+  if (listResultDisplayMode.value === 'currency') return formatDistributionCurrency(currencyValue)
+  return formatSignedPercent(percentValue)
 }
 
 const hideBrokenAssetIcon = (event: Event) => {
@@ -1302,9 +1321,8 @@ const timeTreeGroups = computed(() => {
       assetIcon: resolveTimeTreeAssetIcon(trade),
       side: getTimeTreeSide(trade?.side || trade?.direction),
       pnl,
-      resultPct: formatSignedPercent(resultValue),
-      resultCurrency: formatDistributionCurrency(pnl),
-      resultColor: getTimeTreeResultColor(resultValue),
+      resultLabel: formatTimeTreeResult(resultValue, pnl),
+      resultColor: getTimeTreeResultColor(listResultDisplayMode.value === 'currency' ? pnl : resultValue),
       time: formatTimeTreeTime(timestamp),
       timestamp
     })
@@ -3169,6 +3187,17 @@ canvas { image-rendering: pixelated; }
 .panel-slide-enter-to, .panel-slide-leave-from {
   transform: translateX(0) translateY(-50%);
   opacity: 1;
+}
+
+.page-reify-enter-active,
+.page-reify-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.page-reify-enter-from,
+.page-reify-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(10px);
 }
 
 .fade-blur-enter-active, .fade-blur-leave-active {

@@ -506,6 +506,8 @@ const props = defineProps<{
   filtersOnly?: boolean
   hideFilters?: boolean
   viewMode?: 'list' | 'timeTree'
+  resultDisplayMode?: 'currency' | 'percent'
+  colorMode?: 'monochrome' | 'colorful'
 }>()
 
 const emit = defineEmits<{
@@ -513,6 +515,7 @@ const emit = defineEmits<{
   (e: 'open-trade', payload: { tradeId: string }): void
   (e: 'filtered-trades-change', payload: any[]): void
   (e: 'list-view-mode-change', payload: 'list' | 'timeTree'): void
+  (e: 'display-settings-change', payload: { resultDisplayMode: 'currency' | 'percent'; colorMode: 'monochrome' | 'colorful' }): void
 }>()
 
 const filtersOnly = computed(() => props.filtersOnly === true)
@@ -520,8 +523,8 @@ const showFilters = computed(() => props.hideFilters !== true)
 const activeListViewMode = computed(() => props.viewMode || 'list')
 
 const expandedTradeId = ref<string | null>(null)
-const colorMode = ref<'monochrome' | 'colorful'>('monochrome')
-const resultDisplayMode = ref<'currency' | 'percent'>('percent')
+const colorMode = ref<'monochrome' | 'colorful'>(props.colorMode || 'monochrome')
+const resultDisplayMode = ref<'currency' | 'percent'>(props.resultDisplayMode || 'percent')
 const openFilterId = ref<string | null>(null)
 const filterBarRef = ref<HTMLElement | null>(null)
 const showHiddenTrades = ref(true)
@@ -529,6 +532,21 @@ const showHiddenTrades = ref(true)
 const toggleTradeExpand = (tradeId: string) => {
   expandedTradeId.value = expandedTradeId.value === tradeId ? null : tradeId
 }
+
+watch(() => props.resultDisplayMode, (mode) => {
+  if (mode && mode !== resultDisplayMode.value) resultDisplayMode.value = mode
+})
+
+watch(() => props.colorMode, (mode) => {
+  if (mode && mode !== colorMode.value) colorMode.value = mode
+})
+
+watch([resultDisplayMode, colorMode], () => {
+  emit('display-settings-change', {
+    resultDisplayMode: resultDisplayMode.value,
+    colorMode: colorMode.value
+  })
+})
 
 const getNormalizedExecutionLabel = (exec: any) => {
   const rawLabel = String(exec?.label || '').toUpperCase()
