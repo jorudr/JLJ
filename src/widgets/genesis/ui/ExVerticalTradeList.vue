@@ -13,20 +13,20 @@
         <div class="flex items-center space-x-3 shrink-0">
           <div class="flex items-center gap-1 pr-3 border-r nier-border-primary">
             <button
-              @click="emit('list-view-mode-change', 'list')"
-              class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
-              :class="activeListViewMode === 'list' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              :title="locale === 'ru' ? 'Вертикальный список' : 'Vertical list'"
-            >
-              LIST
-            </button>
-            <button
               @click="emit('list-view-mode-change', 'timeTree')"
               class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
               :class="activeListViewMode === 'timeTree' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
               :title="locale === 'ru' ? 'Дерево времени' : 'Time tree'"
             >
               TREE
+            </button>
+            <button
+              @click="emit('list-view-mode-change', 'list')"
+              class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
+              :class="activeListViewMode === 'list' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
+              :title="locale === 'ru' ? 'Вертикальный список' : 'Vertical list'"
+            >
+              LIST
             </button>
           </div>
           <div class="flex items-center gap-1 pr-3 border-r nier-border-primary">
