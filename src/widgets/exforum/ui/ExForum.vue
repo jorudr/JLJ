@@ -1,5 +1,5 @@
 <template>
-  <div class="journal-wrapper h-full flex flex-col min-w-0 overflow-hidden relative">
+  <div class="journal-wrapper h-full flex flex-col min-w-0 overflow-hidden relative px-6 lg:px-16">
     
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
