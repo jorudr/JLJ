@@ -1,6 +1,6 @@
 <template>
   <div
-    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16"
+    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-4 md:pt-6"
     :class="{ 'exforum-transparent-bg': isForumLightTheme }"
   >
     <!-- Inner Shadows -->
@@ -15,7 +15,7 @@
     <div v-else class="flex flex-col h-full overflow-hidden" :key="`page-${currentPage}`">
       
       <!-- Masthead (Page 1 Only) -->
-      <header v-if="currentPage === 1" class="pt-8 pb-12 border-b-4 border-double border-current/20 flex flex-col items-center space-y-4 px-8 relative z-10">
+      <header v-if="currentPage === 1" class="pt-8 pb-4 border-b-4 border-double border-current/20 flex flex-col items-center space-y-4 px-8 relative z-10">
         <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
           <span>Vol. XXIV // No. 12</span>
           <span class="text-[10px] tracking-[1em] italic font-serif">Reification Edition</span>
@@ -53,7 +53,7 @@
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
           <!-- SECTION 1: Top Row (Lead Setup + Inquiry Sidebar) -->
           <div class="grid grid-cols-12 border-b border-current/10">
-            <section class="journal-sector col-span-12 lg:col-span-8 p-12 lg:border-r border-current/10">
+            <section class="journal-sector col-span-12 lg:col-span-8 px-12 pb-12 pt-6 lg:border-r border-current/10">
               <div class="flex flex-col space-y-12">
                 <div class="flex items-center justify-between border-b border-current/10 pb-4">
                   <div class="flex items-center space-x-3">
@@ -69,7 +69,7 @@
               </div>
             </section>
             
-            <section class="journal-sector col-span-12 lg:col-span-4 p-8">
+            <section class="journal-sector col-span-12 lg:col-span-4 px-8 pb-8 pt-6">
               <div class="space-y-12">
                  <div class="flex items-center space-x-3 border-b border-current/10 pb-4">
                    <div class="w-1 h-1 bg-current opacity-20"></div>
