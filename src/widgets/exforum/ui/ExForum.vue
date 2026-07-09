@@ -1,8 +1,8 @@
 <template>
   <div class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16">
     <!-- Inner Shadows -->
-    <div class="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-[100]"></div>
-    <div class="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none z-[100]"></div>
+    <div class="forum-edge-shadow forum-edge-shadow-top"></div>
+    <div class="forum-edge-shadow forum-edge-shadow-bottom"></div>
     
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
@@ -264,6 +264,30 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 <style scoped>
 .journal-wrapper {
   color: var(--text-primary);
+}
+
+.forum-edge-shadow {
+  height: min(34vh, 260px);
+  left: 0;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 100;
+}
+
+.forum-edge-shadow-top {
+  background:
+    radial-gradient(ellipse 120% 86% at 50% 0%, rgba(0, 0, 0, 0.11) 0%, rgba(0, 0, 0, 0.07) 28%, rgba(0, 0, 0, 0.026) 58%, rgba(0, 0, 0, 0) 82%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.038) 34%, rgba(0, 0, 0, 0.014) 68%, rgba(0, 0, 0, 0) 100%);
+  top: 0;
+}
+
+.forum-edge-shadow-bottom {
+  background:
+    radial-gradient(ellipse 120% 86% at 50% 100%, rgba(0, 0, 0, 0.11) 0%, rgba(0, 0, 0, 0.07) 28%, rgba(0, 0, 0, 0.026) 58%, rgba(0, 0, 0, 0) 82%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.038) 34%, rgba(0, 0, 0, 0.014) 68%, rgba(0, 0, 0, 0) 100%);
+  bottom: 0;
 }
 
 .journal-sector {
