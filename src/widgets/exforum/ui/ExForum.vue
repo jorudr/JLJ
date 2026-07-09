@@ -1,18 +1,17 @@
 <template>
   <div
-    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-4 md:pt-6"
-    :class="{ 'exforum-transparent-bg': isForumLightTheme }"
+    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-y-auto scroll-minimal relative pt-4 md:pt-6"
+    :class="{
+      'exforum-transparent-bg': isForumLightTheme,
+      'exforum-edge-shadows': showForumEdgeShadows
+    }"
   >
-    <!-- Inner Shadows -->
-    <div v-if="showForumEdgeShadows" class="forum-edge-shadow forum-edge-shadow-top"></div>
-    <div v-if="showForumEdgeShadows" class="forum-edge-shadow forum-edge-shadow-bottom"></div>
-    
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
     <ExNodeContent v-if="selectedNode" :node="selectedNode" @back="closeReader" key="reader" />
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="flex flex-col h-full overflow-hidden" :key="`page-${currentPage}`">
+    <div v-else class="flex flex-col min-h-full" :key="`page-${currentPage}`">
       
       <!-- Masthead (Page 1 Only) -->
       <header v-if="currentPage === 1" class="pt-8 pb-4 border-b-4 border-double border-current/20 flex flex-col items-center space-y-4 px-8 relative z-10">
@@ -47,7 +46,7 @@
       </header>
 
       <!-- Main Journal Body -->
-      <div class="flex-grow overflow-y-auto scroll-minimal relative z-10 pb-0">
+      <div class="flex-grow relative z-10 pb-0">
         
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
@@ -277,28 +276,16 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   color: var(--text-primary);
 }
 
-.forum-edge-shadow {
-  height: min(34vh, 260px);
-  left: 0;
-  mix-blend-mode: multiply;
-  pointer-events: none;
-  position: absolute;
-  width: 100%;
-  z-index: 100;
-}
-
-.forum-edge-shadow-top {
-  background:
+.journal-wrapper.exforum-edge-shadows {
+  background-attachment: local, local, local, local;
+  background-image:
     radial-gradient(ellipse 120% 86% at 50% 0%, rgba(0, 0, 0, 0.11) 0%, rgba(0, 0, 0, 0.07) 28%, rgba(0, 0, 0, 0.026) 58%, rgba(0, 0, 0, 0) 82%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.038) 34%, rgba(0, 0, 0, 0.014) 68%, rgba(0, 0, 0, 0) 100%);
-  top: 0;
-}
-
-.forum-edge-shadow-bottom {
-  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.038) 34%, rgba(0, 0, 0, 0.014) 68%, rgba(0, 0, 0, 0) 100%),
     radial-gradient(ellipse 120% 86% at 50% 100%, rgba(0, 0, 0, 0.11) 0%, rgba(0, 0, 0, 0.07) 28%, rgba(0, 0, 0, 0.026) 58%, rgba(0, 0, 0, 0) 82%),
     linear-gradient(to top, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0.038) 34%, rgba(0, 0, 0, 0.014) 68%, rgba(0, 0, 0, 0) 100%);
-  bottom: 0;
+  background-position: top, top, bottom, bottom;
+  background-repeat: no-repeat;
+  background-size: 100% 260px, 100% 260px, 100% 260px, 100% 260px;
 }
 
 .journal-sector {
