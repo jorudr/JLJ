@@ -485,6 +485,10 @@
                       <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.tradeMetrics') }}</span>
                       <div class="flex flex-col mt-2 space-y-2">
                          <div class="flex items-baseline justify-between">
+                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'НАПРАВЛЕНИЕ' : 'DIRECTION' }}</span>
+                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatTradeDirection(selectedTrade) }}</span>
+                         </div>
+                         <div class="flex items-baseline justify-between">
                            <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.rrRatio') }}</span>
                            <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">1:{{ calculateRR(selectedTrade) }}</span>
                          </div>
@@ -1155,6 +1159,14 @@ const formatOptionalTradePrice = (value: unknown) => {
   const number = Number(value)
   if (!Number.isFinite(number) || number === 0) return 'NaN'
   return Number.isInteger(number) ? String(number) : number.toString()
+}
+
+const formatTradeDirection = (trade: any) => {
+  const rawDirection = String(trade?.side || trade?.direction || '').trim().toLowerCase()
+  const isShort = rawDirection.includes('short') || rawDirection.includes('sell')
+  return locale.value === 'ru'
+    ? (isShort ? 'КОРОТКАЯ' : 'ДЛИННАЯ')
+    : (isShort ? 'SHORT' : 'LONG')
 }
 
 const getDynamicPriceClass = (price: unknown) => {
