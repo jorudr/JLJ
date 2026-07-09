@@ -194,7 +194,13 @@
     </header>
 
     <!-- 2. Central Stage -->
-    <main class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-8'">
+    <main
+      class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center"
+      :class="[
+        activeDashboardPanel === 'forum' || activeDashboardPanel === 'activity' ? 'px-0' : 'px-8',
+        activeDashboardPanel === 'activity' ? 'is-activity' : ''
+      ]"
+    >
       <Transition name="dashboard-center-fade" mode="out-in">
         <div
           v-if="activeDashboardPanel === 'activity'"
@@ -441,7 +447,15 @@ const handleDashboardModuleClick = (moduleId: string) => {
   padding-top: 84px;
 }
 
+.dashboard-center-stage.is-activity {
+  padding-bottom: 120px;
+  padding-top: 40px;
+}
+
 .dashboard-activity-stage {
+  align-items: center;
+  display: flex;
+  justify-content: center;
   max-width: min(1180px, calc(100vw - 64px));
 }
 

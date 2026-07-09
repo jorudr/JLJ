@@ -1,8 +1,8 @@
 <template>
   <div class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16">
     <!-- Inner Shadows -->
-    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/30 to-transparent pointer-events-none z-[100]"></div>
-    <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[100]"></div>
+    <div class="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/40 to-transparent pointer-events-none z-[100]"></div>
+    <div class="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none z-[100]"></div>
     
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
