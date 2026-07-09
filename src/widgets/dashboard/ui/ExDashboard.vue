@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden px-6 py-1.5 lg:px-10 lg:py-2">
+  <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden py-1.5 lg:py-2" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-6 lg:px-10'">
     <!-- Update Notification Widget -->
     <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] nier-bg-inverted p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
       
@@ -194,7 +194,7 @@
     </header>
 
     <!-- 2. Central Stage -->
-    <main class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center px-8">
+    <main class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-8'">
       <Transition name="dashboard-center-fade" mode="out-in">
         <div
           v-if="activeDashboardPanel === 'activity'"
@@ -202,6 +202,14 @@
           class="dashboard-activity-stage pointer-events-auto h-full w-full"
         >
           <ExActivityMonitor @exit="activeDashboardPanel = null" />
+        </div>
+
+        <div
+          v-else-if="activeDashboardPanel === 'forum'"
+          key="forum-monitor"
+          class="pointer-events-auto h-full w-full"
+        >
+          <ExForum />
         </div>
 
         <div v-else key="dashboard-logo" class="dashboard-core-logo pointer-events-none flex flex-col items-center text-center">
@@ -256,6 +264,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
+import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 
 const props = withDefaults(defineProps<{
   isMusicMuted?: boolean
@@ -385,8 +394,8 @@ const dashboardModules = [
 ]
 
 const handleDashboardModuleClick = (moduleId: string) => {
-  if (moduleId === 'activity') {
-    activeDashboardPanel.value = activeDashboardPanel.value === 'activity' ? null : 'activity'
+  if (moduleId === 'activity' || moduleId === 'forum') {
+    activeDashboardPanel.value = activeDashboardPanel.value === moduleId ? null : moduleId
     return
   }
 

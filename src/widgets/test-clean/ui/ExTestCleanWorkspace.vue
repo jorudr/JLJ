@@ -232,11 +232,6 @@
              </nav>
           </div>
 
-         <!-- Forum Module -->
-         <div v-else-if="isAssembled && activeTab === 'forum'" key="forum" class="w-full h-full overflow-y-auto">
-            <ExForum />
-         </div>
-
          <!-- Activity Module -->
          <div v-else-if="isAssembled && activeTab === 'activity'" key="activity" class="w-full h-full flex flex-col items-center justify-center">
             <ExActivityMonitor @exit="goToHub" />
@@ -260,7 +255,6 @@ import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
 import ExGenesisMatrix from '~/widgets/genesis/ui/ExGenesisMatrix.vue'
 import ExEquityCurve3D from '~/widgets/genesis/ui/ExEquityCurve3D.vue'
 import ExGenesisLog from '~/widgets/genesis/ui/ExGenesisLog.vue'
-import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 
@@ -283,7 +277,7 @@ const router = useRouter()
 const genesisBasePath = '/genesis'
 const defaultGenesisMode = 'diary'
 const genesisBottomBarHeight = 56
-const validTabs = ['activity', 'forum', 'genesis', 'matrix']
+const validTabs = ['activity', 'genesis', 'matrix']
 const genesisModeItems = [
   { id: 'diary', title: 'Ex Equity Curve 3D' },
   { id: 'matrix', title: 'Ex Genesis Matrix' },

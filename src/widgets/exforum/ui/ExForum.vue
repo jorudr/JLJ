@@ -1,5 +1,8 @@
 <template>
-  <div class="journal-wrapper h-full flex flex-col min-w-0 overflow-hidden relative px-6 lg:px-16">
+  <div class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-hidden relative pt-12 md:pt-16">
+    <!-- Inner Shadows -->
+    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/30 to-transparent pointer-events-none z-[100]"></div>
+    <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[100]"></div>
     
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
@@ -41,7 +44,7 @@
       </header>
 
       <!-- Main Journal Body -->
-      <div class="flex-grow overflow-y-auto scroll-minimal relative z-10 pb-24">
+      <div class="flex-grow overflow-y-auto scroll-minimal relative z-10 pb-0">
         
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
@@ -132,7 +135,7 @@
                 [ PREV_PAGE ]
               </button>
               <button @click="navigateToPage(currentPage + 1)" 
-                      class="px-8 py-3 bg-zinc-800 dark:bg-white/10 text-white dark:text-current text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
+                      class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 [ NEXT_PAGE // ARV_0{{ currentPage + 1 }} ]
               </button>
            </div>
@@ -141,7 +144,7 @@
         </div>
 
         <!-- Journal Footer -->
-        <footer class="p-12 text-center opacity-10 hover:opacity-100 transition-opacity duration-700">
+        <footer class="py-4 text-center opacity-10 hover:opacity-100 transition-opacity duration-700">
           <div class="flex flex-col items-center space-y-4">
             <div class="text-[10px] font-serif italic tracking-widest text-current">"Knowledge Reified. Value Extracted."</div>
             <div class="w-24 h-px bg-current/20 mx-auto text-current"></div>
@@ -230,6 +233,33 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 // Sectional Intelligence Logic (Inherited by paged computed)
 </script>
+
+<style scoped>
+.force-light-theme {
+  --theme-bg: #FFFFFF !important;
+  --theme-panel: rgba(255, 255, 255, 0.92) !important;
+  --theme-text: #2c2c2a !important;
+  --theme-muted: rgba(44, 44, 42, 0.58) !important;
+  --theme-border: rgba(44, 44, 42, 0.12) !important;
+  --theme-border-strong: rgba(44, 44, 42, 0.28) !important;
+  --theme-accent: #8d7f61 !important;
+  --theme-grid-dot: rgba(44, 44, 42, 0.24) !important;
+  --theme-tooltip-bg: #F9F9F9 !important;
+  --theme-tooltip-text: #2c2c2a !important;
+  --theme-tooltip-muted: rgba(44, 44, 42, 0.62) !important;
+  --theme-tooltip-border: rgba(44, 44, 42, 0.18) !important;
+  --text-heading: #050505 !important;
+  --text-description: rgba(18, 18, 18, 0.45) !important;
+  --icon-color-mode: black !important;
+  
+  background-color: var(--theme-bg) !important;
+  color: var(--theme-text) !important;
+}
+
+.force-light-theme * {
+  border-color: var(--theme-border);
+}
+</style>
 
 <style scoped>
 .journal-wrapper {
