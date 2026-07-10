@@ -13,12 +13,7 @@
         <span class="font-semibold text-current/80">{{ formatNodeDateTime(node.lastActivityAt) }}</span>
       </div>
       <div v-else class="flex items-center justify-between text-[7px] font-mono tracking-[0.4em] opacity-40 uppercase">
-        <div class="flex items-center space-x-4">
-          <span>ID//{{ node.id.slice(-4).toUpperCase() }}</span>
-          <span class="w-1 h-1 bg-current opacity-20"></span>
-          <span>{{ node.category }}</span>
-        </div>
-        <span>{{ node.lastActivityAt.slice(11, 16) }} UTC</span>
+        <span>{{ formatNodeDateTime(node.lastActivityAt) }}</span>
       </div>
 
       <!-- Main Headline -->
@@ -89,20 +84,15 @@
       </div>
 
       <!-- Footer Telemetry -->
-      <div v-if="!node.signal" class="flex items-center justify-end pt-4">
-        <div class="flex items-center space-x-10 text-[9px] font-serif italic tracking-widest opacity-80">
-          <span>{{ node.repliesCount }} {{ nodeLabels.echoes }}</span>
-          <span>{{ node.likesCount }} {{ nodeLabels.affinity }}</span>
+      <div v-if="!node.signal" class="flex items-center justify-between gap-6 pt-4">
+        <span class="text-[8px] font-mono uppercase tracking-[0.28em] text-current/35">
+          {{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}
+        </span>
+        <div class="flex items-center space-x-8 text-[9px] font-serif italic tracking-widest">
+          <span class="text-current/60">{{ node.repliesCount }} {{ nodeLabels.comments }}</span>
+          <span class="font-mono text-[11px] font-semibold not-italic text-current/90">{{ node.likesCount }} {{ nodeLabels.likes }}</span>
         </div>
       </div>
-    </div>
-
-    <!-- Decorative Corner Gauge -->
-    <div class="absolute bottom-2 right-0 w-8 h-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-      <svg viewBox="0 0 100 100" class="w-full h-full fill-current">
-        <path d="M50 0 L100 50 L50 100 L0 50 Z" fill="none" stroke="currentColor" stroke-width="2"/>
-        <circle cx="50" cy="50" r="10" />
-      </svg>
     </div>
   </div>
 </template>
@@ -125,15 +115,17 @@ const nodeLabels = computed(() => locale.value === 'ru'
       pricingPillar: 'Ценовой ориентир',
       riskBarrier: 'Уровень риска',
       sourcePrice: 'Исходная цена',
-      echoes: 'Откликов',
-      affinity: 'Лайков'
+      comments: 'комментов',
+      likes: 'лайков',
+      published: 'Опубл.'
     }
   : {
       pricingPillar: 'Pricing Pillar',
       riskBarrier: 'Risk Barrier',
       sourcePrice: 'Source price',
-      echoes: 'Echoes',
-      affinity: 'Affinity'
+      comments: 'comments',
+      likes: 'likes',
+      published: 'Pub.'
     })
 
 const getSignalDirectionClass = (node: ExNode) => node.signal?.direction === 'up'
@@ -147,6 +139,12 @@ const formatNodeDateTime = (value: string) => new Intl.DateTimeFormat(locale.val
   month: '2-digit',
   hour: '2-digit',
   minute: '2-digit'
+}).format(new Date(value))
+
+const formatNodeDate = (value: string) => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric'
 }).format(new Date(value))
 
 const formatSignalPrice = (node: ExNode, price: number) => {

@@ -9,11 +9,6 @@
       </button>
 
       <div class="flex items-center space-x-12">
-        <div class="flex flex-col items-end">
-          <span class="text-[7px] font-mono opacity-20 tracking-widest uppercase">{{ contentLabels.chronicleId }}</span>
-          <span class="text-xs font-serif italic text-current opacity-60 uppercase">{{ node.id }}</span>
-        </div>
-        <div class="w-px h-8 bg-current/10"></div>
         <div class="flex items-center space-x-6">
           <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">{{ contentLabels.exportArchive }}</button>
           <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">{{ contentLabels.syncNode }}</button>
@@ -27,21 +22,16 @@
         
         <!-- Article Header -->
         <header class="space-y-8 text-center">
-          <div v-if="!node.signal" class="flex flex-col items-center space-y-3">
-            <span class="text-[8px] font-mono tracking-[0.5em] uppercase opacity-30">{{ node.category }} // {{ formatMode(node.mode) }}</span>
-            <div class="w-12 h-px bg-current opacity-10"></div>
-          </div>
-          
           <h1 class="text-5xl lg:text-7xl font-serif italic text-current leading-tight tracking-tight drop-shadow-sm">
             {{ node.title }}
           </h1>
 
-          <div class="flex items-center justify-center space-x-10 text-[8px] font-mono tracking-[0.4em] opacity-30 uppercase pt-4">
-             <span>{{ contentLabels.affinity }}: {{ node.likesCount }}</span>
+          <div class="flex items-center justify-center space-x-10 text-[8px] font-mono tracking-[0.32em] uppercase pt-4">
+             <span class="font-semibold text-current/80">{{ contentLabels.likes }}: {{ node.likesCount }}</span>
              <span class="w-1 h-1 bg-current opacity-20 rounded-full"></span>
-             <span>{{ contentLabels.echoes }}: {{ node.repliesCount }}</span>
+             <span class="text-current/40">{{ contentLabels.comments }}: {{ node.repliesCount }}</span>
              <span class="w-1 h-1 bg-current opacity-20 rounded-full"></span>
-             <span>{{ node.lastActivityAt.slice(0, 10) }}</span>
+             <span class="text-current/40">{{ contentLabels.published }}: {{ formatContentDate(node.lastActivityAt) }}</span>
           </div>
         </header>
 
@@ -171,11 +161,11 @@ const { locale } = useI18n()
 const contentLabels = computed(() => locale.value === 'ru'
   ? {
       returnToJournal: 'Вернуться в журнал',
-      chronicleId: 'ID_хроники',
       exportArchive: 'Экспорт_архива',
       syncNode: 'Синхронизировать_узел',
-      affinity: 'Лайки',
-      echoes: 'Отклики',
+      likes: 'Лайки',
+      comments: 'Комменты',
+      published: 'Опубл.',
       buyEntry: 'Вход_покупки // Цель_Z',
       invalidation: 'Отмена // Void_X',
       signalAsset: 'Актив',
@@ -185,11 +175,11 @@ const contentLabels = computed(() => locale.value === 'ru'
     }
   : {
       returnToJournal: 'Return to The Journal',
-      chronicleId: 'Chronicle_ID',
       exportArchive: 'Export_Arch',
       syncNode: 'Sync_Node',
-      affinity: 'Affinity',
-      echoes: 'Echoes',
+      likes: 'Likes',
+      comments: 'Comments',
+      published: 'Pub.',
       buyEntry: 'Buy_Entry // Target_Z',
       invalidation: 'Invalidation // Void_X',
       signalAsset: 'Asset',
@@ -197,15 +187,6 @@ const contentLabels = computed(() => locale.value === 'ru'
       signalSource: 'Source price',
       footerNote: 'Intelligence reified in the Celestial Archive. Document integrity verified by the Equilibrium Protocol.'
     })
-
-const modeLabels: Record<string, { ru: string; en: string }> = {
-  SETUP: { ru: 'СИГНАЛ', en: 'SIGNAL' },
-  RESEARCH: { ru: 'ИССЛЕДОВАНИЕ', en: 'RESEARCH' },
-  LESSON: { ru: 'СТРАТЕГИЯ', en: 'STRATEGY' },
-  QUESTION: { ru: 'АНАЛИТИКА', en: 'ANALYSIS' }
-}
-
-const formatMode = (mode: string) => modeLabels[mode]?.[locale.value] || mode
 
 const getSignalDirectionClass = () => props.node.signal?.direction === 'up'
   ? 'text-emerald-500'
@@ -223,6 +204,12 @@ const formatSignalPrice = (price: number) => {
 
   return signal?.quoteCurrency ? `${formatted} ${signal.quoteCurrency}` : formatted
 }
+
+const formatContentDate = (value: string) => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric'
+}).format(new Date(value))
 
 const scrollToStep = (stepNum: number) => {
   const el = document.getElementById(`step-anchor-${stepNum}`)

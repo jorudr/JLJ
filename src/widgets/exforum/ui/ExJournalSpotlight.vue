@@ -4,11 +4,8 @@
       <!-- Spotlight Header -->
       <div class="flex items-center space-x-4 text-[8px] font-mono tracking-widest opacity-30 uppercase">
         <div class="flex items-center space-x-2">
-           <div class="w-1.5 h-1.5 bg-current opacity-40 transform rotate-45"></div>
            <span>{{ spotlightLabels.featuredAnalysis }}</span>
         </div>
-        <span class="w-1 h-px bg-current opacity-10 flex-grow"></span>
-        <span>{{ spotlightLabels.node }}//{{ node.id.slice(-4).toUpperCase() }}</span>
       </div>
 
       <!-- Main Headline -->
@@ -23,12 +20,15 @@
 
       <!-- Footer Info -->
       <div class="flex items-center justify-between border-t border-current/10 pt-8">
-        <div class="flex items-center space-x-12 text-[10px] font-serif italic opacity-70 tracking-wide">
-          <span class="flex items-center space-x-2">
-            <span class="opacity-30">{{ spotlightLabels.echoes }}:</span> {{ node.repliesCount }}
+        <div class="flex flex-wrap items-center gap-x-10 gap-y-3 text-[10px] tracking-wide">
+          <span class="font-mono uppercase tracking-[0.28em] text-current/35">
+            {{ spotlightLabels.published }} {{ formatSpotlightDate(node.lastActivityAt) }}
           </span>
-          <span class="flex items-center space-x-2">
-            <span class="opacity-30">{{ spotlightLabels.affinity }}:</span> {{ node.likesCount }}
+          <span class="font-serif italic text-current/60">
+            {{ node.repliesCount }} {{ spotlightLabels.comments }}
+          </span>
+          <span class="font-mono text-[12px] font-semibold text-current/90">
+            {{ node.likesCount }} {{ spotlightLabels.likes }}
           </span>
         </div>
         
@@ -56,18 +56,24 @@ const { locale } = useI18n()
 const spotlightLabels = computed(() => locale.value === 'ru'
   ? {
       featuredAnalysis: 'Избранная_аналитика',
-      node: 'Узел',
-      echoes: 'ОТКЛИКИ',
-      affinity: 'ЛАЙКИ',
+      comments: 'комментов',
+      likes: 'лайков',
+      published: 'Опубл.',
       accessNode: 'Открыть_узел'
     }
   : {
       featuredAnalysis: 'Featured_Analysis',
-      node: 'Node',
-      echoes: 'ECHOES',
-      affinity: 'AFFINITY',
+      comments: 'comments',
+      likes: 'likes',
+      published: 'Pub.',
       accessNode: 'Access_Node'
     })
+
+const formatSpotlightDate = (value: string) => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric'
+}).format(new Date(value))
 </script>
 
 <style scoped>

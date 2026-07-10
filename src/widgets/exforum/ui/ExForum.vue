@@ -65,12 +65,6 @@
           </button>
         </div>
 
-        <div class="article-reader-kicker">
-          <span>{{ selectedArticle.subtitle }}</span>
-          <span class="h-1 w-1 rotate-45 bg-current/20"></span>
-          <span>{{ selectedArticle.category }}</span>
-        </div>
-
         <div class="article-reader-title-row">
           <div class="min-w-0">
             <h1>{{ selectedArticle.title }}</h1>
