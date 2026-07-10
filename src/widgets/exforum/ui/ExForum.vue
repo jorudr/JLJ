@@ -25,7 +25,7 @@
             <span>Reified on {{ new Date().toLocaleDateString() }}</span>
           </div>
 
-          <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center py-4 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
+          <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center px-6 py-6 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
             The Eve's Apple
           </h1>
         </template>
