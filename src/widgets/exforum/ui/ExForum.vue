@@ -266,28 +266,27 @@
       </div>
 
       <!-- LAUNCH FOOTER -->
-      <div class="border-t-2 border-current/20 pt-4 mt-auto flex flex-col md:flex-row justify-between md:items-center pb-2 space-y-4 md:space-y-0 shrink-0">
-        <div class="flex items-center space-x-4">
-          <div class="w-2 h-2 rounded-full" :class="isNewArticleFormValid ? 'bg-green-500/80 animate-pulse' : 'bg-current/20'"></div>
-          <span class="text-[9px] font-mono tracking-[0.4em] uppercase" :class="isNewArticleFormValid ? 'opacity-100' : 'opacity-30'">
-            {{ isNewArticleFormValid ? (locale === 'ru' ? 'Готово к публикации' : 'Ready to publish') : (locale === 'ru' ? 'Ожидание данных' : 'Waiting for input') }}
-          </span>
-        </div>
-        
+      <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-end shrink-0">
         <button
-          class="group flex items-center space-x-6 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-500"
-          :disabled="!isNewArticleFormValid"
+          class="group relative overflow-hidden px-8 py-3 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
+          :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
+          :disabled="!isNewArticleFormValid || isSubmittingArticle"
           @click="submitNewArticle"
         >
-          <span class="text-[10px] font-mono tracking-[0.4em] uppercase transition-opacity" :class="isNewArticleFormValid ? 'opacity-100' : 'opacity-40'">
+          <span class="text-[11px] font-mono tracking-[0.4em] uppercase relative z-10 font-bold transition-all duration-500" 
+                :class="[
+                  isSubmittingArticle ? 'opacity-0' : '',
+                  isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white' : 'text-current opacity-30'
+                ]">
             {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
           </span>
-          <div class="relative overflow-hidden w-20 h-8 flex items-center border border-current/20 group-hover:border-current/80 rounded-full transition-colors">
-            <span class="text-3xl absolute transition-all duration-700 ease-in-out"
-                  :class="[isSubmittingArticle ? 'translate-x-[200%] opacity-0' : 'translate-x-4 opacity-80', isNewArticleFormValid ? 'group-hover:translate-x-6' : '']">
-              →
-            </span>
-          </div>
+          <span v-if="!isSubmittingArticle" class="text-xl relative z-10 transition-all duration-500 font-light leading-none" 
+                :class="isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'">
+            →
+          </span>
+          <svg v-else class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+          </svg>
         </button>
       </div>
       
