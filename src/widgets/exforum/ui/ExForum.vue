@@ -208,23 +208,32 @@
           </h1>
         </template>
 
-        <div class="flex items-center justify-between w-full border-t border-current/10 pt-4 px-4">
+        <div class="journal-masthead-tools flex items-center justify-between w-full border-t border-current/10 pt-4 px-4">
           <!-- Filters -->
-          <div class="flex items-center space-x-8">
-            <div v-for="tag in ['SETUPS', 'RESEARCH', 'PROTOCOL', 'INQUIRY']" :key="tag" 
-                 class="text-[9px] font-mono tracking-[0.4em] opacity-30 hover:opacity-100 transition-opacity cursor-pointer">
-              {{ tag }}
-            </div>
+          <div class="journal-filter-list flex items-center space-x-2">
+            <button
+              v-for="filter in journalFilters"
+              :key="filter.mode"
+              class="journal-filter-button"
+              :class="{ 'is-active': activeJournalFilter === filter.mode }"
+              type="button"
+              @click="setJournalFilter(filter.mode)"
+            >
+              {{ filter.label }}
+            </button>
           </div>
 
           <!-- Search Bar -->
-          <div class="relative flex items-center group/search">
-            <span class="absolute left-0 text-[10px] font-mono opacity-20 group-focus-within/search:opacity-100 transition-opacity uppercase tracking-widest">Search_</span>
-            <input v-model="searchQuery" 
-                   type="text" 
-                   placeholder="INDEX_REIFICATION"
-                   class="bg-transparent border-b border-current/10 py-2 pl-20 pr-4 text-[10px] font-mono tracking-widest focus:outline-none focus:border-current/40 w-48 transition-all focus:w-80 placeholder:opacity-20 uppercase" />
-          </div>
+          <label class="journal-search-shell group/search" for="journal-search">
+            <span class="journal-search-label">Search_</span>
+            <input
+              id="journal-search"
+              v-model="searchQuery"
+              type="search"
+              placeholder="INDEX_REIFICATION"
+              class="journal-search-input"
+            />
+          </label>
         </div>
       </header>
 
@@ -365,6 +374,13 @@ const authStore = useAuthStore()
 
 // Archival State
 const searchQuery = ref('')
+const journalFilters = [
+  { label: 'SETUPS', mode: 'SETUP' },
+  { label: 'RESEARCH', mode: 'RESEARCH' },
+  { label: 'PROTOCOL', mode: 'LESSON' },
+  { label: 'INQUIRY', mode: 'QUESTION' }
+] as const
+const activeJournalFilter = ref<string | null>(null)
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
 const articleLabels = computed(() => locale.value === 'ru'
@@ -422,13 +438,12 @@ const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
 const filteredNodes = computed(() => {
-  if (!searchQuery.value) return mockExNodes
   const q = searchQuery.value.toLowerCase()
-  return mockExNodes.filter((n: any) => 
-    n.title.toLowerCase().includes(q) || 
-    n.thesis_brief?.toLowerCase().includes(q) ||
-    n.category.toLowerCase().includes(q)
-  )
+  return mockExNodes.filter((n: any) => {
+    const matchesFilter = !activeJournalFilter.value || n.mode === activeJournalFilter.value
+    const matchesSearch = !q || n.title.toLowerCase().includes(q) || n.thesis_brief?.toLowerCase().includes(q) || n.category.toLowerCase().includes(q)
+    return matchesFilter && matchesSearch
+  })
 })
 
 const pagedNodes = computed(() => {
@@ -444,6 +459,11 @@ const pagedInquiry = computed(() => pagedNodes.value.filter((n: any) => n.mode =
 const navigateToPage = (page: number) => {
   const query = { ...route.query, page: page === 1 ? undefined : page.toString() }
   router.replace({ query })
+}
+
+const setJournalFilter = (mode: string) => {
+  activeJournalFilter.value = activeJournalFilter.value === mode ? null : mode
+  navigateToPage(1)
 }
 
 // Reader Logic
@@ -735,6 +755,97 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .journal-sector {
   position: relative;
+}
+
+.journal-filter-list {
+  flex-wrap: wrap;
+}
+
+.journal-filter-button {
+  position: relative;
+  min-height: 30px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 7px 5px 8px;
+  background: transparent;
+  color: rgba(44, 44, 42, 0.52);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.journal-filter-button:hover {
+  border-bottom-color: rgba(44, 44, 42, 0.42);
+  color: rgba(44, 44, 42, 0.95);
+}
+
+.journal-filter-button.is-active {
+  border-bottom-color: rgba(44, 44, 42, 0.88);
+  color: rgba(44, 44, 42, 0.95);
+}
+
+.journal-filter-button.is-active::after {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: rgba(44, 44, 42, 0.88);
+  content: '';
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.journal-search-shell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  border: 0;
+  border-bottom: 1px solid rgba(44, 44, 42, 0.28);
+  padding: 0 2px;
+  background: transparent;
+  transition: border-color 0.2s ease;
+}
+
+.journal-search-shell:focus-within {
+  border-bottom-color: rgba(44, 44, 42, 0.78);
+}
+
+.journal-search-label {
+  flex: 0 0 auto;
+  color: rgba(44, 44, 42, 0.64);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.journal-search-input {
+  width: 210px;
+  border: 0;
+  padding: 9px 0;
+  background: transparent;
+  color: rgba(44, 44, 42, 0.9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  outline: none;
+  text-transform: uppercase;
+  transition: width 0.2s ease;
+}
+
+.journal-search-input:focus {
+  width: 290px;
+}
+
+.journal-search-input::placeholder {
+  color: rgba(44, 44, 42, 0.5);
+  opacity: 1;
 }
 
 .fade-slide-enter-active, .fade-slide-leave-active {
@@ -1106,6 +1217,22 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 }
 
 @media (max-width: 639px) {
+  .journal-masthead-tools {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .journal-filter-list {
+    width: 100%;
+  }
+
+  .journal-search-shell,
+  .journal-search-input,
+  .journal-search-input:focus {
+    width: 100%;
+  }
+
   .article-reader-header {
     padding-top: 28px;
   }
