@@ -218,8 +218,11 @@
           </div>
 
           <!-- Search Bar -->
-          <label class="journal-search-shell group/search" for="journal-search">
-            <span class="journal-search-label">{{ journalLabels.search }}</span>
+          <label class="journal-search-shell group/search flex items-center gap-2" for="journal-search">
+            <svg class="w-3.5 h-3.5 text-current/40 group-focus-within/search:text-current/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             <input
               id="journal-search"
               v-model="searchQuery"
@@ -237,8 +240,12 @@
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
           <!-- SECTION 1: Top Row (Lead Analysis + Signal Sidebar) -->
-          <div class="grid grid-cols-12 border-b border-current/10">
-            <section class="journal-sector col-span-12 lg:col-span-8 px-12 pb-12 pt-6 lg:border-r border-current/10">
+          <div class="grid grid-cols-12 border-b-[2px] border-solid border-current/20">
+            <section
+              v-if="pagedAnalysis.length > 0"
+              class="journal-sector px-12 pb-12 pt-6"
+              :class="[pagedSignals.length > 0 ? 'col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20' : 'col-span-12']"
+            >
               <div class="flex flex-col space-y-12">
                 <div class="flex items-center justify-between pb-4">
                   <div class="flex items-center space-x-3">
@@ -254,7 +261,11 @@
               </div>
             </section>
             
-            <section class="journal-sector col-span-12 lg:col-span-4 px-8 pb-8 pt-6">
+            <section
+              v-if="pagedSignals.length > 0"
+              class="journal-sector px-8 pb-8 pt-6"
+              :class="[pagedAnalysis.length > 0 ? 'col-span-12 lg:col-span-4' : 'col-span-12']"
+            >
               <div class="space-y-4">
                  <div class="flex items-center space-x-3 pb-2">
                    <div class="w-1 h-1 bg-current opacity-20"></div>
@@ -273,7 +284,7 @@
           </div>
 
           <!-- SECTION 2: Middle Horizontal (Research) -->
-          <section class="journal-sector p-12 border-b border-current/10">
+          <section v-if="pagedResearch.length > 0" class="journal-sector p-12 border-b-[2px] border-solid border-current/20">
             <div class="flex flex-col space-y-12">
               <div class="flex items-center justify-between pb-4">
                 <div class="flex items-center space-x-3">
@@ -288,7 +299,7 @@
           </section>
 
           <!-- SECTION 3: Bottom Strip (Strategy) -->
-          <section class="journal-sector p-12">
+          <section v-if="pagedStrategies.length > 0" class="journal-sector p-12">
             <div class="flex flex-col space-y-12">
               <div class="flex items-center justify-between pb-4">
                   <div class="flex items-center space-x-3">
@@ -377,8 +388,8 @@ const journalLabels = computed(() => locale.value === 'ru'
       volume: 'Том XXIV // № 12',
       edition: 'Издание Реализации',
       datePrefix: 'Опубликовано',
-      search: 'Поиск_',
-      searchPlaceholder: 'ПОИСК_В_АРХИВЕ',
+      search: 'Поиск',
+      searchPlaceholder: 'ПОИСК В АРХИВЕ',
       signals: 'Сигналы',
       research: 'Исследования',
       strategy: 'Стратегии',
@@ -398,8 +409,8 @@ const journalLabels = computed(() => locale.value === 'ru'
       volume: 'Vol. XXIV // No. 12',
       edition: 'Reification Edition',
       datePrefix: 'Reified on',
-      search: 'Search_',
-      searchPlaceholder: 'INDEX_REIFICATION',
+      search: 'Search',
+      searchPlaceholder: 'INDEX REIFICATION',
       signals: 'Signals',
       research: 'Research',
       strategy: 'Strategy',

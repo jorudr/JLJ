@@ -10,10 +10,10 @@
         v-if="node.signal"
         class="flex items-center justify-end text-[9px] font-mono tracking-[0.18em] text-current/65 uppercase"
       >
-        <span class="font-semibold text-current/80">{{ formatNodeDateTime(node.lastActivityAt) }}</span>
+        <span class="font-semibold text-current/80">{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
       </div>
       <div v-else class="flex items-center justify-between text-[7px] font-mono tracking-[0.4em] opacity-40 uppercase">
-        <span>{{ formatNodeDateTime(node.lastActivityAt) }}</span>
+        <span>{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
       </div>
 
       <!-- Main Headline -->
@@ -23,7 +23,7 @@
       >
         {{ node.signal.asset }}
       </h3>
-      <h3 v-else class="text-2xl font-serif italic text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-opacity">
+      <h3 v-else class="text-2xl font-serif italic text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-all duration-300 transform origin-left group-hover:scale-[1.03]">
         {{ node.title }}
       </h3>
 
@@ -31,7 +31,7 @@
       <div class="flex-grow">
         <!-- Signal: Price Ticket -->
         <div v-if="node.signal" class="my-2">
-          <div class="flex min-w-0 items-baseline justify-between gap-4">
+          <div class="flex min-w-0 items-baseline gap-3">
             <span :class="['text-2xl font-mono leading-none', getSignalDirectionClass(node)]">
               {{ getSignalArrow(node) }} {{ formatSignalPrice(node, node.signal.targetPrice) }}
             </span>
@@ -79,10 +79,7 @@
       </div>
 
       <!-- Footer Telemetry -->
-      <div v-if="!node.signal" class="flex items-center justify-between gap-6 pt-4">
-        <span class="text-[8px] font-mono uppercase tracking-[0.28em] text-current/35">
-          {{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}
-        </span>
+      <div v-if="!node.signal" class="flex items-center justify-end gap-6 pt-4">
         <div class="flex items-center space-x-8 text-[9px] font-serif italic tracking-widest">
           <span class="text-current/60">{{ node.repliesCount }} {{ nodeLabels.comments }}</span>
           <span class="font-mono text-[11px] font-semibold not-italic text-current/90">{{ node.likesCount }} {{ nodeLabels.likes }}</span>
