@@ -5,18 +5,18 @@
     <div class="flex items-center justify-between border-b border-current/10 py-6 px-12 bg-current/[0.01]">
       <button @click="$emit('back')" class="flex items-center space-x-4 text-current/40 hover:text-current transition-all group">
         <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
-        <span class="text-[9px] tracking-[0.4em] uppercase">Return to The Journal</span>
+        <span class="text-[9px] tracking-[0.4em] uppercase">{{ contentLabels.returnToJournal }}</span>
       </button>
 
       <div class="flex items-center space-x-12">
         <div class="flex flex-col items-end">
-          <span class="text-[7px] font-mono opacity-20 tracking-widest uppercase">Chronicle_ID</span>
+          <span class="text-[7px] font-mono opacity-20 tracking-widest uppercase">{{ contentLabels.chronicleId }}</span>
           <span class="text-xs font-serif italic text-current opacity-60 uppercase">{{ node.id }}</span>
         </div>
         <div class="w-px h-8 bg-current/10"></div>
         <div class="flex items-center space-x-6">
-          <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">Export_Arch</button>
-          <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">Sync_Node</button>
+          <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">{{ contentLabels.exportArchive }}</button>
+          <button class="text-[9px] tracking-[0.4em] opacity-40 hover:opacity-100 uppercase transition-opacity">{{ contentLabels.syncNode }}</button>
         </div>
       </div>
     </div>
@@ -28,7 +28,7 @@
         <!-- Article Header -->
         <header class="space-y-8 text-center">
           <div class="flex flex-col items-center space-y-3">
-            <span class="text-[8px] font-mono tracking-[0.5em] uppercase opacity-30">{{ node.category }} // {{ node.mode }}</span>
+            <span class="text-[8px] font-mono tracking-[0.5em] uppercase opacity-30">{{ node.category }} // {{ formatMode(node.mode) }}</span>
             <div class="w-12 h-px bg-current opacity-10"></div>
           </div>
           
@@ -37,9 +37,9 @@
           </h1>
 
           <div class="flex items-center justify-center space-x-10 text-[8px] font-mono tracking-[0.4em] opacity-30 uppercase pt-4">
-             <span>Affinity: {{ node.likesCount }}</span>
+             <span>{{ contentLabels.affinity }}: {{ node.likesCount }}</span>
              <span class="w-1 h-1 bg-current opacity-20 rounded-full"></span>
-             <span>Echoes: {{ node.repliesCount }}</span>
+             <span>{{ contentLabels.echoes }}: {{ node.repliesCount }}</span>
              <span class="w-1 h-1 bg-current opacity-20 rounded-full"></span>
              <span>{{ node.lastActivityAt.slice(0, 10) }}</span>
           </div>
@@ -50,12 +50,12 @@
            <!-- Setup Block -->
            <div v-if="node.mode === 'SETUP'" class="p-10 border border-current/10 bg-current/[0.02] flex items-center justify-around">
              <div class="flex flex-col items-center">
-               <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">Buy_Entry // Target_Z</span>
+               <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">{{ contentLabels.buyEntry }}</span>
                <span class="text-4xl font-mono text-current opacity-60">{{ node.setupLevels?.tp }}</span>
              </div>
              <div class="w-px h-16 bg-current/10"></div>
              <div class="flex flex-col items-center">
-               <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">Invalidation // Void_X</span>
+               <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">{{ contentLabels.invalidation }}</span>
                <span class="text-4xl font-mono text-current opacity-60">{{ node.setupLevels?.sl }}</span>
              </div>
            </div>
@@ -119,7 +119,7 @@
         <footer class="pt-24 pb-12 text-center flex flex-col items-center space-y-6">
            <div class="w-12 h-px bg-current opacity-10"></div>
            <p class="text-[9px] font-serif italic opacity-30 tracking-[0.2em] max-w-sm">
-             Intelligence reified in the Celestial Archive. Document integrity verified by the Equilibrium Protocol.
+             {{ contentLabels.footerNote }}
            </p>
            <div class="flex items-center space-x-4 text-[7px] font-mono tracking-[0.5em] opacity-20 uppercase">
               <span>0x8A_REIFY</span>
@@ -134,6 +134,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from '~/shared/i18n/useI18n'
 import type { ExNode } from '../model/exnode.types'
 
 defineProps<{
@@ -141,6 +143,41 @@ defineProps<{
 }>()
 
 defineEmits(['back'])
+
+const { locale } = useI18n()
+
+const contentLabels = computed(() => locale.value === 'ru'
+  ? {
+      returnToJournal: 'Вернуться в журнал',
+      chronicleId: 'ID_хроники',
+      exportArchive: 'Экспорт_архива',
+      syncNode: 'Синхронизировать_узел',
+      affinity: 'Лайки',
+      echoes: 'Отклики',
+      buyEntry: 'Вход_покупки // Цель_Z',
+      invalidation: 'Отмена // Void_X',
+      footerNote: 'Интеллект сохранен в Небесном архиве. Целостность документа подтверждена протоколом равновесия.'
+    }
+  : {
+      returnToJournal: 'Return to The Journal',
+      chronicleId: 'Chronicle_ID',
+      exportArchive: 'Export_Arch',
+      syncNode: 'Sync_Node',
+      affinity: 'Affinity',
+      echoes: 'Echoes',
+      buyEntry: 'Buy_Entry // Target_Z',
+      invalidation: 'Invalidation // Void_X',
+      footerNote: 'Intelligence reified in the Celestial Archive. Document integrity verified by the Equilibrium Protocol.'
+    })
+
+const modeLabels: Record<string, { ru: string; en: string }> = {
+  SETUP: { ru: 'СИГНАЛ', en: 'SIGNAL' },
+  RESEARCH: { ru: 'ИССЛЕДОВАНИЕ', en: 'RESEARCH' },
+  LESSON: { ru: 'СТРАТЕГИЯ', en: 'STRATEGY' },
+  QUESTION: { ru: 'АНАЛИТИКА', en: 'ANALYSIS' }
+}
+
+const formatMode = (mode: string) => modeLabels[mode]?.[locale.value] || mode
 
 const scrollToStep = (stepNum: number) => {
   const el = document.getElementById(`step-anchor-${stepNum}`)

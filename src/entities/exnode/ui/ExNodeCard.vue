@@ -22,11 +22,11 @@
         <!-- Setup: Technical Ledger -->
         <div v-if="node.mode === 'SETUP'" class="my-4 py-4 border-y border-current/5 flex items-center space-x-12">
           <div class="flex flex-col">
-            <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">Pricing Pillar</span>
+            <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">{{ nodeLabels.pricingPillar }}</span>
             <span class="text-lg font-mono opacity-60">{{ node.setupLevels?.tp }}</span>
           </div>
           <div class="flex flex-col border-l border-current/5 pl-12">
-            <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">Risk Barrier</span>
+            <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">{{ nodeLabels.riskBarrier }}</span>
             <span class="text-lg font-mono opacity-60">{{ node.setupLevels?.sl }}</span>
           </div>
         </div>
@@ -56,8 +56,8 @@
       <!-- Footer Telemetry -->
       <div class="flex items-center justify-end pt-4">
         <div class="flex items-center space-x-10 text-[9px] font-serif italic tracking-widest opacity-80">
-          <span>{{ node.repliesCount }} Echoes</span>
-          <span>{{ node.likesCount }} Affinity</span>
+          <span>{{ node.repliesCount }} {{ nodeLabels.echoes }}</span>
+          <span>{{ node.likesCount }} {{ nodeLabels.affinity }}</span>
         </div>
       </div>
     </div>
@@ -73,7 +73,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from '~/shared/i18n/useI18n'
 import type { ExNode } from '../model/exnode.types'
 
 const props = defineProps<{
@@ -82,6 +84,20 @@ const props = defineProps<{
 
 const router = useRouter()
 const route = useRoute()
+const { locale } = useI18n()
+const nodeLabels = computed(() => locale.value === 'ru'
+  ? {
+      pricingPillar: 'Ценовой ориентир',
+      riskBarrier: 'Уровень риска',
+      echoes: 'Откликов',
+      affinity: 'Лайков'
+    }
+  : {
+      pricingPillar: 'Pricing Pillar',
+      riskBarrier: 'Risk Barrier',
+      echoes: 'Echoes',
+      affinity: 'Affinity'
+    })
 
 const handleNodeClick = () => {
   router.replace({

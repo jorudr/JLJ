@@ -198,9 +198,9 @@
       >
         <template v-if="currentPage === 1">
           <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
-            <span>Vol. XXIV // No. 12</span>
-            <span class="text-[10px] tracking-[1em] italic font-serif">Reification Edition</span>
-            <span>Reified on {{ new Date().toLocaleDateString() }}</span>
+            <span>{{ journalLabels.volume }}</span>
+            <span class="text-[10px] tracking-[1em] italic font-serif">{{ journalLabels.edition }}</span>
+            <span>{{ journalLabels.datePrefix }} {{ formatJournalDate() }}</span>
           </div>
 
           <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center px-6 py-6 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
@@ -225,12 +225,12 @@
 
           <!-- Search Bar -->
           <label class="journal-search-shell group/search" for="journal-search">
-            <span class="journal-search-label">Search_</span>
+            <span class="journal-search-label">{{ journalLabels.search }}</span>
             <input
               id="journal-search"
               v-model="searchQuery"
               type="search"
-              placeholder="INDEX_REIFICATION"
+              :placeholder="journalLabels.searchPlaceholder"
               class="journal-search-input"
             />
           </label>
@@ -242,20 +242,20 @@
         
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
-          <!-- SECTION 1: Top Row (Lead Setup + Inquiry Sidebar) -->
+          <!-- SECTION 1: Top Row (Lead Signal + Analysis Sidebar) -->
           <div class="grid grid-cols-12 border-b border-current/10">
             <section class="journal-sector col-span-12 lg:col-span-8 px-12 pb-12 pt-6 lg:border-r border-current/10">
               <div class="flex flex-col space-y-12">
                 <div class="flex items-center justify-between border-b border-current/10 pb-4">
                   <div class="flex items-center space-x-3">
                     <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Strategic Setups</h2>
+                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.signals }}</h2>
                   </div>
-                  <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">Edition_0{{ currentPage }}</span>
+                  <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">{{ journalLabels.editionPrefix }}{{ currentPage }}</span>
                 </div>
-                <ExJournalSpotlight v-if="pagedSetups[0]" :node="pagedSetups[0]" @click="navigateToNode(pagedSetups[0].id)" />
+                <ExJournalSpotlight v-if="pagedSignals[0]" :node="pagedSignals[0]" @click="navigateToNode(pagedSignals[0].id)" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-current/10 pt-8">
-                  <ExNodeCard v-for="node in pagedSetups.slice(1, 3)" :key="node.id" :node="node" />
+                  <ExNodeCard v-for="node in pagedSignals.slice(1, 3)" :key="node.id" :node="node" />
                 </div>
               </div>
             </section>
@@ -264,22 +264,22 @@
               <div class="space-y-12">
                  <div class="flex items-center space-x-3 border-b border-current/10 pb-4">
                    <div class="w-1 h-1 bg-current opacity-20"></div>
-                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">Inquiry Voices</h2>
+                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.analysis }}</h2>
                 </div>
                 <div class="space-y-6">
-                  <ExNodeCard v-for="node in pagedInquiry.slice(0, 3)" :key="node.id" :node="node" />
+                  <ExNodeCard v-for="node in pagedAnalysis.slice(0, 3)" :key="node.id" :node="node" />
                 </div>
               </div>
             </section>
           </div>
 
-          <!-- SECTION 2: Middle Horizontal (Market Ledger) -->
+          <!-- SECTION 2: Middle Horizontal (Research) -->
           <section class="journal-sector p-12 border-b border-current/10">
             <div class="flex flex-col space-y-12">
               <div class="flex items-center justify-between border-b border-current/10 pb-4">
                 <div class="flex items-center space-x-3">
                   <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                  <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Market Ledger</h2>
+                  <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.research }}</h2>
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
@@ -288,17 +288,17 @@
             </div>
           </section>
 
-          <!-- SECTION 3: Bottom Strip (Protocol Masterclass) -->
+          <!-- SECTION 3: Bottom Strip (Strategy) -->
           <section class="journal-sector p-12">
             <div class="flex flex-col space-y-12">
               <div class="flex items-center justify-between border-b border-current/10 pb-4">
                   <div class="flex items-center space-x-3">
                     <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">Protocol Masterclass</h2>
+                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.strategy }}</h2>
                   </div>
               </div>
               <div class="flex overflow-x-auto space-x-12 scroll-minimal pb-4">
-                <div v-for="node in pagedLessons.slice(0, 3)" :key="node.id" class="min-w-[400px]">
+                <div v-for="node in pagedStrategies.slice(0, 3)" :key="node.id" class="min-w-[400px]">
                   <ExNodeCard :node="node" class="!border-none" />
                 </div>
               </div>
@@ -309,15 +309,14 @@
         <!-- NO CONTENT WARNING: The Reification Void -->
         <div v-else class="flex flex-col items-center justify-center py-48 px-12 space-y-8 animate-pulse text-center">
             <div class="text-4xl font-serif italic tracking-tighter opacity-20">
-               The Reification Void
+               {{ journalLabels.emptyTitle }}
             </div>
             <div class="w-12 h-px bg-current opacity-10"></div>
             <p class="max-w-md text-[10px] font-mono tracking-[0.3em] uppercase opacity-30 leading-loose">
-               Caution: You have reached the edge of the indexed registry. 
-               No tactical intelligence or archival nodes have been reified at this temporal coordinate.
+               {{ journalLabels.emptyDescription }}
             </p>
             <button @click="navigateToPage(1)" class="mt-8 text-[9px] font-mono tracking-[0.4em] uppercase border border-current/20 px-8 py-3 hover:bg-current/5 transition-all">
-               [ Return_to_Origin ]
+               {{ journalLabels.returnToOrigin }}
             </button>
         </div>
 
@@ -326,23 +325,23 @@
            <div class="flex items-center space-x-12">
               <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
                       class="px-8 py-3 border border-current/10 text-[9px] font-mono tracking-[0.4em] uppercase opacity-40 hover:opacity-100 hover:bg-current/[0.02] transition-all">
-                [ PREV_PAGE ]
+                {{ journalLabels.previousPage }}
               </button>
               <button @click="navigateToPage(currentPage + 1)" 
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
-                [ NEXT_PAGE // ARV_0{{ currentPage + 1 }} ]
+                {{ journalLabels.nextPage }} // {{ journalLabels.archivePrefix }}0{{ currentPage + 1 }} ]
               </button>
            </div>
            
-           <div class="text-[7px] font-mono opacity-20 uppercase tracking-[0.8em]">End of Indexed Reification</div>
+           <div class="text-[7px] font-mono opacity-20 uppercase tracking-[0.8em]">{{ journalLabels.endOfArchive }}</div>
         </div>
 
         <!-- Journal Footer -->
         <footer class="py-4 text-center opacity-10 hover:opacity-100 transition-opacity duration-700">
           <div class="flex flex-col items-center space-y-4">
-            <div class="text-[10px] font-serif italic tracking-widest text-current">"Knowledge Reified. Value Extracted."</div>
+            <div class="text-[10px] font-serif italic tracking-widest text-current">{{ journalLabels.footerQuote }}</div>
             <div class="w-24 h-px bg-current/20 mx-auto text-current"></div>
-            <div class="text-[7px] font-mono tracking-[0.8em] uppercase text-current">The Eve's Apple // Distributed Intel Hub</div>
+            <div class="text-[7px] font-mono tracking-[0.8em] uppercase text-current">{{ journalLabels.footerBrand }}</div>
           </div>
         </footer>
 
@@ -374,12 +373,62 @@ const authStore = useAuthStore()
 
 // Archival State
 const searchQuery = ref('')
-const journalFilters = [
-  { label: 'SETUPS', mode: 'SETUP' },
-  { label: 'RESEARCH', mode: 'RESEARCH' },
-  { label: 'PROTOCOL', mode: 'LESSON' },
-  { label: 'INQUIRY', mode: 'QUESTION' }
-] as const
+const journalLabels = computed(() => locale.value === 'ru'
+  ? {
+      volume: 'Том XXIV // № 12',
+      edition: 'Издание Реализации',
+      datePrefix: 'Опубликовано',
+      search: 'Поиск_',
+      searchPlaceholder: 'ПОИСК_В_АРХИВЕ',
+      signals: 'Сигналы',
+      research: 'Исследования',
+      strategy: 'Стратегии',
+      analysis: 'Аналитика',
+      editionPrefix: 'Выпуск_0',
+      emptyTitle: 'Пустота архива',
+      emptyDescription: 'Внимание: вы достигли края индексированного архива. Для этой позиции нет тактических данных или публикаций.',
+      returnToOrigin: '[ Вернуться_к_началу ]',
+      previousPage: '[ ПРЕДЫДУЩАЯ_СТРАНИЦА ]',
+      nextPage: '[ СЛЕДУЮЩАЯ_СТРАНИЦА',
+      archivePrefix: 'АРХ_',
+      endOfArchive: 'Конец индексированного архива',
+      footerQuote: '"Знание реализовано. Ценность извлечена."',
+      footerBrand: 'The Eve\'s Apple // Распределенный центр аналитики'
+    }
+  : {
+      volume: 'Vol. XXIV // No. 12',
+      edition: 'Reification Edition',
+      datePrefix: 'Reified on',
+      search: 'Search_',
+      searchPlaceholder: 'INDEX_REIFICATION',
+      signals: 'Signals',
+      research: 'Research',
+      strategy: 'Strategy',
+      analysis: 'Analysis',
+      editionPrefix: 'Edition_0',
+      emptyTitle: 'The Reification Void',
+      emptyDescription: 'Caution: You have reached the edge of the indexed registry. No tactical intelligence or archival nodes have been reified at this temporal coordinate.',
+      returnToOrigin: '[ Return_to_Origin ]',
+      previousPage: '[ PREV_PAGE ]',
+      nextPage: '[ NEXT_PAGE',
+      archivePrefix: 'ARV_',
+      endOfArchive: 'End of Indexed Reification',
+      footerQuote: '"Knowledge Reified. Value Extracted."',
+      footerBrand: 'The Eve\'s Apple // Distributed Intel Hub'
+    })
+const journalFilters = computed(() => locale.value === 'ru'
+  ? [
+      { label: 'СИГНАЛЫ', mode: 'SETUP' },
+      { label: 'ИССЛЕДОВАНИЯ', mode: 'RESEARCH' },
+      { label: 'СТРАТЕГИИ', mode: 'LESSON' },
+      { label: 'АНАЛИТИКА', mode: 'QUESTION' }
+    ]
+  : [
+      { label: 'SIGNALS', mode: 'SETUP' },
+      { label: 'RESEARCH', mode: 'RESEARCH' },
+      { label: 'STRATEGY', mode: 'LESSON' },
+      { label: 'ANALYSIS', mode: 'QUESTION' }
+    ])
 const activeJournalFilter = ref<string | null>(null)
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
@@ -422,6 +471,7 @@ const articleLabels = computed(() => locale.value === 'ru'
       noComments: 'No comments yet.',
       leaveFullscreen: 'Leave fullscreen mode'
     })
+const formatJournalDate = () => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US').format(new Date())
 const fullscreenExitLabel = computed(() => articleLabels.value.leaveFullscreen)
 
 const getMetricLabel = (label: string) => {
@@ -451,10 +501,10 @@ const pagedNodes = computed(() => {
   return filteredNodes.value.slice(start, start + nodesPerPage)
 })
 
-const pagedSetups = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP'))
+const pagedSignals = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP'))
 const pagedResearch = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'RESEARCH'))
-const pagedLessons = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'LESSON'))
-const pagedInquiry = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'QUESTION'))
+const pagedStrategies = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'LESSON'))
+const pagedAnalysis = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'QUESTION'))
 
 const navigateToPage = (page: number) => {
   const query = { ...route.query, page: page === 1 ? undefined : page.toString() }
