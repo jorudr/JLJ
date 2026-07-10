@@ -2,7 +2,7 @@
   <div @click="handleNodeClick"
        :class="[
          'journal-node group relative transition-all duration-700 hover:bg-current/[0.02] cursor-pointer',
-         node.signal ? 'py-3' : 'py-8 border-b border-current/10'
+         node.signal ? 'py-3' : 'py-8'
       ]">
     <div :class="['flex flex-col', node.signal ? 'space-y-2' : 'space-y-4']">
       <!-- Metadata Rail -->
@@ -50,12 +50,12 @@
         </div>
 
         <!-- Setup: Technical Ledger -->
-        <div v-else-if="node.mode === 'SETUP'" class="my-4 py-4 border-y border-current/5 flex items-center space-x-12">
+        <div v-else-if="node.mode === 'SETUP'" class="my-4 py-4 flex items-center space-x-12">
           <div class="flex flex-col">
             <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">{{ nodeLabels.pricingPillar }}</span>
             <span class="text-lg font-mono opacity-60">{{ node.setupLevels?.tp }}</span>
           </div>
-          <div class="flex flex-col border-l border-current/5 pl-12">
+          <div class="flex flex-col pl-12">
             <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">{{ nodeLabels.riskBarrier }}</span>
             <span class="text-lg font-mono opacity-60">{{ node.setupLevels?.sl }}</span>
           </div>

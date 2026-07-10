@@ -240,7 +240,7 @@
           <div class="grid grid-cols-12 border-b border-current/10">
             <section class="journal-sector col-span-12 lg:col-span-8 px-12 pb-12 pt-6 lg:border-r border-current/10">
               <div class="flex flex-col space-y-12">
-                <div class="flex items-center justify-between border-b border-current/10 pb-4">
+                <div class="flex items-center justify-between pb-4">
                   <div class="flex items-center space-x-3">
                     <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
                     <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.analysis }}</h2>
@@ -248,7 +248,7 @@
                   <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">{{ journalLabels.editionPrefix }}{{ currentPage }}</span>
                 </div>
                 <ExJournalSpotlight v-if="pagedAnalysis[0]" :node="pagedAnalysis[0]" @click="navigateToNode(pagedAnalysis[0].id)" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-current/10 pt-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
                   <ExNodeCard v-for="node in pagedAnalysis.slice(1, 3)" :key="node.id" :node="node" />
                 </div>
               </div>
@@ -270,7 +270,7 @@
           <!-- SECTION 2: Middle Horizontal (Research) -->
           <section class="journal-sector p-12 border-b border-current/10">
             <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between border-b border-current/10 pb-4">
+              <div class="flex items-center justify-between pb-4">
                 <div class="flex items-center space-x-3">
                   <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
                   <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.research }}</h2>
@@ -285,7 +285,7 @@
           <!-- SECTION 3: Bottom Strip (Strategy) -->
           <section class="journal-sector p-12">
             <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between border-b border-current/10 pb-4">
+              <div class="flex items-center justify-between pb-4">
                   <div class="flex items-center space-x-3">
                     <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
                     <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.strategy }}</h2>

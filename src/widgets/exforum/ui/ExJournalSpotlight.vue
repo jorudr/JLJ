@@ -19,7 +19,7 @@
       </p>
 
       <!-- Footer Info -->
-      <div class="flex items-center justify-between border-t border-current/10 pt-8">
+      <div class="flex items-center justify-between pt-8">
         <div class="flex flex-wrap items-center gap-x-10 gap-y-3 text-[10px] tracking-wide">
           <span class="font-mono uppercase tracking-[0.28em] text-current/35">
             {{ spotlightLabels.published }} {{ formatSpotlightDate(node.lastActivityAt) }}
