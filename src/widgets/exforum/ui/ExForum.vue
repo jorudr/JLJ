@@ -205,7 +205,7 @@
         <!-- INLINE CATEGORY SELECTOR -->
         <div class="flex flex-col md:items-end space-y-2">
           <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
-            {{ locale === 'ru' ? 'Категория' : 'Category' }}
+            {{ locale === 'ru' ? 'Выберите категорию' : 'Choose Category' }}
           </span>
           <div class="flex flex-wrap gap-4 md:space-x-6 md:gap-0">
             <button
