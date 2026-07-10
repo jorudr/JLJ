@@ -38,8 +38,11 @@
         </div>
       </header>
 
-      <main class="article-board-stage">
-        <section class="journal-article-board" aria-label="Article board"></section>
+      <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
+        <section
+          class="box-border min-h-[68vh] w-full max-w-full flex-1 border-y border-x-0 border-current/10 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
+          aria-label="Article board"
+        ></section>
       </main>
 
       <footer class="article-comments-footer">
@@ -506,36 +509,6 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   color: color-mix(in srgb, currentColor 76%, transparent);
 }
 
-.article-board-stage {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: stretch;
-  justify-content: center;
-  width: 100%;
-  max-width: 100%;
-  min-height: calc(100vh - 360px);
-  padding: 24px 0;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.journal-article-board {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  flex: 1 1 auto;
-  min-height: min(72vh, 780px);
-  border: 1px solid currentColor;
-  border-color: color-mix(in srgb, currentColor 12%, transparent);
-  background-image:
-    radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1.6px);
-  background-size: 28px 28px;
-  background-position: center;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, currentColor 4%, transparent),
-    inset 0 0 80px color-mix(in srgb, currentColor 5%, transparent);
-}
-
 .article-comments-footer {
   display: flex;
   flex-direction: column;
@@ -627,10 +600,6 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   .article-reader-title-row {
     grid-template-columns: 1fr;
   }
-
-  .article-board-stage {
-    min-height: 62vh;
-  }
 }
 
 @media (max-width: 639px) {
@@ -654,11 +623,6 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     flex-direction: column;
     text-align: left;
     white-space: normal;
-  }
-
-  .journal-article-board {
-    min-height: 68vh;
-    background-size: 22px 22px;
   }
 }
 </style>
