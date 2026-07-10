@@ -202,9 +202,9 @@
           </h1>
         </template>
 
-        <div class="journal-masthead-tools flex items-center justify-between w-full border-t border-current/10 pt-4 px-4">
-          <!-- Filters -->
-          <div class="journal-filter-list flex items-center space-x-2">
+        <div class="journal-masthead-tools flex flex-wrap lg:flex-nowrap items-center justify-between w-full border-t border-current/10 pt-4 px-4 gap-4">
+          <!-- Filters (Left) -->
+          <div class="journal-filter-list flex items-center space-x-2 flex-1 justify-start">
             <button
               v-for="filter in journalFilters"
               :key="filter.mode"
@@ -217,20 +217,32 @@
             </button>
           </div>
 
-          <!-- Search Bar -->
-          <label class="journal-search-shell group/search flex items-center gap-2" for="journal-search">
-            <svg class="w-3.5 h-3.5 text-current/40 group-focus-within/search:text-current/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              id="journal-search"
-              v-model="searchQuery"
-              type="search"
-              :placeholder="journalLabels.searchPlaceholder"
-              class="journal-search-input"
-            />
-          </label>
+          <!-- Search Bar (Center) -->
+          <div class="flex-1 flex justify-center">
+            <label class="journal-search-shell group/search flex items-center gap-2" for="journal-search">
+              <svg class="w-3.5 h-3.5 text-current/40 group-focus-within/search:text-current/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                id="journal-search"
+                v-model="searchQuery"
+                type="search"
+                :placeholder="journalLabels.searchPlaceholder"
+                class="journal-search-input"
+              />
+            </label>
+          </div>
+
+          <!-- Create Article Button (Right) -->
+          <div class="flex-1 flex justify-end">
+            <button class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90">
+              <svg class="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+              <span>{{ locale === 'ru' ? 'Создать статью' : 'Create Article' }}</span>
+            </button>
+          </div>
         </div>
       </header>
 
