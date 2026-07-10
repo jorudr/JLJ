@@ -40,9 +40,49 @@
 
       <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
         <section
-          class="box-border min-h-[68vh] w-full max-w-full flex-1 border-y border-x-0 border-current/10 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
+          ref="boardViewportRef"
+          class="relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-grab select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner active:cursor-grabbing sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
           aria-label="Article board"
-        ></section>
+          @pointerdown="startBoardPan"
+          @wheel.prevent="handleBoardWheel"
+        >
+          <div
+            class="absolute left-0 top-0 origin-top-left"
+            :style="[boardWorldStyle, boardTransformStyle]"
+          >
+            <article
+              v-for="node in boardNodes"
+              :key="node.id"
+              data-board-node
+              class="absolute box-border overflow-hidden border border-current/20 bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+              :style="getBoardNodeStyle(node)"
+              @pointerdown.stop="startBoardNodeDrag($event, node.id)"
+            >
+              <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
+                <h3 class="font-serif text-xl italic leading-none text-current/80">{{ node.title }}</h3>
+                <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-current/55">{{ node.text }}</p>
+              </div>
+
+              <div v-else class="flex h-full flex-col">
+                <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+                <p v-if="node.caption" class="border-t border-current/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
+                  {{ node.caption }}
+                </p>
+              </div>
+
+              <button
+                class="absolute bottom-0 right-0 h-5 w-5 cursor-se-resize border-l border-t border-current/20 bg-white/80"
+                type="button"
+                aria-label="Resize node"
+                @pointerdown.stop="startBoardNodeResize($event, node.id)"
+              ></button>
+            </article>
+          </div>
+
+          <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/80 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
+            {{ Math.round(boardScale * 100) }}%
+          </div>
+        </section>
       </main>
 
       <footer class="article-comments-footer">
@@ -230,12 +270,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
+import type { JournalArticleBoardNode } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 
@@ -288,6 +329,55 @@ const articleComments = computed(() => {
   if (!selectedArticle.value) return []
   return mockComments.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
 })
+const boardViewportRef = ref<HTMLElement | null>(null)
+const boardNodes = ref<JournalArticleBoardNode[]>([])
+const boardPan = ref({ x: 48, y: 36 })
+const boardScale = ref(1)
+
+type BoardInteraction =
+  | { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
+  | {
+      type: 'drag'
+      nodeId: string
+      startClientX: number
+      startClientY: number
+      startX: number
+      startY: number
+      width: number
+      height: number
+    }
+  | {
+      type: 'resize'
+      nodeId: string
+      startClientX: number
+      startClientY: number
+      startWidth: number
+      startHeight: number
+    }
+
+const activeBoardInteraction = ref<BoardInteraction | null>(null)
+const minBoardNodeSize = { width: 6, height: 4 }
+const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
+const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
+const boardWorldStyle = computed(() => ({
+  width: `${boardUnitSize.value.width * boardGridSize.value}px`,
+  height: `${boardUnitSize.value.height * boardGridSize.value}px`
+}))
+const boardTransformStyle = computed(() => ({
+  transform: `translate(${boardPan.value.x}px, ${boardPan.value.y}px) scale(${boardScale.value})`
+}))
+
+const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => nodes.map(node => ({
+  ...node,
+  position: { ...node.position },
+  size: { ...node.size }
+})) as JournalArticleBoardNode[]
+
+watch(selectedArticle, (article) => {
+  boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
+  boardPan.value = { x: 48, y: 36 }
+  boardScale.value = 1
+}, { immediate: true })
 
 const closeReader = () => {
   const query = { ...route.query }
@@ -303,6 +393,138 @@ const navigateToNode = (id: string) => {
     }
   })
 }
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
+  left: `${node.position.x * boardGridSize.value}px`,
+  top: `${node.position.y * boardGridSize.value}px`,
+  width: `${node.size.width * boardGridSize.value}px`,
+  height: `${node.size.height * boardGridSize.value}px`
+})
+
+const updateBoardNode = (nodeId: string, updater: (node: JournalArticleBoardNode) => JournalArticleBoardNode) => {
+  boardNodes.value = boardNodes.value.map(node => node.id === nodeId ? updater(node) : node)
+}
+
+const startWindowTracking = () => {
+  window.addEventListener('pointermove', handleBoardPointerMove)
+  window.addEventListener('pointerup', stopBoardInteraction)
+  window.addEventListener('pointercancel', stopBoardInteraction)
+}
+
+const stopWindowTracking = () => {
+  window.removeEventListener('pointermove', handleBoardPointerMove)
+  window.removeEventListener('pointerup', stopBoardInteraction)
+  window.removeEventListener('pointercancel', stopBoardInteraction)
+}
+
+const startBoardPan = (event: PointerEvent) => {
+  const target = event.target as HTMLElement | null
+  if (target?.closest('[data-board-node]')) return
+
+  activeBoardInteraction.value = {
+    type: 'pan',
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    startPanX: boardPan.value.x,
+    startPanY: boardPan.value.y
+  }
+  startWindowTracking()
+}
+
+const startBoardNodeDrag = (event: PointerEvent, nodeId: string) => {
+  const node = boardNodes.value.find(item => item.id === nodeId)
+  if (!node) return
+
+  activeBoardInteraction.value = {
+    type: 'drag',
+    nodeId,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    startX: node.position.x,
+    startY: node.position.y,
+    width: node.size.width,
+    height: node.size.height
+  }
+  startWindowTracking()
+}
+
+const startBoardNodeResize = (event: PointerEvent, nodeId: string) => {
+  const node = boardNodes.value.find(item => item.id === nodeId)
+  if (!node) return
+
+  activeBoardInteraction.value = {
+    type: 'resize',
+    nodeId,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    startWidth: node.size.width,
+    startHeight: node.size.height
+  }
+  startWindowTracking()
+}
+
+const handleBoardPointerMove = (event: PointerEvent) => {
+  const interaction = activeBoardInteraction.value
+  if (!interaction) return
+
+  if (interaction.type === 'pan') {
+    boardPan.value = {
+      x: interaction.startPanX + event.clientX - interaction.startClientX,
+      y: interaction.startPanY + event.clientY - interaction.startClientY
+    }
+    return
+  }
+
+  const deltaX = Math.round((event.clientX - interaction.startClientX) / (boardScale.value * boardGridSize.value))
+  const deltaY = Math.round((event.clientY - interaction.startClientY) / (boardScale.value * boardGridSize.value))
+
+  if (interaction.type === 'drag') {
+    updateBoardNode(interaction.nodeId, node => ({
+      ...node,
+      position: {
+        x: clamp(interaction.startX + deltaX, 0, boardUnitSize.value.width - interaction.width),
+        y: clamp(interaction.startY + deltaY, 0, boardUnitSize.value.height - interaction.height)
+      }
+    }))
+    return
+  }
+
+  updateBoardNode(interaction.nodeId, node => ({
+    ...node,
+    size: {
+      width: clamp(interaction.startWidth + deltaX, minBoardNodeSize.width, boardUnitSize.value.width - node.position.x),
+      height: clamp(interaction.startHeight + deltaY, minBoardNodeSize.height, boardUnitSize.value.height - node.position.y)
+    }
+  }))
+}
+
+const stopBoardInteraction = () => {
+  activeBoardInteraction.value = null
+  stopWindowTracking()
+}
+
+const handleBoardWheel = (event: WheelEvent) => {
+  const viewport = boardViewportRef.value
+  if (!viewport) return
+
+  const rect = viewport.getBoundingClientRect()
+  const previousScale = boardScale.value
+  const nextScale = clamp(previousScale - event.deltaY * 0.001, 0.45, 2.2)
+  const pointerX = event.clientX - rect.left
+  const pointerY = event.clientY - rect.top
+  const worldX = (pointerX - boardPan.value.x) / previousScale
+  const worldY = (pointerY - boardPan.value.y) / previousScale
+
+  boardScale.value = nextScale
+  boardPan.value = {
+    x: pointerX - worldX * nextScale,
+    y: pointerY - worldY * nextScale
+  }
+}
+
+onUnmounted(stopWindowTracking)
 
 const formatCommentDate = (value: string) => {
   return new Intl.DateTimeFormat('en', {

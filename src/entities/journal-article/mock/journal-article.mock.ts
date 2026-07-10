@@ -16,6 +16,46 @@ export const mockJournalArticles: JournalArticle[] = [
       { id: 'read-time', label: 'Read Time', value: '7 min' },
       { id: 'confidence', label: 'Confidence', value: '4/5' }
     ],
+    board: {
+      gridSize: 28,
+      magnet: { enabled: true, mode: 'grid' },
+      size: { width: 72, height: 44 },
+      nodes: [
+        {
+          id: 'board-node-thesis',
+          type: 'text',
+          position: { x: 4, y: 4 },
+          size: { width: 16, height: 8 },
+          title: 'Liquidity thesis',
+          text: 'Sweep above the monthly high created the first useful anchor. Every block on the board snaps to the same grid cadence.'
+        },
+        {
+          id: 'board-node-risk',
+          type: 'text',
+          position: { x: 24, y: 7 },
+          size: { width: 13, height: 7 },
+          title: 'Risk line',
+          text: 'Invalidation stays above the sweep. Drag or resize this note and it will resolve back to the grid.'
+        },
+        {
+          id: 'board-node-chart',
+          type: 'image',
+          position: { x: 42, y: 5 },
+          size: { width: 20, height: 13 },
+          src: '/assets/ui/tactical_chart_preview.png',
+          alt: 'Tactical chart preview',
+          caption: 'Reference image node'
+        },
+        {
+          id: 'board-node-target',
+          type: 'text',
+          position: { x: 12, y: 20 },
+          size: { width: 18, height: 9 },
+          title: 'Target zone',
+          text: 'Primary draw remains the lower imbalance. Nodes use grid units for position and size, not arbitrary pixels.'
+        }
+      ]
+    },
     boardBlocks: []
   }
 ]

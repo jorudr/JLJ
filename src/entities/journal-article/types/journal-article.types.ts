@@ -17,6 +17,52 @@ export interface JournalArticleMetric {
   value: string | number
 }
 
+export type JournalArticleBoardNodeType = 'text' | 'image'
+
+export interface JournalArticleBoardPosition {
+  x: number
+  y: number
+}
+
+export interface JournalArticleBoardSize {
+  width: number
+  height: number
+}
+
+export interface JournalArticleBoardBaseNode {
+  id: string
+  type: JournalArticleBoardNodeType
+  position: JournalArticleBoardPosition
+  size: JournalArticleBoardSize
+}
+
+export interface JournalArticleBoardTextNode extends JournalArticleBoardBaseNode {
+  type: 'text'
+  title: string
+  text: string
+}
+
+export interface JournalArticleBoardImageNode extends JournalArticleBoardBaseNode {
+  type: 'image'
+  src: string
+  alt: string
+  caption?: string
+}
+
+export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode
+
+export interface JournalArticleBoardGridMagnet {
+  enabled: boolean
+  mode: 'grid'
+}
+
+export interface JournalArticleBoard {
+  gridSize: number
+  magnet: JournalArticleBoardGridMagnet
+  size: JournalArticleBoardSize
+  nodes: JournalArticleBoardNode[]
+}
+
 export interface JournalArticle {
   id: string
   sourceNodeId?: string
@@ -27,5 +73,6 @@ export interface JournalArticle {
   author: string
   publishedAt: string
   metrics: JournalArticleMetric[]
+  board: JournalArticleBoard
   boardBlocks: JournalArticleBoardBlock[]
 }
