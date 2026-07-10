@@ -17,6 +17,14 @@
         @pointerdown="startBoardPan"
         @wheel.prevent="handleBoardWheel"
       >
+        <button
+          class="absolute left-1/2 top-5 z-20 -translate-x-1/2 font-mono text-[9px] uppercase tracking-[0.32em] text-black/35 transition-colors hover:text-black/65"
+          type="button"
+          @click.stop="closeBoardFullscreen"
+        >
+          {{ fullscreenExitLabel }}
+        </button>
+
         <div
           class="absolute left-0 top-0 origin-top-left"
           :style="[boardWorldStyle, boardTransformStyle]"
@@ -27,7 +35,6 @@
             data-board-node
             class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
             :style="getBoardNodeStyle(node)"
-            @pointerdown.stop="startBoardNodeDrag($event, node.id)"
           >
             <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
               <h3 class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
@@ -311,6 +318,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
+import { useI18n } from '~/shared/i18n/useI18n'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
@@ -320,12 +328,14 @@ import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { locale } = useI18n()
 const themeStore = useThemeStore()
 
 // Archival State
 const searchQuery = ref('')
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
+const fullscreenExitLabel = computed(() => locale.value === 'ru' ? 'Покинуть полноэкранный режим' : 'Leave fullscreen mode')
 
 // Pagination Logic
 const currentPage = computed(() => Number(route.query.page) || 1)
@@ -376,16 +386,6 @@ const isBoardFullscreen = ref(false)
 
 type BoardInteraction =
   | { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
-  | {
-      type: 'drag'
-      nodeId: string
-      startClientX: number
-      startClientY: number
-      startX: number
-      startY: number
-      width: number
-      height: number
-    }
   | {
       type: 'resize'
       nodeId: string
@@ -489,23 +489,6 @@ const startBoardPan = (event: PointerEvent) => {
   startWindowTracking()
 }
 
-const startBoardNodeDrag = (event: PointerEvent, nodeId: string) => {
-  const node = boardNodes.value.find(item => item.id === nodeId)
-  if (!node) return
-
-  activeBoardInteraction.value = {
-    type: 'drag',
-    nodeId,
-    startClientX: event.clientX,
-    startClientY: event.clientY,
-    startX: node.position.x,
-    startY: node.position.y,
-    width: node.size.width,
-    height: node.size.height
-  }
-  startWindowTracking()
-}
-
 const startBoardNodeResize = (event: PointerEvent, nodeId: string) => {
   const node = boardNodes.value.find(item => item.id === nodeId)
   if (!node) return
@@ -535,17 +518,6 @@ const handleBoardPointerMove = (event: PointerEvent) => {
 
   const deltaX = Math.round((event.clientX - interaction.startClientX) / (boardScale.value * boardGridSize.value))
   const deltaY = Math.round((event.clientY - interaction.startClientY) / (boardScale.value * boardGridSize.value))
-
-  if (interaction.type === 'drag') {
-    updateBoardNode(interaction.nodeId, node => ({
-      ...node,
-      position: {
-        x: clamp(interaction.startX + deltaX, 0, boardUnitSize.value.width - interaction.width),
-        y: clamp(interaction.startY + deltaY, 0, boardUnitSize.value.height - interaction.height)
-      }
-    }))
-    return
-  }
 
   updateBoardNode(interaction.nodeId, node => ({
     ...node,

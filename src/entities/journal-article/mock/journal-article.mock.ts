@@ -35,7 +35,7 @@ export const mockJournalArticles: JournalArticle[] = [
           position: { x: 24, y: 7 },
           size: { width: 13, height: 7 },
           title: 'Risk line',
-          text: 'Invalidation stays above the sweep. Drag or resize this note and it will resolve back to the grid.'
+          text: 'Invalidation stays above the sweep. Resize this note and it will resolve back to the grid.'
         },
         {
           id: 'board-node-chart',
