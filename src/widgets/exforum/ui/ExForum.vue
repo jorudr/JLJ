@@ -5,7 +5,7 @@
     :class="{
       'exforum-transparent-bg': isForumLightTheme,
       'exforum-edge-shadows': showForumEdgeShadows,
-      '!overflow-hidden': isBoardFullscreen
+      '!overflow-hidden': isBoardFullscreen || isCreatingArticle
     }"
   >
     <Transition name="fade-slide">
@@ -182,6 +182,117 @@
 
     </article>
 
+    <!-- ARTICLE CREATION VIEW -->
+    <div v-else-if="isCreatingArticle" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-6 relative overflow-hidden" key="creator">
+      
+      <!-- Close Button (Top Right) -->
+      <button class="absolute top-8 right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity flex items-center gap-2 z-50" @click="isCreatingArticle = false">
+        <span>{{ locale === 'ru' ? 'Закрыть' : 'Close' }}</span>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <!-- DRAFT METADATA HEADER -->
+      <div class="flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
+        <div class="flex flex-col space-y-2">
+          <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+            {{ locale === 'ru' ? 'Редактор' : 'Editor' }} // {{ formatJournalDate() }}
+          </span>
+          <span class="font-serif italic text-2xl text-current/80">{{ currentUserName }}</span>
+        </div>
+        
+        <!-- INLINE CATEGORY SELECTOR -->
+        <div class="flex flex-col md:items-end space-y-2">
+          <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+            {{ locale === 'ru' ? 'Категория' : 'Category' }}
+          </span>
+          <div class="flex flex-wrap gap-4 md:space-x-6 md:gap-0">
+            <button
+              v-for="type in articleTypes"
+              :key="type.value"
+              class="text-[11px] font-mono tracking-widest uppercase transition-all duration-300 border-b"
+              :class="newArticleForm.type === type.value ? 'opacity-100 border-current pb-1 font-bold' : 'opacity-50 border-transparent hover:opacity-100 pb-1'"
+              @click="newArticleForm.type = type.value"
+            >
+              {{ type.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN EDITORIAL CANVAS -->
+      <div class="flex-grow flex flex-col justify-center w-full max-w-5xl mx-auto space-y-6 min-h-0 pt-2 pb-6">
+        
+        <!-- Huge Title Input -->
+        <div class="flex flex-col items-center group/title relative w-full shrink-0 pt-4">
+          <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-2" :class="newArticleForm.title ? 'opacity-30' : 'opacity-60 group-focus-within/title:opacity-100'">
+            {{ locale === 'ru' ? 'Введите заголовок' : 'Enter Title' }}
+          </span>
+          <input
+            v-model="newArticleForm.title"
+            type="text"
+            maxlength="60"
+            class="w-full bg-transparent text-4xl md:text-6xl lg:text-7xl font-serif italic tracking-tighter text-center focus:outline-none transition-colors placeholder:text-current/20"
+            :placeholder="locale === 'ru' ? 'Заголовок...' : 'Title...'"
+          />
+          <div class="absolute -bottom-6 w-full flex justify-end px-4">
+            <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.title.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/title:opacity-40'">
+              {{ newArticleForm.title.length }} / 60
+            </span>
+          </div>
+        </div>
+        
+        <div class="w-16 h-px bg-current/30 mx-auto my-2 shrink-0"></div>
+
+        <!-- Description Textarea -->
+        <div class="flex flex-col items-center group/desc relative w-full flex-grow min-h-0">
+          <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-4 shrink-0" :class="newArticleForm.description ? 'opacity-30' : 'opacity-60 group-focus-within/desc:opacity-100'">
+            {{ locale === 'ru' ? 'Введите описание' : 'Enter Description' }}
+          </span>
+          <textarea
+            v-model="newArticleForm.description"
+            @input="newArticleForm.description = newArticleForm.description.replace(/[\r\n]+/g, ' ')"
+            maxlength="200"
+            class="w-full h-full flex-grow min-h-0 bg-transparent text-lg md:text-xl lg:text-2xl font-serif text-center focus:outline-none transition-colors resize-none placeholder:text-current/20 leading-normal text-current/90"
+            :placeholder="locale === 'ru' ? 'Краткое описание или тезис вашей статьи...' : 'Brief description or thesis of your article...'"
+          ></textarea>
+          <div class="absolute bottom-2 w-full flex justify-end px-4 shrink-0 pointer-events-none">
+            <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.description.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/desc:opacity-40'">
+              {{ newArticleForm.description.length }} / 200
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAUNCH FOOTER -->
+      <div class="border-t-2 border-current/20 pt-4 mt-auto flex flex-col md:flex-row justify-between md:items-center pb-2 space-y-4 md:space-y-0 shrink-0">
+        <div class="flex items-center space-x-4">
+          <div class="w-2 h-2 rounded-full" :class="isNewArticleFormValid ? 'bg-green-500/80 animate-pulse' : 'bg-current/20'"></div>
+          <span class="text-[9px] font-mono tracking-[0.4em] uppercase" :class="isNewArticleFormValid ? 'opacity-100' : 'opacity-30'">
+            {{ isNewArticleFormValid ? (locale === 'ru' ? 'Готово к публикации' : 'Ready to publish') : (locale === 'ru' ? 'Ожидание данных' : 'Waiting for input') }}
+          </span>
+        </div>
+        
+        <button
+          class="group flex items-center space-x-6 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-500"
+          :disabled="!isNewArticleFormValid"
+          @click="submitNewArticle"
+        >
+          <span class="text-[10px] font-mono tracking-[0.4em] uppercase transition-opacity" :class="isNewArticleFormValid ? 'opacity-100' : 'opacity-40'">
+            {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
+          </span>
+          <div class="relative overflow-hidden w-20 h-8 flex items-center border border-current/20 group-hover:border-current/80 rounded-full transition-colors">
+            <span class="text-3xl absolute transition-all duration-700 ease-in-out"
+                  :class="[isSubmittingArticle ? 'translate-x-[200%] opacity-0' : 'translate-x-4 opacity-80', isNewArticleFormValid ? 'group-hover:translate-x-6' : '']">
+              →
+            </span>
+          </div>
+        </button>
+      </div>
+      
+    </div>
+
     <!-- JOURNAL VIEW: Front Page & Archive -->
     <div v-else class="flex flex-col min-h-full px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
       
@@ -236,11 +347,17 @@
 
           <!-- Create Article Button (Right) -->
           <div class="flex-1 flex justify-end">
-            <button class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90">
-              <svg class="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button
+              class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90"
+              @click="isCreatingArticle = !isCreatingArticle"
+            >
+              <svg v-if="!isCreatingArticle" class="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
-              <span>{{ locale === 'ru' ? 'Создать статью' : 'Create Article' }}</span>
+              <svg v-else class="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6L6 18M6 6l12 12"></path>
+              </svg>
+              <span>{{ isCreatingArticle ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Создать статью' : 'Create Article') }}</span>
             </button>
           </div>
         </div>
@@ -565,6 +682,51 @@ const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
+
+// Article Creation State
+const isCreatingArticle = ref(false)
+const isDropdownOpen = ref(false)
+const isSubmittingArticle = ref(false)
+const newArticleForm = ref({
+  title: '',
+  description: '',
+  type: ''
+})
+
+const articleTypes = computed(() => [
+  { value: 'SETUP', label: locale.value === 'ru' ? 'Сетап (SETUP)' : 'Setup' },
+  { value: 'RESEARCH', label: locale.value === 'ru' ? 'Исследование (RESEARCH)' : 'Research' },
+  { value: 'LESSON', label: locale.value === 'ru' ? 'Урок (LESSON)' : 'Lesson' },
+  { value: 'QUESTION', label: locale.value === 'ru' ? 'Вопрос (QUESTION)' : 'Question' }
+])
+
+const selectedTypeLabel = computed(() => {
+  const t = articleTypes.value.find(t => t.value === newArticleForm.value.type)
+  return t ? t.label : ''
+})
+
+const isNewArticleFormValid = computed(() => {
+  return newArticleForm.value.title.trim() !== '' &&
+         newArticleForm.value.description.trim() !== '' &&
+         newArticleForm.value.type !== ''
+})
+
+const submitNewArticle = () => {
+  if (!isNewArticleFormValid.value) return
+  isSubmittingArticle.value = true
+  
+  // Animation duration matches the 700ms in CSS, user asked to not add actual saving logic yet
+  setTimeout(() => {
+    isSubmittingArticle.value = false
+    // isCreatingArticle.value = false
+  }, 1000)
+}
+
+// v-click-outside directive logic setup inside component (or via vueuse if available, 
+// but since we are in a single file, a simple window event listener is better for the dropdown, 
+// but we'll use a standard workaround if v-click-outside isn't registered globally. Let's assume it might not be. 
+// Wait, I used v-click-outside in the template, I should replace it with a simple @click.away or similar if it's not available.
+// Actually VueUse `onClickOutside` is safer. Let's just use a transparent overlay for the dropdown instead to be safe.)
 
 type BoardInteraction = { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
 
