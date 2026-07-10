@@ -11,19 +11,24 @@
     <ExNodeContent v-if="selectedNode" :node="selectedNode" @back="closeReader" key="reader" />
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="flex flex-col min-h-full" :key="`page-${currentPage}`">
+    <div v-else class="flex flex-col min-h-full px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
       
-      <!-- Masthead (Page 1 Only) -->
-      <header v-if="currentPage === 1" class="pt-8 pb-4 border-b-4 border-double border-current/20 flex flex-col items-center space-y-4 px-8 relative z-10">
-        <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
-          <span>Vol. XXIV // No. 12</span>
-          <span class="text-[10px] tracking-[1em] italic font-serif">Reification Edition</span>
-          <span>Reified on {{ new Date().toLocaleDateString() }}</span>
-        </div>
-        
-        <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center py-4 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
-          The Eve's Apple
-        </h1>
+      <!-- Masthead -->
+      <header
+        class="border-b-4 border-double border-current/20 flex flex-col items-center px-8 relative z-10"
+        :class="currentPage === 1 ? 'pt-8 pb-4 space-y-4' : 'pt-3 pb-4'"
+      >
+        <template v-if="currentPage === 1">
+          <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
+            <span>Vol. XXIV // No. 12</span>
+            <span class="text-[10px] tracking-[1em] italic font-serif">Reification Edition</span>
+            <span>Reified on {{ new Date().toLocaleDateString() }}</span>
+          </div>
+
+          <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center py-4 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
+            The Eve's Apple
+          </h1>
+        </template>
 
         <div class="flex items-center justify-between w-full border-t border-current/10 pt-4 px-4">
           <!-- Filters -->
