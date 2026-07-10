@@ -27,7 +27,7 @@
         
         <!-- Article Header -->
         <header class="space-y-8 text-center">
-          <div class="flex flex-col items-center space-y-3">
+          <div v-if="!node.signal" class="flex flex-col items-center space-y-3">
             <span class="text-[8px] font-mono tracking-[0.5em] uppercase opacity-30">{{ node.category }} // {{ formatMode(node.mode) }}</span>
             <div class="w-12 h-px bg-current opacity-10"></div>
           </div>
@@ -48,7 +48,29 @@
         <!-- Dynamic Mode-Specific Block -->
         <div class="mode-specific-ledger">
            <!-- Setup Block -->
-           <div v-if="node.mode === 'SETUP'" class="p-10 border border-current/10 bg-current/[0.02] flex items-center justify-around">
+           <div v-if="node.signal" class="p-10 border border-current/10 bg-current/[0.02] flex flex-col gap-8">
+             <div class="flex items-end justify-between gap-8">
+               <div class="flex flex-col">
+                 <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">{{ contentLabels.signalAsset }}</span>
+                 <span class="text-4xl font-mono text-current opacity-70">{{ node.signal.asset }}</span>
+               </div>
+               <div class="flex flex-col items-end text-right">
+                 <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">{{ contentLabels.signalTarget }}</span>
+                 <span :class="['text-4xl font-mono', getSignalDirectionClass()]">
+                   {{ getSignalArrow() }} {{ formatSignalPrice(node.signal.targetPrice) }}
+                 </span>
+               </div>
+             </div>
+             <div class="flex items-center justify-between border-t border-current/10 pt-6">
+               <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">{{ contentLabels.signalSource }}</span>
+               <span class="text-xl font-mono text-current/50">{{ formatSignalPrice(node.signal.entryPrice) }}</span>
+             </div>
+             <p class="text-base font-serif italic leading-relaxed text-current/60">
+               "{{ node.signal.description }}"
+             </p>
+           </div>
+
+           <div v-else-if="node.mode === 'SETUP'" class="p-10 border border-current/10 bg-current/[0.02] flex items-center justify-around">
              <div class="flex flex-col items-center">
                <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest mb-2">{{ contentLabels.buyEntry }}</span>
                <span class="text-4xl font-mono text-current opacity-60">{{ node.setupLevels?.tp }}</span>
@@ -138,7 +160,7 @@ import { computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import type { ExNode } from '../model/exnode.types'
 
-defineProps<{
+const props = defineProps<{
   node: ExNode
 }>()
 
@@ -156,6 +178,9 @@ const contentLabels = computed(() => locale.value === 'ru'
       echoes: 'Отклики',
       buyEntry: 'Вход_покупки // Цель_Z',
       invalidation: 'Отмена // Void_X',
+      signalAsset: 'Актив',
+      signalTarget: 'Ближайшая цель',
+      signalSource: 'Цена прогноза',
       footerNote: 'Интеллект сохранен в Небесном архиве. Целостность документа подтверждена протоколом равновесия.'
     }
   : {
@@ -167,6 +192,9 @@ const contentLabels = computed(() => locale.value === 'ru'
       echoes: 'Echoes',
       buyEntry: 'Buy_Entry // Target_Z',
       invalidation: 'Invalidation // Void_X',
+      signalAsset: 'Asset',
+      signalTarget: 'Nearest target',
+      signalSource: 'Source price',
       footerNote: 'Intelligence reified in the Celestial Archive. Document integrity verified by the Equilibrium Protocol.'
     })
 
@@ -178,6 +206,23 @@ const modeLabels: Record<string, { ru: string; en: string }> = {
 }
 
 const formatMode = (mode: string) => modeLabels[mode]?.[locale.value] || mode
+
+const getSignalDirectionClass = () => props.node.signal?.direction === 'up'
+  ? 'text-emerald-500'
+  : 'text-red-500'
+
+const getSignalArrow = () => props.node.signal?.direction === 'up' ? '↑' : '↓'
+
+const formatSignalPrice = (price: number) => {
+  const signal = props.node.signal
+  const precision = signal?.pricePrecision ?? (price < 10 ? 4 : price < 100 ? 2 : 0)
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: precision,
+    maximumFractionDigits: precision
+  }).format(price)
+
+  return signal?.quoteCurrency ? `${formatted} ${signal.quoteCurrency}` : formatted
+}
 
 const scrollToStep = (stepNum: number) => {
   const el = document.getElementById(`step-anchor-${stepNum}`)

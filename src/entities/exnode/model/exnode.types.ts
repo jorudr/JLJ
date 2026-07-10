@@ -1,4 +1,5 @@
 export type ExNodeMode = 'SETUP' | 'RESEARCH' | 'LESSON' | 'QUESTION'
+export type ExSignalDirection = 'up' | 'down'
 
 export interface ExNodeMetric {
   label: string
@@ -8,6 +9,16 @@ export interface ExNodeMetric {
 export interface ExNodeLevels {
   tp: string
   sl: string
+}
+
+export interface ExNodeSignal {
+  asset: string
+  entryPrice: number
+  targetPrice: number
+  direction: ExSignalDirection
+  description: string
+  pricePrecision?: number
+  quoteCurrency?: string
 }
 
 export interface ExNode {
@@ -22,6 +33,7 @@ export interface ExNode {
   repliesCount: number
   lastActivityAt: string
   setupLevels?: ExNodeLevels
+  signal?: ExNodeSignal
   metrics?: ExNodeMetric[]
   steps?: string[]
   blocks?: ExNodeBlock[]

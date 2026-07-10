@@ -242,32 +242,32 @@
         
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-if="pagedNodes.length > 0" class="flex flex-col">
-          <!-- SECTION 1: Top Row (Lead Signal + Analysis Sidebar) -->
+          <!-- SECTION 1: Top Row (Lead Analysis + Signal Sidebar) -->
           <div class="grid grid-cols-12 border-b border-current/10">
             <section class="journal-sector col-span-12 lg:col-span-8 px-12 pb-12 pt-6 lg:border-r border-current/10">
               <div class="flex flex-col space-y-12">
                 <div class="flex items-center justify-between border-b border-current/10 pb-4">
                   <div class="flex items-center space-x-3">
                     <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.signals }}</h2>
+                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.analysis }}</h2>
                   </div>
                   <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">{{ journalLabels.editionPrefix }}{{ currentPage }}</span>
                 </div>
-                <ExJournalSpotlight v-if="pagedSignals[0]" :node="pagedSignals[0]" @click="navigateToNode(pagedSignals[0].id)" />
+                <ExJournalSpotlight v-if="pagedAnalysis[0]" :node="pagedAnalysis[0]" @click="navigateToNode(pagedAnalysis[0].id)" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-current/10 pt-8">
-                  <ExNodeCard v-for="node in pagedSignals.slice(1, 3)" :key="node.id" :node="node" />
+                  <ExNodeCard v-for="node in pagedAnalysis.slice(1, 3)" :key="node.id" :node="node" />
                 </div>
               </div>
             </section>
             
             <section class="journal-sector col-span-12 lg:col-span-4 px-8 pb-8 pt-6">
-              <div class="space-y-12">
-                 <div class="flex items-center space-x-3 border-b border-current/10 pb-4">
+              <div class="space-y-4">
+                 <div class="flex items-center space-x-3 pb-2">
                    <div class="w-1 h-1 bg-current opacity-20"></div>
-                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.analysis }}</h2>
+                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.signals }}</h2>
                 </div>
-                <div class="space-y-6">
-                  <ExNodeCard v-for="node in pagedAnalysis.slice(0, 3)" :key="node.id" :node="node" />
+                <div class="space-y-1">
+                  <ExNodeCard v-for="node in pagedSignals.slice(0, 4)" :key="node.id" :node="node" />
                 </div>
               </div>
             </section>
@@ -491,7 +491,12 @@ const filteredNodes = computed(() => {
   const q = searchQuery.value.toLowerCase()
   return mockExNodes.filter((n: any) => {
     const matchesFilter = !activeJournalFilter.value || n.mode === activeJournalFilter.value
-    const matchesSearch = !q || n.title.toLowerCase().includes(q) || n.thesis_brief?.toLowerCase().includes(q) || n.category.toLowerCase().includes(q)
+    const matchesSearch = !q
+      || n.title.toLowerCase().includes(q)
+      || n.thesis_brief?.toLowerCase().includes(q)
+      || n.category.toLowerCase().includes(q)
+      || n.signal?.asset.toLowerCase().includes(q)
+      || n.signal?.description.toLowerCase().includes(q)
     return matchesFilter && matchesSearch
   })
 })

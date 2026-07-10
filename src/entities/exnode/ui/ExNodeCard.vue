@@ -1,9 +1,18 @@
 <template>
   <div @click="handleNodeClick"
-       class="journal-node group relative py-8 border-b border-current/10 transition-all duration-700 hover:bg-current/[0.02] cursor-pointer">
-    <div class="flex flex-col space-y-4">
+       :class="[
+         'journal-node group relative transition-all duration-700 hover:bg-current/[0.02] cursor-pointer',
+         node.signal ? 'py-3' : 'py-8 border-b border-current/10'
+      ]">
+    <div :class="['flex flex-col', node.signal ? 'space-y-2' : 'space-y-4']">
       <!-- Metadata Rail -->
-      <div class="flex items-center justify-between text-[7px] font-mono tracking-[0.4em] opacity-40 uppercase">
+      <div
+        v-if="node.signal"
+        class="flex items-center justify-end text-[9px] font-mono tracking-[0.18em] text-current/65 uppercase"
+      >
+        <span class="font-semibold text-current/80">{{ formatNodeDateTime(node.lastActivityAt) }}</span>
+      </div>
+      <div v-else class="flex items-center justify-between text-[7px] font-mono tracking-[0.4em] opacity-40 uppercase">
         <div class="flex items-center space-x-4">
           <span>ID//{{ node.id.slice(-4).toUpperCase() }}</span>
           <span class="w-1 h-1 bg-current opacity-20"></span>
@@ -13,14 +22,40 @@
       </div>
 
       <!-- Main Headline -->
-      <h3 class="text-2xl font-serif italic text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-opacity">
+      <h3
+        v-if="node.signal"
+        class="text-2xl font-mono text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-opacity"
+      >
+        {{ node.signal.asset }}
+      </h3>
+      <h3 v-else class="text-2xl font-serif italic text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-opacity">
         {{ node.title }}
       </h3>
 
       <!-- Content Snippet -->
       <div class="flex-grow">
+        <!-- Signal: Price Ticket -->
+        <div v-if="node.signal" class="my-2">
+          <div class="flex items-end justify-between gap-6">
+            <div class="flex flex-col">
+              <span :class="['text-2xl font-mono leading-none', getSignalDirectionClass(node)]">
+                {{ getSignalArrow(node) }} {{ formatSignalPrice(node, node.signal.targetPrice) }}
+              </span>
+            </div>
+            <div class="flex min-w-0 flex-col items-end text-right">
+              <span class="text-[6px] font-mono opacity-25 uppercase tracking-widest">{{ nodeLabels.sourcePrice }}</span>
+              <span class="max-w-full truncate text-sm font-mono text-current/50">
+                {{ formatSignalPrice(node, node.signal.entryPrice) }}
+              </span>
+            </div>
+          </div>
+          <p class="mt-2 line-clamp-2 text-[11px] font-serif italic leading-relaxed text-current/50">
+            "{{ node.signal.description }}"
+          </p>
+        </div>
+
         <!-- Setup: Technical Ledger -->
-        <div v-if="node.mode === 'SETUP'" class="my-4 py-4 border-y border-current/5 flex items-center space-x-12">
+        <div v-else-if="node.mode === 'SETUP'" class="my-4 py-4 border-y border-current/5 flex items-center space-x-12">
           <div class="flex flex-col">
             <span class="text-[6px] font-mono opacity-20 uppercase tracking-widest">{{ nodeLabels.pricingPillar }}</span>
             <span class="text-lg font-mono opacity-60">{{ node.setupLevels?.tp }}</span>
@@ -48,13 +83,13 @@
           </div>
         </div>
 
-        <p class="text-[11px] font-serif italic text-current/50 leading-relaxed tracking-wide mt-2 line-clamp-2">
+        <p v-if="!node.signal" class="text-[11px] font-serif italic text-current/50 leading-relaxed tracking-wide mt-2 line-clamp-2">
           "{{ node.thesis_brief }}"
         </p>
       </div>
 
       <!-- Footer Telemetry -->
-      <div class="flex items-center justify-end pt-4">
+      <div v-if="!node.signal" class="flex items-center justify-end pt-4">
         <div class="flex items-center space-x-10 text-[9px] font-serif italic tracking-widest opacity-80">
           <span>{{ node.repliesCount }} {{ nodeLabels.echoes }}</span>
           <span>{{ node.likesCount }} {{ nodeLabels.affinity }}</span>
@@ -89,15 +124,40 @@ const nodeLabels = computed(() => locale.value === 'ru'
   ? {
       pricingPillar: 'Ценовой ориентир',
       riskBarrier: 'Уровень риска',
+      sourcePrice: 'Исходная цена',
       echoes: 'Откликов',
       affinity: 'Лайков'
     }
   : {
       pricingPillar: 'Pricing Pillar',
       riskBarrier: 'Risk Barrier',
+      sourcePrice: 'Source price',
       echoes: 'Echoes',
       affinity: 'Affinity'
     })
+
+const getSignalDirectionClass = (node: ExNode) => node.signal?.direction === 'up'
+  ? 'text-emerald-500'
+  : 'text-red-500'
+
+const getSignalArrow = (node: ExNode) => node.signal?.direction === 'up' ? '↑' : '↓'
+
+const formatNodeDateTime = (value: string) => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
+}).format(new Date(value))
+
+const formatSignalPrice = (node: ExNode, price: number) => {
+  const precision = node.signal?.pricePrecision ?? (price < 10 ? 4 : price < 100 ? 2 : 0)
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: precision,
+    maximumFractionDigits: precision
+  }).format(price)
+
+  return node.signal?.quoteCurrency ? `${formatted} ${node.signal.quoteCurrency}` : formatted
+}
 
 const handleNodeClick = () => {
   router.replace({
