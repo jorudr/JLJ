@@ -339,6 +339,17 @@
               </svg>
             </button>
           </ExPanel>
+          <!-- Bottom Right Actions -->
+          <div class="absolute bottom-6 right-6 z-50 flex items-center gap-4">
+            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
+                    @click="creationStep = 'metadata'">
+              {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
+            </button>
+            <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+                    @click="publishArticle">
+              {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
+            </button>
+          </div>
         </div>
         
       </Transition>
@@ -784,6 +795,12 @@ const submitNewArticle = () => {
     boardPan.value = { x: 48, y: 36 }
     boardScale.value = 1
   }, 1000)
+}
+
+const publishArticle = () => {
+  console.log('Publishing article...', newArticleForm.value, boardNodes.value)
+  // For now, just close the creation flow as a stub
+  isCreatingArticle.value = false
 }
 
 // v-click-outside directive logic setup inside component (or via vueuse if available, 
