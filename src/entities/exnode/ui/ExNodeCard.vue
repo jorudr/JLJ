@@ -1,8 +1,8 @@
 <template>
   <div @click="handleNodeClick"
        :class="[
-         'journal-node group relative transition-all duration-700 hover:bg-current/[0.02] cursor-pointer',
-         node.signal ? 'py-3' : 'py-8'
+         'journal-node group relative cursor-pointer transition-colors duration-500 ease-out',
+         node.signal ? 'signal-node-card -mx-3 px-3 py-3' : 'py-8 hover:bg-current/[0.02]'
       ]">
     <div :class="['flex flex-col', node.signal ? 'space-y-2' : 'space-y-4']">
       <!-- Metadata Rail -->
@@ -19,7 +19,7 @@
       <!-- Main Headline -->
       <h3
         v-if="node.signal"
-        class="text-2xl font-mono text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100 transition-opacity"
+        class="signal-node-asset text-2xl font-mono text-current opacity-90 leading-tight tracking-tight group-hover:opacity-100"
       >
         {{ node.signal.asset }}
       </h3>
@@ -31,18 +31,13 @@
       <div class="flex-grow">
         <!-- Signal: Price Ticket -->
         <div v-if="node.signal" class="my-2">
-          <div class="flex items-end justify-between gap-6">
-            <div class="flex flex-col">
-              <span :class="['text-2xl font-mono leading-none', getSignalDirectionClass(node)]">
-                {{ getSignalArrow(node) }} {{ formatSignalPrice(node, node.signal.targetPrice) }}
-              </span>
-            </div>
-            <div class="flex min-w-0 flex-col items-end text-right">
-              <span class="text-[6px] font-mono opacity-25 uppercase tracking-widest">{{ nodeLabels.sourcePrice }}</span>
-              <span class="max-w-full truncate text-sm font-mono text-current/50">
-                {{ formatSignalPrice(node, node.signal.entryPrice) }}
-              </span>
-            </div>
+          <div class="flex min-w-0 items-baseline justify-between gap-4">
+            <span :class="['text-2xl font-mono leading-none', getSignalDirectionClass(node)]">
+              {{ getSignalArrow(node) }} {{ formatSignalPrice(node, node.signal.targetPrice) }}
+            </span>
+            <span class="min-w-0 truncate text-sm font-mono text-current/50">
+              {{ formatSignalPrice(node, node.signal.entryPrice) }}
+            </span>
           </div>
           <p class="mt-2 line-clamp-2 text-[11px] font-serif italic leading-relaxed text-current/50">
             "{{ node.signal.description }}"
@@ -114,7 +109,6 @@ const nodeLabels = computed(() => locale.value === 'ru'
   ? {
       pricingPillar: 'Ценовой ориентир',
       riskBarrier: 'Уровень риска',
-      sourcePrice: 'Исходная цена',
       comments: 'комментов',
       likes: 'лайков',
       published: 'Опубл.'
@@ -122,7 +116,6 @@ const nodeLabels = computed(() => locale.value === 'ru'
   : {
       pricingPillar: 'Pricing Pillar',
       riskBarrier: 'Risk Barrier',
-      sourcePrice: 'Source price',
       comments: 'comments',
       likes: 'likes',
       published: 'Pub.'
@@ -193,5 +186,14 @@ h3::after {
 
 .journal-node:hover h3::after {
   width: 100%;
+}
+
+.signal-node-asset {
+  transform-origin: left center;
+  transition: transform 0.24s ease, opacity 0.24s ease;
+}
+
+.signal-node-card:hover .signal-node-asset {
+  transform: scale(1.045);
 }
 </style>

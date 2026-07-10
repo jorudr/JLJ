@@ -261,7 +261,12 @@
                    <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.signals }}</h2>
                 </div>
                 <div class="space-y-1">
-                  <ExNodeCard v-for="node in pagedSignals.slice(0, 4)" :key="node.id" :node="node" />
+                  <ExNodeCard
+                    v-for="node in pagedSignals.slice(0, 4)"
+                    :key="node.id"
+                    :node="node"
+                    class="journal-signal-card"
+                  />
                 </div>
               </div>
             </section>
@@ -804,6 +809,10 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .journal-sector {
   position: relative;
+}
+
+:deep(.journal-signal-card) {
+  border: 0 !important;
 }
 
 .journal-filter-list {
