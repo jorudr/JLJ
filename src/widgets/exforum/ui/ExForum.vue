@@ -183,113 +183,165 @@
     </article>
 
     <!-- ARTICLE CREATION VIEW -->
-    <div v-else-if="isCreatingArticle" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-6 relative overflow-hidden" key="creator">
-      
-      <!-- DRAFT METADATA HEADER -->
-      <div class="flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
-        <div class="flex flex-col space-y-2">
-          <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
-            {{ locale === 'ru' ? 'Редактор' : 'Editor' }} // {{ formatJournalDate() }}
-          </span>
-          <span class="font-serif italic text-2xl text-current/80">{{ currentUserName }}</span>
-        </div>
+    <div v-else-if="isCreatingArticle" class="absolute inset-0 z-50 bg-theme-bg overflow-hidden flex flex-col w-full" key="creator">
+      <Transition name="fade-slide" mode="out-in">
         
-        <!-- INLINE CATEGORY SELECTOR -->
-        <div class="flex flex-col md:items-end space-y-4">
-          <span class="text-xs md:text-sm font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
-            {{ locale === 'ru' ? 'Выберите категорию' : 'Choose Category' }}
-          </span>
-          <div class="flex flex-wrap gap-4 md:space-x-6 md:gap-0">
+        <!-- METADATA STEP -->
+        <div v-if="creationStep === 'metadata'" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-10 relative overflow-hidden w-full max-w-7xl mx-auto" key="metadata">
+          <!-- DRAFT METADATA HEADER -->
+          <div class="flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
+            <div class="flex flex-col space-y-2">
+              <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                {{ locale === 'ru' ? 'Редактор' : 'Editor' }} // {{ formatJournalDate() }}
+              </span>
+              <span class="font-serif italic text-2xl text-current/80">{{ currentUserName }}</span>
+            </div>
+            
+            <!-- INLINE CATEGORY SELECTOR -->
+            <div class="flex flex-col md:items-end space-y-4">
+              <span class="text-xs md:text-sm font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                {{ locale === 'ru' ? 'Выберите категорию' : 'Choose Category' }}
+              </span>
+              <div class="flex flex-wrap gap-4 md:space-x-6 md:gap-0">
+                <button
+                  v-for="type in articleTypes"
+                  :key="type.value"
+                  class="text-[11px] font-mono tracking-widest uppercase transition-all duration-300 border-b"
+                  :class="newArticleForm.type === type.value ? 'opacity-100 border-current pb-1 font-bold' : 'opacity-50 border-transparent hover:opacity-100 pb-1'"
+                  @click="newArticleForm.type = type.value"
+                >
+                  {{ type.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MAIN EDITORIAL CANVAS -->
+          <div class="flex-grow flex flex-col justify-center w-full max-w-5xl mx-auto space-y-6 min-h-0 pt-2 pb-6">
+            
+            <!-- Huge Title Input -->
+            <div class="flex flex-col items-center group/title relative w-full shrink-0 pt-4">
+              <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-2" :class="newArticleForm.title ? 'opacity-30' : 'opacity-60 group-focus-within/title:opacity-100'">
+                {{ locale === 'ru' ? 'Введите заголовок' : 'Enter Title' }}
+              </span>
+              <input
+                v-model="newArticleForm.title"
+                type="text"
+                maxlength="60"
+                class="w-full bg-transparent text-4xl md:text-6xl lg:text-7xl font-serif italic tracking-tighter text-center focus:outline-none transition-colors placeholder:text-current/20"
+                :placeholder="locale === 'ru' ? 'Заголовок...' : 'Title...'"
+              />
+              <div class="absolute -bottom-6 w-full flex justify-end px-4">
+                <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.title.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/title:opacity-40'">
+                  {{ newArticleForm.title.length }} / 60
+                </span>
+              </div>
+            </div>
+            
+            <div class="w-16 h-px bg-current/30 mx-auto my-2 shrink-0"></div>
+
+            <!-- Description Textarea -->
+            <div class="flex flex-col items-center group/desc relative w-full flex-grow min-h-0">
+              <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-4 shrink-0" :class="newArticleForm.description ? 'opacity-30' : 'opacity-60 group-focus-within/desc:opacity-100'">
+                {{ locale === 'ru' ? 'Введите описание' : 'Enter Description' }}
+              </span>
+              <textarea
+                v-model="newArticleForm.description"
+                @input="newArticleForm.description = newArticleForm.description.replace(/[\r\n]+/g, ' ')"
+                maxlength="200"
+                class="w-full h-full flex-grow min-h-0 bg-transparent text-lg md:text-xl lg:text-2xl font-serif text-center focus:outline-none transition-colors resize-none placeholder:text-current/20 leading-normal text-current/90"
+                :placeholder="locale === 'ru' ? 'Краткое описание или тезис вашей статьи...' : 'Brief description or thesis of your article...'"
+              ></textarea>
+              <div class="absolute bottom-2 w-full flex justify-end px-4 shrink-0 pointer-events-none">
+                <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.description.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/desc:opacity-40'">
+                  {{ newArticleForm.description.length }} / 200
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- LAUNCH FOOTER -->
+          <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
+            <!-- Cancel Button (Bottom Left) -->
+            <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" @click="isCreatingArticle = false">
+              <svg class="w-4 h-4 transition-transform group-hover/cancel:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+              </svg>
+              <span>{{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}</span>
+            </button>
+
             <button
-              v-for="type in articleTypes"
-              :key="type.value"
-              class="text-[11px] font-mono tracking-widest uppercase transition-all duration-300 border-b"
-              :class="newArticleForm.type === type.value ? 'opacity-100 border-current pb-1 font-bold' : 'opacity-50 border-transparent hover:opacity-100 pb-1'"
-              @click="newArticleForm.type = type.value"
+              class="group relative overflow-hidden px-8 py-3 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
+              :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
+              :disabled="!isNewArticleFormValid || isSubmittingArticle"
+              @click="submitNewArticle"
             >
-              {{ type.label }}
+              <span class="text-[11px] font-mono tracking-[0.4em] uppercase relative z-10 font-bold transition-all duration-500" 
+                    :class="[
+                      isSubmittingArticle ? 'opacity-0' : '',
+                      isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white' : 'text-current opacity-30'
+                    ]">
+                {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
+              </span>
+              <span v-if="!isSubmittingArticle" class="text-xl relative z-10 transition-all duration-500 font-light leading-none" 
+                    :class="isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'">
+                →
+              </span>
+              <svg v-else class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+              </svg>
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- MAIN EDITORIAL CANVAS -->
-      <div class="flex-grow flex flex-col justify-center w-full max-w-5xl mx-auto space-y-6 min-h-0 pt-2 pb-6">
-        
-        <!-- Huge Title Input -->
-        <div class="flex flex-col items-center group/title relative w-full shrink-0 pt-4">
-          <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-2" :class="newArticleForm.title ? 'opacity-30' : 'opacity-60 group-focus-within/title:opacity-100'">
-            {{ locale === 'ru' ? 'Введите заголовок' : 'Enter Title' }}
-          </span>
-          <input
-            v-model="newArticleForm.title"
-            type="text"
-            maxlength="60"
-            class="w-full bg-transparent text-4xl md:text-6xl lg:text-7xl font-serif italic tracking-tighter text-center focus:outline-none transition-colors placeholder:text-current/20"
-            :placeholder="locale === 'ru' ? 'Заголовок...' : 'Title...'"
-          />
-          <div class="absolute -bottom-6 w-full flex justify-end px-4">
-            <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.title.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/title:opacity-40'">
-              {{ newArticleForm.title.length }} / 60
-            </span>
-          </div>
-        </div>
-        
-        <div class="w-16 h-px bg-current/30 mx-auto my-2 shrink-0"></div>
-
-        <!-- Description Textarea -->
-        <div class="flex flex-col items-center group/desc relative w-full flex-grow min-h-0">
-          <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-4 shrink-0" :class="newArticleForm.description ? 'opacity-30' : 'opacity-60 group-focus-within/desc:opacity-100'">
-            {{ locale === 'ru' ? 'Введите описание' : 'Enter Description' }}
-          </span>
-          <textarea
-            v-model="newArticleForm.description"
-            @input="newArticleForm.description = newArticleForm.description.replace(/[\r\n]+/g, ' ')"
-            maxlength="200"
-            class="w-full h-full flex-grow min-h-0 bg-transparent text-lg md:text-xl lg:text-2xl font-serif text-center focus:outline-none transition-colors resize-none placeholder:text-current/20 leading-normal text-current/90"
-            :placeholder="locale === 'ru' ? 'Краткое описание или тезис вашей статьи...' : 'Brief description or thesis of your article...'"
-          ></textarea>
-          <div class="absolute bottom-2 w-full flex justify-end px-4 shrink-0 pointer-events-none">
-            <span class="text-[9px] font-mono transition-opacity duration-300" :class="newArticleForm.description.length > 0 ? 'opacity-40' : 'opacity-0 group-focus-within/desc:opacity-40'">
-              {{ newArticleForm.description.length }} / 200
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- LAUNCH FOOTER -->
-      <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
-        <!-- Cancel Button (Bottom Left) -->
-        <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" @click="isCreatingArticle = false">
-          <svg class="w-4 h-4 transition-transform group-hover/cancel:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
-          </svg>
-          <span>{{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}</span>
-        </button>
-
-        <button
-          class="group relative overflow-hidden px-8 py-3 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
-          :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
-          :disabled="!isNewArticleFormValid || isSubmittingArticle"
-          @click="submitNewArticle"
+        <!-- BOARD STEP -->
+        <div v-else-if="creationStep === 'board'"
+             class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] cursor-grab active:cursor-grabbing text-[#2c2c2a]"
+             @pointerdown="startBoardPan"
+             @wheel.prevent="handleBoardWheel"
+             key="board"
         >
-          <span class="text-[11px] font-mono tracking-[0.4em] uppercase relative z-10 font-bold transition-all duration-500" 
-                :class="[
-                  isSubmittingArticle ? 'opacity-0' : '',
-                  isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white' : 'text-current opacity-30'
-                ]">
-            {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
-          </span>
-          <span v-if="!isSubmittingArticle" class="text-xl relative z-10 transition-all duration-500 font-light leading-none" 
-                :class="isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'">
-            →
-          </span>
-          <svg v-else class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-             <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-          </svg>
-        </button>
-      </div>
-      
+          <!-- Board World (Pan & Zoom) -->
+          <div class="absolute left-0 top-0 origin-top-left" :style="[boardWorldStyle, boardTransformStyle]">
+            <article
+              v-for="node in boardNodes"
+              :key="node.id"
+              data-board-node
+              class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+              :style="getBoardNodeStyle(node)"
+            >
+              <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
+                <h3 class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
+                <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
+              </div>
+              <div v-else class="flex h-full flex-col">
+                <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+                <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
+                  {{ node.caption }}
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <!-- Left Vertical Toolbar -->
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
+            <button class="p-2 hover:bg-black/5 transition-colors group relative" :title="locale === 'ru' ? 'Текст' : 'Text Node'">
+              <svg class="w-5 h-5 text-black/60 group-hover:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="w-6 h-px bg-black/10 my-1"></div>
+            <button class="p-2 hover:bg-black/5 transition-colors group relative" :title="locale === 'ru' ? 'Изображение' : 'Image Node'">
+              <svg class="w-5 h-5 text-black/60 group-hover:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="8.5" cy="8.5" r="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="21 15 16 10 5 21" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </ExPanel>
+        </div>
+        
+      </Transition>
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
@@ -502,6 +554,7 @@ import type { Comment } from '~/entities/comment/types/comment.types'
 import type { JournalArticleBoardNode } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -684,6 +737,15 @@ const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 
 // Article Creation State
 const isCreatingArticle = ref(false)
+const creationStep = ref<'metadata' | 'board'>('metadata')
+
+watch(isCreatingArticle, (newVal) => {
+  if (!newVal) {
+    creationStep.value = 'metadata'
+    newArticleForm.value = { title: '', description: '', type: '' }
+  }
+})
+
 const isDropdownOpen = ref(false)
 const isSubmittingArticle = ref(false)
 const newArticleForm = ref({
@@ -717,7 +779,10 @@ const submitNewArticle = () => {
   // Animation duration matches the 700ms in CSS, user asked to not add actual saving logic yet
   setTimeout(() => {
     isSubmittingArticle.value = false
-    // isCreatingArticle.value = false
+    creationStep.value = 'board'
+    boardNodes.value = []
+    boardPan.value = { x: 48, y: 36 }
+    boardScale.value = 1
   }, 1000)
 }
 
