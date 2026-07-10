@@ -18,7 +18,7 @@
         @wheel.prevent="handleBoardWheel"
       >
         <button
-          class="absolute left-1/2 top-5 z-20 -translate-x-1/2 font-mono text-[9px] uppercase tracking-[0.32em] text-black/35 transition-colors hover:text-black/65"
+          class="absolute left-1/2 top-5 z-20 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 border border-black/20 bg-white/90 px-4 py-3 text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.2em] text-black/65 shadow-[0_8px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-black/40 hover:text-black sm:px-5"
           type="button"
           @click.stop="closeBoardFullscreen"
         >
@@ -760,17 +760,24 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   display: inline-flex;
   align-items: center;
   gap: 16px;
-  color: color-mix(in srgb, currentColor 40%, transparent);
-  transition: color 0.3s ease;
+  border: 1px solid rgba(44, 44, 42, 0.24);
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(44, 44, 42, 0.07);
+  color: rgba(44, 44, 42, 0.7);
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
 }
 
 .article-reader-back:hover {
-  color: currentColor;
+  border-color: rgba(44, 44, 42, 0.5);
+  background: #ffffff;
+  color: rgba(44, 44, 42, 1);
 }
 
 .article-reader-back span:last-child {
-  font-size: 9px;
-  letter-spacing: 0.4em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
 }
 
