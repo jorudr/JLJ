@@ -8,12 +8,14 @@
       <!-- Metadata Rail -->
       <div
         v-if="node.signal"
-        class="flex items-center justify-end text-[9px] font-mono tracking-[0.18em] text-current/65 uppercase"
+        class="flex items-center justify-between font-mono tracking-[0.18em] uppercase"
       >
-        <span class="font-semibold text-current/80">{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
+        <span v-if="node.author" class="text-[10px] font-semibold text-current/90">{{ node.author }}</span>
+        <span class="text-[9px] font-semibold text-current/80">{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
       </div>
-      <div v-else class="flex items-center justify-between text-[7px] font-mono tracking-[0.4em] opacity-40 uppercase">
-        <span>{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
+      <div v-else class="flex items-center justify-between font-mono uppercase">
+        <span v-if="node.author" class="text-[10px] font-semibold tracking-[0.2em] text-current/90">{{ node.author }}</span>
+        <span class="text-[7px] tracking-[0.4em] opacity-40">{{ nodeLabels.published }} {{ formatNodeDate(node.lastActivityAt) }}</span>
       </div>
 
       <!-- Main Headline -->

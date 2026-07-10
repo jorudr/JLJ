@@ -2,9 +2,9 @@
   <div class="journal-spotlight group cursor-pointer" @click="$emit('click')">
     <div class="flex flex-col space-y-8">
       <!-- Spotlight Header -->
-      <div class="flex items-center space-x-4 text-[8px] font-mono tracking-widest opacity-30 uppercase">
+      <div v-if="node.author" class="flex items-center space-x-4 text-[10px] font-mono tracking-[0.2em] font-semibold text-current/80 uppercase">
         <div class="flex items-center space-x-2">
-           <span>{{ spotlightLabels.featuredAnalysis }}</span>
+           <span>{{ node.author }}</span>
         </div>
       </div>
 

@@ -25,6 +25,7 @@ export interface ExNode {
   id: string
   mode: ExNodeMode
   title: string
+  author?: string
   category: string
   confidence?: number
   thesis_brief?: string
