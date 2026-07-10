@@ -12,7 +12,8 @@
       <section
         v-if="isBoardFullscreen"
         ref="boardViewportRef"
-        class="absolute inset-0 z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
+        class="fixed z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
+        :style="boardFullscreenViewportStyle"
         :aria-label="articleLabels.fullscreenBoard"
         @pointerdown="startBoardPan"
         @wheel.prevent="handleBoardWheel"
@@ -466,6 +467,7 @@ const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
 const isBoardFullscreen = ref(false)
+const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 
 type BoardInteraction = { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
 
@@ -536,11 +538,24 @@ const closeReader = () => {
   router.replace({ query })
 }
 
+const syncBoardFullscreenViewport = () => {
+  const wrapper = journalWrapperRef.value
+  if (!wrapper) return
+
+  const rect = wrapper.getBoundingClientRect()
+  boardFullscreenViewportStyle.value = {
+    top: `${rect.top}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+    height: `${rect.height}px`
+  }
+}
+
 const openBoardFullscreen = () => {
   isBoardFullscreen.value = true
+  syncBoardFullscreenViewport()
   boardPan.value = { x: 48, y: 36 }
   boardScale.value = 1
-  journalWrapperRef.value?.scrollTo({ top: 0, left: 0 })
 }
 
 const closeBoardFullscreen = () => {
@@ -632,14 +647,20 @@ const handleBoardKeydown = (event: KeyboardEvent) => {
   }
 }
 
+const handleWindowResize = () => {
+  if (isBoardFullscreen.value) syncBoardFullscreenViewport()
+}
+
 onMounted(() => {
   nextTick(resizeCommentInput)
   window.addEventListener('keydown', handleBoardKeydown)
+  window.addEventListener('resize', handleWindowResize)
 })
 
 onUnmounted(() => {
   stopWindowTracking()
   window.removeEventListener('keydown', handleBoardKeydown)
+  window.removeEventListener('resize', handleWindowResize)
 })
 
 const formatCommentDate = (value: string) => {
