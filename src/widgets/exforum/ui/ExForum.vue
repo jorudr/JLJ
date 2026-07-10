@@ -185,14 +185,6 @@
     <!-- ARTICLE CREATION VIEW -->
     <div v-else-if="isCreatingArticle" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-6 relative overflow-hidden" key="creator">
       
-      <!-- Close Button (Top Right) -->
-      <button class="absolute top-8 right-8 text-[10px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity flex items-center gap-2 z-50" @click="isCreatingArticle = false">
-        <span>{{ locale === 'ru' ? 'Закрыть' : 'Close' }}</span>
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 6L6 18M6 6l12 12"></path>
-        </svg>
-      </button>
-
       <!-- DRAFT METADATA HEADER -->
       <div class="flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
         <div class="flex flex-col space-y-2">
@@ -203,8 +195,8 @@
         </div>
         
         <!-- INLINE CATEGORY SELECTOR -->
-        <div class="flex flex-col md:items-end space-y-2">
-          <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+        <div class="flex flex-col md:items-end space-y-4">
+          <span class="text-xs md:text-sm font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
             {{ locale === 'ru' ? 'Выберите категорию' : 'Choose Category' }}
           </span>
           <div class="flex flex-wrap gap-4 md:space-x-6 md:gap-0">
@@ -266,7 +258,15 @@
       </div>
 
       <!-- LAUNCH FOOTER -->
-      <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-end shrink-0">
+      <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
+        <!-- Cancel Button (Bottom Left) -->
+        <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" @click="isCreatingArticle = false">
+          <svg class="w-4 h-4 transition-transform group-hover/cancel:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+          </svg>
+          <span>{{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}</span>
+        </button>
+
         <button
           class="group relative overflow-hidden px-8 py-3 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
           :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
@@ -278,7 +278,7 @@
                   isSubmittingArticle ? 'opacity-0' : '',
                   isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white' : 'text-current opacity-30'
                 ]">
-            {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
+            {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
           </span>
           <span v-if="!isSubmittingArticle" class="text-xl relative z-10 transition-all duration-500 font-light leading-none" 
                 :class="isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'">
