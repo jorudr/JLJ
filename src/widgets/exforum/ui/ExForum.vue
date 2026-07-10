@@ -1,11 +1,57 @@
 <template>
   <div
+    ref="journalWrapperRef"
     class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-y-auto scroll-minimal relative pt-4 md:pt-6"
     :class="{
       'exforum-transparent-bg': isForumLightTheme,
-      'exforum-edge-shadows': showForumEdgeShadows
+      'exforum-edge-shadows': showForumEdgeShadows,
+      '!overflow-hidden': isBoardFullscreen
     }"
   >
+    <Transition name="fade-slide">
+      <section
+        v-if="isBoardFullscreen"
+        ref="boardViewportRef"
+        class="absolute inset-0 z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
+        aria-label="Fullscreen article board"
+        @pointerdown="startBoardPan"
+        @wheel.prevent="handleBoardWheel"
+      >
+        <div
+          class="absolute left-0 top-0 origin-top-left"
+          :style="[boardWorldStyle, boardTransformStyle]"
+        >
+          <article
+            v-for="node in boardNodes"
+            :key="node.id"
+            data-board-node
+            class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+            :style="getBoardNodeStyle(node)"
+            @pointerdown.stop="startBoardNodeDrag($event, node.id)"
+          >
+            <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
+              <h3 class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
+              <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
+            </div>
+
+            <div v-else class="flex h-full flex-col">
+              <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+              <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
+                {{ node.caption }}
+              </p>
+            </div>
+
+            <button
+              class="absolute bottom-0 right-0 h-5 w-5 cursor-se-resize border-l border-t border-black/20 bg-white/80"
+              type="button"
+              aria-label="Resize node"
+              @pointerdown.stop="startBoardNodeResize($event, node.id)"
+            ></button>
+          </article>
+        </div>
+      </section>
+    </Transition>
+
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
     <article v-if="selectedArticle" class="journal-article-reader flex flex-col min-h-full" key="reader">
@@ -40,15 +86,13 @@
 
       <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
         <section
-          ref="boardViewportRef"
-          class="relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-grab select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner active:cursor-grabbing sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
+          class="group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-zoom-in select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
           aria-label="Article board"
-          @pointerdown="startBoardPan"
-          @wheel.prevent="handleBoardWheel"
+          @click="openBoardFullscreen"
         >
           <div
-            class="absolute left-0 top-0 origin-top-left"
-            :style="[boardWorldStyle, boardTransformStyle]"
+            class="pointer-events-none absolute left-0 top-0 origin-top-left"
+            :style="[boardWorldStyle, boardPreviewTransformStyle]"
           >
             <article
               v-for="node in boardNodes"
@@ -56,7 +100,6 @@
               data-board-node
               class="absolute box-border overflow-hidden border border-current/20 bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
               :style="getBoardNodeStyle(node)"
-              @pointerdown.stop="startBoardNodeDrag($event, node.id)"
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
                 <h3 class="font-serif text-xl italic leading-none text-current/80">{{ node.title }}</h3>
@@ -69,18 +112,12 @@
                   {{ node.caption }}
                 </p>
               </div>
-
-              <button
-                class="absolute bottom-0 right-0 h-5 w-5 cursor-se-resize border-l border-t border-current/20 bg-white/80"
-                type="button"
-                aria-label="Resize node"
-                @pointerdown.stop="startBoardNodeResize($event, node.id)"
-              ></button>
             </article>
           </div>
 
-          <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/80 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
-            {{ Math.round(boardScale * 100) }}%
+          <div class="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/[0.025]"></div>
+          <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/85 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
+            Open Board
           </div>
         </section>
       </main>
@@ -112,6 +149,7 @@
 
         <p v-else class="article-comments-empty">No comments yet.</p>
       </footer>
+
     </article>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
@@ -270,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
@@ -329,10 +367,12 @@ const articleComments = computed(() => {
   if (!selectedArticle.value) return []
   return mockComments.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
 })
+const journalWrapperRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
 const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
+const isBoardFullscreen = ref(false)
 
 type BoardInteraction =
   | { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
@@ -366,6 +406,9 @@ const boardWorldStyle = computed(() => ({
 const boardTransformStyle = computed(() => ({
   transform: `translate(${boardPan.value.x}px, ${boardPan.value.y}px) scale(${boardScale.value})`
 }))
+const boardPreviewTransformStyle = computed(() => ({
+  transform: 'translate(48px, 36px) scale(0.82)'
+}))
 
 const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => nodes.map(node => ({
   ...node,
@@ -380,9 +423,22 @@ watch(selectedArticle, (article) => {
 }, { immediate: true })
 
 const closeReader = () => {
+  closeBoardFullscreen()
   const query = { ...route.query }
   delete query.nodeId
   router.replace({ query })
+}
+
+const openBoardFullscreen = () => {
+  isBoardFullscreen.value = true
+  boardPan.value = { x: 48, y: 36 }
+  boardScale.value = 1
+  journalWrapperRef.value?.scrollTo({ top: 0, left: 0 })
+}
+
+const closeBoardFullscreen = () => {
+  isBoardFullscreen.value = false
+  stopBoardInteraction()
 }
 
 const navigateToNode = (id: string) => {
@@ -524,7 +580,20 @@ const handleBoardWheel = (event: WheelEvent) => {
   }
 }
 
-onUnmounted(stopWindowTracking)
+const handleBoardKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isBoardFullscreen.value) {
+    closeBoardFullscreen()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleBoardKeydown)
+})
+
+onUnmounted(() => {
+  stopWindowTracking()
+  window.removeEventListener('keydown', handleBoardKeydown)
+})
 
 const formatCommentDate = (value: string) => {
   return new Intl.DateTimeFormat('en', {
