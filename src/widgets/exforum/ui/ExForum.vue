@@ -8,7 +8,18 @@
   >
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
-    <ExNodeContent v-if="selectedNode" :node="selectedNode" @back="closeReader" key="reader" />
+    <article v-if="selectedArticle" class="journal-article-reader flex flex-col min-h-full" key="reader">
+      <div class="flex items-center justify-between border-b border-current/10 py-6 px-6 md:px-12 bg-current/[0.01] shrink-0">
+        <button @click="closeReader" class="flex items-center space-x-4 text-current/40 hover:text-current transition-all group">
+          <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
+          <span class="text-[9px] tracking-[0.4em] uppercase">Return to The Journal</span>
+        </button>
+      </div>
+
+      <div class="article-board-stage flex flex-1 items-center justify-center">
+        <section class="journal-article-board" aria-label="Article board"></section>
+      </div>
+    </article>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
     <div v-else class="flex flex-col min-h-full px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
@@ -170,8 +181,8 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
+import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
-import ExNodeContent from '~/entities/exnode/ui/ExNodeContent.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 
 const route = useRoute()
@@ -215,6 +226,10 @@ const navigateToPage = (page: number) => {
 // Reader Logic
 const selectedNodeId = computed(() => route.query.nodeId as string | undefined)
 const selectedNode = computed(() => mockExNodes.find((n: any) => n.id === selectedNodeId.value))
+const selectedArticle = computed(() => {
+  if (!selectedNode.value) return undefined
+  return mockJournalArticles.find(article => article.sourceNodeId === selectedNode.value?.id) || mockJournalArticle
+})
 
 const closeReader = () => {
   const query = { ...route.query }
@@ -313,5 +328,41 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 /* Double border for masthead authority */
 .border-double {
   border-style: double;
+}
+
+.journal-article-reader {
+  color: var(--text-primary);
+}
+
+.article-board-stage {
+  min-height: calc(100vh - 112px);
+  padding: 24px 0;
+}
+
+.journal-article-board {
+  width: 100vw;
+  min-height: min(72vh, 780px);
+  border: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 12%, transparent);
+  background-image:
+    radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1.6px);
+  background-size: 28px 28px;
+  background-position: center;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, currentColor 4%, transparent),
+    inset 0 0 80px color-mix(in srgb, currentColor 5%, transparent);
+}
+
+@media (max-width: 1023px) {
+  .article-board-stage {
+    min-height: calc(100vh - 104px);
+  }
+}
+
+@media (max-width: 639px) {
+  .journal-article-board {
+    min-height: 68vh;
+    background-size: 22px 22px;
+  }
 }
 </style>
