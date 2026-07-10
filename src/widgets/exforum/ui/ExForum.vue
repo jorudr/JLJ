@@ -9,16 +9,66 @@
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
     <article v-if="selectedArticle" class="journal-article-reader flex flex-col min-h-full" key="reader">
-      <div class="flex items-center justify-between border-b border-current/10 py-6 px-6 md:px-12 bg-current/[0.01] shrink-0">
-        <button @click="closeReader" class="flex items-center space-x-4 text-current/40 hover:text-current transition-all group">
-          <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
-          <span class="text-[9px] tracking-[0.4em] uppercase">Return to The Journal</span>
-        </button>
-      </div>
+      <header class="article-reader-header">
+        <div class="article-reader-toolbar">
+          <button @click="closeReader" class="article-reader-back group">
+            <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
+            <span>Return to The Journal</span>
+          </button>
+        </div>
 
-      <div class="article-board-stage flex flex-1 items-center justify-center">
+        <div class="article-reader-kicker">
+          <span>{{ selectedArticle.subtitle }}</span>
+          <span class="h-1 w-1 rotate-45 bg-current/20"></span>
+          <span>{{ selectedArticle.category }}</span>
+        </div>
+
+        <div class="article-reader-title-row">
+          <div class="min-w-0">
+            <h1>{{ selectedArticle.title }}</h1>
+            <p>{{ selectedArticle.description }}</p>
+          </div>
+
+          <div class="article-reader-metrics" aria-label="Article metrics">
+            <div v-for="metric in selectedArticle.metrics" :key="metric.id" class="article-reader-metric">
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="article-board-stage">
         <section class="journal-article-board" aria-label="Article board"></section>
-      </div>
+      </main>
+
+      <footer class="article-comments-footer">
+        <div class="article-comments-heading">
+          <div>
+            <span>Comments</span>
+            <h2>User Discussion</h2>
+          </div>
+          <strong>{{ articleComments.length }} Published</strong>
+        </div>
+
+        <div v-if="articleComments.length" class="article-comments-list">
+          <article v-for="comment in articleComments" :key="comment.id" class="article-comment">
+            <div class="article-comment-head">
+              <div>
+                <h3>{{ comment.authorName }}</h3>
+                <span>{{ comment.authorRole }}</span>
+              </div>
+              <div class="article-comment-meta">
+                <span>{{ formatCommentDate(comment.createdAt) }}</span>
+                <span>{{ comment.likesCount }} Likes</span>
+              </div>
+            </div>
+            <p>{{ comment.text }}</p>
+          </article>
+        </div>
+
+        <p v-else class="article-comments-empty">No comments yet.</p>
+      </footer>
     </article>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
@@ -181,6 +231,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
+import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
@@ -230,6 +281,10 @@ const selectedArticle = computed(() => {
   if (!selectedNode.value) return undefined
   return mockJournalArticles.find(article => article.sourceNodeId === selectedNode.value?.id) || mockJournalArticle
 })
+const articleComments = computed(() => {
+  if (!selectedArticle.value) return []
+  return mockComments.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
+})
 
 const closeReader = () => {
   const query = { ...route.query }
@@ -244,6 +299,14 @@ const navigateToNode = (id: string) => {
       nodeId: id
     }
   })
+}
+
+const formatCommentDate = (value: string) => {
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
+  }).format(new Date(value))
 }
 
 // Scroll to Top Logic
@@ -334,13 +397,133 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   color: var(--text-primary);
 }
 
+.article-reader-header {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 0 clamp(20px, 4vw, 64px) 28px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.article-reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 calc(clamp(20px, 4vw, 64px) * -1);
+  padding: 24px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 1%, transparent);
+}
+
+.article-reader-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  color: color-mix(in srgb, currentColor 40%, transparent);
+  transition: color 0.3s ease;
+}
+
+.article-reader-back:hover {
+  color: currentColor;
+}
+
+.article-reader-back span:last-child {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+}
+
+.article-reader-kicker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.48em;
+  text-transform: uppercase;
+  opacity: 0.35;
+}
+
+.article-reader-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: end;
+}
+
+.article-reader-title-row h1 {
+  max-width: 980px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.4rem, 5vw, 5.8rem);
+  font-style: italic;
+  line-height: 0.98;
+  letter-spacing: 0;
+  color: currentColor;
+}
+
+.article-reader-title-row p {
+  max-width: 720px;
+  margin-top: 22px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1rem, 1.25vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.65;
+  color: color-mix(in srgb, currentColor 54%, transparent);
+}
+
+.article-reader-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-left: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.article-reader-metric {
+  min-height: 82px;
+  padding: 16px 18px;
+  border-right: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  background: color-mix(in srgb, currentColor 1.5%, transparent);
+}
+
+.article-reader-metric span {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.35;
+}
+
+.article-reader-metric strong {
+  display: block;
+  margin-top: 12px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.55rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1;
+  color: color-mix(in srgb, currentColor 76%, transparent);
+}
+
 .article-board-stage {
-  min-height: calc(100vh - 112px);
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-height: calc(100vh - 360px);
   padding: 24px 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .journal-article-board {
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex: 1 1 auto;
   min-height: min(72vh, 780px);
   border: 1px solid currentColor;
   border-color: color-mix(in srgb, currentColor 12%, transparent);
@@ -353,13 +536,126 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     inset 0 0 80px color-mix(in srgb, currentColor 5%, transparent);
 }
 
+.article-comments-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 34px clamp(20px, 4vw, 64px) 46px;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.article-comments-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.article-comments-heading span,
+.article-comments-heading strong,
+.article-comment span,
+.article-comment-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.35;
+}
+
+.article-comments-heading h2 {
+  margin-top: 8px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.8rem, 2.6vw, 3rem);
+  font-style: italic;
+  line-height: 1;
+  color: color-mix(in srgb, currentColor 84%, transparent);
+}
+
+.article-comments-list {
+  display: grid;
+  gap: 12px;
+}
+
+.article-comment {
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 1.5%, transparent);
+}
+
+.article-comment-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+.article-comment h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1;
+  color: color-mix(in srgb, currentColor 78%, transparent);
+}
+
+.article-comment span {
+  display: block;
+  margin-top: 8px;
+}
+
+.article-comment-meta {
+  display: flex;
+  gap: 18px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.article-comment-meta span {
+  margin-top: 0;
+}
+
+.article-comment p,
+.article-comments-empty {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.65;
+  color: color-mix(in srgb, currentColor 56%, transparent);
+}
+
 @media (max-width: 1023px) {
+  .article-reader-title-row {
+    grid-template-columns: 1fr;
+  }
+
   .article-board-stage {
-    min-height: calc(100vh - 104px);
+    min-height: 62vh;
   }
 }
 
 @media (max-width: 639px) {
+  .article-reader-header {
+    padding-top: 28px;
+  }
+
+  .article-reader-kicker {
+    flex-wrap: wrap;
+    letter-spacing: 0.32em;
+  }
+
+  .article-reader-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .article-comments-heading,
+  .article-comment-head,
+  .article-comment-meta {
+    align-items: start;
+    flex-direction: column;
+    text-align: left;
+    white-space: normal;
+  }
+
   .journal-article-board {
     min-height: 68vh;
     background-size: 22px 22px;
