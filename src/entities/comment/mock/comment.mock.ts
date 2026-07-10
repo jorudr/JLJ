@@ -4,6 +4,7 @@ export const mockComments: Comment[] = [
   {
     id: 'comment-001',
     articleId: 'journal-article-liquidity-ceiling',
+    authorId: 'user-mira-vale',
     authorName: 'Mira Vale',
     authorRole: 'Macro Desk',
     createdAt: '2026-01-18T11:12:00Z',
@@ -14,6 +15,7 @@ export const mockComments: Comment[] = [
   {
     id: 'comment-002',
     articleId: 'journal-article-liquidity-ceiling',
+    authorId: 'user-anton-reed',
     authorName: 'Anton Reed',
     authorRole: 'Order Flow',
     createdAt: '2026-01-18T12:04:00Z',

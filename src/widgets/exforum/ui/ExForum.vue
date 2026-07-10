@@ -133,10 +133,44 @@
         <div class="article-comments-heading">
           <div>
             <span>Comments</span>
-            <h2>User Discussion</h2>
           </div>
           <strong>{{ articleComments.length }} Published</strong>
         </div>
+
+        <form class="article-comment-composer" @submit.prevent="submitComment">
+          <div class="article-comment-composer-title">
+            <div>
+              <span>New comment</span>
+              <h3>Leave a comment</h3>
+            </div>
+            <span v-if="!isAuthenticated" class="article-comment-composer-status">Sign in required</span>
+          </div>
+          <div class="article-comment-composer-meta">
+            <span>Commenting as</span>
+            <strong>{{ currentUserName }}</strong>
+          </div>
+          <textarea
+            ref="commentInputRef"
+            id="article-comment-input"
+            v-model="commentDraft"
+            class="article-comment-input"
+            rows="1"
+            maxlength="1000"
+            :disabled="!isAuthenticated"
+            :placeholder="isAuthenticated ? 'Write a comment...' : 'Sign in to join the discussion.'"
+            @input="resizeCommentInput"
+          ></textarea>
+          <div class="article-comment-composer-actions">
+            <span>{{ commentDraft.length }}/1000</span>
+            <button
+              class="article-comment-submit"
+              type="submit"
+              :disabled="!isAuthenticated || !commentDraft.trim()"
+            >
+              Post comment
+            </button>
+          </div>
+        </form>
 
         <div v-if="articleComments.length" class="article-comments-list">
           <article v-for="comment in articleComments" :key="comment.id" class="article-comment">
@@ -319,9 +353,11 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useAuthStore } from '~/entities/user/auth.store'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
+import type { Comment } from '~/entities/comment/types/comment.types'
 import type { JournalArticleBoardNode } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
@@ -330,6 +366,7 @@ const route = useRoute()
 const router = useRouter()
 const { locale } = useI18n()
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 
 // Archival State
 const searchQuery = ref('')
@@ -373,9 +410,13 @@ const selectedArticle = computed(() => {
   if (!selectedNode.value) return undefined
   return mockJournalArticles.find(article => article.sourceNodeId === selectedNode.value?.id) || mockJournalArticle
 })
+const comments = ref<Comment[]>(mockComments.map(comment => ({ ...comment })))
+const commentDraft = ref('')
+const commentInputRef = ref<HTMLTextAreaElement | null>(null)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const currentUserName = computed(() => authStore.user?.displayName?.trim() || authStore.user?.email?.trim() || 'Authenticated user')
 const articleComments = computed(() => {
-  if (!selectedArticle.value) return []
-  return mockComments.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
+  return comments.value.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
 })
 const journalWrapperRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
@@ -416,11 +457,45 @@ const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => nodes.map(node => 
   size: { ...node.size }
 })) as JournalArticleBoardNode[]
 
+const resizeCommentInput = () => {
+  const input = commentInputRef.value
+  if (!input) return
+
+  input.style.height = 'auto'
+  const maxHeight = 220
+  input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`
+  input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden'
+}
+
 watch(selectedArticle, (article) => {
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
+  commentDraft.value = ''
+  nextTick(resizeCommentInput)
   boardPan.value = { x: 48, y: 36 }
   boardScale.value = 1
 }, { immediate: true })
+
+const submitComment = () => {
+  const article = selectedArticle.value
+  const user = authStore.user
+  const text = commentDraft.value.trim()
+
+  if (!article || !user || !text) return
+
+  comments.value.unshift({
+    id: `comment-${Date.now()}`,
+    articleId: article.id,
+    authorId: user.uid,
+    authorName: currentUserName.value,
+    authorRole: user.type || 'Authenticated user',
+    createdAt: new Date().toISOString(),
+    text,
+    likesCount: 0,
+    status: 'published'
+  })
+  commentDraft.value = ''
+  nextTick(resizeCommentInput)
+}
 
 const closeReader = () => {
   closeBoardFullscreen()
@@ -559,6 +634,7 @@ const handleBoardKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(() => {
+  nextTick(resizeCommentInput)
   window.addEventListener('keydown', handleBoardKeydown)
 })
 
@@ -798,13 +874,142 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   opacity: 0.35;
 }
 
-.article-comments-heading h2 {
-  margin-top: 8px;
+.article-comment-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 22px;
+  border: 1px solid rgba(44, 44, 42, 0.24);
+  border-left: 3px solid rgba(44, 44, 42, 0.72);
+  background: rgba(248, 248, 246, 0.96);
+  box-shadow: 0 12px 30px rgba(44, 44, 42, 0.08);
+}
+
+.article-comment-composer-title {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 2px;
+}
+
+.article-comment-composer-title > div > span {
+  display: block;
+  margin-bottom: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(44, 44, 42, 0.58);
+}
+
+.article-comment-composer-title h3 {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.8rem, 2.6vw, 3rem);
+  font-size: 1.45rem;
   font-style: italic;
+  font-weight: 400;
   line-height: 1;
-  color: color-mix(in srgb, currentColor 84%, transparent);
+  color: rgba(44, 44, 42, 0.88);
+}
+
+.article-comment-composer-status {
+  flex: 0 0 auto;
+  border: 1px solid rgba(44, 44, 42, 0.18);
+  padding: 7px 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(44, 44, 42, 0.56);
+}
+
+.article-comment-composer-meta,
+.article-comment-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.article-comment-composer-meta span,
+.article-comment-composer-actions span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(44, 44, 42, 0.52);
+}
+
+.article-comment-composer-meta strong {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(44, 44, 42, 0.8);
+}
+
+.article-comment-input {
+  width: 100%;
+  min-height: 42px;
+  max-height: 220px;
+  resize: none;
+  overflow-y: hidden;
+  border: 1px solid rgba(44, 44, 42, 0.24);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.98);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: rgba(44, 44, 42, 0.9);
+  box-shadow: inset 0 1px 2px rgba(44, 44, 42, 0.04);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.article-comment-input::placeholder {
+  color: rgba(44, 44, 42, 0.6);
+  opacity: 1;
+}
+
+.article-comment-input:focus {
+  border-color: rgba(44, 44, 42, 0.62);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(44, 44, 42, 0.08);
+}
+
+.article-comment-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.article-comment-submit {
+  border: 1px solid rgba(44, 44, 42, 0.82);
+  padding: 11px 15px;
+  background: rgba(44, 44, 42, 0.88);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #ffffff;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.article-comment-submit:hover:not(:disabled) {
+  background: rgba(44, 44, 42, 1);
+}
+
+.article-comment-submit:disabled {
+  cursor: not-allowed;
+  background: rgba(44, 44, 42, 0.42);
+  border-color: rgba(44, 44, 42, 0.42);
+  opacity: 1;
 }
 
 .article-comments-list {
@@ -881,7 +1086,10 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
   .article-comments-heading,
   .article-comment-head,
-  .article-comment-meta {
+  .article-comment-meta,
+  .article-comment-composer-title,
+  .article-comment-composer-meta,
+  .article-comment-composer-actions {
     align-items: start;
     flex-direction: column;
     text-align: left;

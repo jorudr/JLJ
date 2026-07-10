@@ -12,9 +12,7 @@ export const mockJournalArticles: JournalArticle[] = [
     publishedAt: '2026-01-18T10:30:00Z',
     metrics: [
       { id: 'likes', label: 'Likes', value: 142 },
-      { id: 'comments', label: 'Comments', value: 2 },
-      { id: 'read-time', label: 'Read Time', value: '7 min' },
-      { id: 'confidence', label: 'Confidence', value: '4/5' }
+      { id: 'comments', label: 'Comments', value: 2 }
     ],
     board: {
       gridSize: 28,

@@ -3,6 +3,7 @@ export type CommentStatus = 'published' | 'hidden'
 export interface Comment {
   id: string
   articleId: string
+  authorId: string
   authorName: string
   authorRole: string
   createdAt: string
