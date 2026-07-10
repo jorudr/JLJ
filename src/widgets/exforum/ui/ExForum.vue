@@ -13,7 +13,7 @@
         v-if="isBoardFullscreen"
         ref="boardViewportRef"
         class="absolute inset-0 z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
-        aria-label="Fullscreen article board"
+        :aria-label="articleLabels.fullscreenBoard"
         @pointerdown="startBoardPan"
         @wheel.prevent="handleBoardWheel"
       >
@@ -48,12 +48,6 @@
               </p>
             </div>
 
-            <button
-              class="absolute bottom-0 right-0 h-5 w-5 cursor-se-resize border-l border-t border-black/20 bg-white/80"
-              type="button"
-              aria-label="Resize node"
-              @pointerdown.stop="startBoardNodeResize($event, node.id)"
-            ></button>
           </article>
         </div>
       </section>
@@ -66,7 +60,7 @@
         <div class="article-reader-toolbar">
           <button @click="closeReader" class="article-reader-back group">
             <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
-            <span>Return to The Journal</span>
+            <span>{{ articleLabels.returnToJournal }}</span>
           </button>
         </div>
 
@@ -82,9 +76,9 @@
             <p>{{ selectedArticle.description }}</p>
           </div>
 
-          <div class="article-reader-metrics" aria-label="Article metrics">
+          <div class="article-reader-metrics" :aria-label="articleLabels.metrics">
             <div v-for="metric in selectedArticle.metrics" :key="metric.id" class="article-reader-metric">
-              <span>{{ metric.label }}</span>
+              <span>{{ getMetricLabel(metric.label) }}</span>
               <strong>{{ metric.value }}</strong>
             </div>
           </div>
@@ -94,7 +88,7 @@
       <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
         <section
           class="group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-zoom-in select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
-          aria-label="Article board"
+          :aria-label="articleLabels.board"
           @click="openBoardFullscreen"
         >
           <div
@@ -124,7 +118,7 @@
 
           <div class="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/[0.025]"></div>
           <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/85 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
-            Open Board
+            {{ articleLabels.openBoard }}
           </div>
         </section>
       </main>
@@ -132,21 +126,21 @@
       <footer class="article-comments-footer">
         <div class="article-comments-heading">
           <div>
-            <span>Comments</span>
+            <span>{{ articleLabels.comments }}</span>
           </div>
-          <strong>{{ articleComments.length }} Published</strong>
+          <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
         </div>
 
         <form class="article-comment-composer" @submit.prevent="submitComment">
           <div class="article-comment-composer-title">
             <div>
-              <span>New comment</span>
-              <h3>Leave a comment</h3>
+              <span>{{ articleLabels.newComment }}</span>
+              <h3>{{ articleLabels.leaveComment }}</h3>
             </div>
-            <span v-if="!isAuthenticated" class="article-comment-composer-status">Sign in required</span>
+            <span v-if="!isAuthenticated" class="article-comment-composer-status">{{ articleLabels.signInRequired }}</span>
           </div>
           <div class="article-comment-composer-meta">
-            <span>Commenting as</span>
+            <span>{{ articleLabels.commentingAs }}</span>
             <strong>{{ currentUserName }}</strong>
           </div>
           <textarea
@@ -157,7 +151,7 @@
             rows="1"
             maxlength="1000"
             :disabled="!isAuthenticated"
-            :placeholder="isAuthenticated ? 'Write a comment...' : 'Sign in to join the discussion.'"
+            :placeholder="isAuthenticated ? articleLabels.writeComment : articleLabels.signInToComment"
             @input="resizeCommentInput"
           ></textarea>
           <div class="article-comment-composer-actions">
@@ -167,7 +161,7 @@
               type="submit"
               :disabled="!isAuthenticated || !commentDraft.trim()"
             >
-              Post comment
+              {{ articleLabels.postComment }}
             </button>
           </div>
         </form>
@@ -181,14 +175,14 @@
               </div>
               <div class="article-comment-meta">
                 <span>{{ formatCommentDate(comment.createdAt) }}</span>
-                <span>{{ comment.likesCount }} Likes</span>
+                <span>{{ comment.likesCount }} {{ articleLabels.likes }}</span>
               </div>
             </div>
             <p>{{ comment.text }}</p>
           </article>
         </div>
 
-        <p v-else class="article-comments-empty">No comments yet.</p>
+        <p v-else class="article-comments-empty">{{ articleLabels.noComments }}</p>
       </footer>
 
     </article>
@@ -372,7 +366,55 @@ const authStore = useAuthStore()
 const searchQuery = ref('')
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
-const fullscreenExitLabel = computed(() => locale.value === 'ru' ? 'Покинуть полноэкранный режим' : 'Leave fullscreen mode')
+const articleLabels = computed(() => locale.value === 'ru'
+  ? {
+      returnToJournal: 'Вернуться в журнал',
+      fullscreenBoard: 'Полноэкранная доска статьи',
+      metrics: 'Метрики статьи',
+      board: 'Доска статьи',
+      openBoard: 'Открыть доску',
+      comments: 'Комментарии',
+      published: 'Опубликовано',
+      newComment: 'Новый комментарий',
+      leaveComment: 'Оставить комментарий',
+      signInRequired: 'Требуется войти',
+      commentingAs: 'Автор комментария',
+      writeComment: 'Напишите комментарий...',
+      signInToComment: 'Войдите, чтобы оставить комментарий.',
+      postComment: 'Опубликовать комментарий',
+      likes: 'лайков',
+      noComments: 'Комментариев пока нет',
+      leaveFullscreen: 'Покинуть полноэкранный режим'
+    }
+  : {
+      returnToJournal: 'Return to The Journal',
+      fullscreenBoard: 'Fullscreen article board',
+      metrics: 'Article metrics',
+      board: 'Article board',
+      openBoard: 'Open Board',
+      comments: 'Comments',
+      published: 'Published',
+      newComment: 'New comment',
+      leaveComment: 'Leave a comment',
+      signInRequired: 'Sign in required',
+      commentingAs: 'Commenting as',
+      writeComment: 'Write a comment...',
+      signInToComment: 'Sign in to join the discussion.',
+      postComment: 'Post comment',
+      likes: 'Likes',
+      noComments: 'No comments yet.',
+      leaveFullscreen: 'Leave fullscreen mode'
+    })
+const fullscreenExitLabel = computed(() => articleLabels.value.leaveFullscreen)
+
+const getMetricLabel = (label: string) => {
+  if (locale.value !== 'ru') return label
+
+  return {
+    Likes: 'Лайки',
+    Comments: 'Комментарии'
+  }[label] || label
+}
 
 // Pagination Logic
 const currentPage = computed(() => Number(route.query.page) || 1)
@@ -425,19 +467,9 @@ const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
 const isBoardFullscreen = ref(false)
 
-type BoardInteraction =
-  | { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
-  | {
-      type: 'resize'
-      nodeId: string
-      startClientX: number
-      startClientY: number
-      startWidth: number
-      startHeight: number
-    }
+type BoardInteraction = { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const minBoardNodeSize = { width: 6, height: 4 }
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
 const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
 const boardWorldStyle = computed(() => ({
@@ -534,10 +566,6 @@ const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
   height: `${node.size.height * boardGridSize.value}px`
 })
 
-const updateBoardNode = (nodeId: string, updater: (node: JournalArticleBoardNode) => JournalArticleBoardNode) => {
-  boardNodes.value = boardNodes.value.map(node => node.id === nodeId ? updater(node) : node)
-}
-
 const startWindowTracking = () => {
   window.addEventListener('pointermove', handleBoardPointerMove)
   window.addEventListener('pointerup', stopBoardInteraction)
@@ -564,43 +592,14 @@ const startBoardPan = (event: PointerEvent) => {
   startWindowTracking()
 }
 
-const startBoardNodeResize = (event: PointerEvent, nodeId: string) => {
-  const node = boardNodes.value.find(item => item.id === nodeId)
-  if (!node) return
-
-  activeBoardInteraction.value = {
-    type: 'resize',
-    nodeId,
-    startClientX: event.clientX,
-    startClientY: event.clientY,
-    startWidth: node.size.width,
-    startHeight: node.size.height
-  }
-  startWindowTracking()
-}
-
 const handleBoardPointerMove = (event: PointerEvent) => {
   const interaction = activeBoardInteraction.value
   if (!interaction) return
 
-  if (interaction.type === 'pan') {
-    boardPan.value = {
-      x: interaction.startPanX + event.clientX - interaction.startClientX,
-      y: interaction.startPanY + event.clientY - interaction.startClientY
-    }
-    return
+  boardPan.value = {
+    x: interaction.startPanX + event.clientX - interaction.startClientX,
+    y: interaction.startPanY + event.clientY - interaction.startClientY
   }
-
-  const deltaX = Math.round((event.clientX - interaction.startClientX) / (boardScale.value * boardGridSize.value))
-  const deltaY = Math.round((event.clientY - interaction.startClientY) / (boardScale.value * boardGridSize.value))
-
-  updateBoardNode(interaction.nodeId, node => ({
-    ...node,
-    size: {
-      width: clamp(interaction.startWidth + deltaX, minBoardNodeSize.width, boardUnitSize.value.width - node.position.x),
-      height: clamp(interaction.startHeight + deltaY, minBoardNodeSize.height, boardUnitSize.value.height - node.position.y)
-    }
-  }))
 }
 
 const stopBoardInteraction = () => {
@@ -644,7 +643,7 @@ onUnmounted(() => {
 })
 
 const formatCommentDate = (value: string) => {
-  return new Intl.DateTimeFormat('en', {
+  return new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric'
@@ -872,6 +871,14 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   letter-spacing: 0.32em;
   text-transform: uppercase;
   opacity: 0.35;
+}
+
+.article-comments-heading span,
+.article-comments-heading strong {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  opacity: 0.72;
 }
 
 .article-comment-composer {
