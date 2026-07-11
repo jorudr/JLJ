@@ -346,7 +346,11 @@
                  </div>
               </div>
               <div v-else class="flex h-full flex-col pt-4">
-                <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+                <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+                <div v-else class="flex-1 flex flex-col items-center justify-center cursor-pointer border border-dashed border-black/20 m-4 hover:border-black/40 hover:bg-black/5 transition-all" @click.stop="triggerImageUpload(node.id)">
+                   <svg class="w-8 h-8 opacity-40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                   <span class="text-[10px] font-mono tracking-[0.2em] uppercase opacity-40 text-center px-4">Upload Image (RU/EN)</span>
+                </div>
                 <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
                   {{ node.caption }}
                 </p>
@@ -1102,6 +1106,29 @@ type BoardInteraction =
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
 const activeBoardTool = ref<'text' | 'image' | null>(null)
+
+const triggerImageUpload = (nodeId: string) => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (file) {
+      const url = URL.createObjectURL(file)
+      const node = boardNodes.value.find((n: any) => n.id === nodeId)
+      if (node) {
+        node.src = url
+        const img = new Image()
+        img.onload = () => {
+          const aspect = img.width / img.height
+          node.size.height = Math.max(1, Math.round(node.size.width / aspect))
+        }
+        img.src = url
+      }
+    }
+  }
+  input.click()
+}
 const boardPointerPos = ref({ x: 0, y: 0 })
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
 const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
@@ -1255,8 +1282,8 @@ const startBoardPan = (event: PointerEvent) => {
       const newNode = {
         id: `node_${Date.now()}`,
         type: 'image',
-        src: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=3270&auto=format&fit=crop',
-        alt: 'Placeholder Image',
+        src: '',
+        alt: 'Uploaded Image',
         caption: '',
         position: { x: gridX, y: gridY },
         size: { width: 10, height: 10 }
