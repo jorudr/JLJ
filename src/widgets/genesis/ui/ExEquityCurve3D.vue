@@ -250,30 +250,9 @@
             </div>
           </div>
           <div v-else class="flex flex-col">
-            <div class="flex items-center gap-4">
-              <span class="text-6xl font-mono nier-text-primary tracking-tighter font-bold drop-shadow-sm">
-                {{ displayBalance }}
-              </span>
-              <button class="pointer-events-auto flex h-10 w-10 items-center justify-center border border-white/20 bg-[#0a0a0a]/80 backdrop-blur-xl text-white/45 transition-all hover:border-white/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
-                      :class="isApiSyncing ? 'border-white/40 text-white' : ''"
-                      :disabled="isApiSyncing"
-                      :title="apiSyncButtonTitle"
-                      @click="syncCurrentStrategyApi">
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     class="h-4 w-4"
-                     :class="isApiSyncing ? 'animate-spin' : ''">
-                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                  <path d="M3 21v-5h5" />
-                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                  <path d="M16 8h5V3" />
-                </svg>
-              </button>
-            </div>
+            <span class="text-6xl font-mono nier-text-primary tracking-tighter font-bold drop-shadow-sm">
+              {{ displayBalance }}
+            </span>
             <span class="text-[9px] font-mono tracking-[0.4em] uppercase opacity-30 mt-2 nier-text-primary">
               {{ apiSyncStatusMessage || 'REIFIED_BALANCE_SNAPSHOT' }}
             </span>
@@ -760,6 +739,31 @@
           </svg>
           <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
             {{ isRu ? '[ ПОДКЛЮЧИТЬ_БРОКЕР_API ]' : '[ CONNECT_BROKER_API ]' }}
+          </div>
+        </button>
+
+        <!-- SYNC TRADES FROM API -->
+        <button v-if="!showMetricsPanel && !showDistribution3D"
+                @click="syncCurrentStrategyApi"
+                :disabled="isApiSyncing"
+                :title="apiSyncButtonTitle"
+                class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-25"
+                :class="isApiSyncing ? 'bg-white/10 opacity-100 border-white/20' : ''">
+          <svg viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="1.5"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               class="w-4 h-4"
+               :class="isApiSyncing ? 'animate-spin' : ''">
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M3 21v-5h5" />
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M16 8h5V3" />
+          </svg>
+          <div class="absolute bottom-full mb-3 px-3 py-1.5 bg-white text-black text-[9px] font-mono tracking-widest uppercase font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-[0_10px_20px_rgba(0,0,0,0.3)] border border-white/20">
+            {{ isApiSyncing ? (isRu ? '[ СИНХРОНИЗАЦИЯ_СДЕЛОК ]' : '[ SYNCING_TRADES ]') : (isRu ? '[ СИНХРОНИЗИРОВАТЬ_СДЕЛКИ_API ]' : '[ SYNC_TRADES_FROM_API ]') }}
           </div>
         </button>
 
