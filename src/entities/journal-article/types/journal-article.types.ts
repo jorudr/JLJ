@@ -34,6 +34,7 @@ export interface JournalArticleBoardBaseNode {
   type: JournalArticleBoardNodeType
   position: JournalArticleBoardPosition
   size: JournalArticleBoardSize
+  isEditing?: boolean
 }
 
 export interface JournalArticleBoardTextNode extends JournalArticleBoardBaseNode {

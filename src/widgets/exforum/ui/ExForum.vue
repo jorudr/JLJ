@@ -296,43 +296,90 @@
 
         <!-- BOARD STEP -->
         <div v-else-if="creationStep === 'board'"
-             class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] cursor-grab active:cursor-grabbing text-[#2c2c2a]"
+             class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] text-[#2c2c2a]"
+             :class="activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'"
+             @pointermove="handleBoardHover"
              @pointerdown="startBoardPan"
              @wheel.prevent="handleBoardWheel"
              key="board"
         >
           <!-- Board World (Pan & Zoom) -->
-          <div class="absolute left-0 top-0 origin-top-left" :style="[boardWorldStyle, boardTransformStyle]">
+          <div class="absolute left-0 top-0 origin-top-left" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef">
             <article
               v-for="node in boardNodes"
               :key="node.id"
               data-board-node
-              class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+              class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node"
               :style="getBoardNodeStyle(node)"
             >
-              <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-                <h3 class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
-                <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
+              <!-- Drag Handle -->
+              <div 
+                data-board-node-handle 
+                :data-node-id="node.id"
+                class="absolute top-0 left-0 w-full h-4 bg-black/5 hover:bg-black/10 cursor-move opacity-0 group-hover/node:opacity-100 transition-opacity z-10"
+              ></div>
+
+              <div v-if="node.type === 'text'" class="flex h-full flex-col gap-2 p-4 pt-6 relative">
+                <input
+                  v-if="node.isEditing"
+                  v-model="node.title"
+                  type="text"
+                  class="font-serif text-xl italic leading-none text-black/80 bg-transparent focus:outline-none placeholder:text-black/30"
+                  placeholder="Title"
+                />
+                <h3 v-else class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
+                
+                <textarea
+                  v-if="node.isEditing"
+                  v-model="node.text"
+                  class="min-h-0 flex-1 overflow-auto font-serif text-sm italic leading-relaxed text-black/55 bg-transparent resize-none focus:outline-none placeholder:text-black/30"
+                  placeholder="Text"
+                ></textarea>
+                <p v-else class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
               </div>
-              <div v-else class="flex h-full flex-col">
+              <div v-else class="flex h-full flex-col pt-4">
                 <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
                 <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
                   {{ node.caption }}
                 </p>
               </div>
+
+              <!-- Resize Handle -->
+              <div 
+                data-board-resize 
+                :data-node-id="node.id"
+                class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-0 group-hover/node:opacity-100 transition-opacity z-10 flex items-end justify-end p-1"
+              >
+                <div class="w-2 h-2 border-r-2 border-b-2 border-black/40"></div>
+              </div>
             </article>
+          </div>
+
+          <!-- Tooltip near cursor -->
+          <div 
+            v-if="activeBoardTool"
+            class="pointer-events-none absolute z-[9999] px-3 py-1.5 bg-black text-white text-[10px] font-mono tracking-widest uppercase shadow-lg transform -translate-x-1/2 mt-4 transition-all duration-75"
+            :style="{ left: `${boardPointerPos.x}px`, top: `${boardPointerPos.y}px` }"
+          >
+            {{ locale === 'ru' ? 'Кликните чтобы добавить' : 'Click to add node' }}
           </div>
 
           <!-- Left Vertical Toolbar -->
           <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
-            <button class="p-2 hover:bg-black/5 transition-colors group relative" :title="locale === 'ru' ? 'Текст' : 'Text Node'">
-              <svg class="w-5 h-5 text-black/60 group-hover:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <button class="p-2 transition-colors group relative" 
+                    :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
+                    :title="locale === 'ru' ? 'Текст' : 'Text Node'"
+                    @click.stop="activeBoardTool = activeBoardTool === 'text' ? null : 'text'">
+              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'text' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <div class="w-6 h-px bg-black/10 my-1"></div>
-            <button class="p-2 hover:bg-black/5 transition-colors group relative" :title="locale === 'ru' ? 'Изображение' : 'Image Node'">
-              <svg class="w-5 h-5 text-black/60 group-hover:text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <button class="p-2 transition-colors group relative" 
+                    :class="activeBoardTool === 'image' ? 'bg-black/10' : 'hover:bg-black/5'"
+                    :title="locale === 'ru' ? 'Изображение' : 'Image Node'"
+                    @click.stop="activeBoardTool = activeBoardTool === 'image' ? null : 'image'">
+              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'image' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <circle cx="8.5" cy="8.5" r="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <polyline points="21 15 16 10 5 21" stroke-linecap="round" stroke-linejoin="round"/>
@@ -341,7 +388,7 @@
           </ExPanel>
           <!-- Bottom Right Actions -->
           <div class="absolute bottom-6 right-6 z-50 flex items-center gap-4">
-            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
+            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
                     @click="creationStep = 'metadata'">
               {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
             </button>
@@ -809,9 +856,14 @@ const publishArticle = () => {
 // Wait, I used v-click-outside in the template, I should replace it with a simple @click.away or similar if it's not available.
 // Actually VueUse `onClickOutside` is safer. Let's just use a transparent overlay for the dropdown instead to be safe.)
 
-type BoardInteraction = { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
+type BoardInteraction = 
+  | { type: 'pan'; startClientX: number; startClientY: number; startPanX: number; startPanY: number }
+  | { type: 'moveNode'; node: any; startClientX: number; startClientY: number; startNodeX: number; startNodeY: number }
+  | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
+const activeBoardTool = ref<'text' | 'image' | null>(null)
+const boardPointerPos = ref({ x: 0, y: 0 })
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
 const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
 const boardWorldStyle = computed(() => ({
@@ -935,6 +987,72 @@ const stopWindowTracking = () => {
 
 const startBoardPan = (event: PointerEvent) => {
   const target = event.target as HTMLElement | null
+  
+  if (creationStep.value === 'board' && activeBoardTool.value) {
+    // Click to add node
+    const rect = boardViewportRef.value?.getBoundingClientRect()
+    if (!rect) return
+    const pointerX = event.clientX - rect.left
+    const pointerY = event.clientY - rect.top
+    const worldX = (pointerX - boardPan.value.x) / boardScale.value
+    const worldY = (pointerY - boardPan.value.y) / boardScale.value
+    
+    // Snap to grid
+    const gridX = Math.round(worldX / boardGridSize.value)
+    const gridY = Math.round(worldY / boardGridSize.value)
+    
+    if (activeBoardTool.value === 'text') {
+      const newNode = {
+        id: `node_${Date.now()}`,
+        type: 'text',
+        title: '',
+        text: '',
+        position: { x: gridX, y: gridY },
+        size: { width: 10, height: 6 },
+        isEditing: true
+      }
+      boardNodes.value.push(newNode as any)
+    }
+    activeBoardTool.value = null
+    return
+  }
+
+  const resizeHandle = target?.closest('[data-board-resize]') as HTMLElement | null
+  if (resizeHandle) {
+    const nodeId = resizeHandle.dataset.nodeId
+    const node = boardNodes.value.find((n: any) => n.id === nodeId)
+    if (node) {
+      activeBoardInteraction.value = {
+        type: 'resizeNode',
+        node,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startNodeW: node.size.width,
+        startNodeH: node.size.height
+      }
+      startWindowTracking()
+      return
+    }
+  }
+
+  const nodeHandle = target?.closest('[data-board-node-handle]') as HTMLElement | null
+  if (nodeHandle) {
+    const nodeId = nodeHandle.dataset.nodeId
+    const node = boardNodes.value.find((n: any) => n.id === nodeId)
+    if (node) {
+      activeBoardInteraction.value = {
+        type: 'moveNode',
+        node,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startNodeX: node.position.x,
+        startNodeY: node.position.y
+      }
+      startWindowTracking()
+      return
+    }
+  }
+
   if (target?.closest('[data-board-node]')) return
 
   activeBoardInteraction.value = {
@@ -947,13 +1065,47 @@ const startBoardPan = (event: PointerEvent) => {
   startWindowTracking()
 }
 
+const handleBoardHover = (event: PointerEvent) => {
+  if (creationStep.value === 'board' && activeBoardTool.value) {
+    const rect = boardViewportRef.value?.getBoundingClientRect()
+    if (rect) {
+      boardPointerPos.value = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      }
+    }
+  }
+}
+
 const handleBoardPointerMove = (event: PointerEvent) => {
   const interaction = activeBoardInteraction.value
   if (!interaction) return
 
-  boardPan.value = {
-    x: interaction.startPanX + event.clientX - interaction.startClientX,
-    y: interaction.startPanY + event.clientY - interaction.startClientY
+  if (interaction.type === 'pan') {
+    boardPan.value = {
+      x: interaction.startPanX + event.clientX - interaction.startClientX,
+      y: interaction.startPanY + event.clientY - interaction.startClientY
+    }
+  } else if (interaction.type === 'moveNode') {
+    const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
+    const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
+    
+    // Snap to grid
+    const deltaGridX = Math.round(deltaWorldX / boardGridSize.value)
+    const deltaGridY = Math.round(deltaWorldY / boardGridSize.value)
+    
+    interaction.node.position.x = interaction.startNodeX + deltaGridX
+    interaction.node.position.y = interaction.startNodeY + deltaGridY
+  } else if (interaction.type === 'resizeNode') {
+    const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
+    const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
+    
+    // Snap to grid
+    const deltaGridW = Math.round(deltaWorldX / boardGridSize.value)
+    const deltaGridH = Math.round(deltaWorldY / boardGridSize.value)
+    
+    interaction.node.size.width = Math.max(4, interaction.startNodeW + deltaGridW)
+    interaction.node.size.height = Math.max(4, interaction.startNodeH + deltaGridH)
   }
 }
 
