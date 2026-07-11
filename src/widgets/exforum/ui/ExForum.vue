@@ -1352,6 +1352,7 @@ const startBoardPan = (event: PointerEvent) => {
 
   const resizeHandle = target?.closest('[data-board-resize]') as HTMLElement | null
   if (resizeHandle) {
+    event.preventDefault()
     const nodeId = resizeHandle.dataset.nodeId
     selectedBoardNodeId.value = nodeId || null
     const node = boardNodes.value.find((n: any) => n.id === nodeId)
@@ -1371,6 +1372,7 @@ const startBoardPan = (event: PointerEvent) => {
 
   const nodeHandle = target?.closest('[data-board-node-handle]') as HTMLElement | null
   if (nodeHandle) {
+    event.preventDefault()
     const nodeId = nodeHandle.dataset.nodeId
     selectedBoardNodeId.value = nodeId || null
     const node = boardNodes.value.find((n: any) => n.id === nodeId)
@@ -1395,6 +1397,7 @@ const startBoardPan = (event: PointerEvent) => {
     return
   }
 
+  event.preventDefault()
   selectedBoardNodeId.value = null
 
   activeBoardInteraction.value = {
