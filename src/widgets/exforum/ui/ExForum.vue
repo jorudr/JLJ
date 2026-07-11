@@ -471,9 +471,14 @@
 
           <!-- Create Article Button (Right) -->
           <div class="flex-1 flex justify-end items-center">
-            <span v-if="hasDraft && !isCreatingArticle" class="text-[9px] font-mono tracking-widest uppercase text-current/50 pr-4 cursor-pointer hover:underline" @click="loadDraft">
-              {{ locale === 'ru' ? 'ЕСТЬ ЧЕРНОВИК' : 'UNPUBLISHED DRAFT' }}
-            </span>
+            <button
+              v-if="hasDraft && !isCreatingArticle"
+              class="flex items-center space-x-2 px-4 py-2 mr-4 border border-black bg-black text-white hover:bg-black/80 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm shadow-md"
+              @click="loadDraft"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+              <span>{{ locale === 'ru' ? 'ПРОДОЛЖИТЬ ЧЕРНОВИК' : 'CONTINUE DRAFT' }}</span>
+            </button>
             <button
               class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90"
               @click="isCreatingArticle = !isCreatingArticle"
