@@ -16,8 +16,8 @@
       }"
     ></div>
 
-    <div class="relative z-10 h-full min-h-0 box-border flex flex-col transition-all duration-300" :class="isFullscreen ? '' : 'pt-10'">
-      <CustomTitleBar />
+    <div class="relative z-10 h-full min-h-0 box-border flex flex-col transition-all duration-300" :class="isFullscreen || route.meta.hideChrome ? '' : 'pt-10'">
+      <CustomTitleBar v-if="!route.meta.hideChrome" />
       <main class="flex-1 min-h-0 overflow-hidden">
         <NuxtPage />
       </main>
