@@ -364,7 +364,7 @@
           </div>
 
           <!-- Left Vertical Toolbar -->
-          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit" @pointerdown.stop>
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
                     :title="locale === 'ru' ? 'Текст' : 'Text Node'"
@@ -1011,8 +1011,21 @@ const startBoardPan = (event: PointerEvent) => {
         isEditing: true
       }
       boardNodes.value.push(newNode as any)
+    } else if (activeBoardTool.value === 'image') {
+      const newNode = {
+        id: `node_${Date.now()}`,
+        type: 'image',
+        src: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=3270&auto=format&fit=crop',
+        alt: 'Placeholder Image',
+        caption: '',
+        position: { x: gridX, y: gridY },
+        size: { width: 10, height: 10 }
+      }
+      boardNodes.value.push(newNode as any)
     }
-    activeBoardTool.value = null
+    
+    // We do NOT reset activeBoardTool.value here.
+    // The user must click the tool in the side panel again to reset it.
     return
   }
 
