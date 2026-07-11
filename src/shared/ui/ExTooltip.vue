@@ -83,6 +83,10 @@ const props = defineProps({
     type: String,
     default: 'top',
     validator: (v) => ['top', 'bottom'].includes(v)
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -138,6 +142,7 @@ const updateTriggerPosition = () => {
 }
 
 const handleMouseEnter = () => {
+  if (props.disabled) return
   updateTriggerPosition()
   isVisible.value = true
   measureTooltip()
