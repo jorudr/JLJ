@@ -311,6 +311,7 @@
               data-board-node
               class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node"
               :style="getBoardNodeStyle(node)"
+              @contextmenu.prevent.stop="handleNodeContextMenu($event, node.id)"
             >
               <!-- Drag Handle -->
               <div 
@@ -595,6 +596,34 @@
       </div>
     </div>
     </Transition>
+
+    <!-- NODE CONTEXT MENU Overlay -->
+    <Teleport to="body">
+      <Transition name="fade-slide">
+        <div v-if="nodeContextMenu" 
+             class="fixed z-[100000000] pointer-events-auto"
+             :style="{ left: nodeContextMenu.x + 'px', top: nodeContextMenu.y + 'px' }"
+             @pointerdown.stop
+             @contextmenu.prevent.stop>
+            
+            <div class="flex flex-col space-y-1.5">
+              <div class="w-2 h-2 bg-black rotate-45 absolute -left-1 -top-1 animate-pulse"></div>
+
+              <div class="group relative pt-2">
+                 <button @click="removeBoardNode(nodeContextMenu.nodeId)"
+                         class="bg-white border border-red-500/30 px-6 py-3 min-w-[180px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden shadow-[10px_10px_0_rgba(0,0,0,0.1)] text-[#2c2c2a]">
+                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">REMOVE_NODE</span>
+                   <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
+                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
+                 </button>
+                 <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent_Archive_Erasure</span>
+                </div>
+              </div>
+            </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -849,6 +878,34 @@ const publishArticle = () => {
   isCreatingArticle.value = false
 }
 
+// Node Context Menu Logic
+const nodeContextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
+
+const handleNodeContextMenu = (e: MouseEvent, nodeId: string) => {
+  nodeContextMenu.value = {
+    x: e.clientX,
+    y: e.clientY,
+    nodeId
+  }
+}
+
+const closeNodeContextMenu = () => {
+  nodeContextMenu.value = null
+}
+
+const removeBoardNode = (nodeId: string) => {
+  boardNodes.value = boardNodes.value.filter(n => n.id !== nodeId)
+  closeNodeContextMenu()
+}
+
+onMounted(() => {
+  window.addEventListener('pointerdown', closeNodeContextMenu)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('pointerdown', closeNodeContextMenu)
+})
+
 // v-click-outside directive logic setup inside component (or via vueuse if available, 
 // but since we are in a single file, a simple window event listener is better for the dropdown, 
 // but we'll use a standard workaround if v-click-outside isn't registered globally. Let's assume it might not be. 
@@ -1024,8 +1081,7 @@ const startBoardPan = (event: PointerEvent) => {
       boardNodes.value.push(newNode as any)
     }
     
-    // We do NOT reset activeBoardTool.value here.
-    // The user must click the tool in the side panel again to reset it.
+    activeBoardTool.value = null
     return
   }
 
