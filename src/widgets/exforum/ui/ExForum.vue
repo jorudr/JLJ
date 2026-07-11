@@ -355,11 +355,10 @@
             </article>
           </div>
 
-          <!-- Tooltip near cursor -->
+          <!-- Tooltip at the top center -->
           <div 
             v-if="activeBoardTool"
-            class="pointer-events-none absolute z-[9999] px-3 py-1.5 bg-black text-white text-[10px] font-mono tracking-widest uppercase shadow-lg transform -translate-x-1/2 mt-4 transition-all duration-75"
-            :style="{ left: `${boardPointerPos.x}px`, top: `${boardPointerPos.y}px` }"
+            class="pointer-events-none absolute top-8 left-1/2 transform -translate-x-1/2 z-[9999] px-4 py-2 bg-black text-white text-[10px] font-mono tracking-widest uppercase shadow-lg"
           >
             {{ locale === 'ru' ? 'Кликните чтобы добавить' : 'Click to add node' }}
           </div>
