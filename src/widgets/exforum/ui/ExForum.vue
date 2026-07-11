@@ -346,7 +346,7 @@
                  </div>
               </div>
               <div v-else class="flex h-full flex-col pt-4">
-                <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
+                <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-contain cursor-pointer hover:opacity-90 transition-opacity" draggable="false" @click.stop="triggerImageUpload(node.id)" />
                 <div v-else class="flex-1 flex flex-col items-center justify-center cursor-pointer border border-dashed border-black/20 m-4 hover:border-black/40 hover:bg-black/5 transition-all" @click.stop="triggerImageUpload(node.id)">
                    <svg class="w-8 h-8 opacity-40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                    <span class="text-[10px] font-mono tracking-[0.2em] uppercase opacity-40 text-center px-4">Upload Image (RU/EN)</span>
@@ -402,6 +402,10 @@
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
                     @click="creationStep = 'metadata'">
               {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
+            </button>
+            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+                    @click="saveDraftAndExit">
+              {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
             </button>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
                     @click="publishArticle">
@@ -466,7 +470,10 @@
           </div>
 
           <!-- Create Article Button (Right) -->
-          <div class="flex-1 flex justify-end">
+          <div class="flex-1 flex justify-end items-center">
+            <span v-if="hasDraft && !isCreatingArticle" class="text-[9px] font-mono tracking-widest uppercase text-current/50 pr-4 cursor-pointer hover:underline" @click="loadDraft">
+              {{ locale === 'ru' ? 'ЕСТЬ ЧЕРНОВИК' : 'UNPUBLISHED DRAFT' }}
+            </span>
             <button
               class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90"
               @click="isCreatingArticle = !isCreatingArticle"
@@ -897,20 +904,63 @@ const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'board'>('metadata')
 
-watch(isCreatingArticle, (newVal) => {
-  if (!newVal) {
-    creationStep.value = 'metadata'
-    newArticleForm.value = { title: '', description: '', type: '' }
-  }
-})
+const DRAFT_STORAGE_KEY = 'exforum_draft'
+const hasDraft = ref(false)
+if (typeof localStorage !== 'undefined') {
+  hasDraft.value = !!localStorage.getItem(DRAFT_STORAGE_KEY)
+}
 
-const isDropdownOpen = ref(false)
-const isSubmittingArticle = ref(false)
 const newArticleForm = ref({
   title: '',
   description: '',
   type: ''
 })
+
+const loadDraft = () => {
+  const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY)
+  if (draftStr) {
+    try {
+      const draft = JSON.parse(draftStr)
+      newArticleForm.value = draft.form
+      boardNodes.value = draft.nodes
+      creationStep.value = draft.step || 'metadata'
+      hasDraft.value = true
+      isCreatingArticle.value = true
+    } catch(e) {}
+  }
+}
+
+const clearDraft = () => {
+  localStorage.removeItem(DRAFT_STORAGE_KEY)
+  hasDraft.value = false
+  newArticleForm.value = { title: '', description: '', type: '' }
+  boardNodes.value = []
+  creationStep.value = 'metadata'
+}
+
+const saveDraftAndExit = () => {
+  isCreatingArticle.value = false
+}
+
+watch(isCreatingArticle, (newVal) => {
+  if (!newVal) {
+    creationStep.value = 'metadata'
+  }
+})
+
+watch([newArticleForm, boardNodes, creationStep], () => {
+  if (isCreatingArticle.value) {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+      form: newArticleForm.value,
+      nodes: boardNodes.value,
+      step: creationStep.value
+    }))
+    hasDraft.value = true
+  }
+}, { deep: true })
+
+const isDropdownOpen = ref(false)
+const isSubmittingArticle = ref(false)
 
 const articleTypes = computed(() => [
   { value: 'SETUP', label: locale.value === 'ru' ? 'Сетап (SETUP)' : 'Setup' },
@@ -946,7 +996,7 @@ const submitNewArticle = () => {
 
 const publishArticle = () => {
   console.log('Publishing article...', newArticleForm.value, boardNodes.value)
-  // For now, just close the creation flow as a stub
+  clearDraft()
   isCreatingArticle.value = false
 }
 
@@ -1116,7 +1166,7 @@ const triggerImageUpload = (nodeId: string) => {
     if (file) {
       const url = URL.createObjectURL(file)
       const node = boardNodes.value.find((n: any) => n.id === nodeId)
-      if (node) {
+      if (node && node.type === 'image') {
         node.src = url
         const img = new Image()
         img.onload = () => {
@@ -1389,10 +1439,17 @@ const handleBoardPointerMove = (event: PointerEvent) => {
     
     // Snap to grid
     const deltaGridW = Math.round(deltaWorldX / boardGridSize.value)
-    const deltaGridH = Math.round(deltaWorldY / boardGridSize.value)
+    const newWidth = Math.max(4, interaction.startNodeW + deltaGridW)
     
-    interaction.node.size.width = Math.max(4, interaction.startNodeW + deltaGridW)
-    interaction.node.size.height = Math.max(4, interaction.startNodeH + deltaGridH)
+    interaction.node.size.width = newWidth
+    
+    if (interaction.node.type === 'image') {
+      const aspect = interaction.startNodeW / interaction.startNodeH
+      interaction.node.size.height = Math.max(4, Math.round(newWidth / aspect))
+    } else {
+      const deltaGridH = Math.round(deltaWorldY / boardGridSize.value)
+      interaction.node.size.height = Math.max(4, interaction.startNodeH + deltaGridH)
+    }
   }
 }
 
