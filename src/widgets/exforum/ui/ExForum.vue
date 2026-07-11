@@ -38,7 +38,7 @@
             :style="getBoardNodeStyle(node)"
           >
             <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-              <h3 class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
+              <h3 class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || 'Untitled'"></h3>
               <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
             </div>
 
@@ -98,7 +98,7 @@
               :style="getBoardNodeStyle(node)"
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-                <h3 class="font-serif text-xl italic leading-none text-current/80">{{ node.title }}</h3>
+                <h3 class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || 'Untitled'"></h3>
                 <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-current/55">{{ node.text }}</p>
               </div>
 
@@ -309,7 +309,9 @@
               v-for="node in boardNodes"
               :key="node.id"
               data-board-node
-              class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node"
+              :data-node-id="node.id"
+              class="absolute box-border overflow-hidden bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node transition-all border"
+              :class="selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20'"
               :style="getBoardNodeStyle(node)"
               @contextmenu.prevent.stop="handleNodeContextMenu($event, node.id)"
             >
@@ -320,23 +322,28 @@
                 class="absolute top-0 left-0 w-full h-4 bg-black/5 hover:bg-black/10 cursor-move opacity-0 group-hover/node:opacity-100 transition-opacity z-10"
               ></div>
 
-              <div v-if="node.type === 'text'" class="flex h-full flex-col gap-2 p-4 pt-6 relative">
-                <input
-                  v-if="node.isEditing"
-                  v-model="node.title"
-                  type="text"
-                  class="font-serif text-xl italic leading-none text-black/80 bg-transparent focus:outline-none placeholder:text-black/30"
-                  placeholder="Title"
-                />
-                <h3 v-else class="font-serif text-xl italic leading-none text-black/80">{{ node.title }}</h3>
-                
-                <textarea
-                  v-if="node.isEditing"
-                  v-model="node.text"
-                  class="min-h-0 flex-1 overflow-auto font-serif text-sm italic leading-relaxed text-black/55 bg-transparent resize-none focus:outline-none placeholder:text-black/30"
-                  placeholder="Text"
-                ></textarea>
-                <p v-else class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
+              <div v-if="node.type === 'text'" class="flex h-full w-full flex-col relative bg-transparent p-4 pt-6 gap-2">
+                 <div :ref="(el) => setTitleEditorRef(el, node.id)"
+                      :data-title-node-id="node.id"
+                      contenteditable="true"
+                      @mousedown.stop
+                      @click.stop
+                      @focus="selectedBoardNodeId = node.id; activeEditorField = 'title'"
+                      @input="updateNodeTitle($event, node)"
+                      @keydown.enter.prevent
+                      class="font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent empty:before:content-[attr(data-placeholder)] empty:before:opacity-40 cursor-text"
+                      data-placeholder="Untitled">
+                 </div>
+                 <div :ref="(el) => setTextEditorRef(el, node.id)"
+                      :data-text-node-id="node.id"
+                      contenteditable="true"
+                      @mousedown.stop
+                      @click.stop
+                      @focus="selectedBoardNodeId = node.id; activeEditorField = 'text'"
+                      @input="updateNodeText($event, node)"
+                      class="w-full flex-1 font-serif text-sm italic leading-relaxed text-black/55 bg-transparent outline-none overflow-y-auto cursor-text break-words whitespace-pre-wrap min-h-0 matrix-text-rich empty:before:content-[attr(data-placeholder)] empty:before:opacity-40"
+                      data-placeholder="Click to edit...">
+                 </div>
               </div>
               <div v-else class="flex h-full flex-col pt-4">
                 <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
@@ -624,6 +631,67 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- BOTTOM TEXT EDITOR PANEL (Matrix Style) -->
+    <Teleport to="body">
+      <Transition name="fade-slide">
+        <div v-if="selectedBoardNodeId && selectedBoardNode?.type === 'text'"
+             class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100000] flex flex-col items-center w-full max-w-3xl bg-[#0a0a0a] border border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.4)] pointer-events-auto text-white/90 transition-colors duration-500"
+             @pointerdown.stop
+             @contextmenu.prevent.stop>
+             
+          <!-- Accent corners -->
+          <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white opacity-40"></div>
+          <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white opacity-40"></div>
+
+          <!-- Header -->
+          <div class="w-full flex items-center justify-between px-6 py-2 border-b border-white/10 bg-white/[0.03]">
+              <div class="flex items-center space-x-3">
+                  <div class="w-1.5 h-1.5 bg-white rotate-45 opacity-50"></div>
+                  <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Command_Panel</span>
+              </div>
+          </div>
+
+          <!-- Content -->
+          <div class="w-full flex justify-center py-4">
+            <div class="flex flex-wrap items-center justify-center gap-4 px-4 w-full">
+              <div class="flex items-center border border-white/20">
+                <button @mousedown.stop.prevent="applyTextCommand('bold')"
+                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">B</button>
+                <button @mousedown.stop.prevent="applyTextCommand('italic')"
+                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-serif italic text-[15px] opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">I</button>
+                <button @mousedown.stop.prevent="applyTextCommand('underline')"
+                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-mono text-[13px] underline opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">U</button>
+              </div>
+
+              <div class="flex items-center border border-white/20">
+                <button @mousedown.stop.prevent="applyTextCommand('insertUnorderedList')"
+                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">•</button>
+                <button @mousedown.stop.prevent="applyTextBlock('quote')"
+                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-serif text-[18px] opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">“</button>
+              </div>
+
+              <label class="h-9 w-11 border border-white/20 flex items-center justify-center cursor-pointer relative overflow-hidden hover:bg-white/5">
+                <span class="w-5 h-5 border border-white/20"
+                      :style="{ backgroundColor: activeTextColor }"></span>
+                <input :value="activeTextColor === 'currentColor' ? '#ffffff' : activeTextColor"
+                       type="color"
+                       class="absolute inset-0 opacity-0 cursor-pointer"
+                       @mousedown.stop
+                       @input="applyTextColor($event)" />
+              </label>
+              <button @mousedown.stop.prevent="resetTextColor"
+                      class="h-9 w-11 border border-white/20 flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-white/5 transition-all"
+                      aria-label="Default text color">
+                <span class="w-5 h-5 border border-white/20 bg-white relative">
+                  <span class="absolute left-1/2 top-[-3px] h-[26px] w-px bg-red-500 rotate-45 origin-center"></span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -895,15 +963,130 @@ const closeNodeContextMenu = () => {
 
 const removeBoardNode = (nodeId: string) => {
   boardNodes.value = boardNodes.value.filter(n => n.id !== nodeId)
+  if (selectedBoardNodeId.value === nodeId) selectedBoardNodeId.value = null
   closeNodeContextMenu()
+}
+
+// Node Selection logic
+const selectedBoardNodeId = ref<string | null>(null)
+const selectedBoardNode = computed(() => boardNodes.value.find((n: any) => n.id === selectedBoardNodeId.value) || null)
+const activeEditorField = ref<'title' | 'text' | null>(null)
+
+// --- Text Formatting Logic ---
+const activeTextColor = ref('currentColor')
+const textEditorRefs = ref<Record<string, HTMLElement>>({})
+const titleEditorRefs = ref<Record<string, HTMLElement>>({})
+
+const setTitleEditorRef = (el: any, id: string) => {
+  if (el) {
+    titleEditorRefs.value[id] = el
+    const node = boardNodes.value.find(n => n.id === id)
+    const nodeTitle = (node?.type === 'text' ? node.title : '') || ''
+    if (el.innerHTML !== nodeTitle) {
+      el.innerHTML = nodeTitle
+    }
+  }
+}
+
+const updateNodeTitle = (event: Event, node: any) => {
+  if (node.type === 'text') {
+    node.title = (event.target as HTMLElement).innerHTML || ''
+  }
+}
+
+const setTextEditorRef = (el: any, id: string) => {
+  if (el) {
+    textEditorRefs.value[id] = el
+    const node = boardNodes.value.find(n => n.id === id)
+    const nodeText = (node?.type === 'text' ? node.text : '') || ''
+    if (el.innerHTML !== nodeText) {
+      el.innerHTML = nodeText
+    }
+  }
+}
+
+const updateNodeText = (event: Event, node: any) => {
+  node.text = (event.target as HTMLElement).innerHTML
+}
+
+function getActiveTextEditor() {
+  if (!selectedBoardNodeId.value) return null
+  if (activeEditorField.value === 'title') {
+    return document.querySelector(`[data-title-node-id="${selectedBoardNodeId.value}"]`) as HTMLElement | null
+  } else {
+    return document.querySelector(`[data-text-node-id="${selectedBoardNodeId.value}"]`) as HTMLElement | null
+  }
+}
+
+const savedTextSelection = ref<Range | null>(null)
+
+function saveTextSelection() {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  const editor = getActiveTextEditor()
+  if (!editor || !editor.contains(range.commonAncestorContainer)) return
+  savedTextSelection.value = range.cloneRange()
+}
+
+function restoreTextSelection() {
+  const editor = getActiveTextEditor()
+  if (!editor) return
+  editor.focus()
+  const selection = window.getSelection()
+  if (!selection) return
+  selection.removeAllRanges()
+  if (savedTextSelection.value) {
+    selection.addRange(savedTextSelection.value)
+  }
+}
+
+function syncActiveTextHtml() {
+  const node = selectedBoardNode.value
+  const editor = getActiveTextEditor()
+  if (!node || !editor) return
+  if (node.type === 'text') {
+    if (activeEditorField.value === 'title') {
+      node.title = editor.innerHTML
+    } else {
+      node.text = editor.innerHTML
+    }
+  }
+}
+
+function applyTextCommand(command: string, value?: string) {
+  if (!selectedBoardNode.value) return
+  restoreTextSelection()
+  document.execCommand('styleWithCSS', false, 'true')
+  document.execCommand(command, false, value)
+  syncActiveTextHtml()
+  saveTextSelection()
+}
+
+function applyTextBlock(preset: string) {
+  if (preset === 'quote') {
+    applyTextCommand('formatBlock', 'blockquote')
+  }
+}
+
+function applyTextColor(event?: Event) {
+  activeTextColor.value = (event?.target as HTMLInputElement | undefined)?.value || activeTextColor.value
+  applyTextCommand('foreColor', activeTextColor.value)
+}
+
+function resetTextColor() {
+  activeTextColor.value = 'currentColor'
+  applyTextCommand('foreColor', '#000000')
 }
 
 onMounted(() => {
   window.addEventListener('pointerdown', closeNodeContextMenu)
+  document.addEventListener('selectionchange', saveTextSelection)
 })
 
 onUnmounted(() => {
   window.removeEventListener('pointerdown', closeNodeContextMenu)
+  document.removeEventListener('selectionchange', saveTextSelection)
 })
 
 // v-click-outside directive logic setup inside component (or via vueuse if available, 
@@ -1088,6 +1271,7 @@ const startBoardPan = (event: PointerEvent) => {
   const resizeHandle = target?.closest('[data-board-resize]') as HTMLElement | null
   if (resizeHandle) {
     const nodeId = resizeHandle.dataset.nodeId
+    selectedBoardNodeId.value = nodeId || null
     const node = boardNodes.value.find((n: any) => n.id === nodeId)
     if (node) {
       activeBoardInteraction.value = {
@@ -1106,6 +1290,7 @@ const startBoardPan = (event: PointerEvent) => {
   const nodeHandle = target?.closest('[data-board-node-handle]') as HTMLElement | null
   if (nodeHandle) {
     const nodeId = nodeHandle.dataset.nodeId
+    selectedBoardNodeId.value = nodeId || null
     const node = boardNodes.value.find((n: any) => n.id === nodeId)
     if (node) {
       activeBoardInteraction.value = {
@@ -1121,7 +1306,14 @@ const startBoardPan = (event: PointerEvent) => {
     }
   }
 
-  if (target?.closest('[data-board-node]')) return
+  const clickedNodeEl = target?.closest('[data-board-node]') as HTMLElement | null
+  if (clickedNodeEl) {
+    const nodeId = clickedNodeEl.dataset.nodeId
+    if (nodeId) selectedBoardNodeId.value = nodeId
+    return
+  }
+
+  selectedBoardNodeId.value = null
 
   activeBoardInteraction.value = {
     type: 'pan',
