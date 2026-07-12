@@ -98,7 +98,8 @@ const {
   nodes: matrixStateNodes,
   connections: matrixStateConnections,
   strategyVersions,
-  selectedStrategyVersionId
+  selectedStrategyVersionId,
+  ensureMatrixDataRestored
 } = useMatrixState();
 
 const selectedMatrixSnapshot = computed(() => {
@@ -861,6 +862,7 @@ const isInitializing = ref(true);
 
 onMounted(async () => {
   isInitializing.value = true;
+  await ensureMatrixDataRestored();
   isInitializing.value = false;
   
   const duration = 1500; // 1.5s

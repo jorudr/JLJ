@@ -156,6 +156,7 @@ const activeEmotionTab = ref<'NEGATIVE' | 'POSITIVE' | 'NEUTRAL'>('NEGATIVE')
 const personalIndicators = ref<any[]>([])
 const updateKey = ref(0)
 const pendingNodeConfig = ref<any | null>(null)
+let matrixRestorePromise: Promise<void> | null = null
 
 // Page-scoped dictionaries
 const strategyVersionsByPage = ref<Record<string, MatrixStrategyVersion[]>>({})
@@ -1969,6 +1970,21 @@ export function useMatrixState() {
     }
   }
 
+  const ensureMatrixDataRestored = async () => {
+    const appBootStore = useAppBootStore()
+    if (hasMatrixSessionData() && appBootStore.isGenesisMatrixSessionRestored) return
+    if (!matrixRestorePromise) {
+      matrixRestorePromise = restoreData()
+        .then(() => {
+          appBootStore.isGenesisMatrixSessionRestored = hasMatrixSessionData()
+        })
+        .finally(() => {
+          matrixRestorePromise = null
+        })
+    }
+    await matrixRestorePromise
+  }
+
   function applyTreeStateToMatrix(next: Set<string>) {
     const activeNodeIdentities = changeTree.syncNodeIdentityLabels(next)
     activeNodeIdentities.forEach((identity: any, nodeId: any) => {
@@ -2230,6 +2246,7 @@ export function useMatrixState() {
     removeStrategyVersion,
     saveMatrixData,
     restoreData,
+    ensureMatrixDataRestored,
     hasMatrixSessionData,
     applyTreeStateToMatrix,
     changeTree

@@ -942,7 +942,8 @@ const {
   nodes: matrixStateNodes,
   connections: matrixStateConnections,
   strategyVersions,
-  selectedStrategyVersionId
+  selectedStrategyVersionId,
+  ensureMatrixDataRestored
 } = useMatrixState()
 
 const selectedMatrixSnapshot = computed(() => {
@@ -3309,15 +3310,18 @@ const handleDistributionWheel = (e: WheelEvent) => {
   distributionScale.value = Math.max(0.65, Math.min(2.2, distributionScale.value - e.deltaY * 0.001))
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.addEventListener('keydown', handleGlobalKeydown)
+  isMatrixLoading.value = true
+  await Promise.all([
+    ensureMatrixDataRestored(),
+    tradeStore.init()
+  ])
   isMatrixLoading.value = false
-  tradeStore.init().then(() => {
-    initTrades()
-    switchFace(0)
-    update()
-  })
+  initTrades()
+  switchFace(0)
+  update()
 })
 onUnmounted(() => { 
   window.removeEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
