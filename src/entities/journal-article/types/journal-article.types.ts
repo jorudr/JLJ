@@ -17,7 +17,7 @@ export interface JournalArticleMetric {
   value: string | number
 }
 
-export type JournalArticleBoardNodeType = 'text' | 'image'
+export type JournalArticleBoardNodeType = 'text' | 'image' | 'drawing'
 
 export interface JournalArticleBoardPosition {
   x: number
@@ -50,7 +50,14 @@ export interface JournalArticleBoardImageNode extends JournalArticleBoardBaseNod
   caption?: string
 }
 
-export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode
+export interface JournalArticleBoardDrawingNode extends JournalArticleBoardBaseNode {
+  type: 'drawing'
+  params?: {
+    strokes?: any[]
+  }
+}
+
+export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode | JournalArticleBoardDrawingNode
 
 export interface JournalArticleBoardGridMagnet {
   enabled: boolean

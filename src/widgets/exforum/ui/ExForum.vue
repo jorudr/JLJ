@@ -42,11 +42,17 @@
               <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
             </div>
 
-            <div v-else class="flex h-full flex-col">
+            <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
               <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
               <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
                 {{ node.caption }}
               </p>
+            </div>
+
+            <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden">
+              <svg class="absolute inset-0 w-full h-full pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
+              </svg>
             </div>
 
           </article>
@@ -102,11 +108,17 @@
                 <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-current/55">{{ node.text }}</p>
               </div>
 
-              <div v-else class="flex h-full flex-col">
+              <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
                 <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
                 <p v-if="node.caption" class="border-t border-current/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
                   {{ node.caption }}
                 </p>
+              </div>
+
+              <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden">
+                <svg class="absolute inset-0 w-full h-full pointer-events-none text-current" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
+                </svg>
               </div>
             </article>
           </div>
@@ -345,7 +357,7 @@
                       data-placeholder="Click to edit...">
                  </div>
               </div>
-              <div v-else class="flex h-full flex-col pt-4">
+              <div v-else-if="node.type === 'image'" class="flex h-full flex-col pt-4">
                 <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-contain cursor-pointer hover:opacity-90 transition-opacity" draggable="false" @click.stop="triggerImageUpload(node.id)" />
                 <div v-else class="flex-1 flex flex-col items-center justify-center cursor-pointer border border-dashed border-black/20 m-4 hover:border-black/40 hover:bg-black/5 transition-all" @click.stop="triggerImageUpload(node.id)">
                    <svg class="w-8 h-8 opacity-40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -354,6 +366,25 @@
                 <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
                   {{ node.caption }}
                 </p>
+              </div>
+              <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden" @dblclick.stop="drawing.openDrawingFullscreen(node)">
+                <svg class="absolute inset-0 w-full h-full pointer-events-none text-black"
+                     viewBox="0 0 100 100"
+                     preserveAspectRatio="none">
+                  <polyline v-for="stroke in node.params?.strokes || []"
+                            :key="stroke.id"
+                            :points="drawing.formatDrawingStroke(stroke)"
+                            fill="none"
+                            :stroke="stroke.color || 'currentColor'"
+                            :stroke-width="stroke.size || 2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            vector-effect="non-scaling-stroke"
+                            class="opacity-90" />
+                </svg>
+                <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 text-[10px] font-mono tracking-widest uppercase text-center px-4">
+                   Dbl-Click to Draw
+                </div>
               </div>
 
               <!-- Resize Handle -->
@@ -396,6 +427,18 @@
                 <polyline points="21 15 16 10 5 21" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
+            <div class="w-6 h-px bg-black/10 my-1"></div>
+            <button class="p-2 transition-colors group relative" 
+                    :class="activeBoardTool === 'drawing' ? 'bg-black/10' : 'hover:bg-black/5'"
+                    :title="locale === 'ru' ? 'Рисунок' : 'Drawing Node'"
+                    @click.stop="activeBoardTool = activeBoardTool === 'drawing' ? null : 'drawing'">
+              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'drawing' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                <path d="M2 2l7.586 7.586"/>
+                <circle cx="11" cy="11" r="2"/>
+              </svg>
+            </button>
           </ExPanel>
           <!-- Bottom Right Actions -->
           <div class="absolute bottom-6 right-6 z-50 flex items-center gap-4">
@@ -412,6 +455,7 @@
               {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
             </button>
           </div>
+          <ExForumDrawingPanel :drawing="drawing" />
         </div>
         
       </Transition>
@@ -714,6 +758,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useForumDrawing } from '../model/useForumDrawing'
+import ExForumDrawingPanel from './ExForumDrawingPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useAuthStore } from '~/entities/user/auth.store'
@@ -908,6 +954,7 @@ const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 // Article Creation State
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'board'>('metadata')
+const drawing = useForumDrawing()
 
 const DRAFT_STORAGE_KEY = 'exforum_draft'
 const hasDraft = ref(false)
@@ -1160,7 +1207,7 @@ type BoardInteraction =
   | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const activeBoardTool = ref<'text' | 'image' | null>(null)
+const activeBoardTool = ref<'text' | 'image' | 'drawing' | null>(null)
 
 const triggerImageUpload = (nodeId: string) => {
   const input = document.createElement('input')
@@ -1315,8 +1362,8 @@ const startBoardPan = (event: PointerEvent) => {
     if (!rect) return
     const pointerX = event.clientX - rect.left
     const pointerY = event.clientY - rect.top
-    const worldX = (pointerX - boardPan.value.x) / boardScale.value
-    const worldY = (pointerY - boardPan.value.y) / boardScale.value
+    const worldX = pointerX / boardScale.value
+    const worldY = pointerY / boardScale.value
     
     // Snap to grid
     const gridX = Math.round(worldX / boardGridSize.value)
@@ -1342,6 +1389,15 @@ const startBoardPan = (event: PointerEvent) => {
         caption: '',
         position: { x: gridX, y: gridY },
         size: { width: 10, height: 10 }
+      }
+      boardNodes.value.push(newNode as any)
+    } else if (activeBoardTool.value === 'drawing') {
+      const newNode = {
+        id: `node_${Date.now()}`,
+        type: 'drawing',
+        params: { strokes: [] },
+        position: { x: gridX, y: gridY },
+        size: { width: 12, height: 12 }
       }
       boardNodes.value.push(newNode as any)
     }
