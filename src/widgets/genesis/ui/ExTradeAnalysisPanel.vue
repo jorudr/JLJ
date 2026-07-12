@@ -1708,7 +1708,7 @@ const strategyExecutionMetrics = computed(() => {
   const isRu = locale.value === 'ru';
   const resolvedBudgetDollars = riskBudgetDollars.value;
   const maxRisk = resolvedBudgetDollars ?? 250;
-  const riskBudgetRatio = maxRisk > 0 ? Math.min(200, (actualRisk / maxRisk) * 100) : 0;
+  const riskBudgetRatio = maxRisk > 0 ? (actualRisk / maxRisk) * 100 : 0;
   const riskBudgetBudgetStr = resolvedBudgetDollars !== null
     ? (maxRiskTrade.value!.unit === '%'
       ? (isRu
