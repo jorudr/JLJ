@@ -1341,6 +1341,18 @@ const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
   height: `${node.size.height * boardGridSize.value}px`
 })
 
+const checkNodeOverlap = (x: number, y: number, w: number, h: number, ignoreNodeId?: string) => {
+  return boardNodes.value.some((node: any) => {
+    if (node.id === ignoreNodeId) return false
+    return (
+      x < node.position.x + node.size.width &&
+      x + w > node.position.x &&
+      y < node.position.y + node.size.height &&
+      y + h > node.position.y
+    )
+  })
+}
+
 const startWindowTracking = () => {
   window.addEventListener('pointermove', handleBoardPointerMove)
   window.addEventListener('pointerup', stopBoardInteraction)
@@ -1368,6 +1380,16 @@ const startBoardPan = (event: PointerEvent) => {
     // Snap to grid
     const gridX = Math.round(worldX / boardGridSize.value)
     const gridY = Math.round(worldY / boardGridSize.value)
+    
+    // Check overlap
+    const newW = activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)
+    const newH = activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)
+    
+    if (checkNodeOverlap(gridX, gridY, newW, newH)) {
+      alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
+      activeBoardTool.value = null
+      return
+    }
     
     if (activeBoardTool.value === 'text') {
       const newNode = {
@@ -1491,33 +1513,67 @@ const handleBoardPointerMove = (event: PointerEvent) => {
     const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
     const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
     
-    // Snap to grid
-    const deltaGridX = Math.round(deltaWorldX / boardGridSize.value)
-    const deltaGridY = Math.round(deltaWorldY / boardGridSize.value)
+    // Smooth fractional position
+    const freeX = interaction.startNodeX + deltaWorldX / boardGridSize.value
+    const freeY = interaction.startNodeY + deltaWorldY / boardGridSize.value
     
-    interaction.node.position.x = interaction.startNodeX + deltaGridX
-    interaction.node.position.y = interaction.startNodeY + deltaGridY
+    interaction.node.position.x = freeX
+    interaction.node.position.y = freeY
   } else if (interaction.type === 'resizeNode') {
     const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
     const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
     
-    // Snap to grid
-    const deltaGridW = Math.round(deltaWorldX / boardGridSize.value)
-    const newWidth = Math.max(4, interaction.startNodeW + deltaGridW)
+    // Smooth fractional size
+    const freeW = interaction.startNodeW + deltaWorldX / boardGridSize.value
+    const newWidth = Math.max(4, freeW)
     
-    interaction.node.size.width = newWidth
-    
+    let newHeight = interaction.node.size.height
     if (interaction.node.type === 'image') {
       const aspect = interaction.startNodeW / interaction.startNodeH
-      interaction.node.size.height = Math.max(4, Math.round(newWidth / aspect))
+      newHeight = Math.max(4, newWidth / aspect)
     } else {
-      const deltaGridH = Math.round(deltaWorldY / boardGridSize.value)
-      interaction.node.size.height = Math.max(4, interaction.startNodeH + deltaGridH)
+      const freeH = interaction.startNodeH + deltaWorldY / boardGridSize.value
+      newHeight = Math.max(4, freeH)
     }
+
+    interaction.node.size.width = newWidth
+    interaction.node.size.height = newHeight
   }
 }
 
 const stopBoardInteraction = () => {
+  const interaction = activeBoardInteraction.value
+  if (interaction) {
+    if (interaction.type === 'moveNode') {
+      // Snap to grid on drop
+      const snappedX = Math.round(interaction.node.position.x)
+      const snappedY = Math.round(interaction.node.position.y)
+      
+      // Check overlap
+      if (!checkNodeOverlap(snappedX, snappedY, Math.round(interaction.node.size.width), Math.round(interaction.node.size.height), interaction.node.id)) {
+        interaction.node.position.x = snappedX
+        interaction.node.position.y = snappedY
+      } else {
+        // Revert if invalid
+        interaction.node.position.x = interaction.startNodeX
+        interaction.node.position.y = interaction.startNodeY
+      }
+    } else if (interaction.type === 'resizeNode') {
+      // Snap to grid on drop
+      const snappedW = Math.round(interaction.node.size.width)
+      const snappedH = Math.round(interaction.node.size.height)
+      
+      if (!checkNodeOverlap(Math.round(interaction.node.position.x), Math.round(interaction.node.position.y), snappedW, snappedH, interaction.node.id)) {
+        interaction.node.size.width = snappedW
+        interaction.node.size.height = snappedH
+      } else {
+        // Revert if invalid
+        interaction.node.size.width = interaction.startNodeW
+        interaction.node.size.height = interaction.startNodeH
+      }
+    }
+  }
+
   activeBoardInteraction.value = null
   stopWindowTracking()
 }
