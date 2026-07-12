@@ -693,46 +693,37 @@
     </Teleport>
 
     <!-- BOTTOM TEXT EDITOR PANEL (Matrix Style) -->
-    <Teleport to="body">
       <Transition name="fade-slide">
         <div v-if="selectedBoardNodeId && selectedBoardNode?.type === 'text'"
-             class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100000] flex flex-col items-center w-full max-w-3xl bg-[#0a0a0a] border border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.4)] pointer-events-auto text-white/90 transition-colors duration-500"
+             class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100000] flex flex-col items-center w-full max-w-3xl bg-white/90 backdrop-blur-md border border-black/10 shadow-[0_20px_40px_rgba(0,0,0,0.08)] pointer-events-auto text-[#2c2c2a] transition-colors duration-500"
              @pointerdown.stop
              @contextmenu.prevent.stop>
              
           <!-- Accent corners -->
-          <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white opacity-40"></div>
-          <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white opacity-40"></div>
-
-          <!-- Header -->
-          <div class="w-full flex items-center justify-between px-6 py-2 border-b border-white/10 bg-white/[0.03]">
-              <div class="flex items-center space-x-3">
-                  <div class="w-1.5 h-1.5 bg-white rotate-45 opacity-50"></div>
-                  <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Command_Panel</span>
-              </div>
-          </div>
+          <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-black opacity-30"></div>
+          <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-black opacity-30"></div>
 
           <!-- Content -->
           <div class="w-full flex justify-center py-4">
             <div class="flex flex-wrap items-center justify-center gap-4 px-4 w-full">
-              <div class="flex items-center border border-white/20">
+              <div class="flex items-center border border-black/10">
                 <button @mousedown.stop.prevent="applyTextCommand('bold')"
-                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">B</button>
+                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-black/5 transition-all">B</button>
                 <button @mousedown.stop.prevent="applyTextCommand('italic')"
-                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-serif italic text-[15px] opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">I</button>
+                        class="h-9 w-11 border-l border-black/10 flex items-center justify-center font-serif italic text-[15px] opacity-60 hover:opacity-100 hover:bg-black/5 transition-all">I</button>
                 <button @mousedown.stop.prevent="applyTextCommand('underline')"
-                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-mono text-[13px] underline opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">U</button>
+                        class="h-9 w-11 border-l border-black/10 flex items-center justify-center font-mono text-[13px] underline opacity-60 hover:opacity-100 hover:bg-black/5 transition-all">U</button>
               </div>
 
-              <div class="flex items-center border border-white/20">
+              <div class="flex items-center border border-black/10">
                 <button @mousedown.stop.prevent="applyTextCommand('insertUnorderedList')"
-                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">•</button>
+                        class="h-9 w-11 flex items-center justify-center font-mono text-[13px] font-black opacity-60 hover:opacity-100 hover:bg-black/5 transition-all">•</button>
                 <button @mousedown.stop.prevent="applyTextBlock('quote')"
-                        class="h-9 w-11 border-l border-white/20 flex items-center justify-center font-serif text-[18px] opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">“</button>
+                        class="h-9 w-11 border-l border-black/10 flex items-center justify-center font-serif text-[18px] opacity-60 hover:opacity-100 hover:bg-black/5 transition-all">“</button>
               </div>
 
-              <label class="h-9 w-11 border border-white/20 flex items-center justify-center cursor-pointer relative overflow-hidden hover:bg-white/5">
-                <span class="w-5 h-5 border border-white/20"
+              <label class="h-9 w-11 border border-black/10 flex items-center justify-center cursor-pointer relative overflow-hidden hover:bg-black/5">
+                <span class="w-5 h-5 border border-black/10"
                       :style="{ backgroundColor: activeTextColor }"></span>
                 <input :value="activeTextColor === 'currentColor' ? '#ffffff' : activeTextColor"
                        type="color"
@@ -741,9 +732,9 @@
                        @input="applyTextColor($event)" />
               </label>
               <button @mousedown.stop.prevent="resetTextColor"
-                      class="h-9 w-11 border border-white/20 flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-white/5 transition-all"
+                      class="h-9 w-11 border border-black/10 flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 transition-all"
                       aria-label="Default text color">
-                <span class="w-5 h-5 border border-white/20 bg-white relative">
+                <span class="w-5 h-5 border border-black/10 bg-white relative">
                   <span class="absolute left-1/2 top-[-3px] h-[26px] w-px bg-red-500 rotate-45 origin-center"></span>
                 </span>
               </button>
@@ -751,7 +742,6 @@
           </div>
         </div>
       </Transition>
-    </Teleport>
   </div>
 </template>
 
