@@ -1480,7 +1480,7 @@ const handleSpaceUp = (e: KeyboardEvent) => {
 }
 
 const handleGlobalBoardDrawingMove = (e: MouseEvent) => {
-   if (boardDrawing.isBoardDrawingPointerDown.value) {
+   if (boardDrawing.isBoardDrawingPointerDown.value && !isSpacePressed.value) {
       boardDrawing.moveBoardDrawing(e, boardStrokes.value)
    }
 }
@@ -1500,10 +1500,12 @@ const startBoardPan = (event: PointerEvent) => {
        startWindowTracking()
        return
     }
-    // Click to add node
-    const rect = boardViewportRef.value?.getBoundingClientRect()
-    if (!rect) return
-    const pointerX = event.clientX - rect.left
+    
+    if (!isSpacePressed.value) {
+      // Click to add node
+      const rect = boardViewportRef.value?.getBoundingClientRect()
+      if (!rect) return
+      const pointerX = event.clientX - rect.left
     const pointerY = event.clientY - rect.top
     const worldX = pointerX / boardScale.value
     const worldY = pointerY / boardScale.value
@@ -1557,6 +1559,7 @@ const startBoardPan = (event: PointerEvent) => {
     
     activeBoardTool.value = null
     return
+  }
   }
 
   const resizeHandle = target?.closest('[data-board-resize]') as HTMLElement | null
@@ -1622,6 +1625,9 @@ const startBoardPan = (event: PointerEvent) => {
 const handleBoardHover = (event: PointerEvent) => {
   if (creationStep.value === 'board') {
     if (activeBoardTool.value === 'pencil') {
+      if (!boardDrawing.boardViewport.value) {
+        boardDrawing.boardViewport.value = boardViewportRef.value
+      }
       boardDrawing.updateBoardDrawingCursor(event)
     }
     if (activeBoardTool.value) {
