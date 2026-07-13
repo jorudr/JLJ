@@ -1206,17 +1206,21 @@ const triggerImageUpload = (nodeId: string) => {
   input.onchange = (e) => {
     const file = (e.target as HTMLInputElement).files?.[0]
     if (file) {
-      const url = URL.createObjectURL(file)
-      const node = boardNodes.value.find((n: any) => n.id === nodeId)
-      if (node && node.type === 'image') {
-        node.src = url
-        const img = new Image()
-        img.onload = () => {
-          const aspect = img.width / img.height
-          node.size.height = Math.max(1, Math.round(node.size.width / aspect))
+      const reader = new FileReader()
+      reader.onload = (re) => {
+        const url = re.target?.result as string
+        const node = boardNodes.value.find((n: any) => n.id === nodeId)
+        if (node && node.type === 'image') {
+          node.src = url
+          const img = new Image()
+          img.onload = () => {
+            const aspect = img.width / img.height
+            node.size.height = Math.max(1, Math.round(node.size.width / aspect))
+          }
+          img.src = url
         }
-        img.src = url
       }
+      reader.readAsDataURL(file)
     }
   }
   input.click()
