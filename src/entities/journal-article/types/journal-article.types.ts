@@ -69,6 +69,7 @@ export interface JournalArticleBoard {
   magnet: JournalArticleBoardGridMagnet
   size: JournalArticleBoardSize
   nodes: JournalArticleBoardNode[]
+  strokes?: any[]
 }
 
 export interface JournalArticle {

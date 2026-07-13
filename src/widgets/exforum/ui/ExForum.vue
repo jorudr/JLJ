@@ -320,6 +320,20 @@
 
           <!-- Board World (Pan & Zoom) -->
           <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef">
+            <!-- Freehand Board Drawing Layer -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none text-black z-0 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <polyline v-for="stroke in boardStrokes"
+                        :key="stroke.id"
+                        :points="boardDrawing.formatBoardDrawingStroke(stroke)"
+                        fill="none"
+                        :stroke="stroke.color || 'currentColor'"
+                        :stroke-width="stroke.size || 2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        vector-effect="non-scaling-stroke"
+                        class="opacity-90" />
+            </svg>
+
             <article
               v-for="node in boardNodes"
               :key="node.id"
@@ -403,7 +417,7 @@
 
           <!-- Tooltip at the top center -->
           <div 
-            v-if="activeBoardTool"
+            v-if="activeBoardTool && activeBoardTool !== 'pencil'"
             class="pointer-events-none absolute top-8 left-1/2 transform -translate-x-1/2 z-[9999] px-4 py-2 bg-black text-white text-[10px] font-mono tracking-widest uppercase shadow-lg"
           >
             {{ locale === 'ru' ? 'Кликните чтобы добавить' : 'Click to add node' }}
@@ -442,7 +456,66 @@
                 <circle cx="11" cy="11" r="2"/>
               </svg>
             </button>
+            <div class="w-6 h-px bg-black/10 my-1"></div>
+            <button class="p-2 transition-colors group relative" 
+                    :class="activeBoardTool === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
+                    :title="locale === 'ru' ? 'Карандаш' : 'Pencil'"
+                    @click.stop="activeBoardTool = activeBoardTool === 'pencil' ? null : 'pencil'">
+              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'pencil' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+              </svg>
+            </button>
           </ExPanel>
+          
+          <!-- Right Vertical Toolbar (Pencil Settings) -->
+          <div v-if="activeBoardTool === 'pencil'" class="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-12" @pointerdown.stop>
+            <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 w-full h-full">
+               <!-- Brush Tool -->
+               <button class="p-2 transition-colors group relative"
+                       :class="boardDrawing.boardDrawingTool.value === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
+                       @click="boardDrawing.boardDrawingTool.value = 'pencil'"
+                       :title="locale === 'ru' ? 'Кисть' : 'Brush'">
+                  <div class="w-5 h-5 flex items-center justify-center">
+                    <div class="w-2 h-2 rounded-full bg-black"></div>
+                  </div>
+               </button>
+
+               <div class="w-6 h-px bg-black/10 my-1"></div>
+
+               <!-- Eraser Tool -->
+               <button class="p-2 transition-colors group relative"
+                       :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'bg-black/10' : 'hover:bg-black/5'"
+                       @click="boardDrawing.boardDrawingTool.value = 'eraser'"
+                       :title="locale === 'ru' ? 'Ластик' : 'Eraser'">
+                  <svg class="w-5 h-5 transition-colors" :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M2.5 13.5l10-10a2.828 2.828 0 014 4l-10 10H2.5v-4z" />
+                     <path d="M12.5 13.5L22 23" />
+                  </svg>
+               </button>
+
+               <div class="w-6 h-px bg-black/10 my-1"></div>
+
+               <!-- Size Slider (Vertical) -->
+               <div class="flex flex-col items-center py-2 w-full">
+                  <div class="relative h-24 flex justify-center cursor-ns-resize group/slider w-full" @pointerdown="boardDrawing.startBoardDrawingSizeDrag">
+                     <div class="absolute inset-y-0 w-0.5 bg-black/10 rounded-full group-hover/slider:bg-black/20 transition-colors"></div>
+                     <div class="absolute w-2 h-2 bg-white border border-black/30 rounded-full shadow-sm pointer-events-none transition-transform group-active/slider:scale-110"
+                          :style="{ top: `${boardDrawing.boardDrawingSizePercent.value}%`, transform: 'translateY(-50%)' }">
+                     </div>
+                  </div>
+               </div>
+
+               <div class="w-6 h-px bg-black/10 my-1"></div>
+
+               <!-- Color Picker -->
+               <div class="flex flex-col items-center py-2 w-full">
+                  <label class="w-5 h-5 rounded-full cursor-pointer border border-black/20 overflow-hidden hover:scale-110 transition-transform">
+                     <input type="color" v-model="boardDrawing.boardDrawingColor.value" class="w-full h-full opacity-0 cursor-pointer absolute inset-0" />
+                     <div class="w-full h-full" :style="{ backgroundColor: boardDrawing.boardDrawingColor.value }"></div>
+                  </label>
+               </div>
+            </ExPanel>
+          </div>
           <!-- Bottom Right Actions -->
           <div class="absolute bottom-6 right-6 z-50 flex items-center gap-4">
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
@@ -752,6 +825,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useForumDrawing } from '../model/useForumDrawing'
+import { useBoardDrawing } from '../model/useBoardDrawing'
 import ExForumDrawingPanel from './ExForumDrawingPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -939,6 +1013,7 @@ const articleComments = computed(() => {
 const journalWrapperRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
 const boardNodes = ref<JournalArticleBoardNode[]>([])
+const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
 const isBoardFullscreen = ref(false)
@@ -948,6 +1023,7 @@ const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'board'>('metadata')
 const drawing = useForumDrawing()
+const boardDrawing = useBoardDrawing()
 
 const DRAFT_STORAGE_KEY = 'exforum_draft'
 const hasDraft = ref(false)
@@ -968,6 +1044,7 @@ const loadDraft = () => {
       const draft = JSON.parse(draftStr)
       newArticleForm.value = draft.form
       boardNodes.value = draft.nodes
+      boardStrokes.value = draft.strokes || []
       creationStep.value = draft.step || 'metadata'
       hasDraft.value = true
       isCreatingArticle.value = true
@@ -980,6 +1057,7 @@ const clearDraft = () => {
   hasDraft.value = false
   newArticleForm.value = { title: '', description: '', type: '' }
   boardNodes.value = []
+  boardStrokes.value = []
   creationStep.value = 'metadata'
 }
 
@@ -993,11 +1071,12 @@ watch(isCreatingArticle, (newVal) => {
   }
 })
 
-watch([newArticleForm, boardNodes, creationStep], () => {
+watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
   if (isCreatingArticle.value) {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
       form: newArticleForm.value,
-      nodes: boardNodes.value,
+      nodes: JSON.parse(JSON.stringify(boardNodes.value)),
+      strokes: JSON.parse(JSON.stringify(boardStrokes.value)),
       step: creationStep.value
     }))
     hasDraft.value = true
@@ -1200,7 +1279,7 @@ type BoardInteraction =
   | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const activeBoardTool = ref<'text' | 'image' | 'drawing' | null>(null)
+const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | null>(null)
 
 const triggerImageUpload = (nodeId: string) => {
   const input = document.createElement('input')
@@ -1260,6 +1339,7 @@ const resizeCommentInput = () => {
 
 watch(selectedArticle, (article) => {
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
+  boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
   nextTick(resizeCommentInput)
   boardPan.value = { x: 48, y: 36 }
@@ -1354,18 +1434,42 @@ const startWindowTracking = () => {
   window.addEventListener('pointermove', handleBoardPointerMove)
   window.addEventListener('pointerup', stopBoardInteraction)
   window.addEventListener('pointercancel', stopBoardInteraction)
+  
+  if (boardDrawing.isBoardDrawingPointerDown.value) {
+     window.addEventListener('pointermove', handleGlobalBoardDrawingMove)
+     window.addEventListener('pointerup', handleGlobalBoardDrawingUp)
+  }
 }
 
 const stopWindowTracking = () => {
   window.removeEventListener('pointermove', handleBoardPointerMove)
   window.removeEventListener('pointerup', stopBoardInteraction)
   window.removeEventListener('pointercancel', stopBoardInteraction)
+  window.removeEventListener('pointermove', handleGlobalBoardDrawingMove)
+  window.removeEventListener('pointerup', handleGlobalBoardDrawingUp)
+}
+
+const handleGlobalBoardDrawingMove = (e: MouseEvent) => {
+   if (boardDrawing.isBoardDrawingPointerDown.value) {
+      boardDrawing.moveBoardDrawing(e, boardStrokes.value)
+   }
+}
+
+const handleGlobalBoardDrawingUp = () => {
+   boardDrawing.finishBoardDrawing()
+   stopWindowTracking()
 }
 
 const startBoardPan = (event: PointerEvent) => {
   const target = event.target as HTMLElement | null
   
   if (creationStep.value === 'board' && activeBoardTool.value) {
+    if (activeBoardTool.value === 'pencil') {
+       boardDrawing.boardViewport.value = boardViewportRef.value
+       boardDrawing.startBoardDrawing(event, boardStrokes.value)
+       startWindowTracking()
+       return
+    }
     // Click to add node
     const rect = boardViewportRef.value?.getBoundingClientRect()
     if (!rect) return
