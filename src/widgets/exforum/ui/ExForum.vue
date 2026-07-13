@@ -531,7 +531,8 @@
 
               <!-- Matrix-style ports -->
               <div
-                class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all group-hover/node:opacity-100"
+                class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
+                :class="isHighlightedPassiveBoardPort(node) ? 'opacity-100 scale-125' : 'opacity-0 group-hover/node:opacity-100'"
                 @pointerdown.stop.prevent="pickupBoardInput(node, 'left')"
                 @pointerup.stop.prevent="dropBoardWire(node, 'left')"
                 @dblclick.stop.prevent="clearBoardInput(node)"
@@ -542,7 +543,8 @@
                 @dblclick.stop.prevent="clearBoardOutput(node)"
               ></div>
               <div
-                class="absolute -top-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all group-hover/node:opacity-100"
+                class="absolute -top-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
+                :class="isHighlightedPassiveBoardPort(node) ? 'opacity-100 scale-125' : 'opacity-0 group-hover/node:opacity-100'"
                 @pointerdown.stop.prevent="pickupBoardInput(node, 'top')"
                 @pointerup.stop.prevent="dropBoardWire(node, 'top')"
                 @dblclick.stop.prevent="clearBoardInput(node)"
@@ -1298,6 +1300,7 @@ const activeBoardWire = ref<{
   originalToPort?: JournalArticleBoardPort
   current: { x: number; y: number }
 } | null>(null)
+const passivePortRevealDistance = 96
 const activeAssetNodeId = ref<string | null>(null)
 const assetSearch = ref('')
 const assetTypeFilter = ref('ALL')
@@ -1799,6 +1802,42 @@ const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
   width: `${node.size.width * boardGridSize.value}px`,
   height: `${node.size.height * boardGridSize.value}px`
 })
+
+const getBoardNodeRect = (node: JournalArticleBoardNode) => ({
+  left: node.position.x * boardGridSize.value,
+  top: node.position.y * boardGridSize.value,
+  right: (node.position.x + node.size.width) * boardGridSize.value,
+  bottom: (node.position.y + node.size.height) * boardGridSize.value
+})
+
+const getDistanceToBoardNode = (point: { x: number; y: number }, node: JournalArticleBoardNode) => {
+  const rect = getBoardNodeRect(node)
+  const dx = point.x < rect.left ? rect.left - point.x : point.x > rect.right ? point.x - rect.right : 0
+  const dy = point.y < rect.top ? rect.top - point.y : point.y > rect.bottom ? point.y - rect.bottom : 0
+  return Math.hypot(dx, dy)
+}
+
+const closestBoardWireTargetId = computed(() => {
+  const wire = activeBoardWire.value
+  if (!wire) return null
+  let closestId: string | null = null
+  let closestDistance = passivePortRevealDistance
+
+  boardNodes.value.forEach((node) => {
+    if (node.id === wire.fromId) return
+    const distance = getDistanceToBoardNode(wire.current, node)
+    if (distance <= closestDistance) {
+      closestDistance = distance
+      closestId = node.id
+    }
+  })
+
+  return closestId
+})
+
+const isHighlightedPassiveBoardPort = (node: JournalArticleBoardNode) => {
+  return !!activeBoardWire.value && closestBoardWireTargetId.value === node.id
+}
 
 const parsePriceValue = (value: string | number | undefined | null) => {
   const normalized = String(value ?? '').replace(',', '.').trim()
