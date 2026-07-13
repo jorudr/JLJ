@@ -54,6 +54,7 @@ export interface JournalArticleBoardDrawingNode extends JournalArticleBoardBaseN
   type: 'drawing'
   params?: {
     strokes?: any[]
+    preview?: string
   }
 }
 

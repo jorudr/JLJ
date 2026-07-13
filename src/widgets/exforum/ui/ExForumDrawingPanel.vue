@@ -11,20 +11,8 @@
            @pointerup.stop.prevent="finishFullscreenDrawing"
            @pointerenter.stop="isDrawingCursorVisible = true"
            @pointerleave.stop.prevent="finishFullscreenDrawing">
-        <svg class="absolute inset-0 w-full h-full pointer-events-none text-black"
-             viewBox="0 0 100 100"
-             preserveAspectRatio="none">
-          <polyline v-for="stroke in activeDrawingNode.params?.strokes || []"
-                    :key="stroke.id"
-                    :points="formatDrawingStroke(stroke)"
-                    fill="none"
-                    :stroke="stroke.color || 'currentColor'"
-                    :stroke-width="stroke.size || 2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    vector-effect="non-scaling-stroke"
-                    class="opacity-90" />
-        </svg>
+        <canvas ref="canvasRef"
+                class="absolute inset-0 h-full w-full pointer-events-none"></canvas>
         <div v-if="!activeDrawingNode.params?.strokes?.length"
              class="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">Press_And_Draw</span>
@@ -112,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRefs } from 'vue'
+import { nextTick, ref, watch, toRefs } from 'vue'
 import type { useForumDrawing } from '../model/useForumDrawing'
 
 const props = defineProps<{
@@ -120,6 +108,7 @@ const props = defineProps<{
 }>()
 
 const boardRef = ref<HTMLElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 // Extract reactive state into refs so they sync properly
 const {
@@ -130,24 +119,28 @@ const {
   drawingSize,
   drawingSizePercent,
   drawingCursorStyle,
-  fullscreenDrawingBoard
+  fullscreenDrawingBoard,
+  fullscreenDrawingCanvas
 } = toRefs(props.drawing)
 
 // Extract functions directly so they are just callable references in the template
 const {
-  formatDrawingStroke,
   startFullscreenDrawing,
   moveFullscreenDrawing,
   finishFullscreenDrawing,
   startDrawingSizeDrag,
   clearDrawingFullscreen,
-  closeDrawingFullscreen
+  closeDrawingFullscreen,
+  renderFullscreenDrawing
 } = props.drawing
 
 // Sync our local template ref to the composable's ref
-watch(boardRef, (el) => {
+watch([boardRef, canvasRef, activeDrawingNode], () => {
+  const el = boardRef.value
   fullscreenDrawingBoard.value = el as HTMLElement | null
-})
+  fullscreenDrawingCanvas.value = canvasRef.value as HTMLCanvasElement | null
+  nextTick(renderFullscreenDrawing)
+}, { flush: 'post' })
 </script>
 
 <style scoped>

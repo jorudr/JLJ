@@ -50,7 +50,8 @@
             </div>
 
             <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden">
-              <svg class="absolute inset-0 w-full h-full pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <img v-if="node.params?.preview" :src="node.params.preview" alt="" class="absolute inset-0 h-full w-full object-fill pointer-events-none" draggable="false" />
+              <svg v-else class="absolute inset-0 w-full h-full pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
               </svg>
             </div>
@@ -116,7 +117,8 @@
               </div>
 
               <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden">
-                <svg class="absolute inset-0 w-full h-full pointer-events-none text-current" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <img v-if="node.params?.preview" :src="node.params.preview" alt="" class="absolute inset-0 h-full w-full object-fill pointer-events-none" draggable="false" />
+                <svg v-else class="absolute inset-0 w-full h-full pointer-events-none text-current" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
                 </svg>
               </div>
@@ -394,7 +396,13 @@
                 </p>
               </div>
               <div v-else-if="node.type === 'drawing'" class="flex h-full w-full flex-col relative bg-transparent overflow-hidden" @dblclick.stop="drawing.openDrawingFullscreen(node)">
-                <svg class="absolute inset-0 w-full h-full pointer-events-none text-black"
+                <img v-if="node.params?.preview"
+                     :src="node.params.preview"
+                     alt=""
+                     class="absolute inset-0 h-full w-full object-fill pointer-events-none"
+                     draggable="false" />
+                <svg v-else
+                     class="absolute inset-0 w-full h-full pointer-events-none text-black"
                      viewBox="0 0 100 100"
                      preserveAspectRatio="none">
                   <polyline v-for="stroke in node.params?.strokes || []"
