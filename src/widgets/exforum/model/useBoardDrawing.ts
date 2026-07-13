@@ -31,6 +31,8 @@ export function useBoardDrawing() {
   const boardDrawingTool = ref<BoardDrawingTool>('pencil')
   const boardDrawingColor = ref('#000000')
   const boardDrawingSize = ref(4)
+  let previousDocumentCursor = ''
+  let previousBodyCursor = ''
 
   const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize()))
   const boardDrawingSizePercent = computed(() => ((boardDrawingSize.value - 1) / 23) * 100)
@@ -228,6 +230,7 @@ export function useBoardDrawing() {
     const target = e.target as HTMLElement
     if (target.closest('[data-board-node], [data-board-chrome]')) return
 
+    hideNativeCursor()
     updateBoardDrawingCursor(e)
     isBoardDrawingPointerDown.value = true
 
@@ -266,6 +269,19 @@ export function useBoardDrawing() {
     activeBoardStrokeId.value = null
     isBoardDrawingPointerDown.value = false
     isBoardDrawingCursorVisible.value = false
+    restoreNativeCursor()
+  }
+
+  function hideNativeCursor() {
+    previousDocumentCursor = document.documentElement.style.cursor
+    previousBodyCursor = document.body.style.cursor
+    document.documentElement.style.cursor = 'none'
+    document.body.style.cursor = 'none'
+  }
+
+  function restoreNativeCursor() {
+    document.documentElement.style.cursor = previousDocumentCursor
+    document.body.style.cursor = previousBodyCursor
   }
 
   return {
