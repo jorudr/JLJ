@@ -309,7 +309,7 @@
         <!-- BOARD STEP -->
         <div v-else-if="creationStep === 'board'"
              class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] text-[#2c2c2a]"
-             :class="activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'"
+             :class="isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (activeBoardTool === 'pencil' ? 'cursor-none' : (activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'))"
              @pointermove="handleBoardHover"
              @pointerdown="startBoardPan"
              @wheel.prevent="handleBoardWheel"
@@ -319,8 +319,9 @@
           <div class="absolute inset-0 bg-black/10 pointer-events-none"></div>
 
           <!-- Board World (Pan & Zoom) -->
-          <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef">
-            <!-- Freehand Board Drawing Layer -->
+          <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef"
+               @pointerleave="boardDrawing.isBoardDrawingCursorVisible.value = false">
+             <!-- Freehand Board Drawing Layer -->
             <svg class="absolute inset-0 w-full h-full pointer-events-none text-black z-0 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
               <polyline v-for="stroke in boardStrokes"
                         :key="stroke.id"
@@ -333,6 +334,13 @@
                         vector-effect="non-scaling-stroke"
                         class="opacity-90" />
             </svg>
+
+            <!-- Custom Cursor for Board Drawing -->
+            <div v-if="activeBoardTool === 'pencil' && boardDrawing.isBoardDrawingCursorVisible.value && !isSpacePressed"
+                 class="absolute rounded-full pointer-events-none z-20 shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
+                 :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'border-2 border-red-500 bg-red-500/10' : 'border-2 border-black bg-black/5'"
+                 :style="boardDrawing.boardDrawingCursorStyle.value">
+            </div>
 
             <article
               v-for="node in boardNodes"
@@ -487,20 +495,23 @@
                        :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'bg-black/10' : 'hover:bg-black/5'"
                        @click="boardDrawing.boardDrawingTool.value = 'eraser'"
                        :title="locale === 'ru' ? 'Ластик' : 'Eraser'">
-                  <svg class="w-5 h-5 transition-colors" :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                     <path d="M2.5 13.5l10-10a2.828 2.828 0 014 4l-10 10H2.5v-4z" />
-                     <path d="M12.5 13.5L22 23" />
-                  </svg>
+                  <div class="w-5 h-5 flex items-center justify-center">
+                    <div class="w-2 h-2 rounded-full border-2" :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'border-black' : 'border-black/60 group-hover:border-black'"></div>
+                  </div>
                </button>
 
                <div class="w-6 h-px bg-black/10 my-1"></div>
 
                <!-- Size Slider (Vertical) -->
-               <div class="flex flex-col items-center py-2 w-full">
+               <div class="flex flex-col items-center py-2 w-full gap-2">
+                  <div class="w-5 h-5 flex items-center justify-center pointer-events-none">
+                    <div class="rounded-full border border-black/40"
+                         :style="{ width: `${Math.min(18, Math.max(5, boardDrawing.boardDrawingSize.value))}px`, height: `${Math.min(18, Math.max(5, boardDrawing.boardDrawingSize.value))}px`, backgroundColor: boardDrawing.boardDrawingColor.value }"></div>
+                  </div>
                   <div class="relative h-24 flex justify-center cursor-ns-resize group/slider w-full" @pointerdown="boardDrawing.startBoardDrawingSizeDrag">
                      <div class="absolute inset-y-0 w-0.5 bg-black/10 rounded-full group-hover/slider:bg-black/20 transition-colors"></div>
                      <div class="absolute w-2 h-2 bg-white border border-black/30 rounded-full shadow-sm pointer-events-none transition-transform group-active/slider:scale-110"
-                          :style="{ top: `${boardDrawing.boardDrawingSizePercent.value}%`, transform: 'translateY(-50%)' }">
+                          :style="{ bottom: `${boardDrawing.boardDrawingSizePercent.value}%`, transform: 'translateY(50%)' }">
                      </div>
                   </div>
                </div>
@@ -509,7 +520,7 @@
 
                <!-- Color Picker -->
                <div class="flex flex-col items-center py-2 w-full">
-                  <label class="w-5 h-5 rounded-full cursor-pointer border border-black/20 overflow-hidden hover:scale-110 transition-transform">
+                  <label class="w-5 h-5 rounded-full cursor-pointer border border-black/20 overflow-hidden hover:scale-110 transition-transform relative">
                      <input type="color" v-model="boardDrawing.boardDrawingColor.value" class="w-full h-full opacity-0 cursor-pointer absolute inset-0" />
                      <div class="w-full h-full" :style="{ backgroundColor: boardDrawing.boardDrawingColor.value }"></div>
                   </label>
@@ -1260,11 +1271,15 @@ function resetTextColor() {
 onMounted(() => {
   window.addEventListener('pointerdown', closeNodeContextMenu)
   document.addEventListener('selectionchange', saveTextSelection)
+  window.addEventListener('keydown', handleSpaceDown)
+  window.addEventListener('keyup', handleSpaceUp)
 })
 
 onUnmounted(() => {
   window.removeEventListener('pointerdown', closeNodeContextMenu)
   document.removeEventListener('selectionchange', saveTextSelection)
+  window.removeEventListener('keydown', handleSpaceDown)
+  window.removeEventListener('keyup', handleSpaceUp)
 })
 
 // v-click-outside directive logic setup inside component (or via vueuse if available, 
@@ -1449,6 +1464,21 @@ const stopWindowTracking = () => {
   window.removeEventListener('pointerup', handleGlobalBoardDrawingUp)
 }
 
+const isSpacePressed = ref(false)
+
+const handleSpaceDown = (e: KeyboardEvent) => {
+  if (e.code === 'Space' && (e.target === document.body || !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName) && !(e.target as HTMLElement).isContentEditable)) {
+    isSpacePressed.value = true
+    if (creationStep.value === 'board') e.preventDefault()
+  }
+}
+
+const handleSpaceUp = (e: KeyboardEvent) => {
+  if (e.code === 'Space') {
+    isSpacePressed.value = false
+  }
+}
+
 const handleGlobalBoardDrawingMove = (e: MouseEvent) => {
    if (boardDrawing.isBoardDrawingPointerDown.value) {
       boardDrawing.moveBoardDrawing(e, boardStrokes.value)
@@ -1464,7 +1494,7 @@ const startBoardPan = (event: PointerEvent) => {
   const target = event.target as HTMLElement | null
   
   if (creationStep.value === 'board' && activeBoardTool.value) {
-    if (activeBoardTool.value === 'pencil') {
+    if (activeBoardTool.value === 'pencil' && !isSpacePressed.value) {
        boardDrawing.boardViewport.value = boardViewportRef.value
        boardDrawing.startBoardDrawing(event, boardStrokes.value)
        startWindowTracking()
@@ -1590,12 +1620,17 @@ const startBoardPan = (event: PointerEvent) => {
 }
 
 const handleBoardHover = (event: PointerEvent) => {
-  if (creationStep.value === 'board' && activeBoardTool.value) {
-    const rect = boardViewportRef.value?.getBoundingClientRect()
-    if (rect) {
-      boardPointerPos.value = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+  if (creationStep.value === 'board') {
+    if (activeBoardTool.value === 'pencil') {
+      boardDrawing.updateBoardDrawingCursor(event)
+    }
+    if (activeBoardTool.value) {
+      const rect = boardViewportRef.value?.getBoundingClientRect()
+      if (rect) {
+        boardPointerPos.value = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        }
       }
     }
   }

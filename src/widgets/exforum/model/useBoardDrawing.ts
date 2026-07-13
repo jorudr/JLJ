@@ -22,7 +22,14 @@ export function useBoardDrawing() {
 
   function setBoardDrawingSizeFromEvent(e: MouseEvent, track: HTMLElement) {
     const rect = track.getBoundingClientRect()
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)))
+    let ratio = 0
+    if (rect.height > rect.width) {
+      // Vertical slider (usually bottom to top)
+      ratio = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)))
+    } else {
+      // Horizontal slider (left to right)
+      ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)))
+    }
     boardDrawingSize.value = Math.round(1 + ratio * 23)
   }
 
@@ -170,6 +177,7 @@ export function useBoardDrawing() {
     startBoardDrawing,
     moveBoardDrawing,
     finishBoardDrawing,
-    formatBoardDrawingStroke
+    formatBoardDrawingStroke,
+    updateBoardDrawingCursor
   }
 }
