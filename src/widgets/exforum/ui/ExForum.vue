@@ -315,8 +315,11 @@
              @wheel.prevent="handleBoardWheel"
              key="board"
         >
+          <!-- Darkening overlay -->
+          <div class="absolute inset-0 bg-black/10 pointer-events-none"></div>
+
           <!-- Board World (Pan & Zoom) -->
-          <div class="absolute left-0 top-0 origin-top-left" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef">
+          <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef">
             <article
               v-for="node in boardNodes"
               :key="node.id"
