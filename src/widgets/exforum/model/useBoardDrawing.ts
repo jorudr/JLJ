@@ -35,7 +35,7 @@ export function useBoardDrawing() {
   let previousBodyCursor = ''
   let isNativeCursorHidden = false
 
-  const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize() * boardTransform.value.scale))
+  const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize()))
   const boardDrawingSizePercent = computed(() => ((boardDrawingSize.value - 1) / 23) * 100)
 
   const boardDrawingCursorStyle = computed(() => ({
@@ -156,7 +156,11 @@ export function useBoardDrawing() {
     ctx.globalCompositeOperation = operation.tool === 'eraser' ? 'destination-out' : 'source-over'
     ctx.strokeStyle = operation.color || '#000000'
     ctx.fillStyle = operation.color || '#000000'
-    ctx.lineWidth = (operation.size || 4) * boardTransform.value.scale
+    ctx.lineWidth = getOperationScreenSize(operation)
+  }
+
+  function getOperationScreenSize(operation: BoardDrawingOperation) {
+    return Math.max(1, (operation.size || 4) * boardTransform.value.scale)
   }
 
   function getCanvasPoint(point: BoardDrawingPoint) {
@@ -170,7 +174,7 @@ export function useBoardDrawing() {
     const canvasPoint = getCanvasPoint(point)
     configureContext(ctx, operation)
     ctx.beginPath()
-    ctx.arc(canvasPoint.x, canvasPoint.y, Math.max(1, operation.size / 2), 0, Math.PI * 2)
+    ctx.arc(canvasPoint.x, canvasPoint.y, getOperationScreenSize(operation) / 2, 0, Math.PI * 2)
     ctx.fill()
   }
 
@@ -240,7 +244,7 @@ export function useBoardDrawing() {
       id: 'bo' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       tool: boardDrawingTool.value,
       color: boardDrawingTool.value === 'eraser' ? '#000000' : boardDrawingColor.value,
-      size: getEffectiveBrushSize(),
+      size: getEffectiveBrushSize() / Math.max(0.01, boardTransform.value.scale),
       points: [point]
     }
 
