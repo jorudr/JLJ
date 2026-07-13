@@ -29,6 +29,18 @@
           class="absolute left-0 top-0 origin-top-left"
           :style="[boardWorldStyle, boardTransformStyle]"
         >
+          <svg class="pointer-events-none absolute left-0 top-0 h-full w-full overflow-visible text-black/35">
+            <path
+              v-for="connection in boardConnections"
+              :key="connection.id"
+              :d="getBoardConnectionPath(connection)"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.2"
+              vector-effect="non-scaling-stroke"
+              class="opacity-70"
+            />
+          </svg>
           <article
             v-for="node in boardNodes"
             :key="node.id"
@@ -53,6 +65,15 @@
               <svg v-else class="absolute inset-0 w-full h-full pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
               </svg>
+            </div>
+
+            <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+              <span
+                class="truncate text-center text-xl font-black leading-none"
+                :class="getPriceNodeValueClass(node)"
+              >
+                <template v-if="getPriceNodeArrow(node)">{{ getPriceNodeArrow(node) }} </template>{{ node.value || priceNodePlaceholder(node) }}
+              </span>
             </div>
 
           </article>
@@ -96,6 +117,18 @@
             class="pointer-events-none absolute left-0 top-0 origin-top-left"
             :style="[boardWorldStyle, boardPreviewTransformStyle]"
           >
+            <svg class="pointer-events-none absolute left-0 top-0 h-full w-full overflow-visible text-current/35">
+              <path
+                v-for="connection in boardConnections"
+                :key="connection.id"
+                :d="getBoardConnectionPath(connection)"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                vector-effect="non-scaling-stroke"
+                class="opacity-70"
+              />
+            </svg>
             <article
               v-for="node in boardNodes"
               :key="node.id"
@@ -120,6 +153,15 @@
                 <svg v-else class="absolute inset-0 w-full h-full pointer-events-none text-current" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <polyline v-for="stroke in node.params?.strokes || []" :key="stroke.id" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
                 </svg>
+              </div>
+
+              <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/70 px-3 font-mono text-current">
+                <span
+                  class="truncate text-center text-lg font-black leading-none"
+                  :class="getPriceNodeValueClass(node)"
+                >
+                  <template v-if="getPriceNodeArrow(node)">{{ getPriceNodeArrow(node) }} </template>{{ node.value || priceNodePlaceholder(node) }}
+                </span>
               </div>
             </article>
           </div>
@@ -328,6 +370,28 @@
           <!-- Board World (Pan Only) -->
           <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardWorldRef"
                @pointerleave="boardDrawing.isBoardDrawingCursorVisible.value = false">
+            <svg class="pointer-events-none absolute left-0 top-0 h-full w-full overflow-visible text-black/40">
+              <path
+                v-for="connection in boardConnections"
+                :key="connection.id"
+                :d="getBoardConnectionPath(connection)"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                vector-effect="non-scaling-stroke"
+                class="opacity-75"
+              />
+              <path
+                v-if="activeBoardWire"
+                :d="getActiveBoardWirePath()"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-dasharray="4 8"
+                vector-effect="non-scaling-stroke"
+                class="opacity-70"
+              />
+            </svg>
             <article
               v-for="node in boardNodes"
               :key="node.id"
@@ -419,6 +483,53 @@
                 </div>
               </div>
 
+              <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+                <div class="flex min-w-0 items-center justify-center gap-2">
+                  <span
+                    v-if="getPriceNodeArrow(node)"
+                    class="text-xl font-black leading-none"
+                    :class="getPriceNodeValueClass(node)"
+                  >
+                    {{ getPriceNodeArrow(node) }}
+                  </span>
+                  <input
+                    :value="node.value"
+                    inputmode="decimal"
+                    type="text"
+                    class="min-w-0 w-full bg-transparent text-center text-2xl font-black leading-none outline-none"
+                    :class="getPriceNodeValueClass(node)"
+                    :placeholder="priceNodePlaceholder(node)"
+                    @pointerdown.stop
+                    @click.stop
+                    @input="updatePriceNodeValue($event, node)"
+                  />
+                </div>
+              </div>
+
+              <!-- Matrix-style ports -->
+              <div
+                class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all group-hover/node:opacity-100"
+                @pointerdown.stop.prevent="pickupBoardInput(node, 'left')"
+                @pointerup.stop.prevent="dropBoardWire(node, 'left')"
+                @dblclick.stop.prevent="clearBoardInput(node)"
+              ></div>
+              <div
+                class="absolute top-1/2 -right-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
+                @pointerdown.stop.prevent="startBoardWire(node, 'right', $event)"
+                @dblclick.stop.prevent="clearBoardOutput(node)"
+              ></div>
+              <div
+                class="absolute -top-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all group-hover/node:opacity-100"
+                @pointerdown.stop.prevent="pickupBoardInput(node, 'top')"
+                @pointerup.stop.prevent="dropBoardWire(node, 'top')"
+                @dblclick.stop.prevent="clearBoardInput(node)"
+              ></div>
+              <div
+                class="absolute -bottom-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
+                @pointerdown.stop.prevent="startBoardWire(node, 'bottom', $event)"
+                @dblclick.stop.prevent="clearBoardOutput(node)"
+              ></div>
+
               <!-- Resize Handle -->
               <div 
                 data-board-resize 
@@ -490,6 +601,22 @@
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
               </svg>
             </button>
+            <template v-if="isSignalArticle">
+              <div class="w-6 h-px bg-black/10 my-1"></div>
+              <button class="p-2 transition-colors group relative"
+                      :class="activeBoardTool === 'current-price' ? 'bg-black/10' : 'hover:bg-black/5'"
+                      :title="locale === 'ru' ? 'Текущая цена' : 'Current Price'"
+                      @click.stop="activeBoardTool = activeBoardTool === 'current-price' ? null : 'current-price'">
+                <span class="font-mono text-[10px] font-black transition-colors" :class="activeBoardTool === 'current-price' ? 'text-black' : 'text-black/60 group-hover:text-black'">CP</span>
+              </button>
+              <div class="w-6 h-px bg-black/10 my-1"></div>
+              <button class="p-2 transition-colors group relative"
+                      :class="activeBoardTool === 'target-price' ? 'bg-black/10' : 'hover:bg-black/5'"
+                      :title="locale === 'ru' ? 'Предполагаемая цена' : 'Projected Price'"
+                      @click.stop="activeBoardTool = activeBoardTool === 'target-price' ? null : 'target-price'">
+                <span class="font-mono text-[10px] font-black transition-colors" :class="activeBoardTool === 'target-price' ? 'text-black' : 'text-black/60 group-hover:text-black'">TP</span>
+              </button>
+            </template>
           </ExPanel>
           
           <!-- Right Vertical Toolbar (Pencil Settings) -->
@@ -868,7 +995,7 @@ import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
 import type { Comment } from '~/entities/comment/types/comment.types'
-import type { JournalArticleBoardNode } from '~/entities/journal-article/types/journal-article.types'
+import type { JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -1050,10 +1177,18 @@ const boardStageRef = ref<HTMLElement | null>(null)
 const boardWorldRef = ref<HTMLElement | null>(null)
 const boardDrawingCanvasRef = ref<HTMLCanvasElement | null>(null)
 const boardNodes = ref<JournalArticleBoardNode[]>([])
+const boardConnections = ref<JournalArticleBoardConnection[]>([])
 const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
+const activeBoardWire = ref<{
+  fromId: string
+  fromPort: JournalArticleBoardPort
+  originalToId?: string
+  originalToPort?: JournalArticleBoardPort
+  current: { x: number; y: number }
+} | null>(null)
 
 // Article Creation State
 const isCreatingArticle = ref(false)
@@ -1080,6 +1215,7 @@ const loadDraft = () => {
       const draft = JSON.parse(draftStr)
       newArticleForm.value = draft.form
       boardNodes.value = draft.nodes
+      boardConnections.value = draft.connections || []
       boardStrokes.value = draft.strokes || []
       creationStep.value = draft.step || 'metadata'
       hasDraft.value = true
@@ -1094,6 +1230,7 @@ const clearDraft = () => {
   hasDraft.value = false
   newArticleForm.value = { title: '', description: '', type: '' }
   boardNodes.value = []
+  boardConnections.value = []
   boardStrokes.value = []
   creationStep.value = 'metadata'
 }
@@ -1123,6 +1260,7 @@ const persistDraft = () => {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
       form: newArticleForm.value,
       nodes: JSON.parse(JSON.stringify(boardNodes.value)),
+      connections: JSON.parse(JSON.stringify(boardConnections.value)),
       strokes: JSON.parse(JSON.stringify(boardStrokes.value)),
       step: creationStep.value
     }))
@@ -1130,7 +1268,7 @@ const persistDraft = () => {
   }
 }
 
-watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
+watch([newArticleForm, boardNodes, boardConnections, boardStrokes, creationStep], () => {
   if (!isCreatingArticle.value) return
   if (draftSaveTimer) window.clearTimeout(draftSaveTimer)
   draftSaveTimer = window.setTimeout(persistDraft, 250)
@@ -1139,12 +1277,11 @@ watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
 const isDropdownOpen = ref(false)
 const isSubmittingArticle = ref(false)
 
-const articleTypes = computed(() => [
-  { value: 'SETUP', label: locale.value === 'ru' ? 'Сетап (SETUP)' : 'Setup' },
-  { value: 'RESEARCH', label: locale.value === 'ru' ? 'Исследование (RESEARCH)' : 'Research' },
-  { value: 'LESSON', label: locale.value === 'ru' ? 'Урок (LESSON)' : 'Lesson' },
-  { value: 'QUESTION', label: locale.value === 'ru' ? 'Вопрос (QUESTION)' : 'Question' }
-])
+const articleTypes = computed(() => journalFilters.value.map(filter => ({
+  value: filter.mode,
+  label: filter.label
+})))
+const isSignalArticle = computed(() => newArticleForm.value.type === 'SETUP')
 
 const selectedTypeLabel = computed(() => {
   const t = articleTypes.value.find(t => t.value === newArticleForm.value.type)
@@ -1166,6 +1303,7 @@ const submitNewArticle = () => {
     isSubmittingArticle.value = false
     creationStep.value = 'board'
     boardNodes.value = []
+    boardConnections.value = []
     boardStrokes.value = []
     boardPan.value = { x: 48, y: 36 }
   }, 1000)
@@ -1194,6 +1332,7 @@ const closeNodeContextMenu = () => {
 
 const removeBoardNode = (nodeId: string) => {
   boardNodes.value = boardNodes.value.filter(n => n.id !== nodeId)
+  boardConnections.value = boardConnections.value.filter(connection => connection.fromId !== nodeId && connection.toId !== nodeId)
   if (selectedBoardNodeId.value === nodeId) selectedBoardNodeId.value = null
   closeNodeContextMenu()
 }
@@ -1355,7 +1494,7 @@ type BoardInteraction =
   | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | null>(null)
+const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | 'current-price' | 'target-price' | null>(null)
 
 watch(activeBoardTool, (tool, previousTool) => {
   if (previousTool === 'pencil' && tool !== 'pencil') {
@@ -1367,6 +1506,12 @@ watch(activeBoardTool, (tool, previousTool) => {
     activeEditorField.value = null
     closeNodeContextMenu()
     window.getSelection()?.removeAllRanges()
+  }
+})
+
+watch(() => newArticleForm.value.type, (type) => {
+  if (type !== 'SETUP' && (activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price')) {
+    activeBoardTool.value = null
   }
 })
 
@@ -1415,11 +1560,7 @@ const boardPreviewTransformStyle = computed(() => ({
   transform: 'translate(48px, 36px) scale(0.82)'
 }))
 
-const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => nodes.map(node => ({
-  ...node,
-  position: { ...node.position },
-  size: { ...node.size }
-})) as JournalArticleBoardNode[]
+const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => JSON.parse(JSON.stringify(nodes || [])) as JournalArticleBoardNode[]
 
 const resizeCommentInput = () => {
   const input = commentInputRef.value
@@ -1433,6 +1574,7 @@ const resizeCommentInput = () => {
 
 watch(selectedArticle, (article) => {
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
+  boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
   nextTick(resizeCommentInput)
@@ -1510,6 +1652,113 @@ const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
   height: `${node.size.height * boardGridSize.value}px`
 })
 
+const parsePriceValue = (value: string | number | undefined | null) => {
+  const normalized = String(value ?? '').replace(',', '.').trim()
+  if (!normalized) return null
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const priceNodePlaceholder = (node: any) => {
+  if (node?.priceKind === 'current') return locale.value === 'ru' ? 'Текущая' : 'Current'
+  return locale.value === 'ru' ? 'Прогноз' : 'Target'
+}
+
+const getReferenceCurrentPrice = () => {
+  const currentNode = boardNodes.value.find((node: any) => node.type === 'price' && node.priceKind === 'current' && parsePriceValue(node.value) !== null) as any
+  return parsePriceValue(currentNode?.value)
+}
+
+const getPriceNodeDirection = (node: any) => {
+  if (node?.type !== 'price' || node.priceKind !== 'target') return null
+  const currentPrice = getReferenceCurrentPrice()
+  const targetPrice = parsePriceValue(node.value)
+  if (currentPrice === null || targetPrice === null || targetPrice === currentPrice) return null
+  return targetPrice > currentPrice ? 'up' : 'down'
+}
+
+const getPriceNodeArrow = (node: any) => {
+  const direction = getPriceNodeDirection(node)
+  if (direction === 'up') return '↑'
+  if (direction === 'down') return '↓'
+  return ''
+}
+
+const getPriceNodeValueClass = (node: any) => {
+  const direction = getPriceNodeDirection(node)
+  if (direction === 'up') return 'text-emerald-500'
+  if (direction === 'down') return 'text-red-500'
+  return 'text-black/75'
+}
+
+const updatePriceNodeValue = (event: Event, node: any) => {
+  const input = event.target as HTMLInputElement
+  const sanitized = input.value
+    .replace(',', '.')
+    .replace(/[^\d.]/g, '')
+    .replace(/(\..*)\./g, '$1')
+  input.value = sanitized
+  node.value = sanitized
+}
+
+const getBoardNodePortPoint = (node: JournalArticleBoardNode, port: JournalArticleBoardPort = 'left') => {
+  const x = node.position.x * boardGridSize.value
+  const y = node.position.y * boardGridSize.value
+  const width = node.size.width * boardGridSize.value
+  const height = node.size.height * boardGridSize.value
+  if (port === 'top') return { x: x + width / 2, y }
+  if (port === 'bottom') return { x: x + width / 2, y: y + height }
+  if (port === 'right') return { x: x + width, y: y + height / 2 }
+  return { x, y: y + height / 2 }
+}
+
+const getBoardConnectionPathFromPoints = (
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  fromPort: JournalArticleBoardPort = 'right',
+  toPort: JournalArticleBoardPort = 'left'
+) => {
+  const distance = Math.max(80, Math.hypot(to.x - from.x, to.y - from.y) * 0.35)
+  const cp1 = { ...from }
+  const cp2 = { ...to }
+  if (fromPort === 'right') cp1.x += distance
+  else if (fromPort === 'left') cp1.x -= distance
+  else if (fromPort === 'top') cp1.y -= distance
+  else cp1.y += distance
+  if (toPort === 'right') cp2.x += distance
+  else if (toPort === 'left') cp2.x -= distance
+  else if (toPort === 'top') cp2.y -= distance
+  else cp2.y += distance
+  return `M ${from.x} ${from.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${to.x} ${to.y}`
+}
+
+const getBoardConnectionPath = (connection: JournalArticleBoardConnection) => {
+  const fromNode = boardNodes.value.find(node => node.id === connection.fromId)
+  const toNode = boardNodes.value.find(node => node.id === connection.toId)
+  if (!fromNode || !toNode) return ''
+  const fromPort = connection.fromPort || 'right'
+  const toPort = connection.toPort || 'left'
+  return getBoardConnectionPathFromPoints(
+    getBoardNodePortPoint(fromNode, fromPort),
+    getBoardNodePortPoint(toNode, toPort),
+    fromPort,
+    toPort
+  )
+}
+
+const getActiveBoardWirePath = () => {
+  if (!activeBoardWire.value) return ''
+  const fromNode = boardNodes.value.find(node => node.id === activeBoardWire.value?.fromId)
+  if (!fromNode) return ''
+  const fromPort = activeBoardWire.value.fromPort || 'right'
+  return getBoardConnectionPathFromPoints(
+    getBoardNodePortPoint(fromNode, fromPort),
+    activeBoardWire.value.current,
+    fromPort,
+    'left'
+  )
+}
+
 const checkNodeOverlap = (x: number, y: number, w: number, h: number, ignoreNodeId?: string) => {
   return boardNodes.value.some((node: any) => {
     if (node.id === ignoreNodeId) return false
@@ -1541,10 +1790,87 @@ const stopWindowTracking = () => {
   window.removeEventListener('pointerup', handleGlobalBoardDrawingUp)
 }
 
+const getBoardWorldPointFromEvent = (event: PointerEvent | MouseEvent) => {
+  const rect = boardWorldRef.value?.getBoundingClientRect()
+  if (!rect) return { x: 0, y: 0 }
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  }
+}
+
+const moveBoardWire = (event: PointerEvent) => {
+  if (!activeBoardWire.value) return
+  activeBoardWire.value.current = getBoardWorldPointFromEvent(event)
+}
+
+const cancelBoardWire = () => {
+  activeBoardWire.value = null
+  window.removeEventListener('pointermove', moveBoardWire)
+  window.removeEventListener('pointerup', cancelBoardWire)
+  window.removeEventListener('pointercancel', cancelBoardWire)
+}
+
+const startBoardWire = (node: JournalArticleBoardNode, port: JournalArticleBoardPort, event: PointerEvent) => {
+  activeBoardWire.value = {
+    fromId: node.id,
+    fromPort: port,
+    current: getBoardWorldPointFromEvent(event)
+  }
+  window.addEventListener('pointermove', moveBoardWire)
+  window.addEventListener('pointerup', cancelBoardWire)
+  window.addEventListener('pointercancel', cancelBoardWire)
+}
+
+const pickupBoardInput = (node: JournalArticleBoardNode, port: JournalArticleBoardPort) => {
+  const index = boardConnections.value.findLastIndex(connection => connection.toId === node.id && (connection.toPort || 'left') === port)
+  if (index === -1) return
+  const connection = boardConnections.value[index]
+  if (!connection) return
+  boardConnections.value.splice(index, 1)
+  activeBoardWire.value = {
+    fromId: connection.fromId,
+    fromPort: connection.fromPort || 'right',
+    originalToId: connection.toId,
+    originalToPort: connection.toPort || 'left',
+    current: getBoardNodePortPoint(node, port)
+  }
+  window.addEventListener('pointermove', moveBoardWire)
+  window.addEventListener('pointerup', cancelBoardWire)
+  window.addEventListener('pointercancel', cancelBoardWire)
+}
+
+const dropBoardWire = (node: JournalArticleBoardNode, port: JournalArticleBoardPort) => {
+  if (!activeBoardWire.value) return
+  if (activeBoardWire.value.fromId === node.id) {
+    cancelBoardWire()
+    return
+  }
+  const nextConnection: JournalArticleBoardConnection = {
+    id: 'bc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    fromId: activeBoardWire.value.fromId,
+    toId: node.id,
+    fromPort: activeBoardWire.value.fromPort,
+    toPort: port
+  }
+  boardConnections.value = boardConnections.value.filter(connection => !(connection.toId === node.id && (connection.toPort || 'left') === port))
+  boardConnections.value.push(nextConnection)
+  cancelBoardWire()
+}
+
+const clearBoardInput = (node: JournalArticleBoardNode) => {
+  boardConnections.value = boardConnections.value.filter(connection => connection.toId !== node.id)
+}
+
+const clearBoardOutput = (node: JournalArticleBoardNode) => {
+  boardConnections.value = boardConnections.value.filter(connection => connection.fromId !== node.id)
+}
+
 function stopBoardDrawingMode() {
   boardDrawing.finishBoardDrawing()
   boardDrawing.restoreNativeCursor()
   boardDrawing.isBoardDrawingCursorVisible.value = false
+  cancelBoardWire()
   stopWindowTracking()
   if (activeBoardTool.value === 'pencil') {
     activeBoardTool.value = null
@@ -1646,8 +1972,9 @@ const startBoardPan = (event: PointerEvent) => {
       const gridY = Math.round(worldY / boardGridSize.value)
 
       // Check overlap
-      const newW = activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)
-      const newH = activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)
+      const isPriceTool = activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price'
+      const newW = isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12))
+      const newH = isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12))
 
       if (checkNodeOverlap(gridX, gridY, newW, newH)) {
         alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
@@ -1684,6 +2011,16 @@ const startBoardPan = (event: PointerEvent) => {
           params: { strokes: [] },
           position: { x: gridX, y: gridY },
           size: { width: 12, height: 12 }
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (isPriceTool) {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'price',
+          priceKind: activeBoardTool.value === 'current-price' ? 'current' : 'target',
+          value: '',
+          position: { x: gridX, y: gridY },
+          size: { width: 8, height: 3 }
         }
         boardNodes.value.push(newNode as any)
       }

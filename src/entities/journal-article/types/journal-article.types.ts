@@ -17,7 +17,8 @@ export interface JournalArticleMetric {
   value: string | number
 }
 
-export type JournalArticleBoardNodeType = 'text' | 'image' | 'drawing'
+export type JournalArticleBoardNodeType = 'text' | 'image' | 'drawing' | 'price'
+export type JournalArticleBoardPort = 'left' | 'right' | 'top' | 'bottom'
 
 export interface JournalArticleBoardPosition {
   x: number
@@ -58,7 +59,21 @@ export interface JournalArticleBoardDrawingNode extends JournalArticleBoardBaseN
   }
 }
 
-export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode | JournalArticleBoardDrawingNode
+export interface JournalArticleBoardPriceNode extends JournalArticleBoardBaseNode {
+  type: 'price'
+  priceKind: 'current' | 'target'
+  value: string
+}
+
+export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode | JournalArticleBoardDrawingNode | JournalArticleBoardPriceNode
+
+export interface JournalArticleBoardConnection {
+  id: string
+  fromId: string
+  toId: string
+  fromPort?: JournalArticleBoardPort
+  toPort?: JournalArticleBoardPort
+}
 
 export interface JournalArticleBoardGridMagnet {
   enabled: boolean
@@ -70,6 +85,7 @@ export interface JournalArticleBoard {
   magnet: JournalArticleBoardGridMagnet
   size: JournalArticleBoardSize
   nodes: JournalArticleBoardNode[]
+  connections?: JournalArticleBoardConnection[]
   strokes?: any[]
 }
 
