@@ -87,6 +87,24 @@
               </div>
             </div>
 
+            <div v-else-if="node.type === 'strategy'" class="flex h-full w-full flex-col justify-center gap-2 bg-white/80 px-4 font-mono">
+              <span class="truncate text-base font-black uppercase tracking-widest text-black/75">{{ getStrategyNodeLabel(node) }}</span>
+              <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-3 gap-2 text-[8px] uppercase tracking-[0.18em] text-black/40">
+                <span>PF {{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</span>
+                <span>WR {{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</span>
+                <span :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">
+                  {{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }} ({{ formatSignedPercent(getStrategyNodeMetrics(node)!.resultPercent) }})
+                </span>
+              </div>
+            </div>
+
+            <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center gap-1 bg-white/80 px-4 font-mono">
+              <span class="truncate text-base font-black uppercase tracking-widest text-black/75">{{ getTradeNodeLabel(node) }}</span>
+              <span class="truncate text-[9px] font-black uppercase tracking-[0.2em]" :class="getTradeNodeResultClass(node)">
+                {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБЕРИТЕ СДЕЛКУ' : 'SELECT TRADE') }}
+              </span>
+            </div>
+
           </article>
         </div>
       </section>
@@ -184,6 +202,24 @@
                     {{ getAssetNodeTypeLabel(node) }}
                   </span>
                 </div>
+              </div>
+
+              <div v-else-if="node.type === 'strategy'" class="flex h-full w-full flex-col justify-center gap-2 bg-white/70 px-4 font-mono text-current">
+                <span class="truncate text-sm font-black uppercase tracking-widest text-current/75">{{ getStrategyNodeLabel(node) }}</span>
+                <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-3 gap-2 text-[7px] uppercase tracking-[0.16em] text-current/40">
+                  <span>PF {{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</span>
+                  <span>WR {{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</span>
+                  <span :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">
+                    {{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }} ({{ formatSignedPercent(getStrategyNodeMetrics(node)!.resultPercent) }})
+                  </span>
+                </div>
+              </div>
+
+              <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center gap-1 bg-white/70 px-4 font-mono text-current">
+                <span class="truncate text-sm font-black uppercase tracking-widest text-current/75">{{ getTradeNodeLabel(node) }}</span>
+                <span class="truncate text-[8px] font-black uppercase tracking-[0.18em]" :class="getTradeNodeResultClass(node)">
+                  {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБЕРИТЕ СДЕЛКУ' : 'SELECT TRADE') }}
+                </span>
               </div>
             </article>
           </div>
@@ -544,6 +580,42 @@
                 </button>
               </div>
 
+              <div v-else-if="node.type === 'strategy'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+                <button
+                  class="flex min-w-0 flex-col items-center justify-center gap-2 text-center outline-none transition-colors"
+                  :class="node.strategyId ? 'text-black/80 hover:text-black' : 'text-black/35 hover:text-black/70'"
+                  @pointerdown.stop
+                  @click.stop="openStrategyPicker(node)"
+                >
+                  <span class="max-w-full truncate text-lg font-black uppercase tracking-widest">
+                    {{ getStrategyNodeLabel(node) }}
+                  </span>
+                  <span v-if="getStrategyNodeMetrics(node)" class="grid max-w-full grid-cols-3 gap-2 text-[8px] font-black uppercase tracking-[0.16em] text-black/35">
+                    <span>PF {{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</span>
+                    <span>WR {{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</span>
+                    <span :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">
+                      {{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }} ({{ formatSignedPercent(getStrategyNodeMetrics(node)!.resultPercent) }})
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <div v-else-if="node.type === 'trade'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+                <button
+                  class="flex min-w-0 flex-col items-center justify-center gap-1 text-center outline-none transition-colors"
+                  :class="node.tradeId ? 'text-black/80 hover:text-black' : 'text-black/35 hover:text-black/70'"
+                  @pointerdown.stop
+                  @click.stop="openTradePicker(node)"
+                >
+                  <span class="max-w-full truncate text-lg font-black uppercase tracking-widest">
+                    {{ getTradeNodeLabel(node) }}
+                  </span>
+                  <span class="max-w-full truncate text-[8px] font-black uppercase tracking-[0.2em]" :class="getTradeNodeResultClass(node)">
+                    {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБЕРИТЕ СДЕЛКУ' : 'SELECT TRADE') }}
+                  </span>
+                </button>
+              </div>
+
               <!-- Matrix-style ports -->
               <div
                 class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
@@ -673,6 +745,26 @@
                 </div>
               </div>
             </template>
+            <template v-else>
+              <div class="w-6 h-px bg-black/10 my-1"></div>
+              <button
+                class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
+                :class="activeBoardTool === 'strategy-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                :title="locale === 'ru' ? 'Стратегия' : 'Strategy'"
+                @click.stop="activeBoardTool = activeBoardTool === 'strategy-node' ? null : 'strategy-node'"
+              >
+                STR
+              </button>
+              <div class="w-6 h-px bg-black/10 my-1"></div>
+              <button
+                class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
+                :class="activeBoardTool === 'trade-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                :title="locale === 'ru' ? 'Сделки' : 'Trades'"
+                @click.stop="activeBoardTool = activeBoardTool === 'trade-node' ? null : 'trade-node'"
+              >
+                TRD
+              </button>
+            </template>
           </ExPanel>
           </div>
           
@@ -731,6 +823,7 @@
                </div>
             </ExPanel>
           </div>
+
           <!-- Bottom Right Actions -->
           <div data-board-chrome class="absolute bottom-6 right-6 z-50 flex items-center gap-4 cursor-auto"
                @pointerdown.stop
@@ -818,6 +911,123 @@
               </div>
             </Transition>
           </Teleport>
+          <Transition name="fade">
+              <div
+                v-if="activeStrategyNodeId"
+                data-board-chrome
+                class="absolute inset-0 z-[90] flex items-center justify-center bg-black/20 px-6 py-8"
+                @click.self="closeStrategyPicker"
+                @pointerdown.stop
+                @pointermove.stop
+              >
+                <div class="relative flex h-full max-h-[520px] w-[760px] max-w-full flex-col" @click.stop>
+                  <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex h-full flex-col border-black/20 bg-white text-black">
+                    <div class="flex items-center justify-between border-b border-black/10 px-6 py-5">
+                      <div class="flex flex-col gap-1">
+                        <span class="font-mono text-[9px] font-black uppercase tracking-[0.35em] text-black/35">
+                          {{ locale === 'ru' ? 'ЛОКАЛЬНЫЕ СТРАТЕГИИ' : 'LOCAL STRATEGIES' }}
+                        </span>
+                        <strong class="font-mono text-xl font-black uppercase tracking-widest">
+                          {{ locale === 'ru' ? 'Выберите стратегию' : 'Select strategy' }}
+                        </strong>
+                      </div>
+                      <button class="font-mono text-[10px] uppercase tracking-[0.25em] text-black/35 transition-colors hover:text-black" @click="closeStrategyPicker">
+                        {{ locale === 'ru' ? 'Закрыть' : 'Close' }}
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-[1fr_0.45fr_0.45fr_0.75fr] gap-3 border-b border-black/10 px-6 py-3 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
+                      <span>{{ locale === 'ru' ? 'Стратегия' : 'Strategy' }}</span>
+                      <span>PF</span>
+                      <span>WR</span>
+                      <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto scroll-minimal py-2">
+                      <button
+                        v-for="strategy in localStrategies"
+                        :key="strategy.id"
+                        class="grid w-full grid-cols-[1fr_0.45fr_0.45fr_0.75fr] items-center gap-3 border-b border-black/5 px-6 py-4 text-left font-mono transition-colors hover:bg-black/5"
+                        @click="selectBoardStrategy(strategy)"
+                      >
+                        <span class="min-w-0">
+                          <span class="block truncate text-[13px] font-black uppercase tracking-widest text-black/80">{{ strategy.name }}</span>
+                          <span class="mt-1 block text-[8px] uppercase tracking-[0.2em] text-black/30">
+                            {{ getStrategyMetrics(strategy).tradesCount }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
+                          </span>
+                        </span>
+                        <span class="text-[12px] font-black text-black/60">{{ formatProfitFactor(getStrategyMetrics(strategy).profitFactor) }}</span>
+                        <span class="text-[12px] font-black text-black/60">{{ formatCompactNumber(getStrategyMetrics(strategy).winRate, 1) }}%</span>
+                        <span class="text-right text-[12px] font-black" :class="getResultToneClass(getStrategyMetrics(strategy).resultCurrency)">
+                          {{ formatSignedCurrency(getStrategyMetrics(strategy).resultCurrency) }} ({{ formatSignedPercent(getStrategyMetrics(strategy).resultPercent) }})
+                        </span>
+                      </button>
+                      <div v-if="localStrategies.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
+                        {{ locale === 'ru' ? 'СТРАТЕГИИ НЕ НАЙДЕНЫ' : 'NO_STRATEGIES_FOUND' }}
+                      </div>
+                    </div>
+                  </ExPanel>
+                </div>
+              </div>
+          </Transition>
+          <Transition name="fade">
+              <div
+                v-if="activeTradeNodeId"
+                data-board-chrome
+                class="absolute inset-0 z-[90] flex items-center justify-center bg-black/20 px-6 py-8"
+                @click.self="closeTradePicker"
+                @pointerdown.stop
+                @pointermove.stop
+              >
+                <div class="relative flex h-full max-h-[620px] w-[980px] max-w-full flex-col" @click.stop>
+                  <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex h-full flex-col border-black/20 bg-white text-black">
+                    <div class="flex items-center justify-between border-b border-black/10 px-6 py-5">
+                      <div class="flex flex-col gap-1">
+                        <span class="font-mono text-[9px] font-black uppercase tracking-[0.35em] text-black/35">
+                          {{ locale === 'ru' ? 'EXGENESISLOG // СПИСОК' : 'EXGENESISLOG // LIST' }}
+                        </span>
+                        <strong class="font-mono text-xl font-black uppercase tracking-widest">
+                          {{ locale === 'ru' ? 'Выберите сделку' : 'Select trade' }}
+                        </strong>
+                      </div>
+                      <button class="font-mono text-[10px] uppercase tracking-[0.25em] text-black/35 transition-colors hover:text-black" @click="closeTradePicker">
+                        {{ locale === 'ru' ? 'Закрыть' : 'Close' }}
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] gap-2 border-b border-black/10 px-6 py-3 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
+                      <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
+                      <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
+                      <span>{{ locale === 'ru' ? 'Даты' : 'Dates' }}</span>
+                      <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
+                      <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto scroll-minimal py-2">
+                      <button
+                        v-for="trade in localTrades"
+                        :key="trade.id"
+                        class="grid w-full grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] items-center gap-2 border-b border-black/5 px-6 py-4 text-left font-mono transition-colors hover:bg-black/5"
+                        @click="selectBoardTrade(trade)"
+                      >
+                        <span class="flex min-w-0 items-center gap-3">
+                          <span class="h-1.5 w-1.5 rounded-full" :class="getResultDotClass(getTradeCurrencyProfit(trade))"></span>
+                          <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ String(trade.side || 'LONG').toUpperCase() }}</span>
+                        </span>
+                        <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || 'ASSET' }}</span>
+                        <span class="flex min-w-0 flex-col">
+                          <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ formatTradeDate(trade.date) }}</span>
+                          <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ formatTradeDate(trade.dateExit) }}</span>
+                        </span>
+                        <span class="truncate text-right text-[11px] uppercase tracking-wider text-black/40">{{ formatTradeDuration(trade) }}</span>
+                        <span class="truncate text-right text-[12px] font-black tracking-wider" :class="getResultToneClass(getTradeCurrencyProfit(trade))">
+                          {{ formatSignedCurrency(getTradeCurrencyProfit(trade)) }} ({{ formatSignedPercent(getTradePercentProfit(trade, trade.strategyId)) }})
+                        </span>
+                      </button>
+                      <div v-if="localTrades.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
+                        {{ locale === 'ru' ? 'СДЕЛКИ НЕ НАЙДЕНЫ' : 'NO_TRADES_FOUND' }}
+                      </div>
+                    </div>
+                  </ExPanel>
+                </div>
+              </div>
+          </Transition>
         </div>
         
       </Transition>
@@ -1114,6 +1324,7 @@ import { useForumDrawing } from '../model/useForumDrawing'
 import { useBoardDrawing } from '../model/useBoardDrawing'
 import ExForumDrawingPanel from './ExForumDrawingPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
+import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
@@ -1121,6 +1332,8 @@ import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
 import allAssets from '~/shared/data/global_assets.json'
 import type { Comment } from '~/entities/comment/types/comment.types'
+import type { DiaryEntry } from '~/entities/diary/model/diary.types'
+import type { StrategyProfile } from '~/features/store/useStrategyTrades'
 import type { JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
@@ -1131,6 +1344,7 @@ const router = useRouter()
 const { locale } = useI18n()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const strategyTradesStore = useStrategyTradesStore()
 
 // Archival State
 const searchQuery = ref('')
@@ -1317,6 +1531,8 @@ const activeBoardWire = ref<{
 } | null>(null)
 const passivePortRevealDistance = 96
 const activeAssetNodeId = ref<string | null>(null)
+const activeStrategyNodeId = ref<string | null>(null)
+const activeTradeNodeId = ref<string | null>(null)
 const assetSearch = ref('')
 const assetTypeFilter = ref('ALL')
 const failedAssetIcons = ref(new Set<string>())
@@ -1635,6 +1851,7 @@ function resetTextColor() {
 }
 
 onMounted(() => {
+  void strategyTradesStore.init()
   window.addEventListener('pointerdown', closeNodeContextMenu)
   document.addEventListener('selectionchange', saveTextSelection)
   window.addEventListener('keydown', handleSpaceDown)
@@ -1660,7 +1877,7 @@ type BoardInteraction =
   | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | 'asset-node' | 'current-price' | 'target-price' | null>(null)
+const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | 'asset-node' | 'current-price' | 'target-price' | 'strategy-node' | 'trade-node' | null>(null)
 
 watch(activeBoardTool, (tool, previousTool) => {
   if (previousTool === 'pencil' && tool !== 'pencil') {
@@ -1677,6 +1894,9 @@ watch(activeBoardTool, (tool, previousTool) => {
 
 watch(() => newArticleForm.value.type, (type) => {
   if (type !== 'SETUP' && (activeBoardTool.value === 'asset-node' || activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price')) {
+    activeBoardTool.value = null
+  }
+  if (type === 'SETUP' && (activeBoardTool.value === 'strategy-node' || activeBoardTool.value === 'trade-node')) {
     activeBoardTool.value = null
   }
 })
@@ -1952,6 +2172,180 @@ const hasValidSignalAssetNode = computed(() => {
   return boardNodes.value.some((node: any) => node.type === 'asset' && String(node.asset || '').trim())
 })
 
+const localStrategies = computed(() => (strategyTradesStore.strategies || []).filter(strategy => strategy.id !== 'MAIN_DIARY'))
+const localTrades = computed(() => {
+  return Object.values(strategyTradesStore.tradesByStrategy || {}).flat() as DiaryEntry[]
+})
+
+const getStrategyTrades = (strategyId: string) => {
+  return (strategyTradesStore.getTradesForStrategy(strategyId) || []) as DiaryEntry[]
+}
+
+const getTradeCurrencyProfit = (trade: any) => {
+  const value = trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const getTradePercentProfit = (trade: any, strategyId?: string) => {
+  const explicit = Number(trade?.profitValue ?? trade?.resultPercent)
+  if (Number.isFinite(explicit)) return explicit
+  const result = Number(trade?.result)
+  if (Number.isFinite(result) && Math.abs(result) <= 1000 && trade?.profitInCurrency === undefined) return result
+  const deposit = strategyId ? strategyTradesStore.getInitialDeposit(strategyId) : 1000
+  const base = deposit > 0 ? deposit : 1000
+  return (getTradeCurrencyProfit(trade) / base) * 100
+}
+
+const formatCompactNumber = (value: number, digits = 2) => {
+  if (!Number.isFinite(value)) return '0'
+  if (Math.abs(value) >= 1000) {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, notation: 'compact' }).format(value)
+  }
+  return value.toFixed(digits)
+}
+
+const formatSignedCurrency = (value: number) => {
+  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${sign}$${formatCompactNumber(Math.abs(value), 2)}`
+}
+
+const formatSignedPercent = (value: number) => {
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${formatCompactNumber(value, 2)}%`
+}
+
+const getResultToneClass = (value: number) => {
+  if (value > 0) return 'text-emerald-500'
+  if (value < 0) return 'text-red-500'
+  return 'text-black/55'
+}
+
+const getResultDotClass = (value: number) => {
+  if (value > 0) return 'bg-emerald-500'
+  if (value < 0) return 'bg-red-500'
+  return 'bg-black/40'
+}
+
+const getStrategyMetrics = (strategy: StrategyProfile | any) => {
+  const trades = getStrategyTrades(strategy.id)
+  const profits = trades.map(getTradeCurrencyProfit)
+  const grossProfit = profits.filter(value => value > 0).reduce((sum, value) => sum + value, 0)
+  const grossLoss = Math.abs(profits.filter(value => value < 0).reduce((sum, value) => sum + value, 0))
+  const wins = profits.filter(value => value > 0).length
+  const total = profits.length
+  const resultCurrency = profits.reduce((sum, value) => sum + value, 0)
+  const initialDeposit = strategyTradesStore.getInitialDeposit(strategy.id)
+  const resultPercent = initialDeposit > 0 ? (resultCurrency / initialDeposit) * 100 : 0
+
+  return {
+    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0),
+    winRate: total > 0 ? (wins / total) * 100 : 0,
+    resultCurrency,
+    resultPercent,
+    tradesCount: total
+  }
+}
+
+const formatProfitFactor = (value: number) => {
+  if (value === Infinity) return '∞'
+  return formatCompactNumber(value, 2)
+}
+
+const getStrategyNodeLabel = (node: any) => {
+  if (node?.strategyName) return node.strategyName
+  const strategy = localStrategies.value.find(strategy => strategy.id === node?.strategyId)
+  return strategy?.name || (locale.value === 'ru' ? 'БЕЗ СТРАТЕГИИ' : 'NO STRATEGY')
+}
+
+const getStrategyNodeMetrics = (node: any) => {
+  const strategy = localStrategies.value.find(strategy => strategy.id === node?.strategyId)
+  if (!strategy) return null
+  return getStrategyMetrics(strategy)
+}
+
+const getTradeNodeData = (node: any) => {
+  if (node?.tradeSnapshot) return node.tradeSnapshot
+  if (!node?.tradeId) return null
+  return localTrades.value.find((trade: any) => trade.id === node.tradeId) || null
+}
+
+const getTradeNodeLabel = (node: any) => {
+  const trade = getTradeNodeData(node)
+  if (!trade) return locale.value === 'ru' ? 'БЕЗ СДЕЛКИ' : 'NO TRADE'
+  return `${String(trade.side || 'LONG').toUpperCase()} ${trade.asset || 'ASSET'}`
+}
+
+const getTradeNodeResult = (node: any) => {
+  const trade = getTradeNodeData(node)
+  if (!trade) return ''
+  const strategyId = trade.strategyId || strategyTradesStore.selectedStrategyId
+  return `${formatSignedCurrency(getTradeCurrencyProfit(trade))} (${formatSignedPercent(getTradePercentProfit(trade, strategyId))})`
+}
+
+const getTradeNodeResultClass = (node: any) => {
+  const trade = getTradeNodeData(node)
+  return trade ? getResultToneClass(getTradeCurrencyProfit(trade)) : 'text-black/35'
+}
+
+const formatTradeDate = (value: any) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+const formatTradeDuration = (trade: any) => {
+  const start = trade?.date ? new Date(trade.date).getTime() : 0
+  const end = trade?.dateExit ? new Date(trade.dateExit).getTime() : start
+  if (!start || !end || end < start) return '—'
+  const diffMins = Math.floor((end - start) / 60000)
+  const hours = Math.floor(diffMins / 60)
+  return hours > 0 ? `${hours}h ${diffMins % 60}m` : `${diffMins}m`
+}
+
+const openStrategyPicker = (node: any) => {
+  if (node?.type !== 'strategy') return
+  activeStrategyNodeId.value = node.id
+}
+
+const closeStrategyPicker = () => {
+  activeStrategyNodeId.value = null
+}
+
+const selectBoardStrategy = (strategy: StrategyProfile) => {
+  const node = boardNodes.value.find((item: any) => item.id === activeStrategyNodeId.value)
+  if (node && node.type === 'strategy') {
+    node.strategyId = strategy.id
+    node.strategyName = strategy.name
+  }
+  closeStrategyPicker()
+}
+
+const openTradePicker = (node: any) => {
+  if (node?.type !== 'trade') return
+  activeTradeNodeId.value = node.id
+}
+
+const closeTradePicker = () => {
+  activeTradeNodeId.value = null
+}
+
+const selectBoardTrade = (trade: DiaryEntry) => {
+  const node = boardNodes.value.find((item: any) => item.id === activeTradeNodeId.value)
+  if (node && node.type === 'trade') {
+    node.tradeId = trade.id || ''
+    node.tradeSnapshot = JSON.parse(JSON.stringify(trade))
+  }
+  closeTradePicker()
+}
+
 const getBoardNodePortPoint = (node: JournalArticleBoardNode, port: JournalArticleBoardPort = 'left') => {
   const x = node.position.x * boardGridSize.value
   const y = node.position.y * boardGridSize.value
@@ -2225,8 +2619,10 @@ const startBoardPan = (event: PointerEvent) => {
       // Check overlap
       const isPriceTool = activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price'
       const isAssetTool = activeBoardTool.value === 'asset-node'
-      const newW = isAssetTool ? 9 : (isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)))
-      const newH = isAssetTool ? 3 : (isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)))
+      const isStrategyTool = activeBoardTool.value === 'strategy-node'
+      const isTradeTool = activeBoardTool.value === 'trade-node'
+      const newW = isStrategyTool || isTradeTool ? 13 : (isAssetTool ? 9 : (isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12))))
+      const newH = isStrategyTool ? 5 : (isTradeTool ? 4 : (isAssetTool ? 3 : (isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)))))
 
       if (checkNodeOverlap(gridX, gridY, newW, newH)) {
         alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
@@ -2282,6 +2678,26 @@ const startBoardPan = (event: PointerEvent) => {
           asset: '',
           position: { x: gridX, y: gridY },
           size: { width: 9, height: 3 }
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (isStrategyTool) {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'strategy',
+          strategyId: '',
+          strategyName: '',
+          position: { x: gridX, y: gridY },
+          size: { width: 13, height: 5 }
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (isTradeTool) {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'trade',
+          tradeId: '',
+          tradeSnapshot: null,
+          position: { x: gridX, y: gridY },
+          size: { width: 13, height: 4 }
         }
         boardNodes.value.push(newNode as any)
       }

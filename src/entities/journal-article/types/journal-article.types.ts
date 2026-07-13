@@ -17,7 +17,7 @@ export interface JournalArticleMetric {
   value: string | number
 }
 
-export type JournalArticleBoardNodeType = 'text' | 'image' | 'drawing' | 'price' | 'asset'
+export type JournalArticleBoardNodeType = 'text' | 'image' | 'drawing' | 'price' | 'asset' | 'strategy' | 'trade'
 export type JournalArticleBoardPort = 'left' | 'right' | 'top' | 'bottom'
 
 export interface JournalArticleBoardPosition {
@@ -70,7 +70,19 @@ export interface JournalArticleBoardAssetNode extends JournalArticleBoardBaseNod
   asset: string
 }
 
-export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode | JournalArticleBoardDrawingNode | JournalArticleBoardPriceNode | JournalArticleBoardAssetNode
+export interface JournalArticleBoardStrategyNode extends JournalArticleBoardBaseNode {
+  type: 'strategy'
+  strategyId: string
+  strategyName?: string
+}
+
+export interface JournalArticleBoardTradeNode extends JournalArticleBoardBaseNode {
+  type: 'trade'
+  tradeId: string
+  tradeSnapshot?: Record<string, any>
+}
+
+export type JournalArticleBoardNode = JournalArticleBoardTextNode | JournalArticleBoardImageNode | JournalArticleBoardDrawingNode | JournalArticleBoardPriceNode | JournalArticleBoardAssetNode | JournalArticleBoardStrategyNode | JournalArticleBoardTradeNode
 
 export interface JournalArticleBoardConnection {
   id: string
