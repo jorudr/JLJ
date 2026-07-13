@@ -308,6 +308,7 @@
 
         <!-- BOARD STEP -->
         <div v-else-if="creationStep === 'board'"
+             ref="boardStageRef"
              class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] text-[#2c2c2a]"
              :class="isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (activeBoardTool === 'pencil' ? 'cursor-none' : (activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'))"
              @pointermove="handleBoardHover"
@@ -319,28 +320,13 @@
           <div class="absolute inset-0 bg-black/10 pointer-events-none"></div>
 
           <!-- Board World (Pan & Zoom) -->
-          <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardViewportRef"
+          <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardWorldRef"
                @pointerleave="boardDrawing.isBoardDrawingCursorVisible.value = false">
-             <!-- Freehand Board Drawing Layer -->
-            <svg class="absolute inset-0 w-full h-full pointer-events-none text-black z-0 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <polyline v-for="stroke in boardStrokes"
-                        :key="stroke.id"
-                        :points="boardDrawing.formatBoardDrawingStroke(stroke)"
-                        fill="none"
-                        :stroke="stroke.color || 'currentColor'"
-                        :stroke-width="stroke.size || 2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        vector-effect="non-scaling-stroke"
-                        class="opacity-90" />
-            </svg>
-
-            <!-- Custom Cursor for Board Drawing -->
-            <div v-if="activeBoardTool === 'pencil' && boardDrawing.isBoardDrawingCursorVisible.value && !isSpacePressed"
-                 class="absolute rounded-full pointer-events-none z-20 shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
-                 :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'border-2 border-red-500 bg-red-500/10' : 'border-2 border-black bg-black/5'"
-                 :style="boardDrawing.boardDrawingCursorStyle.value">
-            </div>
+            <!-- Freehand Board Drawing Layer -->
+            <canvas
+              ref="boardDrawingCanvasRef"
+              class="absolute inset-0 z-0 h-full w-full pointer-events-none"
+            ></canvas>
 
             <article
               v-for="node in boardNodes"
@@ -423,6 +409,13 @@
             </article>
           </div>
 
+          <!-- Custom Cursor for Board Drawing -->
+          <div v-if="activeBoardTool === 'pencil' && boardDrawing.isBoardDrawingCursorVisible.value && !isSpacePressed"
+               class="absolute rounded-full pointer-events-none z-40 shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
+               :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'border-2 border-red-500 bg-red-500/10' : 'border-2 border-black bg-black/5'"
+               :style="boardDrawing.boardDrawingCursorStyle.value">
+          </div>
+
           <!-- Tooltip at the top center -->
           <div 
             v-if="activeBoardTool && activeBoardTool !== 'pencil'"
@@ -432,7 +425,10 @@
           </div>
 
           <!-- Left Vertical Toolbar -->
-          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit" @pointerdown.stop>
+          <ExPanel data-board-chrome variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit cursor-auto"
+                   @pointerdown.stop
+                   @pointermove.stop
+                   @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
                     :title="locale === 'ru' ? 'Текст' : 'Text Node'"
@@ -476,7 +472,10 @@
           </ExPanel>
           
           <!-- Right Vertical Toolbar (Pencil Settings) -->
-          <div v-if="activeBoardTool === 'pencil'" class="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-12" @pointerdown.stop>
+          <div v-if="activeBoardTool === 'pencil'" data-board-chrome class="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-12 cursor-auto"
+               @pointerdown.stop
+               @pointermove.stop
+               @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 w-full h-full">
                <!-- Brush Tool -->
                <button class="p-2 transition-colors group relative"
@@ -508,10 +507,10 @@
                     <div class="rounded-full border border-black/40"
                          :style="{ width: `${Math.min(18, Math.max(5, boardDrawing.boardDrawingSize.value))}px`, height: `${Math.min(18, Math.max(5, boardDrawing.boardDrawingSize.value))}px`, backgroundColor: boardDrawing.boardDrawingColor.value }"></div>
                   </div>
-                  <div class="relative h-24 flex justify-center cursor-ns-resize group/slider w-full" @pointerdown="boardDrawing.startBoardDrawingSizeDrag">
-                     <div class="absolute inset-y-0 w-0.5 bg-black/10 rounded-full group-hover/slider:bg-black/20 transition-colors"></div>
-                     <div class="absolute w-2 h-2 bg-white border border-black/30 rounded-full shadow-sm pointer-events-none transition-transform group-active/slider:scale-110"
-                          :style="{ bottom: `${boardDrawing.boardDrawingSizePercent.value}%`, transform: 'translateY(50%)' }">
+                  <div class="relative h-32 w-10 touch-none select-none cursor-ns-resize group/slider" @pointerdown.stop.prevent="boardDrawing.startBoardDrawingSizeDrag">
+                     <div class="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-black/10 rounded-full group-hover/slider:bg-black/20 transition-colors"></div>
+                     <div class="absolute left-1/2 w-2 h-2 bg-white border border-black/30 rounded-full shadow-sm pointer-events-none transition-transform group-active/slider:scale-110"
+                          :style="{ bottom: `${boardDrawing.boardDrawingSizePercent.value}%`, transform: 'translate(-50%, 50%)' }">
                      </div>
                   </div>
                </div>
@@ -528,7 +527,10 @@
             </ExPanel>
           </div>
           <!-- Bottom Right Actions -->
-          <div class="absolute bottom-6 right-6 z-50 flex items-center gap-4">
+          <div data-board-chrome class="absolute bottom-6 right-6 z-50 flex items-center gap-4 cursor-auto"
+               @pointerdown.stop
+               @pointermove.stop
+               @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
                     @click="creationStep = 'metadata'">
               {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
@@ -1023,10 +1025,14 @@ const articleComments = computed(() => {
 })
 const journalWrapperRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
+const boardStageRef = ref<HTMLElement | null>(null)
+const boardWorldRef = ref<HTMLElement | null>(null)
+const boardDrawingCanvasRef = ref<HTMLCanvasElement | null>(null)
 const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
+const boardStageSize = ref({ width: 0, height: 0 })
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 
@@ -1082,7 +1088,18 @@ watch(isCreatingArticle, (newVal) => {
   }
 })
 
-watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
+watch(creationStep, (step) => {
+  if (step === 'board') {
+    nextTick(() => {
+      syncBoardStageSize()
+      renderBoardDrawingCanvas()
+    })
+  }
+})
+
+let draftSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+const persistDraft = () => {
   if (isCreatingArticle.value) {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
       form: newArticleForm.value,
@@ -1092,6 +1109,12 @@ watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
     }))
     hasDraft.value = true
   }
+}
+
+watch([newArticleForm, boardNodes, boardStrokes, creationStep], () => {
+  if (!isCreatingArticle.value) return
+  if (draftSaveTimer) window.clearTimeout(draftSaveTimer)
+  draftSaveTimer = window.setTimeout(persistDraft, 250)
 }, { deep: true })
 
 const isDropdownOpen = ref(false)
@@ -1124,6 +1147,7 @@ const submitNewArticle = () => {
     isSubmittingArticle.value = false
     creationStep.value = 'board'
     boardNodes.value = []
+    boardStrokes.value = []
     boardPan.value = { x: 48, y: 36 }
     boardScale.value = 1
   }, 1000)
@@ -1325,12 +1349,37 @@ const triggerImageUpload = (nodeId: string) => {
 const boardPointerPos = ref({ x: 0, y: 0 })
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
 const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
+const boardBaseWorldSize = computed(() => ({
+  width: boardUnitSize.value.width * boardGridSize.value,
+  height: boardUnitSize.value.height * boardGridSize.value
+}))
+const boardWorldMargin = 640
+const boardWorldBounds = computed(() => {
+  const scale = Math.max(0.1, boardScale.value)
+  const visibleLeft = -boardPan.value.x / scale
+  const visibleTop = -boardPan.value.y / scale
+  const visibleRight = (boardStageSize.value.width - boardPan.value.x) / scale
+  const visibleBottom = (boardStageSize.value.height - boardPan.value.y) / scale
+  const minX = Math.min(0, visibleLeft) - boardWorldMargin
+  const minY = Math.min(0, visibleTop) - boardWorldMargin
+  const maxX = Math.max(boardBaseWorldSize.value.width, visibleRight) + boardWorldMargin
+  const maxY = Math.max(boardBaseWorldSize.value.height, visibleBottom) + boardWorldMargin
+
+  return {
+    minX,
+    minY,
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+    offsetX: -minX,
+    offsetY: -minY
+  }
+})
 const boardWorldStyle = computed(() => ({
-  width: `${boardUnitSize.value.width * boardGridSize.value}px`,
-  height: `${boardUnitSize.value.height * boardGridSize.value}px`
+  width: `${boardWorldBounds.value.width}px`,
+  height: `${boardWorldBounds.value.height}px`
 }))
 const boardTransformStyle = computed(() => ({
-  transform: `translate(${boardPan.value.x}px, ${boardPan.value.y}px) scale(${boardScale.value})`
+  transform: `translate(${boardPan.value.x + boardWorldBounds.value.minX * boardScale.value}px, ${boardPan.value.y + boardWorldBounds.value.minY * boardScale.value}px) scale(${boardScale.value})`
 }))
 const boardPreviewTransformStyle = computed(() => ({
   transform: 'translate(48px, 36px) scale(0.82)'
@@ -1350,6 +1399,16 @@ const resizeCommentInput = () => {
   const maxHeight = 220
   input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`
   input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden'
+}
+
+const syncBoardStageSize = () => {
+  const stage = boardStageRef.value
+  if (!stage) return
+  const rect = stage.getBoundingClientRect()
+  const width = Math.round(rect.width)
+  const height = Math.round(rect.height)
+  if (boardStageSize.value.width === width && boardStageSize.value.height === height) return
+  boardStageSize.value = { width, height }
 }
 
 watch(selectedArticle, (article) => {
@@ -1427,8 +1486,8 @@ const navigateToNode = (id: string) => {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
-  left: `${node.position.x * boardGridSize.value}px`,
-  top: `${node.position.y * boardGridSize.value}px`,
+  left: `${boardWorldBounds.value.offsetX + node.position.x * boardGridSize.value}px`,
+  top: `${boardWorldBounds.value.offsetY + node.position.y * boardGridSize.value}px`,
   width: `${node.size.width * boardGridSize.value}px`,
   height: `${node.size.height * boardGridSize.value}px`
 })
@@ -1480,9 +1539,10 @@ const handleSpaceUp = (e: KeyboardEvent) => {
 }
 
 const handleGlobalBoardDrawingMove = (e: MouseEvent) => {
-   if (boardDrawing.isBoardDrawingPointerDown.value && !isSpacePressed.value) {
-      boardDrawing.moveBoardDrawing(e, boardStrokes.value)
-   }
+  if (!boardDrawing.isBoardDrawingPointerDown.value || isSpacePressed.value) return
+  const elementAtPointer = document.elementFromPoint(e.clientX, e.clientY)
+  if (isBoardChromeTarget(elementAtPointer)) return
+  boardDrawing.moveBoardDrawing(e, boardStrokes.value)
 }
 
 const handleGlobalBoardDrawingUp = () => {
@@ -1490,76 +1550,120 @@ const handleGlobalBoardDrawingUp = () => {
    stopWindowTracking()
 }
 
+const syncBoardDrawingRefs = () => {
+  const bounds = boardWorldBounds.value
+  boardDrawing.boardViewport.value = boardWorldRef.value
+  boardDrawing.boardCursorViewport.value = boardStageRef.value
+  boardDrawing.boardCanvas.value = boardDrawingCanvasRef.value
+  boardDrawing.boardOffset.value = {
+    x: bounds.offsetX,
+    y: bounds.offsetY
+  }
+  boardDrawing.boardContentSize.value = {
+    width: boardBaseWorldSize.value.width,
+    height: boardBaseWorldSize.value.height
+  }
+}
+
+const renderBoardDrawingCanvas = () => {
+  nextTick(() => {
+    syncBoardStageSize()
+    syncBoardDrawingRefs()
+    boardDrawing.renderBoardDrawing(boardStrokes.value)
+  })
+}
+
+const isBoardChromeTarget = (target: EventTarget | null) => {
+  return target instanceof HTMLElement && !!target.closest('[data-board-chrome]')
+}
+
+watch([
+  boardDrawingCanvasRef,
+  boardWorldRef,
+  creationStep,
+  () => boardGridSize.value,
+  () => boardUnitSize.value.width,
+  () => boardUnitSize.value.height,
+  () => boardWorldBounds.value.minX,
+  () => boardWorldBounds.value.minY,
+  () => boardWorldBounds.value.width,
+  () => boardWorldBounds.value.height
+], () => {
+  if (creationStep.value === 'board') renderBoardDrawingCanvas()
+}, { flush: 'post' })
+
 const startBoardPan = (event: PointerEvent) => {
   const target = event.target as HTMLElement | null
+  if (creationStep.value === 'board' && isBoardChromeTarget(target)) return
   
   if (creationStep.value === 'board' && activeBoardTool.value) {
     if (activeBoardTool.value === 'pencil' && !isSpacePressed.value) {
-       boardDrawing.boardViewport.value = boardViewportRef.value
-       boardDrawing.startBoardDrawing(event, boardStrokes.value)
-       startWindowTracking()
-       return
+      syncBoardStageSize()
+      syncBoardDrawingRefs()
+      boardDrawing.startBoardDrawing(event, boardStrokes.value)
+      startWindowTracking()
+      return
     }
     
     if (!isSpacePressed.value) {
       // Click to add node
-      const rect = boardViewportRef.value?.getBoundingClientRect()
+      const rect = boardWorldRef.value?.getBoundingClientRect()
       if (!rect) return
       const pointerX = event.clientX - rect.left
-    const pointerY = event.clientY - rect.top
-    const worldX = pointerX / boardScale.value
-    const worldY = pointerY / boardScale.value
-    
-    // Snap to grid
-    const gridX = Math.round(worldX / boardGridSize.value)
-    const gridY = Math.round(worldY / boardGridSize.value)
-    
-    // Check overlap
-    const newW = activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)
-    const newH = activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)
-    
-    if (checkNodeOverlap(gridX, gridY, newW, newH)) {
-      alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
+      const pointerY = event.clientY - rect.top
+      const worldX = pointerX / boardScale.value + boardWorldBounds.value.minX
+      const worldY = pointerY / boardScale.value + boardWorldBounds.value.minY
+
+      // Snap to grid
+      const gridX = Math.round(worldX / boardGridSize.value)
+      const gridY = Math.round(worldY / boardGridSize.value)
+
+      // Check overlap
+      const newW = activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)
+      const newH = activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)
+
+      if (checkNodeOverlap(gridX, gridY, newW, newH)) {
+        alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
+        activeBoardTool.value = null
+        return
+      }
+
+      if (activeBoardTool.value === 'text') {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'text',
+          title: '',
+          text: '',
+          position: { x: gridX, y: gridY },
+          size: { width: 10, height: 6 },
+          isEditing: true
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (activeBoardTool.value === 'image') {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'image',
+          src: '',
+          alt: 'Uploaded Image',
+          caption: '',
+          position: { x: gridX, y: gridY },
+          size: { width: 10, height: 10 }
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (activeBoardTool.value === 'drawing') {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'drawing',
+          params: { strokes: [] },
+          position: { x: gridX, y: gridY },
+          size: { width: 12, height: 12 }
+        }
+        boardNodes.value.push(newNode as any)
+      }
+
       activeBoardTool.value = null
       return
     }
-    
-    if (activeBoardTool.value === 'text') {
-      const newNode = {
-        id: `node_${Date.now()}`,
-        type: 'text',
-        title: '',
-        text: '',
-        position: { x: gridX, y: gridY },
-        size: { width: 10, height: 6 },
-        isEditing: true
-      }
-      boardNodes.value.push(newNode as any)
-    } else if (activeBoardTool.value === 'image') {
-      const newNode = {
-        id: `node_${Date.now()}`,
-        type: 'image',
-        src: '',
-        alt: 'Uploaded Image',
-        caption: '',
-        position: { x: gridX, y: gridY },
-        size: { width: 10, height: 10 }
-      }
-      boardNodes.value.push(newNode as any)
-    } else if (activeBoardTool.value === 'drawing') {
-      const newNode = {
-        id: `node_${Date.now()}`,
-        type: 'drawing',
-        params: { strokes: [] },
-        position: { x: gridX, y: gridY },
-        size: { width: 12, height: 12 }
-      }
-      boardNodes.value.push(newNode as any)
-    }
-    
-    activeBoardTool.value = null
-    return
-  }
   }
 
   const resizeHandle = target?.closest('[data-board-resize]') as HTMLElement | null
@@ -1624,14 +1728,18 @@ const startBoardPan = (event: PointerEvent) => {
 
 const handleBoardHover = (event: PointerEvent) => {
   if (creationStep.value === 'board') {
+    if (isBoardChromeTarget(event.target)) {
+      boardDrawing.isBoardDrawingCursorVisible.value = false
+      return
+    }
+
     if (activeBoardTool.value === 'pencil') {
-      if (!boardDrawing.boardViewport.value) {
-        boardDrawing.boardViewport.value = boardViewportRef.value
-      }
+      syncBoardStageSize()
+      syncBoardDrawingRefs()
       boardDrawing.updateBoardDrawingCursor(event)
     }
     if (activeBoardTool.value) {
-      const rect = boardViewportRef.value?.getBoundingClientRect()
+      const rect = boardWorldRef.value?.getBoundingClientRect()
       if (rect) {
         boardPointerPos.value = {
           x: event.clientX - rect.left,
@@ -1721,7 +1829,7 @@ const stopBoardInteraction = () => {
 }
 
 const handleBoardWheel = (event: WheelEvent) => {
-  const viewport = boardViewportRef.value
+  const viewport = creationStep.value === 'board' ? boardStageRef.value : boardViewportRef.value
   if (!viewport) return
 
   const rect = viewport.getBoundingClientRect()
@@ -1747,6 +1855,10 @@ const handleBoardKeydown = (event: KeyboardEvent) => {
 
 const handleWindowResize = () => {
   if (isBoardFullscreen.value) syncBoardFullscreenViewport()
+  if (creationStep.value === 'board') {
+    syncBoardStageSize()
+    renderBoardDrawingCanvas()
+  }
 }
 
 onMounted(() => {
@@ -1757,6 +1869,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopWindowTracking()
+  if (draftSaveTimer) {
+    window.clearTimeout(draftSaveTimer)
+    persistDraft()
+    draftSaveTimer = null
+  }
   window.removeEventListener('keydown', handleBoardKeydown)
   window.removeEventListener('resize', handleWindowResize)
 })
