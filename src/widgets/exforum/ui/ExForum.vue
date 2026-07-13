@@ -580,10 +580,11 @@
           </div>
 
           <!-- Left Vertical Toolbar -->
-          <ExPanel data-board-chrome variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-2 px-1 border-black/20 !w-fit cursor-auto"
-                   @pointerdown.stop
-                   @pointermove.stop
-                   @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
+          <div data-board-chrome class="absolute left-6 top-1/2 z-50 w-fit -translate-y-1/2 cursor-auto"
+               @pointerdown.stop
+               @pointermove.stop
+               @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
                     :title="locale === 'ru' ? 'Текст' : 'Text Node'"
@@ -633,7 +634,7 @@
                         @click.stop>
                   <span class="font-mono text-[10px] font-black transition-colors" :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'text-black' : 'text-black/60 group-hover:text-black'">SIG</span>
                 </button>
-                <div class="pointer-events-none absolute left-full top-1/2 z-[60] ml-2 flex -translate-x-2 -translate-y-1/2 items-center border border-black/20 bg-white/95 opacity-0 shadow-[0_16px_36px_rgba(0,0,0,0.12)] transition-all group-hover/signal:pointer-events-auto group-hover/signal:translate-x-0 group-hover/signal:opacity-100">
+                <div class="pointer-events-none absolute left-[calc(100%-1px)] top-1/2 z-[60] flex -translate-x-2 -translate-y-1/2 items-center border border-black/20 bg-white/95 opacity-0 shadow-[0_16px_36px_rgba(0,0,0,0.12)] transition-all group-hover/signal:pointer-events-auto group-hover/signal:translate-x-0 group-hover/signal:opacity-100">
                   <button class="h-9 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                           :class="activeBoardTool === 'asset-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
                           :title="locale === 'ru' ? 'Актив' : 'Asset'"
@@ -656,6 +657,7 @@
               </div>
             </template>
           </ExPanel>
+          </div>
           
           <!-- Right Vertical Toolbar (Pencil Settings) -->
           <div v-if="activeBoardTool === 'pencil'" data-board-chrome class="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-12 cursor-auto"
