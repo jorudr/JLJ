@@ -76,6 +76,12 @@
               </span>
             </div>
 
+            <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+              <span class="truncate text-center text-lg font-black uppercase tracking-widest text-black/75">
+                {{ getAssetNodeLabel(node) }}
+              </span>
+            </div>
+
           </article>
         </div>
       </section>
@@ -161,6 +167,12 @@
                   :class="getPriceNodeValueClass(node)"
                 >
                   <template v-if="getPriceNodeArrow(node)">{{ getPriceNodeArrow(node) }} </template>{{ node.value || priceNodePlaceholder(node) }}
+                </span>
+              </div>
+
+              <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/70 px-3 font-mono text-current">
+                <span class="truncate text-center text-base font-black uppercase tracking-widest text-current/75">
+                  {{ getAssetNodeLabel(node) }}
                 </span>
               </div>
             </article>
@@ -397,7 +409,7 @@
               :key="node.id"
               data-board-node
               :data-node-id="node.id"
-              class="absolute box-border overflow-hidden bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node transition-all border"
+              class="absolute box-border overflow-visible bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node transition-all border"
               :class="[
                 selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20',
                 activeBoardTool === 'pencil' ? 'pointer-events-none select-none' : ''
@@ -506,6 +518,17 @@
                 </div>
               </div>
 
+              <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+                <button
+                  class="min-w-0 truncate text-center text-xl font-black uppercase tracking-widest outline-none transition-colors"
+                  :class="node.asset ? 'text-black/80 hover:text-black' : 'text-black/35 hover:text-black/70'"
+                  @pointerdown.stop
+                  @click.stop="openAssetPicker(node)"
+                >
+                  {{ getAssetNodeLabel(node) }}
+                </button>
+              </div>
+
               <!-- Matrix-style ports -->
               <div
                 class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all group-hover/node:opacity-100"
@@ -603,19 +626,34 @@
             </button>
             <template v-if="isSignalArticle">
               <div class="w-6 h-px bg-black/10 my-1"></div>
-              <button class="p-2 transition-colors group relative"
-                      :class="activeBoardTool === 'current-price' ? 'bg-black/10' : 'hover:bg-black/5'"
-                      :title="locale === 'ru' ? 'Текущая цена' : 'Current Price'"
-                      @click.stop="activeBoardTool = activeBoardTool === 'current-price' ? null : 'current-price'">
-                <span class="font-mono text-[10px] font-black transition-colors" :class="activeBoardTool === 'current-price' ? 'text-black' : 'text-black/60 group-hover:text-black'">CP</span>
-              </button>
-              <div class="w-6 h-px bg-black/10 my-1"></div>
-              <button class="p-2 transition-colors group relative"
-                      :class="activeBoardTool === 'target-price' ? 'bg-black/10' : 'hover:bg-black/5'"
-                      :title="locale === 'ru' ? 'Предполагаемая цена' : 'Projected Price'"
-                      @click.stop="activeBoardTool = activeBoardTool === 'target-price' ? null : 'target-price'">
-                <span class="font-mono text-[10px] font-black transition-colors" :class="activeBoardTool === 'target-price' ? 'text-black' : 'text-black/60 group-hover:text-black'">TP</span>
-              </button>
+              <div class="group/signal relative">
+                <button class="p-2 transition-colors group relative"
+                        :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'bg-black/10' : 'hover:bg-black/5'"
+                        :title="locale === 'ru' ? 'Сигнальные узлы' : 'Signal Nodes'"
+                        @click.stop>
+                  <span class="font-mono text-[10px] font-black transition-colors" :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'text-black' : 'text-black/60 group-hover:text-black'">SIG</span>
+                </button>
+                <div class="pointer-events-none absolute left-full top-1/2 z-[60] ml-2 flex -translate-x-2 -translate-y-1/2 items-center border border-black/20 bg-white/95 opacity-0 shadow-[0_16px_36px_rgba(0,0,0,0.12)] transition-all group-hover/signal:pointer-events-auto group-hover/signal:translate-x-0 group-hover/signal:opacity-100">
+                  <button class="h-9 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
+                          :class="activeBoardTool === 'asset-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                          :title="locale === 'ru' ? 'Актив' : 'Asset'"
+                          @click.stop="activeBoardTool = activeBoardTool === 'asset-node' ? null : 'asset-node'">
+                    {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
+                  </button>
+                  <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
+                          :class="activeBoardTool === 'current-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                          :title="locale === 'ru' ? 'Текущая цена' : 'Current Price'"
+                          @click.stop="activeBoardTool = activeBoardTool === 'current-price' ? null : 'current-price'">
+                    CP
+                  </button>
+                  <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
+                          :class="activeBoardTool === 'target-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                          :title="locale === 'ru' ? 'Предполагаемая цена' : 'Projected Price'"
+                          @click.stop="activeBoardTool = activeBoardTool === 'target-price' ? null : 'target-price'">
+                    TP
+                  </button>
+                </div>
+              </div>
             </template>
           </ExPanel>
           
@@ -624,7 +662,7 @@
                @pointerdown.stop
                @pointermove.stop
                @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
-            <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 w-full h-full">
+            <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 w-full">
                <!-- Brush Tool -->
                <button class="p-2 transition-colors group relative"
                        :class="boardDrawing.boardDrawingTool.value === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
@@ -688,11 +726,79 @@
               {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
             </button>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+                    :class="!hasValidSignalAssetNode ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
+                    :disabled="!hasValidSignalAssetNode"
                     @click="publishArticle">
               {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
             </button>
           </div>
           <ExForumDrawingPanel :drawing="drawing" />
+          <Teleport to="body">
+            <Transition name="fade">
+              <div
+                v-if="activeAssetNodeId"
+                class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/20"
+                @click.self="closeAssetPicker"
+              >
+                <div class="w-[800px] max-w-[95vw] max-h-[80vh] flex flex-col relative" @click.stop>
+                  <ExPanel variant="light" :no-padding="true" :no-shadow="true" class="h-[500px] max-h-[80vh] flex flex-col bg-black/85 text-white border-white/10">
+                    <div class="p-6 border-b border-white/10 flex items-center gap-4 shrink-0 bg-black/20">
+                      <input
+                        v-model="assetSearch"
+                        :placeholder="locale === 'ru' ? 'ПОИСК_АКТИВОВ...' : 'SEARCH_ASSETS...'"
+                        class="w-full uppercase text-xl font-black tracking-widest bg-transparent border-0 outline-none text-white placeholder-white/20 font-mono"
+                        autofocus
+                      />
+                    </div>
+                    <div class="flex items-center gap-6 px-6 py-4 border-b border-white/10 overflow-x-auto scroll-minimal shrink-0 bg-black/20">
+                      <button
+                        v-for="assetType in assetTypeOptions"
+                        :key="assetType"
+                        class="text-[9px] uppercase tracking-[0.3em] font-bold transition-all whitespace-nowrap"
+                        :class="assetTypeFilter === assetType ? 'text-white border-b border-white pb-0.5' : 'text-white/40 hover:text-white/70'"
+                        @click="assetTypeFilter = assetType"
+                      >
+                        {{ getAssetTypeLoc(assetType) }}
+                      </button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto scroll-minimal py-2">
+                      <div
+                        v-for="asset in filteredAssets"
+                        :key="asset.symbol"
+                        class="group/asset flex items-center justify-start gap-4 px-6 py-4 cursor-pointer border-b border-white/5 last:border-0 hover:bg-white/10 transition-all text-left w-full"
+                        @click="selectBoardAsset(asset)"
+                      >
+                        <div
+                          class="w-10 h-10 rounded-full overflow-hidden border border-white/10 group-hover/asset:border-white/40 flex items-center justify-center shrink-0 transition-colors"
+                          :class="asset.type === 'US Equities' || asset.type === 'Stocks' ? 'bg-white' : 'bg-white/5'"
+                        >
+                          <img
+                            v-if="asset.icon && !failedAssetIcons.has(asset.symbol)"
+                            :src="asset.icon"
+                            class="w-full h-full object-contain"
+                            @error="handleAssetIconError(asset.symbol)"
+                          />
+                          <span v-else class="text-[14px] font-black uppercase transition-colors" :class="asset.type === 'US Equities' || asset.type === 'Stocks' ? 'text-black' : 'text-white'">
+                            {{ asset.symbol[0] }}
+                          </span>
+                        </div>
+                        <div class="flex flex-col min-w-0 flex-1 gap-0.5">
+                          <span class="text-[14px] font-bold tracking-widest text-white">{{ asset.symbol }}</span>
+                          <span class="text-[10px] text-white/40 truncate uppercase tracking-tighter">{{ asset.name }}</span>
+                        </div>
+                        <div class="shrink-0 text-[8px] uppercase tracking-[0.2em] text-white/20 group-hover/asset:text-white/60 border border-white/10 px-2 py-1 transition-colors">
+                          {{ getAssetTypeLoc(asset.type) }}
+                        </div>
+                      </div>
+                      <div v-if="filteredAssets.length === 0" class="flex flex-col items-center justify-center h-full text-white/30 uppercase tracking-[0.3em] font-mono text-[10px] mt-10">
+                        {{ locale === 'ru' ? 'АКТИВЫ НЕ НАЙДЕНЫ' : 'NO_ASSETS_FOUND' }}
+                      </div>
+                    </div>
+                  </ExPanel>
+                </div>
+              </div>
+            </Transition>
+          </Teleport>
         </div>
         
       </Transition>
@@ -994,6 +1100,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
 import { mockComments } from '~/entities/comment/mock/comment.mock'
 import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
+import allAssets from '~/shared/data/global_assets.json'
 import type { Comment } from '~/entities/comment/types/comment.types'
 import type { JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
@@ -1189,6 +1296,41 @@ const activeBoardWire = ref<{
   originalToPort?: JournalArticleBoardPort
   current: { x: number; y: number }
 } | null>(null)
+const activeAssetNodeId = ref<string | null>(null)
+const assetSearch = ref('')
+const assetTypeFilter = ref('ALL')
+const failedAssetIcons = ref(new Set<string>())
+const assetTypeLocales: Record<string, { en: string; ru: string }> = {
+  ALL: { en: 'ALL', ru: 'ВСЕ' },
+  'US Equities': { en: 'US Equities', ru: 'АКЦИИ' },
+  Crypto: { en: 'Crypto', ru: 'КРИПТО' },
+  Forex: { en: 'Forex', ru: 'ФОРЕКС' },
+  Commodities: { en: 'Commodities', ru: 'СЫРЬЕ' },
+  Indices: { en: 'Indices', ru: 'ИНДЕКСЫ' },
+  Stocks: { en: 'Stocks', ru: 'АКЦИИ' }
+}
+const assetTypeOptions = ['ALL', 'US Equities', 'Crypto', 'Forex', 'Commodities', 'Indices']
+const filteredAssets = computed(() => {
+  const query = assetSearch.value.trim().toLowerCase()
+  let assets = allAssets as any[]
+  if (assetTypeFilter.value !== 'ALL') {
+    assets = assets.filter(asset => String(asset.type || '').toUpperCase() === assetTypeFilter.value.toUpperCase())
+  }
+  if (!query) return assets.slice(0, 50)
+  return assets
+    .filter(asset => String(asset.symbol || '').toLowerCase().includes(query) || String(asset.name || '').toLowerCase().includes(query))
+    .sort((a, b) => {
+      const aSymbol = String(a.symbol || '').toUpperCase()
+      const bSymbol = String(b.symbol || '').toUpperCase()
+      const exact = assetSearch.value.trim().toUpperCase()
+      if (aSymbol === exact) return -1
+      if (bSymbol === exact) return 1
+      if (aSymbol.startsWith(exact) && !bSymbol.startsWith(exact)) return -1
+      if (!aSymbol.startsWith(exact) && bSymbol.startsWith(exact)) return 1
+      return aSymbol.localeCompare(bSymbol)
+    })
+    .slice(0, 20)
+})
 
 // Article Creation State
 const isCreatingArticle = ref(false)
@@ -1310,6 +1452,10 @@ const submitNewArticle = () => {
 }
 
 const publishArticle = () => {
+  if (!hasValidSignalAssetNode.value) {
+    alert(locale.value === 'ru' ? 'Добавьте узел АКТИВ и выберите актив перед публикацией сигнала.' : 'Add an ASSET node and choose an asset before publishing a signal.')
+    return
+  }
   console.log('Publishing article...', newArticleForm.value, boardNodes.value)
   clearDraft()
   isCreatingArticle.value = false
@@ -1494,7 +1640,7 @@ type BoardInteraction =
   | { type: 'resizeNode'; node: any; startClientX: number; startClientY: number; startNodeW: number; startNodeH: number }
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
-const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | 'current-price' | 'target-price' | null>(null)
+const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | 'asset-node' | 'current-price' | 'target-price' | null>(null)
 
 watch(activeBoardTool, (tool, previousTool) => {
   if (previousTool === 'pencil' && tool !== 'pencil') {
@@ -1510,7 +1656,7 @@ watch(activeBoardTool, (tool, previousTool) => {
 })
 
 watch(() => newArticleForm.value.type, (type) => {
-  if (type !== 'SETUP' && (activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price')) {
+  if (type !== 'SETUP' && (activeBoardTool.value === 'asset-node' || activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price')) {
     activeBoardTool.value = null
   }
 })
@@ -1700,6 +1846,45 @@ const updatePriceNodeValue = (event: Event, node: any) => {
   input.value = sanitized
   node.value = sanitized
 }
+
+const getAssetTypeLoc = (type: string) => {
+  if (!type) return ''
+  return assetTypeLocales[type]?.[locale.value === 'ru' ? 'ru' : 'en'] || type
+}
+
+const getAssetNodeLabel = (node: any) => {
+  return node?.asset || (locale.value === 'ru' ? 'БЕЗ АКТИВА' : 'NO ASSET')
+}
+
+const openAssetPicker = (node: any) => {
+  if (node?.type !== 'asset') return
+  activeAssetNodeId.value = node.id
+  assetSearch.value = ''
+  assetTypeFilter.value = 'ALL'
+}
+
+const closeAssetPicker = () => {
+  activeAssetNodeId.value = null
+}
+
+const selectBoardAsset = (asset: any) => {
+  const node = boardNodes.value.find((item: any) => item.id === activeAssetNodeId.value)
+  if (node && node.type === 'asset') {
+    node.asset = asset.symbol
+  }
+  closeAssetPicker()
+}
+
+const handleAssetIconError = (symbol: string) => {
+  const next = new Set(failedAssetIcons.value)
+  next.add(symbol)
+  failedAssetIcons.value = next
+}
+
+const hasValidSignalAssetNode = computed(() => {
+  if (!isSignalArticle.value) return true
+  return boardNodes.value.some((node: any) => node.type === 'asset' && String(node.asset || '').trim())
+})
 
 const getBoardNodePortPoint = (node: JournalArticleBoardNode, port: JournalArticleBoardPort = 'left') => {
   const x = node.position.x * boardGridSize.value
@@ -1973,8 +2158,9 @@ const startBoardPan = (event: PointerEvent) => {
 
       // Check overlap
       const isPriceTool = activeBoardTool.value === 'current-price' || activeBoardTool.value === 'target-price'
-      const newW = isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12))
-      const newH = isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12))
+      const isAssetTool = activeBoardTool.value === 'asset-node'
+      const newW = isAssetTool ? 9 : (isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)))
+      const newH = isAssetTool ? 3 : (isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)))
 
       if (checkNodeOverlap(gridX, gridY, newW, newH)) {
         alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
@@ -2021,6 +2207,15 @@ const startBoardPan = (event: PointerEvent) => {
           value: '',
           position: { x: gridX, y: gridY },
           size: { width: 8, height: 3 }
+        }
+        boardNodes.value.push(newNode as any)
+      } else if (isAssetTool) {
+        const newNode = {
+          id: `node_${Date.now()}`,
+          type: 'asset',
+          asset: '',
+          position: { x: gridX, y: gridY },
+          size: { width: 9, height: 3 }
         }
         boardNodes.value.push(newNode as any)
       }
