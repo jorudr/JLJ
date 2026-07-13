@@ -33,6 +33,7 @@ export function useBoardDrawing() {
   const boardDrawingSize = ref(4)
   let previousDocumentCursor = ''
   let previousBodyCursor = ''
+  let isNativeCursorHidden = false
 
   const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize() * boardTransform.value.scale))
   const boardDrawingSizePercent = computed(() => ((boardDrawingSize.value - 1) / 23) * 100)
@@ -273,15 +274,25 @@ export function useBoardDrawing() {
   }
 
   function hideNativeCursor() {
+    if (isNativeCursorHidden) return
     previousDocumentCursor = document.documentElement.style.cursor
     previousBodyCursor = document.body.style.cursor
     document.documentElement.style.cursor = 'none'
     document.body.style.cursor = 'none'
+    isNativeCursorHidden = true
   }
 
   function restoreNativeCursor() {
+    if (!isNativeCursorHidden) {
+      if (document.documentElement.style.cursor === 'none') document.documentElement.style.cursor = ''
+      if (document.body.style.cursor === 'none') document.body.style.cursor = ''
+      return
+    }
     document.documentElement.style.cursor = previousDocumentCursor
     document.body.style.cursor = previousBodyCursor
+    previousDocumentCursor = ''
+    previousBodyCursor = ''
+    isNativeCursorHidden = false
   }
 
   return {
@@ -304,6 +315,7 @@ export function useBoardDrawing() {
     startBoardDrawing,
     moveBoardDrawing,
     finishBoardDrawing,
+    restoreNativeCursor,
     renderBoardDrawing,
     updateBoardDrawingCursor
   }

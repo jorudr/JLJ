@@ -334,7 +334,10 @@
               data-board-node
               :data-node-id="node.id"
               class="absolute box-border overflow-hidden bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node transition-all border"
-              :class="selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20'"
+              :class="[
+                selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20',
+                activeBoardTool === 'pencil' ? 'pointer-events-none select-none' : ''
+              ]"
               :style="getBoardNodeStyle(node)"
               @contextmenu.prevent.stop="handleNodeContextMenu($event, node.id)"
             >
@@ -364,9 +367,15 @@
                       @click.stop
                       @focus="selectedBoardNodeId = node.id; activeEditorField = 'text'"
                       @input="updateNodeText($event, node)"
-                      class="w-full flex-1 font-serif text-sm italic leading-relaxed text-black/55 bg-transparent outline-none overflow-y-auto cursor-text break-words whitespace-pre-wrap min-h-0 matrix-text-rich empty:before:content-[attr(data-placeholder)] empty:before:opacity-40"
-                      data-placeholder="Click to edit...">
+                      class="relative z-10 w-full flex-1 font-serif text-sm italic leading-relaxed text-black/55 bg-transparent outline-none overflow-y-auto cursor-text break-words whitespace-pre-wrap min-h-0 matrix-text-rich"
+                      :data-placeholder="boardTextPlaceholder">
                  </div>
+                 <span
+                   v-if="isTextNodeBodyEmpty(node)"
+                   class="pointer-events-none absolute left-4 right-4 top-[58px] z-0 font-serif text-sm italic leading-relaxed text-black/25"
+                 >
+                   {{ boardTextPlaceholder }}
+                 </span>
               </div>
               <div v-else-if="node.type === 'image'" class="flex h-full flex-col pt-4">
                 <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-contain cursor-pointer hover:opacity-90 transition-opacity" draggable="false" @click.stop="triggerImageUpload(node.id)" />
@@ -1069,6 +1078,7 @@ const loadDraft = () => {
 }
 
 const clearDraft = () => {
+  stopBoardDrawingMode()
   localStorage.removeItem(DRAFT_STORAGE_KEY)
   hasDraft.value = false
   newArticleForm.value = { title: '', description: '', type: '' }
@@ -1078,11 +1088,13 @@ const clearDraft = () => {
 }
 
 const saveDraftAndExit = () => {
+  stopBoardDrawingMode()
   isCreatingArticle.value = false
 }
 
 watch(isCreatingArticle, (newVal) => {
   if (!newVal) {
+    stopBoardDrawingMode()
     creationStep.value = 'metadata'
   }
 })
@@ -1093,7 +1105,7 @@ watch(creationStep, (step) => {
   }
 })
 
-let draftSaveTimer: ReturnType<typeof setTimeout> | null = null
+let draftSaveTimer: number | null = null
 
 const persistDraft = () => {
   if (isCreatingArticle.value) {
@@ -1180,6 +1192,18 @@ const removeBoardNode = (nodeId: string) => {
 const selectedBoardNodeId = ref<string | null>(null)
 const selectedBoardNode = computed(() => boardNodes.value.find((n: any) => n.id === selectedBoardNodeId.value) || null)
 const activeEditorField = ref<'title' | 'text' | null>(null)
+const boardTextPlaceholder = computed(() => locale.value === 'ru' ? 'Введите текст...' : 'Enter text...')
+
+const isTextNodeBodyEmpty = (node: any) => {
+  if (node?.type !== 'text') return false
+  const rawText = String(node.text || '')
+  const plainText = rawText
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<\/?[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+  return plainText.length === 0
+}
 
 // --- Text Formatting Logic ---
 const activeTextColor = ref('currentColor')
@@ -1315,6 +1339,19 @@ type BoardInteraction =
 
 const activeBoardInteraction = ref<BoardInteraction | null>(null)
 const activeBoardTool = ref<'text' | 'image' | 'drawing' | 'pencil' | null>(null)
+
+watch(activeBoardTool, (tool, previousTool) => {
+  if (previousTool === 'pencil' && tool !== 'pencil') {
+    stopBoardDrawingMode()
+  }
+
+  if (tool === 'pencil') {
+    selectedBoardNodeId.value = null
+    activeEditorField.value = null
+    closeNodeContextMenu()
+    window.getSelection()?.removeAllRanges()
+  }
+})
 
 const triggerImageUpload = (nodeId: string) => {
   const input = document.createElement('input')
@@ -1489,6 +1526,16 @@ const stopWindowTracking = () => {
   window.removeEventListener('pointerup', handleGlobalBoardDrawingUp)
 }
 
+function stopBoardDrawingMode() {
+  boardDrawing.finishBoardDrawing()
+  boardDrawing.restoreNativeCursor()
+  boardDrawing.isBoardDrawingCursorVisible.value = false
+  stopWindowTracking()
+  if (activeBoardTool.value === 'pencil') {
+    activeBoardTool.value = null
+  }
+}
+
 const isSpacePressed = ref(false)
 
 const handleSpaceDown = (e: KeyboardEvent) => {
@@ -1505,7 +1552,7 @@ const handleSpaceUp = (e: KeyboardEvent) => {
 }
 
 const handleGlobalBoardDrawingMove = (e: MouseEvent) => {
-  if (!boardDrawing.isBoardDrawingPointerDown.value || isSpacePressed.value) return
+  if (activeBoardTool.value !== 'pencil' || !boardDrawing.isBoardDrawingPointerDown.value || isSpacePressed.value) return
   const elementAtPointer = document.elementFromPoint(e.clientX, e.clientY)
   if (isBoardChromeTarget(elementAtPointer)) return
   boardDrawing.moveBoardDrawing(e, boardStrokes.value)
@@ -1829,13 +1876,14 @@ const handleWindowResize = () => {
 }
 
 onMounted(() => {
+  boardDrawing.restoreNativeCursor()
   nextTick(resizeCommentInput)
   window.addEventListener('keydown', handleBoardKeydown)
   window.addEventListener('resize', handleWindowResize)
 })
 
 onUnmounted(() => {
-  stopWindowTracking()
+  stopBoardDrawingMode()
   if (boardDrawingRenderFrame !== null) {
     window.cancelAnimationFrame(boardDrawingRenderFrame)
     boardDrawingRenderFrame = null
