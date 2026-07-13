@@ -77,9 +77,14 @@
             </div>
 
             <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
-              <span class="truncate text-center text-lg font-black uppercase tracking-widest text-black/75">
-                {{ getAssetNodeLabel(node) }}
-              </span>
+              <div class="flex min-w-0 flex-col items-center justify-center gap-1 text-center">
+                <span class="max-w-full truncate text-lg font-black uppercase tracking-widest text-black/75">
+                  {{ getAssetNodeLabel(node) }}
+                </span>
+                <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate text-[8px] font-black uppercase tracking-[0.3em] text-black/35">
+                  {{ getAssetNodeTypeLabel(node) }}
+                </span>
+              </div>
             </div>
 
           </article>
@@ -171,9 +176,14 @@
               </div>
 
               <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/70 px-3 font-mono text-current">
-                <span class="truncate text-center text-base font-black uppercase tracking-widest text-current/75">
-                  {{ getAssetNodeLabel(node) }}
-                </span>
+                <div class="flex min-w-0 flex-col items-center justify-center gap-1 text-center">
+                  <span class="max-w-full truncate text-base font-black uppercase tracking-widest text-current/75">
+                    {{ getAssetNodeLabel(node) }}
+                  </span>
+                  <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate text-[7px] font-black uppercase tracking-[0.28em] text-current/35">
+                    {{ getAssetNodeTypeLabel(node) }}
+                  </span>
+                </div>
               </div>
             </article>
           </div>
@@ -520,12 +530,17 @@
 
               <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
                 <button
-                  class="min-w-0 truncate text-center text-xl font-black uppercase tracking-widest outline-none transition-colors"
+                  class="flex min-w-0 flex-col items-center justify-center gap-1 text-center outline-none transition-colors"
                   :class="node.asset ? 'text-black/80 hover:text-black' : 'text-black/35 hover:text-black/70'"
                   @pointerdown.stop
                   @click.stop="openAssetPicker(node)"
                 >
-                  {{ getAssetNodeLabel(node) }}
+                  <span class="max-w-full truncate text-xl font-black uppercase tracking-widest">
+                    {{ getAssetNodeLabel(node) }}
+                  </span>
+                  <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate text-[8px] font-black uppercase tracking-[0.3em] text-black/35">
+                    {{ getAssetNodeTypeLabel(node) }}
+                  </span>
                 </button>
               </div>
 
@@ -1895,6 +1910,16 @@ const getAssetTypeLoc = (type: string) => {
 
 const getAssetNodeLabel = (node: any) => {
   return node?.asset || (locale.value === 'ru' ? 'БЕЗ АКТИВА' : 'NO ASSET')
+}
+
+const getAssetNodeData = (node: any) => {
+  if (!node?.asset) return null
+  return (allAssets as any[]).find(asset => asset.symbol === node.asset) || null
+}
+
+const getAssetNodeTypeLabel = (node: any) => {
+  const asset = getAssetNodeData(node)
+  return asset?.type ? getAssetTypeLoc(asset.type) : ''
 }
 
 const openAssetPicker = (node: any) => {
