@@ -992,35 +992,66 @@
                         {{ locale === 'ru' ? 'Закрыть' : 'Close' }}
                       </button>
                     </div>
-                    <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] gap-2 border-b border-black/10 px-6 py-3 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
-                      <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
-                      <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
-                      <span>{{ locale === 'ru' ? 'Даты' : 'Dates' }}</span>
-                      <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
-                      <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
-                    </div>
                     <div class="flex-1 overflow-y-auto scroll-minimal py-2">
-                      <button
-                        v-for="trade in localTrades"
-                        :key="trade.id"
-                        class="grid w-full grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] items-center gap-2 border-b border-black/5 px-6 py-4 text-left font-mono transition-colors hover:bg-black/5"
-                        @click="selectBoardTrade(trade)"
+                      <div
+                        v-for="strategy in tradePickerStrategies"
+                        :key="strategy.id"
+                        class="border-b border-black/5 last:border-0"
                       >
-                        <span class="flex min-w-0 items-center gap-3">
-                          <span class="h-1.5 w-1.5 rounded-full" :class="getResultDotClass(getTradeCurrencyProfit(trade))"></span>
-                          <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ String(trade.side || 'LONG').toUpperCase() }}</span>
-                        </span>
-                        <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || 'ASSET' }}</span>
-                        <span class="flex min-w-0 flex-col">
-                          <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ formatTradeDate(trade.date) }}</span>
-                          <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ formatTradeDate(trade.dateExit) }}</span>
-                        </span>
-                        <span class="truncate text-right text-[11px] uppercase tracking-wider text-black/40">{{ formatTradeDuration(trade) }}</span>
-                        <span class="truncate text-right text-[12px] font-black tracking-wider" :class="getResultToneClass(getTradeCurrencyProfit(trade))">
-                          {{ formatSignedCurrency(getTradeCurrencyProfit(trade)) }} ({{ formatSignedPercent(getTradePercentProfit(trade, trade.strategyId)) }})
-                        </span>
-                      </button>
-                      <div v-if="localTrades.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
+                        <button
+                          class="grid w-full grid-cols-[1fr_0.4fr_0.4fr_0.7fr_auto] items-center gap-3 px-6 py-4 text-left font-mono transition-colors hover:bg-black/5"
+                          @click="toggleTradeStrategy(strategy.id)"
+                        >
+                          <span class="min-w-0">
+                            <span class="block truncate text-[13px] font-black uppercase tracking-widest text-black/80">{{ strategy.name }}</span>
+                            <span class="mt-1 block text-[8px] uppercase tracking-[0.2em] text-black/30">
+                              {{ getTradePickerStrategyTrades(strategy.id).length }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
+                            </span>
+                          </span>
+                          <span class="text-[11px] font-black text-black/55">PF {{ formatProfitFactor(getStrategyMetrics(strategy).profitFactor) }}</span>
+                          <span class="text-[11px] font-black text-black/55">WR {{ formatCompactNumber(getStrategyMetrics(strategy).winRate, 1) }}%</span>
+                          <span class="text-right text-[11px] font-black" :class="getResultToneClass(getStrategyMetrics(strategy).resultCurrency)">
+                            {{ formatSignedCurrency(getStrategyMetrics(strategy).resultCurrency) }} ({{ formatSignedPercent(getStrategyMetrics(strategy).resultPercent) }})
+                          </span>
+                          <span class="flex h-6 w-6 items-center justify-center border border-black/10 text-[12px] font-black text-black/35 transition-colors" :class="expandedTradeStrategyId === strategy.id ? 'bg-black text-white' : ''">
+                            {{ expandedTradeStrategyId === strategy.id ? '−' : '+' }}
+                          </span>
+                        </button>
+
+                        <div v-if="expandedTradeStrategyId === strategy.id" class="border-t border-black/10 bg-black/[0.025]">
+                          <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] gap-2 border-b border-black/10 px-6 py-3 pl-10 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
+                            <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
+                            <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
+                            <span>{{ locale === 'ru' ? 'Даты' : 'Dates' }}</span>
+                            <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
+                            <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
+                          </div>
+                          <button
+                            v-for="trade in getTradePickerStrategyTrades(strategy.id)"
+                            :key="trade.id"
+                            class="grid w-full grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] items-center gap-2 border-b border-black/5 px-6 py-3 pl-10 text-left font-mono transition-colors last:border-0 hover:bg-black/5"
+                            @click="selectBoardTrade(trade)"
+                          >
+                            <span class="flex min-w-0 items-center gap-3">
+                              <span class="h-1.5 w-1.5 rounded-full" :class="getResultDotClass(getTradeCurrencyProfit(trade))"></span>
+                              <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ String(trade.side || 'LONG').toUpperCase() }}</span>
+                            </span>
+                            <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || 'ASSET' }}</span>
+                            <span class="flex min-w-0 flex-col">
+                              <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ formatTradeDate(trade.date) }}</span>
+                              <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ formatTradeDate(trade.dateExit) }}</span>
+                            </span>
+                            <span class="truncate text-right text-[11px] uppercase tracking-wider text-black/40">{{ formatTradeDuration(trade) }}</span>
+                            <span class="truncate text-right text-[12px] font-black tracking-wider" :class="getResultToneClass(getTradeCurrencyProfit(trade))">
+                              {{ formatSignedCurrency(getTradeCurrencyProfit(trade)) }} ({{ formatSignedPercent(getTradePercentProfit(trade, trade.strategyId || strategy.id)) }})
+                            </span>
+                          </button>
+                          <div v-if="getTradePickerStrategyTrades(strategy.id).length === 0" class="px-10 py-8 text-center font-mono text-[9px] uppercase tracking-[0.25em] text-black/25">
+                            {{ locale === 'ru' ? 'В ЭТОЙ СТРАТЕГИИ НЕТ СДЕЛОК' : 'NO TRADES IN THIS STRATEGY' }}
+                          </div>
+                        </div>
+                      </div>
+                      <div v-if="tradePickerStrategies.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
                         {{ locale === 'ru' ? 'СДЕЛКИ НЕ НАЙДЕНЫ' : 'NO_TRADES_FOUND' }}
                       </div>
                     </div>
@@ -1533,6 +1564,7 @@ const passivePortRevealDistance = 96
 const activeAssetNodeId = ref<string | null>(null)
 const activeStrategyNodeId = ref<string | null>(null)
 const activeTradeNodeId = ref<string | null>(null)
+const expandedTradeStrategyId = ref<string | null>(null)
 const assetSearch = ref('')
 const assetTypeFilter = ref('ALL')
 const failedAssetIcons = ref(new Set<string>())
@@ -2176,9 +2208,22 @@ const localStrategies = computed(() => (strategyTradesStore.strategies || []).fi
 const localTrades = computed(() => {
   return Object.values(strategyTradesStore.tradesByStrategy || {}).flat() as DiaryEntry[]
 })
+const tradePickerStrategies = computed(() => strategyTradesStore.strategies || [])
 
 const getStrategyTrades = (strategyId: string) => {
   return (strategyTradesStore.getTradesForStrategy(strategyId) || []) as DiaryEntry[]
+}
+
+const getTradePickerStrategyTrades = (strategyId: string) => {
+  return getStrategyTrades(strategyId).slice().sort((left: DiaryEntry, right: DiaryEntry) => {
+    const leftTime = left.date ? new Date(left.date).getTime() : 0
+    const rightTime = right.date ? new Date(right.date).getTime() : 0
+    return rightTime - leftTime
+  })
+}
+
+const toggleTradeStrategy = (strategyId: string) => {
+  expandedTradeStrategyId.value = expandedTradeStrategyId.value === strategyId ? null : strategyId
 }
 
 const getTradeCurrencyProfit = (trade: any) => {
@@ -2331,10 +2376,12 @@ const selectBoardStrategy = (strategy: StrategyProfile) => {
 const openTradePicker = (node: any) => {
   if (node?.type !== 'trade') return
   activeTradeNodeId.value = node.id
+  expandedTradeStrategyId.value = null
 }
 
 const closeTradePicker = () => {
   activeTradeNodeId.value = null
+  expandedTradeStrategyId.value = null
 }
 
 const selectBoardTrade = (trade: DiaryEntry) => {
