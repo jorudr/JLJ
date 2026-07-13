@@ -31,7 +31,28 @@ const journalEntries = ref([])
 
 const getArchiveNodeName = (id) => `Archive_Node_${id.toString(16).toUpperCase().slice(-6)}`
 
+const archiveMode = ref('notes') // 'notes' or 'images'
+const notesList = ref([])
+
+const addNote = () => {
+  const id = `note_${Date.now()}`
+  notesList.value.push({
+    id,
+    content: '',
+    date: new Date().toISOString(),
+    title: `SESSION_LOG_${notesList.value.length + 1}`
+  })
+}
+
+const removeNote = (id) => {
+  notesList.value = notesList.value.filter(n => n.id !== id)
+}
+
 const addJournalEntry = () => {
+  if (archiveMode.value === 'notes') {
+    addNote()
+    return
+  }
   const id = Date.now()
   journalEntries.value.push({
     id,
@@ -1778,6 +1799,8 @@ const resetForm = () => {
   activeConditionScenarioIds.value.clear()
   selectedEmotions.value = []
   journalEntries.value = []
+  notesList.value = []
+  archiveMode.value = 'notes'
   openDate.value = new Date()
   exitDate.value = new Date()
   tradeTimeZone.value = detectUserTimeZone()
@@ -2063,7 +2086,8 @@ const submit = async () => {
       createdAt: e.createdAt || new Date().toISOString(),
       context: ''
     })).filter(img => img.url),
-    notes: ''
+    notes: '',
+    notesList: [...notesList.value]
   }
 
   commitState.value = 'loading'
@@ -2092,10 +2116,14 @@ const submit = async () => {
     themeStore,
     isDark,
     viewMode,
+    archiveMode,
     journalEntries,
+    notesList,
     getArchiveNodeName,
     addJournalEntry,
     removeJournalEntry,
+    addNote,
+    removeNote,
     addJournalEntryTag,
     removeJournalEntryTag,
     handleImageUpload,

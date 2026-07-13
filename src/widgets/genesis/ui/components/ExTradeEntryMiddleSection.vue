@@ -8,7 +8,126 @@ const isArchivalBriefingEnabled = false;
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
-const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+import { ref } from 'vue';
+const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+
+const isCreatingNote = ref(false);
+const isPreviewMode = ref(false);
+const noteText = ref("");
+const noteTextArea = ref(null);
+const editingContentNoteId = ref(null);
+const expandedNoteIds = ref([]);
+const editingNoteId = ref(null);
+const editNoteTitle = ref("");
+
+const startEditContent = (note) => {
+  editingContentNoteId.value = note.id;
+  noteText.value = note.content || "";
+  isCreatingNote.value = true;
+  isPreviewMode.value = false;
+};
+
+const cancelNoteEdit = () => {
+  isCreatingNote.value = false;
+  editingContentNoteId.value = null;
+  noteText.value = "";
+};
+
+const toggleNote = (id) => {
+  const index = expandedNoteIds.value.indexOf(id);
+  if (index === -1) {
+    expandedNoteIds.value.push(id);
+  } else {
+    expandedNoteIds.value.splice(index, 1);
+  }
+};
+
+const startEditNote = (note, event) => {
+  event.stopPropagation();
+  editingNoteId.value = note.id;
+  editNoteTitle.value = note.title || (locale.value === 'ru' ? "АРХИВНАЯ_ЗАПИСЬ" : "ARCHIVED_RECORD");
+};
+
+const saveNoteTitle = (noteId) => {
+  if (editingNoteId.value === noteId) {
+    const n = notesList.value.find(n => n.id === noteId);
+    if (n) n.title = editNoteTitle.value;
+    editingNoteId.value = null;
+  }
+};
+
+const insertFormatting = (prefix, suffix = "") => {
+  if (!noteTextArea.value) return;
+  const el = noteTextArea.value;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const text = el.value;
+  const before = text.substring(0, start);
+  const selection = text.substring(start, end);
+  const after = text.substring(end);
+
+  noteText.value = before + prefix + (selection || "") + suffix + after;
+  
+  setTimeout(() => {
+    el.focus();
+    const newCursorPos = start + prefix.length + (selection ? selection.length + suffix.length : 0);
+    el.setSelectionRange(newCursorPos, newCursorPos);
+  }, 0);
+};
+
+const formatNote = (content) => {
+  if (!content) return "";
+  
+  let processedContent = content.replace(/\[VISUAL_REF:(\d+)\]/gim, (match, idxStr) => {
+    const idx = parseInt(idxStr);
+    const img = journalEntries.value?.[idx];
+    if (img && img.image) {
+      const name = img.name || `Visual_Node_${idx}`;
+      return `<div class="my-4 border nier-border-primary bg-black/5 dark:bg-white/5 p-2 relative group"><img src="${img.image}" alt="${name}" class="max-w-full h-auto object-contain max-h-[400px] w-full" /><div class="absolute bottom-4 left-4 nier-bg-panel px-2 py-1 text-[8px] font-mono opacity-80 uppercase tracking-widest border nier-border-primary shadow-lg">${name}</div></div>`;
+    }
+    return match;
+  });
+
+  return processedContent
+    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-black uppercase tracking-widest mt-4 mb-2 nier-text-primary">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-black uppercase tracking-[0.2em] mt-6 mb-3 nier-text-primary border-b nier-border-primary pb-1">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-black uppercase tracking-[0.4em] mt-8 mb-4 nier-text-primary border-b-2 border-black/20 dark:border-white/20 pb-2">$1</h1>')
+    .replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-black/20 dark:border-white/20 pl-6 my-4 italic opacity-80">$1</blockquote>')
+    .replace(/^\- (.*$)/gim, '<li class="ml-6 list-disc opacity-80">$1</li>')
+    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
+    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
+    .replace(/\~\~(.*?)\~\~/gim, '<u>$1</u>')
+    .replace(/\[color\=(.*?)\](.*?)\[\/color\]/gim, '<span style="color: $1">$2</span>')
+    .replace(/\n/gim, '<br />');
+};
+
+const persistNote = () => {
+  if (!noteText.value.trim()) return;
+  if (editingContentNoteId.value) {
+    const n = notesList.value.find(n => n.id === editingContentNoteId.value);
+    if (n) n.content = noteText.value;
+  } else {
+    notesList.value.push({
+      id: `note_${Date.now()}`,
+      content: noteText.value,
+      date: new Date().toISOString(),
+      title: `SESSION_LOG_${notesList.value.length + 1}`
+    });
+  }
+  noteText.value = "";
+  isCreatingNote.value = false;
+  editingContentNoteId.value = null;
+};
+
+const formatDateTactical = (dateStr) => {
+  if (!dateStr) return 'DATE_UNASSIGNED';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return 'DATE_UNASSIGNED';
+
+  const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${date} // ${time}`;
+};
 </script>
 
 <template>
@@ -240,17 +359,148 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
             <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-6">
               <div class="flex items-center space-x-4">
                 <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45"></div>
-                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black nier-text-primary">EVIDENCE_ARCHIVE</span>
+                <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-sm">
+                   <button @click="archiveMode = 'notes'" 
+                           :class="['px-3 py-1.5 text-[9px] font-mono transition-all font-black uppercase tracking-widest', archiveMode === 'notes' ? 'nier-bg-inverted nier-text-primary' : 'opacity-40 hover:opacity-100']">
+                      {{ locale === 'ru' ? 'Архив_Заметок' : 'Neural_Note_Archive' }}
+                   </button>
+                   <button @click="archiveMode = 'images'" 
+                           :class="['px-3 py-1.5 text-[9px] font-mono transition-all font-black uppercase tracking-widest', archiveMode === 'images' ? 'nier-bg-inverted nier-text-primary' : 'opacity-40 hover:opacity-100']">
+                      {{ locale === 'ru' ? 'Архив_Доказательств' : 'Evidence_Archive' }}
+                   </button>
+                </div>
               </div>
-              <button @click="addJournalEntry" class="flex items-center space-x-3 group px-4 py-1.5 border nier-border-primary hover:bg-black dark:hover:bg-white transition-all">
-                 <span class="text-[8px] font-mono tracking-widest uppercase font-black text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black">New_Archive_Slot</span>
-                 <div class="w-1.5 h-1.5 bg-black/20 dark:bg-white/20 rotate-45 group-hover:bg-white dark:group-hover:bg-black"></div>
-              </button>
+              <div class="flex items-center space-x-6">
+                 <button v-if="!isCreatingNote" @click="archiveMode === 'notes' ? (isCreatingNote = true) : addJournalEntry()" class="flex items-center space-x-3 group px-4 py-1.5 border nier-border-primary hover:bg-black dark:hover:bg-white transition-all">
+                    <span class="text-[8px] font-mono tracking-widest uppercase font-black text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black">
+                       {{ archiveMode === 'notes' ? (locale === 'ru' ? 'Новая_Заметка' : 'Add_New_Record') : (locale === 'ru' ? 'Новый_Слот_Архива' : 'New_Archive_Slot') }}
+                    </span>
+                    <div class="w-1.5 h-1.5 bg-black/20 dark:bg-white/20 rotate-45 group-hover:bg-white dark:group-hover:bg-black"></div>
+                 </button>
+              </div>
             </div>
 
-            <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
+            <!-- NOTES TAB CONTENT -->
+            <div v-if="archiveMode === 'notes'" class="flex flex-col space-y-8">
+               <!-- NEW NOTE TEXTAREA -->
+               <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 border nier-border-primary relative">
+                    <div class="absolute top-4 right-4 flex space-x-4">
+                       <button @click="cancelNoteEdit" class="text-[10px] font-mono uppercase tracking-widest opacity-40 hover:opacity-100">{{ locale === 'ru' ? 'Отмена' : 'Cancel' }}</button>
+                    </div>
+                 
+                    <!-- FORMATTING TOOLBAR -->
+                    <div class="flex items-center flex-wrap gap-2 pb-4 border-b border-black/5 dark:border-white/5 mb-4">
+                       <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-sm mr-4">
+                          <button @click="isPreviewMode = false" 
+                                  :class="['px-3 py-1 text-[9px] font-mono transition-all', !isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
+                             {{ locale === 'ru' ? 'РЕДАКТОР' : 'EDITOR' }}
+                          </button>
+                          <button @click="isPreviewMode = true" 
+                                  :class="['px-3 py-1 text-[9px] font-mono transition-all', isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
+                             {{ locale === 'ru' ? 'ПРОСМОТР' : 'PREVIEW' }}
+                          </button>
+                       </div>
+
+                       <div v-if="!isPreviewMode" class="flex items-center flex-wrap gap-2">
+                         <button @click="insertFormatting('# ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H1</button>
+                         <button @click="insertFormatting('## ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H2</button>
+                         <button @click="insertFormatting('### ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H3</button>
+                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('**', '**')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono font-bold transition-all">B</button>
+                         <button @click="insertFormatting('*', '*')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono italic transition-all">I</button>
+                         <button @click="insertFormatting('~~', '~~')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono underline transition-all">U</button>
+                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('- ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">LIST</button>
+                         <button @click="insertFormatting('> ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">QUOTE</button>
+                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('[color=#10b981]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-emerald-500 rounded-full"></div></button>
+                         <button @click="insertFormatting('[color=#ef4444]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-rose-500 rounded-full"></div></button>
+                         <button @click="insertFormatting('[color=#3b82f6]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-blue-500 rounded-full"></div></button>
+                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         
+                         <!-- Visual Attach Dropdown -->
+                         <div class="relative group/visuals inline-block">
+                           <button class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all flex items-center gap-1">
+                             {{ locale === 'ru' ? 'ПРИКРЕПИТЬ_МАТЕРИАЛ' : 'ATTACH_VISUAL' }}
+                             <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                           </button>
+                           <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
+                             <div v-if="!journalEntries?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">{{ locale === 'ru' ? 'НЕТ_СОХРАНЕННЫХ_МАТЕРИАЛОВ' : 'NO_VISUALS_ARCHIVED' }}</div>
+                             <button v-else v-for="(img, idx) in journalEntries" :key="img.id" @click.prevent="insertFormatting(`[VISUAL_REF:${idx}]`, '')" class="px-3 py-2 text-[9px] font-mono text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors truncate max-w-[200px]">
+                               {{ img.name || `Visual_Node_${idx}` }}
+                             </button>
+                           </div>
+                         </div>
+                       </div>
+                    </div>
+
+                    <div class="relative min-h-[200px]">
+                       <textarea 
+                          v-if="!isPreviewMode"
+                          ref="noteTextArea"
+                          v-model="noteText" 
+                          :placeholder="locale === 'ru' ? 'МАТЕРИАЛИЗУЙТЕ СВОИ МЫСЛИ...' : 'REIFY SESSION THOUGHTS HERE...'"
+                          class="w-full h-full bg-transparent border-0 font-mono text-[13px] leading-relaxed tracking-wider outline-none resize-none placeholder:opacity-20 min-h-[200px]"
+                          autofocus
+                       ></textarea>
+                       <div v-else 
+                            class="w-full h-full font-mono text-[13px] leading-relaxed tracking-wider overflow-y-auto custom-scrollbar min-h-[200px]"
+                            v-html="formatNote(noteText || (locale === 'ru' ? 'НЕТ_КОНТЕНТА_ДЛЯ_ОТОБРАЖЕНИЯ' : 'NO_CONTENT_TO_PREVIEW'))">
+                       </div>
+                    </div>
+                    <div class="flex justify-end">
+                       <button @click="persistNote" class="group/save relative h-10 px-10 bg-black text-white dark:bg-white dark:text-black font-black border border-black dark:border-white hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all duration-500">
+                         <span class="relative z-10 text-[9px] uppercase tracking-[0.4em]">{{ locale === 'ru' ? 'Сохранить_Запись' : 'Persist_Record' }}</span>
+                       </button>
+                    </div>
+                 </div>
+               
+               <div v-if="notesList.length === 0 && !isCreatingNote" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
+                 <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
+                 <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Записи_Не_Найдены' : 'No_Records_Found' }}</span>
+                 <div class="mt-6 flex gap-2">
+                   <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
+                 </div>
+               </div>
+
+               <!-- EXISTING NOTES LIST -->
+               <div v-else class="flex flex-col space-y-6">
+                  <div v-for="note in notesList.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())" :key="note.id" 
+                       class="flex flex-col p-6 border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.01] relative group/note cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
+                       @click="toggleNote(note.id)"
+                       @dblclick="startEditContent(note)">
+                     <div class="flex items-center justify-between mb-2 pb-2" :class="expandedNoteIds.includes(note.id) ? 'border-b border-black/5 dark:border-white/5' : ''">
+                        <div class="flex items-center space-x-4">
+                           <div class="w-1.5 h-1.5 nier-bg-inverted transition-transform duration-300" :class="expandedNoteIds.includes(note.id) ? 'rotate-[135deg]' : 'rotate-45'"></div>
+                           <div v-if="editingNoteId === note.id" @click.stop class="flex items-center gap-2">
+                             <input 
+                               v-model="editNoteTitle" 
+                               @keydown.enter.prevent="saveNoteTitle(note.id)" 
+                               @blur="saveNoteTitle(note.id)"
+                               class="bg-transparent border-b border-black/30 dark:border-white/30 outline-none text-[9px] font-mono font-black uppercase tracking-[0.2em] nier-text-primary"
+                               autofocus
+                             />
+                             <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '(ENTER_ДЛЯ_СОХРАНЕНИЯ)' : '(ENTER_TO_SAVE)' }}</span>
+                           </div>
+                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text" title="Click to rename">{{ note.title || (locale === 'ru' ? 'АРХИВНАЯ_ЗАПИСЬ' : 'ARCHIVED_RECORD') }}</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                           <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>
+                           <button type="button" @click.stop="removeNote(note.id)" class="opacity-0 group-hover/note:opacity-40 hover:!opacity-100 transition-opacity text-rose-500">
+                              <span class="text-[9px] font-mono font-black uppercase tracking-widest">{{ locale === 'ru' ? '[Удалить]' : '[Delete]' }}</span>
+                           </button>
+                        </div>
+                     </div>
+                     <div v-if="expandedNoteIds.includes(note.id)" class="text-[12px] font-mono leading-relaxed opacity-70 whitespace-pre-wrap mt-2 animate-fade-in" v-html="formatNote(note.content)"></div>
+                  </div>
+               </div>
+            </div>
+
+            <!-- IMAGES TAB CONTENT -->
+            <div v-else-if="archiveMode === 'images'">
+              <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
               <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
-              <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">No_Evidences_In_The_Archive</span>
+              <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Архив_Доказательств_Пуст' : 'No_Evidences_In_The_Archive' }}</span>
               <div class="mt-6 flex gap-2">
                 <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
               </div>
@@ -338,6 +588,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                     </div>
                   </ExPanel>
               </div>
+            </div>
           </div>
         </Transition>
       </div>
