@@ -49,7 +49,7 @@
             :style="getBoardNodeStyle(node)"
           >
             <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-              <h3 class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || 'Untitled'"></h3>
+              <h3 class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || boardUiLabels.untitled"></h3>
               <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
             </div>
 
@@ -91,23 +91,23 @@
               <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getStrategyNodeLabel(node) }}</span>
               <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 gap-1.5 text-center uppercase">
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">PF</small>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
                   <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">WR</small>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
                   <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">RES</small>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
                   <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">START</small>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
                   <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">END</small>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
                   <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                 </span>
               </div>
@@ -120,16 +120,16 @@
                   <span class="truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
                 </div>
                 <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
-                  {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                  {{ getTradeNodeResult(node) || boardUiLabels.select }}
                 </span>
               </div>
               <div class="grid grid-cols-2 gap-1.5 text-center uppercase">
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">ENTRY</small>
+                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
                   <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">EXIT</small>
+                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
                   <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
                 </span>
               </div>
@@ -196,7 +196,7 @@
               :style="getBoardNodeStyle(node)"
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-                <h3 class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || 'Untitled'"></h3>
+                <h3 class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || boardUiLabels.untitled"></h3>
                 <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-current/55">{{ node.text }}</p>
               </div>
 
@@ -238,23 +238,23 @@
                 <span class="truncate text-sm font-black uppercase tracking-widest text-current/80">{{ getStrategyNodeLabel(node) }}</span>
                 <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 gap-1 text-center uppercase">
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">PF</small>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">{{ boardUiLabels.profitFactorShort }}</small>
                     <strong class="truncate text-[11px] font-black text-current/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">WR</small>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">{{ boardUiLabels.winRateShort }}</small>
                     <strong class="truncate text-[11px] font-black text-current/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">RES</small>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">{{ boardUiLabels.resultShort }}</small>
                     <strong class="truncate text-[11px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">START</small>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">{{ boardUiLabels.startShort }}</small>
                     <strong class="truncate text-[11px] font-black text-current/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">END</small>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">{{ boardUiLabels.endShort }}</small>
                     <strong class="truncate text-[11px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                   </span>
                 </div>
@@ -267,16 +267,16 @@
                     <span class="truncate text-[8px] font-black uppercase tracking-[0.2em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
                   </div>
                   <span class="max-w-[45%] truncate text-right text-[10px] font-black uppercase tracking-[0.14em]" :class="getTradeNodeResultClass(node)">
-                    {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                    {{ getTradeNodeResult(node) || boardUiLabels.select }}
                   </span>
                 </div>
                 <div class="grid grid-cols-2 gap-1 text-center uppercase">
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">ENTRY</small>
+                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">{{ boardUiLabels.entryShort }}</small>
                     <strong class="truncate text-[9px] font-black text-current/80">{{ getTradeNodeEntryDate(node) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">EXIT</small>
+                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">{{ boardUiLabels.exitShort }}</small>
                     <strong class="truncate text-[9px] font-black text-current/80">{{ getTradeNodeExitDate(node) }}</strong>
                   </span>
                 </div>
@@ -540,13 +540,13 @@
                       @input="updateNodeTitle($event, node)"
                       @keydown.enter.prevent
                       class="relative z-10 font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent cursor-text"
-                      data-placeholder="Untitled">
+                      :data-placeholder="boardUiLabels.untitled">
                  </div>
                  <span
                    v-if="isTextNodeTitleEmpty(node)"
                    class="pointer-events-none absolute left-4 right-4 top-6 z-0 font-serif text-xl italic leading-none text-black/40"
                  >
-                   Untitled
+                   {{ boardUiLabels.untitled }}
                  </span>
                  <div :ref="(el) => setTextEditorRef(el, node.id)"
                       :data-text-node-id="node.id"
@@ -569,7 +569,7 @@
                 <img v-if="node.src" :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-contain cursor-pointer hover:opacity-90 transition-opacity" draggable="false" @click.stop="triggerImageUpload(node.id)" />
                 <div v-else class="flex-1 flex flex-col items-center justify-center cursor-pointer border border-dashed border-black/20 m-4 hover:border-black/40 hover:bg-black/5 transition-all" @click.stop="triggerImageUpload(node.id)">
                    <svg class="w-8 h-8 opacity-40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                   <span class="text-[10px] font-mono tracking-[0.2em] uppercase opacity-40 text-center px-4">Upload Image (RU/EN)</span>
+                   <span class="text-[10px] font-mono tracking-[0.2em] uppercase opacity-40 text-center px-4">{{ boardUiLabels.uploadImage }}</span>
                 </div>
                 <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
                   {{ node.caption }}
@@ -597,7 +597,7 @@
                             class="opacity-90" />
                 </svg>
                 <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 text-[10px] font-mono tracking-widest uppercase text-center px-4">
-                   Dbl-Click to Draw
+                   {{ boardUiLabels.dblClickToDraw }}
                 </div>
               </div>
 
@@ -652,23 +652,23 @@
                   </span>
                   <span v-if="getStrategyNodeMetrics(node)" class="grid w-full grid-cols-5 gap-1.5 text-center uppercase">
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">PF</small>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
                       <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">WR</small>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
                       <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">RES</small>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
                       <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">START</small>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
                       <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">END</small>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
                       <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                     </span>
                   </span>
@@ -692,16 +692,16 @@
                       </span>
                     </span>
                     <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
-                      {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                      {{ getTradeNodeResult(node) || boardUiLabels.select }}
                     </span>
                   </span>
                   <span class="grid w-full grid-cols-2 gap-1.5 text-center uppercase">
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">ENTRY</small>
+                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
                       <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">EXIT</small>
+                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
                       <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
                     </span>
                   </span>
@@ -813,26 +813,26 @@
                         :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'bg-black/10' : 'hover:bg-black/5'"
                         :title="locale === 'ru' ? 'Сигнальные узлы' : 'Signal Nodes'"
                         @click.stop>
-                  <span class="font-mono text-[10px] font-black transition-colors" :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'text-black' : 'text-black/60 group-hover:text-black'">SIG</span>
+                  <span class="font-mono text-[10px] font-black transition-colors" :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'text-black' : 'text-black/60 group-hover:text-black'">{{ boardUiLabels.signalTool }}</span>
                 </button>
                 <div class="pointer-events-none absolute left-[calc(100%-1px)] top-1/2 z-[60] flex -translate-x-2 -translate-y-1/2 items-center border border-black/20 bg-white/95 opacity-0 shadow-[0_16px_36px_rgba(0,0,0,0.12)] transition-all group-hover/signal:pointer-events-auto group-hover/signal:translate-x-0 group-hover/signal:opacity-100">
                   <button class="h-9 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                           :class="activeBoardTool === 'asset-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
                           :title="locale === 'ru' ? 'Актив' : 'Asset'"
                           @click.stop="activeBoardTool = activeBoardTool === 'asset-node' ? null : 'asset-node'">
-                    {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
+                    {{ boardUiLabels.asset }}
                   </button>
                   <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                           :class="activeBoardTool === 'current-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
                           :title="locale === 'ru' ? 'Текущая цена' : 'Current Price'"
                           @click.stop="activeBoardTool = activeBoardTool === 'current-price' ? null : 'current-price'">
-                    CP
+                    {{ boardUiLabels.currentPriceTool }}
                   </button>
                   <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                           :class="activeBoardTool === 'target-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
                           :title="locale === 'ru' ? 'Предполагаемая цена' : 'Projected Price'"
                           @click.stop="activeBoardTool = activeBoardTool === 'target-price' ? null : 'target-price'">
-                    TP
+                    {{ boardUiLabels.targetPriceTool }}
                   </button>
                 </div>
               </div>
@@ -845,7 +845,7 @@
                 :title="locale === 'ru' ? 'Стратегия' : 'Strategy'"
                 @click.stop="activeBoardTool = activeBoardTool === 'strategy-node' ? null : 'strategy-node'"
               >
-                STR
+                {{ boardUiLabels.strategyTool }}
               </button>
               <div class="w-6 h-px bg-black/10 my-1"></div>
               <button
@@ -854,7 +854,7 @@
                 :title="locale === 'ru' ? 'Сделки' : 'Trades'"
                 @click.stop="activeBoardTool = activeBoardTool === 'trade-node' ? null : 'trade-node'"
               >
-                TRD
+                {{ boardUiLabels.tradeTool }}
               </button>
             </template>
           </ExPanel>
@@ -949,7 +949,7 @@
                     <div class="p-6 border-b border-white/10 flex items-center gap-4 shrink-0 bg-black/20">
                       <input
                         v-model="assetSearch"
-                        :placeholder="locale === 'ru' ? 'ПОИСК_АКТИВОВ...' : 'SEARCH_ASSETS...'"
+                        :placeholder="boardUiLabels.searchAssets"
                         class="w-full uppercase text-xl font-black tracking-widest bg-transparent border-0 outline-none text-white placeholder-white/20 font-mono"
                         autofocus
                       />
@@ -995,7 +995,7 @@
                         </div>
                       </div>
                       <div v-if="filteredAssets.length === 0" class="flex flex-col items-center justify-center h-full text-white/30 uppercase tracking-[0.3em] font-mono text-[10px] mt-10">
-                        {{ locale === 'ru' ? 'АКТИВЫ НЕ НАЙДЕНЫ' : 'NO_ASSETS_FOUND' }}
+                        {{ boardUiLabels.noAssetsFound }}
                       </div>
                     </div>
                   </ExPanel>
@@ -1026,8 +1026,8 @@
                     </div>
                     <div class="grid grid-cols-[1fr_0.45fr_0.45fr_0.75fr] gap-3 border-b border-black/10 px-6 py-3 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
                       <span>{{ locale === 'ru' ? 'Стратегия' : 'Strategy' }}</span>
-                      <span>PF</span>
-                      <span>WR</span>
+                      <span>{{ boardUiLabels.profitFactorShort }}</span>
+                      <span>{{ boardUiLabels.winRateShort }}</span>
                       <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
                     </div>
                     <div class="flex-1 overflow-y-auto scroll-minimal py-2">
@@ -1050,7 +1050,7 @@
                         </span>
                       </button>
                       <div v-if="localStrategies.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
-                        {{ locale === 'ru' ? 'СТРАТЕГИИ НЕ НАЙДЕНЫ' : 'NO_STRATEGIES_FOUND' }}
+                        {{ boardUiLabels.noStrategiesFound }}
                       </div>
                     </div>
                   </ExPanel>
@@ -1094,8 +1094,8 @@
                               {{ getTradePickerStrategyTrades(strategy.id).length }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
                             </span>
                           </span>
-                          <span class="text-[11px] font-black text-black/55">PF {{ formatProfitFactor(getStrategyMetrics(strategy).profitFactor) }}</span>
-                          <span class="text-[11px] font-black text-black/55">WR {{ formatCompactNumber(getStrategyMetrics(strategy).winRate, 1) }}%</span>
+                          <span class="text-[11px] font-black text-black/55">{{ boardUiLabels.profitFactorShort }} {{ formatProfitFactor(getStrategyMetrics(strategy).profitFactor) }}</span>
+                          <span class="text-[11px] font-black text-black/55">{{ boardUiLabels.winRateShort }} {{ formatCompactNumber(getStrategyMetrics(strategy).winRate, 1) }}%</span>
                           <span class="text-right text-[11px] font-black" :class="getResultToneClass(getStrategyMetrics(strategy).resultCurrency)">
                             {{ formatSignedCurrency(getStrategyMetrics(strategy).resultCurrency) }} ({{ formatSignedPercent(getStrategyMetrics(strategy).resultPercent) }})
                           </span>
@@ -1106,11 +1106,11 @@
 
                         <div v-if="expandedTradeStrategyId === strategy.id" class="border-t border-black/10 bg-black/[0.025]">
                           <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] gap-2 border-b border-black/10 px-6 py-3 pl-10 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
-                            <span>{{ locale === 'ru' ? 'Направление' : 'Direction' }}</span>
-                            <span>{{ locale === 'ru' ? 'Актив' : 'Asset' }}</span>
-                            <span>{{ locale === 'ru' ? 'Даты' : 'Dates' }}</span>
-                            <span class="text-right">{{ locale === 'ru' ? 'Длительность' : 'Duration' }}</span>
-                            <span class="text-right">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
+                            <span>{{ boardUiLabels.direction }}</span>
+                            <span>{{ boardUiLabels.asset }}</span>
+                            <span>{{ boardUiLabels.dates }}</span>
+                            <span class="text-right">{{ boardUiLabels.duration }}</span>
+                            <span class="text-right">{{ boardUiLabels.result }}</span>
                           </div>
                           <button
                             v-for="trade in getTradePickerStrategyTrades(strategy.id)"
@@ -1120,9 +1120,9 @@
                           >
                             <span class="flex min-w-0 items-center gap-3">
                               <span class="h-1.5 w-1.5 rounded-full" :class="getResultDotClass(getTradeCurrencyProfit(trade))"></span>
-                              <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ String(trade.side || 'LONG').toUpperCase() }}</span>
+                              <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ getTradeSideLabel(trade.side) }}</span>
                             </span>
-                            <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || 'ASSET' }}</span>
+                            <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || boardUiLabels.assetFallback }}</span>
                             <span class="flex min-w-0 flex-col">
                               <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ formatTradeDate(trade.date) }}</span>
                               <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ formatTradeDate(trade.dateExit) }}</span>
@@ -1133,12 +1133,12 @@
                             </span>
                           </button>
                           <div v-if="getTradePickerStrategyTrades(strategy.id).length === 0" class="px-10 py-8 text-center font-mono text-[9px] uppercase tracking-[0.25em] text-black/25">
-                            {{ locale === 'ru' ? 'В ЭТОЙ СТРАТЕГИИ НЕТ СДЕЛОК' : 'NO TRADES IN THIS STRATEGY' }}
+                            {{ boardUiLabels.noTradesInStrategy }}
                           </div>
                         </div>
                       </div>
                       <div v-if="tradePickerStrategies.length === 0" class="flex h-64 items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-black/30">
-                        {{ locale === 'ru' ? 'СДЕЛКИ НЕ НАЙДЕНЫ' : 'NO_TRADES_FOUND' }}
+                        {{ boardUiLabels.noTradesFound }}
                       </div>
                     </div>
                   </ExPanel>
@@ -1368,12 +1368,12 @@
               <div class="group relative pt-2">
                  <button @click="removeBoardNode(nodeContextMenu.nodeId)"
                          class="bg-white border border-red-500/30 px-6 py-3 min-w-[180px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden shadow-[10px_10px_0_rgba(0,0,0,0.1)] text-[#2c2c2a]">
-                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">REMOVE_NODE</span>
+                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">{{ boardUiLabels.removeNode }}</span>
                    <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
                    <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
                  </button>
                  <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent_Archive_Erasure</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">{{ boardUiLabels.removeWarning }}</span>
                 </div>
               </div>
             </div>
@@ -1842,6 +1842,85 @@ const selectedBoardNodeId = ref<string | null>(null)
 const selectedBoardNode = computed(() => boardNodes.value.find((n: any) => n.id === selectedBoardNodeId.value) || null)
 const activeEditorField = ref<'title' | 'text' | null>(null)
 const boardTextPlaceholder = computed(() => locale.value === 'ru' ? 'Введите текст...' : 'Enter text...')
+const boardUiLabels = computed(() => locale.value === 'ru'
+  ? {
+      untitled: 'Без названия',
+      uploadImage: 'Загрузить изображение',
+      dblClickToDraw: 'Дважды кликните, чтобы рисовать',
+      profitFactorShort: 'ПФ',
+      winRateShort: 'ВИН',
+      resultShort: 'РЕЗ',
+      startShort: 'СТАРТ',
+      endShort: 'ФИН',
+      entryShort: 'ВХОД',
+      exitShort: 'ВЫХОД',
+      select: 'ВЫБОР',
+      signalTool: 'СИГ',
+      currentPriceTool: 'ТЦ',
+      targetPriceTool: 'ПЦ',
+      strategyTool: 'СТР',
+      tradeTool: 'СДЛ',
+      searchAssets: 'ПОИСК_АКТИВОВ...',
+      noAssetsFound: 'АКТИВЫ НЕ НАЙДЕНЫ',
+      noStrategiesFound: 'СТРАТЕГИИ НЕ НАЙДЕНЫ',
+      noTradesFound: 'СДЕЛКИ НЕ НАЙДЕНЫ',
+      noTradesInStrategy: 'В ЭТОЙ СТРАТЕГИИ НЕТ СДЕЛОК',
+      removeNode: 'УДАЛИТЬ_УЗЕЛ',
+      removeWarning: 'Внимание: безвозвратное удаление',
+      assetFallback: 'АКТИВ',
+      direction: 'Направление',
+      asset: 'Актив',
+      dates: 'Даты',
+      duration: 'Длительность',
+      result: 'Результат',
+      currentPrice: 'Текущая',
+      targetPrice: 'Прогноз',
+      noAsset: 'БЕЗ АКТИВА',
+      noStrategy: 'БЕЗ СТРАТЕГИИ',
+      noTrade: 'БЕЗ СДЕЛКИ',
+      selectTrade: 'ВЫБЕРИТЕ СДЕЛКУ',
+      long: 'ЛОНГ',
+      short: 'ШОРТ'
+    }
+  : {
+      untitled: 'Untitled',
+      uploadImage: 'Upload image',
+      dblClickToDraw: 'Dbl-click to draw',
+      profitFactorShort: 'PF',
+      winRateShort: 'WR',
+      resultShort: 'RES',
+      startShort: 'START',
+      endShort: 'END',
+      entryShort: 'ENTRY',
+      exitShort: 'EXIT',
+      select: 'SELECT',
+      signalTool: 'SIG',
+      currentPriceTool: 'CP',
+      targetPriceTool: 'TP',
+      strategyTool: 'STR',
+      tradeTool: 'TRD',
+      searchAssets: 'SEARCH_ASSETS...',
+      noAssetsFound: 'NO_ASSETS_FOUND',
+      noStrategiesFound: 'NO_STRATEGIES_FOUND',
+      noTradesFound: 'NO_TRADES_FOUND',
+      noTradesInStrategy: 'NO TRADES IN THIS STRATEGY',
+      removeNode: 'REMOVE_NODE',
+      removeWarning: 'Warning: Permanent_Archive_Erasure',
+      assetFallback: 'ASSET',
+      direction: 'Direction',
+      asset: 'Asset',
+      dates: 'Dates',
+      duration: 'Duration',
+      result: 'Result',
+      currentPrice: 'Current',
+      targetPrice: 'Target',
+      noAsset: 'NO ASSET',
+      noStrategy: 'NO STRATEGY',
+      noTrade: 'NO TRADE',
+      selectTrade: 'SELECT TRADE',
+      long: 'LONG',
+      short: 'SHORT'
+    })
 
 const getPlainEditorText = (value: string) => {
   return String(value || '')
@@ -2200,8 +2279,8 @@ const parsePriceValue = (value: string | number | undefined | null) => {
 }
 
 const priceNodePlaceholder = (node: any) => {
-  if (node?.priceKind === 'current') return locale.value === 'ru' ? 'Текущая' : 'Current'
-  return locale.value === 'ru' ? 'Прогноз' : 'Target'
+  if (node?.priceKind === 'current') return boardUiLabels.value.currentPrice
+  return boardUiLabels.value.targetPrice
 }
 
 const getReferenceCurrentPrice = () => {
@@ -2247,7 +2326,7 @@ const getAssetTypeLoc = (type: string) => {
 }
 
 const getAssetNodeLabel = (node: any) => {
-  return node?.asset || (locale.value === 'ru' ? 'БЕЗ АКТИВА' : 'NO ASSET')
+  return node?.asset || boardUiLabels.value.noAsset
 }
 
 const getAssetNodeData = (node: any) => {
@@ -2393,7 +2472,7 @@ const formatProfitFactor = (value: number) => {
 const getStrategyNodeLabel = (node: any) => {
   if (node?.strategyName) return node.strategyName
   const strategy = localStrategies.value.find(strategy => strategy.id === node?.strategyId)
-  return strategy?.name || (locale.value === 'ru' ? 'БЕЗ СТРАТЕГИИ' : 'NO STRATEGY')
+  return strategy?.name || boardUiLabels.value.noStrategy
 }
 
 const getStrategyNodeMetrics = (node: any) => {
@@ -2410,27 +2489,32 @@ const getTradeNodeData = (node: any) => {
 
 const getTradeNodeLabel = (node: any) => {
   const trade = getTradeNodeData(node)
-  if (!trade) return locale.value === 'ru' ? 'БЕЗ СДЕЛКИ' : 'NO TRADE'
-  return `${String(trade.side || 'LONG').toUpperCase()} ${trade.asset || 'ASSET'}`
+  if (!trade) return boardUiLabels.value.noTrade
+  return `${getTradeSideLabel(trade.side)} ${trade.asset || boardUiLabels.value.assetFallback}`
 }
 
 const getTradeNodeAssetLabel = (node: any) => {
   const trade = getTradeNodeData(node)
-  return trade?.asset || (locale.value === 'ru' ? 'БЕЗ СДЕЛКИ' : 'NO TRADE')
+  return trade?.asset || boardUiLabels.value.noTrade
 }
 
 const getTradeNodeVector = (node: any) => {
   const trade = getTradeNodeData(node)
-  if (!trade) return locale.value === 'ru' ? 'ВЫБЕРИТЕ СДЕЛКУ' : 'SELECT TRADE'
-  const side = String(trade.side || 'LONG').toUpperCase()
-  return side.includes('SHORT') ? 'SHORT' : 'LONG'
+  if (!trade) return boardUiLabels.value.selectTrade
+  return getTradeSideLabel(trade.side)
 }
 
 const getTradeNodeVectorClass = (node: any) => {
-  const vector = getTradeNodeVector(node)
-  if (vector === 'LONG') return 'text-emerald-500'
-  if (vector === 'SHORT') return 'text-red-500'
+  const trade = getTradeNodeData(node)
+  const side = String(trade?.side || '').toUpperCase()
+  if (side.includes('LONG')) return 'text-emerald-500'
+  if (side.includes('SHORT')) return 'text-red-500'
   return 'text-black/35'
+}
+
+const getTradeSideLabel = (side: any) => {
+  const normalized = String(side || 'LONG').toUpperCase()
+  return normalized.includes('SHORT') ? boardUiLabels.value.short : boardUiLabels.value.long
 }
 
 const getTradeNodeResult = (node: any) => {
