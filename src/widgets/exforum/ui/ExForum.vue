@@ -357,9 +357,15 @@
                       @focus="selectedBoardNodeId = node.id; activeEditorField = 'title'"
                       @input="updateNodeTitle($event, node)"
                       @keydown.enter.prevent
-                      class="font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent empty:before:content-[attr(data-placeholder)] empty:before:opacity-40 cursor-text"
+                      class="relative z-10 font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent cursor-text"
                       data-placeholder="Untitled">
                  </div>
+                 <span
+                   v-if="isTextNodeTitleEmpty(node)"
+                   class="pointer-events-none absolute left-4 right-4 top-6 z-0 font-serif text-xl italic leading-none text-black/40"
+                 >
+                   Untitled
+                 </span>
                  <div :ref="(el) => setTextEditorRef(el, node.id)"
                       :data-text-node-id="node.id"
                       contenteditable="true"
@@ -1194,15 +1200,20 @@ const selectedBoardNode = computed(() => boardNodes.value.find((n: any) => n.id 
 const activeEditorField = ref<'title' | 'text' | null>(null)
 const boardTextPlaceholder = computed(() => locale.value === 'ru' ? 'Введите текст...' : 'Enter text...')
 
-const isTextNodeBodyEmpty = (node: any) => {
-  if (node?.type !== 'text') return false
-  const rawText = String(node.text || '')
-  const plainText = rawText
+const getPlainEditorText = (value: string) => {
+  return String(value || '')
     .replace(/<br\s*\/?>/gi, '')
     .replace(/<\/?[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .trim()
-  return plainText.length === 0
+}
+
+const isTextNodeTitleEmpty = (node: any) => {
+  return node?.type === 'text' && getPlainEditorText(node.title || '') === ''
+}
+
+const isTextNodeBodyEmpty = (node: any) => {
+  return node?.type === 'text' && getPlainEditorText(node.text || '') === ''
 }
 
 // --- Text Formatting Logic ---
@@ -1223,7 +1234,9 @@ const setTitleEditorRef = (el: any, id: string) => {
 
 const updateNodeTitle = (event: Event, node: any) => {
   if (node.type === 'text') {
-    node.title = (event.target as HTMLElement).innerHTML || ''
+    const editor = event.target as HTMLElement
+    node.title = getPlainEditorText(editor.innerHTML) === '' ? '' : editor.innerHTML
+    if (node.title === '' && editor.innerHTML !== '') editor.innerHTML = ''
   }
 }
 
