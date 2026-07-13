@@ -22,7 +22,7 @@ export function useBoardDrawing() {
   const boardCursorViewport = ref<HTMLElement | null>(null)
   const boardCanvas = ref<HTMLCanvasElement | null>(null)
   const boardContentSize = ref({ width: 1, height: 1 })
-  const boardTransform = ref({ x: 0, y: 0, scale: 1 })
+  const boardTransform = ref({ x: 0, y: 0 })
 
   const activeBoardStrokeId = ref<string | null>(null)
   const isBoardDrawingPointerDown = ref(false)
@@ -99,8 +99,8 @@ export function useBoardDrawing() {
     if (!board) return { x: 0, y: 0 }
 
     return {
-      x: ((e.clientX - board.rect.left) / board.scaleX - boardTransform.value.x) / boardTransform.value.scale,
-      y: ((e.clientY - board.rect.top) / board.scaleY - boardTransform.value.y) / boardTransform.value.scale
+      x: (e.clientX - board.rect.left) / board.scaleX - boardTransform.value.x,
+      y: (e.clientY - board.rect.top) / board.scaleY - boardTransform.value.y
     }
   }
 
@@ -160,13 +160,13 @@ export function useBoardDrawing() {
   }
 
   function getOperationScreenSize(operation: BoardDrawingOperation) {
-    return Math.max(1, (operation.size || 4) * boardTransform.value.scale)
+    return Math.max(1, operation.size || 4)
   }
 
   function getCanvasPoint(point: BoardDrawingPoint) {
     return {
-      x: point.x * boardTransform.value.scale + boardTransform.value.x,
-      y: point.y * boardTransform.value.scale + boardTransform.value.y
+      x: point.x + boardTransform.value.x,
+      y: point.y + boardTransform.value.y
     }
   }
 
@@ -244,7 +244,7 @@ export function useBoardDrawing() {
       id: 'bo' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       tool: boardDrawingTool.value,
       color: boardDrawingTool.value === 'eraser' ? '#000000' : boardDrawingColor.value,
-      size: getEffectiveBrushSize() / Math.max(0.01, boardTransform.value.scale),
+      size: getEffectiveBrushSize(),
       points: [point]
     }
 

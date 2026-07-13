@@ -16,7 +16,6 @@
         :style="boardFullscreenViewportStyle"
         :aria-label="articleLabels.fullscreenBoard"
         @pointerdown="startBoardPan"
-        @wheel.prevent="handleBoardWheel"
       >
         <button
           class="absolute left-1/2 top-5 z-20 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 border border-black/20 bg-white/90 px-4 py-3 text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.2em] text-black/65 shadow-[0_8px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-black/40 hover:text-black sm:px-5"
@@ -89,7 +88,7 @@
 
       <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
         <section
-          class="group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-zoom-in select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
+          class="group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-pointer select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
           :aria-label="articleLabels.board"
           @click="openBoardFullscreen"
         >
@@ -315,7 +314,6 @@
              :class="isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (activeBoardTool === 'pencil' ? 'cursor-none' : (activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'))"
              @pointermove="handleBoardHover"
              @pointerdown="startBoardPan"
-             @wheel.prevent="handleBoardWheel"
              key="board"
         >
           <!-- Darkening overlay -->
@@ -327,7 +325,7 @@
             class="absolute inset-0 z-20 h-full w-full pointer-events-none"
           ></canvas>
 
-          <!-- Board World (Pan & Zoom) -->
+          <!-- Board World (Pan Only) -->
           <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardWorldRef"
                @pointerleave="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <article
@@ -1054,7 +1052,6 @@ const boardDrawingCanvasRef = ref<HTMLCanvasElement | null>(null)
 const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
-const boardScale = ref(1)
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 
@@ -1171,7 +1168,6 @@ const submitNewArticle = () => {
     boardNodes.value = []
     boardStrokes.value = []
     boardPan.value = { x: 48, y: 36 }
-    boardScale.value = 1
   }, 1000)
 }
 
@@ -1412,7 +1408,7 @@ const boardWorldStyle = computed(() => ({
   height: `${boardBaseWorldSize.value.height}px`
 }))
 const boardTransformStyle = computed(() => ({
-  transform: `translate3d(${boardPan.value.x}px, ${boardPan.value.y}px, 0) scale(${boardScale.value})`,
+  transform: `translate3d(${boardPan.value.x}px, ${boardPan.value.y}px, 0)`,
   willChange: 'transform'
 }))
 const boardPreviewTransformStyle = computed(() => ({
@@ -1441,7 +1437,6 @@ watch(selectedArticle, (article) => {
   commentDraft.value = ''
   nextTick(resizeCommentInput)
   boardPan.value = { x: 48, y: 36 }
-  boardScale.value = 1
 }, { immediate: true })
 
 const submitComment = () => {
@@ -1490,7 +1485,6 @@ const openBoardFullscreen = () => {
   isBoardFullscreen.value = true
   syncBoardFullscreenViewport()
   boardPan.value = { x: 48, y: 36 }
-  boardScale.value = 1
 }
 
 const closeBoardFullscreen = () => {
@@ -1594,8 +1588,7 @@ const syncBoardDrawingRefs = () => {
   }
   boardDrawing.boardTransform.value = {
     x: boardPan.value.x,
-    y: boardPan.value.y,
-    scale: boardScale.value
+    y: boardPan.value.y
   }
 }
 
@@ -1624,8 +1617,7 @@ watch([
   () => boardUnitSize.value.width,
   () => boardUnitSize.value.height,
   () => boardPan.value.x,
-  () => boardPan.value.y,
-  () => boardScale.value
+  () => boardPan.value.y
 ], () => {
   if (creationStep.value === 'board') renderBoardDrawingCanvas()
 }, { flush: 'post' })
@@ -1646,10 +1638,8 @@ const startBoardPan = (event: PointerEvent) => {
       // Click to add node
       const rect = boardWorldRef.value?.getBoundingClientRect()
       if (!rect) return
-      const pointerX = event.clientX - rect.left
-      const pointerY = event.clientY - rect.top
-      const worldX = pointerX / boardScale.value
-      const worldY = pointerY / boardScale.value
+      const worldX = event.clientX - rect.left
+      const worldY = event.clientY - rect.top
 
       // Snap to grid
       const gridX = Math.round(worldX / boardGridSize.value)
@@ -1796,8 +1786,8 @@ const handleBoardPointerMove = (event: PointerEvent) => {
       y: interaction.startPanY + event.clientY - interaction.startClientY
     }
   } else if (interaction.type === 'moveNode') {
-    const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
-    const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
+    const deltaWorldX = event.clientX - interaction.startClientX
+    const deltaWorldY = event.clientY - interaction.startClientY
     
     // Smooth fractional position
     const freeX = interaction.startNodeX + deltaWorldX / boardGridSize.value
@@ -1806,8 +1796,8 @@ const handleBoardPointerMove = (event: PointerEvent) => {
     interaction.node.position.x = freeX
     interaction.node.position.y = freeY
   } else if (interaction.type === 'resizeNode') {
-    const deltaWorldX = (event.clientX - interaction.startClientX) / boardScale.value
-    const deltaWorldY = (event.clientY - interaction.startClientY) / boardScale.value
+    const deltaWorldX = event.clientX - interaction.startClientX
+    const deltaWorldY = event.clientY - interaction.startClientY
     
     // Smooth fractional size
     const freeW = interaction.startNodeW + deltaWorldX / boardGridSize.value
@@ -1862,25 +1852,6 @@ const stopBoardInteraction = () => {
 
   activeBoardInteraction.value = null
   stopWindowTracking()
-}
-
-const handleBoardWheel = (event: WheelEvent) => {
-  const viewport = creationStep.value === 'board' ? boardStageRef.value : boardViewportRef.value
-  if (!viewport) return
-
-  const rect = viewport.getBoundingClientRect()
-  const previousScale = boardScale.value
-  const nextScale = clamp(previousScale - event.deltaY * 0.001, 0.45, 2.2)
-  const pointerX = event.clientX - rect.left
-  const pointerY = event.clientY - rect.top
-  const worldX = (pointerX - boardPan.value.x) / previousScale
-  const worldY = (pointerY - boardPan.value.y) / previousScale
-
-  boardScale.value = nextScale
-  boardPan.value = {
-    x: pointerX - worldX * nextScale,
-    y: pointerY - worldY * nextScale
-  }
 }
 
 const handleBoardKeydown = (event: KeyboardEvent) => {
