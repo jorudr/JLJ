@@ -91,36 +91,48 @@
               <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getStrategyNodeLabel(node) }}</span>
               <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 gap-1.5 text-center uppercase">
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[7px] font-black tracking-[0.18em] text-black/35">PF</small>
-                  <strong class="truncate text-[12px] font-black text-black/80">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">PF</small>
+                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[7px] font-black tracking-[0.18em] text-black/35">WR</small>
-                  <strong class="truncate text-[12px] font-black text-black/80">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">WR</small>
+                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[7px] font-black tracking-[0.18em] text-black/35">RES</small>
-                  <strong class="truncate text-[12px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">RES</small>
+                  <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[7px] font-black tracking-[0.18em] text-black/35">START</small>
-                  <strong class="truncate text-[12px] font-black text-black/80">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">START</small>
+                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[7px] font-black tracking-[0.18em] text-black/35">END</small>
-                  <strong class="truncate text-[12px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">END</small>
+                  <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                 </span>
               </div>
             </div>
 
-            <div v-else-if="node.type === 'trade'" class="flex h-full w-full items-center justify-between gap-3 bg-white/80 px-4 font-mono">
-              <div class="flex min-w-0 flex-col text-left">
-                <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getTradeNodeAssetLabel(node) }}</span>
-                <span class="truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+            <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center gap-3 bg-white/80 px-4 font-mono">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 flex-col text-left">
+                  <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getTradeNodeAssetLabel(node) }}</span>
+                  <span class="truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+                </div>
+                <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
+                  {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                </span>
               </div>
-              <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
-                {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
-              </span>
+              <div class="grid grid-cols-2 gap-1.5 text-center uppercase">
+                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
+                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">ENTRY</small>
+                  <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
+                </span>
+                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
+                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">EXIT</small>
+                  <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
+                </span>
+              </div>
             </div>
 
           </article>
@@ -226,36 +238,48 @@
                 <span class="truncate text-sm font-black uppercase tracking-widest text-current/80">{{ getStrategyNodeLabel(node) }}</span>
                 <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 gap-1 text-center uppercase">
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[6px] font-black tracking-[0.16em] text-current/35">PF</small>
-                    <strong class="truncate text-[10px] font-black text-current/80">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">PF</small>
+                    <strong class="truncate text-[11px] font-black text-current/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[6px] font-black tracking-[0.16em] text-current/35">WR</small>
-                    <strong class="truncate text-[10px] font-black text-current/80">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">WR</small>
+                    <strong class="truncate text-[11px] font-black text-current/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[6px] font-black tracking-[0.16em] text-current/35">RES</small>
-                    <strong class="truncate text-[10px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">RES</small>
+                    <strong class="truncate text-[11px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[6px] font-black tracking-[0.16em] text-current/35">START</small>
-                    <strong class="truncate text-[10px] font-black text-current/80">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">START</small>
+                    <strong class="truncate text-[11px] font-black text-current/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                   </span>
                   <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
-                    <small class="text-[6px] font-black tracking-[0.16em] text-current/35">END</small>
-                    <strong class="truncate text-[10px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                    <small class="text-[7px] font-black tracking-[0.16em] text-current/40">END</small>
+                    <strong class="truncate text-[11px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                   </span>
                 </div>
               </div>
 
-              <div v-else-if="node.type === 'trade'" class="flex h-full w-full items-center justify-between gap-3 bg-white/70 px-4 font-mono text-current">
-                <div class="flex min-w-0 flex-col text-left">
-                  <span class="truncate text-sm font-black uppercase tracking-widest text-current/80">{{ getTradeNodeAssetLabel(node) }}</span>
-                  <span class="truncate text-[8px] font-black uppercase tracking-[0.2em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+              <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center gap-2 bg-white/70 px-4 font-mono text-current">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex min-w-0 flex-col text-left">
+                    <span class="truncate text-sm font-black uppercase tracking-widest text-current/80">{{ getTradeNodeAssetLabel(node) }}</span>
+                    <span class="truncate text-[8px] font-black uppercase tracking-[0.2em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+                  </div>
+                  <span class="max-w-[45%] truncate text-right text-[10px] font-black uppercase tracking-[0.14em]" :class="getTradeNodeResultClass(node)">
+                    {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                  </span>
                 </div>
-                <span class="max-w-[45%] truncate text-right text-[10px] font-black uppercase tracking-[0.14em]" :class="getTradeNodeResultClass(node)">
-                  {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
-                </span>
+                <div class="grid grid-cols-2 gap-1 text-center uppercase">
+                  <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
+                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">ENTRY</small>
+                    <strong class="truncate text-[9px] font-black text-current/80">{{ getTradeNodeEntryDate(node) }}</strong>
+                  </span>
+                  <span class="flex min-w-0 flex-col border border-current/10 px-1 py-1">
+                    <small class="text-[7px] font-black tracking-[0.14em] text-current/40">EXIT</small>
+                    <strong class="truncate text-[9px] font-black text-current/80">{{ getTradeNodeExitDate(node) }}</strong>
+                  </span>
+                </div>
               </div>
             </article>
           </div>
@@ -628,24 +652,24 @@
                   </span>
                   <span v-if="getStrategyNodeMetrics(node)" class="grid w-full grid-cols-5 gap-1.5 text-center uppercase">
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[7px] font-black tracking-[0.18em] text-black/35">PF</small>
-                      <strong class="truncate text-[12px] font-black text-black/80">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">PF</small>
+                      <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[7px] font-black tracking-[0.18em] text-black/35">WR</small>
-                      <strong class="truncate text-[12px] font-black text-black/80">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">WR</small>
+                      <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[7px] font-black tracking-[0.18em] text-black/35">RES</small>
-                      <strong class="truncate text-[12px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">RES</small>
+                      <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[7px] font-black tracking-[0.18em] text-black/35">START</small>
-                      <strong class="truncate text-[12px] font-black text-black/80">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">START</small>
+                      <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                     </span>
                     <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                      <small class="text-[7px] font-black tracking-[0.18em] text-black/35">END</small>
-                      <strong class="truncate text-[12px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                      <small class="text-[8px] font-black tracking-[0.18em] text-black/40">END</small>
+                      <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                     </span>
                   </span>
                 </button>
@@ -653,47 +677,59 @@
 
               <div v-else-if="node.type === 'trade'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
                 <button
-                  class="flex min-w-0 w-full items-center justify-between gap-3 text-left outline-none transition-colors"
+                  class="flex min-w-0 w-full flex-col justify-center gap-3 text-left outline-none transition-colors"
                   :class="node.tradeId ? 'text-black/80 hover:text-black' : 'text-black/35 hover:text-black/70'"
                   @pointerdown.stop
                   @click.stop="openTradePicker(node)"
                 >
-                  <span class="flex min-w-0 flex-col">
-                    <span class="max-w-full truncate text-xl font-black uppercase tracking-widest">
-                      {{ getTradeNodeAssetLabel(node) }}
+                  <span class="flex w-full items-start justify-between gap-3">
+                    <span class="flex min-w-0 flex-col">
+                      <span class="max-w-full truncate text-xl font-black uppercase tracking-widest">
+                        {{ getTradeNodeAssetLabel(node) }}
+                      </span>
+                      <span class="max-w-full truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">
+                        {{ getTradeNodeVector(node) }}
+                      </span>
                     </span>
-                    <span class="max-w-full truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">
-                      {{ getTradeNodeVector(node) }}
+                    <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
+                      {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
                     </span>
                   </span>
-                  <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
-                    {{ getTradeNodeResult(node) || (locale === 'ru' ? 'ВЫБОР' : 'SELECT') }}
+                  <span class="grid w-full grid-cols-2 gap-1.5 text-center uppercase">
+                    <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
+                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">ENTRY</small>
+                      <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
+                    </span>
+                    <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
+                      <small class="text-[8px] font-black tracking-[0.16em] text-black/40">EXIT</small>
+                      <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
+                    </span>
                   </span>
                 </button>
               </div>
 
               <!-- Matrix-style ports -->
               <div
-                class="absolute top-1/2 -left-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
+                class="absolute top-1/2 -left-[6px] z-30 h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
                 :class="isHighlightedPassiveBoardPort(node) ? 'opacity-100 scale-125' : 'opacity-0 group-hover/node:opacity-100'"
                 @pointerdown.stop.prevent="pickupBoardInput(node, 'left')"
                 @pointerup.stop.prevent="dropBoardWire(node, 'left')"
                 @dblclick.stop.prevent="clearBoardInput(node)"
               ></div>
               <div
-                class="absolute top-1/2 -right-[6px] h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
+                class="absolute top-1/2 -right-[6px] z-30 h-[12px] w-[12px] -translate-y-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
                 @pointerdown.stop.prevent="startBoardWire(node, 'right', $event)"
                 @dblclick.stop.prevent="clearBoardOutput(node)"
               ></div>
               <div
-                class="absolute -top-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
+                class="absolute -top-[6px] left-1/2 z-30 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all"
                 :class="isHighlightedPassiveBoardPort(node) ? 'opacity-100 scale-125' : 'opacity-0 group-hover/node:opacity-100'"
                 @pointerdown.stop.prevent="pickupBoardInput(node, 'top')"
                 @pointerup.stop.prevent="dropBoardWire(node, 'top')"
                 @dblclick.stop.prevent="clearBoardInput(node)"
               ></div>
               <div
-                class="absolute -bottom-[6px] left-1/2 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
+                class="absolute -bottom-[6px] left-1/2 z-30 h-[12px] w-[12px] -translate-x-1/2 rotate-45 border-[2px] border-black bg-white opacity-0 shadow-[0_0_20px_rgba(44,44,42,0.3)] transition-all hover:bg-black group-hover/node:opacity-100"
                 @pointerdown.stop.prevent="startBoardWire(node, 'bottom', $event)"
                 @dblclick.stop.prevent="clearBoardOutput(node)"
               ></div>
@@ -2422,6 +2458,18 @@ const formatTradeDate = (value: any) => {
   }).format(date)
 }
 
+const formatTradeNodeDateTime = (value: any) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
 const formatTradeDuration = (trade: any) => {
   const start = trade?.date ? new Date(trade.date).getTime() : 0
   const end = trade?.dateExit ? new Date(trade.dateExit).getTime() : start
@@ -2429,6 +2477,21 @@ const formatTradeDuration = (trade: any) => {
   const diffMins = Math.floor((end - start) / 60000)
   const hours = Math.floor(diffMins / 60)
   return hours > 0 ? `${hours}h ${diffMins % 60}m` : `${diffMins}m`
+}
+
+const getTradeNodeEntryDate = (node: any) => {
+  const trade = getTradeNodeData(node)
+  return trade ? formatTradeNodeDateTime(trade.date) : '—'
+}
+
+const getTradeNodeExitDate = (node: any) => {
+  const trade = getTradeNodeData(node)
+  return trade ? formatTradeNodeDateTime(trade.dateExit) : '—'
+}
+
+const getTradeNodeDuration = (node: any) => {
+  const trade = getTradeNodeData(node)
+  return trade ? formatTradeDuration(trade) : '—'
 }
 
 const openStrategyPicker = (node: any) => {
@@ -2744,8 +2807,8 @@ const startBoardPan = (event: PointerEvent) => {
       const isAssetTool = activeBoardTool.value === 'asset-node'
       const isStrategyTool = activeBoardTool.value === 'strategy-node'
       const isTradeTool = activeBoardTool.value === 'trade-node'
-      const newW = isStrategyTool ? 16 : (isTradeTool ? 13 : (isAssetTool ? 9 : (isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)))))
-      const newH = isStrategyTool ? 6 : (isTradeTool ? 4 : (isAssetTool ? 3 : (isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)))))
+      const newW = isStrategyTool ? 18 : (isTradeTool ? 16 : (isAssetTool ? 9 : (isPriceTool ? 8 : (activeBoardTool.value === 'text' ? 10 : (activeBoardTool.value === 'image' ? 10 : 12)))))
+      const newH = isStrategyTool ? 7 : (isTradeTool ? 6 : (isAssetTool ? 3 : (isPriceTool ? 3 : (activeBoardTool.value === 'text' ? 6 : (activeBoardTool.value === 'image' ? 10 : 12)))))
 
       if (checkNodeOverlap(gridX, gridY, newW, newH)) {
         alert(locale.value === 'ru' ? 'Недостаточно места для размещения узла!' : 'Not enough space to place node!')
@@ -2810,7 +2873,7 @@ const startBoardPan = (event: PointerEvent) => {
           strategyId: '',
           strategyName: '',
           position: { x: gridX, y: gridY },
-          size: { width: 16, height: 6 }
+          size: { width: 18, height: 7 }
         }
         boardNodes.value.push(newNode as any)
       } else if (isTradeTool) {
@@ -2820,7 +2883,7 @@ const startBoardPan = (event: PointerEvent) => {
           tradeId: '',
           tradeSnapshot: null,
           position: { x: gridX, y: gridY },
-          size: { width: 13, height: 4 }
+          size: { width: 16, height: 6 }
         }
         boardNodes.value.push(newNode as any)
       }
