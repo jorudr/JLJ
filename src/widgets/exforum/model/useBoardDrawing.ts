@@ -21,8 +21,8 @@ export function useBoardDrawing() {
   const boardViewport = ref<HTMLElement | null>(null)
   const boardCursorViewport = ref<HTMLElement | null>(null)
   const boardCanvas = ref<HTMLCanvasElement | null>(null)
-  const boardOffset = ref({ x: 0, y: 0 })
   const boardContentSize = ref({ width: 1, height: 1 })
+  const boardTransform = ref({ x: 0, y: 0, scale: 1 })
 
   const activeBoardStrokeId = ref<string | null>(null)
   const isBoardDrawingPointerDown = ref(false)
@@ -34,7 +34,7 @@ export function useBoardDrawing() {
   let previousDocumentCursor = ''
   let previousBodyCursor = ''
 
-  const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize()))
+  const boardDrawingCursorDiameter = computed(() => Math.max(10, getEffectiveBrushSize() * boardTransform.value.scale))
   const boardDrawingSizePercent = computed(() => ((boardDrawingSize.value - 1) / 23) * 100)
 
   const boardDrawingCursorStyle = computed(() => ({
@@ -98,8 +98,8 @@ export function useBoardDrawing() {
     if (!board) return { x: 0, y: 0 }
 
     return {
-      x: clamp((e.clientX - board.rect.left) / board.scaleX, 0, board.width) - boardOffset.value.x,
-      y: clamp((e.clientY - board.rect.top) / board.scaleY, 0, board.height) - boardOffset.value.y
+      x: ((e.clientX - board.rect.left) / board.scaleX - boardTransform.value.x) / boardTransform.value.scale,
+      y: ((e.clientY - board.rect.top) / board.scaleY - boardTransform.value.y) / boardTransform.value.scale
     }
   }
 
@@ -155,13 +155,13 @@ export function useBoardDrawing() {
     ctx.globalCompositeOperation = operation.tool === 'eraser' ? 'destination-out' : 'source-over'
     ctx.strokeStyle = operation.color || '#000000'
     ctx.fillStyle = operation.color || '#000000'
-    ctx.lineWidth = operation.size || 4
+    ctx.lineWidth = (operation.size || 4) * boardTransform.value.scale
   }
 
   function getCanvasPoint(point: BoardDrawingPoint) {
     return {
-      x: point.x + boardOffset.value.x,
-      y: point.y + boardOffset.value.y
+      x: point.x * boardTransform.value.scale + boardTransform.value.x,
+      y: point.y * boardTransform.value.scale + boardTransform.value.y
     }
   }
 
@@ -202,16 +202,16 @@ export function useBoardDrawing() {
     const points = normalizedOperation.points || []
     if (!points.length) return
     if (points.length === 1) {
-      drawDot(ctx, normalizedOperation, points[0])
+      drawDot(ctx, normalizedOperation, points[0]!)
       return
     }
 
     configureContext(ctx, normalizedOperation)
     ctx.beginPath()
-    const firstPoint = getCanvasPoint(points[0])
+    const firstPoint = getCanvasPoint(points[0]!)
     ctx.moveTo(firstPoint.x, firstPoint.y)
     for (let index = 1; index < points.length; index += 1) {
-      const canvasPoint = getCanvasPoint(points[index])
+      const canvasPoint = getCanvasPoint(points[index]!)
       ctx.lineTo(canvasPoint.x, canvasPoint.y)
     }
     ctx.stroke()
@@ -257,7 +257,7 @@ export function useBoardDrawing() {
     const operation = operations.find((item) => item.id === activeBoardStrokeId.value)
     if (!operation) return
 
-    const previousPoint = operation.points[operation.points.length - 1]
+    const previousPoint = operation.points[operation.points.length - 1]!
     const nextPoint = getBoardDrawingPoint(e)
     operation.points.push(nextPoint)
 
@@ -288,8 +288,8 @@ export function useBoardDrawing() {
     boardViewport,
     boardCursorViewport,
     boardCanvas,
-    boardOffset,
     boardContentSize,
+    boardTransform,
     activeBoardStrokeId,
     isBoardDrawingPointerDown,
     isBoardDrawingCursorVisible,

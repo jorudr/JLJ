@@ -319,15 +319,15 @@
           <!-- Darkening overlay -->
           <div class="absolute inset-0 bg-black/10 pointer-events-none"></div>
 
+          <!-- Freehand Board Drawing Layer -->
+          <canvas
+            ref="boardDrawingCanvasRef"
+            class="absolute inset-0 z-20 h-full w-full pointer-events-none"
+          ></canvas>
+
           <!-- Board World (Pan & Zoom) -->
           <div class="absolute left-0 top-0 origin-top-left z-10" :style="[boardWorldStyle, boardTransformStyle]" ref="boardWorldRef"
                @pointerleave="boardDrawing.isBoardDrawingCursorVisible.value = false">
-            <!-- Freehand Board Drawing Layer -->
-            <canvas
-              ref="boardDrawingCanvasRef"
-              class="absolute inset-0 z-0 h-full w-full pointer-events-none"
-            ></canvas>
-
             <article
               v-for="node in boardNodes"
               :key="node.id"
@@ -1032,7 +1032,6 @@ const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
-const boardStageSize = ref({ width: 0, height: 0 })
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 
@@ -1090,10 +1089,7 @@ watch(isCreatingArticle, (newVal) => {
 
 watch(creationStep, (step) => {
   if (step === 'board') {
-    nextTick(() => {
-      syncBoardStageSize()
-      renderBoardDrawingCanvas()
-    })
+    renderBoardDrawingCanvas()
   }
 })
 
@@ -1353,33 +1349,13 @@ const boardBaseWorldSize = computed(() => ({
   width: boardUnitSize.value.width * boardGridSize.value,
   height: boardUnitSize.value.height * boardGridSize.value
 }))
-const boardWorldMargin = 640
-const boardWorldBounds = computed(() => {
-  const scale = Math.max(0.1, boardScale.value)
-  const visibleLeft = -boardPan.value.x / scale
-  const visibleTop = -boardPan.value.y / scale
-  const visibleRight = (boardStageSize.value.width - boardPan.value.x) / scale
-  const visibleBottom = (boardStageSize.value.height - boardPan.value.y) / scale
-  const minX = Math.min(0, visibleLeft) - boardWorldMargin
-  const minY = Math.min(0, visibleTop) - boardWorldMargin
-  const maxX = Math.max(boardBaseWorldSize.value.width, visibleRight) + boardWorldMargin
-  const maxY = Math.max(boardBaseWorldSize.value.height, visibleBottom) + boardWorldMargin
-
-  return {
-    minX,
-    minY,
-    width: Math.max(1, maxX - minX),
-    height: Math.max(1, maxY - minY),
-    offsetX: -minX,
-    offsetY: -minY
-  }
-})
 const boardWorldStyle = computed(() => ({
-  width: `${boardWorldBounds.value.width}px`,
-  height: `${boardWorldBounds.value.height}px`
+  width: `${boardBaseWorldSize.value.width}px`,
+  height: `${boardBaseWorldSize.value.height}px`
 }))
 const boardTransformStyle = computed(() => ({
-  transform: `translate(${boardPan.value.x + boardWorldBounds.value.minX * boardScale.value}px, ${boardPan.value.y + boardWorldBounds.value.minY * boardScale.value}px) scale(${boardScale.value})`
+  transform: `translate3d(${boardPan.value.x}px, ${boardPan.value.y}px, 0) scale(${boardScale.value})`,
+  willChange: 'transform'
 }))
 const boardPreviewTransformStyle = computed(() => ({
   transform: 'translate(48px, 36px) scale(0.82)'
@@ -1399,16 +1375,6 @@ const resizeCommentInput = () => {
   const maxHeight = 220
   input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`
   input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden'
-}
-
-const syncBoardStageSize = () => {
-  const stage = boardStageRef.value
-  if (!stage) return
-  const rect = stage.getBoundingClientRect()
-  const width = Math.round(rect.width)
-  const height = Math.round(rect.height)
-  if (boardStageSize.value.width === width && boardStageSize.value.height === height) return
-  boardStageSize.value = { width, height }
 }
 
 watch(selectedArticle, (article) => {
@@ -1486,8 +1452,8 @@ const navigateToNode = (id: string) => {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
-  left: `${boardWorldBounds.value.offsetX + node.position.x * boardGridSize.value}px`,
-  top: `${boardWorldBounds.value.offsetY + node.position.y * boardGridSize.value}px`,
+  left: `${node.position.x * boardGridSize.value}px`,
+  top: `${node.position.y * boardGridSize.value}px`,
   width: `${node.size.width * boardGridSize.value}px`,
   height: `${node.size.height * boardGridSize.value}px`
 })
@@ -1551,25 +1517,30 @@ const handleGlobalBoardDrawingUp = () => {
 }
 
 const syncBoardDrawingRefs = () => {
-  const bounds = boardWorldBounds.value
-  boardDrawing.boardViewport.value = boardWorldRef.value
+  boardDrawing.boardViewport.value = boardStageRef.value
   boardDrawing.boardCursorViewport.value = boardStageRef.value
   boardDrawing.boardCanvas.value = boardDrawingCanvasRef.value
-  boardDrawing.boardOffset.value = {
-    x: bounds.offsetX,
-    y: bounds.offsetY
-  }
   boardDrawing.boardContentSize.value = {
     width: boardBaseWorldSize.value.width,
     height: boardBaseWorldSize.value.height
   }
+  boardDrawing.boardTransform.value = {
+    x: boardPan.value.x,
+    y: boardPan.value.y,
+    scale: boardScale.value
+  }
 }
+
+let boardDrawingRenderFrame: number | null = null
 
 const renderBoardDrawingCanvas = () => {
   nextTick(() => {
-    syncBoardStageSize()
-    syncBoardDrawingRefs()
-    boardDrawing.renderBoardDrawing(boardStrokes.value)
+    if (boardDrawingRenderFrame !== null) return
+    boardDrawingRenderFrame = window.requestAnimationFrame(() => {
+      boardDrawingRenderFrame = null
+      syncBoardDrawingRefs()
+      boardDrawing.renderBoardDrawing(boardStrokes.value)
+    })
   })
 }
 
@@ -1579,15 +1550,14 @@ const isBoardChromeTarget = (target: EventTarget | null) => {
 
 watch([
   boardDrawingCanvasRef,
-  boardWorldRef,
+  boardStageRef,
   creationStep,
   () => boardGridSize.value,
   () => boardUnitSize.value.width,
   () => boardUnitSize.value.height,
-  () => boardWorldBounds.value.minX,
-  () => boardWorldBounds.value.minY,
-  () => boardWorldBounds.value.width,
-  () => boardWorldBounds.value.height
+  () => boardPan.value.x,
+  () => boardPan.value.y,
+  () => boardScale.value
 ], () => {
   if (creationStep.value === 'board') renderBoardDrawingCanvas()
 }, { flush: 'post' })
@@ -1598,7 +1568,6 @@ const startBoardPan = (event: PointerEvent) => {
   
   if (creationStep.value === 'board' && activeBoardTool.value) {
     if (activeBoardTool.value === 'pencil' && !isSpacePressed.value) {
-      syncBoardStageSize()
       syncBoardDrawingRefs()
       boardDrawing.startBoardDrawing(event, boardStrokes.value)
       startWindowTracking()
@@ -1611,8 +1580,8 @@ const startBoardPan = (event: PointerEvent) => {
       if (!rect) return
       const pointerX = event.clientX - rect.left
       const pointerY = event.clientY - rect.top
-      const worldX = pointerX / boardScale.value + boardWorldBounds.value.minX
-      const worldY = pointerY / boardScale.value + boardWorldBounds.value.minY
+      const worldX = pointerX / boardScale.value
+      const worldY = pointerY / boardScale.value
 
       // Snap to grid
       const gridX = Math.round(worldX / boardGridSize.value)
@@ -1734,7 +1703,6 @@ const handleBoardHover = (event: PointerEvent) => {
     }
 
     if (activeBoardTool.value === 'pencil') {
-      syncBoardStageSize()
       syncBoardDrawingRefs()
       boardDrawing.updateBoardDrawingCursor(event)
     }
@@ -1856,7 +1824,6 @@ const handleBoardKeydown = (event: KeyboardEvent) => {
 const handleWindowResize = () => {
   if (isBoardFullscreen.value) syncBoardFullscreenViewport()
   if (creationStep.value === 'board') {
-    syncBoardStageSize()
     renderBoardDrawingCanvas()
   }
 }
@@ -1869,6 +1836,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopWindowTracking()
+  if (boardDrawingRenderFrame !== null) {
+    window.cancelAnimationFrame(boardDrawingRenderFrame)
+    boardDrawingRenderFrame = null
+  }
   if (draftSaveTimer) {
     window.clearTimeout(draftSaveTimer)
     persistDraft()
