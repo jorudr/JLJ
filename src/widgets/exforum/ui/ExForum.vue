@@ -1748,12 +1748,27 @@ watch(isCreatingArticle, (newVal) => {
 watch(creationStep, (step) => {
   if (step === 'board') {
     renderBoardDrawingCanvas()
+
+    const idsToRemove = new Set<string>()
+    boardNodes.value.forEach((n: any) => {
+      const isSignalNode = n.type === 'asset' || (n.type === 'price' && (n.priceKind === 'current' || n.priceKind === 'target'))
+      const isQuestionNode = n.type === 'text' && n.isQuestion
+
+      if (!isSignalArticle.value && isSignalNode) idsToRemove.add(n.id)
+      if (!isQuestionArticle.value && isQuestionNode) idsToRemove.add(n.id)
+    })
+
+    if (idsToRemove.size > 0) {
+      boardNodes.value = boardNodes.value.filter((n: any) => !idsToRemove.has(n.id))
+      boardConnections.value = boardConnections.value.filter((c: any) => !idsToRemove.has(c.sourceNodeId) && !idsToRemove.has(c.targetNodeId))
+    }
+
     if (isSignalArticle.value) {
       const hasCurrentPrice = boardNodes.value.some((n: any) => n.type === 'price' && n.priceKind === 'current')
       const hasAsset = boardNodes.value.some((n: any) => n.type === 'asset')
       const hasTargetPrice = boardNodes.value.some((n: any) => n.type === 'price' && n.priceKind === 'target')
 
-      if (!hasCurrentPrice && !hasAsset && !hasTargetPrice) {
+      if (!hasCurrentPrice) {
         boardNodes.value.push({
           id: `node_cp_${Date.now()}`,
           type: 'price',
@@ -1762,7 +1777,9 @@ watch(creationStep, (step) => {
           position: { x: 2, y: 2 },
           size: { width: 8, height: 3 }
         } as any)
-        
+      }
+      
+      if (!hasAsset) {
         boardNodes.value.push({
           id: `node_asset_${Date.now()}`,
           type: 'asset',
@@ -1770,7 +1787,9 @@ watch(creationStep, (step) => {
           position: { x: 11, y: 2 },
           size: { width: 9, height: 3 }
         } as any)
-        
+      }
+      
+      if (!hasTargetPrice) {
         boardNodes.value.push({
           id: `node_tp_${Date.now()}`,
           type: 'price',
@@ -1781,8 +1800,8 @@ watch(creationStep, (step) => {
         } as any)
       }
     } else if (isQuestionArticle.value) {
-      const hasTextNode = boardNodes.value.some((n: any) => n.type === 'text')
-      if (!hasTextNode) {
+      const hasQuestionNode = boardNodes.value.some((n: any) => n.type === 'text' && n.isQuestion)
+      if (!hasQuestionNode) {
         boardNodes.value.push({
           id: `node_text_${Date.now()}`,
           type: 'text',
