@@ -1168,8 +1168,10 @@
               {{ locale === 'ru' ? 'ФИНАЛЬНЫЙ РЕЗУЛЬТАТ' : 'FINAL RESULT' }}
             </div>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+                    :disabled="isPublishingArticle"
+                    :class="isPublishingArticle ? 'cursor-wait opacity-60' : ''"
                     @click="confirmPublishArticle">
-              {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'CONFIRM PUBLISH' }}
+              {{ isPublishingArticle ? boardUiLabels.publishing : (locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'CONFIRM PUBLISH') }}
             </button>
           </header>
 
@@ -1443,9 +1445,11 @@
                 </button>
                 <button
                   class="border border-black bg-black px-6 py-2.5 text-[11px] font-mono font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-black/85"
+                  :disabled="isPublishingArticle"
+                  :class="isPublishingArticle ? 'cursor-wait opacity-60' : ''"
                   @click="confirmPublishArticle"
                 >
-                  {{ boardUiLabels.confirmPublish }}
+                  {{ isPublishingArticle ? boardUiLabels.publishing : boardUiLabels.confirmPublish }}
                 </button>
               </div>
             </ExPanel>
@@ -1630,13 +1634,13 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
+        <div v-if="hasJournalPagination" class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
            <div class="flex items-center space-x-12">
               <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
                       class="px-8 py-3 border border-current/10 text-[9px] font-mono tracking-[0.4em] uppercase opacity-40 hover:opacity-100 hover:bg-current/[0.02] transition-all">
                 {{ journalLabels.previousPage }}
               </button>
-              <button @click="navigateToPage(currentPage + 1)" 
+              <button v-if="hasNextJournalPage" @click="navigateToPage(currentPage + 1)"
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.nextPage }} // {{ journalLabels.archivePrefix }}0{{ currentPage + 1 }} ]
               </button>
@@ -1747,17 +1751,17 @@ import { useForumDrawing } from '../model/useForumDrawing'
 import { useBoardDrawing } from '../model/useBoardDrawing'
 import ExForumDrawingPanel from './ExForumDrawingPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
+import { useForumStore } from '~/features/store/useForum'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useAuthStore } from '~/entities/user/auth.store'
-import { mockExNodes } from '~/entities/exnode/model/exnode.mock'
-import { mockComments } from '~/entities/comment/mock/comment.mock'
-import { mockJournalArticles, mockJournalArticle } from '~/entities/journal-article/mock/journal-article.mock'
 import allAssets from '~/shared/data/global_assets.json'
 import type { Comment } from '~/entities/comment/types/comment.types'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
+import type { ExNode, ExNodeMode, ExNodeSignal } from '~/entities/exnode/model/exnode.types'
 import type { StrategyProfile } from '~/features/store/useStrategyTrades'
-import type { JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
+import type { Thread } from '~/entities/thread/model/thread.types'
+import type { JournalArticle, JournalArticleBoard, JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -1768,6 +1772,7 @@ const router = useRouter()
 const { locale } = useI18n()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const forumStore = useForumStore()
 const strategyTradesStore = useStrategyTradesStore()
 
 // Archival State
@@ -1882,13 +1887,154 @@ const getMetricLabel = (label: string) => {
   }[label] || label
 }
 
+const journalModeValues = new Set<ExNodeMode>(['SETUP', 'RESEARCH', 'LESSON', 'QUESTION'])
+
+const normalizeFirestoreDate = (value: any) => {
+  if (!value) return new Date().toISOString()
+  if (typeof value === 'string') return value
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value?.toDate === 'function') return value.toDate().toISOString()
+  if (typeof value?.seconds === 'number') return new Date(value.seconds * 1000).toISOString()
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString()
+}
+
+const getThreadMode = (thread: Thread & Record<string, any>): ExNodeMode => {
+  const candidate = String(thread.journalMode || thread.articleType || thread.mode || thread.category || '').toUpperCase()
+  return journalModeValues.has(candidate as ExNodeMode) ? candidate as ExNodeMode : 'RESEARCH'
+}
+
+const getThreadAuthorName = (thread: Thread & Record<string, any>) => {
+  return thread.author
+    || thread.authorData?.displayName
+    || thread.user?.displayName
+    || thread.userData?.displayName
+    || 'Anonymous'
+}
+
+const getThreadDescription = (thread: Thread & Record<string, any>) => {
+  const firstTextBlock = thread.thesis?.blocks?.find((block: any) => block?.text)?.text
+  return thread.description || thread.summary || firstTextBlock || ''
+}
+
+const getThreadPublishedAt = (thread: Thread & Record<string, any>) => {
+  return normalizeFirestoreDate(thread.publishedAt || thread.createdAt || thread.lastActivityAt)
+}
+
+const createFallbackArticleBoard = (thread: Thread & Record<string, any>): JournalArticleBoard => ({
+  gridSize: 28,
+  magnet: { enabled: true, mode: 'grid' },
+  size: { width: 72, height: 44 },
+  nodes: [
+    {
+      id: `${thread.id}-fallback-text`,
+      type: 'text',
+      title: thread.title || boardUiLabels.value.untitled,
+      text: getThreadDescription(thread),
+      position: { x: 4, y: 4 },
+      size: { width: 24, height: 10 }
+    }
+  ],
+  connections: [],
+  strokes: []
+})
+
+const getThreadBoard = (thread: Thread & Record<string, any>): JournalArticleBoard => {
+  const board = thread.board || thread.journalArticle?.board || thread.content?.board
+  if (board?.nodes && Array.isArray(board.nodes)) {
+    return {
+      gridSize: board.gridSize || 28,
+      magnet: board.magnet || { enabled: true, mode: 'grid' },
+      size: board.size || { width: 72, height: 44 },
+      nodes: board.nodes || [],
+      connections: board.connections || [],
+      strokes: board.strokes || []
+    }
+  }
+
+  return createFallbackArticleBoard(thread)
+}
+
+const getThreadSignal = (thread: Thread & Record<string, any>): ExNodeSignal | undefined => {
+  if (thread.signal) return thread.signal as ExNodeSignal
+  if (getThreadMode(thread) !== 'SETUP') return undefined
+
+  const board = getThreadBoard(thread)
+  const assetNode = board.nodes.find((node: any) => node.type === 'asset') as any
+  const currentNode = board.nodes.find((node: any) => node.type === 'price' && node.priceKind === 'current') as any
+  const targetNode = board.nodes.find((node: any) => node.type === 'price' && node.priceKind === 'target') as any
+  const entryPrice = parsePriceValue(currentNode?.value)
+  const targetPrice = parsePriceValue(targetNode?.value)
+
+  if (!assetNode?.asset || entryPrice === null || targetPrice === null) return undefined
+
+  return {
+    asset: assetNode.asset,
+    entryPrice,
+    targetPrice,
+    direction: targetPrice >= entryPrice ? 'up' : 'down',
+    description: getThreadDescription(thread),
+    pricePrecision: Math.max(String(currentNode?.value || '').split('.')[1]?.length || 0, String(targetNode?.value || '').split('.')[1]?.length || 0)
+  }
+}
+
+const threadToJournalNode = (thread: Thread & Record<string, any>): ExNode => {
+  const mode = getThreadMode(thread)
+  const description = getThreadDescription(thread)
+
+  return {
+    id: thread.id,
+    mode,
+    title: thread.title || boardUiLabels.value.untitled,
+    author: getThreadAuthorName(thread),
+    category: thread.categoryLabel || thread.subcategory || thread.category || mode,
+    thesis_brief: description,
+    tags: Array.isArray(thread.tags) ? thread.tags : [],
+    likesCount: Number(thread.likesCount || 0),
+    repliesCount: Number(thread.repliesCount || 0),
+    lastActivityAt: getThreadPublishedAt(thread),
+    signal: getThreadSignal(thread),
+    metrics: Array.isArray(thread.metrics) ? thread.metrics : undefined,
+    steps: Array.isArray(thread.steps) ? thread.steps : undefined,
+    blocks: Array.isArray(thread.blocks) ? thread.blocks : undefined
+  }
+}
+
+const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalArticle => {
+  const createdAt = getThreadPublishedAt(thread)
+  const commentsCount = Number(thread.repliesCount || 0)
+  const likesCount = Number(thread.likesCount || 0)
+
+  return {
+    id: thread.id,
+    sourceNodeId: thread.id,
+    title: thread.title || boardUiLabels.value.untitled,
+    subtitle: thread.categoryLabel || thread.subcategory || getThreadMode(thread),
+    description: getThreadDescription(thread),
+    category: thread.categoryLabel || thread.category || getThreadMode(thread),
+    author: getThreadAuthorName(thread),
+    publishedAt: createdAt,
+    metrics: [
+      { id: 'likes', label: 'Likes', value: likesCount },
+      { id: 'comments', label: 'Comments', value: commentsCount }
+    ],
+    board: getThreadBoard(thread),
+    boardBlocks: Array.isArray(thread.boardBlocks) ? thread.boardBlocks : []
+  }
+}
+
 // Pagination Logic
 const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
+const journalThreads = computed(() => Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
+const journalNodes = computed(() => journalThreads.value
+  .map(threadToJournalNode)
+  .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()))
+
 const filteredNodes = computed(() => {
   const q = searchQuery.value.toLowerCase()
-  return mockExNodes.filter((n: any) => {
+  return journalNodes.value.filter((n: ExNode) => {
     const matchesFilter = !activeJournalFilter.value || n.mode === activeJournalFilter.value
     const matchesSearch = !q
       || n.title.toLowerCase().includes(q)
@@ -1904,6 +2050,9 @@ const pagedNodes = computed(() => {
   const start = (currentPage.value - 1) * nodesPerPage
   return filteredNodes.value.slice(start, start + nodesPerPage)
 })
+const totalJournalPages = computed(() => Math.ceil(filteredNodes.value.length / nodesPerPage))
+const hasNextJournalPage = computed(() => currentPage.value < totalJournalPages.value)
+const hasJournalPagination = computed(() => currentPage.value > 1 || hasNextJournalPage.value)
 
 const pagedSignals = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP'))
 const pagedResearch = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'RESEARCH'))
@@ -1922,12 +2071,16 @@ const setJournalFilter = (mode: string) => {
 
 // Reader Logic
 const selectedNodeId = computed(() => route.query.nodeId as string | undefined)
-const selectedNode = computed(() => mockExNodes.find((n: any) => n.id === selectedNodeId.value))
-const selectedArticle = computed(() => {
-  if (!selectedNode.value) return undefined
-  return mockJournalArticles.find(article => article.sourceNodeId === selectedNode.value?.id) || mockJournalArticle
+const selectedNode = computed(() => journalNodes.value.find((n: ExNode) => n.id === selectedNodeId.value))
+const selectedThread = computed(() => {
+  if (!selectedNodeId.value) return undefined
+  return journalThreads.value.find(thread => thread.id === selectedNodeId.value)
 })
-const comments = ref<Comment[]>(mockComments.map(comment => ({ ...comment })))
+const selectedArticle = computed(() => {
+  if (!selectedThread.value) return undefined
+  return threadToJournalArticle(selectedThread.value)
+})
+const comments = ref<Comment[]>([])
 const commentDraft = ref('')
 const commentInputRef = ref<HTMLTextAreaElement | null>(null)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -2148,6 +2301,7 @@ watch([newArticleForm, boardNodes, boardConnections, boardStrokes, creationStep]
 
 const isDropdownOpen = ref(false)
 const isSubmittingArticle = ref(false)
+const isPublishingArticle = ref(false)
 
 const articleTypes = computed(() => journalFilters.value.map(filter => ({
   value: filter.mode,
@@ -2189,17 +2343,150 @@ const publishArticle = () => {
   showPublishConfirmation.value = true
 }
 
-const confirmPublishArticle = () => {
+const toSerializable = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+
+const createArticleBoardSnapshot = (): JournalArticleBoard => {
+  const nodes = toSerializable(boardNodes.value.map((node: any) => {
+    const { isEditing, ...rest } = node
+    return rest
+  })) as JournalArticleBoardNode[]
+  const connections = toSerializable(boardConnections.value) as JournalArticleBoardConnection[]
+  const strokes = toSerializable(boardStrokes.value)
+  const maxNodeX = nodes.reduce((max, node) => Math.max(max, node.position.x + node.size.width + 4), 72)
+  const maxNodeY = nodes.reduce((max, node) => Math.max(max, node.position.y + node.size.height + 4), 44)
+
+  return {
+    gridSize: 28,
+    magnet: { enabled: true, mode: 'grid' },
+    size: { width: maxNodeX, height: maxNodeY },
+    nodes,
+    connections,
+    strokes
+  }
+}
+
+const createArticleContentBlocks = (board: JournalArticleBoard) => {
+  const blocks: any[] = []
+
+  board.nodes.forEach((node: any) => {
+    if (node.type === 'text') {
+      if (node.title) blocks.push({ type: 'heading', level: node.isQuestion ? 2 : 3, text: getPlainEditorText(node.title) || node.title })
+      if (node.text) blocks.push({ type: 'paragraph', text: getPlainEditorText(node.text) || node.text })
+    }
+
+    if (node.type === 'image' && node.src) {
+      blocks.push({ type: 'image', src: node.src, caption: node.caption || '' })
+    }
+
+    if (node.type === 'drawing' && node.params?.preview) {
+      blocks.push({ type: 'image', src: node.params.preview, caption: '' })
+    }
+  })
+
+  if (blocks.length === 0 && newArticleForm.value.description.trim()) {
+    blocks.push({ type: 'paragraph', text: newArticleForm.value.description.trim() })
+  }
+
+  return blocks
+}
+
+const createThreadPayloadFromArticle = () => {
+  const user = authStore.user
+  if (!user) return null
+
+  const createdAt = new Date().toISOString()
+  const board = createArticleBoardSnapshot()
+  const thesis = { blocks: createArticleContentBlocks(board) }
+  const authorName = currentUserName.value
+  const categoryMode = newArticleForm.value.type
+  const categoryLabel = selectedTypeLabel.value
+  const signal = getThreadSignal({
+    id: 'pending',
+    title: newArticleForm.value.title,
+    description: newArticleForm.value.description,
+    category: categoryMode,
+    subcategory: categoryLabel,
+    author: authorName,
+    authorId: user.uid,
+    createdAt,
+    publishedAt: createdAt,
+    lastActivityAt: createdAt,
+    lastMeaningfulAt: createdAt,
+    repliesCount: 0,
+    status: 'active',
+    thesis,
+    board
+  } as Thread & Record<string, any>)
+
+  return {
+    title: newArticleForm.value.title.trim(),
+    description: newArticleForm.value.description.trim(),
+    category: categoryMode,
+    subcategory: categoryLabel,
+    categoryLabel,
+    journalMode: categoryMode,
+    articleType: categoryMode,
+    author: authorName,
+    authorId: user.uid,
+    authorData: {
+      uid: user.uid,
+      email: user.email || null,
+      displayName: user.displayName || user.email || null,
+      photoURL: user.photoURL || null,
+      type: user.type || 'common'
+    },
+    createdAt,
+    publishedAt: createdAt,
+    lastActivityAt: createdAt,
+    lastMeaningfulAt: createdAt,
+    repliesCount: 0,
+    likesCount: 0,
+    status: 'active',
+    thesis,
+    summary: newArticleForm.value.description.trim(),
+    board,
+    boardNodes: board.nodes,
+    boardConnections: board.connections,
+    boardStrokes: board.strokes,
+    content: {
+      type: 'exforum-article-board',
+      board,
+      thesis
+    },
+    signal: signal || null,
+    tags: []
+  }
+}
+
+const confirmPublishArticle = async () => {
+  if (isPublishingArticle.value) return
   if (isSignalArticle.value && !isSignalBoardValid.value) {
     showPublishConfirmation.value = false
     alert(locale.value === 'ru' ? 'Заполните данные актива и обе цены перед публикацией сигнала.' : 'Fill out asset data and both prices before publishing a signal.')
     return
   }
-  showPublishConfirmation.value = false
-  console.log('Publishing article...', newArticleForm.value, boardNodes.value)
-  clearDraft()
-  isCreatingArticle.value = false
-  creationStep.value = 'metadata'
+
+  const payload = createThreadPayloadFromArticle()
+  if (!payload) {
+    alert(locale.value === 'ru' ? 'Войдите в аккаунт, чтобы опубликовать статью.' : 'Sign in to publish an article.')
+    return
+  }
+
+  isPublishingArticle.value = true
+
+  try {
+    const createdThread = await forumStore.createThread(payload as Omit<Thread, 'id'> & Record<string, any>)
+    showPublishConfirmation.value = false
+    clearDraft()
+    isCreatingArticle.value = false
+    creationStep.value = 'metadata'
+    navigateToNode(createdThread.id)
+  } catch (error) {
+    console.error('Failed to publish ExForum article:', error)
+    alert(locale.value === 'ru' ? 'Не удалось опубликовать статью. Проверьте подключение и попробуйте снова.' : 'Could not publish the article. Check your connection and try again.')
+  } finally {
+    isPublishingArticle.value = false
+  }
 }
 
 const previewNodeOrder = ref<string[]>([])
@@ -2362,6 +2649,7 @@ const boardUiLabels = computed(() => locale.value === 'ru'
       articleCategoryLabel: 'Категория',
       cancelPublish: 'Отмена',
       confirmPublish: 'Опубликовать',
+      publishing: 'Публикация...',
       assetFallback: 'АКТИВ',
       direction: 'Направление',
       asset: 'Актив',
@@ -2407,6 +2695,7 @@ const boardUiLabels = computed(() => locale.value === 'ru'
       articleCategoryLabel: 'Category',
       cancelPublish: 'Cancel',
       confirmPublish: 'Publish',
+      publishing: 'Publishing...',
       assetFallback: 'ASSET',
       direction: 'Direction',
       asset: 'Asset',
@@ -2549,6 +2838,9 @@ function resetTextColor() {
 }
 
 onMounted(() => {
+  void forumStore.fetchThreadList(100, 'createdAt').catch((error) => {
+    console.error('Failed to load ExForum threads:', error)
+  })
   void strategyTradesStore.init()
   window.addEventListener('pointerdown', closeNodeContextMenu)
   document.addEventListener('selectionchange', saveTextSelection)

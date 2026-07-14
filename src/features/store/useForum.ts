@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import {
   collection,
   doc,
+  setDoc,
   getDoc,
   getDocs,
   query,
@@ -140,6 +141,26 @@ export const useForumStore = defineStore('forum', {
 
       addThread(thread: Thread) {
         this.threads.set(thread.id, thread)
+        this.threads = new Map(this.threads)
+      },
+
+      async createThread(threadData: Omit<Thread, 'id'> & Record<string, any>): Promise<Thread> {
+        this.loading = true
+        try {
+          const threadRef = doc(collection(db, 'threads'))
+          const thread = {
+            id: threadRef.id,
+            ...threadData
+          } as Thread & Record<string, any>
+
+          await setDoc(threadRef, thread)
+          this.threads.set(thread.id, thread)
+          this.threads = new Map(this.threads)
+
+          return thread
+        } finally {
+          this.loading = false
+        }
       },
 
       getAuthor(userId: string) {
@@ -161,26 +182,31 @@ export const useForumStore = defineStore('forum', {
 
       const thread = snap.data()
       this.threads.set(thread.id, thread)
+      this.threads = new Map(this.threads)
       return thread
     },
 
-    async fetchThreadList(limitCount = 30): Promise<void> {
+    async fetchThreadList(limitCount = 30, orderField = 'lastActivityAt'): Promise<void> {
       this.loading = true
 
-      const q = query(
-        collection(db, 'threads').withConverter(threadConverter),
-        orderBy('lastActivityAt', 'desc'),
-        limit(limitCount)
-      )
+      try {
+        const q = query(
+          collection(db, 'threads').withConverter(threadConverter),
+          orderBy(orderField, 'desc'),
+          limit(limitCount)
+        )
 
-      const snap = await getDocs(q)
+        const snap = await getDocs(q)
 
-      snap.forEach(d => {
-        const thread = d.data()
-        this.threads.set(thread.id, thread)
-      })
+        snap.forEach(d => {
+          const thread = d.data()
+          this.threads.set(thread.id, thread)
+        })
+        this.threads = new Map(this.threads)
 
-      this.loading = false
+      } finally {
+        this.loading = false
+      }
     },
 
     async fetchFollowedThreads(followedIds: string[], limitCount = 30): Promise<void> {
@@ -320,5 +346,3 @@ export const useForumStore = defineStore('forum', {
     },
   },
 })
-
-
