@@ -1198,7 +1198,53 @@
                         </div>
                       </div>
 
-                      <!-- ASSET -->
+                      <!-- SIGNAL HEADER -->
+                      <div v-else-if="(node as any).type === 'signal-header'" class="w-full flex justify-center py-6">
+                        <div class="flex flex-row items-center justify-between w-full max-w-[800px] border border-black/10 bg-white shadow-sm overflow-hidden">
+                          
+                          <!-- Current Price -->
+                          <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="(node as any).cp ? 'bg-blue-50/50' : ''">
+                            <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                              {{ locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE' }}
+                            </span>
+                            <div class="flex items-center gap-2" v-if="(node as any).cp">
+                              <span v-if="getPriceNodeArrow((node as any).cp)" class="text-xl font-black" :class="getPriceNodeValueClass((node as any).cp)">{{ getPriceNodeArrow((node as any).cp) }}</span>
+                              <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass((node as any).cp)">
+                                {{ (node as any).cp.value || '0.00' }}
+                              </span>
+                            </div>
+                            <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
+                          </div>
+
+                          <!-- Asset -->
+                          <div class="flex flex-col items-center justify-center flex-1 py-8 px-4 border-l border-r border-black/10 bg-white z-10 shadow-[0_0_20px_rgba(0,0,0,0.05)]">
+                             <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                               {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
+                             </span>
+                             <span class="max-w-full truncate text-4xl font-black uppercase tracking-widest text-black/90" v-if="(node as any).asset">
+                               {{ (node as any).asset.asset || '---' }}
+                             </span>
+                             <span v-else class="text-4xl font-mono font-black tracking-widest text-black/20">---</span>
+                          </div>
+
+                          <!-- Target Price -->
+                          <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="(node as any).tp ? 'bg-green-50/50' : ''">
+                            <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                              {{ locale === 'ru' ? 'ЦЕЛЬ' : 'TARGET' }}
+                            </span>
+                            <div class="flex items-center gap-2" v-if="(node as any).tp">
+                              <span v-if="getPriceNodeArrow((node as any).tp)" class="text-xl font-black" :class="getPriceNodeValueClass((node as any).tp)">{{ getPriceNodeArrow((node as any).tp) }}</span>
+                              <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass((node as any).tp)">
+                                {{ (node as any).tp.value || '0.00' }}
+                              </span>
+                            </div>
+                            <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- ASSET (Standalone, if any left) -->
                       <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-black/10 bg-black/5 flex flex-col items-center">
                         <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
                           {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
@@ -1208,7 +1254,7 @@
                         </span>
                       </div>
 
-                      <!-- PRICE -->
+                      <!-- PRICE (Standalone, if any left) -->
                       <div v-else-if="node.type === 'price'" class="w-full p-8 border border-black/10 flex flex-col items-center"
                            :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
                         <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
@@ -2082,16 +2128,33 @@ const initializePreviewOrder = () => {
 
   if (isSignalArticle.value) {
     const cpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'current')
-    if (cpIdx > -1) orderedIds.push(nodes.splice(cpIdx, 1)[0]!.id)
-
     const aIdx = nodes.findIndex((n: any) => n.type === 'asset')
-    if (aIdx > -1) orderedIds.push(nodes.splice(aIdx, 1)[0]!.id)
-
     const tpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'target')
-    if (tpIdx > -1) orderedIds.push(nodes.splice(tpIdx, 1)[0]!.id)
+
+    if (cpIdx > -1 || aIdx > -1 || tpIdx > -1) {
+      if (!previewNodeOrder.value.includes('signal-header')) {
+        orderedIds.push('signal-header')
+      }
+      
+      const idsToRemove = [
+        cpIdx > -1 ? nodes[cpIdx]!.id : null,
+        aIdx > -1 ? nodes[aIdx]!.id : null,
+        tpIdx > -1 ? nodes[tpIdx]!.id : null
+      ].filter(Boolean)
+
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        if (idsToRemove.includes(nodes[i]!.id)) {
+          nodes.splice(i, 1)
+        }
+      }
+    }
   }
 
   for (const id of previewNodeOrder.value) {
+    if (id === 'signal-header' && isSignalArticle.value) {
+      if (!orderedIds.includes('signal-header')) orderedIds.push('signal-header')
+      continue
+    }
     const idx = nodes.findIndex(n => n.id === id)
     if (idx > -1) {
       orderedIds.push(nodes.splice(idx, 1)[0]!.id)
@@ -2108,7 +2171,18 @@ const initializePreviewOrder = () => {
 
 const previewNodes = computed(() => {
   return previewNodeOrder.value
-    .map(id => boardNodes.value.find(n => n.id === id))
+    .map(id => {
+      if (id === 'signal-header') {
+        return {
+          id: 'signal-header',
+          type: 'signal-header',
+          cp: boardNodes.value.find((n: any) => n.type === 'price' && n.priceKind === 'current'),
+          asset: boardNodes.value.find((n: any) => n.type === 'asset'),
+          tp: boardNodes.value.find((n: any) => n.type === 'price' && n.priceKind === 'target')
+        } as any
+      }
+      return boardNodes.value.find(n => n.id === id)
+    })
     .filter(n => n !== undefined) as JournalArticleBoardNode[]
 })
 
