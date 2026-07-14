@@ -441,12 +441,14 @@
 
           <!-- LAUNCH FOOTER -->
           <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
-            <!-- Cancel Button (Bottom Left) -->
-            <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" @click="isCreatingArticle = false">
+            <!-- Cancel / Delete Draft Button (Bottom Left) -->
+            <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" 
+                    @click="hasDraft ? (clearDraft(), isCreatingArticle = false) : isCreatingArticle = false">
               <svg class="w-4 h-4 transition-transform group-hover/cancel:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+                <path v-if="!hasDraft" d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+                <path v-else stroke-linecap="square" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
-              <span>{{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}</span>
+              <span>{{ hasDraft ? (locale === 'ru' ? 'УДАЛИТЬ ЧЕРНОВИК' : 'DELETE DRAFT') : (locale === 'ru' ? 'ОТМЕНА' : 'CANCEL') }}</span>
             </button>
 
             <button
@@ -905,7 +907,7 @@
                @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
                     @click="creationStep = 'metadata'">
-              {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
+              {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}
             </button>
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
                     @click="saveDraftAndExit">
@@ -1827,10 +1829,6 @@ const submitNewArticle = () => {
   setTimeout(() => {
     isSubmittingArticle.value = false
     creationStep.value = 'board'
-    boardNodes.value = []
-    boardConnections.value = []
-    boardStrokes.value = []
-    boardPan.value = { x: 48, y: 36 }
   }, 1000)
 }
 
