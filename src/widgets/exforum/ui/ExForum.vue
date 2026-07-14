@@ -1388,30 +1388,71 @@
       </Transition>
 
       <!-- PUBLISH CONFIRMATION MODAL -->
-      <div v-if="showPublishConfirmation" class="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <ExPanel variant="light" :show-corners="true" corner-style="gothic" :no-shadow="true" class="w-full max-w-lg bg-[#F9F9F9] border-black/20 text-center flex flex-col p-10">
-          <h3 class="text-3xl font-black uppercase tracking-widest text-black mb-8">
-            {{ locale === 'ru' ? 'Публикация' : 'Publish' }}
-          </h3>
-          <p class="text-sm font-mono text-black/70 mb-10 leading-relaxed">
-            {{ locale === 'ru' ? 'Вы уверены, что хотите опубликовать статью' : 'Are you sure you want to publish the article' }} 
-            <br/><br/>
-            "<span class="font-bold text-black text-lg">{{ newArticleForm.title }}</span>"? 
-            <br/><br/>
-            {{ locale === 'ru' ? 'Она попадет в категорию' : 'It will go to category' }} 
-            <br/>
-            "<span class="font-bold text-black text-lg uppercase">{{ selectedTypeLabel }}</span>".
-          </p>
-          <div class="flex flex-row space-x-6 justify-center">
-             <button @click="showPublishConfirmation = false" class="px-10 py-4 border-2 border-black/20 text-black font-mono tracking-widest hover:bg-black hover:text-white uppercase transition-colors duration-300">
-               {{ locale === 'ru' ? 'Отмена' : 'Cancel' }}
-             </button>
-             <button @click="confirmPublishArticle" class="px-10 py-4 bg-black text-white font-mono tracking-widest hover:bg-black/80 uppercase transition-colors duration-300 border-2 border-black">
-               {{ locale === 'ru' ? 'Опубликовать' : 'Publish' }}
-             </button>
+      <Transition name="fade">
+        <div
+          v-if="showPublishConfirmation && isCreatingArticle"
+          data-board-chrome
+          class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/35 p-6 backdrop-blur-sm cursor-auto"
+          @click.self="showPublishConfirmation = false"
+          @pointerdown.stop
+          @pointermove.stop
+        >
+          <div class="relative w-full max-w-[520px]" @click.stop>
+            <ExPanel
+              variant="light"
+              :show-corners="false"
+              :no-padding="true"
+              :no-shadow="true"
+              class="w-full overflow-hidden border-black/15 bg-[#fbfaf7] text-black"
+            >
+              <div class="px-8 pb-5 pt-7">
+                <span class="block text-[10px] font-mono font-semibold uppercase tracking-[0.24em] text-black/35">
+                  {{ boardUiLabels.publishConfirmKicker }}
+                </span>
+                <h3 class="mt-3 font-serif text-[28px] italic leading-tight text-black/90">
+                  {{ boardUiLabels.publishConfirmTitle }}
+                </h3>
+              </div>
+
+              <div class="mx-8 border-y border-black/10 font-mono">
+                <div class="grid grid-cols-[108px_1fr] items-baseline gap-6 py-4">
+                  <span class="text-[10px] font-semibold tracking-[0.18em] text-black/40">
+                    {{ boardUiLabels.articleTitleLabel }}
+                  </span>
+                  <strong class="min-w-0 break-words text-[15px] font-semibold leading-relaxed tracking-normal text-black/90">
+                    {{ newArticleForm.title || boardUiLabels.untitled }}
+                  </strong>
+                </div>
+
+                <div class="grid grid-cols-[108px_1fr] items-baseline gap-6 border-t border-black/10 py-4">
+                  <span class="text-[10px] font-semibold tracking-[0.18em] text-black/40">
+                    {{ boardUiLabels.articleCategoryLabel }}
+                  </span>
+                  <strong class="min-w-0 break-words text-[15px] font-semibold leading-relaxed tracking-normal text-black/90">
+                    {{ selectedTypeLabel }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap justify-end gap-2 px-8 pb-7 pt-5">
+                <button
+                  class="border border-transparent px-5 py-2.5 text-[11px] font-mono font-semibold uppercase tracking-[0.18em] text-black/45 transition-colors hover:border-black/10 hover:bg-black/[0.03] hover:text-black/70"
+                  @click="showPublishConfirmation = false"
+                >
+                  {{ boardUiLabels.cancelPublish }}
+                </button>
+                <button
+                  class="border border-black bg-black px-6 py-2.5 text-[11px] font-mono font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-black/85"
+                  @click="confirmPublishArticle"
+                >
+                  {{ boardUiLabels.confirmPublish }}
+                </button>
+              </div>
+            </ExPanel>
+            <ExGothicCorners variant="light" :opacity="0.9" class="text-black" />
           </div>
-        </ExPanel>
-      </div>
+        </div>
+      </Transition>
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
@@ -1720,6 +1761,7 @@ import type { JournalArticleBoardConnection, JournalArticleBoardNode, JournalArt
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -1954,6 +1996,7 @@ const filteredAssets = computed(() => {
 // Article Creation State
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'board' | 'preview'>('metadata')
+const showPublishConfirmation = ref(false)
 const drawing = useForumDrawing()
 const boardDrawing = useBoardDrawing()
 
@@ -1987,6 +2030,7 @@ const loadDraft = () => {
 
 const clearDraft = () => {
   stopBoardDrawingMode()
+  showPublishConfirmation.value = false
   localStorage.removeItem(DRAFT_STORAGE_KEY)
   hasDraft.value = false
   newArticleForm.value = { title: '', description: '', type: '' }
@@ -1998,12 +2042,14 @@ const clearDraft = () => {
 
 const saveDraftAndExit = () => {
   stopBoardDrawingMode()
+  showPublishConfirmation.value = false
   isCreatingArticle.value = false
 }
 
 watch(isCreatingArticle, (newVal) => {
   if (!newVal) {
     stopBoardDrawingMode()
+    showPublishConfirmation.value = false
     creationStep.value = 'metadata'
   }
 })
@@ -2132,19 +2178,23 @@ const submitNewArticle = () => {
   }, 1000)
 }
 
-const showPublishConfirmation = ref(false)
-
 const publishArticle = () => {
   if (isSignalArticle.value && !isSignalBoardValid.value) {
     alert(locale.value === 'ru' ? 'Заполните данные актива и обе цены перед публикацией сигнала.' : 'Fill out asset data and both prices before publishing a signal.')
     return
   }
+  stopBoardDrawingMode()
   // initializePreviewOrder()
   // creationStep.value = 'preview'
   showPublishConfirmation.value = true
 }
 
 const confirmPublishArticle = () => {
+  if (isSignalArticle.value && !isSignalBoardValid.value) {
+    showPublishConfirmation.value = false
+    alert(locale.value === 'ru' ? 'Заполните данные актива и обе цены перед публикацией сигнала.' : 'Fill out asset data and both prices before publishing a signal.')
+    return
+  }
   showPublishConfirmation.value = false
   console.log('Publishing article...', newArticleForm.value, boardNodes.value)
   clearDraft()
@@ -2306,6 +2356,12 @@ const boardUiLabels = computed(() => locale.value === 'ru'
       noTradesInStrategy: 'В ЭТОЙ СТРАТЕГИИ НЕТ СДЕЛОК',
       removeNode: 'УДАЛИТЬ_УЗЕЛ',
       removeWarning: 'Внимание: безвозвратное удаление',
+      publishConfirmKicker: 'ПОДТВЕРЖДЕНИЕ',
+      publishConfirmTitle: 'Опубликовать статью?',
+      articleTitleLabel: 'Название',
+      articleCategoryLabel: 'Категория',
+      cancelPublish: 'Отмена',
+      confirmPublish: 'Опубликовать',
       assetFallback: 'АКТИВ',
       direction: 'Направление',
       asset: 'Актив',
@@ -2345,6 +2401,12 @@ const boardUiLabels = computed(() => locale.value === 'ru'
       noTradesInStrategy: 'NO TRADES IN THIS STRATEGY',
       removeNode: 'REMOVE_NODE',
       removeWarning: 'Warning: Permanent_Archive_Erasure',
+      publishConfirmKicker: 'CONFIRMATION',
+      publishConfirmTitle: 'Publish article?',
+      articleTitleLabel: 'Title',
+      articleCategoryLabel: 'Category',
+      cancelPublish: 'Cancel',
+      confirmPublish: 'Publish',
       assetFallback: 'ASSET',
       direction: 'Direction',
       asset: 'Asset',
