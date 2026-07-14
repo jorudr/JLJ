@@ -42,6 +42,7 @@ export interface JournalArticleBoardTextNode extends JournalArticleBoardBaseNode
   type: 'text'
   title: string
   text: string
+  isQuestion?: boolean
 }
 
 export interface JournalArticleBoardImageNode extends JournalArticleBoardBaseNode {

@@ -49,8 +49,8 @@
             :style="getBoardNodeStyle(node)"
           >
             <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-              <h3 class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || boardUiLabels.untitled"></h3>
-              <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-black/55">{{ node.text }}</p>
+              <h3 v-if="!node.isQuestion" class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || boardUiLabels.untitled"></h3>
+              <p class="min-h-0 overflow-hidden font-serif italic break-words whitespace-pre-wrap" :class="node.isQuestion ? 'text-5xl leading-none text-black/80' : 'text-sm leading-relaxed text-black/55'">{{ node.text }}</p>
             </div>
 
             <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
@@ -199,8 +199,8 @@
               :style="getBoardNodeStyle(node)"
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-                <h3 class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || boardUiLabels.untitled"></h3>
-                <p class="min-h-0 overflow-hidden font-serif text-sm italic leading-relaxed text-current/55">{{ node.text }}</p>
+                <h3 v-if="!node.isQuestion" class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || boardUiLabels.untitled"></h3>
+                <p class="min-h-0 overflow-hidden font-serif italic break-words whitespace-pre-wrap" :class="node.isQuestion ? 'text-5xl leading-none text-current/80' : 'text-sm leading-relaxed text-current/55'">{{ node.text }}</p>
               </div>
 
               <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
@@ -537,23 +537,25 @@
               ></div>
 
               <div v-if="node.type === 'text'" class="flex h-full w-full flex-col relative bg-transparent p-4 pt-6 gap-2">
-                 <div :ref="(el) => setTitleEditorRef(el, node.id)"
-                      :data-title-node-id="node.id"
-                      contenteditable="true"
-                      @mousedown.stop
-                      @click.stop
-                      @focus="selectedBoardNodeId = node.id; activeEditorField = 'title'"
-                      @input="updateNodeTitle($event, node)"
-                      @keydown.enter.prevent
-                      class="relative z-10 font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent cursor-text"
-                      :data-placeholder="boardUiLabels.untitled">
-                 </div>
-                 <span
-                   v-if="isTextNodeTitleEmpty(node)"
-                   class="pointer-events-none absolute left-4 right-4 top-6 z-0 font-serif text-xl italic leading-none text-black/40"
-                 >
-                   {{ boardUiLabels.untitled }}
-                 </span>
+                 <template v-if="!node.isQuestion">
+                   <div :ref="(el) => setTitleEditorRef(el, node.id)"
+                        :data-title-node-id="node.id"
+                        contenteditable="true"
+                        @mousedown.stop
+                        @click.stop
+                        @focus="selectedBoardNodeId = node.id; activeEditorField = 'title'"
+                        @input="updateNodeTitle($event, node)"
+                        @keydown.enter.prevent
+                        class="relative z-10 font-serif text-xl italic leading-none text-black/80 break-words outline-none bg-transparent cursor-text"
+                        :data-placeholder="boardUiLabels.untitled">
+                   </div>
+                   <span
+                     v-if="isTextNodeTitleEmpty(node)"
+                     class="pointer-events-none absolute left-4 right-4 top-6 z-0 font-serif text-xl italic leading-none text-black/40"
+                   >
+                     {{ boardUiLabels.untitled }}
+                   </span>
+                 </template>
                  <div :ref="(el) => setTextEditorRef(el, node.id)"
                       :data-text-node-id="node.id"
                       contenteditable="true"
@@ -561,14 +563,16 @@
                       @click.stop
                       @focus="selectedBoardNodeId = node.id; activeEditorField = 'text'"
                       @input="updateNodeText($event, node)"
-                      class="relative z-10 w-full flex-1 font-serif text-sm italic leading-relaxed text-black/55 bg-transparent outline-none overflow-y-auto cursor-text break-words whitespace-pre-wrap min-h-0 matrix-text-rich"
-                      :data-placeholder="boardTextPlaceholder">
+                      class="relative z-10 w-full flex-1 font-serif italic bg-transparent outline-none overflow-y-auto cursor-text break-words whitespace-pre-wrap min-h-0 matrix-text-rich"
+                      :class="node.isQuestion ? 'text-5xl leading-none text-black/80' : 'text-sm leading-relaxed text-black/55'"
+                      :data-placeholder="node.isQuestion ? boardQuestionPlaceholder : boardTextPlaceholder">
                  </div>
                  <span
                    v-if="isTextNodeBodyEmpty(node)"
-                   class="pointer-events-none absolute left-4 right-4 top-[58px] z-0 font-serif text-sm italic leading-relaxed text-black/25"
+                   class="pointer-events-none absolute left-4 right-4 z-0 font-serif italic"
+                   :class="node.isQuestion ? 'top-6 text-5xl leading-none text-black/40' : 'top-[58px] text-sm leading-relaxed text-black/25'"
                  >
-                   {{ boardTextPlaceholder }}
+                   {{ node.isQuestion ? boardQuestionPlaceholder : boardTextPlaceholder }}
                  </span>
               </div>
               <div v-else-if="node.type === 'image'" class="flex h-full flex-col pt-4">
@@ -1756,6 +1760,19 @@ watch(creationStep, (step) => {
           size: { width: 8, height: 3 }
         } as any)
       }
+    } else if (isQuestionArticle.value) {
+      const hasTextNode = boardNodes.value.some((n: any) => n.type === 'text')
+      if (!hasTextNode) {
+        boardNodes.value.push({
+          id: `node_text_${Date.now()}`,
+          type: 'text',
+          isQuestion: true,
+          title: '',
+          text: '',
+          position: { x: 2, y: 2 },
+          size: { width: 12, height: 8 }
+        } as any)
+      }
     }
   }
 })
@@ -1789,6 +1806,7 @@ const articleTypes = computed(() => journalFilters.value.map(filter => ({
   label: filter.label
 })))
 const isSignalArticle = computed(() => newArticleForm.value.type === 'SETUP')
+const isQuestionArticle = computed(() => newArticleForm.value.type === 'QUESTION')
 
 const selectedTypeLabel = computed(() => {
   const t = articleTypes.value.find(t => t.value === newArticleForm.value.type)
@@ -1836,6 +1854,13 @@ const handleNodeContextMenu = (e: MouseEvent, nodeId: string) => {
       return
     }
   }
+
+  if (isQuestionArticle.value) {
+    const node = boardNodes.value.find((n: any) => n.id === nodeId)
+    if (node && node.type === 'text' && node.isQuestion) {
+      return
+    }
+  }
   
   nodeContextMenu.value = {
     x: e.clientX,
@@ -1860,6 +1885,7 @@ const selectedBoardNodeId = ref<string | null>(null)
 const selectedBoardNode = computed(() => boardNodes.value.find((n: any) => n.id === selectedBoardNodeId.value) || null)
 const activeEditorField = ref<'title' | 'text' | null>(null)
 const boardTextPlaceholder = computed(() => locale.value === 'ru' ? 'Введите текст...' : 'Enter text...')
+const boardQuestionPlaceholder = computed(() => locale.value === 'ru' ? 'Задайте свой вопрос...' : 'Ask your question...')
 const boardUiLabels = computed(() => locale.value === 'ru'
   ? {
       untitled: 'Без названия',
