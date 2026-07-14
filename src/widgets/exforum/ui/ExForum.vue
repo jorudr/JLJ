@@ -1149,6 +1149,100 @@
           </Transition>
         </div>
         
+        <!-- PREVIEW STEP -->
+        <div v-else-if="creationStep === 'preview'" class="flex-1 flex flex-col bg-[#F4F4F4] overflow-hidden relative font-mono">
+          <!-- Header -->
+          <header class="flex-shrink-0 flex items-center justify-between px-12 py-6 border-b border-black/10 z-10 bg-[#F4F4F4]">
+            <button class="px-6 py-3 border border-black/20 bg-white shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
+                    @click="creationStep = 'board'">
+              {{ locale === 'ru' ? 'НАЗАД В РЕДАКТОР' : 'BACK TO EDITOR' }}
+            </button>
+            <div class="text-[10px] uppercase tracking-[0.3em] font-black opacity-40">
+              {{ locale === 'ru' ? 'ФИНАЛЬНЫЙ РЕЗУЛЬТАТ' : 'FINAL RESULT' }}
+            </div>
+            <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+                    @click="confirmPublishArticle">
+              {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'CONFIRM PUBLISH' }}
+            </button>
+          </header>
+
+          <!-- Scrollable Content -->
+          <div class="flex-1 overflow-y-auto scroll-minimal px-12 py-16">
+            <div class="max-w-[800px] mx-auto flex flex-col items-center">
+              <!-- Title & Description -->
+              <h1 class="text-5xl font-serif italic text-black/90 text-center mb-8 break-words leading-tight w-full">
+                {{ newArticleForm.title }}
+              </h1>
+              <p class="text-sm font-mono text-black/60 text-center leading-loose mb-16 max-w-[600px] whitespace-pre-wrap">
+                {{ newArticleForm.description }}
+              </p>
+
+              <!-- Nodes -->
+              <div class="flex flex-col w-full gap-12">
+                <template v-for="node in previewNodes" :key="node.id">
+                  
+                  <!-- TEXT -->
+                  <div v-if="node.type === 'text'" class="w-full text-black/80 font-serif italic break-words whitespace-pre-wrap"
+                       :class="(node as any).isQuestion ? 'text-5xl leading-none text-center' : 'text-base leading-relaxed'"
+                       v-html="(node as any).text || (node as any).title">
+                  </div>
+
+                  <!-- ASSET -->
+                  <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-black/10 bg-black/5 flex flex-col items-center">
+                    <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                      {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
+                    </span>
+                    <span class="text-4xl font-mono font-black uppercase tracking-widest text-black/90">
+                      {{ (node as any).asset || '---' }}
+                    </span>
+                  </div>
+
+                  <!-- PRICE -->
+                  <div v-else-if="node.type === 'price'" class="w-full p-8 border border-black/10 flex flex-col items-center"
+                       :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
+                    <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                      {{ (node as any).priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE') }}
+                    </span>
+                    <span class="text-4xl font-mono font-black tracking-widest text-black/90">
+                      {{ (node as any).value || '0.00' }}
+                    </span>
+                  </div>
+
+                  <!-- STRATEGY / TRADE -->
+                  <div v-else-if="node.type === 'strategy' || node.type === 'trade'" class="w-full flex justify-center">
+                     <ExNodeCard :node="node" class="w-[450px]" />
+                  </div>
+
+                  <!-- DRAWING -->
+                  <div v-else-if="node.type === 'drawing'" class="w-full flex justify-center bg-white p-4 border border-black/10 shadow-sm relative" :style="{ minHeight: '100px' }">
+                    <img v-if="(node as any).params?.preview"
+                         :src="(node as any).params.preview"
+                         alt="Drawing"
+                         class="w-full h-auto max-h-[400px] object-contain pointer-events-none" />
+                    <svg v-else
+                         class="w-full h-auto max-h-[400px] pointer-events-none text-black"
+                         viewBox="0 0 100 100"
+                         preserveAspectRatio="xMidYMid meet">
+                      <polyline v-for="(stroke, i) in (node as any).params?.strokes || []" :key="i"
+                                :points="stroke.points.map((p: any) => `${p.x},${p.y}`).join(' ')"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1" />
+                    </svg>
+                  </div>
+
+                  <!-- IMAGE -->
+                  <div v-else-if="node.type === 'image'" class="w-full flex flex-col items-center gap-4">
+                    <img :src="(node as any).src" class="max-w-full h-auto rounded-sm border border-black/10 shadow-sm object-contain max-h-[600px]" />
+                    <p v-if="(node as any).caption" class="text-[10px] font-mono tracking-widest uppercase text-black/40 text-center">{{ (node as any).caption }}</p>
+                  </div>
+
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </Transition>
     </div>
 
@@ -1690,7 +1784,7 @@ const filteredAssets = computed(() => {
 
 // Article Creation State
 const isCreatingArticle = ref(false)
-const creationStep = ref<'metadata' | 'board'>('metadata')
+const creationStep = ref<'metadata' | 'board' | 'preview'>('metadata')
 const drawing = useForumDrawing()
 const boardDrawing = useBoardDrawing()
 
@@ -1870,14 +1964,54 @@ const submitNewArticle = () => {
 }
 
 const publishArticle = () => {
-  if (!hasValidSignalAssetNode.value) {
+  if (isSignalArticle.value && !hasValidSignalAssetNode.value) {
     alert(locale.value === 'ru' ? 'Добавьте узел АКТИВ и выберите актив перед публикацией сигнала.' : 'Add an ASSET node and choose an asset before publishing a signal.')
     return
   }
+  creationStep.value = 'preview'
+}
+
+const confirmPublishArticle = () => {
   console.log('Publishing article...', newArticleForm.value, boardNodes.value)
   clearDraft()
   isCreatingArticle.value = false
+  creationStep.value = 'metadata'
 }
+
+const previewNodes = computed(() => {
+  const nodes = [...boardNodes.value]
+  const ordered: any[] = []
+
+  if (isQuestionArticle.value) {
+    const qNodeIdx = nodes.findIndex((n: any) => n.type === 'text' && n.isQuestion)
+    if (qNodeIdx > -1) ordered.push(nodes.splice(qNodeIdx, 1)[0])
+  }
+
+  if (isSignalArticle.value) {
+    const cpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'current')
+    if (cpIdx > -1) ordered.push(nodes.splice(cpIdx, 1)[0])
+
+    const aIdx = nodes.findIndex((n: any) => n.type === 'asset')
+    if (aIdx > -1) ordered.push(nodes.splice(aIdx, 1)[0])
+
+    const tpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'target')
+    if (tpIdx > -1) ordered.push(nodes.splice(tpIdx, 1)[0])
+  }
+
+  const textNodes = nodes.filter((n: any) => n.type === 'text' && !ordered.includes(n))
+  ordered.push(...textNodes)
+
+  const tradeNodes = nodes.filter((n: any) => n.type === 'trade' || n.type === 'strategy')
+  ordered.push(...tradeNodes)
+
+  const drawingNodes = nodes.filter((n: any) => n.type === 'drawing')
+  ordered.push(...drawingNodes)
+
+  const imageNodes = nodes.filter((n: any) => n.type === 'image')
+  ordered.push(...imageNodes)
+
+  return ordered
+})
 
 // Node Context Menu Logic
 const nodeContextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
