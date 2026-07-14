@@ -67,7 +67,10 @@
               </svg>
             </div>
 
-            <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+            <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/80 px-3 font-mono">
+              <span class="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-black/40">
+                {{ node.priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'PROJECTED PRICE') }}
+              </span>
               <span
                 class="truncate text-center text-xl font-black leading-none"
                 :class="getPriceNodeValueClass(node)"
@@ -214,7 +217,10 @@
                 </svg>
               </div>
 
-              <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/70 px-3 font-mono text-current">
+              <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/70 px-3 font-mono text-current">
+                <span class="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-current/40">
+                  {{ node.priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'PROJECTED PRICE') }}
+                </span>
                 <span
                   class="truncate text-center text-lg font-black leading-none"
                   :class="getPriceNodeValueClass(node)"
@@ -601,7 +607,10 @@
                 </div>
               </div>
 
-              <div v-else-if="node.type === 'price'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
+              <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/80 px-3 font-mono">
+                <span class="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-black/40 pointer-events-none select-none">
+                  {{ node.priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'PROJECTED PRICE') }}
+                </span>
                 <div class="flex min-w-0 items-center justify-center gap-2">
                   <span
                     v-if="getPriceNodeArrow(node)"
@@ -806,38 +815,7 @@
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
               </svg>
             </button>
-            <template v-if="isSignalArticle">
-              <div class="w-6 h-px bg-black/10 my-1"></div>
-              <div class="group/signal relative">
-                <button class="p-2 transition-colors group relative"
-                        :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'bg-black/10' : 'hover:bg-black/5'"
-                        :title="locale === 'ru' ? 'Сигнальные узлы' : 'Signal Nodes'"
-                        @click.stop>
-                  <span class="font-mono text-[10px] font-black transition-colors" :class="['asset-node', 'current-price', 'target-price'].includes(activeBoardTool || '') ? 'text-black' : 'text-black/60 group-hover:text-black'">{{ boardUiLabels.signalTool }}</span>
-                </button>
-                <div class="pointer-events-none absolute left-[calc(100%-1px)] top-1/2 z-[60] flex -translate-x-2 -translate-y-1/2 items-center border border-black/20 bg-white/95 opacity-0 shadow-[0_16px_36px_rgba(0,0,0,0.12)] transition-all group-hover/signal:pointer-events-auto group-hover/signal:translate-x-0 group-hover/signal:opacity-100">
-                  <button class="h-9 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
-                          :class="activeBoardTool === 'asset-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
-                          :title="locale === 'ru' ? 'Актив' : 'Asset'"
-                          @click.stop="activeBoardTool = activeBoardTool === 'asset-node' ? null : 'asset-node'">
-                    {{ boardUiLabels.asset }}
-                  </button>
-                  <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
-                          :class="activeBoardTool === 'current-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
-                          :title="locale === 'ru' ? 'Текущая цена' : 'Current Price'"
-                          @click.stop="activeBoardTool = activeBoardTool === 'current-price' ? null : 'current-price'">
-                    {{ boardUiLabels.currentPriceTool }}
-                  </button>
-                  <button class="h-9 border-l border-black/10 px-3 font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
-                          :class="activeBoardTool === 'target-price' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
-                          :title="locale === 'ru' ? 'Предполагаемая цена' : 'Projected Price'"
-                          @click.stop="activeBoardTool = activeBoardTool === 'target-price' ? null : 'target-price'">
-                    {{ boardUiLabels.targetPriceTool }}
-                  </button>
-                </div>
-              </div>
-            </template>
-            <template v-else>
+            <template v-if="!isSignalArticle">
               <div class="w-6 h-px bg-black/10 my-1"></div>
               <button
                 class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
@@ -1746,6 +1724,39 @@ watch(isCreatingArticle, (newVal) => {
 watch(creationStep, (step) => {
   if (step === 'board') {
     renderBoardDrawingCanvas()
+    if (isSignalArticle.value) {
+      const hasCurrentPrice = boardNodes.value.some((n: any) => n.type === 'price' && n.priceKind === 'current')
+      const hasAsset = boardNodes.value.some((n: any) => n.type === 'asset')
+      const hasTargetPrice = boardNodes.value.some((n: any) => n.type === 'price' && n.priceKind === 'target')
+
+      if (!hasCurrentPrice && !hasAsset && !hasTargetPrice) {
+        boardNodes.value.push({
+          id: `node_cp_${Date.now()}`,
+          type: 'price',
+          priceKind: 'current',
+          value: '',
+          position: { x: 2, y: 2 },
+          size: { width: 8, height: 3 }
+        } as any)
+        
+        boardNodes.value.push({
+          id: `node_asset_${Date.now()}`,
+          type: 'asset',
+          asset: '',
+          position: { x: 11, y: 2 },
+          size: { width: 9, height: 3 }
+        } as any)
+        
+        boardNodes.value.push({
+          id: `node_tp_${Date.now()}`,
+          type: 'price',
+          priceKind: 'target',
+          value: '',
+          position: { x: 21, y: 2 },
+          size: { width: 8, height: 3 }
+        } as any)
+      }
+    }
   }
 })
 
@@ -1819,6 +1830,13 @@ const publishArticle = () => {
 const nodeContextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
 
 const handleNodeContextMenu = (e: MouseEvent, nodeId: string) => {
+  if (isSignalArticle.value) {
+    const node = boardNodes.value.find((n: any) => n.id === nodeId)
+    if (node && (node.type === 'asset' || node.type === 'price')) {
+      return
+    }
+  }
+  
   nodeContextMenu.value = {
     x: e.clientX,
     y: e.clientY,
