@@ -452,7 +452,7 @@
             </button>
 
             <button
-              class="group relative overflow-hidden px-8 py-3 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
+              class="group relative overflow-hidden h-12 w-64 border-2 transition-all duration-500 flex items-center justify-center space-x-4"
               :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
               :disabled="!isNewArticleFormValid || isSubmittingArticle"
               @click="submitNewArticle"
@@ -464,11 +464,16 @@
                     ]">
                 {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
               </span>
-              <span v-if="!isSubmittingArticle" class="text-xl relative z-10 transition-all duration-500 font-light leading-none" 
-                    :class="isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'">
+              <span class="text-xl relative z-10 transition-all duration-500 font-light leading-none absolute right-6" 
+                    :class="[
+                      isSubmittingArticle ? 'opacity-0' : 'opacity-100',
+                      isNewArticleFormValid ? 'text-black group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'
+                    ]">
                 →
               </span>
-              <svg v-else class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white transition-opacity duration-300" 
+                   :class="isSubmittingArticle ? 'opacity-100' : 'opacity-0'"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
               </svg>
             </button>
@@ -932,8 +937,8 @@
               {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
             </button>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
-                    :class="!hasValidSignalAssetNode ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
-                    :disabled="!hasValidSignalAssetNode"
+                    :class="!isSignalBoardValid ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
+                    :disabled="!isSignalBoardValid"
                     @click="publishArticle">
               {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
             </button>
@@ -1149,7 +1154,9 @@
           </Transition>
         </div>
         
+
         <!-- PREVIEW STEP -->
+        <!-- Note: This logic is bypassed, user sees the ExPanel instead -->
         <div v-else-if="creationStep === 'preview'" class="flex-1 flex flex-col bg-[#F4F4F4] overflow-hidden relative font-mono">
           <!-- Header -->
           <header class="flex-shrink-0 flex items-center justify-between px-12 py-6 border-b border-black/10 z-10 bg-[#F4F4F4]">
@@ -1379,6 +1386,32 @@
         </div>
 
       </Transition>
+
+      <!-- PUBLISH CONFIRMATION MODAL -->
+      <div v-if="showPublishConfirmation" class="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <ExPanel variant="light" :show-corners="true" corner-style="gothic" :no-shadow="true" class="w-full max-w-lg bg-[#F9F9F9] border-black/20 text-center flex flex-col p-10">
+          <h3 class="text-3xl font-black uppercase tracking-widest text-black mb-8">
+            {{ locale === 'ru' ? 'Публикация' : 'Publish' }}
+          </h3>
+          <p class="text-sm font-mono text-black/70 mb-10 leading-relaxed">
+            {{ locale === 'ru' ? 'Вы уверены, что хотите опубликовать статью' : 'Are you sure you want to publish the article' }} 
+            <br/><br/>
+            "<span class="font-bold text-black text-lg">{{ newArticleForm.title }}</span>"? 
+            <br/><br/>
+            {{ locale === 'ru' ? 'Она попадет в категорию' : 'It will go to category' }} 
+            <br/>
+            "<span class="font-bold text-black text-lg uppercase">{{ selectedTypeLabel }}</span>".
+          </p>
+          <div class="flex flex-row space-x-6 justify-center">
+             <button @click="showPublishConfirmation = false" class="px-10 py-4 border-2 border-black/20 text-black font-mono tracking-widest hover:bg-black hover:text-white uppercase transition-colors duration-300">
+               {{ locale === 'ru' ? 'Отмена' : 'Cancel' }}
+             </button>
+             <button @click="confirmPublishArticle" class="px-10 py-4 bg-black text-white font-mono tracking-widest hover:bg-black/80 uppercase transition-colors duration-300 border-2 border-black">
+               {{ locale === 'ru' ? 'Опубликовать' : 'Publish' }}
+             </button>
+          </div>
+        </ExPanel>
+      </div>
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
@@ -2099,16 +2132,20 @@ const submitNewArticle = () => {
   }, 1000)
 }
 
+const showPublishConfirmation = ref(false)
+
 const publishArticle = () => {
-  if (isSignalArticle.value && !hasValidSignalAssetNode.value) {
-    alert(locale.value === 'ru' ? 'Добавьте узел АКТИВ и выберите актив перед публикацией сигнала.' : 'Add an ASSET node and choose an asset before publishing a signal.')
+  if (isSignalArticle.value && !isSignalBoardValid.value) {
+    alert(locale.value === 'ru' ? 'Заполните данные актива и обе цены перед публикацией сигнала.' : 'Fill out asset data and both prices before publishing a signal.')
     return
   }
-  initializePreviewOrder()
-  creationStep.value = 'preview'
+  // initializePreviewOrder()
+  // creationStep.value = 'preview'
+  showPublishConfirmation.value = true
 }
 
 const confirmPublishArticle = () => {
+  showPublishConfirmation.value = false
   console.log('Publishing article...', newArticleForm.value, boardNodes.value)
   clearDraft()
   isCreatingArticle.value = false
@@ -2775,9 +2812,14 @@ const handleAssetIconError = (symbol: string) => {
   failedAssetIcons.value = next
 }
 
-const hasValidSignalAssetNode = computed(() => {
+const isSignalBoardValid = computed(() => {
   if (!isSignalArticle.value) return true
-  return boardNodes.value.some((node: any) => node.type === 'asset' && String(node.asset || '').trim())
+  
+  const hasValidAsset = boardNodes.value.some((node: any) => node.type === 'asset' && String(node.asset || '').trim())
+  const hasValidCurrentPrice = boardNodes.value.some((node: any) => node.type === 'price' && node.priceKind === 'current' && String(node.value || '').trim())
+  const hasValidTargetPrice = boardNodes.value.some((node: any) => node.type === 'price' && node.priceKind === 'target' && String(node.value || '').trim())
+  
+  return hasValidAsset && hasValidCurrentPrice && hasValidTargetPrice
 })
 
 const localStrategies = computed(() => (strategyTradesStore.strategies || []).filter(strategy => strategy.id !== 'MAIN_DIARY'))
