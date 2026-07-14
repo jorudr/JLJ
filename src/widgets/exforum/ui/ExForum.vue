@@ -1491,13 +1491,13 @@ const journalFilters = computed(() => locale.value === 'ru'
       { label: 'СИГНАЛЫ', mode: 'SETUP' },
       { label: 'ИССЛЕДОВАНИЯ', mode: 'RESEARCH' },
       { label: 'СТРАТЕГИИ', mode: 'LESSON' },
-      { label: 'АНАЛИТИКА', mode: 'QUESTION' }
+      { label: 'ВОПРОСЫ', mode: 'QUESTION' }
     ]
   : [
       { label: 'SIGNALS', mode: 'SETUP' },
       { label: 'RESEARCH', mode: 'RESEARCH' },
       { label: 'STRATEGY', mode: 'LESSON' },
-      { label: 'ANALYSIS', mode: 'QUESTION' }
+      { label: 'QUESTIONS', mode: 'QUESTION' }
     ])
 const activeJournalFilter = ref<string | null>(null)
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
