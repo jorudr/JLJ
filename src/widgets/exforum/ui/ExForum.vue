@@ -1179,64 +1179,153 @@
 
               <!-- Nodes -->
               <div class="flex flex-col w-full gap-12">
-                <template v-for="node in previewNodes" :key="node.id">
+                <template v-for="(node, index) in previewNodes" :key="node.id">
                   
-                  <!-- TEXT -->
-                  <div v-if="node.type === 'text'" class="w-full text-black/80 font-serif italic break-words whitespace-pre-wrap"
-                       :class="(node as any).isQuestion ? 'text-5xl leading-none text-center' : 'text-base leading-relaxed'"
-                       v-html="(node as any).text || (node as any).title">
-                  </div>
+                  <!-- NODE WRAPPER WITH CONTROLS -->
+                  <div class="group relative w-full flex flex-col items-center">
+                    
+                    <!-- NODE CONTENT -->
+                    <div class="w-full">
+                      <!-- TEXT -->
+                      <div v-if="node.type === 'text'" class="w-full flex flex-col gap-4 font-serif italic break-words">
+                        <h2 v-if="(node as any).title" class="font-bold text-black/90"
+                            :class="(node as any).isQuestion ? 'text-5xl leading-none text-center' : 'text-3xl'">
+                          {{ (node as any).title }}
+                        </h2>
+                        <div v-if="(node as any).text" class="text-black/80 whitespace-pre-wrap"
+                             :class="(node as any).isQuestion ? 'text-3xl text-center' : 'text-base leading-relaxed'"
+                             v-html="(node as any).text">
+                        </div>
+                      </div>
 
-                  <!-- ASSET -->
-                  <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-black/10 bg-black/5 flex flex-col items-center">
-                    <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
-                      {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
-                    </span>
-                    <span class="text-4xl font-mono font-black uppercase tracking-widest text-black/90">
-                      {{ (node as any).asset || '---' }}
-                    </span>
-                  </div>
+                      <!-- ASSET -->
+                      <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-black/10 bg-black/5 flex flex-col items-center">
+                        <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                          {{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}
+                        </span>
+                        <span class="text-4xl font-mono font-black uppercase tracking-widest text-black/90">
+                          {{ (node as any).asset || '---' }}
+                        </span>
+                      </div>
 
-                  <!-- PRICE -->
-                  <div v-else-if="node.type === 'price'" class="w-full p-8 border border-black/10 flex flex-col items-center"
-                       :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
-                    <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
-                      {{ (node as any).priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE') }}
-                    </span>
-                    <span class="text-4xl font-mono font-black tracking-widest text-black/90">
-                      {{ (node as any).value || '0.00' }}
-                    </span>
-                  </div>
+                      <!-- PRICE -->
+                      <div v-else-if="node.type === 'price'" class="w-full p-8 border border-black/10 flex flex-col items-center"
+                           :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
+                        <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">
+                          {{ (node as any).priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE') }}
+                        </span>
+                        <span class="text-4xl font-mono font-black tracking-widest text-black/90">
+                          {{ (node as any).value || '0.00' }}
+                        </span>
+                      </div>
 
-                  <!-- STRATEGY / TRADE -->
-                  <div v-else-if="node.type === 'strategy' || node.type === 'trade'" class="w-full flex justify-center">
-                     <ExNodeCard :node="node" class="w-[450px]" />
-                  </div>
+                      <!-- STRATEGY / TRADE -->
+                      <div v-else-if="node.type === 'strategy'" class="w-full flex justify-center py-6">
+                        <div class="flex min-w-[300px] max-w-[450px] w-full flex-col items-center justify-center gap-4 text-center border border-black/10 bg-white p-6 shadow-sm">
+                          <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40">
+                            {{ locale === 'ru' ? 'СТРАТЕГИЯ' : 'STRATEGY' }}
+                          </span>
+                          <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">
+                            {{ getStrategyNodeLabel(node) || '---' }}
+                          </span>
+                          <span v-if="getStrategyNodeMetrics(node)" class="grid w-full grid-cols-5 gap-2 text-center uppercase pt-4 border-t border-black/5 mt-2">
+                            <span class="flex min-w-0 flex-col px-1.5">
+                              <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
+                              <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+                            </span>
+                            <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                              <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
+                              <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                            </span>
+                            <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                              <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
+                              <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                            </span>
+                            <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                              <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
+                              <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                            </span>
+                            <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                              <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
+                              <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                            </span>
+                          </span>
+                        </div>
+                      </div>
 
-                  <!-- DRAWING -->
-                  <div v-else-if="node.type === 'drawing'" class="w-full flex justify-center bg-white p-4 border border-black/10 shadow-sm relative" :style="{ minHeight: '100px' }">
-                    <img v-if="(node as any).params?.preview"
-                         :src="(node as any).params.preview"
-                         alt="Drawing"
-                         class="w-full h-auto max-h-[400px] object-contain pointer-events-none" />
-                    <svg v-else
-                         class="w-full h-auto max-h-[400px] pointer-events-none text-black"
-                         viewBox="0 0 100 100"
-                         preserveAspectRatio="xMidYMid meet">
-                      <polyline v-for="(stroke, i) in (node as any).params?.strokes || []" :key="i"
-                                :points="stroke.points.map((p: any) => `${p.x},${p.y}`).join(' ')"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1" />
-                    </svg>
-                  </div>
+                      <div v-else-if="node.type === 'trade'" class="w-full flex justify-center py-6">
+                        <div class="flex min-w-[300px] max-w-[450px] w-full flex-col justify-center gap-4 text-left border border-black/10 bg-white p-6 shadow-sm">
+                          <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40 text-center">
+                            {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }}
+                          </span>
+                          
+                          <span class="flex w-full items-start justify-between gap-3 border-t border-black/5 pt-4">
+                            <span class="flex min-w-0 flex-col">
+                              <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">
+                                {{ getTradeNodeAssetLabel(node) }}
+                              </span>
+                              <span class="max-w-full truncate text-[10px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">
+                                {{ getTradeNodeVector(node) }}
+                              </span>
+                            </span>
+                            <span class="max-w-[45%] truncate text-right text-xl font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
+                              {{ getTradeNodeResult(node) || '---' }}
+                            </span>
+                          </span>
 
-                  <!-- IMAGE -->
-                  <div v-else-if="node.type === 'image'" class="w-full flex flex-col items-center gap-4">
-                    <img :src="(node as any).src" class="max-w-full h-auto rounded-sm border border-black/10 shadow-sm object-contain max-h-[600px]" />
-                    <p v-if="(node as any).caption" class="text-[10px] font-mono tracking-widest uppercase text-black/40 text-center">{{ (node as any).caption }}</p>
-                  </div>
+                          <span class="grid w-full grid-cols-2 gap-2 text-center uppercase pt-2">
+                            <span class="flex min-w-0 flex-col border-t border-black/5 px-1.5 py-2">
+                              <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
+                              <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
+                            </span>
+                            <span class="flex min-w-0 flex-col border-t border-l border-black/5 px-1.5 py-2">
+                              <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
+                              <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
+                            </span>
+                          </span>
+                        </div>
+                      </div>
 
+                      <!-- DRAWING -->
+                      <div v-else-if="node.type === 'drawing'" class="w-full flex justify-center bg-white p-4 border border-black/10 shadow-sm relative" :style="{ minHeight: '100px' }">
+                        <img v-if="(node as any).params?.preview"
+                             :src="(node as any).params.preview"
+                             alt="Drawing"
+                             class="w-full h-auto max-h-[400px] object-contain pointer-events-none" />
+                        <svg v-else
+                             class="w-full h-auto max-h-[400px] pointer-events-none text-black"
+                             viewBox="0 0 100 100"
+                             preserveAspectRatio="xMidYMid meet">
+                          <polyline v-for="(stroke, i) in (node as any).params?.strokes || []" :key="i"
+                                    :points="stroke.points.map((p: any) => `${p.x},${p.y}`).join(' ')"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1" />
+                        </svg>
+                      </div>
+
+                      <!-- IMAGE -->
+                      <div v-else-if="node.type === 'image'" class="w-full flex flex-col items-center gap-4">
+                        <img :src="(node as any).src" class="max-w-full h-auto rounded-sm border border-black/10 shadow-sm object-contain max-h-[600px]" />
+                        <p v-if="(node as any).caption" class="text-[10px] font-mono tracking-widest uppercase text-black/40 text-center">{{ (node as any).caption }}</p>
+                      </div>
+                    </div>
+
+                    <!-- REORDER CONTROLS -->
+                    <div class="absolute -right-16 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button class="w-8 h-8 flex items-center justify-center border border-black/20 bg-white shadow-sm hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              :disabled="index === 0"
+                              @click="movePreviewNodeUp(index)">
+                        <svg class="w-4 h-4 text-black/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M18 15l-6-6-6 6"/></svg>
+                      </button>
+                      <button class="w-8 h-8 flex items-center justify-center border border-black/20 bg-white shadow-sm hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              :disabled="index === previewNodes.length - 1"
+                              @click="movePreviewNodeDown(index)">
+                        <svg class="w-4 h-4 text-black/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+
+                  </div>
                 </template>
               </div>
             </div>
@@ -1527,6 +1616,7 @@
           </div>
         </div>
       </Transition>
+      <input type="file" ref="globalImageInput" class="hidden" accept="image/*" @change="handleGlobalImageUpload" />
   </div>
 </template>
 
@@ -1968,6 +2058,7 @@ const publishArticle = () => {
     alert(locale.value === 'ru' ? 'Добавьте узел АКТИВ и выберите актив перед публикацией сигнала.' : 'Add an ASSET node and choose an asset before publishing a signal.')
     return
   }
+  initializePreviewOrder()
   creationStep.value = 'preview'
 }
 
@@ -1978,40 +2069,64 @@ const confirmPublishArticle = () => {
   creationStep.value = 'metadata'
 }
 
-const previewNodes = computed(() => {
-  const nodes = [...boardNodes.value]
-  const ordered: any[] = []
+const previewNodeOrder = ref<string[]>([])
 
+const initializePreviewOrder = () => {
+  const nodes = [...boardNodes.value]
+  const orderedIds: string[] = []
+  
   if (isQuestionArticle.value) {
     const qNodeIdx = nodes.findIndex((n: any) => n.type === 'text' && n.isQuestion)
-    if (qNodeIdx > -1) ordered.push(nodes.splice(qNodeIdx, 1)[0])
+    if (qNodeIdx > -1) orderedIds.push(nodes.splice(qNodeIdx, 1)[0]!.id)
   }
 
   if (isSignalArticle.value) {
     const cpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'current')
-    if (cpIdx > -1) ordered.push(nodes.splice(cpIdx, 1)[0])
+    if (cpIdx > -1) orderedIds.push(nodes.splice(cpIdx, 1)[0]!.id)
 
     const aIdx = nodes.findIndex((n: any) => n.type === 'asset')
-    if (aIdx > -1) ordered.push(nodes.splice(aIdx, 1)[0])
+    if (aIdx > -1) orderedIds.push(nodes.splice(aIdx, 1)[0]!.id)
 
     const tpIdx = nodes.findIndex((n: any) => n.type === 'price' && n.priceKind === 'target')
-    if (tpIdx > -1) ordered.push(nodes.splice(tpIdx, 1)[0])
+    if (tpIdx > -1) orderedIds.push(nodes.splice(tpIdx, 1)[0]!.id)
   }
 
-  const textNodes = nodes.filter((n: any) => n.type === 'text' && !ordered.includes(n))
-  ordered.push(...textNodes)
+  for (const id of previewNodeOrder.value) {
+    const idx = nodes.findIndex(n => n.id === id)
+    if (idx > -1) {
+      orderedIds.push(nodes.splice(idx, 1)[0]!.id)
+    }
+  }
 
-  const tradeNodes = nodes.filter((n: any) => n.type === 'trade' || n.type === 'strategy')
-  ordered.push(...tradeNodes)
+  orderedIds.push(...nodes.filter((n: any) => n.type === 'text').map(n => n.id))
+  orderedIds.push(...nodes.filter((n: any) => n.type === 'trade' || n.type === 'strategy').map(n => n.id))
+  orderedIds.push(...nodes.filter((n: any) => n.type === 'drawing').map(n => n.id))
+  orderedIds.push(...nodes.filter((n: any) => n.type === 'image').map(n => n.id))
 
-  const drawingNodes = nodes.filter((n: any) => n.type === 'drawing')
-  ordered.push(...drawingNodes)
+  previewNodeOrder.value = orderedIds
+}
 
-  const imageNodes = nodes.filter((n: any) => n.type === 'image')
-  ordered.push(...imageNodes)
-
-  return ordered
+const previewNodes = computed(() => {
+  return previewNodeOrder.value
+    .map(id => boardNodes.value.find(n => n.id === id))
+    .filter(n => n !== undefined) as JournalArticleBoardNode[]
 })
+
+const movePreviewNodeUp = (index: number) => {
+  if (index > 0) {
+    const temp = previewNodeOrder.value[index - 1]!
+    previewNodeOrder.value[index - 1] = previewNodeOrder.value[index]!
+    previewNodeOrder.value[index] = temp
+  }
+}
+
+const movePreviewNodeDown = (index: number) => {
+  if (index < previewNodeOrder.value.length - 1) {
+    const temp = previewNodeOrder.value[index + 1]!
+    previewNodeOrder.value[index + 1] = previewNodeOrder.value[index]!
+    previewNodeOrder.value[index] = temp
+  }
+}
 
 // Node Context Menu Logic
 const nodeContextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
@@ -2311,31 +2426,40 @@ watch(() => newArticleForm.value.type, (type) => {
   }
 })
 
+const globalImageInput = ref<HTMLInputElement | null>(null)
+let imageUploadTargetNodeId: string | null = null
+
 const triggerImageUpload = (nodeId: string) => {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = 'image/*'
-  input.onchange = (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (re) => {
-        const url = re.target?.result as string
-        const node = boardNodes.value.find((n: any) => n.id === nodeId)
-        if (node && node.type === 'image') {
-          node.src = url
-          const img = new Image()
-          img.onload = () => {
-            const aspect = img.width / img.height
-            node.size.height = Math.max(1, Math.round(node.size.width / aspect))
-          }
-          img.src = url
-        }
+  imageUploadTargetNodeId = nodeId
+  globalImageInput.value?.click()
+}
+
+const handleGlobalImageUpload = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !imageUploadTargetNodeId) return
+
+  const targetId = imageUploadTargetNodeId
+
+  const reader = new FileReader()
+  reader.onload = (re) => {
+    const url = re.target?.result as string
+    const node = boardNodes.value.find((n: any) => n.id === targetId)
+    if (node && node.type === 'image') {
+      node.src = url
+      const img = new Image()
+      img.onload = () => {
+        const aspect = img.width / img.height
+        node.size.height = Math.max(1, Math.round(node.size.width / aspect))
       }
-      reader.readAsDataURL(file)
+      img.src = url
     }
   }
-  input.click()
+  reader.readAsDataURL(file)
+  
+  if (globalImageInput.value) {
+    globalImageInput.value.value = ''
+  }
+  imageUploadTargetNodeId = null
 }
 const boardPointerPos = ref({ x: 0, y: 0 })
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
