@@ -760,6 +760,24 @@
             </article>
           </div>
 
+          <!-- OFFSCREEN ORIGIN INDICATOR -->
+          <div v-if="outOfBoundsIndicator"
+               class="absolute pointer-events-auto flex flex-col items-center transition-all duration-300 z-[150]"
+               :style="{ left: outOfBoundsIndicator.x + 'px', top: outOfBoundsIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
+            <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100 cursor-pointer group"
+                 :style="{ transform: `rotate(${outOfBoundsIndicator.angle}deg)` }"
+                 @click="focusBoardNode(outOfBoundsIndicator.id)"
+                 :title="(locale === 'ru' ? 'Найти ' : 'Focus ') + outOfBoundsIndicator.name">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="drop-shadow-sm transition-transform group-hover:scale-125 text-black">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="flex flex-col items-center mt-1">
+              <span class="text-[8px] font-mono font-bold tracking-widest uppercase truncate max-w-[100px] text-black">{{ outOfBoundsIndicator.name }}</span>
+              <span class="text-[7px] font-mono opacity-60 font-bold text-black">{{ outOfBoundsIndicator.dist }}px</span>
+            </div>
+          </div>
+
           <!-- Custom Cursor for Board Drawing -->
           <div v-if="activeBoardTool === 'pencil' && boardDrawing.isBoardDrawingCursorVisible.value && !isSpacePressed"
                class="absolute rounded-full pointer-events-none z-40 shadow-[0_0_0_1px_rgba(255,255,255,0.8)]"
@@ -2890,6 +2908,66 @@ const renderBoardDrawingCanvas = () => {
 
 const isBoardChromeTarget = (target: EventTarget | null) => {
   return target instanceof HTMLElement && !!target.closest('[data-board-chrome]')
+}
+
+const outOfBoundsIndicator = computed(() => {
+  if (creationStep.value !== 'board') return null
+  if (boardNodes.value.length === 0) return null
+
+  let targetNode = null
+  if (isSignalArticle.value) {
+    targetNode = boardNodes.value.find((n: any) => n.type === 'asset')
+  } else if (isQuestionArticle.value) {
+    targetNode = boardNodes.value.find((n: any) => n.type === 'text' && n.isQuestion)
+  }
+  if (!targetNode) {
+    targetNode = boardNodes.value[0]
+  }
+  if (!targetNode) return null
+
+  const nodeWidth = targetNode.size.width * boardGridSize.value
+  const nodeHeight = targetNode.size.height * boardGridSize.value
+
+  const screenX = (targetNode.position.x * boardGridSize.value) + boardPan.value.x
+  const screenY = (targetNode.position.y * boardGridSize.value) + boardPan.value.y
+
+  const winW = typeof window !== 'undefined' ? window.innerWidth : 1000
+  const winH = typeof window !== 'undefined' ? window.innerHeight : 1000
+
+  const isOffScreen = 
+    screenX + nodeWidth < 0 || 
+    screenX > winW || 
+    screenY + nodeHeight < 0 || 
+    screenY > winH
+
+  if (!isOffScreen) return null
+
+  const padding = 60
+  const clampedX = Math.max(padding, Math.min(winW - padding, screenX + nodeWidth / 2))
+  const clampedY = Math.max(padding, Math.min(winH - padding, screenY + nodeHeight / 2))
+
+  const dx = screenX + nodeWidth / 2 - clampedX
+  const dy = screenY + nodeHeight / 2 - clampedY
+  const dist = Math.round(Math.sqrt(dx * dx + dy * dy))
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+
+  let name = ''
+  if (targetNode.type === 'asset') name = locale.value === 'ru' ? 'АКТИВ' : 'ASSET'
+  else if ((targetNode as any).isQuestion) name = locale.value === 'ru' ? 'ВОПРОС' : 'QUESTION'
+  else name = locale.value === 'ru' ? 'УЗЕЛ' : 'NODE'
+
+  return { id: targetNode.id, x: clampedX, y: clampedY, dist, angle, name }
+})
+
+const focusBoardNode = (id: string) => {
+  const node = boardNodes.value.find((n: any) => n.id === id)
+  if (node && boardStageRef.value) {
+    const rect = boardStageRef.value.getBoundingClientRect()
+    boardPan.value = {
+      x: (rect.width / 2) - (node.position.x * boardGridSize.value) - ((node.size.width * boardGridSize.value) / 2),
+      y: (rect.height / 2) - (node.position.y * boardGridSize.value) - ((node.size.height * boardGridSize.value) / 2)
+    }
+  }
 }
 
 watch([
