@@ -119,4 +119,9 @@ export interface JournalArticle {
   metrics: JournalArticleMetric[]
   board: JournalArticleBoard
   boardBlocks: JournalArticleBoardBlock[]
+  thesis?: {
+    text?: string
+    blocks: any[]
+  }
+  textBlocks?: any[]
 }

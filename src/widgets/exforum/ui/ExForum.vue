@@ -178,8 +178,22 @@
         </div>
       </header>
 
-      <main class="box-border flex w-full max-w-full flex-none overflow-hidden py-6">
+      <main class="box-border flex w-full max-w-full flex-col flex-none overflow-hidden py-6 gap-6">
+        
+        <!-- MODE SWITCHER -->
+        <div class="flex justify-center w-full shrink-0">
+          <div class="flex items-center bg-current/5 border border-current/10 p-1 font-mono text-[10px] uppercase tracking-widest text-current/60">
+            <button class="px-6 py-2 transition-colors" :class="articleViewMode === 'board' ? 'bg-current/10 font-bold text-current' : 'hover:bg-current/5'" @click="articleViewMode = 'board'">
+              {{ locale === 'ru' ? 'ДОСКА' : 'BOARD' }}
+            </button>
+            <button class="px-6 py-2 transition-colors" :class="articleViewMode === 'text' ? 'bg-current/10 font-bold text-current' : 'hover:bg-current/5'" @click="articleViewMode = 'text'">
+              {{ locale === 'ru' ? 'ТЕКСТ' : 'TEXT' }}
+            </button>
+          </div>
+        </div>
+
         <section
+          v-if="articleViewMode === 'board'"
           class="group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-pointer select-none overflow-hidden border-y border-x-0 border-current/10 bg-white/20 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
           :aria-label="articleLabels.board"
           @click="openBoardFullscreen"
@@ -302,6 +316,144 @@
           <div class="pointer-events-none absolute inset-0 bg-black/[0.025]"></div>
           <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/85 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
             {{ articleLabels.openBoard }}
+          </div>
+        </section>
+
+        <!-- TEXT SECTION -->
+        <section v-else class="flex-1 w-full overflow-y-auto scroll-minimal px-6 pb-12">
+          <div class="max-w-[800px] mx-auto flex flex-col items-center gap-12 text-black">
+            <template v-for="(node, index) in selectedArticleTextBlocks" :key="node.id || index">
+              
+              <div class="w-full flex flex-col items-center">
+                <!-- LEGACY BLOCKS -->
+                <div v-if="node.type === 'heading'" class="w-full flex flex-col gap-4 font-serif italic break-words">
+                  <h2 class="font-bold text-current" :class="node.level === 2 ? 'text-5xl leading-none text-center' : 'text-3xl'">
+                    {{ node.text }}
+                  </h2>
+                </div>
+                <div v-else-if="node.type === 'paragraph'" class="w-full flex flex-col gap-4 font-serif italic break-words">
+                  <div class="text-current/90 whitespace-pre-wrap text-base leading-relaxed" v-html="node.text"></div>
+                </div>
+                <div v-else-if="node.type === 'image'" class="w-full flex flex-col items-center">
+                  <img :src="(node as any).src" class="max-w-full h-auto rounded-sm border border-current/10 shadow-sm object-contain max-h-[600px]" />
+                  <p v-if="(node as any).caption" class="text-[10px] font-mono tracking-widest uppercase text-current/40 text-center mt-2">{{ (node as any).caption }}</p>
+                </div>
+
+                <div v-else-if="node.type === 'text'" class="w-full flex flex-col gap-4 font-serif italic break-words">
+                  <h2 v-if="(node as any).title" class="font-bold text-current"
+                      :class="(node as any).isQuestion ? 'text-5xl leading-none text-center' : 'text-3xl'">
+                    {{ (node as any).title }}
+                  </h2>
+                  <div v-if="(node as any).text" class="text-current/90 whitespace-pre-wrap"
+                       :class="(node as any).isQuestion ? 'text-3xl text-center' : 'text-base leading-relaxed'"
+                       v-html="(node as any).text">
+                  </div>
+                </div>
+
+                <!-- SIGNAL HEADER -->
+                <div v-else-if="(node as any).type === 'signal-header'" class="w-full flex justify-center py-6">
+                  <div class="flex flex-row items-center justify-between w-full max-w-[800px] border border-current/10 bg-white shadow-sm overflow-hidden text-black">
+                    <!-- Current Price -->
+                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="getSignalHeaderCurrentPrice(node) ? 'bg-blue-50/50' : ''">
+                      <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE' }}</span>
+                      <div class="flex items-center gap-2" v-if="getSignalHeaderCurrentPrice(node)">
+                        <span v-if="getPriceNodeArrow(getSignalHeaderCurrentPrice(node))" class="text-xl font-black" :class="getPriceNodeValueClass(getSignalHeaderCurrentPrice(node))">{{ getPriceNodeArrow(getSignalHeaderCurrentPrice(node)) }}</span>
+                        <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(getSignalHeaderCurrentPrice(node))">{{ getSignalHeaderCurrentPrice(node)?.value || '0.00' }}</span>
+                      </div>
+                      <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
+                    </div>
+                    <!-- Asset -->
+                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4 border-l border-r border-black/10 bg-white z-10 shadow-[0_0_20px_rgba(0,0,0,0.05)]">
+                       <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
+                       <span class="max-w-full truncate text-4xl font-black uppercase tracking-widest text-black/90" v-if="getSignalHeaderAsset(node)">{{ getSignalHeaderAsset(node)?.asset || '---' }}</span>
+                       <span v-else class="text-4xl font-mono font-black tracking-widest text-black/20">---</span>
+                    </div>
+                    <!-- Target Price -->
+                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="getSignalHeaderTargetPrice(node) ? 'bg-green-50/50' : ''">
+                      <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'ЦЕЛЬ' : 'TARGET' }}</span>
+                      <div class="flex items-center gap-2" v-if="getSignalHeaderTargetPrice(node)">
+                        <span v-if="getPriceNodeArrow(getSignalHeaderTargetPrice(node))" class="text-xl font-black" :class="getPriceNodeValueClass(getSignalHeaderTargetPrice(node))">{{ getPriceNodeArrow(getSignalHeaderTargetPrice(node)) }}</span>
+                        <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(getSignalHeaderTargetPrice(node))">{{ getSignalHeaderTargetPrice(node)?.value || '0.00' }}</span>
+                      </div>
+                      <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-current/10 bg-current/5 flex flex-col items-center">
+                  <span class="text-[9px] uppercase tracking-[0.3em] font-black text-current/40 mb-2">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
+                  <span class="text-4xl font-mono font-black uppercase tracking-widest text-current/90">{{ (node as any).asset || '---' }}</span>
+                </div>
+
+                <div v-else-if="node.type === 'price'" class="w-full p-8 border border-current/10 flex flex-col items-center text-black" :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
+                  <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ (node as any).priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE') }}</span>
+                  <div class="flex items-center gap-2">
+                    <span v-if="getPriceNodeArrow(node)" class="text-xl font-black" :class="getPriceNodeValueClass(node)">{{ getPriceNodeArrow(node) }}</span>
+                    <span class="text-4xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(node)">{{ (node as any).value || '0.00' }}</span>
+                  </div>
+                </div>
+
+                <div v-else-if="node.type === 'strategy'" class="w-full flex justify-center py-6">
+                  <div class="flex min-w-[300px] max-w-[450px] w-full flex-col items-center justify-center gap-4 text-center border border-current/10 bg-white p-6 shadow-sm text-black">
+                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40">{{ locale === 'ru' ? 'СТРАТЕГИЯ' : 'STRATEGY' }}</span>
+                    <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">{{ getStrategyNodeLabel(node) || '---' }}</span>
+                    <span v-if="getStrategyNodeMetrics(node)" class="grid w-full grid-cols-5 gap-2 text-center uppercase pt-4 border-t border-black/5 mt-2">
+                      <span class="flex min-w-0 flex-col px-1.5">
+                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
+                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+                      </span>
+                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
+                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                      </span>
+                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
+                        <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                      </span>
+                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
+                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                      </span>
+                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
+                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
+                        <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <div v-else-if="node.type === 'trade'" class="w-full flex justify-center py-6">
+                  <div class="flex min-w-[300px] max-w-[450px] w-full flex-col justify-center gap-4 text-left border border-current/10 bg-white p-6 shadow-sm text-black">
+                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40 text-center">{{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }}</span>
+                    <span class="flex w-full items-start justify-between gap-3 border-t border-black/5 pt-4">
+                      <span class="flex min-w-0 flex-col">
+                        <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">{{ getTradeNodeAssetLabel(node) }}</span>
+                        <span class="max-w-full truncate text-[10px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+                      </span>
+                      <span class="max-w-[45%] truncate text-right text-xl font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">{{ getTradeNodeResult(node) || '---' }}</span>
+                    </span>
+                    <span class="grid w-full grid-cols-2 gap-2 text-center uppercase pt-2">
+                      <span class="flex min-w-0 flex-col border-t border-black/5 px-1.5 py-2">
+                        <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
+                        <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
+                      </span>
+                      <span class="flex min-w-0 flex-col border-t border-l border-black/5 px-1.5 py-2">
+                        <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
+                        <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <div v-else-if="node.type === 'drawing'" class="w-full flex justify-center bg-white p-4 border border-current/10 shadow-sm relative" :style="{ minHeight: '100px' }">
+                  <img v-if="(node as any).params?.preview" :src="(node as any).params.preview" alt="Drawing" class="w-full h-auto max-h-[400px] object-contain pointer-events-none" />
+                  <svg v-else class="w-full h-auto max-h-[400px] pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+                    <polyline v-for="(stroke, i) in (node as any).params?.strokes || []" :key="i" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
+                  </svg>
+                </div>
+
+              </div>
+            </template>
           </div>
         </section>
       </main>
@@ -1076,7 +1228,7 @@
                     :class="!isSignalBoardValid ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
                     :disabled="!isSignalBoardValid"
                     @click="publishArticle">
-              {{ locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH' }}
+              {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
             </button>
           </div>
           <ExForumDrawingPanel :drawing="drawing" />
@@ -1306,8 +1458,8 @@
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
                     :disabled="isPublishingArticle"
                     :class="isPublishingArticle ? 'cursor-wait opacity-60' : ''"
-                    @click="confirmPublishArticle">
-              {{ isPublishingArticle ? boardUiLabels.publishing : (locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'CONFIRM PUBLISH') }}
+                    @click="showPublishConfirmation = true">
+              {{ isPublishingArticle ? boardUiLabels.publishing : (locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH') }}
             </button>
           </header>
 
@@ -2119,6 +2271,40 @@ const getThreadBoard = (thread: Thread & Record<string, any>): JournalArticleBoa
   return createFallbackArticleBoard(thread)
 }
 
+const sortArticleTextBlocks = (blocks: any[]) => {
+  return [...blocks].sort((a, b) => {
+    const aOrder = Number.isFinite(Number(a?.order)) ? Number(a.order) : Number.POSITIVE_INFINITY
+    const bOrder = Number.isFinite(Number(b?.order)) ? Number(b.order) : Number.POSITIVE_INFINITY
+    if (aOrder !== bOrder) return aOrder - bOrder
+    return 0
+  })
+}
+
+const getThreadTextBlocks = (thread: Thread & Record<string, any>) => {
+  const explicitBlocks = Array.isArray(thread.textBlocks)
+    ? thread.textBlocks
+    : Array.isArray(thread.articleTextBlocks)
+      ? thread.articleTextBlocks
+      : null
+
+  if (explicitBlocks?.length) return sortArticleTextBlocks(explicitBlocks)
+
+  const thesisBlocks = Array.isArray(thread.thesis?.blocks)
+    ? thread.thesis.blocks
+    : Array.isArray(thread.content?.thesis?.blocks)
+      ? thread.content.thesis.blocks
+      : Array.isArray(thread.content?.blocks)
+        ? thread.content.blocks
+        : null
+
+  if (thesisBlocks?.length) return sortArticleTextBlocks(thesisBlocks)
+
+  const board = getThreadBoard(thread)
+  if (board.nodes.length) return sortArticleTextBlocks(board.nodes.map((node: any, index) => ({ ...node, order: index })))
+
+  return []
+}
+
 const getThreadSignal = (thread: Thread & Record<string, any>): ExNodeSignal | undefined => {
   if (thread.signal) return thread.signal as ExNodeSignal
   if (getThreadMode(thread) !== 'SETUP') return undefined
@@ -2168,6 +2354,7 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
   const createdAt = getThreadPublishedAt(thread)
   const commentsCount = Number(thread.repliesCount || 0)
   const likesCount = Number(thread.likesCount || 0)
+  const textBlocks = getThreadTextBlocks(thread)
 
   return {
     id: thread.id,
@@ -2183,7 +2370,12 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
       { id: 'comments', label: 'Comments', value: commentsCount }
     ],
     board: getThreadBoard(thread),
-    boardBlocks: Array.isArray(thread.boardBlocks) ? thread.boardBlocks : []
+    boardBlocks: Array.isArray(thread.boardBlocks) ? thread.boardBlocks : [],
+    thesis: {
+      text: thread.thesis?.text || thread.content?.thesis?.text || thread.description || '',
+      blocks: textBlocks
+    },
+    textBlocks
   }
 }
 
@@ -2247,10 +2439,14 @@ const selectedThread = computed(() => {
   if (!selectedNodeId.value) return undefined
   return journalThreads.value.find(thread => thread.id === selectedNodeId.value)
 })
+
+const articleViewMode = ref<'board' | 'text'>('board')
+
 const selectedArticle = computed(() => {
   if (!selectedThread.value) return undefined
   return threadToJournalArticle(selectedThread.value)
 })
+const selectedArticleTextBlocks = computed(() => selectedArticle.value?.textBlocks || selectedArticle.value?.thesis?.blocks || [])
 const comments = computed(() => {
   if (!selectedArticle.value) return []
   return forumStore.replies.get(selectedArticle.value.id) || []
@@ -2583,12 +2779,72 @@ const publishArticle = () => {
     return
   }
   stopBoardDrawingMode()
-  // initializePreviewOrder()
-  // creationStep.value = 'preview'
-  showPublishConfirmation.value = true
+  initializePreviewOrder()
+  creationStep.value = 'preview'
 }
 
 const toSerializable = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+const ARTICLE_TEXT_BLOCK_SCHEMA_VERSION = 1
+
+const stripBoardNodeEditorState = (node: any) => {
+  if (!node) return null
+  const { isEditing, ...rest } = node
+  return rest
+}
+
+const createArticleTextBlockLabel = (node: any) => {
+  if (node?.type === 'signal-header') return locale.value === 'ru' ? 'СИГНАЛ' : 'SIGNAL'
+  if (node?.type === 'text' && node.isQuestion) return locale.value === 'ru' ? 'ВОПРОС' : 'QUESTION'
+  if (node?.type === 'text') return locale.value === 'ru' ? 'ТЕКСТ' : 'TEXT'
+  if (node?.type === 'price' && node.priceKind === 'current') return locale.value === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE'
+  if (node?.type === 'price' && node.priceKind === 'target') return locale.value === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE'
+  if (node?.type === 'asset') return locale.value === 'ru' ? 'АКТИВ' : 'ASSET'
+  if (node?.type === 'strategy') return locale.value === 'ru' ? 'СТРАТЕГИЯ' : 'STRATEGY'
+  if (node?.type === 'trade') return locale.value === 'ru' ? 'СДЕЛКА' : 'TRADE'
+  if (node?.type === 'drawing') return locale.value === 'ru' ? 'РИСУНОК' : 'DRAWING'
+  if (node?.type === 'image') return locale.value === 'ru' ? 'ИЗОБРАЖЕНИЕ' : 'IMAGE'
+  return locale.value === 'ru' ? 'БЛОК' : 'BLOCK'
+}
+
+const createArticleTextBlockFromNode = (node: any, order: number) => {
+  const cleanNode = stripBoardNodeEditorState(node)
+  if (!cleanNode) return null
+
+  return {
+    ...cleanNode,
+    order,
+    schemaVersion: ARTICLE_TEXT_BLOCK_SCHEMA_VERSION,
+    sourceNodeId: cleanNode.id,
+    label: createArticleTextBlockLabel(cleanNode),
+    data: cleanNode
+  }
+}
+
+const createSignalHeaderTextBlock = (board: JournalArticleBoard, order: number) => {
+  const currentPrice = stripBoardNodeEditorState(board.nodes.find((node: any) => node.type === 'price' && node.priceKind === 'current'))
+  const assetNode = stripBoardNodeEditorState(board.nodes.find((node: any) => node.type === 'asset'))
+  const targetPrice = stripBoardNodeEditorState(board.nodes.find((node: any) => node.type === 'price' && node.priceKind === 'target'))
+
+  return {
+    id: 'signal-header',
+    type: 'signal-header',
+    order,
+    schemaVersion: ARTICLE_TEXT_BLOCK_SCHEMA_VERSION,
+    sourceNodeId: null,
+    label: createArticleTextBlockLabel({ type: 'signal-header' }),
+    currentPrice,
+    assetNode,
+    targetPrice,
+    data: {
+      currentPrice,
+      assetNode,
+      targetPrice
+    },
+    cp: currentPrice,
+    asset: assetNode,
+    tp: targetPrice
+  }
+}
 
 const createArticleBoardSnapshot = (): JournalArticleBoard => {
   const nodes = toSerializable(boardNodes.value.map((node: any) => {
@@ -2611,25 +2867,35 @@ const createArticleBoardSnapshot = (): JournalArticleBoard => {
 }
 
 const createArticleContentBlocks = (board: JournalArticleBoard) => {
-  const blocks: any[] = []
+  const sourceBlocks = previewNodeOrder.value.length
+    ? previewNodeOrder.value
+        .map((id, index) => {
+          if (id === 'signal-header' && isSignalArticle.value) return createSignalHeaderTextBlock(board, index)
+          const node = board.nodes.find(item => item.id === id)
+          return node ? createArticleTextBlockFromNode(node, index) : null
+        })
+        .filter(Boolean)
+    : [...board.nodes]
+        .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+        .map((node, index) => createArticleTextBlockFromNode(node, index))
+        .filter(Boolean)
 
-  board.nodes.forEach((node: any) => {
-    if (node.type === 'text') {
-      if (node.title) blocks.push({ type: 'heading', level: node.isQuestion ? 2 : 3, text: getPlainEditorText(node.title) || node.title })
-      if (node.text) blocks.push({ type: 'paragraph', text: getPlainEditorText(node.text) || node.text })
-    }
-
-    if (node.type === 'image' && node.src) {
-      blocks.push({ type: 'image', src: node.src, caption: node.caption || '' })
-    }
-
-    if (node.type === 'drawing' && node.params?.preview) {
-      blocks.push({ type: 'image', src: node.params.preview, caption: '' })
-    }
-  })
+  const blocks = toSerializable(sourceBlocks) as any[]
 
   if (blocks.length === 0 && newArticleForm.value.description.trim()) {
-    blocks.push({ type: 'paragraph', text: newArticleForm.value.description.trim() })
+    blocks.push({
+      id: 'article-description',
+      type: 'text',
+      order: 0,
+      schemaVersion: ARTICLE_TEXT_BLOCK_SCHEMA_VERSION,
+      label: createArticleTextBlockLabel({ type: 'text' }),
+      title: '',
+      text: newArticleForm.value.description.trim(),
+      data: {
+        title: '',
+        text: newArticleForm.value.description.trim()
+      }
+    })
   }
 
   return blocks
@@ -2641,7 +2907,12 @@ const createThreadPayloadFromArticle = () => {
 
   const createdAt = new Date().toISOString()
   const board = createArticleBoardSnapshot()
-  const thesis = { blocks: createArticleContentBlocks(board) }
+  const textBlocks = createArticleContentBlocks(board)
+  const textBlockOrder = textBlocks.map((block: any) => block.id).filter(Boolean)
+  const thesis = {
+    text: newArticleForm.value.description.trim(),
+    blocks: textBlocks
+  }
   const authorName = currentUserName.value
   const categoryMode = newArticleForm.value.type
   const categoryLabel = selectedTypeLabel.value
@@ -2693,10 +2964,14 @@ const createThreadPayloadFromArticle = () => {
     boardNodes: board.nodes,
     boardConnections: board.connections,
     boardStrokes: board.strokes,
+    textBlocks,
+    textBlockOrder,
     content: {
       type: 'exforum-article-board',
       board,
-      thesis
+      thesis,
+      textBlocks,
+      textBlockOrder
     },
     signal: signal || null,
     tags: []
@@ -3446,6 +3721,18 @@ const getPriceNodeValueClass = (node: any) => {
   if (direction === 'up') return 'text-emerald-500'
   if (direction === 'down') return 'text-red-500'
   return 'text-black/75'
+}
+
+const getSignalHeaderCurrentPrice = (node: any) => {
+  return node?.currentPrice || node?.cp || null
+}
+
+const getSignalHeaderAsset = (node: any) => {
+  return node?.assetNode || node?.asset || null
+}
+
+const getSignalHeaderTargetPrice = (node: any) => {
+  return node?.targetPrice || node?.tp || null
 }
 
 const updatePriceNodeValue = (event: Event, node: any) => {

@@ -1,24 +1,24 @@
 import type { DiaryEntry } from "~/entities/diary/model/diary.types"
 export interface Thread {
-    id: string,
-    title: string,
-    description: string,
-    category: ThreadCategory,
-    subcategory: ThreadSubcategory,
-    author?: string,
-    authorId: string,
-    createdAt: string,
-    lastActivityAt: string,
-    lastMeaningfulAt: string,
-    repliesCount: number,
-    status: ThreadStatus,
-    thesis: ThreadContent,
-    includedTrades?: DiaryEntry[],
-    summary?: string,
-    linkedTradesCount?: number,
-    positiveTradesCount?: number,
-    likesCount?: number,
-    likedByMe?: boolean
+  id: string,
+  title: string,
+  description: string,
+  category: ThreadCategory,
+  subcategory: ThreadSubcategory,
+  author?: string,
+  authorId: string,
+  createdAt: string,
+  lastActivityAt: string,
+  lastMeaningfulAt: string,
+  repliesCount: number,
+  status: ThreadStatus,
+  thesis: ThreadContent,
+  includedTrades?: DiaryEntry[],
+  summary?: string,
+  linkedTradesCount?: number,
+  positiveTradesCount?: number,
+  likesCount?: number,
+  likedByMe?: boolean
 }
 
 
@@ -52,7 +52,7 @@ export interface ImageBlock {
   type: 'image'
   src: string
   caption?: string
-  
+
 }
 
 export interface QuoteBlock {
