@@ -4596,18 +4596,18 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   display: inline-flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(44, 44, 42, 0.24);
+  border: 1px solid rgba(44, 44, 42, 0.9);
   padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 22px rgba(44, 44, 42, 0.07);
-  color: rgba(44, 44, 42, 0.7);
+  background: rgba(44, 44, 42, 0.9);
+  box-shadow: 0 8px 22px rgba(44, 44, 42, 0.15);
+  color: rgba(255, 255, 255, 0.9);
   transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
 }
 
 .article-reader-back:hover {
-  border-color: rgba(44, 44, 42, 0.5);
-  background: #ffffff;
-  color: rgba(44, 44, 42, 1);
+  border-color: rgba(44, 44, 42, 1);
+  background: rgba(44, 44, 42, 1);
+  color: #ffffff;
 }
 
 .article-reader-back span:last-child {
