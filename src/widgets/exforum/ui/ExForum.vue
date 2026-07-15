@@ -1619,6 +1619,25 @@
           <!-- Filters (Left) -->
           <div class="journal-filter-list flex items-center space-x-2 flex-1 justify-start">
             <button
+              class="journal-filter-button !px-2"
+              :class="{ 'is-active': activeJournalFilter === 'LIKED' }"
+              title="Liked Posts"
+              type="button"
+              @click="setJournalFilter('LIKED')"
+            >
+              <svg class="w-4 h-4" :class="activeJournalFilter === 'LIKED' ? 'fill-current' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+            </button>
+            <button
+              class="journal-filter-button !px-2"
+              :class="{ 'is-active': activeJournalFilter === 'BOOKMARKED' }"
+              title="Saved Posts"
+              type="button"
+              @click="setJournalFilter('BOOKMARKED')"
+            >
+              <svg class="w-4 h-4" :class="activeJournalFilter === 'BOOKMARKED' ? 'fill-current' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path></svg>
+            </button>
+            <div class="w-px h-4 bg-current/20 mx-1"></div>
+            <button
               v-for="filter in journalFilters"
               :key="filter.mode"
               class="journal-filter-button"
@@ -1676,8 +1695,16 @@
       <!-- Main Journal Body -->
       <div class="flex-grow relative z-10 pb-0">
         
+        <!-- Loading State -->
+        <div v-if="forumStore.loading" class="flex flex-col items-center justify-center py-32 opacity-50 space-y-4">
+          <svg class="w-8 h-8 animate-spin text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+          </svg>
+          <span class="text-[10px] font-mono tracking-[0.4em] uppercase">{{ locale === 'ru' ? 'Загрузка...' : 'Loading...' }}</span>
+        </div>
+
         <!-- DYNAMIC MAGAZINE LAYOUT -->
-        <div v-if="pagedNodes.length > 0" class="flex flex-col">
+        <div v-else-if="pagedNodes.length > 0" class="flex flex-col">
           <!-- SECTION 1: Top Row (Lead Analysis + Signal Sidebar) -->
           <div class="grid grid-cols-12 border-b-[2px] border-solid border-current/20">
             <section
@@ -2172,7 +2199,14 @@ const journalNodes = computed(() => journalThreads.value
 const filteredNodes = computed(() => {
   const q = searchQuery.value.toLowerCase()
   return journalNodes.value.filter((n: ExNode) => {
-    const matchesFilter = !activeJournalFilter.value || n.mode === activeJournalFilter.value
+    let matchesFilter = true
+    if (activeJournalFilter.value === 'LIKED') {
+      matchesFilter = forumStore.userLikedThreadIds.has(n.id)
+    } else if (activeJournalFilter.value === 'BOOKMARKED') {
+      matchesFilter = forumStore.userSavedThreadIds.has(n.id)
+    } else if (activeJournalFilter.value) {
+      matchesFilter = n.mode === activeJournalFilter.value
+    }
     const matchesSearch = !q
       || n.title.toLowerCase().includes(q)
       || n.thesis_brief?.toLowerCase().includes(q)
@@ -3065,6 +3099,12 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleSpaceDown)
   window.removeEventListener('keyup', handleSpaceUp)
 })
+
+watch(() => authStore.user, (user) => {
+  if (user) {
+    forumStore.fetchUserInteractions(user.uid)
+  }
+}, { immediate: true })
 
 // v-click-outside directive logic setup inside component (or via vueuse if available, 
 // but since we are in a single file, a simple window event listener is better for the dropdown, 

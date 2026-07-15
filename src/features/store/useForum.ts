@@ -34,6 +34,8 @@ export const useForumStore = defineStore('forum', {
     diaries: new Map<string, DiaryEntry[]>(),
     quotes: new Map(),
     loading: false,
+    userLikedThreadIds: new Set<string>(),
+    userSavedThreadIds: new Set<string>(),
   }),
 
   actions: {
@@ -239,8 +241,10 @@ export const useForumStore = defineStore('forum', {
           const userLikeRef = doc(db, 'users', userId, 'likedThreads', threadId)
           if (isLiking) {
             await setDoc(userLikeRef, { likedAt: serverTimestamp(), threadId })
+            this.userLikedThreadIds.add(threadId)
           } else {
             await deleteDoc(userLikeRef)
+            this.userLikedThreadIds.delete(threadId)
           }
 
           // Update local state immediately
@@ -263,8 +267,10 @@ export const useForumStore = defineStore('forum', {
           const userSaveRef = doc(db, 'users', userId, 'savedThreads', threadId)
           if (isSaving) {
             await setDoc(userSaveRef, { savedAt: serverTimestamp(), threadId })
+            this.userSavedThreadIds.add(threadId)
           } else {
             await deleteDoc(userSaveRef)
+            this.userSavedThreadIds.delete(threadId)
           }
         } catch (error) {
           console.error("Error toggling save:", error)
@@ -288,6 +294,22 @@ export const useForumStore = defineStore('forum', {
           return snap.exists()
         } catch {
           return false
+        }
+      },
+
+      async fetchUserInteractions(userId: string) {
+        if (!userId) return;
+        try {
+          const likesSnap = await getDocs(collection(db, 'users', userId, 'likedThreads'));
+          const savedSnap = await getDocs(collection(db, 'users', userId, 'savedThreads'));
+          
+          this.userLikedThreadIds.clear();
+          likesSnap.forEach(d => this.userLikedThreadIds.add(d.id));
+          
+          this.userSavedThreadIds.clear();
+          savedSnap.forEach(d => this.userSavedThreadIds.add(d.id));
+        } catch (e) {
+          console.error('Error fetching user interactions', e);
         }
       },
 
