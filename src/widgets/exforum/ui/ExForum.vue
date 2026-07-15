@@ -311,14 +311,14 @@
           class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group"
           @click="toggleLike"
         >
-          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isLiked ? 'fill-black text-black' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isLiked ? 'fill-red-500 text-red-500' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
           <span>{{ isLiked ? (locale === 'ru' ? 'Понравилось' : 'Liked') : (locale === 'ru' ? 'Нравится' : 'Like') }}</span>
         </button>
         <button 
           class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group"
           @click="toggleBookmark"
         >
-          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isBookmarked ? 'fill-black text-black' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path></svg>
+          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isBookmarked ? 'fill-amber-500 text-amber-500' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path></svg>
           <span>{{ isBookmarked ? (locale === 'ru' ? 'В закладках' : 'Saved') : (locale === 'ru' ? 'В закладки' : 'Save') }}</span>
         </button>
       </div>
