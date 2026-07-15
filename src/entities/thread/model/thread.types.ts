@@ -25,6 +25,7 @@ export interface Thread {
 
 
 export interface ThreadContent {
+  text?: string
   blocks: ContentBlock[]
 }
 

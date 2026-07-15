@@ -127,6 +127,66 @@ export const useForumStore = defineStore('forum', {
         }
       },
 
+      async createReply(threadId: string, replyData: Omit<Reply, 'id' | 'threadId' | 'createdAt'>) {
+        try {
+          const replyRef = doc(collection(db, 'replies'))
+          const newReply: Reply = {
+            ...replyData,
+            id: replyRef.id,
+            threadId,
+            createdAt: serverTimestamp()
+          }
+          await setDoc(replyRef, newReply)
+          
+          const threadRef = doc(db, 'threads', threadId)
+          await updateDoc(threadRef, {
+            repliesCount: increment(1)
+          })
+
+          this.addReply({
+            ...newReply,
+            createdAt: new Date() // Temporary local date
+          })
+          
+          const thread = this.threads.get(threadId)
+          if (thread) {
+            thread.repliesCount = (thread.repliesCount || 0) + 1
+          }
+
+          return newReply
+        } catch (e) {
+          console.error("Error creating reply", e)
+          throw e
+        }
+      },
+
+      async softDeleteReply(reply: Reply) {
+        try {
+          const replyRef = doc(db, 'replies', reply.id)
+          await updateDoc(replyRef, {
+            status: 'hidden',
+            'content.text': 'Комментарий удален автором',
+            'content.blocks': []
+          })
+          
+          const list = this.replies.get(reply.threadId)
+          if (list) {
+            const index = list.findIndex(r => r.id === reply.id)
+            const r = list[index]
+            if (index !== -1 && r) {
+              r.status = 'hidden'
+              if (!r.content) r.content = { text: '', blocks: [] }
+              r.content.text = 'Комментарий удален автором'
+              r.content.blocks = []
+            }
+          }
+        } catch (e) {
+          console.error("Error soft deleting reply", e)
+          throw e
+        }
+      },
+
+
       removeReply(threadId: string, replyId: string) {
         const list = this.replies.get(threadId)
         if (!list) return

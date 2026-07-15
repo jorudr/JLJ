@@ -331,7 +331,7 @@
           <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
         </div>
 
-        <form class="article-comment-composer" @submit.prevent="submitComment">
+        <form class="article-comment-composer" @submit.prevent="() => submitComment()">
           <div class="article-comment-composer-title">
             <div>
               <span>{{ articleLabels.newComment }}</span>
@@ -366,20 +366,130 @@
           </div>
         </form>
 
-        <div v-if="articleComments.length" class="article-comments-list">
-          <article v-for="comment in articleComments" :key="comment.id" class="article-comment">
-            <div class="article-comment-head">
-              <div>
-                <h3>{{ comment.authorName }}</h3>
-                <span>{{ comment.authorRole }}</span>
+        <div v-if="nestedComments.length" class="article-comments-list !gap-0">
+          <!-- Level 1 -->
+          <div v-for="(comment, index) in (expandedComments.has('root') ? nestedComments : nestedComments.slice(0, 5))" :key="comment.id" class="flex flex-col">
+            <article class="article-comment !pb-2 !border-none">
+              <div class="article-comment-head">
+                <div>
+                  <h3 :class="{'opacity-50': comment.status === 'hidden'}">{{ comment.author || 'Anonymous' }}</h3>
+                </div>
+                <div class="article-comment-meta">
+                  <span>{{ formatCommentDate(comment.createdAt) }}</span>
+                  <span v-if="comment.status !== 'hidden'">{{ comment.likes || 0 }} {{ articleLabels.likes }}</span>
+                </div>
               </div>
-              <div class="article-comment-meta">
-                <span>{{ formatCommentDate(comment.createdAt) }}</span>
-                <span>{{ comment.likesCount }} {{ articleLabels.likes }}</span>
+              <p :class="{'italic opacity-50': comment.status === 'hidden'}">{{ comment.content?.text }}</p>
+              
+              <div v-if="comment.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                <button @click="toggleReplyForm(comment.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                  {{ replyingToId === comment.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
+                </button>
+                <button v-if="comment.authorId === authStore.user?.uid" @click="deleteComment(comment)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                  {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
+                </button>
               </div>
+
+              <!-- Level 1 Reply Form -->
+              <form v-if="replyingToId === comment.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(comment.id)">
+                <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                <div class="flex justify-end gap-3 items-center">
+                  <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
+                  <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                    {{ locale === 'ru' ? 'Отправить' : 'Send' }}
+                  </button>
+                </div>
+              </form>
+            </article>
+
+            <!-- Level 2 -->
+            <div v-if="comment.children.length > 0" class="pl-4 md:pl-8 border-l border-current/10 mt-4 flex flex-col gap-6">
+              <div v-for="reply in (expandedComments.has(comment.id) ? comment.children : comment.children.slice(0, 5))" :key="reply.id" class="flex flex-col">
+                <article class="article-comment !pb-2 !border-none">
+                  <div class="article-comment-head">
+                    <div>
+                      <h3 :class="{'opacity-50': reply.status === 'hidden'}">{{ reply.author || 'Anonymous' }}</h3>
+                    </div>
+                    <div class="article-comment-meta">
+                      <span>{{ formatCommentDate(reply.createdAt) }}</span>
+                      <span v-if="reply.status !== 'hidden'">{{ reply.likes || 0 }} {{ articleLabels.likes }}</span>
+                    </div>
+                  </div>
+                  <p :class="{'italic opacity-50': reply.status === 'hidden'}">{{ reply.content?.text }}</p>
+                  
+                  <div v-if="reply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                    <button @click="toggleReplyForm(reply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                      {{ replyingToId === reply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
+                    </button>
+                    <button v-if="reply.authorId === authStore.user?.uid" @click="deleteComment(reply)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                      {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
+                    </button>
+                  </div>
+
+                  <!-- Level 2 Reply Form -->
+                  <form v-if="replyingToId === reply.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(reply.id)">
+                    <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                    <div class="flex justify-end gap-3 items-center">
+                      <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
+                      <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                        {{ locale === 'ru' ? 'Отправить' : 'Send' }}
+                      </button>
+                    </div>
+                  </form>
+                </article>
+
+                <!-- Level 3 -->
+                <div v-if="reply.children.length > 0" class="pl-4 md:pl-8 border-l border-current/10 mt-4 flex flex-col gap-6">
+                  <div v-for="subreply in (expandedComments.has(reply.id) ? reply.children : reply.children.slice(0, 5))" :key="subreply.id">
+                    <article class="article-comment !pb-2 !border-none">
+                      <div class="article-comment-head">
+                        <div>
+                          <h3 :class="{'opacity-50': subreply.status === 'hidden'}">{{ subreply.author || 'Anonymous' }}</h3>
+                        </div>
+                        <div class="article-comment-meta">
+                          <span>{{ formatCommentDate(subreply.createdAt) }}</span>
+                          <span v-if="subreply.status !== 'hidden'">{{ subreply.likes || 0 }} {{ articleLabels.likes }}</span>
+                        </div>
+                      </div>
+                      <p :class="{'italic opacity-50': subreply.status === 'hidden'}">{{ subreply.content?.text }}</p>
+                      
+                      <div v-if="subreply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                        <button @click="toggleReplyForm(subreply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                          {{ replyingToId === subreply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
+                        </button>
+                        <button v-if="subreply.authorId === authStore.user?.uid" @click="deleteComment(subreply)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                          {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
+                        </button>
+                      </div>
+
+                      <!-- Level 3 Reply Form -->
+                      <form v-if="replyingToId === subreply.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(subreply.id)">
+                        <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                        <div class="flex justify-end gap-3 items-center">
+                          <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
+                          <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                            {{ locale === 'ru' ? 'Отправить' : 'Send' }}
+                          </button>
+                        </div>
+                      </form>
+                    </article>
+                  </div>
+                  <button v-if="reply.children.length > 5" @click="toggleCommentExpand(reply.id)" class="text-[9px] font-mono uppercase tracking-widest opacity-50 hover:opacity-100 text-left py-2">
+                    {{ expandedComments.has(reply.id) ? (locale === 'ru' ? 'Скрыть' : 'Hide') : (locale === 'ru' ? `Показать еще ${reply.children.length - 5}` : `Show ${reply.children.length - 5} more`) }}
+                  </button>
+                </div>
+              </div>
+              <button v-if="comment.children.length > 5" @click="toggleCommentExpand(comment.id)" class="text-[9px] font-mono uppercase tracking-widest opacity-50 hover:opacity-100 text-left py-2">
+                {{ expandedComments.has(comment.id) ? (locale === 'ru' ? 'Скрыть' : 'Hide') : (locale === 'ru' ? `Показать еще ${comment.children.length - 5}` : `Show ${comment.children.length - 5} more`) }}
+              </button>
             </div>
-            <p>{{ comment.text }}</p>
-          </article>
+            
+            <hr v-if="index !== nestedComments.length - 1" class="w-full border-current/10 my-8" />
+          </div>
+          
+          <button v-if="nestedComments.length > 5" @click="toggleCommentExpand('root')" class="text-[10px] font-mono uppercase tracking-widest bg-current/5 py-4 hover:bg-current/10 transition-colors w-full border border-current/10 mt-8">
+            {{ expandedComments.has('root') ? (locale === 'ru' ? 'Скрыть комментарии' : 'Hide comments') : (locale === 'ru' ? `Показать еще ${nestedComments.length - 5} комментариев` : `Show ${nestedComments.length - 5} more comments`) }}
+          </button>
         </div>
 
         <p v-else class="article-comments-empty">{{ articleLabels.noComments }}</p>
@@ -1783,6 +1893,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import { useAuthStore } from '~/entities/user/auth.store'
 import allAssets from '~/shared/data/global_assets.json'
 import type { Comment } from '~/entities/comment/types/comment.types'
+import type { Reply } from '~/entities/reply/model/reply.types'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import type { ExNode, ExNodeMode, ExNodeSignal } from '~/entities/exnode/model/exnode.types'
 import type { StrategyProfile } from '~/features/store/useStrategyTrades'
@@ -2106,14 +2217,88 @@ const selectedArticle = computed(() => {
   if (!selectedThread.value) return undefined
   return threadToJournalArticle(selectedThread.value)
 })
-const comments = ref<Comment[]>([])
+const comments = computed(() => {
+  if (!selectedArticle.value) return []
+  return forumStore.replies.get(selectedArticle.value.id) || []
+})
 const commentDraft = ref('')
 const commentInputRef = ref<HTMLTextAreaElement | null>(null)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const currentUserName = computed(() => authStore.user?.displayName?.trim() || authStore.user?.email?.trim() || 'Authenticated user')
 const articleComments = computed(() => {
-  return comments.value.filter(comment => comment.articleId === selectedArticle.value?.id && comment.status === 'published')
+  return comments.value
 })
+
+type CommentNode = Reply & { children: CommentNode[] }
+
+const nestedComments = computed(() => {
+  const allComments = comments.value
+  const map = new Map<string, CommentNode>()
+  const roots: CommentNode[] = []
+
+  allComments.forEach(c => map.set(c.id, { ...c, children: [] }))
+
+  allComments.forEach(c => {
+    const node = map.get(c.id)!
+    if (c.parentId && map.has(c.parentId)) {
+      map.get(c.parentId)!.children.push(node)
+    } else {
+      roots.push(node)
+    }
+  })
+
+  const getMs = (date: any) => {
+    if (!date) return 0
+    if (date.toMillis) return date.toMillis()
+    if (date.seconds) return date.seconds * 1000
+    return new Date(date).getTime()
+  }
+
+  const sortByDate = (a: CommentNode, b: CommentNode) => getMs(a.createdAt) - getMs(b.createdAt)
+
+  roots.forEach((root: CommentNode) => {
+    root.children.forEach((level2: CommentNode) => {
+      const flattenedLevel3: CommentNode[] = []
+      
+      const extractLevel3 = (nodes: CommentNode[]) => {
+        nodes.forEach(n => {
+          flattenedLevel3.push(n)
+          if (n.children.length > 0) {
+            extractLevel3(n.children)
+          }
+        })
+      }
+      
+      extractLevel3(level2.children)
+      flattenedLevel3.sort(sortByDate)
+      level2.children = flattenedLevel3
+    })
+    root.children.sort(sortByDate)
+  })
+  
+  return roots
+})
+
+const replyingToId = ref<string | null>(null)
+const expandedComments = ref<Set<string>>(new Set())
+
+const toggleCommentExpand = (id: string) => {
+  const newSet = new Set(expandedComments.value)
+  if (newSet.has(id)) newSet.delete(id)
+  else newSet.add(id)
+  expandedComments.value = newSet
+}
+
+const toggleReplyForm = (id: string) => {
+  if (replyingToId.value === id) {
+    replyingToId.value = null
+  } else {
+    replyingToId.value = id
+    commentDraft.value = ''
+    nextTick(resizeCommentInput)
+  }
+}
+
 const journalWrapperRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
 const boardStageRef = ref<HTMLElement | null>(null)
@@ -3038,6 +3223,8 @@ watch(selectedArticle, async (article) => {
   isBookmarked.value = false
 
   if (article && authStore.user) {
+    forumStore.fetchReplies(article.id) // Fetch replies from Firestore
+    
     const [liked, saved] = await Promise.all([
       forumStore.isThreadLiked(authStore.user.uid, article.id),
       forumStore.isThreadSaved(authStore.user.uid, article.id)
@@ -3054,26 +3241,46 @@ watch(selectedArticle, async (article) => {
   })
 }, { immediate: true })
 
-const submitComment = () => {
+const submitComment = async (parentId?: string) => {
   const article = selectedArticle.value
   const user = authStore.user
   const text = commentDraft.value.trim()
 
   if (!article || !user || !text) return
 
-  comments.value.unshift({
-    id: `comment-${Date.now()}`,
-    articleId: article.id,
+  const replyData: any = {
     authorId: user.uid,
-    authorName: currentUserName.value,
-    authorRole: user.type || 'Authenticated user',
-    createdAt: new Date().toISOString(),
-    text,
-    likesCount: 0,
-    status: 'published'
-  })
-  commentDraft.value = ''
-  nextTick(resizeCommentInput)
+    author: currentUserName.value,
+    status: 'published' as any,
+    type: 'extension' as any,
+    meaningful: true,
+    likes: 0,
+    content: {
+      text,
+      blocks: []
+    }
+  }
+
+  if (parentId) {
+    replyData.parentId = parentId
+  }
+
+  try {
+    await forumStore.createReply(article.id, replyData)
+    commentDraft.value = ''
+    if (parentId) {
+      replyingToId.value = null
+      expandedComments.value.add(parentId)
+    }
+    nextTick(resizeCommentInput)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const deleteComment = async (reply: any) => {
+  if (reply.authorId !== authStore.user?.uid) return
+  await forumStore.softDeleteReply(reply)
 }
 
 const closeReader = () => {
@@ -4129,12 +4336,19 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleWindowResize)
 })
 
-const formatCommentDate = (value: string) => {
+const formatCommentDate = (value: any) => {
+  if (!value) return ''
+  let date: Date
+  if (value.toDate) date = value.toDate()
+  else if (value.toMillis) date = new Date(value.toMillis())
+  else if (value.seconds) date = new Date(value.seconds * 1000)
+  else date = new Date(value)
+  
   return new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric'
-  }).format(new Date(value))
+  }).format(date)
 }
 
 // Scroll to Top Logic
