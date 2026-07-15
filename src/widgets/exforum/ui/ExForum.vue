@@ -159,8 +159,14 @@
           <div class="min-w-0">
             <span class="text-[10px] font-mono tracking-widest uppercase text-current/40 mb-1 block">{{ locale === 'ru' ? 'Название' : 'Title' }}</span>
             <h1>{{ selectedArticle.title }}</h1>
-            <hr class="my-4 w-1/2 border-current/10" />
-            <p>{{ selectedArticle.description }}</p>
+            <div class="mt-6 mb-5 flex w-3/4 max-w-md items-center gap-4">
+              <div class="h-[1px] w-8 bg-current/10 shrink-0"></div>
+              <span class="text-[9px] font-mono tracking-[0.3em] uppercase text-current/40 shrink-0">
+                {{ locale === 'ru' ? 'АВТОР' : 'BY' }} <span class="text-current/70 font-bold ml-1">{{ selectedArticle.author }}</span>
+              </span>
+              <div class="h-[1px] flex-1 bg-current/10"></div>
+            </div>
+            <p class="text-current/90 leading-relaxed">{{ selectedArticle.description }}</p>
           </div>
 
           <div class="article-reader-metrics" :aria-label="articleLabels.metrics">
@@ -3003,21 +3009,45 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
 const isLiked = ref(false)
 const isBookmarked = ref(false)
 
-const toggleLike = () => {
+const toggleLike = async () => {
+  if (!authStore.user || !selectedArticle.value) return
   isLiked.value = !isLiked.value
+  try {
+    await forumStore.toggleThreadLike(authStore.user.uid, selectedArticle.value.id, isLiked.value)
+  } catch (error) {
+    isLiked.value = !isLiked.value // revert
+  }
 }
 
-const toggleBookmark = () => {
+const toggleBookmark = async () => {
+  if (!authStore.user || !selectedArticle.value) return
   isBookmarked.value = !isBookmarked.value
+  try {
+    await forumStore.toggleThreadSave(authStore.user.uid, selectedArticle.value.id, isBookmarked.value)
+  } catch (error) {
+    isBookmarked.value = !isBookmarked.value // revert
+  }
 }
 
-watch(selectedArticle, (article) => {
+watch(selectedArticle, async (article) => {
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
   boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
   isLiked.value = false
   isBookmarked.value = false
+
+  if (article && authStore.user) {
+    const [liked, saved] = await Promise.all([
+      forumStore.isThreadLiked(authStore.user.uid, article.id),
+      forumStore.isThreadSaved(authStore.user.uid, article.id)
+    ])
+    if (selectedArticle.value?.id === article.id) {
+      isLiked.value = liked
+      isBookmarked.value = saved
+    }
+  }
+
   nextTick(() => {
     resizeCommentInput()
     centerBoardOnMainNode()

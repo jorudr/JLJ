@@ -9,6 +9,10 @@ import {
   where,
   orderBy,
   limit,
+  updateDoc,
+  increment,
+  deleteDoc,
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '@/shared/firebase.client'
 
@@ -160,6 +164,70 @@ export const useForumStore = defineStore('forum', {
           return thread
         } finally {
           this.loading = false
+        }
+      },
+
+      async toggleThreadLike(userId: string, threadId: string, isLiking: boolean) {
+        if (!userId || !threadId) return
+        
+        try {
+          const threadRef = doc(db, 'threads', threadId)
+          await updateDoc(threadRef, {
+            likesCount: increment(isLiking ? 1 : -1)
+          })
+
+          const userLikeRef = doc(db, 'users', userId, 'likedThreads', threadId)
+          if (isLiking) {
+            await setDoc(userLikeRef, { likedAt: serverTimestamp(), threadId })
+          } else {
+            await deleteDoc(userLikeRef)
+          }
+
+          // Update local state immediately
+          const thread = this.threads.get(threadId)
+          if (thread) {
+            thread.likesCount = Math.max(0, (thread.likesCount || 0) + (isLiking ? 1 : -1))
+            this.threads.set(threadId, thread)
+            this.threads = new Map(this.threads)
+          }
+        } catch (error) {
+          console.error("Error toggling like:", error)
+          throw error
+        }
+      },
+
+      async toggleThreadSave(userId: string, threadId: string, isSaving: boolean) {
+        if (!userId || !threadId) return
+        
+        try {
+          const userSaveRef = doc(db, 'users', userId, 'savedThreads', threadId)
+          if (isSaving) {
+            await setDoc(userSaveRef, { savedAt: serverTimestamp(), threadId })
+          } else {
+            await deleteDoc(userSaveRef)
+          }
+        } catch (error) {
+          console.error("Error toggling save:", error)
+          throw error
+        }
+      },
+      async isThreadLiked(userId: string, threadId: string): Promise<boolean> {
+        if (!userId || !threadId) return false
+        try {
+          const snap = await getDoc(doc(db, 'users', userId, 'likedThreads', threadId))
+          return snap.exists()
+        } catch {
+          return false
+        }
+      },
+
+      async isThreadSaved(userId: string, threadId: string): Promise<boolean> {
+        if (!userId || !threadId) return false
+        try {
+          const snap = await getDoc(doc(db, 'users', userId, 'savedThreads', threadId))
+          return snap.exists()
+        } catch {
+          return false
         }
       },
 
