@@ -140,6 +140,7 @@
 
           </article>
         </div>
+        <div class="pointer-events-none absolute inset-0 bg-black/[0.025]"></div>
       </section>
     </Transition>
 
@@ -156,7 +157,9 @@
 
         <div class="article-reader-title-row">
           <div class="min-w-0">
+            <span class="text-[10px] font-mono tracking-widest uppercase text-current/40 mb-1 block">{{ locale === 'ru' ? 'Название' : 'Title' }}</span>
             <h1>{{ selectedArticle.title }}</h1>
+            <hr class="my-4 w-1/2 border-current/10" />
             <p>{{ selectedArticle.description }}</p>
           </div>
 
@@ -290,12 +293,29 @@
             </article>
           </div>
 
-          <div class="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/[0.025]"></div>
+          <div class="pointer-events-none absolute inset-0 bg-black/[0.025]"></div>
           <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/85 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
             {{ articleLabels.openBoard }}
           </div>
         </section>
       </main>
+
+      <div class="flex items-center gap-3 px-6 pb-6">
+        <button 
+          class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group"
+          @click="toggleLike"
+        >
+          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isLiked ? 'fill-black text-black' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+          <span>{{ isLiked ? (locale === 'ru' ? 'Понравилось' : 'Liked') : (locale === 'ru' ? 'Нравится' : 'Like') }}</span>
+        </button>
+        <button 
+          class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group"
+          @click="toggleBookmark"
+        >
+          <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isBookmarked ? 'fill-black text-black' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path></svg>
+          <span>{{ isBookmarked ? (locale === 'ru' ? 'В закладках' : 'Saved') : (locale === 'ru' ? 'В закладки' : 'Save') }}</span>
+        </button>
+      </div>
 
       <footer class="article-comments-footer">
         <div class="article-comments-heading">
@@ -1913,7 +1933,7 @@ const getThreadAuthorName = (thread: Thread & Record<string, any>) => {
 }
 
 const getThreadDescription = (thread: Thread & Record<string, any>) => {
-  const firstTextBlock = thread.thesis?.blocks?.find((block: any) => block?.text)?.text
+  const firstTextBlock = (thread.thesis?.blocks?.find((block: any) => block?.text) as any)?.text
   return thread.description || thread.summary || firstTextBlock || ''
 }
 
@@ -2942,7 +2962,7 @@ const boardTransformStyle = computed(() => ({
   willChange: 'transform'
 }))
 const boardPreviewTransformStyle = computed(() => ({
-  transform: 'translate(48px, 36px) scale(0.82)'
+  transform: `translate(${boardPan.value.x}px, ${boardPan.value.y}px) scale(0.82)`
 }))
 
 const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => JSON.parse(JSON.stringify(nodes || [])) as JournalArticleBoardNode[]
@@ -2957,13 +2977,51 @@ const resizeCommentInput = () => {
   input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden'
 }
 
+const centerBoardOnMainNode = (isFullScreen = false) => {
+  if (!boardNodes.value || boardNodes.value.length === 0) {
+    boardPan.value = { x: 48, y: 36 }
+    return
+  }
+  let mainNode = boardNodes.value.find((n: any) => n.type === 'asset' || (n.type === 'text' && n.isQuestion))
+  if (!mainNode) mainNode = boardNodes.value[0]
+  if (!mainNode) return
+  
+  const grid = boardGridSize.value
+  const nodeCenterX = (mainNode.position.x + (mainNode.size.width / 2)) * grid
+  const nodeCenterY = (mainNode.position.y + (mainNode.size.height / 2)) * grid
+  
+  const vWidth = typeof window !== 'undefined' ? window.innerWidth : 1200
+  const vHeight = typeof window !== 'undefined' ? (isFullScreen ? window.innerHeight : window.innerHeight * 0.68) : 800
+  const scale = isFullScreen ? 1.0 : 0.82
+  
+  boardPan.value = {
+    x: (vWidth / 2) - (nodeCenterX * scale),
+    y: (vHeight / 2.5) - (nodeCenterY * scale)
+  }
+}
+
+const isLiked = ref(false)
+const isBookmarked = ref(false)
+
+const toggleLike = () => {
+  isLiked.value = !isLiked.value
+}
+
+const toggleBookmark = () => {
+  isBookmarked.value = !isBookmarked.value
+}
+
 watch(selectedArticle, (article) => {
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
   boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
-  nextTick(resizeCommentInput)
-  boardPan.value = { x: 48, y: 36 }
+  isLiked.value = false
+  isBookmarked.value = false
+  nextTick(() => {
+    resizeCommentInput()
+    centerBoardOnMainNode()
+  })
 }, { immediate: true })
 
 const submitComment = () => {
@@ -3011,12 +3069,13 @@ const syncBoardFullscreenViewport = () => {
 const openBoardFullscreen = () => {
   isBoardFullscreen.value = true
   syncBoardFullscreenViewport()
-  boardPan.value = { x: 48, y: 36 }
+  centerBoardOnMainNode(true)
 }
 
 const closeBoardFullscreen = () => {
   isBoardFullscreen.value = false
   stopBoardInteraction()
+  centerBoardOnMainNode(false)
 }
 
 const navigateToNode = (id: string) => {
