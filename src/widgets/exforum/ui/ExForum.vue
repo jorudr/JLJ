@@ -1216,10 +1216,22 @@
                @pointerdown.stop
                @pointermove.stop
                @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
-            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
-                    @click="cancelArticleEditing">
-              {{ locale === 'ru' ? 'ОТМЕНИТЬ РЕДАКТИРОВАНИЕ' : 'CANCEL EDITING' }}
-            </button>
+            <template v-if="isEditingArticle">
+              <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+                      @click="cancelArticleEditing">
+                {{ locale === 'ru' ? 'ОТМЕНИТЬ РЕДАКТИРОВАНИЕ' : 'CANCEL EDITING' }}
+              </button>
+            </template>
+            <template v-else>
+              <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+                      @click="creationStep = 'metadata'">
+                {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}
+              </button>
+              <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+                      @click="saveDraftAndExit">
+                {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
+              </button>
+            </template>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
                     :class="!isSignalBoardValid ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
                     :disabled="!isSignalBoardValid"
@@ -1884,7 +1896,7 @@
                 </span>
               </button>
               <button
-                class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-colors hover:border-current/40 hover:bg-current/5 hover:text-current"
+                class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-all opacity-0 group-hover:opacity-100 hover:border-current/40 hover:bg-current/5 hover:text-current"
                 type="button"
                 :title="locale === 'ru' ? 'Редактировать статью' : 'Edit article'"
                 @click="startEditArticle(thread)"
