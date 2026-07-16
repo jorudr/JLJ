@@ -1217,12 +1217,8 @@
                @pointermove.stop
                @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
             <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
-                    @click="creationStep = 'metadata'">
-              {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}
-            </button>
-            <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
-                    @click="saveDraftAndExit">
-              {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
+                    @click="cancelArticleEditing">
+              {{ locale === 'ru' ? 'ОТМЕНИТЬ РЕДАКТИРОВАНИЕ' : 'CANCEL EDITING' }}
             </button>
             <button class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
                     :class="!isSignalBoardValid ? 'cursor-not-allowed opacity-35 hover:bg-black' : ''"
@@ -1459,7 +1455,7 @@
                     :disabled="isPublishingArticle"
                     :class="isPublishingArticle ? 'cursor-wait opacity-60' : ''"
                     @click="showPublishConfirmation = true">
-              {{ isPublishingArticle ? boardUiLabels.publishing : (locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH') }}
+              {{ isPublishingArticle ? boardUiLabels.publishing : (isEditingArticle ? (locale === 'ru' ? 'ОБНОВИТЬ' : 'UPDATE') : (locale === 'ru' ? 'ОПУБЛИКОВАТЬ' : 'PUBLISH')) }}
             </button>
           </header>
 
@@ -1700,7 +1696,7 @@
                   {{ boardUiLabels.publishConfirmKicker }}
                 </span>
                 <h3 class="mt-3 font-serif text-[28px] italic leading-tight text-black/90">
-                  {{ boardUiLabels.publishConfirmTitle }}
+                  {{ isEditingArticle ? (locale === 'ru' ? 'Обновить статью?' : 'Update article?') : boardUiLabels.publishConfirmTitle }}
                 </h3>
               </div>
 
@@ -1737,7 +1733,7 @@
                   :class="isPublishingArticle ? 'cursor-wait opacity-60' : ''"
                   @click="confirmPublishArticle"
                 >
-                  {{ isPublishingArticle ? boardUiLabels.publishing : boardUiLabels.confirmPublish }}
+                  {{ isPublishingArticle ? boardUiLabels.publishing : (isEditingArticle ? (locale === 'ru' ? 'Обновить' : 'Update') : boardUiLabels.confirmPublish) }}
                 </button>
               </div>
             </ExPanel>
@@ -1819,7 +1815,20 @@
           </div>
 
           <!-- Create Article Button (Right) -->
-          <div class="flex-1 flex justify-end items-center">
+          <div class="flex-1 flex justify-end items-center gap-3">
+            <button
+              class="flex items-center space-x-2 px-4 py-2 border transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm"
+              :class="journalViewMode === 'mine' ? 'border-black bg-black text-white shadow-md' : 'border-current/20 text-current/70 hover:border-current/40 hover:bg-current/5 hover:text-current/90'"
+              type="button"
+              @click="toggleMyArticles"
+            >
+              <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5V5a2 2 0 0 1 2-2h11.5" />
+                <path d="M8 7h8M8 11h8M8 15h5" />
+                <path d="M18 3v18l-3-2-3 2V3" />
+              </svg>
+              <span>{{ locale === 'ru' ? 'МОИ СТАТЬИ' : 'MY ARTICLES' }}</span>
+            </button>
             <button
               v-if="hasDraft && !isCreatingArticle"
               class="flex items-center space-x-2 px-4 py-2 mr-4 border border-black bg-black text-white hover:bg-black/80 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm shadow-md"
@@ -1830,7 +1839,7 @@
             </button>
             <button
               class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90"
-              @click="isCreatingArticle = !isCreatingArticle"
+              @click="isCreatingArticle ? cancelArticleEditing() : startCreateArticle()"
             >
               <svg v-if="!isCreatingArticle" class="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 5v14M5 12h14"></path>
@@ -1854,6 +1863,53 @@
           </svg>
           <span class="text-[10px] font-mono tracking-[0.4em] uppercase">{{ locale === 'ru' ? 'Загрузка...' : 'Loading...' }}</span>
         </div>
+
+        <!-- MY ARTICLES LIST -->
+        <section v-else-if="journalViewMode === 'mine'" class="px-6 py-8 md:px-12">
+          <div class="mx-auto flex max-w-5xl flex-col border-y border-current/15">
+            <article
+              v-for="thread in myArticleThreads"
+              :key="thread.id"
+              class="group grid grid-cols-[1fr_auto] items-center gap-6 border-b border-current/10 py-5 last:border-b-0"
+            >
+              <button class="min-w-0 text-left" type="button" @click="navigateToNode(thread.id)">
+                <span class="mb-2 block font-mono text-[8px] uppercase tracking-[0.35em] text-current/35">
+                  {{ thread.categoryLabel || thread.subcategory || getThreadMode(thread) }} // {{ formatArticleListDate(thread.publishedAt || thread.createdAt) }}
+                </span>
+                <strong class="block truncate font-serif text-2xl italic text-current/90">
+                  {{ thread.title || boardUiLabels.untitled }}
+                </strong>
+                <span class="mt-2 block line-clamp-2 text-sm leading-relaxed text-current/55">
+                  {{ getThreadDescription(thread) }}
+                </span>
+              </button>
+              <button
+                class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-colors hover:border-current/40 hover:bg-current/5 hover:text-current"
+                type="button"
+                :title="locale === 'ru' ? 'Редактировать статью' : 'Edit article'"
+                @click="startEditArticle(thread)"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </button>
+            </article>
+
+            <div v-if="myArticleThreads.length === 0" class="flex flex-col items-center justify-center gap-4 py-24 text-center">
+              <h2 class="font-serif text-3xl italic text-current/35">
+                {{ locale === 'ru' ? 'У вас пока нет статей' : 'No articles yet' }}
+              </h2>
+              <button
+                class="border border-current/20 px-6 py-3 font-mono text-[9px] uppercase tracking-[0.35em] text-current/60 transition-colors hover:bg-current/5 hover:text-current"
+                type="button"
+                @click="startCreateArticle"
+              >
+                {{ locale === 'ru' ? 'Создать статью' : 'Create article' }}
+              </button>
+            </div>
+          </div>
+        </section>
 
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-else-if="pagedNodes.length > 0" class="flex flex-col">
@@ -2150,6 +2206,7 @@ const journalFilters = computed(() => locale.value === 'ru'
       { label: 'QUESTIONS', mode: 'QUESTION' }
     ])
 const activeJournalFilter = ref<string | null>(null)
+const journalViewMode = ref<'journal' | 'mine'>('journal')
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
 const articleLabels = computed(() => locale.value === 'ru'
@@ -2192,6 +2249,11 @@ const articleLabels = computed(() => locale.value === 'ru'
       leaveFullscreen: 'Leave fullscreen mode'
     })
 const formatJournalDate = () => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US').format(new Date())
+const formatArticleListDate = (value: any) => new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+}).format(new Date(normalizeFirestoreDate(value)))
 const fullscreenExitLabel = computed(() => articleLabels.value.leaveFullscreen)
 
 const getMetricLabel = (label: string) => {
@@ -2384,6 +2446,13 @@ const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
 const journalThreads = computed(() => Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
+const myArticleThreads = computed(() => {
+  const userId = authStore.user?.uid
+  if (!userId) return []
+  return journalThreads.value
+    .filter(thread => thread.authorId === userId)
+    .sort((a, b) => new Date(getThreadPublishedAt(b)).getTime() - new Date(getThreadPublishedAt(a)).getTime())
+})
 const journalNodes = computed(() => journalThreads.value
   .map(threadToJournalNode)
   .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()))
@@ -2428,8 +2497,17 @@ const navigateToPage = (page: number) => {
 }
 
 const setJournalFilter = (mode: string) => {
+  journalViewMode.value = 'journal'
   activeJournalFilter.value = activeJournalFilter.value === mode ? null : mode
   navigateToPage(1)
+}
+
+const toggleMyArticles = () => {
+  journalViewMode.value = journalViewMode.value === 'mine' ? 'journal' : 'mine'
+  if (journalViewMode.value === 'mine') {
+    activeJournalFilter.value = null
+    navigateToPage(1)
+  }
 }
 
 // Reader Logic
@@ -2591,6 +2669,7 @@ const filteredAssets = computed(() => {
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'board' | 'preview'>('metadata')
 const showPublishConfirmation = ref(false)
+const editingArticleId = ref<string | null>(null)
 const drawing = useForumDrawing()
 const boardDrawing = useBoardDrawing()
 
@@ -2606,10 +2685,29 @@ const newArticleForm = ref({
   type: ''
 })
 
+const isEditingArticle = computed(() => !!editingArticleId.value)
+const editingArticleThread = computed(() => {
+  if (!editingArticleId.value) return null
+  return journalThreads.value.find(thread => thread.id === editingArticleId.value) || null
+})
+
+const resetArticleEditorState = () => {
+  stopBoardDrawingMode()
+  showPublishConfirmation.value = false
+  editingArticleId.value = null
+  newArticleForm.value = { title: '', description: '', type: '' }
+  boardNodes.value = []
+  boardConnections.value = []
+  boardStrokes.value = []
+  previewNodeOrder.value = []
+  creationStep.value = 'metadata'
+}
+
 const loadDraft = () => {
   const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY)
   if (draftStr) {
     try {
+      editingArticleId.value = null
       const draft = JSON.parse(draftStr)
       newArticleForm.value = draft.form
       boardNodes.value = draft.nodes
@@ -2623,15 +2721,9 @@ const loadDraft = () => {
 }
 
 const clearDraft = () => {
-  stopBoardDrawingMode()
-  showPublishConfirmation.value = false
   localStorage.removeItem(DRAFT_STORAGE_KEY)
   hasDraft.value = false
-  newArticleForm.value = { title: '', description: '', type: '' }
-  boardNodes.value = []
-  boardConnections.value = []
-  boardStrokes.value = []
-  creationStep.value = 'metadata'
+  resetArticleEditorState()
 }
 
 const saveDraftAndExit = () => {
@@ -2644,6 +2736,7 @@ watch(isCreatingArticle, (newVal) => {
   if (!newVal) {
     stopBoardDrawingMode()
     showPublishConfirmation.value = false
+    editingArticleId.value = null
     creationStep.value = 'metadata'
   }
 })
@@ -2722,7 +2815,7 @@ watch(creationStep, (step) => {
 let draftSaveTimer: number | null = null
 
 const persistDraft = () => {
-  if (isCreatingArticle.value) {
+  if (isCreatingArticle.value && !isEditingArticle.value) {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
       form: newArticleForm.value,
       nodes: JSON.parse(JSON.stringify(boardNodes.value)),
@@ -2735,7 +2828,7 @@ const persistDraft = () => {
 }
 
 watch([newArticleForm, boardNodes, boardConnections, boardStrokes, creationStep], () => {
-  if (!isCreatingArticle.value) return
+  if (!isCreatingArticle.value || isEditingArticle.value) return
   if (draftSaveTimer) window.clearTimeout(draftSaveTimer)
   draftSaveTimer = window.setTimeout(persistDraft, 250)
 }, { deep: true })
@@ -2761,6 +2854,55 @@ const isNewArticleFormValid = computed(() => {
          newArticleForm.value.description.trim() !== '' &&
          newArticleForm.value.type !== ''
 })
+
+const startCreateArticle = () => {
+  resetArticleEditorState()
+  isCreatingArticle.value = true
+}
+
+const getArticleTextBlockOrder = (thread: Thread & Record<string, any>) => {
+  if (Array.isArray(thread.textBlockOrder) && thread.textBlockOrder.length) return [...thread.textBlockOrder]
+
+  const textBlocks = getThreadTextBlocks(thread)
+  if (textBlocks.length) return textBlocks.map((block: any) => block.id).filter(Boolean)
+
+  return getThreadBoard(thread).nodes.map(node => node.id)
+}
+
+const startEditArticle = (thread: Thread & Record<string, any>) => {
+  if (!authStore.user || thread.authorId !== authStore.user.uid) return
+
+  closeReader()
+  resetArticleEditorState()
+  editingArticleId.value = thread.id
+  newArticleForm.value = {
+    title: thread.title || '',
+    description: thread.description || thread.summary || '',
+    type: getThreadMode(thread)
+  }
+
+  const board = getThreadBoard(thread)
+  boardNodes.value = cloneBoardNodes(board.nodes)
+  boardConnections.value = board.connections ? JSON.parse(JSON.stringify(board.connections)) : []
+  boardStrokes.value = board.strokes ? JSON.parse(JSON.stringify(board.strokes)) : []
+  previewNodeOrder.value = getArticleTextBlockOrder(thread)
+  isCreatingArticle.value = true
+  creationStep.value = 'board'
+
+  nextTick(() => {
+    centerBoardOnMainNode()
+    renderBoardDrawingCanvas()
+  })
+}
+
+const cancelArticleEditing = () => {
+  if (!isEditingArticle.value) {
+    localStorage.removeItem(DRAFT_STORAGE_KEY)
+    hasDraft.value = false
+  }
+  resetArticleEditorState()
+  isCreatingArticle.value = false
+}
 
 const submitNewArticle = () => {
   if (!isNewArticleFormValid.value) return
@@ -2905,7 +3047,10 @@ const createThreadPayloadFromArticle = () => {
   const user = authStore.user
   if (!user) return null
 
-  const createdAt = new Date().toISOString()
+  const sourceThread = editingArticleThread.value
+  const now = new Date().toISOString()
+  const createdAt = sourceThread ? normalizeFirestoreDate(sourceThread.createdAt) : now
+  const publishedAt = sourceThread ? normalizeFirestoreDate(sourceThread.publishedAt || sourceThread.createdAt) : now
   const board = createArticleBoardSnapshot()
   const textBlocks = createArticleContentBlocks(board)
   const textBlockOrder = textBlocks.map((block: any) => block.id).filter(Boolean)
@@ -2925,10 +3070,10 @@ const createThreadPayloadFromArticle = () => {
     author: authorName,
     authorId: user.uid,
     createdAt,
-    publishedAt: createdAt,
-    lastActivityAt: createdAt,
-    lastMeaningfulAt: createdAt,
-    repliesCount: 0,
+    publishedAt,
+    lastActivityAt: now,
+    lastMeaningfulAt: now,
+    repliesCount: sourceThread?.repliesCount || 0,
     status: 'active',
     thesis,
     board
@@ -2944,7 +3089,7 @@ const createThreadPayloadFromArticle = () => {
     articleType: categoryMode,
     author: authorName,
     authorId: user.uid,
-    authorData: {
+    authorData: sourceThread?.authorData || {
       uid: user.uid,
       email: user.email || null,
       displayName: user.displayName || user.email || null,
@@ -2952,12 +3097,13 @@ const createThreadPayloadFromArticle = () => {
       type: user.type || 'common'
     },
     createdAt,
-    publishedAt: createdAt,
-    lastActivityAt: createdAt,
-    lastMeaningfulAt: createdAt,
-    repliesCount: 0,
-    likesCount: 0,
-    status: 'active',
+    publishedAt,
+    updatedAt: now,
+    lastActivityAt: now,
+    lastMeaningfulAt: now,
+    repliesCount: sourceThread?.repliesCount || 0,
+    likesCount: sourceThread?.likesCount || 0,
+    status: sourceThread?.status || 'active',
     thesis,
     summary: newArticleForm.value.description.trim(),
     board,
@@ -2995,12 +3141,19 @@ const confirmPublishArticle = async () => {
   isPublishingArticle.value = true
 
   try {
-    const createdThread = await forumStore.createThread(payload as Omit<Thread, 'id'> & Record<string, any>)
+    const savedThread = isEditingArticle.value && editingArticleId.value
+      ? await forumStore.updateThread(editingArticleId.value, payload as Partial<Thread> & Record<string, any>)
+      : await forumStore.createThread(payload as Omit<Thread, 'id'> & Record<string, any>)
+
     showPublishConfirmation.value = false
-    clearDraft()
+    if (!isEditingArticle.value) {
+      clearDraft()
+    } else {
+      resetArticleEditorState()
+    }
     isCreatingArticle.value = false
     creationStep.value = 'metadata'
-    navigateToNode(createdThread.id)
+    navigateToNode(savedThread.id)
   } catch (error) {
     console.error('Failed to publish ExForum article:', error)
     alert(locale.value === 'ru' ? 'Не удалось опубликовать статью. Проверьте подключение и попробуйте снова.' : 'Could not publish the article. Check your connection and try again.')

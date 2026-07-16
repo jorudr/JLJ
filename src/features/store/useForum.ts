@@ -229,6 +229,28 @@ export const useForumStore = defineStore('forum', {
         }
       },
 
+      async updateThread(threadId: string, threadData: Partial<Thread> & Record<string, any>): Promise<Thread> {
+        this.loading = true
+        try {
+          const threadRef = doc(db, 'threads', threadId)
+          await updateDoc(threadRef, threadData)
+
+          const currentThread = this.threads.get(threadId)
+          const updatedThread = {
+            ...(currentThread || {}),
+            ...threadData,
+            id: threadId
+          } as Thread
+
+          this.threads.set(threadId, updatedThread)
+          this.threads = new Map(this.threads)
+
+          return updatedThread
+        } finally {
+          this.loading = false
+        }
+      },
+
       async toggleThreadLike(userId: string, threadId: string, isLiking: boolean) {
         if (!userId || !threadId) return
         
