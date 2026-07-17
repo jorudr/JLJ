@@ -1756,7 +1756,15 @@
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="flex flex-col min-h-full px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
+    <div v-else class="relative isolate flex flex-col min-h-full overflow-visible px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
+      <div v-if="currentPage === 1" class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
+        <img
+          src="/assets/ui/eves.svg"
+          alt=""
+          aria-hidden="true"
+          class="absolute left-[-50rem] top-1/2 h-[2800px] w-[2800px] -translate-y-1/2 select-none object-contain opacity-[0.06]"
+        />
+      </div>
       
       <!-- Masthead -->
       <header
@@ -1770,9 +1778,11 @@
             <span>{{ journalLabels.datePrefix }} {{ formatJournalDate() }}</span>
           </div>
 
-          <h1 class="text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center px-6 py-6 drop-shadow-sm cursor-pointer" @click="navigateToPage(1)">
-            The Eve's Apple
-          </h1>
+          <div class="relative flex w-full items-center justify-center overflow-visible px-14 py-6 md:px-20">
+            <h1 class="cursor-pointer px-4 text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center drop-shadow-sm" @click="navigateToPage(1)">
+              The Eve's Apple
+            </h1>
+          </div>
         </template>
 
         <div class="journal-masthead-tools flex flex-wrap lg:flex-nowrap items-center justify-between w-full border-t border-current/10 pt-4 px-4 gap-4">
