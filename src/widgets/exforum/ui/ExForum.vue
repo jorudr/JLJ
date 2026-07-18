@@ -26,6 +26,53 @@
         </button>
 
         <div
+          class="absolute left-2 top-32 z-30 flex items-start gap-3 text-black pointer-events-none"
+          data-board-chrome
+          @pointerdown.stop
+          @click.stop
+        >
+          <div class="relative ml-3 flex flex-col items-center gap-2">
+            <div class="article-board-tool">
+              <button
+                type="button"
+                class="pointer-events-auto flex h-8 w-8 items-center justify-center border border-black/20 bg-white text-[10px] font-mono italic opacity-70 transition-colors hover:bg-black/5 hover:opacity-100"
+                :aria-label="locale === 'ru' ? 'Сбросить вид' : 'Reset view'"
+                @click.stop="resetArticleBoardFullscreenView"
+              >
+                [R]
+              </button>
+              <span class="article-board-tool-tooltip">{{ locale === 'ru' ? 'Сбросить вид' : 'Reset view' }}</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-6 border-l border-black/20 py-1 pl-4">
+            <div class="flex flex-col">
+              <span class="text-[8px] font-mono uppercase tracking-widest opacity-40">
+                Viewport_Telemetry
+              </span>
+              <span class="text-[12px] font-mono uppercase tracking-widest opacity-80">
+                {{ (boardScale * 100).toFixed(0) }}% // FOCUS
+              </span>
+            </div>
+
+            <div class="flex flex-col space-y-1">
+              <button
+                v-for="zoom in boardScaleOptions"
+                :key="zoom"
+                type="button"
+                class="pointer-events-auto relative flex h-5 w-12 items-center justify-center overflow-hidden border border-black/20 bg-white text-[9px] font-mono tracking-tighter transition-all"
+                :class="Math.round(boardScale * 100) === zoom ? 'bg-black !text-white opacity-100' : 'text-black/55 opacity-70 hover:bg-black/5 hover:text-black hover:opacity-100'"
+                @click.stop="setArticleBoardScale(zoom / 100)"
+              >
+                <div v-if="Math.round(boardScale * 100) === zoom" class="absolute inset-0 bg-white/10 animate-pulse"></div>
+                <span class="relative z-10">{{ zoom }}%</span>
+                <div class="absolute right-0 top-0 h-1 w-1 bg-current opacity-20"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
           class="absolute left-0 top-0 origin-top-left"
           :style="[boardWorldStyle, boardTransformStyle]"
         >
@@ -48,14 +95,28 @@
             class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
             :style="getBoardNodeStyle(node)"
           >
-            <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
-              <h3 v-if="!node.isQuestion" class="font-serif text-xl italic leading-none text-black/80" v-html="node.title || boardUiLabels.untitled"></h3>
-              <p class="min-h-0 overflow-hidden font-serif italic break-words whitespace-pre-wrap" :class="node.isQuestion ? 'text-5xl leading-none text-black/80' : 'text-sm leading-relaxed text-black/55'">{{ node.text }}</p>
-            </div>
+              <div v-if="node.type === 'text'" class="flex h-full flex-col" :style="getBoardTextShellStyle()">
+                <h3
+                  v-if="!node.isQuestion"
+                  class="font-serif italic text-black/80"
+                  :style="getBoardTextTitleStyle()"
+                  v-html="node.title || boardUiLabels.untitled"
+                ></h3>
+                <div
+                  class="min-h-0 overflow-hidden font-serif italic break-words"
+                  :class="node.isQuestion ? 'text-black/80' : 'text-black/55'"
+                  :style="getBoardTextBodyStyle(node)"
+                  v-html="node.text"
+                ></div>
+              </div>
 
             <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
               <img :src="node.src" :alt="node.alt" class="min-h-0 flex-1 object-cover" draggable="false" />
-              <p v-if="node.caption" class="border-t border-black/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-black/35">
+              <p
+                v-if="node.caption"
+                class="border-t border-black/10 font-mono uppercase tracking-[0.28em] text-black/35"
+                :style="getBoardCaptionStyle()"
+              >
                 {{ node.caption }}
               </p>
             </div>
@@ -67,73 +128,74 @@
               </svg>
             </div>
 
-            <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/80 px-3 font-mono">
-              <span class="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-black/40">
+            <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/80 font-mono" :style="getBoardPriceShellStyle()">
+              <span class="font-black uppercase tracking-[0.2em] text-black/40" :style="getBoardPriceLabelStyle()">
                 {{ node.priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'PROJECTED PRICE') }}
               </span>
               <span
-                class="truncate text-center text-xl font-black leading-none"
+                class="truncate text-center font-black"
                 :class="getPriceNodeValueClass(node)"
+                :style="getBoardPriceValueStyle()"
               >
                 <template v-if="getPriceNodeArrow(node)">{{ getPriceNodeArrow(node) }} </template>{{ node.value || priceNodePlaceholder(node) }}
               </span>
             </div>
 
-            <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 px-3 font-mono">
-              <div class="flex min-w-0 flex-col items-center justify-center gap-1 text-center">
-                <span class="max-w-full truncate text-lg font-black uppercase tracking-widest text-black/75">
+            <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 font-mono" :style="getBoardAssetShellStyle()">
+              <div class="flex min-w-0 flex-col items-center justify-center text-center" :style="getBoardAssetInnerStyle()">
+                <span class="max-w-full truncate font-black uppercase tracking-widest text-black/75" :style="getBoardAssetLabelStyle()">
                   {{ getAssetNodeLabel(node) }}
                 </span>
-                <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate text-[8px] font-black uppercase tracking-[0.3em] text-black/35">
+                <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate font-black uppercase tracking-[0.3em] text-black/35" :style="getBoardAssetTypeStyle()">
                   {{ getAssetNodeTypeLabel(node) }}
                 </span>
               </div>
             </div>
 
-            <div v-else-if="node.type === 'strategy'" class="flex h-full w-full flex-col justify-center gap-3 bg-white/80 px-4 font-mono">
-              <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getStrategyNodeLabel(node) }}</span>
-              <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 gap-1.5 text-center uppercase">
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
-                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
+            <div v-else-if="node.type === 'strategy'" class="flex h-full w-full flex-col justify-center bg-white/80 font-mono" :style="getBoardDataShellStyle(12, 16)">
+              <span class="truncate font-black uppercase tracking-widest text-black/80" :style="getBoardDataTitleStyle(16)">{{ getStrategyNodeLabel(node) }}</span>
+              <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 text-center uppercase" :style="getBoardDataGridStyle(6)">
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.profitFactorShort }}</small>
+                  <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                 </span>
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
-                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.winRateShort }}</small>
+                  <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                 </span>
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
-                  <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.resultShort }}</small>
+                  <strong class="truncate font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)" :style="getBoardDataValueStyle(14)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                 </span>
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
-                  <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.startShort }}</small>
+                  <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                 </span>
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
-                  <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.endShort }}</small>
+                  <strong class="truncate font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)" :style="getBoardDataValueStyle(14)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                 </span>
               </div>
             </div>
 
-            <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center gap-3 bg-white/80 px-4 font-mono">
-              <div class="flex items-start justify-between gap-3">
+            <div v-else-if="node.type === 'trade'" class="flex h-full w-full flex-col justify-center bg-white/80 font-mono" :style="getBoardDataShellStyle(12, 16)">
+              <div class="flex items-start justify-between" :style="getBoardDataGridStyle(12)">
                 <div class="flex min-w-0 flex-col text-left">
-                  <span class="truncate text-base font-black uppercase tracking-widest text-black/80">{{ getTradeNodeAssetLabel(node) }}</span>
-                  <span class="truncate text-[9px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
+                  <span class="truncate font-black uppercase tracking-widest text-black/80" :style="getBoardDataTitleStyle(16)">{{ getTradeNodeAssetLabel(node) }}</span>
+                  <span class="truncate font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)" :style="getBoardDataLabelStyle(9)">{{ getTradeNodeVector(node) }}</span>
                 </div>
-                <span class="max-w-[45%] truncate text-right text-[12px] font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">
+                <span class="max-w-[45%] truncate text-right font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)" :style="getBoardDataValueStyle(12)">
                   {{ getTradeNodeResult(node) || boardUiLabels.select }}
                 </span>
               </div>
-              <div class="grid grid-cols-2 gap-1.5 text-center uppercase">
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
-                  <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
+              <div class="grid grid-cols-2 text-center uppercase" :style="getBoardDataGridStyle(6)">
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.entryShort }}</small>
+                  <strong class="truncate font-black text-black/80" :style="getBoardDataValueStyle(11)">{{ getTradeNodeEntryDate(node) }}</strong>
                 </span>
-                <span class="flex min-w-0 flex-col border border-black/10 px-1.5 py-1">
-                  <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
-                  <strong class="truncate text-[11px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
+                <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
+                  <small class="font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.exitShort }}</small>
+                  <strong class="truncate font-black text-black/80" :style="getBoardDataValueStyle(11)">{{ getTradeNodeExitDate(node) }}</strong>
                 </span>
               </div>
             </div>
@@ -223,7 +285,7 @@
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
                 <h3 v-if="!node.isQuestion" class="font-serif text-xl italic leading-none text-current/80" v-html="node.title || boardUiLabels.untitled"></h3>
-                <p class="min-h-0 overflow-hidden font-serif italic break-words whitespace-pre-wrap" :class="node.isQuestion ? 'text-5xl leading-none text-current/80' : 'text-sm leading-relaxed text-current/55'">{{ node.text }}</p>
+                <div class="min-h-0 overflow-hidden font-serif italic break-words" :class="node.isQuestion ? 'text-3xl leading-tight text-current/80' : 'text-sm leading-relaxed text-current/55'" v-html="node.text"></div>
               </div>
 
               <div v-else-if="node.type === 'image'" class="flex h-full flex-col">
@@ -2467,7 +2529,164 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
 const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
-const journalThreads = computed(() => Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
+const SYSTEM_FTMO_THREAD_ID = 'system-ftmo-rules-hidden-rules-trader-losses'
+const SYSTEM_APP_AUTHOR_ID = 'jlj-jormungandr-app'
+
+const systemFtmoNodePayloads = [
+  {
+    id: 'n0',
+    title: 'N0. FTMO challenge',
+    text: `<p><strong style="color:#111827">Главная мысль:</strong> FTMO не прячет правила, но <em>практическая механика</em> этих правил требует отдельного навыка.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">Прибыльная стратегия не равна готовности пройти challenge.</blockquote>`,
+    position: { x: 36, y: 22 },
+    size: { width: 22, height: 10 },
+    order: 0
+  },
+  {
+    id: 'n1',
+    title: 'N1. Официальные лимиты',
+    text: `<p><strong style="color:#991b1b">Лимиты — это каркас challenge.</strong> Они работают постоянно, даже когда общая картина выглядит здоровой.</p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Max Daily Loss:</strong> примерно 5% на классическом пути и около 3% на одноэтапном.</li><li><strong>Max Total Loss:</strong> около 10% от стартового баланса; иногда граница trailing.</li><li><strong>Profit Target:</strong> +10% / +5% на двух этапах или около +10% за один этап.</li></ul><p style="color:#7f1d1d"><em>Пробой дневного лимита закрывает счёт, даже если неделя в плюсе.</em></p>`,
+    position: { x: 4, y: 4 },
+    size: { width: 24, height: 14 },
+    order: 1
+  },
+  {
+    id: 'n2',
+    title: 'N2. Правила консистентности',
+    text: `<p><strong style="color:#854d0e">FTMO проверяет не только результат, но и форму результата.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> минимум около 4 торговых дней на этап.</li><li><strong>Best Day Rule:</strong> лучший день не должен тащить весь результат.</li><li><strong>Scaling / Profit Split:</strong> рост доли и баланса зависит от выполнения условий плана.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">Одна удачная сделка может дать target, но не обязательно даст право пройти систему.</blockquote>`,
+    position: { x: 4, y: 25 },
+    size: { width: 24, height: 15 },
+    order: 2
+  },
+  {
+    id: 'n3',
+    title: 'N3. Операционные ограничения',
+    text: `<p><strong style="color:#1d4ed8">Самые частые нарушения рождаются не в идее сделки, а в исполнении.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>News Trading:</strong> запрет — это узкое окно до/после новости, а не весь день.</li><li><strong>Weekend Holding:</strong> стандартный счёт требует закрытия перед выходными.</li><li><strong>EA / роботы:</strong> считается не только вход, но и модификации стопа, TP, частичные закрытия.</li></ul><p><span style="color:#2563eb;font-weight:700">Swing account</span> снимает часть ограничений, но обычно ценой меньшего плеча.</p>`,
+    position: { x: 34, y: 2 },
+    size: { width: 26, height: 15 },
+    order: 3
+  },
+  {
+    id: 'n4',
+    title: 'N4. Скрытая механика',
+    text: `<p><strong style="color:#047857">Это не скрытые правила, а неочевидная математика.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Equity-based drawdown:</strong> лимит может пробиться по текущему equity, пока позиция ещё открыта.</li><li><strong>Best Day Rule:</strong> считается доля лучшего дня от суммы всех зелёных дней.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #059669;background:rgba(16,185,129,.08)">$7000 + $4000 = $11000. Лучший день $7000 — это 64%, значит долю нужно разбавлять новыми зелёными днями.</blockquote>`,
+    position: { x: 68, y: 6 },
+    size: { width: 26, height: 16 },
+    order: 4
+  },
+  {
+    id: 'n5',
+    title: 'N5. Почему трейдеры теряют',
+    text: `<p><strong style="color:#7e22ce">Challenge ломает не только риск-модель, но и состояние трейдера.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Setup bias:</strong> «сегодня должен быть сетап», хотя рынок часто даёт шум.</li><li><strong>Confirmation bias:</strong> трейдер видит то, что хочет увидеть.</li><li><strong>Overtrading:</strong> бездействие превращается в тревогу.</li><li><strong>Эмоциональный дрейф:</strong> после серии убытков решения принимает уже другой человек.</li></ul><p style="color:#92400e"><strong>⚠️ Осторожно:</strong> широкие формулировки вроде «на усмотрение фирмы» и детекция похожих сделок — это зона жалоб трейдеров, а не доказанный факт нарушения со стороны фирмы.</p>`,
+    position: { x: 68, y: 28 },
+    size: { width: 26, height: 18 },
+    order: 5
+  }
+] as const
+
+const systemFtmoConnectionPairs = [
+  ['n0', 'n1'], ['n0', 'n2'], ['n0', 'n3'], ['n0', 'n4'], ['n0', 'n5'],
+  ['n1', 'n4'], ['n2', 'n5'], ['n3', 'n4'], ['n4', 'n5']
+] as const
+
+const createSystemFtmoBoardNode = (payload: typeof systemFtmoNodePayloads[number]): JournalArticleBoardNode => ({
+  id: `ftmo-${payload.id}`,
+  type: 'text',
+  title: payload.title,
+  text: payload.text,
+  position: payload.position,
+  size: payload.size,
+  isQuestion: payload.id === 'n0'
+})
+
+const createSystemFtmoTextBlock = (payload: typeof systemFtmoNodePayloads[number]) => {
+  const data = createSystemFtmoBoardNode(payload)
+  return {
+    ...data,
+    order: payload.order,
+    schemaVersion: 1,
+    sourceNodeId: data.id,
+    label: payload.id === 'n0' ? 'ВОПРОС' : 'ТЕКСТ',
+    data
+  }
+}
+
+const systemFtmoBoard: JournalArticleBoard = {
+  gridSize: 28,
+  magnet: { enabled: true, mode: 'grid' },
+  size: { width: 100, height: 52 },
+  nodes: systemFtmoNodePayloads.map(createSystemFtmoBoardNode),
+  connections: systemFtmoConnectionPairs.map(([from, to], index) => ({
+    id: `ftmo-link-${index + 1}`,
+    fromId: `ftmo-${from}`,
+    toId: `ftmo-${to}`,
+    fromPort: from === 'n0' ? (to === 'n1' || to === 'n2' ? 'left' : 'right') : 'right',
+    toPort: to === 'n0' ? 'left' : 'left'
+  })),
+  strokes: []
+}
+
+const systemFtmoTextBlocks = systemFtmoNodePayloads.map(createSystemFtmoTextBlock)
+
+const systemFtmoThread = computed(() => {
+  const publishedAt = '2026-07-18T00:00:00.000Z'
+  const thesisText = 'Карта правил FTMO: что официально написано, какие механики неочевидны на старте и почему именно эти ограничения часто превращают прибыльную торговлю в провал challenge.'
+
+  return {
+    id: SYSTEM_FTMO_THREAD_ID,
+    title: 'FTMO — правила, скрытые правила и почему трейдеры теряют деньги',
+    description: thesisText,
+    summary: thesisText,
+    category: 'QUESTION',
+    subcategory: 'Аналитика',
+    categoryLabel: 'Аналитика',
+    journalMode: 'QUESTION',
+    articleType: 'QUESTION',
+    author: 'J.L.Jörmungandr',
+    authorId: SYSTEM_APP_AUTHOR_ID,
+    authorData: {
+      uid: SYSTEM_APP_AUTHOR_ID,
+      displayName: 'J.L.Jörmungandr',
+      type: 'system'
+    },
+    createdAt: publishedAt,
+    publishedAt,
+    updatedAt: publishedAt,
+    lastActivityAt: publishedAt,
+    lastMeaningfulAt: publishedAt,
+    repliesCount: 0,
+    likesCount: 0,
+    status: 'active',
+    thesis: {
+      text: thesisText,
+      blocks: systemFtmoTextBlocks
+    },
+    board: systemFtmoBoard,
+    boardNodes: systemFtmoBoard.nodes,
+    boardConnections: systemFtmoBoard.connections,
+    boardStrokes: systemFtmoBoard.strokes,
+    textBlocks: systemFtmoTextBlocks,
+    textBlockOrder: systemFtmoTextBlocks.map(block => block.id),
+    content: {
+      type: 'exforum-article-board',
+      board: systemFtmoBoard,
+      thesis: {
+        text: thesisText,
+        blocks: systemFtmoTextBlocks
+      },
+      textBlocks: systemFtmoTextBlocks,
+      textBlockOrder: systemFtmoTextBlocks.map(block => block.id)
+    },
+    tags: ['FTMO', 'prop trading', 'challenge', 'risk management', 'psychology']
+  } as Thread & Record<string, any>
+})
+
+const journalThreads = computed(() => {
+  const firestoreThreads = Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>
+  return [
+    systemFtmoThread.value,
+    ...firestoreThreads.filter(thread => thread.id !== SYSTEM_FTMO_THREAD_ID)
+  ]
+})
 const myArticleThreads = computed(() => {
   const userId = authStore.user?.uid
   if (!userId) return []
@@ -2638,6 +2857,8 @@ const boardNodes = ref<JournalArticleBoardNode[]>([])
 const boardConnections = ref<JournalArticleBoardConnection[]>([])
 const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
+const boardScale = ref(1)
+const boardScaleOptions = [25, 50, 75, 100, 150, 200]
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 const activeBoardWire = ref<{
@@ -3629,10 +3850,12 @@ const handleGlobalImageUpload = (e: Event) => {
 }
 const boardPointerPos = ref({ x: 0, y: 0 })
 const boardGridSize = computed(() => selectedArticle.value?.board.gridSize || 28)
+const boardRenderScale = computed(() => isBoardFullscreen.value ? boardScale.value : 1)
+const boardRenderGridSize = computed(() => boardGridSize.value * boardRenderScale.value)
 const boardUnitSize = computed(() => selectedArticle.value?.board.size || { width: 72, height: 44 })
 const boardBaseWorldSize = computed(() => ({
-  width: boardUnitSize.value.width * boardGridSize.value,
-  height: boardUnitSize.value.height * boardGridSize.value
+  width: boardUnitSize.value.width * boardRenderGridSize.value,
+  height: boardUnitSize.value.height * boardRenderGridSize.value
 }))
 const boardWorldStyle = computed(() => ({
   width: `${boardBaseWorldSize.value.width}px`,
@@ -3671,9 +3894,10 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
   const nodeCenterX = (mainNode.position.x + (mainNode.size.width / 2)) * grid
   const nodeCenterY = (mainNode.position.y + (mainNode.size.height / 2)) * grid
   
-  const vWidth = typeof window !== 'undefined' ? window.innerWidth : 1200
-  const vHeight = typeof window !== 'undefined' ? (isFullScreen ? window.innerHeight : window.innerHeight * 0.68) : 800
-  const scale = isFullScreen ? 1.0 : 0.82
+  const viewportRect = isFullScreen ? getArticleBoardViewportRect() : null
+  const vWidth = viewportRect?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 1200)
+  const vHeight = viewportRect?.height ?? (typeof window !== 'undefined' ? (isFullScreen ? window.innerHeight : window.innerHeight * 0.68) : 800)
+  const scale = isFullScreen ? boardScale.value : 0.82
   
   boardPan.value = {
     x: (vWidth / 2) - (nodeCenterX * scale),
@@ -3681,11 +3905,48 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
   }
 }
 
+const getArticleBoardViewportRect = () => {
+  return boardViewportRef.value?.getBoundingClientRect() || journalWrapperRef.value?.getBoundingClientRect() || null
+}
+
+const setArticleBoardScale = (nextScale: number) => {
+  const scale = Math.max(0.25, Math.min(2, nextScale))
+  if (!Number.isFinite(scale) || scale === boardScale.value) return
+
+  const rect = getArticleBoardViewportRect()
+  if (!rect) {
+    boardScale.value = scale
+    return
+  }
+
+  const oldScale = boardScale.value || 1
+  const screenCenter = {
+    x: rect.width / 2,
+    y: rect.height / 2
+  }
+  const worldCenter = {
+    x: (screenCenter.x - boardPan.value.x) / oldScale,
+    y: (screenCenter.y - boardPan.value.y) / oldScale
+  }
+
+  boardScale.value = scale
+  boardPan.value = {
+    x: screenCenter.x - worldCenter.x * scale,
+    y: screenCenter.y - worldCenter.y * scale
+  }
+}
+
+const resetArticleBoardFullscreenView = () => {
+  centerBoardOnMainNode(true)
+}
+
 const isLiked = ref(false)
 const isBookmarked = ref(false)
+const isSystemJournalArticleId = (id?: string) => id === SYSTEM_FTMO_THREAD_ID
 
 const toggleLike = async () => {
   if (!authStore.user || !selectedArticle.value) return
+  if (isSystemJournalArticleId(selectedArticle.value.id)) return
   isLiked.value = !isLiked.value
   try {
     await forumStore.toggleThreadLike(authStore.user.uid, selectedArticle.value.id, isLiked.value)
@@ -3696,6 +3957,7 @@ const toggleLike = async () => {
 
 const toggleBookmark = async () => {
   if (!authStore.user || !selectedArticle.value) return
+  if (isSystemJournalArticleId(selectedArticle.value.id)) return
   isBookmarked.value = !isBookmarked.value
   try {
     await forumStore.toggleThreadSave(authStore.user.uid, selectedArticle.value.id, isBookmarked.value)
@@ -3712,7 +3974,7 @@ watch(selectedArticle, async (article) => {
   isLiked.value = false
   isBookmarked.value = false
 
-  if (article && authStore.user) {
+  if (article && authStore.user && !isSystemJournalArticleId(article.id)) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
     
     const [liked, saved] = await Promise.all([
@@ -3737,6 +3999,7 @@ const submitComment = async (parentId?: string) => {
   const text = commentDraft.value.trim()
 
   if (!article || !user || !text) return
+  if (isSystemJournalArticleId(article.id)) return
 
   const replyData: any = {
     authorId: user.uid,
@@ -3816,18 +4079,106 @@ const navigateToNode = (id: string) => {
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
+const scaledBoardNumber = (value: number, min = 1) => Math.max(min, value * boardRenderScale.value)
+const scaledBoardPx = (value: number, min = 1) => `${scaledBoardNumber(value, min)}px`
+
+const getBoardTextShellStyle = () => ({
+  gap: scaledBoardPx(12),
+  padding: scaledBoardPx(16)
+})
+
+const getBoardTextTitleStyle = () => ({
+  fontSize: scaledBoardPx(20),
+  lineHeight: scaledBoardPx(20)
+})
+
+const getBoardTextBodyStyle = (node: JournalArticleBoardNode) => ({
+  fontSize: scaledBoardPx(node.isQuestion ? 30 : 14),
+  lineHeight: scaledBoardPx(node.isQuestion ? 36 : 22)
+})
+
+const getBoardCaptionStyle = () => ({
+  padding: `${scaledBoardPx(8)} ${scaledBoardPx(12)}`,
+  fontSize: scaledBoardPx(8),
+  lineHeight: scaledBoardPx(12)
+})
+
+const getBoardPriceShellStyle = () => ({
+  paddingLeft: scaledBoardPx(12),
+  paddingRight: scaledBoardPx(12)
+})
+
+const getBoardPriceLabelStyle = () => ({
+  marginBottom: scaledBoardPx(4),
+  fontSize: scaledBoardPx(8),
+  lineHeight: scaledBoardPx(10)
+})
+
+const getBoardPriceValueStyle = () => ({
+  fontSize: scaledBoardPx(20),
+  lineHeight: scaledBoardPx(20)
+})
+
+const getBoardAssetShellStyle = () => ({
+  paddingLeft: scaledBoardPx(12),
+  paddingRight: scaledBoardPx(12)
+})
+
+const getBoardAssetInnerStyle = () => ({
+  gap: scaledBoardPx(4)
+})
+
+const getBoardAssetLabelStyle = () => ({
+  fontSize: scaledBoardPx(18),
+  lineHeight: scaledBoardPx(22)
+})
+
+const getBoardAssetTypeStyle = () => ({
+  fontSize: scaledBoardPx(8),
+  lineHeight: scaledBoardPx(10)
+})
+
+const getBoardDataShellStyle = (gap: number, paddingX: number) => ({
+  gap: scaledBoardPx(gap),
+  paddingLeft: scaledBoardPx(paddingX),
+  paddingRight: scaledBoardPx(paddingX)
+})
+
+const getBoardDataGridStyle = (gap: number) => ({
+  gap: scaledBoardPx(gap)
+})
+
+const getBoardDataCellStyle = (paddingX: number, paddingY: number) => ({
+  padding: `${scaledBoardPx(paddingY)} ${scaledBoardPx(paddingX)}`
+})
+
+const getBoardDataTitleStyle = (fontSize: number) => ({
+  fontSize: scaledBoardPx(fontSize),
+  lineHeight: scaledBoardPx(fontSize + 4)
+})
+
+const getBoardDataLabelStyle = (fontSize: number) => ({
+  fontSize: scaledBoardPx(fontSize),
+  lineHeight: scaledBoardPx(fontSize + 3)
+})
+
+const getBoardDataValueStyle = (fontSize: number) => ({
+  fontSize: scaledBoardPx(fontSize),
+  lineHeight: scaledBoardPx(fontSize + 3)
+})
+
 const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
-  left: `${node.position.x * boardGridSize.value}px`,
-  top: `${node.position.y * boardGridSize.value}px`,
-  width: `${node.size.width * boardGridSize.value}px`,
-  height: `${node.size.height * boardGridSize.value}px`
+  left: `${node.position.x * boardRenderGridSize.value}px`,
+  top: `${node.position.y * boardRenderGridSize.value}px`,
+  width: `${node.size.width * boardRenderGridSize.value}px`,
+  height: `${node.size.height * boardRenderGridSize.value}px`
 })
 
 const getBoardNodeRect = (node: JournalArticleBoardNode) => ({
-  left: node.position.x * boardGridSize.value,
-  top: node.position.y * boardGridSize.value,
-  right: (node.position.x + node.size.width) * boardGridSize.value,
-  bottom: (node.position.y + node.size.height) * boardGridSize.value
+  left: node.position.x * boardRenderGridSize.value,
+  top: node.position.y * boardRenderGridSize.value,
+  right: (node.position.x + node.size.width) * boardRenderGridSize.value,
+  bottom: (node.position.y + node.size.height) * boardRenderGridSize.value
 })
 
 const getDistanceToBoardNode = (point: { x: number; y: number }, node: JournalArticleBoardNode) => {
@@ -4222,10 +4573,10 @@ const selectBoardTrade = (trade: DiaryEntry) => {
 }
 
 const getBoardNodePortPoint = (node: JournalArticleBoardNode, port: JournalArticleBoardPort = 'left') => {
-  const x = node.position.x * boardGridSize.value
-  const y = node.position.y * boardGridSize.value
-  const width = node.size.width * boardGridSize.value
-  const height = node.size.height * boardGridSize.value
+  const x = node.position.x * boardRenderGridSize.value
+  const y = node.position.y * boardRenderGridSize.value
+  const width = node.size.width * boardRenderGridSize.value
+  const height = node.size.height * boardRenderGridSize.value
   if (port === 'top') return { x: x + width / 2, y }
   if (port === 'bottom') return { x: x + width / 2, y: y + height }
   if (port === 'right') return { x: x + width, y: y + height / 2 }
@@ -4238,7 +4589,7 @@ const getBoardConnectionPathFromPoints = (
   fromPort: JournalArticleBoardPort = 'right',
   toPort: JournalArticleBoardPort = 'left'
 ) => {
-  const distance = Math.max(80, Math.hypot(to.x - from.x, to.y - from.y) * 0.35)
+  const distance = Math.max(80 * boardRenderScale.value, Math.hypot(to.x - from.x, to.y - from.y) * 0.35)
   const cp1 = { ...from }
   const cp2 = { ...to }
   if (fromPort === 'right') cp1.x += distance
@@ -4901,6 +5252,40 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 <style scoped>
 .journal-wrapper {
   color: var(--text-primary);
+}
+
+.article-board-tool {
+  position: relative;
+  pointer-events: auto;
+}
+
+.article-board-tool-tooltip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  z-index: 9001;
+  border: 1px solid rgba(44, 44, 42, 0.18);
+  padding: 4px 7px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.08);
+  color: #2c2c2a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: uppercase;
+  transform: translateY(-50%) translateX(-4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  white-space: nowrap;
+}
+
+.article-board-tool:hover .article-board-tool-tooltip,
+.article-board-tool:focus-within .article-board-tool-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .journal-wrapper.exforum-edge-shadows {
