@@ -614,7 +614,7 @@
       </div>
 
      <!-- Custom Labels Container -->
-      <div v-if="['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName || node.params?.customDescription || node.params?.isEditingDescription)"
+      <div v-if="!isPreview && ['condition', 'scenario', 'strategy'].includes(node.type) && (node.params?.customName || node.params?.isEditingName || node.params?.customDescription || node.params?.isEditingDescription)"
            v-show="scale > 0.25"
            class="absolute top-full left-1/2 flex flex-col items-center z-50 -translate-x-1/2"
            :style="{ marginTop: scaledPx(8), gap: scaledPx(8) }">

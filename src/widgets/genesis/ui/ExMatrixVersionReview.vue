@@ -126,7 +126,7 @@
                                    :scale="0.45"
                                    :is-dark="isDark"
                                    :is-preview="true"
-                                   :style="`position: absolute !important; left: 50% !important; top: ${change.nodeObject.params?.customName ? '38%' : '50%'} !important; transform: translate(-50%, -50%) !important;`"
+                                   style="position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important;"
                                  />
                                </div>
                                <div class="flex flex-col gap-0.5 relative z-10 flex-1 min-w-0">
