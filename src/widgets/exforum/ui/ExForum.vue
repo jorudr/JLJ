@@ -208,8 +208,17 @@
 
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
-    <article v-if="selectedArticle" class="journal-article-reader flex flex-col min-h-full" key="reader">
-      <header class="article-reader-header">
+    <article v-if="selectedArticle" class="journal-article-reader relative isolate flex flex-col min-h-full" key="reader">
+      <div class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
+        <img
+          src="/assets/ui/eves.svg"
+          alt=""
+          aria-hidden="true"
+          class="absolute left-[-50rem] top-[58%] h-[2800px] w-[2800px] -translate-y-1/2 select-none object-contain opacity-[0.06]"
+        />
+      </div>
+
+      <header class="article-reader-header relative z-10">
         <div class="article-reader-toolbar">
           <button @click="closeReader" class="article-reader-back group">
             <span class="text-xl opacity-30 group-hover:-translate-x-1 transition-transform">←</span>
@@ -240,7 +249,7 @@
         </div>
       </header>
 
-      <main class="box-border flex w-full max-w-full flex-col flex-none overflow-hidden py-6 gap-6">
+      <main class="relative z-10 box-border flex w-full max-w-full flex-col flex-none overflow-hidden py-6 gap-6">
         
         <!-- MODE SWITCHER -->
         <div class="flex justify-center w-full shrink-0">
@@ -537,7 +546,7 @@
         </button>
       </div>
 
-      <footer class="article-comments-footer">
+      <footer class="article-comments-footer relative z-10">
         <div class="article-comments-heading">
           <div>
             <span>{{ articleLabels.comments }}</span>
