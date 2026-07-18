@@ -229,7 +229,8 @@ const emit = defineEmits([
   'strategy-version-create',
   'strategy-version-update',
   'strategy-version-clear',
-  'toggle-tree'
+  'toggle-tree',
+  'close-context-menus'
 ])
 
 const { locale } = useI18n()
@@ -267,18 +268,21 @@ function setGitPanelOpen(value: boolean) {
 }
 
 function openVersionReview() {
+  emit('close-context-menus')
   isManualOpen.value = false
   setGitPanelOpen(false)
   isVersionReviewOpen.value = true
 }
 
 function openManual() {
+  emit('close-context-menus')
   isVersionReviewOpen.value = false
   setGitPanelOpen(false)
   isManualOpen.value = true
 }
 
 function toggleTree() {
+  emit('close-context-menus')
   setGitPanelOpen(false)
   emit('toggle-tree')
 }

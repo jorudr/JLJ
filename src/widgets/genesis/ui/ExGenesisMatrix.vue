@@ -134,6 +134,7 @@
                        @strategy-version-update="state.updateSelectedStrategyVersion"
                        @strategy-version-clear="state.clearStrategyVersionChanges"
                        @git-panel-state="isGitPanelOpen = $event"
+                       @close-context-menus="closeContextMenus"
                        @toggle-tree="isTreeOpen = !isTreeOpen" />
 
       <!-- GENESIS TREE OVERLAY -->
@@ -528,11 +529,15 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 function handleGlobalClick(e: MouseEvent) {
   const target = e.target as HTMLElement
   if (!target.closest('.context-menu-container')) {
-    menu.nodeContextMenu.value = null
-    menu.connectionContextMenu.value = null
-    menu.personalCondContextMenu.value = null
-    menu.pageContextMenu.value = null
+    closeContextMenus()
   }
+}
+
+function closeContextMenus() {
+  menu.nodeContextMenu.value = null
+  menu.connectionContextMenu.value = null
+  menu.personalCondContextMenu.value = null
+  menu.pageContextMenu.value = null
 }
 
 function handleBoardContextMenu(e: MouseEvent) {
