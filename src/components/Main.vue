@@ -1,11 +1,19 @@
 <template>
   <div
     class="relative w-full min-h-screen overflow-x-hidden flex flex-col select-none transition-all duration-1000"
-    :class="isDark ? 'theme-dark bg-[#070708] text-white/80' : 'theme-light bg-[#f8f9fa] text-slate-800'"
+    :class="isDark ? 'theme-dark bg-[#070708] text-white/80' : 'theme-light bg-[#FFFFFF] text-[#2c2c2a]'"
     style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Background Ambience -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <!-- Ethereal Background (Light Theme) -->
+      <div class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000" 
+           :style="{ 
+             backgroundImage: 'url(\'/assets/white_ethereal_bg.png\')',
+             filter: 'blur(20px) brightness(1.1) contrast(0.9)',
+             opacity: !isDark ? 0.2 : 0
+           }"></div>
+
       <!-- Glow Gradients -->
       <div 
         class="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-25 mix-blend-screen transition-all duration-1000"
@@ -18,15 +26,26 @@
       
       <!-- Digital Grid -->
       <div 
-        class="absolute inset-0 opacity-[0.4] transition-opacity duration-1000"
+        class="absolute inset-0 opacity-10 transition-opacity duration-1000"
         :class="isDark ? 'grid-dark' : 'grid-light'"
       ></div>
+
+      <!-- Dot Grid (app1.1 style) -->
+      <div class="absolute inset-0 pointer-events-none transition-opacity duration-1000" 
+           :style="{ backgroundImage: 'radial-gradient(#2c2c2a 0.5px, transparent 0.5px)', backgroundSize: '30px 30px', opacity: !isDark ? 0.05 : 0 }"></div>
+
+      <!-- Light Sweep (only in light mode) -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden transition-opacity duration-1000" :style="{ opacity: !isDark ? 1 : 0 }">
+        <div class="absolute top-[-100%] left-[-50%] w-[20%] h-[300%] origin-center animate-sweep"
+             style="background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);"></div>
+      </div>
+
+      <!-- Cinematic Vignette -->
+      <div class="absolute inset-0 pointer-events-none transition-opacity duration-1000"
+           :style="{ background: 'radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%)', opacity: !isDark ? 1 : 0 }"></div>
     </div>
 
-    <!-- Scan Line -->
-    <div class="absolute inset-0 pointer-events-none opacity-[0.1] sm:opacity-[0.1] overflow-hidden">
-      <div class="w-full h-px bg-current animate-scan"></div>
-    </div>
+
 
     <!-- Geometric Background Elements -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40">
@@ -52,66 +71,65 @@
     <!-- Hero Section (First Viewport) -->
     <div class="w-full min-h-screen flex flex-col justify-between p-6 sm:p-10 relative z-10">
       <!-- Header / Top Bar -->
-      <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] uppercase">
-        <!-- App Name -->
-        <div class="flex items-center z-50">
+      <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] uppercase relative">
+        <!-- Left Section: App Name & Navigation -->
+        <div class="flex items-center space-x-8 md:space-x-12 z-50">
+          <!-- App Name -->
           <span 
-            class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light"
-            :class="isDark ? 'text-white' : 'text-slate-900'"
+            class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light cursor-pointer"
+            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
             J.L.JÖRMUNGANDR
           </span>
+
+          <!-- Navigation -->
+          <nav class="hidden md:flex items-center space-x-8 text-[12px]">
+            <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+              {{ t('landing.nav.products') }}
+              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </a>
+            <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+              {{ t('landing.nav.useCases') }}
+              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </a>
+            <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</a>
+            <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</a>
+          </nav>
         </div>
 
-        <!-- Language Switcher -->
-        <div class="flex items-center justify-center space-x-4 z-50 absolute left-1/2 -translate-x-1/2">
+        <!-- Right Section: Language Switcher -->
+        <div class="flex items-center space-x-4 z-50">
           <button 
             @click="setLocale('en')"
             class="transition-colors hover:text-white/50 cursor-pointer"
-            :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-black font-bold') : 'opacity-50'"
+            :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
             EN
           </button>
-          <span class="opacity-30">/</span>
+          <span :class="isDark ? 'text-white/30' : 'text-[#2c2c2a]/30'">/</span>
           <button 
             @click="setLocale('ru')"
             class="transition-colors hover:text-white/50 cursor-pointer"
-            :class="locale === 'ru' ? (isDark ? 'text-white font-bold' : 'text-black font-bold') : 'opacity-50'"
+            :class="locale === 'ru' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
             RU
-          </button>
-        </div>
-
-        <!-- Download Button -->
-        <div class="flex items-center z-50">
-          <button 
-            @click="scrollToDownload"
-            class="px-6 cursor-pointer py-2.5 transition-all duration-300 hover:scale-105 tracking-[0.4em] bg-white text-black shadow-sm border border-black/5 hover:bg-slate-50"
-          >
-            {{ t('landing.download') }}
           </button>
         </div>
       </header>
 
       <!-- Animated Tagline Section -->
       <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50">
-        <!-- Core Identity Logo (Small) -->
-        <div class="relative w-16 h-16 flex items-center justify-center mb-8" :class="isDark ? 'text-white' : 'text-slate-900'">
-          <div 
-            class="absolute inset-0 border border-current opacity-30 rounded-none"
-            style="animation: spin 12s linear infinite;"
-          ></div>
-          <div 
-            class="absolute inset-3 border border-current opacity-50 rounded-none"
-            style="animation: spin 8s linear infinite reverse;"
-          ></div>
-          <div 
-            class="w-3 h-3 bg-current rotate-45"
-          ></div>
+        <!-- Core Icon -->
+        <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center mb-8 shrink-0">
+          <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
+          <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
+          <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
+          <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+          <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
         </div>
 
-        <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-slate-900'">
+        <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
           {{ t('landing.heroTitleLine1') }}<br>{{ t('landing.heroTitleLine2') }}
         </div>
 
@@ -161,7 +179,7 @@
             <!- Pulsing Diamond Core ->
             <div 
               class="w-3.5 h-3.5 rotate-45 animate-pulse transition-colors duration-1000"
-              :class="isDark ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'bg-slate-900 shadow-[0_0_8px_rgba(0,0,0,0.3)]'"
+              :class="isDark ? 'bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'bg-[#2c2c2a] shadow-[0_0_8px_rgba(0,0,0,0.3)]'"
             ></div>
             <!- Corner Brackets ->
             <div class="absolute -top-3 -left-3 w-5 h-5 border-t-2 border-l-2 transition-colors duration-700" :class="isDark ? 'border-white group-hover:border-black' : 'border-slate-800 group-hover:border-black'"></div>
@@ -198,7 +216,7 @@
                 class="relative cursor-pointer overflow-hidden w-full py-4 text-[10px] font-mono tracking-[0.5em] uppercase font-bold border transition-all duration-300 group/btn"
                 :class="isDark 
                   ? 'bg-white text-black border-white hover:bg-transparent hover:text-white' 
-                  : 'bg-black/90 text-white border-slate-900 hover:bg-transparent hover:text-slate-900'"
+                  : 'bg-black/90 text-white border-[#2c2c2a] hover:bg-transparent hover:text-[#2c2c2a]'"
               >
                 <span class="relative z-10">EXPLORE</span>
                 <span 
@@ -224,6 +242,11 @@
       </div>
     </div>
 
+    <!-- New Empty Section -->
+    <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[50vh] py-32">
+      <!-- Placeholder for future content -->
+    </section>
+
     <!-- Features Section -->
     <section 
       ref="featuresSection" 
@@ -233,7 +256,7 @@
       <div class="text-center space-y-6">
         <h2 
           class="text-4xl sm:text-5xl lg:text-6xl tracking-[0.3em] uppercase font-light"
-          :class="isDark ? 'text-white' : 'text-slate-900'"
+          :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
         >
           {{ t('landing.features.title') }}
         </h2>
@@ -356,7 +379,7 @@
 
     <!-- Download Section -->
     <section ref="downloadSection" class="relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 border-t" :class="isDark ? 'border-white/5 bg-transparent' : 'border-slate-200 bg-transparent'">
-      <div class="text-3xl sm:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-slate-900'">
+      <div class="text-3xl sm:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
         {{ t('landing.footer.experience') }}
         <div class="flex items-center justify-center space-x-4 mt-6">
           <span class="text-xs sm:text-sm tracking-[0.3em] font-mono opacity-50 uppercase">{{ t('landing.footer.with') }}</span>
@@ -443,11 +466,23 @@ onMounted(() => {
   } else {
     os.value = 'other'
   }
+
+  if (emptySection.value) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        isDark.value = !entry.isIntersecting
+      })
+    }, {
+      rootMargin: "-25% 0px -25% 0px"
+    })
+    observer.observe(emptySection.value)
+  }
 })
 
 const isDark = ref(true)
 const featuresSection = ref(null)
 const downloadSection = ref(null)
+const emptySection = ref(null)
 
 const scrollToDownload = () => {
   downloadSection.value?.scrollIntoView({ behavior: 'smooth' })
@@ -474,6 +509,14 @@ const scrollToFeatures = () => {
 .grid-light {
   background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+@keyframes sweep { 
+  from { transform: rotate(-35deg) translateX(-100%); } 
+  to { transform: rotate(-35deg) translateX(500%); } 
+}
+.animate-sweep {
+  animation: sweep 10s linear infinite;
 }
 
 /* Animations */

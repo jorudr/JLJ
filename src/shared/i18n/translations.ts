@@ -4,9 +4,15 @@ export const translations = {
       download: "DOWNLOAD",
       downloadMac: "DOWNLOAD FOR MAC",
       downloadWindows: "DOWNLOAD FOR WINDOWS",
-      heroTitleLine1: "Manage your capital with advanced",
-      heroTitleLine2: "analysis of trades",
+      heroTitleLine1: "Manage your capital, keep a trading journal,",
+      heroTitleLine2: "connect and learn",
       scrollToExplore: "SCROLL_TO_EXPLORE",
+      nav: {
+        products: "Products",
+        useCases: "Use Cases",
+        pricing: "Pricing",
+        philosophy: "Philosophy"
+      },
       features: {
         title: "System Features",
         subtitle: "Analytical Grid Capabilities",
@@ -176,9 +182,15 @@ export const translations = {
       download: "СКАЧАТЬ",
       downloadMac: "СКАЧАТЬ ДЛЯ MAC",
       downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
-      heroTitleLine1: "Управляйте своим капиталом с помощью продвинутого",
-      heroTitleLine2: "анализа сделок",
+      heroTitleLine1: "Управляйте своим капиталом, ведите торговый журнал,",
+      heroTitleLine2: "общайтесь и учитесь",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
+      nav: {
+        products: "Продукты",
+        useCases: "Сценарии использования",
+        pricing: "Цены",
+        philosophy: "Философия"
+      },
       features: {
         title: "Особенности Системы",
         subtitle: "Возможности Аналитической Сетки",
