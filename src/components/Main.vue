@@ -278,9 +278,29 @@
 
     </div>
 
-    <!-- New Empty Section -->
-    <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[50vh] py-32">
-      <!-- Placeholder for future content -->
+    <!-- Philosophy Section (Light Theme Trigger) -->
+    <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[70vh] py-32 px-6 sm:px-10 flex flex-col justify-center">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <!-- Left: Asset & Name -->
+        <div class="flex flex-col items-center md:items-start opacity-80 transition-opacity hover:opacity-100">
+          <img src="/assets/eves.svg" alt="J.L.JORMUNGANDR Concept" class="w-full max-w-md h-auto object-contain" />
+          <div class="h-[1px] w-full bg-current opacity-20 my-10"></div>
+          <span 
+            class="text-[14px] sm:text-[18px] tracking-[0.5em] font-light uppercase"
+            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+            style="font-family: 'Cormorant Garamond', serif;"
+          >
+            J.L.JÖRMUNGANDR
+          </span>
+        </div>
+        
+        <!-- Right: Statement -->
+        <div class="flex items-center">
+          <p class="text-2xl sm:text-3xl lg:text-4xl font-light leading-relaxed tracking-wide italic" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'" style="font-family: 'Cormorant Garamond', serif;">
+            "{{ t('landing.aboutStatement') }}"
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- Features Section -->
