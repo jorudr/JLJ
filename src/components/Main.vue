@@ -48,21 +48,21 @@
 
 
     <!-- Geometric Background Elements -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 transition-opacity duration-1000" :class="isDark ? 'opacity-40' : 'opacity-60'">
         <!-- Tesseract / 3D Wireframe -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/10 dark:border-white/10 rounded-full">
-           <div class="absolute inset-12 border border-black/5 dark:border-white/5 rotate-45"></div>
-           <div class="absolute inset-24 border border-black/5 dark:border-white/5 -rotate-12"></div>
-           <div class="absolute inset-36 border border-black/5 dark:border-white/5 rotate-12"></div>
+        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border" :class="isDark ? 'border-white/10' : 'border-black/20'">
+           <div class="absolute inset-12 rotate-45 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
+           <div class="absolute inset-24 -rotate-12 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
+           <div class="absolute inset-36 rotate-12 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
         </div>
 
         <!-- Floating Squares / Tesseracts -->
-        <div class="absolute top-1/3 left-1/4 -translate-x-1/2 w-32 h-32 border border-black/20 dark:border-white/20 rotate-12"></div>
-        <div class="absolute bottom-1/3 right-1/4 translate-x-1/2 w-48 h-48 border border-black/10 dark:border-white/10 -rotate-45"></div>
+        <div class="absolute top-[5%] left-1/4 -translate-x-1/2 w-32 h-32 rotate-12 border" :class="isDark ? 'border-white/20' : 'border-black/30'"></div>
+        <div class="absolute top-[25%] right-1/4 translate-x-1/2 w-48 h-48 -rotate-45 border" :class="isDark ? 'border-white/10' : 'border-black/20'"></div>
 
         <!-- Geometric Pulse Circles -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] border border-black/[0.03] dark:border-white/[0.03] rounded-full"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] border border-black/[0.02] dark:border-white/[0.02] rounded-full"></div>
+        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] rounded-full border" :class="isDark ? 'border-white/[0.03]' : 'border-black/10'"></div>
+        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] rounded-full border" :class="isDark ? 'border-white/[0.02]' : 'border-black/5'"></div>
         
         <!-- Tactical Grid Accents -->
         <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,transparent_0%,currentColor_1px,transparent_1px)] bg-[length:64px_64px]"></div>
