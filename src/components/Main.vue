@@ -285,13 +285,18 @@
         <div class="flex flex-col items-center md:items-start opacity-80 transition-opacity hover:opacity-100">
           <img src="/assets/eves.svg" alt="J.L.JORMUNGANDR Concept" class="w-full max-w-md h-auto object-contain" />
           <div class="h-[1px] w-full bg-current opacity-20 my-10"></div>
-          <span 
-            class="text-[14px] sm:text-[18px] tracking-[0.5em] font-light uppercase"
-            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-            style="font-family: 'Cormorant Garamond', serif;"
-          >
-            J.L.JÖRMUNGANDR
-          </span>
+          <div class="flex items-center flex-wrap gap-4">
+            <span 
+              class="text-[14px] sm:text-[18px] tracking-[0.5em] font-light uppercase"
+              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+              style="font-family: 'Cormorant Garamond', serif;"
+            >
+              J.L.JÖRMUNGANDR
+            </span>
+            <span class="text-[10px] sm:text-[12px] font-mono tracking-widest opacity-40">
+              // plastic moth
+            </span>
+          </div>
         </div>
         
         <!-- Right: Statement -->
