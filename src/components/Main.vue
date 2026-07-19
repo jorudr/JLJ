@@ -278,6 +278,20 @@
 
     </div>
 
+    <!-- Video Preview Section -->
+    <section class="relative z-10 w-full max-w-7xl mx-auto py-16 px-6 sm:px-10 flex justify-center items-center pointer-events-none">
+      <div ref="videoContainer" class="w-full max-w-6xl rounded-2xl overflow-hidden border" :class="isDark ? 'border-white/10' : 'border-black/5'" :style="{ transform: `scale(${videoScale})`, transition: 'transform 0.1s ease-out' }">
+        <video 
+          src="/assets/preview.mov" 
+          autoplay 
+          loop 
+          muted 
+          playsinline 
+          class="w-full h-auto object-cover opacity-90"
+        ></video>
+      </div>
+    </section>
+
     <!-- Philosophy Section (Light Theme Trigger) -->
     <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[70vh] py-32 px-6 sm:px-10 flex flex-col justify-center">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -551,7 +565,9 @@ const isDark = ref(true)
 const featuresSection = ref(null)
 const downloadSection = ref(null)
 const emptySection = ref(null)
+const videoContainer = ref(null)
 
+const videoScale = ref(0.6)
 const hasTypedPhilosophy = ref(false)
 const typedPhilosophyText = ref('')
 
@@ -594,7 +610,7 @@ const runHeroAnimation = async () => {
   heroAnimationState.value = 3
 }
 
-import { watch } from 'vue'
+import { watch, onUnmounted } from 'vue'
 watch(() => locale.value, () => {
   if (heroAnimationState.value >= 3) {
     typedLine1.value = t('landing.heroTitleLine1')
@@ -603,6 +619,38 @@ watch(() => locale.value, () => {
   if (hasTypedPhilosophy.value) {
     typedPhilosophyText.value = t('landing.aboutStatement')
   }
+})
+
+// Removed dynamic body background sync to keep the scrollbar container background permanently dark
+
+let scrollTimeout = null
+const handleScroll = () => {
+  document.body.classList.add('is-scrolling')
+  if (scrollTimeout) clearTimeout(scrollTimeout)
+  scrollTimeout = setTimeout(() => {
+    document.body.classList.remove('is-scrolling')
+  }, 800) // hide after 800ms
+
+  if (videoContainer.value) {
+    const rect = videoContainer.value.getBoundingClientRect()
+    const windowHeight = window.innerHeight
+    
+    // Calculate progress from 0 to 1 based on how far the video has scrolled into view
+    // Start scaling when top of the video enters the screen (rect.top <= windowHeight)
+    // Finish scaling when the top of the video is 1/3 of the screen from the top
+    let progress = (windowHeight - rect.top) / (windowHeight / 1.5)
+    progress = Math.max(0, Math.min(1, progress))
+    videoScale.value = 0.6 + (0.6 * progress)
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+  if (scrollTimeout) clearTimeout(scrollTimeout)
 })
 
 const scrollToDownload = () => {
@@ -641,6 +689,7 @@ const scrollToFeatures = () => {
 }
 
 /* Animations */
+
 @keyframes slideUp {
   0% { opacity: 0; transform: translateY(30px); }
   100% { opacity: 1; transform: translateY(0); }
