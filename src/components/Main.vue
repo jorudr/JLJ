@@ -69,14 +69,14 @@
     </div>
 
     <!-- Hero Section (First Viewport) -->
-    <div class="w-full min-h-screen flex flex-col justify-between p-6 sm:p-10 relative z-10">
+    <div class="w-full min-h-screen flex flex-col justify-between px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10 relative z-10">
       <!-- Header / Top Bar -->
-      <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] uppercase relative">
+      <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] relative">
         <!-- Left Section: App Name & Navigation -->
         <div class="flex items-center space-x-8 md:space-x-12 z-50">
           <!-- App Name -->
           <span 
-            class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light cursor-pointer"
+            class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light cursor-pointer uppercase"
             :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
@@ -84,7 +84,7 @@
           </span>
 
           <!-- Navigation -->
-          <nav class="hidden md:flex items-center space-x-8 text-[12px]">
+          <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.1em]"   style="font-family: 'Cormorant Garamond', serif;">
             <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
               {{ t('landing.nav.products') }}
               <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -235,7 +235,6 @@
         @click="scrollToFeatures" 
         class="w-full flex flex-col items-center justify-center space-y-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer text-[9px] font-mono tracking-[0.3em] uppercase"
       >
-        <span>{{ t('landing.scrollToExplore') }}</span>
         <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
         </svg>
