@@ -302,7 +302,7 @@
         <!-- Right: Statement -->
         <div class="flex items-center">
           <p class="text-2xl sm:text-3xl lg:text-4xl font-light leading-relaxed tracking-wide italic" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'" style="font-family: 'Cormorant Garamond', serif;">
-            "{{ t('landing.aboutStatement') }}"
+            "{{ typedPhilosophyText }}"<span v-if="!hasTypedPhilosophy || typedPhilosophyText.length < t('landing.aboutStatement').length" class="animate-pulse">|</span>
           </p>
         </div>
       </div>
@@ -532,6 +532,11 @@ onMounted(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         isDark.value = !entry.isIntersecting
+        
+        if (entry.isIntersecting && !hasTypedPhilosophy.value) {
+          hasTypedPhilosophy.value = true
+          typeText(t('landing.aboutStatement'), typedPhilosophyText, 30)
+        }
       })
     }, {
       rootMargin: "-25% 0px -25% 0px"
@@ -546,6 +551,9 @@ const isDark = ref(true)
 const featuresSection = ref(null)
 const downloadSection = ref(null)
 const emptySection = ref(null)
+
+const hasTypedPhilosophy = ref(false)
+const typedPhilosophyText = ref('')
 
 // Animation logic
 const heroAnimationState = ref(0)
@@ -591,6 +599,9 @@ watch(() => locale.value, () => {
   if (heroAnimationState.value >= 3) {
     typedLine1.value = t('landing.heroTitleLine1')
     typedLine2.value = t('landing.heroTitleLine2')
+  }
+  if (hasTypedPhilosophy.value) {
+    typedPhilosophyText.value = t('landing.aboutStatement')
   }
 })
 
