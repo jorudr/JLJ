@@ -128,47 +128,74 @@
       </header>
 
       <!-- Animated Tagline Section -->
-      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50">
-        <!-- Core Icon & Name -->
-        <div class="flex items-center space-x-8 mb-8 scale-[0.8] origin-center">
-          <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
-            <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
-            <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
-            <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
-            <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-            <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-          </div>
-          <span 
-            class="text-[18px] sm:text-[22px] tracking-[0.4em] font-light uppercase"
-            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-            style="font-family: 'Cormorant Garamond', serif;"
-          >
-            J.L.JÖRMUNGANDR
+      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50 relative min-h-[300px]">
+        
+        <!-- INTRO TYPING -->
+        <div 
+          v-if="heroAnimationState < 2"
+          class="absolute inset-0 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
+          :class="[
+            heroAnimationState === 1 ? 'opacity-0' : 'opacity-100',
+            isDark ? 'text-white' : 'text-[#2c2c2a]'
+          ]"
+        >
+          <span class="text-[20px] sm:text-[28px] tracking-[0.5em] font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">
+            {{ typedIntro }}<span class="animate-pulse">|</span>
           </span>
         </div>
 
-        <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
-          {{ t('landing.heroTitleLine1') }}<br>{{ t('landing.heroTitleLine2') }}
-        </div>
-
-        <!-- OS Specific Download Button -->
-        <button 
-          @click="scrollToDownload"
-          class="flex cursor-pointer items-center space-x-3 px-8 py-3.5 transition-all duration-300 hover:scale-105 group animate-slide-up opacity-0 bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
+        <!-- MAIN CONTENT -->
+        <div 
+          v-show="heroAnimationState >= 2"
+          class="flex flex-col items-center justify-center w-full"
         >
-          <template v-if="os === 'mac'">
-            <svg class="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
-              <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-            </svg>
-            <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadMac') }}</span>
-          </template>
-          <template v-else>
-            <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
-              <path d="M0 93.6l183.6-25.3v177.4H0V93.6zm203.6-28L448 32v213.6H203.6V65.6zM0 274.5h183.6V443L0 417.6V274.5zm203.6 0H448v213.6L203.6 448V274.5z"/>
-            </svg>
-            <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
-          </template>
-        </button>
+          <!-- Core Icon & Name -->
+          <div 
+            class="flex items-center space-x-8 mb-8 scale-[0.8] origin-center transition-all duration-1000 ease-out"
+            :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+          >
+            <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
+              <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
+              <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
+              <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
+              <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+              <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+            </div>
+            <span 
+              class="text-[18px] sm:text-[22px] tracking-[0.4em] font-light uppercase"
+              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+              style="font-family: 'Cormorant Garamond', serif;"
+            >
+              J.L.JÖRMUNGANDR
+            </span>
+          </div>
+
+          <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+            {{ typedLine1 }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse">|</span>
+            <br v-if="typedLine2.length > 0 || (heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1'))">
+            {{ typedLine2 }}<span v-if="heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1')" class="animate-pulse">|</span>
+          </div>
+
+          <!-- OS Specific Download Button -->
+          <button 
+            @click="scrollToDownload"
+            class="flex cursor-pointer items-center space-x-3 px-8 py-3.5 transition-all duration-1000 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
+            :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'"
+          >
+            <template v-if="os === 'mac'">
+              <svg class="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+              </svg>
+              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadMac') }}</span>
+            </template>
+            <template v-else>
+              <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
+                <path d="M0 93.6l183.6-25.3v177.4H0V93.6zm203.6-28L448 32v213.6H203.6V65.6zM0 274.5h183.6V443L0 417.6V274.5zm203.6 0H448v213.6L203.6 448V274.5z"/>
+              </svg>
+              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
+            </template>
+          </button>
+        </div>
       </main>
 
       <!-- Main Content Area (Commented Out) -->
@@ -486,12 +513,61 @@ onMounted(() => {
     })
     observer.observe(emptySection.value)
   }
+
+  runHeroAnimation()
 })
 
 const isDark = ref(true)
 const featuresSection = ref(null)
 const downloadSection = ref(null)
 const emptySection = ref(null)
+
+// Animation logic
+const heroAnimationState = ref(0)
+const typedIntro = ref('')
+const typedLine1 = ref('')
+const typedLine2 = ref('')
+
+const typeText = async (text, refVar, speed = 50) => {
+  refVar.value = ''
+  for (let i = 0; i < text.length; i++) {
+    refVar.value += text[i]
+    await new Promise(r => setTimeout(r, speed))
+  }
+}
+
+const runHeroAnimation = async () => {
+  heroAnimationState.value = 0
+  typedIntro.value = ''
+  typedLine1.value = ''
+  typedLine2.value = ''
+  
+  // State 0: Type Intro
+  await typeText('J.L.JÖRMUNGANDR', typedIntro, 60)
+  await new Promise(r => setTimeout(r, 800))
+  
+  // State 1: Fade out Intro
+  heroAnimationState.value = 1
+  await new Promise(r => setTimeout(r, 600)) // wait for fade out
+  
+  // State 2: Type Taglines
+  heroAnimationState.value = 2
+  await typeText(t('landing.heroTitleLine1'), typedLine1, 30)
+  await new Promise(r => setTimeout(r, 200))
+  await typeText(t('landing.heroTitleLine2'), typedLine2, 30)
+  await new Promise(r => setTimeout(r, 400))
+  
+  // State 3: Final show logo & button
+  heroAnimationState.value = 3
+}
+
+import { watch } from 'vue'
+watch(() => locale.value, () => {
+  if (heroAnimationState.value >= 3) {
+    typedLine1.value = t('landing.heroTitleLine1')
+    typedLine2.value = t('landing.heroTitleLine2')
+  }
+})
 
 const scrollToDownload = () => {
   downloadSection.value?.scrollIntoView({ behavior: 'smooth' })
