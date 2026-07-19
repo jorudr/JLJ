@@ -74,14 +74,23 @@
       <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] relative">
         <!-- Left Section: App Name & Navigation -->
         <div class="flex items-center space-x-8 md:space-x-12 z-50">
-          <!-- App Name -->
-          <span 
-            class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light cursor-pointer uppercase"
-            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-            style="font-family: 'Cormorant Garamond', serif;"
-          >
-            J.L.JÖRMUNGANDR
-          </span>
+          <!-- App Name & Logo -->
+          <div class="flex items-center space-x-6 cursor-pointer">
+            <div class="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+              <div class="absolute inset-0 border animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
+              <div class="absolute inset-1 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
+              <div class="w-1 h-1 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
+              <div class="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+              <div class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+            </div>
+            <span 
+              class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light uppercase"
+              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+              style="font-family: 'Cormorant Garamond', serif;"
+            >
+              J.L.JÖRMUNGANDR
+            </span>
+          </div>
 
           <!-- Navigation -->
           <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.15rem]"   style="font-family: 'Cormorant Garamond', serif;">
@@ -120,13 +129,22 @@
 
       <!-- Animated Tagline Section -->
       <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50">
-        <!-- Core Icon -->
-        <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center mb-8 shrink-0">
-          <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
-          <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
-          <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
-          <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-          <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+        <!-- Core Icon & Name -->
+        <div class="flex items-center space-x-8 mb-8 scale-[0.8] origin-center">
+          <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
+            <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
+            <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
+            <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
+            <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+            <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+          </div>
+          <span 
+            class="text-[18px] sm:text-[22px] tracking-[0.4em] font-light uppercase"
+            :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+            style="font-family: 'Cormorant Garamond', serif;"
+          >
+            J.L.JÖRMUNGANDR
+          </span>
         </div>
 
         <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
