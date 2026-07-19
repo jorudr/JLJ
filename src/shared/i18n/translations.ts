@@ -187,7 +187,7 @@ export const translations = {
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
         products: "Продукты",
-        useCases: "Сценарии использования",
+        useCases: "Применение",
         pricing: "Цены",
         philosophy: "Философия"
       },

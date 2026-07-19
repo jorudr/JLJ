@@ -84,7 +84,7 @@
           </span>
 
           <!-- Navigation -->
-          <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.1em]"   style="font-family: 'Cormorant Garamond', serif;">
+          <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.15rem]"   style="font-family: 'Cormorant Garamond', serif;">
             <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
               {{ t('landing.nav.products') }}
               <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -230,15 +230,7 @@
       </main>
       -->
 
-      <!-- Scroll Indicator -->
-      <div 
-        @click="scrollToFeatures" 
-        class="w-full flex flex-col items-center justify-center space-y-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer text-[9px] font-mono tracking-[0.3em] uppercase"
-      >
-        <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-        </svg>
-      </div>
+
     </div>
 
     <!-- New Empty Section -->
