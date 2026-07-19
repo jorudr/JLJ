@@ -2545,47 +2545,47 @@ const systemFtmoNodePayloads = [
   {
     id: 'n0',
     title: 'N0. FTMO challenge',
-    text: `<p><strong style="color:#111827">Главная мысль:</strong> FTMO не прячет правила, но <em>практическая механика</em> этих правил требует отдельного навыка.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">Прибыльная стратегия не равна готовности пройти challenge.</blockquote>`,
+    text: `<p><strong style="color:#111827">Main thought:</strong> FTMO does not hide rules, but the <em>practical mechanics</em> of these rules require a separate skill.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">A profitable strategy does not equal readiness to pass the challenge.</blockquote>`,
     position: { x: 36, y: 22 },
     size: { width: 22, height: 10 },
     order: 0
   },
   {
     id: 'n1',
-    title: 'N1. Официальные лимиты',
-    text: `<p><strong style="color:#991b1b">Лимиты — это каркас challenge.</strong> Они работают постоянно, даже когда общая картина выглядит здоровой.</p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Max Daily Loss:</strong> примерно 5% на классическом пути и около 3% на одноэтапном.</li><li><strong>Max Total Loss:</strong> около 10% от стартового баланса; иногда граница trailing.</li><li><strong>Profit Target:</strong> +10% / +5% на двух этапах или около +10% за один этап.</li></ul><p style="color:#7f1d1d"><em>Пробой дневного лимита закрывает счёт, даже если неделя в плюсе.</em></p>`,
+    title: 'N1. Official limits',
+    text: `<p><strong style="color:#991b1b">Limits are the framework of the challenge.</strong> They apply constantly, even when the overall picture looks healthy.</p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Max Daily Loss:</strong> approximately 5% on the classic path and about 3% on the 1-step.</li><li><strong>Max Total Loss:</strong> about 10% of the starting balance; sometimes trailing bound.</li><li><strong>Profit Target:</strong> +10% / +5% over two stages or about +10% for one stage.</li></ul><p style="color:#7f1d1d"><em>Breaching the daily limit closes the account, even if the week is in profit.</em></p>`,
     position: { x: 4, y: 4 },
     size: { width: 24, height: 14 },
     order: 1
   },
   {
     id: 'n2',
-    title: 'N2. Правила консистентности',
-    text: `<p><strong style="color:#854d0e">FTMO проверяет не только результат, но и форму результата.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> минимум около 4 торговых дней на этап.</li><li><strong>Best Day Rule:</strong> лучший день не должен тащить весь результат.</li><li><strong>Scaling / Profit Split:</strong> рост доли и баланса зависит от выполнения условий плана.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">Одна удачная сделка может дать target, но не обязательно даст право пройти систему.</blockquote>`,
+    title: 'N2. Consistency rules',
+    text: `<p><strong style="color:#854d0e">FTMO verifies not only the result, but the form of the result.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> minimum of around 4 trading days per stage.</li><li><strong>Best Day Rule:</strong> your best day should not carry the entire result.</li><li><strong>Scaling / Profit Split:</strong> balance and share growth depends on meeting plan conditions.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">A single lucky trade can hit the target, but won't necessarily qualify you to pass the system.</blockquote>`,
     position: { x: 4, y: 25 },
     size: { width: 24, height: 15 },
     order: 2
   },
   {
     id: 'n3',
-    title: 'N3. Операционные ограничения',
-    text: `<p><strong style="color:#1d4ed8">Самые частые нарушения рождаются не в идее сделки, а в исполнении.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>News Trading:</strong> запрет — это узкое окно до/после новости, а не весь день.</li><li><strong>Weekend Holding:</strong> стандартный счёт требует закрытия перед выходными.</li><li><strong>EA / роботы:</strong> считается не только вход, но и модификации стопа, TP, частичные закрытия.</li></ul><p><span style="color:#2563eb;font-weight:700">Swing account</span> снимает часть ограничений, но обычно ценой меньшего плеча.</p>`,
+    title: 'N3. Operational restrictions',
+    text: `<p><strong style="color:#1d4ed8">The most common violations arise not from the trade idea, but from execution.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>News Trading:</strong> the ban is a narrow window before/after the news, not the whole day.</li><li><strong>Weekend Holding:</strong> standard accounts require closing before the weekend.</li><li><strong>EA / robots:</strong> not just entry, but stop modifications, TP, and partial closes count.</li></ul><p><span style="color:#2563eb;font-weight:700">Swing account</span> removes some restrictions, but usually at the cost of lower leverage.</p>`,
     position: { x: 34, y: 2 },
     size: { width: 26, height: 15 },
     order: 3
   },
   {
     id: 'n4',
-    title: 'N4. Скрытая механика',
-    text: `<p><strong style="color:#047857">Это не скрытые правила, а неочевидная математика.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Equity-based drawdown:</strong> лимит может пробиться по текущему equity, пока позиция ещё открыта.</li><li><strong>Best Day Rule:</strong> считается доля лучшего дня от суммы всех зелёных дней.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #059669;background:rgba(16,185,129,.08)">$7000 + $4000 = $11000. Лучший день $7000 — это 64%, значит долю нужно разбавлять новыми зелёными днями.</blockquote>`,
+    title: 'N4. Hidden mechanics',
+    text: `<p><strong style="color:#047857">These aren't hidden rules, but unobvious mathematics.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Equity-based drawdown:</strong> the limit can be breached by floating equity while the position is still open.</li><li><strong>Best Day Rule:</strong> calculated as the share of the best day out of the sum of all green days.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #059669;background:rgba(16,185,129,.08)">$7000 + $4000 = $11000. A best day of $7000 is 64%, meaning the share must be diluted with new green days.</blockquote>`,
     position: { x: 68, y: 6 },
     size: { width: 26, height: 16 },
     order: 4
   },
   {
     id: 'n5',
-    title: 'N5. Почему трейдеры теряют',
-    text: `<p><strong style="color:#7e22ce">Challenge ломает не только риск-модель, но и состояние трейдера.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Setup bias:</strong> «сегодня должен быть сетап», хотя рынок часто даёт шум.</li><li><strong>Confirmation bias:</strong> трейдер видит то, что хочет увидеть.</li><li><strong>Overtrading:</strong> бездействие превращается в тревогу.</li><li><strong>Эмоциональный дрейф:</strong> после серии убытков решения принимает уже другой человек.</li></ul><p style="color:#92400e"><strong>⚠️ Осторожно:</strong> широкие формулировки вроде «на усмотрение фирмы» и детекция похожих сделок — это зона жалоб трейдеров, а не доказанный факт нарушения со стороны фирмы.</p>`,
+    title: 'N5. Why traders fail',
+    text: `<p><strong style="color:#7e22ce">The challenge breaks not only the risk model, but also the trader's mental state.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Setup bias:</strong> "there must be a setup today", even though the market often just provides noise.</li><li><strong>Confirmation bias:</strong> a trader sees what they want to see.</li><li><strong>Overtrading:</strong> inaction turns into anxiety.</li><li><strong>Emotional drift:</strong> after a series of losses, decisions are made by a different person entirely.</li></ul><p style="color:#92400e"><strong>⚠️ Caution:</strong> broad phrasing like "at the firm's discretion" and detection of similar trades are areas of trader complaints, not necessarily proven facts of firm misconduct.</p>`,
     position: { x: 68, y: 28 },
     size: { width: 26, height: 18 },
     order: 5
@@ -2629,7 +2629,7 @@ const systemFtmoBoard: JournalArticleBoard = {
     fromId: `ftmo-${from}`,
     toId: `ftmo-${to}`,
     fromPort: from === 'n0' ? (to === 'n1' || to === 'n2' ? 'left' : 'right') : 'right',
-    toPort: to === 'n0' ? 'left' : 'left'
+    toPort: 'left'
   })),
   strokes: []
 }
@@ -2638,16 +2638,16 @@ const systemFtmoTextBlocks = systemFtmoNodePayloads.map(createSystemFtmoTextBloc
 
 const systemFtmoThread = computed(() => {
   const publishedAt = '2026-07-18T00:00:00.000Z'
-  const thesisText = 'Карта правил FTMO: что официально написано, какие механики неочевидны на старте и почему именно эти ограничения часто превращают прибыльную торговлю в провал challenge.'
+  const thesisText = 'FTMO rules map: what is officially written, which mechanics are unobvious at the start, and why these very constraints often turn profitable trading into a failed challenge.'
 
   return {
     id: SYSTEM_FTMO_THREAD_ID,
-    title: 'FTMO — правила, скрытые правила и почему трейдеры теряют деньги',
+    title: 'FTMO — rules, hidden rules and why traders lose money',
     description: thesisText,
     summary: thesisText,
     category: 'QUESTION',
-    subcategory: 'Аналитика',
-    categoryLabel: 'Аналитика',
+    subcategory: 'Analytics',
+    categoryLabel: 'Analytics',
     journalMode: 'QUESTION',
     articleType: 'QUESTION',
     author: 'J.L.Jörmungandr',
@@ -4102,8 +4102,8 @@ const getBoardTextTitleStyle = () => ({
 })
 
 const getBoardTextBodyStyle = (node: JournalArticleBoardNode) => ({
-  fontSize: scaledBoardPx(node.isQuestion ? 30 : 14),
-  lineHeight: scaledBoardPx(node.isQuestion ? 36 : 22)
+  fontSize: scaledBoardPx((node as any).isQuestion ? 30 : 14),
+  lineHeight: scaledBoardPx((node as any).isQuestion ? 36 : 22)
 })
 
 const getBoardCaptionStyle = () => ({
