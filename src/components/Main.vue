@@ -349,11 +349,11 @@
           </p>
           <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-sky-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.genesis.point1') }}</span>
             </li>
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-sky-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.genesis.point2') }}</span>
             </li>
           </ul>
@@ -384,11 +384,11 @@
           </p>
           <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-purple-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.virtualLog.point1') }}</span>
             </li>
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-purple-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.virtualLog.point2') }}</span>
             </li>
           </ul>
@@ -405,11 +405,11 @@
           </p>
           <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-emerald-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.equity.point1') }}</span>
             </li>
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-emerald-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.equity.point2') }}</span>
             </li>
           </ul>
@@ -440,11 +440,11 @@
           </p>
           <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-rose-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.engine.point1') }}</span>
             </li>
             <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-rose-500"></span>
+              <span class="w-2 h-2 rotate-45 bg-current"></span>
               <span>{{ t('landing.features.engine.point2') }}</span>
             </li>
           </ul>

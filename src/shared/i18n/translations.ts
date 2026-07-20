@@ -24,7 +24,7 @@ export const translations = {
           point2: "Visual connection mapping"
         },
         virtualLog: {
-          title: "Virtual Log & Genesis Diary",
+          title: "Virtual Log & Trading Diary",
           desc: "A comprehensive journal for analyzing your trading system scenarios, reviewing the precise conditions used for opening and closing trades, and checking your emotional state.",
           point1: "Trade condition analysis",
           point2: "Emotional state logging"
@@ -203,7 +203,7 @@ export const translations = {
           point2: "Визуализация связей"
         },
         virtualLog: {
-          title: "Виртуальный Журнал и Дневник Генезиса",
+          title: "Виртуальный Журнал и Торговый Дневник",
           desc: "Комплексный журнал для анализа сценариев вашей торговой системы, рассмотрения точных условий для открытия и закрытия сделок, а также для проверки вашего эмоционального состояния.",
           point1: "Анализ условий сделок",
           point2: "Журналирование эмоционального состояния"
