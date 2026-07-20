@@ -94,13 +94,17 @@
 
           <!-- Navigation -->
           <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.15rem]"   style="font-family: 'Cormorant Garamond', serif;">
-            <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+            <a href="#" 
+               @mouseenter="showMegaMenu" @mouseleave="hideMegaMenu"
+               class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
               {{ t('landing.nav.products') }}
-              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </a>
-            <a href="#" class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+            <a href="#" 
+               @mouseenter="showMegaMenu" @mouseleave="hideMegaMenu"
+               class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
               {{ t('landing.nav.useCases') }}
-              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </a>
             <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</a>
             <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</a>
@@ -127,8 +131,56 @@
         </div>
       </header>
 
+      <!-- Mega Menu Panel -->
+      <div 
+        @mouseenter="showMegaMenu"
+        @mouseleave="hideMegaMenu"
+        class="absolute top-16 sm:top-20 left-0 w-full z-40 transition-all duration-500 overflow-hidden"
+        :class="[
+          isMegaMenuVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none',
+          isDark ? 'text-white' : 'text-[#2c2c2a]'
+        ]"
+      >
+        <div class="max-w-7xl mx-auto px-6 sm:px-10 py-12 flex flex-col md:flex-row items-stretch gap-12">
+          <!-- Left Side: Message -->
+          <div class="flex-1 flex items-center md:pr-12">
+            <h3 class="text-3xl lg:text-4xl font-light tracking-wide leading-snug" style="font-family: 'Cormorant Garamond', serif;">
+              Explore our current products and await for the newest solutions.
+            </h3>
+          </div>
+          
+          <!-- Divider -->
+          <div class="hidden md:block w-[1px] opacity-20" :class="isDark ? 'bg-white' : 'bg-black'"></div>
+          <div class="md:hidden h-[1px] w-full opacity-20" :class="isDark ? 'bg-white' : 'bg-black'"></div>
+          
+          <!-- Right Side: Products -->
+          <div class="flex-1 md:pl-12 flex flex-col justify-center space-y-8">
+            <a href="#" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+              <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
+                <div class="w-3 h-3 rotate-45 border transition-colors duration-300" :class="isDark ? 'border-white' : 'border-black'"></div>
+              </div>
+              <div>
+                <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR</div>
+                <div class="text-[10px] font-mono tracking-widest opacity-50 uppercase">Full Version</div>
+              </div>
+            </a>
+            
+            <a href="#" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+              <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
+                <div class="w-3 h-3 rotate-45 opacity-50 transition-colors duration-300" :class="isDark ? 'bg-white group-hover:bg-white' : 'bg-black group-hover:bg-black'"></div>
+              </div>
+              <div>
+                <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase opacity-70 group-hover:opacity-100 transition-opacity duration-300" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR DEMO</div>
+                <div class="text-[10px] font-mono tracking-widest opacity-40 uppercase">Free Demo</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <!-- Animated Tagline Section -->
-      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50 relative min-h-[300px]">
+      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500"
+            :class="isMegaMenuVisible ? 'opacity-0 blur-sm scale-95 pointer-events-none' : 'opacity-100 blur-0 scale-100'">
         
         <!-- INTRO TYPING -->
         <div 
@@ -517,6 +569,20 @@ onMounted(() => {
 
   runHeroAnimation()
 })
+
+const isMegaMenuVisible = ref(false)
+let megaMenuTimeout = null
+
+const showMegaMenu = () => {
+  if (megaMenuTimeout) clearTimeout(megaMenuTimeout)
+  isMegaMenuVisible.value = true
+}
+
+const hideMegaMenu = () => {
+  megaMenuTimeout = setTimeout(() => {
+    isMegaMenuVisible.value = false
+  }, 150)
+}
 
 const isDark = ref(true)
 const featuresSection = ref(null)
