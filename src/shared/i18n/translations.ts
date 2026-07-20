@@ -15,21 +15,17 @@ export const translations = {
         philosophy: "Philosophy"
       },
       features: {
-        title: "System Features",
-        subtitle: "Analytical Grid Capabilities",
+        title: "J.L.JÖRMUNGANDR is a trading diary synchronizing market chaos with formalized systems, exclusively for the elite operator.",
         genesis: {
           title: "Genesis Matrix",
-          desc: "An advanced, interactive environment engineered for architecting comprehensive trading systems from the ground up. Precisely map out complex algorithmic flows and define conditional logic paths using an intuitive node-based interface."
+          desc: "Create your trading system on an interactive board. It connects directly to your trading diary to accurately track the performance of your specific trading conditions and scenarios."
         },
         tradesTree: {
-          title: "Strategy Architecture",
-          desc: "Visualize and manage your entire trading protocol as a clearly structured hierarchical node tree. Isolate variables, define strict logic gates, and separate execution layers with absolute clarity."
+          title: "Trade Analysis & Comparison",
+          desc: "Compare your trades to find the best scenarios and execution tactics. The intuitive list allows you to effectively monitor compliance with all the rules of your trading system."
         },
 
-        deepData: {
-          title: "Deep Data Telemetry",
-          desc: "Dive deeply into granular performance metrics, risk exposure, and dynamic system indicators. Track every single tick and scenario outcome to continuously refine your edge in the market."
-        },
+
         equity: {
           title: "Advanced Equity Analysis",
           desc: "Expose and visualize the true performance of your portfolio with comprehensive robustness diagnostics and advanced equity simulations. Stress-test your models under various dynamic market conditions."
@@ -191,21 +187,17 @@ export const translations = {
         philosophy: "Философия"
       },
       features: {
-        title: "Особенности Системы",
-        subtitle: "Возможности Аналитической Сетки",
+        title: "J.L.JÖRMUNGANDR — торговый дневник, синхронизирующий рыночный хаос с формализованными системами, исключительно для элитных операторов.",
         genesis: {
           title: "Матрица Генезиса",
-          desc: "Продвинутая интерактивная среда, разработанная для создания комплексной торговой системы с нуля. Выстраивайте сложные алгоритмические потоки и определяйте пути логики через удобный интерфейс."
+          desc: "Создайте свою торговую систему на интерактивной доске. Она напрямую подключается к вашему торговому дневнику для точного отслеживания результативности торговых условий и сценариев."
         },
         tradesTree: {
-          title: "Архитектура Стратегии",
-          desc: "Визуализируйте и управляйте всем торговым протоколом в виде четко структурированного иерархического дерева. Изолируйте переменные, строгие логические вентили и уровни исполнения с абсолютной ясностью."
+          title: "Анализ и Сравнение Сделок",
+          desc: "Сравнивайте свои сделки для поиска наилучших сценариев и тактик исполнения. Удобный список позволяет эффективно контролировать соблюдение всех правил вашей торговой системы."
         },
 
-        deepData: {
-          title: "Глубокая Телеметрия Данных",
-          desc: "Погрузитесь в детализированные показатели производительности, рисков и динамических индикаторов. Отслеживайте каждый тик и результат сценария, чтобы непрерывно оттачивать свое преимущество."
-        },
+
         equity: {
           title: "Продвинутый Анализ Капитала",
           desc: "Проанализируйте реальную эффективность портфеля с помощью детальной диагностики надежности и моделирования капитала. Тестируйте свои модели на прочность в различных рыночных условиях."

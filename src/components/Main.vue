@@ -328,15 +328,30 @@
       class="relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10 space-y-40"
     >
       <!-- Section Header -->
-      <div class="text-center space-y-6">
+      <div class="text-start space-y-6 max-w-4xl pb-16 lg:pb-24">
         <h2 
-          class="text-4xl sm:text-5xl lg:text-6xl tracking-[0.3em] uppercase font-light"
+          class="text-3xl sm:text-4xl lg:text-5xl font-light leading-snug tracking-wide"
           :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
         >
           {{ t('landing.features.title') }}
         </h2>
-        <div class="h-px w-32 bg-current mx-auto opacity-30"></div>
-        <p class="text-xs lg:text-sm font-mono tracking-[0.4em] uppercase opacity-50">{{ t('landing.features.subtitle') }}</p>
+      </div>
+
+      <!-- Feature 5: Advanced Equity Analysis -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.equity.title') }}</h3>
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
+            {{ t('landing.features.equity.desc') }}
+          </p>
+        </div>
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
+          <img 
+            src="/screenshots/3d-equity.png" 
+            alt="Advanced Equity Analysis" 
+            class="w-full h-auto object-contain"
+          />
+        </div>
       </div>
 
       <!-- Feature 1: Genesis Matrix -->
@@ -374,39 +389,7 @@
       </div>
 
 
-      <!-- Feature 4: Deep Data -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.deepData.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.deepData.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/deep-data.png" 
-            alt="Deep Data Telemetry" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
 
-      <!-- Feature 5: Advanced Equity Analysis -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.equity.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.equity.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/3d-equity.png" 
-            alt="Advanced Equity Analysis" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
 
       <!-- Feature 6: Forum -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
