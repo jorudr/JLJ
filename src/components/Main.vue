@@ -376,36 +376,6 @@
       </div>
     </section>
 
-    <!-- Philosophy Section (Light Theme Trigger) -->
-    <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[70vh] py-32 px-6 sm:px-10 flex flex-col justify-center">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <!-- Left: Asset & Name -->
-        <div class="flex flex-col items-center md:items-start opacity-80 transition-opacity hover:opacity-100">
-          <img src="/assets/eves.svg" alt="J.L.JORMUNGANDR Concept" class="w-full max-w-md h-auto object-contain" />
-          <div class="h-[1px] w-full bg-current opacity-20 my-10"></div>
-          <div class="flex items-center flex-wrap gap-4">
-            <span 
-              class="text-[14px] sm:text-[18px] tracking-[0.5em] font-light uppercase"
-              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-              style="font-family: 'Cormorant Garamond', serif;"
-            >
-              J.L.JÖRMUNGANDR
-            </span>
-            <span class="text-[10px] sm:text-[12px] font-mono tracking-widest opacity-40">
-              // plastic moth
-            </span>
-          </div>
-        </div>
-        
-        <!-- Right: Statement -->
-        <div class="flex items-center">
-          <p class="text-2xl sm:text-3xl lg:text-4xl font-light leading-relaxed tracking-wide italic" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'" style="font-family: 'Cormorant Garamond', serif;">
-            "{{ typedPhilosophyText }}"<span v-if="!hasTypedPhilosophy || typedPhilosophyText.length < t('landing.aboutStatement').length" class="animate-pulse">|</span>
-          </p>
-        </div>
-      </div>
-    </section>
-
     <!-- Features Section -->
     <section 
       ref="featuresSection" 
@@ -493,8 +463,38 @@
       </div>
     </section>
 
+    <!-- Philosophy Section (Light Theme Trigger) -->
+    <section ref="emptySection" class="relative z-10 w-full max-w-7xl mx-auto min-h-[70vh] py-32 px-6 sm:px-10 flex flex-col justify-center">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <!-- Left: Asset & Name -->
+        <div class="flex flex-col items-center md:items-start opacity-80 transition-opacity hover:opacity-100">
+          <img src="/assets/eves.svg" alt="J.L.JORMUNGANDR Concept" class="w-full max-w-md h-auto object-contain" />
+          <div class="h-[1px] w-full bg-current opacity-20 my-10"></div>
+          <div class="flex items-center flex-wrap gap-4">
+            <span 
+              class="text-[14px] sm:text-[18px] tracking-[0.5em] font-light uppercase"
+              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
+              style="font-family: 'Cormorant Garamond', serif;"
+            >
+              J.L.JÖRMUNGANDR
+            </span>
+            <span class="text-[10px] sm:text-[12px] font-mono tracking-widest opacity-40">
+              // plastic moth
+            </span>
+          </div>
+        </div>
+        
+        <!-- Right: Statement -->
+        <div class="flex items-center">
+          <p class="text-2xl sm:text-3xl lg:text-4xl font-light leading-relaxed tracking-wide italic" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'" style="font-family: 'Cormorant Garamond', serif;">
+            "{{ typedPhilosophyText }}"<span v-if="!hasTypedPhilosophy || typedPhilosophyText.length < t('landing.aboutStatement').length" class="animate-pulse">|</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- Download Section -->
-    <section ref="downloadSection" class="relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 border-t" :class="isDark ? 'border-white/5 bg-transparent' : 'border-slate-200 bg-transparent'">
+    <section ref="downloadSection" class="relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 bg-transparent">
       <div class="text-3xl sm:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
         {{ t('landing.footer.experience') }}
         <div class="flex items-center justify-center space-x-4 mt-6">
@@ -557,7 +557,7 @@
     </section>
 
     <!-- Bottom Telemetry Footer -->
-    <footer class="relative z-10 w-full flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] font-mono tracking-[0.2em] opacity-40 uppercase pt-6 pb-12 px-6 sm:px-10 border-t" :class="isDark ? 'border-white/5' : 'border-slate-200'">
+    <footer class="relative z-10 w-full flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] font-mono tracking-[0.2em] uppercase pt-6 pb-12 px-6 sm:px-10" :class="isDark ? 'text-white/20' : 'text-black/60'">
       <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
         <span>{{ t('landing.footer.company') }}</span> 
       </div>
