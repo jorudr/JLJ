@@ -19,27 +19,24 @@ export const translations = {
         subtitle: "Analytical Grid Capabilities",
         genesis: {
           title: "Genesis Matrix",
-          desc: "An interactive environment designed for creating a comprehensive trading system through nodes and advanced connection systems. Easily map out your algorithmic flow.",
-          point1: "Node-based system creation",
-          point2: "Visual connection mapping"
+          desc: "An advanced, interactive environment engineered for architecting comprehensive trading systems from the ground up. Precisely map out complex algorithmic flows and define conditional logic paths using an intuitive node-based interface."
         },
-        virtualLog: {
-          title: "Virtual Log & Trading Diary",
-          desc: "A comprehensive journal for analyzing your trading system scenarios, reviewing the precise conditions used for opening and closing trades, and checking your emotional state.",
-          point1: "Trade condition analysis",
-          point2: "Emotional state logging"
+        tradesTree: {
+          title: "Strategy Architecture",
+          desc: "Visualize and manage your entire trading protocol as a clearly structured hierarchical node tree. Isolate variables, define strict logic gates, and separate execution layers with absolute clarity."
+        },
+
+        deepData: {
+          title: "Deep Data Telemetry",
+          desc: "Dive deeply into granular performance metrics, risk exposure, and dynamic system indicators. Track every single tick and scenario outcome to continuously refine your edge in the market."
         },
         equity: {
           title: "Advanced Equity Analysis",
-          desc: "Expose and visualize your portfolio's performance with comprehensive robustness diagnostics and advanced equity simulations. Stress-test your models under various dynamic scenarios.",
-          point1: "Robustness diagnostics",
-          point2: "Equity simulations"
+          desc: "Expose and visualize the true performance of your portfolio with comprehensive robustness diagnostics and advanced equity simulations. Stress-test your models under various dynamic market conditions."
         },
-        engine: {
-          title: "Isometric Engine Core",
-          desc: "The visual heart of the platform. The application is entirely focused on delivering a stunning visual look and seamless interactivity, ensuring your experience is both beautiful and intuitive.",
-          point1: "Premium visual aesthetics",
-          point2: "Seamless interactivity"
+        forum: {
+          title: "Knowledge Exchange Protocol",
+          desc: "A dedicated, high-level module for discussing complex trading ideas and sharing strategic models. Engage with other operators to compare tactical setups and accelerate your learning curve."
         }
       },
       footer: {
@@ -198,27 +195,24 @@ export const translations = {
         subtitle: "Возможности Аналитической Сетки",
         genesis: {
           title: "Матрица Генезиса",
-          desc: "Интерактивная среда, разработанная для создания комплексной торговой системы через узлы и продвинутые системы связей. Легко выстраивайте поток ваших алгоритмов.",
-          point1: "Создание системы на базе узлов",
-          point2: "Визуализация связей"
+          desc: "Продвинутая интерактивная среда, разработанная для создания комплексной торговой системы с нуля. Выстраивайте сложные алгоритмические потоки и определяйте пути логики через удобный интерфейс."
         },
-        virtualLog: {
-          title: "Виртуальный Журнал и Торговый Дневник",
-          desc: "Комплексный журнал для анализа сценариев вашей торговой системы, рассмотрения точных условий для открытия и закрытия сделок, а также для проверки вашего эмоционального состояния.",
-          point1: "Анализ условий сделок",
-          point2: "Журналирование эмоционального состояния"
+        tradesTree: {
+          title: "Архитектура Стратегии",
+          desc: "Визуализируйте и управляйте всем торговым протоколом в виде четко структурированного иерархического дерева. Изолируйте переменные, строгие логические вентили и уровни исполнения с абсолютной ясностью."
+        },
+
+        deepData: {
+          title: "Глубокая Телеметрия Данных",
+          desc: "Погрузитесь в детализированные показатели производительности, рисков и динамических индикаторов. Отслеживайте каждый тик и результат сценария, чтобы непрерывно оттачивать свое преимущество."
         },
         equity: {
           title: "Продвинутый Анализ Капитала",
-          desc: "Визуализируйте эффективность вашего портфолио с помощью детальной диагностики устойчивости и продвинутых симуляций капитала. Проверьте ваши модели на прочность в различных динамических сценариях.",
-          point1: "Диагностика устойчивости",
-          point2: "Симуляции капитала"
+          desc: "Проанализируйте реальную эффективность портфеля с помощью детальной диагностики надежности и моделирования капитала. Тестируйте свои модели на прочность в различных рыночных условиях."
         },
-        engine: {
-          title: "Изометрическое Ядро Движка",
-          desc: "Визуальное сердце платформы. Приложение полностью сфокусировано на обеспечении потрясающего визуального вида и плавной интерактивности, делая ваш опыт одновременно красивым и интуитивно понятным.",
-          point1: "Премиальная визуальная эстетика",
-          point2: "Плавная интерактивность"
+        forum: {
+          title: "Протокол Обмена Знаниями",
+          desc: "Специализированный модуль для обсуждения сложных торговых идей и обмена стратегическими моделями. Взаимодействуйте с другими операторами для сравнения тактических сетапов и ускорения обучения."
         }
       },
       footer: {

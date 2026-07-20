@@ -340,114 +340,88 @@
       </div>
 
       <!-- Feature 1: Genesis Matrix -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <div class="space-y-8 order-2 md:order-1">
-          
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.genesis.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-70 font-light">
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.genesis.desc') }}
           </p>
-          <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.genesis.point1') }}</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.genesis.point2') }}</span>
-            </li>
-          </ul>
         </div>
-        <div class="order-1 md:order-2 relative group overflow-hidden border transition-all duration-500" :class="isDark ? 'border-white/10 hover:border-sky-500/30' : 'border-slate-200 hover:border-sky-600/30'">
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
           <img 
             src="/screenshots/genesis-matrix.png" 
             alt="Genesis Matrix" 
-            class="w-full h-auto object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
+            class="w-full h-auto object-contain"
           />
         </div>
       </div>
 
-      <!-- Feature 2: Detailed Analysis / Virtual Log -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <div class="relative group overflow-hidden border transition-all duration-500" :class="isDark ? 'border-white/10 hover:border-purple-500/30' : 'border-slate-200 hover:border-purple-600/30'">
-          <img 
-            src="/screenshots/detailed-analysis.png" 
-            alt="Detailed Analysis" 
-            class="w-full h-auto object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
-          />
-        </div>
-        <div class="space-y-8">
-          
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.virtualLog.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-70 font-light">
-            {{ t('landing.features.virtualLog.desc') }}
+      <!-- Feature 2: Trades Tree -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.tradesTree.title') }}</h3>
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
+            {{ t('landing.features.tradesTree.desc') }}
           </p>
-          <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.virtualLog.point1') }}</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.virtualLog.point2') }}</span>
-            </li>
-          </ul>
+        </div>
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
+          <img 
+            src="/screenshots/trades-tree.png" 
+            alt="Trades Tree" 
+            class="w-full h-auto object-contain"
+          />
         </div>
       </div>
 
-      <!-- Feature 3: Advanced Equity Analysis -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <div class="space-y-8 order-2 md:order-1">
-         
+
+      <!-- Feature 4: Deep Data -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.deepData.title') }}</h3>
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
+            {{ t('landing.features.deepData.desc') }}
+          </p>
+        </div>
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
+          <img 
+            src="/screenshots/deep-data.png" 
+            alt="Deep Data Telemetry" 
+            class="w-full h-auto object-contain"
+          />
+        </div>
+      </div>
+
+      <!-- Feature 5: Advanced Equity Analysis -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.equity.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-70 font-light">
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.equity.desc') }}
           </p>
-          <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.equity.point1') }}</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.equity.point2') }}</span>
-            </li>
-          </ul>
         </div>
-        <div class="order-1 md:order-2 relative group overflow-hidden border transition-all duration-500" :class="isDark ? 'border-white/10 hover:border-emerald-500/30' : 'border-slate-200 hover:border-emerald-600/30'">
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
           <img 
             src="/screenshots/3d-equity.png" 
-            alt="3D Equity" 
-            class="w-full h-auto object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
+            alt="Advanced Equity Analysis" 
+            class="w-full h-auto object-contain"
           />
         </div>
       </div>
 
-      <!-- Feature 4: Isometric Engine Core (3D Cube) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <div class="relative group overflow-hidden border transition-all duration-500" :class="isDark ? 'border-white/10 hover:border-rose-500/30' : 'border-slate-200 hover:border-rose-600/30'">
-          <img 
-            src="/screenshots/3d-cube.png" 
-            alt="3D Cube" 
-            class="w-full h-auto object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
-          />
-        </div>
-        <div class="space-y-8">
-         
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.engine.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-70 font-light">
-            {{ t('landing.features.engine.desc') }}
+      <!-- Feature 6: Forum -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.forum.title') }}</h3>
+          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
+            {{ t('landing.features.forum.desc') }}
           </p>
-          <ul class="space-y-3 font-mono text-[13px] lg:text-[15px] opacity-60">
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.engine.point1') }}</span>
-            </li>
-            <li class="flex items-center space-x-3">
-              <span class="w-2 h-2 rotate-45 bg-current"></span>
-              <span>{{ t('landing.features.engine.point2') }}</span>
-            </li>
-          </ul>
+        </div>
+        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
+          <img 
+            src="/screenshots/forum.png" 
+            alt="Forum" 
+            class="w-full h-auto object-contain"
+          />
         </div>
       </div>
     </section>
