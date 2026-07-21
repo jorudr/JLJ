@@ -146,22 +146,6 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                 {{ side }}
               </button>
             </div>
-
-            <label class="group/closed flex cursor-pointer flex-col gap-1 text-left select-none">
-              <span class="text-[7px] uppercase tracking-[0.32em] font-bold text-white/40">isClosed?</span>
-              <span class="flex items-center gap-2">
-                <input v-model="isClosed" type="checkbox" class="sr-only" />
-                <span
-                  class="relative h-4 w-4 border transition-all duration-300"
-                  :class="isClosed ? 'border-emerald-400 bg-emerald-400/15' : 'border-white/25 bg-black/40 group-hover/closed:border-white/50'"
-                >
-                  <span v-if="isClosed" class="absolute left-1 top-0 h-3 w-1.5 rotate-45 border-b-2 border-r-2 border-emerald-300"></span>
-                </span>
-                <span class="text-[10px] font-black uppercase tracking-[0.24em] transition-colors" :class="isClosed ? 'text-emerald-300' : 'text-white/35'">
-                  {{ isClosed ? (locale === 'ru' ? 'ДА' : 'YES') : (locale === 'ru' ? 'НЕТ' : 'NO') }}
-                </span>
-              </span>
-            </label>
           </div>
 
           <!-- BLOCK: DYNAMIC DATA STREAM -->
