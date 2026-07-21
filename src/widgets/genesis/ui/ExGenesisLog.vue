@@ -479,7 +479,7 @@
                    </div>
                  </div>
                  
-                 <div v-if="selectedTrade" class="flex items-baseline space-x-3">
+                 <div v-if="selectedTrade && isClosedDiaryTrade(selectedTrade)" class="flex items-baseline space-x-3">
                    <span class="text-4xl font-bold font-mono tracking-tighter bg-clip-text text-transparent"
                          :class="(Number(selectedTrade.profitInCurrency) || 0) >= 0 ? 'bg-gradient-to-br from-green-500 to-green-300 dark:from-green-400 dark:to-green-600' : 'bg-gradient-to-br from-red-500 to-red-300 dark:from-red-400 dark:to-red-600'">
                      {{ (Number(selectedTrade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(selectedTrade.profitInCurrency) || 0).toFixed(2) }}
@@ -487,6 +487,11 @@
                    <span class="text-xl font-bold font-mono tracking-widest opacity-80"
                          :class="(Number(selectedTrade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
                      {{ (Number(selectedTrade.profitInCurrency) || 0) >= 0 ? '+' : '' }}{{ (((Number(selectedTrade.profitInCurrency) || 0) / Math.max(1, selectedTradeBalanceBefore)) * 100).toFixed(3) }}%
+                   </span>
+                 </div>
+                 <div v-else-if="selectedTrade" class="flex items-baseline space-x-3">
+                   <span class="text-3xl font-bold font-mono tracking-[0.18em] uppercase text-amber-500/80">
+                     {{ locale === 'ru' ? 'Незакрытая сделка' : 'Open trade' }}
                    </span>
                  </div>
                   <div class="h-px w-full bg-gradient-to-r from-black/10 via-transparent to-transparent dark:from-white/10"></div>
@@ -505,8 +510,8 @@
                     <div class="flex flex-col">
                       <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ_ВЫХОД' : 'AVERAGE_EXIT' }}</span>
                       <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.exitPrice') }}</span>
-                      <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.exit)">{{ formatFullPrice(selectedTrade?.exit) }}</span>
-                      <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') }}</span>
+                      <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.exit)">{{ isClosedDiaryTrade(selectedTrade) ? formatFullPrice(selectedTrade?.exit) : '—' }}</span>
+                      <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ isClosedDiaryTrade(selectedTrade) ? formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') : (locale === 'ru' ? 'НЕЗАКРЫТА' : 'OPEN') }}</span>
                     </div>
 
                     <div v-if="selectedTradeTimeZone" class="col-span-2 flex justify-start">
@@ -1583,9 +1588,11 @@ const getDynamicPriceClass = (price: unknown) => {
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
 
+const isClosedDiaryTrade = (trade: any) => trade?.isClosed !== false && trade?.status !== 'open'
 
 const currentTrades = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getTradesForStrategy(selectedStrategyId.value))
+    .filter(isClosedDiaryTrade)
 })
 
 const currentTradesForList = computed(() => {

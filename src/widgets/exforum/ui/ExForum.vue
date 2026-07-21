@@ -2544,8 +2544,8 @@ const SYSTEM_APP_AUTHOR_ID = 'jlj-jormungandr-app'
 const systemFtmoNodePayloads = [
   {
     id: 'n0',
-    title: 'N0. FTMO challenge',
-    text: `<p><strong style="color:#111827">Main thought:</strong> FTMO does not hide rules, but the <em>practical mechanics</em> of these rules require a separate skill.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">A profitable strategy does not equal readiness to pass the challenge.</blockquote>`,
+    title: 'N0. PROP-FIRMS challenge',
+    text: `<p><strong style="color:#111827">Main thought:</strong> PROP-FIRMS does not hide rules, but the <em>practical mechanics</em> of these rules require a separate skill.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">A profitable strategy does not equal readiness to pass the challenge.</blockquote>`,
     position: { x: 36, y: 22 },
     size: { width: 22, height: 10 },
     order: 0
@@ -2561,7 +2561,7 @@ const systemFtmoNodePayloads = [
   {
     id: 'n2',
     title: 'N2. Consistency rules',
-    text: `<p><strong style="color:#854d0e">FTMO verifies not only the result, but the form of the result.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> minimum of around 4 trading days per stage.</li><li><strong>Best Day Rule:</strong> your best day should not carry the entire result.</li><li><strong>Scaling / Profit Split:</strong> balance and share growth depends on meeting plan conditions.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">A single lucky trade can hit the target, but won't necessarily qualify you to pass the system.</blockquote>`,
+    text: `<p><strong style="color:#854d0e">PROP-FIRMS verifies not only the result, but the form of the result.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> minimum of around 4 trading days per stage.</li><li><strong>Best Day Rule:</strong> your best day should not carry the entire result.</li><li><strong>Scaling / Profit Split:</strong> balance and share growth depends on meeting plan conditions.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">A single lucky trade can hit the target, but won't necessarily qualify you to pass the system.</blockquote>`,
     position: { x: 4, y: 25 },
     size: { width: 24, height: 15 },
     order: 2
@@ -2638,11 +2638,11 @@ const systemFtmoTextBlocks = systemFtmoNodePayloads.map(createSystemFtmoTextBloc
 
 const systemFtmoThread = computed(() => {
   const publishedAt = '2026-07-18T00:00:00.000Z'
-  const thesisText = 'FTMO rules map: what is officially written, which mechanics are unobvious at the start, and why these very constraints often turn profitable trading into a failed challenge.'
+  const thesisText = 'PROP-FIRMS rules map: what is officially written, which mechanics are unobvious at the start, and why these very constraints often turn profitable trading into a failed challenge.'
 
   return {
     id: SYSTEM_FTMO_THREAD_ID,
-    title: 'FTMO — rules, hidden rules and why traders lose money',
+    title: 'PROP-FIRMS — rules, hidden rules and why traders lose money',
     description: thesisText,
     summary: thesisText,
     category: 'QUESTION',
@@ -2685,7 +2685,7 @@ const systemFtmoThread = computed(() => {
       textBlocks: systemFtmoTextBlocks,
       textBlockOrder: systemFtmoTextBlocks.map(block => block.id)
     },
-    tags: ['FTMO', 'prop trading', 'challenge', 'risk management', 'psychology']
+    tags: ['PROP-FIRMS', 'prop trading', 'challenge', 'risk management', 'psychology']
   } as Thread & Record<string, any>
 })
 

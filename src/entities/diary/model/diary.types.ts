@@ -19,6 +19,8 @@ export interface DiaryEntry {
     id?: string;
     date: Date;
     dateExit?: Date;
+    isClosed?: boolean;
+    status?: 'open' | 'closed' | string;
     timeZone?: string;
     asset?: string;
     side?: 'Long' | 'Short';

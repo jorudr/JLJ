@@ -657,12 +657,16 @@ const onNoteClick = (tradeId: string, noteId: string) => {
 }
 
 const getResultMetricValue = (trade: any) => {
+  if (trade?.isClosed === false || trade?.status === 'OPEN') return Number.NaN
   return resultDisplayMode.value === 'currency' ? Number(trade.profitInCurrency || 0) : Number(trade.profitValue || 0)
 }
 
 const resultMetricLabel = computed(() => resultDisplayMode.value === 'currency' ? '$' : '%')
 
 const formatTradeResult = (trade: any) => {
+  if (trade?.isClosed === false || trade?.status === 'OPEN') {
+    return locale.value === 'ru' ? 'Незакрытая' : 'Open'
+  }
   const rawValue = getResultMetricValue(trade)
   const value = Number.isFinite(rawValue) ? rawValue : 0
   const sign = value > 0 ? '+' : ''
@@ -679,6 +683,7 @@ const getSharedResultColor = (value: number) => {
 }
 
 const resultColorValue = (trade: any) => {
+  if (trade?.isClosed === false || trade?.status === 'OPEN') return colorMode.value === 'colorful' ? 'hsl(45 80% 58%)' : 'currentColor'
   if (colorMode.value !== 'colorful') return 'currentColor'
   const value = getResultMetricValue(trade)
   return getSharedResultColor(value)
@@ -1109,7 +1114,8 @@ const statusList = computed(() => [
   { id: 'ALL', label: locale.value === 'ru' ? 'ВСЕ' : 'ALL' },
   { id: 'WIN', label: locale.value === 'ru' ? 'ПРИБЫЛЬ' : 'WIN' },
   { id: 'LOSS', label: locale.value === 'ru' ? 'УБЫТОК' : 'LOSS' },
-  { id: 'SCRATCH', label: locale.value === 'ru' ? 'БЕЗУБЫТОК' : 'SCRATCH' }
+  { id: 'SCRATCH', label: locale.value === 'ru' ? 'БЕЗУБЫТОК' : 'SCRATCH' },
+  { id: 'OPEN', label: locale.value === 'ru' ? 'НЕЗАКРЫТАЯ' : 'OPEN' }
 ])
 
 const directionList = computed(() => [
@@ -1490,11 +1496,12 @@ const activeTrades = computed(() => {
 
       let runningCapital = strategyStore.getInitialDeposit(sId)
       for (const t of stratTrades) {
+        const closed = t.isClosed !== false && t.status !== 'open'
         const currencyProfit = t.profitInCurrency !== undefined ? t.profitInCurrency : (t.pnl !== undefined ? t.pnl : (t.result || 0))
         const capAtTrade = runningCapital > 0 ? runningCapital : 1000
-        const calcPercent = Math.round((currencyProfit / capAtTrade) * 10000) / 100
+        const calcPercent = closed ? Math.round((currencyProfit / capAtTrade) * 10000) / 100 : 0
         
-        runningCapital += currencyProfit
+        if (closed) runningCapital += currencyProfit
 
         enrichedTradesMap[t.id || 'TRD-XX'] = { currencyProfit, calcPercent }
       }
@@ -1508,12 +1515,13 @@ const activeTrades = computed(() => {
       }
       const currencyProfit = enriched.currencyProfit
       const calcPercent = enriched.calcPercent
+      const isClosed = t.isClosed !== false && t.status !== 'open'
 
       const start = t.date ? new Date(t.date).getTime() : Date.now()
-      const end = t.dateExit ? new Date(t.dateExit).getTime() : start + 45 * 60000
+      const end = isClosed && t.dateExit ? new Date(t.dateExit).getTime() : start
       const diffMins = Math.max(0, Math.floor((end - start) / 60000))
       const hours = Math.floor(diffMins / 60)
-      const durStr = hours > 0 ? `${hours}h ${diffMins % 60}m` : `${diffMins}m`
+      const durStr = isClosed ? (hours > 0 ? `${hours}h ${diffMins % 60}m` : `${diffMins}m`) : (locale.value === 'ru' ? 'Открыта' : 'Open')
       
       const notesArr = Array.isArray(t.notesList)
         ? t.notesList
@@ -1536,14 +1544,15 @@ const activeTrades = computed(() => {
         conditions: t.conditions,
         boardConditions: t.boardConditions,
         entryPrice: t.entry !== undefined ? t.entry : (t.entryPrice || 0),
-        exitPrice: t.exit !== undefined ? t.exit : (t.exitPrice || 0),
+        exitPrice: isClosed ? (t.exit !== undefined ? t.exit : (t.exitPrice || 0)) : '—',
         size: t.size !== undefined ? t.size : (t.positionSize || 1),
         stopLoss: t.stopLoss !== undefined ? t.stopLoss : 0,
         takeProfit: t.takeProfit !== undefined ? t.takeProfit : 0,
         profitInCurrency: currencyProfit,
+        isClosed,
         executions: Array.isArray(t.executions) ? t.executions : [],
         dateEntryStr: t.date ? new Date(t.date).toLocaleString() : '10.05.2026, 14:30:00',
-        dateExitStr: t.dateExit ? new Date(t.dateExit).toLocaleString() : '10.05.2026, 15:15:00',
+        dateExitStr: isClosed && t.dateExit ? new Date(t.dateExit).toLocaleString() : (locale.value === 'ru' ? 'Незакрыта' : 'Open'),
         profitValue: calcPercent,
         timeValue: 50,
         dateTime: t.date ? new Date(t.date).toLocaleDateString() : '10.05.2026',
@@ -1552,7 +1561,7 @@ const activeTrades = computed(() => {
         timeZone: t.timeZone,
         duration: durStr,
         durationMinutes: diffMins,
-        status: currencyProfit > 0 ? 'WIN' : currencyProfit < 0 ? 'LOSS' : 'SCRATCH',
+        status: isClosed ? (currencyProfit > 0 ? 'WIN' : currencyProfit < 0 ? 'LOSS' : 'SCRATCH') : 'OPEN',
         asset: t.asset || 'BTC/USD',
         direction: t.side ? t.side.toUpperCase() : 'LONG',
         notes: notesArr

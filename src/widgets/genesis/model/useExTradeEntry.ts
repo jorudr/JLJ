@@ -245,7 +245,9 @@ const activeRiskManagement = computed(() => {
 const currentCapital = computed(() => {
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
   const historical = tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
-  const totalPnl = historical.reduce((acc, t) => acc + (Number(t.profitInCurrency) || 0), 0)
+  const totalPnl = historical
+    .filter(t => t?.isClosed !== false)
+    .reduce((acc, t) => acc + (Number(t.profitInCurrency) || 0), 0)
   return initialDeposit + totalPnl
 })
 
@@ -350,6 +352,7 @@ onMounted(() => {
     }
     asset.value = t.asset || ''
     side.value = t.side?.toLowerCase() === 'short' ? 'short' : 'long'
+    isClosed.value = t.isClosed !== false && t.status !== 'open'
     
     // Reverse-engineer the executions into the component's entry/exit arrays
     if (t.executions && t.executions.length > 0) {
@@ -977,6 +980,7 @@ const sectors = [
 
 // Core Data
 const side = ref('long')
+const isClosed = ref(true)
 const entry = ref('')
 const exit = ref('')
 const size = ref('')
@@ -1032,6 +1036,7 @@ const averageExit = computed(() => {
 })
 
 const addExitEntry = () => {
+  if (!isClosed.value) return
   const remaining = Math.max(0, totalSize.value - totalExitSize.value)
   exitEntries.value.push({ id: Date.now(), price: '', size: remaining > 0 ? remaining.toFixed(2) : '' })
 }
@@ -1669,6 +1674,7 @@ const handleManualDate = (target, unit, val) => {
 
 // Equity Projection Logic
 const projectedProfit = computed(() => {
+  if (!isClosed.value) return null
   const en = entryMethodEnabled.value ? averageEntry.value : parseFloat(entry.value)
   const ex = exitMethodEnabled.value ? averageExit.value : parseFloat(exit.value)
   const sz = exitMethodEnabled.value ? totalExitSize.value : (entryMethodEnabled.value ? totalSize.value : parseFloat(size.value))
@@ -1690,12 +1696,14 @@ const projectedProfit = computed(() => {
 })
 
 const hasValidProjection = computed(() => {
+  if (!isClosed.value) return false
   if (resultMode.value === 'manual' && overridePnl.value !== null && overridePnl.value !== '') return true
   return projectedProfit.value !== null
 })
 
 const equityCurveTrades = computed(() => {
   let historical = tradeStore.getTradesForStrategy(selectedStrategyId.value)
+    .filter(t => t?.isClosed !== false)
   
   if (props.initialTrade) {
     const initialDateStr = props.initialTrade.dateExit || props.initialTrade.date
@@ -1787,15 +1795,29 @@ watch(activeTemporalTarget, () => {
 const scrollContainer = ref(null)
 
 const pnl = computed({
-  get: () => (resultMode.value === 'manual' && overridePnl.value !== null) ? overridePnl.value : (projectedProfit.value || 0),
-  set: (val) => { overridePnl.value = val }
+  get: () => {
+    if (!isClosed.value) return 0
+    return (resultMode.value === 'manual' && overridePnl.value !== null) ? overridePnl.value : (projectedProfit.value || 0)
+  },
+  set: (val) => {
+    if (isClosed.value) overridePnl.value = val
+  }
 })
 
 const commitState = ref('idle')
 
+watch(isClosed, (closed) => {
+  if (closed) return
+  exit.value = ''
+  exitFee.value = ''
+  exitEntries.value = []
+  overridePnl.value = null
+})
+
 const resetForm = () => {
   asset.value = ''
   side.value = 'long'
+  isClosed.value = true
   entry.value = ''
   exit.value = ''
   size.value = ''
@@ -1827,14 +1849,14 @@ const resetForm = () => {
 
 const submit = async () => {
   const finalEntry = entryMethodEnabled.value ? averageEntry.value : +entry.value
-  const finalExit = exitMethodEnabled.value ? averageExit.value : +exit.value
+  const finalExit = isClosed.value ? (exitMethodEnabled.value ? averageExit.value : +exit.value) : undefined
   const finalSize = totalSize.value
   const committedOpenDate = cloneDate(openDate.value)
   const committedExitDate = cloneDate(exitDate.value)
   const committedTimeZone = String(tradeTimeZone.value || detectUserTimeZone()).trim() || detectUserTimeZone()
   const plannedRiskReward = activeRiskSnapshot.value?.riskRewardRatio ?? undefined
 
-  if (!finalEntry || !finalExit || !finalSize) return
+  if (!finalEntry || (isClosed.value && !finalExit) || !finalSize) return
   if (riskInputViolationMessage.value) {
     normalizeRiskInputs()
     activeSector.value = 'risk'
@@ -2029,7 +2051,7 @@ const submit = async () => {
     })
   }
 
-  if (exitMethodEnabled.value) {
+  if (isClosed.value && exitMethodEnabled.value) {
     exitEntries.value.forEach(e => {
        if (e.price && e.size) {
          builtExecutions.push({
@@ -2044,7 +2066,7 @@ const submit = async () => {
          })
        }
     })
-  } else {
+  } else if (isClosed.value) {
     builtExecutions.push({
          id: Date.now().toString() + 'ex',
          type: 'exit',
@@ -2062,15 +2084,17 @@ const submit = async () => {
     asset: asset.value || 'UNTITLED',
     side: side.value === 'long' ? 'Long' : 'Short',
     entry: entryMethodEnabled.value ? averageEntry.value : +entry.value,
-    exit: exitMethodEnabled.value ? averageExit.value : +exit.value,
+    exit: isClosed.value ? (exitMethodEnabled.value ? averageExit.value : +exit.value) : undefined,
     size: totalSize.value,
     executions: builtExecutions,
+    isClosed: isClosed.value,
+    status: isClosed.value ? 'closed' : 'open',
     timeZone: committedTimeZone,
     stopLoss: +stopLoss.value,
     takeProfit: +takeProfit.value,
     date: cloneDate(committedOpenDate),
-    dateExit: cloneDate(committedExitDate),
-    profitInCurrency: pnl.value,
+    dateExit: isClosed.value ? cloneDate(committedExitDate) : undefined,
+    profitInCurrency: isClosed.value ? pnl.value : undefined,
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: selectedStrategyId.value,
     risk: actualRiskDollars.value !== null ? actualRiskDollars.value : undefined,
@@ -2082,7 +2106,7 @@ const submit = async () => {
     feeType: feeType.value,
     emotions: [...selectedEmotions.value],
     boardScenarioEntry: formatScen(activeEntry, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
-    boardScenarioExit: formatScen(activeExit || activeMini, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value),
+    boardScenarioExit: isClosed.value ? formatScen(activeExit || activeMini, tradeStore.getTradesForStrategy(selectedStrategyId.value), side.value) : undefined,
     boardRequiredConditionsEntry,
     boardRequiredConditionsExit,
     images: journalEntries.value.map(e => ({
@@ -2217,6 +2241,7 @@ const submit = async () => {
     activeSector,
     sectors,
     side,
+    isClosed,
     entry,
     exit,
     size,
