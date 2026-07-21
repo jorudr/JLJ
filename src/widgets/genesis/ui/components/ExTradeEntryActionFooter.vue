@@ -230,11 +230,11 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                      @click="t === 'exit' && !isClosed ? null : openTemporal(t)"
                      class="flex flex-col gap-1 cursor-pointer group/time hover:translate-y-[-2px] transition-all"
                      :class="{ 'opacity-40 pointer-events-none': t === 'exit' && !isClosed }">
-                  <span class="text-[7px] uppercase tracking-[0.3em] font-bold text-white/30 group-hover/time:text-white/60 transition-colors">{{ t === 'exit' && !isClosed ? (locale === 'ru' ? 'НЕЗАКРЫТА' : 'OPEN_TRADE') : `${t.toUpperCase()}_SYNC` }}</span>
+                  <span class="text-[7px] uppercase tracking-[0.3em] font-bold text-white/30 group-hover/time:text-white/60 transition-colors">{{ t.toUpperCase() }}_SYNC</span>
                   <div class="flex items-center gap-3 font-mono text-[11px] text-white/80 group-hover/time:text-white">
-                    <span>{{ t === 'exit' && !isClosed ? '--.--.--' : `${formatPart(t === 'open' ? openDate : exitDate, 'year')}.${formatPart(t === 'open' ? openDate : exitDate, 'month')}.${formatPart(t === 'open' ? openDate : exitDate, 'day')}` }}</span>
+                    <span>{{ t === 'exit' && !isClosed ? '--' : `${formatPart(t === 'open' ? openDate : exitDate, 'year')}.${formatPart(t === 'open' ? openDate : exitDate, 'month')}.${formatPart(t === 'open' ? openDate : exitDate, 'day')}` }}</span>
                     <span class="opacity-20">/</span>
-                    <span class="tracking-widest">{{ t === 'exit' && !isClosed ? '--:--' : `${formatPart(t === 'open' ? openDate : exitDate, 'hour')}:${formatPart(t === 'open' ? openDate : exitDate, 'minute')}` }}</span>
+                    <span class="tracking-widest">{{ t === 'exit' && !isClosed ? '--' : `${formatPart(t === 'open' ? openDate : exitDate, 'hour')}:${formatPart(t === 'open' ? openDate : exitDate, 'minute')}` }}</span>
                   </div>
                 </div>
               </div>
