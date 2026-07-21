@@ -4,7 +4,8 @@ import { inject } from 'vue';
 import { useI18n } from '~/shared/i18n/useI18n';
 import ExPanel from '~/shared/ui/ExPanel.vue';
 const emit = defineEmits(['close']);
-const { locale } = useI18n();
+const { locale, t } = useI18n();
+const openTradeText = () => t('genesis.virtualLog.openTrade');
 
 const assetTypeLocales = {
   'ALL': { en: 'ALL', ru: 'ВСЕ' },
@@ -176,7 +177,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                 </div>
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': exitMethodEnabled || !isClosed }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="exitMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
-                    {{ !isClosed ? (locale === 'ru' ? 'НЕЗАКРЫТА' : 'OPEN_TRADE') : (exitMethodEnabled ? 'Avg_Exit_Lvl' : 'Exit_Lvl') }}
+                    {{ !isClosed ? openTradeText() : (exitMethodEnabled ? 'Avg_Exit_Lvl' : 'Exit_Lvl') }}
                   </span>
                   <input v-if="!exitMethodEnabled" v-model="exit" type="number" placeholder="0.00" class="nier-input w-20 font-mono" :disabled="!isClosed"/>
                   <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
@@ -268,7 +269,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
             <div class="flex flex-col items-end gap-0.5">
               <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">{{ isClosed ? 'Yield_Est' : (locale === 'ru' ? 'СТАТУС' : 'STATUS') }}</span>
               <div v-if="!isClosed" class="text-[10px] font-mono font-black uppercase tracking-[0.24em] text-white/45">
-                {{ locale === 'ru' ? 'НЕЗАКРЫТАЯ' : 'OPEN' }}
+                {{ openTradeText() }}
               </div>
               <div v-else-if="resultMode === 'manual'" class="flex items-center">
                 <input v-model.number="pnl" 

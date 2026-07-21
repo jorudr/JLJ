@@ -352,7 +352,7 @@ onMounted(() => {
     }
     asset.value = t.asset || ''
     side.value = t.side?.toLowerCase() === 'short' ? 'short' : 'long'
-    isClosed.value = t.isClosed !== false && t.status !== 'open'
+    isClosed.value = t.isClosed !== false && String(t.status || '').toLowerCase() !== 'open'
     
     // Reverse-engineer the executions into the component's entry/exit arrays
     if (t.executions && t.executions.length > 0) {
