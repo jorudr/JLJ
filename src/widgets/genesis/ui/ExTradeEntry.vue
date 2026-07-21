@@ -13,6 +13,7 @@ import ExTradeEntryEmotionMatrix from './components/ExTradeEntryEmotionMatrix.vu
 import ExTradeEntryActionFooter from './components/ExTradeEntryActionFooter.vue'
 import ExTradeEntryConditionLibrary from './components/ExTradeEntryConditionLibrary.vue'
 import ExTradeEntryMethodMatrix from './components/ExTradeEntryMethodMatrix.vue'
+import ExTradeEntryStudyMetricsPanel from './components/ExTradeEntryStudyMetricsPanel.vue'
 
 const emit = defineEmits(['addTrade', 'updateTrade', 'close'])
 const props = defineProps({
@@ -75,6 +76,7 @@ const { isDark, isClosed, scrollContainer } = state
      <ExTradeEntryActionFooter />
      <ExTradeEntryConditionLibrary />
      <ExTradeEntryMethodMatrix />
+     <ExTradeEntryStudyMetricsPanel />
   </div>
 </template>
 

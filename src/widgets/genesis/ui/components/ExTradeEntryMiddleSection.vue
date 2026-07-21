@@ -9,7 +9,7 @@ const isArchivalBriefingEnabled = false;
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
 import { ref } from 'vue';
-const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 
 const isCreatingNote = ref(false);
 const isPreviewMode = ref(false);
@@ -597,7 +597,7 @@ const formatDateTactical = (dateStr) => {
     <!-- LEFT SIDE PHANTOM CLUSTER (Stealth Mode) -->
     <Teleport to="body">
       <Transition name="nier-fade">
-        <div v-if="!showConditionLibrary && !showEmotionSelector && !showEntryMethod" 
+        <div v-if="!showConditionLibrary && !showEmotionSelector && !showEntryMethod && !showTradeStudyMetrics" 
              class="fixed left-10 top-1/2 -translate-y-1/2 flex flex-col gap-10 z-[9999]">
         <!-- UNIFIED MATRIX TOGGLE -->
         <button @click="showConditionLibrary = !showConditionLibrary" 
@@ -637,6 +637,28 @@ const formatDateTactical = (dateStr) => {
               <div class="absolute left-full ml-8 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0 whitespace-nowrap pointer-events-none">
                  <div class="flex flex-col items-start">
                     <span class="text-[8px] font-mono tracking-[0.5em] uppercase font-black nier-text-primary">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY_METHOD' }}</span>
+                    <div class="h-px w-0 group-hover:w-full nier-bg-inverted transition-all duration-500 mt-1 opacity-40"></div>
+                 </div>
+              </div>
+           </div>
+        </button>
+
+        <!-- STUDY METRICS BUTTON -->
+        <button @click="showTradeStudyMetrics = true" 
+                :disabled="commitState === 'loading'"
+                class="group relative opacity-70 hover:opacity-100 focus-visible:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed">
+           <div class="relative flex items-center justify-center w-12 h-12">
+              <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white transition-all duration-500 shadow-xl"
+                   :class="{ 'nier-bg-inverted': showTradeStudyMetrics }"></div>
+              <div class="relative z-10 flex h-4 w-4 items-end justify-center gap-0.5 transition-colors duration-500 group-hover:text-white dark:group-hover:text-black nier-text-primary">
+                 <span class="h-2 w-0.5 bg-current"></span>
+                 <span class="h-4 w-0.5 bg-current"></span>
+                 <span class="h-3 w-0.5 bg-current"></span>
+              </div>
+              
+              <div class="absolute left-full ml-8 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-4 group-hover:translate-x-0 whitespace-nowrap pointer-events-none">
+                 <div class="flex flex-col items-start">
+                    <span class="text-[8px] font-mono tracking-[0.5em] uppercase font-black nier-text-primary">{{ locale === 'ru' ? 'МЕТРИКИ СДЕЛКИ' : 'TRADE_METRICS' }}</span>
                     <div class="h-px w-0 group-hover:w-full nier-bg-inverted transition-all duration-500 mt-1 opacity-40"></div>
                  </div>
               </div>

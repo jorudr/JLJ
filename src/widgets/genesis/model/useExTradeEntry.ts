@@ -405,6 +405,7 @@ onMounted(() => {
     openDate.value = t.date ? new Date(t.date) : new Date()
     exitDate.value = t.dateExit ? new Date(t.dateExit) : new Date()
     selectedEmotions.value = Array.isArray(t.emotions) ? [...t.emotions] : []
+    hydrateTradeStudyMetrics(t.tradeStudyMetrics || t.studyMetrics)
 
     if (t.images && Array.isArray(t.images)) {
       journalEntries.value = t.images.map((img, index) => ({
@@ -991,7 +992,36 @@ const resultMode = ref('auto')
 
 // Entry & Exit Protocol
 const showEntryMethod = ref(false)
+const showTradeStudyMetrics = ref(false)
 const activeProtocolTab = ref('PYRAMIDING') // 'PYRAMIDING', 'AVERAGING_DOWN', or 'EXIT'
+
+const createTradeStudyMetrics = () => ({
+  maxPriceDuringTrade: '',
+  minPriceDuringTrade: '',
+  priceDroppedBelowEntryLong: false,
+  priceRoseAboveEntryShort: false,
+  hadNews: false,
+  priceDirectionBeforeNews: '',
+  priceDirectionAfterNews: ''
+})
+
+const tradeStudyMetrics = ref(createTradeStudyMetrics())
+
+const hydrateTradeStudyMetrics = (metrics = {}) => {
+  const defaults = createTradeStudyMetrics()
+  const normalized = {}
+  Object.keys(defaults).forEach(key => {
+    normalized[key] = metrics?.[key] ?? defaults[key]
+  })
+  tradeStudyMetrics.value = {
+    ...defaults,
+    ...normalized
+  }
+}
+
+const resetTradeStudyMetrics = () => {
+  hydrateTradeStudyMetrics()
+}
 
 // Entry State
 const entryMethodType = ref('PYRAMIDING') // Tracks the active entry calculation mode
@@ -1836,6 +1866,8 @@ const resetForm = () => {
   selectedRegistryScenarioId.value = null
   showConditionLibrary.value = false
   showEntryMethod.value = false
+  showTradeStudyMetrics.value = false
+  resetTradeStudyMetrics()
   activeProtocolTab.value = 'PYRAMIDING'
   entryMethodType.value = 'PYRAMIDING'
   pyramidingEntries.value = []
@@ -2117,7 +2149,8 @@ const submit = async () => {
       context: ''
     })).filter(img => img.url),
     notes: '',
-    notesList: [...notesList.value]
+    notesList: [...notesList.value],
+    tradeStudyMetrics: { ...tradeStudyMetrics.value }
   }
 
   commitState.value = 'loading'
@@ -2250,6 +2283,9 @@ const submit = async () => {
     feeType,
     resultMode,
     showEntryMethod,
+    showTradeStudyMetrics,
+    tradeStudyMetrics,
+    resetTradeStudyMetrics,
     activeProtocolTab,
     entryMethodType,
     pyramidingEntries,
