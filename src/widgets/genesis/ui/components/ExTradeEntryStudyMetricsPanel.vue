@@ -29,6 +29,19 @@ const {
   commitState
 } = inject('tradeState')
 
+const props = defineProps({
+  surface: {
+    type: String,
+    default: 'modal'
+  },
+  visible: {
+    type: Boolean,
+    default: true
+  }
+})
+
+const isChartSurface = computed(() => props.surface === 'chart')
+
 const copy = {
   en: {
     title: 'TRADE_STUDY_METRICS',
@@ -163,8 +176,7 @@ const copy = {
 const ui = () => copy[locale.value] || copy.en
 
 const studyPages = [
-  { id: 'market', number: 1 },
-  { id: 'manual', number: 2 }
+  { id: 'manual', number: 1 }
 ]
 
 const MINUTE_MS = 60 * 1000
@@ -179,7 +191,7 @@ const timeframeOptions = [
 ]
 const YAHOO_ONLY_MARKET_KINDS = new Set(['forex', 'index', 'commodity', 'metal'])
 
-const activeStudyPage = ref('market')
+const activeStudyPage = ref('manual')
 const activeGeneratedTimeframe = ref('4h')
 const generatedMarketData = ref({})
 const resolvedMarketSymbol = ref('')
@@ -2041,6 +2053,12 @@ watch(showTradeStudyMetrics, async (isOpen) => {
   drawChart()
 })
 
+watch(() => props.visible, async (isVisible) => {
+  if (!isVisible) return
+  await nextTick()
+  drawChart()
+})
+
 watch([() => isDark?.value, locale, chartLevelOverlays], () => drawChart())
 
 onMounted(() => {
@@ -2058,7 +2076,97 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <section
+    v-if="isChartSurface"
+    :class="generatedChartCandles.length ? 'flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white' : 'flex h-full min-h-[420px] w-full flex-col'"
+  >
+    <div v-if="!generatedChartCandles.length" class="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
+      <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
+        {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
+      </p>
+      <button
+        type="button"
+        class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
+        :disabled="!canGenerateMarketData"
+        @click="generateMarketData"
+      >
+        {{ generationState === 'loading' ? ui().generating : (locale === 'ru' ? 'СГЕНЕРИРОВАТЬ ГРАФИК' : 'GENERATE CHART') }}
+      </button>
+    </div>
+
+    <template v-else>
+      <div class="flex h-14 shrink-0 items-center gap-5 border-b border-white/10 bg-white/[0.025] px-5">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="h-1.5 w-1.5 shrink-0 rotate-45 bg-white/70"></span>
+          <div class="min-w-0">
+            <ExHeading level="h3" variant="module" class="truncate !text-[12px] !font-black !leading-none !opacity-100 !tracking-[0.24em] text-white">
+              {{ chartAssetHeading }}
+            </ExHeading>
+            <span class="mt-1 block truncate text-[7px] font-mono font-black uppercase tracking-[0.26em] text-white/30">
+              {{ chartSourceLabel }}
+            </span>
+          </div>
+        </div>
+
+        <div class="ml-auto flex shrink-0 items-center gap-5">
+          <button
+            v-for="timeframe in chartTimeframeOptions"
+            :key="timeframe.id"
+            type="button"
+            class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
+            :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
+            @click="activeGeneratedTimeframe = timeframe.id"
+          >
+            {{ timeframe.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="relative min-h-0 flex-1">
+        <div
+          v-if="hoveredOhlcLabel"
+          class="pointer-events-none absolute left-5 top-5 z-10 max-w-[calc(100%-14rem)]"
+        >
+          <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white/75">
+            {{ hoveredOhlcLabel }}
+          </span>
+        </div>
+
+        <canvas
+          ref="chartCanvas"
+          class="h-full w-full cursor-crosshair touch-none"
+          @pointerdown="handleChartPointerDown"
+          @pointermove="handleChartPointerMove"
+          @pointerup="handleChartPointerUp"
+          @pointercancel="handleChartPointerUp"
+          @pointerleave="handleChartPointerLeave"
+          @wheel.prevent="handleChartWheel"
+        ></canvas>
+
+        <div
+          class="pointer-events-none absolute bottom-0 left-4 right-[84px] h-8 border-t border-white/0"
+          :class="generatedChartCandles.length ? 'pointer-events-auto cursor-ew-resize' : ''"
+          @pointerdown="handleChartPointerDown"
+          @pointermove="handleChartPointerMove"
+          @pointerup="handleChartPointerUp"
+          @pointercancel="handleChartPointerUp"
+          @pointerleave="handleChartPointerLeave"
+        ></div>
+
+        <div
+          class="pointer-events-none absolute bottom-8 right-0 top-6 w-[84px] border-l border-white/0"
+          :class="generatedChartCandles.length ? 'pointer-events-auto cursor-ns-resize' : ''"
+          @pointerdown="handleChartPointerDown"
+          @pointermove="handleChartPointerMove"
+          @pointerup="handleChartPointerUp"
+          @pointercancel="handleChartPointerUp"
+          @pointerleave="handleChartPointerLeave"
+        ></div>
+      </div>
+    </template>
+  </section>
+
+  <Teleport v-else to="body">
     <Transition name="nier-fade">
       <div
         v-if="showTradeStudyMetrics"
@@ -2286,7 +2394,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="relative flex items-center justify-center border-t border-black/10 bg-white/10 px-6 py-4 dark:border-white/10 dark:bg-black/20">
+          <div v-if="studyPages.length > 1" class="relative flex items-center justify-center border-t border-black/10 bg-white/10 px-6 py-4 dark:border-white/10 dark:bg-black/20">
             <button
               v-if="generatedChartCandles.length"
               type="button"

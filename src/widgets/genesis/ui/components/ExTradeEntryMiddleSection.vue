@@ -7,6 +7,7 @@ const { locale } = useI18n();
 const isArchivalBriefingEnabled = false;
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
+import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
 import { ref } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
@@ -19,6 +20,7 @@ const editingContentNoteId = ref(null);
 const expandedNoteIds = ref([]);
 const editingNoteId = ref(null);
 const editNoteTitle = ref("");
+const activeProjectionMode = ref('projection');
 
 const startEditContent = (note) => {
   editingContentNoteId.value = note.id;
@@ -340,18 +342,59 @@ const formatDateTactical = (dateStr) => {
 
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
              <div v-else class="relative w-full h-[500px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
-                <Transition name="sector-swap" mode="out-in">
-                  <div v-if="hasValidProjection" key="curve" class="absolute inset-0 w-full h-full">
+                <div
+                  v-show="activeProjectionMode === 'chart'"
+                  class="absolute inset-0 h-full w-full"
+                  :class="activeProjectionMode === 'chart' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
+                >
+                   <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                </div>
+
+                <div
+                  v-show="activeProjectionMode === 'projection'"
+                  class="absolute inset-0 h-full w-full transition-opacity duration-300"
+                  :class="activeProjectionMode === 'projection' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
+                >
+                  <div v-if="hasValidProjection" class="absolute inset-0 w-full h-full">
                      <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
                   </div>
-                  <div v-else key="empty" class="flex flex-col items-center justify-center py-20 opacity-20">
+                  <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
                      <div class="w-16 h-px nier-bg-inverted mb-8 group-hover:w-24 transition-all duration-700"></div>
                      <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
                      <div class="mt-8 flex gap-2">
                         <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
                      </div>
                   </div>
-                </Transition>
+                </div>
+
+                <div class="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 translate-y-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+                  <button
+                    type="button"
+                    :title="locale === 'ru' ? 'Проекция' : 'Projection'"
+                    :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'"
+                    class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10"
+                    :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+                    @click="activeProjectionMode = 'projection'"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 17l4-5 4 3 5-8 3 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
+                      <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    :title="locale === 'ru' ? 'График' : 'Chart'"
+                    :aria-label="locale === 'ru' ? 'График' : 'Chart'"
+                    class="grid h-11 w-12 place-items-center transition-colors"
+                    :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+                    @click="activeProjectionMode = 'chart'"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M7 4v16M17 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+                      <path d="M5 8h4v7H5zM15 6h4v10h-4z" fill="currentColor" />
+                    </svg>
+                  </button>
+                </div>
              </div>
           </div>
 
