@@ -999,10 +999,20 @@ const createTradeStudyMetrics = () => ({
   maxPriceDuringTrade: '',
   minPriceDuringTrade: '',
   priceDroppedBelowEntryLong: false,
+  priceBelowEntryLongDurationDays: '',
+  priceBelowEntryLongDurationHours: '',
+  priceBelowEntryLongDurationMinutes: '',
+  priceBelowEntryLongDurationSeconds: '',
   priceRoseAboveEntryShort: false,
+  priceAboveEntryShortDurationDays: '',
+  priceAboveEntryShortDurationHours: '',
+  priceAboveEntryShortDurationMinutes: '',
+  priceAboveEntryShortDurationSeconds: '',
   hadNews: false,
   priceDirectionBeforeNews: '',
-  priceDirectionAfterNews: ''
+  priceDirectionBeforeNewsChangePercent: '',
+  priceDirectionAfterNews: '',
+  priceDirectionAfterNewsChangePercent: ''
 })
 
 const tradeStudyMetrics = ref(createTradeStudyMetrics())
