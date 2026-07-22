@@ -2715,42 +2715,6 @@ const simpleMetricInsights = computed(() => {
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
-                     <!-- TAB E: IN-TRADE ANALYSIS -->
-                     <ExTooltip
-                       v-for="metric in visibleInTradeAnalysisRows"
-                       :key="metric.id"
-                       :is-dark="isDark"
-                       variant="basic"
-                     >
-                        <template #trigger>
-                           <div class="group relative flex min-h-[104px] cursor-pointer flex-col justify-between border nier-border-primary p-3 transition-all duration-300 hover:bg-black/[0.025] dark:hover:bg-white/[0.025]">
-                              <div class="absolute left-0 top-0 h-full w-px opacity-60"
-                                   :class="metric.tone === 'positive' ? 'bg-emerald-500' : (metric.tone === 'danger' ? 'bg-rose-500' : (metric.tone === 'warning' ? 'bg-amber-500' : 'bg-black/20 dark:bg-white/20'))"></div>
-                              <div class="flex items-start justify-between gap-3">
-                                 <span class="min-w-0 text-[8px] font-mono font-black uppercase tracking-widest opacity-40 transition-opacity group-hover:opacity-60">
-                                    {{ metric.label }}
-                                 </span>
-                                 <span class="mt-1 h-2 w-2 shrink-0 rotate-45 border"
-                                       :class="metric.tone === 'muted' ? 'border-black/20 dark:border-white/20' : 'border-current'"></span>
-                              </div>
-                              <div class="flex flex-col gap-1 overflow-hidden">
-                                 <span
-                                   class="truncate text-lg font-mono font-black uppercase tracking-normal"
-                                   :class="metric.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (metric.tone === 'danger' ? 'text-rose-500 dark:text-rose-400' : (metric.tone === 'warning' ? 'text-amber-500 dark:text-amber-400' : (metric.tone === 'muted' ? 'text-black/35 dark:text-white/35' : 'nier-text-primary')))"
-                                 >
-                                    {{ metric.value }}
-                                 </span>
-                                 <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/45 dark:text-white/45">
-                                    {{ metric.subvalue }}
-                                 </span>
-                              </div>
-                           </div>
-                        </template>
-                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed">
-                           {{ metric.hint }}
-                        </div>
-                     </ExTooltip>
-
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
@@ -3836,6 +3800,42 @@ const simpleMetricInsights = computed(() => {
                                  {{ strategyExecutionMetrics.executionGrade >= 80 ? 'Good' : (strategyExecutionMetrics.executionGrade >= 60 ? 'Stable' : 'Sub-Optimal') }}
                               </span>
                            </div>
+                        </div>
+                     </ExTooltip>
+
+                     <!-- TAB E: IN-TRADE ANALYSIS -->
+                     <ExTooltip
+                       v-for="metric in visibleInTradeAnalysisRows"
+                       :key="metric.id"
+                       :is-dark="isDark"
+                       variant="basic"
+                     >
+                        <template #trigger>
+                           <div class="group relative flex min-h-[104px] cursor-pointer flex-col justify-between border nier-border-primary p-3 transition-all duration-300 hover:bg-black/[0.025] dark:hover:bg-white/[0.025]">
+                              <div class="absolute left-0 top-0 h-full w-px opacity-60"
+                                   :class="metric.tone === 'positive' ? 'bg-emerald-500' : (metric.tone === 'danger' ? 'bg-rose-500' : (metric.tone === 'warning' ? 'bg-amber-500' : 'bg-black/20 dark:bg-white/20'))"></div>
+                              <div class="flex items-start justify-between gap-3">
+                                 <span class="min-w-0 text-[8px] font-mono font-black uppercase tracking-widest opacity-40 transition-opacity group-hover:opacity-60">
+                                    {{ metric.label }}
+                                 </span>
+                                 <span class="mt-1 h-2 w-2 shrink-0 rotate-45 border"
+                                       :class="metric.tone === 'muted' ? 'border-black/20 dark:border-white/20' : 'border-current'"></span>
+                              </div>
+                              <div class="flex flex-col gap-1 overflow-hidden">
+                                 <span
+                                   class="truncate text-lg font-mono font-black uppercase tracking-normal"
+                                   :class="metric.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (metric.tone === 'danger' ? 'text-rose-500 dark:text-rose-400' : (metric.tone === 'warning' ? 'text-amber-500 dark:text-amber-400' : (metric.tone === 'muted' ? 'text-black/35 dark:text-white/35' : 'nier-text-primary')))"
+                                 >
+                                    {{ metric.value }}
+                                 </span>
+                                 <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/45 dark:text-white/45">
+                                    {{ metric.subvalue }}
+                                 </span>
+                              </div>
+                           </div>
+                        </template>
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed">
+                           {{ metric.hint }}
                         </div>
                      </ExTooltip>
                   </div>
