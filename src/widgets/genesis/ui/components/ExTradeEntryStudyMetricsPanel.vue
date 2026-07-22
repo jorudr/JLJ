@@ -1,5 +1,5 @@
 <script setup>
-import { inject, watch } from 'vue'
+import { computed, inject, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
@@ -7,6 +7,8 @@ const { locale } = useI18n()
 
 const {
   side,
+  currentAssetData,
+  isForex,
   showTradeStudyMetrics,
   tradeStudyMetrics,
   resetTradeStudyMetrics,
@@ -40,6 +42,8 @@ const copy = {
     placeholders: {
       maxPriceDuringTrade: 'ex. 4312.50',
       minPriceDuringTrade: 'ex. 4268.25',
+      forexMaxPriceDuringTrade: 'ex. 1.00542',
+      forexMinPriceDuringTrade: 'ex. 1.00180',
       durationDays: 'ex. 0',
       durationHours: 'ex. 1',
       durationMinutes: 'ex. 25',
@@ -53,6 +57,10 @@ const copy = {
       hours: 'Hours',
       minutes: 'Minutes',
       seconds: 'Seconds'
+    },
+    units: {
+      money: '$',
+      forex: 'POINTS'
     }
   },
   ru: {
@@ -81,6 +89,8 @@ const copy = {
     placeholders: {
       maxPriceDuringTrade: 'напр. 4312.50',
       minPriceDuringTrade: 'напр. 4268.25',
+      forexMaxPriceDuringTrade: 'напр. 1.00542',
+      forexMinPriceDuringTrade: 'напр. 1.00180',
       durationDays: 'напр. 0',
       durationHours: 'напр. 1',
       durationMinutes: 'напр. 25',
@@ -94,6 +104,10 @@ const copy = {
       hours: 'Часы',
       minutes: 'Минуты',
       seconds: 'Секунды'
+    },
+    units: {
+      money: '$',
+      forex: 'ПУНКТЫ'
     }
   }
 }
@@ -104,8 +118,8 @@ const groups = [
   {
     id: 'pricePath',
     fields: [
-      { key: 'maxPriceDuringTrade', type: 'number' },
-      { key: 'minPriceDuringTrade', type: 'number' },
+      { key: 'maxPriceDuringTrade', type: 'number', unit: 'price' },
+      { key: 'minPriceDuringTrade', type: 'number', unit: 'price' },
       { key: 'priceDroppedBelowEntryLong', type: 'boolean' },
       { key: 'priceRoseAboveEntryShort', type: 'boolean' }
     ]
@@ -148,12 +162,56 @@ const splitFields = (fields) => {
   return [fields.slice(0, midpoint), fields.slice(midpoint)]
 }
 
+const usesForexPriceFormat = computed(() => {
+  return Boolean(isForex?.value || currentAssetData?.value?.type === 'Forex')
+})
+
+const getFieldPlaceholder = (field) => {
+  if (field.unit === 'price' && usesForexPriceFormat.value) {
+    return ui().placeholders[`forex${field.key.charAt(0).toUpperCase()}${field.key.slice(1)}`]
+  }
+  return ui().placeholders[field.key]
+}
+
+const getFieldUnit = (field) => {
+  if (field.unit !== 'price') return ''
+  return usesForexPriceFormat.value ? ui().units.forex : ui().units.money
+}
+
+const directionPercentKeys = {
+  priceDirectionBeforeNews: 'priceDirectionBeforeNewsChangePercent',
+  priceDirectionAfterNews: 'priceDirectionAfterNewsChangePercent'
+}
+
+const normalizeDirectionPercent = (field, rawValue = tradeStudyMetrics.value[field.key]) => {
+  const direction = tradeStudyMetrics.value[field.directionKey]
+  if (!direction) {
+    tradeStudyMetrics.value[field.key] = ''
+    return
+  }
+
+  if (rawValue === '' || rawValue === null || rawValue === undefined) {
+    tradeStudyMetrics.value[field.key] = ''
+    return
+  }
+
+  const numericValue = Number(rawValue)
+  if (!Number.isFinite(numericValue)) return
+
+  const signedValue = direction === 'up' ? Math.abs(numericValue) : -Math.abs(numericValue)
+  tradeStudyMetrics.value[field.key] = String(signedValue)
+}
+
 const toggleDirection = (key, value) => {
   if (!tradeStudyMetrics.value.hadNews) return
   tradeStudyMetrics.value[key] = tradeStudyMetrics.value[key] === value ? '' : value
+  const percentKey = directionPercentKeys[key]
+  if (!percentKey) return
+
   if (!tradeStudyMetrics.value[key]) {
-    if (key === 'priceDirectionBeforeNews') tradeStudyMetrics.value.priceDirectionBeforeNewsChangePercent = ''
-    if (key === 'priceDirectionAfterNews') tradeStudyMetrics.value.priceDirectionAfterNewsChangePercent = ''
+    tradeStudyMetrics.value[percentKey] = ''
+  } else {
+    normalizeDirectionPercent({ key: percentKey, directionKey: key })
   }
 }
 
@@ -258,7 +316,7 @@ watch(side, (vector) => {
                     <label
                       v-for="field in visibleFields(fieldColumn)"
                       :key="field.key"
-                      class="flex min-w-0 flex-col gap-2"
+                      class="relative flex min-w-0 flex-col gap-2"
                     >
                       <span class="min-h-[20px] text-[8px] font-bold uppercase leading-relaxed tracking-[0.18em] text-black/50 dark:text-white/40">{{ ui().fields[field.key] }}</span>
 
@@ -326,7 +384,11 @@ watch(side, (vector) => {
                         v-model="tradeStudyMetrics[field.key]"
                         type="number"
                         step="any"
+                        :min="tradeStudyMetrics[field.directionKey] === 'up' ? 0 : undefined"
+                        :max="tradeStudyMetrics[field.directionKey] === 'down' ? 0 : undefined"
                         :placeholder="ui().placeholders.percentMove"
+                        @input="normalizeDirectionPercent(field, $event.target.value)"
+                        @blur="normalizeDirectionPercent(field)"
                         class="h-14 min-w-0 border border-black/15 bg-transparent px-4 text-[13px] font-mono outline-none transition-colors placeholder:text-[10px] placeholder:tracking-[0.16em] placeholder:text-black/25 focus:border-black dark:border-white/15 dark:placeholder:text-white/20 dark:focus:border-white"
                       />
 
@@ -335,9 +397,16 @@ watch(side, (vector) => {
                         v-model="tradeStudyMetrics[field.key]"
                         type="number"
                         step="any"
-                        :placeholder="ui().placeholders[field.key]"
+                        :placeholder="getFieldPlaceholder(field)"
                         class="h-14 min-w-0 border border-black/15 bg-transparent px-4 text-[13px] font-mono outline-none transition-colors placeholder:text-[10px] placeholder:tracking-[0.16em] placeholder:text-black/25 focus:border-black dark:border-white/15 dark:placeholder:text-white/20 dark:focus:border-white"
+                        :class="field.unit === 'price' ? 'pr-24' : ''"
                       />
+                      <span
+                        v-if="getFieldUnit(field)"
+                        class="pointer-events-none absolute bottom-0 right-3 flex h-14 items-center text-[8px] font-black uppercase tracking-[0.22em] text-black/35 dark:text-white/30"
+                      >
+                        {{ getFieldUnit(field) }}
+                      </span>
                     </label>
                   </div>
                 </div>
