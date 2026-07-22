@@ -1,5 +1,6 @@
 <script setup>
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -478,14 +479,13 @@ const loadMarketCatalog = async (refresh = false) => {
   const endpoint = refresh ? '/api/market-data/catalog?refresh=1' : '/api/market-data/catalog'
   try {
     const response = await fetch(endpoint)
-    if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`)
-    marketCatalog.value = await response.json()
+    marketCatalog.value = await readJsonResponse(response, 'Market catalog')
     return marketCatalog.value
   } catch (error) {
     if (refresh) throw error
     const response = await fetch('/data/market-data/api_asset_catalog.json')
     if (!response.ok) throw error
-    marketCatalog.value = await response.json()
+    marketCatalog.value = await readJsonResponse(response, 'Local market catalog')
     return marketCatalog.value
   }
 }
@@ -554,19 +554,23 @@ const scoreCatalogAsset = (catalogAsset) => {
   return bestAliasScore + getCatalogAssetTypeScore(catalogAsset, wantedKind) + getCatalogProviderScore(catalogAsset, wantedKind)
 }
 
-const findCatalogMatch = (catalog) => {
+const findCatalogMatch = (catalog, allowedProviders = null) => {
+  const allowed = Array.isArray(allowedProviders) && allowedProviders.length
+    ? new Set(allowedProviders)
+    : null
   const assets = Array.isArray(catalog?.assets) ? catalog.assets : []
   const scored = assets
+    .filter(asset => !allowed || allowed.has(asset?.provider))
     .map(asset => ({ asset, score: scoreCatalogAsset(asset) }))
     .filter(item => item.score >= 100)
     .sort((a, b) => b.score - a.score)
   return scored[0]?.asset || null
 }
 
-const resolveCatalogMarketAsset = async () => {
-  let match = findCatalogMatch(await loadMarketCatalog(false))
+const resolveCatalogMarketAsset = async (allowedProviders = null) => {
+  let match = findCatalogMatch(await loadMarketCatalog(false), allowedProviders)
   if (match) return match
-  match = findCatalogMatch(await loadMarketCatalog(true))
+  match = findCatalogMatch(await loadMarketCatalog(true), allowedProviders)
   return match
 }
 
@@ -644,6 +648,44 @@ const pushYahooCandidate = (set, value) => {
   if (symbol) set.add(symbol)
 }
 
+const pushYahooXStockCandidate = (set, value) => {
+  const symbol = normalizeYahooSymbol(value)
+  if (!symbol) return
+
+  if (symbol.includes('-')) pushYahooCandidate(set, symbol)
+
+  const compact = normalizeApiSymbol(symbol)
+  if (!compact) return
+
+  const base = compact.endsWith('USD') && compact.length > 3
+    ? compact.slice(0, -3)
+    : compact
+
+  if (!base) return
+  if (base.endsWith('X')) {
+    pushYahooCandidate(set, `${base}-USD`)
+    return
+  }
+
+  if (/\d/.test(base)) {
+    pushYahooCandidate(set, `${base}-USD`)
+    return
+  }
+
+  pushYahooCandidate(set, `${base}X-USD`)
+}
+
+const pushYahooXStockEquityFallback = (set, value) => {
+  const compact = normalizeApiSymbol(value)
+  if (!compact) return
+
+  let base = compact.endsWith('USD') && compact.length > 3
+    ? compact.slice(0, -3)
+    : compact
+  if (base.endsWith('X') && base.length > 1) base = base.slice(0, -1)
+  pushYahooCandidate(set, base)
+}
+
 const getBaseAssetSymbol = () => {
   const rawAsset = selectedTradeAsset.value
   const rawParts = String(rawAsset).split(/[\/:_-]/).filter(Boolean)
@@ -659,8 +701,18 @@ const buildYahooSymbolCandidates = () => {
   const rawSymbol = normalizeYahooSymbol(rawAsset)
   const base = getBaseAssetSymbol()
   const rawParts = String(rawAsset).split(/[\/:_-]/).filter(Boolean).map(normalizeYahooSymbol)
+  const isTokenizedStock = assetName.toLowerCase().includes('tokenized stock') || assetType === 'xstocks'
 
   const directValues = [rawAsset, assetData.symbol, assetData.ticker]
+  if (isTokenizedStock) {
+    const tokenizedValues = [...directValues, rawSymbol, base, rawParts[0]].filter(Boolean)
+    tokenizedValues
+      .forEach(value => pushYahooXStockCandidate(candidates, value))
+    tokenizedValues
+      .forEach(value => pushYahooXStockEquityFallback(candidates, value))
+    return Array.from(candidates)
+  }
+
   directValues.forEach(value => pushYahooCandidate(candidates, value))
 
   const commodityMap = {
@@ -718,8 +770,7 @@ const buildYahooSymbolCandidates = () => {
     ;['USD', 'USDC'].forEach(quote => pushYahooCandidate(candidates, `${cryptoBase}-${quote}`))
   }
 
-  const isTokenizedStock = assetName.toLowerCase().includes('tokenized stock') || assetType === 'xstocks'
-  if (isTokenizedStock || (assetType === 'crypto' && rawSymbol.endsWith('X'))) {
+  if (assetType === 'crypto' && rawSymbol.endsWith('X')) {
     if (rawSymbol.endsWith('X') && rawSymbol.length > 1) pushYahooCandidate(candidates, rawSymbol.slice(0, -1))
     if (base.endsWith('X') && base.length > 1) pushYahooCandidate(candidates, base.slice(0, -1))
   }
@@ -736,13 +787,36 @@ const fetchJsonWithFallback = async (path) => {
   for (const host of hosts) {
     try {
       const response = await fetch(`${host}${path}`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      return await response.json()
+      return await readJsonResponse(response, `Binance ${host}`)
     } catch (error) {
       lastError = error
     }
   }
   throw lastError || new Error('Public API request failed')
+}
+
+const parseJsonText = (text, label) => {
+  const trimmed = String(text || '').trim()
+  if (!trimmed) throw new Error(`${label} returned an empty response`)
+  if (!/^[\[{]/.test(trimmed)) throw new Error(`${label} returned a non-JSON response`)
+  try {
+    return JSON.parse(trimmed)
+  } catch (error) {
+    throw new Error(`${label} returned invalid JSON`)
+  }
+}
+
+const readJsonResponse = async (response, label) => {
+  const text = await response.text()
+  if (!response.ok) {
+    const detail = text ? ` - ${text.slice(0, 160)}` : ''
+    throw new Error(`${label} HTTP ${response.status}${detail}`)
+  }
+  return parseJsonText(text, label)
+}
+
+const isTauriRuntime = () => {
+  return typeof window !== 'undefined' && Boolean(window.__TAURI_INTERNALS__ || window.__TAURI__)
 }
 
 const getBinanceTradableSymbols = async () => {
@@ -885,17 +959,46 @@ const fetchYahooChart = async (symbol, interval) => {
   const requestRange = getMarketRequestRange()
   if (!requestRange) throw new Error('Invalid trade time range')
   const params = new URLSearchParams({
-    symbol,
     interval,
     period1: String(Math.floor(requestRange.start / 1000)),
     period2: String(Math.ceil(requestRange.end / 1000))
   })
-  const response = await fetch(`/api/market-data/yahoo-chart?${params.toString()}`)
-  if (!response.ok) throw new Error(`Yahoo proxy HTTP ${response.status}`)
-  const payload = await response.json()
-  const apiError = payload?.chart?.error
-  if (apiError) throw new Error(apiError.description || apiError.code || 'Yahoo chart error')
-  return payload
+  const proxyParams = new URLSearchParams(params)
+  proxyParams.set('symbol', symbol)
+  let lastError = null
+
+  try {
+    const response = await fetch(`/api/market-data/yahoo-chart?${proxyParams.toString()}`)
+    const payload = await readJsonResponse(response, 'Yahoo proxy')
+    const apiError = payload?.chart?.error
+    if (apiError) throw new Error(apiError.description || apiError.code || 'Yahoo chart error')
+    return payload
+  } catch (error) {
+    lastError = error
+  }
+
+  if (isTauriRuntime()) {
+    const encodedSymbol = encodeURIComponent(symbol)
+    const hosts = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']
+    for (const host of hosts) {
+      try {
+        const payload = parseJsonText(
+          await invoke('ibkr_fetch_xml', {
+            url: `${host}/v8/finance/chart/${encodedSymbol}`,
+            params: Object.fromEntries(params.entries())
+          }),
+          `Yahoo native ${host}`
+        )
+        const apiError = payload?.chart?.error
+        if (apiError) throw new Error(apiError.description || apiError.code || 'Yahoo chart error')
+        return payload
+      } catch (error) {
+        lastError = error
+      }
+    }
+  }
+
+  throw lastError || new Error('Yahoo chart request failed')
 }
 
 const loadYahooMarketData = async (preferredSymbol = '') => {
@@ -971,8 +1074,7 @@ const fetchBybitKlines = async ({ category, symbol, timeframe }) => {
     limit: String(getTimeframeLimit(timeframe))
   })
   const response = await fetch(`https://api.bybit.com/v5/market/kline?${params.toString()}`)
-  if (!response.ok) throw new Error(`Bybit HTTP ${response.status}`)
-  return parseBybitKlineCandles(await response.json())
+  return parseBybitKlineCandles(await readJsonResponse(response, 'Bybit kline'))
 }
 
 const loadBybitMarketData = async (preferredAsset = null) => {
@@ -1014,8 +1116,7 @@ const fetchKrakenOhlc = async ({ pair, timeframe }) => {
     since: String(Math.floor(requestRange.start / 1000))
   })
   const response = await fetch(`https://api.kraken.com/0/public/OHLC?${params.toString()}`)
-  if (!response.ok) throw new Error(`Kraken HTTP ${response.status}`)
-  return filterCandlesToTradeWindow(parseKrakenOhlcCandles(await response.json()), timeframe)
+  return filterCandlesToTradeWindow(parseKrakenOhlcCandles(await readJsonResponse(response, 'Kraken OHLC')), timeframe)
 }
 
 const loadKrakenMarketData = async (preferredSymbol = '') => {
@@ -1055,14 +1156,22 @@ const loadCatalogMatchedMarketData = async (catalogAsset) => {
 
 const loadPublicMarketData = async () => {
   if (!availableTimeframeOptions.value.length) throw new Error('Trade duration is too short or invalid')
+  const wantedKind = getSelectedAssetKind()
+  const preferredCatalogProviders = wantedKind === 'xstock'
+    ? null
+    : wantedKind === 'crypto'
+      ? ['BYBIT', 'BINANCE', 'KRAKEN']
+      : null
   const loaders = isLikelyXStockAsset.value
-      ? [loadBybitMarketData, loadBinanceMarketData, loadYahooMarketData]
+      ? [loadYahooMarketData]
       : isLikelyCryptoAsset.value
-        ? [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData, loadYahooMarketData]
+        ? [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData]
         : [loadYahooMarketData, loadBinanceMarketData]
 
   let lastError = null
-  const catalogMatch = await resolveCatalogMarketAsset()
+  const catalogMatch = wantedKind === 'xstock'
+    ? null
+    : await resolveCatalogMarketAsset(preferredCatalogProviders)
   if (catalogMatch) {
     try {
       return await loadCatalogMatchedMarketData(catalogMatch)
@@ -1264,10 +1373,10 @@ const clampPriceViewport = (min, max, referenceRange = null) => {
   const autoRange = referenceRange || getAutoPriceRange(getVisibleCandles())
   const autoSpan = Math.max(autoRange.max - autoRange.min, Math.abs(autoRange.max) * 0.0001, 0.000001)
   const minSpan = autoSpan * 0.08
-  const maxSpan = autoSpan * 8
+  const maxSpan = autoSpan * 16
   const center = (min + max) / 2
   const span = clamp(max - min, minSpan, maxSpan)
-  const boundaryPadding = autoSpan * 4
+  const boundaryPadding = autoSpan * 16
   const nextMin = clamp(center - (span / 2), autoRange.min - boundaryPadding, autoRange.max + boundaryPadding - span)
   return { min: nextMin, max: nextMin + span }
 }
@@ -1484,6 +1593,16 @@ const applyPriceScaleDrag = (event) => {
   priceViewport.value = clampPriceViewport(center - (nextSpan / 2), center + (nextSpan / 2))
 }
 
+const applyPricePanDrag = (event, geometry) => {
+  const activeRange = getActivePriceRange(getVisibleCandles())
+  const span = activeRange.max - activeRange.min
+  const plotHeight = Math.max(1, geometry.bottom - geometry.top)
+  const dy = event.clientY - lastChartPointerY.value
+  const priceShift = (dy / plotHeight) * span
+  if (!Number.isFinite(priceShift) || priceShift === 0) return
+  priceViewport.value = clampPriceViewport(activeRange.min + priceShift, activeRange.max + priceShift)
+}
+
 const handleChartPointerDown = (event) => {
   if (!generatedChartCandles.value.length) return
   isChartDragging.value = true
@@ -1506,6 +1625,7 @@ const handleChartPointerMove = (event) => {
     } else {
       const candleShift = ((lastChartPointerX.value - event.clientX) / Math.max(1, geometry.right - geometry.left)) * visibleCount
       chartViewport.value = clampChartViewport(chartViewport.value.start + candleShift, visibleCount)
+      applyPricePanDrag(event, geometry)
     }
     lastChartPointerX.value = event.clientX
     lastChartPointerY.value = event.clientY
