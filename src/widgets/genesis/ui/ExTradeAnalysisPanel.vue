@@ -1452,10 +1452,7 @@ const studyMetricText = computed(() => {
     up: isRu ? 'Выросла' : 'Rose',
     down: isRu ? 'Упала' : 'Fell',
     points: isRu ? 'пункты' : 'pts',
-    sectionTitle: isRu ? 'IN-TRADE_ANALYSIS' : 'IN-TRADE_ANALYSIS',
-    sectionHint: isRu
-      ? 'Ручные экстремумы имеют приоритет над публичными свечами'
-      : 'Manual extremes override public candle data',
+    sectionTitle: isRu ? 'Анализ во время сделки' : 'In-Trade Analysis',
     labels: {
       meaningfulLossTime: isRu ? 'Время в значимом убытке' : 'Meaningful time in loss',
       meaningfulProfitTime: isRu ? 'Время в значимом плюсе' : 'Meaningful time in profit',
@@ -1885,7 +1882,7 @@ const advancedMetricTabs = computed(() => [
   { id: 'behavioural', label: 'Behavioural', count: 5 },
   { id: 'execution', label: 'Execution & Risk', count: 8 },
   { id: 'strategy_execution', label: 'Strategy vs. Execution', count: 9 },
-  { id: 'in_trade', label: 'In-Trade Analysis', count: inTradeAnalysisRows.value.length }
+  { id: 'in_trade', label: studyMetricText.value.sectionTitle, count: inTradeAnalysisRows.value.length }
 ]);
 
 const NODE_MAPPING_EMOTION_WEIGHTS: Record<string, number> = {
@@ -1928,9 +1925,12 @@ const tradeScoreBreakdown = computed(() => {
   const lowerTrades = scoredTrades.filter((score: number) => score < rawScore).length;
   const computedPercentile = scoredTrades.length > 0 ? Math.round((lowerTrades / scoredTrades.length) * 100) : 0;
   const propPercentile = Number((tr as any)?.percentileRank);
+  const percentile = scoredTrades.length > 0
+    ? computedPercentile
+    : (Number.isFinite(propPercentile) ? propPercentile : 0);
 
   return {
-    percentile: Number.isFinite(propPercentile) ? propPercentile : computedPercentile,
+    percentile,
     pnlScore,
     emotionScore,
     rawScore,
@@ -2320,7 +2320,7 @@ const simpleMetricInsights = computed(() => {
       label: isRu ? 'Общий score сделки' : 'Trade Score',
       prefix: isRu ? 'Лучше чем' : 'Better than',
       value: `${scoreBreakdown.percentile}%`,
-      suffix: isRu ? 'сделок в node mapping' : 'of trades in node mapping',
+      suffix: isRu ? 'сделок' : 'of trades',
       benchmarkLabel: isRu ? 'raw score' : 'raw score',
       benchmarkValue: formatCurrency(scoreBreakdown.rawScore),
       hint: '',
@@ -2703,10 +2703,10 @@ const simpleMetricInsights = computed(() => {
 
                 <div v-else>
                 <!-- METRICS FILTER TABS -->
-                <div class="flex items-center space-x-2 border-b nier-border-primary pb-3 mb-4 overflow-x-auto custom-scrollbar">
+                <div class="flex flex-wrap items-center gap-2 border-b nier-border-primary pb-3 mb-4">
                   <button v-for="tab in advancedMetricTabs" :key="tab.id"
                   @click="activeMetricTab = tab.id"
-                  class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer shrink-0"
+                  class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer"
                   :class="activeMetricTab === tab.id ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 nier-text-primary font-bold shadow-sm' : 'nier-border-primary text-black/50 dark:text-white/50 hover:border-black/30 dark:hover:border-white/30'">
                     <div v-if="activeMetricTab === tab.id" class="w-1.5 h-1.5 nier-bg-inverted rotate-45 animate-pulse"></div>
                     <span class="text-[10px] font-mono tracking-wider uppercase">{{ tab.label }}</span>
@@ -2746,14 +2746,8 @@ const simpleMetricInsights = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>{{ metric.hint }}</div>
-                           <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
-                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">{{ studyMetricText.sectionTitle }}</span>
-                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5">
-                                 {{ studyMetricText.sectionHint }}
-                              </span>
-                           </div>
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed">
+                           {{ metric.hint }}
                         </div>
                      </ExTooltip>
 
