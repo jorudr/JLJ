@@ -5,6 +5,7 @@ export default defineEventHandler(async (event) => {
   const range = String(query.range || '5d').trim()
   const period1 = Number(query.period1)
   const period2 = Number(query.period2)
+  const includePrePost = String(query.includePrePost ?? 'true').toLowerCase() !== 'false'
 
   const allowedIntervals = new Set(['1m', '15m', '30m', '60m'])
   const allowedRanges = new Set(['1d', '5d', '7d', '1mo'])
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const params = new URLSearchParams({
     interval,
-    includePrePost: 'true',
+    includePrePost: includePrePost ? 'true' : 'false',
     events: 'div,splits'
   })
   if (hasPeriodRange) {

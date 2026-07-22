@@ -1219,6 +1219,24 @@ const parseYahooChartCandles = (payload) => {
     .filter(isUsableOhlcCandle)
 }
 
+const getYahooChartTimeZone = (payload) => {
+  const meta = payload?.chart?.result?.[0]?.meta || {}
+  return meta.exchangeTimezoneName || meta.timezone || 'UTC'
+}
+
+const getLocalDateKey = (timestamp, timeZone) => {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date(timestamp))
+  } catch {
+    return new Date(timestamp).toISOString().slice(0, 10)
+  }
+}
+
 const aggregateCandles = (candles, bucketMs) => {
   const buckets = new Map()
   candles.forEach(candle => {
@@ -1236,13 +1254,50 @@ const aggregateCandles = (candles, bucketMs) => {
   return Array.from(buckets.values()).sort((a, b) => a.time - b.time)
 }
 
-const fetchYahooChart = async (symbol, interval) => {
+const aggregateCandlesByLocalSession = (candles, bucketMs, timeZone = 'UTC') => {
+  const sessions = new Map()
+  candles
+    .slice()
+    .sort((a, b) => a.time - b.time)
+    .forEach(candle => {
+      const dayKey = getLocalDateKey(candle.time, timeZone)
+      if (!sessions.has(dayKey)) sessions.set(dayKey, [])
+      sessions.get(dayKey).push(candle)
+    })
+
+  return Array.from(sessions.values())
+    .flatMap(sessionCandles => {
+      const sessionStart = sessionCandles[0]?.time
+      if (!Number.isFinite(sessionStart)) return []
+      const buckets = new Map()
+      sessionCandles.forEach(candle => {
+        const bucketTime = sessionStart + Math.floor((candle.time - sessionStart) / bucketMs) * bucketMs
+        const bucket = buckets.get(bucketTime)
+        if (!bucket) {
+          buckets.set(bucketTime, { ...candle, time: bucketTime })
+          return
+        }
+        bucket.high = Math.max(bucket.high, candle.high)
+        bucket.low = Math.min(bucket.low, candle.low)
+        bucket.close = candle.close
+        bucket.volume += candle.volume || 0
+      })
+      return Array.from(buckets.values())
+    })
+    .sort((a, b) => a.time - b.time)
+}
+
+const shouldUseYahooRegularSession = () => getSelectedAssetKind() === 'stock'
+
+const fetchYahooChart = async (symbol, interval, options = {}) => {
   const requestRange = getMarketRequestRange()
   if (!requestRange) throw new Error('Invalid trade time range')
+  const includePrePost = options.includePrePost !== false
   const params = new URLSearchParams({
     interval,
     period1: String(Math.floor(requestRange.start / 1000)),
-    period2: String(Math.ceil(requestRange.end / 1000))
+    period2: String(Math.ceil(requestRange.end / 1000)),
+    includePrePost: includePrePost ? 'true' : 'false'
   })
   const proxyParams = new URLSearchParams(params)
   proxyParams.set('symbol', symbol)
@@ -1284,22 +1339,31 @@ const fetchYahooChart = async (symbol, interval) => {
 
 const loadYahooMarketData = async (preferredSymbol = '') => {
   const candidates = preferredSymbol ? [preferredSymbol] : await buildYahooSymbolCandidates()
+  const useRegularSession = shouldUseYahooRegularSession()
   let lastError = null
 
   for (const symbol of candidates) {
     try {
       const marketData = {}
+      let hourlyPayload = null
       let hourly = null
+      let hourlyTimeZone = 'UTC'
       for (const timeframe of availableTimeframeOptions.value) {
         if (timeframe.id === '4h' || timeframe.id === '1h') {
-          if (!hourly) hourly = parseYahooChartCandles(await fetchYahooChart(symbol, '60m'))
+          if (!hourly) {
+            hourlyPayload = await fetchYahooChart(symbol, '60m', { includePrePost: !useRegularSession })
+            hourly = parseYahooChartCandles(hourlyPayload)
+            hourlyTimeZone = getYahooChartTimeZone(hourlyPayload)
+          }
           const candles = timeframe.id === '4h'
-            ? aggregateCandles(hourly, timeframe.durationMs)
+            ? (useRegularSession
+              ? aggregateCandlesByLocalSession(hourly, timeframe.durationMs, hourlyTimeZone)
+              : aggregateCandles(hourly, timeframe.durationMs))
             : hourly
           marketData[timeframe.id] = adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
           continue
         }
-        const candles = parseYahooChartCandles(await fetchYahooChart(symbol, timeframe.yahooInterval))
+        const candles = parseYahooChartCandles(await fetchYahooChart(symbol, timeframe.yahooInterval, { includePrePost: !useRegularSession }))
         marketData[timeframe.id] = adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
       }
 
