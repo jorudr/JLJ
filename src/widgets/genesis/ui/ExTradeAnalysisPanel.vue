@@ -1484,6 +1484,8 @@ const studyMetricText = computed(() => {
     detail: {
       data: isRu ? 'Данные' : 'Data',
       period: isRu ? 'Период' : 'Period',
+      start: isRu ? 'начало отсчета' : 'start',
+      end: isRu ? 'конец отсчета' : 'end',
       entry: 'Entry',
       exit: 'Exit',
       from: isRu ? 'от' : 'from',
@@ -1639,6 +1641,16 @@ const getInTradePeriodValue = () => {
   return `${formatInTradeTimestamp(range.start)} -> ${formatInTradeTimestamp(range.end)}`;
 };
 
+const getInTradeMetricPeriodBounds = (kind: 'loss' | 'profit') => {
+  const analysis = generatedInTradeAnalysis.value;
+  const start = parseStudyNumber(kind === 'loss' ? analysis.meaningfulLossStartTime : analysis.meaningfulProfitStartTime);
+  const end = parseStudyNumber(kind === 'loss' ? analysis.meaningfulLossEndTime : analysis.meaningfulProfitEndTime);
+  return {
+    start: Number.isFinite(start) ? formatInTradeTimestamp(start) : studyMetricText.value.na,
+    end: Number.isFinite(end) ? formatInTradeTimestamp(end) : studyMetricText.value.na
+  };
+};
+
 const getInTradeTimeframeValue = () => String(generatedInTradeAnalysis.value?.timeframe || studyMetricText.value.na).toUpperCase();
 
 const getInTradeThresholds = () => {
@@ -1659,14 +1671,10 @@ const metricDetailRow = (label: string, value: string) => ({ label, value });
 
 const getTimeMetricDetail = (kind: 'loss' | 'profit') => {
   const text = studyMetricText.value.detail;
-  const thresholds = getInTradeThresholds();
-  const levelLabel = kind === 'loss' ? text.lossLevel : text.profitLevel;
+  const bounds = getInTradeMetricPeriodBounds(kind);
   return [
-    metricDetailRow(text.period, getInTradePeriodValue()),
-    metricDetailRow(text.entry, formatStudyPrice(thresholds.entry)),
-    metricDetailRow(levelLabel, formatStudyPrice(kind === 'loss' ? thresholds.lossLevel : thresholds.profitLevel)),
-    metricDetailRow(text.timeframe, getInTradeTimeframeValue()),
-    metricDetailRow(text.sessionDay, formatSessionLength(getInTradeSessionDaySeconds()))
+    metricDetailRow(text.start, bounds.start),
+    metricDetailRow(text.end, bounds.end)
   ];
 };
 
@@ -1752,7 +1760,7 @@ const getStoredAnalysisCandles = (metrics: Record<string, any>) => {
   return { timeframe, candles };
 };
 
-const getStoredCandleStepSeconds = (candles: any[], index: number, timeframeId: string) => {
+const getStoredCandleWindow = (candles: any[], index: number, timeframeId: string) => {
   const current = Number(candles[index]?.time);
   const next = Number(candles[index + 1]?.time);
   const normalizedTimeframeId = String(timeframeId || '');
@@ -1769,12 +1777,16 @@ const getStoredCandleStepSeconds = (candles: any[], index: number, timeframeId: 
     const candleEnd = current + (nominalStepSeconds * 1000);
     const overlapStart = Math.max(candleStart, range.start);
     const overlapEnd = Math.min(candleEnd, range.end);
-    return Math.max(0, (overlapEnd - overlapStart) / 1000);
+    return overlapEnd > overlapStart ? { start: overlapStart, end: overlapEnd } : null;
   }
-  if (Number.isFinite(current) && Number.isFinite(next) && next > current) return Math.min((next - current) / 1000, nominalStepSeconds);
+  if (Number.isFinite(current) && Number.isFinite(next) && next > current) {
+    return { start: current, end: current + Math.min(next - current, nominalStepSeconds * 1000) };
+  }
   const previous = Number(candles[index - 1]?.time);
-  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) return Math.min((current - previous) / 1000, nominalStepSeconds);
-  return nominalStepSeconds;
+  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) {
+    return { start: current, end: current + Math.min(current - previous, nominalStepSeconds * 1000) };
+  }
+  return Number.isFinite(current) ? { start: current, end: current + (nominalStepSeconds * 1000) } : null;
 };
 
 const getBodyAwareExtremePrices = (candles: any[], entryPrice: number) => {
@@ -1852,15 +1864,32 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
 
   let meaningfulLossSeconds = 0;
   let meaningfulProfitSeconds = 0;
+  let meaningfulLossStartTime: number | null = null;
+  let meaningfulLossEndTime: number | null = null;
+  let meaningfulProfitStartTime: number | null = null;
+  let meaningfulProfitEndTime: number | null = null;
   let firstImpulse: string | null = null;
   const states: string[] = [];
 
   candles.forEach((candle, index) => {
     const isLoss = direction === 'LONG' ? candle.low <= lossLimit : candle.high >= lossLimit;
     const isProfit = direction === 'LONG' ? candle.high >= profitLimit : candle.low <= profitLimit;
-    const stepSeconds = getStoredCandleStepSeconds(candles, index, timeframe);
-    if (isLoss) meaningfulLossSeconds += stepSeconds;
-    if (isProfit) meaningfulProfitSeconds += stepSeconds;
+    const window = getStoredCandleWindow(candles, index, timeframe);
+    const stepSeconds = window ? Math.max(0, (window.end - window.start) / 1000) : 0;
+    if (isLoss) {
+      meaningfulLossSeconds += stepSeconds;
+      if (window) {
+        meaningfulLossStartTime = meaningfulLossStartTime ?? window.start;
+        meaningfulLossEndTime = window.end;
+      }
+    }
+    if (isProfit) {
+      meaningfulProfitSeconds += stepSeconds;
+      if (window) {
+        meaningfulProfitStartTime = meaningfulProfitStartTime ?? window.start;
+        meaningfulProfitEndTime = window.end;
+      }
+    }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT';
     states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'));
   });
@@ -1889,6 +1918,10 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
     minPrice,
     meaningfulLossSeconds,
     meaningfulProfitSeconds,
+    meaningfulLossStartTime,
+    meaningfulLossEndTime,
+    meaningfulProfitStartTime,
+    meaningfulProfitEndTime,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,

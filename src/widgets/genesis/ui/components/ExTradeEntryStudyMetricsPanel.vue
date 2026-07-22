@@ -1605,7 +1605,7 @@ const getGeneratedAnalysisCandles = (candlesByTimeframe) => {
   }
 }
 
-const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
+const getGeneratedAnalysisCandleWindow = (candles, index, timeframe) => {
   const current = Number(candles[index]?.time)
   const next = Number(candles[index + 1]?.time)
   const nominalStepSeconds = ((timeframe?.durationMs || MINUTE_MS) / 1000)
@@ -1615,16 +1615,16 @@ const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
     const candleEnd = current + (nominalStepSeconds * 1000)
     const overlapStart = Math.max(candleStart, range.start)
     const overlapEnd = Math.min(candleEnd, range.end)
-    return Math.max(0, (overlapEnd - overlapStart) / 1000)
+    return overlapEnd > overlapStart ? { start: overlapStart, end: overlapEnd } : null
   }
   if (Number.isFinite(current) && Number.isFinite(next) && next > current) {
-    return Math.min((next - current) / 1000, nominalStepSeconds)
+    return { start: current, end: current + Math.min(next - current, nominalStepSeconds * 1000) }
   }
   const previous = Number(candles[index - 1]?.time)
   if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) {
-    return Math.min((current - previous) / 1000, nominalStepSeconds)
+    return { start: current, end: current + Math.min(current - previous, nominalStepSeconds * 1000) }
   }
-  return nominalStepSeconds
+  return Number.isFinite(current) ? { start: current, end: current + (nominalStepSeconds * 1000) } : null
 }
 
 const getBodyAwareExtremePrices = (candles, entryPrice) => {
@@ -1703,6 +1703,10 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
 
   let meaningfulLossSeconds = 0
   let meaningfulProfitSeconds = 0
+  let meaningfulLossStartTime = null
+  let meaningfulLossEndTime = null
+  let meaningfulProfitStartTime = null
+  let meaningfulProfitEndTime = null
   let firstImpulse = null
   const states = []
 
@@ -1713,10 +1717,23 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
 
     const isLoss = direction === 'LONG' ? low <= lossLimit : high >= lossLimit
     const isProfit = direction === 'LONG' ? high >= profitLimit : low <= profitLimit
-    const stepSeconds = getGeneratedAnalysisStepSeconds(candles, index, timeframe)
+    const window = getGeneratedAnalysisCandleWindow(candles, index, timeframe)
+    const stepSeconds = window ? Math.max(0, (window.end - window.start) / 1000) : 0
 
-    if (isLoss) meaningfulLossSeconds += stepSeconds
-    if (isProfit) meaningfulProfitSeconds += stepSeconds
+    if (isLoss) {
+      meaningfulLossSeconds += stepSeconds
+      if (window) {
+        meaningfulLossStartTime = meaningfulLossStartTime ?? window.start
+        meaningfulLossEndTime = window.end
+      }
+    }
+    if (isProfit) {
+      meaningfulProfitSeconds += stepSeconds
+      if (window) {
+        meaningfulProfitStartTime = meaningfulProfitStartTime ?? window.start
+        meaningfulProfitEndTime = window.end
+      }
+    }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT'
     states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'))
   })
@@ -1749,6 +1766,10 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     minPrice,
     meaningfulLossSeconds,
     meaningfulProfitSeconds,
+    meaningfulLossStartTime,
+    meaningfulLossEndTime,
+    meaningfulProfitStartTime,
+    meaningfulProfitEndTime,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
