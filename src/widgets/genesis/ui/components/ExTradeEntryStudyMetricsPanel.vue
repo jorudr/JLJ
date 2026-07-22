@@ -352,7 +352,7 @@ const displayedOhlcCandle = computed(() => {
 
 const hoveredOhlcLabel = computed(() => {
   if (!displayedOhlcCandle.value) return ''
-  return `O: ${formatPrice(displayedOhlcCandle.value.open)} H: ${formatPrice(displayedOhlcCandle.value.high)} L: ${formatPrice(displayedOhlcCandle.value.low)} C: ${formatPrice(displayedOhlcCandle.value.close)}`
+  return `O: ${formatPrice(displayedOhlcCandle.value.open)} H: ${formatPrice(displayedOhlcCandle.value.high)} L: ${formatPrice(displayedOhlcCandle.value.low)} C: ${formatPrice(displayedOhlcCandle.value.close)} · ${formatCandleTime(displayedOhlcCandle.value.time)}`
 })
 
 const normalizeApiSymbol = (value) => {
