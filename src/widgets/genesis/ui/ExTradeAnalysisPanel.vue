@@ -1441,6 +1441,233 @@ const formatCurrency = (value: number) => {
 
 const formatRiskCurrency = (value: number) => Number.isFinite(value) ? `$${value.toFixed(2)}` : 'N/A';
 const formatRiskPercent = (value: number) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A';
+const formatSignedStudyPercent = (value: number) => Number.isFinite(value) ? `${value > 0 ? '+' : ''}${value.toFixed(2)}%` : 'N/A';
+
+const studyMetricText = computed(() => {
+  const isRu = locale.value === 'ru';
+  return {
+    na: 'N/A',
+    yes: isRu ? 'Да' : 'Yes',
+    no: isRu ? 'Нет' : 'No',
+    up: isRu ? 'Выросла' : 'Rose',
+    down: isRu ? 'Упала' : 'Fell',
+    points: isRu ? 'пункты' : 'pts',
+    sectionTitle: isRu ? 'IN-TRADE_ANALYSIS' : 'IN-TRADE_ANALYSIS',
+    sectionHint: isRu
+      ? 'Ручные данные из метрик изучения сделки'
+      : 'Manual data from trade study metrics',
+    labels: {
+      lossDuration: isRu ? 'Длительность в убытке' : 'Loss-side duration',
+      maxPrice: isRu ? 'Максимальная цена' : 'Maximum price',
+      minPrice: isRu ? 'Минимальная цена' : 'Minimum price',
+      adverseMove: isRu ? 'Движение против входа' : 'Adverse entry move',
+      hadNews: isRu ? 'Новости во время сделки' : 'News during trade',
+      beforeNews: isRu ? 'Изменение перед новостью' : 'Move before news',
+      afterNews: isRu ? 'Изменение после новости' : 'Move after news'
+    },
+    hints: {
+      lossDuration: isRu
+        ? 'Считается из ручного поля времени: ниже входа для long или выше входа для short.'
+        : 'Built from the manual duration field: below entry for long, above entry for short.',
+      maxPrice: isRu
+        ? 'Самая высокая цена актива, введенная во время изучения сделки.'
+        : 'Highest asset price entered during post-trade study.',
+      minPrice: isRu
+        ? 'Самая низкая цена актива, введенная во время изучения сделки.'
+        : 'Lowest asset price entered during post-trade study.',
+      adverseMove: isRu
+        ? 'Показывается только если отмечена соответствующая галочка для выбранного вектора.'
+        : 'Shown only when the matching vector checkbox was enabled.',
+      hadNews: isRu
+        ? 'Фиксирует, были ли новости во время сделки.'
+        : 'Flags whether news was present during the trade.',
+      beforeNews: isRu
+        ? 'Ручная оценка изменения цены перед новостью.'
+        : 'Manual estimate of price change before the news.',
+      afterNews: isRu
+        ? 'Ручная оценка изменения цены после новости.'
+        : 'Manual estimate of price change after the news.'
+    }
+  };
+});
+
+const parseStudyNumber = (value: any) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : Number.NaN;
+};
+
+const currentTradeStudyMetrics = computed<Record<string, any>>(() => {
+  const trade = props.trade as any;
+  return trade?.tradeStudyMetrics || trade?.studyMetrics || {};
+});
+
+const hasTradeStudyMetrics = computed(() => {
+  const trade = props.trade as any;
+  return Boolean(trade?.tradeStudyMetrics || trade?.studyMetrics);
+});
+
+const isStudyForexTrade = computed(() => {
+  const trade = props.trade as any;
+  return String(trade?.assetType || '').toLowerCase() === 'forex';
+});
+
+const formatStudyPrice = (value: any) => {
+  const numeric = parseStudyNumber(value);
+  if (!Number.isFinite(numeric)) return studyMetricText.value.na;
+  if (isStudyForexTrade.value) return `${numeric.toFixed(5)} ${studyMetricText.value.points}`;
+  return `$${numeric.toFixed(2)}`;
+};
+
+const formatStudyDuration = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return studyMetricText.value.na;
+
+  const isRu = locale.value === 'ru';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const parts: string[] = [];
+
+  if (days > 0) parts.push(`${days}${isRu ? 'д' : 'd'}`);
+  if (hours > 0 || days > 0) parts.push(`${hours}${isRu ? 'ч' : 'h'}`);
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}${isRu ? 'м' : 'm'}`);
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}${isRu ? 'с' : 's'}`);
+
+  return parts.join(' ');
+};
+
+const getStudyDurationSeconds = (prefix: string) => {
+  const metrics = currentTradeStudyMetrics.value;
+  const days = parseStudyNumber(metrics[`${prefix}Days`]) || 0;
+  const hours = parseStudyNumber(metrics[`${prefix}Hours`]) || 0;
+  const minutes = parseStudyNumber(metrics[`${prefix}Minutes`]) || 0;
+  const seconds = parseStudyNumber(metrics[`${prefix}Seconds`]) || 0;
+  return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+};
+
+const inTradeLossDuration = computed(() => {
+  const metrics = currentTradeStudyMetrics.value;
+  const direction = getTradeDirection(props.trade);
+  if (direction === 'LONG' && metrics.priceDroppedBelowEntryLong) {
+    return formatStudyDuration(getStudyDurationSeconds('priceBelowEntryLongDuration'));
+  }
+  if (direction === 'SHORT' && metrics.priceRoseAboveEntryShort) {
+    return formatStudyDuration(getStudyDurationSeconds('priceAboveEntryShortDuration'));
+  }
+  return studyMetricText.value.na;
+});
+
+const adverseEntryMovePct = computed(() => {
+  const metrics = currentTradeStudyMetrics.value;
+  const direction = getTradeDirection(props.trade);
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  if (!Number.isFinite(entry) || entry <= 0) return Number.NaN;
+
+  if (direction === 'LONG' && metrics.priceDroppedBelowEntryLong) {
+    const minPrice = parseStudyNumber(metrics.minPriceDuringTrade);
+    return Number.isFinite(minPrice) && minPrice < entry ? -((entry - minPrice) / entry) * 100 : Number.NaN;
+  }
+
+  if (direction === 'SHORT' && metrics.priceRoseAboveEntryShort) {
+    const maxPrice = parseStudyNumber(metrics.maxPriceDuringTrade);
+    return Number.isFinite(maxPrice) && maxPrice > entry ? ((maxPrice - entry) / entry) * 100 : Number.NaN;
+  }
+
+  return Number.NaN;
+});
+
+const formatNewsMove = (direction: any, percent: any) => {
+  if (!direction) return studyMetricText.value.na;
+  const numeric = parseStudyNumber(percent);
+  const directionLabel = direction === 'up' ? studyMetricText.value.up : studyMetricText.value.down;
+  if (!Number.isFinite(numeric)) return directionLabel;
+  return `${directionLabel} ${formatSignedStudyPercent(numeric)}`;
+};
+
+const inTradeAnalysisRows = computed(() => {
+  const metrics = currentTradeStudyMetrics.value;
+  const text = studyMetricText.value;
+  const hasMetricValue = (value: string) => value !== text.na;
+  const newsValue = !hasTradeStudyMetrics.value ? text.na : (metrics.hadNews ? text.yes : text.no);
+  const beforeNewsValue = metrics.hadNews
+    ? formatNewsMove(metrics.priceDirectionBeforeNews, metrics.priceDirectionBeforeNewsChangePercent)
+    : text.na;
+  const afterNewsValue = metrics.hadNews
+    ? formatNewsMove(metrics.priceDirectionAfterNews, metrics.priceDirectionAfterNewsChangePercent)
+    : text.na;
+
+  return [
+    {
+      id: 'lossDuration',
+      label: text.labels.lossDuration,
+      value: inTradeLossDuration.value,
+      subvalue: getTradeDirection(props.trade) === 'SHORT' ? 'SHORT_ABOVE_ENTRY' : 'LONG_BELOW_ENTRY',
+      hint: text.hints.lossDuration,
+      tone: hasMetricValue(inTradeLossDuration.value) ? 'warning' : 'neutral'
+    },
+    {
+      id: 'maxPrice',
+      label: text.labels.maxPrice,
+      value: formatStudyPrice(metrics.maxPriceDuringTrade),
+      subvalue: isStudyForexTrade.value ? 'FOREX_PRICE_FORMAT' : 'PRICE_IN_USD',
+      hint: text.hints.maxPrice,
+      tone: Number.isFinite(parseStudyNumber(metrics.maxPriceDuringTrade)) ? 'neutral' : 'muted'
+    },
+    {
+      id: 'minPrice',
+      label: text.labels.minPrice,
+      value: formatStudyPrice(metrics.minPriceDuringTrade),
+      subvalue: isStudyForexTrade.value ? 'FOREX_PRICE_FORMAT' : 'PRICE_IN_USD',
+      hint: text.hints.minPrice,
+      tone: Number.isFinite(parseStudyNumber(metrics.minPriceDuringTrade)) ? 'neutral' : 'muted'
+    },
+    {
+      id: 'adverseMove',
+      label: text.labels.adverseMove,
+      value: formatSignedStudyPercent(adverseEntryMovePct.value),
+      subvalue: getTradeDirection(props.trade) === 'SHORT' ? 'ABOVE_ENTRY' : 'BELOW_ENTRY',
+      hint: text.hints.adverseMove,
+      tone: Number.isFinite(adverseEntryMovePct.value) ? 'danger' : 'muted'
+    },
+    {
+      id: 'hadNews',
+      label: text.labels.hadNews,
+      value: newsValue,
+      subvalue: !hasTradeStudyMetrics.value ? 'N/A' : (metrics.hadNews ? 'NEWS_CONTEXT_ACTIVE' : 'NO_NEWS_CONTEXT'),
+      hint: text.hints.hadNews,
+      tone: !hasTradeStudyMetrics.value ? 'muted' : (metrics.hadNews ? 'warning' : 'neutral')
+    },
+    {
+      id: 'beforeNews',
+      label: text.labels.beforeNews,
+      value: beforeNewsValue,
+      subvalue: metrics.hadNews ? 'PRE_NEWS_MOVE' : 'N/A',
+      hint: text.hints.beforeNews,
+      tone: hasMetricValue(beforeNewsValue) ? (String(metrics.priceDirectionBeforeNews) === 'down' ? 'danger' : 'positive') : 'muted'
+    },
+    {
+      id: 'afterNews',
+      label: text.labels.afterNews,
+      value: afterNewsValue,
+      subvalue: metrics.hadNews ? 'POST_NEWS_MOVE' : 'N/A',
+      hint: text.hints.afterNews,
+      tone: hasMetricValue(afterNewsValue) ? (String(metrics.priceDirectionAfterNews) === 'down' ? 'danger' : 'positive') : 'muted'
+    }
+  ];
+});
+
+const visibleInTradeAnalysisRows = computed(() => {
+  return ['all', 'in_trade'].includes(activeMetricTab.value) ? inTradeAnalysisRows.value : [];
+});
+
+const advancedMetricTabs = computed(() => [
+  { id: 'all', label: 'All', count: 34 },
+  { id: 'adherence', label: 'Matrix Adherence', count: 5 },
+  { id: 'behavioural', label: 'Behavioural', count: 5 },
+  { id: 'execution', label: 'Execution & Risk', count: 8 },
+  { id: 'strategy_execution', label: 'Strategy vs. Execution', count: 9 },
+  { id: 'in_trade', label: 'In-Trade Analysis', count: inTradeAnalysisRows.value.length }
+]);
 
 const NODE_MAPPING_EMOTION_WEIGHTS: Record<string, number> = {
   CONFIDENCE: 10,
@@ -2258,13 +2485,7 @@ const simpleMetricInsights = computed(() => {
                 <div v-else>
                 <!-- METRICS FILTER TABS -->
                 <div class="flex items-center space-x-2 border-b nier-border-primary pb-3 mb-4 overflow-x-auto custom-scrollbar">
-                  <button v-for="tab in [
-                    { id: 'all', label: 'All', count: 27 },
-                    { id: 'adherence', label: 'Matrix Adherence', count: 5 },
-                    { id: 'behavioural', label: 'Behavioural', count: 5 },
-                    { id: 'execution', label: 'Execution & Risk', count: 8 },
-                    { id: 'strategy_execution', label: 'Strategy vs. Execution', count: 9 }
-                  ]" :key="tab.id"
+                  <button v-for="tab in advancedMetricTabs" :key="tab.id"
                   @click="activeMetricTab = tab.id"
                   class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer shrink-0"
                   :class="activeMetricTab === tab.id ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 nier-text-primary font-bold shadow-sm' : 'nier-border-primary text-black/50 dark:text-white/50 hover:border-black/30 dark:hover:border-white/30'">
@@ -2275,6 +2496,48 @@ const simpleMetricInsights = computed(() => {
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
+                     <!-- TAB E: IN-TRADE ANALYSIS -->
+                     <ExTooltip
+                       v-for="metric in visibleInTradeAnalysisRows"
+                       :key="metric.id"
+                       :is-dark="isDark"
+                       variant="basic"
+                     >
+                        <template #trigger>
+                           <div class="group relative flex min-h-[104px] cursor-pointer flex-col justify-between border nier-border-primary p-3 transition-all duration-300 hover:bg-black/[0.025] dark:hover:bg-white/[0.025]">
+                              <div class="absolute left-0 top-0 h-full w-px opacity-60"
+                                   :class="metric.tone === 'positive' ? 'bg-emerald-500' : (metric.tone === 'danger' ? 'bg-rose-500' : (metric.tone === 'warning' ? 'bg-amber-500' : 'bg-black/20 dark:bg-white/20'))"></div>
+                              <div class="flex items-start justify-between gap-3">
+                                 <span class="min-w-0 text-[8px] font-mono font-black uppercase tracking-widest opacity-40 transition-opacity group-hover:opacity-60">
+                                    {{ metric.label }}
+                                 </span>
+                                 <span class="mt-1 h-2 w-2 shrink-0 rotate-45 border"
+                                       :class="metric.tone === 'muted' ? 'border-black/20 dark:border-white/20' : 'border-current'"></span>
+                              </div>
+                              <div class="flex flex-col gap-1 overflow-hidden">
+                                 <span
+                                   class="truncate text-lg font-mono font-black uppercase tracking-normal"
+                                   :class="metric.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (metric.tone === 'danger' ? 'text-rose-500 dark:text-rose-400' : (metric.tone === 'warning' ? 'text-amber-500 dark:text-amber-400' : (metric.tone === 'muted' ? 'text-black/35 dark:text-white/35' : 'nier-text-primary')))"
+                                 >
+                                    {{ metric.value }}
+                                 </span>
+                                 <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/45 dark:text-white/45">
+                                    {{ metric.subvalue }}
+                                 </span>
+                              </div>
+                           </div>
+                        </template>
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
+                           <div>{{ metric.hint }}</div>
+                           <div class="pt-2 border-t nier-border-primary flex items-center justify-between">
+                              <span class="text-[9px] opacity-40 uppercase tracking-widest font-black">{{ studyMetricText.sectionTitle }}</span>
+                              <span class="text-[10px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5">
+                                 {{ studyMetricText.sectionHint }}
+                              </span>
+                           </div>
+                        </div>
+                     </ExTooltip>
+
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
