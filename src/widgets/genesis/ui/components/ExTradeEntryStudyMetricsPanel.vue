@@ -1474,6 +1474,124 @@ const parsePositiveMetric = (value) => {
   return Number.isFinite(numeric) && numeric > 0 ? numeric : Number.NaN
 }
 
+const IN_TRADE_NOISE_PCT = 0.5
+
+const getGeneratedAnalysisDirection = () => {
+  const raw = String(side?.value || '').toUpperCase()
+  if (raw.includes('SHORT')) return 'SHORT'
+  if (raw.includes('LONG')) return 'LONG'
+  return null
+}
+
+const getGeneratedAnalysisCandles = (candlesByTimeframe) => {
+  const finest = [...timeframeOptions]
+    .reverse()
+    .find(timeframe => candlesByTimeframe?.[timeframe.id]?.length)
+  return {
+    timeframe: finest || null,
+    candles: finest ? candlesByTimeframe[finest.id] : []
+  }
+}
+
+const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
+  const current = Number(candles[index]?.time)
+  const next = Number(candles[index + 1]?.time)
+  if (Number.isFinite(current) && Number.isFinite(next) && next > current) {
+    return (next - current) / 1000
+  }
+  return ((timeframe?.durationMs || MINUTE_MS) / 1000)
+}
+
+const classifyGeneratedPathShape = ({ states, firstImpulse, maePct, mfePct, captureRatio }) => {
+  const flips = states.reduce((count, state, index) => {
+    if (!index || state === 'noise' || states[index - 1] === 'noise') return count
+    return state !== states[index - 1] ? count + 1 : count
+  }, 0)
+
+  if (flips >= 3) return 'CHOPPY_PATH'
+  if (Math.abs(maePct) < IN_TRADE_NOISE_PCT && mfePct < IN_TRADE_NOISE_PCT) return 'NOISE_RANGE'
+  if (firstImpulse === 'LOSS' && mfePct >= IN_TRADE_NOISE_PCT) return 'ADVERSE_THEN_RECOVERY'
+  if (firstImpulse === 'PROFIT' && Math.abs(maePct) >= IN_TRADE_NOISE_PCT) return 'FAVORABLE_THEN_PULLBACK'
+  if (mfePct >= IN_TRADE_NOISE_PCT && Number.isFinite(captureRatio) && captureRatio >= 65) return 'CLEAN_TREND_CAPTURE'
+  if (mfePct >= IN_TRADE_NOISE_PCT && Number.isFinite(captureRatio) && captureRatio < 35) return 'LATE_EXIT_AFTER_MFE'
+  return firstImpulse === 'PROFIT' ? 'FAVORABLE_FIRST' : 'ADVERSE_FIRST'
+}
+
+const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
+  const entryPrice = parsePositiveMetric(entryMethodEnabled?.value ? averageEntry?.value : entry?.value)
+  const exitPrice = parsePositiveMetric(isClosed?.value && exitMethodEnabled?.value ? averageExit?.value : exit?.value)
+  const direction = getGeneratedAnalysisDirection()
+  const { timeframe, candles } = getGeneratedAnalysisCandles(candlesByTimeframe)
+
+  if (!Number.isFinite(entryPrice) || !direction || !candles.length) return null
+
+  const highs = candles.map(candle => Number(candle.high)).filter(Number.isFinite)
+  const lows = candles.map(candle => Number(candle.low)).filter(Number.isFinite)
+  if (!highs.length || !lows.length) return null
+
+  const maxPrice = Math.max(...highs)
+  const minPrice = Math.min(...lows)
+  const lossLimit = direction === 'LONG'
+    ? entryPrice * (1 - (IN_TRADE_NOISE_PCT / 100))
+    : entryPrice * (1 + (IN_TRADE_NOISE_PCT / 100))
+  const profitLimit = direction === 'LONG'
+    ? entryPrice * (1 + (IN_TRADE_NOISE_PCT / 100))
+    : entryPrice * (1 - (IN_TRADE_NOISE_PCT / 100))
+
+  let meaningfulLossSeconds = 0
+  let meaningfulProfitSeconds = 0
+  let firstImpulse = null
+  const states = []
+
+  candles.forEach((candle, index) => {
+    const high = Number(candle.high)
+    const low = Number(candle.low)
+    if (!Number.isFinite(high) || !Number.isFinite(low)) return
+
+    const isLoss = direction === 'LONG' ? low <= lossLimit : high >= lossLimit
+    const isProfit = direction === 'LONG' ? high >= profitLimit : low <= profitLimit
+    const stepSeconds = getGeneratedAnalysisStepSeconds(candles, index, timeframe)
+
+    if (isLoss) meaningfulLossSeconds += stepSeconds
+    if (isProfit) meaningfulProfitSeconds += stepSeconds
+    if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT'
+    states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'))
+  })
+
+  const rawMaePct = direction === 'LONG'
+    ? ((minPrice - entryPrice) / entryPrice) * 100
+    : ((entryPrice - maxPrice) / entryPrice) * 100
+  const rawMfePct = direction === 'LONG'
+    ? ((maxPrice - entryPrice) / entryPrice) * 100
+    : ((entryPrice - minPrice) / entryPrice) * 100
+  const maePct = rawMaePct <= -IN_TRADE_NOISE_PCT ? rawMaePct : 0
+  const mfePct = rawMfePct >= IN_TRADE_NOISE_PCT ? rawMfePct : 0
+  const maxFavorableMove = direction === 'LONG' ? maxPrice - entryPrice : entryPrice - minPrice
+  const realizedMove = Number.isFinite(exitPrice)
+    ? (direction === 'LONG' ? exitPrice - entryPrice : entryPrice - exitPrice)
+    : Number.NaN
+  const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove)
+    ? (realizedMove / maxFavorableMove) * 100
+    : Number.NaN
+
+  return {
+    source: 'generated',
+    timeframe: timeframe?.id || '',
+    noisePct: IN_TRADE_NOISE_PCT,
+    direction,
+    entry: entryPrice,
+    exit: Number.isFinite(exitPrice) ? exitPrice : null,
+    maxPrice,
+    minPrice,
+    meaningfulLossSeconds,
+    meaningfulProfitSeconds,
+    maxMeaningfulDrawdownPct: maePct,
+    maxFavorableExcursionPct: mfePct,
+    profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
+    pricePathShape: classifyGeneratedPathShape({ states, firstImpulse, maePct, mfePct, captureRatio })
+  }
+}
+
 const adjustCandlesToStudyMetrics = (candles) => {
   const manualMax = parsePositiveMetric(tradeStudyMetrics.value.maxPriceDuringTrade)
   const manualMin = parsePositiveMetric(tradeStudyMetrics.value.minPriceDuringTrade)
@@ -1530,6 +1648,7 @@ const generateMarketData = async () => {
   try {
     const result = await loadPublicMarketData()
     generatedMarketData.value = result.candlesByTimeframe
+    tradeStudyMetrics.value.generatedInTradeAnalysis = buildGeneratedInTradeAnalysis(result.candlesByTimeframe)
     selectFirstGeneratedTimeframe(result.candlesByTimeframe)
     resolvedMarketSymbol.value = result.symbol
     resolvedMarketProvider.value = result.provider
@@ -1548,6 +1667,7 @@ const generateMarketData = async () => {
 
 const clearGeneratedChart = () => {
   generatedMarketData.value = {}
+  tradeStudyMetrics.value.generatedInTradeAnalysis = null
   resolvedMarketSymbol.value = ''
   resolvedMarketProvider.value = ''
   generatedSourceAsset.value = ''

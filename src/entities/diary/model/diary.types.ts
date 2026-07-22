@@ -80,7 +80,7 @@ export interface DiaryEntry {
         during: string[];
         exit: string[];
     };
-    tradeStudyMetrics?: Record<string, string | number | boolean | undefined>;
+    tradeStudyMetrics?: Record<string, string | number | boolean | undefined | null | Record<string, any>>;
     executions?: Execution[];
 }
 

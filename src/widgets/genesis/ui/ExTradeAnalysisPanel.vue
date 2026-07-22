@@ -1454,39 +1454,52 @@ const studyMetricText = computed(() => {
     points: isRu ? 'пункты' : 'pts',
     sectionTitle: isRu ? 'IN-TRADE_ANALYSIS' : 'IN-TRADE_ANALYSIS',
     sectionHint: isRu
-      ? 'Ручные данные из метрик изучения сделки'
-      : 'Manual data from trade study metrics',
+      ? 'Ручные экстремумы имеют приоритет над публичными свечами'
+      : 'Manual extremes override public candle data',
     labels: {
-      lossDuration: isRu ? 'Длительность в убытке' : 'Loss-side duration',
-      maxPrice: isRu ? 'Максимальная цена' : 'Maximum price',
-      minPrice: isRu ? 'Минимальная цена' : 'Minimum price',
-      adverseMove: isRu ? 'Движение против входа' : 'Adverse entry move',
-      hadNews: isRu ? 'Новости во время сделки' : 'News during trade',
-      beforeNews: isRu ? 'Изменение перед новостью' : 'Move before news',
-      afterNews: isRu ? 'Изменение после новости' : 'Move after news'
+      meaningfulLossTime: isRu ? 'Время в значимом убытке' : 'Meaningful time in loss',
+      meaningfulProfitTime: isRu ? 'Время в значимом плюсе' : 'Meaningful time in profit',
+      maxMeaningfulDrawdown: isRu ? 'Макс. значимая просадка' : 'Max meaningful drawdown',
+      maxFavorableExcursion: isRu ? 'Макс. движение в плюс' : 'Max favorable excursion',
+      profitCaptureRatio: isRu ? 'Захват движения' : 'Profit capture ratio',
+      pricePathShape: isRu ? 'Форма движения' : 'Price path shape'
     },
     hints: {
-      lossDuration: isRu
-        ? 'Считается из ручного поля времени: ниже входа для long или выше входа для short.'
-        : 'Built from the manual duration field: below entry for long, above entry for short.',
-      maxPrice: isRu
-        ? 'Самая высокая цена актива, введенная во время изучения сделки.'
-        : 'Highest asset price entered during post-trade study.',
-      minPrice: isRu
-        ? 'Самая низкая цена актива, введенная во время изучения сделки.'
-        : 'Lowest asset price entered during post-trade study.',
-      adverseMove: isRu
-        ? 'Показывается только если отмечена соответствующая галочка для выбранного вектора.'
-        : 'Shown only when the matching vector checkbox was enabled.',
-      hadNews: isRu
-        ? 'Фиксирует, были ли новости во время сделки.'
-        : 'Flags whether news was present during the trade.',
-      beforeNews: isRu
-        ? 'Ручная оценка изменения цены перед новостью.'
-        : 'Manual estimate of price change before the news.',
-      afterNews: isRu
-        ? 'Ручная оценка изменения цены после новости.'
-        : 'Manual estimate of price change after the news.'
+      meaningfulLossTime: isRu
+        ? 'Считает только движение за пределами шумовой зоны около входа. Ручная длительность имеет приоритет, если она введена.'
+        : 'Counts only movement beyond the entry noise zone. Manual duration is used first when present.',
+      meaningfulProfitTime: isRu
+        ? 'Сколько времени публичная серия была в значимом плюсе относительно входа.'
+        : 'How long the public candle series stayed in meaningful profit versus entry.',
+      maxMeaningfulDrawdown: isRu
+        ? 'Максимальная просадка от входа после фильтра шума. Ручный min/max имеет приоритет.'
+        : 'Maximum adverse move from entry after the noise filter. Manual min/max has priority.',
+      maxFavorableExcursion: isRu
+        ? 'Максимальное благоприятное движение от входа. Ручный min/max имеет приоритет.'
+        : 'Maximum favorable move from entry. Manual min/max has priority.',
+      profitCaptureRatio: isRu
+        ? 'Доля доступного движения, забранная фактическим выходом.'
+        : 'Share of the available favorable move captured by the actual exit.',
+      pricePathShape: isRu
+        ? 'Классификация траектории по сгенерированным свечам; при ручных данных без свечей показывает ручной диапазон.'
+        : 'Path classification from generated candles; manual-only ranges are marked separately.'
+    },
+    sources: {
+      manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
+      generated: isRu ? 'СГЕНЕРИРОВАННЫЕ_ДАННЫЕ' : 'GENERATED_DATA',
+      mixed: isRu ? 'СМЕШАННЫЕ_ДАННЫЕ' : 'MIXED_DATA',
+      none: 'N/A'
+    },
+    shapes: {
+      CHOPPY_PATH: isRu ? 'Рваное движение' : 'Choppy path',
+      NOISE_RANGE: isRu ? 'Шумовой диапазон' : 'Noise range',
+      ADVERSE_THEN_RECOVERY: isRu ? 'Просадка затем восстановление' : 'Adverse then recovery',
+      FAVORABLE_THEN_PULLBACK: isRu ? 'Плюс затем откат' : 'Favorable then pullback',
+      CLEAN_TREND_CAPTURE: isRu ? 'Чистый захват тренда' : 'Clean trend capture',
+      LATE_EXIT_AFTER_MFE: isRu ? 'Поздний выход после MFE' : 'Late exit after MFE',
+      FAVORABLE_FIRST: isRu ? 'Сначала плюс' : 'Favorable first',
+      ADVERSE_FIRST: isRu ? 'Сначала просадка' : 'Adverse first',
+      MANUAL_RANGE_ONLY: isRu ? 'Только ручной диапазон' : 'Manual range only'
     }
   };
 });
@@ -1545,113 +1558,197 @@ const getStudyDurationSeconds = (prefix: string) => {
   return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
 };
 
-const inTradeLossDuration = computed(() => {
+const generatedInTradeAnalysis = computed<Record<string, any>>(() => {
+  const metrics = currentTradeStudyMetrics.value;
+  return metrics?.generatedInTradeAnalysis && typeof metrics.generatedInTradeAnalysis === 'object'
+    ? metrics.generatedInTradeAnalysis
+    : {};
+});
+
+const inTradeAnalysisNoisePct = computed(() => {
+  const generatedNoise = parseStudyNumber(generatedInTradeAnalysis.value.noisePct);
+  return Number.isFinite(generatedNoise) && generatedNoise > 0 ? generatedNoise : 0.5;
+});
+
+const manualInTradeExtremes = computed(() => {
+  const metrics = currentTradeStudyMetrics.value;
+  const maxPrice = parseStudyNumber(metrics.maxPriceDuringTrade);
+  const minPrice = parseStudyNumber(metrics.minPriceDuringTrade);
+  return {
+    maxPrice: Number.isFinite(maxPrice) && maxPrice > 0 ? maxPrice : Number.NaN,
+    minPrice: Number.isFinite(minPrice) && minPrice > 0 ? minPrice : Number.NaN
+  };
+});
+
+const inTradeExtremes = computed(() => {
+  const manual = manualInTradeExtremes.value;
+  const generated = generatedInTradeAnalysis.value;
+  const generatedMax = parseStudyNumber(generated.maxPrice);
+  const generatedMin = parseStudyNumber(generated.minPrice);
+  const hasManualMax = Number.isFinite(manual.maxPrice);
+  const hasManualMin = Number.isFinite(manual.minPrice);
+  const hasGeneratedMax = Number.isFinite(generatedMax);
+  const hasGeneratedMin = Number.isFinite(generatedMin);
+
+  return {
+    maxPrice: hasManualMax ? manual.maxPrice : (hasGeneratedMax ? generatedMax : Number.NaN),
+    minPrice: hasManualMin ? manual.minPrice : (hasGeneratedMin ? generatedMin : Number.NaN),
+    source: hasManualMax || hasManualMin
+      ? ((hasGeneratedMax || hasGeneratedMin) ? 'mixed' : 'manual')
+      : ((hasGeneratedMax || hasGeneratedMin) ? 'generated' : 'none')
+  };
+});
+
+const inTradeLossSeconds = computed(() => {
   const metrics = currentTradeStudyMetrics.value;
   const direction = getTradeDirection(props.trade);
   if (direction === 'LONG' && metrics.priceDroppedBelowEntryLong) {
-    return formatStudyDuration(getStudyDurationSeconds('priceBelowEntryLongDuration'));
+    const manualSeconds = getStudyDurationSeconds('priceBelowEntryLongDuration');
+    if (manualSeconds > 0) return manualSeconds;
   }
   if (direction === 'SHORT' && metrics.priceRoseAboveEntryShort) {
-    return formatStudyDuration(getStudyDurationSeconds('priceAboveEntryShortDuration'));
+    const manualSeconds = getStudyDurationSeconds('priceAboveEntryShortDuration');
+    if (manualSeconds > 0) return manualSeconds;
   }
-  return studyMetricText.value.na;
+  const generatedSeconds = parseStudyNumber(generatedInTradeAnalysis.value.meaningfulLossSeconds);
+  return Number.isFinite(generatedSeconds) && generatedSeconds > 0 ? generatedSeconds : Number.NaN;
 });
 
-const adverseEntryMovePct = computed(() => {
-  const metrics = currentTradeStudyMetrics.value;
+const inTradeProfitSeconds = computed(() => {
+  const generatedSeconds = parseStudyNumber(generatedInTradeAnalysis.value.meaningfulProfitSeconds);
+  return Number.isFinite(generatedSeconds) && generatedSeconds > 0 ? generatedSeconds : Number.NaN;
+});
+
+const inTradeMoveMetrics = computed(() => {
   const direction = getTradeDirection(props.trade);
   const entry = parsePositiveTradePrice((props.trade as any)?.entry);
-  if (!Number.isFinite(entry) || entry <= 0) return Number.NaN;
+  const exit = parsePositiveTradePrice((props.trade as any)?.exit);
+  const extremes = inTradeExtremes.value;
+  const noisePct = inTradeAnalysisNoisePct.value;
 
-  if (direction === 'LONG' && metrics.priceDroppedBelowEntryLong) {
-    const minPrice = parseStudyNumber(metrics.minPriceDuringTrade);
-    return Number.isFinite(minPrice) && minPrice < entry ? -((entry - minPrice) / entry) * 100 : Number.NaN;
+  if (!Number.isFinite(entry) || entry <= 0 || !direction) {
+    return {
+      maePct: Number.NaN,
+      mfePct: Number.NaN,
+      captureRatio: Number.NaN
+    };
   }
 
-  if (direction === 'SHORT' && metrics.priceRoseAboveEntryShort) {
-    const maxPrice = parseStudyNumber(metrics.maxPriceDuringTrade);
-    return Number.isFinite(maxPrice) && maxPrice > entry ? ((maxPrice - entry) / entry) * 100 : Number.NaN;
+  const hasMax = Number.isFinite(extremes.maxPrice);
+  const hasMin = Number.isFinite(extremes.minPrice);
+  let rawMaePct = Number.NaN;
+  let rawMfePct = Number.NaN;
+  let maxFavorableMove = Number.NaN;
+
+  if (direction === 'LONG') {
+    rawMaePct = hasMin ? ((extremes.minPrice - entry) / entry) * 100 : Number.NaN;
+    rawMfePct = hasMax ? ((extremes.maxPrice - entry) / entry) * 100 : Number.NaN;
+    maxFavorableMove = hasMax ? extremes.maxPrice - entry : Number.NaN;
+  } else {
+    rawMaePct = hasMax ? ((entry - extremes.maxPrice) / entry) * 100 : Number.NaN;
+    rawMfePct = hasMin ? ((entry - extremes.minPrice) / entry) * 100 : Number.NaN;
+    maxFavorableMove = hasMin ? entry - extremes.minPrice : Number.NaN;
   }
 
-  return Number.NaN;
+  const maePct = Number.isFinite(rawMaePct) && rawMaePct <= -noisePct ? rawMaePct : 0;
+  const mfePct = Number.isFinite(rawMfePct) && rawMfePct >= noisePct ? rawMfePct : 0;
+  const realizedMove = Number.isFinite(exit)
+    ? (direction === 'LONG' ? exit - entry : entry - exit)
+    : Number.NaN;
+  const generatedCaptureRatio = parseStudyNumber(generatedInTradeAnalysis.value.profitCaptureRatio);
+  const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove)
+    ? (realizedMove / maxFavorableMove) * 100
+    : (Number.isFinite(generatedCaptureRatio) ? generatedCaptureRatio : Number.NaN);
+
+  return {
+    maePct,
+    mfePct,
+    captureRatio
+  };
 });
 
-const formatNewsMove = (direction: any, percent: any) => {
-  if (!direction) return studyMetricText.value.na;
-  const numeric = parseStudyNumber(percent);
-  const directionLabel = direction === 'up' ? studyMetricText.value.up : studyMetricText.value.down;
-  if (!Number.isFinite(numeric)) return directionLabel;
-  return `${directionLabel} ${formatSignedStudyPercent(numeric)}`;
+const getInTradeDataSourceLabel = () => {
+  const text = studyMetricText.value;
+  return text.sources[inTradeExtremes.value.source as keyof typeof text.sources] || text.sources.none;
+};
+
+const getDurationSourceLabel = (seconds: number, type: 'loss' | 'profit') => {
+  if (!Number.isFinite(seconds)) return studyMetricText.value.sources.none;
+  if (type === 'loss') {
+    const metrics = currentTradeStudyMetrics.value;
+    const direction = getTradeDirection(props.trade);
+    const hasManualLoss = direction === 'LONG'
+      ? metrics.priceDroppedBelowEntryLong && getStudyDurationSeconds('priceBelowEntryLongDuration') > 0
+      : metrics.priceRoseAboveEntryShort && getStudyDurationSeconds('priceAboveEntryShortDuration') > 0;
+    return hasManualLoss ? studyMetricText.value.sources.manual : studyMetricText.value.sources.generated;
+  }
+  return studyMetricText.value.sources.generated;
+};
+
+const formatCaptureRatio = (value: number) => {
+  return Number.isFinite(value) ? `${value.toFixed(1)}%` : studyMetricText.value.na;
 };
 
 const inTradeAnalysisRows = computed(() => {
-  const metrics = currentTradeStudyMetrics.value;
   const text = studyMetricText.value;
-  const hasMetricValue = (value: string) => value !== text.na;
-  const newsValue = !hasTradeStudyMetrics.value ? text.na : (metrics.hadNews ? text.yes : text.no);
-  const beforeNewsValue = metrics.hadNews
-    ? formatNewsMove(metrics.priceDirectionBeforeNews, metrics.priceDirectionBeforeNewsChangePercent)
-    : text.na;
-  const afterNewsValue = metrics.hadNews
-    ? formatNewsMove(metrics.priceDirectionAfterNews, metrics.priceDirectionAfterNewsChangePercent)
-    : text.na;
+  const moveMetrics = inTradeMoveMetrics.value;
+  const lossSeconds = inTradeLossSeconds.value;
+  const profitSeconds = inTradeProfitSeconds.value;
+  const sourceLabel = getInTradeDataSourceLabel();
+  const shapeKey = String(generatedInTradeAnalysis.value.pricePathShape || (inTradeExtremes.value.source !== 'none' ? 'MANUAL_RANGE_ONLY' : ''));
+  const shapeLabel = text.shapes[shapeKey as keyof typeof text.shapes] || text.na;
+  const hasGeneratedShape = Boolean(generatedInTradeAnalysis.value.pricePathShape);
 
   return [
     {
-      id: 'lossDuration',
-      label: text.labels.lossDuration,
-      value: inTradeLossDuration.value,
-      subvalue: getTradeDirection(props.trade) === 'SHORT' ? 'SHORT_ABOVE_ENTRY' : 'LONG_BELOW_ENTRY',
-      hint: text.hints.lossDuration,
-      tone: hasMetricValue(inTradeLossDuration.value) ? 'warning' : 'neutral'
+      id: 'meaningfulLossTime',
+      label: text.labels.meaningfulLossTime,
+      value: formatStudyDuration(lossSeconds),
+      subvalue: getDurationSourceLabel(lossSeconds, 'loss'),
+      hint: text.hints.meaningfulLossTime,
+      tone: Number.isFinite(lossSeconds) ? 'warning' : 'muted'
     },
     {
-      id: 'maxPrice',
-      label: text.labels.maxPrice,
-      value: formatStudyPrice(metrics.maxPriceDuringTrade),
-      subvalue: isStudyForexTrade.value ? 'FOREX_PRICE_FORMAT' : 'PRICE_IN_USD',
-      hint: text.hints.maxPrice,
-      tone: Number.isFinite(parseStudyNumber(metrics.maxPriceDuringTrade)) ? 'neutral' : 'muted'
+      id: 'meaningfulProfitTime',
+      label: text.labels.meaningfulProfitTime,
+      value: formatStudyDuration(profitSeconds),
+      subvalue: getDurationSourceLabel(profitSeconds, 'profit'),
+      hint: text.hints.meaningfulProfitTime,
+      tone: Number.isFinite(profitSeconds) ? 'positive' : 'muted'
     },
     {
-      id: 'minPrice',
-      label: text.labels.minPrice,
-      value: formatStudyPrice(metrics.minPriceDuringTrade),
-      subvalue: isStudyForexTrade.value ? 'FOREX_PRICE_FORMAT' : 'PRICE_IN_USD',
-      hint: text.hints.minPrice,
-      tone: Number.isFinite(parseStudyNumber(metrics.minPriceDuringTrade)) ? 'neutral' : 'muted'
+      id: 'maxMeaningfulDrawdown',
+      label: text.labels.maxMeaningfulDrawdown,
+      value: formatSignedStudyPercent(moveMetrics.maePct),
+      subvalue: sourceLabel,
+      hint: text.hints.maxMeaningfulDrawdown,
+      tone: Number.isFinite(moveMetrics.maePct) && moveMetrics.maePct < 0 ? 'danger' : (Number.isFinite(moveMetrics.maePct) ? 'neutral' : 'muted')
     },
     {
-      id: 'adverseMove',
-      label: text.labels.adverseMove,
-      value: formatSignedStudyPercent(adverseEntryMovePct.value),
-      subvalue: getTradeDirection(props.trade) === 'SHORT' ? 'ABOVE_ENTRY' : 'BELOW_ENTRY',
-      hint: text.hints.adverseMove,
-      tone: Number.isFinite(adverseEntryMovePct.value) ? 'danger' : 'muted'
+      id: 'maxFavorableExcursion',
+      label: text.labels.maxFavorableExcursion,
+      value: formatSignedStudyPercent(moveMetrics.mfePct),
+      subvalue: sourceLabel,
+      hint: text.hints.maxFavorableExcursion,
+      tone: Number.isFinite(moveMetrics.mfePct) && moveMetrics.mfePct > 0 ? 'positive' : (Number.isFinite(moveMetrics.mfePct) ? 'neutral' : 'muted')
     },
     {
-      id: 'hadNews',
-      label: text.labels.hadNews,
-      value: newsValue,
-      subvalue: !hasTradeStudyMetrics.value ? 'N/A' : (metrics.hadNews ? 'NEWS_CONTEXT_ACTIVE' : 'NO_NEWS_CONTEXT'),
-      hint: text.hints.hadNews,
-      tone: !hasTradeStudyMetrics.value ? 'muted' : (metrics.hadNews ? 'warning' : 'neutral')
+      id: 'profitCaptureRatio',
+      label: text.labels.profitCaptureRatio,
+      value: formatCaptureRatio(moveMetrics.captureRatio),
+      subvalue: sourceLabel,
+      hint: text.hints.profitCaptureRatio,
+      tone: Number.isFinite(moveMetrics.captureRatio)
+        ? (moveMetrics.captureRatio >= 65 ? 'positive' : (moveMetrics.captureRatio >= 35 ? 'warning' : 'danger'))
+        : 'muted'
     },
     {
-      id: 'beforeNews',
-      label: text.labels.beforeNews,
-      value: beforeNewsValue,
-      subvalue: metrics.hadNews ? 'PRE_NEWS_MOVE' : 'N/A',
-      hint: text.hints.beforeNews,
-      tone: hasMetricValue(beforeNewsValue) ? (String(metrics.priceDirectionBeforeNews) === 'down' ? 'danger' : 'positive') : 'muted'
-    },
-    {
-      id: 'afterNews',
-      label: text.labels.afterNews,
-      value: afterNewsValue,
-      subvalue: metrics.hadNews ? 'POST_NEWS_MOVE' : 'N/A',
-      hint: text.hints.afterNews,
-      tone: hasMetricValue(afterNewsValue) ? (String(metrics.priceDirectionAfterNews) === 'down' ? 'danger' : 'positive') : 'muted'
+      id: 'pricePathShape',
+      label: text.labels.pricePathShape,
+      value: shapeLabel,
+      subvalue: hasGeneratedShape ? text.sources.generated : sourceLabel,
+      hint: text.hints.pricePathShape,
+      tone: hasGeneratedShape ? 'neutral' : (shapeKey ? 'warning' : 'muted')
     }
   ];
 });
@@ -1661,7 +1758,7 @@ const visibleInTradeAnalysisRows = computed(() => {
 });
 
 const advancedMetricTabs = computed(() => [
-  { id: 'all', label: 'All', count: 34 },
+  { id: 'all', label: 'All', count: 33 },
   { id: 'adherence', label: 'Matrix Adherence', count: 5 },
   { id: 'behavioural', label: 'Behavioural', count: 5 },
   { id: 'execution', label: 'Execution & Risk', count: 8 },
