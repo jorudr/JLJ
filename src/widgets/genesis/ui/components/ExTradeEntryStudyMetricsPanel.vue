@@ -177,6 +177,7 @@ const timeframeOptions = [
   { id: '15m', label: '15M', durationMs: 15 * MINUTE_MS, binanceInterval: '15m', bybitInterval: '15', krakenInterval: '15', yahooInterval: '15m' },
   { id: '1m', label: '1M', durationMs: MINUTE_MS, binanceInterval: '1m', bybitInterval: '1', krakenInterval: '1', yahooInterval: '1m' }
 ]
+const YAHOO_ONLY_MARKET_KINDS = new Set(['forex', 'index', 'commodity', 'metal'])
 
 const activeStudyPage = ref('market')
 const activeGeneratedTimeframe = ref('4h')
@@ -362,9 +363,11 @@ const getSelectedAssetKind = () => {
   if (['stocks', 'stock'].includes(type)) return 'stock'
   if (['commodities', 'commodity'].includes(type)) return 'commodity'
   if (['metals', 'metal'].includes(type)) return 'metal'
-  if (['indices', 'index'].includes(type)) return 'index'
+  if (['indices', 'index', 'indexes'].includes(type)) return 'index'
   return type || 'unknown'
 }
+
+const isYahooOnlyMarketKind = (kind) => YAHOO_ONLY_MARKET_KINDS.has(kind)
 
 const isLikelyXStockAsset = computed(() => {
   const type = getAssetType()
@@ -940,14 +943,40 @@ const buildYahooSymbolCandidates = async () => {
   const indexMap = {
     SPX: '^GSPC',
     SP500: '^GSPC',
+    SPX500: '^GSPC',
     US500: '^GSPC',
     NASDAQ: '^IXIC',
     NDX: '^NDX',
+    NAS100: '^NDX',
     US100: '^NDX',
     DJI: '^DJI',
     DOW: '^DJI',
     US30: '^DJI',
-    RUT: '^RUT'
+    RUT: '^RUT',
+    RUSSELL2000: '^RUT',
+    US2000: '^RUT',
+    DAX: '^GDAXI',
+    DAX40: '^GDAXI',
+    DE40: '^GDAXI',
+    GER40: '^GDAXI',
+    FTSE: '^FTSE',
+    FTSE100: '^FTSE',
+    UK100: '^FTSE',
+    NIKKEI: '^N225',
+    NIKKEI225: '^N225',
+    JP225: '^N225',
+    JPN225: '^N225',
+    HSI: '^HSI',
+    HANGSENG: '^HSI',
+    HK50: '^HSI',
+    STOXX50: '^STOXX50E',
+    EU50: '^STOXX50E',
+    EUSTX50: '^STOXX50E',
+    CAC: '^FCHI',
+    CAC40: '^FCHI',
+    FRA40: '^FCHI',
+    ASX200: '^AXJO',
+    AUS200: '^AXJO'
   }
 
   const mapped = commodityMap[rawSymbol] || commodityMap[base] || indexMap[rawSymbol] || indexMap[base]
@@ -1352,16 +1381,18 @@ const loadCatalogMatchedMarketData = async (catalogAsset) => {
 const loadPublicMarketData = async () => {
   if (!availableTimeframeOptions.value.length) throw new Error('Trade duration is too short or invalid')
   const wantedKind = getSelectedAssetKind()
-  const preferredCatalogProviders = wantedKind === 'xstock'
-    ? null
-    : wantedKind === 'crypto'
-      ? ['BYBIT', 'BINANCE', 'KRAKEN']
-      : null
-  const loaders = isLikelyXStockAsset.value
-      ? [loadYahooMarketData]
-      : isLikelyCryptoAsset.value
-        ? [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData]
-        : [loadYahooMarketData, loadBinanceMarketData]
+  let preferredCatalogProviders = null
+  let loaders = [loadYahooMarketData, loadBinanceMarketData]
+
+  if (isYahooOnlyMarketKind(wantedKind)) {
+    preferredCatalogProviders = ['YAHOO_LOCAL']
+    loaders = [loadYahooMarketData]
+  } else if (wantedKind === 'crypto') {
+    preferredCatalogProviders = ['BYBIT', 'BINANCE', 'KRAKEN']
+    loaders = [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData]
+  } else if (isLikelyXStockAsset.value) {
+    loaders = [loadYahooMarketData]
+  }
 
   let lastError = null
   const catalogMatch = wantedKind === 'xstock'

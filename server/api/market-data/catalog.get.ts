@@ -27,7 +27,7 @@ const classifyLocalAsset = (asset: any) => {
   if (type === 'stocks' || type === 'stock') return 'stock'
   if (type === 'commodities' || type === 'commodity') return 'commodity'
   if (type === 'metals' || type === 'metal') return 'metal'
-  if (type === 'indices' || type === 'index') return 'index'
+  if (type === 'indices' || type === 'index' || type === 'indexes') return 'index'
   return type || 'unknown'
 }
 
@@ -178,9 +178,17 @@ function yahooSymbolForLocalAsset(asset: any) {
     NATGAS: 'NG=F', COPPER: 'HG=F'
   }
   const indexMap: Record<string, string> = {
-    SPX: '^GSPC', SP500: '^GSPC', US500: '^GSPC',
-    NASDAQ: '^IXIC', NDX: '^NDX', US100: '^NDX',
-    DJI: '^DJI', DOW: '^DJI', US30: '^DJI', RUT: '^RUT'
+    SPX: '^GSPC', SP500: '^GSPC', SPX500: '^GSPC', US500: '^GSPC',
+    NASDAQ: '^IXIC', NDX: '^NDX', NAS100: '^NDX', US100: '^NDX',
+    DJI: '^DJI', DOW: '^DJI', US30: '^DJI',
+    RUT: '^RUT', RUSSELL2000: '^RUT', US2000: '^RUT',
+    DAX: '^GDAXI', DAX40: '^GDAXI', DE40: '^GDAXI', GER40: '^GDAXI',
+    FTSE: '^FTSE', FTSE100: '^FTSE', UK100: '^FTSE',
+    NIKKEI: '^N225', NIKKEI225: '^N225', JP225: '^N225', JPN225: '^N225',
+    HSI: '^HSI', HANGSENG: '^HSI', HK50: '^HSI',
+    STOXX50: '^STOXX50E', EU50: '^STOXX50E', EUSTX50: '^STOXX50E',
+    CAC: '^FCHI', CAC40: '^FCHI', FRA40: '^FCHI',
+    ASX200: '^AXJO', AUS200: '^AXJO'
   }
   if (commodityMap[symbol] || commodityMap[base]) return commodityMap[symbol] || commodityMap[base]
   if (indexMap[symbol] || indexMap[base]) return indexMap[symbol] || indexMap[base]

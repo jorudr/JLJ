@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-22T17:17:29.533Z",
+  "generatedAt": "2026-07-22T17:27:35.763Z",
   "note": "Yahoo does not expose a comprehensive public bulk symbol list here; YAHOO_LOCAL entries are generated from the app asset registry.",
   "sources": {
     "BYBIT": 1373,
@@ -83683,13 +83683,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "CAC",
+      "symbol": "^FCHI",
       "base": "CAC",
       "quote": "USD",
       "type": "stock",
       "name": "Camden National Corporation",
       "aliases": [
         "CAC",
+        "^FCHI",
         "CAMDEN NATIONAL CORPORATION",
         "GLOBAL EQUITY ASSET // GLOBAL"
       ]
@@ -130822,13 +130823,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "SPX500",
+      "symbol": "^GSPC",
       "base": "SPX500",
       "quote": "USD",
       "type": "index",
       "name": "S&P 500 Index",
       "aliases": [
         "SPX500",
+        "^GSPC",
         "S&P 500 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130836,13 +130838,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "NAS100",
+      "symbol": "^NDX",
       "base": "NAS100",
       "quote": "USD",
       "type": "index",
       "name": "Nasdaq 100 Index",
       "aliases": [
         "NAS100",
+        "^NDX",
         "NASDAQ 100 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130865,13 +130868,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "GER40",
+      "symbol": "^GDAXI",
       "base": "GER40",
       "quote": "USD",
       "type": "index",
       "name": "DAX 40 Index",
       "aliases": [
         "GER40",
+        "^GDAXI",
         "DAX 40 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130879,13 +130883,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "UK100",
+      "symbol": "^FTSE",
       "base": "UK100",
       "quote": "USD",
       "type": "index",
       "name": "FTSE 100 Index",
       "aliases": [
         "UK100",
+        "^FTSE",
         "FTSE 100 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130893,13 +130898,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "JPN225",
+      "symbol": "^N225",
       "base": "JPN225",
       "quote": "USD",
       "type": "index",
       "name": "Nikkei 225",
       "aliases": [
         "JPN225",
+        "^N225",
         "NIKKEI 225",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130907,13 +130913,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "HK50",
+      "symbol": "^HSI",
       "base": "HK50",
       "quote": "USD",
       "type": "index",
       "name": "Hang Seng Index",
       "aliases": [
         "HK50",
+        "^HSI",
         "HANG SENG INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130921,13 +130928,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "EUSTX50",
+      "symbol": "^STOXX50E",
       "base": "EUSTX50",
       "quote": "USD",
       "type": "index",
       "name": "Euro Stoxx 50",
       "aliases": [
         "EUSTX50",
+        "^STOXX50E",
         "EURO STOXX 50",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130935,13 +130943,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "FRA40",
+      "symbol": "^FCHI",
       "base": "FRA40",
       "quote": "USD",
       "type": "index",
       "name": "CAC 40 Index",
       "aliases": [
         "FRA40",
+        "^FCHI",
         "CAC 40 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
@@ -130949,13 +130958,14 @@
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "AUS200",
+      "symbol": "^AXJO",
       "base": "AUS200",
       "quote": "USD",
       "type": "index",
       "name": "ASX 200 Index",
       "aliases": [
         "AUS200",
+        "^AXJO",
         "ASX 200 INDEX",
         "GLOBAL EQUITY INDEX"
       ]
