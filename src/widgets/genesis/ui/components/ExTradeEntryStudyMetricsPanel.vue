@@ -1,6 +1,7 @@
 <script setup>
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const { locale } = useI18n()
@@ -13,7 +14,6 @@ const {
   isForex,
   showTradeStudyMetrics,
   tradeStudyMetrics,
-  resetTradeStudyMetrics,
   commitState
 } = inject('tradeState')
 
@@ -179,7 +179,6 @@ const chartDragMode = ref('plot')
 const lastChartPointerX = ref(0)
 const lastChartPointerY = ref(0)
 const marketCatalog = ref(null)
-const isTimeframeMenuOpen = ref(false)
 
 let binanceSymbolsPromise = null
 let resizeObserver = null
@@ -246,14 +245,6 @@ const generatedChartCandles = computed(() => {
   return generatedMarketData.value?.[activeGeneratedTimeframe.value] || []
 })
 
-const activeTimeframeMeta = computed(() => {
-  return timeframeOptions.find(timeframe => timeframe.id === activeGeneratedTimeframe.value) || timeframeOptions[0]
-})
-
-const inactiveTimeframeOptions = computed(() => {
-  return timeframeOptions.filter(timeframe => timeframe.id !== activeGeneratedTimeframe.value)
-})
-
 const resolvedMarketLabel = computed(() => {
   if (!resolvedMarketSymbol.value) return ''
   return resolvedMarketProvider.value
@@ -262,8 +253,11 @@ const resolvedMarketLabel = computed(() => {
 })
 
 const chartSourceLabel = computed(() => {
-  if (!generatedSourceAsset.value && !resolvedMarketLabel.value) return ''
-  return `${generatedSourceAsset.value || selectedTradeAsset.value || 'ASSET'} // ${resolvedMarketLabel.value || 'LOCAL_RESOLVER'}`
+  return resolvedMarketLabel.value || 'LOCAL_RESOLVER'
+})
+
+const chartAssetHeading = computed(() => {
+  return cleanAssetDisplayLabel(generatedSourceAsset.value || selectedTradeAsset.value) || 'ASSET'
 })
 
 const displayedOhlcCandle = computed(() => {
@@ -282,6 +276,10 @@ const normalizeApiSymbol = (value) => {
 
 const normalizeYahooSymbol = (value) => {
   return String(value || '').trim().toUpperCase().replace(/\s+/g, '')
+}
+
+const cleanAssetDisplayLabel = (value) => {
+  return String(value || '').replace(/^\s*(?:актив|asset)\s*[:=]\s*/iu, '').trim()
 }
 
 const getAssetType = () => String(currentAssetData?.value?.type || '').trim().toLowerCase()
@@ -1088,11 +1086,6 @@ const clearGeneratedChart = () => {
   nextTick(() => drawChart())
 }
 
-const handleResetStudyMetrics = () => {
-  resetTradeStudyMetrics?.()
-  clearGeneratedChart()
-}
-
 const formatPrice = (value) => {
   if (!Number.isFinite(value)) return 'N/A'
   if (value >= 1000) return value.toFixed(2)
@@ -1202,7 +1195,6 @@ const drawChart = () => {
   const plotWidth = geometry.right - geometry.left
   const plotHeight = geometry.bottom - geometry.top
   const dark = true
-  const axisColor = dark ? 'rgba(255,255,255,0.34)' : 'rgba(0,0,0,0.36)'
   const gridColor = dark ? 'rgba(255,255,255,0.075)' : 'rgba(0,0,0,0.075)'
   const textColor = dark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.54)'
   const upColor = '#ffffff'
@@ -1217,13 +1209,6 @@ const drawChart = () => {
     ctx.lineTo(geometry.right, y)
     ctx.stroke()
   }
-
-  ctx.strokeStyle = axisColor
-  ctx.beginPath()
-  ctx.moveTo(geometry.left, geometry.top)
-  ctx.lineTo(geometry.left, geometry.bottom)
-  ctx.lineTo(geometry.right, geometry.bottom)
-  ctx.stroke()
 
   if (!visible.length) return
 
@@ -1270,15 +1255,25 @@ const drawChart = () => {
     }
   })
 
-  const labelStep = Math.max(1, Math.ceil(visibleSpan / 4))
+  const allCandles = generatedChartCandles.value
+  const minTimeLabelSpacing = 96
+  const maxTimeLabels = Math.max(1, Math.floor(plotWidth / minTimeLabelSpacing))
+  const labelStep = Math.max(1, Math.ceil(visibleSpan / maxTimeLabels))
+  const firstTimeLabelIndex = Math.max(0, Math.ceil(viewStart / labelStep) * labelStep)
+  const lastTimeLabelIndex = Math.min(allCandles.length - 1, Math.floor(chartViewport.value.end || allCandles.length))
+  let lastTimeLabelX = Number.NEGATIVE_INFINITY
   ctx.fillStyle = textColor
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  visible.forEach((candle) => {
-    if (candle.absoluteIndex % labelStep !== 0 && candle.absoluteIndex !== generatedChartCandles.value.length - 1) return
-    const x = geometry.left + ((candle.absoluteIndex - viewStart + 0.5) * barWidth)
+  for (let candleIndex = firstTimeLabelIndex; candleIndex <= lastTimeLabelIndex; candleIndex += labelStep) {
+    const candle = allCandles[candleIndex]
+    if (!candle) continue
+    const x = geometry.left + ((candleIndex - viewStart + 0.5) * barWidth)
+    if (x < geometry.left + 24 || x > geometry.right - 24) continue
+    if (x - lastTimeLabelX < minTimeLabelSpacing) continue
     ctx.fillText(formatCandleTime(candle.time), x, geometry.bottom + 12)
-  })
+    lastTimeLabelX = x
+  }
 
   if (chartCrosshair.value) {
     ctx.save()
@@ -1546,7 +1541,7 @@ onBeforeUnmount(() => {
     <Transition name="nier-fade">
       <div
         v-if="showTradeStudyMetrics"
-        class="fixed inset-0 z-[10006] flex items-center justify-center bg-black/20 p-6 backdrop-blur-md"
+        class="fixed inset-0 z-[10006] flex items-center justify-center bg-black/15 p-6 backdrop-blur-sm"
         @click.self="showTradeStudyMetrics = false"
       >
         <ExPanel
@@ -1554,27 +1549,16 @@ onBeforeUnmount(() => {
           :show-corners="true"
           :no-padding="true"
           :no-shadow="true"
-          class="max-h-[84vh] w-full max-w-6xl !border-black/20 dark:!border-white/20"
+          class="h-[84vh] max-h-[84vh] w-full max-w-6xl !border-black/20 dark:!border-white/20"
         >
-          <div class="flex items-center justify-between border-b border-black/10 bg-white/10 px-6 py-4 dark:border-white/10 dark:bg-black/20">
-            <div class="flex min-w-0 flex-col gap-1">
-              <span class="text-[10px] font-black uppercase tracking-[0.5em] nier-text-primary">{{ ui().title }}</span>
-              <span class="text-[8px] font-mono uppercase tracking-[0.28em] text-black/40 dark:text-white/35">{{ ui().subtitle }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="border border-black/15 px-4 py-2 text-[8px] font-black uppercase tracking-[0.35em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/20 dark:hover:bg-white dark:hover:text-black"
-                :disabled="commitState === 'loading'"
-                @click="handleResetStudyMetrics"
-              >
-                {{ ui().reset }}
-              </button>
-            </div>
-          </div>
-
-          <div class="max-h-[calc(84vh-128px)] overflow-y-auto custom-scrollbar p-7">
-            <section v-if="activeStudyPage === 'market'" class="min-h-[520px]">
+          <div
+            class="min-h-0 flex-1 custom-scrollbar"
+            :class="activeStudyPage === 'market' && generatedChartCandles.length ? 'overflow-hidden p-0' : 'overflow-y-auto p-7'"
+          >
+            <section
+              v-if="activeStudyPage === 'market'"
+              :class="generatedChartCandles.length ? 'flex h-full min-h-0 flex-col overflow-hidden bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white dark:bg-black/25' : 'min-h-[520px]'"
+            >
               <div v-if="!generatedChartCandles.length" class="flex min-h-[500px] flex-col items-center justify-center px-4 text-center">
                 <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
                   {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
@@ -1589,42 +1573,40 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
-              <div v-else class="border border-black/10 bg-black/[0.92] dark:border-white/10">
-                <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-                  <span class="min-w-0 truncate text-[10px] font-mono font-black uppercase tracking-[0.18em] text-white">
-                    {{ chartSourceLabel }}
-                  </span>
-                  <div class="relative shrink-0">
-                    <button
-                      type="button"
-                      class="h-8 border border-white/20 px-3 text-[8px] font-mono font-black uppercase tracking-[0.16em] text-white transition-colors hover:border-white/50"
-                      @click="isTimeframeMenuOpen = !isTimeframeMenuOpen"
-                    >
-                      {{ activeTimeframeMeta.label }}
-                    </button>
-                    <div
-                      v-if="isTimeframeMenuOpen"
-                      class="absolute left-0 top-[calc(100%+6px)] z-20 min-w-full border border-white/15 bg-black/95 shadow-xl"
-                    >
-                      <button
-                        v-for="timeframe in inactiveTimeframeOptions"
-                        :key="timeframe.id"
-                        type="button"
-                        class="block h-8 w-full px-3 text-left text-[8px] font-mono font-black uppercase tracking-[0.16em] text-white/55 transition-colors hover:bg-white hover:text-black"
-                        @click="activeGeneratedTimeframe = timeframe.id; isTimeframeMenuOpen = false"
-                      >
-                        {{ timeframe.label }}
-                      </button>
+              <template v-else>
+                <div class="flex h-14 shrink-0 items-center gap-5 border-b border-white/10 bg-white/[0.025] px-5">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <span class="h-1.5 w-1.5 shrink-0 rotate-45 bg-white/70"></span>
+                    <div class="min-w-0">
+                      <ExHeading level="h3" variant="module" class="truncate !text-[12px] !font-black !leading-none !opacity-100 !tracking-[0.24em] text-white">
+                        {{ chartAssetHeading }}
+                      </ExHeading>
+                      <span class="mt-1 block truncate text-[7px] font-mono font-black uppercase tracking-[0.26em] text-white/30">
+                        {{ chartSourceLabel }}
+                      </span>
                     </div>
+                  </div>
+
+                  <div class="ml-auto flex shrink-0 items-center gap-5">
+                    <button
+                      v-for="timeframe in timeframeOptions"
+                      :key="timeframe.id"
+                      type="button"
+                      class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
+                      :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
+                      @click="activeGeneratedTimeframe = timeframe.id"
+                    >
+                      {{ timeframe.label }}
+                    </button>
                   </div>
                 </div>
 
-                <div class="relative h-[500px] min-h-[380px]">
+                <div class="relative min-h-0 flex-1">
                   <div
                     v-if="hoveredOhlcLabel"
-                    class="pointer-events-none absolute left-4 top-4 z-10 max-w-[calc(100%-14rem)]"
+                    class="pointer-events-none absolute left-5 top-5 z-10 max-w-[calc(100%-14rem)]"
                   >
-                    <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white">
+                    <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white/75">
                       {{ hoveredOhlcLabel }}
                     </span>
                   </div>
@@ -1661,7 +1643,7 @@ onBeforeUnmount(() => {
                   ></div>
 
                 </div>
-              </div>
+              </template>
             </section>
 
             <div v-else class="grid grid-cols-1 gap-6">
