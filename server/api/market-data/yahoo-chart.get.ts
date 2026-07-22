@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const interval = String(query.interval || '').trim()
   const range = String(query.range || '5d').trim()
 
-  const allowedIntervals = new Set(['30m', '60m'])
+  const allowedIntervals = new Set(['15m', '30m', '60m'])
   const allowedRanges = new Set(['1d', '5d', '7d', '1mo'])
 
   if (!symbol || !allowedIntervals.has(interval) || !allowedRanges.has(range)) {

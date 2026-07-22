@@ -156,9 +156,9 @@ const studyPages = [
 ]
 
 const timeframeOptions = [
-  { id: '4h', label: '4HOURS', limit: 18 },
-  { id: '1h', label: '1HOUR', limit: 72 },
-  { id: '30m', label: '30MINS', limit: 144 }
+  { id: '4h', label: '4H', limit: 18 },
+  { id: '1h', label: '1H', limit: 72 },
+  { id: '15m', label: '15M', limit: 288 }
 ]
 
 const activeStudyPage = ref('market')
@@ -173,9 +173,13 @@ const hoveredCandle = ref(null)
 const chartCrosshair = ref(null)
 const chartCanvas = ref(null)
 const chartViewport = ref({ start: 0, end: 0 })
+const priceViewport = ref(null)
 const isChartDragging = ref(false)
+const chartDragMode = ref('plot')
 const lastChartPointerX = ref(0)
+const lastChartPointerY = ref(0)
 const marketCatalog = ref(null)
+const isTimeframeMenuOpen = ref(false)
 
 let binanceSymbolsPromise = null
 let resizeObserver = null
@@ -246,11 +250,30 @@ const activeTimeframeMeta = computed(() => {
   return timeframeOptions.find(timeframe => timeframe.id === activeGeneratedTimeframe.value) || timeframeOptions[0]
 })
 
+const inactiveTimeframeOptions = computed(() => {
+  return timeframeOptions.filter(timeframe => timeframe.id !== activeGeneratedTimeframe.value)
+})
+
 const resolvedMarketLabel = computed(() => {
   if (!resolvedMarketSymbol.value) return ''
   return resolvedMarketProvider.value
     ? `${resolvedMarketProvider.value}: ${resolvedMarketSymbol.value}`
     : resolvedMarketSymbol.value
+})
+
+const chartSourceLabel = computed(() => {
+  if (!generatedSourceAsset.value && !resolvedMarketLabel.value) return ''
+  return `${generatedSourceAsset.value || selectedTradeAsset.value || 'ASSET'} // ${resolvedMarketLabel.value || 'LOCAL_RESOLVER'}`
+})
+
+const displayedOhlcCandle = computed(() => {
+  const candles = generatedChartCandles.value
+  return hoveredCandle.value || candles[candles.length - 1] || null
+})
+
+const hoveredOhlcLabel = computed(() => {
+  if (!displayedOhlcCandle.value) return ''
+  return `O: ${formatPrice(displayedOhlcCandle.value.open)} H: ${formatPrice(displayedOhlcCandle.value.high)} L: ${formatPrice(displayedOhlcCandle.value.low)} C: ${formatPrice(displayedOhlcCandle.value.close)}`
 })
 
 const normalizeApiSymbol = (value) => {
@@ -800,15 +823,15 @@ const loadYahooMarketData = async (preferredSymbol = '') => {
       const hourly = filterToLastThreeDays(parseYahooChartCandles(await fetchYahooChart(symbol, '60m')))
       if (!hourly.length) throw new Error(`No Yahoo 60m data for ${symbol}`)
 
-      let thirtyMinute = []
+      let fifteenMinute = []
       try {
-        thirtyMinute = filterToLastThreeDays(parseYahooChartCandles(await fetchYahooChart(symbol, '30m')))
+        fifteenMinute = filterToLastThreeDays(parseYahooChartCandles(await fetchYahooChart(symbol, '15m')))
       } catch (error) {
-        thirtyMinute = hourly
+        fifteenMinute = hourly
       }
 
       const marketData = {
-        '30m': adjustCandlesToStudyMetrics(thirtyMinute),
+        '15m': adjustCandlesToStudyMetrics(fifteenMinute),
         '1h': adjustCandlesToStudyMetrics(hourly),
         '4h': adjustCandlesToStudyMetrics(aggregateCandles(hourly, 4 * 60 * 60 * 1000))
       }
@@ -851,7 +874,7 @@ const loadBinanceMarketData = async (preferredSymbol = '') => {
 
 const fetchBybitKlines = async ({ category, symbol, timeframe }) => {
   const intervalMap = {
-    '30m': '30',
+    '15m': '15',
     '1h': '60',
     '4h': '240'
   }
@@ -900,7 +923,7 @@ const loadBybitMarketData = async (preferredAsset = null) => {
 
 const fetchKrakenOhlc = async ({ pair, timeframe }) => {
   const intervalMap = {
-    '30m': '30',
+    '15m': '15',
     '1h': '60',
     '4h': '240'
   }
@@ -1092,6 +1115,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 const resetChartViewport = () => {
   const candles = generatedChartCandles.value
   chartViewport.value = { start: 0, end: candles.length }
+  priceViewport.value = null
 }
 
 const getChartViewportSpan = () => {
@@ -1133,6 +1157,32 @@ const getVisibleCandles = () => {
   return candles.slice(firstIndex, lastIndex).map((candle, index) => ({ ...candle, absoluteIndex: firstIndex + index }))
 }
 
+const getAutoPriceRange = (visibleCandles) => {
+  const candles = visibleCandles.length ? visibleCandles : generatedChartCandles.value
+  if (!candles.length) return { min: 0, max: 1 }
+  const minLow = Math.min(...candles.map(candle => candle.low))
+  const maxHigh = Math.max(...candles.map(candle => candle.high))
+  const padding = Math.max((maxHigh - minLow) * 0.08, Math.abs(maxHigh) * 0.0001, 0.000001)
+  return { min: minLow - padding, max: maxHigh + padding }
+}
+
+const clampPriceViewport = (min, max, referenceRange = null) => {
+  const autoRange = referenceRange || getAutoPriceRange(getVisibleCandles())
+  const autoSpan = Math.max(autoRange.max - autoRange.min, Math.abs(autoRange.max) * 0.0001, 0.000001)
+  const minSpan = autoSpan * 0.08
+  const maxSpan = autoSpan * 8
+  const center = (min + max) / 2
+  const span = clamp(max - min, minSpan, maxSpan)
+  const boundaryPadding = autoSpan * 4
+  const nextMin = clamp(center - (span / 2), autoRange.min - boundaryPadding, autoRange.max + boundaryPadding - span)
+  return { min: nextMin, max: nextMin + span }
+}
+
+const getActivePriceRange = (visibleCandles) => {
+  if (priceViewport.value) return priceViewport.value
+  return getAutoPriceRange(visibleCandles)
+}
+
 const drawChart = () => {
   const canvas = chartCanvas.value
   if (!canvas) return
@@ -1156,7 +1206,7 @@ const drawChart = () => {
   const gridColor = dark ? 'rgba(255,255,255,0.075)' : 'rgba(0,0,0,0.075)'
   const textColor = dark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.54)'
   const upColor = '#ffffff'
-  const downColor = dark ? 'rgba(251,113,133,0.88)' : 'rgba(190,18,60,0.82)'
+  const downColor = '#fb7185'
 
   ctx.strokeStyle = gridColor
   ctx.lineWidth = 1
@@ -1177,11 +1227,9 @@ const drawChart = () => {
 
   if (!visible.length) return
 
-  const minLow = Math.min(...visible.map(candle => candle.low))
-  const maxHigh = Math.max(...visible.map(candle => candle.high))
-  const padding = Math.max((maxHigh - minLow) * 0.08, maxHigh * 0.0001)
-  const minPrice = minLow - padding
-  const maxPrice = maxHigh + padding
+  const activePriceRange = getActivePriceRange(visible)
+  const minPrice = activePriceRange.min
+  const maxPrice = activePriceRange.max
   const priceRange = maxPrice - minPrice || 1
   const yForPrice = price => geometry.top + ((maxPrice - price) / priceRange) * plotHeight
   const viewStart = chartViewport.value.start
@@ -1275,10 +1323,46 @@ const syncHoveredCandle = (event) => {
   drawChart()
 }
 
+const getChartInteractionZone = (event) => {
+  const canvas = chartCanvas.value
+  if (!canvas) return 'plot'
+  const geometry = getChartGeometry(canvas)
+  const x = event.clientX - geometry.rect.left
+  const y = event.clientY - geometry.rect.top
+  if (x > geometry.right && y >= geometry.top && y <= geometry.bottom) return 'price'
+  if (y > geometry.bottom && x >= geometry.left && x <= geometry.right) return 'time'
+  return 'plot'
+}
+
+const applyTimeScaleDrag = (event, geometry, visibleCount) => {
+  const dx = event.clientX - lastChartPointerX.value
+  const zoomFactor = Math.exp(-dx * 0.008)
+  const pointerRatio = clamp((event.clientX - geometry.rect.left - geometry.left) / Math.max(1, geometry.right - geometry.left), 0, 1)
+  const currentStart = chartViewport.value.start
+  const currentVisible = visibleCount
+  const nextVisible = currentVisible * zoomFactor
+  const anchor = currentStart + (currentVisible * pointerRatio)
+  chartViewport.value = clampChartViewport(anchor - (nextVisible * pointerRatio), nextVisible)
+}
+
+const applyPriceScaleDrag = (event) => {
+  const canvas = chartCanvas.value
+  if (!canvas) return
+  const activeRange = getActivePriceRange(getVisibleCandles())
+  const span = activeRange.max - activeRange.min
+  const dy = event.clientY - lastChartPointerY.value
+  const zoomFactor = Math.exp(dy * 0.01)
+  const center = (activeRange.min + activeRange.max) / 2
+  const nextSpan = span * zoomFactor
+  priceViewport.value = clampPriceViewport(center - (nextSpan / 2), center + (nextSpan / 2))
+}
+
 const handleChartPointerDown = (event) => {
   if (!generatedChartCandles.value.length) return
   isChartDragging.value = true
+  chartDragMode.value = getChartInteractionZone(event)
   lastChartPointerX.value = event.clientX
+  lastChartPointerY.value = event.clientY
   event.currentTarget?.setPointerCapture?.(event.pointerId)
 }
 
@@ -1288,20 +1372,29 @@ const handleChartPointerMove = (event) => {
   if (isChartDragging.value && canvas && candles.length) {
     const geometry = getChartGeometry(canvas)
     const visibleCount = chartViewport.value.end - chartViewport.value.start
-    const candleShift = ((lastChartPointerX.value - event.clientX) / Math.max(1, geometry.right - geometry.left)) * visibleCount
-    chartViewport.value = clampChartViewport(chartViewport.value.start + candleShift, visibleCount)
+    if (chartDragMode.value === 'price') {
+      applyPriceScaleDrag(event)
+    } else if (chartDragMode.value === 'time') {
+      applyTimeScaleDrag(event, geometry, visibleCount)
+    } else {
+      const candleShift = ((lastChartPointerX.value - event.clientX) / Math.max(1, geometry.right - geometry.left)) * visibleCount
+      chartViewport.value = clampChartViewport(chartViewport.value.start + candleShift, visibleCount)
+    }
     lastChartPointerX.value = event.clientX
+    lastChartPointerY.value = event.clientY
   }
   syncHoveredCandle(event)
 }
 
 const handleChartPointerUp = (event) => {
   isChartDragging.value = false
+  chartDragMode.value = 'plot'
   event.currentTarget?.releasePointerCapture?.(event.pointerId)
 }
 
 const handleChartPointerLeave = () => {
   isChartDragging.value = false
+  chartDragMode.value = 'plot'
   hoveredCandle.value = null
   chartCrosshair.value = null
   drawChart()
@@ -1497,24 +1590,45 @@ onBeforeUnmount(() => {
               </div>
 
               <div v-else class="border border-black/10 bg-black/[0.92] dark:border-white/10">
-                <div class="flex items-center justify-end border-b border-white/10 px-4 py-3">
-                  <div class="grid grid-cols-3 gap-1.5">
+                <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+                  <span class="min-w-0 truncate text-[10px] font-mono font-black uppercase tracking-[0.18em] text-white">
+                    {{ chartSourceLabel }}
+                  </span>
+                  <div class="relative shrink-0">
                     <button
-                      v-for="timeframe in timeframeOptions"
-                      :key="timeframe.id"
                       type="button"
-                      class="h-8 border px-2.5 text-[7px] font-mono font-black uppercase tracking-[0.14em] transition-colors"
-                      :class="activeGeneratedTimeframe === timeframe.id
-                        ? 'border-white bg-white text-black'
-                        : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
-                      @click="activeGeneratedTimeframe = timeframe.id"
+                      class="h-8 border border-white/20 px-3 text-[8px] font-mono font-black uppercase tracking-[0.16em] text-white transition-colors hover:border-white/50"
+                      @click="isTimeframeMenuOpen = !isTimeframeMenuOpen"
                     >
-                      {{ timeframe.label }}
+                      {{ activeTimeframeMeta.label }}
                     </button>
+                    <div
+                      v-if="isTimeframeMenuOpen"
+                      class="absolute left-0 top-[calc(100%+6px)] z-20 min-w-full border border-white/15 bg-black/95 shadow-xl"
+                    >
+                      <button
+                        v-for="timeframe in inactiveTimeframeOptions"
+                        :key="timeframe.id"
+                        type="button"
+                        class="block h-8 w-full px-3 text-left text-[8px] font-mono font-black uppercase tracking-[0.16em] text-white/55 transition-colors hover:bg-white hover:text-black"
+                        @click="activeGeneratedTimeframe = timeframe.id; isTimeframeMenuOpen = false"
+                      >
+                        {{ timeframe.label }}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div class="relative h-[500px] min-h-[380px]">
+                  <div
+                    v-if="hoveredOhlcLabel"
+                    class="pointer-events-none absolute left-4 top-4 z-10 max-w-[calc(100%-14rem)]"
+                  >
+                    <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white">
+                      {{ hoveredOhlcLabel }}
+                    </span>
+                  </div>
+
                   <canvas
                     ref="chartCanvas"
                     class="h-full w-full cursor-crosshair touch-none"
@@ -1527,23 +1641,25 @@ onBeforeUnmount(() => {
                   ></canvas>
 
                   <div
-                    v-if="hoveredCandle"
-                    class="pointer-events-none absolute right-4 top-4 w-44 border border-white/10 bg-black/85 p-3 shadow-sm backdrop-blur"
-                  >
-                    <span class="block truncate text-[8px] font-mono font-black uppercase tracking-[0.24em] text-white/35">
-                      {{ formatCandleTime(hoveredCandle.time) }}
-                    </span>
-                    <div class="mt-3 grid grid-cols-2 gap-2 text-[9px] font-mono uppercase tracking-[0.14em]">
-                      <span class="text-white/35">{{ ui().ohlc.open }}</span>
-                      <span class="text-right font-black text-white">{{ formatPrice(hoveredCandle.open) }}</span>
-                      <span class="text-white/35">{{ ui().ohlc.high }}</span>
-                      <span class="text-right font-black text-white">{{ formatPrice(hoveredCandle.high) }}</span>
-                      <span class="text-white/35">{{ ui().ohlc.low }}</span>
-                      <span class="text-right font-black text-white">{{ formatPrice(hoveredCandle.low) }}</span>
-                      <span class="text-white/35">{{ ui().ohlc.close }}</span>
-                      <span class="text-right font-black text-white">{{ formatPrice(hoveredCandle.close) }}</span>
-                    </div>
-                  </div>
+                    class="pointer-events-none absolute bottom-0 left-4 right-[84px] h-8 border-t border-white/0"
+                    :class="generatedChartCandles.length ? 'pointer-events-auto cursor-ew-resize' : ''"
+                    @pointerdown="handleChartPointerDown"
+                    @pointermove="handleChartPointerMove"
+                    @pointerup="handleChartPointerUp"
+                    @pointercancel="handleChartPointerUp"
+                    @pointerleave="handleChartPointerLeave"
+                  ></div>
+
+                  <div
+                    class="pointer-events-none absolute bottom-8 right-0 top-6 w-[84px] border-l border-white/0"
+                    :class="generatedChartCandles.length ? 'pointer-events-auto cursor-ns-resize' : ''"
+                    @pointerdown="handleChartPointerDown"
+                    @pointermove="handleChartPointerMove"
+                    @pointerup="handleChartPointerUp"
+                    @pointercancel="handleChartPointerUp"
+                    @pointerleave="handleChartPointerLeave"
+                  ></div>
+
                 </div>
               </div>
             </section>
