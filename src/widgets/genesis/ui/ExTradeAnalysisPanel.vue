@@ -1481,6 +1481,22 @@ const studyMetricText = computed(() => {
         ? 'Классификация траектории по сгенерированным свечам; при ручных данных без свечей показывает ручной диапазон.'
         : 'Path classification from generated candles; manual-only ranges are marked separately.'
     },
+    detail: {
+      data: isRu ? 'Данные' : 'Data',
+      period: isRu ? 'Период' : 'Period',
+      entry: 'Entry',
+      exit: 'Exit',
+      from: isRu ? 'от' : 'from',
+      to: isRu ? 'до' : 'to',
+      lossLevel: isRu ? 'уровень убытка' : 'loss level',
+      profitLevel: isRu ? 'уровень плюса' : 'profit level',
+      timeframe: isRu ? 'таймфрейм' : 'timeframe',
+      sessionDay: isRu ? 'день сессии' : 'session day',
+      realized: isRu ? 'реализовано' : 'realized',
+      favorable: isRu ? 'доступное движение' : 'favorable move',
+      source: isRu ? 'источник' : 'source',
+      shape: isRu ? 'форма' : 'shape'
+    },
     sources: {
       manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
       generated: isRu ? 'СГЕНЕРИРОВАННЫЕ_ДАННЫЕ' : 'GENERATED_DATA',
@@ -1578,6 +1594,13 @@ const formatStudyDuration = (seconds: number) => {
   return parts.join(' ');
 };
 
+const formatSessionLength = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return studyMetricText.value.na;
+  const hours = seconds / 3600;
+  const value = Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+  return `${value}${locale.value === 'ru' ? 'ч' : 'h'}`;
+};
+
 const getStudyDurationSeconds = (prefix: string) => {
   const metrics = currentTradeStudyMetrics.value;
   const days = parseStudyNumber(metrics[`${prefix}Days`]) || 0;
@@ -1598,6 +1621,108 @@ const getInTradeTimeRange = () => {
   const end = getTradeTimestamp(trade?.dateExit || trade?.exitTime);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
   return { start, end };
+};
+
+const formatInTradeTimestamp = (timestamp: number) => {
+  if (!Number.isFinite(timestamp)) return studyMetricText.value.na;
+  return new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(timestamp));
+};
+
+const getInTradePeriodLabel = () => {
+  const text = studyMetricText.value.detail;
+  const range = getInTradeTimeRange();
+  if (!range) return `${text.period}: ${studyMetricText.value.na}`;
+  return `${text.period}: ${formatInTradeTimestamp(range.start)} -> ${formatInTradeTimestamp(range.end)}`;
+};
+
+const getInTradeTimeframeLabel = () => {
+  const text = studyMetricText.value.detail;
+  const timeframe = String(generatedInTradeAnalysis.value?.timeframe || studyMetricText.value.na).toUpperCase();
+  return `${text.timeframe}: ${timeframe}`;
+};
+
+const getInTradeThresholds = () => {
+  const direction = getTradeDirection(props.trade);
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  const noisePct = inTradeAnalysisNoisePct.value;
+  if (!direction || !Number.isFinite(entry)) {
+    return { entry, lossLevel: Number.NaN, profitLevel: Number.NaN };
+  }
+  return {
+    entry,
+    lossLevel: direction === 'LONG' ? entry * (1 - (noisePct / 100)) : entry * (1 + (noisePct / 100)),
+    profitLevel: direction === 'LONG' ? entry * (1 + (noisePct / 100)) : entry * (1 - (noisePct / 100))
+  };
+};
+
+const getTimeMetricDetail = (kind: 'loss' | 'profit') => {
+  const text = studyMetricText.value.detail;
+  const thresholds = getInTradeThresholds();
+  const levelLabel = kind === 'loss' ? text.lossLevel : text.profitLevel;
+  return [
+    getInTradePeriodLabel(),
+    `${text.entry}: ${formatStudyPrice(thresholds.entry)}`,
+    `${levelLabel}: ${formatStudyPrice(kind === 'loss' ? thresholds.lossLevel : thresholds.profitLevel)}`,
+    getInTradeTimeframeLabel(),
+    `${text.sessionDay}: ${formatSessionLength(getInTradeSessionDaySeconds())}`
+  ].join(' | ');
+};
+
+const getDirectionalExtremePrice = (kind: 'drawdown' | 'favorable') => {
+  const direction = getTradeDirection(props.trade);
+  const extremes = inTradeExtremes.value;
+  if (kind === 'drawdown') {
+    return direction === 'LONG' ? extremes.minPrice : extremes.maxPrice;
+  }
+  return direction === 'LONG' ? extremes.maxPrice : extremes.minPrice;
+};
+
+const getMoveMetricDetail = (kind: 'drawdown' | 'favorable') => {
+  const text = studyMetricText.value.detail;
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  const target = getDirectionalExtremePrice(kind);
+  const pct = kind === 'drawdown' ? inTradeMoveMetrics.value.maePct : inTradeMoveMetrics.value.mfePct;
+  return [
+    `${text.from}: ${formatStudyPrice(entry)}`,
+    `${text.to}: ${formatStudyPrice(target)}`,
+    `${kind === 'drawdown' ? text.lossLevel : text.profitLevel}: ${formatSignedStudyPercent(pct)}`,
+    `${text.source}: ${getInTradeDataSourceLabel()}`
+  ].join(' | ');
+};
+
+const getCaptureMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  const direction = getTradeDirection(props.trade);
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  const exit = parsePositiveTradePrice((props.trade as any)?.exit);
+  const favorablePrice = getDirectionalExtremePrice('favorable');
+  const realizedMove = Number.isFinite(exit) && Number.isFinite(entry)
+    ? (direction === 'LONG' ? exit - entry : entry - exit)
+    : Number.NaN;
+  const favorableMove = Number.isFinite(favorablePrice) && Number.isFinite(entry)
+    ? (direction === 'LONG' ? favorablePrice - entry : entry - favorablePrice)
+    : Number.NaN;
+  return [
+    `${text.entry}: ${formatStudyPrice(entry)}`,
+    `${text.exit}: ${formatStudyPrice(exit)}`,
+    `${text.realized}: ${formatStudyPrice(realizedMove)}`,
+    `${text.favorable}: ${formatStudyPrice(favorableMove)}`
+  ].join(' | ');
+};
+
+const getPathShapeMetricDetail = (shapeLabel: string) => {
+  const text = studyMetricText.value.detail;
+  return [
+    `${text.shape}: ${shapeLabel}`,
+    getInTradePeriodLabel(),
+    getInTradeTimeframeLabel(),
+    `${text.source}: ${hasTradeStudyMetrics.value ? getInTradeDataSourceLabel() : studyMetricText.value.sources.none}`
+  ].join(' | ');
 };
 
 const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
@@ -1917,6 +2042,7 @@ const inTradeAnalysisRows = computed(() => {
       value: formatStudyDuration(lossSeconds),
       subvalue: getDurationSourceLabel(lossSeconds, 'loss'),
       hint: text.hints.meaningfulLossTime,
+      detail: getTimeMetricDetail('loss'),
       tone: Number.isFinite(lossSeconds) ? 'warning' : 'muted'
     },
     {
@@ -1925,6 +2051,7 @@ const inTradeAnalysisRows = computed(() => {
       value: formatStudyDuration(profitSeconds),
       subvalue: getDurationSourceLabel(profitSeconds, 'profit'),
       hint: text.hints.meaningfulProfitTime,
+      detail: getTimeMetricDetail('profit'),
       tone: Number.isFinite(profitSeconds) ? 'positive' : 'muted'
     },
     {
@@ -1933,6 +2060,7 @@ const inTradeAnalysisRows = computed(() => {
       value: formatSignedStudyPercent(moveMetrics.maePct),
       subvalue: sourceLabel,
       hint: text.hints.maxMeaningfulDrawdown,
+      detail: getMoveMetricDetail('drawdown'),
       tone: Number.isFinite(moveMetrics.maePct) && moveMetrics.maePct < 0 ? 'danger' : (Number.isFinite(moveMetrics.maePct) ? 'neutral' : 'muted')
     },
     {
@@ -1941,6 +2069,7 @@ const inTradeAnalysisRows = computed(() => {
       value: formatSignedStudyPercent(moveMetrics.mfePct),
       subvalue: sourceLabel,
       hint: text.hints.maxFavorableExcursion,
+      detail: getMoveMetricDetail('favorable'),
       tone: Number.isFinite(moveMetrics.mfePct) && moveMetrics.mfePct > 0 ? 'positive' : (Number.isFinite(moveMetrics.mfePct) ? 'neutral' : 'muted')
     },
     {
@@ -1949,6 +2078,7 @@ const inTradeAnalysisRows = computed(() => {
       value: formatCaptureRatio(moveMetrics.captureRatio),
       subvalue: sourceLabel,
       hint: text.hints.profitCaptureRatio,
+      detail: getCaptureMetricDetail(),
       tone: Number.isFinite(moveMetrics.captureRatio)
         ? (moveMetrics.captureRatio >= 65 ? 'positive' : (moveMetrics.captureRatio >= 35 ? 'warning' : 'danger'))
         : 'muted'
@@ -1959,6 +2089,7 @@ const inTradeAnalysisRows = computed(() => {
       value: shapeLabel,
       subvalue: hasGeneratedShape ? text.sources.generated : sourceLabel,
       hint: text.hints.pricePathShape,
+      detail: getPathShapeMetricDetail(shapeLabel),
       tone: hasGeneratedShape ? 'neutral' : (shapeKey ? 'warning' : 'muted')
     }
   ];
@@ -3926,8 +4057,12 @@ const simpleMetricInsights = computed(() => {
                               </div>
                            </div>
                         </template>
-                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed">
-                           {{ metric.hint }}
+                        <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col gap-2">
+                           <div>{{ metric.hint }}</div>
+                           <div v-if="metric.detail" class="border-t nier-border-primary pt-2 text-[9px] leading-relaxed tracking-[0.14em] opacity-70">
+                              <span class="font-black opacity-45">{{ studyMetricText.detail.data }}:</span>
+                              <span>{{ metric.detail }}</span>
+                           </div>
                         </div>
                      </ExTooltip>
                   </div>
