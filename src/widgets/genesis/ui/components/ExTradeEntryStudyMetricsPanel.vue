@@ -25,7 +25,8 @@ const {
   exitMethodEnabled,
   averageEntry,
   averageExit,
-  commitState
+  commitState,
+  initialTrade
 } = inject('tradeState')
 
 const props = defineProps({
@@ -208,6 +209,7 @@ const chartDragMode = ref('plot')
 const lastChartPointerX = ref(0)
 const lastChartPointerY = ref(0)
 const marketCatalog = ref(null)
+const generatedChartClearedManually = ref(false)
 
 let binanceSymbolsPromise = null
 const yahooSearchCache = new Map()
@@ -304,9 +306,27 @@ const generatedChartCandles = computed(() => {
   return generatedMarketData.value?.[activeGeneratedTimeframe.value] || []
 })
 
+const getGeneratedTimeframeIds = (candlesByTimeframe = generatedMarketData.value) => {
+  const knownIds = timeframeOptions
+    .map(timeframe => timeframe.id)
+    .filter(id => candlesByTimeframe?.[id]?.length)
+  const customIds = Object.keys(candlesByTimeframe || {})
+    .filter(id => candlesByTimeframe?.[id]?.length && !knownIds.includes(id))
+  return [...knownIds, ...customIds]
+}
+
+const getTimeframeOption = (id) => {
+  return timeframeOptions.find(timeframe => timeframe.id === id) || {
+    id,
+    label: String(id || '').toUpperCase(),
+    durationMs: MINUTE_MS
+  }
+}
+
 const chartTimeframeOptions = computed(() => {
-  if (!Object.keys(generatedMarketData.value || {}).length) return availableTimeframeOptions.value
-  return availableTimeframeOptions.value.filter(timeframe => generatedMarketData.value?.[timeframe.id]?.length)
+  const generatedIds = getGeneratedTimeframeIds()
+  if (!generatedIds.length) return availableTimeframeOptions.value
+  return generatedIds.map(getTimeframeOption)
 })
 
 const chartAssetHeading = computed(() => {
@@ -1457,6 +1477,14 @@ const loadPublicMarketData = async () => {
 }
 
 const syncActiveGeneratedTimeframe = () => {
+  const generatedIds = getGeneratedTimeframeIds()
+  if (generatedIds.length) {
+    if (!generatedIds.includes(activeGeneratedTimeframe.value)) {
+      activeGeneratedTimeframe.value = generatedIds[0]
+    }
+    return
+  }
+
   const available = availableTimeframeOptions.value
   if (!available.length) return
   if (!available.some(timeframe => timeframe.id === activeGeneratedTimeframe.value)) {
@@ -1466,7 +1494,13 @@ const syncActiveGeneratedTimeframe = () => {
 
 const selectFirstGeneratedTimeframe = (candlesByTimeframe) => {
   const preferred = availableTimeframeOptions.value.find(timeframe => candlesByTimeframe?.[timeframe.id]?.length)
-  if (preferred) activeGeneratedTimeframe.value = preferred.id
+  if (preferred) {
+    activeGeneratedTimeframe.value = preferred.id
+    return
+  }
+
+  const generatedIds = getGeneratedTimeframeIds(candlesByTimeframe)
+  if (generatedIds.length) activeGeneratedTimeframe.value = generatedIds[0]
 }
 
 const parsePositiveMetric = (value) => {
@@ -1592,6 +1626,102 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   }
 }
 
+const normalizeStoredCandle = (candle) => {
+  const normalized = {
+    time: Number(candle?.time),
+    open: Number(candle?.open),
+    high: Number(candle?.high),
+    low: Number(candle?.low),
+    close: Number(candle?.close)
+  }
+  return isUsableOhlcCandle(normalized) ? normalized : null
+}
+
+const normalizeCandlesByTimeframe = (candlesByTimeframe) => {
+  if (!candlesByTimeframe || typeof candlesByTimeframe !== 'object') return {}
+
+  return Object.fromEntries(
+    Object.entries(candlesByTimeframe)
+      .map(([timeframe, candles]) => [
+        timeframe,
+        Array.isArray(candles)
+          ? candles.map(normalizeStoredCandle).filter(Boolean).slice(-MAX_API_CANDLES)
+          : []
+      ])
+      .filter(([, candles]) => candles.length)
+  )
+}
+
+const persistGeneratedChartSnapshot = (candlesByTimeframe) => {
+  const normalizedCandles = normalizeCandlesByTimeframe(candlesByTimeframe)
+  if (!Object.keys(normalizedCandles).length) return
+
+  generatedChartClearedManually.value = false
+  tradeStudyMetrics.value.generatedInTradeAnalysis = buildGeneratedInTradeAnalysis(normalizedCandles)
+  tradeStudyMetrics.value.generatedMarketData = {
+    version: 1,
+    candlesByTimeframe: normalizedCandles,
+    activeTimeframe: activeGeneratedTimeframe.value,
+    symbol: resolvedMarketSymbol.value || '',
+    provider: resolvedMarketProvider.value || '',
+    sourceAsset: generatedSourceAsset.value || selectedTradeAsset.value || '',
+    generatedAt: new Date().toISOString()
+  }
+}
+
+const getStoredGeneratedMarketData = () => {
+  const candidates = [
+    tradeStudyMetrics.value?.generatedMarketData,
+    initialTrade?.tradeStudyMetrics?.generatedMarketData,
+    initialTrade?.studyMetrics?.generatedMarketData,
+    initialTrade?.generatedMarketData
+  ]
+
+  return candidates.find(candidate => candidate && typeof candidate === 'object') || null
+}
+
+const getStoredGeneratedInTradeAnalysis = () => {
+  const candidates = [
+    tradeStudyMetrics.value?.generatedInTradeAnalysis,
+    initialTrade?.tradeStudyMetrics?.generatedInTradeAnalysis,
+    initialTrade?.studyMetrics?.generatedInTradeAnalysis,
+    initialTrade?.generatedInTradeAnalysis
+  ]
+
+  return candidates.find(candidate => candidate && typeof candidate === 'object') || null
+}
+
+const hydrateGeneratedChartFromMetrics = () => {
+  if (generatedChartClearedManually.value) return false
+
+  const stored = getStoredGeneratedMarketData()
+  const normalizedCandles = normalizeCandlesByTimeframe(stored?.candlesByTimeframe)
+  if (!Object.keys(normalizedCandles).length) return false
+
+  generatedMarketData.value = normalizedCandles
+  resolvedMarketSymbol.value = stored?.symbol || ''
+  resolvedMarketProvider.value = stored?.provider || ''
+  generatedSourceAsset.value = stored?.sourceAsset || selectedTradeAsset.value || ''
+  generationState.value = 'success'
+  generationError.value = ''
+  hoveredCandle.value = null
+  chartCrosshair.value = null
+
+  if (stored?.activeTimeframe && normalizedCandles[stored.activeTimeframe]?.length) {
+    activeGeneratedTimeframe.value = stored.activeTimeframe
+  } else {
+    selectFirstGeneratedTimeframe(normalizedCandles)
+  }
+
+  tradeStudyMetrics.value.generatedMarketData = {
+    ...stored,
+    candlesByTimeframe: normalizedCandles,
+    activeTimeframe: activeGeneratedTimeframe.value
+  }
+  tradeStudyMetrics.value.generatedInTradeAnalysis = getStoredGeneratedInTradeAnalysis() || buildGeneratedInTradeAnalysis(normalizedCandles)
+  return true
+}
+
 const adjustCandlesToStudyMetrics = (candles) => {
   const manualMax = parsePositiveMetric(tradeStudyMetrics.value.maxPriceDuringTrade)
   const manualMin = parsePositiveMetric(tradeStudyMetrics.value.minPriceDuringTrade)
@@ -1639,6 +1769,7 @@ const adjustCandlesToStudyMetrics = (candles) => {
 const generateMarketData = async () => {
   if (!canGenerateMarketData.value) return
 
+  generatedChartClearedManually.value = false
   generationState.value = 'loading'
   generationError.value = ''
   hoveredCandle.value = null
@@ -1648,11 +1779,11 @@ const generateMarketData = async () => {
   try {
     const result = await loadPublicMarketData()
     generatedMarketData.value = result.candlesByTimeframe
-    tradeStudyMetrics.value.generatedInTradeAnalysis = buildGeneratedInTradeAnalysis(result.candlesByTimeframe)
     selectFirstGeneratedTimeframe(result.candlesByTimeframe)
     resolvedMarketSymbol.value = result.symbol
     resolvedMarketProvider.value = result.provider
     generatedSourceAsset.value = selectedTradeAsset.value
+    persistGeneratedChartSnapshot(result.candlesByTimeframe)
     generationState.value = 'success'
     resetChartViewport()
   } catch (error) {
@@ -1666,8 +1797,10 @@ const generateMarketData = async () => {
 }
 
 const clearGeneratedChart = () => {
+  generatedChartClearedManually.value = true
   generatedMarketData.value = {}
   tradeStudyMetrics.value.generatedInTradeAnalysis = null
+  tradeStudyMetrics.value.generatedMarketData = null
   resolvedMarketSymbol.value = ''
   resolvedMarketProvider.value = ''
   generatedSourceAsset.value = ''
@@ -2134,6 +2267,8 @@ const visibleFields = (fields) => {
   return fields.filter(field => field.type !== 'directionPercent' || shouldShowDirectionPercent(field))
 }
 
+hydrateGeneratedChartFromMetrics()
+
 watch(side, (vector) => {
   if (vector === 'long') {
     tradeStudyMetrics.value.priceRoseAboveEntryShort = false
@@ -2147,6 +2282,19 @@ watch(side, (vector) => {
 watch(availableTimeframeOptions, () => {
   syncActiveGeneratedTimeframe()
 }, { immediate: true })
+
+watch(
+  () => tradeStudyMetrics.value?.generatedMarketData,
+  async (stored) => {
+    if (!stored || generatedChartCandles.value.length) return
+    const hydrated = hydrateGeneratedChartFromMetrics()
+    if (!hydrated) return
+    resetChartViewport()
+    await nextTick()
+    drawChart()
+  },
+  { deep: true }
+)
 
 watch([generatedChartCandles, activeGeneratedTimeframe], async () => {
   resetChartViewport()
@@ -2170,6 +2318,7 @@ watch(() => props.visible, async (isVisible) => {
 watch([() => isDark?.value, locale, chartLevelOverlays], () => drawChart())
 
 onMounted(() => {
+  hydrateGeneratedChartFromMetrics()
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => drawChart())
     if (chartCanvas.value) resizeObserver.observe(chartCanvas.value)

@@ -1069,7 +1069,8 @@ const createTradeStudyMetrics = () => ({
   priceDirectionBeforeNewsChangePercent: '',
   priceDirectionAfterNews: '',
   priceDirectionAfterNewsChangePercent: '',
-  generatedInTradeAnalysis: null
+  generatedInTradeAnalysis: null,
+  generatedMarketData: null
 })
 
 const tradeStudyMetrics = ref(createTradeStudyMetrics())

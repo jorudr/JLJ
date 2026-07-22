@@ -1558,10 +1558,132 @@ const getStudyDurationSeconds = (prefix: string) => {
   return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
 };
 
+const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
+const DEFAULT_IN_TRADE_NOISE_PCT = 0.5;
+
+const normalizeStoredAnalysisCandle = (candle: any) => {
+  const normalized = {
+    time: Number(candle?.time),
+    open: Number(candle?.open),
+    high: Number(candle?.high),
+    low: Number(candle?.low),
+    close: Number(candle?.close)
+  };
+  return Object.values(normalized).every(Number.isFinite) && normalized.high > 0 && normalized.low > 0 && normalized.high >= normalized.low
+    ? normalized
+    : null;
+};
+
+const getStoredAnalysisCandles = (metrics: Record<string, any>) => {
+  const candlesByTimeframe = metrics?.generatedMarketData?.candlesByTimeframe;
+  if (!candlesByTimeframe || typeof candlesByTimeframe !== 'object') return { timeframe: '', candles: [] as any[] };
+
+  const timeframe = STORED_CHART_TIMEFRAME_ORDER.find(id => Array.isArray(candlesByTimeframe[id]) && candlesByTimeframe[id].length)
+    || Object.keys(candlesByTimeframe).find(id => Array.isArray(candlesByTimeframe[id]) && candlesByTimeframe[id].length)
+    || '';
+  const candles = timeframe
+    ? candlesByTimeframe[timeframe].map(normalizeStoredAnalysisCandle).filter(Boolean)
+    : [];
+
+  return { timeframe, candles };
+};
+
+const getStoredCandleStepSeconds = (candles: any[], index: number) => {
+  const current = Number(candles[index]?.time);
+  const next = Number(candles[index + 1]?.time);
+  if (Number.isFinite(current) && Number.isFinite(next) && next > current) return (next - current) / 1000;
+  const previous = Number(candles[index - 1]?.time);
+  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) return (current - previous) / 1000;
+  return 60;
+};
+
+const classifyStoredPricePathShape = (states: string[], firstImpulse: string | null, maePct: number, mfePct: number, captureRatio: number) => {
+  const flips = states.reduce((count, state, index) => {
+    if (!index || state === 'noise' || states[index - 1] === 'noise') return count;
+    return state !== states[index - 1] ? count + 1 : count;
+  }, 0);
+
+  if (flips >= 3) return 'CHOPPY_PATH';
+  if (Math.abs(maePct) < DEFAULT_IN_TRADE_NOISE_PCT && mfePct < DEFAULT_IN_TRADE_NOISE_PCT) return 'NOISE_RANGE';
+  if (firstImpulse === 'LOSS' && mfePct >= DEFAULT_IN_TRADE_NOISE_PCT) return 'ADVERSE_THEN_RECOVERY';
+  if (firstImpulse === 'PROFIT' && Math.abs(maePct) >= DEFAULT_IN_TRADE_NOISE_PCT) return 'FAVORABLE_THEN_PULLBACK';
+  if (mfePct >= DEFAULT_IN_TRADE_NOISE_PCT && Number.isFinite(captureRatio) && captureRatio >= 65) return 'CLEAN_TREND_CAPTURE';
+  if (mfePct >= DEFAULT_IN_TRADE_NOISE_PCT && Number.isFinite(captureRatio) && captureRatio < 35) return 'LATE_EXIT_AFTER_MFE';
+  return firstImpulse === 'PROFIT' ? 'FAVORABLE_FIRST' : 'ADVERSE_FIRST';
+};
+
+const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>) => {
+  const direction = getTradeDirection(props.trade);
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  const exit = parsePositiveTradePrice((props.trade as any)?.exit);
+  const { timeframe, candles } = getStoredAnalysisCandles(metrics);
+  if (!direction || !Number.isFinite(entry) || !candles.length) return {};
+
+  const highs = candles.map(candle => Number(candle.high)).filter(Number.isFinite);
+  const lows = candles.map(candle => Number(candle.low)).filter(Number.isFinite);
+  if (!highs.length || !lows.length) return {};
+
+  const maxPrice = Math.max(...highs);
+  const minPrice = Math.min(...lows);
+  const lossLimit = direction === 'LONG'
+    ? entry * (1 - (DEFAULT_IN_TRADE_NOISE_PCT / 100))
+    : entry * (1 + (DEFAULT_IN_TRADE_NOISE_PCT / 100));
+  const profitLimit = direction === 'LONG'
+    ? entry * (1 + (DEFAULT_IN_TRADE_NOISE_PCT / 100))
+    : entry * (1 - (DEFAULT_IN_TRADE_NOISE_PCT / 100));
+
+  let meaningfulLossSeconds = 0;
+  let meaningfulProfitSeconds = 0;
+  let firstImpulse: string | null = null;
+  const states: string[] = [];
+
+  candles.forEach((candle, index) => {
+    const isLoss = direction === 'LONG' ? candle.low <= lossLimit : candle.high >= lossLimit;
+    const isProfit = direction === 'LONG' ? candle.high >= profitLimit : candle.low <= profitLimit;
+    const stepSeconds = getStoredCandleStepSeconds(candles, index);
+    if (isLoss) meaningfulLossSeconds += stepSeconds;
+    if (isProfit) meaningfulProfitSeconds += stepSeconds;
+    if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT';
+    states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'));
+  });
+
+  const rawMaePct = direction === 'LONG'
+    ? ((minPrice - entry) / entry) * 100
+    : ((entry - maxPrice) / entry) * 100;
+  const rawMfePct = direction === 'LONG'
+    ? ((maxPrice - entry) / entry) * 100
+    : ((entry - minPrice) / entry) * 100;
+  const maePct = rawMaePct <= -DEFAULT_IN_TRADE_NOISE_PCT ? rawMaePct : 0;
+  const mfePct = rawMfePct >= DEFAULT_IN_TRADE_NOISE_PCT ? rawMfePct : 0;
+  const maxFavorableMove = direction === 'LONG' ? maxPrice - entry : entry - minPrice;
+  const realizedMove = Number.isFinite(exit) ? (direction === 'LONG' ? exit - entry : entry - exit) : Number.NaN;
+  const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove) ? (realizedMove / maxFavorableMove) * 100 : Number.NaN;
+
+  return {
+    source: 'generated',
+    timeframe,
+    noisePct: DEFAULT_IN_TRADE_NOISE_PCT,
+    direction,
+    entry,
+    exit: Number.isFinite(exit) ? exit : null,
+    maxPrice,
+    minPrice,
+    meaningfulLossSeconds,
+    meaningfulProfitSeconds,
+    maxMeaningfulDrawdownPct: maePct,
+    maxFavorableExcursionPct: mfePct,
+    profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
+    pricePathShape: classifyStoredPricePathShape(states, firstImpulse, maePct, mfePct, captureRatio)
+  };
+};
+
 const generatedInTradeAnalysis = computed<Record<string, any>>(() => {
   const metrics = currentTradeStudyMetrics.value;
-  return metrics?.generatedInTradeAnalysis && typeof metrics.generatedInTradeAnalysis === 'object'
-    ? metrics.generatedInTradeAnalysis
+  if (metrics?.generatedInTradeAnalysis && typeof metrics.generatedInTradeAnalysis === 'object') {
+    return metrics.generatedInTradeAnalysis;
+  }
+  return metrics?.generatedMarketData && typeof metrics.generatedMarketData === 'object'
+    ? buildGeneratedAnalysisFromStoredMarketData(metrics)
     : {};
 });
 
