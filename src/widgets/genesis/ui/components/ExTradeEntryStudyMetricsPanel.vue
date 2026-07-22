@@ -1193,7 +1193,7 @@ const filterCandlesToTradeWindow = (candles, timeframe) => {
   return candles.filter(candle => {
     const candleStart = candle.time
     const candleEnd = candleStart + timeframe.durationMs
-    return candleStart <= range.end && candleEnd >= range.start
+    return candleStart < range.end && candleEnd > range.start
   })
 }
 
@@ -1609,6 +1609,14 @@ const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
   const current = Number(candles[index]?.time)
   const next = Number(candles[index + 1]?.time)
   const nominalStepSeconds = ((timeframe?.durationMs || MINUTE_MS) / 1000)
+  const range = tradeTimeRange.value
+  if (Number.isFinite(current) && range) {
+    const candleStart = current
+    const candleEnd = current + (nominalStepSeconds * 1000)
+    const overlapStart = Math.max(candleStart, range.start)
+    const overlapEnd = Math.min(candleEnd, range.end)
+    return Math.max(0, (overlapEnd - overlapStart) / 1000)
+  }
   if (Number.isFinite(current) && Number.isFinite(next) && next > current) {
     return Math.min((next - current) / 1000, nominalStepSeconds)
   }
@@ -1617,6 +1625,33 @@ const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
     return Math.min((current - previous) / 1000, nominalStepSeconds)
   }
   return nominalStepSeconds
+}
+
+const getBodyAwareExtremePrices = (candles, entryPrice) => {
+  const confirmedHighs = []
+  const confirmedLows = []
+
+  candles.forEach(candle => {
+    const open = Number(candle.open)
+    const close = Number(candle.close)
+    const high = Number(candle.high)
+    const low = Number(candle.low)
+    if (![open, close, high, low].every(Number.isFinite)) return
+
+    if (close > open) {
+      confirmedHighs.push(high)
+    } else if (close < open) {
+      confirmedLows.push(low)
+    } else {
+      confirmedHighs.push(high)
+      confirmedLows.push(low)
+    }
+  })
+
+  return {
+    maxPrice: confirmedHighs.length ? Math.max(...confirmedHighs) : entryPrice,
+    minPrice: confirmedLows.length ? Math.min(...confirmedLows) : entryPrice
+  }
 }
 
 const classifyGeneratedPathShape = ({ states, firstImpulse, maePct, mfePct, captureRatio }) => {
@@ -1646,8 +1681,7 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   const lows = candles.map(candle => Number(candle.low)).filter(Number.isFinite)
   if (!highs.length || !lows.length) return null
 
-  const maxPrice = Math.max(...highs)
-  const minPrice = Math.min(...lows)
+  const { maxPrice, minPrice } = getBodyAwareExtremePrices(candles, entryPrice)
   const lossLimit = direction === 'LONG'
     ? entryPrice * (1 - (IN_TRADE_NOISE_PCT / 100))
     : entryPrice * (1 + (IN_TRADE_NOISE_PCT / 100))

@@ -1587,6 +1587,19 @@ const getStudyDurationSeconds = (prefix: string) => {
   return (days * getInTradeSessionDaySeconds()) + (hours * 3600) + (minutes * 60) + seconds;
 };
 
+const getTradeTimestamp = (value: any) => {
+  const timestamp = new Date(value || 0).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.NaN;
+};
+
+const getInTradeTimeRange = () => {
+  const trade = props.trade as any;
+  const start = getTradeTimestamp(trade?.date || trade?.entryTime);
+  const end = getTradeTimestamp(trade?.dateExit || trade?.exitTime);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+  return { start, end };
+};
+
 const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
 const DEFAULT_IN_TRADE_NOISE_PCT = 0.5;
 
@@ -1628,10 +1641,45 @@ const getStoredCandleStepSeconds = (candles: any[], index: number, timeframeId: 
       : normalizedTimeframeId === '15m'
         ? 15 * 60
         : 60;
+  const range = getInTradeTimeRange();
+  if (Number.isFinite(current) && range) {
+    const candleStart = current;
+    const candleEnd = current + (nominalStepSeconds * 1000);
+    const overlapStart = Math.max(candleStart, range.start);
+    const overlapEnd = Math.min(candleEnd, range.end);
+    return Math.max(0, (overlapEnd - overlapStart) / 1000);
+  }
   if (Number.isFinite(current) && Number.isFinite(next) && next > current) return Math.min((next - current) / 1000, nominalStepSeconds);
   const previous = Number(candles[index - 1]?.time);
   if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) return Math.min((current - previous) / 1000, nominalStepSeconds);
   return nominalStepSeconds;
+};
+
+const getBodyAwareExtremePrices = (candles: any[], entryPrice: number) => {
+  const confirmedHighs: number[] = [];
+  const confirmedLows: number[] = [];
+
+  candles.forEach((candle) => {
+    const open = Number(candle.open);
+    const close = Number(candle.close);
+    const high = Number(candle.high);
+    const low = Number(candle.low);
+    if (![open, close, high, low].every(Number.isFinite)) return;
+
+    if (close > open) {
+      confirmedHighs.push(high);
+    } else if (close < open) {
+      confirmedLows.push(low);
+    } else {
+      confirmedHighs.push(high);
+      confirmedLows.push(low);
+    }
+  });
+
+  return {
+    maxPrice: confirmedHighs.length ? Math.max(...confirmedHighs) : entryPrice,
+    minPrice: confirmedLows.length ? Math.min(...confirmedLows) : entryPrice
+  };
 };
 
 const classifyStoredPricePathShape = (states: string[], firstImpulse: string | null, maePct: number, mfePct: number, captureRatio: number) => {
@@ -1660,8 +1708,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const lows = candles.map(candle => Number(candle.low)).filter(Number.isFinite);
   if (!highs.length || !lows.length) return {};
 
-  const maxPrice = Math.max(...highs);
-  const minPrice = Math.min(...lows);
+  const { maxPrice, minPrice } = getBodyAwareExtremePrices(candles, entry);
   const lossLimit = direction === 'LONG'
     ? entry * (1 - (DEFAULT_IN_TRADE_NOISE_PCT / 100))
     : entry * (1 + (DEFAULT_IN_TRADE_NOISE_PCT / 100));
