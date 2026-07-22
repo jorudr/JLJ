@@ -1094,6 +1094,12 @@ const resolveBinanceSymbol = async () => {
   return candidates.find(candidate => tradableSymbols.has(candidate)) || ''
 }
 
+const isUsableOhlcCandle = (candle) => {
+  if (!Number.isFinite(candle?.time)) return false
+  const values = [candle.open, candle.high, candle.low, candle.close]
+  return values.every(value => Number.isFinite(value) && value > 0) && candle.high >= candle.low
+}
+
 const parseKlineCandles = (rows) => {
   return (Array.isArray(rows) ? rows : [])
     .map(row => ({
@@ -1104,7 +1110,7 @@ const parseKlineCandles = (rows) => {
       close: Number(row[4]),
       volume: Number(row[5])
     }))
-    .filter(candle => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite))
+    .filter(isUsableOhlcCandle)
 }
 
 const parseBybitKlineCandles = (payload) => {
@@ -1119,7 +1125,7 @@ const parseBybitKlineCandles = (payload) => {
       close: Number(row[4]),
       volume: Number(row[5] || 0)
     }))
-    .filter(candle => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite))
+    .filter(isUsableOhlcCandle)
     .sort((a, b) => a.time - b.time)
 }
 
@@ -1141,7 +1147,7 @@ const parseKrakenOhlcCandles = (payload) => {
       close: Number(row[4]),
       volume: Number(row[6] || 0)
     }))
-    .filter(candle => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite))
+    .filter(isUsableOhlcCandle)
     .sort((a, b) => a.time - b.time)
 }
 
@@ -1190,7 +1196,7 @@ const parseYahooChartCandles = (payload) => {
       close: Number(closes[index]),
       volume: Number(volumes[index] || 0)
     }))
-    .filter(candle => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite))
+    .filter(isUsableOhlcCandle)
 }
 
 const aggregateCandles = (candles, bucketMs) => {
@@ -1471,7 +1477,9 @@ const parsePositiveMetric = (value) => {
 const adjustCandlesToStudyMetrics = (candles) => {
   const manualMax = parsePositiveMetric(tradeStudyMetrics.value.maxPriceDuringTrade)
   const manualMin = parsePositiveMetric(tradeStudyMetrics.value.minPriceDuringTrade)
-  if (!candles.length || (!Number.isFinite(manualMax) && !Number.isFinite(manualMin))) return candles
+  if (!candles.length || (!Number.isFinite(manualMax) && !Number.isFinite(manualMin))) {
+    return candles.filter(isUsableOhlcCandle)
+  }
 
   const sourceHigh = Math.max(...candles.map(candle => candle.high))
   const sourceLow = Math.min(...candles.map(candle => candle.low))
@@ -1493,7 +1501,7 @@ const adjustCandlesToStudyMetrics = (candles) => {
     mapPrice = price => price * scale
   }
 
-  if (!mapPrice) return candles
+  if (!mapPrice) return candles.filter(isUsableOhlcCandle)
 
   return candles.map(candle => {
     const open = mapPrice(candle.open)
@@ -1507,7 +1515,7 @@ const adjustCandlesToStudyMetrics = (candles) => {
       low: Math.min(open, high, low, close),
       close
     }
-  })
+  }).filter(isUsableOhlcCandle)
 }
 
 const generateMarketData = async () => {
