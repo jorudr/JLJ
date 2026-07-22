@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-22T17:27:35.763Z",
+  "generatedAt": "2026-07-22T17:35:36.504Z",
   "note": "Yahoo does not expose a comprehensive public bulk symbol list here; YAHOO_LOCAL entries are generated from the app asset registry.",
   "sources": {
     "BYBIT": 1373,
@@ -130561,7 +130561,9 @@
         "GC=F",
         "XAU",
         "GOLD",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "XAUUSD",
+        "GC"
       ]
     },
     {
@@ -130577,7 +130579,9 @@
         "SI=F",
         "XAG",
         "SILVER",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "XAGUSD",
+        "SI"
       ]
     },
     {
@@ -130592,7 +130596,10 @@
         "XPT/USD",
         "PL=F",
         "XPT",
-        "PLATINUM / US DOLLAR"
+        "PLATINUM / US DOLLAR",
+        "XPTUSD",
+        "PLATINUM",
+        "PLATIN"
       ]
     },
     {
@@ -130607,7 +130614,10 @@
         "XPD/USD",
         "PA=F",
         "XPD",
-        "PALLADIUM / US DOLLAR"
+        "PALLADIUM / US DOLLAR",
+        "XPDUSD",
+        "PALLAD",
+        "PALLADIUM"
       ]
     },
     {
@@ -130622,7 +130632,10 @@
         "USOIL",
         "CL=F",
         "CRUDE OIL WTI",
-        "GLOBAL ENERGY BENCHMARK"
+        "GLOBAL ENERGY BENCHMARK",
+        "OIL",
+        "WTI",
+        "CL"
       ]
     },
     {
@@ -130637,7 +130650,8 @@
         "UKOIL",
         "BZ=F",
         "CRUDE OIL BRENT",
-        "GLOBAL ENERGY BENCHMARK"
+        "GLOBAL ENERGY BENCHMARK",
+        "BRENT"
       ]
     },
     {
@@ -130982,7 +130996,10 @@
         "WTI",
         "CL=F",
         "CRUDE OIL WTI",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "OIL",
+        "USOIL",
+        "CL"
       ]
     },
     {
@@ -130997,7 +131014,8 @@
         "BRENT",
         "BZ=F",
         "BRENT CRUDE OIL",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "UKOIL"
       ]
     },
     {
@@ -131012,13 +131030,15 @@
         "NATGAS",
         "NG=F",
         "NATURAL GAS",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "NG",
+        "NATURALGAS"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "SOYBN",
+      "symbol": "ZS=F",
       "base": "SOYBN",
       "quote": "USD",
       "type": "commodity",
@@ -131026,72 +131046,79 @@
       "aliases": [
         "SOYBN",
         "SOYBEANS",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "ZS=F",
+        "SOYBEAN"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "WHEAT",
+      "symbol": "ZW=F",
       "base": "WHEAT",
       "quote": "USD",
       "type": "commodity",
       "name": "Wheat",
       "aliases": [
         "WHEAT",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "ZW=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "CORN",
+      "symbol": "ZC=F",
       "base": "CORN",
       "quote": "USD",
       "type": "commodity",
       "name": "Corn",
       "aliases": [
         "CORN",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "ZC=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "COFFEE",
+      "symbol": "KC=F",
       "base": "COFFEE",
       "quote": "USD",
       "type": "commodity",
       "name": "Coffee",
       "aliases": [
         "COFFEE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "KC=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "SUGAR",
+      "symbol": "SB=F",
       "base": "SUGAR",
       "quote": "USD",
       "type": "commodity",
       "name": "Sugar",
       "aliases": [
         "SUGAR",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "SB=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "COTTON",
+      "symbol": "CT=F",
       "base": "COTTON",
       "quote": "USD",
       "type": "commodity",
       "name": "Cotton",
       "aliases": [
         "COTTON",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "CT=F"
       ]
     },
     {
@@ -131105,13 +131132,14 @@
       "aliases": [
         "COPPER",
         "HG=F",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "HG"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "COCOA",
+      "symbol": "CC=F",
       "base": "COCOA",
       "quote": "USD",
       "type": "commodity",
@@ -131119,13 +131147,14 @@
       "aliases": [
         "COCOA",
         "COCOA SPOT",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "CC=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "LIVCAT",
+      "symbol": "LE=F",
       "base": "LIVCAT",
       "quote": "USD",
       "type": "commodity",
@@ -131133,13 +131162,15 @@
       "aliases": [
         "LIVCAT",
         "LIVE CATTLE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "LE=F",
+        "LIVECATTLE"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "FDRCAT",
+      "symbol": "GF=F",
       "base": "FDRCAT",
       "quote": "USD",
       "type": "commodity",
@@ -131147,13 +131178,15 @@
       "aliases": [
         "FDRCAT",
         "FEEDER CATTLE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "GF=F",
+        "FEEDERCATTLE"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "LN_HOG",
+      "symbol": "HE=F",
       "base": "LNHOG",
       "quote": "USD",
       "type": "commodity",
@@ -131162,13 +131195,15 @@
         "LN_HOG",
         "LNHOG",
         "LEAN HOGS",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "HE=F",
+        "LEANHOGS"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "ORNG_J",
+      "symbol": "OJ=F",
       "base": "ORNGJ",
       "quote": "USD",
       "type": "commodity",
@@ -131177,13 +131212,15 @@
         "ORNG_J",
         "ORNGJ",
         "ORANGE JUICE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "OJ=F",
+        "ORANGEJUICE"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "RICE",
+      "symbol": "ZR=F",
       "base": "RICE",
       "quote": "USD",
       "type": "commodity",
@@ -131191,26 +131228,29 @@
       "aliases": [
         "RICE",
         "ROUGH RICE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "ZR=F",
+        "ROUGHRICE"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "LUMBER",
+      "symbol": "LBR=F",
       "base": "LUMBER",
       "quote": "USD",
       "type": "commodity",
       "name": "Lumber",
       "aliases": [
         "LUMBER",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "LBR=F"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "PALLAD",
+      "symbol": "PA=F",
       "base": "PALLAD",
       "quote": "USD",
       "type": "commodity",
@@ -131218,13 +131258,16 @@
       "aliases": [
         "PALLAD",
         "PALLADIUM",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "PA=F",
+        "XPD",
+        "XPDUSD"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "PLATIN",
+      "symbol": "PL=F",
       "base": "PLATIN",
       "quote": "USD",
       "type": "commodity",
@@ -131232,13 +131275,16 @@
       "aliases": [
         "PLATIN",
         "PLATINUM",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "PL=F",
+        "XPT",
+        "XPTUSD"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "HEAT_O",
+      "symbol": "HO=F",
       "base": "HEATO",
       "quote": "USD",
       "type": "commodity",
@@ -131247,13 +131293,15 @@
         "HEAT_O",
         "HEATO",
         "HEATING OIL",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "HO=F",
+        "HEATINGOIL"
       ]
     },
     {
       "provider": "YAHOO_LOCAL",
       "market": "chart",
-      "symbol": "GASOLN",
+      "symbol": "RB=F",
       "base": "GASOLN",
       "quote": "USD",
       "type": "commodity",
@@ -131261,7 +131309,10 @@
       "aliases": [
         "GASOLN",
         "RBOB GASOLINE",
-        "GLOBAL COMMODITY / FUTURE"
+        "GLOBAL COMMODITY / FUTURE",
+        "RB=F",
+        "GASOLINE",
+        "RBOBGASOLINE"
       ]
     },
     {

@@ -173,9 +173,23 @@ function yahooSymbolForLocalAsset(asset: any) {
     XAU: 'GC=F', XAUUSD: 'GC=F', GOLD: 'GC=F',
     XAG: 'SI=F', XAGUSD: 'SI=F', SILVER: 'SI=F',
     XPT: 'PL=F', XPTUSD: 'PL=F', PLATINUM: 'PL=F',
-    XPD: 'PA=F', XPDUSD: 'PA=F', PALLADIUM: 'PA=F',
+    XPD: 'PA=F', XPDUSD: 'PA=F', PALLAD: 'PA=F', PALLADIUM: 'PA=F',
     OIL: 'CL=F', WTI: 'CL=F', USOIL: 'CL=F', BRENT: 'BZ=F', UKOIL: 'BZ=F',
-    NATGAS: 'NG=F', COPPER: 'HG=F'
+    NATGAS: 'NG=F', NATURALGAS: 'NG=F',
+    SOYBN: 'ZS=F', SOYBEAN: 'ZS=F', SOYBEANS: 'ZS=F',
+    WHEAT: 'ZW=F', CORN: 'ZC=F',
+    COFFEE: 'KC=F', SUGAR: 'SB=F', COTTON: 'CT=F',
+    COPPER: 'HG=F', HG: 'HG=F',
+    COCOA: 'CC=F',
+    LIVCAT: 'LE=F', LIVECATTLE: 'LE=F',
+    FDRCAT: 'GF=F', FEEDERCATTLE: 'GF=F',
+    LN_HOG: 'HE=F', LNHOG: 'HE=F', LEANHOGS: 'HE=F',
+    ORNG_J: 'OJ=F', ORNGJ: 'OJ=F', ORANGEJUICE: 'OJ=F',
+    RICE: 'ZR=F', ROUGHRICE: 'ZR=F',
+    LUMBER: 'LBR=F',
+    PLATIN: 'PL=F',
+    HEAT_O: 'HO=F', HEATO: 'HO=F', HEATINGOIL: 'HO=F',
+    GASOLN: 'RB=F', GASOLINE: 'RB=F', RBOBGASOLINE: 'RB=F'
   }
   const indexMap: Record<string, string> = {
     SPX: '^GSPC', SP500: '^GSPC', SPX500: '^GSPC', US500: '^GSPC',
