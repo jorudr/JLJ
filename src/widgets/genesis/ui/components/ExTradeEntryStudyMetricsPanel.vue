@@ -1630,6 +1630,7 @@ const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
 const getBodyAwareExtremePrices = (candles, entryPrice) => {
   const confirmedHighs = []
   const confirmedLows = []
+  let countedIndex = 0
 
   candles.forEach(candle => {
     const open = Number(candle.open)
@@ -1638,12 +1639,23 @@ const getBodyAwareExtremePrices = (candles, entryPrice) => {
     const low = Number(candle.low)
     if (![open, close, high, low].every(Number.isFinite)) return
 
-    if (close > open) {
+    const isFirstCountedCandle = countedIndex === 0
+    countedIndex += 1
+
+    if (isFirstCountedCandle) {
+      if (close >= open) confirmedHighs.push(high)
+      if (close <= open) confirmedLows.push(low)
+      return
+    }
+
+    const crossesEntry = low < entryPrice && high > entryPrice
+    const entirelyAboveEntry = low >= entryPrice
+    const entirelyBelowEntry = high <= entryPrice
+
+    if (entirelyAboveEntry || (crossesEntry && close >= open)) {
       confirmedHighs.push(high)
-    } else if (close < open) {
-      confirmedLows.push(low)
-    } else {
-      confirmedHighs.push(high)
+    }
+    if (entirelyBelowEntry || (crossesEntry && close <= open)) {
       confirmedLows.push(low)
     }
   })

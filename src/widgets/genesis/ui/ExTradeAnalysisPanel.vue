@@ -1633,18 +1633,13 @@ const formatInTradeTimestamp = (timestamp: number) => {
   }).format(new Date(timestamp));
 };
 
-const getInTradePeriodLabel = () => {
-  const text = studyMetricText.value.detail;
+const getInTradePeriodValue = () => {
   const range = getInTradeTimeRange();
-  if (!range) return `${text.period}: ${studyMetricText.value.na}`;
-  return `${text.period}: ${formatInTradeTimestamp(range.start)} -> ${formatInTradeTimestamp(range.end)}`;
+  if (!range) return studyMetricText.value.na;
+  return `${formatInTradeTimestamp(range.start)} -> ${formatInTradeTimestamp(range.end)}`;
 };
 
-const getInTradeTimeframeLabel = () => {
-  const text = studyMetricText.value.detail;
-  const timeframe = String(generatedInTradeAnalysis.value?.timeframe || studyMetricText.value.na).toUpperCase();
-  return `${text.timeframe}: ${timeframe}`;
-};
+const getInTradeTimeframeValue = () => String(generatedInTradeAnalysis.value?.timeframe || studyMetricText.value.na).toUpperCase();
 
 const getInTradeThresholds = () => {
   const direction = getTradeDirection(props.trade);
@@ -1660,17 +1655,19 @@ const getInTradeThresholds = () => {
   };
 };
 
+const metricDetailRow = (label: string, value: string) => ({ label, value });
+
 const getTimeMetricDetail = (kind: 'loss' | 'profit') => {
   const text = studyMetricText.value.detail;
   const thresholds = getInTradeThresholds();
   const levelLabel = kind === 'loss' ? text.lossLevel : text.profitLevel;
   return [
-    getInTradePeriodLabel(),
-    `${text.entry}: ${formatStudyPrice(thresholds.entry)}`,
-    `${levelLabel}: ${formatStudyPrice(kind === 'loss' ? thresholds.lossLevel : thresholds.profitLevel)}`,
-    getInTradeTimeframeLabel(),
-    `${text.sessionDay}: ${formatSessionLength(getInTradeSessionDaySeconds())}`
-  ].join(' | ');
+    metricDetailRow(text.period, getInTradePeriodValue()),
+    metricDetailRow(text.entry, formatStudyPrice(thresholds.entry)),
+    metricDetailRow(levelLabel, formatStudyPrice(kind === 'loss' ? thresholds.lossLevel : thresholds.profitLevel)),
+    metricDetailRow(text.timeframe, getInTradeTimeframeValue()),
+    metricDetailRow(text.sessionDay, formatSessionLength(getInTradeSessionDaySeconds()))
+  ];
 };
 
 const getDirectionalExtremePrice = (kind: 'drawdown' | 'favorable') => {
@@ -1688,11 +1685,11 @@ const getMoveMetricDetail = (kind: 'drawdown' | 'favorable') => {
   const target = getDirectionalExtremePrice(kind);
   const pct = kind === 'drawdown' ? inTradeMoveMetrics.value.maePct : inTradeMoveMetrics.value.mfePct;
   return [
-    `${text.from}: ${formatStudyPrice(entry)}`,
-    `${text.to}: ${formatStudyPrice(target)}`,
-    `${kind === 'drawdown' ? text.lossLevel : text.profitLevel}: ${formatSignedStudyPercent(pct)}`,
-    `${text.source}: ${getInTradeDataSourceLabel()}`
-  ].join(' | ');
+    metricDetailRow(text.from, formatStudyPrice(entry)),
+    metricDetailRow(text.to, formatStudyPrice(target)),
+    metricDetailRow(kind === 'drawdown' ? text.lossLevel : text.profitLevel, formatSignedStudyPercent(pct)),
+    metricDetailRow(text.source, getInTradeDataSourceLabel())
+  ];
 };
 
 const getCaptureMetricDetail = () => {
@@ -1708,21 +1705,21 @@ const getCaptureMetricDetail = () => {
     ? (direction === 'LONG' ? favorablePrice - entry : entry - favorablePrice)
     : Number.NaN;
   return [
-    `${text.entry}: ${formatStudyPrice(entry)}`,
-    `${text.exit}: ${formatStudyPrice(exit)}`,
-    `${text.realized}: ${formatStudyPrice(realizedMove)}`,
-    `${text.favorable}: ${formatStudyPrice(favorableMove)}`
-  ].join(' | ');
+    metricDetailRow(text.entry, formatStudyPrice(entry)),
+    metricDetailRow(text.exit, formatStudyPrice(exit)),
+    metricDetailRow(text.realized, formatStudyPrice(realizedMove)),
+    metricDetailRow(text.favorable, formatStudyPrice(favorableMove))
+  ];
 };
 
 const getPathShapeMetricDetail = (shapeLabel: string) => {
   const text = studyMetricText.value.detail;
   return [
-    `${text.shape}: ${shapeLabel}`,
-    getInTradePeriodLabel(),
-    getInTradeTimeframeLabel(),
-    `${text.source}: ${hasTradeStudyMetrics.value ? getInTradeDataSourceLabel() : studyMetricText.value.sources.none}`
-  ].join(' | ');
+    metricDetailRow(text.shape, shapeLabel),
+    metricDetailRow(text.period, getInTradePeriodValue()),
+    metricDetailRow(text.timeframe, getInTradeTimeframeValue()),
+    metricDetailRow(text.source, hasTradeStudyMetrics.value ? getInTradeDataSourceLabel() : studyMetricText.value.sources.none)
+  ];
 };
 
 const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
@@ -1783,6 +1780,7 @@ const getStoredCandleStepSeconds = (candles: any[], index: number, timeframeId: 
 const getBodyAwareExtremePrices = (candles: any[], entryPrice: number) => {
   const confirmedHighs: number[] = [];
   const confirmedLows: number[] = [];
+  let countedIndex = 0;
 
   candles.forEach((candle) => {
     const open = Number(candle.open);
@@ -1791,12 +1789,23 @@ const getBodyAwareExtremePrices = (candles: any[], entryPrice: number) => {
     const low = Number(candle.low);
     if (![open, close, high, low].every(Number.isFinite)) return;
 
-    if (close > open) {
+    const isFirstCountedCandle = countedIndex === 0;
+    countedIndex += 1;
+
+    if (isFirstCountedCandle) {
+      if (close >= open) confirmedHighs.push(high);
+      if (close <= open) confirmedLows.push(low);
+      return;
+    }
+
+    const crossesEntry = low < entryPrice && high > entryPrice;
+    const entirelyAboveEntry = low >= entryPrice;
+    const entirelyBelowEntry = high <= entryPrice;
+
+    if (entirelyAboveEntry || (crossesEntry && close >= open)) {
       confirmedHighs.push(high);
-    } else if (close < open) {
-      confirmedLows.push(low);
-    } else {
-      confirmedHighs.push(high);
+    }
+    if (entirelyBelowEntry || (crossesEntry && close <= open)) {
       confirmedLows.push(low);
     }
   });
@@ -4059,9 +4068,14 @@ const simpleMetricInsights = computed(() => {
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col gap-2">
                            <div>{{ metric.hint }}</div>
-                           <div v-if="metric.detail" class="border-t nier-border-primary pt-2 text-[9px] leading-relaxed tracking-[0.14em] opacity-70">
-                              <span class="font-black opacity-45">{{ studyMetricText.detail.data }}:</span>
-                              <span>{{ metric.detail }}</span>
+                           <div v-if="metric.detail?.length" class="border-t nier-border-primary pt-2 text-[9px] leading-relaxed tracking-[0.14em] opacity-70">
+                              <div class="mb-1 font-black opacity-45">{{ studyMetricText.detail.data }}</div>
+                              <div class="grid grid-cols-[minmax(80px,0.55fr)_minmax(0,1fr)] gap-x-3 gap-y-1">
+                                 <template v-for="row in metric.detail" :key="row.label">
+                                    <span class="opacity-45">{{ row.label }}</span>
+                                    <span class="min-w-0 break-words font-black nier-text-primary">{{ row.value }}</span>
+                                 </template>
+                              </div>
                            </div>
                         </div>
                      </ExTooltip>
