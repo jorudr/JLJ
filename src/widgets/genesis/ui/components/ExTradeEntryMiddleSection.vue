@@ -341,7 +341,8 @@ const formatDateTactical = (dateStr) => {
             </div>
 
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
-             <div v-else class="relative w-full h-[500px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
+             <div v-else class="pt-10">
+               <div class="relative w-full h-[52vh] min-h-[500px] max-h-[560px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
                 <div
                   v-show="activeProjectionMode === 'chart'"
                   class="absolute inset-0 h-full w-full"
@@ -395,6 +396,7 @@ const formatDateTactical = (dateStr) => {
                     </svg>
                   </button>
                 </div>
+               </div>
              </div>
           </div>
 
