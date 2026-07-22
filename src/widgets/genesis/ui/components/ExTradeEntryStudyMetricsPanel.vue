@@ -198,6 +198,7 @@ const lastChartPointerY = ref(0)
 const marketCatalog = ref(null)
 
 let binanceSymbolsPromise = null
+const yahooSearchCache = new Map()
 let resizeObserver = null
 
 const groups = [
@@ -514,6 +515,7 @@ const getCatalogAssetTypeScore = (catalogAsset, wantedKind) => {
 const getCatalogProviderScore = (catalogAsset, wantedKind) => {
   const provider = catalogAsset?.provider
   if (wantedKind === 'xstock') {
+    if (provider === 'XSTOCKS') return 42
     if (provider === 'BYBIT') return 30
     if (provider === 'BINANCE') return 20
     if (provider === 'YAHOO_LOCAL') return 10
@@ -572,6 +574,14 @@ const resolveCatalogMarketAsset = async (allowedProviders = null) => {
   if (match) return match
   match = findCatalogMatch(await loadMarketCatalog(true), allowedProviders)
   return match
+}
+
+const resolveXStockReferenceAsset = async () => {
+  try {
+    return await resolveCatalogMarketAsset(['XSTOCKS'])
+  } catch {
+    return null
+  }
 }
 
 const buildBybitSymbolCandidates = () => {
@@ -686,13 +696,194 @@ const pushYahooXStockEquityFallback = (set, value) => {
   pushYahooCandidate(set, base)
 }
 
+const addYahooXStockBaseValues = (set, value) => {
+  const compact = normalizeApiSymbol(value)
+  if (!compact) return
+
+  const base = compact.endsWith('USD') && compact.length > 3
+    ? compact.slice(0, -3)
+    : compact
+  if (!base) return
+
+  set.add(base)
+  if (base.endsWith('X') && base.length > 1) set.add(base.slice(0, -1))
+  else set.add(`${base}X`)
+}
+
+const cleanXStockSearchName = (value) => {
+  return String(value || '')
+    .replace(/\btokenized\b/ig, ' ')
+    .replace(/\bstock\b/ig, ' ')
+    .replace(/\bxstock\b/ig, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const addYahooXStockSearchPhrase = (set, value) => {
+  const phrase = cleanXStockSearchName(value)
+  if (!phrase) return
+  set.add(phrase)
+  set.add(`${phrase} tokenized stock xStock`)
+}
+
+const addYahooXStockSearchQuery = (set, value) => {
+  const query = String(value || '').trim()
+  const compact = normalizeApiSymbol(query)
+  if (!query || !compact) return
+  if (/^[A-Z]{2}[A-Z0-9]{10}$/.test(compact)) return
+  if (compact.length > 18) return
+  set.add(query)
+}
+
+const getYahooXStockSearchContext = (referenceAsset = null) => {
+  const rawAsset = selectedTradeAsset.value
+  const assetData = currentAssetData?.value || {}
+  const rawParts = String(rawAsset).split(/[\/:_-]/).filter(Boolean)
+  const tokens = new Set()
+  const queries = new Set()
+
+  ;[
+    rawAsset,
+    assetData.symbol,
+    assetData.ticker,
+    getBaseAssetSymbol(),
+    rawParts[0],
+    referenceAsset?.symbol,
+    referenceAsset?.base,
+    ...(Array.isArray(referenceAsset?.aliases) ? referenceAsset.aliases : [])
+  ]
+    .filter(Boolean)
+    .forEach(value => {
+      addYahooXStockBaseValues(tokens, value)
+      addYahooXStockSearchQuery(queries, value)
+    })
+
+  ;[
+    referenceAsset?.name,
+    assetData.name,
+    getAssetName()
+  ]
+    .filter(Boolean)
+    .forEach(value => addYahooXStockSearchPhrase(queries, value))
+
+  return {
+    tokens: Array.from(tokens),
+    queries: Array.from(queries)
+  }
+}
+
+const fetchYahooSearch = async (query) => {
+  const normalizedQuery = String(query || '').trim().replace(/\s+/g, ' ').toUpperCase()
+  if (!normalizedQuery) return []
+  if (yahooSearchCache.has(normalizedQuery)) return yahooSearchCache.get(normalizedQuery)
+
+  const params = new URLSearchParams({ q: normalizedQuery })
+  let lastError = null
+
+  try {
+    const response = await fetch(`/api/market-data/yahoo-search?${params.toString()}`)
+    const payload = await readJsonResponse(response, 'Yahoo search proxy')
+    const quotes = Array.isArray(payload?.quotes) ? payload.quotes : []
+    yahooSearchCache.set(normalizedQuery, quotes)
+    return quotes
+  } catch (error) {
+    lastError = error
+  }
+
+  if (isTauriRuntime()) {
+    const nativeParams = {
+      q: normalizedQuery,
+      quotesCount: '20',
+      newsCount: '0',
+      enableFuzzyQuery: 'true'
+    }
+    const hosts = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']
+    for (const host of hosts) {
+      try {
+        const payload = parseJsonText(
+          await invoke('ibkr_fetch_xml', {
+            url: `${host}/v1/finance/search`,
+            params: nativeParams
+          }),
+          `Yahoo search native ${host}`
+        )
+        const quotes = Array.isArray(payload?.quotes) ? payload.quotes : []
+        yahooSearchCache.set(normalizedQuery, quotes)
+        return quotes
+      } catch (error) {
+        lastError = error
+      }
+    }
+  }
+
+  throw lastError || new Error('Yahoo search request failed')
+}
+
+const scoreYahooXStockQuote = (quote, searchTokens) => {
+  const symbol = normalizeYahooSymbol(quote?.symbol)
+  const compactSymbol = normalizeApiSymbol(symbol)
+  if (!symbol || !compactSymbol) return 0
+
+  const quoteType = String(quote?.quoteType || '').toUpperCase()
+  const typeDisp = String(quote?.typeDisp || '').toLowerCase()
+  const name = `${quote?.shortname || ''} ${quote?.longname || ''}`.toLowerCase()
+  const isCryptoCurrency = quoteType === 'CRYPTOCURRENCY' || typeDisp.includes('cryptocurrency')
+  const looksXStock = name.includes('xstock')
+  const looksTokenized = looksXStock || name.includes('tokenized') || name.includes('stock token')
+  let score = 0
+
+  if (isCryptoCurrency) score += 80
+  if (symbol.endsWith('-USD') || compactSymbol.endsWith('USD')) score += 36
+  if (looksXStock) score += 70
+  else if (looksTokenized) score += 34
+  if (!isCryptoCurrency && !looksTokenized) score -= 70
+
+  searchTokens.forEach(value => {
+    const token = normalizeApiSymbol(value)
+    if (!token) return
+    const tokenWithUsd = `${token}USD`
+    if (compactSymbol === tokenWithUsd) score += 140
+    if (compactSymbol.startsWith(tokenWithUsd)) score += 120
+    if (compactSymbol.startsWith(token)) score += token.length <= 1 ? 20 : 105
+    if (compactSymbol.includes(token)) score += token.length <= 1 ? 8 : 28
+    if (similarityScore(token, compactSymbol.replace(/USD$/, '')) > 0.84) score += 26
+  })
+
+  return score
+}
+
+const resolveYahooXStockSearchCandidates = async (referenceAsset = null) => {
+  const { queries, tokens } = getYahooXStockSearchContext(referenceAsset)
+  const quotes = []
+
+  for (const value of queries) {
+    try {
+      quotes.push(...await fetchYahooSearch(value))
+    } catch {}
+  }
+
+  const uniqueSymbols = new Set()
+  return quotes
+    .map(quote => ({
+      symbol: normalizeYahooSymbol(quote?.symbol),
+      score: scoreYahooXStockQuote(quote, tokens)
+    }))
+    .filter(item => {
+      if (!item.symbol || item.score < 120 || uniqueSymbols.has(item.symbol)) return false
+      uniqueSymbols.add(item.symbol)
+      return true
+    })
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.symbol)
+}
+
 const getBaseAssetSymbol = () => {
   const rawAsset = selectedTradeAsset.value
   const rawParts = String(rawAsset).split(/[\/:_-]/).filter(Boolean)
   return stripKnownQuote(rawParts[0] || rawAsset)
 }
 
-const buildYahooSymbolCandidates = () => {
+const buildYahooSymbolCandidates = async () => {
   const candidates = new Set()
   const rawAsset = selectedTradeAsset.value
   const assetData = currentAssetData?.value || {}
@@ -705,7 +896,11 @@ const buildYahooSymbolCandidates = () => {
 
   const directValues = [rawAsset, assetData.symbol, assetData.ticker]
   if (isTokenizedStock) {
-    const tokenizedValues = [...directValues, rawSymbol, base, rawParts[0]].filter(Boolean)
+    const xstockReference = await resolveXStockReferenceAsset()
+    const searchedSymbols = await resolveYahooXStockSearchCandidates(xstockReference)
+    searchedSymbols.forEach(symbol => pushYahooCandidate(candidates, symbol))
+
+    const tokenizedValues = [...directValues, rawSymbol, base, rawParts[0], xstockReference?.symbol, xstockReference?.base].filter(Boolean)
     tokenizedValues
       .forEach(value => pushYahooXStockCandidate(candidates, value))
     tokenizedValues
@@ -1002,7 +1197,7 @@ const fetchYahooChart = async (symbol, interval) => {
 }
 
 const loadYahooMarketData = async (preferredSymbol = '') => {
-  const candidates = preferredSymbol ? [preferredSymbol] : buildYahooSymbolCandidates()
+  const candidates = preferredSymbol ? [preferredSymbol] : await buildYahooSymbolCandidates()
   let lastError = null
 
   for (const symbol of candidates) {

@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path'
 import globalAssets from '../../../src/shared/data/global_assets.json'
 
 type CatalogAsset = {
-  provider: 'BYBIT' | 'BINANCE' | 'KRAKEN' | 'YAHOO_LOCAL'
+  provider: 'BYBIT' | 'BINANCE' | 'KRAKEN' | 'YAHOO_LOCAL' | 'XSTOCKS'
   market?: string
   symbol: string
   base?: string
@@ -125,6 +125,46 @@ async function collectKraken() {
   })
 }
 
+async function collectBackedXStocks() {
+  const assets: CatalogAsset[] = []
+  let page = 0
+
+  do {
+    const payload = await fetchJson(`https://api.backed.fi/api/v2/public/assets?page=${page}&limit=100`)
+    const nodes = Array.isArray(payload?.nodes) ? payload.nodes : []
+    nodes.forEach((item: any) => {
+      const symbol = normalize(item?.symbol)
+      const underlying = normalize(item?.underlyingSymbol)
+      const name = String(item?.name || item?.description || symbol).trim()
+      if (!symbol) return
+
+      assets.push({
+        provider: 'XSTOCKS',
+        market: 'reference',
+        symbol,
+        base: underlying,
+        quote: 'USD',
+        type: 'xstock',
+        name,
+        aliases: unique([
+          symbol,
+          underlying,
+          `${underlying}X`,
+          name,
+          item?.description,
+          item?.isin,
+          item?.underlyingIsin
+        ])
+      })
+    })
+
+    if (!payload?.page?.hasNextPage) break
+    page = Number(payload?.page?.currentPage || page) + 1
+  } while (page < 50)
+
+  return assets
+}
+
 function yahooSymbolForLocalAsset(asset: any) {
   const symbol = normalize(asset?.symbol)
   const type = classifyLocalAsset(asset)
@@ -174,7 +214,8 @@ async function buildCatalog() {
   const results = await Promise.allSettled([
     collectBybit(),
     collectBinance(),
-    collectKraken()
+    collectKraken(),
+    collectBackedXStocks()
   ])
   const providerAssets = results.flatMap(result => result.status === 'fulfilled' ? result.value : [])
   const assets = [...providerAssets, ...collectYahooLocal()]
