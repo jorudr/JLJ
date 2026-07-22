@@ -341,7 +341,7 @@ const formatDateTactical = (dateStr) => {
             </div>
 
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
-             <div v-else class="relative mt-14 w-full h-[500px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
+             <div v-else class="relative w-full h-[500px] flex flex-col items-center justify-center border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] group z-10">
                 <div
                   v-show="activeProjectionMode === 'chart'"
                   class="absolute inset-0 h-full w-full"

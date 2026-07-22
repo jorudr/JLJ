@@ -2,7 +2,6 @@
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useI18n } from '~/shared/i18n/useI18n'
-import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const { locale } = useI18n()
@@ -308,17 +307,6 @@ const generatedChartCandles = computed(() => {
 const chartTimeframeOptions = computed(() => {
   if (!Object.keys(generatedMarketData.value || {}).length) return availableTimeframeOptions.value
   return availableTimeframeOptions.value.filter(timeframe => generatedMarketData.value?.[timeframe.id]?.length)
-})
-
-const resolvedMarketLabel = computed(() => {
-  if (!resolvedMarketSymbol.value) return ''
-  return resolvedMarketProvider.value
-    ? `${resolvedMarketProvider.value}: ${resolvedMarketSymbol.value}`
-    : resolvedMarketSymbol.value
-})
-
-const chartSourceLabel = computed(() => {
-  return resolvedMarketLabel.value || 'LOCAL_RESOLVER'
 })
 
 const chartAssetHeading = computed(() => {
@@ -2078,7 +2066,7 @@ onBeforeUnmount(() => {
 <template>
   <section
     v-if="isChartSurface"
-    :class="generatedChartCandles.length ? 'flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white' : 'flex h-full min-h-[420px] w-full flex-col'"
+    :class="generatedChartCandles.length ? 'relative flex h-full min-h-0 w-full flex-col overflow-visible bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white' : 'flex h-full min-h-[420px] w-full flex-col'"
   >
     <div v-if="!generatedChartCandles.length" class="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
       <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
@@ -2095,38 +2083,27 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <div class="flex h-14 shrink-0 items-center gap-5 border-b border-white/10 bg-white/[0.025] px-5">
-        <div class="flex min-w-0 items-center gap-3">
-          <span class="h-1.5 w-1.5 shrink-0 rotate-45 bg-white/70"></span>
-          <div class="min-w-0">
-            <ExHeading level="h3" variant="module" class="truncate !text-[12px] !font-black !leading-none !opacity-100 !tracking-[0.24em] text-white">
-              {{ chartAssetHeading }}
-            </ExHeading>
-            <span class="mt-1 block truncate text-[7px] font-mono font-black uppercase tracking-[0.26em] text-white/30">
-              {{ chartSourceLabel }}
-            </span>
-          </div>
-        </div>
-
-        <div class="ml-auto flex shrink-0 items-center gap-5">
-          <button
-            v-for="timeframe in chartTimeframeOptions"
-            :key="timeframe.id"
-            type="button"
-            class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
-            :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
-            @click="activeGeneratedTimeframe = timeframe.id"
-          >
-            {{ timeframe.label }}
-          </button>
-        </div>
+      <div class="absolute -top-12 left-0 z-20 flex h-11 items-center gap-5 border border-black/10 bg-theme-bg px-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+        <button
+          v-for="timeframe in chartTimeframeOptions"
+          :key="timeframe.id"
+          type="button"
+          class="text-[9px] font-mono font-black uppercase tracking-[0.18em] nier-text-primary transition-opacity hover:opacity-75"
+          :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
+          @click="activeGeneratedTimeframe = timeframe.id"
+        >
+          {{ timeframe.label }}
+        </button>
       </div>
 
       <div class="relative min-h-0 flex-1">
         <div
           v-if="hoveredOhlcLabel"
-          class="pointer-events-none absolute left-5 top-5 z-10 max-w-[calc(100%-14rem)]"
+          class="pointer-events-none absolute left-5 top-5 z-10 flex max-w-[calc(100%-2rem)] items-center gap-4"
         >
+          <span class="block max-w-[11rem] truncate text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white">
+            {{ chartAssetHeading }}
+          </span>
           <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white/75">
             {{ hoveredOhlcLabel }}
           </span>
@@ -2186,7 +2163,7 @@ onBeforeUnmount(() => {
           >
             <section
               v-if="activeStudyPage === 'market'"
-              :class="generatedChartCandles.length ? 'flex h-full min-h-0 flex-col overflow-hidden bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white dark:bg-black/25' : 'min-h-[520px]'"
+              :class="generatedChartCandles.length ? 'relative flex h-full min-h-0 flex-col overflow-hidden bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white dark:bg-black/25' : 'min-h-[520px]'"
             >
               <div v-if="!generatedChartCandles.length" class="flex min-h-[500px] flex-col items-center justify-center px-4 text-center">
                 <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
@@ -2203,38 +2180,27 @@ onBeforeUnmount(() => {
               </div>
 
               <template v-else>
-                <div class="flex h-14 shrink-0 items-center gap-5 border-b border-white/10 bg-white/[0.025] px-5">
-                  <div class="flex min-w-0 items-center gap-3">
-                    <span class="h-1.5 w-1.5 shrink-0 rotate-45 bg-white/70"></span>
-                    <div class="min-w-0">
-                      <ExHeading level="h3" variant="module" class="truncate !text-[12px] !font-black !leading-none !opacity-100 !tracking-[0.24em] text-white">
-                        {{ chartAssetHeading }}
-                      </ExHeading>
-                      <span class="mt-1 block truncate text-[7px] font-mono font-black uppercase tracking-[0.26em] text-white/30">
-                        {{ chartSourceLabel }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="ml-auto flex shrink-0 items-center gap-5">
-                    <button
-                      v-for="timeframe in chartTimeframeOptions"
-                      :key="timeframe.id"
-                      type="button"
-                      class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
-                      :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
-                      @click="activeGeneratedTimeframe = timeframe.id"
-                    >
-                      {{ timeframe.label }}
-                    </button>
-                  </div>
+                <div class="absolute left-5 top-5 z-20 flex items-center gap-5">
+                  <button
+                    v-for="timeframe in chartTimeframeOptions"
+                    :key="timeframe.id"
+                    type="button"
+                    class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
+                    :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
+                    @click="activeGeneratedTimeframe = timeframe.id"
+                  >
+                    {{ timeframe.label }}
+                  </button>
                 </div>
 
                 <div class="relative min-h-0 flex-1">
                   <div
                     v-if="hoveredOhlcLabel"
-                    class="pointer-events-none absolute left-5 top-5 z-10 max-w-[calc(100%-14rem)]"
+                    class="pointer-events-none absolute left-5 top-14 z-10 flex max-w-[calc(100%-2rem)] items-center gap-4"
                   >
+                    <span class="block max-w-[11rem] truncate text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white">
+                      {{ chartAssetHeading }}
+                    </span>
                     <span class="block truncate text-[9px] font-mono font-black uppercase tracking-[0.14em] text-white/75">
                       {{ hoveredOhlcLabel }}
                     </span>
