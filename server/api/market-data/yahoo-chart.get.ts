@@ -3,11 +3,14 @@ export default defineEventHandler(async (event) => {
   const symbol = String(query.symbol || '').trim().toUpperCase()
   const interval = String(query.interval || '').trim()
   const range = String(query.range || '5d').trim()
+  const period1 = Number(query.period1)
+  const period2 = Number(query.period2)
 
-  const allowedIntervals = new Set(['15m', '30m', '60m'])
+  const allowedIntervals = new Set(['1m', '15m', '30m', '60m'])
   const allowedRanges = new Set(['1d', '5d', '7d', '1mo'])
+  const hasPeriodRange = Number.isFinite(period1) && Number.isFinite(period2) && period2 > period1
 
-  if (!symbol || !allowedIntervals.has(interval) || !allowedRanges.has(range)) {
+  if (!symbol || !allowedIntervals.has(interval) || (!hasPeriodRange && !allowedRanges.has(range))) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Invalid Yahoo chart query'
@@ -15,11 +18,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const params = new URLSearchParams({
-    range,
     interval,
     includePrePost: 'true',
     events: 'div,splits'
   })
+  if (hasPeriodRange) {
+    params.set('period1', String(Math.floor(period1)))
+    params.set('period2', String(Math.ceil(period2)))
+  } else {
+    params.set('range', range)
+  }
 
   const encodedSymbol = encodeURIComponent(symbol)
   const hosts = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']

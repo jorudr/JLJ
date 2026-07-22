@@ -14,6 +14,17 @@ const {
   isForex,
   showTradeStudyMetrics,
   tradeStudyMetrics,
+  entry,
+  exit,
+  stopLoss,
+  takeProfit,
+  openDate,
+  exitDate,
+  isClosed,
+  entryMethodEnabled,
+  exitMethodEnabled,
+  averageEntry,
+  averageExit,
   commitState
 } = inject('tradeState')
 
@@ -155,10 +166,15 @@ const studyPages = [
   { id: 'manual', number: 2 }
 ]
 
+const MINUTE_MS = 60 * 1000
+const HOUR_MS = 60 * MINUTE_MS
+const MAX_API_CANDLES = 1000
+
 const timeframeOptions = [
-  { id: '4h', label: '4H', limit: 18 },
-  { id: '1h', label: '1H', limit: 72 },
-  { id: '15m', label: '15M', limit: 288 }
+  { id: '4h', label: '4H', durationMs: 4 * HOUR_MS, binanceInterval: '4h', bybitInterval: '240', krakenInterval: '240', yahooInterval: '60m' },
+  { id: '1h', label: '1H', durationMs: HOUR_MS, binanceInterval: '1h', bybitInterval: '60', krakenInterval: '60', yahooInterval: '60m' },
+  { id: '15m', label: '15M', durationMs: 15 * MINUTE_MS, binanceInterval: '15m', bybitInterval: '15', krakenInterval: '15', yahooInterval: '15m' },
+  { id: '1m', label: '1M', durationMs: MINUTE_MS, binanceInterval: '1m', bybitInterval: '1', krakenInterval: '1', yahooInterval: '1m' }
 ]
 
 const activeStudyPage = ref('market')
@@ -237,12 +253,46 @@ const usesForexPriceFormat = computed(() => {
 
 const selectedTradeAsset = computed(() => String(asset?.value || '').trim())
 
+const parseTradePrice = (value) => {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : Number.NaN
+}
+
+const getDateTimestamp = (value) => {
+  const timestamp = new Date(value || 0).getTime()
+  return Number.isFinite(timestamp) ? timestamp : Number.NaN
+}
+
+const tradeTimeRange = computed(() => {
+  const start = getDateTimestamp(openDate?.value)
+  const end = getDateTimestamp(exitDate?.value)
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null
+  return { start, end }
+})
+
+const tradeDurationMs = computed(() => {
+  if (!tradeTimeRange.value) return 0
+  return tradeTimeRange.value.end - tradeTimeRange.value.start
+})
+
+const availableTimeframeOptions = computed(() => {
+  const duration = tradeDurationMs.value
+  if (!Number.isFinite(duration) || duration <= 0) return []
+  if (duration < 15 * MINUTE_MS) return timeframeOptions.filter(timeframe => timeframe.id === '1m')
+  return timeframeOptions.filter(timeframe => timeframe.id !== '1m' && duration >= timeframe.durationMs)
+})
+
 const canGenerateMarketData = computed(() => {
-  return Boolean(selectedTradeAsset.value) && commitState?.value !== 'loading' && generationState.value !== 'loading'
+  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && commitState?.value !== 'loading' && generationState.value !== 'loading'
 })
 
 const generatedChartCandles = computed(() => {
   return generatedMarketData.value?.[activeGeneratedTimeframe.value] || []
+})
+
+const chartTimeframeOptions = computed(() => {
+  if (!Object.keys(generatedMarketData.value || {}).length) return availableTimeframeOptions.value
+  return availableTimeframeOptions.value.filter(timeframe => generatedMarketData.value?.[timeframe.id]?.length)
 })
 
 const resolvedMarketLabel = computed(() => {
@@ -258,6 +308,18 @@ const chartSourceLabel = computed(() => {
 
 const chartAssetHeading = computed(() => {
   return cleanAssetDisplayLabel(generatedSourceAsset.value || selectedTradeAsset.value) || 'ASSET'
+})
+
+const chartLevelOverlays = computed(() => {
+  const entryPrice = parseTradePrice(entryMethodEnabled?.value ? averageEntry?.value : entry?.value)
+  const exitPrice = parseTradePrice(isClosed?.value && exitMethodEnabled?.value ? averageExit?.value : exit?.value)
+  const levels = [
+    { id: 'entry', label: 'ENTRY', value: entryPrice, color: 'rgba(255,255,255,0.72)' },
+    { id: 'stop', label: 'STOP', value: parseTradePrice(stopLoss?.value), color: 'rgba(251,113,133,0.82)' },
+    { id: 'take', label: 'TAKE', value: parseTradePrice(takeProfit?.value), color: 'rgba(110,231,183,0.82)' },
+    { id: 'exit', label: 'EXIT', value: exitPrice, color: 'rgba(251,191,36,0.82)' }
+  ]
+  return levels.filter(level => Number.isFinite(level.value))
 })
 
 const displayedOhlcCandle = computed(() => {
@@ -754,9 +816,30 @@ const parseKrakenOhlcCandles = (payload) => {
     .sort((a, b) => a.time - b.time)
 }
 
-const filterToLastThreeDays = (candles) => {
-  const cutoff = Date.now() - (3 * 24 * 60 * 60 * 1000)
-  return candles.filter(candle => candle.time >= cutoff)
+const getMarketRequestRange = () => {
+  const range = tradeTimeRange.value
+  if (!range) return null
+  const padding = clamp((range.end - range.start) * 0.12, 2 * MINUTE_MS, 6 * HOUR_MS)
+  return {
+    start: Math.max(0, Math.floor(range.start - padding)),
+    end: Math.ceil(range.end + padding)
+  }
+}
+
+const getTimeframeLimit = (timeframe) => {
+  const range = getMarketRequestRange()
+  if (!range) return timeframe.id === '1m' ? 120 : 288
+  return clamp(Math.ceil((range.end - range.start) / timeframe.durationMs) + 8, 2, MAX_API_CANDLES)
+}
+
+const filterCandlesToTradeWindow = (candles, timeframe) => {
+  const range = tradeTimeRange.value
+  if (!range) return candles
+  return candles.filter(candle => {
+    const candleStart = candle.time
+    const candleEnd = candleStart + timeframe.durationMs
+    return candleStart <= range.end && candleEnd >= range.start
+  })
 }
 
 const parseYahooChartCandles = (payload) => {
@@ -799,10 +882,13 @@ const aggregateCandles = (candles, bucketMs) => {
 }
 
 const fetchYahooChart = async (symbol, interval) => {
+  const requestRange = getMarketRequestRange()
+  if (!requestRange) throw new Error('Invalid trade time range')
   const params = new URLSearchParams({
     symbol,
-    range: '5d',
-    interval
+    interval,
+    period1: String(Math.floor(requestRange.start / 1000)),
+    period2: String(Math.ceil(requestRange.end / 1000))
   })
   const response = await fetch(`/api/market-data/yahoo-chart?${params.toString()}`)
   if (!response.ok) throw new Error(`Yahoo proxy HTTP ${response.status}`)
@@ -818,23 +904,22 @@ const loadYahooMarketData = async (preferredSymbol = '') => {
 
   for (const symbol of candidates) {
     try {
-      const hourly = filterToLastThreeDays(parseYahooChartCandles(await fetchYahooChart(symbol, '60m')))
-      if (!hourly.length) throw new Error(`No Yahoo 60m data for ${symbol}`)
-
-      let fifteenMinute = []
-      try {
-        fifteenMinute = filterToLastThreeDays(parseYahooChartCandles(await fetchYahooChart(symbol, '15m')))
-      } catch (error) {
-        fifteenMinute = hourly
+      const marketData = {}
+      let hourly = null
+      for (const timeframe of availableTimeframeOptions.value) {
+        if (timeframe.id === '4h' || timeframe.id === '1h') {
+          if (!hourly) hourly = parseYahooChartCandles(await fetchYahooChart(symbol, '60m'))
+          const candles = timeframe.id === '4h'
+            ? aggregateCandles(hourly, timeframe.durationMs)
+            : hourly
+          marketData[timeframe.id] = adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
+          continue
+        }
+        const candles = parseYahooChartCandles(await fetchYahooChart(symbol, timeframe.yahooInterval))
+        marketData[timeframe.id] = adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
       }
 
-      const marketData = {
-        '15m': adjustCandlesToStudyMetrics(fifteenMinute),
-        '1h': adjustCandlesToStudyMetrics(hourly),
-        '4h': adjustCandlesToStudyMetrics(aggregateCandles(hourly, 4 * 60 * 60 * 1000))
-      }
-
-      if (marketData['1h'].length) {
+      if (Object.values(marketData).some(candles => candles?.length)) {
         return {
           provider: 'YAHOO',
           symbol,
@@ -852,15 +937,19 @@ const loadYahooMarketData = async (preferredSymbol = '') => {
 const loadBinanceMarketData = async (preferredSymbol = '') => {
   const symbol = preferredSymbol || await resolveBinanceSymbol()
   if (!symbol) throw new Error(`No Binance market for ${selectedTradeAsset.value}`)
+  const requestRange = getMarketRequestRange()
+  if (!requestRange) throw new Error('Invalid trade time range')
 
-  const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
+  const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
     const params = new URLSearchParams({
       symbol,
-      interval: timeframe.id,
-      limit: String(timeframe.limit)
+      interval: timeframe.binanceInterval,
+      startTime: String(requestRange.start),
+      endTime: String(requestRange.end),
+      limit: String(getTimeframeLimit(timeframe))
     })
     const rows = await fetchJsonWithFallback(`/api/v3/klines?${params.toString()}`)
-    return [timeframe.id, adjustCandlesToStudyMetrics(parseKlineCandles(rows))]
+    return [timeframe.id, adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(parseKlineCandles(rows), timeframe))]
   }))
 
   return {
@@ -871,18 +960,15 @@ const loadBinanceMarketData = async (preferredSymbol = '') => {
 }
 
 const fetchBybitKlines = async ({ category, symbol, timeframe }) => {
-  const intervalMap = {
-    '15m': '15',
-    '1h': '60',
-    '4h': '240'
-  }
+  const requestRange = getMarketRequestRange()
+  if (!requestRange) throw new Error('Invalid trade time range')
   const params = new URLSearchParams({
     category,
     symbol,
-    interval: intervalMap[timeframe.id],
-    start: String(Date.now() - (3 * 24 * 60 * 60 * 1000)),
-    end: String(Date.now()),
-    limit: String(timeframe.limit)
+    interval: timeframe.bybitInterval,
+    start: String(requestRange.start),
+    end: String(requestRange.end),
+    limit: String(getTimeframeLimit(timeframe))
   })
   const response = await fetch(`https://api.bybit.com/v5/market/kline?${params.toString()}`)
   if (!response.ok) throw new Error(`Bybit HTTP ${response.status}`)
@@ -899,12 +985,12 @@ const loadBybitMarketData = async (preferredAsset = null) => {
 
   for (const { category, symbol } of candidateMarkets) {
     try {
-      const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
+      const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
         const candles = await fetchBybitKlines({ category, symbol, timeframe })
-        return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
+        return [timeframe.id, adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))]
       }))
       const candlesByTimeframe = Object.fromEntries(timeframeEntries)
-      if (candlesByTimeframe['1h']?.length || candlesByTimeframe[activeGeneratedTimeframe.value]?.length) {
+      if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
         return {
           provider: `BYBIT_${String(category).toUpperCase()}`,
           symbol,
@@ -920,19 +1006,16 @@ const loadBybitMarketData = async (preferredAsset = null) => {
 }
 
 const fetchKrakenOhlc = async ({ pair, timeframe }) => {
-  const intervalMap = {
-    '15m': '15',
-    '1h': '60',
-    '4h': '240'
-  }
+  const requestRange = getMarketRequestRange()
+  if (!requestRange) throw new Error('Invalid trade time range')
   const params = new URLSearchParams({
     pair,
-    interval: intervalMap[timeframe.id],
-    since: String(Math.floor((Date.now() - (3 * 24 * 60 * 60 * 1000)) / 1000))
+    interval: timeframe.krakenInterval,
+    since: String(Math.floor(requestRange.start / 1000))
   })
   const response = await fetch(`https://api.kraken.com/0/public/OHLC?${params.toString()}`)
   if (!response.ok) throw new Error(`Kraken HTTP ${response.status}`)
-  return filterToLastThreeDays(parseKrakenOhlcCandles(await response.json()))
+  return filterCandlesToTradeWindow(parseKrakenOhlcCandles(await response.json()), timeframe)
 }
 
 const loadKrakenMarketData = async (preferredSymbol = '') => {
@@ -941,12 +1024,12 @@ const loadKrakenMarketData = async (preferredSymbol = '') => {
 
   for (const pair of candidates) {
     try {
-      const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
+      const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
         const candles = await fetchKrakenOhlc({ pair, timeframe })
         return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
       }))
       const candlesByTimeframe = Object.fromEntries(timeframeEntries)
-      if (candlesByTimeframe['1h']?.length || candlesByTimeframe[activeGeneratedTimeframe.value]?.length) {
+      if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
         return {
           provider: 'KRAKEN',
           symbol: pair,
@@ -971,6 +1054,7 @@ const loadCatalogMatchedMarketData = async (catalogAsset) => {
 }
 
 const loadPublicMarketData = async () => {
+  if (!availableTimeframeOptions.value.length) throw new Error('Trade duration is too short or invalid')
   const loaders = isLikelyXStockAsset.value
       ? [loadBybitMarketData, loadBinanceMarketData, loadYahooMarketData]
       : isLikelyCryptoAsset.value
@@ -990,7 +1074,7 @@ const loadPublicMarketData = async () => {
   for (const loader of loaders) {
     try {
       const result = await loader()
-      if (result?.candlesByTimeframe?.[activeGeneratedTimeframe.value]?.length || result?.candlesByTimeframe?.['1h']?.length) {
+      if (Object.values(result?.candlesByTimeframe || {}).some(candles => candles?.length)) {
         return result
       }
     } catch (error) {
@@ -998,6 +1082,19 @@ const loadPublicMarketData = async () => {
     }
   }
   throw lastError || new Error('No public market data provider matched')
+}
+
+const syncActiveGeneratedTimeframe = () => {
+  const available = availableTimeframeOptions.value
+  if (!available.length) return
+  if (!available.some(timeframe => timeframe.id === activeGeneratedTimeframe.value)) {
+    activeGeneratedTimeframe.value = available[0].id
+  }
+}
+
+const selectFirstGeneratedTimeframe = (candlesByTimeframe) => {
+  const preferred = availableTimeframeOptions.value.find(timeframe => candlesByTimeframe?.[timeframe.id]?.length)
+  if (preferred) activeGeneratedTimeframe.value = preferred.id
 }
 
 const parsePositiveMetric = (value) => {
@@ -1054,10 +1151,12 @@ const generateMarketData = async () => {
   generationError.value = ''
   hoveredCandle.value = null
   chartCrosshair.value = null
+  syncActiveGeneratedTimeframe()
 
   try {
     const result = await loadPublicMarketData()
     generatedMarketData.value = result.candlesByTimeframe
+    selectFirstGeneratedTimeframe(result.candlesByTimeframe)
     resolvedMarketSymbol.value = result.symbol
     resolvedMarketProvider.value = result.provider
     generatedSourceAsset.value = selectedTradeAsset.value
@@ -1083,6 +1182,7 @@ const clearGeneratedChart = () => {
   hoveredCandle.value = null
   chartCrosshair.value = null
   chartViewport.value = { start: 0, end: 0 }
+  priceViewport.value = null
   nextTick(() => drawChart())
 }
 
@@ -1152,9 +1252,10 @@ const getVisibleCandles = () => {
 
 const getAutoPriceRange = (visibleCandles) => {
   const candles = visibleCandles.length ? visibleCandles : generatedChartCandles.value
-  if (!candles.length) return { min: 0, max: 1 }
-  const minLow = Math.min(...candles.map(candle => candle.low))
-  const maxHigh = Math.max(...candles.map(candle => candle.high))
+  const levelValues = chartLevelOverlays.value.map(level => level.value)
+  if (!candles.length && !levelValues.length) return { min: 0, max: 1 }
+  const minLow = Math.min(...candles.map(candle => candle.low), ...levelValues)
+  const maxHigh = Math.max(...candles.map(candle => candle.high), ...levelValues)
   const padding = Math.max((maxHigh - minLow) * 0.08, Math.abs(maxHigh) * 0.0001, 0.000001)
   return { min: minLow - padding, max: maxHigh + padding }
 }
@@ -1174,6 +1275,35 @@ const clampPriceViewport = (min, max, referenceRange = null) => {
 const getActivePriceRange = (visibleCandles) => {
   if (priceViewport.value) return priceViewport.value
   return getAutoPriceRange(visibleCandles)
+}
+
+const drawTradeLevelLines = (ctx, geometry, yForPrice) => {
+  const levels = chartLevelOverlays.value
+  if (!levels.length) return
+
+  ctx.save()
+  ctx.font = '9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+
+  levels.forEach((level) => {
+    const y = yForPrice(level.value)
+    if (y < geometry.top - 2 || y > geometry.bottom + 2) return
+
+    ctx.setLineDash([6, 6])
+    ctx.lineWidth = 1
+    ctx.strokeStyle = level.color
+    ctx.beginPath()
+    ctx.moveTo(geometry.left, y)
+    ctx.lineTo(geometry.right, y)
+    ctx.stroke()
+
+    ctx.setLineDash([])
+    ctx.fillStyle = level.color
+    ctx.fillText(`${level.label} ${formatPrice(level.value)}`, geometry.right - 8, y - 4)
+  })
+
+  ctx.restore()
 }
 
 const drawChart = () => {
@@ -1221,6 +1351,8 @@ const drawChart = () => {
   const visibleSpan = getChartViewportSpan()
   const barWidth = plotWidth / visibleSpan
   const bodyWidth = clamp(barWidth * 0.9, 4, Math.max(4, barWidth - 1))
+
+  drawTradeLevelLines(ctx, geometry, yForPrice)
 
   ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
   ctx.fillStyle = textColor
@@ -1507,6 +1639,10 @@ watch(side, (vector) => {
   }
 }, { immediate: true })
 
+watch(availableTimeframeOptions, () => {
+  syncActiveGeneratedTimeframe()
+}, { immediate: true })
+
 watch([generatedChartCandles, activeGeneratedTimeframe], async () => {
   resetChartViewport()
   await nextTick()
@@ -1520,7 +1656,7 @@ watch(showTradeStudyMetrics, async (isOpen) => {
   drawChart()
 })
 
-watch([() => isDark?.value, locale], () => drawChart())
+watch([() => isDark?.value, locale, chartLevelOverlays], () => drawChart())
 
 onMounted(() => {
   if (typeof ResizeObserver !== 'undefined') {
@@ -1589,7 +1725,7 @@ onBeforeUnmount(() => {
 
                   <div class="ml-auto flex shrink-0 items-center gap-5">
                     <button
-                      v-for="timeframe in timeframeOptions"
+                      v-for="timeframe in chartTimeframeOptions"
                       :key="timeframe.id"
                       type="button"
                       class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
@@ -1765,7 +1901,20 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="flex items-center justify-center border-t border-black/10 bg-white/10 px-6 py-4 dark:border-white/10 dark:bg-black/20">
+          <div class="relative flex items-center justify-center border-t border-black/10 bg-white/10 px-6 py-4 dark:border-white/10 dark:bg-black/20">
+            <button
+              v-if="generatedChartCandles.length"
+              type="button"
+              class="absolute left-6 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-black/35 transition-colors hover:text-black dark:text-white/35 dark:hover:text-white"
+              :aria-label="ui().reset"
+              :title="ui().reset"
+              @click="clearGeneratedChart"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h11a5 5 0 1 1-4.15 7.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
+                <path d="M4 7l4-4M4 7l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
+              </svg>
+            </button>
             <div class="flex items-center gap-2">
               <button
                 v-for="page in studyPages"
