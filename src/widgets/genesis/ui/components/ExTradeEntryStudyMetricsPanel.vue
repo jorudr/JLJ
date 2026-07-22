@@ -1573,6 +1573,20 @@ const parsePositiveMetric = (value) => {
 }
 
 const IN_TRADE_NOISE_PCT = 0.5
+const IN_TRADE_SESSION_DAY_SECONDS = {
+  stock: 8 * 3600,
+  forex: 24 * 3600,
+  crypto: 24 * 3600,
+  xstock: 24 * 3600,
+  metal: 23 * 3600,
+  commodity: 23 * 3600,
+  index: 23 * 3600,
+  unknown: 24 * 3600
+}
+
+const getInTradeSessionDaySeconds = () => {
+  return IN_TRADE_SESSION_DAY_SECONDS[getSelectedAssetKind()] || IN_TRADE_SESSION_DAY_SECONDS.unknown
+}
 
 const getGeneratedAnalysisDirection = () => {
   const raw = String(side?.value || '').toUpperCase()
@@ -1594,10 +1608,15 @@ const getGeneratedAnalysisCandles = (candlesByTimeframe) => {
 const getGeneratedAnalysisStepSeconds = (candles, index, timeframe) => {
   const current = Number(candles[index]?.time)
   const next = Number(candles[index + 1]?.time)
+  const nominalStepSeconds = ((timeframe?.durationMs || MINUTE_MS) / 1000)
   if (Number.isFinite(current) && Number.isFinite(next) && next > current) {
-    return (next - current) / 1000
+    return Math.min((next - current) / 1000, nominalStepSeconds)
   }
-  return ((timeframe?.durationMs || MINUTE_MS) / 1000)
+  const previous = Number(candles[index - 1]?.time)
+  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) {
+    return Math.min((current - previous) / 1000, nominalStepSeconds)
+  }
+  return nominalStepSeconds
 }
 
 const classifyGeneratedPathShape = ({ states, firstImpulse, maePct, mfePct, captureRatio }) => {
@@ -1676,6 +1695,7 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     source: 'generated',
     timeframe: timeframe?.id || '',
     noisePct: IN_TRADE_NOISE_PCT,
+    sessionDaySeconds: getInTradeSessionDaySeconds(),
     direction,
     entry: entryPrice,
     exit: Number.isFinite(exitPrice) ? exitPrice : null,

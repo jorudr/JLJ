@@ -1521,6 +1521,37 @@ const isStudyForexTrade = computed(() => {
   return String(trade?.assetType || '').toLowerCase() === 'forex';
 });
 
+const getTradeAssetKind = (trade: any) => {
+  const type = String(trade?.assetType || '').trim().toLowerCase();
+  if (['stocks', 'stock', 'equity', 'equities'].includes(type)) return 'stock';
+  if (['forex', 'fx'].includes(type)) return 'forex';
+  if (['crypto', 'cryptocurrency'].includes(type)) return 'crypto';
+  if (['xstocks', 'xstock', 'tokenized stock'].includes(type)) return 'xstock';
+  if (['metals', 'metal'].includes(type)) return 'metal';
+  if (['commodities', 'commodity'].includes(type)) return 'commodity';
+  if (['indices', 'index', 'indexes'].includes(type)) return 'index';
+  return 'unknown';
+};
+
+const IN_TRADE_SESSION_DAY_SECONDS: Record<string, number> = {
+  stock: 8 * 3600,
+  forex: 24 * 3600,
+  crypto: 24 * 3600,
+  xstock: 24 * 3600,
+  metal: 23 * 3600,
+  commodity: 23 * 3600,
+  index: 23 * 3600,
+  unknown: 24 * 3600
+};
+
+const getInTradeSessionDaySeconds = (preferGenerated = true) => {
+  if (preferGenerated) {
+    const generatedSessionDay = parseStudyNumber(generatedInTradeAnalysis.value?.sessionDaySeconds);
+    if (Number.isFinite(generatedSessionDay) && generatedSessionDay > 0) return generatedSessionDay;
+  }
+  return IN_TRADE_SESSION_DAY_SECONDS[getTradeAssetKind(props.trade)] || IN_TRADE_SESSION_DAY_SECONDS.unknown;
+};
+
 const formatStudyPrice = (value: any) => {
   const numeric = parseStudyNumber(value);
   if (!Number.isFinite(numeric)) return studyMetricText.value.na;
@@ -1532,8 +1563,9 @@ const formatStudyDuration = (seconds: number) => {
   if (!Number.isFinite(seconds) || seconds <= 0) return studyMetricText.value.na;
 
   const isRu = locale.value === 'ru';
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
+  const sessionDaySeconds = getInTradeSessionDaySeconds();
+  const days = Math.floor(seconds / sessionDaySeconds);
+  const hours = Math.floor((seconds % sessionDaySeconds) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
   const parts: string[] = [];
@@ -1552,7 +1584,7 @@ const getStudyDurationSeconds = (prefix: string) => {
   const hours = parseStudyNumber(metrics[`${prefix}Hours`]) || 0;
   const minutes = parseStudyNumber(metrics[`${prefix}Minutes`]) || 0;
   const seconds = parseStudyNumber(metrics[`${prefix}Seconds`]) || 0;
-  return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+  return (days * getInTradeSessionDaySeconds()) + (hours * 3600) + (minutes * 60) + seconds;
 };
 
 const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
@@ -1585,13 +1617,21 @@ const getStoredAnalysisCandles = (metrics: Record<string, any>) => {
   return { timeframe, candles };
 };
 
-const getStoredCandleStepSeconds = (candles: any[], index: number) => {
+const getStoredCandleStepSeconds = (candles: any[], index: number, timeframeId: string) => {
   const current = Number(candles[index]?.time);
   const next = Number(candles[index + 1]?.time);
-  if (Number.isFinite(current) && Number.isFinite(next) && next > current) return (next - current) / 1000;
+  const normalizedTimeframeId = String(timeframeId || '');
+  const nominalStepSeconds = normalizedTimeframeId === '4h'
+    ? 4 * 3600
+    : normalizedTimeframeId === '1h'
+      ? 3600
+      : normalizedTimeframeId === '15m'
+        ? 15 * 60
+        : 60;
+  if (Number.isFinite(current) && Number.isFinite(next) && next > current) return Math.min((next - current) / 1000, nominalStepSeconds);
   const previous = Number(candles[index - 1]?.time);
-  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) return (current - previous) / 1000;
-  return 60;
+  if (Number.isFinite(current) && Number.isFinite(previous) && current > previous) return Math.min((current - previous) / 1000, nominalStepSeconds);
+  return nominalStepSeconds;
 };
 
 const classifyStoredPricePathShape = (states: string[], firstImpulse: string | null, maePct: number, mfePct: number, captureRatio: number) => {
@@ -1637,7 +1677,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   candles.forEach((candle, index) => {
     const isLoss = direction === 'LONG' ? candle.low <= lossLimit : candle.high >= lossLimit;
     const isProfit = direction === 'LONG' ? candle.high >= profitLimit : candle.low <= profitLimit;
-    const stepSeconds = getStoredCandleStepSeconds(candles, index);
+    const stepSeconds = getStoredCandleStepSeconds(candles, index, timeframe);
     if (isLoss) meaningfulLossSeconds += stepSeconds;
     if (isProfit) meaningfulProfitSeconds += stepSeconds;
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT';
@@ -1660,6 +1700,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
     source: 'generated',
     timeframe,
     noisePct: DEFAULT_IN_TRADE_NOISE_PCT,
+    sessionDaySeconds: getInTradeSessionDaySeconds(false),
     direction,
     entry,
     exit: Number.isFinite(exit) ? exit : null,
@@ -1676,12 +1717,16 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
 
 const generatedInTradeAnalysis = computed<Record<string, any>>(() => {
   const metrics = currentTradeStudyMetrics.value;
-  if (metrics?.generatedInTradeAnalysis && typeof metrics.generatedInTradeAnalysis === 'object') {
-    return metrics.generatedInTradeAnalysis;
-  }
-  return metrics?.generatedMarketData && typeof metrics.generatedMarketData === 'object'
+  const rebuilt = metrics?.generatedMarketData && typeof metrics.generatedMarketData === 'object'
     ? buildGeneratedAnalysisFromStoredMarketData(metrics)
     : {};
+  if (metrics?.generatedInTradeAnalysis && typeof metrics.generatedInTradeAnalysis === 'object') {
+    return {
+      ...metrics.generatedInTradeAnalysis,
+      ...rebuilt
+    };
+  }
+  return rebuilt;
 });
 
 const inTradeAnalysisNoisePct = computed(() => {
