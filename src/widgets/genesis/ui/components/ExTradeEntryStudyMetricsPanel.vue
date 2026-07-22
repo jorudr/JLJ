@@ -175,6 +175,7 @@ const chartCanvas = ref(null)
 const chartViewport = ref({ start: 0, end: 0 })
 const isChartDragging = ref(false)
 const lastChartPointerX = ref(0)
+const marketCatalog = ref(null)
 
 let binanceSymbolsPromise = null
 let resizeObserver = null
@@ -266,6 +267,20 @@ const getAssetName = () => String(currentAssetData?.value?.name || '').trim()
 
 const getAssetDescription = () => String(currentAssetData?.value?.description || '').trim()
 
+const normalizeSearchToken = (value) => normalizeApiSymbol(value)
+
+const getSelectedAssetKind = () => {
+  if (isLikelyXStockAsset.value) return 'xstock'
+  if (isLikelyCryptoAsset.value) return 'crypto'
+  const type = getAssetType()
+  if (type === 'forex') return 'forex'
+  if (['stocks', 'stock'].includes(type)) return 'stock'
+  if (['commodities', 'commodity'].includes(type)) return 'commodity'
+  if (['metals', 'metal'].includes(type)) return 'metal'
+  if (['indices', 'index'].includes(type)) return 'index'
+  return type || 'unknown'
+}
+
 const isLikelyXStockAsset = computed(() => {
   const type = getAssetType()
   const name = getAssetName().toLowerCase()
@@ -342,6 +357,134 @@ const buildBinanceSymbolCandidates = () => {
 const getTokenizedStockBase = (symbol) => {
   const normalized = stripKnownQuote(symbol)
   return normalized.endsWith('X') && normalized.length > 1 ? normalized.slice(0, -1) : normalized
+}
+
+const levenshteinDistance = (a, b) => {
+  if (a === b) return 0
+  if (!a) return b.length
+  if (!b) return a.length
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index)
+  const current = new Array(b.length + 1)
+  for (let i = 1; i <= a.length; i += 1) {
+    current[0] = i
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + cost
+      )
+    }
+    for (let j = 0; j <= b.length; j += 1) previous[j] = current[j]
+  }
+  return previous[b.length]
+}
+
+const similarityScore = (a, b) => {
+  const left = normalizeSearchToken(a)
+  const right = normalizeSearchToken(b)
+  if (!left || !right) return 0
+  if (left === right) return 1
+  const distance = levenshteinDistance(left, right)
+  return Math.max(0, 1 - (distance / Math.max(left.length, right.length)))
+}
+
+const loadMarketCatalog = async (refresh = false) => {
+  if (marketCatalog.value && !refresh) return marketCatalog.value
+
+  const endpoint = refresh ? '/api/market-data/catalog?refresh=1' : '/api/market-data/catalog'
+  try {
+    const response = await fetch(endpoint)
+    if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`)
+    marketCatalog.value = await response.json()
+    return marketCatalog.value
+  } catch (error) {
+    if (refresh) throw error
+    const response = await fetch('/data/market-data/api_asset_catalog.json')
+    if (!response.ok) throw error
+    marketCatalog.value = await response.json()
+    return marketCatalog.value
+  }
+}
+
+const getCatalogAssetTypeScore = (catalogAsset, wantedKind) => {
+  const itemType = String(catalogAsset?.type || '').toLowerCase()
+  if (wantedKind === 'xstock') {
+    if (itemType === 'xstock') return 90
+    if (itemType === 'crypto_or_xstock') return 60
+    if (catalogAsset?.provider === 'YAHOO_LOCAL') return 50
+    return -80
+  }
+  if (wantedKind === 'crypto') {
+    if (itemType === 'crypto') return 90
+    if (itemType === 'crypto_or_xstock') return 65
+    return -70
+  }
+  if (wantedKind && wantedKind !== 'unknown') {
+    if (itemType === wantedKind) return 90
+    if (catalogAsset?.provider === 'YAHOO_LOCAL') return 25
+    return -45
+  }
+  return 0
+}
+
+const getCatalogProviderScore = (catalogAsset, wantedKind) => {
+  const provider = catalogAsset?.provider
+  if (wantedKind === 'xstock') {
+    if (provider === 'BYBIT') return 30
+    if (provider === 'BINANCE') return 20
+    if (provider === 'YAHOO_LOCAL') return 10
+  }
+  if (wantedKind === 'crypto') {
+    if (provider === 'BYBIT') return 30
+    if (provider === 'BINANCE') return 22
+    if (provider === 'KRAKEN') return 14
+    if (provider === 'YAHOO_LOCAL') return 5
+  }
+  return provider === 'YAHOO_LOCAL' ? 10 : 0
+}
+
+const scoreCatalogAsset = (catalogAsset) => {
+  const selectedSymbol = normalizeSearchToken(selectedTradeAsset.value)
+  const selectedBase = isLikelyXStockAsset.value
+    ? getTokenizedStockBase(selectedTradeAsset.value)
+    : stripKnownQuote(selectedTradeAsset.value)
+  const wantedKind = getSelectedAssetKind()
+  const aliases = [
+    catalogAsset?.symbol,
+    catalogAsset?.base,
+    catalogAsset?.name,
+    ...(Array.isArray(catalogAsset?.aliases) ? catalogAsset.aliases : [])
+  ].filter(Boolean)
+
+  let bestAliasScore = 0
+  aliases.forEach(alias => {
+    const normalizedAlias = normalizeSearchToken(alias)
+    if (!normalizedAlias) return
+    if (normalizedAlias === selectedSymbol) bestAliasScore = Math.max(bestAliasScore, 120)
+    if (selectedBase && normalizedAlias === normalizeSearchToken(selectedBase)) bestAliasScore = Math.max(bestAliasScore, 92)
+    if (normalizedAlias.includes(selectedSymbol) || selectedSymbol.includes(normalizedAlias)) bestAliasScore = Math.max(bestAliasScore, 74)
+    bestAliasScore = Math.max(bestAliasScore, similarityScore(selectedSymbol, normalizedAlias) * 64)
+    if (selectedBase) bestAliasScore = Math.max(bestAliasScore, similarityScore(selectedBase, normalizedAlias) * 58)
+  })
+
+  return bestAliasScore + getCatalogAssetTypeScore(catalogAsset, wantedKind) + getCatalogProviderScore(catalogAsset, wantedKind)
+}
+
+const findCatalogMatch = (catalog) => {
+  const assets = Array.isArray(catalog?.assets) ? catalog.assets : []
+  const scored = assets
+    .map(asset => ({ asset, score: scoreCatalogAsset(asset) }))
+    .filter(item => item.score >= 100)
+    .sort((a, b) => b.score - a.score)
+  return scored[0]?.asset || null
+}
+
+const resolveCatalogMarketAsset = async () => {
+  let match = findCatalogMatch(await loadMarketCatalog(false))
+  if (match) return match
+  match = findCatalogMatch(await loadMarketCatalog(true))
+  return match
 }
 
 const buildBybitSymbolCandidates = () => {
@@ -648,8 +791,8 @@ const fetchYahooChart = async (symbol, interval) => {
   return payload
 }
 
-const loadYahooMarketData = async () => {
-  const candidates = buildYahooSymbolCandidates()
+const loadYahooMarketData = async (preferredSymbol = '') => {
+  const candidates = preferredSymbol ? [preferredSymbol] : buildYahooSymbolCandidates()
   let lastError = null
 
   for (const symbol of candidates) {
@@ -685,8 +828,8 @@ const loadYahooMarketData = async () => {
   throw lastError || new Error('No Yahoo market data candidates matched')
 }
 
-const loadBinanceMarketData = async () => {
-  const symbol = await resolveBinanceSymbol()
+const loadBinanceMarketData = async (preferredSymbol = '') => {
+  const symbol = preferredSymbol || await resolveBinanceSymbol()
   if (!symbol) throw new Error(`No Binance market for ${selectedTradeAsset.value}`)
 
   const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
@@ -725,29 +868,30 @@ const fetchBybitKlines = async ({ category, symbol, timeframe }) => {
   return parseBybitKlineCandles(await response.json())
 }
 
-const loadBybitMarketData = async () => {
+const loadBybitMarketData = async (preferredAsset = null) => {
   const candidates = buildBybitSymbolCandidates()
   const categories = isLikelyXStockAsset.value ? ['spot'] : ['spot', 'linear']
+  const candidateMarkets = preferredAsset?.symbol
+    ? [{ category: preferredAsset.market || 'spot', symbol: preferredAsset.symbol }]
+    : categories.flatMap(category => candidates.map(symbol => ({ category, symbol })))
   let lastError = null
 
-  for (const category of categories) {
-    for (const symbol of candidates) {
-      try {
-        const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
-          const candles = await fetchBybitKlines({ category, symbol, timeframe })
-          return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
-        }))
-        const candlesByTimeframe = Object.fromEntries(timeframeEntries)
-        if (candlesByTimeframe['1h']?.length || candlesByTimeframe[activeGeneratedTimeframe.value]?.length) {
-          return {
-            provider: `BYBIT_${category.toUpperCase()}`,
-            symbol,
-            candlesByTimeframe
-          }
+  for (const { category, symbol } of candidateMarkets) {
+    try {
+      const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
+        const candles = await fetchBybitKlines({ category, symbol, timeframe })
+        return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
+      }))
+      const candlesByTimeframe = Object.fromEntries(timeframeEntries)
+      if (candlesByTimeframe['1h']?.length || candlesByTimeframe[activeGeneratedTimeframe.value]?.length) {
+        return {
+          provider: `BYBIT_${String(category).toUpperCase()}`,
+          symbol,
+          candlesByTimeframe
         }
-      } catch (error) {
-        lastError = error
       }
+    } catch (error) {
+      lastError = error
     }
   }
 
@@ -770,8 +914,8 @@ const fetchKrakenOhlc = async ({ pair, timeframe }) => {
   return filterToLastThreeDays(parseKrakenOhlcCandles(await response.json()))
 }
 
-const loadKrakenMarketData = async () => {
-  const candidates = buildKrakenPairCandidates()
+const loadKrakenMarketData = async (preferredSymbol = '') => {
+  const candidates = preferredSymbol ? [preferredSymbol] : buildKrakenPairCandidates()
   let lastError = null
 
   for (const pair of candidates) {
@@ -796,6 +940,15 @@ const loadKrakenMarketData = async () => {
   throw lastError || new Error('No Kraken market data candidates matched')
 }
 
+const loadCatalogMatchedMarketData = async (catalogAsset) => {
+  if (!catalogAsset?.provider || !catalogAsset?.symbol) throw new Error('Catalog asset is incomplete')
+  if (catalogAsset.provider === 'BYBIT') return loadBybitMarketData(catalogAsset)
+  if (catalogAsset.provider === 'BINANCE') return loadBinanceMarketData(catalogAsset.symbol)
+  if (catalogAsset.provider === 'KRAKEN') return loadKrakenMarketData(catalogAsset.symbol)
+  if (catalogAsset.provider === 'YAHOO_LOCAL') return loadYahooMarketData(catalogAsset.symbol)
+  throw new Error(`Unsupported catalog provider ${catalogAsset.provider}`)
+}
+
 const loadPublicMarketData = async () => {
   const loaders = isLikelyXStockAsset.value
       ? [loadBybitMarketData, loadBinanceMarketData, loadYahooMarketData]
@@ -804,6 +957,15 @@ const loadPublicMarketData = async () => {
         : [loadYahooMarketData, loadBinanceMarketData]
 
   let lastError = null
+  const catalogMatch = await resolveCatalogMarketAsset()
+  if (catalogMatch) {
+    try {
+      return await loadCatalogMatchedMarketData(catalogMatch)
+    } catch (error) {
+      lastError = error
+    }
+  }
+
   for (const loader of loaders) {
     try {
       const result = await loader()
@@ -890,6 +1052,24 @@ const generateMarketData = async () => {
   }
 }
 
+const clearGeneratedChart = () => {
+  generatedMarketData.value = {}
+  resolvedMarketSymbol.value = ''
+  resolvedMarketProvider.value = ''
+  generatedSourceAsset.value = ''
+  generationState.value = 'idle'
+  generationError.value = ''
+  hoveredCandle.value = null
+  chartCrosshair.value = null
+  chartViewport.value = { start: 0, end: 0 }
+  nextTick(() => drawChart())
+}
+
+const handleResetStudyMetrics = () => {
+  resetTradeStudyMetrics?.()
+  clearGeneratedChart()
+}
+
 const formatPrice = (value) => {
   if (!Number.isFinite(value)) return 'N/A'
   if (value >= 1000) return value.toFixed(2)
@@ -914,6 +1094,24 @@ const resetChartViewport = () => {
   chartViewport.value = { start: 0, end: candles.length }
 }
 
+const getChartViewportSpan = () => {
+  const candles = generatedChartCandles.value
+  return Math.max(1, (chartViewport.value.end || candles.length) - chartViewport.value.start)
+}
+
+const clampChartViewport = (start, visibleCount) => {
+  const candles = generatedChartCandles.value
+  if (!candles.length) return { start: 0, end: 0 }
+  const minVisible = Math.min(8, Math.max(1, candles.length))
+  const maxVisible = Math.max(minVisible, candles.length * 2.6)
+  const safeVisibleCount = clamp(visibleCount, minVisible, maxVisible)
+  const emptyMargin = Math.max(4, safeVisibleCount * 0.85)
+  const minStart = -emptyMargin
+  const maxStart = candles.length - safeVisibleCount + emptyMargin
+  const safeStart = clamp(start, minStart, Math.max(minStart, maxStart))
+  return { start: safeStart, end: safeStart + safeVisibleCount }
+}
+
 const getChartGeometry = (canvas) => {
   const rect = canvas.getBoundingClientRect()
   return {
@@ -928,9 +1126,11 @@ const getChartGeometry = (canvas) => {
 const getVisibleCandles = () => {
   const candles = generatedChartCandles.value
   if (!candles.length) return []
-  const start = clamp(Math.floor(chartViewport.value.start), 0, Math.max(0, candles.length - 1))
-  const end = clamp(Math.ceil(chartViewport.value.end || candles.length), start + 1, candles.length)
-  return candles.slice(start, end).map((candle, index) => ({ ...candle, absoluteIndex: start + index }))
+  const start = Math.floor(chartViewport.value.start)
+  const end = Math.ceil(chartViewport.value.end || candles.length)
+  const firstIndex = clamp(start, 0, candles.length)
+  const lastIndex = clamp(end, firstIndex, candles.length)
+  return candles.slice(firstIndex, lastIndex).map((candle, index) => ({ ...candle, absoluteIndex: firstIndex + index }))
 }
 
 const drawChart = () => {
@@ -984,7 +1184,9 @@ const drawChart = () => {
   const maxPrice = maxHigh + padding
   const priceRange = maxPrice - minPrice || 1
   const yForPrice = price => geometry.top + ((maxPrice - price) / priceRange) * plotHeight
-  const barWidth = plotWidth / visible.length
+  const viewStart = chartViewport.value.start
+  const visibleSpan = getChartViewportSpan()
+  const barWidth = plotWidth / visibleSpan
   const bodyWidth = clamp(barWidth * 0.9, 4, Math.max(4, barWidth - 1))
 
   ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
@@ -997,8 +1199,8 @@ const drawChart = () => {
     ctx.fillText(formatPrice(price), geometry.right + 10, y)
   }
 
-  visible.forEach((candle, index) => {
-    const x = geometry.left + (barWidth * index) + (barWidth / 2)
+  visible.forEach((candle) => {
+    const x = geometry.left + ((candle.absoluteIndex - viewStart + 0.5) * barWidth)
     const openY = yForPrice(candle.open)
     const closeY = yForPrice(candle.close)
     const highY = yForPrice(candle.high)
@@ -1020,17 +1222,17 @@ const drawChart = () => {
     }
   })
 
-  const labelStep = Math.max(1, Math.ceil(visible.length / 4))
+  const labelStep = Math.max(1, Math.ceil(visibleSpan / 4))
   ctx.fillStyle = textColor
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  visible.forEach((candle, index) => {
-    if (index % labelStep !== 0 && index !== visible.length - 1) return
-    const x = geometry.left + (barWidth * index) + (barWidth / 2)
+  visible.forEach((candle) => {
+    if (candle.absoluteIndex % labelStep !== 0 && candle.absoluteIndex !== generatedChartCandles.value.length - 1) return
+    const x = geometry.left + ((candle.absoluteIndex - viewStart + 0.5) * barWidth)
     ctx.fillText(formatCandleTime(candle.time), x, geometry.bottom + 12)
   })
 
-  if (chartCrosshair.value && hoveredCandle.value) {
+  if (chartCrosshair.value) {
     ctx.save()
     ctx.setLineDash([4, 4])
     ctx.strokeStyle = dark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.34)'
@@ -1047,7 +1249,7 @@ const drawChart = () => {
 const syncHoveredCandle = (event) => {
   const canvas = chartCanvas.value
   const visible = getVisibleCandles()
-  if (!canvas || !visible.length) {
+  if (!canvas) {
     hoveredCandle.value = null
     chartCrosshair.value = null
     return
@@ -1066,9 +1268,10 @@ const syncHoveredCandle = (event) => {
     return
   }
 
-  const index = clamp(Math.floor(((x - geometry.left) / plotWidth) * visible.length), 0, visible.length - 1)
-  hoveredCandle.value = visible[index]
   chartCrosshair.value = { x, y }
+  const absoluteIndex = Math.floor(chartViewport.value.start + (((x - geometry.left) / plotWidth) * getChartViewportSpan()))
+  const candidate = visible.find(candle => candle.absoluteIndex === absoluteIndex)
+  hoveredCandle.value = candidate || null
   drawChart()
 }
 
@@ -1086,9 +1289,7 @@ const handleChartPointerMove = (event) => {
     const geometry = getChartGeometry(canvas)
     const visibleCount = chartViewport.value.end - chartViewport.value.start
     const candleShift = ((lastChartPointerX.value - event.clientX) / Math.max(1, geometry.right - geometry.left)) * visibleCount
-    const maxStart = Math.max(0, candles.length - visibleCount)
-    const nextStart = clamp(chartViewport.value.start + candleShift, 0, maxStart)
-    chartViewport.value = { start: nextStart, end: nextStart + visibleCount }
+    chartViewport.value = clampChartViewport(chartViewport.value.start + candleShift, visibleCount)
     lastChartPointerX.value = event.clientX
   }
   syncHoveredCandle(event)
@@ -1117,10 +1318,9 @@ const handleChartWheel = (event) => {
   const currentEnd = chartViewport.value.end || candles.length
   const visibleCount = currentEnd - currentStart
   const zoomFactor = event.deltaY > 0 ? 1.18 : 0.82
-  const nextVisible = clamp(visibleCount * zoomFactor, 8, candles.length)
+  const nextVisible = visibleCount * zoomFactor
   const anchor = currentStart + (visibleCount * pointerRatio)
-  const nextStart = clamp(anchor - (nextVisible * pointerRatio), 0, Math.max(0, candles.length - nextVisible))
-  chartViewport.value = { start: nextStart, end: nextStart + nextVisible }
+  chartViewport.value = clampChartViewport(anchor - (nextVisible * pointerRatio), nextVisible)
   drawChart()
 }
 
@@ -1273,7 +1473,7 @@ onBeforeUnmount(() => {
                 type="button"
                 class="border border-black/15 px-4 py-2 text-[8px] font-black uppercase tracking-[0.35em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/20 dark:hover:bg-white dark:hover:text-black"
                 :disabled="commitState === 'loading'"
-                @click="resetTradeStudyMetrics"
+                @click="handleResetStudyMetrics"
               >
                 {{ ui().reset }}
               </button>
