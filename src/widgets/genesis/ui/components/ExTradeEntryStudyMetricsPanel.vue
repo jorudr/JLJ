@@ -264,17 +264,17 @@ const getAssetType = () => String(currentAssetData?.value?.type || '').trim().to
 
 const getAssetName = () => String(currentAssetData?.value?.name || '').trim()
 
-const isLikelyCryptoAsset = computed(() => {
-  const type = getAssetType()
-  const name = getAssetName().toLowerCase()
-  return type === 'crypto' && !name.includes('tokenized stock')
-})
+const getAssetDescription = () => String(currentAssetData?.value?.description || '').trim()
 
 const isLikelyXStockAsset = computed(() => {
   const type = getAssetType()
   const name = getAssetName().toLowerCase()
-  const symbol = normalizeApiSymbol(selectedTradeAsset.value)
-  return type === 'xstocks' || name.includes('tokenized stock') || (type === 'crypto' && symbol.endsWith('X'))
+  const description = getAssetDescription().toLowerCase()
+  return type === 'xstocks' || name.includes('tokenized stock') || description.includes('tokenized crypto stock')
+})
+
+const isLikelyCryptoAsset = computed(() => {
+  return getAssetType() === 'crypto' && !isLikelyXStockAsset.value
 })
 
 const pushCandidate = (set, value) => {
@@ -369,6 +369,44 @@ const buildBybitSymbolCandidates = () => {
     ;['USDT', 'USDC'].forEach(quote => {
       pushCandidate(candidates, `${base}${quote}`)
       if (isLikelyXStockAsset.value) pushCandidate(candidates, `${base}X${quote}`)
+    })
+  })
+
+  return Array.from(candidates)
+}
+
+const buildKrakenPairCandidates = () => {
+  const candidates = new Set()
+  const rawAsset = selectedTradeAsset.value
+  const assetData = currentAssetData?.value || {}
+  const rawParts = String(rawAsset).split(/[\/:_-]/).filter(Boolean)
+  const directValues = [rawAsset, assetData.symbol, assetData.ticker]
+  const aliasMap = {
+    BTC: 'XBT',
+    XBT: 'XBT',
+    DOGE: 'XDG'
+  }
+
+  const bases = new Set()
+  directValues.forEach(value => {
+    const base = stripKnownQuote(value)
+    if (base) bases.add(aliasMap[base] || base)
+  })
+  if (rawParts[0]) {
+    const base = stripKnownQuote(rawParts[0])
+    if (base) bases.add(aliasMap[base] || base)
+  }
+
+  const quoteCandidates = rawParts[1]
+    ? [normalizeApiSymbol(rawParts[1]), 'USD', 'USDT', 'USDC', 'EUR']
+    : ['USD', 'USDT', 'USDC', 'EUR']
+
+  Array.from(bases).forEach(base => {
+    quoteCandidates.forEach(quote => {
+      if (!quote || quote === base) return
+      candidates.add(`${base}${quote}`)
+      candidates.add(`${base}/${quote}`)
+      candidates.add(`X${base}Z${quote}`)
     })
   })
 
@@ -530,6 +568,28 @@ const parseBybitKlineCandles = (payload) => {
     .sort((a, b) => a.time - b.time)
 }
 
+const parseKrakenOhlcCandles = (payload) => {
+  if (Array.isArray(payload?.error) && payload.error.length) {
+    throw new Error(payload.error.join(', '))
+  }
+
+  const result = payload?.result || {}
+  const pairKey = Object.keys(result).find(key => key !== 'last' && Array.isArray(result[key]))
+  const rows = pairKey ? result[pairKey] : []
+
+  return rows
+    .map(row => ({
+      time: Number(row[0]) * 1000,
+      open: Number(row[1]),
+      high: Number(row[2]),
+      low: Number(row[3]),
+      close: Number(row[4]),
+      volume: Number(row[6] || 0)
+    }))
+    .filter(candle => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite))
+    .sort((a, b) => a.time - b.time)
+}
+
 const filterToLastThreeDays = (candles) => {
   const cutoff = Date.now() - (3 * 24 * 60 * 60 * 1000)
   return candles.filter(candle => candle.time >= cutoff)
@@ -575,28 +635,17 @@ const aggregateCandles = (candles, bucketMs) => {
 }
 
 const fetchYahooChart = async (symbol, interval) => {
-  const encodedSymbol = encodeURIComponent(symbol)
   const params = new URLSearchParams({
+    symbol,
     range: '5d',
-    interval,
-    includePrePost: 'true',
-    events: 'div,splits'
+    interval
   })
-  const hosts = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']
-  let lastError = null
-  for (const host of hosts) {
-    try {
-      const response = await fetch(`${host}/v8/finance/chart/${encodedSymbol}?${params.toString()}`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const payload = await response.json()
-      const apiError = payload?.chart?.error
-      if (apiError) throw new Error(apiError.description || apiError.code || 'Yahoo chart error')
-      return payload
-    } catch (error) {
-      lastError = error
-    }
-  }
-  throw lastError || new Error('Yahoo chart request failed')
+  const response = await fetch(`/api/market-data/yahoo-chart?${params.toString()}`)
+  if (!response.ok) throw new Error(`Yahoo proxy HTTP ${response.status}`)
+  const payload = await response.json()
+  const apiError = payload?.chart?.error
+  if (apiError) throw new Error(apiError.description || apiError.code || 'Yahoo chart error')
+  return payload
 }
 
 const loadYahooMarketData = async () => {
@@ -705,10 +754,54 @@ const loadBybitMarketData = async () => {
   throw lastError || new Error('No Bybit market data candidates matched')
 }
 
+const fetchKrakenOhlc = async ({ pair, timeframe }) => {
+  const intervalMap = {
+    '30m': '30',
+    '1h': '60',
+    '4h': '240'
+  }
+  const params = new URLSearchParams({
+    pair,
+    interval: intervalMap[timeframe.id],
+    since: String(Math.floor((Date.now() - (3 * 24 * 60 * 60 * 1000)) / 1000))
+  })
+  const response = await fetch(`https://api.kraken.com/0/public/OHLC?${params.toString()}`)
+  if (!response.ok) throw new Error(`Kraken HTTP ${response.status}`)
+  return filterToLastThreeDays(parseKrakenOhlcCandles(await response.json()))
+}
+
+const loadKrakenMarketData = async () => {
+  const candidates = buildKrakenPairCandidates()
+  let lastError = null
+
+  for (const pair of candidates) {
+    try {
+      const timeframeEntries = await Promise.all(timeframeOptions.map(async timeframe => {
+        const candles = await fetchKrakenOhlc({ pair, timeframe })
+        return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
+      }))
+      const candlesByTimeframe = Object.fromEntries(timeframeEntries)
+      if (candlesByTimeframe['1h']?.length || candlesByTimeframe[activeGeneratedTimeframe.value]?.length) {
+        return {
+          provider: 'KRAKEN',
+          symbol: pair,
+          candlesByTimeframe
+        }
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError || new Error('No Kraken market data candidates matched')
+}
+
 const loadPublicMarketData = async () => {
-  const loaders = (isLikelyCryptoAsset.value || isLikelyXStockAsset.value)
-    ? [loadBybitMarketData, loadYahooMarketData]
-    : [loadYahooMarketData, loadBinanceMarketData]
+  const loaders = isLikelyXStockAsset.value
+      ? [loadBybitMarketData, loadBinanceMarketData, loadYahooMarketData]
+      : isLikelyCryptoAsset.value
+        ? [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData, loadYahooMarketData]
+        : [loadYahooMarketData, loadBinanceMarketData]
 
   let lastError = null
   for (const loader of loaders) {
