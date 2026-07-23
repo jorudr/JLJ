@@ -1657,6 +1657,32 @@ const classifyGeneratedPathShape = ({ states, firstImpulse, maePct, mfePct, capt
   return firstImpulse === 'PROFIT' ? 'FAVORABLE_FIRST' : 'ADVERSE_FIRST'
 }
 
+const classifyGeneratedCandleState = (candle, direction, entryPrice, lossLimit, profitLimit) => {
+  const open = Number(candle.open)
+  const close = Number(candle.close)
+  const high = Number(candle.high)
+  const low = Number(candle.low)
+  if (![open, close, high, low].every(Number.isFinite)) return 'noise'
+
+  const isBullish = close >= open
+  const isBearish = close <= open
+  const isLong = direction === 'LONG'
+  const isLoss = isLong
+    ? low <= lossLimit && (high <= entryPrice || close <= entryPrice || isBearish)
+    : high >= lossLimit && (low >= entryPrice || close >= entryPrice || isBullish)
+  const isProfit = isLong
+    ? high >= profitLimit && (low >= entryPrice || close >= entryPrice || isBullish)
+    : low <= profitLimit && (high <= entryPrice || close <= entryPrice || isBearish)
+
+  if (isLoss && isProfit) {
+    if (isLong) return close >= entryPrice || isBullish ? 'profit' : 'loss'
+    return close <= entryPrice || isBearish ? 'profit' : 'loss'
+  }
+  if (isLoss) return 'loss'
+  if (isProfit) return 'profit'
+  return 'noise'
+}
+
 const summarizePathCleanliness = (states) => {
   const validStates = states.filter(Boolean)
   const stateCount = validStates.length
@@ -1716,12 +1742,9 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   const pathSegments = []
 
   candles.forEach((candle, index) => {
-    const high = Number(candle.high)
-    const low = Number(candle.low)
-    if (!Number.isFinite(high) || !Number.isFinite(low)) return
-
-    const isLoss = direction === 'LONG' ? low <= lossLimit : high >= lossLimit
-    const isProfit = direction === 'LONG' ? high >= profitLimit : low <= profitLimit
+    const state = classifyGeneratedCandleState(candle, direction, entryPrice, lossLimit, profitLimit)
+    const isLoss = state === 'loss'
+    const isProfit = state === 'profit'
     const window = getGeneratedAnalysisCandleWindow(candles, index, timeframe)
     const stepSeconds = window ? Math.max(0, (window.end - window.start) / 1000) : 0
 
@@ -1740,7 +1763,6 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
       }
     }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT'
-    const state = isLoss ? 'loss' : (isProfit ? 'profit' : 'noise')
     states.push(state)
     if (window) {
       const previous = pathSegments[pathSegments.length - 1]
@@ -1768,8 +1790,10 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     ? (realizedMove / maxFavorableMove) * 100
     : Number.NaN
   const pathCleanliness = summarizePathCleanliness(states)
-  const firstLossDelaySeconds = meaningfulLossStartTime !== null && tradeTimeRange.value
-    ? Math.max(0, (meaningfulLossStartTime - tradeTimeRange.value.start) / 1000)
+  const firstMeaningfulSegment = pathSegments.find(segment => segment.state === 'loss' || segment.state === 'profit')
+  const entryHeatEndTime = firstMeaningfulSegment?.state === 'loss' ? firstMeaningfulSegment.start : null
+  const entryHeatSeconds = entryHeatEndTime !== null && tradeTimeRange.value
+    ? Math.max(0, (entryHeatEndTime - tradeTimeRange.value.start) / 1000)
     : Number.NaN
   const adverseBeforeProfit = meaningfulProfitStartTime !== null
     ? Boolean(meaningfulLossStartTime !== null && meaningfulLossStartTime < meaningfulProfitStartTime)
@@ -1792,7 +1816,8 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     meaningfulProfitStartTime,
     meaningfulProfitEndTime,
     firstImpulseDirection: firstImpulse,
-    entryHeatSeconds: Number.isFinite(firstLossDelaySeconds) ? firstLossDelaySeconds : null,
+    entryHeatSeconds: Number.isFinite(entryHeatSeconds) ? entryHeatSeconds : null,
+    entryHeatEndTime,
     adverseBeforeProfit,
     pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
     pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,

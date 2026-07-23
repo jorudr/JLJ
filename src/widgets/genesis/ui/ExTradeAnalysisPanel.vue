@@ -1524,8 +1524,7 @@ const studyMetricText = computed(() => {
       pricePathShape: isRu ? 'Форма движения' : 'Price path shape',
       firstImpulseDirection: isRu ? 'Первый импульс' : 'First impulse',
       entryHeat: isRu ? 'Entry heat' : 'Entry heat',
-      adverseBeforeProfit: isRu ? 'Просадка до плюса' : 'Adverse before profit',
-      pathCleanlinessScore: isRu ? 'Чистота пути' : 'Path cleanliness'
+      adverseBeforeProfit: isRu ? 'Просадка до плюса' : 'Adverse before profit'
     },
     hints: {
       meaningfulLossTime: isRu
@@ -1550,20 +1549,17 @@ const studyMetricText = computed(() => {
         ? 'Первое значимое движение после входа: в сторону сделки или против нее.'
         : 'First meaningful move after entry: favorable or adverse.',
       entryHeat: isRu
-        ? 'Как быстро после входа появилась значимая просадка.'
-        : 'How quickly meaningful adverse movement appeared after entry.',
+        ? 'Время от входа до начала первого импульса, если первый импульс был просадкой.'
+        : 'Time from entry to the first impulse start when that first impulse was adverse.',
       adverseBeforeProfit: isRu
         ? 'Показывает, была ли значимая просадка до первого значимого плюса.'
-        : 'Shows whether meaningful adverse movement appeared before the first meaningful profit.',
-      pathCleanlinessScore: isRu
-        ? 'Оценивает, насколько траектория была чистой: меньше шума и смен состояний дает выше score.'
-        : 'Scores how clean the path was: less noise and fewer state flips gives a higher score.'
+        : 'Shows whether meaningful adverse movement appeared before the first meaningful profit.'
     },
     detail: {
       data: isRu ? 'Данные' : 'Data',
       period: isRu ? 'Период' : 'Period',
-      start: isRu ? 'начало отсчета' : 'start',
-      end: isRu ? 'конец отсчета' : 'end',
+      start: isRu ? 'Начало' : 'Start',
+      end: isRu ? 'Конец' : 'End',
       lossStart: isRu ? 'начало просадки' : 'drawdown start',
       lossEnd: isRu ? 'конец просадки' : 'drawdown end',
       profitStart: isRu ? 'начало плюса' : 'profit start',
@@ -1585,10 +1581,6 @@ const studyMetricText = computed(() => {
       firstLoss: isRu ? 'первая просадка' : 'first adverse',
       firstProfit: isRu ? 'первый плюс' : 'first profit',
       impulse: isRu ? 'импульс' : 'impulse',
-      firstImpulseStart: isRu ? 'начало первого импульса' : 'first impulse start',
-      firstImpulseEnd: isRu ? 'конец первого импульса' : 'first impulse end',
-      entryHeatStart: isRu ? 'начало entry heat' : 'entry heat start',
-      entryHeatEnd: isRu ? 'конец entry heat' : 'entry heat end',
       delay: isRu ? 'длительность ожидания' : 'delay',
       flips: isRu ? 'смены состояний' : 'state flips',
       noiseShare: isRu ? 'доля шума' : 'noise share',
@@ -1680,6 +1672,24 @@ const formatStudyDuration = (seconds: number) => {
   const sessionDaySeconds = getInTradeSessionDaySeconds();
   const days = Math.floor(seconds / sessionDaySeconds);
   const hours = Math.floor((seconds % sessionDaySeconds) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const parts: string[] = [];
+
+  if (days > 0) parts.push(`${days}${isRu ? 'д' : 'd'}`);
+  if (hours > 0 || days > 0) parts.push(`${hours}${isRu ? 'ч' : 'h'}`);
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}${isRu ? 'м' : 'm'}`);
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}${isRu ? 'с' : 's'}`);
+
+  return parts.join(' ');
+};
+
+const formatElapsedDuration = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return studyMetricText.value.na;
+
+  const isRu = locale.value === 'ru';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
   const parts: string[] = [];
@@ -1874,13 +1884,12 @@ const getFirstImpulseTone = (value: any) => {
 };
 
 const formatEntryHeat = (seconds: number) => {
-  if (Number.isFinite(seconds)) return formatStudyDuration(seconds);
-  const lossSeconds = inTradeLossSeconds.value;
-  return Number.isFinite(lossSeconds) ? studyMetricText.value.na : (locale.value === 'ru' ? 'Нет просадки' : 'No adverse move');
+  if (Number.isFinite(seconds)) return formatElapsedDuration(seconds);
+  return locale.value === 'ru' ? 'Нет просадки' : 'No adverse move';
 };
 
 const getEntryHeatTone = (seconds: number) => {
-  if (!Number.isFinite(seconds)) return Number.isFinite(inTradeLossSeconds.value) ? 'muted' : 'positive';
+  if (!Number.isFinite(seconds)) return 'positive';
   if (seconds <= 15 * 60) return 'danger';
   if (seconds <= 60 * 60) return 'warning';
   return 'neutral';
@@ -1892,8 +1901,6 @@ const formatAdverseBeforeProfit = (value: any) => {
   return studyMetricText.value.na;
 };
 
-const formatPathCleanliness = (value: number) => Number.isFinite(value) ? `${Math.round(value)}%` : studyMetricText.value.na;
-
 const getFirstImpulseMetricDetail = () => {
   const text = studyMetricText.value.detail;
   const analysis = generatedInTradeAnalysis.value;
@@ -1904,8 +1911,8 @@ const getFirstImpulseMetricDetail = () => {
   const end = parseStudyNumber(firstMeaningfulSegment?.end);
   return [
     metricDetailRow(text.impulse, getFirstImpulseLabel(analysis.firstImpulseDirection)),
-    metricDetailRow(text.firstImpulseStart, Number.isFinite(start) ? formatInTradeTimestamp(start) : studyMetricText.value.na),
-    metricDetailRow(text.firstImpulseEnd, Number.isFinite(end) ? formatInTradeTimestamp(end) : studyMetricText.value.na)
+    metricDetailRow(text.start, Number.isFinite(start) ? formatInTradeTimestamp(start) : studyMetricText.value.na),
+    metricDetailRow(text.end, Number.isFinite(end) ? formatInTradeTimestamp(end) : studyMetricText.value.na)
   ];
 };
 
@@ -1913,12 +1920,12 @@ const getEntryHeatMetricDetail = () => {
   const text = studyMetricText.value.detail;
   const analysis = generatedInTradeAnalysis.value;
   const heatSeconds = parseStudyNumber(analysis.entryHeatSeconds);
-  const firstLoss = parseStudyNumber(analysis.meaningfulLossStartTime);
+  const heatEnd = parseStudyNumber(analysis.entryHeatEndTime);
   const range = getInTradeTimeRange();
   return [
-    metricDetailRow(text.delay, Number.isFinite(heatSeconds) ? formatStudyDuration(heatSeconds) : studyMetricText.value.na),
-    metricDetailRow(text.entryHeatStart, range ? formatInTradeTimestamp(range.start) : studyMetricText.value.na),
-    metricDetailRow(text.entryHeatEnd, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na)
+    metricDetailRow(text.delay, Number.isFinite(heatSeconds) ? formatElapsedDuration(heatSeconds) : studyMetricText.value.na),
+    metricDetailRow(text.start, range ? formatInTradeTimestamp(range.start) : studyMetricText.value.na),
+    metricDetailRow(text.end, Number.isFinite(heatEnd) ? formatInTradeTimestamp(heatEnd) : studyMetricText.value.na)
   ];
 };
 
@@ -1930,18 +1937,6 @@ const getAdverseBeforeProfitMetricDetail = () => {
   return [
     metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
     metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na)
-  ];
-};
-
-const getPathCleanlinessMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  const analysis = generatedInTradeAnalysis.value;
-  const flips = parseStudyNumber(analysis.pathFlipCount);
-  const noiseShare = parseStudyNumber(analysis.pathNoiseSharePct);
-  return [
-    metricDetailRow(text.flips, Number.isFinite(flips) ? String(Math.round(flips)) : studyMetricText.value.na),
-    metricDetailRow(text.noiseShare, Number.isFinite(noiseShare) ? `${noiseShare.toFixed(1)}%` : studyMetricText.value.na),
-    metricDetailRow(text.timeframe, getInTradeTimeframeValue())
   ];
 };
 
@@ -2088,6 +2083,32 @@ const classifyStoredPricePathShape = (states: string[], firstImpulse: string | n
   return firstImpulse === 'PROFIT' ? 'FAVORABLE_FIRST' : 'ADVERSE_FIRST';
 };
 
+const classifyStoredCandleState = (candle: any, direction: string, entry: number, lossLimit: number, profitLimit: number) => {
+  const open = Number(candle.open);
+  const close = Number(candle.close);
+  const high = Number(candle.high);
+  const low = Number(candle.low);
+  if (![open, close, high, low].every(Number.isFinite)) return 'noise';
+
+  const isBullish = close >= open;
+  const isBearish = close <= open;
+  const isLong = direction === 'LONG';
+  const isLoss = isLong
+    ? low <= lossLimit && (high <= entry || close <= entry || isBearish)
+    : high >= lossLimit && (low >= entry || close >= entry || isBullish);
+  const isProfit = isLong
+    ? high >= profitLimit && (low >= entry || close >= entry || isBullish)
+    : low <= profitLimit && (high <= entry || close <= entry || isBearish);
+
+  if (isLoss && isProfit) {
+    if (isLong) return close >= entry || isBullish ? 'profit' : 'loss';
+    return close <= entry || isBearish ? 'profit' : 'loss';
+  }
+  if (isLoss) return 'loss';
+  if (isProfit) return 'profit';
+  return 'noise';
+};
+
 const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>) => {
   const direction = getTradeDirection(props.trade);
   const entry = parsePositiveTradePrice((props.trade as any)?.entry);
@@ -2118,10 +2139,12 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const pathSegments: Array<{ state: string; start: number; end: number }> = [];
 
   candles.forEach((candle, index) => {
-    const isLoss = direction === 'LONG' ? candle.low <= lossLimit : candle.high >= lossLimit;
-    const isProfit = direction === 'LONG' ? candle.high >= profitLimit : candle.low <= profitLimit;
+    const state = classifyStoredCandleState(candle, direction, entry, lossLimit, profitLimit);
+    const isLoss = state === 'loss';
+    const isProfit = state === 'profit';
     const window = getStoredCandleWindow(candles, index, timeframe);
     const stepSeconds = window ? Math.max(0, (window.end - window.start) / 1000) : 0;
+
     if (isLoss) {
       meaningfulLossSeconds += stepSeconds;
       if (window) {
@@ -2137,7 +2160,6 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
       }
     }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT';
-    const state = isLoss ? 'loss' : (isProfit ? 'profit' : 'noise');
     states.push(state);
     if (window) {
       const previous = pathSegments[pathSegments.length - 1];
@@ -2162,8 +2184,10 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove) ? (realizedMove / maxFavorableMove) * 100 : Number.NaN;
   const pathCleanliness = summarizePathCleanliness(states);
   const tradeRange = getInTradeTimeRange();
-  const firstLossDelaySeconds = meaningfulLossStartTime !== null && tradeRange
-    ? Math.max(0, (meaningfulLossStartTime - tradeRange.start) / 1000)
+  const firstMeaningfulSegment = pathSegments.find(segment => segment.state === 'loss' || segment.state === 'profit');
+  const entryHeatEndTime = firstMeaningfulSegment?.state === 'loss' ? firstMeaningfulSegment.start : null;
+  const entryHeatSeconds = entryHeatEndTime !== null && tradeRange
+    ? Math.max(0, (entryHeatEndTime - tradeRange.start) / 1000)
     : Number.NaN;
   const adverseBeforeProfit = meaningfulProfitStartTime !== null
     ? Boolean(meaningfulLossStartTime !== null && meaningfulLossStartTime < meaningfulProfitStartTime)
@@ -2186,7 +2210,8 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
     meaningfulProfitStartTime,
     meaningfulProfitEndTime,
     firstImpulseDirection: firstImpulse,
-    entryHeatSeconds: Number.isFinite(firstLossDelaySeconds) ? firstLossDelaySeconds : null,
+    entryHeatSeconds: Number.isFinite(entryHeatSeconds) ? entryHeatSeconds : null,
+    entryHeatEndTime,
     adverseBeforeProfit,
     pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
     pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,
@@ -2364,7 +2389,6 @@ const inTradeAnalysisRows = computed(() => {
   const hasGeneratedShape = Boolean(generatedInTradeAnalysis.value.pricePathShape);
   const firstImpulseDirection = generatedInTradeAnalysis.value.firstImpulseDirection;
   const entryHeatSeconds = parseStudyNumber(generatedInTradeAnalysis.value.entryHeatSeconds);
-  const pathCleanlinessScore = parseStudyNumber(generatedInTradeAnalysis.value.pathCleanlinessScore);
   const hasGeneratedPathMetrics = Boolean(generatedInTradeAnalysis.value.source === 'generated' || generatedInTradeAnalysis.value.pricePathShape);
 
   return [
@@ -2450,17 +2474,6 @@ const inTradeAnalysisRows = computed(() => {
       hint: text.hints.adverseBeforeProfit,
       detail: getAdverseBeforeProfitMetricDetail(),
       tone: generatedInTradeAnalysis.value.adverseBeforeProfit === true ? 'warning' : (generatedInTradeAnalysis.value.adverseBeforeProfit === false ? 'positive' : 'muted')
-    },
-    {
-      id: 'pathCleanlinessScore',
-      label: text.labels.pathCleanlinessScore,
-      value: formatPathCleanliness(pathCleanlinessScore),
-      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
-      hint: text.hints.pathCleanlinessScore,
-      detail: getPathCleanlinessMetricDetail(),
-      tone: Number.isFinite(pathCleanlinessScore)
-        ? (pathCleanlinessScore >= 75 ? 'positive' : (pathCleanlinessScore >= 45 ? 'warning' : 'danger'))
-        : 'muted'
     }
   ];
 });
@@ -2470,7 +2483,7 @@ const visibleInTradeAnalysisRows = computed(() => {
 });
 
 const advancedMetricTabs = computed(() => [
-  { id: 'all', label: 'All', count: 37 },
+  { id: 'all', label: 'All', count: 36 },
   { id: 'adherence', label: 'Matrix Adherence', count: 5 },
   { id: 'behavioural', label: 'Behavioural', count: 5 },
   { id: 'execution', label: 'Execution & Risk', count: 8 },
