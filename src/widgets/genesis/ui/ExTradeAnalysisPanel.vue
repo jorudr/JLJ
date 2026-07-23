@@ -1564,6 +1564,10 @@ const studyMetricText = computed(() => {
       period: isRu ? 'Период' : 'Period',
       start: isRu ? 'начало отсчета' : 'start',
       end: isRu ? 'конец отсчета' : 'end',
+      lossStart: isRu ? 'начало просадки' : 'drawdown start',
+      lossEnd: isRu ? 'конец просадки' : 'drawdown end',
+      profitStart: isRu ? 'начало плюса' : 'profit start',
+      profitEnd: isRu ? 'конец плюса' : 'profit end',
       entry: 'Entry',
       exit: 'Exit',
       from: isRu ? 'от' : 'from',
@@ -1574,14 +1578,22 @@ const studyMetricText = computed(() => {
       sessionDay: isRu ? 'день сессии' : 'session day',
       realized: isRu ? 'реализовано' : 'realized',
       favorable: isRu ? 'доступное движение' : 'favorable move',
+      captured: isRu ? 'захвачено' : 'captured',
+      left: isRu ? 'оставлено' : 'left',
       source: isRu ? 'источник' : 'source',
       shape: isRu ? 'форма' : 'shape',
       firstLoss: isRu ? 'первая просадка' : 'first adverse',
       firstProfit: isRu ? 'первый плюс' : 'first profit',
       impulse: isRu ? 'импульс' : 'impulse',
-      delay: isRu ? 'задержка' : 'delay',
+      firstImpulseStart: isRu ? 'начало первого импульса' : 'first impulse start',
+      firstImpulseEnd: isRu ? 'конец первого импульса' : 'first impulse end',
+      entryHeatStart: isRu ? 'начало entry heat' : 'entry heat start',
+      entryHeatEnd: isRu ? 'конец entry heat' : 'entry heat end',
+      delay: isRu ? 'длительность ожидания' : 'delay',
       flips: isRu ? 'смены состояний' : 'state flips',
-      noiseShare: isRu ? 'доля шума' : 'noise share'
+      noiseShare: isRu ? 'доля шума' : 'noise share',
+      drawdownPeriod: isRu ? 'просадка' : 'drawdown',
+      recoveryPeriod: isRu ? 'восстановление' : 'recovery'
     },
     sources: {
       manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
@@ -1757,8 +1769,8 @@ const getTimeMetricDetail = (kind: 'loss' | 'profit') => {
   const text = studyMetricText.value.detail;
   const bounds = getInTradeMetricPeriodBounds(kind);
   return [
-    metricDetailRow(text.start, bounds.start),
-    metricDetailRow(text.end, bounds.end)
+    metricDetailRow(kind === 'loss' ? text.lossStart : text.profitStart, bounds.start),
+    metricDetailRow(kind === 'loss' ? text.lossEnd : text.profitEnd, bounds.end)
   ];
 };
 
@@ -1779,8 +1791,7 @@ const getMoveMetricDetail = (kind: 'drawdown' | 'favorable') => {
   return [
     metricDetailRow(text.from, formatStudyPrice(entry)),
     metricDetailRow(text.to, formatStudyPrice(target)),
-    metricDetailRow(kind === 'drawdown' ? text.lossLevel : text.profitLevel, formatSignedStudyPercent(pct)),
-    metricDetailRow(text.source, getInTradeDataSourceLabel())
+    metricDetailRow(kind === 'drawdown' ? text.lossLevel : text.profitLevel, formatSignedStudyPercent(pct))
   ];
 };
 
@@ -1796,21 +1807,54 @@ const getCaptureMetricDetail = () => {
   const favorableMove = Number.isFinite(favorablePrice) && Number.isFinite(entry)
     ? (direction === 'LONG' ? favorablePrice - entry : entry - favorablePrice)
     : Number.NaN;
+  const capturedMove = Number.isFinite(realizedMove) ? Math.max(0, realizedMove) : Number.NaN;
+  const leftMove = Number.isFinite(favorableMove) && Number.isFinite(capturedMove)
+    ? Math.max(0, favorableMove - capturedMove)
+    : Number.NaN;
   return [
-    metricDetailRow(text.entry, formatStudyPrice(entry)),
-    metricDetailRow(text.exit, formatStudyPrice(exit)),
-    metricDetailRow(text.realized, formatStudyPrice(realizedMove)),
-    metricDetailRow(text.favorable, formatStudyPrice(favorableMove))
+    metricDetailRow(text.favorable, formatStudyPrice(favorableMove)),
+    metricDetailRow(text.captured, formatCaptureRatio(inTradeMoveMetrics.value.captureRatio)),
+    metricDetailRow(text.left, formatStudyPrice(leftMove)),
+    metricDetailRow(text.exit, formatStudyPrice(exit))
   ];
+};
+
+const formatPathSegmentLabel = (state: string, index: number) => {
+  const text = studyMetricText.value.detail;
+  return `${state === 'loss' ? text.drawdownPeriod : text.recoveryPeriod} ${index + 1}`;
+};
+
+const getPathSegmentRows = () => {
+  const text = studyMetricText.value.detail;
+  const segments = Array.isArray(generatedInTradeAnalysis.value.pathSegments)
+    ? generatedInTradeAnalysis.value.pathSegments
+    : [];
+  const counters: Record<string, number> = { loss: 0, profit: 0 };
+  const rows = segments
+    .filter((segment: any) => segment?.state === 'loss' || segment?.state === 'profit')
+    .map((segment: any) => {
+      const state = String(segment.state);
+      const index = counters[state] || 0;
+      counters[state] = index + 1;
+      const start = parseStudyNumber(segment.start);
+      const end = parseStudyNumber(segment.end);
+      return metricDetailRow(
+        formatPathSegmentLabel(state, index),
+        Number.isFinite(start) && Number.isFinite(end)
+          ? `${formatInTradeTimestamp(start)} -> ${formatInTradeTimestamp(end)}`
+          : studyMetricText.value.na
+      );
+    });
+
+  return rows.length ? rows : [metricDetailRow(text.period, studyMetricText.value.na)];
 };
 
 const getPathShapeMetricDetail = (shapeLabel: string) => {
   const text = studyMetricText.value.detail;
   return [
     metricDetailRow(text.shape, shapeLabel),
-    metricDetailRow(text.period, getInTradePeriodValue()),
     metricDetailRow(text.timeframe, getInTradeTimeframeValue()),
-    metricDetailRow(text.source, hasTradeStudyMetrics.value ? getInTradeDataSourceLabel() : studyMetricText.value.sources.none)
+    ...getPathSegmentRows()
   ];
 };
 
@@ -1854,15 +1898,14 @@ const getFirstImpulseMetricDetail = () => {
   const text = studyMetricText.value.detail;
   const analysis = generatedInTradeAnalysis.value;
   const impulse = String(analysis.firstImpulseDirection || '').toUpperCase();
-  const time = impulse === 'LOSS'
-    ? parseStudyNumber(analysis.meaningfulLossStartTime)
-    : impulse === 'PROFIT'
-      ? parseStudyNumber(analysis.meaningfulProfitStartTime)
-      : Number.NaN;
+  const segments = Array.isArray(analysis.pathSegments) ? analysis.pathSegments : [];
+  const firstMeaningfulSegment = segments.find((segment: any) => segment?.state === 'loss' || segment?.state === 'profit');
+  const start = parseStudyNumber(firstMeaningfulSegment?.start);
+  const end = parseStudyNumber(firstMeaningfulSegment?.end);
   return [
     metricDetailRow(text.impulse, getFirstImpulseLabel(analysis.firstImpulseDirection)),
-    metricDetailRow(text.start, Number.isFinite(time) ? formatInTradeTimestamp(time) : studyMetricText.value.na),
-    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+    metricDetailRow(text.firstImpulseStart, Number.isFinite(start) ? formatInTradeTimestamp(start) : studyMetricText.value.na),
+    metricDetailRow(text.firstImpulseEnd, Number.isFinite(end) ? formatInTradeTimestamp(end) : studyMetricText.value.na)
   ];
 };
 
@@ -1871,10 +1914,11 @@ const getEntryHeatMetricDetail = () => {
   const analysis = generatedInTradeAnalysis.value;
   const heatSeconds = parseStudyNumber(analysis.entryHeatSeconds);
   const firstLoss = parseStudyNumber(analysis.meaningfulLossStartTime);
+  const range = getInTradeTimeRange();
   return [
     metricDetailRow(text.delay, Number.isFinite(heatSeconds) ? formatStudyDuration(heatSeconds) : studyMetricText.value.na),
-    metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
-    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+    metricDetailRow(text.entryHeatStart, range ? formatInTradeTimestamp(range.start) : studyMetricText.value.na),
+    metricDetailRow(text.entryHeatEnd, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na)
   ];
 };
 
@@ -1885,8 +1929,7 @@ const getAdverseBeforeProfitMetricDetail = () => {
   const firstProfit = parseStudyNumber(analysis.meaningfulProfitStartTime);
   return [
     metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
-    metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na),
-    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+    metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na)
   ];
 };
 
@@ -2072,6 +2115,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   let meaningfulProfitEndTime: number | null = null;
   let firstImpulse: string | null = null;
   const states: string[] = [];
+  const pathSegments: Array<{ state: string; start: number; end: number }> = [];
 
   candles.forEach((candle, index) => {
     const isLoss = direction === 'LONG' ? candle.low <= lossLimit : candle.high >= lossLimit;
@@ -2093,7 +2137,16 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
       }
     }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT';
-    states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'));
+    const state = isLoss ? 'loss' : (isProfit ? 'profit' : 'noise');
+    states.push(state);
+    if (window) {
+      const previous = pathSegments[pathSegments.length - 1];
+      if (previous?.state === state && window.start <= previous.end + 1) {
+        previous.end = window.end;
+      } else {
+        pathSegments.push({ state, start: window.start, end: window.end });
+      }
+    }
   });
 
   const rawMaePct = direction === 'LONG'
@@ -2138,6 +2191,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
     pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
     pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,
     pathNoiseSharePct: Number.isFinite(pathCleanliness.noiseSharePct) ? pathCleanliness.noiseSharePct : null,
+    pathSegments,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
@@ -4350,25 +4404,19 @@ const simpleMetricInsights = computed(() => {
                        variant="basic"
                      >
                         <template #trigger>
-                           <div class="group relative flex min-h-[104px] cursor-pointer flex-col justify-between border nier-border-primary p-3 transition-all duration-300 hover:bg-black/[0.025] dark:hover:bg-white/[0.025]">
-                              <div class="absolute left-0 top-0 h-full w-px opacity-60"
-                                   :class="metric.tone === 'positive' ? 'bg-emerald-500' : (metric.tone === 'danger' ? 'bg-rose-500' : (metric.tone === 'warning' ? 'bg-amber-500' : 'bg-black/20 dark:bg-white/20'))"></div>
-                              <div class="flex items-start justify-between gap-3">
-                                 <span class="min-w-0 text-[8px] font-mono font-black uppercase tracking-widest opacity-40 transition-opacity group-hover:opacity-60">
-                                    {{ metric.label }}
-                                 </span>
-                                 <span class="mt-1 h-2 w-2 shrink-0 rotate-45 border"
-                                       :class="metric.tone === 'muted' ? 'border-black/20 dark:border-white/20' : 'border-current'"></span>
-                              </div>
-                              <div class="flex flex-col gap-1 overflow-hidden">
+                           <div class="flex flex-col space-y-1 group cursor-pointer">
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">
+                                 {{ metric.label }}
+                              </span>
+                              <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span
-                                   class="truncate text-lg font-mono font-black uppercase tracking-normal"
-                                   :class="metric.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (metric.tone === 'danger' ? 'text-rose-500 dark:text-rose-400' : (metric.tone === 'warning' ? 'text-amber-500 dark:text-amber-400' : (metric.tone === 'muted' ? 'text-black/35 dark:text-white/35' : 'nier-text-primary')))"
+                                   class="truncate text-xl font-mono font-black"
+                                   :class="metric.tone === 'positive' ? 'text-emerald-400' : (metric.tone === 'danger' ? 'text-rose-400' : (metric.tone === 'warning' ? 'text-amber-400' : (metric.tone === 'muted' ? 'text-black/35 dark:text-white/35' : 'nier-text-primary')))"
                                  >
-                                    {{ metric.value }}
+                                   {{ metric.value }}
                                  </span>
-                                 <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/45 dark:text-white/45">
-                                    {{ metric.subvalue }}
+                                 <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
+                                   {{ metric.subvalue }}
                                  </span>
                               </div>
                            </div>

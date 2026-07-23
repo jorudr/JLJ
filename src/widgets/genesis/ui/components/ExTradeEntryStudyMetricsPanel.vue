@@ -1713,6 +1713,7 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   let meaningfulProfitEndTime = null
   let firstImpulse = null
   const states = []
+  const pathSegments = []
 
   candles.forEach((candle, index) => {
     const high = Number(candle.high)
@@ -1739,7 +1740,16 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
       }
     }
     if (!firstImpulse && (isLoss || isProfit)) firstImpulse = isLoss ? 'LOSS' : 'PROFIT'
-    states.push(isLoss ? 'loss' : (isProfit ? 'profit' : 'noise'))
+    const state = isLoss ? 'loss' : (isProfit ? 'profit' : 'noise')
+    states.push(state)
+    if (window) {
+      const previous = pathSegments[pathSegments.length - 1]
+      if (previous?.state === state && window.start <= previous.end + 1) {
+        previous.end = window.end
+      } else {
+        pathSegments.push({ state, start: window.start, end: window.end })
+      }
+    }
   })
 
   const rawMaePct = direction === 'LONG'
@@ -1787,6 +1797,7 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
     pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,
     pathNoiseSharePct: Number.isFinite(pathCleanliness.noiseSharePct) ? pathCleanliness.noiseSharePct : null,
+    pathSegments,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
