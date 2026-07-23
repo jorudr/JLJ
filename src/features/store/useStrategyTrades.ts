@@ -99,7 +99,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   function getTradesForStrategy(strategyId: string) {
     const trades = tradesByStrategy.value[strategyId] || []
     const hiddenIds = new Set(hiddenTradeIdsByStrategy.value[strategyId] || [])
-    return trades.filter(trade => !hiddenIds.has(trade.id))
+    return trades.filter(trade => !hiddenIds.has(trade.id!))
   }
 
   function getAllTradesForStrategy(strategyId: string) {
