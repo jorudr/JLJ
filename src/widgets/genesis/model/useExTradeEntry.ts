@@ -1067,10 +1067,6 @@ const createTradeStudyMetrics = () => ({
   priceAboveEntryShortDurationMinutes: '',
   priceAboveEntryShortDurationSeconds: '',
   hadNews: false,
-  priceDirectionBeforeNews: '',
-  priceDirectionBeforeNewsChangePercent: '',
-  priceDirectionAfterNews: '',
-  priceDirectionAfterNewsChangePercent: '',
   generatedInTradeAnalysis: null,
   generatedMarketData: null
 })

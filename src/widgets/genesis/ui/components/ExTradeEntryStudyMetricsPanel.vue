@@ -66,8 +66,6 @@ const copy = {
     },
     boolOn: 'YES',
     boolOff: 'NO',
-    directionUp: 'ROSE',
-    directionDown: 'FELL',
     groups: {
       pricePath: 'PRICE_PATH',
       news: 'NEWS_CONTEXT'
@@ -77,11 +75,7 @@ const copy = {
       priceBelowEntryLongMovePercent: 'How much price fell from entry, %',
       priceRoseAboveEntryShort: 'Price rose above entry point',
       priceAboveEntryShortMovePercent: 'How much price rose from entry, %',
-      hadNews: 'News during trade',
-      priceDirectionBeforeNews: 'Price direction before the news',
-      priceDirectionBeforeNewsChangePercent: 'How much price changed before the news, %',
-      priceDirectionAfterNews: 'Price direction after the news',
-      priceDirectionAfterNewsChangePercent: 'How much price changed after the news, %'
+      hadNews: 'News during trade'
     },
     placeholders: {
       durationDays: 'ex. 0',
@@ -126,8 +120,6 @@ const copy = {
     },
     boolOn: 'ДА',
     boolOff: 'НЕТ',
-    directionUp: 'ВЫРОСЛА',
-    directionDown: 'УПАЛА',
     groups: {
       pricePath: 'ПУТЬ_ЦЕНЫ',
       news: 'НОВОСТИ_И_КОНТЕКСТ'
@@ -137,11 +129,7 @@ const copy = {
       priceBelowEntryLongMovePercent: 'Как сильно цена упала от точки входа, %',
       priceRoseAboveEntryShort: 'Цена выросла выше точки входа',
       priceAboveEntryShortMovePercent: 'Как сильно цена выросла от точки входа, %',
-      hadNews: 'Были новости',
-      priceDirectionBeforeNews: 'Цена перед новостью',
-      priceDirectionBeforeNewsChangePercent: 'На сколько изменилась цена перед новостью, %',
-      priceDirectionAfterNews: 'Цена после новости',
-      priceDirectionAfterNewsChangePercent: 'На сколько изменилась цена после новости, %'
+      hadNews: 'Были новости'
     },
     placeholders: {
       durationDays: 'напр. 0',
@@ -218,11 +206,7 @@ const groups = [
   {
     id: 'news',
     fields: [
-      { key: 'hadNews', type: 'boolean' },
-      { key: 'priceDirectionBeforeNews', type: 'direction' },
-      { key: 'priceDirectionBeforeNewsChangePercent', type: 'directionPercent', directionKey: 'priceDirectionBeforeNews' },
-      { key: 'priceDirectionAfterNews', type: 'direction' },
-      { key: 'priceDirectionAfterNewsChangePercent', type: 'directionPercent', directionKey: 'priceDirectionAfterNews' }
+      { key: 'hadNews', type: 'boolean' }
     ]
   }
 ]
@@ -1673,6 +1657,34 @@ const classifyGeneratedPathShape = ({ states, firstImpulse, maePct, mfePct, capt
   return firstImpulse === 'PROFIT' ? 'FAVORABLE_FIRST' : 'ADVERSE_FIRST'
 }
 
+const summarizePathCleanliness = (states) => {
+  const validStates = states.filter(Boolean)
+  const stateCount = validStates.length
+  if (!stateCount) return { score: Number.NaN, flips: Number.NaN, noiseSharePct: Number.NaN }
+
+  let flips = 0
+  let previousMeaningful = ''
+  let meaningfulCount = 0
+  let noiseCount = 0
+
+  validStates.forEach((state) => {
+    if (state === 'noise') {
+      noiseCount += 1
+      return
+    }
+    meaningfulCount += 1
+    if (previousMeaningful && previousMeaningful !== state) flips += 1
+    previousMeaningful = state
+  })
+
+  const noiseSharePct = (noiseCount / stateCount) * 100
+  const score = meaningfulCount
+    ? Math.round(Math.min(100, Math.max(0, 100 - (flips * 22) - (noiseSharePct * 0.25))))
+    : 0
+
+  return { score, flips, noiseSharePct }
+}
+
 const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   const entryPrice = parsePositiveMetric(entryMethodEnabled?.value ? averageEntry?.value : entry?.value)
   const exitPrice = parsePositiveMetric(isClosed?.value && exitMethodEnabled?.value ? averageExit?.value : exit?.value)
@@ -1745,6 +1757,13 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
   const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove)
     ? (realizedMove / maxFavorableMove) * 100
     : Number.NaN
+  const pathCleanliness = summarizePathCleanliness(states)
+  const firstLossDelaySeconds = meaningfulLossStartTime !== null && tradeTimeRange.value
+    ? Math.max(0, (meaningfulLossStartTime - tradeTimeRange.value.start) / 1000)
+    : Number.NaN
+  const adverseBeforeProfit = meaningfulProfitStartTime !== null
+    ? Boolean(meaningfulLossStartTime !== null && meaningfulLossStartTime < meaningfulProfitStartTime)
+    : null
 
   return {
     source: 'generated',
@@ -1762,6 +1781,12 @@ const buildGeneratedInTradeAnalysis = (candlesByTimeframe) => {
     meaningfulLossEndTime,
     meaningfulProfitStartTime,
     meaningfulProfitEndTime,
+    firstImpulseDirection: firstImpulse,
+    entryHeatSeconds: Number.isFinite(firstLossDelaySeconds) ? firstLossDelaySeconds : null,
+    adverseBeforeProfit,
+    pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
+    pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,
+    pathNoiseSharePct: Number.isFinite(pathCleanliness.noiseSharePct) ? pathCleanliness.noiseSharePct : null,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
@@ -2297,30 +2322,6 @@ const getFieldUnit = (field) => {
   return usesForexPriceFormat.value ? ui().units.forex : ui().units.money
 }
 
-const directionPercentKeys = {
-  priceDirectionBeforeNews: 'priceDirectionBeforeNewsChangePercent',
-  priceDirectionAfterNews: 'priceDirectionAfterNewsChangePercent'
-}
-
-const normalizeDirectionPercent = (field, rawValue = tradeStudyMetrics.value[field.key]) => {
-  const direction = tradeStudyMetrics.value[field.directionKey]
-  if (!direction) {
-    tradeStudyMetrics.value[field.key] = ''
-    return
-  }
-
-  if (rawValue === '' || rawValue === null || rawValue === undefined) {
-    tradeStudyMetrics.value[field.key] = ''
-    return
-  }
-
-  const numericValue = Number(rawValue)
-  if (!Number.isFinite(numericValue)) return
-
-  const signedValue = direction === 'up' ? Math.abs(numericValue) : -Math.abs(numericValue)
-  tradeStudyMetrics.value[field.key] = String(signedValue)
-}
-
 const normalizePositivePercent = (key, rawValue = tradeStudyMetrics.value[key]) => {
   if (rawValue === '' || rawValue === null || rawValue === undefined) {
     tradeStudyMetrics.value[key] = ''
@@ -2334,19 +2335,6 @@ const normalizePositivePercent = (key, rawValue = tradeStudyMetrics.value[key]) 
   }
 
   tradeStudyMetrics.value[key] = String(Math.abs(numericValue))
-}
-
-const toggleDirection = (key, value) => {
-  if (!tradeStudyMetrics.value.hadNews) return
-  tradeStudyMetrics.value[key] = tradeStudyMetrics.value[key] === value ? '' : value
-  const percentKey = directionPercentKeys[key]
-  if (!percentKey) return
-
-  if (!tradeStudyMetrics.value[key]) {
-    tradeStudyMetrics.value[percentKey] = ''
-  } else {
-    normalizeDirectionPercent({ key: percentKey, directionKey: key })
-  }
 }
 
 const isVectorLocked = (field) => {
@@ -2372,12 +2360,6 @@ const toggleBoolean = (field) => {
     clearDurationGroup(durationFieldGroups[field.key])
     clearMoveField(durationFieldGroups[field.key])
   }
-  if (field.key === 'hadNews' && !tradeStudyMetrics.value.hadNews) {
-    tradeStudyMetrics.value.priceDirectionBeforeNews = ''
-    tradeStudyMetrics.value.priceDirectionBeforeNewsChangePercent = ''
-    tradeStudyMetrics.value.priceDirectionAfterNews = ''
-    tradeStudyMetrics.value.priceDirectionAfterNewsChangePercent = ''
-  }
 }
 
 const shouldShowDuration = (field) => {
@@ -2386,12 +2368,8 @@ const shouldShowDuration = (field) => {
 
 const shouldShowEntryMove = (field) => shouldShowDuration(field)
 
-const shouldShowDirectionPercent = (field) => {
-  return Boolean(field.type === 'directionPercent' && tradeStudyMetrics.value.hadNews && tradeStudyMetrics.value[field.directionKey])
-}
-
 const visibleFields = (fields) => {
-  return fields.filter(field => field.type !== 'directionPercent' || shouldShowDirectionPercent(field))
+  return fields
 }
 
 hydrateGeneratedChartFromMetrics()
@@ -2723,39 +2701,6 @@ onBeforeUnmount(() => {
                           </label>
                         </div>
                       </div>
-
-                      <div v-else-if="field.type === 'direction'" class="grid grid-cols-2 gap-2">
-                        <button
-                          v-for="option in ['up', 'down']"
-                          :key="`${field.key}-${option}`"
-                          type="button"
-                          class="flex h-14 items-center justify-center border px-3 text-[10px] font-mono font-black uppercase tracking-[0.2em] transition-colors"
-                          :class="[
-                            !tradeStudyMetrics.hadNews
-                              ? 'cursor-not-allowed border-black/5 bg-black/[0.02] text-black/20 dark:border-white/5 dark:text-white/15'
-                              : tradeStudyMetrics[field.key] === option
-                                ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                                : 'border-black/15 bg-transparent nier-text-primary hover:border-black/40 dark:border-white/15 dark:hover:border-white/40'
-                          ]"
-                          :disabled="!tradeStudyMetrics.hadNews"
-                          @click="toggleDirection(field.key, option)"
-                        >
-                          {{ option === 'up' ? ui().directionUp : ui().directionDown }}
-                        </button>
-                      </div>
-
-                      <input
-                        v-else-if="shouldShowDirectionPercent(field)"
-                        v-model="tradeStudyMetrics[field.key]"
-                        type="number"
-                        step="any"
-                        :min="tradeStudyMetrics[field.directionKey] === 'up' ? 0 : undefined"
-                        :max="tradeStudyMetrics[field.directionKey] === 'down' ? 0 : undefined"
-                        :placeholder="ui().placeholders.percentMove"
-                        @input="normalizeDirectionPercent(field, $event.target.value)"
-                        @blur="normalizeDirectionPercent(field)"
-                        class="h-14 min-w-0 border border-black/15 bg-transparent px-4 text-[13px] font-mono outline-none transition-colors placeholder:text-[10px] placeholder:tracking-[0.16em] placeholder:text-black/25 focus:border-black dark:border-white/15 dark:placeholder:text-white/20 dark:focus:border-white"
-                      />
 
                       <input
                         v-else-if="field.type === 'number'"

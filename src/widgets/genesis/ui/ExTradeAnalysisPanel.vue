@@ -1521,7 +1521,11 @@ const studyMetricText = computed(() => {
       maxMeaningfulDrawdown: isRu ? 'Макс. значимая просадка' : 'Max meaningful drawdown',
       maxFavorableExcursion: isRu ? 'Макс. движение в плюс' : 'Max favorable excursion',
       profitCaptureRatio: isRu ? 'Захват движения' : 'Profit capture ratio',
-      pricePathShape: isRu ? 'Форма движения' : 'Price path shape'
+      pricePathShape: isRu ? 'Форма движения' : 'Price path shape',
+      firstImpulseDirection: isRu ? 'Первый импульс' : 'First impulse',
+      entryHeat: isRu ? 'Entry heat' : 'Entry heat',
+      adverseBeforeProfit: isRu ? 'Просадка до плюса' : 'Adverse before profit',
+      pathCleanlinessScore: isRu ? 'Чистота пути' : 'Path cleanliness'
     },
     hints: {
       meaningfulLossTime: isRu
@@ -1541,7 +1545,19 @@ const studyMetricText = computed(() => {
         : 'Share of the available favorable move captured by the actual exit.',
       pricePathShape: isRu
         ? 'Классификация траектории по сгенерированным свечам; при ручных данных без свечей показывает ручной диапазон.'
-        : 'Path classification from generated candles; manual-only ranges are marked separately.'
+        : 'Path classification from generated candles; manual-only ranges are marked separately.',
+      firstImpulseDirection: isRu
+        ? 'Первое значимое движение после входа: в сторону сделки или против нее.'
+        : 'First meaningful move after entry: favorable or adverse.',
+      entryHeat: isRu
+        ? 'Как быстро после входа появилась значимая просадка.'
+        : 'How quickly meaningful adverse movement appeared after entry.',
+      adverseBeforeProfit: isRu
+        ? 'Показывает, была ли значимая просадка до первого значимого плюса.'
+        : 'Shows whether meaningful adverse movement appeared before the first meaningful profit.',
+      pathCleanlinessScore: isRu
+        ? 'Оценивает, насколько траектория была чистой: меньше шума и смен состояний дает выше score.'
+        : 'Scores how clean the path was: less noise and fewer state flips gives a higher score.'
     },
     detail: {
       data: isRu ? 'Данные' : 'Data',
@@ -1559,7 +1575,13 @@ const studyMetricText = computed(() => {
       realized: isRu ? 'реализовано' : 'realized',
       favorable: isRu ? 'доступное движение' : 'favorable move',
       source: isRu ? 'источник' : 'source',
-      shape: isRu ? 'форма' : 'shape'
+      shape: isRu ? 'форма' : 'shape',
+      firstLoss: isRu ? 'первая просадка' : 'first adverse',
+      firstProfit: isRu ? 'первый плюс' : 'first profit',
+      impulse: isRu ? 'импульс' : 'impulse',
+      delay: isRu ? 'задержка' : 'delay',
+      flips: isRu ? 'смены состояний' : 'state flips',
+      noiseShare: isRu ? 'доля шума' : 'noise share'
     },
     sources: {
       manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
@@ -1792,6 +1814,124 @@ const getPathShapeMetricDetail = (shapeLabel: string) => {
   ];
 };
 
+const getFirstImpulseLabel = (value: any) => {
+  const impulse = String(value || '').toUpperCase();
+  const isRu = locale.value === 'ru';
+  if (impulse === 'PROFIT') return isRu ? 'В плюс' : 'Favorable';
+  if (impulse === 'LOSS') return isRu ? 'В минус' : 'Adverse';
+  return studyMetricText.value.na;
+};
+
+const getFirstImpulseTone = (value: any) => {
+  const impulse = String(value || '').toUpperCase();
+  if (impulse === 'PROFIT') return 'positive';
+  if (impulse === 'LOSS') return 'warning';
+  return 'muted';
+};
+
+const formatEntryHeat = (seconds: number) => {
+  if (Number.isFinite(seconds)) return formatStudyDuration(seconds);
+  const lossSeconds = inTradeLossSeconds.value;
+  return Number.isFinite(lossSeconds) ? studyMetricText.value.na : (locale.value === 'ru' ? 'Нет просадки' : 'No adverse move');
+};
+
+const getEntryHeatTone = (seconds: number) => {
+  if (!Number.isFinite(seconds)) return Number.isFinite(inTradeLossSeconds.value) ? 'muted' : 'positive';
+  if (seconds <= 15 * 60) return 'danger';
+  if (seconds <= 60 * 60) return 'warning';
+  return 'neutral';
+};
+
+const formatAdverseBeforeProfit = (value: any) => {
+  if (value === true) return studyMetricText.value.yes;
+  if (value === false) return studyMetricText.value.no;
+  return studyMetricText.value.na;
+};
+
+const formatPathCleanliness = (value: number) => Number.isFinite(value) ? `${Math.round(value)}%` : studyMetricText.value.na;
+
+const getFirstImpulseMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  const analysis = generatedInTradeAnalysis.value;
+  const impulse = String(analysis.firstImpulseDirection || '').toUpperCase();
+  const time = impulse === 'LOSS'
+    ? parseStudyNumber(analysis.meaningfulLossStartTime)
+    : impulse === 'PROFIT'
+      ? parseStudyNumber(analysis.meaningfulProfitStartTime)
+      : Number.NaN;
+  return [
+    metricDetailRow(text.impulse, getFirstImpulseLabel(analysis.firstImpulseDirection)),
+    metricDetailRow(text.start, Number.isFinite(time) ? formatInTradeTimestamp(time) : studyMetricText.value.na),
+    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+  ];
+};
+
+const getEntryHeatMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  const analysis = generatedInTradeAnalysis.value;
+  const heatSeconds = parseStudyNumber(analysis.entryHeatSeconds);
+  const firstLoss = parseStudyNumber(analysis.meaningfulLossStartTime);
+  return [
+    metricDetailRow(text.delay, Number.isFinite(heatSeconds) ? formatStudyDuration(heatSeconds) : studyMetricText.value.na),
+    metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
+    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+  ];
+};
+
+const getAdverseBeforeProfitMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  const analysis = generatedInTradeAnalysis.value;
+  const firstLoss = parseStudyNumber(analysis.meaningfulLossStartTime);
+  const firstProfit = parseStudyNumber(analysis.meaningfulProfitStartTime);
+  return [
+    metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
+    metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na),
+    metricDetailRow(text.source, studyMetricText.value.sources.generated)
+  ];
+};
+
+const getPathCleanlinessMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  const analysis = generatedInTradeAnalysis.value;
+  const flips = parseStudyNumber(analysis.pathFlipCount);
+  const noiseShare = parseStudyNumber(analysis.pathNoiseSharePct);
+  return [
+    metricDetailRow(text.flips, Number.isFinite(flips) ? String(Math.round(flips)) : studyMetricText.value.na),
+    metricDetailRow(text.noiseShare, Number.isFinite(noiseShare) ? `${noiseShare.toFixed(1)}%` : studyMetricText.value.na),
+    metricDetailRow(text.timeframe, getInTradeTimeframeValue())
+  ];
+};
+
+const clampStudyScore = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+
+const summarizePathCleanliness = (states: string[]) => {
+  const validStates = states.filter(Boolean);
+  const stateCount = validStates.length;
+  if (!stateCount) return { score: Number.NaN, flips: Number.NaN, noiseSharePct: Number.NaN };
+
+  let flips = 0;
+  let previousMeaningful = '';
+  let meaningfulCount = 0;
+  let noiseCount = 0;
+
+  validStates.forEach((state) => {
+    if (state === 'noise') {
+      noiseCount += 1;
+      return;
+    }
+    meaningfulCount += 1;
+    if (previousMeaningful && previousMeaningful !== state) flips += 1;
+    previousMeaningful = state;
+  });
+
+  const noiseSharePct = (noiseCount / stateCount) * 100;
+  const score = meaningfulCount
+    ? Math.round(clampStudyScore(100 - (flips * 22) - (noiseSharePct * 0.25)))
+    : 0;
+
+  return { score, flips, noiseSharePct };
+};
+
 const STORED_CHART_TIMEFRAME_ORDER = ['1m', '15m', '1h', '4h'];
 const DEFAULT_IN_TRADE_NOISE_PCT = 0.5;
 
@@ -1967,6 +2107,14 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const maxFavorableMove = direction === 'LONG' ? maxPrice - entry : entry - minPrice;
   const realizedMove = Number.isFinite(exit) ? (direction === 'LONG' ? exit - entry : entry - exit) : Number.NaN;
   const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove) ? (realizedMove / maxFavorableMove) * 100 : Number.NaN;
+  const pathCleanliness = summarizePathCleanliness(states);
+  const tradeRange = getInTradeTimeRange();
+  const firstLossDelaySeconds = meaningfulLossStartTime !== null && tradeRange
+    ? Math.max(0, (meaningfulLossStartTime - tradeRange.start) / 1000)
+    : Number.NaN;
+  const adverseBeforeProfit = meaningfulProfitStartTime !== null
+    ? Boolean(meaningfulLossStartTime !== null && meaningfulLossStartTime < meaningfulProfitStartTime)
+    : null;
 
   return {
     source: 'generated',
@@ -1984,6 +2132,12 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
     meaningfulLossEndTime,
     meaningfulProfitStartTime,
     meaningfulProfitEndTime,
+    firstImpulseDirection: firstImpulse,
+    entryHeatSeconds: Number.isFinite(firstLossDelaySeconds) ? firstLossDelaySeconds : null,
+    adverseBeforeProfit,
+    pathCleanlinessScore: Number.isFinite(pathCleanliness.score) ? pathCleanliness.score : null,
+    pathFlipCount: Number.isFinite(pathCleanliness.flips) ? pathCleanliness.flips : null,
+    pathNoiseSharePct: Number.isFinite(pathCleanliness.noiseSharePct) ? pathCleanliness.noiseSharePct : null,
     maxMeaningfulDrawdownPct: maePct,
     maxFavorableExcursionPct: mfePct,
     profitCaptureRatio: Number.isFinite(captureRatio) ? captureRatio : null,
@@ -2154,6 +2308,10 @@ const inTradeAnalysisRows = computed(() => {
   const shapeKey = String(generatedInTradeAnalysis.value.pricePathShape || (inTradeExtremes.value.source !== 'none' ? 'MANUAL_RANGE_ONLY' : ''));
   const shapeLabel = text.shapes[shapeKey as keyof typeof text.shapes] || text.na;
   const hasGeneratedShape = Boolean(generatedInTradeAnalysis.value.pricePathShape);
+  const firstImpulseDirection = generatedInTradeAnalysis.value.firstImpulseDirection;
+  const entryHeatSeconds = parseStudyNumber(generatedInTradeAnalysis.value.entryHeatSeconds);
+  const pathCleanlinessScore = parseStudyNumber(generatedInTradeAnalysis.value.pathCleanlinessScore);
+  const hasGeneratedPathMetrics = Boolean(generatedInTradeAnalysis.value.source === 'generated' || generatedInTradeAnalysis.value.pricePathShape);
 
   return [
     {
@@ -2211,6 +2369,44 @@ const inTradeAnalysisRows = computed(() => {
       hint: text.hints.pricePathShape,
       detail: getPathShapeMetricDetail(shapeLabel),
       tone: hasGeneratedShape ? 'neutral' : (shapeKey ? 'warning' : 'muted')
+    },
+    {
+      id: 'firstImpulseDirection',
+      label: text.labels.firstImpulseDirection,
+      value: getFirstImpulseLabel(firstImpulseDirection),
+      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
+      hint: text.hints.firstImpulseDirection,
+      detail: getFirstImpulseMetricDetail(),
+      tone: getFirstImpulseTone(firstImpulseDirection)
+    },
+    {
+      id: 'entryHeat',
+      label: text.labels.entryHeat,
+      value: formatEntryHeat(entryHeatSeconds),
+      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
+      hint: text.hints.entryHeat,
+      detail: getEntryHeatMetricDetail(),
+      tone: getEntryHeatTone(entryHeatSeconds)
+    },
+    {
+      id: 'adverseBeforeProfit',
+      label: text.labels.adverseBeforeProfit,
+      value: formatAdverseBeforeProfit(generatedInTradeAnalysis.value.adverseBeforeProfit),
+      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
+      hint: text.hints.adverseBeforeProfit,
+      detail: getAdverseBeforeProfitMetricDetail(),
+      tone: generatedInTradeAnalysis.value.adverseBeforeProfit === true ? 'warning' : (generatedInTradeAnalysis.value.adverseBeforeProfit === false ? 'positive' : 'muted')
+    },
+    {
+      id: 'pathCleanlinessScore',
+      label: text.labels.pathCleanlinessScore,
+      value: formatPathCleanliness(pathCleanlinessScore),
+      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
+      hint: text.hints.pathCleanlinessScore,
+      detail: getPathCleanlinessMetricDetail(),
+      tone: Number.isFinite(pathCleanlinessScore)
+        ? (pathCleanlinessScore >= 75 ? 'positive' : (pathCleanlinessScore >= 45 ? 'warning' : 'danger'))
+        : 'muted'
     }
   ];
 });
@@ -2220,7 +2416,7 @@ const visibleInTradeAnalysisRows = computed(() => {
 });
 
 const advancedMetricTabs = computed(() => [
-  { id: 'all', label: 'All', count: 33 },
+  { id: 'all', label: 'All', count: 37 },
   { id: 'adherence', label: 'Matrix Adherence', count: 5 },
   { id: 'behavioural', label: 'Behavioural', count: 5 },
   { id: 'execution', label: 'Execution & Risk', count: 8 },
