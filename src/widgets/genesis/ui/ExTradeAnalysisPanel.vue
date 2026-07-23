@@ -81,8 +81,8 @@ const props = withDefaults(defineProps<TradeAnalysisProps>(), {
 
 const emit = defineEmits(['close', 'requestEmotionEdit']);
 
-const styleLimits: Record<number, { label: string, max?: number, min?: number, desc: string }> = {
-  0: { label: 'Day Trading Style', max: 1, desc: '(24h)' },
+const styleLimits: Record<number, { label: string, max?: number, min?: number, maxExclusive?: boolean, desc: string }> = {
+  0: { label: 'Day Trading Style', max: 1, maxExclusive: true, desc: '(<24h)' },
   1: { label: 'Swing Trading', min: 1, desc: '(from 1 day to unlimited)' },
   2: { label: 'Investing', min: 90, desc: '(from 3 month - to unlimited)' }
 };
@@ -776,6 +776,45 @@ const scenarioDurationLabel = computed(() => {
     : `Scenario range (${stats.minDays.toFixed(2)}d - ${stats.maxDays.toFixed(2)}d)`;
 });
 
+const tradingStyleDurationLimit = computed(() => {
+  const extraType = resolvedExtraType.value;
+  return typeof extraType === 'number' ? styleLimits[extraType] : null;
+});
+
+const durationAxisLabel = computed(() => {
+  const limit = tradingStyleDurationLimit.value;
+  const isRu = locale.value === 'ru';
+  if (!limit) return scenarioDurationLabel.value;
+  if (limit.maxExclusive && limit.max === 1) {
+    return isRu ? 'Лимит стиля: < 24ч' : 'Style limit: < 24h';
+  }
+  if (limit.min !== undefined && limit.max !== undefined) {
+    return isRu
+      ? `Лимит стиля: ${limit.min}д - ${limit.max}д`
+      : `Style limit: ${limit.min}d - ${limit.max}d`;
+  }
+  if (limit.min !== undefined) {
+    return isRu ? `Лимит стиля: от ${limit.min}д` : `Style limit: from ${limit.min}d`;
+  }
+  if (limit.max !== undefined) {
+    return isRu ? `Лимит стиля: до ${limit.max}д` : `Style limit: up to ${limit.max}d`;
+  }
+  return scenarioDurationLabel.value;
+});
+
+const durationContextLabel = computed(() => {
+  const isRu = locale.value === 'ru';
+  return tradingStyleDurationLimit.value
+    ? (isRu ? 'лимит стиля' : 'style limit')
+    : (isRu ? 'диапазон сценария' : 'scenario range');
+});
+
+const durationProgressMaxDays = computed(() => {
+  const limit = tradingStyleDurationLimit.value;
+  if (limit?.max !== undefined) return Math.max(limit.max, 0.0001);
+  return Math.max(scenarioDurationStats.value.maxDays, 0.0001);
+});
+
 const durationText = computed(() => {
   if (!props.trade) return '0s';
   const start = new Date(props.trade.date || Date.now()).getTime();
@@ -831,6 +870,14 @@ const tradeDurationMinutes = computed(() => {
 
 const isStyleCompliant = computed(() => {
   const days = duration.value / 24;
+  const limit = tradingStyleDurationLimit.value;
+  if (limit) {
+    if (limit.min !== undefined && days < limit.min) return false;
+    if (limit.max !== undefined) {
+      if (limit.maxExclusive ? days >= limit.max : days > limit.max) return false;
+    }
+  }
+
   const stats = scenarioDurationStats.value;
   if (stats.count === 0) return true;
   return days >= stats.minDays && days <= stats.maxDays;
@@ -838,10 +885,25 @@ const isStyleCompliant = computed(() => {
 
 const styleAlertMessage = computed(() => {
   const days = duration.value / 24;
+  const isRu = locale.value === 'ru';
+  const limit = tradingStyleDurationLimit.value;
+  const styleName = resolvedTradingStyle.value;
+
+  if (limit) {
+    const belowMin = limit.min !== undefined && days < limit.min;
+    const aboveMax = limit.max !== undefined && (limit.maxExclusive ? days >= limit.max : days > limit.max);
+    if (belowMin || aboveMax) {
+      const expected = limit.maxExclusive && limit.max === 1
+        ? (isRu ? 'меньше 24ч' : 'under 24h')
+        : durationAxisLabel.value.replace(/^Лимит стиля: |^Style limit: /, '');
+      return isRu
+        ? `Предупреждение: Длительность исполнения (${durationText.value}) не соответствует стилю «${styleName}». Ожидаемо: ${expected}.`
+        : `Alert: Execution duration (${durationText.value}) does not match "${styleName}". Expected: ${expected}.`;
+    }
+  }
+
   const stats = scenarioDurationStats.value;
   if (stats.count === 0) return '';
-
-  const isRu = locale.value === 'ru';
 
   if (days < stats.minDays) {
     return isRu
@@ -2768,7 +2830,7 @@ const simpleMetricInsights = computed(() => {
                              <div class="w-1 h-1 nier-bg-inverted rotate-45"></div>
                              <span class="text-[10px] font-mono font-black uppercase tracking-widest nier-text-primary">
                                {{ resolvedTradingStyle }} 
-                               <span v-if="scenarioDurationStats.count > 0" class="opacity-40 ml-1">scenario range</span>
+                               <span class="opacity-40 ml-1">{{ durationContextLabel }}</span>
                              </span>
                           </div>
                        </div>
@@ -2776,12 +2838,12 @@ const simpleMetricInsights = computed(() => {
                     <div class="space-y-2">
                        <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest opacity-30 nier-text-primary">
                           <span>Start_Point</span>
-                          <span>{{ scenarioDurationLabel }}</span>
+                          <span>{{ durationAxisLabel }}</span>
                        </div>
                        <div class="h-1 w-full bg-black/5 dark:bg-white/5 relative group">
                           <div class="h-full transition-all duration-1000 ease-[var(--nier-ease)]"
                                :class="isStyleCompliant ? 'nier-bg-inverted' : 'bg-rose-500'"
-                               :style="{ width: `${scenarioDurationStats.count > 0 ? Math.min((duration / 24 / Math.max(scenarioDurationStats.maxDays, 0.0001)) * 100, 100) : 100}%` }">
+                               :style="{ width: `${Math.min((duration / 24 / durationProgressMaxDays) * 100, 100)}%` }">
                           </div>
                           <div v-if="!isStyleCompliant" class="absolute inset-y-0 right-0 w-px bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></div>
                        </div>
