@@ -7,7 +7,7 @@ const { locale } = useI18n();
 
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select';
 import ExTooltip from '~/shared/ui/ExTooltip.vue';
-const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, violatesTradingStyleDuration, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, violatesTradingStyleDuration, requiredTradingStyleDurationLabel, actualTradeDurationLabel, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 
 const labels = {
   en: {
@@ -16,8 +16,10 @@ const labels = {
     protocolConstraints: 'Protocol Constraints',
     requiredRR: 'Required R:R:',
     maxRiskPerTrade: 'Max Risk Per Trade:',
+    requiredDuration: 'Required Duration:',
     actualRR: 'Actual R:R:',
-    actualRisk: 'Actual Risk:'
+    actualRisk: 'Actual Risk:',
+    actualDuration: 'Actual Duration:'
   },
   ru: {
     panelRisk: 'РИСК_ПАНЕЛИ',
@@ -25,8 +27,10 @@ const labels = {
     protocolConstraints: 'Ограничения протокола',
     requiredRR: 'Требуемый R:R:',
     maxRiskPerTrade: 'Макс. риск на сделку:',
+    requiredDuration: 'Требуемая длительность:',
     actualRR: 'Факт. R:R:',
-    actualRisk: 'Факт. риск:'
+    actualRisk: 'Факт. риск:',
+    actualDuration: 'Факт. длительность:'
   }
 };
 
@@ -98,7 +102,7 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
              :is-dark="isDark"
              variant="basic"
              placement="bottom"
-             :title="riskViolationMessage || ''"
+             title=""
              :disabled="actualRiskPercent === null && actualRR === null && !violatesTradingStyleDuration"
            >
              <template #trigger>
@@ -127,6 +131,10 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
 	                 <span class="opacity-70 text-[11px]">{{ l('maxRiskPerTrade') }}</span>
 	                 <span class="font-black text-[11px] text-white">{{ activeRiskManagement.riskPerTradeValue }}{{ activeRiskManagement.riskPerTradeUnit }}</span>
 	               </div>
+	               <div v-if="requiredTradingStyleDurationLabel" class="flex items-center justify-between gap-6">
+	                 <span class="opacity-70 text-[11px]">{{ l('requiredDuration') }}</span>
+	                 <span class="font-black text-[11px] text-white">{{ requiredTradingStyleDurationLabel }}</span>
+	               </div>
 	               <div class="h-px bg-white/10 my-1"></div>
 	               <div v-if="actualRR !== null" class="flex items-center justify-between gap-6">
 	                 <span class="opacity-70 text-[11px]">{{ l('actualRR') }}</span>
@@ -135,6 +143,10 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
 	               <div v-if="actualRiskPercent !== null" class="flex items-center justify-between gap-6">
 	                 <span class="opacity-70 text-[11px]">{{ l('actualRisk') }}</span>
 	                 <span class="font-black text-[11px]" :class="violatesRiskPerTrade ? 'text-rose-400' : 'text-emerald-400'">{{ formatSnapshotMetric(actualRiskPercent, '%', '--%') }}</span>
+	               </div>
+	               <div v-if="requiredTradingStyleDurationLabel" class="flex items-center justify-between gap-6">
+	                 <span class="opacity-70 text-[11px]">{{ l('actualDuration') }}</span>
+	                 <span class="font-black text-[11px]" :class="violatesTradingStyleDuration ? 'text-rose-400' : 'text-emerald-400'">{{ actualTradeDurationLabel }}</span>
 	               </div>
              </div>
            </ExTooltip>

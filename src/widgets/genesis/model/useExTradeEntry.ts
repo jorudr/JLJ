@@ -1573,19 +1573,24 @@ const violatesTradingStyleDuration = computed(() => {
 
 const tradingStyleViolationMessage = computed(() => {
   if (!violatesTradingStyleDuration.value) return null
-  const limit = tradingStyleDurationLimit.value
-  const hours = tradeDurationHours.value
-  const styleName = activeRiskManagement.value.tradingStyle || limit?.label || 'STYLE'
-  const isRu = locale.value === 'ru'
-  const expected = limit?.maxHours === 24 && limit?.maxExclusive
-    ? (isRu ? '< 24ч' : '< 24h')
-    : limit?.minHours
-      ? (isRu ? `от ${formatTradeDuration(limit.minHours)}` : `from ${formatTradeDuration(limit.minHours)}`)
-      : 'N/A'
+  return locale.value === 'ru'
+    ? 'НАРУШЕНО ПРАВИЛО СТИЛЯ ТОРГОВЛИ'
+    : 'YOU VIOLATE TRADE STYLE RULE'
+})
 
-  return isRu
-    ? `ДЛИТЕЛЬНОСТЬ ${formatTradeDuration(hours)} НЕ СООТВЕТСТВУЕТ ${styleName}. ОЖИДАЕМО: ${expected}`
-    : `DURATION ${formatTradeDuration(hours)} DOES NOT MATCH ${styleName}. EXPECTED: ${expected}`
+const requiredTradingStyleDurationLabel = computed(() => {
+  const limit = tradingStyleDurationLimit.value
+  if (!limit) return null
+  const isRu = locale.value === 'ru'
+
+  if (limit.maxHours === 24 && limit.maxExclusive) return isRu ? '< 24ч' : '< 24h'
+  if (limit.maxHours !== undefined) return isRu ? `до ${formatTradeDuration(limit.maxHours)}` : `up to ${formatTradeDuration(limit.maxHours)}`
+  if (limit.minHours !== undefined) return isRu ? `от ${formatTradeDuration(limit.minHours)}` : `from ${formatTradeDuration(limit.minHours)}`
+  return null
+})
+
+const actualTradeDurationLabel = computed(() => {
+  return Number.isFinite(tradeDurationHours.value) ? formatTradeDuration(tradeDurationHours.value) : 'N/A'
 })
 
 const violatesRR = computed(() => {
@@ -1608,10 +1613,15 @@ const riskViolationMessage = computed(() => {
   const rptViol = violatesRiskPerTrade.value
   const styleViol = violatesTradingStyleDuration.value
   const messages = []
+  const isRu = locale.value === 'ru'
 
-  if (rrViol && rptViol) messages.push('YOU VIOLATE BOTH RISK RULES')
-  else if (rrViol) messages.push('YOU VIOLATE RISK REWARD RULE')
-  else if (rptViol) messages.push('YOU VIOLATE RISK PER TRADE RULE')
+  if (rrViol && rptViol) {
+    messages.push(isRu ? 'НАРУШЕНЫ ОБА ПРАВИЛА РИСКА' : 'YOU VIOLATE BOTH RISK RULES')
+  } else if (rrViol) {
+    messages.push(isRu ? 'НАРУШЕНО ПРАВИЛО RISK REWARD' : 'YOU VIOLATE RISK REWARD RULE')
+  } else if (rptViol) {
+    messages.push(isRu ? 'НАРУШЕНО ПРАВИЛО РИСКА НА СДЕЛКУ' : 'YOU VIOLATE RISK PER TRADE RULE')
+  }
 
   if (styleViol && tradingStyleViolationMessage.value) {
     messages.push(tradingStyleViolationMessage.value)
@@ -2318,6 +2328,8 @@ const submit = async () => {
     violatesRR,
     violatesRiskPerTrade,
     violatesTradingStyleDuration,
+    requiredTradingStyleDurationLabel,
+    actualTradeDurationLabel,
     riskViolationMessage,
     riskInputViolationMessage,
     hasRiskInputViolation,
