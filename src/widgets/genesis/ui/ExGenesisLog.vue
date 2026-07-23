@@ -1277,7 +1277,7 @@ const emit = defineEmits(['exit', 'nodeMapState', 'hudState', 'openNote', 'openT
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
-const openTradeText = () => t('genesis.virtualLog.openTrade')
+const openTradeText = () => locale.value === 'ru' ? 'НЕЗАКР. СД.' : 'OPEN TRD.'
 const authStore = useAuthStore()
 const {
   nodes: matrixStateNodes,
@@ -1855,7 +1855,7 @@ const tradeOverallScoreMap = computed(() => {
     .filter(item => item.key && Number.isFinite(item.rawScore))
 
   if (scoredTrades.length === 0) return new Map<any, number>()
-  if (scoredTrades.length === 1) return new Map([[scoredTrades[0].key, 50]])
+  if (scoredTrades.length === 1) return new Map([[scoredTrades[0]!.key, 50]])
 
   const rawScores = scoredTrades.map(item => item.rawScore).sort((a, b) => a - b)
   if (rawScores[0] === rawScores[rawScores.length - 1]) {
