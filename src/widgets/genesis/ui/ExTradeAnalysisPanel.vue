@@ -1524,7 +1524,8 @@ const studyMetricText = computed(() => {
       pricePathShape: isRu ? 'Форма движения' : 'Price path shape',
       firstImpulseDirection: isRu ? 'Первый импульс' : 'First impulse',
       entryHeat: isRu ? 'Entry heat' : 'Entry heat',
-      adverseBeforeProfit: isRu ? 'Просадка до плюса' : 'Adverse before profit'
+      adverseBeforeProfit: isRu ? 'Просадка до плюса' : 'Adverse before profit',
+      hadNews: isRu ? 'Новости во время сделки' : 'News during trade'
     },
     hints: {
       meaningfulLossTime: isRu
@@ -1553,7 +1554,10 @@ const studyMetricText = computed(() => {
         : 'Time from entry to the first impulse start when that first impulse was adverse.',
       adverseBeforeProfit: isRu
         ? 'Показывает, была ли значимая просадка до первого значимого плюса.'
-        : 'Shows whether meaningful adverse movement appeared before the first meaningful profit.'
+        : 'Shows whether meaningful adverse movement appeared before the first meaningful profit.',
+      hadNews: isRu
+        ? 'Ручная отметка пользователя о наличии новостей во время сделки.'
+        : 'Manual user mark for whether news occurred during the trade.'
     },
     detail: {
       data: isRu ? 'Данные' : 'Data',
@@ -1580,6 +1584,7 @@ const studyMetricText = computed(() => {
       shape: isRu ? 'форма' : 'shape',
       firstLoss: isRu ? 'первая просадка' : 'first adverse',
       firstProfit: isRu ? 'первый плюс' : 'first profit',
+      news: isRu ? 'новости' : 'news',
       impulse: isRu ? 'импульс' : 'impulse',
       delay: isRu ? 'длительность ожидания' : 'delay',
       flips: isRu ? 'смены состояний' : 'state flips',
@@ -1589,6 +1594,7 @@ const studyMetricText = computed(() => {
     },
     sources: {
       manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
+      manualInput: isRu ? 'РУЧНЫЕ_ДАННЫЕ' : 'MANUAL_INPUT',
       generated: isRu ? 'СГЕНЕРИРОВАННЫЕ_ДАННЫЕ' : 'GENERATED_DATA',
       mixed: isRu ? 'СМЕШАННЫЕ_ДАННЫЕ' : 'MIXED_DATA',
       none: 'N/A'
@@ -1937,6 +1943,14 @@ const getAdverseBeforeProfitMetricDetail = () => {
   return [
     metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
     metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na)
+  ];
+};
+
+const getHadNewsMetricDetail = () => {
+  const text = studyMetricText.value.detail;
+  return [
+    metricDetailRow(text.news, currentTradeStudyMetrics.value?.hadNews ? studyMetricText.value.yes : studyMetricText.value.no),
+    metricDetailRow(text.data, studyMetricText.value.sources.manualInput)
   ];
 };
 
@@ -2389,6 +2403,7 @@ const inTradeAnalysisRows = computed(() => {
   const hasGeneratedShape = Boolean(generatedInTradeAnalysis.value.pricePathShape);
   const firstImpulseDirection = generatedInTradeAnalysis.value.firstImpulseDirection;
   const entryHeatSeconds = parseStudyNumber(generatedInTradeAnalysis.value.entryHeatSeconds);
+  const hadNews = Boolean(currentTradeStudyMetrics.value?.hadNews);
   const hasGeneratedPathMetrics = Boolean(generatedInTradeAnalysis.value.source === 'generated' || generatedInTradeAnalysis.value.pricePathShape);
 
   return [
@@ -2474,6 +2489,15 @@ const inTradeAnalysisRows = computed(() => {
       hint: text.hints.adverseBeforeProfit,
       detail: getAdverseBeforeProfitMetricDetail(),
       tone: generatedInTradeAnalysis.value.adverseBeforeProfit === true ? 'warning' : (generatedInTradeAnalysis.value.adverseBeforeProfit === false ? 'positive' : 'muted')
+    },
+    {
+      id: 'hadNews',
+      label: text.labels.hadNews,
+      value: hadNews ? text.yes : text.no,
+      subvalue: text.sources.manualInput,
+      hint: text.hints.hadNews,
+      detail: getHadNewsMetricDetail(),
+      tone: hadNews ? 'warning' : 'neutral'
     }
   ];
 });
@@ -2483,7 +2507,7 @@ const visibleInTradeAnalysisRows = computed(() => {
 });
 
 const advancedMetricTabs = computed(() => [
-  { id: 'all', label: 'All', count: 36 },
+  { id: 'all', label: 'All', count: 37 },
   { id: 'adherence', label: 'Matrix Adherence', count: 5 },
   { id: 'behavioural', label: 'Behavioural', count: 5 },
   { id: 'execution', label: 'Execution & Risk', count: 8 },
