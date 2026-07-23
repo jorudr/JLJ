@@ -1823,6 +1823,10 @@ const getTradePnlValue = (trade: any) => {
 
 const distributionMetricMode = ref<'pnl' | 'score'>('pnl')
 
+const distributionClosedTrades = computed(() => {
+  return filteredTrades.value.filter(isClosedDiaryTrade)
+})
+
 const formatDistributionCurrency = (value: number) => {
   const sign = value > 0 ? '+' : ''
   return `${sign}$${value.toLocaleString(undefined, {
@@ -1842,28 +1846,38 @@ const formatDistributionValue = (value: number, withMetricLabel = false) => {
 const tradeOverallScoreMap = computed(() => {
   const strategyId = selectedStrategyId.value
   const deposit = tradeStore.getInitialDeposit(strategyId) || 1000
-  const scoredTrades = closedCurrentTrades.value
+  const scoredTrades = distributionClosedTrades.value
     .map((trade) => ({
       id: String(trade?.id || ''),
+      key: String(trade?.id || '') || trade,
       rawScore: getTradeScore(trade, deposit)
     }))
-    .filter(item => item.id && Number.isFinite(item.rawScore))
+    .filter(item => item.key && Number.isFinite(item.rawScore))
 
-  if (scoredTrades.length === 0) return new Map<string, number>()
+  if (scoredTrades.length === 0) return new Map<any, number>()
+  if (scoredTrades.length === 1) return new Map([[scoredTrades[0].key, 50]])
 
   const rawScores = scoredTrades.map(item => item.rawScore).sort((a, b) => a - b)
+  if (rawScores[0] === rawScores[rawScores.length - 1]) {
+    return new Map(scoredTrades.map(item => [item.key, 50]))
+  }
 
   return new Map(scoredTrades.map((item) => {
     const lowerScores = rawScores.filter(score => score < item.rawScore).length
     const overallScore = Math.round((lowerScores / scoredTrades.length) * 100)
-    return [item.id, Math.min(Math.max(overallScore, 0), 100)]
+    return [item.key, Math.min(Math.max(overallScore, 0), 100)]
   }))
 })
 
 const getTradeOverallScorePercent = (trade: any) => {
   const id = String(trade?.id || '')
-  if (!id) return 0
-  return tradeOverallScoreMap.value.get(id) ?? 0
+  if (id && tradeOverallScoreMap.value.has(id)) {
+    return tradeOverallScoreMap.value.get(id) ?? 0
+  }
+  if (trade && typeof trade === 'object') {
+    return tradeOverallScoreMap.value.get(trade) ?? 0
+  }
+  return 0
 }
 
 const tradeDistributionBars = computed(() => {
@@ -1874,8 +1888,7 @@ const tradeDistributionBars = computed(() => {
     return getTradePnlValue(trade)
   }
 
-  const sortedTrades = filteredTrades.value
-    .filter(isClosedDiaryTrade)
+  const sortedTrades = distributionClosedTrades.value
     .map((trade) => ({
       trade,
       pnl: getTradePnlValue(trade),
