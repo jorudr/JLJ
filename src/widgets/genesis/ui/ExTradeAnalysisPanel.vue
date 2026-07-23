@@ -2010,13 +2010,29 @@ const inTradeAnalysisNoisePct = computed(() => {
   return Number.isFinite(generatedNoise) && generatedNoise > 0 ? generatedNoise : 0.5;
 });
 
+const getManualMovePercent = (metrics: Record<string, any>, key: string, flagKey: string) => {
+  if (!metrics?.[flagKey]) return Number.NaN;
+  const value = parseStudyNumber(metrics[key]);
+  return Number.isFinite(value) && value > 0 ? Math.abs(value) : Number.NaN;
+};
+
 const manualInTradeExtremes = computed(() => {
   const metrics = currentTradeStudyMetrics.value;
-  const maxPrice = parseStudyNumber(metrics.maxPriceDuringTrade);
-  const minPrice = parseStudyNumber(metrics.minPriceDuringTrade);
+  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
+  const dropPct = getManualMovePercent(metrics, 'priceBelowEntryLongMovePercent', 'priceDroppedBelowEntryLong');
+  const risePct = getManualMovePercent(metrics, 'priceAboveEntryShortMovePercent', 'priceRoseAboveEntryShort');
+  const legacyMaxPrice = parseStudyNumber(metrics.maxPriceDuringTrade);
+  const legacyMinPrice = parseStudyNumber(metrics.minPriceDuringTrade);
+  const maxPrice = Number.isFinite(entry) && Number.isFinite(risePct)
+    ? entry * (1 + (risePct / 100))
+    : legacyMaxPrice;
+  const minPrice = Number.isFinite(entry) && Number.isFinite(dropPct)
+    ? Math.max(0, entry * (1 - (dropPct / 100)))
+    : legacyMinPrice;
+
   return {
     maxPrice: Number.isFinite(maxPrice) && maxPrice > 0 ? maxPrice : Number.NaN,
-    minPrice: Number.isFinite(minPrice) && minPrice > 0 ? minPrice : Number.NaN
+    minPrice: Number.isFinite(minPrice) && minPrice >= 0 ? minPrice : Number.NaN
   };
 });
 

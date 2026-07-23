@@ -73,10 +73,10 @@ const copy = {
       news: 'NEWS_CONTEXT'
     },
     fields: {
-      maxPriceDuringTrade: 'Max price during trade',
-      minPriceDuringTrade: 'Min price during trade',
-      priceDroppedBelowEntryLong: 'Price dropped below entry point for long vector',
-      priceRoseAboveEntryShort: 'Price rose above entry point for short vector',
+      priceDroppedBelowEntryLong: 'Price fell below entry point',
+      priceBelowEntryLongMovePercent: 'How much price fell from entry, %',
+      priceRoseAboveEntryShort: 'Price rose above entry point',
+      priceAboveEntryShortMovePercent: 'How much price rose from entry, %',
       hadNews: 'News during trade',
       priceDirectionBeforeNews: 'Price direction before the news',
       priceDirectionBeforeNewsChangePercent: 'How much price changed before the news, %',
@@ -84,10 +84,6 @@ const copy = {
       priceDirectionAfterNewsChangePercent: 'How much price changed after the news, %'
     },
     placeholders: {
-      maxPriceDuringTrade: 'ex. 4312.50',
-      minPriceDuringTrade: 'ex. 4268.25',
-      forexMaxPriceDuringTrade: 'ex. 1.00542',
-      forexMinPriceDuringTrade: 'ex. 1.00180',
       durationDays: 'ex. 0',
       durationHours: 'ex. 1',
       durationMinutes: 'ex. 25',
@@ -137,10 +133,10 @@ const copy = {
       news: 'НОВОСТИ_И_КОНТЕКСТ'
     },
     fields: {
-      maxPriceDuringTrade: 'Макс. цена во время сделки',
-      minPriceDuringTrade: 'Мин. цена во время сделки',
-      priceDroppedBelowEntryLong: 'Цена упала ниже точки входа для вектора long',
-      priceRoseAboveEntryShort: 'Цена выросла выше точки входа для вектора short',
+      priceDroppedBelowEntryLong: 'Цена упала ниже точки входа',
+      priceBelowEntryLongMovePercent: 'Как сильно цена упала от точки входа, %',
+      priceRoseAboveEntryShort: 'Цена выросла выше точки входа',
+      priceAboveEntryShortMovePercent: 'Как сильно цена выросла от точки входа, %',
       hadNews: 'Были новости',
       priceDirectionBeforeNews: 'Цена перед новостью',
       priceDirectionBeforeNewsChangePercent: 'На сколько изменилась цена перед новостью, %',
@@ -148,10 +144,6 @@ const copy = {
       priceDirectionAfterNewsChangePercent: 'На сколько изменилась цена после новости, %'
     },
     placeholders: {
-      maxPriceDuringTrade: 'напр. 4312.50',
-      minPriceDuringTrade: 'напр. 4268.25',
-      forexMaxPriceDuringTrade: 'напр. 1.00542',
-      forexMinPriceDuringTrade: 'напр. 1.00180',
       durationDays: 'напр. 0',
       durationHours: 'напр. 1',
       durationMinutes: 'напр. 25',
@@ -219,8 +211,6 @@ const groups = [
   {
     id: 'pricePath',
     fields: [
-      { key: 'maxPriceDuringTrade', type: 'number', unit: 'price' },
-      { key: 'minPriceDuringTrade', type: 'number', unit: 'price' },
       { key: 'priceDroppedBelowEntryLong', type: 'boolean' },
       { key: 'priceRoseAboveEntryShort', type: 'boolean' }
     ]
@@ -240,6 +230,7 @@ const groups = [
 const durationFieldGroups = {
   priceDroppedBelowEntryLong: {
     titleKey: 'belowLong',
+    moveField: { key: 'priceBelowEntryLongMovePercent', labelKey: 'priceBelowEntryLongMovePercent' },
     fields: [
       { key: 'priceBelowEntryLongDurationDays', unitKey: 'days', placeholderKey: 'durationDays' },
       { key: 'priceBelowEntryLongDurationHours', unitKey: 'hours', placeholderKey: 'durationHours' },
@@ -249,6 +240,7 @@ const durationFieldGroups = {
   },
   priceRoseAboveEntryShort: {
     titleKey: 'aboveShort',
+    moveField: { key: 'priceAboveEntryShortMovePercent', labelKey: 'priceAboveEntryShortMovePercent' },
     fields: [
       { key: 'priceAboveEntryShortDurationDays', unitKey: 'days', placeholderKey: 'durationDays' },
       { key: 'priceAboveEntryShortDurationHours', unitKey: 'hours', placeholderKey: 'durationHours' },
@@ -1874,47 +1866,7 @@ const hydrateGeneratedChartFromMetrics = () => {
 }
 
 const adjustCandlesToStudyMetrics = (candles) => {
-  const manualMax = parsePositiveMetric(tradeStudyMetrics.value.maxPriceDuringTrade)
-  const manualMin = parsePositiveMetric(tradeStudyMetrics.value.minPriceDuringTrade)
-  if (!candles.length || (!Number.isFinite(manualMax) && !Number.isFinite(manualMin))) {
-    return candles.filter(isUsableOhlcCandle)
-  }
-
-  const sourceHigh = Math.max(...candles.map(candle => candle.high))
-  const sourceLow = Math.min(...candles.map(candle => candle.low))
-  let mapPrice = null
-
-  if (
-    Number.isFinite(manualMax) &&
-    Number.isFinite(manualMin) &&
-    manualMax > manualMin &&
-    sourceHigh > sourceLow
-  ) {
-    const scale = (manualMax - manualMin) / (sourceHigh - sourceLow)
-    mapPrice = price => manualMin + ((price - sourceLow) * scale)
-  } else if (Number.isFinite(manualMax) && sourceHigh > 0) {
-    const scale = manualMax / sourceHigh
-    mapPrice = price => price * scale
-  } else if (Number.isFinite(manualMin) && sourceLow > 0) {
-    const scale = manualMin / sourceLow
-    mapPrice = price => price * scale
-  }
-
-  if (!mapPrice) return candles.filter(isUsableOhlcCandle)
-
-  return candles.map(candle => {
-    const open = mapPrice(candle.open)
-    const high = mapPrice(candle.high)
-    const low = mapPrice(candle.low)
-    const close = mapPrice(candle.close)
-    return {
-      ...candle,
-      open,
-      high: Math.max(open, high, low, close),
-      low: Math.min(open, high, low, close),
-      close
-    }
-  }).filter(isUsableOhlcCandle)
+  return candles.filter(isUsableOhlcCandle)
 }
 
 const generateMarketData = async () => {
@@ -2369,6 +2321,21 @@ const normalizeDirectionPercent = (field, rawValue = tradeStudyMetrics.value[fie
   tradeStudyMetrics.value[field.key] = String(signedValue)
 }
 
+const normalizePositivePercent = (key, rawValue = tradeStudyMetrics.value[key]) => {
+  if (rawValue === '' || rawValue === null || rawValue === undefined) {
+    tradeStudyMetrics.value[key] = ''
+    return
+  }
+
+  const numericValue = Number(rawValue)
+  if (!Number.isFinite(numericValue)) {
+    tradeStudyMetrics.value[key] = ''
+    return
+  }
+
+  tradeStudyMetrics.value[key] = String(Math.abs(numericValue))
+}
+
 const toggleDirection = (key, value) => {
   if (!tradeStudyMetrics.value.hadNews) return
   tradeStudyMetrics.value[key] = tradeStudyMetrics.value[key] === value ? '' : value
@@ -2394,10 +2361,17 @@ const clearDurationGroup = (group) => {
   })
 }
 
+const clearMoveField = (group) => {
+  if (group?.moveField?.key) tradeStudyMetrics.value[group.moveField.key] = ''
+}
+
 const toggleBoolean = (field) => {
   if (isVectorLocked(field)) return
   tradeStudyMetrics.value[field.key] = !tradeStudyMetrics.value[field.key]
-  if (!tradeStudyMetrics.value[field.key]) clearDurationGroup(durationFieldGroups[field.key])
+  if (!tradeStudyMetrics.value[field.key]) {
+    clearDurationGroup(durationFieldGroups[field.key])
+    clearMoveField(durationFieldGroups[field.key])
+  }
   if (field.key === 'hadNews' && !tradeStudyMetrics.value.hadNews) {
     tradeStudyMetrics.value.priceDirectionBeforeNews = ''
     tradeStudyMetrics.value.priceDirectionBeforeNewsChangePercent = ''
@@ -2409,6 +2383,8 @@ const toggleBoolean = (field) => {
 const shouldShowDuration = (field) => {
   return Boolean(durationFieldGroups[field.key] && tradeStudyMetrics.value[field.key] && !isVectorLocked(field))
 }
+
+const shouldShowEntryMove = (field) => shouldShowDuration(field)
 
 const shouldShowDirectionPercent = (field) => {
   return Boolean(field.type === 'directionPercent' && tradeStudyMetrics.value.hadNews && tradeStudyMetrics.value[field.directionKey])
@@ -2424,9 +2400,11 @@ watch(side, (vector) => {
   if (vector === 'long') {
     tradeStudyMetrics.value.priceRoseAboveEntryShort = false
     clearDurationGroup(durationFieldGroups.priceRoseAboveEntryShort)
+    clearMoveField(durationFieldGroups.priceRoseAboveEntryShort)
   } else {
     tradeStudyMetrics.value.priceDroppedBelowEntryLong = false
     clearDurationGroup(durationFieldGroups.priceDroppedBelowEntryLong)
+    clearMoveField(durationFieldGroups.priceDroppedBelowEntryLong)
   }
 }, { immediate: true })
 
@@ -2703,6 +2681,27 @@ onBeforeUnmount(() => {
                           <span v-if="tradeStudyMetrics[field.key]" class="h-2 w-1 rotate-45 border-b-2 border-r-2 border-current"></span>
                         </span>
                       </button>
+
+                      <div v-if="shouldShowEntryMove(field)" class="border border-black/10 p-3 dark:border-white/10">
+                        <label class="flex min-w-0 flex-col gap-2">
+                          <span class="text-[7px] font-black uppercase tracking-[0.22em] text-black/35 dark:text-white/30">
+                            {{ ui().fields[durationFieldGroups[field.key].moveField.labelKey] }}
+                          </span>
+                          <div class="relative">
+                            <input
+                              v-model="tradeStudyMetrics[durationFieldGroups[field.key].moveField.key]"
+                              type="number"
+                              min="0"
+                              step="any"
+                              :placeholder="ui().placeholders.percentMove"
+                              @input="normalizePositivePercent(durationFieldGroups[field.key].moveField.key, $event.target.value)"
+                              @blur="normalizePositivePercent(durationFieldGroups[field.key].moveField.key)"
+                              class="h-11 w-full min-w-0 border border-black/15 bg-transparent px-3 pr-10 text-[12px] font-mono outline-none transition-colors placeholder:text-[9px] placeholder:tracking-[0.14em] placeholder:text-black/25 focus:border-black dark:border-white/15 dark:placeholder:text-white/20 dark:focus:border-white"
+                            />
+                            <span class="pointer-events-none absolute bottom-0 right-3 flex h-11 items-center text-[8px] font-black uppercase tracking-[0.22em] text-black/35 dark:text-white/30">%</span>
+                          </div>
+                        </label>
+                      </div>
 
                       <div v-if="shouldShowDuration(field)" class="border border-black/10 p-3 dark:border-white/10">
                         <span class="mb-3 block text-[7px] font-black uppercase tracking-[0.22em] text-black/35 dark:text-white/30">{{ ui().duration[durationFieldGroups[field.key].titleKey] }}</span>
