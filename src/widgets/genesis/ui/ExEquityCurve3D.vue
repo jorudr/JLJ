@@ -943,6 +943,7 @@ import {
   syncBrokerConnectionTrades,
   type StoredBrokerConnection
 } from '~/utils/brokerTradeSync'
+import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
 
 const authStore = useAuthStore()
 const sp500BenchmarkRate = ref(SP500_BENCHMARK_RATE)
@@ -1184,18 +1185,26 @@ const tradeMatchesWinrateTarget = (trade: any, targetId: string) => {
     trade.scenarios?.some((scenario: any) => scenario?.id === targetId || scenario?.conditions?.some((condition: any) => condition?.id === targetId))
 }
 
-const getFilteredTrades = (strategyId?: string) => {
-  const sId = strategyId || selectedStrategyId.value
+const getFilteredTrades = (sId: string = selectedStrategyId.value, ignoreWinrateFilter = false) => {
   const propTrades = Array.isArray(props.trades) ? props.trades : null
   const propTradesHaveStrategy = propTrades?.some((trade: any) => !!trade?.strategyId) ?? false
-  const baseTrades = propTrades
+  let baseTrades = propTrades
     ? (
         propTradesHaveStrategy
           ? propTrades.filter((trade: any) => trade?.strategyId ? trade.strategyId === sId : sId === 'MAIN_DIARY')
           : (sId === 'MAIN_DIARY' || props.mode === 'standalone' ? propTrades : tradeStore.getTradesForStrategy(sId))
       )
     : tradeStore.getTradesForStrategy(sId) || []
-  if (selectedWinrateNodeId.value && sId === selectedStrategyId.value) {
+    
+  if (sId !== 'MAIN_DIARY') {
+    baseTrades = filterTradesBySelectedStrategyVersion(
+      baseTrades,
+      matrixState.strategyVersions.value || [],
+      matrixState.selectedStrategyVersionId.value
+    )
+  }
+
+  if (!ignoreWinrateFilter && selectedWinrateNodeId.value && sId === selectedStrategyId.value) {
     return baseTrades.filter((t: any) => tradeMatchesWinrateTarget(t, selectedWinrateNodeId.value!))
   }
   return baseTrades
@@ -1240,26 +1249,53 @@ const getConditionName = (condition: any) => {
 
 const winrateMenuNodes = computed(() => {
   const targets = new Map<string, WinrateTargetNode>()
-  getCurrentWinrateTrades().forEach((trade: any) => {
-    ;[trade.boardScenarioEntry, trade.boardScenarioExit].forEach((scenario: any) => {
-      if (!scenario?.id) return
-      const sName = getScenarioName(scenario)
-      addWinrateTarget(targets, {
-        id: scenario.id,
-        name: sName,
-        type: 'scenario'
-      })
-      ;(scenario.info?.conditions || []).forEach((condition: any) => {
+  
+  // Generate options from all trades matching the current strategy, ignoring the current winrate filter
+  const baseTrades = getFilteredTrades(selectedStrategyId.value, true)
+  
+  baseTrades.forEach((trade: any) => {
+    // 1. Process Entry Scenario
+    const entryScenario = trade.boardScenarioEntry
+    if (entryScenario?.id) {
+      const sName = getScenarioName(entryScenario)
+      addWinrateTarget(targets, { id: entryScenario.id, name: sName, type: 'scenario' })
+      
+      // Add conditions, but exclude take-profit
+      ;(entryScenario.info?.conditions || []).forEach((condition: any) => {
         const id = typeof condition === 'string' ? condition : condition?.id
+        const cName = getConditionName(condition) || ''
+        const cNameLower = cName.toLowerCase()
+        
+        // Do not duplicate take-profit into conditions
+        if (id === 'take-profit' || id === 'take_profit' || cNameLower.includes('take profit') || cNameLower.includes('тейк-профит') || cNameLower.includes('тейк профит')) {
+          return
+        }
         addWinrateTarget(targets, {
           id,
-          name: getConditionName(condition),
+          name: cName,
           description: getConditionDesc(condition),
           type: 'condition',
           parentScenarioName: sName
         })
       })
-    })
+    } else if (trade.scenario && typeof trade.scenario === 'string') {
+      // Fallback for legacy string scenarios
+      addWinrateTarget(targets, { id: trade.scenario, name: trade.scenario, type: 'scenario' })
+    }
+
+    // 2. Process Exit Scenario ONLY for specific known scenarios (like Take Profit, Stop Loss)
+    const exitScenario = trade.boardScenarioExit
+    if (exitScenario?.id) {
+      const sName = getScenarioName(exitScenario)
+      const sNameLower = sName.toLowerCase()
+      const isTakeProfit = exitScenario.id === 'take-profit' || exitScenario.id === 'take_profit' || sNameLower.includes('take profit') || sNameLower.includes('тейк-профит') || sNameLower.includes('тейк профит')
+      const isStopLoss = exitScenario.id === 'stop-loss' || exitScenario.id === 'stop_loss' || sNameLower.includes('stop loss') || sNameLower.includes('стоп-лосс') || sNameLower.includes('стоп лосс')
+      const isFullLiquidation = exitScenario.id === 'full-liquidation' || exitScenario.id === 'full_liquidation' || sNameLower.includes('full liquidation') || sNameLower.includes('полная ликвидация') || sNameLower.includes('полный выход')
+      
+      if (isTakeProfit || isStopLoss || isFullLiquidation) {
+        addWinrateTarget(targets, { id: exitScenario.id, name: sName, type: 'scenario' })
+      }
+    }
   })
 
   const query = winrateTargetSearch.value.trim().toLowerCase()
