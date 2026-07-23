@@ -1523,6 +1523,71 @@ const actualRR = computed(() => {
   return reward / risk
 })
 
+const tradeDurationHours = computed(() => {
+  if (!isClosed.value) return null
+  const start = cloneDate(openDate.value).getTime()
+  const end = cloneDate(exitDate.value).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null
+  return (end - start) / (1000 * 60 * 60)
+})
+
+const formatTradeDuration = (hours) => {
+  if (!Number.isFinite(hours) || hours <= 0) return 'N/A'
+  const totalMinutes = Math.round(hours * 60)
+  const days = Math.floor(totalMinutes / (24 * 60))
+  const hrs = Math.floor((totalMinutes % (24 * 60)) / 60)
+  const mins = totalMinutes % 60
+  const isRu = locale.value === 'ru'
+  const parts = []
+  if (days > 0) parts.push(`${days}${isRu ? 'д' : 'd'}`)
+  if (hrs > 0 || days > 0) parts.push(`${hrs}${isRu ? 'ч' : 'h'}`)
+  if (mins > 0 || parts.length === 0) parts.push(`${mins}${isRu ? 'м' : 'm'}`)
+  return parts.join(' ')
+}
+
+const tradingStyleDurationLimit = computed(() => {
+  const style = String(activeRiskManagement.value.tradingStyle || '').toUpperCase()
+  const extraType = activeRiskManagement.value.tradingStyleExtraType
+  if (extraType === 0 || style.includes('DAY')) {
+    return { maxHours: 24, maxExclusive: true, label: 'DAY_TRADING' }
+  }
+  if (extraType === 1 || style.includes('SWING')) {
+    return { minHours: 24, label: 'SWING_TRADING' }
+  }
+  if (extraType === 2 || style.includes('INVEST')) {
+    return { minHours: 90 * 24, label: 'INVESTING' }
+  }
+  return null
+})
+
+const violatesTradingStyleDuration = computed(() => {
+  const limit = tradingStyleDurationLimit.value
+  const hours = tradeDurationHours.value
+  if (!limit || !Number.isFinite(hours)) return false
+  if (limit.minHours !== undefined && hours < limit.minHours) return true
+  if (limit.maxHours !== undefined) {
+    return limit.maxExclusive ? hours >= limit.maxHours : hours > limit.maxHours
+  }
+  return false
+})
+
+const tradingStyleViolationMessage = computed(() => {
+  if (!violatesTradingStyleDuration.value) return null
+  const limit = tradingStyleDurationLimit.value
+  const hours = tradeDurationHours.value
+  const styleName = activeRiskManagement.value.tradingStyle || limit?.label || 'STYLE'
+  const isRu = locale.value === 'ru'
+  const expected = limit?.maxHours === 24 && limit?.maxExclusive
+    ? (isRu ? '< 24ч' : '< 24h')
+    : limit?.minHours
+      ? (isRu ? `от ${formatTradeDuration(limit.minHours)}` : `from ${formatTradeDuration(limit.minHours)}`)
+      : 'N/A'
+
+  return isRu
+    ? `ДЛИТЕЛЬНОСТЬ ${formatTradeDuration(hours)} НЕ СООТВЕТСТВУЕТ ${styleName}. ОЖИДАЕМО: ${expected}`
+    : `DURATION ${formatTradeDuration(hours)} DOES NOT MATCH ${styleName}. EXPECTED: ${expected}`
+})
+
 const violatesRR = computed(() => {
   const required = activeRiskManagement.value.riskRewardRatio
   if (!required || actualRR.value === null) return false
@@ -1541,10 +1606,18 @@ const riskViolationMessage = computed(() => {
   if (riskInputViolationMessage.value) return riskInputViolationMessage.value
   const rrViol = violatesRR.value
   const rptViol = violatesRiskPerTrade.value
-  if (rrViol && rptViol) return 'YOU VIOLATE BOTH RISK RULES'
-  if (rrViol) return 'YOU VIOLATE RISK REWARD RULE'
-  if (rptViol) return 'YOU VIOLATE RISK PER TRADE RULE'
-  return null
+  const styleViol = violatesTradingStyleDuration.value
+  const messages = []
+
+  if (rrViol && rptViol) messages.push('YOU VIOLATE BOTH RISK RULES')
+  else if (rrViol) messages.push('YOU VIOLATE RISK REWARD RULE')
+  else if (rptViol) messages.push('YOU VIOLATE RISK PER TRADE RULE')
+
+  if (styleViol && tradingStyleViolationMessage.value) {
+    messages.push(tradingStyleViolationMessage.value)
+  }
+
+  return messages.length ? messages.join(' / ') : null
 })
 
 const normalizeRiskInputs = () => {
@@ -2244,6 +2317,7 @@ const submit = async () => {
     actualRiskPercent,
     violatesRR,
     violatesRiskPerTrade,
+    violatesTradingStyleDuration,
     riskViolationMessage,
     riskInputViolationMessage,
     hasRiskInputViolation,
