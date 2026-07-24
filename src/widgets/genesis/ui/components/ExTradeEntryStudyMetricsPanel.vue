@@ -51,6 +51,9 @@ const copy = {
     pageManual: 'MANUAL_METRICS',
     generate: 'GENERATE DATA',
     generating: 'GENERATING...',
+    generateChart: 'GENERATE CHART',
+    cooldownButton: 'WAIT {time}',
+    apiCooldownHint: 'API requests are paused for {time}. You can always generate the chart through trade edit mode.',
     noAsset: 'Select an asset in the commit footer first',
     selectedAsset: 'Selected asset',
     generatedSource: 'Resolved API symbol',
@@ -105,6 +108,9 @@ const copy = {
     pageManual: 'РУЧНЫЕ_МЕТРИКИ',
     generate: 'СГЕНЕРИРОВАТЬ ДАННЫЕ',
     generating: 'ГЕНЕРАЦИЯ...',
+    generateChart: 'СГЕНЕРИРОВАТЬ ГРАФИК',
+    cooldownButton: 'ПАУЗА {time}',
+    apiCooldownHint: 'API-запросы остановлены на {time}. Вы всегда можете сгенерировать график через режим редактирования сделки.',
     noAsset: 'Сначала выберите актив в нижнем footer с commit',
     selectedAsset: 'Выбранный актив',
     generatedSource: 'Символ API',
@@ -162,6 +168,7 @@ const studyPages = [
 const MINUTE_MS = 60 * 1000
 const HOUR_MS = 60 * MINUTE_MS
 const MAX_API_CANDLES = 1000
+const API_ERROR_COOLDOWN_MS = MINUTE_MS
 
 const timeframeOptions = [
   { id: '4h', label: '4H', durationMs: 4 * HOUR_MS, binanceInterval: '4h', bybitInterval: '240', krakenInterval: '240', yahooInterval: '60m' },
@@ -179,6 +186,8 @@ const resolvedMarketProvider = ref('')
 const generatedSourceAsset = ref('')
 const generationState = ref('idle')
 const generationError = ref('')
+const apiCooldownUntil = ref(0)
+const apiCooldownNow = ref(Date.now())
 const hoveredCandle = ref(null)
 const chartCrosshair = ref(null)
 const chartCanvas = ref(null)
@@ -194,6 +203,7 @@ const generatedChartClearedManually = ref(false)
 let binanceSymbolsPromise = null
 const yahooSearchCache = new Map()
 let resizeObserver = null
+let apiCooldownInterval = null
 
 const groups = [
   {
@@ -274,8 +284,30 @@ const availableTimeframeOptions = computed(() => {
   return timeframeOptions.filter(timeframe => timeframe.id !== '1m' && duration >= timeframe.durationMs)
 })
 
+const apiCooldownRemainingMs = computed(() => {
+  return Math.max(0, apiCooldownUntil.value - apiCooldownNow.value)
+})
+
+const isApiCooldownActive = computed(() => apiCooldownRemainingMs.value > 0)
+
+const apiCooldownRemainingLabel = computed(() => {
+  const seconds = Math.max(1, Math.ceil(apiCooldownRemainingMs.value / 1000))
+  return locale.value === 'ru' ? `${seconds} сек` : `${seconds}s`
+})
+
+const apiCooldownHint = computed(() => {
+  if (!isApiCooldownActive.value) return ''
+  return ui().apiCooldownHint.replace('{time}', apiCooldownRemainingLabel.value)
+})
+
+const generateMarketDataButtonLabel = computed(() => {
+  if (generationState.value === 'loading') return ui().generating
+  if (isApiCooldownActive.value) return ui().cooldownButton.replace('{time}', apiCooldownRemainingLabel.value)
+  return ui().generateChart
+})
+
 const canGenerateMarketData = computed(() => {
-  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && commitState?.value !== 'loading' && generationState.value !== 'loading'
+  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && commitState?.value !== 'loading' && generationState.value !== 'loading' && !isApiCooldownActive.value
 })
 
 const generatedChartCandles = computed(() => {
@@ -1930,6 +1962,25 @@ const adjustCandlesToStudyMetrics = (candles) => {
   return candles.filter(isUsableOhlcCandle)
 }
 
+const stopApiCooldownTimer = () => {
+  if (!apiCooldownInterval) return
+  clearInterval(apiCooldownInterval)
+  apiCooldownInterval = null
+}
+
+const startApiErrorCooldown = () => {
+  apiCooldownUntil.value = Date.now() + API_ERROR_COOLDOWN_MS
+  apiCooldownNow.value = Date.now()
+  stopApiCooldownTimer()
+  apiCooldownInterval = setInterval(() => {
+    apiCooldownNow.value = Date.now()
+    if (!isApiCooldownActive.value) {
+      apiCooldownUntil.value = 0
+      stopApiCooldownTimer()
+    }
+  }, 1000)
+}
+
 const generateMarketData = async () => {
   if (!canGenerateMarketData.value) return
 
@@ -1954,6 +2005,7 @@ const generateMarketData = async () => {
     console.error('[TradeStudyMetrics] Market data generation failed:', error)
     generationError.value = error?.message || ui().apiError
     generationState.value = 'error'
+    startApiErrorCooldown()
   } finally {
     await nextTick()
     drawChart()
@@ -2472,6 +2524,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect?.()
   window.removeEventListener('resize', drawChart)
+  stopApiCooldownTimer()
 })
 </script>
 
@@ -2484,13 +2537,16 @@ onBeforeUnmount(() => {
       <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
         {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
       </p>
+      <p v-if="apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
+        {{ apiCooldownHint }}
+      </p>
       <button
         type="button"
         class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
         :disabled="!canGenerateMarketData"
         @click="generateMarketData"
       >
-        {{ generationState === 'loading' ? ui().generating : (locale === 'ru' ? 'СГЕНЕРИРОВАТЬ ГРАФИК' : 'GENERATE CHART') }}
+        {{ generateMarketDataButtonLabel }}
       </button>
     </div>
 
@@ -2581,13 +2637,16 @@ onBeforeUnmount(() => {
                 <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
                   {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
                 </p>
+                <p v-if="apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
+                  {{ apiCooldownHint }}
+                </p>
                 <button
                   type="button"
                   class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
                   :disabled="!canGenerateMarketData"
                   @click="generateMarketData"
                 >
-                  {{ generationState === 'loading' ? ui().generating : (locale === 'ru' ? 'СГЕНЕРИРОВАТЬ ГРАФИК' : 'GENERATE CHART') }}
+                  {{ generateMarketDataButtonLabel }}
                 </button>
               </div>
 
