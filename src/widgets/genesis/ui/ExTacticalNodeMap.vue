@@ -9,6 +9,7 @@ import ExTacticalNodeTooltip from '~/widgets/genesis/ui/ExTacticalNodeTooltip.vu
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
+import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
 
 const { t } = useI18n()
 
@@ -159,18 +160,7 @@ const currentInitialDeposit = computed(() => {
 })
 
 const getNormalizedPnl = (tr: any) => {
-  let p = tr.profitInCurrency
-  if (p === undefined || p === null || p === 0) {
-    p = tr.result ?? tr.pnl ?? 0
-  }
-  const val = Number(p)
-  if (isNaN(val)) return 0
-  
-  if ((tr.profitInCurrency === undefined || tr.profitInCurrency === null || tr.profitInCurrency === 0) && 
-      Math.abs(val) < 100 && currentInitialDeposit.value > 1000) {
-    return (val / 100) * currentInitialDeposit.value
-  }
-  return val
+  return getTradePnlForScore(tr, currentInitialDeposit.value)
 }
 
 const getEmotionName = (emotion: any) => {
@@ -181,29 +171,26 @@ const getEmotionName = (emotion: any) => {
   return String(emotion)
 }
 
-const EMOTION_WEIGHTS_LOCAL: Record<string, number> = {
-  'CONFIDENCE': 10, 'PATIENCE': 15, 'DISCIPLINE': 20,
-  'FOMO': -20, 'GREED': -25, 'REVENGE': -30, 'FEAR': -15, 'TILT': -40, 'ANXIETY': -15
-}
-
-const getTradeScore = (tr: any) => {
-  const pnl = getNormalizedPnl(tr)
-  let emotionalScore = 0
-  if (tr && tr.emotions && Array.isArray(tr.emotions)) {
-    tr.emotions.forEach((e: any) => {
-      const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
-      emotionalScore += EMOTION_WEIGHTS_LOCAL[key] || 0
-    })
+const scoreSourceTrades = computed(() => {
+  const list = [...allTrades.value]
+  const idx = list.findIndex(t => t.id === props.trade?.id)
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...props.trade }
+  } else if (props.trade?.id) {
+    list.push(props.trade)
   }
-  return pnl + emotionalScore
-}
+  return list
+})
+
+const tradeProfitabilityScoreIndex = computed(() => {
+  return buildTradeProfitabilityScoreIndex(scoreSourceTrades.value, currentInitialDeposit.value)
+})
 
 const percentileRank = computed(() => {
-  const currentScore = getTradeScore(props.trade)
-  const scores = allTrades.value.map(getTradeScore).sort((a, b) => a - b)
-  if (scores.length === 0) return 0
-  const lower = scores.filter(s => s < currentScore).length
-  return Math.round((lower / scores.length) * 100)
+  const trade = props.trade as any
+  if (!trade) return 0
+  const score = tradeProfitabilityScoreIndex.value.get(String(trade.id || '')) ?? tradeProfitabilityScoreIndex.value.get(trade)
+  return score?.score ?? 0
 })
 
 const contentTransform = computed(() => ({

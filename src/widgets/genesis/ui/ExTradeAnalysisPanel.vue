@@ -19,6 +19,7 @@ import {
   filterTradesBySelectedStrategyVersion,
   getSelectedStrategyVersionSnapshot
 } from '~/shared/utils/strategyVersionScope'
+import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
 
 interface Condition {
   id: string;
@@ -563,29 +564,241 @@ const allTrades = computed(() => {
 });
 
 const getNormalizedPnl = (tr: any) => {
-  // Fallback chain: currency (if non-zero) -> result (%) -> pnl -> 0
-  let p = tr.profitInCurrency;
-  if (p === undefined || p === null || p === 0) {
-    p = tr.result ?? tr.pnl ?? 0;
+  return getTradePnlForScore(tr, initialBalance.value);
+};
+
+const tradeScoreSourceTrades = computed(() => {
+  const list = [...allTrades.value];
+  const idx = list.findIndex(t => t.id === props.trade?.id);
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...props.trade } as any;
+  } else if (props.trade?.id) {
+    list.push(props.trade as any);
   }
-  
-  const val = typeof p === 'string' ? parseFloat(p) : p;
-  
-  // If we're using 'result' (percentage) and it's a small number, normalize to currency
-  if ((tr.profitInCurrency === undefined || tr.profitInCurrency === null || tr.profitInCurrency === 0) && 
-      Math.abs(val) < 100 && initialBalance.value > 1000) {
-    return (val / 100) * initialBalance.value;
-  }
-  return val;
+  return list;
+});
+
+const tradeProfitabilityScoreIndex = computed(() => {
+  return buildTradeProfitabilityScoreIndex(tradeScoreSourceTrades.value, initialBalance.value || 1000);
+});
+
+const getUnifiedTradeScore = (trade: any) => {
+  if (!trade) return null;
+  return tradeProfitabilityScoreIndex.value.get(String(trade.id || '')) ?? tradeProfitabilityScoreIndex.value.get(trade) ?? null;
 };
 
 const percentileRank = computed(() => {
-  const currentPnl = props.trade?.pnl || 0;
-  const pnls = allTrades.value.map(getNormalizedPnl).sort((a, b) => a - b);
-  if (pnls.length === 0) return 0;
-  const lower = pnls.filter(p => p < currentPnl).length;
-  return Math.round((lower / pnls.length) * 100);
+  const score = getUnifiedTradeScore(props.trade);
+  return score?.score ?? 0;
 });
+
+const advancedMetricCopy = computed(() => {
+  const isRu = locale.value === 'ru';
+  const labels: Record<string, string> = {
+    required_adherence: isRu ? 'Соблюдение required' : 'Required_Adherence',
+    additional_alpha: isRu ? 'Дополнительная alpha' : 'Additional_Alpha',
+    protocol_strictness: isRu ? 'Строгость протокола' : 'Protocol_Strictness',
+    conditional_pnl_ratio: isRu ? 'PnL на условие' : 'Conditional_PnL_Ratio',
+    setup_complexity: isRu ? 'Сложность setup' : 'Setup_Complexity',
+    cognitive_stability: isRu ? 'Когнитивная стабильность' : 'Cognitive_Stability',
+    dominant_bias: isRu ? 'Главный bias' : 'Dominant_Bias',
+    emotional_pnl_drag: isRu ? 'Эмоциональный PnL drag' : 'Emotional_PnL_Drag',
+    friction_density: isRu ? 'Плотность friction' : 'Friction_Density',
+    net_result_variance: isRu ? 'Отклонение результата' : 'Net_Result_Variance',
+    yield_efficiency: isRu ? 'Эффективность доходности' : 'Yield_Efficiency',
+    profit_velocity: isRu ? 'Скорость прибыли' : 'Profit_Velocity',
+    actual_vs_target_rr: isRu ? 'Факт против target R/R' : 'Actual_vs_Target_RR',
+    planned_vs_realized_risk: isRu ? 'Плановый и факт. риск' : 'Planned_vs_Realized_Risk',
+    temporal_exposure: isRu ? 'Временная экспозиция' : 'Temporal_Exposure',
+    asset_protocol: isRu ? 'Протокол актива' : 'Asset_Protocol',
+    stop_loss_distance: isRu ? 'Дистанция stop loss' : 'Stop_Loss_Distance',
+    take_profit_distance: isRu ? 'Дистанция take profit' : 'Take_Profit_Distance',
+    sl_execution_drag: isRu ? 'SL execution drag' : 'SL_Execution_Drag',
+    risk_budget_adherence: isRu ? 'Соблюдение risk budget' : 'Risk_Budget_Adherence',
+    tp_capture_ratio: isRu ? 'Захват take profit' : 'TP_Capture_Ratio',
+    edge_capture_quotient: isRu ? 'Коэффициент edge capture' : 'Edge_Capture_Quotient',
+    unrealized_alpha_left: isRu ? 'Незабранная alpha' : 'Unrealized_Alpha_Left',
+    horizon_sync_rating: isRu ? 'Синхронизация горизонта' : 'Horizon_Sync_Rating',
+    velocity_variance_index: isRu ? 'Индекс отклонения скорости' : 'Velocity_Variance_Index',
+    conditional_alpha_decay: isRu ? 'Угасание alpha условий' : 'Conditional_Alpha_Decay',
+    execution_confidence_index: isRu ? 'Индекс уверенности исполнения' : 'Execution_Confidence_Index'
+  };
+
+  const descriptions: Record<string, string> = {
+    net_result_variance: isRu ? 'Насколько результат сделки отличается от среднего результата стратегии.' : 'How far this trade result deviates from the strategy average result.',
+    yield_efficiency: isRu ? 'Доходность сделки относительно баланса перед входом.' : 'Trade return relative to balance before entry.',
+    profit_velocity: isRu ? 'Скорость получения PnL за час удержания.' : 'PnL earned per hour of holding time.',
+    actual_vs_target_rr: isRu ? 'Фактическое R/R относительно запланированной цели.' : 'Realized R/R compared with the target R/R.',
+    planned_vs_realized_risk: isRu ? 'Максимум между плановым stop-риск и фактическим убытком.' : 'The larger of planned stop risk and realized loss.',
+    temporal_exposure: isRu ? 'Длительность сделки от входа до выхода.' : 'Trade duration from entry to exit.',
+    asset_protocol: isRu ? 'Сторона сделки и инструмент.' : 'Trade side and traded instrument.',
+    stop_loss_distance: isRu ? 'Расстояние от entry до stop loss в процентах.' : 'Percent distance from entry to stop loss.',
+    take_profit_distance: isRu ? 'Расстояние от entry до take profit в процентах.' : 'Percent distance from entry to take profit.',
+    sl_execution_drag: isRu ? 'Насколько фактический выход в убытке хуже зоны stop loss.' : 'How much a losing exit exceeded the stop-loss area.',
+    risk_budget_adherence: isRu ? 'Насколько риск сделки укладывается в risk budget.' : 'How well trade risk fits inside the risk budget.',
+    tp_capture_ratio: isRu ? 'Какая часть планового target была забрана выходом.' : 'Share of the planned target captured by the exit.',
+    edge_capture_quotient: isRu ? 'Фактическое R/R относительно ожидаемого edge стратегии.' : 'Realized R/R relative to the strategy expected edge.',
+    unrealized_alpha_left: isRu ? 'Сколько потенциальной прибыли осталось незабранной до target.' : 'Potential profit left uncaptured before target.',
+    horizon_sync_rating: isRu ? 'Позиция длительности сделки внутри исторического диапазона сценария.' : 'Position of trade duration inside the historical scenario range.',
+    velocity_variance_index: isRu ? 'Скорость PnL сделки относительно средней скорости стратегии.' : 'Trade PnL velocity relative to the strategy average velocity.'
+  };
+
+  const formulas: Record<string, string> = {
+    net_result_variance: 'Trade PnL - Avg Strategy PnL',
+    yield_efficiency: '(Trade PnL / Balance Before Trade) * 100',
+    profit_velocity: 'Trade PnL / Duration Hours',
+    actual_vs_target_rr: 'Target Distance / Stop Distance',
+    planned_vs_realized_risk: 'max(Planned Stop Risk, Realized Loss)',
+    temporal_exposure: 'Exit Timestamp - Entry Timestamp',
+    asset_protocol: 'Side + Asset',
+    stop_loss_distance: 'abs(Entry - Stop Loss) / Entry * 100',
+    take_profit_distance: 'abs(Take Profit - Entry) / Entry * 100',
+    sl_execution_drag: 'Losing Exit - Stop Loss Zone',
+    risk_budget_adherence: 'Worst Risk / Risk Budget * 100',
+    tp_capture_ratio: 'Captured Target Distance / Planned Target Distance * 100',
+    edge_capture_quotient: 'Realized RR / Expected RR',
+    unrealized_alpha_left: 'Planned Target PnL - Realized PnL',
+    horizon_sync_rating: '(Duration - Scenario Min) / Scenario Range * 100',
+    velocity_variance_index: 'Trade Velocity / Avg Strategy Velocity'
+  };
+
+  const benchmarks: Record<string, string> = {
+    risk_budget_adherence: isRu ? '<= 100% значит риск в лимите.' : '<= 100% means risk is inside budget.',
+    tp_capture_ratio: isRu ? 'Выше значение значит лучше захват target.' : 'Higher value means better target capture.',
+    actual_vs_target_rr: isRu ? 'Сравнивается с target R/R стратегии.' : 'Compared against the strategy target R/R.',
+    temporal_exposure: isRu ? 'Сравнивается с историческим диапазоном длительности.' : 'Compared with the historical duration range.',
+    stop_loss_distance: isRu ? 'Показывает ширину stop относительно entry.' : 'Shows stop width relative to entry.',
+    take_profit_distance: isRu ? 'Показывает target distance относительно entry.' : 'Shows target distance relative to entry.'
+  };
+
+  return { labels, descriptions, formulas, benchmarks };
+});
+
+const getAdvancedMetricLabel = (id: string) => advancedMetricCopy.value.labels[id] || id;
+
+const getAdvancedMetricTooltip = (id: string) => ({
+  description: advancedMetricCopy.value.descriptions[id] || (locale.value === 'ru'
+    ? 'Advanced метрика из отчета сделки.'
+    : 'Advanced metric from the trade report.'),
+  formula: advancedMetricCopy.value.formulas[id] || '',
+  benchmark: advancedMetricCopy.value.benchmarks[id] || ''
+});
+
+const SCORE_PATTERN_EXCLUDED_METRICS = new Set([
+  'required_adherence',
+  'additional_alpha',
+  'protocol_strictness',
+  'conditional_pnl_ratio',
+  'setup_complexity',
+  'cognitive_stability',
+  'dominant_bias',
+  'emotional_pnl_drag',
+  'friction_density',
+  'conditional_alpha_decay',
+  'execution_confidence_index'
+]);
+
+const scorePatternMetricConfigs = () => {
+  return correlationMetricConfigs.value.filter((metric) => {
+    if (SCORE_PATTERN_EXCLUDED_METRICS.has(metric.id)) return false;
+    if (['Matrix Adherence', 'Behavioural'].includes(metric.group)) return false;
+    return true;
+  });
+};
+
+const scorePatternQuantile = (values: number[], ratio: number) => {
+  if (!values.length) return Number.NaN;
+  const sorted = values.slice().sort((a, b) => a - b);
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)));
+  return sorted[index];
+};
+
+const formatScoreMetricPatternValue = (value: number | string, format: CorrelationMetricFormat) => {
+  if (typeof value === 'string') return value;
+  if (!Number.isFinite(value)) return 'N/A';
+  if (format === 'duration') {
+    if (value >= 24) return `${(value / 24).toFixed(value >= 240 ? 0 : 1)}d`;
+    return `${value.toFixed(value >= 10 ? 0 : 1)}h`;
+  }
+  if (format === 'percent') return `${value.toFixed(value >= 10 ? 0 : 1)}%`;
+  if (format === 'currency') return formatCurrency(value);
+  if (format === 'ratio') return value.toFixed(value >= 10 ? 1 : 2);
+  if (format === 'count' || format === 'score') return value.toFixed(value >= 10 ? 0 : 1);
+  return value.toFixed(value >= 10 ? 1 : 2);
+};
+
+const buildMajorityScorePatterns = (useProfitablePatterns: boolean) => {
+  const pool = tradeScoreSourceTrades.value.filter((trade: any) => {
+    const pnl = getNormalizedPnl(trade);
+    return useProfitablePatterns ? pnl > 0 : pnl < 0;
+  });
+  if (!pool.length) return [];
+
+  return scorePatternMetricConfigs()
+    .map((metric) => {
+      if (metric.kind === 'category') {
+        const counts = new Map<string, number>();
+        pool.forEach((trade: any) => {
+          const raw = metric.extract(trade);
+          const value = String(raw || '').trim();
+          if (!value || value === 'N/A') return;
+          counts.set(value, (counts.get(value) || 0) + 1);
+        });
+        const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (!top) return null;
+        const frequency = Math.round((top[1] / pool.length) * 100);
+        if (frequency <= 50) return null;
+        return {
+          metricId: metric.id,
+          label: metric.label,
+          value: top[0],
+          frequency
+        };
+      }
+
+      const values = pool
+        .map((trade: any) => Number(metric.extract(trade)))
+        .filter((value: number) => Number.isFinite(value));
+      if (!values.length) return null;
+
+      const low = scorePatternQuantile(values, 0.2);
+      const high = scorePatternQuantile(values, 0.8);
+      if (!Number.isFinite(low) || !Number.isFinite(high)) return null;
+      const inRange = values.filter((value: number) => value >= low && value <= high).length;
+      const frequency = Math.round((inRange / pool.length) * 100);
+      if (frequency <= 50) return null;
+      const value = low === high
+        ? formatScoreMetricPatternValue(low, metric.format)
+        : `${formatScoreMetricPatternValue(low, metric.format)} - ${formatScoreMetricPatternValue(high, metric.format)}`;
+
+      return {
+        metricId: metric.id,
+        label: metric.label,
+        value,
+        frequency
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => b.frequency - a.frequency || String(a.label).localeCompare(String(b.label)))
+    .slice(0, 18);
+};
+
+const getScorePatternTooltip = (metricId: string) => {
+  if (metricId.startsWith('in_trade:')) {
+    const row = inTradeAnalysisRows.value.find((item: any) => `in_trade:${item.id}` === metricId);
+    return {
+      description: row?.hint || '',
+      formula: '',
+      benchmark: '',
+      details: row?.detail || []
+    };
+  }
+
+  return {
+    ...getAdvancedMetricTooltip(metricId),
+    details: []
+  };
+};
 
 const resolvedRiskManagement = computed(() => {
   return resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, props.trade?.strategyId);
@@ -2507,11 +2720,11 @@ const visibleInTradeAnalysisRows = computed(() => {
 });
 
 const advancedMetricTabs = computed(() => [
-  { id: 'all', label: 'All', count: 37 },
-  { id: 'adherence', label: 'Matrix Adherence', count: 5 },
-  { id: 'behavioural', label: 'Behavioural', count: 5 },
-  { id: 'execution', label: 'Execution & Risk', count: 8 },
-  { id: 'strategy_execution', label: 'Strategy vs. Execution', count: 9 },
+  { id: 'all', label: locale.value === 'ru' ? 'Все' : 'All', count: 37 },
+  { id: 'adherence', label: locale.value === 'ru' ? 'Matrix adherence' : 'Matrix Adherence', count: 5 },
+  { id: 'behavioural', label: locale.value === 'ru' ? 'Поведение' : 'Behavioural', count: 5 },
+  { id: 'execution', label: locale.value === 'ru' ? 'Исполнение и риск' : 'Execution & Risk', count: 8 },
+  { id: 'strategy_execution', label: locale.value === 'ru' ? 'Стратегия vs исполнение' : 'Strategy vs. Execution', count: 9 },
   { id: 'in_trade', label: studyMetricText.value.sectionTitle, count: inTradeAnalysisRows.value.length }
 ]);
 
@@ -2871,36 +3084,36 @@ const getInTradeMetricValueForCorrelation = (trade: any, id: string): number | s
 
 const correlationMetricConfigs = computed<CorrelationMetricConfig[]>(() => {
   const base: CorrelationMetricConfig[] = [
-    { id: 'required_adherence', label: 'Required_Adherence', group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
-    { id: 'additional_alpha', label: 'Additional_Alpha', group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
-    { id: 'protocol_strictness', label: 'Protocol_Strictness', group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
-    { id: 'conditional_pnl_ratio', label: 'Conditional_PnL_Ratio', group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
+    { id: 'required_adherence', label: getAdvancedMetricLabel('required_adherence'), group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
+    { id: 'additional_alpha', label: getAdvancedMetricLabel('additional_alpha'), group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
+    { id: 'protocol_strictness', label: getAdvancedMetricLabel('protocol_strictness'), group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
+    { id: 'conditional_pnl_ratio', label: getAdvancedMetricLabel('conditional_pnl_ratio'), group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
       const conditions = getRuleCountForMetric(trade);
       return conditions > 0 ? getTradePnlValue(trade) / conditions : getTradePnlValue(trade);
     } },
-    { id: 'setup_complexity', label: 'Setup_Complexity', group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
-    { id: 'cognitive_stability', label: 'Cognitive_Stability', group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
-    { id: 'dominant_bias', label: 'Dominant_Bias', group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
-    { id: 'emotional_pnl_drag', label: 'Emotional_PnL_Drag', group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - ((strategyStats.value.avgPnl || 0) * 1.15) : 0 },
-    { id: 'friction_density', label: 'Friction_Density', group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
-    { id: 'net_result_variance', label: 'Net_Result_Variance', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (strategyStats.value.avgPnl || 0) },
-    { id: 'yield_efficiency', label: 'Yield_Efficiency', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
-    { id: 'profit_velocity', label: 'Profit_Velocity', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
-    { id: 'actual_vs_target_rr', label: 'Actual_vs_Target_RR', group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
-    { id: 'planned_vs_realized_risk', label: 'Planned_vs_Realized_Risk', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
-    { id: 'temporal_exposure', label: 'Temporal_Exposure', group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
-    { id: 'asset_protocol', label: 'Asset_Protocol', group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
-    { id: 'stop_loss_distance', label: 'Stop_Loss_Distance', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
-    { id: 'take_profit_distance', label: 'Take_Profit_Distance', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
-    { id: 'sl_execution_drag', label: 'SL_Execution_Drag', group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
-    { id: 'risk_budget_adherence', label: 'Risk_Budget_Adherence', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
-    { id: 'tp_capture_ratio', label: 'TP_Capture_Ratio', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
-    { id: 'edge_capture_quotient', label: 'Edge_Capture_Quotient', group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
-    { id: 'unrealized_alpha_left', label: 'Unrealized_Alpha_Left', group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
-    { id: 'horizon_sync_rating', label: 'Horizon_Sync_Rating', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
-    { id: 'velocity_variance_index', label: 'Velocity_Variance_Index', group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
-    { id: 'conditional_alpha_decay', label: 'Conditional_Alpha_Decay', group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
-    { id: 'execution_confidence_index', label: 'Execution_Confidence_Index', group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
+    { id: 'setup_complexity', label: getAdvancedMetricLabel('setup_complexity'), group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
+    { id: 'cognitive_stability', label: getAdvancedMetricLabel('cognitive_stability'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
+    { id: 'dominant_bias', label: getAdvancedMetricLabel('dominant_bias'), group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
+    { id: 'emotional_pnl_drag', label: getAdvancedMetricLabel('emotional_pnl_drag'), group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - ((strategyStats.value.avgPnl || 0) * 1.15) : 0 },
+    { id: 'friction_density', label: getAdvancedMetricLabel('friction_density'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
+    { id: 'net_result_variance', label: getAdvancedMetricLabel('net_result_variance'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (strategyStats.value.avgPnl || 0) },
+    { id: 'yield_efficiency', label: getAdvancedMetricLabel('yield_efficiency'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
+    { id: 'profit_velocity', label: getAdvancedMetricLabel('profit_velocity'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
+    { id: 'actual_vs_target_rr', label: getAdvancedMetricLabel('actual_vs_target_rr'), group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
+    { id: 'planned_vs_realized_risk', label: getAdvancedMetricLabel('planned_vs_realized_risk'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
+    { id: 'temporal_exposure', label: getAdvancedMetricLabel('temporal_exposure'), group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
+    { id: 'asset_protocol', label: getAdvancedMetricLabel('asset_protocol'), group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
+    { id: 'stop_loss_distance', label: getAdvancedMetricLabel('stop_loss_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
+    { id: 'take_profit_distance', label: getAdvancedMetricLabel('take_profit_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
+    { id: 'sl_execution_drag', label: getAdvancedMetricLabel('sl_execution_drag'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
+    { id: 'risk_budget_adherence', label: getAdvancedMetricLabel('risk_budget_adherence'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
+    { id: 'tp_capture_ratio', label: getAdvancedMetricLabel('tp_capture_ratio'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
+    { id: 'edge_capture_quotient', label: getAdvancedMetricLabel('edge_capture_quotient'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
+    { id: 'unrealized_alpha_left', label: getAdvancedMetricLabel('unrealized_alpha_left'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
+    { id: 'horizon_sync_rating', label: getAdvancedMetricLabel('horizon_sync_rating'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
+    { id: 'velocity_variance_index', label: getAdvancedMetricLabel('velocity_variance_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
+    { id: 'conditional_alpha_decay', label: getAdvancedMetricLabel('conditional_alpha_decay'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
+    { id: 'execution_confidence_index', label: getAdvancedMetricLabel('execution_confidence_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
   ];
 
   const inTradeConfigs = inTradeAnalysisRows.value.map((metric: any): CorrelationMetricConfig => ({
@@ -3281,57 +3494,33 @@ const handleAdvancedMetricGridClick = (event: MouseEvent) => {
   if (metric) openCorrelationMetric(metric.id);
 };
 
-const NODE_MAPPING_EMOTION_WEIGHTS: Record<string, number> = {
-  CONFIDENCE: 10,
-  PATIENCE: 15,
-  DISCIPLINE: 20,
-  FOMO: -20,
-  GREED: -25,
-  REVENGE: -30,
-  FEAR: -15,
-  TILT: -40,
-  ANXIETY: -15
-};
-
-const getNodeMappingEmotionScore = (trade: any) => {
-  if (!Array.isArray(trade?.emotions)) return 0;
-  return trade.emotions.reduce((sum: number, emotion: any) => {
-    const key = String(typeof emotion === 'string' ? emotion : (emotion?.name || '')).toUpperCase();
-    return sum + (NODE_MAPPING_EMOTION_WEIGHTS[key] || 0);
-  }, 0);
-};
-
-const getNodeMappingTradeScore = (trade: any) => {
-  return getNormalizedPnl(trade) + getNodeMappingEmotionScore(trade);
-};
-
 const tradeScoreBreakdown = computed(() => {
   const tr = props.trade as any;
   if (!tr) {
-    return { percentile: 0, pnlScore: 0, emotionScore: 0, rawScore: 0, comparedTrades: 0, lowerTrades: 0 };
+    return { percentile: 0, pnlScore: 0, rawScore: 0, comparedTrades: 0, lowerTrades: 0, patternMode: 'profit', patterns: [] };
   }
 
-  const pnlScore = getNormalizedPnl(tr);
-  const emotionScore = getNodeMappingEmotionScore(tr);
-  const rawScore = pnlScore + emotionScore;
-  const scoredTrades = liveTradesList.value
-    .map((trade: any) => getNodeMappingTradeScore(trade))
-    .filter((score: number) => Number.isFinite(score))
-    .sort((a: number, b: number) => a - b);
-  const lowerTrades = scoredTrades.filter((score: number) => score < rawScore).length;
-  const computedPercentile = scoredTrades.length > 0 ? Math.round((lowerTrades / scoredTrades.length) * 100) : 0;
+  const score = getUnifiedTradeScore(tr);
   const propPercentile = Number((tr as any)?.percentileRank);
-  const percentile = scoredTrades.length > 0
-    ? computedPercentile
+  const percentile = score
+    ? score.score
     : (Number.isFinite(propPercentile) ? propPercentile : 0);
+  const scoredTrades = tradeScoreSourceTrades.value
+    .map((trade: any) => getUnifiedTradeScore(trade))
+    .filter(Boolean) as NonNullable<ReturnType<typeof getUnifiedTradeScore>>[];
+  const lowerTrades = score
+    ? scoredTrades.filter((item) => item.rawScore < score.rawScore).length
+    : 0;
+  const useProfitablePatterns = percentile > 51;
 
   return {
     percentile,
-    pnlScore,
-    emotionScore,
-    rawScore,
+    pnlScore: score?.outcomeScore ?? 0,
+    rawScore: score?.rawScore ?? 0,
     comparedTrades: scoredTrades.length,
-    lowerTrades
+    lowerTrades,
+    patternMode: useProfitablePatterns ? 'profit' : 'loss',
+    patterns: buildMajorityScorePatterns(useProfitablePatterns)
   };
 });
 
@@ -4101,22 +4290,51 @@ const simpleMetricInsights = computed(() => {
                           </span>
                         </button>
 
-                        <div v-if="isTradeScoreExpanded" class="mt-3 flex flex-col border-t nier-border-primary">
-                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
-                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'PnL компонент' : 'PnL component' }}</span>
-                            <span class="text-[10px] font-mono font-black" :class="tradeScoreBreakdown.pnlScore >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'">{{ formatCurrency(tradeScoreBreakdown.pnlScore) }}</span>
-                          </div>
-                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
-                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Эмоциональная поправка' : 'Emotional adjustment' }}</span>
-                            <span class="text-[10px] font-mono font-black" :class="tradeScoreBreakdown.emotionScore >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'">{{ tradeScoreBreakdown.emotionScore >= 0 ? '+' : '' }}{{ tradeScoreBreakdown.emotionScore }}</span>
-                          </div>
-                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
-                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Итоговый raw score' : 'Final raw score' }}</span>
-                            <span class="text-[10px] font-mono font-black nier-text-primary">{{ formatCurrency(tradeScoreBreakdown.rawScore) }}</span>
-                          </div>
-                          <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
-                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ locale === 'ru' ? 'Сравнение' : 'Comparison' }}</span>
-                            <span class="text-[10px] font-mono font-black nier-text-primary">{{ tradeScoreBreakdown.lowerTrades }}/{{ tradeScoreBreakdown.comparedTrades }}</span>
+                        <div v-if="isTradeScoreExpanded" class="mt-3 flex max-h-[360px] flex-col overflow-y-auto border-t nier-border-primary pr-1">
+                          <ExTooltip
+                            v-for="pattern in tradeScoreBreakdown.patterns"
+                            :key="`${pattern.label}-${pattern.value}`"
+                            :is-dark="isDark"
+                            variant="basic"
+                          >
+                            <template #trigger>
+                              <div class="grid cursor-help grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
+                                <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ pattern.label }}</span>
+                                <span class="max-w-[220px] truncate text-right text-[10px] font-mono font-black nier-text-primary">
+                                  {{ pattern.value }}
+                                </span>
+                              </div>
+                            </template>
+                            <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col gap-2">
+                              <div>{{ getScorePatternTooltip(pattern.metricId).description }}</div>
+                              <div v-if="getScorePatternTooltip(pattern.metricId).formula" class="border-t nier-border-primary pt-2">
+                                <span class="mb-1 block text-[9px] font-black uppercase tracking-widest opacity-40">{{ locale === 'ru' ? 'Формула' : 'Formula' }}</span>
+                                <code class="block rounded bg-black/5 p-1 text-[9px] font-bold tracking-tighter nier-text-primary dark:bg-white/5">
+                                  {{ getScorePatternTooltip(pattern.metricId).formula }}
+                                </code>
+                              </div>
+                              <div v-if="getScorePatternTooltip(pattern.metricId).benchmark" class="border-t nier-border-primary pt-2">
+                                <span class="mb-1 block text-[9px] font-black uppercase tracking-widest opacity-40">{{ locale === 'ru' ? 'Benchmark' : 'Benchmark' }}</span>
+                                <span class="text-[9px] opacity-70">{{ getScorePatternTooltip(pattern.metricId).benchmark }}</span>
+                              </div>
+                              <div v-if="getScorePatternTooltip(pattern.metricId).details?.length" class="border-t nier-border-primary pt-2 text-[9px] leading-relaxed tracking-[0.14em] opacity-70">
+                                <div class="mb-1 font-black opacity-45">{{ studyMetricText.detail.data }}</div>
+                                <div class="grid grid-cols-[minmax(80px,0.55fr)_minmax(0,1fr)] gap-x-3 gap-y-1">
+                                  <template v-for="row in getScorePatternTooltip(pattern.metricId).details" :key="row.label">
+                                    <span class="opacity-45">{{ row.label }}</span>
+                                    <span class="min-w-0 break-words font-black nier-text-primary">{{ row.value }}</span>
+                                  </template>
+                                </div>
+                              </div>
+                            </div>
+                          </ExTooltip>
+                          <div v-if="tradeScoreBreakdown.patterns.length === 0" class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
+                              {{ tradeScoreBreakdown.patternMode === 'profit'
+                                ? (locale === 'ru' ? 'Паттерны прибыльных' : 'Profitable patterns')
+                                : (locale === 'ru' ? 'Паттерны убыточных' : 'Losing patterns') }}
+                            </span>
+                            <span class="text-[10px] font-mono font-black opacity-35">{{ locale === 'ru' ? 'нет majority' : 'no majority' }}</span>
                           </div>
                         </div>
                       </div>
@@ -4208,7 +4426,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Required_Adherence</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('required_adherence') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.reqRatio === 100 ? 'text-emerald-400' : 'text-amber-400'">
                                     {{ (matrixAdherenceMetrics.reqRatio || 0).toFixed(2) }}%
@@ -4247,7 +4465,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Additional_Alpha</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('additional_alpha') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.addAlpha >= 0 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ matrixAdherenceMetrics.addAlpha >= 0 ? '+' : '' }}{{ matrixAdherenceMetrics.addAlpha.toFixed(2) }}%
@@ -4286,7 +4504,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Protocol_Strictness</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('protocol_strictness') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary">
                                     {{ matrixAdherenceMetrics.strictness.toFixed(2) }} / 10
@@ -4325,7 +4543,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_PnL_Ratio</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('conditional_pnl_ratio') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="matrixAdherenceMetrics.condPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ matrixAdherenceMetrics.condPnl >= 0 ? '+' : '' }}${{ matrixAdherenceMetrics.condPnl.toFixed(2) }}
@@ -4364,7 +4582,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Setup_Complexity</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('setup_complexity') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                 <span class="text-xl font-mono font-black nier-text-primary">
                                     {{ matrixAdherenceMetrics.complexity.toFixed(2) }}x
@@ -4404,7 +4622,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Cognitive_Stability</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('cognitive_stability') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.stability >= 70 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ (behaviouralMetrics.stability || 0).toFixed(2) }}%
@@ -4443,7 +4661,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Dominant_Bias</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('dominant_bias') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-sm font-mono font-black nier-text-primary truncate">
                                     {{ behaviouralMetrics.bias.split(' ')[0] }}
@@ -4482,7 +4700,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Emotional_PnL_Drag</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('emotional_pnl_drag') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.pnlDrag >= 0 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ behaviouralMetrics.pnlDrag >= 0 ? '+' : '' }}${{ behaviouralMetrics.pnlDrag.toFixed(2) }}
@@ -4521,7 +4739,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'behavioural'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Friction_Density</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('friction_density') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black" :class="behaviouralMetrics.frictionDensity === 0 ? 'text-emerald-400' : 'text-amber-400'">
                                     {{ behaviouralMetrics.frictionDensity.toFixed(2) }}%
@@ -4564,7 +4782,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Net_Result_Variance</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('net_result_variance') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
                                     <span class="text-xl font-mono font-black" :class="props.trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'">
@@ -4606,7 +4824,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Yield_Efficiency</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('yield_efficiency') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary uppercase">{{ tradeDetailStats.yieldPct.toFixed(2) }}%</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
@@ -4644,7 +4862,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Profit_Velocity</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('profit_velocity') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary uppercase">${{ tradeDetailStats.velocity.toFixed(2) }}/h</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
@@ -4682,7 +4900,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Actual_vs_Target_RR</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('actual_vs_target_rr') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <div class="flex items-baseline space-x-2">
                                    <span class="text-xl font-mono font-black" :class="actualRR >= targetRR ? 'text-emerald-400' : 'text-amber-400'">
@@ -4724,7 +4942,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Planned_vs_Realized_Risk</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('planned_vs_realized_risk') }}</span>
                               <div class="flex flex-col justify-center space-y-1 py-1">
                                  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                                    <span class="text-lg font-mono font-black" :class="tradeRiskAudit.plannedOk ? 'text-emerald-400' : 'text-rose-400'">
@@ -4779,7 +4997,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Temporal_Exposure</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('temporal_exposure') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary uppercase flex items-baseline flex-wrap">
                                     <span v-for="(part, idx) in durationParts" :key="idx" class="inline-flex items-baseline mr-1">
@@ -4821,7 +5039,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Asset_Protocol</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('asset_protocol') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary truncate uppercase">{{ props.trade.side }} {{ enrichedTrade?.asset || 'N/A' }}</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
@@ -4857,7 +5075,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Stop_Loss_Distance</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('stop_loss_distance') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary">{{ formatRiskPercent(currentSlDistPct) }}</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
@@ -4895,7 +5113,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Take_Profit_Distance</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('take_profit_distance') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1">
                                  <span class="text-xl font-mono font-black nier-text-primary">{{ formatRiskPercent(currentTpDistPct) }}</span>
                                  <span class="text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
@@ -4933,7 +5151,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">SL_Execution_Drag</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('sl_execution_drag') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.slDrag >= 0 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ strategyExecutionMetrics.slDrag >= 0 ? '+' : '' }}${{ strategyExecutionMetrics.slDrag.toFixed(2) }}
@@ -4972,7 +5190,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Risk_Budget_Adherence</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('risk_budget_adherence') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="tradeRiskAudit.ok ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ strategyExecutionMetrics.riskBudgetRatio.toFixed(2) }}%
@@ -5021,7 +5239,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">TP_Capture_Ratio</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('tp_capture_ratio') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="Number.isFinite(strategyExecutionMetrics.tpCapture) && strategyExecutionMetrics.tpCapture === 100 ? 'text-emerald-400' : 'text-amber-400'">
                                     {{ formatRiskPercent(strategyExecutionMetrics.tpCapture) }}
@@ -5060,7 +5278,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Edge_Capture_Quotient</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('edge_capture_quotient') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.edgeQuotient >= 1 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ strategyExecutionMetrics.edgeQuotient.toFixed(2) }}x
@@ -5099,7 +5317,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Unrealized_Alpha_Left</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('unrealized_alpha_left') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="Number.isFinite(strategyExecutionMetrics.unrealizedLeft) && strategyExecutionMetrics.unrealizedLeft === 0 ? 'text-emerald-400' : 'text-amber-400'">
                                     {{ formatRiskCurrency(strategyExecutionMetrics.unrealizedLeft) }}
@@ -5138,7 +5356,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Horizon_Sync_Rating</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('horizon_sync_rating') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.horizonSync === 100 ? 'text-emerald-400' : 'text-rose-400'">
                                     {{ (strategyExecutionMetrics.horizonSync || 0).toFixed(2) }}%
@@ -5177,7 +5395,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Velocity_Variance_Index</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('velocity_variance_index') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.velocityDelta >= 1 ? 'text-emerald-400' : 'text-amber-400'">
                                     {{ strategyExecutionMetrics.velocityDelta.toFixed(2) }}x
@@ -5216,7 +5434,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Conditional_Alpha_Decay</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('conditional_alpha_decay') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.alphaDecay === 0 ? 'text-emerald-400' : 'text-rose-400'">
                                     -{{ strategyExecutionMetrics.alphaDecay }} Rules
@@ -5255,7 +5473,7 @@ const simpleMetricInsights = computed(() => {
                      <ExTooltip :is-dark="isDark" v-if="['all', 'strategy_execution'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer">
-                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">Execution_Confidence_Index</span>
+                              <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">{{ getAdvancedMetricLabel('execution_confidence_index') }}</span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span class="text-xl font-mono font-black" :class="strategyExecutionMetrics.executionGrade >= 80 ? 'text-emerald-400' : (strategyExecutionMetrics.executionGrade >= 60 ? 'text-amber-400' : 'text-rose-400')">
                                     {{ (strategyExecutionMetrics.executionGrade || 0).toFixed(2) }} / 100

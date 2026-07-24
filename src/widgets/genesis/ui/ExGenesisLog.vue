@@ -1295,6 +1295,7 @@ import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPrevie
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
 import { PATTERN_FORECAST_LIMITS } from '~/widgets/genesis/model/patternForecast'
+import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
@@ -1885,27 +1886,12 @@ const formatDistributionValue = (value: number, withMetricLabel = false) => {
 const tradeOverallScoreMap = computed(() => {
   const strategyId = selectedStrategyId.value
   const deposit = tradeStore.getInitialDeposit(strategyId) || 1000
-  const scoredTrades = distributionClosedTrades.value
-    .map((trade) => ({
-      id: String(trade?.id || ''),
-      key: String(trade?.id || '') || trade,
-      rawScore: getTradeScore(trade, deposit)
-    }))
-    .filter(item => item.key && Number.isFinite(item.rawScore))
-
-  if (scoredTrades.length === 0) return new Map<any, number>()
-  if (scoredTrades.length === 1) return new Map([[scoredTrades[0]!.key, 50]])
-
-  const rawScores = scoredTrades.map(item => item.rawScore).sort((a, b) => a - b)
-  if (rawScores[0] === rawScores[rawScores.length - 1]) {
-    return new Map(scoredTrades.map(item => [item.key, 50]))
-  }
-
-  return new Map(scoredTrades.map((item) => {
-    const lowerScores = rawScores.filter(score => score < item.rawScore).length
-    const overallScore = Math.round((lowerScores / scoredTrades.length) * 100)
-    return [item.key, Math.min(Math.max(overallScore, 0), 100)]
-  }))
+  const scoreIndex = buildTradeProfitabilityScoreIndex(distributionClosedTrades.value, deposit)
+  const scoreMap = new Map<any, number>()
+  scoreIndex.forEach((value, key) => {
+    scoreMap.set(key, value.score)
+  })
+  return scoreMap
 })
 
 const getTradeOverallScorePercent = (trade: any) => {
@@ -2893,36 +2879,8 @@ const shareCardProtocol = computed(() => {
   return label
 })
 
-const EMOTION_WEIGHTS_LOCAL = {
-  'CONFIDENCE': 10, 'PATIENCE': 15, 'DISCIPLINE': 20,
-  'FOMO': -20, 'GREED': -25, 'REVENGE': -30, 'FEAR': -15, 'TILT': -40, 'ANXIETY': -15
-} as Record<string, number>
-
 const getNormalizedPnl = (tr: any, initialDeposit = 1000) => {
-  let p = tr.profitInCurrency
-  if (p === undefined || p === null || p === 0) {
-    p = tr.result ?? tr.pnl ?? 0
-  }
-  const val = Number(p)
-  if (isNaN(val)) return 0
-  
-  if ((tr.profitInCurrency === undefined || tr.profitInCurrency === null || tr.profitInCurrency === 0) && 
-      Math.abs(val) < 100 && initialDeposit > 1000) {
-    return (val / 100) * initialDeposit
-  }
-  return val
-}
-
-const getTradeScore = (tr: any, initialDeposit = 1000) => {
-  const pnl = getNormalizedPnl(tr, initialDeposit)
-  let emotionalScore = 0
-  if (tr && tr.emotions && Array.isArray(tr.emotions)) {
-    tr.emotions.forEach((e: any) => {
-      const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
-      emotionalScore += EMOTION_WEIGHTS_LOCAL[key] || 0
-    })
-  }
-  return pnl + emotionalScore
+  return getTradePnlForScore(tr, initialDeposit)
 }
 
 const mappedTradeForAnalysis = computed(() => {
@@ -2934,10 +2892,8 @@ const mappedTradeForAnalysis = computed(() => {
 
   const stratId = t.strategyId || selectedStrategyId.value
   const deposit = tradeStore.getInitialDeposit(stratId)
-  const currentScore = getTradeScore(t, deposit)
-  const scores = allTrades.map(tr => getTradeScore(tr, deposit)).sort((a, b) => a - b)
-  const lowerScores = scores.filter(s => s < currentScore).length
-  const percentileRank = totalCount > 0 ? Math.round((lowerScores / totalCount) * 100) : 0
+  const scoreIndex = buildTradeProfitabilityScoreIndex(allTrades, deposit || 1000)
+  const percentileRank = scoreIndex.get(String(t.id || ''))?.score ?? scoreIndex.get(t)?.score ?? getTradeOverallScorePercent(t)
 
   return {
     ...t,
