@@ -487,13 +487,13 @@
              <button @click="selectedTradeId = null"
                      class="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-l border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors">
                <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 -rotate-90 whitespace-nowrap">{{ t('genesis.virtualLog.closeArchive') }}</span>
+               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 -rotate-90 whitespace-nowrap">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.closeArchive')) }}</span>
              </button>
  
              <ExPanel 
                class="!bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
                :no-shadow="true"
-               :title="t('genesis.virtualLog.archivalRecord')"
+               :title="formatArchivalFunctionalLabel(t('genesis.virtualLog.archivalRecord'))"
                :show-corners="true"
                variant="light"
              >
@@ -533,16 +533,16 @@
                   <div class="grid grid-cols-2 gap-x-8 gap-y-8 px-6 pb-6 mt-4">
                     <!-- ENTRY -->
                     <div class="flex flex-col">
-                      <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ_ВХОД' : 'AVERAGE_ENTRY' }}</span>
-                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.entryPrice') }}</span>
+                      <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ ВХОД' : 'AVERAGE ENTRY' }}</span>
+                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.entryPrice')) }}</span>
                       <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.entry)">{{ formatFullPrice(selectedTrade?.entry) }}</span>
                       <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
                     </div>
 
                     <!-- EXIT -->
                     <div class="flex flex-col">
-                      <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ_ВЫХОД' : 'AVERAGE_EXIT' }}</span>
-                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.exitPrice') }}</span>
+                      <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ ВЫХОД' : 'AVERAGE EXIT' }}</span>
+                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.exitPrice')) }}</span>
                       <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.exit)">{{ isClosedDiaryTrade(selectedTrade) ? formatFullPrice(selectedTrade?.exit) : '—' }}</span>
                       <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ isClosedDiaryTrade(selectedTrade) ? formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') : openTradeText() }}</span>
                     </div>
@@ -555,14 +555,14 @@
 
                     <!-- RISK MANAGEMENT -->
                     <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.riskExposure') }}</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.riskExposure')) }}</span>
                       <div class="flex flex-col mt-2 space-y-2">
                         <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.stopLoss') }}</span>
+                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.stopLoss')) }}</span>
                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.stopLoss) }}</span>
                         </div>
                         <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.takeProfit') }}</span>
+                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.takeProfit')) }}</span>
                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.takeProfit) }}</span>
                         </div>
                       </div>
@@ -570,18 +570,18 @@
 
                     <!-- PERFORMANCE -->
                     <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ t('genesis.virtualLog.tradeMetrics') }}</span>
+                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.tradeMetrics')) }}</span>
                       <div class="flex flex-col mt-2 space-y-2">
                          <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'НАПРАВЛЕНИЕ' : 'DIRECTION' }}</span>
+                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'НАПР.' : 'DIRECTION' }}</span>
                            <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatTradeDirection(selectedTrade) }}</span>
                          </div>
                          <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.rrRatio') }}</span>
+                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.rrRatio')) }}</span>
                            <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">1:{{ calculateRR(selectedTrade) }}</span>
                          </div>
                          <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ t('genesis.virtualLog.duration') }}</span>
+                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.duration')) }}</span>
                            <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ calculateDuration(selectedTrade) }}</span>
                          </div>
                       </div>
@@ -610,7 +610,7 @@
                       class="flex-1" 
                       @click="openNodeMap"
                     >
-                       {{ t('genesis.virtualLog.showDetails') }}
+                       {{ formatArchivalFunctionalLabel(t('genesis.virtualLog.showDetails')) }}
                     </ExButton>
                     <ExButton 
                       variant="solid" 
@@ -1313,6 +1313,7 @@ const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
 const openTradeText = () => locale.value === 'ru' ? 'НЕЗАКР. СД.' : 'OPEN TRD.'
+const formatArchivalFunctionalLabel = (value: string) => value.replace(/_/g, ' ')
 const authStore = useAuthStore()
 const {
   nodes: matrixStateNodes,
