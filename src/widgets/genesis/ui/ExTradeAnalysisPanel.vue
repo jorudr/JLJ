@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExPanel from "~/shared/ui/ExPanel.vue"
@@ -2515,6 +2515,772 @@ const advancedMetricTabs = computed(() => [
   { id: 'in_trade', label: studyMetricText.value.sectionTitle, count: inTradeAnalysisRows.value.length }
 ]);
 
+type CorrelationMetricKind = 'numeric' | 'category';
+type CorrelationMetricFormat = 'currency' | 'percent' | 'ratio' | 'duration' | 'score' | 'count' | 'text';
+
+interface CorrelationMetricConfig {
+  id: string;
+  label: string;
+  group: string;
+  kind: CorrelationMetricKind;
+  format: CorrelationMetricFormat;
+  extract: (trade: any) => number | string | null;
+}
+
+interface CorrelationPoint {
+  id: string;
+  asset: string;
+  date: string;
+  x: number;
+  y: number;
+  xLabel: string;
+  yLabel: string;
+  xPct: number;
+  yPct: number;
+}
+
+interface CorrelationBucket {
+  label: string;
+  count: number;
+  avgPnl: number;
+  winRate: number;
+  min: number;
+  max: number;
+}
+
+interface CorrelationCategoryBucket {
+  label: string;
+  count: number;
+  avgPnl: number;
+  winRate: number;
+  xPct: number;
+  trades: Array<{ id: string; asset: string; pnl: number }>;
+}
+
+interface MetricEquityCurvePoint {
+  id: string;
+  x: number;
+  metricY: number;
+  equityY: number;
+  metricValue: number;
+  metricLabel: string;
+  equity: number;
+  equityLabel: string;
+  asset: string;
+  date: string;
+}
+
+const activeCorrelationMetricId = ref<string | null>(null);
+
+const normalizeMetricLookupKey = (value: any) => String(value || '')
+  .trim()
+  .replace(/\s+/g, '_')
+  .toUpperCase();
+
+const getTradePnlValue = (trade: any) => getNormalizedPnl(trade);
+
+const isClosedAnalysisTrade = (trade: any) => {
+  return trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open';
+};
+
+const getTradeDurationHoursForMetric = (trade: any) => {
+  const start = new Date(trade?.date || trade?.entryTime || 0).getTime();
+  const end = new Date(trade?.dateExit || trade?.exitTime || trade?.date || 0).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return Number.NaN;
+  return (end - start) / (1000 * 60 * 60);
+};
+
+const getCashPnlForMetric = (trade: any) => {
+  const value = Number(trade?.profitInCurrency ?? trade?.pnl ?? 0);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const getBalanceBeforeTradeForMetric = (trade: any) => {
+  const strategyId = trade?.strategyId || props.trade?.strategyId || '';
+  const startBalance = tradeStore.getInitialDeposit(strategyId) || 1000;
+  const currentEntryTs = new Date(trade?.date || trade?.entryTime || trade?.dateExit || Date.now()).getTime();
+  const currentTradeId = trade?.id;
+
+  return allTrades.value
+    .filter((item: any) => {
+      if (currentTradeId && item?.id === currentTradeId) return false;
+      if (!isClosedAnalysisTrade(item)) return false;
+      const tradeExitTs = new Date(item?.dateExit || item?.date || 0).getTime();
+      return tradeExitTs > 0 && tradeExitTs < currentEntryTs;
+    })
+    .reduce((balance: number, item: any) => balance + getCashPnlForMetric(item), startBalance);
+};
+
+const getTradeRrForMetric = (trade: any) => {
+  const stored = parseStudyNumber(trade?.rr ?? trade?.riskReward);
+  if (Number.isFinite(stored) && stored > 0) return stored;
+  const entry = parsePositiveTradePrice(trade?.entry);
+  const stopLoss = parsePositiveTradePrice(trade?.stopLoss);
+  const takeProfit = parsePositiveTradePrice(trade?.takeProfit);
+  const direction = getTradeDirection(trade);
+  const stopDistance = getDirectionalStopDistance(entry, stopLoss, direction);
+  const targetDistance = getDirectionalTargetDistance(entry, takeProfit, direction);
+  return Number.isFinite(stopDistance) && stopDistance > 0 && Number.isFinite(targetDistance) && targetDistance > 0
+    ? targetDistance / stopDistance
+    : Number.NaN;
+};
+
+const getPlannedStopRiskDollarsForMetric = (trade: any) => {
+  const entry = parsePositiveTradePrice(trade?.entry);
+  const stopLoss = parsePositiveTradePrice(trade?.stopLoss);
+  const stopDistance = getDirectionalStopDistance(entry, stopLoss, getTradeDirection(trade));
+  let size = parseStudyNumber(trade?.size);
+
+  if (!Number.isFinite(stopDistance)) return Number.NaN;
+  if (!Number.isFinite(size) || size <= 0) {
+    const sizeInCurrency = parseStudyNumber(trade?.sizeInCurrency);
+    if (Number.isFinite(sizeInCurrency) && sizeInCurrency > 0 && Number.isFinite(entry) && entry > 0) {
+      size = sizeInCurrency / entry;
+    }
+  }
+
+  return Number.isFinite(size) && size > 0 ? stopDistance * size : Number.NaN;
+};
+
+const getRealizedRiskDollarsForMetric = (trade: any) => {
+  const pnl = getCashPnlForMetric(trade);
+  return pnl < 0 ? Math.abs(pnl) : 0;
+};
+
+const getRiskBudgetDollarsForMetric = (trade: any) => {
+  const risk = resolvedRiskManagement.value;
+  const value = risk.riskPerTradeValue;
+  if (value === null || value === undefined) return Number.NaN;
+  if (risk.riskPerTradeUnit === '%') {
+    return (Number(value) / 100) * getBalanceBeforeTradeForMetric(trade);
+  }
+  return Number(value);
+};
+
+const getRiskBudgetRatioForMetric = (trade: any) => {
+  const budget = getRiskBudgetDollarsForMetric(trade);
+  if (!Number.isFinite(budget) || budget <= 0) return Number.NaN;
+  const planned = getPlannedStopRiskDollarsForMetric(trade);
+  const realized = getRealizedRiskDollarsForMetric(trade);
+  const worst = Math.max(Number.isFinite(planned) ? planned : 0, realized);
+  return (worst / budget) * 100;
+};
+
+const getRequiredAdherenceForMetric = (trade: any) => {
+  const required = getEntryRequiredConditionSnapshot(trade);
+  if (!required.length) return Number.NaN;
+  const executedKeys = new Set(getEntryExecutedConditions(trade).map(conditionIdentity).filter(Boolean));
+  const used = required.filter((condition: any) => executedKeys.has(conditionIdentity(condition))).length;
+  return (used / required.length) * 100;
+};
+
+const getRuleCountForMetric = (trade: any) => {
+  const scenarioRules = trade?.boardScenarioEntry?.info?.conditions;
+  if (Array.isArray(scenarioRules)) return scenarioRules.length;
+  if (Array.isArray(trade?.boardConditions)) return trade.boardConditions.length;
+  return 0;
+};
+
+const getAdditionalConditionCountForMetric = (trade: any) => {
+  const conditions = trade?.boardScenarioEntry?.info?.conditions;
+  return Array.isArray(conditions)
+    ? conditions.filter((condition: any) => condition?.info?.priority === 'ADDITIONAL' || condition?.priority === 'ADDITIONAL').length
+    : 0;
+};
+
+const getSetupComplexityForMetric = (trade: any) => {
+  const scenarioId = trade?.boardScenarioEntry?.id;
+  const counts = allTrades.value
+    .filter((item: any) => !scenarioId || item?.boardScenarioEntry?.id === scenarioId)
+    .map(getRuleCountForMetric)
+    .filter((count: number) => count > 0)
+    .sort((a: number, b: number) => a - b);
+  if (!counts.length) return Number.NaN;
+  const median = counts.length % 2
+    ? counts[(counts.length - 1) / 2]
+    : (counts[(counts.length / 2) - 1] + counts[counts.length / 2]) / 2;
+  return median > 0 ? getRuleCountForMetric(trade) / median : Number.NaN;
+};
+
+const NEGATIVE_CORRELATION_EMOTIONS = new Set([
+  'fomo', 'revenge', 'greed', 'fear', 'tilt', 'anxiety', 'boredom', 'fatigue', 'anger', 'impatience', 'frustration'
+]);
+
+const getTradeEmotionsForMetric = (trade: any) => Array.isArray(trade?.emotions)
+  ? trade.emotions.map((emotion: any) => getEmotionName(emotion))
+  : [];
+
+const getNegativeEmotionsForMetric = (trade: any) => {
+  return getTradeEmotionsForMetric(trade).filter((emotion: string) => NEGATIVE_CORRELATION_EMOTIONS.has(emotion.toLowerCase()));
+};
+
+const getCognitiveStabilityForMetric = (trade: any) => {
+  return Math.max(10, 100 - (getNegativeEmotionsForMetric(trade).length * 15));
+};
+
+const getDominantBiasForMetric = (trade: any) => {
+  const negative = getNegativeEmotionsForMetric(trade);
+  if (!negative.length) return 'None';
+  const priority = ['fomo', 'revenge', 'greed', 'fear', 'tilt', 'fatigue', 'boredom', 'frustration'];
+  const match = priority.find((item) => negative.some((emotion: string) => emotion.toLowerCase() === item));
+  return (match || negative[0]).toUpperCase();
+};
+
+const getFrictionDensityForMetric = (trade: any) => {
+  const emotions = getTradeEmotionsForMetric(trade);
+  if (!emotions.length) return 0;
+  return (getNegativeEmotionsForMetric(trade).length / emotions.length) * 100;
+};
+
+const getYieldPctForMetric = (trade: any) => {
+  const balance = getBalanceBeforeTradeForMetric(trade);
+  return balance > 0 ? (getTradePnlValue(trade) / balance) * 100 : Number.NaN;
+};
+
+const getProfitVelocityForMetric = (trade: any) => {
+  const hours = getTradeDurationHoursForMetric(trade);
+  return Number.isFinite(hours) && hours > 0 ? getTradePnlValue(trade) / hours : Number.NaN;
+};
+
+const getTpCaptureForMetric = (trade: any) => {
+  const entry = parsePositiveTradePrice(trade?.entry);
+  const exit = parsePositiveTradePrice(trade?.exit);
+  const tp = parsePositiveTradePrice(trade?.takeProfit);
+  const direction = getTradeDirection(trade);
+  const plannedDist = getDirectionalTargetDistance(entry, tp, direction);
+  const isLong = direction !== 'SHORT';
+  const actualDist = isLong ? Math.max(0, exit - entry) : Math.max(0, entry - exit);
+  return Number.isFinite(plannedDist) && plannedDist > 0 ? Math.min(100, (actualDist / plannedDist) * 100) : Number.NaN;
+};
+
+const getSlExecutionDragForMetric = (trade: any) => {
+  const entry = parsePositiveTradePrice(trade?.entry);
+  const exit = parsePositiveTradePrice(trade?.exit);
+  const stopLoss = parsePositiveTradePrice(trade?.stopLoss);
+  const pnl = getCashPnlForMetric(trade);
+  const direction = getTradeDirection(trade);
+  const isLong = direction !== 'SHORT';
+  if (!(Number.isFinite(entry) && Number.isFinite(exit) && Number.isFinite(stopLoss)) || pnl >= 0) return 0;
+  const diff = isLong ? (exit - stopLoss) : (stopLoss - exit);
+  return diff * (parseStudyNumber(trade?.size) || 1);
+};
+
+const getEdgeQuotientForMetric = (trade: any) => {
+  const expectedRR = targetRR.value || strategyStats.value.avgRR || 1;
+  const realizedRR = getTradeRrForMetric(trade);
+  return expectedRR > 0 && Number.isFinite(realizedRR) ? realizedRR / expectedRR : Number.NaN;
+};
+
+const getUnrealizedAlphaLeftForMetric = (trade: any) => {
+  const entry = parsePositiveTradePrice(trade?.entry);
+  const exit = parsePositiveTradePrice(trade?.exit);
+  const tp = parsePositiveTradePrice(trade?.takeProfit);
+  const pnl = getCashPnlForMetric(trade);
+  const direction = getTradeDirection(trade);
+  const targetDistance = getDirectionalTargetDistance(entry, tp, direction);
+  const exitDistance = Math.abs(exit - entry);
+  const size = parseStudyNumber(trade?.size) || (exitDistance > 0 ? Math.abs(pnl) / exitDistance : 0);
+  const plannedPnl = Number.isFinite(targetDistance) && size > 0 ? targetDistance * size : Number.NaN;
+  return Number.isFinite(plannedPnl) && plannedPnl > pnl ? plannedPnl - pnl : 0;
+};
+
+const getScenarioDurationRangeForMetric = (trade: any) => {
+  const scenarioId = trade?.boardScenarioEntry?.id;
+  if (!scenarioId) return { minDays: 0, maxDays: 0, count: 0 };
+  const durations = allTrades.value
+    .filter((item: any) => item?.id !== trade?.id && item?.boardScenarioEntry?.id === scenarioId)
+    .map((item: any) => getTradeDurationHoursForMetric(item) / 24)
+    .filter((days: number) => Number.isFinite(days) && days > 0)
+    .sort((a: number, b: number) => a - b);
+  if (!durations.length) return { minDays: 0, maxDays: 0, count: 0 };
+  return { minDays: durations[0], maxDays: durations[durations.length - 1], count: durations.length };
+};
+
+const getHorizonSyncForMetric = (trade: any) => {
+  const range = getScenarioDurationRangeForMetric(trade);
+  if (!range.count) return Number.NaN;
+  const days = getTradeDurationHoursForMetric(trade) / 24;
+  const span = Math.max(range.maxDays - range.minDays, 0.0001);
+  return Math.min(100, Math.max(0, ((days - range.minDays) / span) * 100));
+};
+
+const getVelocityVarianceForMetric = (trade: any) => {
+  const baseline = strategyStats.value.avgVelocity || 1;
+  const velocity = getProfitVelocityForMetric(trade);
+  return baseline > 0 && Number.isFinite(velocity) ? velocity / baseline : Number.NaN;
+};
+
+const getAlphaDecayForMetric = (trade: any) => {
+  const required = getEntryRequiredConditionSnapshot(trade);
+  if (!required.length || !getNegativeEmotionsForMetric(trade).length) return 0;
+  const executedKeys = new Set(getEntryExecutedConditions(trade).map(conditionIdentity).filter(Boolean));
+  return required.filter((condition: any) => !executedKeys.has(conditionIdentity(condition))).length;
+};
+
+const getExecutionConfidenceForMetric = (trade: any) => {
+  const adherenceScore = Number.isFinite(getRequiredAdherenceForMetric(trade)) ? getRequiredAdherenceForMetric(trade) : 100;
+  const tpScore = Number.isFinite(getTpCaptureForMetric(trade)) ? getTpCaptureForMetric(trade) : 100;
+  const riskRatio = getRiskBudgetRatioForMetric(trade);
+  const riskScore = Number.isFinite(riskRatio) ? (riskRatio <= 100 ? 100 : Math.max(0, 100 - (riskRatio - 100))) : 100;
+  const stability = getCognitiveStabilityForMetric(trade);
+  return Math.round((adherenceScore * 0.3) + (tpScore * 0.3) + (riskScore * 0.2) + (stability * 0.2));
+};
+
+const getTradeStudyMetricsForMetric = (trade: any) => trade?.tradeStudyMetrics || trade?.studyMetrics || {};
+
+const getGeneratedStudyForMetric = (trade: any) => {
+  const metrics = getTradeStudyMetricsForMetric(trade);
+  return metrics?.generatedInTradeAnalysis || trade?.generatedInTradeAnalysis || {};
+};
+
+const getStudyDurationSecondsForMetric = (trade: any, prefix: string) => {
+  const metrics = getTradeStudyMetricsForMetric(trade);
+  const days = parseStudyNumber(metrics[`${prefix}Days`]) || 0;
+  const hours = parseStudyNumber(metrics[`${prefix}Hours`]) || 0;
+  const minutes = parseStudyNumber(metrics[`${prefix}Minutes`]) || 0;
+  const seconds = parseStudyNumber(metrics[`${prefix}Seconds`]) || 0;
+  const total = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+  return total > 0 ? total : Number.NaN;
+};
+
+const getInTradeMetricValueForCorrelation = (trade: any, id: string): number | string | null => {
+  const generated = getGeneratedStudyForMetric(trade);
+  const metrics = getTradeStudyMetricsForMetric(trade);
+  if (id === 'meaningfulLossTime') {
+    const manual = getStudyDurationSecondsForMetric(trade, 'meaningfulLoss');
+    return Number.isFinite(manual) ? manual / 3600 : parseStudyNumber(generated.meaningfulLossSeconds) / 3600;
+  }
+  if (id === 'meaningfulProfitTime') {
+    const manual = getStudyDurationSecondsForMetric(trade, 'meaningfulProfit');
+    return Number.isFinite(manual) ? manual / 3600 : parseStudyNumber(generated.meaningfulProfitSeconds) / 3600;
+  }
+  if (id === 'maxMeaningfulDrawdown') return Math.abs(parseStudyNumber(generated.maxMeaningfulDrawdownPct ?? metrics.maxMeaningfulDrawdownPct));
+  if (id === 'maxFavorableExcursion') return parseStudyNumber(generated.maxFavorableExcursionPct ?? metrics.maxFavorableExcursionPct);
+  if (id === 'profitCaptureRatio') return parseStudyNumber(generated.profitCaptureRatio);
+  if (id === 'pricePathShape') return String(generated.pricePathShape || 'N/A');
+  if (id === 'firstImpulseDirection') return String(generated.firstImpulseDirection || 'N/A');
+  if (id === 'entryHeat') return parseStudyNumber(generated.entryHeatSeconds) / 3600;
+  if (id === 'adverseBeforeProfit') {
+    if (generated.adverseBeforeProfit === true) return locale.value === 'ru' ? 'Да' : 'Yes';
+    if (generated.adverseBeforeProfit === false) return locale.value === 'ru' ? 'Нет' : 'No';
+    return 'N/A';
+  }
+  if (id === 'hadNews') return metrics?.hadNews ? (locale.value === 'ru' ? 'Да' : 'Yes') : (locale.value === 'ru' ? 'Нет' : 'No');
+  return null;
+};
+
+const correlationMetricConfigs = computed<CorrelationMetricConfig[]>(() => {
+  const base: CorrelationMetricConfig[] = [
+    { id: 'required_adherence', label: 'Required_Adherence', group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
+    { id: 'additional_alpha', label: 'Additional_Alpha', group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
+    { id: 'protocol_strictness', label: 'Protocol_Strictness', group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
+    { id: 'conditional_pnl_ratio', label: 'Conditional_PnL_Ratio', group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
+      const conditions = getRuleCountForMetric(trade);
+      return conditions > 0 ? getTradePnlValue(trade) / conditions : getTradePnlValue(trade);
+    } },
+    { id: 'setup_complexity', label: 'Setup_Complexity', group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
+    { id: 'cognitive_stability', label: 'Cognitive_Stability', group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
+    { id: 'dominant_bias', label: 'Dominant_Bias', group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
+    { id: 'emotional_pnl_drag', label: 'Emotional_PnL_Drag', group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - ((strategyStats.value.avgPnl || 0) * 1.15) : 0 },
+    { id: 'friction_density', label: 'Friction_Density', group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
+    { id: 'net_result_variance', label: 'Net_Result_Variance', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (strategyStats.value.avgPnl || 0) },
+    { id: 'yield_efficiency', label: 'Yield_Efficiency', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
+    { id: 'profit_velocity', label: 'Profit_Velocity', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
+    { id: 'actual_vs_target_rr', label: 'Actual_vs_Target_RR', group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
+    { id: 'planned_vs_realized_risk', label: 'Planned_vs_Realized_Risk', group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
+    { id: 'temporal_exposure', label: 'Temporal_Exposure', group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
+    { id: 'asset_protocol', label: 'Asset_Protocol', group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
+    { id: 'stop_loss_distance', label: 'Stop_Loss_Distance', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
+    { id: 'take_profit_distance', label: 'Take_Profit_Distance', group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
+    { id: 'sl_execution_drag', label: 'SL_Execution_Drag', group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
+    { id: 'risk_budget_adherence', label: 'Risk_Budget_Adherence', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
+    { id: 'tp_capture_ratio', label: 'TP_Capture_Ratio', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
+    { id: 'edge_capture_quotient', label: 'Edge_Capture_Quotient', group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
+    { id: 'unrealized_alpha_left', label: 'Unrealized_Alpha_Left', group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
+    { id: 'horizon_sync_rating', label: 'Horizon_Sync_Rating', group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
+    { id: 'velocity_variance_index', label: 'Velocity_Variance_Index', group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
+    { id: 'conditional_alpha_decay', label: 'Conditional_Alpha_Decay', group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
+    { id: 'execution_confidence_index', label: 'Execution_Confidence_Index', group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
+  ];
+
+  const inTradeConfigs = inTradeAnalysisRows.value.map((metric: any): CorrelationMetricConfig => ({
+    id: `in_trade:${metric.id}`,
+    label: metric.label,
+    group: studyMetricText.value.sectionTitle,
+    kind: ['pricePathShape', 'firstImpulseDirection', 'adverseBeforeProfit', 'hadNews'].includes(metric.id) ? 'category' : 'numeric',
+    format: ['meaningfulLossTime', 'meaningfulProfitTime', 'entryHeat'].includes(metric.id)
+      ? 'duration'
+      : (['maxMeaningfulDrawdown', 'maxFavorableExcursion', 'profitCaptureRatio'].includes(metric.id) ? 'percent' : 'text'),
+    extract: (trade: any) => getInTradeMetricValueForCorrelation(trade, metric.id)
+  }));
+
+  return [...base, ...inTradeConfigs];
+});
+
+const correlationMetricById = computed(() => new Map(correlationMetricConfigs.value.map((metric) => [metric.id, metric])));
+const correlationMetricByLabel = computed(() => new Map(correlationMetricConfigs.value.map((metric) => [normalizeMetricLookupKey(metric.label), metric])));
+const activeCorrelationMetric = computed(() => activeCorrelationMetricId.value ? correlationMetricById.value.get(activeCorrelationMetricId.value) || null : null);
+
+const formatCorrelationMetricValue = (value: number | string | null, format: CorrelationMetricFormat) => {
+  if (value === null || value === undefined || value === '') return 'N/A';
+  if (typeof value === 'string') return value;
+  if (!Number.isFinite(value)) return 'N/A';
+  if (format === 'currency') return formatCurrency(value);
+  if (format === 'percent') return `${value.toFixed(2)}%`;
+  if (format === 'duration') {
+    if (value < 24) return `${value.toFixed(value < 2 ? 1 : 0)}h`;
+    return `${(value / 24).toFixed(value < 72 ? 1 : 0)}d`;
+  }
+  if (format === 'ratio') return `${value.toFixed(2)}x`;
+  if (format === 'score') return value.toFixed(1);
+  if (format === 'count') return String(Math.round(value));
+  return String(value);
+};
+
+const formatCorrelationRange = (min: number, max: number, format: CorrelationMetricFormat) => {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return 'N/A';
+  if (Math.abs(max - min) < 0.000001) return formatCorrelationMetricValue(min, format);
+  return `${formatCorrelationMetricValue(min, format)} - ${formatCorrelationMetricValue(max, format)}`;
+};
+
+const getCorrelationSourceRows = (metric: CorrelationMetricConfig) => {
+  return allTrades.value
+    .filter(isClosedAnalysisTrade)
+    .map((trade: any) => {
+      const rawX = metric.extract(trade);
+      const y = getTradePnlValue(trade);
+      return {
+        trade,
+        rawX,
+        y,
+        asset: String(trade?.asset || 'UNKNOWN'),
+        date: new Date(trade?.dateExit || trade?.date || '').toLocaleDateString(),
+        timestamp: new Date(trade?.dateExit || trade?.date || 0).getTime()
+      };
+    })
+    .filter((row: any) => {
+      if (!Number.isFinite(row.y)) return false;
+      if (metric.kind === 'numeric') return Number.isFinite(Number(row.rawX));
+      return row.rawX !== null && row.rawX !== undefined && String(row.rawX) !== '' && String(row.rawX) !== 'N/A';
+    });
+};
+
+const getChartY = (value: number, min: number, max: number) => {
+  const span = Math.max(max - min, 0.000001);
+  return 92 - (((value - min) / span) * 84);
+};
+
+const buildMetricCurvePath = (points: Array<{ x: number; y: number }>) => {
+  if (points.length < 2) return '';
+  return points.reduce((path, point, index) => {
+    return index === 0 ? `M ${point.x} ${point.y}` : `${path} L ${point.x} ${point.y}`;
+  }, '');
+};
+
+const selectedMetricEquityCurve = computed(() => {
+  const metric = activeCorrelationMetric.value;
+  if (!metric) return null;
+
+  const rows = getCorrelationSourceRows(metric)
+    .filter((row: any) => Number.isFinite(row.timestamp))
+    .sort((a: any, b: any) => a.timestamp - b.timestamp);
+
+  if (rows.length < 2) return null;
+
+  const categoryIndexes = new Map<string, number>();
+  const strategyId = String(props.trade?.strategyId || 'MAIN_DIARY');
+  let equity = tradeStore.getInitialDeposit(strategyId) || 1000;
+
+  const rawPoints = rows.map((row: any, index: number) => {
+    let metricValue = Number(row.rawX);
+    let metricLabel = formatCorrelationMetricValue(row.rawX, metric.format);
+
+    if (metric.kind === 'category') {
+      const label = String(row.rawX);
+      if (!categoryIndexes.has(label)) categoryIndexes.set(label, categoryIndexes.size + 1);
+      metricValue = categoryIndexes.get(label) || 0;
+      metricLabel = label;
+    }
+
+    equity += row.y;
+
+    return {
+      id: String(row.trade?.id || `${row.asset}-${row.timestamp}-${index}`),
+      metricValue,
+      metricLabel,
+      equity,
+      equityLabel: formatCurrency(equity),
+      asset: row.asset,
+      date: row.date
+    };
+  }).filter((point: any) => Number.isFinite(point.metricValue) && Number.isFinite(point.equity));
+
+  if (rawPoints.length < 2) return null;
+
+  const metricValues = rawPoints.map((point) => point.metricValue);
+  const equityValues = rawPoints.map((point) => point.equity);
+  const metricMin = Math.min(...metricValues);
+  const metricMax = Math.max(...metricValues);
+  const equityMin = Math.min(...equityValues);
+  const equityMax = Math.max(...equityValues);
+  const xSpan = Math.max(rawPoints.length - 1, 1);
+
+  const points: MetricEquityCurvePoint[] = rawPoints.map((point, index) => ({
+    ...point,
+    x: (index / xSpan) * 100,
+    metricY: getChartY(point.metricValue, metricMin, metricMax),
+    equityY: getChartY(point.equity, equityMin, equityMax)
+  }));
+
+  let directMatches = 0;
+  let inverseMatches = 0;
+  let compared = 0;
+
+  for (let index = 1; index < rawPoints.length; index += 1) {
+    const metricDelta = rawPoints[index].metricValue - rawPoints[index - 1].metricValue;
+    const equityDelta = rawPoints[index].equity - rawPoints[index - 1].equity;
+    if (Math.abs(metricDelta) < 0.000001 || Math.abs(equityDelta) < 0.000001) continue;
+    compared += 1;
+    if (Math.sign(metricDelta) === Math.sign(equityDelta)) directMatches += 1;
+    else inverseMatches += 1;
+  }
+
+  const directScore = compared > 0 ? (directMatches / compared) * 100 : 0;
+  const inverseScore = compared > 0 ? (inverseMatches / compared) * 100 : 0;
+  const relationshipMode = metric.kind === 'category'
+    ? 'GROUP'
+    : (directScore >= inverseScore ? 'DIRECT' : 'INVERSE');
+  const relationshipScore = metric.kind === 'category'
+    ? Number.NaN
+    : Math.round(Math.max(directScore, inverseScore));
+
+  return {
+    metric,
+    points,
+    equityPath: buildMetricCurvePath(points.map((point) => ({ x: point.x, y: point.equityY }))),
+    metricPath: buildMetricCurvePath(points.map((point) => ({ x: point.x, y: point.metricY }))),
+    relationshipMode,
+    relationshipScore,
+    compared
+  };
+});
+
+const calculatePearson = (pairs: Array<{ x: number; y: number }>) => {
+  if (pairs.length < 3) return Number.NaN;
+  const avgX = pairs.reduce((sum, item) => sum + item.x, 0) / pairs.length;
+  const avgY = pairs.reduce((sum, item) => sum + item.y, 0) / pairs.length;
+  const numerator = pairs.reduce((sum, item) => sum + ((item.x - avgX) * (item.y - avgY)), 0);
+  const denomX = Math.sqrt(pairs.reduce((sum, item) => sum + Math.pow(item.x - avgX, 2), 0));
+  const denomY = Math.sqrt(pairs.reduce((sum, item) => sum + Math.pow(item.y - avgY, 2), 0));
+  return denomX > 0 && denomY > 0 ? numerator / (denomX * denomY) : Number.NaN;
+};
+
+const buildCorrelationBuckets = (rows: Array<{ x: number; y: number }>, format: CorrelationMetricFormat): CorrelationBucket[] => {
+  if (!rows.length) return [];
+  const sorted = [...rows].sort((a, b) => a.x - b.x);
+  const bucketCount = Math.min(4, sorted.length);
+  return Array.from({ length: bucketCount }, (_, index) => {
+    const start = Math.floor((index / bucketCount) * sorted.length);
+    const end = Math.floor(((index + 1) / bucketCount) * sorted.length);
+    const slice = sorted.slice(start, Math.max(start + 1, end));
+    const avgPnl = slice.reduce((sum, item) => sum + item.y, 0) / slice.length;
+    const wins = slice.filter((item) => item.y > 0).length;
+    const min = Math.min(...slice.map((item) => item.x));
+    const max = Math.max(...slice.map((item) => item.x));
+    return {
+      label: formatCorrelationRange(min, max, format),
+      count: slice.length,
+      avgPnl,
+      winRate: (wins / slice.length) * 100,
+      min,
+      max
+    };
+  });
+};
+
+const buildCorrelationCategoryBuckets = (rows: Array<{ rawX: any; y: number; trade: any; asset: string }>): CorrelationCategoryBucket[] => {
+  const grouped = new Map<string, Array<{ rawX: any; y: number; trade: any; asset: string }>>();
+  rows.forEach((row) => {
+    const key = String(row.rawX);
+    grouped.set(key, [...(grouped.get(key) || []), row]);
+  });
+  const buckets = Array.from(grouped.entries())
+    .map(([label, items]) => {
+      const avgPnl = items.reduce((sum, item) => sum + item.y, 0) / items.length;
+      const wins = items.filter((item) => item.y > 0).length;
+      return {
+        label,
+        count: items.length,
+        avgPnl,
+        winRate: (wins / items.length) * 100,
+        xPct: 0,
+        trades: items.slice(0, 4).map((item) => ({ id: String(item.trade?.id || item.asset), asset: item.asset, pnl: item.y }))
+      };
+    })
+    .sort((a, b) => b.avgPnl - a.avgPnl)
+    .slice(0, 8);
+  return buckets.map((bucket, index) => ({
+    ...bucket,
+    xPct: buckets.length <= 1 ? 50 : 8 + ((index / (buckets.length - 1)) * 84)
+  }));
+};
+
+const selectedCorrelationAnalysis = computed(() => {
+  const metric = activeCorrelationMetric.value;
+  if (!metric) return null;
+  const sourceRows = getCorrelationSourceRows(metric);
+
+  if (metric.kind === 'category') {
+    const buckets = buildCorrelationCategoryBuckets(sourceRows as any);
+    const best = buckets[0] || null;
+    const worst = buckets[buckets.length - 1] || null;
+    return {
+      mode: 'category',
+      metric,
+      sampleSize: sourceRows.length,
+      buckets,
+      best,
+      worst,
+      points: [],
+      trend: null,
+      correlation: Number.NaN,
+      xMin: 0,
+      xMax: 0,
+      yMin: Math.min(0, ...sourceRows.map((row: any) => row.y)),
+      yMax: Math.max(0, ...sourceRows.map((row: any) => row.y))
+    };
+  }
+
+  const numericRows = sourceRows.map((row: any) => ({ ...row, x: Number(row.rawX) }));
+  const xs = numericRows.map((row) => row.x);
+  const ys = numericRows.map((row) => row.y);
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const yMinRaw = Math.min(0, ...ys);
+  const yMaxRaw = Math.max(0, ...ys);
+  const yPadding = Math.max((yMaxRaw - yMinRaw) * 0.08, 1);
+  const yMin = yMinRaw - yPadding;
+  const yMax = yMaxRaw + yPadding;
+  const xSpan = Math.max(xMax - xMin, 0.000001);
+  const ySpan = Math.max(yMax - yMin, 0.000001);
+  const correlation = calculatePearson(numericRows);
+  const avgX = numericRows.reduce((sum, row) => sum + row.x, 0) / Math.max(1, numericRows.length);
+  const avgY = numericRows.reduce((sum, row) => sum + row.y, 0) / Math.max(1, numericRows.length);
+  const varianceX = numericRows.reduce((sum, row) => sum + Math.pow(row.x - avgX, 2), 0);
+  const covariance = numericRows.reduce((sum, row) => sum + ((row.x - avgX) * (row.y - avgY)), 0);
+  const slope = varianceX > 0 ? covariance / varianceX : 0;
+  const intercept = avgY - (slope * avgX);
+  const trendStartY = (slope * xMin) + intercept;
+  const trendEndY = (slope * xMax) + intercept;
+
+  const points: CorrelationPoint[] = numericRows.map((row) => ({
+    id: String(row.trade?.id || `${row.asset}-${row.date}`),
+    asset: row.asset,
+    date: row.date,
+    x: row.x,
+    y: row.y,
+    xLabel: formatCorrelationMetricValue(row.x, metric.format),
+    yLabel: formatCurrency(row.y),
+    xPct: ((row.x - xMin) / xSpan) * 100,
+    yPct: 100 - (((row.y - yMin) / ySpan) * 100)
+  }));
+  const buckets = buildCorrelationBuckets(numericRows, metric.format);
+  const best = [...buckets].sort((a, b) => b.avgPnl - a.avgPnl)[0] || null;
+  const worst = [...buckets].sort((a, b) => a.avgPnl - b.avgPnl)[0] || null;
+
+  return {
+    mode: 'numeric',
+    metric,
+    sampleSize: numericRows.length,
+    buckets,
+    best,
+    worst,
+    points,
+    trend: {
+      x1: 0,
+      y1: 100 - (((trendStartY - yMin) / ySpan) * 100),
+      x2: 100,
+      y2: 100 - (((trendEndY - yMin) / ySpan) * 100)
+    },
+    correlation,
+    xMin,
+    xMax,
+    yMin,
+    yMax
+  };
+});
+
+const correlationStrengthLabel = computed(() => {
+  const analysis = selectedCorrelationAnalysis.value;
+  if (!analysis || analysis.mode !== 'numeric' || !Number.isFinite(analysis.correlation)) return 'N/A';
+  const abs = Math.abs(analysis.correlation);
+  if (abs >= 0.55) return locale.value === 'ru' ? 'сильная' : 'strong';
+  if (abs >= 0.25) return locale.value === 'ru' ? 'умеренная' : 'moderate';
+  return locale.value === 'ru' ? 'слабая' : 'weak';
+});
+
+const correlationVerdict = computed(() => {
+  const analysis = selectedCorrelationAnalysis.value;
+  if (!analysis) return '';
+  const metric = analysis.metric.label.replace(/_/g, ' ');
+  if (analysis.mode === 'category') {
+    if (!analysis.best) return locale.value === 'ru' ? 'Недостаточно данных для группировки.' : 'Not enough data for grouping.';
+    return locale.value === 'ru'
+      ? `Лучший результат у группы ${analysis.best.label}: средняя прибыль ${formatCurrency(analysis.best.avgPnl)}.`
+      : `${analysis.best.label} has the strongest result: average PnL ${formatCurrency(analysis.best.avgPnl)}.`;
+  }
+  if (!Number.isFinite(analysis.correlation) || analysis.sampleSize < 3) {
+    return locale.value === 'ru'
+      ? `Для ${metric} пока недостаточно точек, чтобы оценить связь с прибылью.`
+      : `Not enough points to judge how ${metric} relates to profit yet.`;
+  }
+  const bestRange = analysis.best?.label || 'N/A';
+  if (analysis.correlation > 0.25) {
+    return locale.value === 'ru'
+      ? `Прибыль обычно растет, когда ${metric} увеличивается. Лучший диапазон сейчас: ${bestRange}.`
+      : `Profit usually rises as ${metric} increases. The strongest range is ${bestRange}.`;
+  }
+  if (analysis.correlation < -0.25) {
+    return locale.value === 'ru'
+      ? `Прибыль обычно падает, когда ${metric} увеличивается. Лучший диапазон сейчас: ${bestRange}.`
+      : `Profit usually falls as ${metric} increases. The strongest range is ${bestRange}.`;
+  }
+  return locale.value === 'ru'
+    ? `У ${metric} нет явной линейной связи с прибылью. Лучший диапазон по факту: ${bestRange}.`
+    : `${metric} has no clear linear relationship with profit. The best observed range is ${bestRange}.`;
+});
+
+const openCorrelationMetric = (metricId: string) => {
+  if (!correlationMetricById.value.has(metricId)) return;
+  activeCorrelationMetricId.value = metricId;
+};
+
+const closeCorrelationMetric = () => {
+  activeCorrelationMetricId.value = null;
+};
+
+watch([currentPage, activeReportMetricMode], ([page, mode]) => {
+  if (page !== 3 || mode !== 'advanced') {
+    activeCorrelationMetricId.value = null;
+  }
+});
+
+const handleAdvancedMetricGridClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+  const explicit = target.closest('[data-correlation-metric-id]') as HTMLElement | null;
+  const explicitId = explicit?.dataset?.correlationMetricId;
+  if (explicitId) {
+    openCorrelationMetric(explicitId);
+    return;
+  }
+
+  const trigger = target.closest('.group.cursor-pointer') as HTMLElement | null;
+  const label = trigger?.querySelector('span')?.textContent;
+  const metric = correlationMetricByLabel.value.get(normalizeMetricLookupKey(label));
+  if (metric) openCorrelationMetric(metric.id);
+};
+
 const NODE_MAPPING_EMOTION_WEIGHTS: Record<string, number> = {
   CONFIDENCE: 10,
   PATIENCE: 15,
@@ -3030,7 +3796,7 @@ const simpleMetricInsights = computed(() => {
     <div v-else-if="enrichedTrade" class="relative flex overflow-hidden h-full nier-text-primary">
       
       <!-- MINIMALIST NAVIGATION SIDEBAR (INTERNAL) -->
-      <div class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
+      <div v-if="!activeCorrelationMetric" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
         <div class="flex flex-col space-y-6">
           <button v-for="(tab, idx) in [
             { id: 3, label: 'REPORT', icon: 'M9 17H15M9 13H15M9 9H10M13 3H14.6C15.7201 3 16.2802 3 16.708 3.21799C17.0843 3.40973 17.3903 3.71569 17.582 4.09202C17.8 4.51984 17.8 5.07989 17.8 6.2V17.8C17.8 18.9201 17.8 19.4802 17.582 19.908C17.3903 20.2843 17.0843 20.5903 16.708 20.782C16.2802 21 15.7201 21 14.6 21H9.4C8.2798 21 7.71984 21 7.29202 20.782C6.91569 20.5903 6.60973 20.2843 6.41799 19.908C6.2 19.4802 6.2 18.9201 6.2 17.8V6.2C6.2 5.07989 6.2 4.51984 6.41799 4.09202C6.60973 3.71569 6.91569 3.40973 7.29202 3.21799C7.71984 3 8.27989 3 9.4 3H10.2M12 3V5' },
@@ -3115,9 +3881,102 @@ const simpleMetricInsights = computed(() => {
           <div class="p-3 md:p-4 flex-grow relative overflow-y-auto custom-scrollbar overflow-x-hidden">
             <Transition name="page-slide" mode="out-in">
               <!-- REPORT VIEW (MODE 3) -->
-              <div v-if="currentPage === 3" :key="'report'" class="min-h-full flex flex-col p-4 space-y-6">
+              <div
+                v-if="currentPage === 3"
+                :key="'report'"
+                :class="activeCorrelationMetric ? 'relative h-full min-h-0 overflow-hidden' : 'relative min-h-full flex flex-col p-4 space-y-6'"
+              >
+                <div
+                  v-if="activeCorrelationMetric && selectedCorrelationAnalysis"
+                  class="absolute inset-0 z-30 flex h-full min-h-0 flex-col overflow-hidden bg-[#f7f5ef]/95 p-4 text-black backdrop-blur-xl dark:bg-[#080806]/95 dark:text-white md:p-5"
+                >
+                  <div class="mb-4 flex shrink-0 items-center gap-4">
+                    <button
+                      type="button"
+                      class="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-black/15 transition-all duration-300 hover:bg-black hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-black"
+                      :title="locale === 'ru' ? 'Назад' : 'Back'"
+                      @click="closeCorrelationMetric"
+                    >
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 18l-6-6 6-6"></path>
+                      </svg>
+                    </button>
+
+                    <div class="min-w-0">
+                      <h2 class="truncate font-serif text-2xl italic leading-tight tracking-normal md:text-3xl">
+                        {{ selectedCorrelationAnalysis.metric.label.replaceAll('_', ' ') }}
+                      </h2>
+                    </div>
+
+                    <div
+                      v-if="selectedMetricEquityCurve"
+                      class="ml-auto shrink-0 font-mono text-[10px] font-black uppercase tracking-[0.22em] opacity-65"
+                    >
+                      {{ selectedMetricEquityCurve.relationshipMode }}
+                      <span v-if="Number.isFinite(selectedMetricEquityCurve.relationshipScore)">
+                        {{ selectedMetricEquityCurve.relationshipScore }}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="relative min-h-0 flex-1 overflow-hidden border border-black/10 bg-white/35 p-3 dark:border-white/10 dark:bg-black/20 md:p-4">
+                      <svg v-if="selectedMetricEquityCurve" class="block h-full w-full overflow-hidden" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <line v-for="tick in [20, 40, 60, 80]" :key="`x-${tick}`" :x1="tick" :x2="tick" y1="0" y2="100" stroke="currentColor" stroke-width="0.08" opacity="0.1"></line>
+                        <line v-for="tick in [20, 40, 60, 80]" :key="`y-${tick}`" x1="0" x2="100" :y1="tick" :y2="tick" stroke="currentColor" stroke-width="0.08" opacity="0.1"></line>
+                        <line x1="0" x2="100" y1="100" y2="100" stroke="currentColor" stroke-width="0.16" opacity="0.24"></line>
+                        <line x1="0" x2="0" y1="0" y2="100" stroke="currentColor" stroke-width="0.16" opacity="0.24"></line>
+                        <path
+                          :d="selectedMetricEquityCurve.equityPath"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.35"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          opacity="0.92"
+                          vector-effect="non-scaling-stroke"
+                        ></path>
+                        <path
+                          :d="selectedMetricEquityCurve.metricPath"
+                          fill="none"
+                          class="stroke-emerald-500 dark:stroke-emerald-400"
+                          stroke-width="1.15"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-dasharray="4 3"
+                          opacity="0.88"
+                          vector-effect="non-scaling-stroke"
+                        ></path>
+                        <g v-for="point in selectedMetricEquityCurve.points" :key="point.id">
+                          <circle
+                            :cx="point.x"
+                            :cy="point.equityY"
+                            r="1.15"
+                            class="fill-white stroke-black dark:fill-black dark:stroke-white"
+                            stroke-width="0.7"
+                            opacity="0.7"
+                            vector-effect="non-scaling-stroke"
+                          >
+                            <title>{{ point.asset }} // capital {{ point.equityLabel }} // {{ point.date }}</title>
+                          </circle>
+                          <circle
+                            :cx="point.x"
+                            :cy="point.metricY"
+                            r="0.95"
+                            class="fill-emerald-500 dark:fill-emerald-400"
+                            opacity="0.74"
+                            vector-effect="non-scaling-stroke"
+                          >
+                            <title>{{ point.asset }} // metric {{ point.metricLabel }} // {{ point.date }}</title>
+                          </circle>
+                        </g>
+                      </svg>
+                      <div v-else class="flex h-full items-center justify-center font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-35">
+                        Not enough data
+                      </div>
+                  </div>
+                </div>
                 <!-- Temporal Verification -->
-                <div class="flex flex-col space-y-6 w-full p-4 md:p-6">
+                <div v-if="!activeCorrelationMetric" class="flex flex-col space-y-6 w-full p-4 md:p-6">
                    <div class="flex flex-col space-y-3">
                       <div class="flex justify-between items-center text-[9px] font-mono opacity-30 uppercase tracking-[0.2em] nier-text-primary">
                          <span>Execution_Duration</span>
@@ -3344,7 +4203,7 @@ const simpleMetricInsights = computed(() => {
                   </button>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4" @click="handleAdvancedMetricGridClick">
                      <!-- TAB A: MATRIX ADHERENCE METRICS -->
                      <ExTooltip :is-dark="isDark" v-if="['all', 'adherence'].includes(activeMetricTab)" variant="basic">
                         <template #trigger>
@@ -4441,7 +5300,7 @@ const simpleMetricInsights = computed(() => {
                        variant="basic"
                      >
                         <template #trigger>
-                           <div class="flex flex-col space-y-1 group cursor-pointer">
+                           <div class="flex flex-col space-y-1 group cursor-pointer" :data-correlation-metric-id="`in_trade:${metric.id}`">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">
                                  {{ metric.label }}
                               </span>

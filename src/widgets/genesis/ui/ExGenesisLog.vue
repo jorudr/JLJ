@@ -263,6 +263,16 @@
         </div>
       </div>
 
+      <!-- STRATEGY TREE LAYER -->
+      <div
+        v-if="viewType === 'tree'"
+        class="absolute inset-0 z-40 overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
+      >
+        <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
+        <ExGenesisTree @open-trade-archive="handleTreeOpenTrade" />
+      </div>
+
       <!-- PNL DISTRIBUTION LAYER -->
       <div
         v-if="viewType === 'distribution'"
@@ -380,6 +390,29 @@
                </svg>
                <div v-if="viewType === 'distribution'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
             </button>
+
+            <button @click="viewType = 'tree'"
+                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
+                    :class="viewType === 'tree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
+                    :title="locale === 'ru' ? 'Дерево стратегии' : 'Strategy tree'">
+               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
+                    :class="viewType === 'tree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  <path d="M12 4v5"></path>
+                  <path d="M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+                  <path d="M6 15v3"></path>
+                  <path d="M18 15v3"></path>
+                  <circle cx="12" cy="4" r="2"></circle>
+                  <circle cx="6" cy="19" r="2"></circle>
+                  <circle cx="18" cy="19" r="2"></circle>
+               </svg>
+               <div v-if="viewType === 'tree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
+            </button>
          </div>
       </div>
 
@@ -446,7 +479,7 @@
     <!-- TACTICAL PROTOCOL INSIGHT (FIXED RIGHT - ARCHIVE) -->
     <Teleport to="body">
        <Transition name="panel-slide" mode="out-in">
-          <div v-if="selectedTrade && !showExtraDetails && !showNodeMap && !isTradeEntryOpen && !isTimeTreeFullscreen" 
+          <div v-if="selectedTrade && !showExtraDetails && !showNodeMap && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'" 
                key="trade-archive-insight"
                class="fixed right-12 top-1/2 -translate-y-1/2 w-[440px] z-[10005] transition-colors duration-500 shadow-[16px_16px_0_0_rgba(0,0,0,0.25)] dark:shadow-[16px_16px_0_0_rgba(0,0,0,0.5)]">
              
@@ -975,7 +1008,7 @@
     </div>
 
     <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen" class="absolute bottom-14 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <div v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'" class="absolute bottom-14 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
        
        <!-- The Dropdown Menu -->
 
@@ -1256,6 +1289,7 @@ import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
+import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
@@ -1452,7 +1486,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution'>('cube')
+const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution' | 'tree'>('cube')
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
@@ -1505,6 +1539,11 @@ const handleOpenTrade = (payload: { tradeId: string }) => {
   showExtraDetails.value = false
   showNodeMap.value = false
   emit('openTrade', payload)
+}
+
+const handleTreeOpenTrade = (trade: { id?: string }) => {
+  if (!trade?.id) return
+  handleOpenTrade({ tradeId: trade.id })
 }
 
 watch(showNodeMap, (val) => {
