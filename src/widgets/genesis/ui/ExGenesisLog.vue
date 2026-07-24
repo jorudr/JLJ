@@ -1312,6 +1312,7 @@ const emit = defineEmits(['exit', 'nodeMapState', 'hudState', 'openNote', 'openT
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
+const numberLocale = computed(() => locale.value === 'ru' ? 'ru-RU' : 'en-US')
 const openTradeText = () => locale.value === 'ru' ? 'НЕЗАКР. СД.' : 'OPEN TRD.'
 const formatArchivalFunctionalLabel = (value: string) => value.replace(/_/g, ' ')
 const authStore = useAuthStore()
@@ -1384,12 +1385,12 @@ const tradeDuration = computed(() => {
 
 const tradeEntryPrice = computed(() => {
   if (!selectedTrade.value || selectedTrade.value.entry === undefined) return '$0.00'
-  return `$${Number(selectedTrade.value.entry).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `$${Number(selectedTrade.value.entry).toLocaleString(numberLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 })
 
 const tradeExitPrice = computed(() => {
   if (!selectedTrade.value || selectedTrade.value.exit === undefined) return '$0.00'
-  return `$${Number(selectedTrade.value.exit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `$${Number(selectedTrade.value.exit).toLocaleString(numberLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 })
 
 const EMOTION_WEIGHTS_STABILITY = {
@@ -1431,7 +1432,7 @@ const tradeNetResult = computed(() => {
   if (!selectedTrade.value) return '+$0.00'
   const profit = selectedTrade.value.profitInCurrency || 0
   const sign = profit >= 0 ? '+' : '-'
-  const absProfit = Math.abs(profit).toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const absProfit = Math.abs(profit).toLocaleString(numberLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return `${sign}$${absProfit}`
 })
 
@@ -1604,9 +1605,9 @@ const formatFullPrice = (value: unknown) => {
 }
 
 const formatOptionalTradePrice = (value: unknown) => {
-  if (value === undefined || value === null || value === '') return 'NaN'
+  if (value === undefined || value === null || value === '') return '—'
   const number = Number(value)
-  if (!Number.isFinite(number) || number === 0) return 'NaN'
+  if (!Number.isFinite(number) || number === 0) return '—'
   return Number.isInteger(number) ? String(number) : number.toString()
 }
 
@@ -1870,7 +1871,7 @@ const distributionClosedTrades = computed(() => {
 
 const formatDistributionCurrency = (value: number) => {
   const sign = value > 0 ? '+' : ''
-  return `${sign}$${value.toLocaleString(undefined, {
+  return `${sign}$${value.toLocaleString(numberLocale.value, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })}`
@@ -3468,6 +3469,7 @@ const chronologicalPathNodes = computed(() => {
 })
 
 let rafId: number
+let isLogComponentMounted = false
 const update = () => {
   if (viewType.value === 'distribution') {
     renderDistributionChart()
@@ -3492,19 +3494,23 @@ const update = () => {
     return
   }
 
-  if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-    if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
-      canvas.width = canvas.clientWidth
-      canvas.height = canvas.clientHeight
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const width = canvas.clientWidth
+  const height = canvas.clientHeight
+  if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+    if (width > 0 && height > 0) {
+      canvas.width = Math.floor(width * dpr)
+      canvas.height = Math.floor(height * dpr)
     }
   }
 
-  const w = canvas.width, h = canvas.height
+  const w = width, h = height
   if (w === 0 || h === 0) {
     rafId = requestAnimationFrame(update)
     return
   }
 
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, w, h)
 
   if (revealProgress.value < 1) {
@@ -3910,6 +3916,7 @@ const handleDistributionWheel = (e: WheelEvent) => {
 }
 
 onMounted(async () => {
+  isLogComponentMounted = true
   window.addEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.addEventListener('keydown', handleGlobalKeydown)
   isMatrixLoading.value = true
@@ -3917,15 +3924,21 @@ onMounted(async () => {
     ensureMatrixDataRestored(),
     tradeStore.init()
   ])
+  if (!isLogComponentMounted) return
   isMatrixLoading.value = false
   initTrades()
   switchFace(0)
   update()
 })
 onUnmounted(() => { 
+  isLogComponentMounted = false
   window.removeEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.removeEventListener('keydown', handleGlobalKeydown)
   clearTimeTreeFullscreenHintTimer()
+  if (cubeSearchTimeout) {
+    clearTimeout(cubeSearchTimeout)
+    cubeSearchTimeout = null
+  }
   clearCubeRevealAnimation()
   cancelAnimationFrame(rafId) 
 })
