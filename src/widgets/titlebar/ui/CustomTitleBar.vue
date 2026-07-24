@@ -1,5 +1,6 @@
 <template>
   <div 
+    v-if="isTauri"
     v-show="!isFullscreen"
     @mousedown="startDrag"
     class="titlebar-panel h-10 select-none flex justify-end items-center fixed top-0 left-0 right-0 z-[99999] transition-colors"
@@ -39,6 +40,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 const appWindow = ref(null)
 const isFullscreen = useState('isFullscreen', () => false)
+const isTauri = ref(false)
 let unlistenResize = null
 
 const handleKeydown = async (e) => {
@@ -54,9 +56,12 @@ const handleKeydown = async (e) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown)
+  if (!window.__TAURI_INTERNALS__) return
+
   try {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     appWindow.value = getCurrentWindow()
+    isTauri.value = true
     isFullscreen.value = await appWindow.value.isFullscreen()
     
     // Automatically track fullscreen state changes
@@ -65,8 +70,8 @@ onMounted(async () => {
         isFullscreen.value = await appWindow.value.isFullscreen()
       }
     })
-  } catch (error) {
-    console.error('Tauri API not available', error)
+  } catch {
+    isTauri.value = false
   }
 })
 
