@@ -563,16 +563,24 @@ const allTrades = computed(() => {
   );
 });
 
+function isClosedAnalysisTrade(trade: any) {
+  return trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open';
+}
+
+const closedAllTrades = computed(() => allTrades.value.filter(isClosedAnalysisTrade));
+
 const getNormalizedPnl = (tr: any) => {
   return getTradePnlForScore(tr, initialBalance.value);
 };
 
 const tradeScoreSourceTrades = computed(() => {
-  const list = [...allTrades.value];
+  const list = [...closedAllTrades.value];
+  if (!props.trade?.id || !isClosedAnalysisTrade(props.trade)) return list;
+
   const idx = list.findIndex(t => t.id === props.trade?.id);
   if (idx !== -1) {
     list[idx] = { ...list[idx], ...props.trade } as any;
-  } else if (props.trade?.id) {
+  } else {
     list.push(props.trade as any);
   }
   return list;
@@ -698,12 +706,40 @@ const SCORE_PATTERN_EXCLUDED_METRICS = new Set([
   'execution_confidence_index'
 ]);
 
+const scorePatternInTradeMetricConfigs = (): CorrelationMetricConfig[] => {
+  const text = studyMetricText.value;
+  const specs: Array<{ id: string; kind: CorrelationMetricKind; format: CorrelationMetricFormat }> = [
+    { id: 'meaningfulLossTime', kind: 'numeric', format: 'duration' },
+    { id: 'meaningfulProfitTime', kind: 'numeric', format: 'duration' },
+    { id: 'maxMeaningfulDrawdown', kind: 'numeric', format: 'percent' },
+    { id: 'maxFavorableExcursion', kind: 'numeric', format: 'percent' },
+    { id: 'profitCaptureRatio', kind: 'numeric', format: 'percent' },
+    { id: 'pricePathShape', kind: 'category', format: 'text' },
+    { id: 'firstImpulseDirection', kind: 'category', format: 'text' },
+    { id: 'entryHeat', kind: 'numeric', format: 'duration' },
+    { id: 'adverseBeforeProfit', kind: 'category', format: 'text' },
+    { id: 'hadNews', kind: 'category', format: 'text' }
+  ];
+
+  return specs.map((spec) => ({
+    id: `in_trade:${spec.id}`,
+    label: text.labels[spec.id as keyof typeof text.labels] || spec.id,
+    group: text.sectionTitle,
+    kind: spec.kind,
+    format: spec.format,
+    extract: (trade: any) => getInTradeMetricValueForCorrelation(trade, spec.id)
+  }));
+};
+
 const scorePatternMetricConfigs = () => {
-  return correlationMetricConfigs.value.filter((metric) => {
+  const baseMetrics = correlationMetricConfigs.value.filter((metric) => {
+    if (metric.id.startsWith('in_trade:')) return false;
     if (SCORE_PATTERN_EXCLUDED_METRICS.has(metric.id)) return false;
     if (['Matrix Adherence', 'Behavioural'].includes(metric.group)) return false;
     return true;
   });
+
+  return [...baseMetrics, ...scorePatternInTradeMetricConfigs()];
 };
 
 const scorePatternQuantile = (values: number[], ratio: number) => {
@@ -1400,7 +1436,7 @@ const currentTpDistPct = computed(() => {
 
 const strategyStats = computed(() => {
   if (!props.trade?.strategyId) return { avgPnl: 0, avgDuration: 0, avgRR: 0, avgVelocity: 0, avgAdherence: 0, avgSlDistPct: 0, avgTpDistPct: 0 };
-  const trades = allTrades.value;
+  const trades = closedAllTrades.value;
   if (trades.length === 0) return { avgPnl: 0, avgDuration: 0, avgRR: 0, avgVelocity: 0, avgAdherence: 0, avgSlDistPct: 0, avgTpDistPct: 0 };
   
   const totalPnl = trades.reduce((acc, t) => acc + (t.profitInCurrency || t.result || 0), 0);
@@ -2794,10 +2830,6 @@ const normalizeMetricLookupKey = (value: any) => String(value || '')
 
 const getTradePnlValue = (trade: any) => getNormalizedPnl(trade);
 
-const isClosedAnalysisTrade = (trade: any) => {
-  return trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open';
-};
-
 const getTradeDurationHoursForMetric = (trade: any) => {
   const start = new Date(trade?.date || trade?.entryTime || 0).getTime();
   const end = new Date(trade?.dateExit || trade?.exitTime || trade?.date || 0).getTime();
@@ -2905,7 +2937,7 @@ const getAdditionalConditionCountForMetric = (trade: any) => {
 
 const getSetupComplexityForMetric = (trade: any) => {
   const scenarioId = trade?.boardScenarioEntry?.id;
-  const counts = allTrades.value
+  const counts = closedAllTrades.value
     .filter((item: any) => !scenarioId || item?.boardScenarioEntry?.id === scenarioId)
     .map(getRuleCountForMetric)
     .filter((count: number) => count > 0)
@@ -3002,7 +3034,7 @@ const getUnrealizedAlphaLeftForMetric = (trade: any) => {
 const getScenarioDurationRangeForMetric = (trade: any) => {
   const scenarioId = trade?.boardScenarioEntry?.id;
   if (!scenarioId) return { minDays: 0, maxDays: 0, count: 0 };
-  const durations = allTrades.value
+  const durations = closedAllTrades.value
     .filter((item: any) => item?.id !== trade?.id && item?.boardScenarioEntry?.id === scenarioId)
     .map((item: any) => getTradeDurationHoursForMetric(item) / 24)
     .filter((days: number) => Number.isFinite(days) && days > 0)
@@ -3867,8 +3899,8 @@ const simpleMetricInsights = computed(() => {
   if (!tr) return [];
 
   const currentPnl = getNormalizedPnl(tr);
-  const sameStrategyTrades = allTrades.value.filter((trade: any) => trade?.id !== tr.id);
-  const baselineTrades = sameStrategyTrades.length > 0 ? sameStrategyTrades : allTrades.value;
+  const sameStrategyTrades = closedAllTrades.value.filter((trade: any) => trade?.id !== tr.id);
+  const baselineTrades = sameStrategyTrades.length > 0 ? sameStrategyTrades : closedAllTrades.value;
   const normalizedPnls = baselineTrades
     .map((trade: any) => getNormalizedPnl(trade))
     .filter((value: number) => Number.isFinite(value));
