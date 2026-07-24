@@ -613,7 +613,7 @@ const advancedMetricCopy = computed(() => {
     asset_protocol: isRu ? 'Протокол актива' : 'Asset_Protocol',
     stop_loss_distance: isRu ? 'Дистанция stop loss' : 'Stop_Loss_Distance',
     take_profit_distance: isRu ? 'Дистанция take profit' : 'Take_Profit_Distance',
-    sl_execution_drag: isRu ? 'SL execution drag' : 'SL_Execution_Drag',
+    sl_execution_drag: isRu ? 'Проскальзывание stop loss' : 'Stop_Loss_Execution_Drag',
     risk_budget_adherence: isRu ? 'Соблюдение risk budget' : 'Risk_Budget_Adherence',
     tp_capture_ratio: isRu ? 'Захват take profit' : 'TP_Capture_Ratio',
     edge_capture_quotient: isRu ? 'Коэффициент edge capture' : 'Edge_Capture_Quotient',
@@ -634,7 +634,7 @@ const advancedMetricCopy = computed(() => {
     asset_protocol: isRu ? 'Сторона сделки и инструмент.' : 'Trade side and traded instrument.',
     stop_loss_distance: isRu ? 'Расстояние от entry до stop loss в процентах.' : 'Percent distance from entry to stop loss.',
     take_profit_distance: isRu ? 'Расстояние от entry до take profit в процентах.' : 'Percent distance from entry to take profit.',
-    sl_execution_drag: isRu ? 'Насколько фактический выход в убытке хуже зоны stop loss.' : 'How much a losing exit exceeded the stop-loss area.',
+    sl_execution_drag: isRu ? 'Показывает, насколько фактический выход в убыточной сделке оказался хуже расчетной зоны stop loss.' : 'Shows how much a losing exit exceeded the calculated stop-loss zone.',
     risk_budget_adherence: isRu ? 'Насколько риск сделки укладывается в risk budget.' : 'How well trade risk fits inside the risk budget.',
     tp_capture_ratio: isRu ? 'Какая часть планового target была забрана выходом.' : 'Share of the planned target captured by the exit.',
     edge_capture_quotient: isRu ? 'Фактическое R/R относительно ожидаемого edge стратегии.' : 'Realized R/R relative to the strategy expected edge.',
@@ -1813,6 +1813,8 @@ const studyMetricText = computed(() => {
       none: 'N/A'
     },
     shapes: {
+      trend_continuation: isRu ? 'Продолжение тренда' : 'Trend continuation',
+      failed_follow_through: isRu ? 'Неудачное продолжение' : 'Failed follow-through',
       CHOPPY_PATH: isRu ? 'Рваное движение' : 'Choppy path',
       NOISE_RANGE: isRu ? 'Шумовой диапазон' : 'Noise range',
       ADVERSE_THEN_RECOVERY: isRu ? 'Просадка затем восстановление' : 'Adverse then recovery',
@@ -3070,7 +3072,10 @@ const getInTradeMetricValueForCorrelation = (trade: any, id: string): number | s
   if (id === 'maxMeaningfulDrawdown') return Math.abs(parseStudyNumber(generated.maxMeaningfulDrawdownPct ?? metrics.maxMeaningfulDrawdownPct));
   if (id === 'maxFavorableExcursion') return parseStudyNumber(generated.maxFavorableExcursionPct ?? metrics.maxFavorableExcursionPct);
   if (id === 'profitCaptureRatio') return parseStudyNumber(generated.profitCaptureRatio);
-  if (id === 'pricePathShape') return String(generated.pricePathShape || 'N/A');
+  if (id === 'pricePathShape') {
+    const key = String(generated.pricePathShape || '');
+    return key ? (studyMetricText.value.shapes[key as keyof typeof studyMetricText.value.shapes] || key) : 'N/A';
+  }
   if (id === 'firstImpulseDirection') return String(generated.firstImpulseDirection || 'N/A');
   if (id === 'entryHeat') return parseStudyNumber(generated.entryHeatSeconds) / 3600;
   if (id === 'adverseBeforeProfit') {
@@ -4298,7 +4303,7 @@ const simpleMetricInsights = computed(() => {
                             variant="basic"
                           >
                             <template #trigger>
-                              <div class="grid cursor-help grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
+                              <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
                                 <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ pattern.label }}</span>
                                 <span class="max-w-[220px] truncate text-right text-[10px] font-mono font-black nier-text-primary">
                                   {{ pattern.value }}
@@ -4307,24 +4312,9 @@ const simpleMetricInsights = computed(() => {
                             </template>
                             <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col gap-2">
                               <div>{{ getScorePatternTooltip(pattern.metricId).description }}</div>
-                              <div v-if="getScorePatternTooltip(pattern.metricId).formula" class="border-t nier-border-primary pt-2">
-                                <span class="mb-1 block text-[9px] font-black uppercase tracking-widest opacity-40">{{ locale === 'ru' ? 'Формула' : 'Formula' }}</span>
-                                <code class="block rounded bg-black/5 p-1 text-[9px] font-bold tracking-tighter nier-text-primary dark:bg-white/5">
-                                  {{ getScorePatternTooltip(pattern.metricId).formula }}
-                                </code>
-                              </div>
                               <div v-if="getScorePatternTooltip(pattern.metricId).benchmark" class="border-t nier-border-primary pt-2">
                                 <span class="mb-1 block text-[9px] font-black uppercase tracking-widest opacity-40">{{ locale === 'ru' ? 'Benchmark' : 'Benchmark' }}</span>
                                 <span class="text-[9px] opacity-70">{{ getScorePatternTooltip(pattern.metricId).benchmark }}</span>
-                              </div>
-                              <div v-if="getScorePatternTooltip(pattern.metricId).details?.length" class="border-t nier-border-primary pt-2 text-[9px] leading-relaxed tracking-[0.14em] opacity-70">
-                                <div class="mb-1 font-black opacity-45">{{ studyMetricText.detail.data }}</div>
-                                <div class="grid grid-cols-[minmax(80px,0.55fr)_minmax(0,1fr)] gap-x-3 gap-y-1">
-                                  <template v-for="row in getScorePatternTooltip(pattern.metricId).details" :key="row.label">
-                                    <span class="opacity-45">{{ row.label }}</span>
-                                    <span class="min-w-0 break-words font-black nier-text-primary">{{ row.value }}</span>
-                                  </template>
-                                </div>
                               </div>
                             </div>
                           </ExTooltip>
