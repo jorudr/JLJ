@@ -29,7 +29,7 @@ const { isDark, scrollContainer } = state
 
 <template>
   <div ref="scrollContainer" 
-       class="flex flex-col items-center h-full w-full overflow-x-hidden overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-theme-bg nier-text-primary"
+       class="trade-entry-shell flex flex-col items-center h-full w-full overflow-x-hidden overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-theme-bg nier-text-primary"
        :class="{ dark: isDark }">
      <DesignVignette :is-dark="isDark" />
      
@@ -52,6 +52,18 @@ const { isDark, scrollContainer } = state
 }
 .custom-scrollbar::-webkit-scrollbar {
   display: none !important;
+}
+
+.trade-entry-shell.page-reify-enter-active,
+.trade-entry-shell.page-reify-leave-active {
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.trade-entry-shell.page-reify-enter-from,
+.trade-entry-shell.page-reify-leave-to {
+  opacity: 0 !important;
+  transform: none !important;
+  filter: none !important;
 }
 
 .nier-input {

@@ -27,11 +27,12 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
 
 <template>
 <!-- BOTTOM PANEL (NIER CHASSIS) -->
-    <Transition name="nier-fade">
-      <div v-if="!showEntryMethod" class="fixed bottom-0 mb-4 left-1/2 -translate-x-1/2 z-[1100] font-sans">
+    <Transition name="trade-footer-fade">
+      <div v-if="!showEntryMethod" class="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] mb-4 flex justify-center px-6 font-sans">
+        <div class="pointer-events-auto w-full max-w-5xl">
         
         <!-- NIER SECTOR TABS AND SWITCHER -->
-      <div class="flex justify-between items-end w-full px-2 max-w-5xl">
+      <div class="flex justify-between items-end w-full px-2">
         <div class="flex gap-0.5 bg-black/60 p-1 border-t border-l border-r border-white/30">
           <button 
             v-for="sector in sectors" 
@@ -51,16 +52,16 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
       </div>
 
       <!-- MAIN CHASSIS -->
-      <div class="relative flex items-center bg-[#0a0a0a]/80 border border-white/30 px-8 h-16 max-w-5xl w-full transition-all duration-500 ">
+      <div class="relative flex h-16 w-full items-center bg-[#0a0a0a]/80 border border-white/30 px-8">
         
         <div class="absolute inset-0 pointer-events-none opacity-[0.08] overflow-hidden">
           <div class="w-full h-px bg-white animate-scan"></div>
         </div>
 
-        <div class="flex items-center gap-10 flex-1 relative z-10">
+        <div class="relative z-10 grid w-full grid-cols-[250px_minmax(0,1fr)_240px] items-center gap-8">
           
           <!-- BLOCK: ID -->
-          <div class="flex items-center gap-5 pr-6 border-r border-white/10 shrink-0">
+          <div class="flex min-w-0 items-center gap-5 pr-6 border-r border-white/10">
             <div class="flex min-w-[150px] max-w-[220px] flex-col gap-0.5 text-left relative asset-select-container">
               <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
               <div class="flex items-center gap-2 cursor-pointer group/asset-btn" @click="showAssetMenu = true">
@@ -148,8 +149,8 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
           </div>
 
           <!-- BLOCK: DYNAMIC DATA STREAM -->
-          <div class="flex-1">
-            <Transition name="sector-swap" mode="out-in">
+          <div class="min-w-0">
+            <Transition name="trade-footer-sector-fade" mode="out-in">
               <div v-if="activeSector === 'core'" :key="'core'" class="flex items-center gap-10">
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': entryMethodEnabled }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="entryMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
@@ -283,7 +284,32 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
         <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/40 rotate-45 border border-black"></div>
 
       </div>
+        </div>
     </div>
     </Transition>
     
 </template>
+
+<style scoped>
+.trade-footer-fade-enter-active,
+.trade-footer-fade-leave-active {
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trade-footer-fade-enter-from,
+.trade-footer-fade-leave-to {
+  opacity: 0;
+  filter: blur(4px);
+}
+
+.trade-footer-sector-fade-enter-active,
+.trade-footer-sector-fade-leave-active {
+  transition: opacity 0.18s ease, filter 0.18s ease;
+}
+
+.trade-footer-sector-fade-enter-from,
+.trade-footer-sector-fade-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+}
+</style>
