@@ -152,12 +152,28 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
            </ExTooltip>
         </div>
 
-        <button @click="emit('close')" :disabled="commitState === 'loading'" class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed">
+        <button
+          @click="emit('close')"
+          :disabled="commitState === 'loading'"
+          :title="locale === 'ru' ? 'Выйти' : 'Exit'"
+          class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
            <div class="relative w-full h-full flex items-center justify-center">
-              <div class="w-4 h-4 relative">
-                 <div class="absolute inset-0 m-auto w-full h-px nier-bg-inverted rotate-45 group-hover:bg-white dark:group-hover:bg-black transition-colors duration-500"></div>
-                 <div class="absolute inset-0 m-auto w-full h-px nier-bg-inverted -rotate-45 group-hover:bg-white dark:group-hover:bg-black transition-colors duration-500"></div>
-              </div>
+              <svg
+                class="h-5 w-5 nier-text-primary transition-all duration-500 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M10 17l5-5-5-5"></path>
+                <path d="M15 12H3"></path>
+                <path d="M21 19V5a2 2 0 0 0-2-2h-6"></path>
+                <path d="M13 21h6a2 2 0 0 0 2-2"></path>
+              </svg>
            </div>
         </button>
       </div>
