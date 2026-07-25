@@ -5273,6 +5273,15 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.exforum-page-reify-leave-active {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .exforum-page-reify-enter-from,
 .exforum-page-reify-leave-to {
   opacity: 0;

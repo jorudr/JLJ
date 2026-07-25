@@ -197,15 +197,22 @@
     <main
       class="dashboard-center-stage absolute inset-0 z-10 flex items-center justify-center"
       :class="[
-        activeDashboardPanel === 'forum' || activeDashboardPanel === 'activity' ? 'px-0' : 'px-8',
+        isDashboardFullBleedPanel ? 'px-0' : 'px-8',
         activeDashboardPanel === 'activity' ? 'is-activity' : ''
       ]"
     >
-      <Transition name="dashboard-center-fade" mode="out-in">
+      <Transition
+        name="dashboard-center-fade"
+        mode="out-in"
+        @before-leave="handleDashboardCenterBeforeLeave"
+        @after-leave="handleDashboardCenterAfterLeave"
+        @leave-cancelled="handleDashboardCenterAfterLeave"
+      >
         <div
           v-if="activeDashboardPanel === 'activity'"
           key="activity-monitor"
           class="dashboard-activity-stage pointer-events-auto h-full w-full"
+          data-dashboard-panel="activity"
         >
           <ExActivityMonitor @exit="activeDashboardPanel = null" />
         </div>
@@ -214,11 +221,12 @@
           v-else-if="activeDashboardPanel === 'forum'"
           key="forum-monitor"
           class="pointer-events-auto h-full w-full"
+          data-dashboard-panel="forum"
         >
           <ExForum />
         </div>
 
-        <div v-else key="dashboard-logo" class="dashboard-core-logo pointer-events-none flex flex-col items-center text-center">
+        <div v-else key="dashboard-logo" class="dashboard-core-logo pointer-events-none flex flex-col items-center text-center" data-dashboard-panel="logo">
           <div class="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
             <div class="absolute inset-0 border-2 border-theme-text/40 animate-[spin_10s_linear_infinite]"></div>
             <div class="absolute inset-4 border border-theme-text/60 animate-[spin_6s_linear_infinite_reverse]"></div>
@@ -292,6 +300,12 @@ const menuRef = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 const showProfileOverlay = ref(false)
 const activeDashboardPanel = ref<string | null>(null)
+const isDashboardForumLeaving = ref(false)
+const isDashboardFullBleedPanel = computed(() => (
+  activeDashboardPanel.value === 'forum' ||
+  activeDashboardPanel.value === 'activity' ||
+  isDashboardForumLeaving.value
+))
 
 const toggleMenu = () => {
   if (!userMenuOpen.value && identityRef.value) {
@@ -411,6 +425,22 @@ const handleDashboardModuleClick = (moduleId: string) => {
 
   activeDashboardPanel.value = null
   emit('navigate', moduleId)
+}
+
+const getDashboardPanelFromTransitionElement = (el: Element) => (
+  (el as HTMLElement).dataset.dashboardPanel || ''
+)
+
+const handleDashboardCenterBeforeLeave = (el: Element) => {
+  if (getDashboardPanelFromTransitionElement(el) === 'forum') {
+    isDashboardForumLeaving.value = true
+  }
+}
+
+const handleDashboardCenterAfterLeave = (el: Element) => {
+  if (getDashboardPanelFromTransitionElement(el) === 'forum') {
+    isDashboardForumLeaving.value = false
+  }
 }
 
 </script>
