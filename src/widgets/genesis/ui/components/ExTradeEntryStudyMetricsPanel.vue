@@ -54,6 +54,9 @@ const copy = {
     generateChart: 'GENERATE CHART',
     cooldownButton: 'WAIT {time}',
     apiCooldownHint: 'API requests are paused for {time}. You can always generate the chart through trade edit mode.',
+    rangeTooLongButton: 'MAX 61D',
+    dateRangeLimitExceeded: 'The maximum entry-to-exit range for generated market data is 61 days. Shorten the trade duration to generate the chart.',
+    dailyTimeframeOnly: 'For trades longer than 3 days, generated market data uses daily candles only.',
     noAsset: 'Select an asset in the commit footer first',
     selectedAsset: 'Selected asset',
     generatedSource: 'Resolved API symbol',
@@ -111,6 +114,9 @@ const copy = {
     generateChart: 'СГЕНЕРИРОВАТЬ ГРАФИК',
     cooldownButton: 'ПАУЗА {time}',
     apiCooldownHint: 'API-запросы остановлены на {time}. Вы всегда можете сгенерировать график через режим редактирования сделки.',
+    rangeTooLongButton: 'МАКС. 61Д',
+    dateRangeLimitExceeded: 'Максимальный диапазон от входа до выхода для генерации рыночных данных — 61 день. Сократите длительность сделки, чтобы сгенерировать график.',
+    dailyTimeframeOnly: 'Для сделок длиннее 3 дней генерируются только дневные свечи 1D.',
     noAsset: 'Сначала выберите актив в нижнем footer с commit',
     selectedAsset: 'Выбранный актив',
     generatedSource: 'Символ API',
@@ -167,10 +173,14 @@ const studyPages = [
 
 const MINUTE_MS = 60 * 1000
 const HOUR_MS = 60 * MINUTE_MS
+const DAY_MS = 24 * HOUR_MS
 const MAX_API_CANDLES = 1000
 const API_ERROR_COOLDOWN_MS = MINUTE_MS
+const DAILY_TIMEFRAME_ONLY_AFTER_MS = 3 * DAY_MS
+const MAX_GENERATED_MARKET_DATA_RANGE_MS = 61 * DAY_MS
 
 const timeframeOptions = [
+  { id: '1d', label: '1D', durationMs: DAY_MS, binanceInterval: '1d', bybitInterval: 'D', krakenInterval: '1440', yahooInterval: '1d' },
   { id: '4h', label: '4H', durationMs: 4 * HOUR_MS, binanceInterval: '4h', bybitInterval: '240', krakenInterval: '240', yahooInterval: '60m' },
   { id: '1h', label: '1H', durationMs: HOUR_MS, binanceInterval: '1h', bybitInterval: '60', krakenInterval: '60', yahooInterval: '60m' },
   { id: '15m', label: '15M', durationMs: 15 * MINUTE_MS, binanceInterval: '15m', bybitInterval: '15', krakenInterval: '15', yahooInterval: '15m' },
@@ -277,12 +287,33 @@ const tradeDurationMs = computed(() => {
   return tradeTimeRange.value.end - tradeTimeRange.value.start
 })
 
+const isGeneratedMarketDataRangeTooLong = computed(() => {
+  const duration = tradeDurationMs.value
+  return Number.isFinite(duration) && duration > MAX_GENERATED_MARKET_DATA_RANGE_MS
+})
+
+const isDailyTimeframeOnlyRange = computed(() => {
+  const duration = tradeDurationMs.value
+  return Number.isFinite(duration) && duration > DAILY_TIMEFRAME_ONLY_AFTER_MS && !isGeneratedMarketDataRangeTooLong.value
+})
+
 const availableTimeframeOptions = computed(() => {
   const duration = tradeDurationMs.value
   if (!Number.isFinite(duration) || duration <= 0) return []
+  if (isGeneratedMarketDataRangeTooLong.value) return []
+  if (isDailyTimeframeOnlyRange.value) return timeframeOptions.filter(timeframe => timeframe.id === '1d')
   if (duration < 15 * MINUTE_MS) return timeframeOptions.filter(timeframe => timeframe.id === '1m')
-  return timeframeOptions.filter(timeframe => timeframe.id !== '1m' && duration >= timeframe.durationMs)
+  return timeframeOptions.filter(timeframe => timeframe.id !== '1m' && timeframe.id !== '1d' && duration >= timeframe.durationMs)
 })
+
+const availableTimeframeIds = computed(() => new Set(availableTimeframeOptions.value.map(timeframe => timeframe.id)))
+
+const isTimeframeSelectable = (timeframe) => availableTimeframeIds.value.has(timeframe?.id)
+
+const selectGeneratedTimeframe = (timeframe) => {
+  if (!isTimeframeSelectable(timeframe)) return
+  activeGeneratedTimeframe.value = timeframe.id
+}
 
 const apiCooldownRemainingMs = computed(() => {
   return Math.max(0, apiCooldownUntil.value - apiCooldownNow.value)
@@ -302,24 +333,26 @@ const apiCooldownHint = computed(() => {
 
 const generateMarketDataButtonLabel = computed(() => {
   if (generationState.value === 'loading') return ui().generating
+  if (isGeneratedMarketDataRangeTooLong.value) return ui().rangeTooLongButton
   if (isApiCooldownActive.value) return ui().cooldownButton.replace('{time}', apiCooldownRemainingLabel.value)
   return ui().generateChart
 })
 
 const canGenerateMarketData = computed(() => {
-  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && commitState?.value !== 'loading' && generationState.value !== 'loading' && !isApiCooldownActive.value
+  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && !isGeneratedMarketDataRangeTooLong.value && commitState?.value !== 'loading' && generationState.value !== 'loading' && !isApiCooldownActive.value
 })
 
 const generatedChartCandles = computed(() => {
+  if (!availableTimeframeIds.value.has(activeGeneratedTimeframe.value)) return []
   return generatedMarketData.value?.[activeGeneratedTimeframe.value] || []
 })
 
 const getGeneratedTimeframeIds = (candlesByTimeframe = generatedMarketData.value) => {
   const knownIds = timeframeOptions
     .map(timeframe => timeframe.id)
-    .filter(id => candlesByTimeframe?.[id]?.length)
+    .filter(id => candlesByTimeframe?.[id]?.length && availableTimeframeIds.value.has(id))
   const customIds = Object.keys(candlesByTimeframe || {})
-    .filter(id => candlesByTimeframe?.[id]?.length && !knownIds.includes(id))
+    .filter(id => candlesByTimeframe?.[id]?.length && !knownIds.includes(id) && availableTimeframeIds.value.has(id))
   return [...knownIds, ...customIds]
 }
 
@@ -335,6 +368,13 @@ const chartTimeframeOptions = computed(() => {
   const generatedIds = getGeneratedTimeframeIds()
   if (!generatedIds.length) return availableTimeframeOptions.value
   return generatedIds.map(getTimeframeOption)
+})
+
+const marketDataStatusMessage = computed(() => {
+  if (isGeneratedMarketDataRangeTooLong.value) return ui().dateRangeLimitExceeded
+  if (generationError.value) return `${ui().apiError} ${generationError.value}`
+  if (isDailyTimeframeOnlyRange.value) return ui().dailyTimeframeOnly
+  return ui().warning
 })
 
 const chartAssetHeading = computed(() => {
@@ -1878,6 +1918,7 @@ const normalizeCandlesByTimeframe = (candlesByTimeframe) => {
 
   return Object.fromEntries(
     Object.entries(candlesByTimeframe)
+      .filter(([timeframe]) => availableTimeframeIds.value.has(timeframe))
       .map(([timeframe, candles]) => [
         timeframe,
         Array.isArray(candles)
@@ -2009,6 +2050,26 @@ const generateMarketData = async () => {
   } finally {
     await nextTick()
     drawChart()
+  }
+}
+
+const reconcileGeneratedMarketDataWithDuration = () => {
+  const normalizedCandles = normalizeCandlesByTimeframe(generatedMarketData.value)
+  const currentKeys = Object.keys(generatedMarketData.value || {})
+  const normalizedKeys = Object.keys(normalizedCandles)
+
+  if (currentKeys.length !== normalizedKeys.length || currentKeys.some(key => !normalizedKeys.includes(key))) {
+    generatedMarketData.value = normalizedCandles
+    hoveredCandle.value = null
+    chartCrosshair.value = null
+  }
+
+  if (tradeStudyMetrics.value?.generatedMarketData?.candlesByTimeframe) {
+    tradeStudyMetrics.value.generatedMarketData = {
+      ...tradeStudyMetrics.value.generatedMarketData,
+      candlesByTimeframe: normalizeCandlesByTimeframe(tradeStudyMetrics.value.generatedMarketData.candlesByTimeframe),
+      activeTimeframe: activeGeneratedTimeframe.value
+    }
   }
 }
 
@@ -2476,6 +2537,7 @@ watch(side, (vector) => {
 
 watch(availableTimeframeOptions, () => {
   syncActiveGeneratedTimeframe()
+  reconcileGeneratedMarketDataWithDuration()
 }, { immediate: true })
 
 watch(
@@ -2535,7 +2597,7 @@ onBeforeUnmount(() => {
   >
     <div v-if="!generatedChartCandles.length" class="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
       <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
-        {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
+        {{ marketDataStatusMessage }}
       </p>
       <p v-if="apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
         {{ apiCooldownHint }}
@@ -2556,9 +2618,10 @@ onBeforeUnmount(() => {
           v-for="timeframe in chartTimeframeOptions"
           :key="timeframe.id"
           type="button"
-          class="text-[9px] font-mono font-black uppercase tracking-[0.18em] nier-text-primary transition-opacity hover:opacity-75"
+          class="text-[9px] font-mono font-black uppercase tracking-[0.18em] nier-text-primary transition-opacity hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-20"
           :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
-          @click="activeGeneratedTimeframe = timeframe.id"
+          :disabled="!isTimeframeSelectable(timeframe)"
+          @click="selectGeneratedTimeframe(timeframe)"
         >
           {{ timeframe.label }}
         </button>
@@ -2635,7 +2698,7 @@ onBeforeUnmount(() => {
             >
               <div v-if="!generatedChartCandles.length" class="flex min-h-[500px] flex-col items-center justify-center px-4 text-center">
                 <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
-                  {{ generationError ? `${ui().apiError} ${generationError}` : ui().warning }}
+                  {{ marketDataStatusMessage }}
                 </p>
                 <p v-if="apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
                   {{ apiCooldownHint }}
@@ -2656,9 +2719,10 @@ onBeforeUnmount(() => {
                     v-for="timeframe in chartTimeframeOptions"
                     :key="timeframe.id"
                     type="button"
-                    class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75"
+                    class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-20"
                     :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
-                    @click="activeGeneratedTimeframe = timeframe.id"
+                    :disabled="!isTimeframeSelectable(timeframe)"
+                    @click="selectGeneratedTimeframe(timeframe)"
                   >
                     {{ timeframe.label }}
                   </button>
