@@ -1,13 +1,14 @@
 <template>
-  <div
-    ref="journalWrapperRef"
-    class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-y-auto scroll-minimal relative pt-4 md:pt-6"
-    :class="{
-      'exforum-transparent-bg': isForumLightTheme,
-      'exforum-edge-shadows': showForumEdgeShadows,
-      '!overflow-hidden': isBoardFullscreen || isCreatingArticle
-    }"
-  >
+  <Transition name="exforum-page-reify" appear>
+    <div
+      ref="journalWrapperRef"
+      class="journal-wrapper force-light-theme bg-theme-bg text-theme-text h-full flex flex-col min-w-0 overflow-y-auto scroll-minimal relative pt-4 md:pt-6"
+      :class="{
+        'exforum-transparent-bg': isForumLightTheme,
+        'exforum-edge-shadows': showForumEdgeShadows,
+        '!overflow-hidden': isBoardFullscreen || isCreatingArticle
+      }"
+    >
     <Transition name="fade-slide">
       <section
         v-if="isBoardFullscreen"
@@ -2205,7 +2206,8 @@
         </div>
       </Transition>
       <input type="file" ref="globalImageInput" class="hidden" accept="image/*" @change="handleGlobalImageUpload" />
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -5261,6 +5263,35 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 <style scoped>
 .journal-wrapper {
   color: var(--text-primary);
+}
+
+.exforum-page-reify-enter-active,
+.exforum-page-reify-leave-active {
+  transition:
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exforum-page-reify-enter-from,
+.exforum-page-reify-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exforum-page-reify-enter-active,
+  .exforum-page-reify-leave-active {
+    transition: opacity 0.2s ease;
+  }
+
+  .exforum-page-reify-enter-from,
+  .exforum-page-reify-leave-to {
+    opacity: 0;
+    transform: none;
+    filter: none;
+  }
 }
 
 .article-board-tool {
