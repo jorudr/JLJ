@@ -244,7 +244,8 @@ const activeRiskManagement = computed(() => {
 
 const currentCapital = computed(() => {
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
-  const historical = tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
+  const historical = (tradeStore.getTradesForStrategy(selectedStrategyId.value) || [])
+    .filter(t => !props.initialTrade?.id || t?.id !== props.initialTrade.id)
   const totalPnl = historical
     .filter(t => t?.isClosed !== false)
     .reduce((acc, t) => acc + (Number(t.profitInCurrency) || 0), 0)
@@ -356,10 +357,12 @@ onMounted(() => {
     
     // Reverse-engineer the executions into the component's entry/exit arrays
     if (t.executions && t.executions.length > 0) {
-      const entryExecs = t.executions.filter(e => e.type === 'ENTRY')
-      const exitExecs = t.executions.filter(e => e.type === 'EXIT')
+      const entryExecs = t.executions.filter(e => String(e?.type || '').toLowerCase() === 'entry')
+      const exitExecs = t.executions.filter(e => String(e?.type || '').toLowerCase() === 'exit')
+      const usesEntryMethod = entryExecs.length > 1 || entryExecs.some(e => String(e?.label || '').toUpperCase() !== 'SINGLE')
+      const usesExitMethod = exitExecs.length > 1 || exitExecs.some(e => String(e?.label || '').toUpperCase() !== 'SINGLE')
       
-      if (entryExecs.length > 0) {
+      if (usesEntryMethod) {
         entryMethodEnabled.value = true
         activeProtocolTab.value = 'PYRAMIDING'
         entryMethodType.value = 'PYRAMIDING'
@@ -370,14 +373,14 @@ onMounted(() => {
         }))
       } else {
         entryMethodEnabled.value = false
-        entry.value = t.entry || ''
-        size.value = t.size || ''
+        entry.value = entryExecs[0]?.price || t.entry || ''
+        size.value = entryExecs[0]?.size || t.size || ''
         entryFee.value = t.entryFee || ''
       }
       
-      if (exitExecs.length > 0) {
+      if (usesExitMethod) {
         exitMethodEnabled.value = true
-        exitExecutions.value = exitExecs.map(e => ({
+        exitEntries.value = exitExecs.map(e => ({
           price: e.price,
           size: e.size,
           fee: e.fee || 0,
@@ -385,7 +388,7 @@ onMounted(() => {
         }))
       } else {
         exitMethodEnabled.value = false
-        exit.value = t.exit || ''
+        exit.value = exitExecs[0]?.price || t.exit || ''
         exitFee.value = t.exitFee || ''
       }
     } else {
@@ -1467,6 +1470,24 @@ const calculateGrossPriceMoveDollars = (entryPrice, exitPrice, quantity) => {
   return priceMove * quantity
 }
 
+const calculateTradeFeeDollars = (price, quantity, fee) => {
+  const parsedFee = parseFloat(fee)
+  if (!Number.isFinite(parsedFee) || parsedFee <= 0) return 0
+  if (feeType.value !== '%') return parsedFee
+  if (![price, quantity].every(Number.isFinite) || price <= 0 || quantity <= 0) return 0
+
+  let notional = price * quantity
+  if (currentAssetData.value?.contractSize) {
+    notional *= currentAssetData.value.contractSize
+    const assetCurrency = currentAssetData.value.currency || 'USD'
+    if (assetCurrency !== 'USD') {
+      notional /= getRate(assetCurrency)
+    }
+  }
+
+  return (notional * parsedFee) / 100
+}
+
 const riskInputViolationMessage = computed(() => {
   const e = tradeEntryPrice.value
   if (!Number.isFinite(e) || e <= 0) return null
@@ -1819,14 +1840,10 @@ const projectedProfit = computed(() => {
   const finalProfit = calculateGrossPriceMoveDollars(en, ex, sz)
   if (!Number.isFinite(finalProfit)) return null
 
-  // Deduct Fees
-  let eFee = +entryFee.value || 0
-  let xFee = +exitFee.value || 0
-  
-  if (feeType.value === '%') {
-    eFee = (en * eFee) / 100
-    xFee = (ex * xFee) / 100
-  }
+  const entryFeeSize = entryMethodEnabled.value ? totalSize.value : parseFloat(size.value)
+  const exitFeeSize = sz
+  const eFee = calculateTradeFeeDollars(en, entryFeeSize, entryFee.value)
+  const xFee = calculateTradeFeeDollars(ex, exitFeeSize, exitFee.value)
   
   return finalProfit - (eFee + xFee)
 })
@@ -2210,7 +2227,7 @@ const submit = async () => {
          type: 'exit',
          side: 'Close',
          price: parseFloat(exit.value) || 0,
-         size: parseFloat(size.value) || 0,
+         size: totalSize.value || parseFloat(size.value) || 0,
          date: cloneDate(committedExitDate),
          timeZone: committedTimeZone,
          label: 'SINGLE'

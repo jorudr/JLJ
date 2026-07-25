@@ -20,6 +20,7 @@ import {
   getSelectedStrategyVersionSnapshot
 } from '~/shared/utils/strategyVersionScope'
 import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
+import globalAssets from '~/shared/data/global_assets.json'
 
 interface Condition {
   id: string;
@@ -1410,6 +1411,93 @@ const getDirectionalTargetDistance = (entry: number, takeProfit: number, directi
   return Math.abs(takeProfit - entry);
 };
 
+const RISK_FALLBACK_RATES: Record<string, number> = {
+  EUR: 0.92,
+  GBP: 0.78,
+  JPY: 155,
+  AUD: 1.53,
+  CAD: 1.37,
+  CHF: 0.90,
+  NZD: 1.66
+};
+
+const normalizeTradeAssetSymbol = (asset: unknown) => String(asset || '').trim().toUpperCase();
+
+const getTradeAssetVariants = (asset: unknown) => {
+  const symbol = normalizeTradeAssetSymbol(asset);
+  const compact = symbol.replace(/[^A-Z0-9]/g, '');
+  const variants = new Set([symbol, compact]);
+
+  if (/^[A-Z]{6}$/.test(compact)) {
+    variants.add(`${compact.slice(0, 3)}/${compact.slice(3)}`);
+  }
+
+  return variants;
+};
+
+const resolveAnalysisAssetData = (trade: any) => {
+  const variants = getTradeAssetVariants(trade?.asset || trade?.symbol || trade?.ticker);
+  return (globalAssets as any[]).find((asset) => {
+    const symbol = normalizeTradeAssetSymbol(asset?.symbol);
+    const name = normalizeTradeAssetSymbol(asset?.name);
+    const compactSymbol = symbol.replace(/[^A-Z0-9]/g, '');
+    return variants.has(symbol) || variants.has(name) || variants.has(compactSymbol);
+  });
+};
+
+const getAnalysisConversionRate = (currency: string) => {
+  const normalized = String(currency || 'USD').toUpperCase();
+  if (normalized === 'USD') return 1;
+  try {
+    const cached = typeof localStorage !== 'undefined'
+      ? JSON.parse(localStorage.getItem('genesis_forex_rates') || '{}')
+      : {};
+    const cachedRate = Number(cached?.[normalized]);
+    if (Number.isFinite(cachedRate) && cachedRate > 0) return cachedRate;
+  } catch (error) {}
+  return RISK_FALLBACK_RATES[normalized] || 1;
+};
+
+const isAnalysisForexTrade = (trade: any) => {
+  const assetData = resolveAnalysisAssetData(trade);
+  if (assetData) return String(assetData.type || '').toLowerCase() === 'forex';
+  const symbol = normalizeTradeAssetSymbol(trade?.asset || trade?.symbol || trade?.ticker);
+  const compact = symbol.replace(/[^A-Z]/g, '');
+  return symbol.includes('/') || /^[A-Z]{6}$/.test(compact);
+};
+
+const calculateTradePriceMoveDollars = (trade: any, entryPrice: number, exitPrice: number, quantity: number) => {
+  if (![entryPrice, exitPrice, quantity].every(Number.isFinite) || quantity <= 0) return Number.NaN;
+
+  const direction = getTradeDirection(trade);
+  const priceMove = direction === 'SHORT' ? entryPrice - exitPrice : exitPrice - entryPrice;
+
+  if (isAnalysisForexTrade(trade)) {
+    const symbol = normalizeTradeAssetSymbol(trade?.asset || trade?.symbol || trade?.ticker).replace(/[^A-Z]/g, '');
+    const base = symbol.substring(0, 3);
+    const quote = symbol.substring(3, 6);
+    const isJpy = symbol.includes('JPY');
+    const pips = isJpy ? priceMove * 100 : priceMove * 10000;
+    const pipValue = quantity * 10;
+
+    if (quote === 'USD') return pips * pipValue;
+    if (isJpy) return (pips * pipValue * 100) / getAnalysisConversionRate('JPY');
+    if (base === 'USD') return (pips * pipValue) / exitPrice;
+
+    const quoteToUsdRate = 1 / getAnalysisConversionRate(quote);
+    return (pips * pipValue) * quoteToUsdRate;
+  }
+
+  const assetData = resolveAnalysisAssetData(trade);
+  if (assetData?.contractSize) {
+    const rawProfit = priceMove * quantity * Number(assetData.contractSize);
+    const assetCurrency = String(assetData.currency || 'USD').toUpperCase();
+    return assetCurrency !== 'USD' ? rawProfit / getAnalysisConversionRate(assetCurrency) : rawProfit;
+  }
+
+  return priceMove * quantity;
+};
+
 const getSlDistPct = (t: any) => {
   if (!t) return Number.NaN;
   const entry = parsePositiveTradePrice(t.entry);
@@ -1538,7 +1626,8 @@ const plannedStopRiskDollars = computed(() => {
       }
     }
     if (!isNaN(size) && size > 0) {
-      return stopDistance * size;
+      const risk = Math.abs(calculateTradePriceMoveDollars(t, entry, sl, size));
+      return Number.isFinite(risk) ? risk : stopDistance * size;
     }
   }
 
@@ -2886,7 +2975,9 @@ const getPlannedStopRiskDollarsForMetric = (trade: any) => {
     }
   }
 
-  return Number.isFinite(size) && size > 0 ? stopDistance * size : Number.NaN;
+  if (!Number.isFinite(size) || size <= 0) return Number.NaN;
+  const risk = Math.abs(calculateTradePriceMoveDollars(trade, entry, stopLoss, size));
+  return Number.isFinite(risk) ? risk : stopDistance * size;
 };
 
 const getRealizedRiskDollarsForMetric = (trade: any) => {
