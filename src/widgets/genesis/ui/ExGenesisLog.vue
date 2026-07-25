@@ -580,10 +580,6 @@
                            <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.rrRatio')) }}</span>
                            <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">1:{{ calculateRR(selectedTrade) }}</span>
                          </div>
-                         <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.duration')) }}</span>
-                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ calculateDuration(selectedTrade) }}</span>
-                         </div>
                       </div>
                     </div>
 
@@ -598,8 +594,16 @@
                          <div class="flex flex-col flex-1 space-y-1">
                             <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'ВЫХОДНАЯ' : 'EXIT' }}</span>
                             <span class="text-sm font-mono font-bold text-amber-500/80 tracking-widest">{{ getExitFeeDisplay(selectedTrade) }}</span>
-                         </div>
+                        </div>
                       </div>
+                    </div>
+
+                    <!-- DURATION -->
+                    <div class="col-span-2 flex flex-col items-center justify-center border-t border-black/5 pt-4 text-center dark:border-white/5">
+                      <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40 nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.duration')) }}</span>
+                      <span class="mt-2 inline-flex max-w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-1 break-words text-center text-base font-mono font-black tracking-[0.22em] nier-text-primary">
+                        {{ calculateDuration(selectedTrade) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2502,14 +2506,44 @@ const calculateDuration = (trade: any) => {
   if (!Number.isFinite(start) || !Number.isFinite(end)) return t('genesis.virtualLog.notAvailable')
   const diff = end - start
   if (diff < 0) return '0M'
-  
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-  
-  if (days > 0) return `${days}D ${hours % 24}H`
-  if (hours > 0) return `${hours}H ${minutes % 60}M`
-  return `${minutes}M`
+
+  const totalMinutes = Math.floor(diff / 60000)
+  if (totalMinutes < 1) return '<1M'
+
+  const totalHours = Math.floor(totalMinutes / 60)
+  const totalDays = Math.floor(totalHours / 24)
+  const totalWeeks = Math.floor(totalDays / 7)
+  const totalMonths = Math.floor(totalDays / 30)
+  const totalYears = Math.floor(totalDays / 365)
+
+  if (totalYears > 0) {
+    const remainingMonths = Math.floor((totalDays % 365) / 30)
+    return remainingMonths > 0 ? `${totalYears}Y ${remainingMonths}MO` : `${totalYears}Y`
+  }
+
+  if (totalMonths > 0) {
+    const remainingWeeks = Math.floor((totalDays % 30) / 7)
+    return remainingWeeks > 0 ? `${totalMonths}MO ${remainingWeeks}W` : `${totalMonths}MO`
+  }
+
+  if (totalWeeks >= 2) {
+    const remainingDays = totalDays % 7
+    return remainingDays > 0 ? `${totalWeeks}W ${remainingDays}D` : `${totalWeeks}W`
+  }
+
+  if (totalDays > 0) {
+    const remainingHours = totalHours % 24
+    return remainingHours > 0 ? `${totalDays}D ${remainingHours}H` : `${totalDays}D`
+  }
+
+  if (totalHours >= 6) return `${totalHours}H`
+
+  const remainingMinutes = totalMinutes % 60
+  return totalHours > 0 && remainingMinutes > 0
+    ? `${totalHours}H ${remainingMinutes}M`
+    : totalHours > 0
+      ? `${totalHours}H`
+      : `${totalMinutes}M`
 }
 
 const filterSide = ref<'ALL' | 'Long' | 'Short'>('ALL')
