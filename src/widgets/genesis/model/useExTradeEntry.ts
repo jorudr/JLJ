@@ -244,10 +244,16 @@ const activeRiskManagement = computed(() => {
 
 const currentCapital = computed(() => {
   const initialDeposit = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000
+  const referenceOpenTime = new Date(props.initialTrade?.date || props.initialTrade?.entryTime || openDate.value || Date.now()).getTime()
   const historical = (tradeStore.getTradesForStrategy(selectedStrategyId.value) || [])
     .filter(t => !props.initialTrade?.id || t?.id !== props.initialTrade.id)
+    .filter(t => {
+      if (t?.isClosed === false || String(t?.status || '').toLowerCase() === 'open') return false
+      if (!Number.isFinite(referenceOpenTime)) return true
+      const tradeExitTime = new Date(t?.dateExit || t?.exitTime || t?.date || 0).getTime()
+      return Number.isFinite(tradeExitTime) && tradeExitTime > 0 && tradeExitTime < referenceOpenTime
+    })
   const totalPnl = historical
-    .filter(t => t?.isClosed !== false)
     .reduce((acc, t) => acc + (Number(t.profitInCurrency) || 0), 0)
   return initialDeposit + totalPnl
 })
