@@ -60,9 +60,8 @@
       </div>
     </div>
 
-    <!-- 1. Header / Global Status -->
     <header class="dashboard-top-bar absolute left-6 right-6 top-1.5 z-[200] flex min-h-14 items-center justify-between px-4 py-2 backdrop-blur-md lg:left-10 lg:right-10 lg:top-2 lg:px-5">
-      <div class="flex min-w-0 items-center gap-4">
+      <div class="flex items-center gap-4">
         <ExTag class="shrink-0">v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
       </div>
 
@@ -226,6 +225,15 @@
           <ExForum />
         </div>
 
+        <div
+          v-else-if="activeDashboardPanel === 'tournament'"
+          key="tournament-monitor"
+          class="pointer-events-auto h-full w-full"
+          data-dashboard-panel="tournament"
+        >
+          <ExTournamentView @exit="activeDashboardPanel = null" />
+        </div>
+
         <div v-else key="dashboard-logo" class="dashboard-core-logo pointer-events-none flex flex-col items-center text-center" data-dashboard-panel="logo">
           <div class="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
             <div class="absolute inset-0 border-2 border-theme-text/40 animate-[spin_10s_linear_infinite]"></div>
@@ -279,6 +287,8 @@ import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 import ExForum from '~/widgets/exforum/ui/ExForum.vue'
+import ExTournamentView from '~/widgets/tournament/ui/ExTournamentView.vue'
+import { initTournamentListener } from '~/widgets/tournament/model/useTournament'
 
 const props = withDefaults(defineProps<{
   isMusicMuted?: boolean
@@ -304,6 +314,7 @@ const isDashboardForumLeaving = ref(false)
 const isDashboardFullBleedPanel = computed(() => (
   activeDashboardPanel.value === 'forum' ||
   activeDashboardPanel.value === 'activity' ||
+  activeDashboardPanel.value === 'tournament' ||
   isDashboardForumLeaving.value
 ))
 
@@ -372,6 +383,7 @@ const handleDownload = async (url: string) => {
 }
 
 onMounted(() => {
+  initTournamentListener()
   document.addEventListener('mousedown', handleOutsideClick)
 
   unsubUpdate = onSnapshot(doc(db, 'app_settings', 'update_notification'), (docSnap) => {
@@ -410,15 +422,21 @@ const dashboardModules = [
     descriptionKey: 'dashboard.descriptions.activity_monitor' 
   },
   { 
+    id: 'tournament', 
+    code: 'T3', 
+    titleKey: 'dashboard.modules.events', 
+    descriptionKey: 'dashboard.descriptions.events' 
+  },
+  { 
     id: 'genesis', 
-    code: 'G3', 
+    code: 'G4', 
     titleKey: 'dashboard.modules.genesis_protocol', 
     descriptionKey: 'dashboard.descriptions.genesis_protocol' 
   }
 ]
 
 const handleDashboardModuleClick = (moduleId: string) => {
-  if (moduleId === 'activity' || moduleId === 'forum') {
+  if (moduleId === 'activity' || moduleId === 'forum' || moduleId === 'tournament') {
     activeDashboardPanel.value = activeDashboardPanel.value === moduleId ? null : moduleId
     return
   }
@@ -528,5 +546,4 @@ const handleDashboardCenterAfterLeave = (el: Element) => {
   opacity: 0;
   transform: translateY(-6px);
 }
-
 </style>
