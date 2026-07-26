@@ -228,7 +228,7 @@
         <div
           v-else-if="activeDashboardPanel === 'tournament'"
           key="tournament-monitor"
-          class="pointer-events-auto h-full w-full flex items-center justify-center"
+          class="pointer-events-auto h-full w-full"
           data-dashboard-panel="tournament"
         >
           <ExTournamentView @exit="activeDashboardPanel = null" />
@@ -450,13 +450,15 @@ const getDashboardPanelFromTransitionElement = (el: Element) => (
 )
 
 const handleDashboardCenterBeforeLeave = (el: Element) => {
-  if (getDashboardPanelFromTransitionElement(el) === 'forum') {
+  const panel = getDashboardPanelFromTransitionElement(el)
+  if (panel === 'forum' || panel === 'tournament') {
     isDashboardForumLeaving.value = true
   }
 }
 
 const handleDashboardCenterAfterLeave = (el: Element) => {
-  if (getDashboardPanelFromTransitionElement(el) === 'forum') {
+  const panel = getDashboardPanelFromTransitionElement(el)
+  if (panel === 'forum' || panel === 'tournament') {
     isDashboardForumLeaving.value = false
   }
 }
