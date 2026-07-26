@@ -72,11 +72,11 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
            <div class="flex gap-8">
 	              <div class="flex flex-col">
 	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em]">Entry_Point</span>
-	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums" :title="formatSnapshotValue(entry)">{{ formatSnapshotValue(entry) }}</span>
+	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(entry) }}</span>
 	              </div>
 	              <div class="flex flex-col">
 	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em]">Exit_Target</span>
-	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums" :title="formatSnapshotValue(exit)">{{ formatSnapshotValue(exit) }}</span>
+	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(exit) }}</span>
 	              </div>
            </div>
 
@@ -86,11 +86,11 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
            <div class="flex gap-8">
 	              <div class="flex flex-col">
 	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-rose-500/60 font-black">Stop_Loss</span>
-	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-rose-500/80 tabular-nums" :title="formatSnapshotValue(stopLoss)">{{ formatSnapshotValue(stopLoss) }}</span>
+	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-rose-500/80 tabular-nums">{{ formatSnapshotValue(stopLoss) }}</span>
 	              </div>
 	              <div class="flex flex-col">
 	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-emerald-500/60 font-black">Take_Profit</span>
-	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-emerald-500/80 tabular-nums" :title="formatSnapshotValue(takeProfit)">{{ formatSnapshotValue(takeProfit) }}</span>
+	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-emerald-500/80 tabular-nums">{{ formatSnapshotValue(takeProfit) }}</span>
 	              </div>
            </div>
 
@@ -155,7 +155,6 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
         <button
           @click="emit('close')"
           :disabled="commitState === 'loading'"
-          :title="locale === 'ru' ? 'Выйти' : 'Exit'"
           class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
            <div class="relative w-full h-full flex items-center justify-center">

@@ -22,21 +22,21 @@
 
           <!-- Toolbar Buttons (Image Upload moved to Registry) -->
           <div class="flex items-center gap-1.5 self-center">
-              <button @click="format('bold')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition" title="Bold">
+              <button @click="format('bold')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition">
                   <b class="text-[10px] text-white/50">B</b>
               </button>
-              <button @click="format('italic')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition" title="Italic">
+              <button @click="format('italic')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition">
                   <i class="text-[10px] text-white/50">I</i>
               </button>
               <div class="w-px h-4 bg-white/5 mx-1"></div>
-              <button @click="format('formatBlock', 'h1')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition" title="Header 1">
+              <button @click="format('formatBlock', 'h1')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition">
                   <span class="text-[9px] font-black text-white/50">H1</span>
               </button>
-              <button @click="format('formatBlock', 'blockquote')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition" title="Quote">
+              <button @click="format('formatBlock', 'blockquote')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition">
                   <span class="text-[12px] font-black text-white/50">"</span>
               </button>
               <div class="w-px h-4 bg-white/5 mx-1"></div>
-              <button @click="format('insertUnorderedList')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition" title="Bullet List">
+              <button @click="format('insertUnorderedList')" class="w-7 h-7 rounded border border-white/5 bg-white/[0.03] flex items-center justify-center hover:bg-white/10 transition">
                   <svg class="w-3 h-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
               </button>
               <div class="w-px h-4 bg-white/5 mx-1"></div>
@@ -138,10 +138,10 @@
               <div class="w-px h-8 bg-white/5 mx-1"></div>
 
               <div class="flex flex-col gap-1.5">
-                <button @click="editImage(idx)" class="w-7 h-7 rounded bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-emerald-400 hover:border-emerald-400/30 hover:bg-emerald-400/5 transition-all" title="Edit">
+                <button @click="editImage(idx)" class="w-7 h-7 rounded bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-emerald-400 hover:border-emerald-400/30 hover:bg-emerald-400/5 transition-all">
                   <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
-                <button @click="removeImage(idx)" class="w-7 h-7 rounded bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-red-400 hover:border-red-400/30 hover:bg-red-400/5 transition-all" title="Remove">
+                <button @click="removeImage(idx)" class="w-7 h-7 rounded bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-red-400 hover:border-red-400/30 hover:bg-red-400/5 transition-all">
                   <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>

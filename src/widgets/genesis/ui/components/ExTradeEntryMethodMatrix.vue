@@ -244,8 +244,7 @@ watch(tradeTimeZone, (zone) => {
                     <button type="button"
                             @mousedown.prevent
                             @click="timeZoneMenuOpen = !timeZoneMenuOpen"
-                            class="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-black/35 transition-colors hover:text-black dark:text-white/35 dark:hover:text-white"
-                            :title="locale === 'ru' ? 'Открыть список часовых поясов' : 'Open time zone list'">
+                            class="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-black/35 transition-colors hover:text-black dark:text-white/35 dark:hover:text-white">
                       <svg class="h-3 w-3 transition-transform" :class="timeZoneMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 9l6 6 6-6" />
                       </svg>

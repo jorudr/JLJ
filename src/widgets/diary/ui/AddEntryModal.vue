@@ -342,7 +342,6 @@
                   @click="isAddModalOpen = false; resetEntry(); activePhase = null"
                   type="button"
                   class="w-16 h-full py-6 rounded-3xl bg-white/5 border border-white/10 text-white/40 hover:text-rose-400 hover:border-rose-500/50 hover:bg-rose-500/10 transition-all duration-500 flex items-center justify-center group"
-                  title="Discard Entry"
                 >
                   <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

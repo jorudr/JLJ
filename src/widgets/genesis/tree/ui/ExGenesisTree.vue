@@ -295,7 +295,6 @@
          @pointermove.stop
          @click.stop>
       <button class="relative flex h-11 w-11 items-center justify-center border border-white/10 bg-[#0a0a0a]/90 text-white/55 transition-colors hover:border-white/35 hover:text-white"
-              :title="t('genesis.tree.controls.resetView')"
               @click="resetView">
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
           <path d="M4 4v6h6"></path>

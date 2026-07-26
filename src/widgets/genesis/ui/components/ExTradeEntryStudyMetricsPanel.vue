@@ -2889,7 +2889,6 @@ onBeforeUnmount(() => {
               type="button"
               class="absolute left-6 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-black/35 transition-colors hover:text-black dark:text-white/35 dark:hover:text-white"
               :aria-label="ui().reset"
-              :title="ui().reset"
               @click="clearGeneratedChart"
             >
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">

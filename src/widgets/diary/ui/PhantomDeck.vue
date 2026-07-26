@@ -196,7 +196,6 @@
                  <button 
                    @click="isConditionLibraryOpen = true"
                    class="tactical-key"
-                   title="Condition Manifest"
                  >
                     <svg class="w-5 h-5 transition-all text-white/30 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -219,7 +218,6 @@
                    @click="isPositionManagerOpen = !isPositionManagerOpen"
                    class="tactical-key"
                    :class="{ 'active': isPositionManagerOpen }"
-                   title="Position Architect"
                  >
                     <svg class="w-5 h-5 transition-all" :class="isPositionManagerOpen ? 'text-black' : 'text-white/30 group-hover:text-white'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
@@ -860,7 +858,6 @@
           <button 
             @click.stop="handleCancel"
             class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 transition-all duration-500 hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/50 group"
-            title="Cancel & Close"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -878,7 +875,6 @@
               !isReadyToSave && !(!isJournalOpen && isAdvancedMode) ? 'opacity-30' : 'opacity-100',
               !isReadyToSave && !(!isJournalOpen && isAdvancedMode) ? 'pointer-events-none' : ''
             ]"
-            :title="isAdvancedMode && !isJournalOpen ? 'Continue to Journal' : 'Finalize & Deploy'"
           >
             <!-- Active Glow -->
             <div v-if="isReadyToSave || (isAdvancedMode && !isJournalOpen)" class="absolute inset-0 bg-emerald-500/10 animate-pulse rounded-xl"></div>

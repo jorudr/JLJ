@@ -30,8 +30,7 @@
         </span>
       </button>
       <button @click="state.addMatrixPage()"
-              class="h-9 w-9 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl text-[14px] font-mono font-black opacity-50 hover:opacity-100 transition-all"
-              title="Create empty strategy page">
+              class="h-9 w-9 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl text-[14px] font-mono font-black opacity-50 hover:opacity-100 transition-all">
         +
       </button>
     </div>
@@ -173,8 +172,7 @@
            :style="{ left: indicator.x + 'px', top: indicator.y + 'px', transform: 'translate(-50%, -50%)' }">
         <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100 cursor-pointer group"
              :style="{ transform: `rotate(${indicator.angle}deg)` }"
-             @click="focusNode(indicator.id)"
-             :title="'Focus ' + indicator.name">
+             @click="focusNode(indicator.id)">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="drop-shadow-sm transition-transform group-hover:scale-125" :class="isDark ? 'text-white' : 'text-black'">
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>

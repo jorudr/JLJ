@@ -746,7 +746,6 @@
         <button v-if="!showMetricsPanel && !showDistribution3D"
                 @click="syncCurrentStrategyApi"
                 :disabled="isApiSyncing"
-                :title="apiSyncButtonTitle"
                 class="group relative flex items-center justify-center w-10 h-10 text-white opacity-60 hover:opacity-100 border border-transparent hover:border-white/10 transition-all hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-25"
                 :class="isApiSyncing ? 'bg-white/10 opacity-100 border-white/20' : ''">
           <svg viewBox="0 0 24 24"

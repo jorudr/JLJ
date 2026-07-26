@@ -31,8 +31,7 @@
            <!-- HUD Toggle -->
            <button @click="isHudVisible = !isHudVisible" 
                    class="w-8 h-8 flex items-center justify-center transition-all bg-white/5 dark:bg-black/5 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
-                   :class="isHudVisible ? 'nier-text-primary' : 'text-black/40 dark:text-white/40'"
-                   title="Toggle HUD">
+                   :class="isHudVisible ? 'nier-text-primary' : 'text-black/40 dark:text-white/40'">
               <svg v-if="isHudVisible" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                  <circle cx="12" cy="12" r="3"></circle>
@@ -48,8 +47,7 @@
                    class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
                    :class="isCubeRevealAnimating
                             ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
-                   :title="locale === 'ru' ? 'Запустить анимацию сделок' : 'Run trade reveal animation'">
+                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <path d="M5 5v14l12-7z"></path>
                  <path d="M19 5v14"></path>
@@ -64,8 +62,7 @@
                    class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
                    :class="showComplianceStatus 
                             ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
-                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'"
-                   title="Toggle Compliance Status">
+                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                  <rect x="18" y="3" width="4" height="18"></rect>
                  <rect x="10" y="8" width="4" height="13"></rect>
@@ -84,10 +81,7 @@
                             ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
                             : canOpenCapitalForecast
                               ? 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'
-                              : 'bg-white/5 dark:bg-black/5 text-black/20 dark:text-white/20 hover:bg-black/10 dark:hover:bg-white/10 ring-1 ring-dashed ring-black/10 dark:ring-white/10'"
-                   :title="canOpenCapitalForecast
-                      ? 'Toggle Capital Forecast'
-                      : (locale === 'ru' ? 'Нужен премиум-доступ' : 'Premium access required')">
+                              : 'bg-white/5 dark:bg-black/5 text-black/20 dark:text-white/20 hover:bg-black/10 dark:hover:bg-white/10 ring-1 ring-dashed ring-black/10 dark:ring-white/10'">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                  <path d="M3 17l5-5 4 4 8-9"></path>
                  <path d="M17 7h3v3"></path>
@@ -393,8 +387,7 @@
 
             <button @click="viewType = 'tree'"
                     class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'tree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'"
-                    :title="locale === 'ru' ? 'Дерево стратегии' : 'Strategy tree'">
+                    :class="viewType === 'tree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
                <svg class="h-5 w-5 shrink-0 transition-all duration-700"
                     :class="viewType === 'tree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
                     viewBox="0 0 24 24"
@@ -620,7 +613,6 @@
                       variant="solid" 
                       class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
                       @click="editTrade(selectedTrade)"
-                      :title="locale === 'ru' ? 'Редактировать сделку' : 'Edit Trade'"
                     >
                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -631,7 +623,6 @@
                       variant="solid" 
                       class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
                       @click="showShareCardModal = true"
-                      :title="locale === 'ru' ? 'Сгенерировать Карточку' : 'Generate Share Card'"
                     >
                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -937,7 +928,7 @@
                       <span class="font-bold text-right tracking-wider" :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
                         {{ (Number(trade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(trade.profitInCurrency) || 0).toFixed(2) }}
                       </span>
-                      <button @click.stop="toggleNeuralTrade(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="View emotions">
+                      <button @click.stop="toggleNeuralTrade(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="expandedNeuralTrades.has(trade.id) ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
                         </svg>

@@ -16,7 +16,6 @@
               @click="emit('list-view-mode-change', 'timeTree')"
               class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
               :class="activeListViewMode === 'timeTree' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              :title="locale === 'ru' ? 'Дерево времени' : 'Time tree'"
             >
               TREE
             </button>
@@ -24,7 +23,6 @@
               @click="emit('list-view-mode-change', 'list')"
               class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
               :class="activeListViewMode === 'list' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              :title="locale === 'ru' ? 'Вертикальный список' : 'Vertical list'"
             >
               LIST
             </button>
@@ -34,7 +32,6 @@
               @click="setResultDisplayMode('currency')"
               class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
               :class="resultDisplayMode === 'currency' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              :title="locale === 'ru' ? 'Показать результат в долларах' : 'Show result in dollars'"
             >
               $
             </button>
@@ -42,16 +39,15 @@
               @click="setResultDisplayMode('percent')"
               class="h-5 min-w-5 px-1.5 border text-[10px] font-bold transition-colors"
               :class="resultDisplayMode === 'percent' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
-              :title="locale === 'ru' ? 'Показать результат в процентах' : 'Show result in percent'"
             >
               %
             </button>
           </div>
-          <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group" :title="locale === 'ru' ? 'Монохром' : 'Monochrome'">
+          <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-black dark:border-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 nier-bg-inverted transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
-          <button @click="colorMode = 'colorful'" class="relative w-4 h-4 transition-all group" :title="locale === 'ru' ? 'Цветной' : 'Colorful'">
+          <button @click="colorMode = 'colorful'" class="relative w-4 h-4 transition-all group">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-red-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-green-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
@@ -60,7 +56,6 @@
             @click="emit('toggle-time-tree-fullscreen')"
             class="ml-1 flex h-5 w-5 items-center justify-center border border-black/20 opacity-45 transition-all hover:border-black/50 hover:opacity-100 dark:border-white/20 dark:hover:border-white/50"
             :class="timeTreeFullscreenActive ? 'bg-black text-white opacity-100 dark:bg-[#F9F6F0] dark:text-black' : ''"
-            :title="locale === 'ru' ? 'Полноэкранный TimeTree' : 'Fullscreen TimeTree'"
             :aria-label="locale === 'ru' ? 'Полноэкранный TimeTree' : 'Fullscreen TimeTree'"
           >
             <svg
@@ -294,7 +289,6 @@
             v-if="selectedTradeIds.length > 0"
             @click="toggleSelectedTradesHidden"
             class="hover:opacity-100 transition-opacity font-bold flex items-center gap-1"
-            :title="toggleHiddenButtonTitle"
           >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -378,7 +372,7 @@
             </div>
             <span class="opacity-40 text-right tracking-wider truncate">{{ trade.duration }}</span>
             <span class="font-bold text-right tracking-wider" :style="{ color: resultColorValue(trade) }">{{ formatTradeResult(trade) }}</span>
-            <button @click.stop="toggleTradeExpand(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="View details">
+            <button @click.stop="toggleTradeExpand(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="expandedTradeId === trade.id ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
               </svg>

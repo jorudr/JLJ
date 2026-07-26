@@ -225,7 +225,6 @@
             @click="closeReader"
             class="article-reader-back group"
             :aria-label="articleLabels.returnToJournal"
-            :title="articleLabels.returnToJournal"
           >
             <span class="article-reader-back-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
@@ -1141,8 +1140,7 @@
                :style="{ left: outOfBoundsIndicator.x + 'px', top: outOfBoundsIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
             <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100 cursor-pointer group"
                  :style="{ transform: `rotate(${outOfBoundsIndicator.angle}deg)` }"
-                 @click="focusBoardNode(outOfBoundsIndicator.id)"
-                 :title="(locale === 'ru' ? 'Найти ' : 'Focus ') + outOfBoundsIndicator.name">
+                 @click="focusBoardNode(outOfBoundsIndicator.id)">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="drop-shadow-sm transition-transform group-hover:scale-125 text-black">
                 <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -1176,7 +1174,6 @@
           <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    :title="locale === 'ru' ? 'Текст' : 'Text Node'"
                     @click.stop="activeBoardTool = activeBoardTool === 'text' ? null : 'text'">
               <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'text' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1185,7 +1182,6 @@
             <div class="w-6 h-px bg-black/10 my-1"></div>
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'image' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    :title="locale === 'ru' ? 'Изображение' : 'Image Node'"
                     @click.stop="activeBoardTool = activeBoardTool === 'image' ? null : 'image'">
               <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'image' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1196,7 +1192,6 @@
             <div class="w-6 h-px bg-black/10 my-1"></div>
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'drawing' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    :title="locale === 'ru' ? 'Рисунок' : 'Drawing Node'"
                     @click.stop="activeBoardTool = activeBoardTool === 'drawing' ? null : 'drawing'">
               <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'drawing' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 19l7-7 3 3-7 7-3-3z"/>
@@ -1208,7 +1203,6 @@
             <div class="w-6 h-px bg-black/10 my-1"></div>
             <button class="p-2 transition-colors group relative" 
                     :class="activeBoardTool === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    :title="locale === 'ru' ? 'Карандаш' : 'Pencil'"
                     @click.stop="activeBoardTool = activeBoardTool === 'pencil' ? null : 'pencil'">
               <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'pencil' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
@@ -1219,7 +1213,6 @@
               <button
                 class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                 :class="activeBoardTool === 'strategy-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
-                :title="locale === 'ru' ? 'Стратегия' : 'Strategy'"
                 @click.stop="activeBoardTool = activeBoardTool === 'strategy-node' ? null : 'strategy-node'"
               >
                 {{ boardUiLabels.strategyTool }}
@@ -1228,7 +1221,6 @@
               <button
                 class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
                 :class="activeBoardTool === 'trade-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
-                :title="locale === 'ru' ? 'Сделки' : 'Trades'"
                 @click.stop="activeBoardTool = activeBoardTool === 'trade-node' ? null : 'trade-node'"
               >
                 {{ boardUiLabels.tradeTool }}
@@ -1246,8 +1238,7 @@
                <!-- Brush Tool -->
                <button class="p-2 transition-colors group relative"
                        :class="boardDrawing.boardDrawingTool.value === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
-                       @click="boardDrawing.boardDrawingTool.value = 'pencil'"
-                       :title="locale === 'ru' ? 'Кисть' : 'Brush'">
+                       @click="boardDrawing.boardDrawingTool.value = 'pencil'">
                   <div class="w-5 h-5 flex items-center justify-center">
                     <div class="w-2 h-2 rounded-full bg-black"></div>
                   </div>
@@ -1258,8 +1249,7 @@
                <!-- Eraser Tool -->
                <button class="p-2 transition-colors group relative"
                        :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'bg-black/10' : 'hover:bg-black/5'"
-                       @click="boardDrawing.boardDrawingTool.value = 'eraser'"
-                       :title="locale === 'ru' ? 'Ластик' : 'Eraser'">
+                       @click="boardDrawing.boardDrawingTool.value = 'eraser'">
                   <div class="w-5 h-5 flex items-center justify-center">
                     <div class="w-2 h-2 rounded-full border-2" :class="boardDrawing.boardDrawingTool.value === 'eraser' ? 'border-black' : 'border-black/60 group-hover:border-black'"></div>
                   </div>
@@ -1873,7 +1863,6 @@
             <button
               class="journal-filter-button !px-2"
               :class="{ 'is-active': activeJournalFilter === 'LIKED' }"
-              title="Liked Posts"
               type="button"
               @click="setJournalFilter('LIKED')"
             >
@@ -1882,7 +1871,6 @@
             <button
               class="journal-filter-button !px-2"
               :class="{ 'is-active': activeJournalFilter === 'BOOKMARKED' }"
-              title="Saved Posts"
               type="button"
               @click="setJournalFilter('BOOKMARKED')"
             >
@@ -1990,7 +1978,6 @@
               <button
                 class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-all opacity-0 group-hover:opacity-100 hover:border-current/40 hover:bg-current/5 hover:text-current"
                 type="button"
-                :title="locale === 'ru' ? 'Редактировать статью' : 'Edit article'"
                 @click="startEditArticle(thread)"
               >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">

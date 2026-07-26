@@ -11,7 +11,6 @@
         type="button"
         @click="minimize" 
         class="window-control inline-flex justify-center items-center w-12 h-full cursor-pointer transition-colors"
-        title="Minimize"
       >
         <Icon name="lucide:minus" class="w-4 h-4" />
       </button>
@@ -19,7 +18,6 @@
         type="button"
         @click="toggleFullscreen" 
         class="window-control inline-flex justify-center items-center w-12 h-full cursor-pointer transition-colors"
-        title="Fullscreen"
       >
         <Icon name="lucide:maximize" class="w-3.5 h-3.5" />
       </button>
@@ -27,7 +25,6 @@
         type="button"
         @click="close" 
         class="window-control close-control inline-flex justify-center items-center w-12 h-full cursor-pointer transition-colors"
-        title="Close"
       >
         <Icon name="lucide:x" class="w-4 h-4" />
       </button>

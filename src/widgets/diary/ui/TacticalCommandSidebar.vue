@@ -23,7 +23,6 @@
              @click="activeModule = mod.id"
              class="p-2.5 rounded-full transition-all duration-500 hover:scale-110 active:scale-95 group/btn relative"
              :class="activeModule === mod.id ? 'bg-white text-black' : 'text-white/30 hover:text-white/60'"
-             :title="mod.label"
            >
              <div v-if="mod.hasActive" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 border border-black shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
              <component :is="mod.icon" class="w-4 h-4" />
@@ -34,7 +33,6 @@
            <button 
              class="p-2.5 rounded-full text-white/20 transition-all duration-500"
              :class="{ 'text-emerald-500 animate-pulse': isAddModalOpen }"
-             :title="isAddModalOpen ? 'ACTIVE: Selection Mode' : 'ACTIVE: Filter Mode'"
            >
              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />

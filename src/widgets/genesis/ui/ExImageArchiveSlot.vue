@@ -151,7 +151,6 @@ function getTagColor(tag: string) {
       <button 
         @click="$emit('remove')" 
         class="group relative p-2 nier-text-primary opacity-20 hover:opacity-100 transition-all duration-300 shrink-0 self-start"
-        title="REMOVE_ARCHIVE"
       >
         <div class="absolute inset-0 border border-red-500/0 group-hover:border-red-500/20 scale-0 group-hover:scale-100 transition-transform duration-500"></div>
         <svg class="w-4 h-4 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

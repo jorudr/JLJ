@@ -371,7 +371,6 @@ const formatDateTactical = (dateStr) => {
                 <div class="absolute -top-12 right-0 z-20 flex items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
                   <button
                     type="button"
-                    :title="locale === 'ru' ? 'Проекция' : 'Projection'"
                     :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'"
                     class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10"
                     :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
@@ -384,7 +383,6 @@ const formatDateTactical = (dateStr) => {
                   </button>
                   <button
                     type="button"
-                    :title="locale === 'ru' ? 'График' : 'Chart'"
                     :aria-label="locale === 'ru' ? 'График' : 'Chart'"
                     class="grid h-11 w-12 place-items-center transition-colors"
                     :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
@@ -527,7 +525,7 @@ const formatDateTactical = (dateStr) => {
                              />
                              <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '(ENTER_ДЛЯ_СОХРАНЕНИЯ)' : '(ENTER_TO_SAVE)' }}</span>
                            </div>
-                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text" title="Click to rename">{{ note.title || (locale === 'ru' ? 'АРХИВНАЯ_ЗАПИСЬ' : 'ARCHIVED_RECORD') }}</span>
+                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || (locale === 'ru' ? 'АРХИВНАЯ_ЗАПИСЬ' : 'ARCHIVED_RECORD') }}</span>
                         </div>
                         <div class="flex items-center space-x-4">
                            <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>

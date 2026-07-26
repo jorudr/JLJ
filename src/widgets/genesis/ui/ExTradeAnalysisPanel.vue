@@ -4215,7 +4215,6 @@ const simpleMetricInsights = computed(() => {
                     <button
                       type="button"
                       class="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-black/15 transition-all duration-300 hover:bg-black hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-black"
-                      :title="locale === 'ru' ? 'Назад' : 'Back'"
                       @click="closeCorrelationMetric"
                     >
                       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -5826,7 +5825,7 @@ const simpleMetricInsights = computed(() => {
                                 />
                                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">(ENTER_TO_SAVE)</span>
                               </div>
-                              <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text" title="Click to rename">{{ note.title || 'ARCHIVED_RECORD' }}</span>
+                              <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || 'ARCHIVED_RECORD' }}</span>
                            </div>
                            <div class="flex items-center space-x-4">
                               <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>

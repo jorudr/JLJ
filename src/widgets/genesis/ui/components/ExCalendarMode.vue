@@ -67,7 +67,6 @@ const {
                 
                 <div v-if="day.tradesCount > 0" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span class="calendar-day-result font-black"
-                        :title="formatCalendarDayValue(day)"
                         :class="day.pnl > 0 ? 'nier-text-primary' : day.pnl < 0 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'">
                     {{ formatCalendarDayValue(day) }}
                   </span>

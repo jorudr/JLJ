@@ -37,7 +37,6 @@
               </div>
               <div
                 class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-red-500/80 hover:text-red-500 hover:font-bold font-mono tracking-widest text-[10px] bg-inherit"
-                :title="gitText('deleteVersion')"
                 @click.stop="state.removeStrategyVersion(version.id)"
               >
                 [X]

@@ -614,8 +614,7 @@ const emotionalStatus = computed(() => {
         <!-- View Trade Analytics Reified -->
         <button @click.stop="activeAnalyticsPage = 3; analyticsModalOpen = true"
                 class="w-10 h-10 flex items-center justify-center transition-all duration-300 cursor-pointer pointer-events-auto"
-                :class="isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-black/50 hover:text-black'"
-                :title="t('tacticalNodeMap.viewAnalytics')">
+                :class="isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-black/50 hover:text-black'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 3v18h18" />
             <path d="M7 16l5-5 3 3 5-5" />
@@ -627,8 +626,7 @@ const emotionalStatus = computed(() => {
 
         <!-- Close Map Button -->
         <button @click="emit('close')" 
-                class="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-red-500/20 text-red-500/70 hover:text-red-500 cursor-pointer"
-                :title="t('tacticalNodeMap.terminateLink')">
+                class="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-red-500/20 text-red-500/70 hover:text-red-500 cursor-pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
