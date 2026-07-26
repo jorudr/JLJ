@@ -1844,7 +1844,7 @@
           src="/assets/ui/eves.svg"
           alt=""
           aria-hidden="true"
-          class="absolute left-[-50rem] top-[58%] h-[2800px] w-[2800px] -translate-y-1/2 select-none object-contain opacity-[0.06]"
+          class="exforum-frontpage-bg-image absolute inset-y-0 left-0 h-full min-h-screen w-auto max-w-none select-none object-contain opacity-[0.06]"
         />
       </div>
       
@@ -5273,6 +5273,10 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 <style scoped>
 .journal-wrapper {
   color: var(--text-primary);
+}
+
+.exforum-frontpage-bg-image {
+  transform: translate(clamp(-32rem, -34vw, -10rem), 2.5rem);
 }
 
 .exforum-page-reify-enter-active,
