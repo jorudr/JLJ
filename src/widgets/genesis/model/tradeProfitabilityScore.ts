@@ -1,3 +1,5 @@
+import { getTradeCashPnl } from './tradePnl'
+
 export type TradeProfitabilityScore = {
   score: number
   rawScore: number
@@ -7,20 +9,7 @@ export type TradeProfitabilityScore = {
 const getTradeId = (trade: any) => String(trade?.id || '')
 
 export const getTradePnlForScore = (trade: any, initialDeposit = 1000) => {
-  let raw = trade?.profitInCurrency
-  if (raw === undefined || raw === null || raw === 0) raw = trade?.result ?? trade?.pnl ?? 0
-  const value = Number(raw)
-  if (!Number.isFinite(value)) return 0
-
-  if (
-    (trade?.profitInCurrency === undefined || trade?.profitInCurrency === null || trade?.profitInCurrency === 0) &&
-    Math.abs(value) < 100 &&
-    initialDeposit > 1000
-  ) {
-    return (value / 100) * initialDeposit
-  }
-
-  return value
+  return getTradeCashPnl(trade, initialDeposit)
 }
 
 const EMOTION_SCORE_WEIGHTS: Record<string, number> = {

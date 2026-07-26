@@ -3,6 +3,7 @@ import { toRefs } from 'vue'
 import { useExRobustness } from '../../model/useExRobustness'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 
 const props = defineProps<{
   diagnosticStats: any
@@ -15,6 +16,7 @@ const { diagnosticStats, strategyMetrics, filteredTrades } = toRefs(props)
 const { locale } = useI18n()
 
 const getFilteredTradesFn = () => filteredTrades.value
+const getTradePnlFn = (trade: any) => getTradeCashPnl(trade, strategyMetrics.value?.initialDeposit || 1000)
 
 const {
   robustnessExplanation,
@@ -27,7 +29,7 @@ const {
   robustnessBootstrapInterpretation,
   robustnessUiLayerSummary,
   robustnessExplanationSequence
-} = useExRobustness(diagnosticStats, strategyMetrics, getFilteredTradesFn)
+} = useExRobustness(diagnosticStats, strategyMetrics, getFilteredTradesFn, getTradePnlFn)
 
 const diagnosticTextMap: Record<string, { en: string; ru: string }> = {
   viewExplanation: { en: 'VIEW_EXPLANATION', ru: 'ПОЯСНЕНИЕ_ДИАГНОСТИКИ' },
