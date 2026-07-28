@@ -615,6 +615,7 @@
               <p :class="{'italic opacity-50': comment.status === 'hidden'}">{{ comment.content?.text }}</p>
               
               <div v-if="comment.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                <button type="button" :disabled="!isAuthenticated || isReplyLikePending(comment.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(comment.id) }" :aria-pressed="isReplyLiked(comment.id)" @click="toggleCommentLike(comment)">{{ articleLabels.like }}</button>
                 <button @click="toggleReplyForm(comment.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                   {{ replyingToId === comment.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                 </button>
@@ -651,6 +652,7 @@
                   <p :class="{'italic opacity-50': reply.status === 'hidden'}">{{ reply.content?.text }}</p>
                   
                   <div v-if="reply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                    <button type="button" :disabled="!isAuthenticated || isReplyLikePending(reply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(reply.id) }" :aria-pressed="isReplyLiked(reply.id)" @click="toggleCommentLike(reply)">{{ articleLabels.like }}</button>
                     <button @click="toggleReplyForm(reply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                       {{ replyingToId === reply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                     </button>
@@ -687,6 +689,7 @@
                       <p :class="{'italic opacity-50': subreply.status === 'hidden'}">{{ subreply.content?.text }}</p>
                       
                       <div v-if="subreply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
+                        <button type="button" :disabled="!isAuthenticated || isReplyLikePending(subreply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(subreply.id) }" :aria-pressed="isReplyLiked(subreply.id)" @click="toggleCommentLike(subreply)">{{ articleLabels.like }}</button>
                         <button @click="toggleReplyForm(subreply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                           {{ replyingToId === subreply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                         </button>
@@ -2221,6 +2224,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import allAssets from '~/shared/data/global_assets.json'
 import type { Comment } from '~/entities/comment/types/comment.types'
 import type { Reply } from '~/entities/reply/model/reply.types'
+import { isReplyLikedByUser, toggleReplyLike } from '~/entities/reply/model/likesManagement'
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import type { ExNode, ExNodeMode, ExNodeSignal } from '~/entities/exnode/model/exnode.types'
 import type { StrategyProfile } from '~/features/store/useStrategyTrades'
@@ -2319,6 +2323,7 @@ const articleLabels = computed(() => locale.value === 'ru'
       writeComment: 'Напишите комментарий...',
       signInToComment: 'Войдите, чтобы оставить комментарий.',
       postComment: 'Опубликовать комментарий',
+      like: 'Нравится',
       likes: 'лайков',
       noComments: 'Комментариев пока нет',
       leaveFullscreen: 'Покинуть полноэкранный режим'
@@ -2338,6 +2343,7 @@ const articleLabels = computed(() => locale.value === 'ru'
       writeComment: 'Write a comment...',
       signInToComment: 'Sign in to join the discussion.',
       postComment: 'Post comment',
+      like: 'Like',
       likes: 'Likes',
       noComments: 'No comments yet.',
       leaveFullscreen: 'Leave fullscreen mode'
@@ -2802,12 +2808,73 @@ const commentDraft = ref('')
 const commentInputRef = ref<HTMLTextAreaElement | null>(null)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const currentUserName = computed(() => authStore.user?.displayName?.trim() || authStore.user?.email?.trim() || 'Authenticated user')
+const likedReplyIds = ref<Set<string>>(new Set())
+const pendingReplyLikeIds = ref<Set<string>>(new Set())
+let replyLikeLoadRequestId = 0
 const articleComments = computed(() => {
   return comments.value
 })
 
+const isReplyLiked = (replyId: string) => likedReplyIds.value.has(replyId)
+const isReplyLikePending = (replyId: string) => pendingReplyLikeIds.value.has(replyId)
+
+const loadReplyLikeStates = async () => {
+  const requestId = ++replyLikeLoadRequestId
+  const userId = authStore.user?.uid
+  const replyIds = comments.value
+    .filter((reply) => reply.status !== 'hidden')
+    .map((reply) => reply.id)
+
+  if (!userId || !replyIds.length) {
+    if (requestId === replyLikeLoadRequestId) likedReplyIds.value = new Set()
+    return
+  }
+
+  const results = await Promise.all(replyIds.map(async (replyId) => {
+    try {
+      return (await isReplyLikedByUser(replyId, userId)) ? replyId : null
+    } catch (error) {
+      console.warn('[Forum] Failed to load reply like state:', error)
+      return null
+    }
+  }))
+
+  if (requestId !== replyLikeLoadRequestId || authStore.user?.uid !== userId) return
+  likedReplyIds.value = new Set(results.filter((replyId): replyId is string => replyId !== null))
+}
+
+const toggleCommentLike = async (reply: Reply) => {
+  const userId = authStore.user?.uid
+  if (!userId || reply.status === 'hidden' || isReplyLikePending(reply.id)) return
+
+  const wasLiked = isReplyLiked(reply.id)
+  pendingReplyLikeIds.value = new Set(pendingReplyLikeIds.value).add(reply.id)
+
+  try {
+    const isLiked = await toggleReplyLike(reply.id, userId)
+    const nextLikedReplyIds = new Set(likedReplyIds.value)
+    if (isLiked) nextLikedReplyIds.add(reply.id)
+    else nextLikedReplyIds.delete(reply.id)
+    likedReplyIds.value = nextLikedReplyIds
+    forumStore.updateReplyLikeState(reply.threadId, reply.id, isLiked, wasLiked)
+  } catch (error) {
+    console.error('[Forum] Failed to toggle reply like:', error)
+  } finally {
+    const nextPendingReplyLikeIds = new Set(pendingReplyLikeIds.value)
+    nextPendingReplyLikeIds.delete(reply.id)
+    pendingReplyLikeIds.value = nextPendingReplyLikeIds
+  }
+}
+
 watch(forumAuthorIds, (authorIds) => {
   void Promise.all(authorIds.map((authorId) => forumStore.fetchUser(authorId)))
+}, { immediate: true })
+
+watch([
+  () => authStore.user?.uid,
+  () => comments.value.map((reply) => reply.id).join('|')
+], () => {
+  void loadReplyLikeStates()
 }, { immediate: true })
 
 type CommentNode = Reply & { children: CommentNode[] }
@@ -5859,6 +5926,42 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 .article-comment-meta span {
   margin-top: 0;
   opacity: 1;
+}
+
+.article-comment-like {
+  margin-right: auto;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  padding: 0.38rem 0.58rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  opacity: 0.58;
+  text-transform: uppercase;
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+.article-comment-like:hover:not(:disabled) {
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  opacity: 1;
+}
+
+.article-comment-like--active {
+  border-color: currentColor;
+  background: currentColor;
+  color: #fff;
+  opacity: 1;
+}
+
+:global(.dark) .article-comment-like--active {
+  color: #090909;
+}
+
+.article-comment-like:disabled {
+  cursor: default;
+  opacity: 0.3;
 }
 
 .article-comment p,

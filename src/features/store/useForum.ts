@@ -440,6 +440,21 @@ export const useForumStore = defineStore('forum', {
     return list
     },
 
+    updateReplyLikeState(threadId: string, replyId: string, isLiked: boolean, wasLiked: boolean) {
+      if (isLiked === wasLiked) return
+
+      const currentReplies = this.replies.get(threadId)
+      if (!currentReplies) return
+
+      const likesDelta = isLiked ? 1 : -1
+      const updatedReplies = currentReplies.map((reply) => reply.id === replyId
+        ? { ...reply, likes: Math.max(0, Number(reply.likes || 0) + likesDelta) }
+        : reply)
+
+      this.replies.set(threadId, updatedReplies)
+      this.replies = new Map(this.replies)
+    },
+
     async fetchUser(userId: string) {
       this.loading = true
       try{

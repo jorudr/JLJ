@@ -11,6 +11,24 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isReplyLikeCounterUpdate(replyId) {
+      let likePath = /databases/$(database)/documents/replies/$(replyId)/likes/$(request.auth.uid);
+
+      return isSignedIn()
+        && resource.data.likes is int
+        && request.resource.data.likes is int
+        && request.resource.data.likes >= 0
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["likes"])
+        && (
+          (!exists(likePath)
+            && existsAfter(likePath)
+            && request.resource.data.likes == resource.data.likes + 1)
+          || (exists(likePath)
+            && !existsAfter(likePath)
+            && request.resource.data.likes == resource.data.likes - 1)
+        );
+    }
+
     match /users/{userId} {
       // Leaderboard needs public profile fields (displayName/photoURL) for signed-in users.
       // Writes remain restricted to the profile owner below.
@@ -197,9 +215,26 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid;
 
       allow update: if isSignedIn()
-        && resource.data.authorId == request.auth.uid;
+        && (
+          resource.data.authorId == request.auth.uid
+          || isReplyLikeCounterUpdate(replyId)
+        );
 
       allow delete: if false;
+
+      match /likes/{userId} {
+        allow read: if isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(["createdAt"])
+          && request.resource.data.createdAt == request.time
+          && getAfter(/databases/$(database)/documents/replies/$(replyId)).data.likes == get(/databases/$(database)/documents/replies/$(replyId)).data.likes + 1;
+
+        allow update: if false;
+
+        allow delete: if isOwner(userId)
+          && getAfter(/databases/$(database)/documents/replies/$(replyId)).data.likes == get(/databases/$(database)/documents/replies/$(replyId)).data.likes - 1;
+      }
     }
   }
 }
