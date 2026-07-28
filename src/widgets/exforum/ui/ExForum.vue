@@ -243,7 +243,7 @@
             <div class="mt-6 mb-5 flex w-3/4 max-w-md items-center gap-4">
               <div class="h-[1px] w-8 bg-current/10 shrink-0"></div>
               <span class="text-[9px] font-mono tracking-[0.3em] uppercase text-current/40 shrink-0">
-                {{ locale === 'ru' ? 'АВТОР' : 'BY' }} <span class="text-current/70 font-bold ml-1">{{ selectedArticle.author }}</span>
+                {{ locale === 'ru' ? 'АВТОР' : 'BY' }} <span class="text-current/70 font-bold ml-1">{{ selectedArticle.author }}</span><ExUserStatusBadge v-if="selectedArticleAuthorStatus" :status="selectedArticleAuthorStatus" class="ml-2 align-middle" />
               </span>
               <div class="h-[1px] flex-1 bg-current/10"></div>
             </div>
@@ -605,7 +605,7 @@
             <article class="article-comment !pb-2 !border-none">
               <div class="article-comment-head">
                 <div>
-                  <h3 :class="{'opacity-50': comment.status === 'hidden'}">{{ comment.author || 'Anonymous' }}</h3>
+                  <h3 :class="{'opacity-50': comment.status === 'hidden'}">{{ comment.author || 'Anonymous' }}<ExUserStatusBadge v-if="getSelectedAuthorStatus(comment.authorId)" :status="getSelectedAuthorStatus(comment.authorId)!" class="ml-2 align-middle" /></h3>
                 </div>
                 <div class="article-comment-meta">
                   <span>{{ formatCommentDate(comment.createdAt) }}</span>
@@ -641,7 +641,7 @@
                 <article class="article-comment !pb-2 !border-none">
                   <div class="article-comment-head">
                     <div>
-                      <h3 :class="{'opacity-50': reply.status === 'hidden'}">{{ reply.author || 'Anonymous' }}</h3>
+                      <h3 :class="{'opacity-50': reply.status === 'hidden'}">{{ reply.author || 'Anonymous' }}<ExUserStatusBadge v-if="getSelectedAuthorStatus(reply.authorId)" :status="getSelectedAuthorStatus(reply.authorId)!" class="ml-2 align-middle" /></h3>
                     </div>
                     <div class="article-comment-meta">
                       <span>{{ formatCommentDate(reply.createdAt) }}</span>
@@ -677,7 +677,7 @@
                     <article class="article-comment !pb-2 !border-none">
                       <div class="article-comment-head">
                         <div>
-                          <h3 :class="{'opacity-50': subreply.status === 'hidden'}">{{ subreply.author || 'Anonymous' }}</h3>
+                          <h3 :class="{'opacity-50': subreply.status === 'hidden'}">{{ subreply.author || 'Anonymous' }}<ExUserStatusBadge v-if="getSelectedAuthorStatus(subreply.authorId)" :status="getSelectedAuthorStatus(subreply.authorId)!" class="ml-2 align-middle" /></h3>
                         </div>
                         <div class="article-comment-meta">
                           <span>{{ formatCommentDate(subreply.createdAt) }}</span>
@@ -2225,7 +2225,9 @@ import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import type { ExNode, ExNodeMode, ExNodeSignal } from '~/entities/exnode/model/exnode.types'
 import type { StrategyProfile } from '~/features/store/useStrategyTrades'
 import type { Thread } from '~/entities/thread/model/thread.types'
+import { normalizeUserProfileStatuses, type UserProfileStatus } from '~/entities/user/model/user-status.types'
 import type { JournalArticle, JournalArticleBoard, JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
+import ExUserStatusBadge from '~/entities/user/ui/ExUserStatusBadge.vue'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -2491,6 +2493,7 @@ const threadToJournalNode = (thread: Thread & Record<string, any>): ExNode => {
     mode,
     title: thread.title || boardUiLabels.value.untitled,
     author: getThreadAuthorName(thread),
+    authorStatus: getSelectedAuthorStatus(thread.authorId),
     category: thread.categoryLabel || thread.subcategory || thread.category || mode,
     thesis_brief: description,
     tags: Array.isArray(thread.tags) ? thread.tags : [],
@@ -2778,6 +2781,23 @@ const comments = computed(() => {
   if (!selectedArticle.value) return []
   return forumStore.replies.get(selectedArticle.value.id) || []
 })
+function getSelectedAuthorStatus(authorId?: string): UserProfileStatus | null {
+  if (!authorId) return null
+  const user = forumStore.users.get(authorId)
+  return normalizeUserProfileStatuses(user?.status).find((status) => status.isSelected) || null
+}
+const selectedArticleAuthorStatus = computed(() => getSelectedAuthorStatus(selectedThread.value?.authorId))
+const forumAuthorIds = computed(() => {
+  const authorIds = new Set<string>()
+  journalThreads.value.forEach((thread) => {
+    if (thread.authorId) authorIds.add(thread.authorId)
+  })
+  if (selectedThread.value?.authorId) authorIds.add(selectedThread.value.authorId)
+  comments.value.forEach((comment) => {
+    if (comment.authorId) authorIds.add(comment.authorId)
+  })
+  return [...authorIds]
+})
 const commentDraft = ref('')
 const commentInputRef = ref<HTMLTextAreaElement | null>(null)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -2785,6 +2805,10 @@ const currentUserName = computed(() => authStore.user?.displayName?.trim() || au
 const articleComments = computed(() => {
   return comments.value
 })
+
+watch(forumAuthorIds, (authorIds) => {
+  void Promise.all(authorIds.map((authorId) => forumStore.fetchUser(authorId)))
+}, { immediate: true })
 
 type CommentNode = Reply & { children: CommentNode[] }
 
@@ -5806,10 +5830,10 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .article-comment h3 {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-style: italic;
   line-height: 1;
-  color: color-mix(in srgb, currentColor 78%, transparent);
+  color: color-mix(in srgb, currentColor 96%, transparent);
 }
 
 .article-comment span {
@@ -5817,15 +5841,24 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   margin-top: 8px;
 }
 
+.article-comment :deep(.user-status-badge) {
+  display: inline-flex;
+  margin-top: 0;
+  opacity: 1;
+}
+
 .article-comment-meta {
   display: flex;
   gap: 18px;
   text-align: right;
   white-space: nowrap;
+  color: color-mix(in srgb, currentColor 88%, transparent);
+  opacity: 0.88;
 }
 
 .article-comment-meta span {
   margin-top: 0;
+  opacity: 1;
 }
 
 .article-comment p,

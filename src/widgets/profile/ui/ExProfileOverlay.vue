@@ -114,13 +114,10 @@
                       <span v-if="isLoadingStatuses" class="status-input-loader" role="status" :aria-label="locale === 'ru' ? 'Загрузка статусов' : 'Loading statuses'">
                         <span class="status-input-loader__ring"></span>
                       </span>
-                      <span
+                      <ExUserStatusBadge
                         v-else-if="selectedProfileStatus"
-                        class="status-token"
-                        :class="getStatusPresetClass(selectedProfileStatus.visualPreset)"
-                      >
-                        {{ selectedProfileStatus.name }}
-                      </span>
+                        :status="selectedProfileStatus"
+                      />
                       <span v-else class="text-[9px] font-mono uppercase tracking-[0.25em] opacity-35">
                         {{ profileStatuses.length ? (locale === 'ru' ? 'Не выбран' : 'Not selected') : (locale === 'ru' ? 'Нет доступных статусов' : 'No statuses granted') }}
                       </span>
@@ -141,7 +138,7 @@
                           @click="selectStatus(status.name)"
                         >
                           <span class="flex min-w-0 items-center gap-3">
-                            <span class="status-token" :class="getStatusPresetClass(status.visualPreset)">{{ status.name }}</span>
+                            <ExUserStatusBadge :status="status" />
                             <span v-if="status.isSelected" class="text-[8px] font-mono uppercase tracking-[0.24em] opacity-45">{{ locale === 'ru' ? 'Активен' : 'Active' }}</span>
                           </span>
                           <time class="shrink-0 text-[8px] font-mono uppercase tracking-[0.18em] opacity-45">{{ formatStatusGrantedAt(status.granted) }}</time>
@@ -333,6 +330,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { useProfile } from '~/widgets/profile/model/useProfile'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
+import ExUserStatusBadge from '~/entities/user/ui/ExUserStatusBadge.vue'
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
@@ -372,8 +370,6 @@ const saveLabel = computed(() => locale.value === 'ru' ? 'СОХРАНИТЬ' : 
 const savingLabel = computed(() => locale.value === 'ru' ? 'СОХРАНЕНИЕ' : 'SAVING')
 const isStatusDropdownOpen = ref(false)
 const selectedProfileStatus = computed(() => profileStatuses.value.find((status) => status.isSelected) || null)
-
-const getStatusPresetClass = (preset: number) => `status-token--${Math.min(3, Math.max(0, Math.trunc(preset)))}`
 
 const getStatusKey = (status: { name: string; granted?: unknown }) => {
   const granted = status.granted as { toMillis?: () => number } | undefined
@@ -659,25 +655,6 @@ watch(
   transform: translateY(-6px) scaleY(0.98);
 }
 
-.status-token {
-  position: relative;
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 0.28rem 0.5rem 0.25rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .status-input-loader {
   display: inline-flex;
   height: 1.05rem;
@@ -698,59 +675,6 @@ watch(
 :global(.dark) .status-input-loader__ring {
   border-color: rgba(255, 255, 255, 0.24);
   border-top-color: rgba(255, 255, 255, 0.92);
-}
-
-.status-token--0 {
-  border-color: rgba(255, 255, 255, 0.78);
-  background: linear-gradient(112deg, #070707 0%, #221338 32%, #75628d 49%, #24123a 68%, #080808 100%);
-  background-size: 240% 100%;
-  color: #fff;
-  box-shadow: 0 0 18px rgba(233, 219, 255, 0.38);
-  animation: status-monarch 4.8s ease-in-out infinite;
-}
-
-.status-token--1 {
-  border-color: rgba(135, 206, 255, 0.56);
-  background: linear-gradient(112deg, #09131d 0%, #164f79 47%, #a9dfff 100%);
-  background-size: 180% 100%;
-  color: #f7fcff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  animation: status-prism 6.4s ease-in-out infinite;
-}
-
-.status-token--2 {
-  border-color: rgba(234, 157, 92, 0.52);
-  background: linear-gradient(112deg, #24110a 0%, #8b3c1b 52%, #e0a15a 100%);
-  color: #fff9f1;
-  box-shadow: inset 0 1px 0 rgba(255, 225, 190, 0.2);
-}
-
-.status-token--3 {
-  border-color: rgba(126, 147, 166, 0.42);
-  background: linear-gradient(112deg, #1a2128 0%, #35424e 100%);
-  color: #eaf0f5;
-}
-
-@keyframes status-monarch {
-  0%,
-  100% {
-    background-position: 0% 50%;
-    box-shadow: 0 0 11px rgba(233, 219, 255, 0.2);
-  }
-  50% {
-    background-position: 100% 50%;
-    box-shadow: 0 0 24px rgba(255, 255, 255, 0.55);
-  }
-}
-
-@keyframes status-prism {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
 
 @keyframes status-loader-spin {

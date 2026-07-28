@@ -452,6 +452,7 @@ export const useForumStore = defineStore('forum', {
 
       const user = snap.data()
       this.users.set(userId, user)
+      this.users = new Map(this.users)
       return user
       }finally{
         this.loading = false
