@@ -21,6 +21,7 @@ import type { Reply } from '~/entities/reply/model/reply.types'
 import type { Thread } from '~/entities/thread/model/thread.types'
 import type { ThreadLink } from '~/entities/threadLink/model/threadLink.types'
 import type { Diary, DiaryEntry } from '~/entities/diary/model/diary.types'
+import { getCachedAvatarUrl } from '~/entities/user/model/user-avatar'
 
 
 import { threadConverter, replyConverter, threadLinkConverter, diaryConverter } from '~/composables/typeConverters'
@@ -485,9 +486,11 @@ export const useForumStore = defineStore('forum', {
       if (!snap.exists()) return null
 
       const user = snap.data()
-      this.users.set(userId, user)
+      const avatarUrl = await getCachedAvatarUrl(user?.photoURL || user?.photoUrl).catch(() => null)
+      const resolvedUser = avatarUrl ? { ...user, avatarUrl } : user
+      this.users.set(userId, resolvedUser)
       this.users = new Map(this.users)
-      return user
+      return resolvedUser
       }finally{
         this.loading = false
       }
