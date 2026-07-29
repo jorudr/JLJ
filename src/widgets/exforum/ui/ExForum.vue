@@ -2556,163 +2556,8 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
 const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
-const SYSTEM_FTMO_THREAD_ID = 'system-ftmo-rules-hidden-rules-trader-losses'
-const SYSTEM_APP_AUTHOR_ID = 'jlj-jormungandr-app'
-
-const systemFtmoNodePayloads = [
-  {
-    id: 'n0',
-    title: 'N0. PROP-FIRMS challenge',
-    text: `<p><strong style="color:#111827">Main thought:</strong> PROP-FIRMS does not hide rules, but the <em>practical mechanics</em> of these rules require a separate skill.</p><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #111827;background:rgba(17,24,39,.05)">A profitable strategy does not equal readiness to pass the challenge.</blockquote>`,
-    position: { x: 36, y: 22 },
-    size: { width: 22, height: 10 },
-    order: 0
-  },
-  {
-    id: 'n1',
-    title: 'N1. Official limits',
-    text: `<p><strong style="color:#991b1b">Limits are the framework of the challenge.</strong> They apply constantly, even when the overall picture looks healthy.</p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Max Daily Loss:</strong> approximately 5% on the classic path and about 3% on the 1-step.</li><li><strong>Max Total Loss:</strong> about 10% of the starting balance; sometimes trailing bound.</li><li><strong>Profit Target:</strong> +10% / +5% over two stages or about +10% for one stage.</li></ul><p style="color:#7f1d1d"><em>Breaching the daily limit closes the account, even if the week is in profit.</em></p>`,
-    position: { x: 4, y: 4 },
-    size: { width: 24, height: 14 },
-    order: 1
-  },
-  {
-    id: 'n2',
-    title: 'N2. Consistency rules',
-    text: `<p><strong style="color:#854d0e">PROP-FIRMS verifies not only the result, but the form of the result.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Minimum Trading Days:</strong> minimum of around 4 trading days per stage.</li><li><strong>Best Day Rule:</strong> your best day should not carry the entire result.</li><li><strong>Scaling / Profit Split:</strong> balance and share growth depends on meeting plan conditions.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #a16207;background:rgba(245,158,11,.08)">A single lucky trade can hit the target, but won't necessarily qualify you to pass the system.</blockquote>`,
-    position: { x: 4, y: 25 },
-    size: { width: 24, height: 15 },
-    order: 2
-  },
-  {
-    id: 'n3',
-    title: 'N3. Operational restrictions',
-    text: `<p><strong style="color:#1d4ed8">The most common violations arise not from the trade idea, but from execution.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>News Trading:</strong> the ban is a narrow window before/after the news, not the whole day.</li><li><strong>Weekend Holding:</strong> standard accounts require closing before the weekend.</li><li><strong>EA / robots:</strong> not just entry, but stop modifications, TP, and partial closes count.</li></ul><p><span style="color:#2563eb;font-weight:700">Swing account</span> removes some restrictions, but usually at the cost of lower leverage.</p>`,
-    position: { x: 34, y: 2 },
-    size: { width: 26, height: 15 },
-    order: 3
-  },
-  {
-    id: 'n4',
-    title: 'N4. Hidden mechanics',
-    text: `<p><strong style="color:#047857">These aren't hidden rules, but unobvious mathematics.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Equity-based drawdown:</strong> the limit can be breached by floating equity while the position is still open.</li><li><strong>Best Day Rule:</strong> calculated as the share of the best day out of the sum of all green days.</li></ul><blockquote style="margin:12px 0;padding:10px 14px;border-left:3px solid #059669;background:rgba(16,185,129,.08)">$7000 + $4000 = $11000. A best day of $7000 is 64%, meaning the share must be diluted with new green days.</blockquote>`,
-    position: { x: 68, y: 6 },
-    size: { width: 26, height: 16 },
-    order: 4
-  },
-  {
-    id: 'n5',
-    title: 'N5. Why traders fail',
-    text: `<p><strong style="color:#7e22ce">The challenge breaks not only the risk model, but also the trader's mental state.</strong></p><ul style="margin:10px 0 0 18px;list-style:disc"><li><strong>Setup bias:</strong> "there must be a setup today", even though the market often just provides noise.</li><li><strong>Confirmation bias:</strong> a trader sees what they want to see.</li><li><strong>Overtrading:</strong> inaction turns into anxiety.</li><li><strong>Emotional drift:</strong> after a series of losses, decisions are made by a different person entirely.</li></ul><p style="color:#92400e"><strong>⚠️ Caution:</strong> broad phrasing like "at the firm's discretion" and detection of similar trades are areas of trader complaints, not necessarily proven facts of firm misconduct.</p>`,
-    position: { x: 68, y: 28 },
-    size: { width: 26, height: 18 },
-    order: 5
-  }
-] as const
-
-const systemFtmoConnectionPairs = [
-  ['n0', 'n1'], ['n0', 'n2'], ['n0', 'n3'], ['n0', 'n4'], ['n0', 'n5'],
-  ['n1', 'n4'], ['n2', 'n5'], ['n3', 'n4'], ['n4', 'n5']
-] as const
-
-const createSystemFtmoBoardNode = (payload: typeof systemFtmoNodePayloads[number]): JournalArticleBoardNode => ({
-  id: `ftmo-${payload.id}`,
-  type: 'text',
-  title: payload.title,
-  text: payload.text,
-  position: payload.position,
-  size: payload.size,
-  isQuestion: payload.id === 'n0'
-})
-
-const createSystemFtmoTextBlock = (payload: typeof systemFtmoNodePayloads[number]) => {
-  const data = createSystemFtmoBoardNode(payload)
-  return {
-    ...data,
-    order: payload.order,
-    schemaVersion: 1,
-    sourceNodeId: data.id,
-    label: payload.id === 'n0' ? 'ВОПРОС' : 'ТЕКСТ',
-    data
-  }
-}
-
-const systemFtmoBoard: JournalArticleBoard = {
-  gridSize: 28,
-  magnet: { enabled: true, mode: 'grid' },
-  size: { width: 100, height: 52 },
-  nodes: systemFtmoNodePayloads.map(createSystemFtmoBoardNode),
-  connections: systemFtmoConnectionPairs.map(([from, to], index) => ({
-    id: `ftmo-link-${index + 1}`,
-    fromId: `ftmo-${from}`,
-    toId: `ftmo-${to}`,
-    fromPort: from === 'n0' ? (to === 'n1' || to === 'n2' ? 'left' : 'right') : 'right',
-    toPort: 'left'
-  })),
-  strokes: []
-}
-
-const systemFtmoTextBlocks = systemFtmoNodePayloads.map(createSystemFtmoTextBlock)
-
-const systemFtmoThread = computed(() => {
-  const publishedAt = '2026-07-18T00:00:00.000Z'
-  const thesisText = 'PROP-FIRMS rules map: what is officially written, which mechanics are unobvious at the start, and why these very constraints often turn profitable trading into a failed challenge.'
-
-  return {
-    id: SYSTEM_FTMO_THREAD_ID,
-    title: 'PROP-FIRMS — rules, hidden rules and why traders lose money',
-    description: thesisText,
-    summary: thesisText,
-    category: 'QUESTION',
-    subcategory: 'Analytics',
-    categoryLabel: 'Analytics',
-    journalMode: 'QUESTION',
-    articleType: 'QUESTION',
-    author: 'J.L.Jörmungandr',
-    authorId: SYSTEM_APP_AUTHOR_ID,
-    authorData: {
-      uid: SYSTEM_APP_AUTHOR_ID,
-      displayName: 'J.L.Jörmungandr',
-      type: 'system'
-    },
-    createdAt: publishedAt,
-    publishedAt,
-    updatedAt: publishedAt,
-    lastActivityAt: publishedAt,
-    lastMeaningfulAt: publishedAt,
-    repliesCount: 0,
-    likesCount: 0,
-    status: 'active',
-    thesis: {
-      text: thesisText,
-      blocks: systemFtmoTextBlocks
-    },
-    board: systemFtmoBoard,
-    boardNodes: systemFtmoBoard.nodes,
-    boardConnections: systemFtmoBoard.connections,
-    boardStrokes: systemFtmoBoard.strokes,
-    textBlocks: systemFtmoTextBlocks,
-    textBlockOrder: systemFtmoTextBlocks.map(block => block.id),
-    content: {
-      type: 'exforum-article-board',
-      board: systemFtmoBoard,
-      thesis: {
-        text: thesisText,
-        blocks: systemFtmoTextBlocks
-      },
-      textBlocks: systemFtmoTextBlocks,
-      textBlockOrder: systemFtmoTextBlocks.map(block => block.id)
-    },
-    tags: ['PROP-FIRMS', 'prop trading', 'challenge', 'risk management', 'psychology']
-  } as Thread & Record<string, any>
-})
-
 const journalThreads = computed(() => {
-  const firestoreThreads = Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>
-  return [
-    systemFtmoThread.value,
-    ...firestoreThreads.filter(thread => thread.id !== SYSTEM_FTMO_THREAD_ID)
-  ]
+  return Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>
 })
 const myArticleThreads = computed(() => {
   const userId = authStore.user?.uid
@@ -4053,13 +3898,11 @@ const isLiked = ref(false)
 const isBookmarked = ref(false)
 const isArticleLikePending = ref(false)
 let articleInteractionLoadRequestId = 0
-const isSystemJournalArticleId = (id?: string) => id === SYSTEM_FTMO_THREAD_ID
 
 const toggleLike = async () => {
   const userId = authStore.user?.uid
   const articleId = selectedArticle.value?.id
   if (!userId || !articleId || isArticleLikePending.value) return
-  if (isSystemJournalArticleId(articleId)) return
 
   const operationId = ++articleInteractionLoadRequestId
   isArticleLikePending.value = true
@@ -4080,7 +3923,6 @@ const toggleLike = async () => {
 
 const toggleBookmark = async () => {
   if (!authStore.user || !selectedArticle.value) return
-  if (isSystemJournalArticleId(selectedArticle.value.id)) return
   isBookmarked.value = !isBookmarked.value
   try {
     await forumStore.toggleThreadSave(authStore.user.uid, selectedArticle.value.id, isBookmarked.value)
@@ -4103,7 +3945,7 @@ watch([
   isLiked.value = false
   isBookmarked.value = false
 
-  if (article && userId && !isSystemJournalArticleId(article.id)) {
+  if (article && userId) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
     
     const [liked, saved] = await Promise.all([
@@ -4128,7 +3970,6 @@ const submitComment = async (parentId?: string) => {
   const text = commentDraft.value.trim()
 
   if (!article || !user || !text) return
-  if (isSystemJournalArticleId(article.id)) return
 
   const replyData: any = {
     authorId: user.uid,
