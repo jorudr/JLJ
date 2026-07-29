@@ -541,7 +541,8 @@
 
       <div class="flex items-center gap-3 px-6 pb-6">
         <button 
-          class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group"
+          :disabled="isArticleLikePending"
+          class="flex items-center gap-2 px-5 py-2.5 border border-current/10 bg-white/50 text-[10px] font-mono tracking-widest uppercase hover:bg-black/5 hover:border-current/30 transition-all active:scale-95 group disabled:opacity-60"
           @click="toggleLike"
         >
           <svg class="w-4 h-4 transition-transform group-active:scale-75" :class="isLiked ? 'fill-red-500 text-red-500' : 'fill-transparent text-current/50'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
@@ -615,7 +616,10 @@
               <p :class="{'italic opacity-50': comment.status === 'hidden'}">{{ comment.content?.text }}</p>
               
               <div v-if="comment.status !== 'hidden'" class="mt-2 flex justify-end items-center">
-                <button type="button" :disabled="!isAuthenticated || isReplyLikePending(comment.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(comment.id) }" :aria-pressed="isReplyLiked(comment.id)" @click="toggleCommentLike(comment)">{{ articleLabels.like }}</button>
+                <button type="button" :disabled="!isAuthenticated || isReplyLikePending(comment.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(comment.id) }" :aria-pressed="isReplyLiked(comment.id)" @click="toggleCommentLike(comment)">
+                  <svg class="article-comment-like__heart" :class="isReplyLiked(comment.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                  {{ articleLabels.like }}
+                </button>
                 <button @click="toggleReplyForm(comment.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                   {{ replyingToId === comment.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                 </button>
@@ -652,7 +656,10 @@
                   <p :class="{'italic opacity-50': reply.status === 'hidden'}">{{ reply.content?.text }}</p>
                   
                   <div v-if="reply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
-                    <button type="button" :disabled="!isAuthenticated || isReplyLikePending(reply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(reply.id) }" :aria-pressed="isReplyLiked(reply.id)" @click="toggleCommentLike(reply)">{{ articleLabels.like }}</button>
+                    <button type="button" :disabled="!isAuthenticated || isReplyLikePending(reply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(reply.id) }" :aria-pressed="isReplyLiked(reply.id)" @click="toggleCommentLike(reply)">
+                      <svg class="article-comment-like__heart" :class="isReplyLiked(reply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                      {{ articleLabels.like }}
+                    </button>
                     <button @click="toggleReplyForm(reply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                       {{ replyingToId === reply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                     </button>
@@ -689,7 +696,10 @@
                       <p :class="{'italic opacity-50': subreply.status === 'hidden'}">{{ subreply.content?.text }}</p>
                       
                       <div v-if="subreply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
-                        <button type="button" :disabled="!isAuthenticated || isReplyLikePending(subreply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(subreply.id) }" :aria-pressed="isReplyLiked(subreply.id)" @click="toggleCommentLike(subreply)">{{ articleLabels.like }}</button>
+                        <button type="button" :disabled="!isAuthenticated || isReplyLikePending(subreply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(subreply.id) }" :aria-pressed="isReplyLiked(subreply.id)" @click="toggleCommentLike(subreply)">
+                          <svg class="article-comment-like__heart" :class="isReplyLiked(subreply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+                          {{ articleLabels.like }}
+                        </button>
                         <button @click="toggleReplyForm(subreply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                           {{ replyingToId === subreply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                         </button>
@@ -4041,16 +4051,30 @@ const resetArticleBoardFullscreenView = () => {
 
 const isLiked = ref(false)
 const isBookmarked = ref(false)
+const isArticleLikePending = ref(false)
+let articleInteractionLoadRequestId = 0
 const isSystemJournalArticleId = (id?: string) => id === SYSTEM_FTMO_THREAD_ID
 
 const toggleLike = async () => {
-  if (!authStore.user || !selectedArticle.value) return
-  if (isSystemJournalArticleId(selectedArticle.value.id)) return
-  isLiked.value = !isLiked.value
+  const userId = authStore.user?.uid
+  const articleId = selectedArticle.value?.id
+  if (!userId || !articleId || isArticleLikePending.value) return
+  if (isSystemJournalArticleId(articleId)) return
+
+  const operationId = ++articleInteractionLoadRequestId
+  isArticleLikePending.value = true
+
   try {
-    await forumStore.toggleThreadLike(authStore.user.uid, selectedArticle.value.id, isLiked.value)
+    const result = await forumStore.toggleThreadLike(userId, articleId)
+    if (selectedArticle.value?.id === articleId) {
+      isLiked.value = result.isLiked
+    }
   } catch (error) {
-    isLiked.value = !isLiked.value // revert
+    console.error('[Forum] Failed to toggle thread like:', error)
+  } finally {
+    if (operationId === articleInteractionLoadRequestId) {
+      isArticleLikePending.value = false
+    }
   }
 }
 
@@ -4065,7 +4089,13 @@ const toggleBookmark = async () => {
   }
 }
 
-watch(selectedArticle, async (article) => {
+watch([
+  () => selectedArticle.value?.id,
+  () => authStore.user?.uid
+], async ([articleId, userId]) => {
+  const requestId = ++articleInteractionLoadRequestId
+  isArticleLikePending.value = false
+  const article = selectedArticle.value
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
   boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
@@ -4073,14 +4103,14 @@ watch(selectedArticle, async (article) => {
   isLiked.value = false
   isBookmarked.value = false
 
-  if (article && authStore.user && !isSystemJournalArticleId(article.id)) {
+  if (article && userId && !isSystemJournalArticleId(article.id)) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
     
     const [liked, saved] = await Promise.all([
-      forumStore.isThreadLiked(authStore.user.uid, article.id),
-      forumStore.isThreadSaved(authStore.user.uid, article.id)
+      forumStore.isThreadLiked(userId, article.id),
+      forumStore.isThreadSaved(userId, article.id)
     ])
-    if (selectedArticle.value?.id === article.id) {
+    if (requestId === articleInteractionLoadRequestId && selectedArticle.value?.id === articleId && authStore.user?.uid === userId) {
       isLiked.value = liked
       isBookmarked.value = saved
     }
@@ -5930,6 +5960,9 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .article-comment-like {
   margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
   border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   padding: 0.38rem 0.58rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -5949,14 +5982,30 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 }
 
 .article-comment-like--active {
-  border-color: currentColor;
-  background: currentColor;
+  border-color: #090909;
+  background: #090909;
   color: #fff;
+  box-shadow: 0 0 16px rgba(9, 9, 9, 0.18);
   opacity: 1;
 }
 
 :global(.dark) .article-comment-like--active {
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   color: #090909;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+}
+
+.article-comment-like__heart {
+  width: 0.82rem;
+  height: 0.82rem;
+  flex: 0 0 auto;
+  transition: color 180ms ease, fill 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+.article-comment-like--active .article-comment-like__heart {
+  filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.82));
+  transform: scale(1.08);
 }
 
 .article-comment-like:disabled {

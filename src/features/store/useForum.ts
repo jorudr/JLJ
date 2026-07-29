@@ -12,7 +12,8 @@ import {
   updateDoc,
   increment,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from 'firebase/firestore'
 import { db } from '@/shared/firebase.client'
 
@@ -251,31 +252,49 @@ export const useForumStore = defineStore('forum', {
         }
       },
 
-      async toggleThreadLike(userId: string, threadId: string, isLiking: boolean) {
-        if (!userId || !threadId) return
-        
+      async toggleThreadLike(userId: string, threadId: string): Promise<{ isLiked: boolean, likesCount: number }> {
+        if (!userId || !threadId) throw new Error('User and thread identifiers are required.')
+
         try {
           const threadRef = doc(db, 'threads', threadId)
-          await updateDoc(threadRef, {
-            likesCount: increment(isLiking ? 1 : -1)
+          const userLikeRef = doc(db, 'users', userId, 'likedThreads', threadId)
+          const result = await runTransaction(db, async (transaction) => {
+            const [threadSnapshot, likeSnapshot] = await Promise.all([
+              transaction.get(threadRef),
+              transaction.get(userLikeRef)
+            ])
+
+            if (!threadSnapshot.exists()) {
+              throw new Error('Thread does not exist.')
+            }
+
+            const currentLikes = Math.max(0, Number(threadSnapshot.data().likesCount || 0))
+            const wasLiked = likeSnapshot.exists()
+            const isLiked = !wasLiked
+            const likesCount = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1)
+
+            if (isLiked) {
+              transaction.set(userLikeRef, { likedAt: serverTimestamp(), threadId })
+            } else {
+              transaction.delete(userLikeRef)
+            }
+
+            transaction.update(threadRef, { likesCount })
+            return { isLiked, likesCount }
           })
 
-          const userLikeRef = doc(db, 'users', userId, 'likedThreads', threadId)
-          if (isLiking) {
-            await setDoc(userLikeRef, { likedAt: serverTimestamp(), threadId })
-            this.userLikedThreadIds.add(threadId)
-          } else {
-            await deleteDoc(userLikeRef)
-            this.userLikedThreadIds.delete(threadId)
-          }
+          const nextLikedThreadIds = new Set(this.userLikedThreadIds)
+          if (result.isLiked) nextLikedThreadIds.add(threadId)
+          else nextLikedThreadIds.delete(threadId)
+          this.userLikedThreadIds = nextLikedThreadIds
 
-          // Update local state immediately
           const thread = this.threads.get(threadId)
           if (thread) {
-            thread.likesCount = Math.max(0, (thread.likesCount || 0) + (isLiking ? 1 : -1))
-            this.threads.set(threadId, thread)
+            this.threads.set(threadId, { ...thread, likesCount: result.likesCount })
             this.threads = new Map(this.threads)
           }
+
+          return result
         } catch (error) {
           console.error("Error toggling like:", error)
           throw error
