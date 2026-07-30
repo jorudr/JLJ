@@ -135,6 +135,8 @@
             </Teleport>
           </div>
 
+          <ExNotificationCenter :user-id="authStore.user?.uid" :locale="locale" />
+
           <!-- Music Toggle -->
           <button
             type="button"
@@ -282,6 +284,7 @@ import ExText from "~/shared/ui/ExText.vue"
 import ExTag from "~/shared/ui/ExTag.vue"
 import ExButton from "~/shared/ui/ExButton.vue"
 import ExIdentity from "~/shared/ui/ExIdentity.vue"
+import ExNotificationCenter from '~/entities/notification/ui/ExNotificationCenter.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExProfileOverlay from '~/widgets/profile/ui/ExProfileOverlay.vue'
