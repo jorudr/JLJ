@@ -1,5 +1,6 @@
 interface Env {
   ACCESS_KEY_PEPPER: string
+  ACCESS_KEY_ENCRYPTION_KEY: string
   ACCESS_ADMIN_TOKEN: string
   FIREBASE_PROJECT_ID: string
   FIREBASE_CLIENT_EMAIL: string
@@ -72,12 +73,27 @@ interface CreateKeysInput {
   label: string
 }
 
+interface AccessKeyEntry {
+  id: string
+  key: string
+  keyHash: string
+}
+
+interface RotationBatchRecord {
+  id: string
+  rotationStart: Date
+  expiresAt: Date
+  encryptedKeys: string
+  encryptionIv: string
+}
+
 const FIRESTORE_SCOPE = 'https://www.googleapis.com/auth/datastore'
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const FIREBASE_JWKS_ENDPOINT = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'
 const MAX_KEYS_PER_REQUEST = 100
 const MAX_KEY_REDEMPTIONS = 1_000_000
 const ACCESS_GRANT = 'full_access'
+const ROTATION_MONTHS = [2, 4, 6, 8, 10, 12]
 
 let cachedGoogleToken: { value: string; expiresAtMs: number } | null = null
 let cachedFirebaseJwks: { keys: FirebaseJwk[]; expiresAtMs: number } | null = null
@@ -108,6 +124,18 @@ export default {
         return jsonResponse({ keys }, 201)
       }
 
+      if (request.method === 'POST' && url.pathname === '/v1/admin/rotation/run') {
+        await requireAdminToken(request, env)
+        return jsonResponse(await createOrReadCurrentRotationBatch(env, new Date()))
+      }
+
+      if (request.method === 'GET' && url.pathname === '/v1/admin/rotation') {
+        await requireAdminToken(request, env)
+        const batch = await getCurrentRotationBatch(env, new Date())
+        if (!batch) throw new AccessWorkerError('No active rotation batch exists.', 404)
+        return jsonResponse(await decryptRotationBatch(env, batch))
+      }
+
       const disableMatch = url.pathname.match(/^\/v1\/admin\/keys\/([^/]+)\/disable$/)
       if (request.method === 'POST' && disableMatch) {
         await requireAdminToken(request, env)
@@ -123,6 +151,14 @@ export default {
         { error: knownError?.message || 'Unable to process the request.' },
         knownError?.status || 500
       )
+    }
+  },
+
+  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+    try {
+      await createRotationBatch(env, getRotationStartForSchedule(new Date(controller.scheduledTime)))
+    } catch (error) {
+      console.error('[Access] Rotation batch creation failed.', error)
     }
   }
 }
@@ -219,7 +255,66 @@ async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
 }
 
 async function createAccessKeys(env: Env, input: CreateKeysInput) {
-  const keys = await Promise.all(Array.from({ length: input.count }, async () => {
+  const keys = await createAccessKeyEntries(env, input.count)
+  const writes = keys.map((entry) => createAccessKeyWrite(env, entry, input))
+
+  await commitFirestoreWrites(env, writes)
+  return keys.map(({ id, key }) => ({ id, key }))
+}
+
+async function createOrReadCurrentRotationBatch(env: Env, now: Date) {
+  const currentBatch = await getCurrentRotationBatch(env, now)
+  if (currentBatch) return decryptRotationBatch(env, currentBatch)
+
+  const rotationStart = getManualRotationStart(now)
+  const created = await createRotationBatch(env, rotationStart)
+  return decryptRotationBatch(env, created)
+}
+
+async function createRotationBatch(env: Env, rotationStart: Date): Promise<RotationBatchRecord> {
+  const batchId = getRotationBatchId(rotationStart)
+  const existing = await getFirestoreDocument(env, `accessKeyBatches/${batchId}`)
+  if (existing) return decodeRotationBatch(existing)
+
+  const expiresAt = addUtcMonths(rotationStart, 2)
+  const keys = await createAccessKeyEntries(env, 2)
+  const encrypted = await encryptRotationKeys(env, keys.map(({ id, key }) => ({ id, key })))
+  const input: CreateKeysInput = {
+    count: 2,
+    maxRedemptions: 1,
+    expiresAt,
+    label: `rotation-${rotationStart.toISOString().slice(0, 7)}`
+  }
+  const batchPath = `accessKeyBatches/${batchId}`
+  const writes: FirestoreWrite[] = [
+    ...keys.map((entry) => createAccessKeyWrite(env, entry, input)),
+    {
+      update: {
+        name: firestoreDocumentName(env, batchPath),
+        fields: encodeFields({
+          rotationStart,
+          expiresAt,
+          encryptedKeys: encrypted.ciphertext,
+          encryptionIv: encrypted.iv
+        })
+      },
+      updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
+      currentDocument: { exists: false }
+    }
+  ]
+
+  await commitFirestoreWrites(env, writes)
+  return {
+    id: batchId,
+    rotationStart,
+    expiresAt,
+    encryptedKeys: encrypted.ciphertext,
+    encryptionIv: encrypted.iv
+  }
+}
+
+async function createAccessKeyEntries(env: Env, count: number): Promise<AccessKeyEntry[]> {
+  return Promise.all(Array.from({ length: count }, async () => {
     const key = createAccessKeyValue()
     return {
       id: `key_${crypto.randomUUID().replace(/-/g, '')}`,
@@ -227,8 +322,10 @@ async function createAccessKeys(env: Env, input: CreateKeysInput) {
       keyHash: await hashAccessKey(normalizeAccessKey(key), env.ACCESS_KEY_PEPPER)
     }
   }))
+}
 
-  const writes: FirestoreWrite[] = keys.map((entry) => ({
+function createAccessKeyWrite(env: Env, entry: AccessKeyEntry, input: CreateKeysInput): FirestoreWrite {
+  return {
     update: {
       name: firestoreDocumentName(env, `accessKeys/${entry.id}`),
       fields: encodeFields({
@@ -243,10 +340,71 @@ async function createAccessKeys(env: Env, input: CreateKeysInput) {
     },
     updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
     currentDocument: { exists: false }
-  }))
+  }
+}
 
-  await commitFirestoreWrites(env, writes)
-  return keys.map(({ id, key }) => ({ id, key }))
+async function getCurrentRotationBatch(env: Env, now: Date): Promise<RotationBatchRecord | null> {
+  const scheduledStart = getRotationStartForSchedule(now)
+  const candidates = [
+    scheduledStart,
+    addUtcMonths(scheduledStart, -2),
+    addUtcMonths(scheduledStart, 2)
+  ]
+  for (const rotationStart of candidates) {
+    const document = await getFirestoreDocument(env, `accessKeyBatches/${getRotationBatchId(rotationStart)}`)
+    if (!document) continue
+    const batch = decodeRotationBatch(document)
+    if (batch.expiresAt.getTime() > now.getTime()) return batch
+  }
+  return null
+}
+
+async function decryptRotationBatch(env: Env, batch: RotationBatchRecord) {
+  const plaintext = await decryptRotationKeys(env, batch.encryptedKeys, batch.encryptionIv)
+  return {
+    id: batch.id,
+    expiresAt: batch.expiresAt.toISOString(),
+    keys: plaintext
+  }
+}
+
+function decodeRotationBatch(document: FirestoreDocument): RotationBatchRecord {
+  const rotationStart = document.data.rotationStart instanceof Date ? document.data.rotationStart : null
+  const expiresAt = document.data.expiresAt instanceof Date ? document.data.expiresAt : null
+  const encryptedKeys = String(document.data.encryptedKeys || '')
+  const encryptionIv = String(document.data.encryptionIv || '')
+  if (!rotationStart || !expiresAt || !encryptedKeys || !encryptionIv) {
+    throw new Error(`Invalid access key batch ${document.id}.`)
+  }
+  return { id: document.id, rotationStart, expiresAt, encryptedKeys, encryptionIv }
+}
+
+function getRotationStartForSchedule(date: Date): Date {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth() + 1
+  const day = date.getUTCDate()
+  const currentMonthStart = new Date(Date.UTC(year, month - 1, 1))
+  const currentMonthIsRotation = ROTATION_MONTHS.includes(month)
+  if (currentMonthIsRotation && day >= 1) return currentMonthStart
+
+  const previousRotationMonth = [...ROTATION_MONTHS].reverse().find((candidate) => candidate < month)
+  if (previousRotationMonth) return new Date(Date.UTC(year, previousRotationMonth - 1, 1))
+  return new Date(Date.UTC(year - 1, 11, 1))
+}
+
+function getManualRotationStart(date: Date): Date {
+  const current = getRotationStartForSchedule(date)
+  return ROTATION_MONTHS.includes(date.getUTCMonth() + 1)
+    ? current
+    : addUtcMonths(current, 2)
+}
+
+function getRotationBatchId(rotationStart: Date): string {
+  return `rotation_${rotationStart.getUTCFullYear()}${String(rotationStart.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function addUtcMonths(date: Date, months: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1))
 }
 
 async function disableAccessKey(env: Env, keyId: string) {
@@ -599,6 +757,49 @@ async function hashAccessKey(normalizedKey: string, pepper: string): Promise<str
   )
   const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(normalizedKey))
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function encryptRotationKeys(env: Env, keys: Array<{ id: string; key: string }>) {
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const plaintext = new TextEncoder().encode(JSON.stringify(keys))
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: toArrayBuffer(iv) },
+    await getAccessKeyEncryptionKey(env.ACCESS_KEY_ENCRYPTION_KEY),
+    toArrayBuffer(plaintext)
+  )
+  return {
+    ciphertext: base64UrlEncodeBytes(new Uint8Array(ciphertext)),
+    iv: base64UrlEncodeBytes(iv)
+  }
+}
+
+async function decryptRotationKeys(env: Env, encryptedKeys: string, encodedIv: string): Promise<Array<{ id: string; key: string }>> {
+  try {
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: toArrayBuffer(base64UrlDecode(encodedIv)) },
+      await getAccessKeyEncryptionKey(env.ACCESS_KEY_ENCRYPTION_KEY),
+      toArrayBuffer(base64UrlDecode(encryptedKeys))
+    )
+    const payload = JSON.parse(new TextDecoder().decode(plaintext)) as Array<{ id?: unknown; key?: unknown }>
+    if (!Array.isArray(payload) || payload.length !== 2) throw new Error('Invalid encrypted key batch.')
+
+    const keys = payload.map((entry) => ({
+      id: String(entry.id || ''),
+      key: String(entry.key || '')
+    }))
+    if (keys.some((entry) => !/^key_[a-f0-9]{32}$/i.test(entry.id) || !normalizeAccessKey(entry.key))) {
+      throw new Error('Invalid encrypted key batch.')
+    }
+    return keys
+  } catch {
+    throw new Error('Unable to decrypt the access key batch.')
+  }
+}
+
+async function getAccessKeyEncryptionKey(secret: string): Promise<CryptoKey> {
+  const material = new TextEncoder().encode(secret)
+  const digest = await crypto.subtle.digest('SHA-256', toArrayBuffer(material))
+  return crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
 }
 
 function decodeDocument(document: FirestoreDocumentResponse): FirestoreDocument {

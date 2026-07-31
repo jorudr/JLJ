@@ -8,6 +8,7 @@
 
 ```text
 ACCESS_KEY_PEPPER
+ACCESS_KEY_ENCRYPTION_KEY
 ACCESS_ADMIN_TOKEN
 FIREBASE_CLIENT_EMAIL
 FIREBASE_PRIVATE_KEY
@@ -49,11 +50,30 @@ curl -X POST "https://YOUR-WORKER.workers.dev/v1/admin/keys/KEY_ID/disable" \
   -H "X-Access-Admin-Token: YOUR_ACCESS_ADMIN_TOKEN"
 ```
 
+### Автоматическая пара ключей
+
+Worker запускается строго раз в два месяца: в `00:00 UTC` первого числа февраля, апреля, июня, августа, октября и декабря. Он создаёт ровно два ключа, каждый с `maxRedemptions: 1` и сроком действия до следующего запуска.
+
+Чтобы сразу создать или получить текущую пару, используйте:
+
+```bash
+curl -X POST "https://YOUR-WORKER.workers.dev/v1/admin/rotation/run" \
+  -H "X-Access-Admin-Token: YOUR_ACCESS_ADMIN_TOKEN"
+```
+
+Ответ содержит два ключа и дату окончания. Исходные ключи сохраняются между запусками только в зашифрованном виде и доступны исключительно через защищённый admin endpoint:
+
+```bash
+curl "https://YOUR-WORKER.workers.dev/v1/admin/rotation" \
+  -H "X-Access-Admin-Token: YOUR_ACCESS_ADMIN_TOKEN"
+```
+
 ## Данные Firestore
 
 ```text
 accessKeys/{keyId}                         # только Worker
 accessKeys/{keyId}/redemptions/{userId}    # только Worker
+accessKeyBatches/{batchId}                 # только Worker, ключи зашифрованы
 users/{userId}/redeemedKeys/{keyId}        # пользователь может только читать
 users/{userId}.access                      # пользователь может только читать
 ```

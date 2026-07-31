@@ -4,12 +4,18 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-07-31",
   "workers_dev": true,
+  "triggers": {
+    "crons": [
+      "0 0 1 2,4,6,8,10,12 *"
+    ]
+  },
   "vars": {
     "FIREBASE_PROJECT_ID": "voes-a88f4"
   },
   "secrets": {
     "required": [
       "ACCESS_KEY_PEPPER",
+      "ACCESS_KEY_ENCRYPTION_KEY",
       "ACCESS_ADMIN_TOKEN",
       "FIREBASE_CLIENT_EMAIL",
       "FIREBASE_PRIVATE_KEY"
