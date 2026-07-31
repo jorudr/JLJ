@@ -2,6 +2,7 @@ interface Env {
   ACCESS_KEY_PEPPER: string
   ACCESS_KEY_ENCRYPTION_KEY: string
   ACCESS_ADMIN_TOKEN: string
+  ACCESS_REDEEM_RATE_LIMIT: RateLimit
   FIREBASE_PROJECT_ID: string
   FIREBASE_CLIENT_EMAIL: string
   FIREBASE_PRIVATE_KEY: string
@@ -110,6 +111,7 @@ export default {
       }
 
       if (request.method === 'POST' && url.pathname === '/v1/redeem') {
+        await enforceRedeemRateLimit(request, env)
         const identity = await requireFirebaseIdentity(request, env)
         const input = await readJsonBody<{ key?: unknown }>(request)
         const rawKey = typeof input.key === 'string' ? input.key : ''
@@ -249,6 +251,19 @@ async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
 
   await commitFirestoreTransaction(env, transaction, writes)
   return { activated: true, alreadyActivated: false, grant: accessKey.grant }
+}
+
+async function enforceRedeemRateLimit(request: Request, env: Env): Promise<void> {
+  const outcome = await env.ACCESS_REDEEM_RATE_LIMIT.limit({
+    key: getRedeemRateLimitKey(request)
+  })
+  if (!outcome.success) {
+    throw new AccessWorkerError('Too many activation attempts. Please try again later.', 429)
+  }
+}
+
+function getRedeemRateLimitKey(request: Request): string {
+  return request.headers.get('CF-Connecting-IP') || 'unknown-client'
 }
 
 async function createAccessKeys(env: Env, input: CreateKeysInput) {

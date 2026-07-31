@@ -43,6 +43,8 @@ Content-Type: application/json
 { "key": "EXG-..." }
 ```
 
+Активация ограничена Cloudflare rate limit: максимум 5 попыток за 60 секунд с одного IP.
+
 ### Отключить ключ
 
 ```bash

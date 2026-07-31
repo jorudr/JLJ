@@ -36,7 +36,7 @@
             @input="formatKey"
           >
 
-          <p v-if="error" class="access-gate__error mt-4" role="alert">{{ error }}</p>
+          <p v-if="visibleError" class="access-gate__error mt-4" role="alert">{{ visibleError }}</p>
 
           <button
             type="submit"
@@ -86,6 +86,18 @@ const emit = defineEmits<{
 
 const accessKey = ref('')
 const isRussian = computed(() => props.locale === 'ru')
+const visibleError = computed(() => {
+  const normalizedError = props.error.trim().toLowerCase()
+  if (!normalizedError) return ''
+
+  if (normalizedError.includes('too many activation attempts')) {
+    return isRussian.value
+      ? 'Слишком много попыток. Подождите минуту и попробуйте снова.'
+      : 'Too many attempts. Wait one minute and try again.'
+  }
+
+  return props.error
+})
 
 const formatKey = () => {
   const normalized = accessKey.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
