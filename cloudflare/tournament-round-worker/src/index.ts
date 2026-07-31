@@ -594,35 +594,22 @@ async function buildSeasonPrizeAwardPlan(input: {
   const prizes = readSeasonPrizeMap(input.season.data.prizes)
   if (!prizes.size) return { writes: [], prizeByUserId: new Map() }
 
-  const leaderboard = buildEffectiveLeaderboardRows(input.leaderboardDocuments, input.userDeltas)
-    .filter((row) => row.points > 0)
-    .sort((left, right) => (
-      right.points - left.points
-      || left.userId.localeCompare(right.userId)
-    ))
-    .slice(0, 3)
-
-  if (!leaderboard.length) return { writes: [], prizeByUserId: new Map() }
+  const recipients = selectSeasonPrizeRecipients(
+    buildEffectiveLeaderboardRows(input.leaderboardDocuments, input.userDeltas)
+  )
+  if (!recipients.length) return { writes: [], prizeByUserId: new Map() }
 
   const prizeByUserId = new Map<string, AwardedSeasonPrize>()
-  let currentRank = 0
-  let previousPoints: number | null = null
-
-  for (let index = 0; index < leaderboard.length; index += 1) {
-    const row = leaderboard[index]!
-    if (previousPoints === null || row.points !== previousPoints) {
-      currentRank = index + 1
-      previousPoints = row.points
-    }
-
-    const prize = getSeasonPrizeForRank(prizes, currentRank)
+  for (const recipient of recipients) {
+    const { row, prizeRank } = recipient
+    const prize = getSeasonPrizeForRank(prizes, prizeRank)
     if (!prize) continue
 
     const prizeName = getPrizeDisplayName(prize)
     if (!prizeName) continue
 
     prizeByUserId.set(row.userId, {
-      rank: currentRank,
+      rank: prizeRank,
       prizeName,
       prize
     })
@@ -842,6 +829,51 @@ function buildEffectiveLeaderboardRows(
   }
 
   return Array.from(rows.values())
+}
+
+function selectSeasonPrizeRecipients(rows: LeaderboardRow[]): Array<{
+  row: LeaderboardRow
+  prizeRank: number
+}> {
+  const rankedRows = rows
+    .filter((row) => row.points > 0)
+    .sort((left, right) => (
+      right.points - left.points
+      || left.userId.localeCompare(right.userId)
+    ))
+
+  if (!rankedRows.length) return []
+
+  const allRowsShareTopScore = rankedRows.length > 1
+    && rankedRows.every((row) => row.points === rankedRows[0]!.points)
+  const recipients: Array<{ row: LeaderboardRow; prizeRank: number }> = []
+  let index = 0
+
+  while (index < rankedRows.length) {
+    const groupStartIndex = index
+    const points = rankedRows[index]!.points
+    const group: LeaderboardRow[] = []
+
+    while (index < rankedRows.length && rankedRows[index]!.points === points) {
+      group.push(rankedRows[index]!)
+      index += 1
+    }
+
+    const competitionRank = groupStartIndex + 1
+    if (competitionRank > 3) continue
+
+    const prizeRank = allRowsShareTopScore
+      || group.length > 2
+      || (competitionRank > 1 && group.length > 1)
+      ? 3
+      : competitionRank
+
+    for (const row of group) {
+      recipients.push({ row, prizeRank: Math.min(3, Math.max(1, prizeRank)) })
+    }
+  }
+
+  return recipients
 }
 
 function getSeasonFirstPlaceUserIds(rows: LeaderboardRow[]): string[] {
