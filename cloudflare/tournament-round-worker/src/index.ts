@@ -261,16 +261,11 @@ async function settleTournament(input: {
     throw new Error('season.timeWindow produces an invalid resolution end time.')
   }
 
-  const nextRoundDay = getNextUtcCalendarDay(nowMs)
   const tradingHolidays = readTradingHolidays(season.data.tradingHolidays)
-  if (!isTradingDay(nextRoundDay, tradingHolidays)) {
-    return {
-      tournamentId,
-      seasonId: season.id,
-      status: 'skipped',
-      reason: `Next calendar day ${formatUtcDate(nextRoundDay)} is not a trading day; keeping the current round opened.`
-    }
-  }
+  const nextRoundDay = findNextTradingDay(
+    getNextUtcCalendarDay(endsAt.getTime()),
+    tradingHolidays
+  )
 
   const nextStartsAt = moveToUtcCalendarDay(startsAt, nextRoundDay)
   const nextEndsAt = moveToUtcCalendarDay(endsAt, nextRoundDay)
@@ -1284,6 +1279,17 @@ function readTradingHolidays(value: unknown): Set<string> {
 function isTradingDay(date: Date, tradingHolidays: Set<string>): boolean {
   const dayOfWeek = date.getUTCDay()
   return dayOfWeek !== 0 && dayOfWeek !== 6 && !tradingHolidays.has(formatUtcDate(date))
+}
+
+function findNextTradingDay(firstCandidate: Date, tradingHolidays: Set<string>): Date {
+  let candidate = firstCandidate
+
+  for (let attempt = 0; attempt < 370; attempt += 1) {
+    if (isTradingDay(candidate, tradingHolidays)) return candidate
+    candidate = getNextUtcCalendarDay(candidate.getTime())
+  }
+
+  throw new Error('Could not find a trading day within the next 370 calendar days.')
 }
 
 function formatUtcDate(date: Date): string {
