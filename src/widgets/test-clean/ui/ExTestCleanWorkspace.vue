@@ -3,34 +3,38 @@
        :class="{ 'is-dark': isDark }">
 
     <Transition name="fade">
-       <ExInitialization v-if="!hasInitialized" @initiate="handleInitializationComplete" />
+       <ExInitialization v-if="canEnterWorkspace && !hasInitialized" @initiate="handleInitializationComplete" />
     </Transition>
 
-    <EtherealBackground :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
-    <TesseractCanvas v-if="isTesseractEnabled" :is-dark="isDark" />
-    <DesignVignette :is-dark="isDark" />
+    <Transition name="page-reify" mode="out-in">
+      <ExAccessGate
+        v-if="showAccessGate"
+        key="access-gate"
+        :state="visibleAccessState"
+        :error="accessError"
+        :is-submitting="isActivatingAccess"
+        :locale="locale"
+        @activate="activateAccess"
+        @retry="retryAccessCheck"
+      />
+    </Transition>
+
+    <EtherealBackground v-if="canEnterWorkspace" :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
+    <TesseractCanvas v-if="canEnterWorkspace && isTesseractEnabled" :is-dark="isDark" />
+    <DesignVignette v-if="canEnterWorkspace" :is-dark="isDark" />
      <div 
+        v-if="canEnterWorkspace"
         class="absolute inset-0 opacity-[0.2] transition-opacity duration-1000 theme-grid"
       ></div>
    
     <div
+      v-if="canEnterWorkspace"
       class="relative z-10 flex inset-0 h-full min-h-0"
       :class="!activeTab ? 'items-start justify-center py-4' : (activeTab === 'forum' || activeTab === 'genesis' ? 'items-start justify-center py-0' : 'items-center justify-center py-20')"
     >
        <Transition name="page-reify" mode="out-in">
-         <ExAccessGate
-           v-if="hasInitialized && accessState !== 'granted'"
-           key="access-gate"
-           :state="accessState"
-           :error="accessError"
-           :is-submitting="isActivatingAccess"
-           :locale="locale"
-           @activate="activateAccess"
-           @retry="retryAccessCheck"
-         />
-
          <!-- Dashboard Hub (No Tab) -->
-         <div v-else-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
+         <div v-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
             <ExDashboard
               :is-music-muted="isDashboardMusicMuted"
               @navigate="handleDashboardNavigate"
@@ -274,7 +278,7 @@
        </Transition>
     </div>
 
-    <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
+    <ExPaywallOverlay v-if="canEnterWorkspace" :isOpen="showPaywall" @close="showPaywall = false" />
   </div>
 </template>
 
@@ -374,9 +378,16 @@ const {
 } = useAccessActivation()
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
+const authenticatedUserId = computed(() => authStore.user?.uid || '')
+const canEnterWorkspace = computed(() => Boolean(authenticatedUserId.value) && accessState.value === 'granted')
+const showAccessGate = computed(() => !canEnterWorkspace.value)
+const visibleAccessState = computed(() => {
+  if (!authStore.authReady || !authenticatedUserId.value) return 'checking'
+  return accessState.value
+})
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
 const isDashboardHubActive = computed(() => (
-  accessState.value === 'granted'
+  canEnterWorkspace.value
   && hasInitialized.value
   && isAssembled.value
   && !activeTab.value
@@ -638,12 +649,29 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
-watch(() => authStore.user?.uid, (userId) => {
+watch(authenticatedUserId, (userId) => {
   beginAccessListener(userId)
-  if (userId) {
-    notificationStore.subscribe(userId)
-  } else {
+  if (!userId) {
     notificationStore.unsubscribeFromNotifications()
+  }
+}, { immediate: true })
+
+watch(canEnterWorkspace, (isGranted) => {
+  if (!isGranted) {
+    stopDashboardScore(false)
+    notificationStore.unsubscribeFromNotifications()
+    hasInitialized.value = false
+    isAssembled.value = false
+    showBloom.value = true
+    isNodeMapActive.value = false
+    activeTab.value = ''
+    isGenesisBottomBarHidden.value = false
+    return
+  }
+
+  syncTabFromRoute()
+  if (authenticatedUserId.value) {
+    notificationStore.subscribe(authenticatedUserId.value)
   }
 }, { immediate: true })
 
