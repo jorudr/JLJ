@@ -116,6 +116,7 @@ interface TournamentRunResult {
   openedRoundId?: string
   predictionsProcessed?: number
   usersUpdated?: number
+  seasonPrizesAwarded?: number
   specialPrizesAwarded?: number
   assetResults?: Record<string, PredictionDirection>
 }
@@ -133,6 +134,17 @@ interface SeasonWinRecord {
 interface SpecialPrizeAwardPlan {
   writes: FirestoreWrite[]
   userIds: string[]
+}
+
+interface SeasonPrizeAwardPlan {
+  writes: FirestoreWrite[]
+  prizeByUserId: Map<string, AwardedSeasonPrize>
+}
+
+interface AwardedSeasonPrize {
+  rank: number
+  prizeName: string
+  prize: Record<string, unknown>
 }
 
 interface RunReport {
@@ -409,6 +421,19 @@ async function settleTournament(input: {
   const eventNameEn = requireString(tournament.data.title, 'tournament.title')
   const eventNameRu = readOptionalString(tournament.data.titleRu) || eventNameEn
 
+  const seasonPrizePlan = await buildSeasonPrizeAwardPlan({
+    firestore,
+    tournament,
+    season,
+    leaderboardDocuments,
+    userDeltas,
+    nowMs,
+    eventNameRu,
+    eventNameEn,
+    seasonOrdinal,
+    roundOrdinal
+  })
+
   const writes: FirestoreWrite[] = []
   for (const [userId, delta] of userDeltas) {
     const existing = leaderboardByUserId.get(userId)
@@ -428,6 +453,13 @@ async function settleTournament(input: {
       missedPredictions: currentMissed + delta.missedPredictions,
       assetStats,
       lastScoredRoundId: round.id
+    }
+    const seasonPrize = seasonPrizePlan.prizeByUserId.get(userId)
+    if (seasonPrize) {
+      Object.assign(fields, {
+        prize: seasonPrize.prizeName,
+        prizeRank: seasonPrize.rank
+      })
     }
 
     writes.push(makeUpdateWrite({
@@ -463,6 +495,8 @@ async function settleTournament(input: {
       }))
     }
   }
+
+  writes.push(...seasonPrizePlan.writes)
 
   const specialPrizePlan = await buildSpecialPrizeAwardPlan({
     firestore,
@@ -530,11 +564,132 @@ async function settleTournament(input: {
     openedRoundId: nextRoundId,
     predictionsProcessed: predictions.length,
     usersUpdated: userDeltas.size,
+    seasonPrizesAwarded: seasonPrizePlan.prizeByUserId.size,
     specialPrizesAwarded: specialPrizePlan.userIds.length,
     assetResults: Object.fromEntries(
       resolutions.map((resolution) => [resolution.assetId, resolution.direction])
     )
   }
+}
+
+async function buildSeasonPrizeAwardPlan(input: {
+  firestore: FirestoreRestClient
+  tournament: FirestoreDocument
+  season: FirestoreDocument
+  leaderboardDocuments: FirestoreDocument[]
+  userDeltas: Map<string, UserScoreDelta>
+  nowMs: number
+  eventNameRu: string
+  eventNameEn: string
+  seasonOrdinal: number
+  roundOrdinal: number
+}): Promise<SeasonPrizeAwardPlan> {
+  if (!isSeasonCompleteForPrizeAward(input.season, input.nowMs)) {
+    return { writes: [], prizeByUserId: new Map() }
+  }
+  if (input.season.data.prizesAwarded === true || input.season.data.prizesAwardedAt instanceof Date) {
+    return { writes: [], prizeByUserId: new Map() }
+  }
+
+  const prizes = readSeasonPrizeMap(input.season.data.prizes)
+  if (!prizes.size) return { writes: [], prizeByUserId: new Map() }
+
+  const leaderboard = buildEffectiveLeaderboardRows(input.leaderboardDocuments, input.userDeltas)
+    .filter((row) => row.points > 0)
+    .sort((left, right) => (
+      right.points - left.points
+      || left.userId.localeCompare(right.userId)
+    ))
+    .slice(0, 3)
+
+  if (!leaderboard.length) return { writes: [], prizeByUserId: new Map() }
+
+  const prizeByUserId = new Map<string, AwardedSeasonPrize>()
+  let currentRank = 0
+  let previousPoints: number | null = null
+
+  for (let index = 0; index < leaderboard.length; index += 1) {
+    const row = leaderboard[index]!
+    if (previousPoints === null || row.points !== previousPoints) {
+      currentRank = index + 1
+      previousPoints = row.points
+    }
+
+    const prize = getSeasonPrizeForRank(prizes, currentRank)
+    if (!prize) continue
+
+    const prizeName = getPrizeDisplayName(prize)
+    if (!prizeName) continue
+
+    prizeByUserId.set(row.userId, {
+      rank: currentRank,
+      prizeName,
+      prize
+    })
+  }
+
+  if (!prizeByUserId.size) return { writes: [], prizeByUserId }
+
+  const grantedAt = new Date(input.nowMs)
+  const userDocuments = new Map<string, FirestoreDocument | null>()
+  for (const userId of prizeByUserId.keys()) {
+    userDocuments.set(userId, await input.firestore.getDocument(`users/${userId}`))
+  }
+
+  const winners = Array.from(prizeByUserId.entries()).map(([userId, awarded]) => ({
+    userId,
+    rank: awarded.rank,
+    prize: awarded.prizeName
+  }))
+  const writes: FirestoreWrite[] = [
+    makeUpdateWrite({
+      name: input.season.name,
+      fields: {
+        prizesAwarded: true,
+        prizeWinners: winners
+      },
+      serverTimestampFields: ['prizesAwardedAt'],
+      precondition: requireUpdateTime(input.season, 'season')
+    })
+  ]
+
+  for (const [userId, awarded] of prizeByUserId) {
+    const userDocument = userDocuments.get(userId) || null
+    const existingStatuses = readUserStatuses(userDocument?.data.status)
+    const grantedStatus = createGrantedStatus(awarded.prize, grantedAt)
+
+    writes.push(makeUpdateWrite({
+      name: userDocument?.name || input.firestore.documentName(`users/${userId}`),
+      fields: {
+        status: mergeUserStatuses(existingStatuses, grantedStatus)
+      },
+      precondition: userDocument?.updateTime
+        ? { updateTime: userDocument.updateTime }
+        : { exists: false }
+    }))
+
+    writes.push(makeUpdateWrite({
+      name: input.firestore.documentName(
+        `users/${userId}/notifications/event_prize_${input.tournament.id}_${input.season.id}`
+      ),
+      fields: {
+        type: 'event',
+        subtype: 'prize',
+        contentRu: `Вы получили сезонную награду: ${awarded.prizeName}.`,
+        contentEn: `You have received a seasonal reward: ${awarded.prizeName}.`,
+        eventNameRu: input.eventNameRu,
+        eventNameEn: input.eventNameEn,
+        season: input.seasonOrdinal,
+        round: input.roundOrdinal,
+        prize: awarded.prizeName,
+        isRead: false
+      },
+      serverTimestampFields: ['createdAt'],
+      precondition: { exists: false }
+    }))
+  }
+
+  return { writes, prizeByUserId }
 }
 
 async function buildSpecialPrizeAwardPlan(input: {
@@ -705,6 +860,116 @@ function isSeasonCompleteForSpecialPrize(season: FirestoreDocument, nowMs: numbe
   if (normalizeStatus(season.data.status) === 'closed') return true
   const endsAt = season.data.endsAt
   return endsAt instanceof Date && Number.isFinite(endsAt.getTime()) && endsAt.getTime() <= nowMs
+}
+
+function isSeasonCompleteForPrizeAward(season: FirestoreDocument, nowMs: number): boolean {
+  return isSeasonCompleteForSpecialPrize(season, nowMs)
+}
+
+function readSeasonPrizeMap(value: unknown): Map<number, Record<string, unknown>> {
+  const result = new Map<number, Record<string, unknown>>()
+  if (value === undefined || value === null) return result
+
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => {
+      const normalized = normalizeSeasonPrizeEntry(entry, index + 1)
+      if (normalized) result.set(normalized.rank, normalized.prize)
+    })
+    return result
+  }
+
+  const record = requireObject(value, 'season.prizes')
+  for (const [key, entry] of Object.entries(record)) {
+    const fallbackRank = parsePrizeRank(key)
+    const normalized = normalizeSeasonPrizeEntry(entry, fallbackRank)
+    if (normalized) result.set(normalized.rank, normalized.prize)
+  }
+  return result
+}
+
+function normalizeSeasonPrizeEntry(
+  entry: unknown,
+  fallbackRank: number
+): { rank: number; prize: Record<string, unknown> } | null {
+  const object = requireObject(entry, `season.prizes[${fallbackRank}]`)
+  const wrapperKeys = Object.keys(object).filter((key) => /^prize-\d+$/i.test(key))
+  if (wrapperKeys.length === 1 && Object.keys(object).length === 1) {
+    const wrapperKey = wrapperKeys[0]!
+    return normalizeSeasonPrizeEntry(object[wrapperKey], parsePrizeRank(wrapperKey))
+  }
+
+  const rank = parsePrizeRank(
+    object.id
+      ?? object.key
+      ?? object.rank
+      ?? object.place
+      ?? object.position
+      ?? object.name
+      ?? fallbackRank
+  )
+  if (!Number.isInteger(rank) || rank < 1 || rank > 3) return null
+  return { rank, prize: object }
+}
+
+function parsePrizeRank(value: unknown): number {
+  if (typeof value === 'number' && Number.isInteger(value)) return value
+  const match = String(value || '').match(/(?:prize[-_ ]?)?([1-3])$/i)
+  return match ? Number(match[1]) : 0
+}
+
+function getSeasonPrizeForRank(
+  prizes: Map<number, Record<string, unknown>>,
+  rank: number
+): Record<string, unknown> | null {
+  const exact = prizes.get(rank)
+  if (exact) return exact
+  if (rank === 3) return prizes.get(2) || null
+  return null
+}
+
+function getPrizeDisplayName(prize: Record<string, unknown>): string {
+  return String(prize.prize || prize.name || prize.title || '').trim()
+}
+
+function readUserStatuses(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((entry): entry is Record<string, unknown> => (
+      Boolean(entry)
+      && typeof entry === 'object'
+      && !Array.isArray(entry)
+    ))
+    .map((entry) => ({ ...entry }))
+}
+
+function createGrantedStatus(prize: Record<string, unknown>, grantedAt: Date): Record<string, unknown> {
+  const status: Record<string, unknown> = {
+    ...prize,
+    granted: grantedAt
+  }
+  if (status.isSelected === undefined) {
+    status.isSelected = false
+  }
+  if (status.name === undefined) {
+    const prizeName = getPrizeDisplayName(prize)
+    if (prizeName) status.name = prizeName
+  }
+  return status
+}
+
+function mergeUserStatuses(
+  existingStatuses: Record<string, unknown>[],
+  grantedStatus: Record<string, unknown>
+): Record<string, unknown>[] {
+  const grantedKey = getStatusIdentityKey(grantedStatus)
+  if (grantedKey && existingStatuses.some((status) => getStatusIdentityKey(status) === grantedKey)) {
+    return existingStatuses
+  }
+  return [...existingStatuses, grantedStatus]
+}
+
+function getStatusIdentityKey(status: Record<string, unknown>): string {
+  return String(status.name || status.prize || '').trim().toLowerCase()
 }
 
 function readSpecialPrizeArray(value: unknown): Record<string, unknown>[] {
@@ -1328,6 +1593,24 @@ class FirestoreRestClient {
 
   documentName(path: string): string {
     return `projects/${this.projectId}/databases/(default)/documents/${path}`
+  }
+
+  async getDocument(path: string): Promise<FirestoreDocument | null> {
+    const accessToken = await getGoogleAccessToken(this.env)
+    const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(this.projectId)}/databases/(default)/documents/${encodeFirestorePath(path)}`
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json'
+      }
+    })
+    if (response.status === 404) return null
+
+    const payload = await readJsonResponse(response)
+    if (!response.ok) {
+      throw new Error(`Firestore get ${path} failed: ${response.status} ${JSON.stringify(payload)}`)
+    }
+    return decodeDocument(payload as FirestoreDocumentResponse)
   }
 
   async listDocuments(parentPath: string, collectionId: string): Promise<FirestoreDocument[]> {
