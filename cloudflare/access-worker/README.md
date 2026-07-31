@@ -12,6 +12,12 @@ ACCESS_KEY_ENCRYPTION_KEY
 ACCESS_ADMIN_TOKEN
 FIREBASE_CLIENT_EMAIL
 FIREBASE_PRIVATE_KEY
+PATREON_CLIENT_ID
+PATREON_CLIENT_SECRET
+PATREON_REDIRECT_URI
+PATREON_WEBHOOK_SECRET
+RESEND_API_KEY
+ACCESS_EMAIL_FROM
 ```
 
 Обычная переменная:
@@ -45,6 +51,44 @@ Content-Type: application/json
 
 Активация ограничена Cloudflare rate limit: максимум 5 попыток за 60 секунд с одного IP.
 
+### Patreon → одноразовый ключ → email
+
+OAuth callback URL для Patreon client:
+
+```text
+https://exgenesis-access-worker.waltzno19inaminor.workers.dev/patreon/callback
+```
+
+Webhook URL для Patreon:
+
+```text
+https://exgenesis-access-worker.waltzno19inaminor.workers.dev/patreon/webhook
+```
+
+В Patreon webhook включите события:
+
+```text
+members:create
+members:update
+```
+
+Worker принимает только подписчика с:
+
+```text
+patron_status: "active_patron"
+currently_entitled_amount_cents > 0
+email present
+```
+
+После webhook Worker:
+
+1. проверяет `X-Patreon-Signature` через HMAC-MD5 и `PATREON_WEBHOOK_SECRET`;
+2. создаёт один access key с `maxRedemptions: 1`;
+3. сохраняет выдачу в `patreonAccessGrants/{memberId}` и временно хранит исходный ключ в зашифрованном виде;
+4. отправляет ключ на Patreon email через Resend.
+
+Повторный webhook для того же Patreon member не создаст новый ключ. Если письмо не успело отправиться, Worker повторно отправит тот же зашифрованный ключ.
+
 ### Отключить ключ
 
 ```bash
@@ -76,6 +120,7 @@ curl "https://YOUR-WORKER.workers.dev/v1/admin/rotation" \
 accessKeys/{keyId}                         # только Worker
 accessKeys/{keyId}/redemptions/{userId}    # только Worker
 accessKeyBatches/{batchId}                 # только Worker, ключи зашифрованы
+patreonAccessGrants/{memberId}             # только Worker, факт выдачи Patreon ключа
 users/{userId}/redeemedKeys/{keyId}        # пользователь может только читать
 users/{userId}/access/state                # пользователь может только читать
 ```

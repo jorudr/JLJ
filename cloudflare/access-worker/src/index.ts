@@ -6,6 +6,12 @@ interface Env {
   FIREBASE_PROJECT_ID: string
   FIREBASE_CLIENT_EMAIL: string
   FIREBASE_PRIVATE_KEY: string
+  PATREON_CLIENT_ID: string
+  PATREON_CLIENT_SECRET: string
+  PATREON_REDIRECT_URI: string
+  PATREON_WEBHOOK_SECRET: string
+  RESEND_API_KEY: string
+  ACCESS_EMAIL_FROM: string
 }
 
 interface FirestoreValue {
@@ -80,6 +86,29 @@ interface AccessKeyEntry {
   keyHash: string
 }
 
+interface PatreonWebhookPayload {
+  data?: PatreonResource
+  included?: PatreonResource[]
+}
+
+interface PatreonResource {
+  id?: string
+  type?: string
+  attributes?: Record<string, unknown>
+  relationships?: Record<string, {
+    data?: { id?: string; type?: string } | Array<{ id?: string; type?: string }>
+  }>
+}
+
+interface PatreonMemberGrantInput {
+  memberId: string
+  userId: string
+  email: string
+  fullName: string
+  eventType: string
+  amountCents: number
+}
+
 interface RotationBatchRecord {
   id: string
   rotationStart: Date
@@ -91,10 +120,14 @@ interface RotationBatchRecord {
 const FIRESTORE_SCOPE = 'https://www.googleapis.com/auth/datastore'
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const FIREBASE_JWKS_ENDPOINT = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'
+const PATREON_TOKEN_ENDPOINT = 'https://www.patreon.com/api/oauth2/token'
+const PATREON_IDENTITY_ENDPOINT = 'https://www.patreon.com/api/oauth2/v2/identity'
+const RESEND_EMAIL_ENDPOINT = 'https://api.resend.com/emails'
 const MAX_KEYS_PER_REQUEST = 100
 const MAX_KEY_REDEMPTIONS = 1_000_000
 const ACCESS_GRANT = 'full_access'
 const ROTATION_MONTHS = [2, 4, 6, 8, 10, 12]
+const PATREON_KEY_LABEL = 'patreon-subscription'
 
 let cachedGoogleToken: { value: string; expiresAtMs: number } | null = null
 let cachedFirebaseJwks: { keys: FirebaseJwk[]; expiresAtMs: number } | null = null
@@ -108,6 +141,16 @@ export default {
     try {
       if (request.method === 'GET' && url.pathname === '/health') {
         return jsonResponse({ ok: true })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/patreon/callback') {
+        const result = await handlePatreonCallback(url, env)
+        return htmlResponse(renderPatreonCallbackPage(result))
+      }
+
+      if (request.method === 'POST' && url.pathname === '/patreon/webhook') {
+        const result = await handlePatreonWebhook(request, env)
+        return jsonResponse(result)
       }
 
       if (request.method === 'POST' && url.pathname === '/v1/redeem') {
@@ -174,6 +217,368 @@ class AccessWorkerError extends Error {
   }
 }
 
+async function handlePatreonCallback(url: URL, env: Env) {
+  validatePatreonOAuthEnv(env)
+
+  const error = url.searchParams.get('error')
+  if (error) {
+    throw new AccessWorkerError(`Patreon authorization failed: ${error}`, 400)
+  }
+
+  const code = url.searchParams.get('code') || ''
+  if (!code) throw new AccessWorkerError('Patreon authorization code is missing.', 400)
+
+  const tokenPayload = await exchangePatreonCode(env, code)
+  const identity = await fetchPatreonIdentity(tokenPayload.access_token)
+  return {
+    ok: true,
+    email: identity.email,
+    fullName: identity.fullName
+  }
+}
+
+async function handlePatreonWebhook(request: Request, env: Env) {
+  validatePatreonWebhookEnv(env)
+
+  const eventType = request.headers.get('X-Patreon-Event') || 'unknown'
+  const rawBody = await request.text()
+  await verifyPatreonWebhookSignature(rawBody, request.headers.get('X-Patreon-Signature') || '', env.PATREON_WEBHOOK_SECRET)
+
+  let payload: PatreonWebhookPayload
+  try {
+    payload = JSON.parse(rawBody) as PatreonWebhookPayload
+  } catch {
+    throw new AccessWorkerError('Invalid Patreon webhook JSON.', 400)
+  }
+
+  if (!isPatreonMemberEvent(eventType)) {
+    return { ok: true, ignored: true, reason: `Unsupported event type: ${eventType}` }
+  }
+
+  const grantInput = parsePatreonMemberGrantInput(payload, eventType)
+  if (!grantInput) {
+    return { ok: true, ignored: true, reason: 'Patreon member is not an active paid member.' }
+  }
+
+  const grant = await createPatreonAccessGrant(env, grantInput)
+  if (!grant.created && grant.emailSent) {
+    return {
+      ok: true,
+      alreadyIssued: true,
+      grantId: grant.grantId,
+      keyId: grant.keyId
+    }
+  }
+  if (!grant.key) {
+    throw new Error(`Patreon grant ${grant.grantId} exists without a recoverable encrypted key.`)
+  }
+
+  await sendPatreonAccessEmail(env, {
+    to: grantInput.email,
+    fullName: grantInput.fullName,
+    key: grant.key,
+    keyId: grant.keyId
+  })
+
+  await markPatreonGrantEmailSent(env, grant.grantId)
+
+  return {
+    ok: true,
+    issued: true,
+    grantId: grant.grantId,
+    keyId: grant.keyId,
+    email: grantInput.email
+  }
+}
+
+function validatePatreonOAuthEnv(env: Env): void {
+  if (!env.PATREON_CLIENT_ID || !env.PATREON_CLIENT_SECRET || !env.PATREON_REDIRECT_URI) {
+    throw new AccessWorkerError('Patreon OAuth is not configured.', 500)
+  }
+}
+
+function validatePatreonWebhookEnv(env: Env): void {
+  if (!env.PATREON_WEBHOOK_SECRET) {
+    throw new AccessWorkerError('Patreon webhook secret is not configured.', 500)
+  }
+  if (!env.RESEND_API_KEY || !env.ACCESS_EMAIL_FROM) {
+    throw new AccessWorkerError('Email delivery is not configured.', 500)
+  }
+  if (!env.ACCESS_KEY_PEPPER) {
+    throw new AccessWorkerError('Access key pepper is not configured.', 500)
+  }
+}
+
+async function exchangePatreonCode(env: Env, code: string): Promise<{ access_token: string }> {
+  const response = await fetch(PATREON_TOKEN_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      grant_type: 'authorization_code',
+      client_id: env.PATREON_CLIENT_ID,
+      client_secret: env.PATREON_CLIENT_SECRET,
+      redirect_uri: env.PATREON_REDIRECT_URI
+    })
+  })
+  const payload = await readJsonResponse(response) as { access_token?: string }
+  if (!response.ok || !payload.access_token) {
+    throw new AccessWorkerError('Unable to exchange Patreon authorization code.', 502)
+  }
+  return { access_token: payload.access_token }
+}
+
+async function fetchPatreonIdentity(accessToken: string): Promise<{ email: string; fullName: string }> {
+  const query = new URLSearchParams({
+    'fields[user]': 'email,full_name'
+  })
+  const response = await fetch(`${PATREON_IDENTITY_ENDPOINT}?${query}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  const payload = await readJsonResponse(response) as PatreonWebhookPayload
+  if (!response.ok) throw new AccessWorkerError('Unable to fetch Patreon identity.', 502)
+
+  const attributes = payload.data?.attributes || {}
+  return {
+    email: String(attributes.email || ''),
+    fullName: String(attributes.full_name || '')
+  }
+}
+
+async function verifyPatreonWebhookSignature(rawBody: string, signature: string, secret: string): Promise<void> {
+  if (!signature) throw new AccessWorkerError('Missing Patreon webhook signature.', 401)
+  const expected = hmacMd5Hex(new TextEncoder().encode(secret), new TextEncoder().encode(rawBody))
+  if (!constantTimeEqual(signature.toLowerCase(), expected)) {
+    throw new AccessWorkerError('Invalid Patreon webhook signature.', 401)
+  }
+}
+
+function isPatreonMemberEvent(eventType: string): boolean {
+  return new Set([
+    'members:create',
+    'members:update',
+    'pledges:create',
+    'pledges:update'
+  ]).has(eventType)
+}
+
+function parsePatreonMemberGrantInput(payload: PatreonWebhookPayload, eventType: string): PatreonMemberGrantInput | null {
+  const member = payload.data
+  if (!member?.id || !member.attributes) {
+    throw new AccessWorkerError('Patreon member payload is missing.', 400)
+  }
+
+  const attributes = member.attributes
+  const patronStatus = String(attributes.patron_status || '').toLowerCase()
+  const amountCents = Math.max(0, Number(attributes.currently_entitled_amount_cents || 0))
+  if (patronStatus !== 'active_patron' || amountCents <= 0) return null
+
+  const includedUser = findPatreonIncludedUser(payload, member)
+  const email = String(attributes.email || includedUser?.attributes?.email || '').trim().toLowerCase()
+  if (!isEmailLike(email)) {
+    throw new AccessWorkerError('Patreon member email is missing. Enable member email scope for the webhook.', 400)
+  }
+
+  const fullName = String(
+    attributes.full_name
+      || includedUser?.attributes?.full_name
+      || email.split('@')[0]
+  ).trim()
+
+  return {
+    memberId: member.id,
+    userId: String(getRelationshipId(member, 'user') || includedUser?.id || member.id),
+    email,
+    fullName,
+    eventType,
+    amountCents
+  }
+}
+
+function findPatreonIncludedUser(payload: PatreonWebhookPayload, member: PatreonResource): PatreonResource | null {
+  const relationshipUserId = getRelationshipId(member, 'user')
+  return payload.included?.find((entry) => (
+    entry.type === 'user'
+    && (!relationshipUserId || entry.id === relationshipUserId)
+  )) || null
+}
+
+function getRelationshipId(resource: PatreonResource, relationshipName: string): string {
+  const data = resource.relationships?.[relationshipName]?.data
+  if (!data || Array.isArray(data)) return ''
+  return String(data.id || '')
+}
+
+async function createPatreonAccessGrant(env: Env, input: PatreonMemberGrantInput): Promise<{
+  created: boolean
+  emailSent: boolean
+  grantId: string
+  keyId: string
+  key: string
+}> {
+  const grantId = `member_${safeFirestoreId(input.memberId)}`
+  const grantPath = `patreonAccessGrants/${grantId}`
+  const existingGrant = await getFirestoreDocument(env, grantPath)
+  if (existingGrant) {
+    const emailSent = existingGrant.data.emailSent === true
+    const keyId = String(existingGrant.data.keyId || '')
+    const encryptedKeys = String(existingGrant.data.encryptedKeys || '')
+    const encryptionIv = String(existingGrant.data.encryptionIv || '')
+    const decryptedKeys = emailSent || !encryptedKeys || !encryptionIv
+      ? []
+      : await decryptRotationKeys(env, encryptedKeys, encryptionIv)
+    const key = decryptedKeys.find((entry) => entry.id === keyId)?.key || ''
+    return {
+      created: false,
+      emailSent,
+      grantId,
+      keyId,
+      key
+    }
+  }
+
+  const [entry] = await createAccessKeyEntries(env, 1)
+  if (!entry) throw new Error('Unable to create Patreon access key.')
+  const encrypted = await encryptRotationKeys(env, [{ id: entry.id, key: entry.key }])
+
+  const keyInput: CreateKeysInput = {
+    count: 1,
+    maxRedemptions: 1,
+    expiresAt: null,
+    label: PATREON_KEY_LABEL
+  }
+
+  const writes: FirestoreWrite[] = [
+    createAccessKeyWrite(env, entry, keyInput),
+    {
+      update: {
+        name: firestoreDocumentName(env, grantPath),
+        fields: encodeFields({
+          patreonMemberId: input.memberId,
+          patreonUserId: input.userId,
+          email: input.email,
+          fullName: input.fullName,
+          eventType: input.eventType,
+          amountCents: input.amountCents,
+          keyId: entry.id,
+          encryptedKeys: encrypted.ciphertext,
+          encryptionIv: encrypted.iv,
+          status: 'key_created',
+          emailSent: false
+        })
+      },
+      updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
+      currentDocument: { exists: false }
+    }
+  ]
+
+  await commitFirestoreWrites(env, writes)
+  return {
+    created: true,
+    emailSent: false,
+    grantId,
+    keyId: entry.id,
+    key: entry.key
+  }
+}
+
+async function markPatreonGrantEmailSent(env: Env, grantId: string): Promise<void> {
+  const grantPath = `patreonAccessGrants/${grantId}`
+  const existingGrant = await getFirestoreDocument(env, grantPath)
+  if (!existingGrant) return
+
+  await commitFirestoreWrites(env, [{
+    update: {
+      name: firestoreDocumentName(env, grantPath),
+      fields: encodeFields({
+        status: 'email_sent',
+        emailSent: true
+      })
+    },
+    updateMask: { fieldPaths: ['status', 'emailSent'] },
+    updateTransforms: [{ fieldPath: 'emailSentAt', setToServerValue: 'REQUEST_TIME' }],
+    currentDocument: existingGrant.updateTime ? { updateTime: existingGrant.updateTime } : undefined
+  }])
+}
+
+async function sendPatreonAccessEmail(env: Env, input: {
+  to: string
+  fullName: string
+  key: string
+  keyId: string
+}): Promise<void> {
+  const displayName = input.fullName || 'Patron'
+  const subject = 'Your J.L.JORMUNGANDR access key'
+  const text = [
+    `Hello ${displayName},`,
+    '',
+    'Thank you for supporting J.L.JORMUNGANDR on Patreon.',
+    '',
+    'Your one-time app activation key:',
+    input.key,
+    '',
+    'This key can be activated once inside the app.',
+    '',
+    'J.L.JORMUNGANDR'
+  ].join('\n')
+  const html = `
+    <div style="font-family:Inter,Arial,sans-serif;line-height:1.55;color:#111827">
+      <p>Hello ${escapeHtml(displayName)},</p>
+      <p>Thank you for supporting <strong>J.L.JORMUNGANDR</strong> on Patreon.</p>
+      <p>Your one-time app activation key:</p>
+      <p style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;letter-spacing:0.08em;font-weight:800;padding:14px 16px;border:1px solid #d1d5db;background:#f9fafb">
+        ${escapeHtml(input.key)}
+      </p>
+      <p>This key can be activated once inside the app.</p>
+      <p style="opacity:.7">J.L.JORMUNGANDR</p>
+    </div>
+  `
+
+  const response = await fetch(RESEND_EMAIL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: env.ACCESS_EMAIL_FROM,
+      to: [input.to],
+      subject,
+      text,
+      html,
+      tags: [
+        { name: 'source', value: 'patreon' },
+        { name: 'key_id', value: input.keyId }
+      ]
+    })
+  })
+  const payload = await readJsonResponse(response)
+  if (!response.ok) {
+    throw new Error(`Resend email delivery failed: ${response.status} ${JSON.stringify(payload)}`)
+  }
+}
+
+function renderPatreonCallbackPage(result: { ok: boolean; email: string; fullName: string }): string {
+  const email = result.email ? `<p>Email: <strong>${escapeHtml(result.email)}</strong></p>` : ''
+  const fullName = result.fullName ? `<p>Name: <strong>${escapeHtml(result.fullName)}</strong></p>` : ''
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Patreon connected</title>
+  </head>
+  <body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#050505;color:#f6f1e7;font-family:Inter,Arial,sans-serif">
+    <main style="max-width:560px;padding:32px;text-align:center">
+      <h1 style="font-size:28px;letter-spacing:.08em;text-transform:uppercase">Patreon connected</h1>
+      <p>The OAuth callback works. Access keys are issued by the Patreon webhook after a paid membership event.</p>
+      ${email}
+      ${fullName}
+    </main>
+  </body>
+</html>`
+}
+
 async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
   const normalizedKey = normalizeAccessKey(rawKey)
   if (!normalizedKey) throw new AccessWorkerError('Invalid access key.', 400)
@@ -193,6 +598,9 @@ async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
   const accessKey = decodeAccessKeyRecord(latestKeyDocument)
 
   if (existingRedemption) {
+    await commitFirestoreTransaction(env, transaction, [
+      createUserAccessStateWrite(env, userId, accessKey)
+    ])
     return { activated: true, alreadyActivated: true, grant: accessKey.grant }
   }
 
@@ -236,21 +644,25 @@ async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
       updateTransforms: [{ fieldPath: 'redeemedAt', setToServerValue: 'REQUEST_TIME' }],
       currentDocument: { exists: false }
     },
-    {
-      update: {
-        name: firestoreDocumentName(env, `users/${userId}/access/state`),
-        fields: encodeFields({
-          isActivated: true,
-          grant: accessKey.grant,
-          activatedKeyId: accessKey.id
-        })
-      },
-      updateTransforms: [{ fieldPath: 'activatedAt', setToServerValue: 'REQUEST_TIME' }]
-    }
+    createUserAccessStateWrite(env, userId, accessKey)
   ]
 
   await commitFirestoreTransaction(env, transaction, writes)
   return { activated: true, alreadyActivated: false, grant: accessKey.grant }
+}
+
+function createUserAccessStateWrite(env: Env, userId: string, accessKey: AccessKeyRecord): FirestoreWrite {
+  return {
+    update: {
+      name: firestoreDocumentName(env, `users/${userId}/access/state`),
+      fields: encodeFields({
+        isActivated: true,
+        grant: accessKey.grant,
+        activatedKeyId: accessKey.id
+      })
+    },
+    updateTransforms: [{ fieldPath: 'activatedAt', setToServerValue: 'REQUEST_TIME' }]
+  }
 }
 
 async function enforceRedeemRateLimit(request: Request, env: Env): Promise<void> {
@@ -805,7 +1217,7 @@ async function decryptRotationKeys(env: Env, encryptedKeys: string, encodedIv: s
       toArrayBuffer(base64UrlDecode(encryptedKeys))
     )
     const payload = JSON.parse(new TextDecoder().decode(plaintext)) as Array<{ id?: unknown; key?: unknown }>
-    if (!Array.isArray(payload) || payload.length !== 2) throw new Error('Invalid encrypted key batch.')
+    if (!Array.isArray(payload) || payload.length < 1) throw new Error('Invalid encrypted key batch.')
 
     const keys = payload.map((entry) => ({
       id: String(entry.id || ''),
@@ -888,6 +1300,135 @@ function toMillis(value: unknown): number | null {
   return null
 }
 
+function safeFirestoreId(value: string): string {
+  const safe = value.trim().replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120)
+  if (!safe) throw new AccessWorkerError('Invalid external id.', 400)
+  return safe
+}
+
+function isEmailLike(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case '&': return '&amp;'
+      case '<': return '&lt;'
+      case '>': return '&gt;'
+      case '"': return '&quot;'
+      case "'": return '&#39;'
+      default: return character
+    }
+  })
+}
+
+function hmacMd5Hex(key: Uint8Array, message: Uint8Array): string {
+  const blockSize = 64
+  const normalizedKey = key.byteLength > blockSize ? md5(key) : key
+  const keyBlock = new Uint8Array(blockSize)
+  keyBlock.set(normalizedKey)
+
+  const outerPad = new Uint8Array(blockSize)
+  const innerPad = new Uint8Array(blockSize)
+  for (let index = 0; index < blockSize; index += 1) {
+    outerPad[index] = keyBlock[index] ^ 0x5c
+    innerPad[index] = keyBlock[index] ^ 0x36
+  }
+
+  return bytesToHex(md5(concatBytes(outerPad, md5(concatBytes(innerPad, message)))))
+}
+
+function md5(message: Uint8Array): Uint8Array {
+  const shifts = [
+    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+    5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+    6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+  ]
+  const constants = Array.from({ length: 64 }, (_, index) => (
+    Math.floor(Math.abs(Math.sin(index + 1)) * 0x100000000) >>> 0
+  ))
+
+  const bitLength = message.byteLength * 8
+  const paddedLength = (((message.byteLength + 8) >>> 6) + 1) * 64
+  const padded = new Uint8Array(paddedLength)
+  padded.set(message)
+  padded[message.byteLength] = 0x80
+  const view = new DataView(padded.buffer)
+  view.setUint32(paddedLength - 8, bitLength >>> 0, true)
+  view.setUint32(paddedLength - 4, Math.floor(bitLength / 0x100000000), true)
+
+  let a0 = 0x67452301
+  let b0 = 0xefcdab89
+  let c0 = 0x98badcfe
+  let d0 = 0x10325476
+
+  for (let offset = 0; offset < paddedLength; offset += 64) {
+    const words = Array.from({ length: 16 }, (_, index) => view.getUint32(offset + index * 4, true))
+    let a = a0
+    let b = b0
+    let c = c0
+    let d = d0
+
+    for (let index = 0; index < 64; index += 1) {
+      let f = 0
+      let g = 0
+      if (index < 16) {
+        f = (b & c) | (~b & d)
+        g = index
+      } else if (index < 32) {
+        f = (d & b) | (~d & c)
+        g = (5 * index + 1) % 16
+      } else if (index < 48) {
+        f = b ^ c ^ d
+        g = (3 * index + 5) % 16
+      } else {
+        f = c ^ (b | ~d)
+        g = (7 * index) % 16
+      }
+
+      const nextD = d
+      d = c
+      c = b
+      b = add32(b, rotateLeft(add32(add32(a, f), add32(constants[index] || 0, words[g] || 0)), shifts[index] || 0))
+      a = nextD
+    }
+
+    a0 = add32(a0, a)
+    b0 = add32(b0, b)
+    c0 = add32(c0, c)
+    d0 = add32(d0, d)
+  }
+
+  const output = new Uint8Array(16)
+  const outputView = new DataView(output.buffer)
+  outputView.setUint32(0, a0, true)
+  outputView.setUint32(4, b0, true)
+  outputView.setUint32(8, c0, true)
+  outputView.setUint32(12, d0, true)
+  return output
+}
+
+function add32(left: number, right: number): number {
+  return (left + right) >>> 0
+}
+
+function rotateLeft(value: number, shift: number): number {
+  return ((value << shift) | (value >>> (32 - shift))) >>> 0
+}
+
+function concatBytes(left: Uint8Array, right: Uint8Array): Uint8Array {
+  const output = new Uint8Array(left.byteLength + right.byteLength)
+  output.set(left)
+  output.set(right, left.byteLength)
+  return output
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 function decodeJwtPart<T>(encoded: string): T {
   try {
     return JSON.parse(new TextDecoder().decode(base64UrlDecode(encoded))) as T
@@ -954,6 +1495,16 @@ function jsonResponse(payload: unknown, status = 200): Response {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Access-Admin-Token',
+      'Cache-Control': 'no-store'
+    }
+  })
+}
+
+function htmlResponse(html: string, status = 200): Response {
+  return new Response(html, {
+    status,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store'
     }
   })
