@@ -946,11 +946,13 @@ async function resolveAssetDirection(
   }
 
   const { candles } = await fetchYahooCandles(asset, startsAtMs, cutoffMs)
-  const startCandle = findCandleEndingAt(candles, startsAtMs)
+  const startCandle = findInitialCandle(candles, startsAtMs)
   const finalCandle = findCandleEndingAt(candles, cutoffMs)
 
   if (!startCandle) {
-    throw new Error(`${asset.symbol}: Yahoo has no exact 30-minute candle closing at startsAt.`)
+    throw new Error(
+      `${asset.symbol}: Yahoo has no exact 30-minute candle ending at startsAt or starting at startsAt.`
+    )
   }
   if (!finalCandle) {
     throw new Error(`${asset.symbol}: Yahoo has no exact 30-minute candle closing at endsAt + timeWindow.`)
@@ -1568,6 +1570,11 @@ function makeUpdateWrite(input: {
 function findCandleEndingAt(candles: YahooCandle[], endMs: number): YahooCandle | undefined {
   const startsAtMs = endMs - CANDLE_INTERVAL_MS
   return candles.find((candle) => candle.timestampMs === startsAtMs)
+}
+
+function findInitialCandle(candles: YahooCandle[], startsAtMs: number): YahooCandle | undefined {
+  return findCandleEndingAt(candles, startsAtMs)
+    || candles.find((candle) => candle.timestampMs === startsAtMs)
 }
 
 function isThirtyMinuteBoundary(millis: number): boolean {
