@@ -508,29 +508,38 @@ async function sendPatreonAccessEmail(env: Env, input: {
   keyId: string
 }): Promise<void> {
   const displayName = input.fullName || 'Patron'
-  const subject = 'Your J.L.JORMUNGANDR access key'
+  const brandName = 'J.L.JÖRMUNGANDR'
+  const downloadUrl = 'https://jorudr.github.io/JLJ/'
+  const subject = `Your ${brandName} access key`
   const text = [
     `Hello ${displayName},`,
     '',
-    'Thank you for supporting J.L.JORMUNGANDR on Patreon.',
+    `Thank you for supporting ${brandName} on Patreon.`,
     '',
     'Your one-time app activation key:',
     input.key,
     '',
     'This key can be activated once inside the app.',
+    `You can download the full version here: ${downloadUrl}`,
     '',
-    'J.L.JORMUNGANDR'
+    brandName
   ].join('\n')
   const html = `
     <div style="font-family:Inter,Arial,sans-serif;line-height:1.55;color:#111827">
       <p>Hello ${escapeHtml(displayName)},</p>
-      <p>Thank you for supporting <strong>J.L.JORMUNGANDR</strong> on Patreon.</p>
+      <p>Thank you for supporting <strong>${brandName}</strong> on Patreon.</p>
       <p>Your one-time app activation key:</p>
       <p style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;letter-spacing:0.08em;font-weight:800;padding:14px 16px;border:1px solid #d1d5db;background:#f9fafb">
         ${escapeHtml(input.key)}
       </p>
       <p>This key can be activated once inside the app.</p>
-      <p style="opacity:.7">J.L.JORMUNGANDR</p>
+      <p>You can download the full version here:</p>
+      <p>
+        <a href="${downloadUrl}" style="color:#111827;font-weight:800;text-decoration:underline">
+          ${downloadUrl}
+        </a>
+      </p>
+      <p style="opacity:.7">${brandName}</p>
     </div>
   `
 
