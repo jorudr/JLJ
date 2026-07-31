@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "exgenesis-access-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-31",
+  "workers_dev": true,
+  "vars": {
+    "FIREBASE_PROJECT_ID": "voes-a88f4"
+  },
+  "secrets": {
+    "required": [
+      "ACCESS_KEY_PEPPER",
+      "ACCESS_ADMIN_TOKEN",
+      "FIREBASE_CLIENT_EMAIL",
+      "FIREBASE_PRIVATE_KEY"
+    ]
+  }
+}
