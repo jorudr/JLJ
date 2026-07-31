@@ -588,9 +588,7 @@ async function findAccessKeyByHash(env: Env, keyHash: string): Promise<Firestore
 }
 
 function parseFirestoreQueryResponse(body: string): FirestoreDocument[] {
-  return body.split('\n')
-    .filter((line) => line.trim())
-    .map((line) => JSON.parse(line) as { document?: FirestoreDocumentResponse })
+  return parseFirestoreResponseItems<{ document?: FirestoreDocumentResponse }>(body)
     .map((entry) => entry.document ? decodeDocument(entry.document) : null)
     .filter((entry): entry is FirestoreDocument => Boolean(entry))
 }
@@ -632,14 +630,28 @@ async function batchGetDocuments(env: Env, transaction: string, paths: string[])
   if (!response.ok) throw new Error(`Firestore transaction read failed: ${response.status}`)
 
   const documents = new Map<string, FirestoreDocument>()
-  for (const line of body.split('\n')) {
-    if (!line.trim()) continue
-    const entry = JSON.parse(line) as { found?: FirestoreDocumentResponse }
+  for (const entry of parseFirestoreResponseItems<{ found?: FirestoreDocumentResponse }>(body)) {
     if (!entry.found) continue
     const document = decodeDocument(entry.found)
     documents.set(document.name.split('/documents/')[1] || '', document)
   }
   return documents
+}
+
+function parseFirestoreResponseItems<T>(body: string): T[] {
+  const trimmed = body.trim()
+  if (!trimmed) return []
+
+  try {
+    const parsed = JSON.parse(trimmed) as T | T[]
+    return Array.isArray(parsed) ? parsed : [parsed]
+  } catch {
+    return trimmed.split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as T)
+  }
+
 }
 
 async function commitFirestoreTransaction(env: Env, transaction: string, writes: FirestoreWrite[]): Promise<void> {
@@ -849,7 +861,7 @@ function firestoreBaseUrl(env: Env): string {
 }
 
 function firestoreDocumentName(env: Env, path: string): string {
-  return `${firestoreBaseUrl(env)}/documents/${path}`
+  return `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`
 }
 
 function toMillis(value: unknown): number | null {
