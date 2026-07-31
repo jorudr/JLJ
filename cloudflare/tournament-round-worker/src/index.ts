@@ -80,17 +80,29 @@ interface AssetResolution {
   finalPrice: number
 }
 
+interface AssetVoteSummary {
+  assetId: string
+  longVotes: number
+  shortVotes: number
+  winnerShare: number
+  difficultyMultiplier: number
+  pointsForCorrect: number
+}
+
 interface LeaderboardAssetStat {
   assetId: string
   asset: string
   totalPredictions: number
   correctPredictions: number
+  missedPredictions: number
+  pointsEarned: number
 }
 
 interface UserScoreDelta {
   points: number
   totalPredictions: number
   correctPredictions: number
+  missedPredictions: number
   assetStats: Map<string, LeaderboardAssetStat>
 }
 
@@ -104,7 +116,23 @@ interface TournamentRunResult {
   openedRoundId?: string
   predictionsProcessed?: number
   usersUpdated?: number
+  specialPrizesAwarded?: number
   assetResults?: Record<string, PredictionDirection>
+}
+
+interface LeaderboardRow {
+  userId: string
+  points: number
+}
+
+interface SeasonWinRecord {
+  seasonIds: string[]
+  seasonOrdinals: number[]
+}
+
+interface SpecialPrizeAwardPlan {
+  writes: FirestoreWrite[]
+  userIds: string[]
 }
 
 interface RunReport {
@@ -125,6 +153,11 @@ const CANDLE_INTERVAL_MINUTES = 30
 const CANDLE_INTERVAL_MS = CANDLE_INTERVAL_MINUTES * MINUTE_MS
 const MAX_ATOMIC_WRITES = 450
 const YAHOO_MAX_ATTEMPTS = 4
+const APEX_PROTOCOL_TOURNAMENT_ID = 'apex_protocol_2026'
+const SPECIAL_PRIZE_TYPE_LICENSE_KEY = 'license-key'
+const SPECIAL_PRIZE_REQUIRED_SEASON_WINS = 2
+const MISSED_PREDICTION_PENALTY = -5
+const MAX_DIFFICULTY_MULTIPLIER = 2
 
 let cachedGoogleToken: { value: string; expiresAtMs: number } | null = null
 
@@ -356,19 +389,22 @@ async function settleTournament(input: {
     `tournaments/${tournamentId}/seasons/${season.id}/rounds/${round.id}`,
     'predictions'
   )
-  const userDeltas = calculateUserDeltas({
+  const leaderboardDocuments = await firestore.listDocuments(
+    `tournaments/${tournamentId}/seasons/${season.id}`,
+    'leaderboard'
+  )
+  const scoring = calculateUserDeltas({
     predictions,
+    allowedAssets,
     resolutionsByAssetId,
+    leaderboardUserIds: leaderboardDocuments.map((entry) => entry.id),
     startsAtMs: startsAt.getTime(),
     endsAtMs: endsAt.getTime(),
     pointsPerCorrect: parsePositiveInteger(env.POINTS_PER_CORRECT, 25),
     pointsPerIncorrect: parseNegativeInteger(env.POINTS_PER_INCORRECT, -25)
   })
+  const userDeltas = scoring.userDeltas
 
-  const leaderboardDocuments = await firestore.listDocuments(
-    `tournaments/${tournamentId}/seasons/${season.id}`,
-    'leaderboard'
-  )
   const leaderboardByUserId = new Map(leaderboardDocuments.map((entry) => [entry.id, entry]))
   const eventNameEn = requireString(tournament.data.title, 'tournament.title')
   const eventNameRu = readOptionalString(tournament.data.titleRu) || eventNameEn
@@ -382,12 +418,14 @@ async function settleTournament(input: {
       0
     )
     const currentCorrect = readFiniteNumber(existing?.data.correctPredictions, 0)
+    const currentMissed = readFiniteNumber(existing?.data.missedPredictions, 0)
     const assetStats = mergeLeaderboardAssetStats(existing?.data.assetStats, delta.assetStats)
     const fields = {
       userId,
       points: Math.max(0, currentPoints + delta.points),
       totalPredictions: currentTotal + delta.totalPredictions,
       correctPredictions: currentCorrect + delta.correctPredictions,
+      missedPredictions: currentMissed + delta.missedPredictions,
       assetStats,
       lastScoredRoundId: round.id
     }
@@ -426,12 +464,28 @@ async function settleTournament(input: {
     }
   }
 
+  const specialPrizePlan = await buildSpecialPrizeAwardPlan({
+    firestore,
+    tournament,
+    seasons,
+    currentSeasonId: season.id,
+    currentSeasonLeaderboard: leaderboardDocuments,
+    currentSeasonDeltas: userDeltas,
+    nowMs,
+    eventNameRu,
+    eventNameEn,
+    seasonOrdinal,
+    roundOrdinal
+  })
+  writes.push(...specialPrizePlan.writes)
+
   const assetResults = resolutions.map((resolution) => {
     return {
       asset: resolution.asset,
       initialPrice: resolution.initialPrice,
       finalPrice: resolution.finalPrice,
-      verdict: resolution.direction
+      verdict: resolution.direction,
+      ...scoring.voteSummariesByAssetId.get(resolution.assetId)
     }
   })
 
@@ -476,21 +530,227 @@ async function settleTournament(input: {
     openedRoundId: nextRoundId,
     predictionsProcessed: predictions.length,
     usersUpdated: userDeltas.size,
+    specialPrizesAwarded: specialPrizePlan.userIds.length,
     assetResults: Object.fromEntries(
       resolutions.map((resolution) => [resolution.assetId, resolution.direction])
     )
   }
 }
 
+async function buildSpecialPrizeAwardPlan(input: {
+  firestore: FirestoreRestClient
+  tournament: FirestoreDocument
+  seasons: FirestoreDocument[]
+  currentSeasonId: string
+  currentSeasonLeaderboard: FirestoreDocument[]
+  currentSeasonDeltas: Map<string, UserScoreDelta>
+  nowMs: number
+  eventNameRu: string
+  eventNameEn: string
+  seasonOrdinal: number
+  roundOrdinal: number
+}): Promise<SpecialPrizeAwardPlan> {
+  if (input.tournament.id !== APEX_PROTOCOL_TOURNAMENT_ID) {
+    return { writes: [], userIds: [] }
+  }
+
+  const specialPrizes = readSpecialPrizeArray(input.tournament.data.specialPrize)
+  const prizeIndex = specialPrizes.findIndex((prize) => (
+    normalizeSpecialPrizeValue(prize.type) === SPECIAL_PRIZE_TYPE_LICENSE_KEY
+    && normalizeStatus(prize.status) === 'active'
+  ))
+  if (prizeIndex < 0) return { writes: [], userIds: [] }
+
+  const prize = specialPrizes[prizeIndex]!
+  const alreadyAwardedUserIds = readSpecialPrizeWinnerIds(prize.winners)
+  const seasonWins = await calculateSeasonWins({
+    firestore: input.firestore,
+    tournamentId: input.tournament.id,
+    seasons: input.seasons,
+    currentSeasonId: input.currentSeasonId,
+    currentSeasonLeaderboard: input.currentSeasonLeaderboard,
+    currentSeasonDeltas: input.currentSeasonDeltas,
+    nowMs: input.nowMs
+  })
+  const eligibleUserIds = Array.from(seasonWins.entries())
+    .filter(([, record]) => record.seasonIds.length >= SPECIAL_PRIZE_REQUIRED_SEASON_WINS)
+    .map(([userId]) => userId)
+    .filter((userId) => !alreadyAwardedUserIds.has(userId))
+    .sort()
+
+  if (!eligibleUserIds.length) return { writes: [], userIds: [] }
+
+  const updatedSpecialPrizes = specialPrizes.map((entry, index) => {
+    if (index !== prizeIndex) return entry
+    return {
+      ...entry,
+      winners: Array.from(new Set([
+        ...Array.from(alreadyAwardedUserIds),
+        ...eligibleUserIds
+      ])).sort()
+    }
+  })
+  const writes: FirestoreWrite[] = [
+    makeUpdateWrite({
+      name: input.tournament.name,
+      fields: {
+        specialPrize: updatedSpecialPrizes
+      },
+      serverTimestampFields: ['specialPrizeUpdatedAt'],
+      precondition: requireUpdateTime(input.tournament, 'tournament')
+    })
+  ]
+
+  for (const userId of eligibleUserIds) {
+    writes.push(makeUpdateWrite({
+      name: input.firestore.documentName(
+        `users/${userId}/notifications/event_prize_${input.tournament.id}_special_license_key`
+      ),
+      fields: {
+        type: 'event',
+        subtype: 'prize',
+        contentRu: 'Вы получили специальную награду. Лицензионный ключ приложения будет направлен на почту, через которую вы зарегистрировались.',
+        contentEn: 'You have received a special prize. The application license key will be sent to the email address used for registration.',
+        eventNameRu: input.eventNameRu,
+        eventNameEn: input.eventNameEn,
+        season: input.seasonOrdinal,
+        round: input.roundOrdinal,
+        prize: 'Application license key',
+        isRead: false
+      },
+      serverTimestampFields: ['createdAt']
+    }))
+  }
+
+  return { writes, userIds: eligibleUserIds }
+}
+
+async function calculateSeasonWins(input: {
+  firestore: FirestoreRestClient
+  tournamentId: string
+  seasons: FirestoreDocument[]
+  currentSeasonId: string
+  currentSeasonLeaderboard: FirestoreDocument[]
+  currentSeasonDeltas: Map<string, UserScoreDelta>
+  nowMs: number
+}): Promise<Map<string, SeasonWinRecord>> {
+  const result = new Map<string, SeasonWinRecord>()
+
+  for (let index = 0; index < input.seasons.length; index += 1) {
+    const season = input.seasons[index]!
+    if (!isSeasonCompleteForSpecialPrize(season, input.nowMs)) continue
+
+    const leaderboardDocuments = season.id === input.currentSeasonId
+      ? input.currentSeasonLeaderboard
+      : await input.firestore.listDocuments(
+          `tournaments/${input.tournamentId}/seasons/${season.id}`,
+          'leaderboard'
+        )
+    const leaderboard = season.id === input.currentSeasonId
+      ? buildEffectiveLeaderboardRows(leaderboardDocuments, input.currentSeasonDeltas)
+      : buildEffectiveLeaderboardRows(leaderboardDocuments)
+    const winners = getSeasonFirstPlaceUserIds(leaderboard)
+
+    for (const userId of winners) {
+      const existing = result.get(userId) || { seasonIds: [], seasonOrdinals: [] }
+      existing.seasonIds.push(season.id)
+      existing.seasonOrdinals.push(index + 1)
+      result.set(userId, existing)
+    }
+  }
+
+  return result
+}
+
+function buildEffectiveLeaderboardRows(
+  documents: FirestoreDocument[],
+  deltas?: Map<string, UserScoreDelta>
+): LeaderboardRow[] {
+  const rows = new Map<string, LeaderboardRow>()
+
+  for (const document of documents) {
+    const userId = document.id
+    rows.set(userId, {
+      userId,
+      points: Math.max(0, readFiniteNumber(document.data.points, 0))
+    })
+  }
+
+  if (deltas) {
+    for (const [userId, delta] of deltas) {
+      const current = rows.get(userId)
+      rows.set(userId, {
+        userId,
+        points: Math.max(0, (current?.points || 0) + delta.points)
+      })
+    }
+  }
+
+  return Array.from(rows.values())
+}
+
+function getSeasonFirstPlaceUserIds(rows: LeaderboardRow[]): string[] {
+  const maxPoints = rows.reduce((max, row) => Math.max(max, row.points), 0)
+  if (maxPoints <= 0) return []
+
+  const winners = rows
+    .filter((row) => row.points === maxPoints)
+    .map((row) => row.userId)
+    .sort()
+
+  return winners.length <= 2 ? winners : []
+}
+
+function isSeasonCompleteForSpecialPrize(season: FirestoreDocument, nowMs: number): boolean {
+  if (normalizeStatus(season.data.status) === 'closed') return true
+  const endsAt = season.data.endsAt
+  return endsAt instanceof Date && Number.isFinite(endsAt.getTime()) && endsAt.getTime() <= nowMs
+}
+
+function readSpecialPrizeArray(value: unknown): Record<string, unknown>[] {
+  if (value === undefined || value === null) return []
+  return requireArray(value, 'tournament.specialPrize').map((entry, index) => (
+    requireObject(entry, `tournament.specialPrize[${index}]`)
+  ))
+}
+
+function readSpecialPrizeWinnerIds(value: unknown): Set<string> {
+  if (value === undefined || value === null) return new Set()
+  return new Set(requireArray(value, 'specialPrize.winners')
+    .map((entry) => {
+      if (typeof entry === 'string') return entry.trim()
+      if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+        return String((entry as Record<string, unknown>).userId || '').trim()
+      }
+      return ''
+    })
+    .filter(Boolean))
+}
+
+function normalizeSpecialPrizeValue(value: unknown): string {
+  return String(value || '').trim().toLowerCase()
+}
+
 function calculateUserDeltas(input: {
   predictions: FirestoreDocument[]
+  allowedAssets: ResolvedAsset[]
   resolutionsByAssetId: Map<string, AssetResolution>
+  leaderboardUserIds: string[]
   startsAtMs: number
   endsAtMs: number
   pointsPerCorrect: number
   pointsPerIncorrect: number
-}): Map<string, UserScoreDelta> {
-  const result = new Map<string, UserScoreDelta>()
+}): {
+  userDeltas: Map<string, UserScoreDelta>
+  voteSummariesByAssetId: Map<string, AssetVoteSummary>
+} {
+  const predictionByUserAndAsset = new Map<string, {
+    userId: string
+    assetId: string
+    prediction: PredictionDirection
+  }>()
+  const voteCountsByAssetId = new Map<string, Record<PredictionDirection, number>>()
+  const participantIds = new Set(input.leaderboardUserIds)
   const seenPredictions = new Set<string>()
 
   for (const predictionDocument of input.predictions) {
@@ -508,44 +768,116 @@ function calculateUserDeltas(input: {
       throw new Error(`Prediction ${predictionDocument.id} is outside the round voting interval.`)
     }
 
-    const uniqueKey = `${userId}:${assetId}`
-    if (seenPredictions.has(uniqueKey)) {
-      throw new Error(`Duplicate prediction for ${uniqueKey}.`)
-    }
-    seenPredictions.add(uniqueKey)
-
     const resolution = input.resolutionsByAssetId.get(assetId)
     if (!resolution) {
       throw new Error(`Prediction ${predictionDocument.id} references disallowed asset ${assetId}.`)
     }
 
-    const isCorrect = prediction === resolution.direction
+    const uniqueKey = `${userId}:${assetId}`
+    if (seenPredictions.has(uniqueKey)) {
+      throw new Error(`Duplicate prediction for ${uniqueKey}.`)
+    }
+    seenPredictions.add(uniqueKey)
+    predictionByUserAndAsset.set(uniqueKey, { userId, assetId, prediction })
+    participantIds.add(userId)
+
+    const voteCounts = voteCountsByAssetId.get(assetId) || { LONG: 0, SHORT: 0 }
+    voteCounts[prediction] += 1
+    voteCountsByAssetId.set(assetId, voteCounts)
+  }
+
+  const voteSummariesByAssetId = new Map<string, AssetVoteSummary>()
+  for (const asset of input.allowedAssets) {
+    const resolution = input.resolutionsByAssetId.get(asset.assetId)
+    if (!resolution) continue
+    const voteCounts = voteCountsByAssetId.get(asset.assetId) || { LONG: 0, SHORT: 0 }
+    voteSummariesByAssetId.set(asset.assetId, createAssetVoteSummary({
+      assetId: asset.assetId,
+      direction: resolution.direction,
+      longVotes: voteCounts.LONG,
+      shortVotes: voteCounts.SHORT,
+      pointsPerCorrect: input.pointsPerCorrect
+    }))
+  }
+
+  const result = new Map<string, UserScoreDelta>()
+  const allowedAssetIds = input.allowedAssets.map((asset) => asset.assetId)
+  for (const userId of participantIds) {
     const current = result.get(userId) || {
       points: 0,
       totalPredictions: 0,
       correctPredictions: 0,
+      missedPredictions: 0,
       assetStats: new Map<string, LeaderboardAssetStat>()
     }
-    const assetStat = current.assetStats.get(assetId) || {
-      assetId,
-      asset: resolution.asset,
-      totalPredictions: 0,
-      correctPredictions: 0
+    for (const assetId of allowedAssetIds) {
+      const resolution = input.resolutionsByAssetId.get(assetId)
+      if (!resolution) continue
+
+      const uniqueKey = `${userId}:${assetId}`
+      const predictionRecord = predictionByUserAndAsset.get(uniqueKey)
+      const assetStat = current.assetStats.get(assetId) || {
+        assetId,
+        asset: resolution.asset,
+        totalPredictions: 0,
+        correctPredictions: 0,
+        missedPredictions: 0,
+        pointsEarned: 0
+      }
+
+      if (!predictionRecord) {
+        current.points += MISSED_PREDICTION_PENALTY
+        current.missedPredictions += 1
+        assetStat.missedPredictions += 1
+        assetStat.pointsEarned += MISSED_PREDICTION_PENALTY
+        current.assetStats.set(assetId, assetStat)
+        continue
+      }
+
+      const voteSummary = voteSummariesByAssetId.get(assetId)
+      const isCorrect = predictionRecord.prediction === resolution.direction
+      const pointsEarned = isCorrect
+        ? voteSummary?.pointsForCorrect || input.pointsPerCorrect
+        : input.pointsPerIncorrect
+
+      current.points += pointsEarned
+      current.totalPredictions += 1
+      assetStat.totalPredictions += 1
+      assetStat.pointsEarned += pointsEarned
+      if (isCorrect) {
+        current.correctPredictions += 1
+        assetStat.correctPredictions += 1
+      }
+      current.assetStats.set(assetId, assetStat)
     }
-    current.totalPredictions += 1
-    assetStat.totalPredictions += 1
-    if (isCorrect) {
-      current.correctPredictions += 1
-      assetStat.correctPredictions += 1
-      current.points += input.pointsPerCorrect
-    } else {
-      current.points += input.pointsPerIncorrect
-    }
-    current.assetStats.set(assetId, assetStat)
     result.set(userId, current)
   }
 
-  return result
+  return { userDeltas: result, voteSummariesByAssetId }
+}
+
+function createAssetVoteSummary(input: {
+  assetId: string
+  direction: PredictionDirection
+  longVotes: number
+  shortVotes: number
+  pointsPerCorrect: number
+}): AssetVoteSummary {
+  const totalVotes = input.longVotes + input.shortVotes
+  const winningVotes = input.direction === 'LONG' ? input.longVotes : input.shortVotes
+  const winnerShare = totalVotes > 0 ? winningVotes / totalVotes : 0
+  const difficultyMultiplier = winnerShare >= 0.5 || totalVotes === 0
+    ? 1
+    : Math.min(MAX_DIFFICULTY_MULTIPLIER, 1 + (0.5 - winnerShare) * 2)
+
+  return {
+    assetId: input.assetId,
+    longVotes: input.longVotes,
+    shortVotes: input.shortVotes,
+    winnerShare,
+    difficultyMultiplier,
+    pointsForCorrect: Math.round(input.pointsPerCorrect * difficultyMultiplier)
+  }
 }
 
 function mergeLeaderboardAssetStats(
@@ -570,11 +902,15 @@ function mergeLeaderboardAssetStats(
         totalPredictions,
         Math.max(0, readFiniteNumber(source.correctPredictions, 0))
       )
+      const missedPredictions = Math.max(0, readFiniteNumber(source.missedPredictions, 0))
+      const pointsEarned = readFiniteNumber(source.pointsEarned, 0)
       merged.set(assetId, {
         assetId,
         asset: typeof source.asset === 'string' && source.asset.trim() ? source.asset.trim() : assetId,
         totalPredictions,
-        correctPredictions
+        correctPredictions,
+        missedPredictions,
+        pointsEarned
       })
     }
   }
@@ -585,7 +921,9 @@ function mergeLeaderboardAssetStats(
       assetId,
       asset: delta.asset || existing?.asset || assetId,
       totalPredictions: (existing?.totalPredictions || 0) + delta.totalPredictions,
-      correctPredictions: (existing?.correctPredictions || 0) + delta.correctPredictions
+      correctPredictions: (existing?.correctPredictions || 0) + delta.correctPredictions,
+      missedPredictions: (existing?.missedPredictions || 0) + delta.missedPredictions,
+      pointsEarned: (existing?.pointsEarned || 0) + delta.pointsEarned
     })
   }
 

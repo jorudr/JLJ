@@ -125,11 +125,70 @@ predictTime: Firestore Timestamp
 
 ## Очки
 
-- правильный прогноз: `+25` очков;
+- правильный прогноз: `+25 × difficultyMultiplier`;
 - неправильный прогноз: `-25` очков;
+- пропущенный голос по активу: `-5` очков;
 - баланс участника не может стать отрицательным: после списания минимум — `0`.
 
-Значения задаются в `wrangler.jsonc` через `POINTS_PER_CORRECT` и `POINTS_PER_INCORRECT`.
+`difficultyMultiplier` зависит от того, насколько редкой была победившая сторона среди голосов по активу:
+
+```text
+50%+ победивших голосов: x1.00
+40% победивших голосов:  x1.20
+30% победивших голосов:  x1.40
+20% победивших голосов:  x1.60
+10% победивших голосов:  x1.80
+максимум:                x2.00
+```
+
+Неправильный прогноз остаётся фиксированным `-25`, пропуск — фиксированным `-5`. Базовые значения правильного и неправильного прогноза задаются в `wrangler.jsonc` через `POINTS_PER_CORRECT` и `POINTS_PER_INCORRECT`.
+
+В `leaderboard` Worker обновляет:
+
+```text
+points
+totalPredictions
+correctPredictions
+missedPredictions
+assetStats[].pointsEarned
+assetStats[].missedPredictions
+```
+
+В `round.assetResults` Worker дополнительно записывает:
+
+```text
+longVotes
+shortVotes
+winnerShare
+difficultyMultiplier
+pointsForCorrect
+```
+
+## Special Prize
+
+Для `apex_protocol_2026` Worker дополнительно проверяет специальную награду турнира:
+
+```text
+tournaments/apex_protocol_2026
+
+specialPrize: [
+  {
+    type: "license-key",
+    status: "active",
+    winners: []
+  }
+]
+```
+
+Если `status: "active"`, пользователь получает награду один раз, когда занимает первое место по очкам минимум в двух завершённых сезонах. Сезон считается завершённым, если `status: "closed"` или если `endsAt` уже прошёл. Если первое место по очкам делят один или два пользователя, победа сезона засчитывается каждому из них. Если первое место делят три и более пользователя, сезон не засчитывается никому для `specialPrize`. Максимум очков должен быть больше `0`.
+
+После выдачи Worker добавляет `userId` в `specialPrize[].winners` и создаёт уведомление:
+
+```text
+users/{userId}/notifications/event_prize_apex_protocol_2026_special_license_key
+```
+
+Уведомление сообщает, что лицензионный ключ приложения будет направлен на почту, через которую пользователь зарегистрировался.
 
 ## Service account
 
