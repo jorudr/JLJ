@@ -3,7 +3,7 @@
        :class="{ 'is-dark': isDark }">
 
     <Transition name="fade">
-       <ExInitialization v-if="canEnterWorkspace && !hasInitialized" @initiate="handleInitializationComplete" />
+       <ExInitialization v-if="showInitialization" @initiate="handleInitializationComplete" />
     </Transition>
 
     <Transition name="page-reify" mode="out-in">
@@ -379,8 +379,14 @@ const {
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const authenticatedUserId = computed(() => authStore.user?.uid || '')
-const canEnterWorkspace = computed(() => Boolean(authenticatedUserId.value) && accessState.value === 'granted')
-const showAccessGate = computed(() => !canEnterWorkspace.value)
+const hasAccessGranted = computed(() => Boolean(authenticatedUserId.value) && accessState.value === 'granted')
+const showInitialization = computed(() => !hasInitialized.value)
+const showAccessGate = computed(() => (
+  hasInitialized.value
+  && Boolean(authenticatedUserId.value)
+  && accessState.value !== 'granted'
+))
+const canEnterWorkspace = computed(() => hasInitialized.value && hasAccessGranted.value)
 const visibleAccessState = computed(() => {
   if (!authStore.authReady || !authenticatedUserId.value) return 'checking'
   return accessState.value
@@ -652,7 +658,14 @@ watch(activeTab, (newTab) => {
 watch(authenticatedUserId, (userId) => {
   beginAccessListener(userId)
   if (!userId) {
+    stopDashboardScore(false)
     notificationStore.unsubscribeFromNotifications()
+    hasInitialized.value = false
+    isAssembled.value = false
+    showBloom.value = true
+    isNodeMapActive.value = false
+    activeTab.value = ''
+    isGenesisBottomBarHidden.value = false
   }
 }, { immediate: true })
 
@@ -660,7 +673,6 @@ watch(canEnterWorkspace, (isGranted) => {
   if (!isGranted) {
     stopDashboardScore(false)
     notificationStore.unsubscribeFromNotifications()
-    hasInitialized.value = false
     isAssembled.value = false
     showBloom.value = true
     isNodeMapActive.value = false
