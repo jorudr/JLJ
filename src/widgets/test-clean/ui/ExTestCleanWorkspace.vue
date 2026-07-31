@@ -18,8 +18,19 @@
       :class="!activeTab ? 'items-start justify-center py-4' : (activeTab === 'forum' || activeTab === 'genesis' ? 'items-start justify-center py-0' : 'items-center justify-center py-20')"
     >
        <Transition name="page-reify" mode="out-in">
+         <ExAccessGate
+           v-if="hasInitialized && accessState !== 'granted'"
+           key="access-gate"
+           :state="accessState"
+           :error="accessError"
+           :is-submitting="isActivatingAccess"
+           :locale="locale"
+           @activate="activateAccess"
+           @retry="retryAccessCheck"
+         />
+
          <!-- Dashboard Hub (No Tab) -->
-         <div v-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
+         <div v-else-if="isAssembled && !activeTab" key="hub" class="w-full h-full">
             <ExDashboard
               :is-music-muted="isDashboardMusicMuted"
               @navigate="handleDashboardNavigate"
@@ -275,6 +286,7 @@ import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import TesseractCanvas from '~/widgets/style/ui/TesseractCanvas.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
+import ExAccessGate from '~/widgets/test-clean/ui/ExAccessGate.vue'
 
 import ExGenesisMatrix from '~/widgets/genesis/ui/ExGenesisMatrix.vue'
 import ExEquityCurve3D from '~/widgets/genesis/ui/ExEquityCurve3D.vue'
@@ -288,6 +300,7 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import { storeToRefs } from 'pinia'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useAccessActivation } from '~/features/access/model/useAccessActivation'
 const themeStore = useThemeStore()
 const { locale, setLocale } = useI18n()
 const isDark = computed({
@@ -348,10 +361,24 @@ const workspaceRoot = ref(null)
 const isHudActive = ref(true)
 const isGenesisBottomBarHidden = ref(false)
 const isDashboardMusicMuted = ref(false)
+const isActivatingAccess = ref(false)
+const {
+  accessState,
+  accessError,
+  beginAccessListener,
+  stopAccessListener,
+  retryAccessCheck,
+  activateAccessKey
+} = useAccessActivation()
 useDomI18n(workspaceRoot, 'genesis.dom', { includeBody: true })
 
 const isGenesisPath = computed(() => route.path === genesisBasePath || route.path.startsWith(`${genesisBasePath}/`))
-const isDashboardHubActive = computed(() => hasInitialized.value && isAssembled.value && !activeTab.value)
+const isDashboardHubActive = computed(() => (
+  accessState.value === 'granted'
+  && hasInitialized.value
+  && isAssembled.value
+  && !activeTab.value
+))
 const shouldPlayDashboardScore = computed(() => isDashboardHubActive.value && !isDashboardMusicMuted.value)
 
 let dashboardScore = null
@@ -464,6 +491,16 @@ const toggleDashboardMusic = () => {
   }
   if (isDashboardHubActive.value) {
     playDashboardScore(true)
+  }
+}
+
+const activateAccess = async (key) => {
+  if (isActivatingAccess.value) return
+  isActivatingAccess.value = true
+  try {
+    await activateAccessKey(key)
+  } finally {
+    isActivatingAccess.value = false
   }
 }
 
@@ -599,6 +636,10 @@ watch(activeTab, (newTab) => {
   setScrollLock(newTab)
 }, { immediate: true })
 
+watch(() => authStore.user?.uid, (userId) => {
+  beginAccessListener(userId)
+}, { immediate: true })
+
 watch(shouldPlayDashboardScore, (shouldPlay) => {
   if (shouldPlay) {
     playDashboardScore(true)
@@ -632,6 +673,7 @@ const handleSignedOut = () => {
 
 onUnmounted(() => {
   stopDashboardScore(false)
+  stopAccessListener()
   document.body.style.overflow = ''
   document.body.style.height = ''
 })
