@@ -236,17 +236,14 @@ async function redeemAccessKey(env: Env, userId: string, rawKey: string) {
     },
     {
       update: {
-        name: firestoreDocumentName(env, `users/${userId}`),
+        name: firestoreDocumentName(env, `users/${userId}/access/state`),
         fields: encodeFields({
-          access: {
-            isActivated: true,
-            grant: accessKey.grant,
-            activatedKeyId: accessKey.id
-          }
+          isActivated: true,
+          grant: accessKey.grant,
+          activatedKeyId: accessKey.id
         })
       },
-      updateMask: { fieldPaths: ['access.isActivated', 'access.grant', 'access.activatedKeyId'] },
-      updateTransforms: [{ fieldPath: 'access.activatedAt', setToServerValue: 'REQUEST_TIME' }]
+      updateTransforms: [{ fieldPath: 'activatedAt', setToServerValue: 'REQUEST_TIME' }]
     }
   ]
 

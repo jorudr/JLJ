@@ -75,7 +75,7 @@ accessKeys/{keyId}                         # только Worker
 accessKeys/{keyId}/redemptions/{userId}    # только Worker
 accessKeyBatches/{batchId}                 # только Worker, ключи зашифрованы
 users/{userId}/redeemedKeys/{keyId}        # пользователь может только читать
-users/{userId}.access                      # пользователь может только читать
+users/{userId}/access/state                # пользователь может только читать
 ```
 
 Один Firestore transaction создаёт запись активации, историю ключа у пользователя и увеличивает счётчик использования. Это исключает двойную активацию при параллельных запросах.
