@@ -1,8 +1,7 @@
 <template>
   <section class="access-gate flex h-full w-full items-center justify-center px-5 py-10 sm:px-8">
-    <div class="access-gate__frame relative w-full max-w-[34rem] overflow-hidden px-7 py-9 sm:px-11 sm:py-12">
-      <div class="access-gate__corner access-gate__corner--top-left" aria-hidden="true"></div>
-      <div class="access-gate__corner access-gate__corner--bottom-right" aria-hidden="true"></div>
+    <ExPanel variant="light" no-padding no-shadow class="w-full max-w-[34rem] overflow-visible">
+      <div class="px-7 py-9 sm:px-11 sm:py-12">
 
       <div v-if="state === 'checking'" class="flex min-h-48 flex-col items-center justify-center text-center">
         <span class="access-gate__spinner mb-6" aria-hidden="true"></span>
@@ -16,8 +15,8 @@
         </ExHeading>
         <p class="access-gate__description">
           {{ isRussian
-            ? 'Введите персональный ключ, чтобы открыть протокол ExGenesis.'
-            : 'Enter your personal key to unlock the ExGenesis protocol.' }}
+            ? 'Введите ключ активации'
+            : 'Enter your activation key.' }}
         </p>
 
         <form class="mt-9" @submit.prevent="submit">
@@ -58,13 +57,15 @@
           {{ isRussian ? 'ПОВТОРИТЬ ПРОВЕРКУ' : 'RETRY CHECK' }}
         </button>
       </div>
-    </div>
+      </div>
+    </ExPanel>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 import type { AccessActivationState } from '~/features/access/model/useAccessActivation'
 
 const props = withDefaults(defineProps<{
@@ -104,34 +105,6 @@ const submit = () => {
 </script>
 
 <style scoped>
-.access-gate__frame {
-  background: color-mix(in srgb, var(--theme-bg) 78%, transparent);
-  border: 1px solid var(--theme-border-strong);
-  box-shadow: 0 24px 90px rgb(var(--theme-text-rgb) / 0.08);
-}
-
-.access-gate__corner {
-  height: 1.1rem;
-  position: absolute;
-  width: 1.1rem;
-}
-
-.access-gate__corner--top-left {
-  border-left: 2px solid var(--theme-text);
-  border-top: 2px solid var(--theme-text);
-  left: -1px;
-  opacity: 0.7;
-  top: -1px;
-}
-
-.access-gate__corner--bottom-right {
-  border-bottom: 2px solid var(--theme-text);
-  border-right: 2px solid var(--theme-text);
-  bottom: -1px;
-  opacity: 0.7;
-  right: -1px;
-}
-
 .access-gate__eyebrow,
 .access-gate__retry,
 .access-gate__error {
