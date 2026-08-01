@@ -16,6 +16,7 @@ use zip::ZipArchive;
 pub const APP_IDENTIFIER: &str = "com.voe.app";
 pub const JLJ_DATA_DIR: &str = "JLJData";
 pub const PATCHES_DIR: &str = "patches";
+pub const MAX_PATCH_UPLOAD_BYTES: usize = 50 * 1024 * 1024;
 pub const STATE_FILE: &str = "state.json";
 pub const ACTIVE_MANIFEST_FILE: &str = "active-manifest.json";
 pub const ACTIVE_SIGNATURE_FILE: &str = "active-manifest.minisig";
@@ -241,6 +242,12 @@ pub fn patch_install_from_upload(
     }
     if bytes.is_empty() {
         return Err("Patch file is empty.".to_string());
+    }
+    if bytes.len() > MAX_PATCH_UPLOAD_BYTES {
+        return Err(format!(
+            "Patch file is too large. Maximum size is {} MB.",
+            MAX_PATCH_UPLOAD_BYTES / 1024 / 1024
+        ));
     }
 
     let mut archive =

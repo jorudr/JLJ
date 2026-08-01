@@ -18,6 +18,8 @@ use zip::ZipArchive;
 
 const PATCH_MANIFEST_ENTRY: &str = "manifest.json";
 const PATCH_SIGNATURE_ENTRY: &str = "manifest.minisig";
+const PRODUCT_NAME: &str = "J.L.JÖRMUNGANDR";
+const LEGACY_PRODUCT_NAME: &str = "JLJ";
 
 #[derive(Debug)]
 struct Args {
@@ -157,7 +159,7 @@ fn parse_args() -> Result<Args, String> {
 
 fn print_help() {
     println!(
-        "JLJ hotfix patcher\n\nUsage:\n  hotfix_patcher --patch JLJ-1.0.4-hotfix.1.jljpatch [--app /path/to/JLJ.app|JLJ.exe] [--dry-run]"
+        "J.L.JÖRMUNGANDR hotfix patcher\n\nUsage:\n  hotfix_patcher --patch JLJ-1.0.4-hotfix.1.jljpatch [--app /path/to/J.L.JÖRMUNGANDR.app|J.L.JÖRMUNGANDR.exe] [--dry-run]"
     );
 }
 
@@ -166,19 +168,30 @@ fn locate_installed_app() -> Result<PathBuf, String> {
 
     #[cfg(target_os = "macos")]
     {
-        candidates.push(PathBuf::from("/Applications/JLJ.app"));
+        candidates.push(PathBuf::from(format!("/Applications/{PRODUCT_NAME}.app")));
+        candidates.push(PathBuf::from(format!(
+            "/Applications/{LEGACY_PRODUCT_NAME}.app"
+        )));
         if let Some(home) = dirs::home_dir() {
-            candidates.push(home.join("Applications").join("JLJ.app"));
+            let applications = home.join("Applications");
+            candidates.push(applications.join(format!("{PRODUCT_NAME}.app")));
+            candidates.push(applications.join(format!("{LEGACY_PRODUCT_NAME}.app")));
         }
     }
 
     #[cfg(target_os = "windows")]
     {
-        if let Some(program_files) = env::var_os("ProgramFiles") {
-            candidates.push(PathBuf::from(program_files).join("JLJ").join("JLJ.exe"));
-        }
-        if let Some(local_app_data) = env::var_os("LOCALAPPDATA") {
-            candidates.push(PathBuf::from(local_app_data).join("JLJ").join("JLJ.exe"));
+        for root in ["ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"] {
+            if let Some(value) = env::var_os(root) {
+                let root = PathBuf::from(value);
+                for app_name in [PRODUCT_NAME, LEGACY_PRODUCT_NAME] {
+                    candidates.push(root.join(app_name).join(format!("{app_name}.exe")));
+                    candidates.push(
+                        root.join(app_name)
+                            .join(format!("{LEGACY_PRODUCT_NAME}.exe")),
+                    );
+                }
+            }
         }
     }
 
@@ -424,7 +437,27 @@ fn app_executable_path(app_path: &Path) -> Result<PathBuf, String> {
     #[cfg(target_os = "macos")]
     {
         if app_path.extension().and_then(|s| s.to_str()) == Some("app") {
-            return Ok(app_path.join("Contents").join("MacOS").join("JLJ"));
+            let macos_dir = app_path.join("Contents").join("MacOS");
+            for executable_name in [PRODUCT_NAME, LEGACY_PRODUCT_NAME, "app"] {
+                let candidate = macos_dir.join(executable_name);
+                if candidate.exists() {
+                    return Ok(candidate);
+                }
+            }
+            return Ok(macos_dir.join(PRODUCT_NAME));
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if app_path.is_dir() {
+            for executable_name in [PRODUCT_NAME, LEGACY_PRODUCT_NAME] {
+                let candidate = app_path.join(format!("{executable_name}.exe"));
+                if candidate.exists() {
+                    return Ok(candidate);
+                }
+            }
+            return Ok(app_path.join(format!("{PRODUCT_NAME}.exe")));
         }
     }
 
@@ -487,7 +520,14 @@ fn rollback_native_backups(backup_dir: &Path, app_path: &Path) -> Result<(), Str
         let dest = if rel == Path::new("app-executable") {
             app_executable_path(app_path)?
         } else {
-            app_path.join(rel)
+            let app_root = if app_path.is_file() {
+                app_path
+                    .parent()
+                    .ok_or_else(|| "app executable has no parent directory".to_string())?
+            } else {
+                app_path
+            };
+            app_root.join(rel)
         };
         if let Some(parent) = dest.parent() {
             fs::create_dir_all(parent).map_err(|err| format!("rollback create dir: {err}"))?;

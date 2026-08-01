@@ -481,6 +481,7 @@ const selectedPatchFile = ref<File | null>(null)
 const isPatchDragActive = ref(false)
 const patchInstallState = ref<PatchInstallState>('idle')
 const patchInstallMessage = ref('')
+const MAX_PATCH_FILE_BYTES = 50 * 1024 * 1024
 
 const patchFileSummary = computed(() => {
   if (!selectedPatchFile.value) return ''
@@ -517,13 +518,24 @@ function handlePatchDrop(event: DragEvent) {
 function selectPatchFile(file: File) {
   selectedPatchFile.value = file
   patchInstallMessage.value = ''
-  patchInstallState.value = isValidPatchFile(file) ? 'ready' : 'error'
 
   if (!isValidPatchFile(file)) {
+    patchInstallState.value = 'error'
     patchInstallMessage.value = locale.value === 'ru'
       ? 'Неверный формат файла. Разрешены только .jljpatch.'
       : 'Invalid file format. Only .jljpatch files are allowed.'
+    return
   }
+
+  if (!isPatchFileSizeAllowed(file)) {
+    patchInstallState.value = 'error'
+    patchInstallMessage.value = locale.value === 'ru'
+      ? `Файл патча слишком большой. Максимум ${formatPatchFileSize(MAX_PATCH_FILE_BYTES)}.`
+      : `Patch file is too large. Maximum is ${formatPatchFileSize(MAX_PATCH_FILE_BYTES)}.`
+    return
+  }
+
+  patchInstallState.value = 'ready'
 }
 
 function resetPatchUpload() {
@@ -544,6 +556,14 @@ async function installSelectedPatch() {
   if (!isValidPatchFile(file)) {
     patchInstallState.value = 'error'
     patchInstallMessage.value = locale.value === 'ru' ? 'Можно установить только .jljpatch файл.' : 'Only .jljpatch files can be installed.'
+    return
+  }
+
+  if (!isPatchFileSizeAllowed(file)) {
+    patchInstallState.value = 'error'
+    patchInstallMessage.value = locale.value === 'ru'
+      ? `Файл патча слишком большой. Максимум ${formatPatchFileSize(MAX_PATCH_FILE_BYTES)}.`
+      : `Patch file is too large. Maximum is ${formatPatchFileSize(MAX_PATCH_FILE_BYTES)}.`
     return
   }
 
@@ -576,6 +596,11 @@ async function installSelectedPatch() {
 }
 
 async function clearActivePatch() {
+  const confirmed = window.confirm(locale.value === 'ru'
+    ? 'Удалить активный патч? После этого нужно перезапустить приложение.'
+    : 'Clear the active patch? You will need to restart the app after this.')
+  if (!confirmed) return
+
   patchInstallState.value = 'clearing'
   patchInstallMessage.value = locale.value === 'ru' ? 'Удаление активного патча...' : 'Clearing active patch...'
 
@@ -596,6 +621,10 @@ async function clearActivePatch() {
 
 function isValidPatchFile(file: File) {
   return file.name.toLowerCase().endsWith('.jljpatch')
+}
+
+function isPatchFileSizeAllowed(file: File) {
+  return file.size <= MAX_PATCH_FILE_BYTES
 }
 
 function formatPatchFileSize(bytes: number) {
