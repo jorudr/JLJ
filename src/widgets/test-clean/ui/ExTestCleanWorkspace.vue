@@ -279,6 +279,7 @@
     </div>
 
     <ExPaywallOverlay v-if="canEnterWorkspace" :isOpen="showPaywall" @close="showPaywall = false" />
+    <ExActivationSuccessOverlay v-if="canEnterWorkspace" :isOpen="showSuccessOverlay" @close="showSuccessOverlay = false" />
   </div>
 </template>
 
@@ -297,6 +298,7 @@ import ExEquityCurve3D from '~/widgets/genesis/ui/ExEquityCurve3D.vue'
 import ExGenesisLog from '~/widgets/genesis/ui/ExGenesisLog.vue'
 import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
+import ExActivationSuccessOverlay from '~/widgets/test-clean/ui/ExActivationSuccessOverlay.vue'
 
 import { useThemeStore } from '~/features/store/useTheme'
 import { useWorkspaceStore } from '~/widgets/test-clean/model/useWorkspace'
@@ -368,6 +370,7 @@ const isHudActive = ref(true)
 const isGenesisBottomBarHidden = ref(false)
 const isDashboardMusicMuted = ref(false)
 const isActivatingAccess = ref(false)
+const showSuccessOverlay = ref(true)
 const {
   accessState,
   accessError,
@@ -518,6 +521,7 @@ const activateAccess = async (key) => {
   isActivatingAccess.value = true
   try {
     await activateAccessKey(key)
+    showSuccessOverlay.value = true
   } finally {
     isActivatingAccess.value = false
   }

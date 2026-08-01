@@ -1,6 +1,10 @@
 <template>
-  <section class="access-gate flex h-full w-full items-center justify-center px-5 py-10 sm:px-8">
-    <ExPanel variant="light" no-padding no-shadow class="w-full max-w-[34rem] overflow-visible">
+  <section class="access-gate flex h-full w-full items-center justify-center px-5 py-10 sm:px-8 relative overflow-hidden ethereal-void" :class="{ 'is-dark': isDark }">
+    <!-- Ethereal Background -->
+    <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    <DesignVignette v-if="!isDark" :is-dark="isDark" />
+
+    <ExPanel variant="light" no-padding no-shadow class="w-full max-w-[34rem] overflow-visible relative z-10">
       <div class="px-7 py-9 sm:px-11 sm:py-12">
 
       <div v-if="state === 'checking'" class="flex min-h-48 flex-col items-center justify-center text-center">
@@ -67,6 +71,12 @@ import { computed, ref } from 'vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import type { AccessActivationState } from '~/features/access/model/useAccessActivation'
+import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
+import { useThemeStore } from '~/features/store/useTheme'
+
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.settings.isDark)
 
 const props = withDefaults(defineProps<{
   state: AccessActivationState
