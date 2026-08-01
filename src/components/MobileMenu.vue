@@ -36,10 +36,10 @@
                 <span>J.L.JÖRMUNGANDR</span>
                 <small>{{ t('landing.productsMenu.fullVersion') }}</small>
               </router-link>
-              <router-link to="/download" @click="closeMenu">
+              <a :href="getDemoDownloadUrl()" download @click="closeMenu">
                 <span>J.L.JÖRMUNGANDR DEMO</span>
                 <small>{{ t('landing.productsMenu.freeDemo') }}</small>
-              </router-link>
+              </a>
             </div>
           </div>
 
@@ -72,6 +72,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { getDemoDownloadUrl } from '../shared/downloads'
 
 defineProps({
   isLight: {
@@ -110,6 +111,12 @@ const toggleSection = (name) => {
   flex-direction: column;
   gap: 6px;
   padding: 4px 0;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu__trigger {
+    display: none;
+  }
 }
 
 .mobile-menu__trigger span {

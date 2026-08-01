@@ -68,8 +68,8 @@
 
       <footer class="w-full border-t border-black/[0.1] py-8 text-center text-[9px] uppercase tracking-[0.2em] text-[#2c2c2a]/75" style="font-family: 'Cormorant Garamond', serif;">
         <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row sm:text-left">
-          <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
-          <nav class="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[11px] font-medium tracking-[0.14em] text-[#2c2c2a]/75 sm:justify-end" aria-label="Footer navigation">
+          <span class="self-start text-left text-[12px] tracking-[0.14em] sm:self-auto sm:text-left">{{ t('landing.footer.company') }}</span>
+          <nav class="flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] text-[#2c2c2a]/75 sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" aria-label="Footer navigation">
             <router-link to="/" class="transition-colors hover:text-[#2c2c2a]">{{ t('landing.nav.products') }}</router-link>
             <router-link to="/use-cases" class="transition-colors hover:text-[#2c2c2a]">{{ t('landing.nav.useCases') }}</router-link>
             <router-link to="/pricing" class="transition-colors hover:text-[#2c2c2a]">{{ t('landing.nav.pricing') }}</router-link>
@@ -261,40 +261,87 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 
 @media (max-width: 700px) {
   .philosophy-content {
-    padding-top: 82px;
-    padding-bottom: 80px;
+    padding-top: 64px;
+    padding-bottom: 72px;
   }
 
   .philosophy-intro h1 {
-    font-size: clamp(3.8rem, 19vw, 6rem);
+    margin-top: 20px;
+    max-width: 100%;
+    font-size: clamp(2.4rem, 12vw, 4.2rem);
+    letter-spacing: 0;
+    line-height: 0.9;
+    overflow-wrap: anywhere;
+  }
+
+  .philosophy-intro p {
+    margin-top: 24px;
+    font-size: 0.92rem;
+    line-height: 1.55;
   }
 
   .philosophy-principles {
-    margin-top: 72px;
+    margin-top: 48px;
   }
 
   .philosophy-principle {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px 0 28px;
+    gap: 12px;
+    padding: 20px 0 24px;
+  }
+
+  .philosophy-principle h2 {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+    line-height: 1.05;
   }
 
   .philosophy-principle__labels {
     flex-wrap: wrap;
     gap: 8px 14px;
+    font-size: 0.58rem;
+  }
+
+  .philosophy-principle p {
+    max-width: none;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .philosophy-principles-label {
+    margin-top: 72px;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
   }
 
   .philosophy-closing {
     display: flex;
     flex-direction: column;
-    gap: 56px;
-    margin-top: 92px;
+    gap: 40px;
+    margin-top: 64px;
     align-items: stretch;
   }
 
   .philosophy-closing__visual img {
     width: min(100%, 360px);
+  }
+
+  .philosophy-closing__caption {
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+  }
+
+  .philosophy-closing__caption small {
+    font-size: 0.62rem;
+  }
+
+  .philosophy-statement {
+    max-width: none;
+    font-size: clamp(1.7rem, 8.5vw, 2.7rem);
+    line-height: 1.2;
   }
 }
 </style>

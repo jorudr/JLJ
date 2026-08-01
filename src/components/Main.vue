@@ -161,10 +161,10 @@
                   <span>J.L.JÖRMUNGANDR</span>
                   <small>{{ t('landing.productsMenu.fullVersion') }}</small>
                 </router-link>
-                <router-link to="/download" @click="closeMobileMenu">
+                <a :href="getDemoDownloadUrl()" download @click="closeMobileMenu">
                   <span>J.L.JÖRMUNGANDR DEMO</span>
                   <small>{{ t('landing.productsMenu.freeDemo') }}</small>
-                </router-link>
+                </a>
               </div>
             </div>
 
@@ -224,7 +224,7 @@
             <transition name="fade-slide" mode="out-in">
               <!-- Products Content -->
               <div v-if="megaMenuType === 'products'" key="products-list" class="flex flex-col space-y-8">
-                <a href="#" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+                <a href="/download?full" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
                   <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
                     <div class="w-3 h-3 rotate-45 border transition-colors duration-300" :class="isDark ? 'border-white' : 'border-black'"></div>
                   </div>
@@ -234,7 +234,7 @@
                   </div>
                 </a>
                 
-                <a href="#" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+                <a :href="getDemoDownloadUrl()" download class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
                   <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
                     <div class="w-3 h-3 rotate-45 opacity-50 transition-colors duration-300" :class="isDark ? 'bg-white group-hover:bg-white' : 'bg-black group-hover:bg-black'"></div>
                   </div>
@@ -547,10 +547,8 @@
             class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group text-white shadow-md"
             style="background-color: #FF424D;"
           >
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-              <path d="M512 194.8c0 101.3-82.4 183.8-183.8 183.8-101.7 0-184.4-82.4-184.4-183.8 0-101.6 82.7-184.3 184.4-184.3C429.6 10.5 512 93.2 512 194.8zM0 501.5h98.6v-491H0v491z"/>
-            </svg>
-            <span class="text-xs tracking-[0.3em] font-mono mt-0.5">BUY ON PATREON</span>
+            <img src="/assets/patreon-icon.svg" alt="Patreon" class="h-5 w-5" />
+            <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.buyOnPatreon') }}</span>
           </a>
         </div>
 
@@ -592,10 +590,10 @@
     <!-- Bottom Telemetry Footer -->
     <footer class="relative z-10 w-full border-t px-6 pb-16 pt-10 text-[9px] tracking-[0.2em] uppercase" :class="isDark ? 'border-white/10 text-white/75' : 'border-black/10 text-black/75'" style="font-family: 'Cormorant Garamond', serif;">
       <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row">
-        <div class="flex items-center gap-0 whitespace-nowrap sm:items-start">
+        <div class="flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
           <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
         </div>
-        <nav class="flex flex-col items-center justify-center gap-4 text-[11px] font-medium tracking-[0.14em] sm:flex-row sm:gap-x-10 sm:gap-y-3 sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
+        <nav class="flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
           <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.products') }}</router-link>
           <router-link to="/use-cases" class="transition-opacity hover:opacity-100">{{ t('landing.nav.useCases') }}</router-link>
           <router-link to="/pricing" class="transition-opacity hover:opacity-100">{{ t('landing.nav.pricing') }}</router-link>
@@ -609,6 +607,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { getDemoDownloadUrl } from '../shared/downloads'
 
 const { t, locale, setLocale } = useI18n()
 
@@ -859,6 +858,12 @@ const scrollToFeatures = () => {
   flex-direction: column;
   gap: 6px;
   padding: 4px 0;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-trigger {
+    display: none;
+  }
 }
 
 .mobile-menu-trigger span {
