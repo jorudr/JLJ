@@ -117,18 +117,12 @@ export const useForumStore = defineStore('forum', {
         }
     },
 
-      async addReply(reply: Reply) {
-        if(this.loading) return;
-        this.loading = true;
-        try {
-          const currentList = this.replies.get(reply.threadId) || [];
-    
-          const newList = [...currentList, reply];
-        
-          this.replies.set(reply.threadId, newList);
-        }finally{
-          this.loading = false;
-        }
+      addReply(reply: Reply) {
+        const currentList = this.replies.get(reply.threadId) || []
+        const newList = [...currentList, reply]
+
+        this.replies.set(reply.threadId, newList)
+        this.replies = new Map(this.replies)
       },
 
       async createReply(threadId: string, replyData: Omit<Reply, 'id' | 'threadId' | 'createdAt'>) {

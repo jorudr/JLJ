@@ -618,7 +618,7 @@
               <div v-if="comment.status !== 'hidden'" class="mt-2 flex justify-end items-center">
                 <button type="button" :disabled="!isAuthenticated || isReplyLikePending(comment.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(comment.id) }" :aria-pressed="isReplyLiked(comment.id)" @click="toggleCommentLike(comment)">
                   <svg class="article-comment-like__heart" :class="isReplyLiked(comment.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                  {{ articleLabels.like }}
+                  {{ isReplyLiked(comment.id) ? articleLabels.liked : articleLabels.like }}
                 </button>
                 <button @click="toggleReplyForm(comment.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                   {{ replyingToId === comment.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
@@ -658,7 +658,7 @@
                   <div v-if="reply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
                     <button type="button" :disabled="!isAuthenticated || isReplyLikePending(reply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(reply.id) }" :aria-pressed="isReplyLiked(reply.id)" @click="toggleCommentLike(reply)">
                       <svg class="article-comment-like__heart" :class="isReplyLiked(reply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                      {{ articleLabels.like }}
+                      {{ isReplyLiked(reply.id) ? articleLabels.liked : articleLabels.like }}
                     </button>
                     <button @click="toggleReplyForm(reply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                       {{ replyingToId === reply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
@@ -698,7 +698,7 @@
                       <div v-if="subreply.status !== 'hidden'" class="mt-2 flex justify-end items-center">
                         <button type="button" :disabled="!isAuthenticated || isReplyLikePending(subreply.id)" class="article-comment-like" :class="{ 'article-comment-like--active': isReplyLiked(subreply.id) }" :aria-pressed="isReplyLiked(subreply.id)" @click="toggleCommentLike(subreply)">
                           <svg class="article-comment-like__heart" :class="isReplyLiked(subreply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                          {{ articleLabels.like }}
+                          {{ isReplyLiked(subreply.id) ? articleLabels.liked : articleLabels.like }}
                         </button>
                         <button @click="toggleReplyForm(subreply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
                           {{ replyingToId === subreply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
@@ -750,7 +750,7 @@
         <!-- METADATA STEP -->
         <div v-if="creationStep === 'metadata'" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-10 relative overflow-hidden w-full max-w-7xl mx-auto" key="metadata">
           <!-- DRAFT METADATA HEADER -->
-          <div class="flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
+          <div class="relative z-20 flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
             <div class="flex flex-col space-y-2">
               <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
                 {{ locale === 'ru' ? 'Редактор' : 'Editor' }} // {{ formatJournalDate() }}
@@ -767,9 +767,12 @@
                 <button
                   v-for="type in articleTypes"
                   :key="type.value"
+                  type="button"
+                  :data-article-type="type.value"
                   class="text-[11px] font-mono tracking-widest uppercase transition-all duration-300 border-b"
                   :class="newArticleForm.type === type.value ? 'opacity-100 border-current pb-1 font-bold' : 'opacity-50 border-transparent hover:opacity-100 pb-1'"
-                  @click="newArticleForm.type = type.value"
+                  @pointerdown.stop.prevent="selectArticleType(type.value)"
+                  @click.stop.prevent="selectArticleType(type.value)"
                 >
                   {{ type.label }}
                 </button>
@@ -778,7 +781,7 @@
           </div>
 
           <!-- MAIN EDITORIAL CANVAS -->
-          <div class="flex-grow flex flex-col justify-center w-full max-w-5xl mx-auto space-y-6 min-h-0 pt-2 pb-6">
+          <div class="relative z-10 flex-grow flex flex-col justify-center w-full max-w-5xl mx-auto space-y-6 min-h-0 pt-2 pb-6">
             
             <!-- Huge Title Input -->
             <div class="flex flex-col items-center group/title relative w-full shrink-0 pt-4">
@@ -802,7 +805,7 @@
             <div class="w-16 h-px bg-current/30 mx-auto my-2 shrink-0"></div>
 
             <!-- Description Textarea -->
-            <div class="flex flex-col items-center group/desc relative w-full flex-grow min-h-0">
+            <div class="flex flex-col items-center group/desc relative w-full flex-grow min-h-[8.5rem]">
               <span class="text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase transition-opacity duration-300 mb-4 shrink-0" :class="newArticleForm.description ? 'opacity-30' : 'opacity-60 group-focus-within/desc:opacity-100'">
                 {{ locale === 'ru' ? 'Введите описание' : 'Enter Description' }}
               </span>
@@ -810,7 +813,7 @@
                 v-model="newArticleForm.description"
                 @input="newArticleForm.description = newArticleForm.description.replace(/[\r\n]+/g, ' ')"
                 maxlength="200"
-                class="w-full h-full flex-grow min-h-0 bg-transparent text-lg md:text-xl lg:text-2xl font-serif text-center focus:outline-none transition-colors resize-none placeholder:text-current/20 leading-normal text-current/90"
+                class="w-full h-full flex-grow min-h-[6.5rem] bg-transparent text-lg md:text-xl lg:text-2xl font-serif text-center focus:outline-none transition-colors resize-none placeholder:text-current/20 leading-normal text-current/90"
                 :placeholder="locale === 'ru' ? 'Краткое описание или тезис вашей статьи...' : 'Brief description or thesis of your article...'"
               ></textarea>
               <div class="absolute bottom-2 w-full flex justify-end px-4 shrink-0 pointer-events-none">
@@ -822,9 +825,9 @@
           </div>
 
           <!-- LAUNCH FOOTER -->
-          <div class="border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
+          <div class="relative z-20 border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
             <!-- Cancel / Delete Draft Button (Bottom Left) -->
-            <button class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel" 
+            <button type="button" class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/cancel"
                     @click="hasDraft ? (clearDraft(), isCreatingArticle = false) : isCreatingArticle = false">
               <svg class="w-4 h-4 transition-transform group-hover/cancel:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path v-if="!hasDraft" d="M19 12H5M5 12l7-7M5 12l7 7"></path>
@@ -2334,6 +2337,7 @@ const articleLabels = computed(() => locale.value === 'ru'
       signInToComment: 'Войдите, чтобы оставить комментарий.',
       postComment: 'Опубликовать комментарий',
       like: 'Нравится',
+      liked: 'Понравилось',
       likes: 'лайков',
       noComments: 'Комментариев пока нет',
       leaveFullscreen: 'Покинуть полноэкранный режим'
@@ -2354,6 +2358,7 @@ const articleLabels = computed(() => locale.value === 'ru'
       signInToComment: 'Sign in to join the discussion.',
       postComment: 'Post comment',
       like: 'Like',
+      liked: 'Liked',
       likes: 'Likes',
       noComments: 'No comments yet.',
       leaveFullscreen: 'Leave fullscreen mode'
@@ -3055,6 +3060,10 @@ const selectedTypeLabel = computed(() => {
   const t = articleTypes.value.find(t => t.value === newArticleForm.value.type)
   return t ? t.label : ''
 })
+
+const selectArticleType = (type: string) => {
+  newArticleForm.value.type = type
+}
 
 const isNewArticleFormValid = computed(() => {
   return newArticleForm.value.title.trim() !== '' &&
@@ -3956,9 +3965,11 @@ watch([
   isLiked.value = false
   isBookmarked.value = false
 
-  if (article && userId) {
+  if (article) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
-    
+  }
+
+  if (article && userId) {
     const [liked, saved] = await Promise.all([
       forumStore.isThreadLiked(userId, article.id),
       forumStore.isThreadSaved(userId, article.id)
