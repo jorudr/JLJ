@@ -35,37 +35,50 @@
         </div>
       </header>
 
-      <main class="use-case-main flex-1" :data-case-slug="caseSlug" aria-label="Use case">
-        <section v-if="isImproveCase" class="use-case-content" aria-labelledby="use-case-title">
-          <div class="use-case-intro">
-            <h1 id="use-case-title">{{ improvePage.title }}</h1>
-            <p>{{ improvePage.subtitle }}</p>
-          </div>
-
-          <div class="use-case-stepper" role="tablist" aria-label="Use case steps">
-            <button
-              v-for="(step, index) in improvePage.steps"
-              :key="step.title"
-              type="button"
-              role="tab"
-              :aria-selected="activeStep === index"
-              :aria-controls="`use-case-step-${index + 1}`"
-              :tabindex="activeStep === index ? 0 : -1"
-              :class="{ 'is-active': activeStep >= index }"
-              @click="activeStep = index"
-            >
-              {{ index + 1 }}
-            </button>
-          </div>
-
+      <main class="use-case-main flex-1" aria-label="Use cases">
+        <div class="use-case-stage">
           <Transition name="use-case-fade" mode="out-in">
-            <article v-if="activeStepContent" :id="`use-case-step-${activeStep + 1}`" :key="activeStep" class="use-case-step-content" role="tabpanel">
-              <span class="use-case-step-content__index">0{{ activeStep + 1 }}</span>
-              <h2>{{ activeStepContent.title }}</h2>
-              <p>{{ activeStepContent.description }}</p>
-            </article>
+            <section v-if="activeCasePage" :id="activeCasePage.id" :key="activeCasePage.id" class="use-case-content" :aria-labelledby="`use-case-title-${activeCasePage.id}`">
+              <div class="use-case-intro">
+                <h1 :id="`use-case-title-${activeCasePage.id}`">{{ activeCasePage.content.title }}</h1>
+                <p>{{ activeCasePage.content.subtitle }}</p>
+              </div>
+
+              <div class="use-case-stepper" :style="stepperStyle" role="tablist" :aria-label="`${activeCasePage.content.title} steps`">
+                <button
+                  v-for="(step, index) in activeCasePage.content.steps"
+                  :key="step.title"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeStep === index"
+                  :aria-controls="`use-case-step-${activeCasePage.id}-${index + 1}`"
+                  :tabindex="activeStep === index ? 0 : -1"
+                  :class="{ 'is-active': activeStep >= index }"
+                  @click="activeStep = index"
+                >
+                  {{ index + 1 }}
+                </button>
+              </div>
+
+              <Transition name="use-case-fade" mode="out-in">
+                <article :id="`use-case-step-${activeCasePage.id}-${activeStep + 1}`" :key="`${activeCasePage.id}-${activeStep}`" class="use-case-step-content" role="tabpanel">
+                  <span class="use-case-step-content__index">0{{ activeStep + 1 }}</span>
+                  <h2>{{ activeStepContent.title }}</h2>
+                  <p>{{ activeStepContent.description }}</p>
+                </article>
+              </Transition>
+            </section>
           </Transition>
-        </section>
+
+          <aside v-if="otherCaseLinks.length" class="use-case-more">
+            <h2>{{ t('landing.useCasePages.more') }}</h2>
+            <nav class="use-case-more__list" aria-label="More use cases">
+              <router-link v-for="item in otherCaseLinks" :key="item.id" :to="item.to">
+                {{ item.label }}
+              </router-link>
+            </nav>
+          </aside>
+        </div>
       </main>
 
       <footer class="w-full border-t border-white/[0.08] py-8 text-center text-[9px] uppercase tracking-[0.2em] text-white/90" style="font-family: 'Cormorant Garamond', serif;">
@@ -86,21 +99,58 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from '../shared/i18n/useI18n'
 
-const props = defineProps({
-  caseSlug: {
-    type: String,
-    default: ''
+const { t, tm, locale, setLocale } = useI18n()
+const route = useRoute()
+const activeStep = ref(0)
+const casePages = computed(() => [
+  { id: 'improve-trading-results', content: tm('landing.useCasePages.improveTradingResults') },
+  { id: 'create-trading-system', content: tm('landing.useCasePages.createTradingSystem') },
+  { id: 'content-creator', content: tm('landing.useCasePages.contentCreator') }
+])
+
+const caseLinks = computed(() => [
+  {
+    id: 'improve-trading-results',
+    label: casePages.value[0].content.title,
+    to: '/use-cases?case=improve-trading-results'
+  },
+  {
+    id: 'create-trading-system',
+    label: casePages.value[1].content.title,
+    to: '/use-cases?case=create-trading-system'
+  },
+  {
+    id: 'content-creator',
+    label: t('landing.useCasePages.contentCreatorTitle'),
+    to: '/use-cases?case=content-creator'
+  }
+])
+
+const activeCaseIndex = computed(() => {
+  const requestedCase = typeof route.query.case === 'string' ? route.query.case : ''
+  const index = casePages.value.findIndex((page) => page.id === requestedCase)
+  return index >= 0 ? index : 0
+})
+
+const activeCasePage = computed(() => casePages.value[activeCaseIndex.value])
+const otherCaseLinks = computed(() => caseLinks.value.filter((item) => item.id !== activeCasePage.value.id))
+const activeStepContent = computed(() => activeCasePage.value.content.steps[activeStep.value] || activeCasePage.value.content.steps[0])
+
+const stepperStyle = computed(() => {
+  const stepCount = activeCasePage.value.content.steps.length
+  return {
+    '--step-count': stepCount,
+    '--step-line-inset': `${50 / stepCount}%`
   }
 })
 
-const { t, tm, locale, setLocale } = useI18n()
-const activeStep = ref(0)
-const improvePage = computed(() => tm('landing.useCasePages.improveTradingResults'))
-const isImproveCase = computed(() => props.caseSlug === 'improve-trading-results')
-const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.value] || improvePage.value.steps?.[0])
+watch(() => activeCaseIndex.value, () => {
+  activeStep.value = 0
+})
 </script>
 
 <style scoped>
@@ -111,6 +161,49 @@ const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.va
 .use-case-main {
   width: min(100%, 1280px);
   margin: 0 auto;
+}
+
+.use-case-stage {
+  position: relative;
+}
+
+.use-case-more {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(0px, 1.4vw, 18px) clamp(72px, 10vh, 132px);
+}
+
+.use-case-more h2 {
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.5);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.use-case-more__list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.use-case-more__list a {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.use-case-more__list a:hover {
+  color: white;
+  transform: translateX(8px);
 }
 
 .use-case-content {
@@ -144,7 +237,7 @@ const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.va
 .use-case-stepper {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--step-count), minmax(0, 1fr));
   gap: 0;
   margin-top: clamp(64px, 9vh, 116px);
   transform: translateX(clamp(-64px, -5vw, -36px));
@@ -153,8 +246,8 @@ const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.va
 .use-case-stepper::before {
   position: absolute;
   top: 50%;
-  right: 8.3333%;
-  left: 8.3333%;
+  right: var(--step-line-inset);
+  left: var(--step-line-inset);
   height: 1px;
   background: rgba(255, 255, 255, 0.25);
   content: '';
@@ -239,6 +332,10 @@ const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.va
     padding-bottom: 72px;
   }
 
+  .use-case-more {
+    padding-bottom: 72px;
+  }
+
   .use-case-intro h1 {
     font-size: clamp(2.5rem, 13vw, 4rem);
   }
@@ -247,11 +344,6 @@ const activeStepContent = computed(() => improvePage.value.steps?.[activeStep.va
     gap: 0;
     margin-top: 58px;
     transform: none;
-  }
-
-  .use-case-stepper::before {
-    right: 8.3333%;
-    left: 8.3333%;
   }
 
   .use-case-stepper button {

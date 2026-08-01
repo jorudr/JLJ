@@ -15,6 +15,8 @@ export const translations = {
         philosophy: "Philosophy"
       },
       useCasePages: {
+        more: "MORE",
+        contentCreatorTitle: "How to Become a Content Creator for Our Forum",
         improveTradingResults: {
           title: "How to Improve Your Trading Results",
           subtitle: "Turn your trading history into clear, actionable improvements.",
@@ -25,6 +27,28 @@ export const translations = {
             { title: "Improve trade execution", description: "Check whether required entry conditions were followed and which setups produce the most consistent results." },
             { title: "Remove emotional mistakes", description: "See how FOMO, fear, revenge trading and tilt affect your profitability." },
             { title: "Validate your improvements", description: "Use rolling performance metrics and statistical tests to distinguish real progress from random results." }
+          ]
+        },
+        createTradingSystem: {
+          title: "How to Create a Trading System",
+          subtitle: "Build a structured trading system with clear logic and measurable variations.",
+          steps: [
+            { title: "Define trading scenarios", description: "Create separate scenarios for different market conditions, assets and trading situations." },
+            { title: "Set entry and exit conditions", description: "Specify the exact signals, rules and confirmations required before entering or closing a trade." },
+            { title: "Plan position building", description: "Define how to scale into a position, add exposure and manage risk throughout the trade." },
+            { title: "Create strategy versions", description: "Save different versions of the same strategy with changes to rules, risk, entries or exits." },
+            { title: "Compare performance", description: "Compare versions by win rate, profit factor, average trade result, risk and execution quality." }
+          ]
+        },
+        contentCreator: {
+          title: "How to Become a Content Creator for Our Forum",
+          subtitle: "Share your trading knowledge and build a valuable presence in the community.",
+          steps: [
+            { title: "Publish your market ideas", description: "Share trade setups, market analysis, strategies and research." },
+            { title: "Create structured content", description: "Turn your thoughts into clear lessons, questions, case studies and actionable posts." },
+            { title: "Support ideas with real data", description: "Attach trades, charts and performance metrics to show how your approach works." },
+            { title: "Share and improve your methods", description: "Present different strategy versions, trading scenarios and lessons from your results." },
+            { title: "Build your reputation", description: "Receive feedback, join discussions and become a trusted contributor in the trading community." }
           ]
         }
       },
@@ -236,6 +260,8 @@ export const translations = {
         philosophy: "Философия"
       },
       useCasePages: {
+        more: "ЕЩЁ",
+        contentCreatorTitle: "Как стать автором контента для нашего форума",
         improveTradingResults: {
           title: "Как улучшить результаты торговли",
           subtitle: "Превратите историю торговли в понятные и применимые на практике улучшения.",
@@ -246,6 +272,28 @@ export const translations = {
             { title: "Улучшите исполнение сделок", description: "Проверяйте соблюдение обязательных условий входа и определяйте, какие сетапы дают наиболее стабильные результаты." },
             { title: "Уберите эмоциональные ошибки", description: "Смотрите, как FOMO, страх, торговля на отмщение и тильт влияют на вашу прибыльность." },
             { title: "Проверяйте, действительно ли вы улучшились", description: "Используйте скользящие метрики эффективности и статистические тесты, чтобы отличать реальный прогресс от случайных результатов." }
+          ]
+        },
+        createTradingSystem: {
+          title: "Как создать торговую систему",
+          subtitle: "Постройте структурированную торговую систему с понятной логикой и измеримыми вариациями.",
+          steps: [
+            { title: "Определите торговые сценарии", description: "Создайте отдельные сценарии для разных рыночных условий, активов и торговых ситуаций." },
+            { title: "Задайте условия входа и выхода", description: "Укажите точные сигналы, правила и подтверждения, необходимые до входа или закрытия сделки." },
+            { title: "Спланируйте набор позиции", description: "Определите, как наращивать позицию, добавлять экспозицию и управлять риском на протяжении сделки." },
+            { title: "Создавайте версии стратегии", description: "Сохраняйте разные версии одной стратегии с изменениями правил, риска, входов или выходов." },
+            { title: "Сравнивайте эффективность", description: "Сравнивайте версии по винрейту, профит-фактору, среднему результату сделки, риску и качеству исполнения." }
+          ]
+        },
+        contentCreator: {
+          title: "Как стать автором контента для нашего форума",
+          subtitle: "Делитесь торговыми знаниями и создавайте ценное присутствие в сообществе.",
+          steps: [
+            { title: "Публикуйте рыночные идеи", description: "Делитесь торговыми сетапами, анализом рынка, стратегиями и исследованиями." },
+            { title: "Создавайте структурированный контент", description: "Превращайте свои мысли в понятные уроки, вопросы, кейсы и практические публикации." },
+            { title: "Подкрепляйте идеи реальными данными", description: "Добавляйте сделки, графики и метрики эффективности, чтобы показать, как работает ваш подход." },
+            { title: "Делитесь методами и улучшайте их", description: "Представляйте разные версии стратегий, торговые сценарии и выводы из своих результатов." },
+            { title: "Создавайте свою репутацию", description: "Получайте обратную связь, участвуйте в обсуждениях и становитесь надёжным автором в торговом сообществе." }
           ]
         }
       },

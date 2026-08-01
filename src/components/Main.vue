@@ -187,22 +187,22 @@
 
               <!-- Use Cases Content -->
               <div v-else key="usecases-list" class="flex flex-col justify-center space-y-5">
-                <router-link to="/use-cases/improve-trading-results" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                <router-link to="/use-cases?case=improve-trading-results" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
                     How to improve your trading results
                   </div>
                 </router-link>
-                <router-link to="/use-cases/create-trading-system" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                <router-link to="/use-cases?case=create-trading-system" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
                     How to create a trading system
                   </div>
                 </router-link>
-                <router-link to="/use-cases/become-content-creator" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                <router-link to="/use-cases?case=content-creator" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    How to become a content creator for our forum
+                    How to Become a Content Creator for Our Forum
                   </div>
                 </router-link>
               </div>

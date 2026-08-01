@@ -5,6 +5,12 @@ import UseCase from '../components/UseCase.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.path === from.path && to.query.case !== from.query.case && !to.hash) return false
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -20,12 +26,6 @@ const router = createRouter({
       path: '/use-cases',
       name: 'use-cases',
       component: UseCase
-    },
-    {
-      path: '/use-cases/:caseSlug',
-      name: 'use-case',
-      component: UseCase,
-      props: true
     }
   ]
 })
