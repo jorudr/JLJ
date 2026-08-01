@@ -14,6 +14,16 @@ export const translations = {
         pricing: "Pricing",
         philosophy: "Philosophy"
       },
+      philosophy: {
+        eyebrow: "01 / PHILOSOPHY",
+        title: "PHILOSOPHY",
+        intro: "Trading is a journey that cannot be calculated in advance. Stability in trading is an illusion for fools who want to taste fast and easy money. Yet this instability hides the most fascinating part of the financial world: overnight, the rich can become poor, and the poor can become rich.",
+        principles: [
+          { index: "01", title: "PROCESS", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt." },
+          { index: "02", title: "CLARITY", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim." },
+          { index: "03", title: "DISCIPLINE", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum." }
+        ]
+      },
       notFound: {
         title: "Page not found",
         subtitle: "The route you requested does not exist or has moved somewhere else.",
@@ -274,6 +284,16 @@ export const translations = {
         useCases: "Применение",
         pricing: "Цены",
         philosophy: "Философия"
+      },
+      philosophy: {
+        eyebrow: "01 / ФИЛОСОФИЯ",
+        title: "ФИЛОСОФИЯ",
+        intro: "Торговля — это путешествие, которое невозможно просчитать заранее. Стабильность в торговле — иллюзия глупцов, желающих вкусить быстрых и лёгких денег. Однако именно в этой нестабильности скрывается самая увлекательная часть финансового мира: за одну ночь богач может превратиться в бедняка, а бедняк — в богача.",
+        principles: [
+          { index: "01", title: "ПРОЦЕСС", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt." },
+          { index: "02", title: "ЯСНОСТЬ", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim." },
+          { index: "03", title: "ДИСЦИПЛИНА", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum." }
+        ]
       },
       notFound: {
         title: "Страница не найдена",
