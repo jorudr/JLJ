@@ -108,8 +108,8 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
              <template #trigger>
 	               <div class="flex gap-8 cursor-default" :class="riskViolationMessage ? 'ring-1 ring-rose-500/30 px-2 -mx-2 py-1 -my-1 rounded-sm' : ''">
 	                 <div class="flex flex-col">
-	                    <span class="text-[7px] font-mono uppercase tracking-[0.3em] font-bold transition-colors" :class="riskViolationMessage ? 'text-rose-400/80' : 'text-white'">{{ l('panelRisk') }}</span>
-	                    <span class="block max-w-[130px] truncate text-[12px] font-mono font-bold tabular-nums transition-colors" :class="riskViolationMessage ? 'text-rose-500' : 'text-white'">
+	                    <span class="text-[7px] font-mono uppercase tracking-[0.3em] font-bold transition-colors" :class="riskViolationMessage ? 'text-rose-500/80' : 'text-black/70 dark:text-white'">{{ l('panelRisk') }}</span>
+	                    <span class="block max-w-[130px] truncate text-[12px] font-mono font-bold tabular-nums transition-colors" :class="riskViolationMessage ? 'text-rose-500' : 'text-black/85 dark:text-white'">
 	                       {{ formatSnapshotMetric(actualRiskPercent, '%', '--%') }} / {{ actualRR !== null ? `1:${formatSnapshotMetric(actualRR, '', '--')}` : 'RR_--' }}
 	                    </span>
 	                 </div>
