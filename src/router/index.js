@@ -4,6 +4,7 @@ import Pricing from '../components/Pricing.vue'
 import UseCase from '../components/UseCase.vue'
 import NotFound from '../components/NotFound.vue'
 import Philosophy from '../components/Philosophy.vue'
+import Download from '../components/Download.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,11 @@ const router = createRouter({
       path: '/philosophy',
       name: 'philosophy',
       component: Philosophy
+    },
+    {
+      path: '/download',
+      name: 'download',
+      component: Download
     },
     {
       path: '/:pathMatch(.*)*',
