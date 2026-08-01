@@ -44,7 +44,10 @@
           <div class="philosophy-principles">
             <article v-for="principle in principles" :key="principle.index" class="philosophy-principle">
               <span class="philosophy-principle__index">{{ principle.index }}</span>
-              <h2>{{ principle.title }}</h2>
+              <div>
+                <h2>{{ principle.title }}</h2>
+                <span class="philosophy-principle__module">{{ principle.module }}</span>
+              </div>
               <p>{{ principle.description }}</p>
             </article>
           </div>
@@ -153,6 +156,15 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   font-weight: 300;
   letter-spacing: 0.02em;
   line-height: 1;
+}
+
+.philosophy-principle__module {
+  display: block;
+  margin-top: 12px;
+  color: rgba(44, 44, 42, 0.48);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
 }
 
 .philosophy-principle p {
