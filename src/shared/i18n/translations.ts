@@ -14,6 +14,20 @@ export const translations = {
         pricing: "Pricing",
         philosophy: "Philosophy"
       },
+      useCasePages: {
+        improveTradingResults: {
+          title: "How to Improve Your Trading Results",
+          subtitle: "Turn your trading history into clear, actionable improvements.",
+          steps: [
+            { title: "Find what really works", description: "See which strategies, assets and timeframes generate the best win rate, profit factor and average trade result." },
+            { title: "Reduce unnecessary losses", description: "Measure how much price moved against you, whether your stop-loss was too wide, and how much risk each trade actually used." },
+            { title: "Capture more of each winning trade", description: "Compare your planned target with the profit you actually captured and identify where trades were closed too early." },
+            { title: "Improve trade execution", description: "Check whether required entry conditions were followed and which setups produce the most consistent results." },
+            { title: "Remove emotional mistakes", description: "See how FOMO, fear, revenge trading and tilt affect your profitability." },
+            { title: "Validate your improvements", description: "Use rolling performance metrics and statistical tests to distinguish real progress from random results." }
+          ]
+        }
+      },
       features: {
         title: "J.L.JÖRMUNGANDR is a trading diary synchronizing market chaos with formalized systems, exclusively for the elite operator.",
         genesis: {
@@ -38,7 +52,7 @@ export const translations = {
       footer: {
         experience: "Experience the future of trading analysis",
         with: "with",
-        company: "VOSHE COMPANY D.O.O // ALPHA VERSION"
+        company: "VOSHE COMPANY D.O.O"
       },
       pricing: {
         eyebrow: "ACCESS PROTOCOL // 02",
@@ -221,6 +235,20 @@ export const translations = {
         pricing: "Цены",
         philosophy: "Философия"
       },
+      useCasePages: {
+        improveTradingResults: {
+          title: "Как улучшить результаты торговли",
+          subtitle: "Превратите историю торговли в понятные и применимые на практике улучшения.",
+          steps: [
+            { title: "Найдите то, что действительно работает", description: "Посмотрите, какие стратегии, активы и таймфреймы дают лучший винрейт, профит-фактор и средний результат сделки." },
+            { title: "Сократите ненужные убытки", description: "Измеряйте, насколько цена двигалась против вас, был ли стоп-лосс слишком широким и какой риск фактически использовался в каждой сделке." },
+            { title: "Забирайте больше прибыли из выигрышных сделок", description: "Сравнивайте запланированную цель с фактически полученной прибылью и находите сделки, закрытые слишком рано." },
+            { title: "Улучшите исполнение сделок", description: "Проверяйте соблюдение обязательных условий входа и определяйте, какие сетапы дают наиболее стабильные результаты." },
+            { title: "Уберите эмоциональные ошибки", description: "Смотрите, как FOMO, страх, торговля на отмщение и тильт влияют на вашу прибыльность." },
+            { title: "Проверяйте, действительно ли вы улучшились", description: "Используйте скользящие метрики эффективности и статистические тесты, чтобы отличать реальный прогресс от случайных результатов." }
+          ]
+        }
+      },
       features: {
         title: "J.L.JÖRMUNGANDR — торговый дневник, синхронизирующий рыночный хаос с формализованными системами, исключительно для элитных операторов.",
         genesis: {
@@ -245,7 +273,7 @@ export const translations = {
       footer: {
         experience: "Откройте для себя будущее торгового анализа",
         with: "с",
-        company: "VOSHE COMPANY D.O.O // АЛЬФА ВЕРСИЯ"
+        company: "VOSHE COMPANY D.O.O"
       },
       pricing: {
         eyebrow: "ПРОТОКОЛ ДОСТУПА // 02",

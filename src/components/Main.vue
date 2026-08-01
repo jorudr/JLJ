@@ -187,24 +187,24 @@
 
               <!-- Use Cases Content -->
               <div v-else key="usecases-list" class="flex flex-col justify-center space-y-5">
-                <a href="#" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                <router-link to="/use-cases/improve-trading-results" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
                     How to improve your trading results
                   </div>
-                </a>
-                <a href="#" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                </router-link>
+                <router-link to="/use-cases/create-trading-system" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
                     How to create a trading system
                   </div>
-                </a>
-                <a href="#" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
+                </router-link>
+                <router-link to="/use-cases/become-content-creator" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
                     How to become a content creator for our forum
                   </div>
-                </a>
+                </router-link>
               </div>
             </transition>
           </div>
@@ -560,9 +560,17 @@
     </section>
 
     <!-- Bottom Telemetry Footer -->
-    <footer class="relative z-10 w-full flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] font-mono tracking-[0.2em] uppercase pt-6 pb-12 px-6 sm:px-10" :class="isDark ? 'text-white/20' : 'text-black/60'">
-      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
-        <span>{{ t('landing.footer.company') }}</span> 
+    <footer class="relative z-10 w-full border-t px-6 pb-16 pt-10 text-[9px] tracking-[0.2em] uppercase" :class="isDark ? 'border-white/10 text-white/75' : 'border-black/10 text-black/75'" style="font-family: 'Cormorant Garamond', serif;">
+      <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row">
+        <div class="flex items-center gap-0 whitespace-nowrap sm:items-start">
+          <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
+        </div>
+        <nav class="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[11px] font-medium tracking-[0.14em] sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
+          <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.products') }}</router-link>
+          <router-link to="/use-cases" class="transition-opacity hover:opacity-100">{{ t('landing.nav.useCases') }}</router-link>
+          <router-link to="/pricing" class="transition-opacity hover:opacity-100">{{ t('landing.nav.pricing') }}</router-link>
+          <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.philosophy') }}</router-link>
+        </nav>
       </div>
     </footer>
   </div>
