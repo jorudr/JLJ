@@ -5,8 +5,8 @@ export const translations = {
       download: "DOWNLOAD",
       downloadMac: "DOWNLOAD FOR MAC",
       downloadWindows: "DOWNLOAD FOR WINDOWS",
-      heroTitleLine1: "Manage your capital, keep a trading journal,",
-      heroTitleLine2: "connect and learn",
+      heroTitleLine1: "A TRADING JOURNAL",
+      heroTitleLine2: "",
       scrollToExplore: "SCROLL_TO_EXPLORE",
       nav: {
         products: "Products",
@@ -212,8 +212,8 @@ export const translations = {
       download: "СКАЧАТЬ",
       downloadMac: "СКАЧАТЬ ДЛЯ MAC",
       downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
-      heroTitleLine1: "Управляйте своим капиталом, ведите торговый журнал,",
-      heroTitleLine2: "общайтесь и учитесь",
+      heroTitleLine1: "A TRADING JOURNAL",
+      heroTitleLine2: "",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
         products: "Продукты",

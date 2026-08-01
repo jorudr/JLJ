@@ -255,10 +255,12 @@
             </span>
           </div>
 
-          <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-[0.12em] sm:tracking-[0.16em] lg:tracking-[0.2em] text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse">|</span>
-            <br v-if="typedLine2.length > 0 || (heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1'))">
-            {{ typedLine2 }}<span v-if="heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1')" class="animate-pulse">|</span>
+            <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
+              <br>
+              {{ typedLine2 }}<span v-if="heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1')" class="animate-pulse">|</span>
+            </template>
           </div>
 
           <!-- OS Specific Download Button -->

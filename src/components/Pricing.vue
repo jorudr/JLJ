@@ -114,22 +114,31 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 }
 
 .pricing-main {
+  --pricing-top-space: clamp(52px, 8vh, 96px);
+  --pricing-list-offset: clamp(32px, 5vh, 56px);
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: clamp(88px, 12vh, 150px) clamp(0px, 1.4vw, 18px) 64px;
+  padding: var(--pricing-top-space) clamp(0px, 1.4vw, 18px) calc(var(--pricing-top-space) + var(--pricing-list-offset));
 }
 
 .pricing-list {
-  margin-top: clamp(56px, 8vh, 96px);
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin-top: var(--pricing-list-offset);
   border-top: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .pricing-plan {
+  flex: 1 1 0;
   display: grid;
   grid-template-columns: minmax(190px, 1.1fr) minmax(120px, 0.7fr) minmax(250px, 1.55fr) clamp(120px, 12vw, 150px);
   gap: clamp(18px, 2.7vw, 34px);
   align-items: start;
-  padding: 38px 0 42px;
+  padding: clamp(38px, 5vh, 72px) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
@@ -204,16 +213,6 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
   min-width: 0;
   padding-left: 13px;
   border-left: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.pricing-plan__features li::before {
-  display: block;
-  width: 4px;
-  height: 4px;
-  margin: 3px 0 6px -16px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  content: '';
 }
 
 .pricing-plan__features span,
@@ -292,12 +291,14 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 
 @media (max-width: 640px) {
   .pricing-main {
-    padding-top: 72px;
-    padding-bottom: 44px;
+    --pricing-top-space: 48px;
+    --pricing-list-offset: 32px;
+    padding-top: var(--pricing-top-space);
+    padding-bottom: calc(var(--pricing-top-space) + var(--pricing-list-offset));
   }
 
   .pricing-list {
-    margin-top: 52px;
+    margin-top: var(--pricing-list-offset);
   }
 
   .pricing-plan {

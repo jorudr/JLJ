@@ -26,7 +26,7 @@ export function useI18n() {
     let result: any = translations[currentLocale.value]
     
     for (const key of keys) {
-      if (result && result[key]) {
+      if (result && Object.prototype.hasOwnProperty.call(result, key)) {
         result = result[key]
       } else {
         // Fallback to English if key missing in current locale
@@ -34,7 +34,7 @@ export function useI18n() {
         for (const fallbackKey of keys) {
           result = result?.[fallbackKey]
         }
-        return result || path // Return path if totally missing
+        return typeof result === 'string' ? result : path // Return path if totally missing
       }
     }
     
