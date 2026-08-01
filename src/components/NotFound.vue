@@ -20,11 +20,7 @@
           <router-link to="/philosophy" class="text-white/80 transition-colors hover:opacity-50">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
 
-        <div class="flex items-center space-x-4">
-          <button @click="setLocale('en')" class="transition-colors hover:text-white/50" :class="locale === 'en' ? 'font-bold text-white' : 'text-white/50'">EN</button>
-          <span class="text-white/30">/</span>
-          <button @click="setLocale('ru')" class="transition-colors hover:text-white/50" :class="locale === 'ru' ? 'font-bold text-white' : 'text-white/50'">RU</button>
-        </div>
+        <MobileMenu />
       </header>
 
       <main class="not-found-main flex flex-1 items-center justify-center">
@@ -54,6 +50,7 @@
 </template>
 
 <script setup>
+import MobileMenu from './MobileMenu.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, locale, setLocale } = useI18n()

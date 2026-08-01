@@ -26,11 +26,7 @@
           <router-link to="/philosophy" class="text-[#2c2c2a] transition-colors hover:opacity-50">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
 
-        <div class="flex items-center space-x-4">
-          <button @click="setLocale('en')" class="cursor-pointer transition-colors hover:text-[#2c2c2a]/50" :class="locale === 'en' ? 'font-bold text-[#2c2c2a]' : 'text-[#2c2c2a]/50'">EN</button>
-          <span class="text-[#2c2c2a]/30">/</span>
-          <button @click="setLocale('ru')" class="cursor-pointer transition-colors hover:text-[#2c2c2a]/50" :class="locale === 'ru' ? 'font-bold text-[#2c2c2a]' : 'text-[#2c2c2a]/50'">RU</button>
-        </div>
+        <MobileMenu :is-light="true" />
       </header>
 
       <main class="philosophy-main flex-1" aria-labelledby="philosophy-title">
@@ -87,6 +83,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import MobileMenu from './MobileMenu.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, tm, locale, setLocale } = useI18n()

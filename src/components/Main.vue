@@ -113,7 +113,7 @@
         </nav>
 
         <!-- Right Section: Language Switcher -->
-        <div class="flex items-center space-x-4 z-50">
+        <div class="hidden items-center space-x-4 z-50 md:flex">
           <button 
             @click="setLocale('en')"
             class="transition-colors hover:text-white/50 cursor-pointer"
@@ -130,7 +130,67 @@
             RU
           </button>
         </div>
+
+        <button
+          type="button"
+          class="mobile-menu-trigger z-50 cursor-pointer md:hidden"
+          aria-label="Open navigation"
+          :aria-expanded="isMobileMenuOpen"
+          @click="toggleMobileMenu"
+        >
+          <span></span>
+          <span></span>
+        </button>
       </header>
+
+      <div v-if="isMobileMenuOpen" class="mobile-menu md:hidden" @click.self="closeMobileMenu">
+        <div class="mobile-menu__panel">
+          <div class="mobile-menu__topline">
+            <span>J.L.JÖRMUNGANDR</span>
+            <button type="button" class="mobile-menu__close cursor-pointer" aria-label="Close navigation" @click="closeMobileMenu">×</button>
+          </div>
+
+          <nav class="mobile-menu__nav" aria-label="Mobile navigation">
+            <div class="mobile-menu__group">
+              <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleMobileSection('products')">
+                <span>{{ t('landing.nav.products') }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+              </button>
+              <div v-if="mobileMenuSection === 'products'" class="mobile-menu__children">
+                <router-link to="/download?full" @click="closeMobileMenu">
+                  <span>J.L.JÖRMUNGANDR</span>
+                  <small>{{ t('landing.productsMenu.fullVersion') }}</small>
+                </router-link>
+                <router-link to="/download" @click="closeMobileMenu">
+                  <span>J.L.JÖRMUNGANDR DEMO</span>
+                  <small>{{ t('landing.productsMenu.freeDemo') }}</small>
+                </router-link>
+              </div>
+            </div>
+
+            <div class="mobile-menu__group">
+              <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleMobileSection('useCases')">
+                <span>{{ t('landing.nav.useCases') }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'useCases' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+              </button>
+              <div v-if="mobileMenuSection === 'useCases'" class="mobile-menu__children">
+                <router-link to="/use-cases?case=improve-trading-results" @click="closeMobileMenu">{{ t('landing.useCasesMenu.improveTradingResults') }}</router-link>
+                <router-link to="/use-cases?case=create-trading-system" @click="closeMobileMenu">{{ t('landing.useCasesMenu.createTradingSystem') }}</router-link>
+                <router-link to="/use-cases?case=content-creator" @click="closeMobileMenu">{{ t('landing.useCasesMenu.contentCreator') }}</router-link>
+              </div>
+            </div>
+
+            <router-link to="/pricing" class="mobile-menu__link" @click="closeMobileMenu">{{ t('landing.nav.pricing') }}</router-link>
+            <router-link to="/philosophy" class="mobile-menu__link" @click="closeMobileMenu">{{ t('landing.nav.philosophy') }}</router-link>
+          </nav>
+
+          <div class="mobile-menu__locale">
+            <button type="button" class="cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">EN</button>
+            <span>/</span>
+            <button type="button" class="cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">RU</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Mega Menu Panel -->
       <div 
@@ -212,7 +272,7 @@
       </div>
 
       <!-- Animated Tagline Section -->
-      <main class="flex-1 flex flex-col items-center justify-center px-4 py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500"
+      <main class="flex-1 flex flex-col items-center justify-center py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500"
             :class="isMegaMenuVisible ? 'opacity-0 blur-sm scale-95 pointer-events-none' : 'opacity-100 blur-0 scale-100'">
         
         <!-- INTRO TYPING -->
@@ -366,7 +426,7 @@
     </div>
 
     <!-- Video Preview Section -->
-    <section class="relative z-10 w-full max-w-7xl mx-auto py-16 px-6 sm:px-10 flex justify-center items-center pointer-events-none">
+    <section class="home-video relative z-10 w-full max-w-7xl mx-auto py-16 px-6 sm:px-10 flex justify-center items-center pointer-events-none">
       <div ref="videoContainer" class="w-full max-w-6xl rounded-2xl overflow-hidden border" :class="isDark ? 'border-white/10' : 'border-black/5'" :style="{ transform: `scale(${videoScale})`, transition: 'transform 0.1s ease-out' }">
         <video 
           src="/assets/preview.mov" 
@@ -382,12 +442,12 @@
     <!-- Features Section -->
     <section 
       ref="featuresSection" 
-      class="relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10 space-y-40"
+      class="home-features relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10 space-y-40"
     >
       <!-- Section Header -->
       <div class="text-start space-y-6 max-w-4xl pb-16 lg:pb-24">
         <h2 
-          class="text-3xl sm:text-4xl lg:text-5xl font-light leading-snug tracking-wide"
+          class="text-2xl sm:text-3xl lg:text-4xl font-light leading-snug tracking-wide"
           :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
         >
           {{ t('landing.features.title') }}
@@ -396,7 +456,7 @@
 
       <!-- Feature 5: Advanced Equity Analysis -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.equity.title') }}</h3>
           <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.equity.desc') }}
@@ -413,7 +473,7 @@
 
       <!-- Feature 1: Genesis Matrix -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.genesis.title') }}</h3>
           <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.genesis.desc') }}
@@ -430,7 +490,7 @@
 
       <!-- Feature 2: Trades Tree -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.tradesTree.title') }}</h3>
           <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.tradesTree.desc') }}
@@ -450,7 +510,7 @@
 
       <!-- Feature 6: Forum -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 order-2 md:order-1 md:col-span-5">
+        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
           <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.forum.title') }}</h3>
           <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
             {{ t('landing.features.forum.desc') }}
@@ -467,7 +527,7 @@
     </section>
 
     <!-- Download Section -->
-    <section ref="downloadSection" class="relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 bg-transparent">
+    <section ref="downloadSection" class="home-download relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 bg-transparent">
       <div class="text-3xl sm:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
         {{ t('landing.footer.experience') }}
         <div class="flex items-center justify-center space-x-4 mt-6">
@@ -535,7 +595,7 @@
         <div class="flex items-center gap-0 whitespace-nowrap sm:items-start">
           <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
         </div>
-        <nav class="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[11px] font-medium tracking-[0.14em] sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
+        <nav class="flex flex-col items-center justify-center gap-4 text-[11px] font-medium tracking-[0.14em] sm:flex-row sm:gap-x-10 sm:gap-y-3 sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
           <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.products') }}</router-link>
           <router-link to="/use-cases" class="transition-opacity hover:opacity-100">{{ t('landing.nav.useCases') }}</router-link>
           <router-link to="/pricing" class="transition-opacity hover:opacity-100">{{ t('landing.nav.pricing') }}</router-link>
@@ -570,6 +630,22 @@ onMounted(() => {
 const isMegaMenuVisible = ref(false)
 let megaMenuTimeout = null
 const megaMenuType = ref('products')
+const isMobileMenuOpen = ref(false)
+const mobileMenuSection = ref(null)
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+  if (!isMobileMenuOpen.value) mobileMenuSection.value = null
+}
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+  mobileMenuSection.value = null
+}
+
+const toggleMobileSection = (section) => {
+  mobileMenuSection.value = mobileMenuSection.value === section ? null : section
+}
 
 const showMegaMenu = (type) => {
   if (megaMenuTimeout) clearTimeout(megaMenuTimeout)
@@ -658,7 +734,8 @@ const handleScroll = () => {
     // Finish scaling when the top of the video is 1/3 of the screen from the top
     let progress = (windowHeight - rect.top) / (windowHeight / 1.5)
     progress = Math.max(0, Math.min(1, progress))
-    videoScale.value = 0.6 + (0.6 * progress)
+    const maxScale = window.innerWidth < 768 ? 0.92 : 1.2
+    videoScale.value = 0.6 + ((maxScale - 0.6) * progress)
   }
 }
 
@@ -774,6 +851,192 @@ const scrollToFeatures = () => {
 }
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+.mobile-menu-trigger {
+  display: flex;
+  width: 28px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.mobile-menu-trigger span {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+}
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  background: #070708;
+  color: white;
+}
+
+.mobile-menu__panel {
+  display: flex;
+  width: min(100%, 560px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  flex-direction: column;
+}
+
+.mobile-menu__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+}
+
+.mobile-menu__close {
+  color: white;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 200;
+  line-height: 1;
+}
+
+.mobile-menu__nav {
+  display: flex;
+  margin-top: 64px;
+  flex-direction: column;
+}
+
+.mobile-menu__group,
+.mobile-menu__link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mobile-menu__parent,
+.mobile-menu__link {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  text-align: left;
+}
+
+.mobile-menu__parent svg {
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.52);
+  transition: transform 180ms ease;
+}
+
+.mobile-menu__parent svg.is-expanded {
+  transform: rotate(180deg);
+}
+
+.mobile-menu__children {
+  display: flex;
+  padding: 0 0 18px 18px;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.mobile-menu__children a {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+}
+
+.mobile-menu__children small {
+  color: rgba(255, 255, 255, 0.38);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mobile-menu__locale {
+  display: flex;
+  margin-top: auto;
+  padding-top: 48px;
+  align-items: center;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+.mobile-menu__locale button {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.mobile-menu__locale button.is-active {
+  color: white;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .home-video,
+  .home-features,
+  .home-download {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .home-video {
+    padding-top: 12px;
+    padding-bottom: 48px;
+  }
+
+  .home-video > div {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    transform-origin: center center;
+  }
+
+  .home-features {
+    padding-top: 88px;
+    padding-bottom: 88px;
+    row-gap: 96px;
+  }
+
+  .home-features h2,
+  .home-features h3,
+  .home-features p {
+    width: 100%;
+    max-width: none;
+  }
+
+  .home-download {
+    padding-top: 88px;
+    padding-bottom: 88px;
+  }
+
+  .home-download > div {
+    width: 100%;
+  }
+
+  .home-download .flex.flex-col.sm\:flex-row {
+    width: 100%;
+  }
+
+  .home-download .flex.flex-col.sm\:flex-row a {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @keyframes spin {
