@@ -71,9 +71,9 @@
     <!-- Hero Section (First Viewport) -->
     <div class="w-full min-h-screen flex flex-col justify-between px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10 relative z-10">
       <!-- Header / Top Bar -->
-      <header class="w-full flex justify-between items-center text-[10px] tracking-[0.3em] relative">
-        <!-- Left Section: App Name & Navigation -->
-        <div class="flex items-center space-x-8 md:space-x-12 z-50">
+      <header class="relative mx-auto flex w-full max-w-[1280px] items-center justify-between text-[10px] tracking-[0.3em]">
+        <!-- Left Section: App Name -->
+        <div class="flex items-center z-50">
           <!-- App Name & Logo -->
           <div class="flex items-center space-x-6 cursor-pointer">
             <div class="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
@@ -92,24 +92,25 @@
             </span>
           </div>
 
-          <!-- Navigation -->
-          <nav class="hidden md:flex items-center font-serif space-x-8 text-[16px] tracking-[0.15rem]"   style="font-family: 'Cormorant Garamond', serif;">
-            <a href="#" 
-               @mouseenter="showMegaMenu('products')" @mouseleave="hideMegaMenu"
-               class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
-              {{ t('landing.nav.products') }}
-              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'products'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </a>
-            <a href="#" 
-               @mouseenter="showMegaMenu('useCases')" @mouseleave="hideMegaMenu"
-               class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
-              {{ t('landing.nav.useCases') }}
-              <svg class="w-3.5 h-3.5 ml-1.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'useCases'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </a>
-            <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</a>
-            <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</a>
-          </nav>
         </div>
+
+        <!-- Centered Navigation -->
+        <nav class="absolute left-1/2 hidden -translate-x-1/2 items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" style="font-family: 'Cormorant Garamond', serif;">
+          <a href="#"
+             @mouseenter="showMegaMenu('products')" @mouseleave="hideMegaMenu"
+             class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+            {{ t('landing.nav.products') }}
+            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'products'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </a>
+          <a href="#"
+             @mouseenter="showMegaMenu('useCases')" @mouseleave="hideMegaMenu"
+             class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+            {{ t('landing.nav.useCases') }}
+            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'useCases'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </a>
+          <router-link to="/pricing" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
+          <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</a>
+        </nav>
 
         <!-- Right Section: Language Switcher -->
         <div class="flex items-center space-x-4 z-50">

@@ -39,6 +39,41 @@ export const translations = {
         experience: "Experience the future of trading analysis",
         with: "with",
         company: "VOSHE COMPANY D.O.O // ALPHA VERSION"
+      },
+      pricing: {
+        eyebrow: "ACCESS PROTOCOL // 02",
+        title: "Plans & Pricing",
+        subtitle: "Choose the depth of analysis required to turn market noise into a repeatable trading system.",
+        note: "TWO ACCESS LAYERS // BUILT FOR THE OPERATOR",
+        demo: {
+          eyebrow: "ENTRY LEVEL",
+          name: "DEMO",
+          price: "FREE",
+          cadence: "Download and explore the core system",
+          description: "A precise starting point for recording, reviewing and understanding your trades.",
+          cta: "Download demo",
+          features: [
+            { title: "Forum", desc: "Exchange ideas, setups and hard-won market context." },
+            { title: "Activity Monitor", desc: "Keep an operational view of your trading and analytical activity." },
+            { title: "Equity & Metrics", desc: "Read the essential performance and drawdown signals." }
+          ]
+        },
+        full: {
+          eyebrow: "FULL ACCESS",
+          name: "FULL VERSION",
+          price: "PATREON",
+          cadence: "The complete analytical environment",
+          description: "Unlock the full protocol for building, testing and refining your edge.",
+          cta: "Get full access",
+          includes: "Everything in DEMO, plus",
+          features: [
+            { title: "Forecast Manager", desc: "Model possible paths before capital meets the market." },
+            { title: "Genesis Matrix", desc: "Architect and simulate the rules behind your trading system." },
+            { title: "Broker API", desc: "Connect your execution layer directly to the analytical core." },
+            { title: "Robustness Analytics", desc: "Stress-test assumptions with deep simulations and diagnostics." },
+            { title: "Deep Trade Analytics", desc: "Trace execution quality down to the smallest meaningful detail." }
+          ]
+        }
       }
     },
     dashboard: {
@@ -211,6 +246,41 @@ export const translations = {
         experience: "Откройте для себя будущее торгового анализа",
         with: "с",
         company: "VOSHE COMPANY D.O.O // АЛЬФА ВЕРСИЯ"
+      },
+      pricing: {
+        eyebrow: "ПРОТОКОЛ ДОСТУПА // 02",
+        title: "Тарифы и доступ",
+        subtitle: "Выберите глубину анализа, необходимую, чтобы превратить рыночный шум в воспроизводимую торговую систему.",
+        note: "ДВА УРОВНЯ ДОСТУПА // ДЛЯ ОПЕРАТОРА",
+        demo: {
+          eyebrow: "НАЧАЛЬНЫЙ УРОВЕНЬ",
+          name: "DEMO",
+          price: "БЕСПЛАТНО",
+          cadence: "Скачайте и исследуйте ядро системы",
+          description: "Точная отправная точка для записи, разбора и понимания ваших сделок.",
+          cta: "Скачать демо",
+          features: [
+            { title: "Форум", desc: "Обменивайтесь идеями, сетапами и рыночным контекстом." },
+            { title: "Мониторинг активности", desc: "Следите за торговой и аналитической активностью." },
+            { title: "Капитал и метрики", desc: "Читайте основные сигналы эффективности и просадки." }
+          ]
+        },
+        full: {
+          eyebrow: "ПОЛНЫЙ ДОСТУП",
+          name: "FULL VERSION",
+          price: "PATREON",
+          cadence: "Полная аналитическая среда",
+          description: "Откройте весь протокол для построения, тестирования и улучшения своего преимущества.",
+          cta: "Получить доступ",
+          includes: "Всё из DEMO, плюс",
+          features: [
+            { title: "Менеджер прогнозов", desc: "Моделируйте возможные сценарии до встречи капитала с рынком." },
+            { title: "Матрица Генезиса", desc: "Проектируйте и симулируйте правила своей торговой системы." },
+            { title: "Broker API", desc: "Подключайте исполнение напрямую к аналитическому ядру." },
+            { title: "Аналитика надёжности", desc: "Проверяйте допущения глубокими симуляциями и диагностикой." },
+            { title: "Глубокая аналитика сделок", desc: "Отслеживайте качество исполнения до мельчайших деталей." }
+          ]
+        }
       }
     },
     error: {

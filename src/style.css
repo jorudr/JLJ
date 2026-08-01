@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Keep the layout width identical between routes with and without page scroll. */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 /* Minimalist Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
