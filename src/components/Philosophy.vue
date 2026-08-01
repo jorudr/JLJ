@@ -46,11 +46,16 @@
               <span class="philosophy-principle__index">{{ principle.index }}</span>
               <div>
                 <h2>{{ principle.title }}</h2>
-                <span class="philosophy-principle__module">{{ principle.module }}</span>
+                <div class="philosophy-principle__labels">
+                  <span class="philosophy-principle__archetype">{{ principle.archetype }}</span>
+                  <span class="philosophy-principle__module">{{ principle.module }}</span>
+                </div>
               </div>
               <p>{{ principle.description }}</p>
             </article>
           </div>
+
+          <h2 class="philosophy-principles-label">{{ t('landing.philosophy.principlesLabel') }}</h2>
 
           <div class="philosophy-closing">
             <div class="philosophy-closing__visual">
@@ -138,8 +143,20 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 }
 
 .philosophy-principles {
-  margin-top: clamp(100px, 16vh, 190px);
+  margin-top: clamp(44px, 6vh, 72px);
   border-top: 1px solid rgba(44, 44, 42, 0.2);
+}
+
+.philosophy-principles-label {
+  margin-top: clamp(96px, 14vh, 170px);
+  color: rgba(44, 44, 42, 0.82);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(0.9rem, 1.35vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .philosophy-principle {
@@ -159,12 +176,27 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 }
 
 .philosophy-principle__module {
-  display: block;
+  color: rgba(44, 44, 42, 0.48);
+}
+
+.philosophy-principle__labels {
+  display: flex;
   margin-top: 12px;
+  align-items: baseline;
+  gap: 18px;
   color: rgba(44, 44, 42, 0.48);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+}
+
+.philosophy-principle__archetype {
+  color: rgba(44, 44, 42, 0.72);
+}
+
+.philosophy-principle__module {
+  color: rgba(44, 44, 42, 0.48);
 }
 
 .philosophy-principle p {
@@ -208,7 +240,7 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   border-top: 1px solid rgba(44, 44, 42, 0.2);
   color: rgba(44, 44, 42, 0.85);
   align-items: center;
-  font-size: 0.8rem;
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
@@ -216,7 +248,7 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 .philosophy-closing__caption small {
   color: rgba(44, 44, 42, 0.45);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.62rem;
+  font-size: clamp(0.72rem, 0.9vw, 0.85rem);
   letter-spacing: 0.12em;
 }
 
@@ -241,7 +273,7 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   }
 
   .philosophy-principles {
-    margin-top: 92px;
+    margin-top: 72px;
   }
 
   .philosophy-principle {
@@ -249,6 +281,11 @@ const principles = computed(() => tm('landing.philosophy.principles'))
     flex-direction: column;
     gap: 16px;
     padding: 24px 0 28px;
+  }
+
+  .philosophy-principle__labels {
+    flex-wrap: wrap;
+    gap: 8px 14px;
   }
 
   .philosophy-closing {

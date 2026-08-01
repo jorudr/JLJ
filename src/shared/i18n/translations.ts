@@ -18,10 +18,11 @@ export const translations = {
         eyebrow: "01 / PHILOSOPHY",
         title: "PHILOSOPHY",
         intro: "Trading is a journey that cannot be calculated in advance. Stability in trading is an illusion for fools who want to taste fast and easy money. Yet this instability hides the most fascinating part of the financial world: overnight, the rich can become poor, and the poor can become rich.",
+        principlesLabel: "SPECIAL MENTIONS",
         principles: [
-          { index: "01", title: "MNEMOSYNE", module: "TRADING JOURNAL", description: "The trading journal preserves the complete history of every trade: entries, exits, position details, conditions, notes and mistakes. It turns that record into a source for reviewing decisions and recognizing recurring patterns." },
-          { index: "02", title: "DAEDALUS", module: "STRATEGY MANAGER", description: "The Strategy Manager lets the user design a trading system from interconnected nodes. Market conditions, scenarios, entry and exit rules, position building and risk logic can be structured, versioned and tested as one system." },
-          { index: "03", title: "TYCHE", module: "EQUITY CURVE", description: "The Equity Curve visualizes how financial performance changes over time. It exposes growth, drawdowns, volatility, recovery periods and the changing relationship between risk and the user's capital." }
+          { index: "01", title: "MNEMOSYNE", archetype: "GODDESS OF MEMORY", module: "TRADING JOURNAL", description: "The trading journal preserves the complete history of every trade: entries, exits, position details, conditions, notes and mistakes. It turns that record into a source for reviewing decisions and recognizing recurring patterns." },
+          { index: "02", title: "DAEDALUS", archetype: "GREAT INVENTOR", module: "STRATEGY MANAGER", description: "The Strategy Manager lets the user design a trading system from interconnected nodes. Market conditions, scenarios, entry and exit rules, position building and risk logic can be structured, versioned and tested as one system." },
+          { index: "03", title: "TYCHE", archetype: "GODDESS OF FATE", module: "EQUITY CURVE", description: "The Equity Curve visualizes how financial performance changes over time. It exposes growth, drawdowns, volatility, recovery periods and the changing relationship between risk and the user's capital." }
         ]
       },
       notFound: {
@@ -289,10 +290,11 @@ export const translations = {
         eyebrow: "01 / ФИЛОСОФИЯ",
         title: "ФИЛОСОФИЯ",
         intro: "Торговля — это путешествие, которое невозможно просчитать заранее. Стабильность в торговле — иллюзия глупцов, желающих вкусить быстрых и лёгких денег. Однако именно в этой нестабильности скрывается самая увлекательная часть финансового мира: за одну ночь богач может превратиться в бедняка, а бедняк — в богача.",
+        principlesLabel: "ОТДЕЛЬНЫЕ УПОМИНАНИЯ",
         principles: [
-          { index: "01", title: "МНЕМОСИНА", module: "ТОРГОВЫЙ ЖУРНАЛ", description: "Торговый журнал сохраняет полную историю каждой сделки: входы, выходы, детали позиции, условия, заметки и ошибки. Эти данные помогают разбирать решения и находить повторяющиеся закономерности." },
-          { index: "02", title: "ДЕДАЛ", module: "МЕНЕДЖЕР СТРАТЕГИЙ", description: "Менеджер стратегий позволяет проектировать торговую систему из взаимосвязанных узлов. Рыночные условия, сценарии, правила входа и выхода, набор позиции и логика риска можно структурировать, версионировать и тестировать как единую систему." },
-          { index: "03", title: "ТЮХЕ", module: "КРИВАЯ КАПИТАЛА", description: "Кривая капитала показывает, как меняется финансовый результат во времени. Она раскрывает рост, просадки, волатильность, периоды восстановления и связь между риском и капиталом пользователя." }
+          { index: "01", title: "МНЕМОСИНА", archetype: "БОГИНЯ ПАМЯТИ", module: "ТОРГОВЫЙ ЖУРНАЛ", description: "Торговый журнал сохраняет полную историю каждой сделки: входы, выходы, детали позиции, условия, заметки и ошибки. Эти данные помогают разбирать решения и находить повторяющиеся закономерности." },
+          { index: "02", title: "ДЕДАЛ", archetype: "ВЕЛИКИЙ ИЗОБРЕТАТЕЛЬ", module: "МЕНЕДЖЕР СТРАТЕГИЙ", description: "Менеджер стратегий позволяет проектировать торговую систему из взаимосвязанных узлов. Рыночные условия, сценарии, правила входа и выхода, набор позиции и логика риска можно структурировать, версионировать и тестировать как единую систему." },
+          { index: "03", title: "ТЮХЕ", archetype: "БОГИНЯ СУДЬБЫ", module: "КРИВАЯ КАПИТАЛА", description: "Кривая капитала показывает, как меняется финансовый результат во времени. Она раскрывает рост, просадки, волатильность, периоды восстановления и связь между риском и капиталом пользователя." }
         ]
       },
       notFound: {
