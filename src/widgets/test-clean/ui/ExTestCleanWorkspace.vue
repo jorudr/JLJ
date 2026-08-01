@@ -370,7 +370,7 @@ const isHudActive = ref(true)
 const isGenesisBottomBarHidden = ref(false)
 const isDashboardMusicMuted = ref(false)
 const isActivatingAccess = ref(false)
-const showSuccessOverlay = ref(true)
+const showSuccessOverlay = ref(false)
 const {
   accessState,
   accessError,
