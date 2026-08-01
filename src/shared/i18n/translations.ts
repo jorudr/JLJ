@@ -212,7 +212,7 @@ export const translations = {
       download: "СКАЧАТЬ",
       downloadMac: "СКАЧАТЬ ДЛЯ MAC",
       downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
-      heroTitleLine1: "A TRADING JOURNAL",
+      heroTitleLine1: "ТОРГОВЫЙ ЖУРНАЛ",
       heroTitleLine2: "",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
