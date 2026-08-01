@@ -14,6 +14,11 @@ export const translations = {
         pricing: "Pricing",
         philosophy: "Philosophy"
       },
+      notFound: {
+        title: "Page not found",
+        subtitle: "The route you requested does not exist or has moved somewhere else.",
+        backHome: "Return home"
+      },
       productsMenu: {
         description: "Explore our current products and await for the newest solutions.",
         fullVersion: "Full Version",
@@ -269,6 +274,11 @@ export const translations = {
         useCases: "Применение",
         pricing: "Цены",
         philosophy: "Философия"
+      },
+      notFound: {
+        title: "Страница не найдена",
+        subtitle: "Запрошенный адрес не существует или был перемещён.",
+        backHome: "Вернуться на главную"
       },
       productsMenu: {
         description: "Изучите наши продукты и ожидайте появления новых решений.",
