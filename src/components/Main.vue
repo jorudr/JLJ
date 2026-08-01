@@ -480,7 +480,7 @@
       <div class="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-16 md:gap-8">
         <!-- Left Section: Patreon -->
         <div class="flex flex-col items-center md:items-start gap-4">
-          <span class="text-xs tracking-[0.2em] font-mono opacity-50 uppercase">Get the full app</span>
+          <span class="text-xs tracking-[0.2em] font-mono opacity-50 uppercase">{{ t('landing.getLicenseKey') }}</span>
           <a 
             href="https://patreon.com/jlgandr?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
             target="_blank"
@@ -499,30 +499,22 @@
 
         <!-- Right Section: Downloads -->
         <div class="flex flex-col items-center md:items-end gap-4">
-          <span class="text-xs tracking-[0.2em] font-mono opacity-50 uppercase">Download free demo</span>
           <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
-            <!-- macOS Download Button -->
-            <a 
-              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_universal.dmg"
-              download
-              class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
+            <a
+              href="https://github.com/jorudr/JLJ/releases"
+              target="_blank"
+              rel="noreferrer"
+              class="cursor-pointer border-b border-current px-2 py-3 text-xs tracking-[0.3em] font-mono transition-opacity duration-300 hover:opacity-50"
             >
-              <svg class="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
-                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-              </svg>
-              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadMac') }}</span>
+              {{ t('landing.downloadDemo') }} <span aria-hidden="true">↗</span>
             </a>
-
-            <!-- Windows Download Button -->
-            <a 
-              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_x64-setup.exe"
-              download
-              class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
+            <a
+              href="https://patreon.com/jlgandr"
+              target="_blank"
+              rel="noreferrer"
+              class="cursor-pointer border-b border-current px-2 py-3 text-xs tracking-[0.3em] font-mono transition-opacity duration-300 hover:opacity-50"
             >
-              <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
-                <path d="M0 93.6l183.6-25.3v177.4H0V93.6zm203.6-28L448 32v213.6H203.6V65.6zM0 274.5h183.6V443L0 417.6V274.5zm203.6 0H448v213.6L203.6 448V274.5z"/>
-              </svg>
-              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
+              {{ t('landing.downloadFull') }} <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>

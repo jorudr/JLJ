@@ -3,6 +3,9 @@ export const translations = {
     landing: {
       aboutStatement: "This application was built thanks to a deep love for a certain few, a passion for the market and speculation, as well as the pain and tears of defeats.",
       download: "DOWNLOAD",
+      downloadDemo: "DOWNLOAD DEMO",
+      downloadFull: "DOWNLOAD FULL",
+      getLicenseKey: "GET THE LICENSE KEY",
       downloadMac: "DOWNLOAD FOR MAC",
       downloadWindows: "DOWNLOAD FOR WINDOWS",
       heroTitleLine1: "A TRADING JOURNAL",
@@ -275,6 +278,9 @@ export const translations = {
     landing: {
       aboutStatement: "Это приложение сделано благодаря глубокой любви к некоторым, страсти к рынку и спекуляциям, а также боли и слез от поражений.",
       download: "СКАЧАТЬ",
+      downloadDemo: "СКАЧАТЬ ДЕМО",
+      downloadFull: "СКАЧАТЬ ПОЛНУЮ ВЕРСИЮ",
+      getLicenseKey: "ПОЛУЧИТЬ ЛИЦЕНЗИОННЫЙ КЛЮЧ",
       downloadMac: "СКАЧАТЬ ДЛЯ MAC",
       downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
       heroTitleLine1: "ТОРГОВЫЙ ЖУРНАЛ",
