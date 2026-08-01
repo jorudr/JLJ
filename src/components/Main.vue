@@ -109,7 +109,7 @@
             <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'useCases'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </a>
           <router-link to="/pricing" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
-          <a href="#" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</a>
+          <router-link to="/philosophy" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
 
         <!-- Right Section: Language Switcher -->
@@ -569,7 +569,7 @@
           <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.products') }}</router-link>
           <router-link to="/use-cases" class="transition-opacity hover:opacity-100">{{ t('landing.nav.useCases') }}</router-link>
           <router-link to="/pricing" class="transition-opacity hover:opacity-100">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.philosophy') }}</router-link>
+          <router-link to="/philosophy" class="transition-opacity hover:opacity-100">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
       </div>
     </footer>
