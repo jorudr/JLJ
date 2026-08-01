@@ -147,10 +147,10 @@
           <div class="flex-1 flex items-center md:pr-12">
             <transition name="fade-slide" mode="out-in">
               <h3 v-if="megaMenuType === 'products'" key="products-title" class="text-3xl lg:text-4xl font-light tracking-wide leading-snug" style="font-family: 'Cormorant Garamond', serif;">
-                Explore our current products and await for the newest solutions.
+                {{ t('landing.productsMenu.description') }}
               </h3>
               <h3 v-else key="usecases-title" class="text-3xl lg:text-4xl font-light tracking-wide leading-snug" style="font-family: 'Cormorant Garamond', serif;">
-                Discover the most effective ways to leverage our platform for your goals.
+                {{ t('landing.useCasesMenu.description') }}
               </h3>
             </transition>
           </div>
@@ -170,7 +170,7 @@
                   </div>
                   <div>
                     <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR</div>
-                    <div class="text-[10px] font-mono tracking-widest opacity-50 uppercase">Full Version</div>
+                    <div class="text-[10px] font-mono tracking-widest opacity-50 uppercase">{{ t('landing.productsMenu.fullVersion') }}</div>
                   </div>
                 </a>
                 
@@ -180,7 +180,7 @@
                   </div>
                   <div>
                     <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase opacity-70 group-hover:opacity-100 transition-opacity duration-300" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR DEMO</div>
-                    <div class="text-[10px] font-mono tracking-widest opacity-40 uppercase">Free Demo</div>
+                    <div class="text-[10px] font-mono tracking-widest opacity-40 uppercase">{{ t('landing.productsMenu.freeDemo') }}</div>
                   </div>
                 </a>
               </div>
@@ -190,19 +190,19 @@
                 <router-link to="/use-cases?case=improve-trading-results" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    How to improve your trading results
+                    {{ t('landing.useCasesMenu.improveTradingResults') }}
                   </div>
                 </router-link>
                 <router-link to="/use-cases?case=create-trading-system" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    How to create a trading system
+                    {{ t('landing.useCasesMenu.createTradingSystem') }}
                   </div>
                 </router-link>
                 <router-link to="/use-cases?case=content-creator" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
                   <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
                   <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    How to Become a Content Creator for Our Forum
+                    {{ t('landing.useCasesMenu.contentCreator') }}
                   </div>
                 </router-link>
               </div>

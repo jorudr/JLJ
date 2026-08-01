@@ -14,6 +14,17 @@ export const translations = {
         pricing: "Pricing",
         philosophy: "Philosophy"
       },
+      productsMenu: {
+        description: "Explore our current products and await for the newest solutions.",
+        fullVersion: "Full Version",
+        freeDemo: "Free Demo"
+      },
+      useCasesMenu: {
+        description: "Discover the most effective ways to leverage our platform for your goals.",
+        improveTradingResults: "How to improve your trading results",
+        createTradingSystem: "How to create a trading system",
+        contentCreator: "How to Become a Content Creator for Our Forum"
+      },
       useCasePages: {
         more: "MORE",
         contentCreatorTitle: "How to Become a Content Creator for Our Forum",
@@ -258,6 +269,17 @@ export const translations = {
         useCases: "Применение",
         pricing: "Цены",
         philosophy: "Философия"
+      },
+      productsMenu: {
+        description: "Изучите наши продукты и ожидайте появления новых решений.",
+        fullVersion: "Полная версия",
+        freeDemo: "Бесплатная демо-версия"
+      },
+      useCasesMenu: {
+        description: "Откройте наиболее эффективные способы использовать нашу платформу для достижения своих целей.",
+        improveTradingResults: "Как улучшить результаты торговли",
+        createTradingSystem: "Как создать торговую систему",
+        contentCreator: "Как стать автором контента для нашего форума"
       },
       useCasePages: {
         more: "ЕЩЁ",
