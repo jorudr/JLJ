@@ -47,6 +47,7 @@ export const translations = {
         title: "PHILOSOPHY",
         intro: "Trading is a journey that cannot be calculated in advance. Stability in trading is an illusion for fools who want to taste fast and easy money. Yet this instability hides the most fascinating part of the financial world: overnight, the rich can become poor, and the poor can become rich.",
         principlesLabel: "SPECIAL MENTIONS",
+        contactLabel: "CONTACT THE ARTIST",
         principles: [
           { index: "01", title: "MNEMOSYNE", archetype: "GODDESS OF MEMORY", module: "TRADING JOURNAL", description: "The trading journal preserves the complete history of every trade: entries, exits, position details, conditions, notes and mistakes. It turns that record into a source for reviewing decisions and recognizing recurring patterns." },
           { index: "02", title: "DAEDALUS", archetype: "GREAT INVENTOR", module: "STRATEGY MANAGER", description: "The Strategy Manager lets the user design a trading system from interconnected nodes. Market conditions, scenarios, entry and exit rules, position building and risk logic can be structured, versioned and tested as one system." },
@@ -347,6 +348,7 @@ export const translations = {
         title: "ФИЛОСОФИЯ",
         intro: "Торговля — это путешествие, которое невозможно просчитать заранее. Стабильность в торговле — иллюзия глупцов, желающих вкусить быстрых и лёгких денег. Однако именно в этой нестабильности скрывается самая увлекательная часть финансового мира: за одну ночь богач может превратиться в бедняка, а бедняк — в богача.",
         principlesLabel: "ОТДЕЛЬНЫЕ УПОМИНАНИЯ",
+        contactLabel: "КОНТАКТ ХУДОЖНИКА",
         principles: [
           { index: "01", title: "МНЕМОСИНА", archetype: "БОГИНЯ ПАМЯТИ", module: "ТОРГОВЫЙ ЖУРНАЛ", description: "Торговый журнал сохраняет полную историю каждой сделки: входы, выходы, детали позиции, условия, заметки и ошибки. Эти данные помогают разбирать решения и находить повторяющиеся закономерности." },
           { index: "02", title: "ДЕДАЛ", archetype: "ВЕЛИКИЙ ИЗОБРЕТАТЕЛЬ", module: "МЕНЕДЖЕР СТРАТЕГИЙ", description: "Менеджер стратегий позволяет проектировать торговую систему из взаимосвязанных узлов. Рыночные условия, сценарии, правила входа и выхода, набор позиции и логика риска можно структурировать, версионировать и тестировать как единую систему." },

@@ -60,6 +60,11 @@
                 <span>J.L.JÖRMUNGANDR</span>
                 <small>// plastic moth</small>
               </div>
+              <a class="philosophy-closing__contact" href="mailto:plasticcwc@gmail.com">
+                <span class="philosophy-closing__contact-label">{{ t('landing.philosophy.contactLabel') }}</span>
+                <strong class="philosophy-closing__contact-email">PLASTICCWC@GMAIL.COM</strong>
+                <span class="philosophy-closing__contact-arrow" aria-hidden="true">↗</span>
+              </a>
             </div>
             <p class="philosophy-statement">“{{ t('landing.aboutStatement') }}”</p>
           </div>
@@ -249,6 +254,44 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   letter-spacing: 0.12em;
 }
 
+.philosophy-closing__contact {
+  display: flex;
+  margin-top: 18px;
+  padding: 14px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid rgba(44, 44, 42, 0.14);
+  border-bottom: 1px solid rgba(44, 44, 42, 0.14);
+  color: rgba(44, 44, 42, 0.58);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  transition: color 180ms ease;
+}
+
+.philosophy-closing__contact:hover {
+  color: #2c2c2a;
+}
+
+.philosophy-closing__contact-label {
+  color: rgba(44, 44, 42, 0.45);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+}
+
+.philosophy-closing__contact-email {
+  color: #2c2c2a;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.philosophy-closing__contact-arrow {
+  color: rgba(44, 44, 42, 0.45);
+  font-size: 1rem;
+}
+
 .philosophy-statement {
   max-width: 680px;
   color: rgba(44, 44, 42, 0.78);
@@ -336,6 +379,21 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 
   .philosophy-closing__caption small {
     font-size: 0.62rem;
+  }
+
+  .philosophy-closing__contact {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px 12px;
+  }
+
+  .philosophy-closing__contact-label {
+    width: 100%;
+  }
+
+  .philosophy-closing__contact-email {
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
   }
 
   .philosophy-statement {
