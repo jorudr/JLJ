@@ -1488,7 +1488,6 @@ export const translations = {
         "THEORETICAL:": "ТЕОРИЯ:",
         "Z-SCORE:": "Z-СЧЕТ:",
         "Archival_Registry": "Архивный_Реестр",
-        "REIFIED_BALANCE_SNAPSHOT": "СНИМОК_МАТЕРИАЛИЗОВАННОГО_БАЛАНСА",
         "Capital_Injection_Module": "Модуль_Внесения_Капитала",
         "SET_DEPOSIT": "ЗАДАТЬ_ДЕПОЗИТ",
         "Initial_Liquidity_Amount": "Начальный_Объем_Ликвидности",

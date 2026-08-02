@@ -228,9 +228,6 @@
             <span class="text-6xl font-mono nier-text-primary tracking-tighter font-bold drop-shadow-sm">
               {{ displayBalance }}
             </span>
-            <span class="text-[9px] font-mono tracking-[0.4em] uppercase opacity-30 mt-2 nier-text-primary">
-              {{ apiSyncStatusMessage || 'REIFIED_BALANCE_SNAPSHOT' }}
-            </span>
           </div>
         </div>
       </Transition>
