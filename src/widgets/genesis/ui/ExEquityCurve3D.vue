@@ -43,33 +43,8 @@
         :diagnostic-stats="diagnosticStats"
         :strategy-metrics="strategyMetrics"
         :filtered-trades="getFilteredTrades()"
-        :format-sentence-case="formatSentenceCase"
       />
     </Transition>
-
-
-
-
-    <Transition name="protocol-slide">
-      <div v-if="showDistribution3D && !showRobustnessExplanations && !showSimulator"
-           class="absolute top-12 left-1/2 z-30 w-[min(560px,calc(100vw-320px))] -translate-x-1/2 pointer-events-none">
-        <ExPanel
-          variant="light"
-          :no-padding="true"
-          :no-shadow="true"
-          :show-corners="true"
-          class="!border-black/15 dark:!border-white/15"
-        >
-          <div class="px-7 py-4 bg-white/75 dark:bg-[#0a0a0a]/75 nier-text-primary">
-            <div class="text-center text-[9px] font-mono uppercase tracking-[0.42em] opacity-55">Next step</div>
-            <div class="mt-3 text-center text-base font-semibold leading-6" :style="{ color: robustnessExplanation.tone }">
-              {{ formatSentenceCase(robustnessExplanation.action.replace('Recommended action: ', '')) }}
-            </div>
-          </div>
-        </ExPanel>
-      </div>
-    </Transition>
-
     <!-- TOP-CENTER WARNING BANNER (teleported to body) -->
     <Teleport to="body">
       <Transition name="robustness-warn">
@@ -2532,7 +2507,6 @@ const computeQQPlotPositions = (qqPoints: { theoretical: number; actual: number 
 
 
 // --- 3D MATH TYPES --- //
-import { useExRobustness } from '../model/useExRobustness'
 import ExRobustnessDiagnostic from './components/ExRobustnessDiagnostic.vue'
 
 interface Point3D { x: number; y: number; z: number }
@@ -3097,15 +3071,6 @@ const resetView = () => {
   viewScale.value = 2.2
   viewOffset.value = { x: 0, y: 0 }
 }
-
-const formatSentenceCase = (text: string) => text ? text.charAt(0).toUpperCase() + text.slice(1) : ''
-
-const { robustnessExplanation, robustnessVisualizationStatus } = useExRobustness(
-  diagnosticStats,
-  strategyMetrics,
-  getFilteredTrades,
-  (trade: any) => getTradePnl(trade, strategyMetrics.value?.initialDeposit || tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000)
-)
 
 let rafId: number
 const update = () => {

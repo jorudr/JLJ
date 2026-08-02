@@ -2,14 +2,12 @@
 import { toRefs } from 'vue'
 import { useExRobustness } from '../../model/useExRobustness'
 import { useI18n } from '~/shared/i18n/useI18n'
-import ExPanel from '~/shared/ui/ExPanel.vue'
 import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 
 const props = defineProps<{
   diagnosticStats: any
   strategyMetrics: any
   filteredTrades: any[]
-  formatSentenceCase: (text: string) => string
 }>()
 
 const { diagnosticStats, strategyMetrics, filteredTrades } = toRefs(props)
@@ -40,7 +38,7 @@ const diagnosticTextMap: Record<string, { en: string; ru: string }> = {
   suboptimal: { en: '[ SUBOPTIMAL ]', ru: '[ СЛАБЕЕ ]' },
   normalityHypothesis: { en: 'IV. NORMALITY_HYPOTHESIS', ru: 'IV. ПРОВЕРКА_СТАБИЛЬНОСТИ' },
   rollingLayer: { en: 'V. ROLLING_LAYER_DYNAMICS', ru: 'V. ТЕКУЩАЯ_ДИНАМИКА' },
-  robustnessAction: { en: 'VI. ROBUSTNESS_ACTION', ru: 'VI. СЛЕДУЮЩИЙ_ШАГ' },
+  robustnessAction: { en: 'VI. RECOMMENDED_ACTION', ru: 'VI. РЕКОМЕНДУЕМОЕ_ДЕЙСТВИЕ' },
   diagnosticTrace: { en: 'VII. DIAGNOSTIC_TRACE', ru: 'VII. ХОД_ДИАГНОСТИКИ' }
 }
 
@@ -145,17 +143,9 @@ function diagnosticText(key: string) {
         <!-- ACTION -->
         <section>
           <h2 class="text-[9px] tracking-[0.4em] opacity-40 mb-8 pb-3 border-b nier-border-primary">{{ diagnosticText('robustnessAction') }}</h2>
-          <ExPanel
-            variant="light"
-            :no-padding="true"
-            :no-shadow="true"
-            :show-corners="true"
-            class="!border-black/15 dark:!border-white/15"
-          >
-            <div class="p-6 bg-black/[0.03] dark:bg-white/[0.03]">
-              <p class="leading-loose font-bold" :style="{ color: robustnessExplanation.tone }">> {{ robustnessExplanation.action }}</p>
-            </div>
-          </ExPanel>
+          <div class="border border-white/20 bg-[#0a0a0a]/80 p-6 text-white">
+            <p class="font-sans text-base font-semibold leading-7 tracking-normal normal-case text-white">{{ robustnessExplanation.action }}</p>
+          </div>
         </section>
 
         <!-- TRACE -->

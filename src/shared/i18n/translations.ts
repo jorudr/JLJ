@@ -1516,7 +1516,7 @@ export const translations = {
         "Expert": "Экспертные",
         "QQ_PLOT": "QQ_ГРАФИК",
         "PNL_HIST": "PNL_ГИСТ",
-        "NORMAL_FIT": "NORMAL_ПОДБОР",
+        "NORMAL_FIT": "НОРМАЛЬНАЯ_МОДЕЛЬ",
         "QUANTILE_ALIGNMENT_PROJECTION": "ПРОЕКЦИЯ_КВАНТИЛЬНОГО_СОВПАДЕНИЯ",
         "ROBUSTNESS_FITTING_VERDICT": "ВЕРДИКТ_ПОДБОРА_УСТОЙЧИВОСТИ",
         "PNL_HISTOGRAM": "PNL_ГИСТОГРАММА",
