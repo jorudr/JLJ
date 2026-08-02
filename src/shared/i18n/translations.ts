@@ -10,6 +10,8 @@ export const translations = {
       announcement: {
         eyebrow: "APPLICATION ANNOUNCEMENT",
         title: "The application is coming soon",
+        titleLine1: "The application",
+        titleLine2: "is coming soon",
         description: "The announcement of the application will take place on 20 August 2026.",
         date: "20 AUGUST 2026",
         follow: "FOLLOW UPDATES ON TELEGRAM",
@@ -307,7 +309,9 @@ export const translations = {
       buyOnPatreon: "ПРИОБРЕСТИ",
       announcement: {
         eyebrow: "АНОНС ПРИЛОЖЕНИЯ",
-        title: "Анонс приложения",
+        title: "ДОСТУПНО СОВСЕМ СКОРО",
+        titleLine1: "ДОСТУПНО",
+        titleLine2: "СОВСЕМ СКОРО",
         description: "Анонс приложения состоится 20 августа 2026 года.",
         date: "20 АВГУСТА 2026",
         follow: "СЛЕДИТЬ ЗА ОБНОВЛЕНИЯМИ В TELEGRAM",

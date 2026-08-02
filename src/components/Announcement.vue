@@ -32,7 +32,9 @@
       <main class="announcement-main flex-1" aria-labelledby="announcement-title">
         <section class="announcement-content">
           <span class="announcement-eyebrow">{{ t('landing.announcement.eyebrow') }}</span>
-          <h1 id="announcement-title">{{ t('landing.announcement.title') }}</h1>
+          <h1 id="announcement-title">
+            {{ t('landing.announcement.titleLine1') }}<br />{{ t('landing.announcement.titleLine2') }}
+          </h1>
           <p>{{ t('landing.announcement.description') }}</p>
           <time class="announcement-date" datetime="2026-08-20">{{ t('landing.announcement.date') }}</time>
 
