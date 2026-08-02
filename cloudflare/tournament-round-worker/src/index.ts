@@ -108,14 +108,16 @@ interface UserScoreDelta {
 
 interface TournamentRunResult {
   tournamentId: string
-  status: 'settled' | 'cancelled' | 'skipped' | 'failed'
+  status: 'settled' | 'cancelled' | 'recalculated' | 'skipped' | 'failed'
   reason?: string
   seasonId?: string
   closedRoundId?: string
   cancelledRoundId?: string
+  recalculatedRoundId?: string
   openedRoundId?: string
   predictionsProcessed?: number
   usersUpdated?: number
+  roundsRebuilt?: number
   seasonPrizesAwarded?: number
   specialPrizesAwarded?: number
   assetResults?: Record<string, PredictionDirection>
@@ -152,6 +154,15 @@ interface RunReport {
   startedAt: string
   finishedAt: string
   tournaments: TournamentRunResult[]
+}
+
+interface RebuiltLeaderboardEntry {
+  userId: string
+  points: number
+  totalPredictions: number
+  correctPredictions: number
+  missedPredictions: number
+  assetStats: Map<string, LeaderboardAssetStat>
 }
 
 const FIRESTORE_SCOPE = 'https://www.googleapis.com/auth/datastore'
@@ -193,7 +204,10 @@ export default {
       return jsonResponse({ ok: true, service: 'tournament-round-worker' })
     }
 
-    if (url.pathname !== '/run' || request.method !== 'POST') {
+    if (
+      (url.pathname !== '/run' && url.pathname !== '/recalculate-last-round')
+      || request.method !== 'POST'
+    ) {
       return jsonResponse({ error: 'Not found' }, 404)
     }
 
@@ -204,10 +218,13 @@ export default {
 
     try {
       const dryRun = url.searchParams.get('dryRun') === 'true'
-      const report = await runDailySettlement(env, dryRun)
+      const tournamentId = url.searchParams.get('tournamentId') || undefined
+      const report = url.pathname === '/recalculate-last-round'
+        ? await runLastRoundRecalculation(env, dryRun, Date.now(), tournamentId)
+        : await runDailySettlement(env, dryRun)
       return jsonResponse(report)
     } catch (error) {
-      console.error('[Tournament Worker] Manual run failed:', serializeError(error))
+      console.error(`[Tournament Worker] Manual ${url.pathname} failed:`, serializeError(error))
       return jsonResponse({ error: serializeError(error) }, 500)
     }
   }
@@ -232,6 +249,62 @@ async function runDailySettlement(env: Env, dryRun: boolean, nowMs = Date.now())
       }))
     } catch (error) {
       console.error(`[Tournament Worker] ${tournament.id} failed:`, serializeError(error))
+      tournamentResults.push({
+        tournamentId: tournament.id,
+        status: 'failed',
+        reason: serializeError(error)
+      })
+    }
+  }
+
+  return {
+    dryRun,
+    startedAt: startedAt.toISOString(),
+    finishedAt: new Date().toISOString(),
+    tournaments: tournamentResults
+  }
+}
+
+async function runLastRoundRecalculation(
+  env: Env,
+  dryRun: boolean,
+  nowMs = Date.now(),
+  onlyTournamentId?: string
+): Promise<RunReport> {
+  validateEnv(env)
+
+  const startedAt = new Date(nowMs)
+  const firestore = new FirestoreRestClient(env)
+  const tournamentDocuments = await firestore.listDocuments('', 'tournaments')
+  const selectedTournaments = onlyTournamentId
+    ? tournamentDocuments.filter((tournament) => tournament.id === onlyTournamentId)
+    : tournamentDocuments
+  const tournamentResults: TournamentRunResult[] = []
+
+  if (onlyTournamentId && !selectedTournaments.length) {
+    return {
+      dryRun,
+      startedAt: startedAt.toISOString(),
+      finishedAt: new Date().toISOString(),
+      tournaments: [{
+        tournamentId: onlyTournamentId,
+        status: 'skipped',
+        reason: 'Tournament not found.'
+      }]
+    }
+  }
+
+  for (const tournament of selectedTournaments) {
+    try {
+      tournamentResults.push(await recalculateTournamentLatestPassedRound({
+        env,
+        firestore,
+        tournament,
+        dryRun,
+        nowMs
+      }))
+    } catch (error) {
+      console.error(`[Tournament Worker] ${tournament.id} recalculation failed:`, serializeError(error))
       tournamentResults.push({
         tournamentId: tournament.id,
         status: 'failed',
@@ -569,6 +642,169 @@ async function settleTournament(input: {
     assetResults: Object.fromEntries(
       resolutions.map((resolution) => [resolution.assetId, resolution.direction])
     )
+  }
+}
+
+async function recalculateTournamentLatestPassedRound(input: {
+  env: Env
+  firestore: FirestoreRestClient
+  tournament: FirestoreDocument
+  dryRun: boolean
+  nowMs: number
+}): Promise<TournamentRunResult> {
+  const { env, firestore, tournament, dryRun, nowMs } = input
+  const tournamentId = tournament.id
+  const seasons = await firestore.listDocuments(`tournaments/${tournamentId}`, 'seasons')
+  const openedSeasons = seasons.filter((season) => normalizeStatus(season.data.status) === 'opened')
+
+  if (!openedSeasons.length) {
+    return { tournamentId, status: 'skipped', reason: 'No opened season.' }
+  }
+  if (openedSeasons.length > 1) {
+    throw new Error(`Expected one opened season, found ${openedSeasons.length}.`)
+  }
+
+  const season = openedSeasons[0]
+  const timeWindowMinutes = requirePositiveInteger(season.data.timeWindow, 'season.timeWindow')
+  const dataDelayMs = parseNonNegativeInteger(env.MARKET_DATA_DELAY_MINUTES, 0) * MINUTE_MS
+  const allowedAssets = requireArray(tournament.data.allowedAssets, 'tournament.allowedAssets')
+    .map(resolveAllowedAsset)
+  ensureUniqueAssetIds(allowedAssets)
+
+  const rounds = await firestore.listDocuments(
+    `tournaments/${tournamentId}/seasons/${season.id}`,
+    'rounds'
+  )
+  const passedRounds = rounds
+    .map((round) => {
+      const startsAt = requireDate(round.data.startsAt, `${round.id}.startsAt`)
+      const endsAt = requireDate(round.data.endsAt, `${round.id}.endsAt`)
+      const resolutionEndsAtMs = endsAt.getTime() + timeWindowMinutes * MINUTE_MS
+      return { round, startsAt, endsAt, resolutionEndsAtMs }
+    })
+    .filter((entry) => {
+      const status = normalizeStatus(entry.round.data.status)
+      return status !== 'cancelled'
+        && status !== 'canceled'
+        && entry.endsAt.getTime() > entry.startsAt.getTime()
+        && input.nowMs >= entry.resolutionEndsAtMs + dataDelayMs
+    })
+    .sort((left, right) => {
+      const byEnd = left.endsAt.getTime() - right.endsAt.getTime()
+      return byEnd || left.startsAt.getTime() - right.startsAt.getTime()
+    })
+
+  if (!passedRounds.length) {
+    return {
+      tournamentId,
+      seasonId: season.id,
+      status: 'skipped',
+      reason: 'No passed round is ready for recalculation.'
+    }
+  }
+
+  const targetRound = passedRounds[passedRounds.length - 1]!
+  const leaderboardDocuments = await firestore.listDocuments(
+    `tournaments/${tournamentId}/seasons/${season.id}`,
+    'leaderboard'
+  )
+  const participantDocuments = await firestore.listDocuments(
+    `tournaments/${tournamentId}`,
+    'participants'
+  )
+  const enrolledAtByUserId = buildTournamentEnrollmentMap(leaderboardDocuments, participantDocuments)
+  const rebuiltLeaderboard = new Map<string, RebuiltLeaderboardEntry>()
+  for (const userId of enrolledAtByUserId.keys()) {
+    rebuiltLeaderboard.set(userId, createEmptyRebuiltLeaderboardEntry(userId))
+  }
+
+  let predictionsProcessed = 0
+  const assetResultsByAssetId = new Map<string, PredictionDirection>()
+
+  for (const passedRound of passedRounds) {
+    const resolutions = await resolveRoundResolutions({
+      allowedAssets,
+      round: passedRound.round,
+      startsAtMs: passedRound.startsAt.getTime(),
+      endsAtMs: passedRound.endsAt.getTime(),
+      resolutionEndsAtMs: passedRound.resolutionEndsAtMs
+    })
+    const resolutionsByAssetId = new Map(resolutions.map((resolution) => [resolution.assetId, resolution]))
+    const predictions = await firestore.listDocuments(
+      `tournaments/${tournamentId}/seasons/${season.id}/rounds/${passedRound.round.id}`,
+      'predictions'
+    )
+    predictionsProcessed += predictions.length
+
+    const eligibleUserIds = getEligibleLeaderboardUserIdsForRound(
+      enrolledAtByUserId,
+      rebuiltLeaderboard,
+      passedRound.endsAt.getTime()
+    )
+    const scoring = calculateUserDeltas({
+      predictions,
+      allowedAssets,
+      resolutionsByAssetId,
+      leaderboardUserIds: eligibleUserIds,
+      startsAtMs: passedRound.startsAt.getTime(),
+      endsAtMs: passedRound.endsAt.getTime(),
+      pointsPerCorrect: parsePositiveInteger(env.POINTS_PER_CORRECT, 25),
+      pointsPerIncorrect: parseNegativeInteger(env.POINTS_PER_INCORRECT, -25)
+    })
+
+    applyRecalculatedRoundDeltas(rebuiltLeaderboard, scoring.userDeltas)
+    if (passedRound.round.id === targetRound.round.id) {
+      for (const resolution of resolutions) {
+        assetResultsByAssetId.set(resolution.assetId, resolution.direction)
+      }
+    }
+  }
+
+  const leaderboardByUserId = new Map(leaderboardDocuments.map((entry) => [entry.id, entry]))
+  const writes: FirestoreWrite[] = []
+  for (const entry of rebuiltLeaderboard.values()) {
+    const existing = leaderboardByUserId.get(entry.userId)
+    writes.push(makeUpdateWrite({
+      name: existing?.name || firestore.documentName(
+        `tournaments/${tournamentId}/seasons/${season.id}/leaderboard/${entry.userId}`
+      ),
+      fields: {
+        userId: entry.userId,
+        points: entry.points,
+        totalPredictions: entry.totalPredictions,
+        correctPredictions: entry.correctPredictions,
+        missedPredictions: entry.missedPredictions,
+        assetStats: Array.from(entry.assetStats.values())
+          .sort((left, right) => left.asset.localeCompare(right.asset)),
+        lastScoredRoundId: targetRound.round.id,
+        lastRecalculatedRoundId: targetRound.round.id
+      },
+      serverTimestampFields: existing ? ['updatedAt', 'recalculatedAt'] : ['createdAt', 'updatedAt', 'recalculatedAt'],
+      precondition: existing?.updateTime
+        ? { updateTime: existing.updateTime }
+        : { exists: false }
+    }))
+  }
+
+  if (writes.length > MAX_ATOMIC_WRITES) {
+    throw new Error(
+      `Leaderboard recalculation requires ${writes.length} writes; safety limit is ${MAX_ATOMIC_WRITES}.`
+    )
+  }
+
+  if (!dryRun && writes.length) {
+    await firestore.commit(writes)
+  }
+
+  return {
+    tournamentId,
+    seasonId: season.id,
+    status: 'recalculated',
+    recalculatedRoundId: targetRound.round.id,
+    predictionsProcessed,
+    usersUpdated: rebuiltLeaderboard.size,
+    roundsRebuilt: passedRounds.length,
+    assetResults: Object.fromEntries(assetResultsByAssetId)
   }
 }
 
@@ -1225,6 +1461,172 @@ function mergeLeaderboardAssetStats(
   }
 
   return Array.from(merged.values()).sort((left, right) => left.asset.localeCompare(right.asset))
+}
+
+function createEmptyRebuiltLeaderboardEntry(userId: string): RebuiltLeaderboardEntry {
+  return {
+    userId,
+    points: 0,
+    totalPredictions: 0,
+    correctPredictions: 0,
+    missedPredictions: 0,
+    assetStats: new Map<string, LeaderboardAssetStat>()
+  }
+}
+
+function buildTournamentEnrollmentMap(
+  leaderboardDocuments: FirestoreDocument[],
+  participantDocuments: FirestoreDocument[]
+): Map<string, number> {
+  const result = new Map<string, number>()
+  const setEarliest = (userId: string, enrolledAtMs: number) => {
+    if (!userId) return
+    const existing = result.get(userId)
+    if (existing === undefined || enrolledAtMs < existing) {
+      result.set(userId, enrolledAtMs)
+    }
+  }
+
+  for (const participant of participantDocuments) {
+    const userId = typeof participant.data.userId === 'string' && participant.data.userId.trim()
+      ? participant.data.userId.trim()
+      : participant.id
+    setEarliest(userId, readEnrollmentTimeMs(participant))
+  }
+
+  for (const entry of leaderboardDocuments) {
+    const userId = typeof entry.data.userId === 'string' && entry.data.userId.trim()
+      ? entry.data.userId.trim()
+      : entry.id
+    setEarliest(userId, readEnrollmentTimeMs(entry))
+  }
+
+  return result
+}
+
+function readEnrollmentTimeMs(document: FirestoreDocument): number {
+  const registeredAt = document.data.registeredAt
+  if (registeredAt instanceof Date && Number.isFinite(registeredAt.getTime())) {
+    return registeredAt.getTime()
+  }
+
+  const createdAt = document.data.createdAt
+  if (createdAt instanceof Date && Number.isFinite(createdAt.getTime())) {
+    return createdAt.getTime()
+  }
+
+  if (document.createTime) {
+    const parsed = Date.parse(document.createTime)
+    if (Number.isFinite(parsed)) return parsed
+  }
+
+  return Number.NEGATIVE_INFINITY
+}
+
+function getEligibleLeaderboardUserIdsForRound(
+  enrolledAtByUserId: Map<string, number>,
+  rebuiltLeaderboard: Map<string, RebuiltLeaderboardEntry>,
+  roundEndsAtMs: number
+): string[] {
+  const result = new Set<string>()
+
+  for (const [userId, enrolledAtMs] of enrolledAtByUserId) {
+    if (!Number.isFinite(enrolledAtMs) || enrolledAtMs <= roundEndsAtMs) {
+      result.add(userId)
+    }
+  }
+
+  for (const userId of rebuiltLeaderboard.keys()) {
+    if (!enrolledAtByUserId.has(userId)) result.add(userId)
+  }
+
+  return Array.from(result)
+}
+
+function applyRecalculatedRoundDeltas(
+  rebuiltLeaderboard: Map<string, RebuiltLeaderboardEntry>,
+  userDeltas: Map<string, UserScoreDelta>
+): void {
+  for (const [userId, delta] of userDeltas) {
+    const current = rebuiltLeaderboard.get(userId) || createEmptyRebuiltLeaderboardEntry(userId)
+    current.points = Math.max(0, current.points + delta.points)
+    current.totalPredictions += delta.totalPredictions
+    current.correctPredictions += delta.correctPredictions
+    current.missedPredictions += delta.missedPredictions
+
+    for (const [assetId, assetDelta] of delta.assetStats) {
+      const existing = current.assetStats.get(assetId)
+      current.assetStats.set(assetId, {
+        assetId,
+        asset: assetDelta.asset || existing?.asset || assetId,
+        totalPredictions: (existing?.totalPredictions || 0) + assetDelta.totalPredictions,
+        correctPredictions: (existing?.correctPredictions || 0) + assetDelta.correctPredictions,
+        missedPredictions: (existing?.missedPredictions || 0) + assetDelta.missedPredictions,
+        pointsEarned: (existing?.pointsEarned || 0) + assetDelta.pointsEarned
+      })
+    }
+
+    rebuiltLeaderboard.set(userId, current)
+  }
+}
+
+async function resolveRoundResolutions(input: {
+  allowedAssets: ResolvedAsset[]
+  round: FirestoreDocument
+  startsAtMs: number
+  endsAtMs: number
+  resolutionEndsAtMs: number
+}): Promise<AssetResolution[]> {
+  const storedResolutions = readStoredRoundAssetResults(input.round.data.assetResults)
+  const hasAllStoredResolutions = input.allowedAssets.every((asset) => storedResolutions.has(asset.assetId))
+
+  if (hasAllStoredResolutions) {
+    return input.allowedAssets.map((asset) => storedResolutions.get(asset.assetId)!)
+  }
+
+  return mapWithConcurrency(
+    input.allowedAssets,
+    1,
+    async (asset) => resolveAssetDirection(
+      asset,
+      input.startsAtMs,
+      input.endsAtMs,
+      input.resolutionEndsAtMs
+    )
+  )
+}
+
+function readStoredRoundAssetResults(value: unknown): Map<string, AssetResolution> {
+  const result = new Map<string, AssetResolution>()
+  if (!Array.isArray(value)) return result
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue
+    const source = entry as Record<string, unknown>
+    const assetSource = typeof source.assetId === 'string' && source.assetId.trim()
+      ? source.assetId
+      : typeof source.asset === 'string'
+        ? source.asset
+        : ''
+    const assetId = normalizeAssetId(assetSource)
+    if (!assetId) continue
+
+    const directionSource = source.verdict ?? source.direction
+    const direction = normalizePredictionDirection(directionSource)
+    const asset = typeof source.asset === 'string' && source.asset.trim()
+      ? source.asset.trim()
+      : assetId
+
+    result.set(assetId, {
+      assetId,
+      asset,
+      direction,
+      initialPrice: readFiniteNumber(source.initialPrice, 0),
+      finalPrice: readFiniteNumber(source.finalPrice, 0)
+    })
+  }
+
+  return result
 }
 
 async function resolveAssetDirection(

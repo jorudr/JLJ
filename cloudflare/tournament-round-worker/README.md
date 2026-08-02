@@ -240,6 +240,24 @@ curl -X POST \
 
 Dry-run читает Firestore и Yahoo, считает результат, но ничего не записывает.
 
+Ручной пересчёт leaderboard за последний прошедший раунд:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer YOUR_MANUAL_RUN_TOKEN" \
+  "http://localhost:8787/recalculate-last-round?dryRun=true"
+```
+
+Для конкретного турнира:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer YOUR_MANUAL_RUN_TOKEN" \
+  "http://localhost:8787/recalculate-last-round?dryRun=true&tournamentId=apex_protocol_2026"
+```
+
+Этот режим не закрывает раунд и не создаёт новый. Он пересобирает сезонный `leaderboard` заново по всем уже прошедшим раундам до последнего прошедшего раунда, исправляя `points`, `totalPredictions`, `correctPredictions`, `missedPredictions` и `assetStats`.
+
 ## Деплой
 
 ```bash
