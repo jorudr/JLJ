@@ -68,17 +68,17 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-black/30 dark:border-white/30"></div>
            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black/30 dark:border-white/30"></div>
 
-           <!-- Price Group -->
-           <div class="flex gap-8">
+            <!-- Price Group -->
+            <div class="flex gap-8">
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em]">Entry_Point</span>
+	                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">Entry_Point</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(entry) }}</span>
 	              </div>
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em]">Exit_Target</span>
+	                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">Exit_Target</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(exit) }}</span>
 	              </div>
-           </div>
+            </div>
 
            <div class="w-px h-8 bg-black/10 dark:bg-white/10"></div>
 

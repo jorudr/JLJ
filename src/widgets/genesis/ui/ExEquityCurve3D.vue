@@ -606,7 +606,7 @@
                 @click="handleRobustnessDiagnosticsClick"
                 class="group relative flex items-center justify-center w-10 h-10 transition-all border"
                 :class="[
-                  showDistribution3D ? 'bg-white/10 opacity-100 border-white/20' : 'border-transparent text-white',
+                  showDistribution3D ? 'bg-white/10 opacity-100 border-white/20 text-white' : 'border-transparent text-white',
                   hasEnoughTradesForDiagnostics ? 'opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5' : 'opacity-25 cursor-not-allowed'
                 ]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
@@ -782,7 +782,7 @@
     </div>
 
     <!-- RIGHT PANEL -->
-    <div v-if="!showMetricsPanel && !showRobustnessExplanations && !showSimulator"
+    <div v-if="!showMetricsPanel && !showRobustnessExplanations && !showSimulator && (!showDistribution3D || (!showRobustnessHistogram && !showQQPlot))"
          class="absolute right-12 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center justify-center pointer-events-none">
       <div class="pointer-events-auto flex flex-col items-center space-y-2 bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/20 p-2 relative">
         <!-- Corner Accents -->
@@ -856,8 +856,8 @@
 
           <!-- T DIST TOGGLE -->
           <button @click="showRobustnessTDist = !showRobustnessTDist; if (showRobustnessTDist) showRobustnessNormalDist = false"
-                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent nier-text-primary opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
-                  :class="showRobustnessTDist ? 'bg-black/10 dark:bg-white/10 opacity-100 border-black/20 dark:border-white/20' : ''">
+                  class="group relative flex items-center justify-center w-10 h-10 transition-all border border-transparent text-white opacity-60 hover:opacity-100 hover:border-white/10 hover:bg-white/5"
+                  :class="showRobustnessTDist ? 'bg-white/10 opacity-100 border-white/20' : ''">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
               <path d="M4 16c2-6 4-10 8-10s6 4 8 10" />
             </svg>
