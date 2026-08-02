@@ -13,6 +13,7 @@
         :state="visibleAccessState"
         :error="accessError"
         :is-submitting="isActivatingAccess"
+        :lock-remaining-seconds="accessLockRemainingSeconds"
         :locale="locale"
         @activate="activateAccess"
         @retry="retryAccessCheck"
@@ -374,6 +375,7 @@ const showSuccessOverlay = ref(false)
 const {
   accessState,
   accessError,
+  accessLockRemainingSeconds,
   beginAccessListener,
   stopAccessListener,
   retryAccessCheck,

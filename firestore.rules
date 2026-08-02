@@ -84,8 +84,42 @@ service cloud.firestore {
       allow create, update: if isOwner(userId)
         && subcollection != "likedThreads"
         && subcollection != "notifications"
+        && subcollection != "accessKeyAttempts"
         && subcollection != "access"
         && subcollection != "redeemedKeys";
+      allow delete: if false;
+    }
+
+    // Client-side activation throttle state. This prevents the app from sending
+    // repeated bad-key requests to the access Worker while the trusted Worker
+    // remains the real activation authority.
+    match /users/{userId}/accessKeyAttempts/{attemptId} {
+      allow read: if isOwner(userId);
+
+      allow create, update: if isOwner(userId)
+        && attemptId == "state"
+        && request.resource.data.keys().hasOnly([
+          "failedCount",
+          "lockedUntil",
+          "lastFailedAt",
+          "updatedAt"
+        ])
+        && request.resource.data.failedCount is int
+        && request.resource.data.failedCount >= 0
+        && request.resource.data.failedCount <= 5
+        && (
+          request.resource.data.lockedUntil == null
+          || request.resource.data.lockedUntil is timestamp
+        )
+        && (
+          !request.resource.data.keys().hasAny(["lastFailedAt"])
+          || request.resource.data.lastFailedAt is timestamp
+        )
+        && (
+          !request.resource.data.keys().hasAny(["updatedAt"])
+          || request.resource.data.updatedAt is timestamp
+        );
+
       allow delete: if false;
     }
 

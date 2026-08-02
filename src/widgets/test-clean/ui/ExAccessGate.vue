@@ -35,21 +35,32 @@
             autocapitalize="characters"
             spellcheck="false"
             maxlength="48"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isLocked"
             :placeholder="isRussian ? 'EXG-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX' : 'EXG-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX'"
             @input="formatKey"
           >
 
           <p v-if="visibleError" class="access-gate__error mt-4" role="alert">{{ visibleError }}</p>
 
-          <button
-            type="submit"
-            class="access-gate__submit mt-6"
-            :disabled="isSubmitting || !accessKey"
-          >
-            <span v-if="isSubmitting" class="access-gate__button-spinner" aria-hidden="true"></span>
-            <span>{{ isSubmitting ? (isRussian ? 'АКТИВАЦИЯ...' : 'ACTIVATING...') : (isRussian ? 'АКТИВИРОВАТЬ' : 'ACTIVATE') }}</span>
-          </button>
+          <div class="access-gate__actions mt-6">
+            <button
+              type="submit"
+              class="access-gate__submit"
+              :disabled="isSubmitting || isLocked || !accessKey"
+            >
+              <span v-if="isSubmitting" class="access-gate__button-spinner" aria-hidden="true"></span>
+              <span>{{ isSubmitting ? (isRussian ? 'АКТИВАЦИЯ...' : 'ACTIVATING...') : (isRussian ? 'АКТИВИРОВАТЬ' : 'ACTIVATE') }}</span>
+            </button>
+            <a
+              :href="PATREON_URL"
+              target="_blank"
+              rel="noreferrer"
+              class="access-gate__patreon"
+              @click="openPatreon"
+            >
+              {{ isRussian ? 'НЕТ КЛЮЧА?' : 'NO KEY?' }}
+            </a>
+          </div>
         </form>
 
         <button
@@ -77,15 +88,18 @@ import { useThemeStore } from '~/features/store/useTheme'
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
+const PATREON_URL = 'https://www.patreon.com/cw/jlgandr'
 
 const props = withDefaults(defineProps<{
   state: AccessActivationState
   error?: string
   isSubmitting?: boolean
+  lockRemainingSeconds?: number
   locale?: string
 }>(), {
   error: '',
   isSubmitting: false,
+  lockRemainingSeconds: 0,
   locale: 'en'
 })
 
@@ -96,14 +110,27 @@ const emit = defineEmits<{
 
 const accessKey = ref('')
 const isRussian = computed(() => props.locale === 'ru')
+const isLocked = computed(() => props.lockRemainingSeconds > 0)
+const lockDurationText = computed(() => {
+  const totalSeconds = Math.max(0, Math.ceil(props.lockRemainingSeconds))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+})
 const visibleError = computed(() => {
+  if (isLocked.value) {
+    return isRussian.value
+      ? `Слишком много неверных попыток. Попробуйте снова через ${lockDurationText.value}.`
+      : `Too many invalid attempts. Try again in ${lockDurationText.value}.`
+  }
+
   const normalizedError = props.error.trim().toLowerCase()
   if (!normalizedError) return ''
 
   if (normalizedError.includes('too many activation attempts')) {
     return isRussian.value
-      ? 'Слишком много попыток. Подождите минуту и попробуйте снова.'
-      : 'Too many attempts. Wait one minute and try again.'
+      ? 'Слишком много попыток. Подождите и попробуйте снова.'
+      : 'Too many attempts. Please wait and try again.'
   }
 
   return props.error
@@ -121,8 +148,30 @@ const formatKey = () => {
 }
 
 const submit = () => {
-  if (props.isSubmitting || !accessKey.value) return
+  if (props.isSubmitting || isLocked.value || !accessKey.value) return
   emit('activate', accessKey.value)
+}
+
+const openPatreon = async (event: MouseEvent) => {
+  event.preventDefault()
+
+  if (typeof window === 'undefined') return
+  const isTauri = Boolean((window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__)
+
+  if (!isTauri) {
+    const opened = window.open(PATREON_URL, '_blank', 'noopener,noreferrer')
+    if (!opened) window.location.href = PATREON_URL
+    return
+  }
+
+  try {
+    const { open } = await import('@tauri-apps/plugin-shell')
+    await open(PATREON_URL)
+  } catch (error) {
+    console.error('Failed to open Patreon link', error)
+    const opened = window.open(PATREON_URL, '_blank', 'noopener,noreferrer')
+    if (!opened) window.location.href = PATREON_URL
+  }
 }
 </script>
 
@@ -183,6 +232,12 @@ const submit = () => {
   border-color: var(--theme-text);
 }
 
+.access-gate__actions {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .access-gate__submit {
   align-items: center;
   background: var(--theme-text);
@@ -201,14 +256,43 @@ const submit = () => {
   width: 100%;
 }
 
+.access-gate__patreon {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--theme-border-strong);
+  color: var(--theme-text);
+  display: inline-flex;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 900;
+  justify-content: center;
+  letter-spacing: 0.16em;
+  min-height: 2.85rem;
+  padding: 0.75rem 1rem;
+  transition: background-color 180ms ease, color 180ms ease, opacity 180ms ease, transform 180ms ease;
+  white-space: nowrap;
+}
+
 .access-gate__submit:hover:not(:disabled) {
   opacity: 0.78;
+  transform: translateY(-1px);
+}
+
+.access-gate__patreon:hover {
+  background: var(--theme-text);
+  color: var(--theme-bg);
   transform: translateY(-1px);
 }
 
 .access-gate__submit:disabled {
   cursor: default;
   opacity: 0.38;
+}
+
+@media (max-width: 520px) {
+  .access-gate__actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .access-gate__error {
