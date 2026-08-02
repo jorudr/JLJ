@@ -43,11 +43,11 @@
               %
             </button>
           </div>
-          <button @click="colorMode = 'monochrome'" class="relative w-4 h-4 transition-all group">
+          <button @click="setColorMode('monochrome')" class="relative w-4 h-4 transition-all group">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-black dark:border-white transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 nier-bg-inverted transition-opacity" :class="colorMode === 'monochrome' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
-          <button @click="colorMode = 'colorful'" class="relative w-4 h-4 transition-all group">
+          <button @click="setColorMode('colorful')" class="relative w-4 h-4 transition-all group">
             <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 border border-red-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
             <div class="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-green-500 transition-opacity" :class="colorMode === 'colorful' ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'"></div>
           </button>
@@ -560,6 +560,10 @@ const resultDisplayMode = ref<'currency' | 'percent'>(props.resultDisplayMode ||
 const openFilterId = ref<string | null>(null)
 const filterBarRef = ref<HTMLElement | null>(null)
 const showHiddenTrades = ref(true)
+
+const setColorMode = (mode: 'monochrome' | 'colorful') => {
+  colorMode.value = mode
+}
 
 const toggleTradeExpand = (tradeId: string) => {
   expandedTradeId.value = expandedTradeId.value === tradeId ? null : tradeId
@@ -2056,7 +2060,7 @@ const filteredTrades = computed(() => {
 })
 
 watch(filteredTrades, (trades) => {
-  emit('filtered-trades-change', trades)
+  if (filtersOnly.value) emit('filtered-trades-change', trades)
 }, { immediate: true })
 
 const selectedTradeIds = ref<string[]>([])

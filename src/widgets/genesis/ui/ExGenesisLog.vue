@@ -110,14 +110,6 @@
         ]"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <Transition name="time-tree-fullscreen-hint">
-          <div
-            v-if="isTimeTreeFullscreen && showTimeTreeFullscreenHint"
-            class="pointer-events-none fixed left-1/2 top-8 z-[10090] w-[min(960px,calc(100vw-48px))] -translate-x-1/2 text-center font-serif text-sm font-normal tracking-[0.18em] text-black/70 dark:text-white/70 md:text-base"
-          >
-            {{ locale === 'ru' ? 'Чтобы выйти из полноэкранного режима TimeTree, нажмите ESC' : 'Press ESC to exit fullscreen TimeTree mode' }}
-          </div>
-        </Transition>
         <div
           class="relative z-10 flex h-full w-full flex-col"
           :class="isTimeTreeFullscreen ? 'px-6 py-10 md:px-10 md:py-12' : 'px-8 py-14 md:px-16 md:py-20'"
@@ -204,7 +196,7 @@
                             class="flex min-w-0 items-center gap-2"
                             :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
                           >
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white/10 dark:bg-black/70">
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white dark:bg-white">
                               <img
                                 v-if="trade.assetIcon"
                                 :src="trade.assetIcon"
@@ -1002,8 +994,17 @@
       />
     </div>
 
-    <!-- BOTTOM CENTER: PHANTOM PROTOCOL SELECT -->
-    <div v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'" class="absolute bottom-14 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700" :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''">
+    <!-- PHANTOM PROTOCOL SELECT -->
+    <div
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'"
+      class="absolute bottom-14 z-[10000] flex flex-col pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700"
+      :class="[
+        showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : '',
+        viewType === 'list' || viewType === 'timeTree'
+          ? 'right-12 left-auto translate-x-0 items-end'
+          : 'left-1/2 -translate-x-1/2 items-center'
+      ]"
+    >
        
        <!-- The Dropdown Menu -->
 
@@ -1488,10 +1489,8 @@ const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution' | 'tree'>('cu
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
-const showTimeTreeFullscreenHint = ref(false)
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
-let timeTreeFullscreenHintTimeout: ReturnType<typeof setTimeout> | null = null
 
 const editTrade = (trade: any) => {
   editingTrade.value = trade
@@ -1646,28 +1645,14 @@ const setListViewMode = (mode: 'list' | 'timeTree') => {
   viewType.value = mode
 }
 
-const clearTimeTreeFullscreenHintTimer = () => {
-  if (!timeTreeFullscreenHintTimeout) return
-  clearTimeout(timeTreeFullscreenHintTimeout)
-  timeTreeFullscreenHintTimeout = null
-}
-
 const enterTimeTreeFullscreen = () => {
   if (viewType.value !== 'timeTree') return
   isTimeTreeFullscreen.value = true
-  showTimeTreeFullscreenHint.value = true
-  clearTimeTreeFullscreenHintTimer()
-  timeTreeFullscreenHintTimeout = setTimeout(() => {
-    showTimeTreeFullscreenHint.value = false
-    timeTreeFullscreenHintTimeout = null
-  }, 4000)
 }
 
 const exitTimeTreeFullscreen = () => {
   if (!isTimeTreeFullscreen.value) return
   isTimeTreeFullscreen.value = false
-  showTimeTreeFullscreenHint.value = false
-  clearTimeTreeFullscreenHintTimer()
 }
 
 const handleTimeTreeFullscreenKeydown = (e: KeyboardEvent) => {
@@ -1819,7 +1804,9 @@ const timeTreeGroups = computed(() => {
       side: getTimeTreeSide(trade?.side || trade?.direction),
       pnl,
       resultLabel: formatTimeTreeResult(resultValue, pnl),
-      resultColor: isClosedTrade ? getTimeTreeResultColor(listResultDisplayMode.value === 'currency' ? pnl : resultValue) : 'hsl(45 80% 58%)',
+      resultColor: isClosedTrade
+        ? getTimeTreeResultColor(listResultDisplayMode.value === 'currency' ? pnl : resultValue)
+        : (listColorMode.value === 'colorful' ? 'hsl(45 80% 58%)' : 'currentColor'),
       time: formatTimeTreeTime(timestamp),
       timestamp
     })
@@ -4022,7 +4009,6 @@ onUnmounted(() => {
   isLogComponentMounted = false
   window.removeEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.removeEventListener('keydown', handleGlobalKeydown)
-  clearTimeTreeFullscreenHintTimer()
   if (cubeSearchTimeout) {
     clearTimeout(cubeSearchTimeout)
     cubeSearchTimeout = null
@@ -4042,17 +4028,6 @@ canvas { image-rendering: pixelated; }
 .protocol-slide-enter-from, .protocol-slide-leave-to {
   opacity: 0;
   transform: translateY(20px);
-}
-
-.time-tree-fullscreen-hint-enter-active,
-.time-tree-fullscreen-hint-leave-active {
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.time-tree-fullscreen-hint-enter-from,
-.time-tree-fullscreen-hint-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -8px);
 }
 
 .time-tree-scroll--fullscreen,
