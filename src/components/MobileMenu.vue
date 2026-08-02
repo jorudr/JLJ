@@ -32,11 +32,11 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': section === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
             </button>
             <div v-if="section === 'products'" class="mobile-menu__children">
-              <router-link to="/download?full" @click="closeMenu">
+              <router-link to="/announcement" @click="closeMenu">
                 <span>J.L.JÖRMUNGANDR</span>
                 <small>{{ t('landing.productsMenu.fullVersion') }}</small>
               </router-link>
-              <a :href="getDemoDownloadUrl()" download @click="closeMenu">
+              <a href="/announcement" @click="closeMenu">
                 <span>J.L.JÖRMUNGANDR DEMO</span>
                 <small>{{ t('landing.productsMenu.freeDemo') }}</small>
               </a>
@@ -72,7 +72,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
-import { getDemoDownloadUrl } from '../shared/downloads'
 
 defineProps({
   isLight: {

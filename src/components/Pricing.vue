@@ -54,9 +54,9 @@
               </li>
             </ul>
 
-            <a href="https://github.com/jorudr/JLJ/releases" target="_blank" rel="noreferrer" class="pricing-plan__action pricing-plan__action--quiet">
+            <router-link to="/announcement" class="pricing-plan__action pricing-plan__action--quiet">
               {{ t('landing.pricing.demo.cta') }} <span aria-hidden="true">↗</span>
-            </a>
+            </router-link>
           </article>
 
           <article class="pricing-plan pricing-plan--featured">

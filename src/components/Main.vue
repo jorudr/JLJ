@@ -157,11 +157,11 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
               </button>
               <div v-if="mobileMenuSection === 'products'" class="mobile-menu__children">
-                <router-link to="/download?full" @click="closeMobileMenu">
+                <router-link to="/announcement" @click="closeMobileMenu">
                   <span>J.L.JÖRMUNGANDR</span>
                   <small>{{ t('landing.productsMenu.fullVersion') }}</small>
                 </router-link>
-                <a :href="getDemoDownloadUrl()" download @click="closeMobileMenu">
+                <a href="/announcement" @click="closeMobileMenu">
                   <span>J.L.JÖRMUNGANDR DEMO</span>
                   <small>{{ t('landing.productsMenu.freeDemo') }}</small>
                 </a>
@@ -224,7 +224,7 @@
             <transition name="fade-slide" mode="out-in">
               <!-- Products Content -->
               <div v-if="megaMenuType === 'products'" key="products-list" class="flex flex-col space-y-8">
-                <a href="/download?full" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+                <a href="/announcement" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
                   <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
                     <div class="w-3 h-3 rotate-45 border transition-colors duration-300" :class="isDark ? 'border-white' : 'border-black'"></div>
                   </div>
@@ -234,7 +234,7 @@
                   </div>
                 </a>
                 
-                <a :href="getDemoDownloadUrl()" download class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
+                <a href="/announcement" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
                   <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
                     <div class="w-3 h-3 rotate-45 opacity-50 transition-colors duration-300" :class="isDark ? 'bg-white group-hover:bg-white' : 'bg-black group-hover:bg-black'"></div>
                   </div>
@@ -324,8 +324,8 @@
           </div>
 
           <!-- OS Specific Download Button -->
-          <button 
-            @click="scrollToDownload"
+          <router-link
+            to="/announcement"
             class="flex cursor-pointer items-center space-x-3 px-8 py-3.5 transition-all duration-1000 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'"
           >
@@ -341,7 +341,7 @@
               </svg>
               <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
             </template>
-          </button>
+          </router-link>
         </div>
       </main>
 
@@ -527,7 +527,7 @@
     </section>
 
     <!-- Download Section -->
-    <section ref="downloadSection" class="home-download relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 bg-transparent">
+    <section class="home-download relative z-10 w-full flex flex-col items-center justify-center py-32 px-6 sm:px-10 bg-transparent">
       <div class="text-3xl sm:text-5xl font-thin tracking-wide text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
         {{ t('landing.footer.experience') }}
         <div class="flex items-center justify-center space-x-4 mt-6">
@@ -560,8 +560,7 @@
           <span class="self-end text-right text-xs tracking-[0.2em] font-mono opacity-50 uppercase">{{ t('landing.tryDemo') }}</span>
           <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <a
-              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_universal.dmg"
-              download
+              href="/announcement"
               class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
             >
               <svg class="w-5 h-5" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
@@ -570,8 +569,7 @@
               <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadMac') }}</span>
             </a>
             <a
-              href="https://github.com/jorudr/JLJ/releases/download/v1.0.5/JLJ_1.0.5_x64-setup.exe"
-              download
+              href="/announcement"
               class="flex cursor-pointer items-center space-x-3 px-8 py-4 transition-all duration-300 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
             >
               <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true">
@@ -580,7 +578,7 @@
               <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
             </a>
           </div>
-          <router-link to="/download?full" class="mt-10 self-end cursor-pointer border-b border-current px-2 py-2 text-right text-xs tracking-[0.3em] font-mono transition-opacity duration-300 hover:opacity-50">
+          <router-link to="/announcement" class="mt-10 self-end cursor-pointer border-b border-current px-2 py-2 text-right text-xs tracking-[0.3em] font-mono transition-opacity duration-300 hover:opacity-50">
             {{ t('landing.downloadFull') }} <span aria-hidden="true">↗</span>
           </router-link>
         </div>
@@ -607,7 +605,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
-import { getDemoDownloadUrl } from '../shared/downloads'
 
 const { t, locale, setLocale } = useI18n()
 
@@ -662,7 +659,6 @@ const hideMegaMenu = () => {
 
 const isDark = ref(true)
 const featuresSection = ref(null)
-const downloadSection = ref(null)
 const videoContainer = ref(null)
 
 const videoScale = ref(0.6)
@@ -747,9 +743,6 @@ onUnmounted(() => {
   if (scrollTimeout) clearTimeout(scrollTimeout)
 })
 
-const scrollToDownload = () => {
-  downloadSection.value?.scrollIntoView({ behavior: 'smooth' })
-}
 // Animation logic removed
 
 const toggleTheme = () => {

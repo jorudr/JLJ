@@ -7,6 +7,14 @@ export const translations = {
       downloadFull: "DOWNLOAD FULL",
       getLicenseKey: "GET THE LICENSE KEY",
       buyOnPatreon: "BUY ON PATREON",
+      announcement: {
+        eyebrow: "APPLICATION ANNOUNCEMENT",
+        title: "The application is coming soon",
+        description: "The announcement of the application will take place on 20 August 2026.",
+        date: "20 AUGUST 2026",
+        follow: "FOLLOW UPDATES ON TELEGRAM",
+        channel: "@GANDR_TRADE"
+      },
       tryDemo: "TRY DEMO",
       downloadMac: "DOWNLOAD FOR MAC",
       downloadWindows: "DOWNLOAD FOR WINDOWS",
@@ -297,6 +305,14 @@ export const translations = {
       downloadFull: "СКАЧАТЬ ПОЛНУЮ ВЕРСИЮ",
       getLicenseKey: "ПОЛУЧИТЬ ЛИЦЕНЗИОННЫЙ КЛЮЧ",
       buyOnPatreon: "ПРИОБРЕСТИ",
+      announcement: {
+        eyebrow: "АНОНС ПРИЛОЖЕНИЯ",
+        title: "Анонс приложения",
+        description: "Анонс приложения состоится 20 августа 2026 года.",
+        date: "20 АВГУСТА 2026",
+        follow: "СЛЕДИТЬ ЗА ОБНОВЛЕНИЯМИ В TELEGRAM",
+        channel: "@GANDR_TRADE"
+      },
       tryDemo: "ПОПРОБОВАТЬ ДЕМО",
       downloadMac: "СКАЧАТЬ ДЛЯ MAC",
       downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
