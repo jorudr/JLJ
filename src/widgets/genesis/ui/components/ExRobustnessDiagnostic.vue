@@ -75,13 +75,13 @@ function diagnosticText(key: string) {
           <div class="flex flex-col border-t border-l border-r nier-border-primary overflow-x-auto">
             <div v-for="fit in robustnessDistributionFits" :key="fit.name" 
                  class="grid min-w-[34rem] grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-3 px-3 py-3 border-b"
-                 :class="fit.isBest ? 'border-black/40 bg-black/5 dark:border-white/40 dark:bg-white/5' : fit.isReferenceOnly ? 'nier-border-primary opacity-60' : 'nier-border-primary opacity-70'">
+                 :class="fit.isBest ? 'border-black/40 bg-black/5 dark:border-white/40 dark:bg-white/5' : fit.isReferenceOnly ? 'nier-border-primary bg-black/[0.02] dark:bg-white/[0.02]' : 'nier-border-primary'">
               <div class="font-bold flex items-center gap-2 text-[10px]">
                 <span class="w-1.5 h-1.5 rounded-full" :class="fit.isBest ? 'nier-bg-inverted' : 'opacity-0'"></span>
                 {{ fit.name }}
               </div>
-              <div class="opacity-60 text-right whitespace-nowrap text-[9px]">AIC: <span class="font-bold nier-text-primary opacity-100 ml-1">{{ fit.aic }}</span></div>
-              <div class="opacity-60 text-right whitespace-nowrap text-[9px]">BIC: <span class="font-bold nier-text-primary opacity-100 ml-1">{{ fit.bic }}</span></div>
+              <div class="nier-text-primary text-right whitespace-nowrap text-[9px]"><span class="opacity-80">AIC:</span> <span class="ml-1 font-black">{{ fit.aic }}</span></div>
+              <div class="nier-text-primary text-right whitespace-nowrap text-[9px]"><span class="opacity-80">BIC:</span> <span class="ml-1 font-black">{{ fit.bic }}</span></div>
               <div class="justify-self-end whitespace-nowrap px-1.5 py-0.5 text-[8px] leading-none border font-bold"
                    :class="fit.isBest ? 'border-black bg-black text-white dark:border-white' : fit.isReferenceOnly ? 'nier-border-primary nier-text-primary' : 'border-red-500/70 bg-red-500/10 text-red-600 dark:border-red-400 dark:text-red-400'">
                 {{ fit.isBest ? diagnosticText('optimalFit') : fit.isReferenceOnly ? diagnosticText('referenceFit') : diagnosticText('suboptimal') }}
