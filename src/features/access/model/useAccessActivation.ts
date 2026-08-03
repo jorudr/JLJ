@@ -206,9 +206,10 @@ export function useAccessActivation() {
           void persistGrantedAccess(normalizedUserId, data?.expiresAt).catch((error) => {
             console.warn('[Access] Unable to cache confirmed access:', error)
           })
-        } else if (isOffline.value) {
-          // Firestore can return an empty local snapshot while disconnected.
-          // Keep a still-valid confirmed entitlement in that case.
+        } else if (snapshot.metadata.fromCache || isOffline.value) {
+          // A local Firestore snapshot is not authoritative. This matters in
+          // Tauri/WebView environments where navigator.onLine can stay true
+          // even though the network is unavailable.
           void restoreOfflineAccess(normalizedUserId, true).then((restored) => {
             if (restored) return
             accessState.value = 'requires_key'

@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { browserLocalPersistence, getAuth, setPersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, type Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -29,7 +29,24 @@ if (typeof window !== 'undefined' && appCheckSiteKey) {
 }
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+let dbInstance: Firestore;
+
+if (typeof window !== 'undefined') {
+    try {
+        dbInstance = initializeFirestore(app, {
+            localCache: persistentLocalCache()
+        });
+    } catch (error) {
+        // Another Firebase module may have initialized Firestore first, or
+        // the current WebView may not support IndexedDB persistence.
+        console.warn('[Firebase] Persistent Firestore cache unavailable:', error);
+        dbInstance = getFirestore(app);
+    }
+} else {
+    dbInstance = getFirestore(app);
+}
+
+export const db = dbInstance;
 export const fireStorage = getStorage(app);
 
 // Keep an already authenticated operator signed in across app restarts.

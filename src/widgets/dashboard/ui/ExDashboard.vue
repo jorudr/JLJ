@@ -210,7 +210,23 @@
         @leave-cancelled="handleDashboardCenterAfterLeave"
       >
         <div
-          v-if="activeDashboardPanel === 'activity'"
+          v-if="isOfflineRestrictedPanel"
+          key="offline-panel-loader"
+          class="dashboard-offline-panel-loader pointer-events-none"
+          data-dashboard-panel="offline-loader"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="dashboard-offline-loader-content">
+            <div class="dashboard-offline-spinner" aria-hidden="true"></div>
+            <p class="dashboard-offline-label">
+              {{ locale === 'ru' ? 'Вы оффлайн' : 'You are offline' }}
+            </p>
+          </div>
+        </div>
+
+        <div
+          v-else-if="activeDashboardPanel === 'activity'"
           key="activity-monitor"
           class="dashboard-activity-stage pointer-events-auto h-full w-full"
           data-dashboard-panel="activity"
@@ -314,6 +330,10 @@ const menuStyle = ref<Record<string, string>>({})
 const showProfileOverlay = ref(false)
 const activeDashboardPanel = ref<string | null>(null)
 const isDashboardForumLeaving = ref(false)
+const isOfflineRestrictedPanel = computed(() => (
+  authStore.isOffline &&
+  ['forum', 'activity', 'tournament'].includes(activeDashboardPanel.value || '')
+))
 const isDashboardFullBleedPanel = computed(() => (
   activeDashboardPanel.value === 'forum' ||
   activeDashboardPanel.value === 'activity' ||
@@ -525,6 +545,48 @@ const handleDashboardCenterAfterLeave = (el: Element) => {
 .dashboard-center-fade-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+.dashboard-offline-panel-loader {
+  align-items: center;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: absolute;
+}
+
+.dashboard-offline-loader-content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.dashboard-offline-spinner {
+  animation: dashboard-offline-spin 900ms linear infinite;
+  border: 2px solid var(--theme-text);
+  border-radius: 999px;
+  border-top-color: transparent;
+  box-sizing: border-box;
+  height: 2.75rem;
+  opacity: 0.8;
+  width: 2.75rem;
+}
+
+.dashboard-offline-label {
+  color: var(--theme-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+@keyframes dashboard-offline-spin {
+  to { transform: rotate(360deg); }
 }
 
 .dashboard-icon-toggle {
