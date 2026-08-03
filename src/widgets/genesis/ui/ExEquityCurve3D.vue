@@ -308,7 +308,7 @@
             <div class="flex flex-col space-y-3 pt-4">
               <button @click="handleSetBenchmark" 
                       class="w-full py-4 nier-bg-inverted nier-text-primary font-mono text-[10px] tracking-[0.5em] uppercase font-black hover:opacity-90 transition-all shadow-[0_10px_20px_rgba(0,0,0,0.2)]">
-                CONFIRM_REIFICATION
+                {{ isRu ? 'ПОДТВЕРДИТЬ' : 'CONFIRM' }}
               </button>
               <button @click="showBenchmarkModal = false" 
                       class="w-full py-3 border nier-border-primary nier-text-primary font-mono text-[8px] tracking-[0.4em] uppercase opacity-40 hover:opacity-100 transition-all">
@@ -1036,9 +1036,11 @@ interface StrategyBenchmarkMetrics {
   riskFreeRate: number
   isFallback: boolean
   updatedAt: string
+  periodStartTs: number
+  periodEndTs: number
 }
 
-const BENCHMARK_METRICS_CACHE_KEY = 'strategy_benchmark_metrics_v1'
+const BENCHMARK_METRICS_CACHE_KEY = 'strategy_benchmark_metrics_v2'
 const BROKER_CONNECTIONS_STORAGE_KEY = 'broker_connections_v1'
 const benchmarkMetricsByStrategy = ref<Record<string, StrategyBenchmarkMetrics>>({})
 
@@ -1466,6 +1468,16 @@ const selectedStrategy = computed(() => {
   return tradeStore.strategies.find(s => s.id === selectedStrategyId.value) || tradeStore.strategies[0]
 })
 
+const getLastCompletedCalendarYearPeriod = (now = new Date()) => {
+  const currentYear = now.getUTCFullYear()
+  const completedYear = currentYear - 1
+
+  return {
+    startTs: Math.floor(Date.UTC(completedYear, 0, 1) / 1000),
+    endTs: Math.floor(Date.UTC(currentYear, 0, 1) / 1000)
+  }
+}
+
 const getBenchmarkStrategyIds = () => {
   const matrixStrategyIds = matrixNodes.value
     .filter((n: any) => n.type === 'strategy' || n.type === 'system')
@@ -1479,9 +1491,14 @@ const getBenchmarkStrategyIds = () => {
   ].filter(Boolean)))
 }
 
-const getBenchmarkReturnsForStrategy = (strategyId: string) => {
+const getBenchmarkReturnsForStrategy = (strategyId: string, period = getLastCompletedCalendarYearPeriod()) => {
   const initialDep = tradeStore.getInitialDeposit(strategyId) || 10000
-  const trades = getFilteredTrades(strategyId)
+  const trades = getFilteredTrades(strategyId).filter(trade => {
+    const tradeDate = new Date(trade.dateExit || trade.dateEntry || trade.date).getTime()
+    return Number.isFinite(tradeDate)
+      && tradeDate >= period.startTs * 1000
+      && tradeDate < period.endTs * 1000
+  })
 
   return trades.map(t => {
     const pnl = getTradeCashPnl(t, initialDep)
@@ -1490,10 +1507,17 @@ const getBenchmarkReturnsForStrategy = (strategyId: string) => {
 }
 
 const applyBenchmarkMetricsForStrategy = (strategyId: string) => {
+  const period = getLastCompletedCalendarYearPeriod()
   const cached = benchmarkMetricsByStrategy.value[strategyId]
-  sp500BenchmarkRate.value = cached?.benchmarkRate ?? SP500_BENCHMARK_RATE
-  strategyBeta.value = cached?.beta ?? 0.85
-  riskFreeRate.value = cached?.riskFreeRate ?? 5.00
+  const currentPeriodCache = cached
+    && cached.periodStartTs === period.startTs
+    && cached.periodEndTs === period.endTs
+    ? cached
+    : null
+
+  sp500BenchmarkRate.value = currentPeriodCache?.benchmarkRate ?? SP500_BENCHMARK_RATE
+  strategyBeta.value = currentPeriodCache?.beta ?? 0.85
+  riskFreeRate.value = currentPeriodCache?.riskFreeRate ?? 5.00
   benchmarkInput.value = sp500BenchmarkRate.value
 }
 
@@ -1511,42 +1535,27 @@ const saveBenchmarkMetricsCache = async () => {
 
 const fetchRealtimeMetrics = async (strategyIds = getBenchmarkStrategyIds()) => {
   const ids = Array.from(new Set(strategyIds.filter(Boolean)))
+  const benchmarkPeriod = getLastCompletedCalendarYearPeriod()
   let cacheChanged = false
 
   for (const strategyId of ids) {
     try {
-      const strategyReturns = getBenchmarkReturnsForStrategy(strategyId)
-      const trades = getFilteredTrades(strategyId)
-      
-      let startTs: number | null = null
-      let endTs: number | null = null
-      
-      if (trades && trades.length > 0) {
-        const sortedTrades = [...trades].sort((a: any, b: any) => {
-          const tA = new Date(a.dateEntry || a.date).getTime()
-          const tB = new Date(b.dateEntry || b.date).getTime()
-          return tA - tB
-        })
-        const firstTrade = sortedTrades[0]
-        const lastTrade = sortedTrades[sortedTrades.length - 1]
-        
-        const firstDate = new Date(firstTrade.dateEntry || firstTrade.date)
-        const lastDate = new Date(lastTrade.dateExit || lastTrade.dateEntry || lastTrade.date)
-        
-        if (!isNaN(firstDate.getTime()) && !isNaN(lastDate.getTime())) {
-          startTs = Math.floor(firstDate.getTime() / 1000)
-          endTs = Math.floor(lastDate.getTime() / 1000)
-        }
-      }
-
-      const res: any = await invoke('get_benchmark_and_beta', { strategyReturns, strategyId, startTs, endTs })
+      const strategyReturns = getBenchmarkReturnsForStrategy(strategyId, benchmarkPeriod)
+      const res: any = await invoke('get_benchmark_and_beta', {
+        strategyReturns,
+        strategyId,
+        startTs: benchmarkPeriod.startTs,
+        endTs: benchmarkPeriod.endTs
+      })
       if (res && typeof res.benchmark_rate === 'number') {
         benchmarkMetricsByStrategy.value[strategyId] = {
           benchmarkRate: res.benchmark_rate,
           beta: typeof res.beta === 'number' ? res.beta : 0.85,
           riskFreeRate: typeof res.risk_free_rate === 'number' ? res.risk_free_rate : 5.00,
           isFallback: !!res.is_fallback,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          periodStartTs: benchmarkPeriod.startTs,
+          periodEndTs: benchmarkPeriod.endTs
         }
         cacheChanged = true
 
@@ -3053,13 +3062,16 @@ const handleSetDeposit = async () => {
 }
 
 const handleSetBenchmark = async () => {
+  const benchmarkPeriod = getLastCompletedCalendarYearPeriod()
   sp500BenchmarkRate.value = benchmarkInput.value
   benchmarkMetricsByStrategy.value[selectedStrategyId.value] = {
     benchmarkRate: benchmarkInput.value,
     beta: strategyBeta.value,
     riskFreeRate: riskFreeRate.value,
     isFallback: false,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    periodStartTs: benchmarkPeriod.startTs,
+    periodEndTs: benchmarkPeriod.endTs
   }
   await saveBenchmarkMetricsCache()
   showBenchmarkModal.value = false
