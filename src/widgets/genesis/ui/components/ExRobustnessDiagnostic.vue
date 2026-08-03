@@ -17,7 +17,6 @@ const getFilteredTradesFn = () => filteredTrades.value
 const getTradePnlFn = (trade: any) => getTradeCashPnl(trade, strategyMetrics.value?.initialDeposit || 1000)
 
 const {
-  robustnessExplanation,
   robustnessExplanationVariables,
   robustnessDistributionFits,
   robustnessNormalityTests,
@@ -26,14 +25,14 @@ const {
 } = useExRobustness(diagnosticStats, strategyMetrics, getFilteredTradesFn, getTradePnlFn)
 
 const diagnosticTextMap: Record<string, { en: string; ru: string }> = {
-  distributionMetrics: { en: 'I. DISTRIBUTION_METRICS', ru: 'I. МЕТРИКИ_РЕЗУЛЬТАТОВ' },
-  bootstrapStability: { en: 'II. BOOTSTRAP_STABILITY', ru: 'II. УСТОЙЧИВОСТЬ_ПОВТОРНОЙ_ПРОВЕРКИ' },
-  distributionFits: { en: 'III. DISTRIBUTION_FITS', ru: 'III. СРАВНЕНИЕ_МОДЕЛЕЙ' },
+  distributionMetrics: { en: 'I. DISTRIBUTION METRICS', ru: 'I. МЕТРИКИ РЕЗУЛЬТАТОВ' },
+  bootstrapStability: { en: 'II. BOOTSTRAP STABILITY', ru: 'II. УСТОЙЧИВОСТЬ ПОВТОРНОЙ ПРОВЕРКИ' },
+  distributionFits: { en: 'III. DISTRIBUTION FITS', ru: 'III. СРАВНЕНИЕ МОДЕЛЕЙ' },
   optimalFit: { en: '[ BEST ]', ru: '[ ЛУЧШЕ ]' },
   suboptimal: { en: '[ WEAKER ]', ru: '[ СЛАБЕЕ ]' },
   referenceFit: { en: '[ REFERENCE ]', ru: '[ СПРАВКА ]' },
-  normalityHypothesis: { en: 'IV. NORMALITY_HYPOTHESIS', ru: 'IV. ПРОВЕРКА_НОРМАЛЬНОСТИ' },
-  rollingLayer: { en: 'V. ROLLING_LAYER_DYNAMICS', ru: 'V. ТЕКУЩАЯ_ДИНАМИКА' }
+  normalityHypothesis: { en: 'IV. NORMALITY HYPOTHESIS', ru: 'IV. ПРОВЕРКА НОРМАЛЬНОСТИ' },
+  rollingLayer: { en: 'V. ROLLING LAYER DYNAMICS', ru: 'V. ТЕКУЩАЯ ДИНАМИКА' }
 }
 
 function diagnosticText(key: string) {
@@ -45,13 +44,6 @@ function diagnosticText(key: string) {
   <div class="absolute inset-0 z-30 overflow-y-auto nier-bg-panel nier-text-primary font-mono selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
     <div class="w-full max-w-4xl mx-auto px-12 pt-24 pb-64">
       
-      <!-- HEADER -->
-      <header class="mb-20 border-b border-black/20 dark:border-white/20 pb-12">
-        <h1 class="text-3xl uppercase tracking-widest font-black mb-6" :style="{ color: robustnessExplanation.tone }">
-          {{ robustnessExplanation.verdict }}
-        </h1>
-      </header>
-
       <!-- DATA -->
       <div class="space-y-20 text-[11px] uppercase tracking-widest">
         
