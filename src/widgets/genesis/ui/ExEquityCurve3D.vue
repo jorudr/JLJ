@@ -578,7 +578,7 @@
 
         <!-- SELECT TARGET -->
         <button
-          v-if="!showMetricsPanel && !showCalendarMode && !showDistribution3D"
+          v-if="!showCalendarMode && !showDistribution3D"
           @click="showWinrateMenu = true; showWinrateCurve = false"
           :aria-label="isRu ? 'Выбор цели системы' : 'Select system target'"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -616,6 +616,7 @@
 
         <!-- FUTURE MENU PLACEHOLDER -->
         <button
+          v-if="!showMetricsPanel"
           type="button"
           :aria-label="isRu ? 'Дополнительное меню' : 'Additional menu'"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
