@@ -87,41 +87,41 @@
               <span class="text-[12px] font-mono uppercase tracking-[0.3em] font-black">{{ hoveredDistributionTooltip.label }}</span>
               <div class="w-2 h-2 bg-current opacity-70 rotate-45"></div>
             </div>
-            <div class="flex flex-col space-y-1 font-mono text-[10px] uppercase">
+            <div class="flex flex-col space-y-1.5 font-mono text-[11px] font-semibold leading-relaxed uppercase">
               <template v-if="hoveredHistogramTooltip">
                 <div class="flex justify-between">
-                  <span class="opacity-40">PNL RANGE:</span>
+                  <span class="opacity-75">PNL RANGE:</span>
                   <span class="font-bold tracking-wider">${{ hoveredHistogramTooltip.x0.toFixed(2) }} - ${{ hoveredHistogramTooltip.x1.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40">TRADES:</span>
+                  <span class="opacity-75">TRADES:</span>
                   <span class="font-bold tracking-wider">{{ hoveredHistogramTooltip.count }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40">DENSITY:</span>
+                  <span class="opacity-75">DENSITY:</span>
                   <span class="font-bold tracking-wider">{{ hoveredHistogramTooltip.density.toFixed(4) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40 text-theme-accent">BIN CENTER:</span>
-                  <span class="font-bold tracking-wider text-theme-accent">${{ hoveredHistogramTooltip.mid.toFixed(2) }}</span>
+                  <span class="opacity-75">BIN CENTER:</span>
+                  <span class="font-black tracking-wider">${{ hoveredHistogramTooltip.mid.toFixed(2) }}</span>
                 </div>
               </template>
               <template v-else-if="hoveredCurveTooltip">
                 <div class="flex justify-between">
-                  <span class="opacity-40">RETURN:</span>
+                  <span class="opacity-75">RETURN:</span>
                   <span class="font-bold tracking-wider">${{ hoveredCurveTooltip.returnValue.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40">PDF DENSITY:</span>
+                  <span class="opacity-75">PDF DENSITY:</span>
                   <span class="font-bold tracking-wider">{{ hoveredCurveTooltip.density.toFixed(5) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40">AIC / BIC:</span>
+                  <span class="opacity-75">AIC / BIC:</span>
                   <span class="font-bold tracking-wider">{{ hoveredCurveTooltip.aic.toFixed(2) }} / {{ hoveredCurveTooltip.bic.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="opacity-40 text-theme-accent">MODEL:</span>
-                  <span class="font-bold tracking-wider text-theme-accent">{{ hoveredCurveTooltip.model }}</span>
+                  <span class="opacity-75">MODEL:</span>
+                  <span class="font-black tracking-wider">{{ hoveredCurveTooltip.model }}</span>
                 </div>
               </template>
             </div>
@@ -147,22 +147,18 @@
              }"
         >
           <div class="theme-tooltip-panel border p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col space-y-3 relative">
-            <div class="flex items-center justify-between pb-2">
-              <span class="text-[12px] font-mono uppercase tracking-[0.3em] font-black">QUANTILE_ALIGNMENT</span>
-              <div class="w-2 h-2 bg-current opacity-70 rotate-45"></div>
-            </div>
-            <div class="flex flex-col space-y-1 font-mono text-[10px] uppercase">
+            <div class="flex flex-col space-y-1.5 font-mono text-[11px] font-semibold leading-relaxed uppercase">
               <div class="flex justify-between">
-                <span class="opacity-40">ACTUAL:</span>
-                <span class="font-bold tracking-wider">${{ hoveredQQPoint.actual.toFixed(2) }}</span>
+                <span class="opacity-75">ACTUAL:</span>
+                <span class="font-black tracking-wider">${{ hoveredQQPoint.actual.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="opacity-40">THEORETICAL:</span>
-                <span class="font-bold tracking-wider">${{ hoveredQQPoint.theoretical.toFixed(2) }}</span>
+                <span class="opacity-75">THEORETICAL:</span>
+                <span class="font-black tracking-wider">${{ hoveredQQPoint.theoretical.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="opacity-40 text-theme-accent">Z-SCORE:</span>
-                <span class="font-bold tracking-wider text-theme-accent">{{ hoveredQQPoint.z.toFixed(2) }}</span>
+                <span class="opacity-75">Z-SCORE:</span>
+                <span class="font-black tracking-wider">{{ hoveredQQPoint.z.toFixed(2) }}</span>
               </div>
             </div>
             <!-- Stem -->
@@ -214,7 +210,7 @@
                 {{ showQQPlot ? 'QQ_PLOT' : (showRobustnessHistogram ? 'PNL_HIST' : 'NORMAL_FIT') }}
               </span>
               <span class="text-[9px] font-mono tracking-[0.4em] uppercase opacity-30 mt-2 nier-text-primary">
-                {{ showQQPlot ? 'QUANTILE_ALIGNMENT_PROJECTION' : 'ROBUSTNESS_FITTING_VERDICT' }}
+                {{ showQQPlot ? 'QQ_DISTRIBUTION' : 'ROBUSTNESS_FITTING_VERDICT' }}
               </span>
               <button v-if="!showQQPlot && !showRobustnessExplanations"
                       @click="toggleRobustnessHistogram"
@@ -802,7 +798,7 @@
         <template v-if="showDistribution3D">
           <!-- NORMAL DISTRIBUTION -->
           <button
-            @click="showRobustnessNormalDist = !showRobustnessNormalDist; if (showRobustnessNormalDist) showRobustnessTDist = false"
+            @click="toggleRobustnessMode('normal')"
             :aria-label="isRu ? 'Нормальное распределение' : 'Normal distribution'"
             :title="isRu ? 'Нормальное распределение' : 'Normal distribution'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -812,13 +808,13 @@
               <path d="M4 16c2-4 4-8 8-8s6 4 8 8" stroke-dasharray="3,3"/>
             </svg>
             <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-              {{ showRobustnessNormalDist ? '[ HIDE_NORMAL_DIST ]' : '[ SHOW_NORMAL_DIST ]' }}
+              {{ isRu ? (showRobustnessNormalDist ? '[ СКРЫТЬ_НОРМАЛЬНОЕ_РАСПРЕДЕЛЕНИЕ ]' : '[ ПОКАЗАТЬ_НОРМАЛЬНОЕ_РАСПРЕДЕЛЕНИЕ ]') : (showRobustnessNormalDist ? '[ HIDE_NORMAL_DIST ]' : '[ SHOW_NORMAL_DIST ]') }}
             </span>
           </button>
 
           <!-- STUDENT T DISTRIBUTION -->
           <button
-            @click="showRobustnessTDist = !showRobustnessTDist; if (showRobustnessTDist) showRobustnessNormalDist = false"
+            @click="toggleRobustnessMode('studentT')"
             :aria-label="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
             :title="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -828,7 +824,7 @@
               <path d="M4 16c2-6 4-10 8-10s6 4 8 10"/>
             </svg>
             <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-              {{ showRobustnessTDist ? '[ HIDE_STUDENT_T_DIST ]' : '[ SHOW_STUDENT_T_DIST ]' }}
+              {{ isRu ? (showRobustnessTDist ? '[ СКРЫТЬ_РАСПРЕДЕЛЕНИЕ_СТЬЮДЕНТА ]' : '[ ПОКАЗАТЬ_РАСПРЕДЕЛЕНИЕ_СТЬЮДЕНТА ]') : (showRobustnessTDist ? '[ HIDE_STUDENT_T_DIST ]' : '[ SHOW_STUDENT_T_DIST ]') }}
             </span>
           </button>
           <!-- PNL HISTOGRAM -->
@@ -846,13 +842,13 @@
               <rect x="15" y="10" width="2.5" height="9"/>
             </svg>
             <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-              {{ showRobustnessHistogram ? '[ VIEW_FITTED_PDF ]' : '[ VIEW_PNL_HISTOGRAM ]' }}
+              {{ isRu ? (showRobustnessHistogram ? '[ ПОКАЗАТЬ_ПОДОГНАННЫЙ_PDF ]' : '[ ПОКАЗАТЬ_ГИСТОГРАММУ_PNL ]') : (showRobustnessHistogram ? '[ VIEW_FITTED_PDF ]' : '[ VIEW_PNL_HISTOGRAM ]') }}
             </span>
           </button>
 
           <!-- QQ PLOT -->
           <button
-            @click="showQQPlot = !showQQPlot; showRobustnessHistogram = false; showRobustnessExplanations = false"
+            @click="toggleRobustnessMode('qq')"
             :aria-label="isRu ? 'QQ-график' : 'QQ plot'"
             :title="isRu ? 'QQ-график' : 'QQ plot'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -866,13 +862,13 @@
               <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
             </svg>
             <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-              {{ showQQPlot ? '[ HIDE_QQ_PLOT ]' : '[ SHOW_QQ_PLOT ]' }}
+              {{ isRu ? (showQQPlot ? '[ СКРЫТЬ_QQ_ГРАФИК ]' : '[ ПОКАЗАТЬ_QQ_ГРАФИК ]') : (showQQPlot ? '[ HIDE_QQ_PLOT ]' : '[ SHOW_QQ_PLOT ]') }}
             </span>
           </button>
 
           <!-- EXPLANATIONS -->
           <button
-            @click="showRobustnessExplanations = !showRobustnessExplanations; showRobustnessHistogram = false; showQQPlot = false"
+            @click="toggleRobustnessMode('explanations')"
             :aria-label="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
             :title="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -883,7 +879,7 @@
               <path d="M12 11v5M12 8h.01"/>
             </svg>
             <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-              {{ showRobustnessExplanations ? '[ HIDE_EXPLANATIONS ]' : '[ SHOW_EXPLANATIONS ]' }}
+              {{ isRu ? (showRobustnessExplanations ? '[ СКРЫТЬ_ПОЯСНЕНИЯ ]' : '[ ПОКАЗАТЬ_ПОЯСНЕНИЯ ]') : (showRobustnessExplanations ? '[ HIDE_EXPLANATIONS ]' : '[ SHOW_EXPLANATIONS ]') }}
             </span>
           </button>
 
@@ -1424,6 +1420,30 @@ const hasEnoughTradesForDiagnostics = computed(() => diagnosticStats.value.pnls.
 
 const robustnessWarningTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
+type RobustnessMode = 'normal' | 'studentT' | 'histogram' | 'qq' | 'explanations'
+
+const setRobustnessMode = (mode: RobustnessMode | null) => {
+  showRobustnessNormalDist.value = mode === 'normal'
+  showRobustnessTDist.value = mode === 'studentT'
+  showRobustnessHistogram.value = mode === 'histogram'
+  showQQPlot.value = mode === 'qq'
+  showRobustnessExplanations.value = mode === 'explanations'
+}
+
+const toggleRobustnessMode = (mode: RobustnessMode) => {
+  const isActive = mode === 'normal'
+    ? showRobustnessNormalDist.value
+    : mode === 'studentT'
+      ? showRobustnessTDist.value
+      : mode === 'histogram'
+        ? showRobustnessHistogram.value
+        : mode === 'qq'
+          ? showQQPlot.value
+          : showRobustnessExplanations.value
+
+  setRobustnessMode(isActive ? null : mode)
+}
+
 const handleRobustnessDiagnosticsClick = () => {
   if (!hasEnoughTradesForDiagnostics.value) {
     // Always reset the timer so repeated clicks restart the 5s countdown
@@ -1440,21 +1460,12 @@ const handleRobustnessDiagnosticsClick = () => {
   showMetricsPanel.value = false
 
   if (shouldOpenDiagnostics) {
-    showRobustnessNormalDist.value = true
-    showRobustnessTDist.value = false
-    showRobustnessHistogram.value = false
-    showQQPlot.value = false
-    showRobustnessExplanations.value = false
+    setRobustnessMode('normal')
   }
 }
 
 const toggleRobustnessHistogram = () => {
-  const nextValue = !showRobustnessHistogram.value
-  showRobustnessHistogram.value = nextValue
-  if (nextValue) {
-    showQQPlot.value = false
-    showRobustnessExplanations.value = false
-  }
+  toggleRobustnessMode('histogram')
 }
 
 const metricsPanel = useEquityCurveMetricsPanel()
@@ -3107,8 +3118,7 @@ watch([() => props.trades, () => tradeStore.tradesByStrategy[selectedStrategyId.
 watch(showMetricsPanel, (val) => {
   if (val) {
     showDistribution3D.value = false
-    showRobustnessExplanations.value = false
-    showRobustnessHistogram.value = false
+    setRobustnessMode(null)
     resetView()
   } else {
     isEditMode.value = false
@@ -3120,9 +3130,7 @@ watch(showDistribution3D, (val) => {
   if (val) {
     showMetricsPanel.value = false
   } else {
-    showQQPlot.value = false
-    showRobustnessExplanations.value = false
-    showRobustnessHistogram.value = false
+    setRobustnessMode(null)
   }
 })
 
