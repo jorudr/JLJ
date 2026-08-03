@@ -518,7 +518,163 @@
       </Transition>
     </Teleport>
 
+    <!-- MAIN TOOLS MENU -->
+    <Teleport to="body">
+      <Transition name="protocol-slide">
+        <div
+          v-if="showToolsMenu"
+          @click.self="closeToolsMenu"
+          class="fixed inset-0 z-[10005] flex items-center justify-center bg-black/60 p-12 backdrop-blur-md"
+        >
+          <div class="relative w-full max-w-xl">
+            <ExPanel class="w-full !border-black/15 dark:!border-white/15" noPadding variant="light" :show-corners="true">
+              <div class="grid grid-cols-5 gap-0 p-4 [&>button]:!h-14">
+                <!-- ROBUSTNESS DIAGNOSTICS ENTRY -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showCalendarMode = false; showWinrateCurve = false; handleRobustnessDiagnosticsClick()"
+                  :aria-label="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
+                  :title="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  :class="showDistribution3D ? 'bg-black/10 text-black dark:bg-white/10 dark:text-white' : ''"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+                    <path d="M8 17v-6M13 17V5M18 17V9"/>
+                    <path d="M3 12c3-4 6-8 10-8s7 6 9 10" stroke-dasharray="3,3"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'ДИАГНОСТИКА_УСТОЙЧИВОСТИ' : 'ROBUSTNESS_DIAGNOSTICS' }}
+                  </span>
+                </button>
 
+                <!-- INITIAL DEPOSIT -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showInitialDepositModal = true"
+                  :aria-label="isRu ? 'Начальный депозит' : 'Initial deposit'"
+                  :title="isRu ? 'Начальный депозит' : 'Initial deposit'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'НАЧАЛЬНЫЙ_ДЕПОЗИТ' : 'INITIAL_DEPOSIT' }}
+                  </span>
+                </button>
+
+                <!-- BENCHMARK SETTINGS -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showBenchmarkModal = true"
+                  :aria-label="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
+                  :title="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                    <circle cx="9" cy="6" r="2" fill="currentColor"/>
+                    <circle cx="15" cy="12" r="2" fill="currentColor"/>
+                    <circle cx="8" cy="18" r="2" fill="currentColor"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'НАСТРОЙКИ_BENCHMARK' : 'BENCHMARK_SETTINGS' }}
+                  </span>
+                </button>
+
+                <!-- BENCHMARK CURVES -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showBenchmarkCurves = !showBenchmarkCurves"
+                  :aria-label="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
+                  :title="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  :class="showBenchmarkCurves ? 'bg-black/10 text-black dark:bg-white/10 dark:text-white' : ''"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    <path d="M2 17 6 17 9 8 15 17 18 17 22 17" stroke-dasharray="2,2" opacity="0.5"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'BENCHMARK-КРИВЫЕ' : 'BENCHMARK_CURVES' }}
+                  </span>
+                </button>
+
+                <!-- SIMULATOR -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); openSimulator()"
+                  :aria-label="isRu ? 'Симулятор' : 'Simulator'"
+                  :title="isRu ? 'Симулятор' : 'Simulator'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 14l3-3 4 4 6-6M7 10l3-4 4 6 6-4" opacity="0.55"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'СИМУЛЯТОР' : 'SIMULATOR' }}
+                  </span>
+                </button>
+
+                <!-- BROKER / EXCHANGE -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showBrokerConnectPanel = true"
+                  :aria-label="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
+                  :title="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'БРОКЕР_БИРЖА' : 'BROKER_EXCHANGE' }}
+                  </span>
+                </button>
+
+                <!-- SYNC API -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); syncCurrentStrategyApi()"
+                  :disabled="isApiSyncing"
+                  :aria-label="isRu ? 'Синхронизация API' : 'Sync API'"
+                  :title="isRu ? 'Синхронизация API' : 'Sync API'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black disabled:cursor-not-allowed disabled:opacity-40 dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6" :class="isApiSyncing ? 'animate-spin' : ''">
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M16 8h5V3"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'СИНХРОНИЗАЦИЯ_API' : 'SYNC_API' }}
+                  </span>
+                </button>
+
+                <!-- PURGE RECORDS -->
+                <button
+                  type="button"
+                  @click="closeToolsMenu(); showClearConfirmation = true"
+                  :aria-label="isRu ? 'Удалить записи' : 'Purge records'"
+                  :title="isRu ? 'Удалить записи' : 'Purge records'"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-red-500/70 transition-all hover:bg-red-500/5 hover:text-red-500"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-red-600 px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ isRu ? 'УДАЛИТЬ_ЗАПИСИ' : 'PURGE_RECORDS' }}
+                  </span>
+                </button>
+              </div>
+            </ExPanel>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- MINIMAL BOTTOM CONTROL PANEL -->
     <div v-if="!isTradeEntryOpen && !showSimulator"
@@ -528,6 +684,7 @@
         <button
           @click="isTradeEntryOpen = true"
           :aria-label="isRu ? 'Новая сделка' : 'New trade'"
+          :title="isRu ? 'Новая сделка' : 'New trade'"
           class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 transition-transform duration-300 group-hover:rotate-90">
@@ -539,93 +696,214 @@
           </span>
         </button>
 
-        <!-- STRATEGY METRICS -->
-        <button
-          @click="showMetricsPanel = !showMetricsPanel; showDistribution3D = false; showCalendarMode = false; showWinrateCurve = false"
-          :aria-label="showMetricsPanel ? (isRu ? 'Кривая доходности' : 'Equity curve') : (isRu ? 'Метрики стратегии' : 'Strategy metrics')"
-          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
-          :class="showMetricsPanel ? 'border-white/30 bg-white/10 text-white' : ''"
-        >
-          <svg v-if="showMetricsPanel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <path d="M3 12h18M12 3l9 9-9 9"/>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            {{ showMetricsPanel ? '[ VIEW_EQUITY_CURVE ]' : '[ OPEN_STRATEGY_METRICS ]' }}
+        <!-- STANDARD CURVE CONTROLS -->
+        <template v-if="!showDistribution3D">
+          <!-- STRATEGY METRICS -->
+          <button
+            @click="showMetricsPanel = !showMetricsPanel; showCalendarMode = false; showWinrateCurve = false"
+            :aria-label="showMetricsPanel ? (isRu ? 'Кривая доходности' : 'Equity curve') : (isRu ? 'Метрики стратегии' : 'Strategy metrics')"
+            :title="showMetricsPanel ? (isRu ? 'Кривая доходности' : 'Equity curve') : (isRu ? 'Метрики стратегии' : 'Strategy metrics')"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showMetricsPanel ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg v-if="showMetricsPanel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <path d="M3 12h18M12 3l9 9-9 9"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showMetricsPanel ? '[ VIEW_EQUITY_CURVE ]' : '[ OPEN_STRATEGY_METRICS ]' }}
           </span>
         </button>
 
-        <!-- CENTER CURVE -->
-        <button
-          @click="resetView"
-          :aria-label="isRu ? 'Центрировать кривую' : 'Center curve'"
-          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <circle cx="12" cy="12" r="8"/>
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            {{ isRu ? '[ ЦЕНТРИРОВАТЬ_КРИВУЮ ]' : '[ CENTER_CURVE ]' }}
-          </span>
-        </button>
+          <!-- EDIT MODE -->
+          <button
+            v-if="showMetricsPanel"
+            type="button"
+            @click="isEditMode = !isEditMode"
+            :aria-label="isRu ? 'Режим редактирования' : 'Edit mode'"
+            :title="isRu ? 'Режим редактирования' : 'Edit mode'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="isEditMode ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ isEditMode ? '[ EXIT_EDIT_MODE ]' : '[ EDIT_MODE ]' }}
+            </span>
+          </button>
 
-        <!-- SELECT TARGET -->
-        <button
-          v-if="!showCalendarMode && !showDistribution3D"
-          @click="showWinrateMenu = true; showWinrateCurve = false"
-          :aria-label="isRu ? 'Выбор цели системы' : 'Select system target'"
-          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
-          :class="showWinrateMenu ? 'border-white/30 bg-white/10 text-white' : ''"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <path d="M5 21V4"/>
-            <path d="M5 4c4-3 7 3 14 0v9c-7 3-10-3-14 0"/>
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            {{ isRu ? '[ ВЫБОР_ЦЕЛИ_СИСТЕМЫ ]' : '[ SELECT_SYSTEM_TARGET ]' }}
-          </span>
-        </button>
+          <!-- CENTER CURVE -->
+          <button
+            @click="resetView"
+            :aria-label="isRu ? 'Центрировать кривую' : 'Center curve'"
+            :title="isRu ? 'Центрировать кривую' : 'Center curve'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <circle cx="12" cy="12" r="8"/>
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ isRu ? '[ ЦЕНТРИРОВАТЬ_КРИВУЮ ]' : '[ CENTER_CURVE ]' }}
+            </span>
+          </button>
 
-        <!-- CALENDAR -->
-        <button
-          @click="showCalendarMode = !showCalendarMode; showMetricsPanel = false; showDistribution3D = false; showWinrateCurve = false"
-          :aria-label="showCalendarMode ? (isRu ? 'Вернуться к кривой' : 'Return to curve') : (isRu ? 'Открыть календарь' : 'Open calendar')"
-          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
-          :class="showCalendarMode ? 'border-white/30 bg-white/10 text-white' : ''"
-        >
-          <svg v-if="showCalendarMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <path d="M3 12h18M12 3l9 9-9 9"/>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            {{ showCalendarMode ? '[ VIEW_EQUITY_CURVE ]' : '[ VIEW_CALENDAR_MODE ]' }}
-          </span>
-        </button>
+          <!-- SELECT TARGET -->
+          <button
+            v-if="!showMetricsPanel && !showCalendarMode"
+            @click="showWinrateMenu = true; showWinrateCurve = false"
+            :aria-label="isRu ? 'Выбор цели системы' : 'Select system target'"
+            :title="isRu ? 'Выбор цели системы' : 'Select system target'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showWinrateMenu ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <path d="M5 21V4"/>
+              <path d="M5 4c4-3 7 3 14 0v9c-7 3-10-3-14 0"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ isRu ? '[ ВЫБОР_ЦЕЛИ_СИСТЕМЫ ]' : '[ SELECT_SYSTEM_TARGET ]' }}
+            </span>
+          </button>
 
-        <!-- FUTURE MENU PLACEHOLDER -->
+          <!-- CALENDAR -->
+          <button
+            v-if="!showMetricsPanel"
+            @click="showCalendarMode = !showCalendarMode; showMetricsPanel = false; showWinrateCurve = false"
+            :aria-label="showCalendarMode ? (isRu ? 'Вернуться к кривой' : 'Return to curve') : (isRu ? 'Открыть календарь' : 'Open calendar')"
+            :title="showCalendarMode ? (isRu ? 'Вернуться к кривой' : 'Return to curve') : (isRu ? 'Открыть календарь' : 'Open calendar')"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showCalendarMode ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg v-if="showCalendarMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <path d="M3 12h18M12 3l9 9-9 9"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showCalendarMode ? '[ VIEW_EQUITY_CURVE ]' : '[ VIEW_CALENDAR_MODE ]' }}
+            </span>
+          </button>
+        </template>
+
+        <!-- ROBUSTNESS CONTROLS: SHOWN ONLY AFTER DIAGNOSTICS IS OPEN -->
+        <template v-if="showDistribution3D">
+          <!-- NORMAL DISTRIBUTION -->
+          <button
+            @click="showRobustnessNormalDist = !showRobustnessNormalDist; if (showRobustnessNormalDist) showRobustnessTDist = false"
+            :aria-label="isRu ? 'Нормальное распределение' : 'Normal distribution'"
+            :title="isRu ? 'Нормальное распределение' : 'Normal distribution'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showRobustnessNormalDist ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+              <path d="M4 16c2-4 4-8 8-8s6 4 8 8" stroke-dasharray="3,3"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showRobustnessNormalDist ? '[ HIDE_NORMAL_DIST ]' : '[ SHOW_NORMAL_DIST ]' }}
+            </span>
+          </button>
+
+          <!-- STUDENT T DISTRIBUTION -->
+          <button
+            @click="showRobustnessTDist = !showRobustnessTDist; if (showRobustnessTDist) showRobustnessNormalDist = false"
+            :aria-label="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
+            :title="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showRobustnessTDist ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+              <path d="M4 16c2-6 4-10 8-10s6 4 8 10"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showRobustnessTDist ? '[ HIDE_STUDENT_T_DIST ]' : '[ SHOW_STUDENT_T_DIST ]' }}
+            </span>
+          </button>
+          <!-- PNL HISTOGRAM -->
+          <button
+            @click="toggleRobustnessHistogram"
+            :aria-label="isRu ? 'Гистограмма PnL' : 'PnL histogram'"
+            :title="isRu ? 'Гистограмма PnL' : 'PnL histogram'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showRobustnessHistogram ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+              <path d="M4 19V5M4 19h16"/>
+              <rect x="7" y="12" width="2.5" height="7"/>
+              <rect x="11" y="8" width="2.5" height="11"/>
+              <rect x="15" y="10" width="2.5" height="9"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showRobustnessHistogram ? '[ VIEW_FITTED_PDF ]' : '[ VIEW_PNL_HISTOGRAM ]' }}
+            </span>
+          </button>
+
+          <!-- QQ PLOT -->
+          <button
+            @click="showQQPlot = !showQQPlot; showRobustnessHistogram = false; showRobustnessExplanations = false"
+            :aria-label="isRu ? 'QQ-график' : 'QQ plot'"
+            :title="isRu ? 'QQ-график' : 'QQ plot'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showQQPlot ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+              <line x1="4" y1="20" x2="20" y2="4" stroke-dasharray="3,3"/>
+              <circle cx="7" cy="17" r="1.5" fill="currentColor"/>
+              <circle cx="11" cy="13" r="1.5" fill="currentColor"/>
+              <circle cx="14" cy="10" r="1.5" fill="currentColor"/>
+              <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showQQPlot ? '[ HIDE_QQ_PLOT ]' : '[ SHOW_QQ_PLOT ]' }}
+            </span>
+          </button>
+
+          <!-- EXPLANATIONS -->
+          <button
+            @click="showRobustnessExplanations = !showRobustnessExplanations; showRobustnessHistogram = false; showQQPlot = false"
+            :aria-label="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
+            :title="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
+            class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+            :class="showRobustnessExplanations ? 'border-white/30 bg-white/10 text-white' : ''"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 11v5M12 8h.01"/>
+            </svg>
+            <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              {{ showRobustnessExplanations ? '[ HIDE_EXPLANATIONS ]' : '[ SHOW_EXPLANATIONS ]' }}
+            </span>
+          </button>
+
+        </template>
+
+        <!-- MENU: ALWAYS LAST -->
         <button
           v-if="!showMetricsPanel"
+          @click="showToolsMenu = true"
           type="button"
-          :aria-label="isRu ? 'Дополнительное меню' : 'Additional menu'"
+          :aria-label="isRu ? 'Меню' : 'Menu'"
+          :title="isRu ? 'Меню' : 'Menu'"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :class="showToolsMenu ? 'border-white/30 bg-white/10 text-white' : ''"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
             <path d="M4 7h16M4 12h16M4 17h16"/>
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            {{ isRu ? '[ ДОПОЛНИТЕЛЬНОЕ_МЕНЮ ]' : '[ ADDITIONAL_MENU ]' }}
+            {{ isRu ? '[ МЕНЮ ]' : '[ MENU ]' }}
           </span>
         </button>
       </div>
@@ -943,16 +1221,21 @@ const showDistribution3D = ref(false)
 const showBenchmarkCurves = ref(false)
 const showQQPlot = ref(false)
 const showRobustnessExplanations = ref(false)
-const showRobustnessNormalDist = ref(false)
-const showRobustnessTDist = ref(true)
+const showRobustnessNormalDist = ref(true)
+const showRobustnessTDist = ref(false)
 const showRobustnessHistogram = ref(false)
 const showRobustnessWarning = ref(false)
 const showSimulator = ref(false)
 const showPaywall = ref(false)
 const showBrokerConnectPanel = ref(false)
+const showToolsMenu = ref(false)
 
 const openSimulator = () => {
   showSimulator.value = true
+}
+
+const closeToolsMenu = () => {
+  showToolsMenu.value = false
 }
 
 const showCalendarMode = ref(false)
@@ -1150,8 +1433,17 @@ const handleRobustnessDiagnosticsClick = () => {
     }, 5000)
     return
   }
-  showDistribution3D.value = !showDistribution3D.value
+  const shouldOpenDiagnostics = !showDistribution3D.value
+  showDistribution3D.value = shouldOpenDiagnostics
   showMetricsPanel.value = false
+
+  if (shouldOpenDiagnostics) {
+    showRobustnessNormalDist.value = true
+    showRobustnessTDist.value = false
+    showRobustnessHistogram.value = false
+    showQQPlot.value = false
+    showRobustnessExplanations.value = false
+  }
 }
 
 const toggleRobustnessHistogram = () => {
