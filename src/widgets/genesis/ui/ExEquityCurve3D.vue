@@ -520,10 +520,10 @@
         <div
           v-if="showToolsMenu"
           @click.self="closeToolsMenu"
-          class="force-dark-tools-menu fixed inset-0 z-[10005] flex items-center justify-center bg-black/60 p-12 backdrop-blur-md"
+          class="tools-menu-overlay fixed inset-0 z-[10005] flex items-center justify-center p-12 backdrop-blur-md"
         >
           <div class="relative w-full max-w-xl">
-            <ExPanel class="w-full !border-white/15" noPadding variant="light" :show-corners="true">
+            <ExPanel class="tools-menu-panel w-full" noPadding variant="light" :show-corners="true">
               <div class="grid grid-cols-5 gap-0 p-4 [&>button]:!h-14">
                 <!-- ROBUSTNESS DIAGNOSTICS ENTRY -->
                 <button
@@ -4418,18 +4418,41 @@ input[type=number] {
   appearance: textfield;
 }
 
-/* The tools menu keeps its dark instrument-panel treatment in every app theme. */
-.force-dark-tools-menu {
-  --theme-bg: #070707;
-  --theme-bg-rgb: 7 7 7;
-  --theme-panel: rgba(5, 5, 5, 0.96);
-  --theme-panel-rgb: 5 5 5;
-  --theme-text: #f9f6f0;
-  --theme-text-rgb: 249 246 240;
-  --theme-muted: rgba(249 246 240 / 0.62);
-  --theme-border: rgba(249 246 240 / 0.18);
-  --theme-border-rgb: 249 246 240;
-  --theme-border-strong: rgba(249 246 240 / 0.32);
+.tools-menu-overlay {
+  background-color: rgb(0 0 0 / 0.24);
   color: var(--theme-text);
+}
+
+.tools-menu-panel {
+  border-color: var(--theme-border-strong) !important;
+}
+
+.tools-menu-overlay :deep(button) {
+  color: var(--theme-muted) !important;
+}
+
+.tools-menu-overlay :deep(button:hover) {
+  background-color: rgb(var(--theme-text-rgb) / 0.05) !important;
+  color: var(--theme-text) !important;
+}
+
+.tools-menu-overlay :deep(button.bg-white\/10) {
+  background-color: rgb(var(--theme-text-rgb) / 0.1) !important;
+  color: var(--theme-text) !important;
+}
+
+.tools-menu-overlay :deep(button[aria-label="Удалить записи"]),
+.tools-menu-overlay :deep(button[aria-label="Purge records"]) {
+  color: rgb(239 68 68 / 0.7) !important;
+}
+
+.tools-menu-overlay :deep(button[aria-label="Удалить записи"]:hover),
+.tools-menu-overlay :deep(button[aria-label="Purge records"]:hover) {
+  background-color: rgb(239 68 68 / 0.05) !important;
+  color: rgb(239 68 68) !important;
+}
+
+:global(html.dark) .tools-menu-overlay {
+  background-color: rgb(0 0 0 / 0.6);
 }
 </style>
