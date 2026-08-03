@@ -155,6 +155,7 @@ export function useExRobustness(
       {
         name: copy('Normal', 'Спокойная модель'),
         isBest: normalWins,
+        isReferenceOnly: false,
         aic: stats.normalParams.aic.toFixed(2),
         bic: stats.normalParams.bic.toFixed(2),
         params: [
@@ -166,6 +167,7 @@ export function useExRobustness(
       {
         name: copy('Large-trade model', 'Модель крупных сделок'),
         isBest: !normalWins,
+        isReferenceOnly: false,
         aic: stats.tParams.aic.toFixed(2),
         bic: stats.tParams.bic.toFixed(2),
         params: [
@@ -174,6 +176,40 @@ export function useExRobustness(
           { name: copy('Large Trade Sensitivity', 'Чувствительность к крупным сделкам'), val: stats.tParams.nu.toFixed(2) },
           { name: copy('Log Likelihood', 'Качество совпадения'), val: stats.tParams.logL.toFixed(2) }
         ]
+      },
+      // These candidates are shown for orientation. At the moment the diagnostic
+      // calculates information criteria only for the Normal and Student's t fits.
+      {
+        name: copy('Empirical / non-parametric', 'Эмпирическая / непараметрическая'),
+        isBest: false,
+        isReferenceOnly: true,
+        aic: '—',
+        bic: '—',
+        params: []
+      },
+      {
+        name: copy('Laplace', 'Лаплас'),
+        isBest: false,
+        isReferenceOnly: true,
+        aic: '—',
+        bic: '—',
+        params: []
+      },
+      {
+        name: copy('Logistic', 'Логистическая'),
+        isBest: false,
+        isReferenceOnly: true,
+        aic: '—',
+        bic: '—',
+        params: []
+      },
+      {
+        name: copy('Skew-normal', 'Асимметричная нормальная'),
+        isBest: false,
+        isReferenceOnly: true,
+        aic: '—',
+        bic: '—',
+        params: []
       }
     ]
   })
@@ -220,7 +256,7 @@ export function useExRobustness(
       {
         id: 'balanced-shape',
         name: copy('Balanced Result Shape Check', 'Проверка сбалансированности результатов'),
-        result: `${jarqueBera.toFixed(2)} ${jbPass ? copy('PASS', 'НОРМА') : copy('REJECT', 'ПРОВЕРИТЬ')}`,
+        result: `${jarqueBera.toFixed(2)} ${jbPass ? copy('PASS', 'НОРМА') : copy('REJECTED', 'ОТКЛОНЕНО')}`,
         note: copy(
           'Checks whether the trade results look balanced enough to use a simple normal curve as a reference.',
           'Проверяет, выглядят ли результаты сделок достаточно сбалансированно, чтобы использовать простую нормальную кривую как ориентир.'

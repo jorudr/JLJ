@@ -172,15 +172,6 @@
        </div>
     </Transition>
 
-    <!-- TOAST NOTIFICATION -->
-    <Transition name="protocol-slide">
-      <div v-if="showToast" class="absolute bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-        <div class="bg-black/90 dark:bg-white/90 nier-text-primary px-6 py-3 font-mono text-[9px] tracking-widest uppercase shadow-lg border border-white/20 dark:border-black/20 backdrop-blur-sm">
-          VISUALIZATION OPTIMIZED: RENDERED LAST 50 PATHS FOR CLARITY
-        </div>
-      </div>
-    </Transition>
-
   </div>
 </template>
 
@@ -249,8 +240,6 @@ const getNormalizedParams = () => ({
 
 const showParams = ref(true);
 const hasRun = ref(false);
-const showToast = ref(false);
-let toastTimeout: number | null = null;
 
 const params = reactive({
   initialEquity: finiteOr(props.initialEquity, 10000),
@@ -511,7 +500,7 @@ function runSimulation() {
     if (finalVal < lowestFinal) { lowestFinal = finalVal; worstIndex = i; }
   }
 
-  // PRE-CALCULATE 3D GEOMETRY FOR MAX 50 LINES
+  // Pre-calculate a readable subset of paths for the 3D canvas.
   renderPaths3D = [];
   bestPath3D = null;
   worstPath3D = null;
@@ -572,13 +561,6 @@ function runSimulation() {
   hasRun.value = true;
   showParams.value = false;
   
-  // Show toast for 5 seconds
-  showToast.value = true;
-  if (toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = window.setTimeout(() => {
-    showToast.value = false;
-  }, 5000);
-
   // Reset view for the new run
   targetRotation.value = { x: -0.2, y: -0.3 };
   viewScale.value = 2.2;
