@@ -37,6 +37,17 @@
             @wheel="handleWheel">
     </canvas>
 
+    <Transition name="fade">
+      <div
+        v-if="showBenchmarkCurves && isBenchmarkOffline"
+        class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+      >
+        <span class="nier-text-primary font-mono text-[11px] font-black uppercase tracking-[0.35em] opacity-70">
+          {{ isRu ? 'Вы оффлайн' : 'You are offline' }}
+        </span>
+      </div>
+    </Transition>
+
     <Transition name="explanation-takeover">
       <ExRobustnessDiagnostic
         v-if="showRobustnessExplanations && !showSimulator"
@@ -1022,6 +1033,8 @@ import {
 import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
 
 const authStore = useAuthStore()
+const networkOffline = ref(typeof navigator !== 'undefined' ? !navigator.onLine : false)
+const isBenchmarkOffline = computed(() => authStore.isOffline || networkOffline.value)
 const sp500BenchmarkRate = ref(SP500_BENCHMARK_RATE)
 const strategyBeta = ref(0.85)
 const riskFreeRate = ref(5.00)
@@ -1520,15 +1533,19 @@ const getBenchmarkReturnsForStrategy = (strategyId: string, period = getLastComp
 const applyBenchmarkMetricsForStrategy = (strategyId: string) => {
   const period = getLastCompletedCalendarYearPeriod()
   const cached = benchmarkMetricsByStrategy.value[strategyId]
+  const latestCached = Object.values(benchmarkMetricsByStrategy.value)
+    .filter((metrics) => typeof metrics?.benchmarkRate === 'number')
+    .sort((a, b) => Date.parse(b.updatedAt || '') - Date.parse(a.updatedAt || ''))[0]
   const currentPeriodCache = cached
     && cached.periodStartTs === period.startTs
     && cached.periodEndTs === period.endTs
     ? cached
     : null
+  const usableCache = isBenchmarkOffline.value ? (cached || latestCached) : currentPeriodCache
 
-  sp500BenchmarkRate.value = currentPeriodCache?.benchmarkRate ?? SP500_BENCHMARK_RATE
-  strategyBeta.value = currentPeriodCache?.beta ?? 0.85
-  riskFreeRate.value = currentPeriodCache?.riskFreeRate ?? 5.00
+  sp500BenchmarkRate.value = usableCache?.benchmarkRate ?? SP500_BENCHMARK_RATE
+  strategyBeta.value = usableCache?.beta ?? 0.85
+  riskFreeRate.value = usableCache?.riskFreeRate ?? 5.00
   benchmarkInput.value = sp500BenchmarkRate.value
 }
 
@@ -1545,6 +1562,11 @@ const saveBenchmarkMetricsCache = async () => {
 }
 
 const fetchRealtimeMetrics = async (strategyIds = getBenchmarkStrategyIds()) => {
+  if (isBenchmarkOffline.value) {
+    applyBenchmarkMetricsForStrategy(selectedStrategyId.value)
+    return
+  }
+
   const ids = Array.from(new Set(strategyIds.filter(Boolean)))
   const benchmarkPeriod = getLastCompletedCalendarYearPeriod()
   let cacheChanged = false
@@ -2957,10 +2979,10 @@ const initData = () => {
   })
 
   // Compute Benchmark & Risk-Free Daily Curves
-  benchmarkPoints3D.value = [{ x: -200, y: startY, z: 0, value: initialDeposit, dateLabel: 'DEPOSIT' }]
+  benchmarkPoints3D.value = []
   riskFreePoints3D.value = [{ x: -200, y: startY, z: 0, value: initialDeposit, dateLabel: 'DEPOSIT' }]
 
-  if (sortedTrades.length > 0) {
+  if (!isBenchmarkOffline.value && sortedTrades.length > 0) {
     const dayMs = 24 * 60 * 60 * 1000
     let firstDateTime = Number.POSITIVE_INFINITY
     const dailyTrades = new Map<string, { x: number, date: Date }>()
@@ -3132,6 +3154,13 @@ watch(showDistribution3D, (val) => {
   } else {
     setRobustnessMode(null)
   }
+})
+watch(isBenchmarkOffline, (offline) => {
+  if (offline) {
+    benchmarkPoints3D.value = []
+  }
+  initData()
+  applyBenchmarkMetricsForStrategy(selectedStrategyId.value)
 })
 
 // --- 3D ENGINE --- //
@@ -3825,7 +3854,7 @@ const update = () => {
         }
       }
 
-      if (showBenchmarkCurves.value) {
+      if (showBenchmarkCurves.value && !isBenchmarkOffline.value) {
         drawExtraCurve(benchmarkPoints3D.value, themeText, 'S&P 500')
         // drawExtraCurve(riskFreePoints3D.value, '#f43f5e', 'RISK-FREE') // Rose Pink (Hidden for now)
       }
@@ -4251,7 +4280,14 @@ const handleWheel = (e: WheelEvent) => {
   viewScale.value = Math.max(0.5, Math.min(6, viewScale.value - e.deltaY * 0.001))
 }
 
+const updateNetworkState = () => {
+  networkOffline.value = !window.navigator.onLine
+}
+
 onMounted(() => {
+  window.addEventListener('online', updateNetworkState)
+  window.addEventListener('offline', updateNetworkState)
+
   const bootInterval = setInterval(() => {
     bootProgress.value += Math.random() * 30
     if (bootProgress.value >= 100) {
@@ -4290,7 +4326,11 @@ onMounted(() => {
 
 // --- END CALENDAR LOGIC ---
 
-onUnmounted(() => { cancelAnimationFrame(rafId) })
+onUnmounted(() => {
+  window.removeEventListener('online', updateNetworkState)
+  window.removeEventListener('offline', updateNetworkState)
+  cancelAnimationFrame(rafId)
+})
 
 </script>
 
