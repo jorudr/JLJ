@@ -1,21 +1,34 @@
 import { ref } from 'vue'
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore'
 import { auth, db } from '~/shared/firebase.client'
+import { loadFromDisk, removeFromDisk, saveToDisk } from '~/shared/diskStorage'
 
 export type AccessActivationState = 'checking' | 'requires_key' | 'granted' | 'error'
 
 const DEFAULT_ACCESS_WORKER_URL = 'https://exgenesis-access-worker.waltzno19inaminor.workers.dev'
 const MAX_ACCESS_KEY_ATTEMPTS = 5
 const ACCESS_KEY_LOCK_MS = 15 * 60 * 1000
+const OFFLINE_ACCESS_CACHE_KEY = 'access_activation_offline_v1'
+const OFFLINE_ACCESS_GRACE_MS = 30 * 24 * 60 * 60 * 1000
 const accessState = ref<AccessActivationState>('checking')
 const accessError = ref('')
 const accessLockRemainingSeconds = ref(0)
 const accessAttemptFailedCount = ref(0)
+const isOffline = ref(typeof navigator !== 'undefined' ? !navigator.onLine : false)
+const offlineAccessRestored = ref(false)
 let accessUnsubscribe: (() => void) | null = null
 let accessAttemptsUnsubscribe: (() => void) | null = null
 let accessLockTimer: ReturnType<typeof setInterval> | null = null
 let activeUserId = ''
 let activeLockUntilMs = 0
+let networkListenersAttached = false
+
+type CachedAccessState = {
+  userId: string
+  isActivated: true
+  checkedAt: number
+  expiresAt?: number | null
+}
 
 function getAccessWorkerUrl(): string {
   const configured = String(import.meta.env.VITE_ACCESS_WORKER_URL || '').trim()
@@ -43,6 +56,60 @@ function toMillis(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0
   }
   return 0
+}
+
+function isValidCachedAccess(value: unknown, userId: string): value is CachedAccessState {
+  if (!value || typeof value !== 'object') return false
+  const cached = value as Partial<CachedAccessState>
+  if (cached.userId !== userId || cached.isActivated !== true) return false
+  if (!Number.isFinite(cached.checkedAt) || !cached.checkedAt) return false
+  if (Date.now() - cached.checkedAt > OFFLINE_ACCESS_GRACE_MS) return false
+  if (cached.expiresAt && Date.now() >= cached.expiresAt) return false
+  return true
+}
+
+async function readValidCachedAccess(userId: string): Promise<CachedAccessState | null> {
+  const cached = await loadFromDisk<CachedAccessState>(OFFLINE_ACCESS_CACHE_KEY)
+  return isValidCachedAccess(cached, userId) ? cached : null
+}
+
+async function persistGrantedAccess(userId: string, expiresAt?: unknown) {
+  const expiresAtMs = toMillis(expiresAt)
+  const payload: CachedAccessState = {
+    userId,
+    isActivated: true,
+    checkedAt: Date.now(),
+    expiresAt: expiresAtMs > 0 ? expiresAtMs : null
+  }
+  await saveToDisk(OFFLINE_ACCESS_CACHE_KEY, payload)
+}
+
+async function restoreOfflineAccess(userId: string, force = false) {
+  const cached = await readValidCachedAccess(userId).catch(() => null)
+  if (activeUserId !== userId || !cached) return false
+
+  offlineAccessRestored.value = true
+  if (force || isOffline.value) {
+    accessState.value = 'granted'
+    accessError.value = ''
+  }
+  return true
+}
+
+function attachNetworkListeners() {
+  if (networkListenersAttached || typeof window === 'undefined') return
+  networkListenersAttached = true
+
+  const updateNetworkState = () => {
+    isOffline.value = !window.navigator.onLine
+    if (isOffline.value && activeUserId) {
+      void restoreOfflineAccess(activeUserId, true)
+    }
+  }
+
+  updateNetworkState()
+  window.addEventListener('online', updateNetworkState)
+  window.addEventListener('offline', updateNetworkState)
 }
 
 function updateAccessLockRemaining() {
@@ -103,9 +170,10 @@ async function resetAccessAttemptFailure(userId: string) {
 }
 
 export function useAccessActivation() {
-  const beginAccessListener = (userId?: string | null) => {
+  const beginAccessListener = (userId?: string | null, options: { force?: boolean } = {}) => {
     const normalizedUserId = String(userId || '').trim()
-    if (accessUnsubscribe && activeUserId === normalizedUserId) return
+    attachNetworkListeners()
+    if (accessUnsubscribe && activeUserId === normalizedUserId && !options.force) return
 
     accessUnsubscribe?.()
     accessAttemptsUnsubscribe?.()
@@ -125,16 +193,42 @@ export function useAccessActivation() {
 
     ensureAccessLockTimer()
     accessState.value = 'checking'
+    offlineAccessRestored.value = false
+    void restoreOfflineAccess(normalizedUserId)
     accessUnsubscribe = onSnapshot(
       doc(db, 'users', normalizedUserId, 'access', 'state'),
       (snapshot) => {
         const data = snapshot.data()
-        accessState.value = data?.isActivated === true ? 'granted' : 'requires_key'
-        if (accessState.value !== 'error') accessError.value = ''
+        if (data?.isActivated === true) {
+          accessState.value = 'granted'
+          accessError.value = ''
+          offlineAccessRestored.value = false
+          void persistGrantedAccess(normalizedUserId, data?.expiresAt).catch((error) => {
+            console.warn('[Access] Unable to cache confirmed access:', error)
+          })
+        } else if (isOffline.value) {
+          // Firestore can return an empty local snapshot while disconnected.
+          // Keep a still-valid confirmed entitlement in that case.
+          void restoreOfflineAccess(normalizedUserId, true).then((restored) => {
+            if (restored) return
+            accessState.value = 'requires_key'
+            accessError.value = ''
+          })
+        } else {
+          accessState.value = 'requires_key'
+          accessError.value = ''
+          offlineAccessRestored.value = false
+          void removeFromDisk(OFFLINE_ACCESS_CACHE_KEY).catch((error) => {
+            console.warn('[Access] Unable to clear revoked access cache:', error)
+          })
+        }
       },
       () => {
-        accessState.value = 'error'
-        accessError.value = 'Unable to verify your access status.'
+        void restoreOfflineAccess(normalizedUserId, true).then((restored) => {
+          if (restored) return
+          accessState.value = 'error'
+          accessError.value = 'Unable to verify your access status.'
+        })
       }
     )
 
@@ -164,11 +258,12 @@ export function useAccessActivation() {
     accessLockRemainingSeconds.value = 0
     accessError.value = ''
     accessState.value = 'checking'
+    offlineAccessRestored.value = false
     stopAccessLockTimer()
   }
 
   const retryAccessCheck = () => {
-    beginAccessListener(activeUserId)
+    beginAccessListener(activeUserId, { force: true })
   }
 
   const activateAccessKey = async (key: string): Promise<boolean> => {
@@ -221,6 +316,8 @@ export function useAccessActivation() {
         console.warn('[Access] Unable to reset activation attempts:', error)
       }
       accessState.value = 'granted'
+      offlineAccessRestored.value = false
+      await persistGrantedAccess(currentUser.uid)
       return true
     } catch {
       accessError.value = 'Unable to reach the access service. Please try again.'
@@ -234,6 +331,8 @@ export function useAccessActivation() {
     accessError,
     accessLockRemainingSeconds,
     accessAttemptFailedCount,
+    isOffline,
+    offlineAccessRestored,
     beginAccessListener,
     stopAccessListener,
     retryAccessCheck,

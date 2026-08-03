@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-import { getAuth } from "firebase/auth";
+import { browserLocalPersistence, getAuth, setPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -31,3 +31,12 @@ if (typeof window !== 'undefined' && appCheckSiteKey) {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const fireStorage = getStorage(app);
+
+// Keep an already authenticated operator signed in across app restarts.
+// This is intentionally only the Firebase session; offline entitlement is
+// handled separately and is restored only for this persisted user.
+if (typeof window !== 'undefined') {
+    void setPersistence(auth, browserLocalPersistence).catch((error) => {
+        console.warn('[Firebase] Unable to enable local auth persistence:', error);
+    });
+}
