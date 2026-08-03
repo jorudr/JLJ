@@ -583,7 +583,7 @@ pub async fn get_historical_curves(
     };
 
     let jlj_dir = get_cache_dir()?;
-    let cache_path = jlj_dir.join(format!("historical_curves_{}.json", strategy_key));
+    let cache_path = jlj_dir.join(format!("historical_curves_v2_{}.json", strategy_key));
 
     // Try reading cache
     if let Ok(json_str) = std::fs::read_to_string(&cache_path) {
@@ -643,16 +643,21 @@ pub async fn get_historical_curves(
 
         let mut points = Vec::new();
         if let (Some(timestamps), Some(indicators)) = (result.timestamp, result.indicators) {
-            if let Some(mut quotes) = indicators.quote {
-                if let Some(quote) = quotes.pop() {
-                    if let Some(closes) = quote.close {
-                        for (ts, price) in timestamps.into_iter().zip(closes.into_iter()) {
-                            if let Some(p) = price {
-                                points.push(DailyDataPoint {
-                                    timestamp: ts,
-                                    value: p,
-                                });
-                            }
+            let ChartIndicators { quote, adjclose } = indicators;
+            if let Some(mut quotes) = quote {
+                if let Some(chart_quote) = quotes.pop() {
+                    let close_prices = chart_quote.close.unwrap_or_default();
+                    let adjusted_prices = adjclose
+                        .and_then(|mut rows| rows.pop())
+                        .and_then(|row| row.adjclose);
+                    let prices = adjusted_prices.unwrap_or(close_prices);
+
+                    for (ts, price) in timestamps.into_iter().zip(prices.into_iter()) {
+                        if let Some(p) = price.filter(|value| value.is_finite() && *value > 0.0) {
+                            points.push(DailyDataPoint {
+                                timestamp: ts,
+                                value: p,
+                            });
                         }
                     }
                 }

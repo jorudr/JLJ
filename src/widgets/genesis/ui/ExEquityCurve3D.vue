@@ -524,10 +524,10 @@
         <div
           v-if="showToolsMenu"
           @click.self="closeToolsMenu"
-          class="fixed inset-0 z-[10005] flex items-center justify-center bg-black/60 p-12 backdrop-blur-md"
+          class="force-dark-tools-menu fixed inset-0 z-[10005] flex items-center justify-center bg-black/60 p-12 backdrop-blur-md"
         >
           <div class="relative w-full max-w-xl">
-            <ExPanel class="w-full !border-black/15 dark:!border-white/15" noPadding variant="light" :show-corners="true">
+            <ExPanel class="w-full !border-white/15" noPadding variant="light" :show-corners="true">
               <div class="grid grid-cols-5 gap-0 p-4 [&>button]:!h-14">
                 <!-- ROBUSTNESS DIAGNOSTICS ENTRY -->
                 <button
@@ -535,8 +535,8 @@
                   @click="closeToolsMenu(); showCalendarMode = false; showWinrateCurve = false; handleRobustnessDiagnosticsClick()"
                   :aria-label="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
                   :title="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
-                  :class="showDistribution3D ? 'bg-black/10 text-black dark:bg-white/10 dark:text-white' : ''"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="showDistribution3D ? 'bg-white/10 text-white' : ''"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
@@ -554,7 +554,7 @@
                   @click="closeToolsMenu(); showInitialDepositModal = true"
                   :aria-label="isRu ? 'Начальный депозит' : 'Initial deposit'"
                   :title="isRu ? 'Начальный депозит' : 'Initial deposit'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -570,7 +570,7 @@
                   @click="closeToolsMenu(); showBenchmarkModal = true"
                   :aria-label="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
                   :title="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <path d="M4 6h16M4 12h16M4 18h16"/>
@@ -589,8 +589,8 @@
                   @click="closeToolsMenu(); showBenchmarkCurves = !showBenchmarkCurves"
                   :aria-label="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
                   :title="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
-                  :class="showBenchmarkCurves ? 'bg-black/10 text-black dark:bg-white/10 dark:text-white' : ''"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="showBenchmarkCurves ? 'bg-white/10 text-white' : ''"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -607,7 +607,7 @@
                   @click="closeToolsMenu(); openSimulator()"
                   :aria-label="isRu ? 'Симулятор' : 'Simulator'"
                   :title="isRu ? 'Симулятор' : 'Simulator'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <path d="M3 3v18h18"/>
@@ -624,7 +624,7 @@
                   @click="closeToolsMenu(); showBrokerConnectPanel = true"
                   :aria-label="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
                   :title="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -642,7 +642,7 @@
                   :disabled="isApiSyncing"
                   :aria-label="isRu ? 'Синхронизация API' : 'Sync API'"
                   :title="isRu ? 'Синхронизация API' : 'Sync API'"
-                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-black/55 transition-all hover:bg-black/5 hover:text-black disabled:cursor-not-allowed disabled:opacity-40 dark:text-white/55 dark:hover:bg-white/5 dark:hover:text-white"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6" :class="isApiSyncing ? 'animate-spin' : ''">
                     <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -2950,20 +2950,18 @@ const initData = () => {
   riskFreePoints3D.value = [{ x: -200, y: startY, z: 0, value: initialDeposit, dateLabel: 'DEPOSIT' }]
 
   if (sortedTrades.length > 0) {
-    let firstDateTime = 0
+    const dayMs = 24 * 60 * 60 * 1000
+    let firstDateTime = Number.POSITIVE_INFINITY
     const dailyTrades = new Map<string, { x: number, date: Date }>()
 
     sortedTrades.forEach((trade, i) => {
       const x = -200 + (i + 1) * step
       const dVal = trade.dateExit || trade.date
       const date = dVal instanceof Date ? dVal : new Date(dVal)
-      const dayStr = date.toLocaleDateString('en-US')
-      
-      if (!firstDateTime) {
-        const fd = new Date(date)
-        fd.setHours(0,0,0,0)
-        firstDateTime = fd.getTime()
-      }
+      const dayStr = date.toISOString().slice(0, 10)
+      const dayStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+
+      if (dayStart < firstDateTime) firstDateTime = dayStart
       
       // Last trade of the day overwrites, giving the final X coordinate for that day
       dailyTrades.set(dayStr, { x, date })
@@ -2972,15 +2970,15 @@ const initData = () => {
     const lastTrade = sortedTrades[sortedTrades.length - 1]!
     const lastDateVal = lastTrade.dateExit || lastTrade.date
     const lastDate = lastDateVal instanceof Date ? lastDateVal : new Date(lastDateVal)
-    lastDate.setHours(0,0,0,0)
-    const endDateTime = lastDate.getTime()
+    const endDateTime = Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth(), lastDate.getUTCDate())
     
-    const daysTotal = Math.floor((endDateTime - firstDateTime) / (1000 * 60 * 60 * 24))
+    const daysTotal = Math.max(0, Math.floor((endDateTime - firstDateTime) / dayMs))
 
     const loadHistoricalCurves = async () => {
       try {
         const startTs = Math.floor(firstDateTime / 1000)
-        const endTs = Math.floor(endDateTime / 1000)
+        // period2 is exclusive; include the last trade day in the market-data request.
+        const endTs = Math.floor((endDateTime + dayMs) / 1000)
         const curves: { benchmark: { timestamp: number, value: number }[], risk_free: { timestamp: number, value: number }[] } = 
           await invoke('get_historical_curves', {
             strategyId,
@@ -2997,12 +2995,13 @@ const initData = () => {
         let benchVal = initialDeposit
         let rfVal = initialDeposit
         const getMarketValueForDay = (points: { timestamp: number, value: number }[], dayUnix: number) => {
-          let value = 0
+          const endOfDay = dayUnix + 86400
+          let value = points[0]?.value || 0
           for (const point of points) {
-            if (point.timestamp <= dayUnix + 86400) {
+            if (point.timestamp <= endOfDay) {
               value = point.value
             } else {
-              return value || point.value
+              break
             }
           }
           return value
@@ -3014,7 +3013,7 @@ const initData = () => {
           const currentMs = firstDateTime + i * 24 * 60 * 60 * 1000
           const currentUnix = Math.floor(currentMs / 1000)
           const d = new Date(currentMs)
-          const dayStr = d.toLocaleDateString('en-US')
+          const dayStr = d.toISOString().slice(0, 10)
           const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           
           let x = prevX
@@ -3569,11 +3568,61 @@ const update = () => {
             }
           }
 
+          // Draw a subtle area under the Normal distribution curve.
+          if (showRobustnessNormalDist.value && transformedNormal.length > 0) {
+            const baseline3D = curves.normalCurve.map(v => ({ x: v.x, y: 80, z: 0 }))
+            const transformedBaseline = baseline3D.map(v => {
+              let p = rotateY(v, currentRotation.value.y)
+              p = rotateX(p, currentRotation.value.x)
+              p.x *= scale; p.y *= scale; p.z *= scale
+              return project(p, w, h)
+            })
+
+            let minY = Infinity
+            transformedNormal.forEach(p => {
+              if (p.y < minY) minY = p.y
+            })
+            let maxY = -Infinity
+            transformedBaseline.forEach(p => {
+              if (p.y > maxY) maxY = p.y
+            })
+
+            if (minY < maxY) {
+              ctx.save()
+              const grad = ctx.createLinearGradient(0, minY, 0, maxY)
+              if (themeStore.settings.isDark) {
+                grad.addColorStop(0, 'rgba(249, 246, 240, 0.46)')
+                grad.addColorStop(0.72, 'rgba(249, 246, 240, 0.16)')
+                grad.addColorStop(1, 'rgba(249, 246, 240, 0.02)')
+              } else {
+                grad.addColorStop(0, 'rgba(44, 44, 42, 0.30)')
+                grad.addColorStop(0.72, 'rgba(44, 44, 42, 0.10)')
+                grad.addColorStop(1, 'rgba(44, 44, 42, 0.02)')
+              }
+              ctx.fillStyle = grad
+              ctx.beginPath()
+              ctx.moveTo(transformedNormal[0]!.x, transformedNormal[0]!.y)
+              transformedNormal.forEach((p, idx) => {
+                if (idx > 0) ctx.lineTo(p.x, p.y)
+              })
+              ctx.lineTo(transformedBaseline[transformedBaseline.length - 1]!.x, transformedBaseline[transformedBaseline.length - 1]!.y)
+              for (let i = transformedBaseline.length - 1; i >= 0; i--) {
+                ctx.lineTo(transformedBaseline[i]!.x, transformedBaseline[i]!.y)
+              }
+              ctx.closePath()
+              ctx.fill()
+              ctx.restore()
+            }
+          }
+
           // Draw Normal theoretical curve (dashed, lower opacity)
           if (showRobustnessNormalDist.value) {
-            ctx.lineWidth = 1.5
+            ctx.save()
+            ctx.lineWidth = 2.75
             ctx.strokeStyle = themeText
-            ctx.globalAlpha = 0.25
+            ctx.globalAlpha = 0.95
+            ctx.shadowColor = themeText
+            ctx.shadowBlur = 5
             ctx.setLineDash([5, 5])
             ctx.beginPath()
             transformedNormal.forEach((p, idx) => {
@@ -3582,7 +3631,7 @@ const update = () => {
             })
             ctx.stroke()
             ctx.setLineDash([])
-            ctx.globalAlpha = 1
+            ctx.restore()
           }
 
           // Draw Student's t curve (solid, bold, glowing pure line)
@@ -3769,7 +3818,7 @@ const update = () => {
       }
 
       if (showBenchmarkCurves.value) {
-        drawExtraCurve(benchmarkPoints3D.value, '#0ea5e9', 'S&P 500') // Sky Blue
+        drawExtraCurve(benchmarkPoints3D.value, themeText, 'S&P 500')
         // drawExtraCurve(riskFreePoints3D.value, '#f43f5e', 'RISK-FREE') // Rose Pink (Hidden for now)
       }
 
@@ -4359,5 +4408,20 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* The tools menu keeps its dark instrument-panel treatment in every app theme. */
+.force-dark-tools-menu {
+  --theme-bg: #070707;
+  --theme-bg-rgb: 7 7 7;
+  --theme-panel: rgba(5, 5, 5, 0.96);
+  --theme-panel-rgb: 5 5 5;
+  --theme-text: #f9f6f0;
+  --theme-text-rgb: 249 246 240;
+  --theme-muted: rgba(249 246 240 / 0.62);
+  --theme-border: rgba(249 246 240 / 0.18);
+  --theme-border-rgb: 249 246 240;
+  --theme-border-strong: rgba(249 246 240 / 0.32);
+  color: var(--theme-text);
 }
 </style>
