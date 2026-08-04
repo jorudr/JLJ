@@ -3,7 +3,7 @@
     
     <!-- BOOT OVERLAY -->
     <Transition name="fade">
-      <div v-if="isInitializing" class="absolute inset-0 z-[1000] nier-bg-panel flex flex-col items-center justify-center space-y-8 pointer-events-auto transition-colors duration-500">
+      <div v-if="isInitializing && !isTradeEntryOpen" class="absolute inset-0 z-[1000] nier-bg-panel flex flex-col items-center justify-center space-y-8 pointer-events-auto transition-colors duration-500">
          <div class="flex flex-col items-center space-y-3">
             <div class="w-16 h-px nier-bg-inverted opacity-20"></div>
             <span class="text-[10px] font-mono tracking-[0.8em] uppercase font-black animate-pulse nier-text-primary">Establishing_Neural_Link</span>
@@ -26,16 +26,17 @@
       </div>
     </Transition>
 
-    <!-- CANVAS LAYER -->
-    <canvas ref="canvasRef"
-            v-show="!showRobustnessExplanations && !showCalendarMode && !showSimulator"
-            class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-10"
-            @mousedown="handleMouseDown"
-            @mousemove="handleMouseMove"
-            @mouseup="handleMouseUp"
-            @mouseleave="handleMouseLeave"
-            @wheel="handleWheel">
-    </canvas>
+    <div v-show="!isTradeEntryOpen" class="absolute inset-0">
+      <!-- CANVAS LAYER -->
+      <canvas ref="canvasRef"
+              v-show="!showRobustnessExplanations && !showCalendarMode && !showSimulator"
+              class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-10"
+              @mousedown="handleMouseDown"
+              @mousemove="handleMouseMove"
+              @mouseup="handleMouseUp"
+              @mouseleave="handleMouseLeave"
+              @wheel="handleWheel">
+      </canvas>
 
     <Transition name="fade">
       <div
@@ -59,7 +60,7 @@
     <!-- TOP-CENTER WARNING BANNER (teleported to body) -->
     <Teleport to="body">
       <Transition name="robustness-warn">
-        <div v-if="showRobustnessWarning"
+        <div v-if="!isTradeEntryOpen && showRobustnessWarning"
              class="fixed top-6 inset-x-0 flex justify-center z-[2147483647] pointer-events-none">
           <div class="px-5 py-4 shadow-[0_12px_48px_rgba(220,38,38,0.55)] border border-red-400/30 flex items-start gap-3"
                style="background-color:#dc2626; min-width:340px;">
@@ -82,7 +83,7 @@
 
     <Teleport to="body">
       <Transition name="tooltip-dist-fade">
-        <div v-if="hoveredDistributionTooltip"
+        <div v-if="!isTradeEntryOpen && hoveredDistributionTooltip"
              :key="`${hoveredDistributionTooltip.kind}-${hoveredDistributionTooltip.label}`"
              class="fixed pointer-events-none z-[2147483647] transition-colors duration-500"
              :class="[themeStore.settings.isDark ? 'is-dark dark theme-dark' : 'theme-light']"
@@ -146,7 +147,7 @@
     <!-- QUANTILE ALIGNMENT PROJECTION TOOLTIP -->
     <Teleport to="body">
       <Transition name="tooltip-dist-fade">
-        <div v-if="hoveredQQPoint"
+        <div v-if="!isTradeEntryOpen && hoveredQQPoint"
              :key="hoveredCurveIndex ?? 'null'"
              class="fixed pointer-events-none z-[2147483647] transition-colors duration-500"
              :class="[themeStore.settings.isDark ? 'is-dark dark theme-dark' : 'theme-light']"
@@ -384,7 +385,7 @@
     <!-- WINRATE TARGET MENU MODAL -->
     <Teleport to="body">
       <Transition name="protocol-slide">
-        <div v-if="showWinrateMenu" 
+        <div v-if="!isTradeEntryOpen && showWinrateMenu"
              @click.self="showWinrateMenu = false"
              class="fixed inset-0 z-[10005] flex items-center justify-center p-20 backdrop-blur-md bg-black/60">
           
@@ -529,7 +530,7 @@
     <Teleport to="body">
       <Transition name="protocol-slide">
         <div
-          v-if="showToolsMenu"
+          v-if="!isTradeEntryOpen && showToolsMenu"
           @click.self="closeToolsMenu"
           class="tools-menu-overlay fixed inset-0 z-[10005] flex items-center justify-center p-12 backdrop-blur-md"
         >
@@ -965,18 +966,18 @@
       </div>
     </div>
 
-    <Teleport to="body">
-      <Transition name="page-reify">
-        <ExTradeEntry v-if="isTradeEntryOpen" 
-                      class="fixed inset-0 z-[2000]"
-                      @close="isTradeEntryOpen = false" 
-                      @addTrade="isTradeEntryOpen = false" />
-      </Transition>
-    </Teleport>
+    </div>
+
+    <Transition name="page-reify">
+      <ExTradeEntry v-if="isTradeEntryOpen"
+                    class="absolute inset-0 z-[2000]"
+                    @close="isTradeEntryOpen = false"
+                    @addTrade="isTradeEntryOpen = false" />
+    </Transition>
 
     <Teleport to="body">
       <Transition name="page-reify">
-        <ExBrokerConnectPanel v-if="showBrokerConnectPanel"
+        <ExBrokerConnectPanel v-if="!isTradeEntryOpen && showBrokerConnectPanel"
                               :strategy-id="selectedStrategyId"
                               @close="showBrokerConnectPanel = false" />
       </Transition>
@@ -985,7 +986,7 @@
     <Teleport to="body">
       <Transition name="page-reify">
         <ExEquityCurveSimulator 
-          v-if="showSimulator" 
+          v-if="!isTradeEntryOpen && showSimulator"
           @close="showSimulator = false"
           :historical-trades="getFilteredTrades()"
           :initial-equity="props.initialBalance || tradeStore.getInitialDeposit(selectedStrategyId)"
@@ -995,7 +996,7 @@
         />
       </Transition>
     </Teleport>
-    <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
+    <ExPaywallOverlay :isOpen="showPaywall && !isTradeEntryOpen" @close="showPaywall = false" />
   </div>
 </template>
 
