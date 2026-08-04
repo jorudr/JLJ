@@ -442,7 +442,7 @@
     <!-- Features Section -->
     <section 
       ref="featuresSection" 
-      class="home-features relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10 space-y-40"
+      class="home-features relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10"
     >
       <!-- Section Header -->
       <div class="text-start space-y-6 max-w-4xl pb-16 lg:pb-24">
@@ -454,75 +454,30 @@
         </h2>
       </div>
 
-      <!-- Feature 5: Advanced Equity Analysis -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.equity.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.equity.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/3d-equity.png" 
-            alt="Advanced Equity Analysis" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
+      <div class="features-grid" aria-label="Application features">
+        <article class="feature-grid-card">
+          <span class="feature-grid-card__index">01</span>
+          <h3>{{ t('landing.features.genesis.title') }}</h3>
+          <p>{{ t('landing.features.genesis.desc') }}</p>
+        </article>
 
-      <!-- Feature 1: Genesis Matrix -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.genesis.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.genesis.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/genesis-matrix.png" 
-            alt="Genesis Matrix" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
+        <article class="feature-grid-card">
+          <span class="feature-grid-card__index">02</span>
+          <h3>{{ t('landing.features.tradesTree.title') }}</h3>
+          <p>{{ t('landing.features.tradesTree.desc') }}</p>
+        </article>
 
-      <!-- Feature 2: Trades Tree -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.tradesTree.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.tradesTree.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/trades-tree.png" 
-            alt="Trades Tree" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
+        <article class="feature-grid-card">
+          <span class="feature-grid-card__index">03</span>
+          <h3>{{ t('landing.features.equity.title') }}</h3>
+          <p>{{ t('landing.features.equity.desc') }}</p>
+        </article>
 
-
-
-
-      <!-- Feature 6: Forum -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 items-center">
-        <div class="space-y-6 text-center md:text-start order-2 md:order-1 md:col-span-5">
-          <h3 class="text-3xl lg:text-4xl font-light tracking-wide uppercase">{{ t('landing.features.forum.title') }}</h3>
-          <p class="text-[16px] lg:text-[18px] leading-relaxed opacity-80 font-light">
-            {{ t('landing.features.forum.desc') }}
-          </p>
-        </div>
-        <div class="order-1 md:order-2 md:col-span-7 relative w-full">
-          <img 
-            src="/screenshots/forum.png" 
-            alt="Forum" 
-            class="w-full h-auto object-contain"
-          />
-        </div>
+        <article class="feature-grid-card">
+          <span class="feature-grid-card__index">04</span>
+          <h3>{{ t('landing.features.forum.title') }}</h3>
+          <p>{{ t('landing.features.forum.desc') }}</p>
+        </article>
       </div>
     </section>
 
@@ -985,6 +940,59 @@ const scrollToFeatures = () => {
   font-weight: 700;
 }
 
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.feature-grid-card {
+  display: grid;
+  min-height: 218px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 13px;
+  align-content: start;
+  padding: clamp(38px, 5vh, 64px) clamp(20px, 3vw, 40px) clamp(38px, 5vh, 64px) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.feature-grid-card:nth-child(odd) {
+  padding-right: clamp(28px, 4vw, 64px);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.feature-grid-card:nth-child(even) {
+  padding-left: clamp(28px, 4vw, 64px);
+}
+
+.feature-grid-card__index {
+  display: block;
+  padding-top: 7px;
+  color: rgba(255, 255, 255, 0.38);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.feature-grid-card h3 {
+  color: white;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 3.2vw, 3.25rem);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+}
+
+.feature-grid-card p {
+  grid-column: 2;
+  max-width: 420px;
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.58);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 @media (max-width: 767px) {
   .home-video,
   .home-features,
@@ -994,6 +1002,8 @@ const scrollToFeatures = () => {
   }
 
   .home-video {
+    padding-right: 12px;
+    padding-left: 12px;
     padding-top: 12px;
     padding-bottom: 48px;
   }
@@ -1016,6 +1026,28 @@ const scrollToFeatures = () => {
   .home-features p {
     width: 100%;
     max-width: none;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-grid-card {
+    min-height: 0;
+    display: grid;
+    padding: 30px 0 34px;
+    border-right: 0;
+  }
+
+  .feature-grid-card:nth-child(odd),
+  .feature-grid-card:nth-child(even) {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .feature-grid-card p {
+    margin-top: 10px;
+    font-size: 12px;
   }
 
   .home-download {

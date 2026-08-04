@@ -109,24 +109,24 @@ export const translations = {
         }
       },
       features: {
-        title: "J.L.JÖRMUNGANDR is a trading diary synchronizing market chaos with formalized systems, exclusively for the elite operator.",
+        title: "J.L.JÖRMUNGANDR helps turn trading into a systematic process: from developing and testing a strategy to analyzing trades and controlling results.",
         genesis: {
-          title: "Genesis Matrix",
-          desc: "Create your trading system on an interactive board. It connects directly to your trading diary to accurately track the performance of your specific trading conditions and scenarios."
+          title: "Strategy Manager",
+          desc: "Build rule-based systems from scenarios and conditions for consistent decisions."
         },
         tradesTree: {
-          title: "Trade Analysis & Comparison",
-          desc: "Compare your trades to find the best scenarios and execution tactics. The intuitive list allows you to effectively monitor compliance with all the rules of your trading system."
+          title: "Trading Journal",
+          desc: "Log trades, capture decisions and uncover recurring mistakes and winning setups."
         },
 
 
         equity: {
-          title: "Advanced Equity Analysis",
-          desc: "Expose and visualize the true performance of your portfolio with comprehensive robustness diagnostics and advanced equity simulations. Stress-test your models under various dynamic market conditions."
+          title: "Equity Curve",
+          desc: "Track results, growth and drawdowns to see how your strategy performs over time."
         },
         forum: {
-          title: "Knowledge Exchange Protocol",
-          desc: "A dedicated, high-level module for discussing complex trading ideas and sharing strategic models. Engage with other operators to compare tactical setups and accelerate your learning curve."
+          title: "Forum",
+          desc: "Share ideas, discuss strategies and learn from experienced traders."
         }
       },
       footer: {
@@ -410,24 +410,24 @@ export const translations = {
         }
       },
       features: {
-        title: "J.L.JÖRMUNGANDR это торговый дневник, синхронизирующий рыночный хаос с формализованными системами, исключительно для элитных операторов.",
+        title: "J.L.JÖRMUNGANDR помогает превратить торговлю в системный процесс: от идеи и проверки стратегии до анализа сделок и контроля результата.",
         genesis: {
-          title: "Матрица Генезиса",
-          desc: "Создайте свою торговую систему на интерактивной доске. Она напрямую подключается к вашему торговому дневнику для точного отслеживания результативности торговых условий и сценариев."
+          title: "Менеджер Стратегий",
+          desc: "Собирайте системы из правил, сценариев и условий для последовательных решений."
         },
         tradesTree: {
-          title: "Анализ и Сравнение Сделок",
-          desc: "Сравнивайте свои сделки для поиска наилучших сценариев и тактик исполнения. Удобный список позволяет эффективно контролировать соблюдение всех правил вашей торговой системы."
+          title: "Торговый Журнал",
+          desc: "Фиксируйте сделки и решения, находите повторяющиеся ошибки и сильные сетапы."
         },
 
 
         equity: {
-          title: "Продвинутый Анализ Капитала",
-          desc: "Проанализируйте реальную эффективность портфеля с помощью детальной диагностики надежности и моделирования капитала. Тестируйте свои модели на прочность в различных рыночных условиях."
+          title: "Кривая Капитала",
+          desc: "Отслеживайте результаты, рост и просадки, чтобы видеть поведение стратегии во времени."
         },
         forum: {
-          title: "Протокол Обмена Знаниями",
-          desc: "Специализированный модуль для обсуждения сложных торговых идей и обмена стратегическими моделями. Взаимодействуйте с другими операторами для сравнения тактических сетапов и ускорения обучения."
+          title: "Форум",
+          desc: "Делитесь идеями, обсуждайте стратегии и учитесь у опытных трейдеров."
         }
       },
       footer: {
