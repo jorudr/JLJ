@@ -1,19 +1,17 @@
 <script setup>
-import { computed, provide } from 'vue'
+import { computed, provide, watch } from 'vue'
 import { useExTradeEntry } from '../model/useExTradeEntry'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 import ExTradeEntryCmeNotice from './components/ExTradeEntryCmeNotice.vue'
 import ExTradeEntryProtocolSelect from './components/ExTradeEntryProtocolSelect.vue'
 import ExTradeEntryMiddleSection from './components/ExTradeEntryMiddleSection.vue'
-import ExTradeEntryRightToggle from './components/ExTradeEntryRightToggle.vue'
 import ExTradeEntryEmotionMatrix from './components/ExTradeEntryEmotionMatrix.vue'
-import ExTradeEntryActionFooter from './components/ExTradeEntryActionFooter.vue'
 import ExTradeEntryConditionLibrary from './components/ExTradeEntryConditionLibrary.vue'
 import ExTradeEntryMethodMatrix from './components/ExTradeEntryMethodMatrix.vue'
 import ExTradeEntryStudyMetricsPanel from './components/ExTradeEntryStudyMetricsPanel.vue'
 
-const emit = defineEmits(['addTrade', 'updateTrade', 'close'])
+const emit = defineEmits(['addTrade', 'updateTrade', 'close', 'panelChange'])
 const props = defineProps({
   initialTrade: {
     type: Object,
@@ -23,6 +21,51 @@ const props = defineProps({
 
 const state = useExTradeEntry(props, emit)
 provide('tradeState', state)
+
+const getActivePanel = () => {
+  if (state.showConditionLibrary.value) return 'matrix'
+  if (state.showEntryMethod.value) return 'method'
+  if (state.viewMode.value === 'journal') return 'journal'
+  return null
+}
+
+watch(
+  [state.showConditionLibrary, state.showEntryMethod, state.viewMode],
+  () => emit('panelChange', getActivePanel()),
+  { immediate: true }
+)
+
+const closeTradeEntryPanels = () => {
+  state.showConditionLibrary.value = false
+  state.showEmotionSelector.value = false
+  state.showEntryMethod.value = false
+  state.showTradeStudyMetrics.value = false
+}
+
+const openTradeEntryPanel = (panel) => {
+  closeTradeEntryPanels()
+
+  if (panel === 'close') {
+    state.isClosed.value = !state.isClosed.value
+    return state.isClosed.value
+  }
+
+  if (panel === 'matrix') {
+    state.viewMode.value = 'tactical'
+    state.showConditionLibrary.value = true
+  } else if (panel === 'journal') {
+    state.viewMode.value = 'journal'
+  } else if (panel === 'method') {
+    state.showEntryMethod.value = true
+  }
+
+  return true
+}
+
+defineExpose({
+  openPanel: openTradeEntryPanel,
+  closePanels: closeTradeEntryPanels
+})
 
 const { isDark, scrollContainer } = state
 
@@ -52,9 +95,7 @@ const tradeEntryThemeStyle = computed(() => isDark.value
      <ExTradeEntryCmeNotice />
      <ExTradeEntryProtocolSelect @close="emit('close')" />
      <ExTradeEntryMiddleSection />
-     <ExTradeEntryRightToggle />
      <ExTradeEntryEmotionMatrix />
-     <ExTradeEntryActionFooter />
      <ExTradeEntryConditionLibrary />
      <ExTradeEntryMethodMatrix />
      <ExTradeEntryStudyMetricsPanel />

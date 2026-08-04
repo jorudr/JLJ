@@ -968,11 +968,24 @@
 
     </div>
 
+    <ExTradeEntryBottomBar
+      v-if="isTradeEntryOpen"
+      :is-trade-entry-open="isTradeEntryOpen"
+      :is-simulator-open="showSimulator"
+      :is-close-mode-active="isTradeEntryCloseModeActive"
+      :active-panel="activeTradeEntryPanel"
+      @toggle-entry="toggleTradeEntry"
+      @toggle-close-mode="toggleTradeEntryPanel('close')"
+      @open-panel="toggleTradeEntryPanel"
+    />
+
     <Transition name="page-reify">
       <ExTradeEntry v-if="isTradeEntryOpen"
+                    ref="tradeEntryRef"
                     class="absolute inset-0 z-[2000]"
-                    @close="isTradeEntryOpen = false"
-                    @addTrade="isTradeEntryOpen = false" />
+                    @close="closeTradeEntry"
+                    @addTrade="closeTradeEntry"
+                    @panel-change="handleTradeEntryPanelChange" />
     </Transition>
 
     <Teleport to="body">
@@ -1010,6 +1023,7 @@ import { useAppBootStore } from '~/features/store/useAppBoot'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
+import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
@@ -1072,6 +1086,43 @@ const isRu = computed(() => locale.value === 'ru')
 const route = useRoute()
 const router = useRouter()
 const isTradeEntryOpen = ref(route.query.entry === 'true')
+const tradeEntryRef = ref<any>(null)
+const isTradeEntryCloseModeActive = ref(true)
+const activeTradeEntryPanel = ref<'matrix' | 'journal' | 'method' | null>(null)
+
+const toggleTradeEntry = () => {
+  if (isTradeEntryOpen.value) {
+    tradeEntryRef.value?.closePanels?.()
+    activeTradeEntryPanel.value = null
+  } else {
+    isTradeEntryCloseModeActive.value = true
+    activeTradeEntryPanel.value = null
+  }
+  isTradeEntryOpen.value = !isTradeEntryOpen.value
+}
+
+const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method') => {
+  if (!isTradeEntryOpen.value) return
+
+  const result = tradeEntryRef.value?.openPanel?.(panel)
+  if (panel === 'close') {
+    isTradeEntryCloseModeActive.value = result !== false
+    activeTradeEntryPanel.value = null
+    return
+  }
+
+  activeTradeEntryPanel.value = panel
+}
+
+const handleTradeEntryPanelChange = (panel: 'matrix' | 'journal' | 'method' | null) => {
+  activeTradeEntryPanel.value = panel
+}
+
+const closeTradeEntry = () => {
+  isTradeEntryOpen.value = false
+  isTradeEntryCloseModeActive.value = true
+  activeTradeEntryPanel.value = null
+}
 
 watch(isTradeEntryOpen, (isOpen) => {
   router.push({ 
