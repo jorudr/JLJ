@@ -15,7 +15,6 @@ import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
-import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 export function useExTradeEntry(props, emit) {
 

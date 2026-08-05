@@ -1,7 +1,6 @@
 <script setup>
 import { computed, provide, watch } from 'vue'
 import { useExTradeEntry } from '../model/useExTradeEntry'
-import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 import ExTradeEntryCmeNotice from './components/ExTradeEntryCmeNotice.vue'
 import ExTradeEntryMiddleSection from './components/ExTradeEntryMiddleSection.vue'
@@ -89,8 +88,6 @@ const tradeEntryThemeStyle = computed(() => isDark.value
        class="trade-entry-shell flex flex-col items-center h-full w-full overflow-hidden transition-colors duration-500 bg-theme-bg nier-text-primary"
        :class="isDark ? 'dark is-dark theme-dark' : 'theme-light'"
        :style="tradeEntryThemeStyle">
-     <DesignVignette :is-dark="isDark" />
-     
      <ExTradeEntryCmeNotice />
      <ExTradeEntryMiddleSection />
      <ExTradeEntryEmotionMatrix />
