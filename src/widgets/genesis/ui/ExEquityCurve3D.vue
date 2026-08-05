@@ -1105,7 +1105,7 @@ const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method')
     return
   }
 
-  if (panel === 'journal' && activeTradeEntryPanel.value === 'journal') {
+  if ((panel === 'journal' || panel === 'method') && activeTradeEntryPanel.value === panel) {
     activeTradeEntryPanel.value = null
     return
   }
@@ -3000,7 +3000,8 @@ const initData = () => {
     
     const dVal = trade.dateExit || trade.date
     const date = dVal instanceof Date ? dVal : new Date(dVal)
-    const dateLabel = `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+    const dateLocale = isRu.value ? 'ru-RU' : 'en-US'
+    const dateLabel = `${date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}`
     
     equityPoints3D.value.push({ 
       x, y, z, 
@@ -3107,7 +3108,7 @@ const initData = () => {
           const currentUnix = Math.floor(currentMs / 1000)
           const d = new Date(currentMs)
           const dayStr = d.toISOString().slice(0, 10)
-          const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          const dateLabel = d.toLocaleDateString(isRu.value ? 'ru-RU' : 'en-US', { month: 'short', day: 'numeric' })
           
           let x = prevX
           if (dailyTrades.has(dayStr)) {

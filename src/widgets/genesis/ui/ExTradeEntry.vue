@@ -22,7 +22,7 @@ provide('tradeState', state)
 
 const getActivePanel = () => {
   if (state.showConditionLibrary.value) return 'matrix'
-  if (state.showEntryMethod.value) return 'method'
+  if (state.showEntryMethod.value || state.viewMode.value === 'method') return 'method'
   if (state.viewMode.value === 'journal') return 'journal'
   return null
 }
@@ -38,6 +38,7 @@ const closeTradeEntryPanels = () => {
   state.showEmotionSelector.value = false
   state.showEntryMethod.value = false
   state.showTradeStudyMetrics.value = false
+  if (state.viewMode.value === 'method') state.viewMode.value = 'tactical'
 }
 
 const showSavedSummary = () => {
@@ -51,6 +52,7 @@ const cancelSavedSummary = () => {
 }
 
 const openTradeEntryPanel = (panel) => {
+  const wasMethodView = state.viewMode.value === 'method'
   closeTradeEntryPanels()
 
   if (panel === 'close') {
@@ -64,7 +66,12 @@ const openTradeEntryPanel = (panel) => {
   } else if (panel === 'journal') {
     state.viewMode.value = state.viewMode.value === 'journal' ? 'tactical' : 'journal'
   } else if (panel === 'method') {
-    state.showEntryMethod.value = true
+    if (wasMethodView) {
+      closeTradeEntryPanels()
+    } else {
+      state.viewMode.value = 'method'
+      state.showEntryMethod.value = true
+    }
   }
 
   return true

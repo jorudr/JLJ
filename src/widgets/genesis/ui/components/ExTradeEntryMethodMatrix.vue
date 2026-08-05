@@ -57,13 +57,18 @@ const sanitizeInlineNumberInput = (event, target, key) => {
 watch(tradeTimeZone, (zone) => {
   if (!timeZoneMenuOpen.value) timeZoneSearch.value = zone || '';
 }, { immediate: true });
+
+const closeEntryMethod = () => {
+  showEntryMethod.value = false
+  if (viewMode.value === 'method') viewMode.value = 'tactical'
+}
 </script>
 
 <template>
 <!-- ENTRY METHOD MATRIX WIDGET -->
     <Transition name="nier-fade">
-      <div v-if="showEntryMethod" 
-           @click.self="showEntryMethod = false"
+      <div v-if="showEntryMethod && viewMode !== 'method'"
+           @click.self="closeEntryMethod"
            class="fixed inset-0 z-[10005] flex items-center justify-start p-10 bg-black/10 dark:bg-black/40">
         
           <ExPanel class="w-full max-w-[500px]" noPadding variant="light" :no-shadow="true">

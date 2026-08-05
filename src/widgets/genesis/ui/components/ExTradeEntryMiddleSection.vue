@@ -19,6 +19,7 @@ const getForexCurrencyPair = (symbol) => {
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
+import ExTradeEntryMethodContent from './ExTradeEntryMethodContent.vue';
 import ExButton from '~/shared/ui/ExButton.vue';
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
 import { computed, ref, watch } from 'vue';
@@ -1006,7 +1007,7 @@ const summarySelectedEmotions = computed(() => {
             </div>
           </div>
 
-          <div v-else key="journal" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
+          <div v-else-if="viewMode === 'journal'" key="journal" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
             <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col border-transparent bg-transparent">
               <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
                 <button type="button" disabled aria-disabled="true" aria-label="Основные данные сделки" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
@@ -1246,6 +1247,63 @@ const summarySelectedEmotions = computed(() => {
                  </div>
               </div>
             </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="viewMode === 'method'" key="method" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
+            <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col border-transparent bg-transparent">
+              <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Основные данные сделки' : 'Trade details'" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.7" />
+                    <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+                  </svg>
+                </button>
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 17l4-5 4 3 5-8 3 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
+                    <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                  </svg>
+                </button>
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'График' : 'Chart'" class="grid h-11 w-12 cursor-not-allowed place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 4v16M17 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+                    <path d="M5 8h4v7H5zM15 6h4v10h-4z" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex h-full w-full flex-col overflow-hidden p-10 nier-text-primary">
+                <div class="w-full max-w-4xl px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                  <div class="flex w-full items-center justify-start gap-2 border-b border-black/10 pb-3 dark:border-white/10">
+                    <button
+                      type="button"
+                      class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                      :class="activeProtocolTab === 'PYRAMIDING' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                      @click="activeProtocolTab = 'PYRAMIDING'; entryMethodType = 'PYRAMIDING'"
+                    >
+                      {{ locale === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                      :class="activeProtocolTab === 'AVERAGING_DOWN' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                      @click="activeProtocolTab = 'AVERAGING_DOWN'; entryMethodType = 'AVERAGING_DOWN'"
+                    >
+                      {{ locale === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                      :class="activeProtocolTab === 'EXIT' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                      @click="activeProtocolTab = 'EXIT'"
+                    >
+                      {{ locale === 'ru' ? 'ВЫХОД' : 'EXIT' }}
+                    </button>
+                  </div>
+                </div>
+                <div class="min-h-0 flex-1 px-6 pt-8 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                  <ExTradeEntryMethodContent />
                 </div>
               </div>
             </div>
