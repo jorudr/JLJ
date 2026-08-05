@@ -23,6 +23,8 @@ const {
   totalSize,
   totalExitSize,
   entryMethodEnabled,
+  entryMethodPriceViolations,
+  entryMethodPriceViolationMessage,
   averageEntry,
   averageExit
 } = inject('tradeState')
@@ -57,7 +59,7 @@ const handleExitSizeInput = (event, target) => {
           <span class="w-6 text-[8px] font-mono font-black tracking-widest opacity-40">#{{ idx + 1 }}</span>
           <div class="flex flex-1 flex-col gap-1">
             <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'УРОВЕНЬ ЦЕНЫ' : 'Price Lvl' }}</span>
-            <input v-model="ent.price" type="text" inputmode="decimal" placeholder="0.00" class="nier-input w-full border-b border-black/20 pb-1 !text-black dark:border-white/20 dark:!text-white" @input="sanitizeInlineNumberInput($event, ent, 'price')" />
+            <input v-model="ent.price" type="text" inputmode="decimal" placeholder="0.00" :aria-invalid="entryMethodPriceViolations.includes(idx)" class="nier-input w-full border-b border-black/20 pb-1 !text-black dark:border-white/20 dark:!text-white" :class="entryMethodPriceViolations.includes(idx) ? '!border !border-rose-500/80 !bg-rose-500/5 !pl-3 !text-rose-500 dark:!text-rose-300 placeholder:!text-rose-500/40 dark:placeholder:!text-rose-300/30 focus:!border-rose-400' : ''" @input="sanitizeInlineNumberInput($event, ent, 'price')" />
           </div>
           <div class="flex flex-1 flex-col gap-1">
             <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РАЗМЕР ЛОТА' : 'Lot Size' }}</span>
@@ -66,6 +68,10 @@ const handleExitSizeInput = (event, target) => {
           <button type="button" class="mt-4 flex h-8 w-8 items-center justify-center border border-rose-500/30 text-rose-500 transition-all hover:bg-rose-500 hover:text-white" @click="removeMultipleEntry(ent.id)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
+        </div>
+
+        <div v-if="entryMethodPriceViolationMessage" class="border border-rose-500/40 bg-rose-500/5 px-3 py-2 text-[9px] font-mono uppercase tracking-[0.16em] text-rose-500 dark:text-rose-300">
+          {{ entryMethodPriceViolationMessage }}
         </div>
 
         <div class="mt-2 flex items-center gap-2">

@@ -1124,7 +1124,43 @@ const activeMultipleEntries = computed(() =>
   entryMethodType.value === 'PYRAMIDING' ? pyramidingEntries.value : averagingDownEntries.value
 )
 
+const hasEntryMethodPositions = computed(() => (
+  pyramidingEntries.value.length > 0 || averagingDownEntries.value.length > 0
+))
+
 const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 0)
+
+const entryMethodPriceViolations = computed(() => {
+  const entries = activeMultipleEntries.value
+  if (entries.length < 2) return []
+
+  const firstPrice = parseFloat(entries[0]?.price)
+  if (!Number.isFinite(firstPrice) || firstPrice <= 0) return []
+
+  const isPyramiding = entryMethodType.value === 'PYRAMIDING'
+  return entries.reduce((violations, entryItem, index) => {
+    if (index === 0) return violations
+    const price = parseFloat(entryItem?.price)
+    if (!Number.isFinite(price) || price <= 0) return violations
+
+    const isValid = isPyramiding ? price > firstPrice : price < firstPrice
+    if (!isValid) violations.push(index)
+    return violations
+  }, [])
+})
+
+const hasEntryMethodPriceViolation = computed(() => entryMethodPriceViolations.value.length > 0)
+
+const entryMethodPriceViolationMessage = computed(() => {
+  if (!hasEntryMethodPriceViolation.value) return ''
+  return entryMethodType.value === 'PYRAMIDING'
+    ? (locale.value === 'ru'
+      ? 'Пирамидинг: цена каждой следующей позиции должна быть выше цены первой позиции.'
+      : 'Pyramiding: each subsequent position price must be above the first position price.')
+    : (locale.value === 'ru'
+      ? 'Усреднение: цена каждой следующей позиции должна быть ниже цены первой позиции.'
+      : 'Averaging: each subsequent position price must be below the first position price.')
+})
 
 const hasActiveMethodNode = computed(() => {
   const pType = entryMethodType.value === 'PYRAMIDING' ? 'pyramiding' : 'averaging'
@@ -2078,6 +2114,7 @@ const submit = async () => {
   const commitStrategyId = selectedStrategyId.value || 'MAIN_DIARY'
 
   if (!finalEntry || (isClosed.value && !finalExit) || !finalSize) return false
+  if (hasEntryMethodPriceViolation.value) return false
   if (riskInputViolationMessage.value) {
     normalizeRiskInputs()
     activeSector.value = 'risk'
@@ -2493,7 +2530,11 @@ const submit = async () => {
     pyramidingEntries,
     averagingDownEntries,
     activeMultipleEntries,
+    hasEntryMethodPositions,
     entryMethodEnabled,
+    entryMethodPriceViolations,
+    hasEntryMethodPriceViolation,
+    entryMethodPriceViolationMessage,
     hasActiveMethodNode,
     addMultipleEntry,
     exitEntries,
