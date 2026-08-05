@@ -6,6 +6,16 @@ const emit = defineEmits(['close']);
 const { locale } = useI18n();
 const isArchivalBriefingEnabled = false;
 
+const getForexCurrencyPair = (symbol) => {
+  const match = String(symbol || '').toUpperCase().replace(/[^A-Z]/g, '').match(/^([A-Z]{3})([A-Z]{3})$/);
+  if (!match) return null;
+
+  return {
+    base: `https://wise.com/web-art/assets/flags/${match[1].toLowerCase()}.svg`,
+    quote: `https://wise.com/web-art/assets/flags/${match[2].toLowerCase()}.svg`
+  };
+};
+
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
@@ -343,6 +353,141 @@ const formatDateTactical = (dateStr) => {
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
              <div v-else class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
                <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border border-black/5 bg-black/[0.02] dark:border-white/5 dark:bg-white/[0.02] group z-10">
+                <div v-show="activeProjectionMode === 'core'" class="absolute inset-0 flex items-start justify-start overflow-y-auto overflow-x-hidden custom-scrollbar p-10 text-left text-white">
+                  <div class="flex w-full max-w-4xl flex-col items-start gap-14">
+                    <section class="flex flex-col items-start gap-5">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
+                      <h1 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Актив и направление</h1>
+                      <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
+                        <div class="asset-select-container relative flex w-full flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Актив</span>
+                          <button type="button" class="flex h-10 w-full items-center gap-3 border-b border-white/20 bg-transparent text-left font-mono text-sm uppercase tracking-[0.18em] text-white outline-none transition-colors hover:border-white/80" @click="showAssetMenu = true">
+                            <span v-if="currentAssetData?.type === 'Forex' && getForexCurrencyPair(currentAssetData.symbol)" class="relative flex h-6 w-6 shrink-0 items-center">
+                              <img :src="getForexCurrencyPair(currentAssetData.symbol).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
+                              <img :src="getForexCurrencyPair(currentAssetData.symbol).quote" alt="" class="absolute bottom-0 right-0 h-[68%] w-[68%] rounded-full object-cover" />
+                            </span>
+                            <span v-else-if="currentAssetData?.icon && !failedIcons.has(currentAssetData.symbol)" class="flex h-5 w-5 shrink-0 items-center justify-center">
+                              <img :src="currentAssetData.icon" :alt="currentAssetData.symbol" class="h-full w-full object-contain" @error="handleIconError(currentAssetData.symbol)" />
+                            </span>
+                            <span v-else class="flex h-5 w-5 shrink-0 items-center justify-center border text-[10px] font-black" :class="isDark ? 'border-white/20 text-white' : 'border-black/20 text-black'">
+                              {{ currentAssetData?.symbol?.[0] || '?' }}
+                            </span>
+                            <span :class="asset ? 'text-white' : 'text-white/40'">{{ asset || 'Выберите актив' }}</span>
+                          </button>
+
+                          <Teleport to="body">
+                            <Transition name="nier-fade">
+                              <div v-if="showAssetMenu" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 px-6" @click.self="showAssetMenu = false">
+                                <div class="flex h-[500px] max-h-[80vh] w-[800px] max-w-[95vw] flex-col bg-[#0a0a0a] text-white shadow-2xl" @click.stop>
+                                  <div class="shrink-0 border-b border-white/10 p-6">
+                                    <input v-model="assetSearch" type="search" placeholder="ПОИСК_АКТИВОВ..." class="w-full bg-transparent text-xl font-black uppercase tracking-widest text-white outline-none placeholder:text-white/20" autofocus />
+                                  </div>
+                                  <div class="flex-1 overflow-y-auto custom-scrollbar">
+                                    <button v-for="assetOption in filteredAssets" :key="assetOption.symbol" type="button" class="grid w-full grid-cols-[9rem_minmax(0,1fr)] items-center gap-4 border-b border-white/5 px-6 py-4 text-left transition-colors hover:bg-white/10" @click="selectAsset(assetOption)">
+                                      <span class="flex min-w-0 items-center gap-3">
+                                        <span v-if="assetOption.type === 'Forex' && getForexCurrencyPair(assetOption.symbol)" class="relative flex h-7 w-7 shrink-0 items-center">
+                                          <img :src="getForexCurrencyPair(assetOption.symbol).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
+                                          <img :src="getForexCurrencyPair(assetOption.symbol).quote" alt="" class="absolute bottom-0 right-0 h-[68%] w-[68%] rounded-full object-cover" />
+                                        </span>
+                                        <span v-else-if="assetOption.icon && !failedIcons.has(assetOption.symbol)" class="flex h-7 w-7 shrink-0 items-center justify-center">
+                                          <img :src="assetOption.icon" :alt="assetOption.symbol" class="h-full w-full object-contain" @error="handleIconError(assetOption.symbol)" />
+                                        </span>
+                                        <span v-else class="flex h-7 w-7 shrink-0 items-center justify-center border text-xs font-black" :class="isDark ? 'border-white/20 text-white' : 'border-black/20 text-black'">
+                                          {{ assetOption.symbol?.[0] || '?' }}
+                                        </span>
+                                        <span class="truncate text-sm font-black tracking-widest">{{ assetOption.symbol }}</span>
+                                      </span>
+                                      <span class="min-w-0">
+                                        <span class="block truncate text-[10px] uppercase tracking-widest text-white/80">{{ assetOption.name }}</span>
+                                        <span class="block truncate text-[8px] uppercase tracking-widest text-white/35">{{ assetOption.description }}</span>
+                                      </span>
+                                    </button>
+                                    <div v-if="filteredAssets.length === 0" class="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-white/30">Активы не найдены</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </Transition>
+                          </Teleport>
+                        </div>
+                        <div class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Направление</span>
+                          <div class="flex">
+                            <button
+                              type="button"
+                              class="border border-white/20 px-5 py-2 font-mono text-[11px] font-black uppercase tracking-[0.2em] transition-colors"
+                              :class="side === 'long' ? 'bg-white text-black' : 'text-white/50 hover:text-white'"
+                              @click="side = 'long'"
+                            >
+                              LONG
+                            </button>
+                            <button
+                              type="button"
+                              class="-ml-px border border-white/20 px-5 py-2 font-mono text-[11px] font-black uppercase tracking-[0.2em] transition-colors"
+                              :class="side === 'short' ? 'bg-white text-black' : 'text-white/50 hover:text-white'"
+                              @click="side = 'short'"
+                            >
+                              SHORT
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="flex flex-col items-start gap-5">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">II.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Точка входа, выхода и размер позиции</h2>
+                      <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Точка входа</span>
+                          <input type="text" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Точка выхода</span>
+                          <input type="text" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Размер позиции</span>
+                          <input type="text" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                      </div>
+                    </section>
+
+                    <section class="flex flex-col items-start gap-5">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">III.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Стоп лосс и тейк профит</h2>
+                      <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Стоп лосс</span>
+                          <input type="text" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Тейк профит</span>
+                          <input type="text" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                      </div>
+                    </section>
+
+                    <section class="flex flex-col items-start gap-5">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Время входа и выхода, часовой пояс</h2>
+                      <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время входа</span>
+                          <input type="text" placeholder="00:00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время выхода</span>
+                          <input type="text" placeholder="00:00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Часовой пояс</span>
+                          <input type="text" placeholder="UTC+00:00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" />
+                        </label>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+
                 <div
                   v-show="activeProjectionMode === 'chart'"
                   class="absolute inset-0 h-full w-full"
