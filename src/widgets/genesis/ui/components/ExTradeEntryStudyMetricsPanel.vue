@@ -2617,7 +2617,7 @@ onBeforeUnmount(() => {
       </p>
       <button
         type="button"
-        class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
+        class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
         :disabled="!canGenerateMarketData"
         @click="generateMarketData"
       >
@@ -2631,7 +2631,7 @@ onBeforeUnmount(() => {
           v-for="timeframe in chartTimeframeOptions"
           :key="timeframe.id"
           type="button"
-          class="text-[9px] font-mono font-black uppercase tracking-[0.18em] nier-text-primary transition-opacity hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-20"
+          class="text-[9px] font-mono font-black uppercase tracking-[0.18em] nier-text-primary transition-opacity hover:opacity-75 disabled:opacity-20"
           :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
           :disabled="!isTimeframeSelectable(timeframe)"
           @click="selectGeneratedTimeframe(timeframe)"
@@ -2718,7 +2718,7 @@ onBeforeUnmount(() => {
                 </p>
                 <button
                   type="button"
-                  class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
+                  class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
                   :disabled="!canGenerateMarketData"
                   @click="generateMarketData"
                 >
@@ -2732,7 +2732,7 @@ onBeforeUnmount(() => {
                     v-for="timeframe in chartTimeframeOptions"
                     :key="timeframe.id"
                     type="button"
-                    class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-20"
+                    class="text-[9px] font-mono font-black uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-75 disabled:opacity-20"
                     :class="activeGeneratedTimeframe === timeframe.id ? 'opacity-100' : 'opacity-35'"
                     :disabled="!isTimeframeSelectable(timeframe)"
                     @click="selectGeneratedTimeframe(timeframe)"
@@ -2820,7 +2820,7 @@ onBeforeUnmount(() => {
                         class="flex h-14 items-center justify-between border px-4 text-[11px] font-mono font-black uppercase tracking-[0.25em] transition-colors"
                         :class="[
                           isVectorLocked(field)
-                            ? 'cursor-not-allowed border-black/5 bg-black/[0.02] text-black/20 dark:border-white/5 dark:text-white/15'
+                            ? 'border-black/5 bg-black/[0.02] text-black/20 dark:border-white/5 dark:text-white/15'
                             : 'border-black/15 bg-transparent nier-text-primary hover:border-black/40 dark:border-white/15 dark:hover:border-white/40'
                         ]"
                         :disabled="isVectorLocked(field)"

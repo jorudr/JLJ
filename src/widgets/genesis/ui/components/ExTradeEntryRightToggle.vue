@@ -33,7 +33,7 @@ const closeModeText = (key) => {
           <!-- JOURNAL TOGGLE -->
           <button @click="viewMode = viewMode === 'tactical' ? 'journal' : 'tactical'" 
                   :disabled="commitState === 'loading'"
-                  class="group relative disabled:opacity-50 disabled:cursor-not-allowed">
+                  class="group relative disabled:opacity-50">
              <div class="relative flex items-center justify-center w-12 h-12">
                 <div class="absolute inset-0 border border-black/20 dark:border-white/20 rotate-45 group-hover:bg-black dark:group-hover:bg-white group-hover:border-black dark:border-white transition-all duration-500 shadow-xl"
                      :class="{ 'nier-bg-inverted border-black dark:border-white': viewMode === 'journal' }"></div>
@@ -64,7 +64,7 @@ const closeModeText = (key) => {
                 type="button"
                 @click="isClosed = !isClosed"
                 :disabled="commitState === 'loading'"
-                class="group relative disabled:opacity-50 disabled:cursor-not-allowed"
+                class="group relative disabled:opacity-50"
               >
                  <div class="relative flex items-center justify-center w-12 h-12">
                     <div

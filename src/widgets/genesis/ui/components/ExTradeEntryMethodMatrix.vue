@@ -176,7 +176,7 @@ const closeEntryMethod = () => {
                   <button @click="addExitEntry" 
                           :disabled="totalSize - totalExitSize <= 0"
                           class="w-full py-4 border border-dashed text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2"
-                          :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20 cursor-not-allowed' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
+                          :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                      {{ (totalSize - totalExitSize <= 0) ? (locale === 'ru' ? 'ОБЪЕМ ИСЧЕРПАН' : 'VOLUME DEPLETED') : (locale === 'ru' ? 'ДОБАВИТЬ ВЫХОД' : 'Add Exit Node') }}
                   </button>

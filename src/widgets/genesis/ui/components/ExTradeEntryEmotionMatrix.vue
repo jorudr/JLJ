@@ -46,7 +46,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                               selectedEmotions.includes(emotion.label) 
                                 ? 'bg-white border-white' 
                                 : 'bg-transparent border-white/10 hover:border-white/30',
-                              isEmotionDisabled(emotion.label) ? 'opacity-20 cursor-not-allowed grayscale' : ''
+                              isEmotionDisabled(emotion.label) ? 'opacity-20 grayscale' : ''
                             ]">
                       <span class="text-[13px] font-mono font-black tracking-widest uppercase transition-colors"
                             :class="selectedEmotions.includes(emotion.label) ? 'text-black' : 'text-white/80 group-hover:text-white'">

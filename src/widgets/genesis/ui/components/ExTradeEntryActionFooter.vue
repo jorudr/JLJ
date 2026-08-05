@@ -239,7 +239,7 @@ const getForexCurrencyPair = (symbol) => {
 
               <div v-else-if="activeSector === 'fee'" :key="'fee'" class="flex items-center gap-8">
                 <button @click="!isFixedFeeAsset && (feeType = feeType === '%' ? '$' : '%')" 
-                        :class="[isFixedFeeAsset ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/10']"
+                        :class="[isFixedFeeAsset ? 'opacity-30' : 'hover:bg-white/10']"
                         class="flex items-center justify-center w-6 h-6 text-xl font-mono font-bold text-white shrink-0 transition-colors">
                   {{ feeType }}
                 </button>
@@ -283,7 +283,7 @@ const getForexCurrencyPair = (symbol) => {
 
             <button @click="submit" :disabled="commitState !== 'idle'"
                     class="group relative h-9 px-6 bg-white/10 border border-white/30 transition-all duration-300 flex items-center justify-center min-w-[120px]"
-                    :class="commitState === 'idle' ? 'hover:bg-white cursor-pointer' : 'cursor-not-allowed'">
+                    :class="commitState === 'idle' ? 'hover:bg-white cursor-pointer' : ''">
               <span v-if="commitState === 'idle'" class="relative z-10 text-[9px] uppercase tracking-[0.5em] font-black text-white group-hover:text-black">
                 {{ initialTrade ? (locale === 'ru' ? 'ОБНОВИТЬ' : 'UPDATE') : (locale === 'ru' ? 'СОХРАНИТЬ' : 'COMMIT') }}
               </span>

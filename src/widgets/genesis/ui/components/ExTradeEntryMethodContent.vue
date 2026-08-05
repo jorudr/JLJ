@@ -130,7 +130,7 @@ const handleExitSizeInput = (event, target) => {
           </button>
         </div>
 
-        <button type="button" :disabled="totalSize - totalExitSize <= 0" class="mt-2 flex w-full items-center justify-center gap-2 border border-dashed py-4 text-[9px] font-mono uppercase tracking-widest transition-all" :class="totalSize - totalExitSize <= 0 ? 'cursor-not-allowed border-black/5 text-black/20 dark:border-white/5 dark:text-white/20' : 'border-black/20 text-black/40 hover:border-black hover:text-black dark:border-white/20 dark:text-white/40 dark:hover:border-white dark:hover:text-white'" @click="addExitEntry">
+        <button type="button" :disabled="totalSize - totalExitSize <= 0" class="mt-2 flex w-full items-center justify-center gap-2 border border-dashed py-4 text-[9px] font-mono uppercase tracking-widest transition-all" :class="totalSize - totalExitSize <= 0 ? 'border-black/5 text-black/20 dark:border-white/5 dark:text-white/20' : 'border-black/20 text-black/40 hover:border-black hover:text-black dark:border-white/20 dark:text-white/40 dark:hover:border-white dark:hover:text-white'" @click="addExitEntry">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
           {{ totalSize - totalExitSize <= 0 ? (locale === 'ru' ? 'ОБЪЕМ ИСЧЕРПАН' : 'VOLUME DEPLETED') : (locale === 'ru' ? 'ДОБАВИТЬ ВЫХОД' : 'Add Exit Node') }}
         </button>

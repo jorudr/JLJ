@@ -155,7 +155,7 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
         <button
           @click="emit('close')"
           :disabled="commitState === 'loading'"
-          class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="group relative h-14 w-14 bg-transparent border border-black/20 dark:border-white/20 hover:bg-black dark:hover:bg-white transition-all duration-500 disabled:opacity-50"
         >
            <div class="relative w-full h-full flex items-center justify-center">
               <svg

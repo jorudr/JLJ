@@ -63,7 +63,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
                           class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center transition-all duration-500 group/node"
                           :class="[
                             cond.isMismatched 
-                              ? 'bg-red-500/10 border-red-500/30 cursor-not-allowed'
+                              ? 'bg-red-500/10 border-red-500/30'
                               : (isConditionActive(cond.id, cond.scenarioId)
                                 ? 'nier-bg-inverted border-black dark:border-white shadow-[0_0_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
                                 : (cond.priority === 'REQUIRED' ? 'bg-red-500/[0.05] border-red-500/30 hover:border-red-500' : cond.priority === 'ADDITIONAL' ? 'bg-blue-500/[0.05] border-blue-500/30 hover:border-blue-500' : 'bg-black/[0.02] dark:bg-white/[0.02] nier-border-primary hover:border-black dark:hover:border-white'))

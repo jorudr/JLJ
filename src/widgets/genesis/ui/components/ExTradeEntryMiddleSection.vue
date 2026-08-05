@@ -760,19 +760,19 @@ const summarySelectedEmotions = computed(() => {
                       <div class="grid w-full max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Точка входа', 'Entry price') }}</span>
-                          <input v-model="entry" type="text" inputmode="decimal" placeholder="0.00" :disabled="hasEntryMethodPositions" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-35 focus:border-white/80" :title="hasEntryMethodPositions ? tr('Точка входа задаётся в методе входа', 'Entry price is set in the entry method') : ''" @input="sanitizeTradeNumberInput($event, 'entry')" />
+                          <input v-model="entry" type="text" inputmode="decimal" placeholder="0.00" :disabled="hasEntryMethodPositions" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:opacity-35 focus:border-white/80" :title="hasEntryMethodPositions ? tr('Точка входа задаётся в методе входа', 'Entry price is set in the entry method') : ''" @input="sanitizeTradeNumberInput($event, 'entry')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Точка выхода', 'Exit price') }}</span>
-                          <input v-model="exit" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed || exitMethodEnabled" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :title="exitMethodEnabled ? tr('Точка выхода задаётся в методе выхода', 'Exit price is set in the exit method') : ''" @input="sanitizeTradeNumberInput($event, 'exit')" />
+                          <input v-model="exit" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed || exitMethodEnabled" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:opacity-30 focus:border-white/80" :title="exitMethodEnabled ? tr('Точка выхода задаётся в методе выхода', 'Exit price is set in the exit method') : ''" @input="sanitizeTradeNumberInput($event, 'exit')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Размер позиции', 'Position size') }}</span>
-                          <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" :disabled="entryMethodEnabled" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80 disabled:cursor-not-allowed disabled:opacity-35" :title="entryMethodEnabled ? tr('Размер задаётся в методе входа', 'Position size is set in the entry method') : ''" @input="sanitizeTradeNumberInput($event, 'size')" />
+                          <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" :disabled="entryMethodEnabled" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80 disabled:opacity-35" :title="entryMethodEnabled ? tr('Размер задаётся в методе входа', 'Position size is set in the entry method') : ''" @input="sanitizeTradeNumberInput($event, 'size')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Результат', 'Trade result') }}</span>
-                          <input :value="pnl" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed" :aria-label="tr('Результат по сделке', 'Trade result')" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :class="resultMode === 'manual' ? 'text-amber-300' : ''" @input="handlePnlInput" />
+                          <input :value="pnl" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed" :aria-label="tr('Результат по сделке', 'Trade result')" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:opacity-30 focus:border-white/80" :class="resultMode === 'manual' ? 'text-amber-300' : ''" @input="handlePnlInput" />
                         </label>
                       </div>
                     </section>
@@ -843,7 +843,7 @@ const summarySelectedEmotions = computed(() => {
                         </label>
                         <label class="group/risk relative flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Время выхода', 'Exit time') }}</span>
-                          <input readonly type="text" :value="isClosed ? `${formatPart(exitDate, 'year')}.${formatPart(exitDate, 'month')}.${formatPart(exitDate, 'day')} ${formatPart(exitDate, 'hour')}:${formatPart(exitDate, 'minute')}` : '--'" :disabled="!isClosed" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="isClosed && openTemporal('exit')" />
+                          <input readonly type="text" :value="isClosed ? `${formatPart(exitDate, 'year')}.${formatPart(exitDate, 'month')}.${formatPart(exitDate, 'day')} ${formatPart(exitDate, 'hour')}:${formatPart(exitDate, 'minute')}` : '--'" :disabled="!isClosed" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors disabled:cursor-auto disabled:opacity-30 focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="isClosed && openTemporal('exit')" />
                           <span v-if="tradeTimeStyleMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ tradeTimeStyleMessage }}</span>
                         </label>
                         <label class="flex flex-col items-start gap-2">
@@ -1011,19 +1011,19 @@ const summarySelectedEmotions = computed(() => {
           <div v-else-if="viewMode === 'journal'" key="journal" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
             <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col border-transparent bg-transparent">
               <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
-                <button type="button" disabled aria-disabled="true" aria-label="Основные данные сделки" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" aria-label="Основные данные сделки" class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.7" />
                     <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
                   </svg>
                 </button>
-                <button type="button" disabled aria-disabled="true" aria-label="Проекция" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" aria-label="Проекция" class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M4 17l4-5 4 3 5-8 3 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
                     <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                   </svg>
                 </button>
-                <button type="button" disabled aria-disabled="true" aria-label="График" class="grid h-11 w-12 cursor-not-allowed place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" aria-label="График" class="grid h-11 w-12 place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M7 4v16M17 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
                     <path d="M5 8h4v7H5zM15 6h4v10h-4z" fill="currentColor" />
@@ -1255,19 +1255,19 @@ const summarySelectedEmotions = computed(() => {
           <div v-else-if="viewMode === 'method'" key="method" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
             <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col border-transparent bg-transparent">
               <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
-                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Основные данные сделки' : 'Trade details'" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Основные данные сделки' : 'Trade details'" class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.7" />
                     <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
                   </svg>
                 </button>
-                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'" class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M4 17l4-5 4 3 5-8 3 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
                     <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                   </svg>
                 </button>
-                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'График' : 'Chart'" class="grid h-11 w-12 cursor-not-allowed place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                <button type="button" disabled aria-disabled="true" :aria-label="locale === 'ru' ? 'График' : 'Chart'" class="grid h-11 w-12 place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M7 4v16M17 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
                     <path d="M5 8h4v7H5zM15 6h4v10h-4z" fill="currentColor" />
