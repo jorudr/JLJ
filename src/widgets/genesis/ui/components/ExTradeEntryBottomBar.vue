@@ -8,6 +8,7 @@ const tr = (ru: string, en: string) => locale.value === 'ru' ? ru : en
 
 defineProps<{
   isTradeEntryOpen: boolean
+  isEditing?: boolean
   isSimulatorOpen?: boolean
   isCloseModeActive: boolean
   commitState?: 'idle' | 'loading' | 'success'
@@ -52,7 +53,7 @@ const emit = defineEmits<{
         type="button"
         class="group relative flex h-10 w-10 cursor-default items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80 disabled:opacity-70"
         :disabled="commitState !== 'idle'"
-        :aria-label="tr('Сохранить сделку', 'Save trade')"
+        :aria-label="isEditing ? tr('Обновить сделку', 'Update trade') : tr('Сохранить сделку', 'Save trade')"
         @click="emit('save-trade')"
       >
         <svg v-if="commitState === 'loading'" viewBox="0 0 24 24" fill="none" class="h-5 w-5 animate-spin" aria-hidden="true">
@@ -62,7 +63,7 @@ const emit = defineEmits<{
           <path d="M5 12.5 9.5 17 19 7.5" />
         </svg>
         <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-          [ {{ tr('СОХРАНИТЬ_СДЕЛКУ', 'SAVE_TRADE') }} ]
+          [ {{ isEditing ? tr('ОБНОВИТЬ_СДЕЛКУ', 'UPDATE_TRADE') : tr('СОХРАНИТЬ_СДЕЛКУ', 'SAVE_TRADE') }} ]
         </span>
       </button>
 

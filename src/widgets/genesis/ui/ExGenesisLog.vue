@@ -3,7 +3,7 @@
     
     
 
-    <div v-show="!showNodeMap" class="contents">
+    <div v-if="!showNodeMap && !isTradeEntryOpen" class="contents">
 
       <!-- CANVAS LAYER (Shared) -->
       <canvas v-show="viewType === 'cube'"
@@ -1038,19 +1038,36 @@
           </button>
        </div>
     </div>
-  </div>
+  <Transition name="page-reify">
+    <ExTradeEntry v-if="isTradeEntryOpen"
+                  ref="tradeEntryRef"
+                  class="absolute inset-0 z-[2000]"
+                  :key="editingTrade?.id || 'new-trade-entry'"
+                  :initial-trade="editingTrade"
+                  @close="closeTradeEntry"
+                  @addTrade="closeTradeEntry"
+                  @updateTrade="closeTradeEntry"
+                  @panel-change="handleTradeEntryPanelChange" />
+  </Transition>
 
-  <Teleport to="body">
-    <Transition name="page-reify">
-       <ExTradeEntry v-if="isTradeEntryOpen" 
-                     class="fixed inset-0 z-[9999] w-screen h-screen"
-                     :key="editingTrade?.id || 'new-trade-entry'"
-                     :initial-trade="editingTrade"
-                     @close="isTradeEntryOpen = false; editingTrade = undefined" 
-                     @addTrade="isTradeEntryOpen = false; editingTrade = undefined"
-                     @updateTrade="isTradeEntryOpen = false; editingTrade = undefined" />
-    </Transition>
-  </Teleport>
+  <ExTradeEntryBottomBar
+    v-if="isTradeEntryOpen"
+    :is-trade-entry-open="isTradeEntryOpen"
+    :is-editing="Boolean(editingTrade?.id)"
+    :is-close-mode-active="isTradeEntryCloseModeActive"
+    :commit-state="tradeEntryCommitState"
+    :active-panel="activeTradeEntryPanel"
+    :strategies="strategies"
+    :selected-strategy-id="selectedStrategyId"
+    :is-matrix-loading="isMatrixLoading"
+    @toggle-entry="closeTradeEntry"
+    @save-trade="saveTradeEntry"
+    @toggle-close-mode="toggleTradeEntryPanel('close')"
+    @open-panel="toggleTradeEntryPanel"
+    @update-strategy="updateTradeEntryStrategy"
+  />
+
+  </div>
 
     <Teleport to="body">
        <Transition name="fade-blur">
@@ -1281,6 +1298,7 @@ import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
+import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1488,9 +1506,21 @@ const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
 const selectedTradeId = ref<string | null>(null)
 const editingTrade = ref<any>(undefined)
+const tradeEntryRef = ref<any>(null)
+const isTradeEntryCloseModeActive = ref(true)
+const activeTradeEntryPanel = ref<'matrix' | 'journal' | 'method' | null>(null)
+const tradeEntryCommitState = computed(() => {
+  const exposedState = tradeEntryRef.value?.commitState
+  if (exposedState && typeof exposedState === 'object' && 'value' in exposedState) {
+    return exposedState.value || 'idle'
+  }
+  return exposedState || 'idle'
+})
 
 const editTrade = (trade: any) => {
   editingTrade.value = trade
+  isTradeEntryCloseModeActive.value = trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open'
+  activeTradeEntryPanel.value = null
   isTradeEntryOpen.value = true
 }
 
@@ -1504,6 +1534,49 @@ const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
 const imageLoadError = ref(false)
+
+const closeTradeEntryPanels = () => {
+  tradeEntryRef.value?.closePanels?.()
+  activeTradeEntryPanel.value = null
+}
+
+const closeTradeEntry = () => {
+  isTradeEntryOpen.value = false
+  editingTrade.value = undefined
+  isTradeEntryCloseModeActive.value = true
+  activeTradeEntryPanel.value = null
+}
+
+const saveTradeEntry = () => {
+  if (!isTradeEntryOpen.value) return
+  tradeEntryRef.value?.saveTrade?.()
+}
+
+const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method') => {
+  if (!isTradeEntryOpen.value) return
+
+  const result = tradeEntryRef.value?.openPanel?.(panel)
+  if (panel === 'close') {
+    isTradeEntryCloseModeActive.value = result !== false
+    activeTradeEntryPanel.value = null
+    return
+  }
+
+  if (panel === 'journal' && activeTradeEntryPanel.value === 'journal') {
+    activeTradeEntryPanel.value = null
+    return
+  }
+
+  activeTradeEntryPanel.value = panel
+}
+
+const handleTradeEntryPanelChange = (panel: 'matrix' | 'journal' | 'method' | null) => {
+  activeTradeEntryPanel.value = panel
+}
+
+const updateTradeEntryStrategy = (strategyId: string) => {
+  selectedStrategyId.value = strategyId
+}
 
 watch(isHudVisible, (val) => {
   emit('hudState', val)

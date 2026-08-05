@@ -951,6 +951,7 @@
     <ExTradeEntryBottomBar
       v-if="isTradeEntryOpen"
       :is-trade-entry-open="isTradeEntryOpen"
+      :is-editing="false"
       :is-simulator-open="showSimulator"
       :is-close-mode-active="isTradeEntryCloseModeActive"
       :commit-state="tradeEntryCommitState"
