@@ -954,9 +954,12 @@
       :is-simulator-open="showSimulator"
       :is-close-mode-active="isTradeEntryCloseModeActive"
       :active-panel="activeTradeEntryPanel"
+      :strategies="strategies"
+      :selected-strategy-id="selectedStrategyId"
       @toggle-entry="toggleTradeEntry"
       @toggle-close-mode="toggleTradeEntryPanel('close')"
       @open-panel="toggleTradeEntryPanel"
+      @update-strategy="updateTradeEntryStrategy"
     />
 
     <Transition name="page-reify">
@@ -1096,6 +1099,10 @@ const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method')
 
 const handleTradeEntryPanelChange = (panel: 'matrix' | 'journal' | 'method' | null) => {
   activeTradeEntryPanel.value = panel
+}
+
+const updateTradeEntryStrategy = (strategyId: string) => {
+  selectedStrategyId.value = strategyId
 }
 
 const closeTradeEntry = () => {

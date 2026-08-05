@@ -1,15 +1,22 @@
 <script setup lang="ts">
+import type { Strategy } from '~/widgets/system-protocol-select'
+import ExTradeEntryProtocolButton from './ExTradeEntryProtocolButton.vue'
+
 defineProps<{
   isTradeEntryOpen: boolean
   isSimulatorOpen?: boolean
   isCloseModeActive: boolean
   activePanel: 'matrix' | 'journal' | 'method' | null
+  strategies: Strategy[]
+  selectedStrategyId: string | null
+  isMatrixLoading?: boolean
 }>()
 
 const emit = defineEmits<{
   (event: 'toggle-entry'): void
   (event: 'toggle-close-mode'): void
   (event: 'open-panel', panel: 'matrix' | 'journal' | 'method'): void
+  (event: 'update-strategy', strategyId: string): void
 }>()
 </script>
 
@@ -42,7 +49,7 @@ const emit = defineEmits<{
 
       <template v-if="isTradeEntryOpen">
         <button
-        type="button"
+          type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
           :class="isCloseModeActive
             ? 'border-white/30 bg-white/10 text-white'
@@ -57,6 +64,13 @@ const emit = defineEmits<{
             [ РЕЖИМ_ЗАКРЫТИЯ ]
           </span>
         </button>
+
+        <ExTradeEntryProtocolButton
+          :model-value="selectedStrategyId"
+          :strategies="strategies"
+          :is-loading="isMatrixLoading"
+          @update:model-value="emit('update-strategy', $event)"
+        />
 
         <button
           type="button"
