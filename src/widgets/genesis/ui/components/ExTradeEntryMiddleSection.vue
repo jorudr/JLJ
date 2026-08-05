@@ -263,6 +263,45 @@ const summaryProtocolGroups = computed(() => {
     conditions: Array.isArray(group.scenario.info.conditions) ? group.scenario.info.conditions : []
   }));
 });
+
+const getSummaryConditionLabel = (condition) => String(
+  condition?.info?.name
+  || condition?.name
+  || condition?.label
+  || condition?.params?.customName
+  || condition?.id
+  || ''
+).trim().toUpperCase();
+
+const summarySelectedConditions = computed(() => {
+  if (savedTradeSummary.value) {
+    return [...new Map(
+      summaryProtocolGroups.value
+        .flatMap(group => group.conditions.map(condition => ({
+          id: `${group.label}-${condition.id || condition.info?.name || condition.name}`,
+          label: getSummaryConditionLabel(condition)
+        })))
+        .filter(condition => condition.label)
+        .map(condition => [condition.id, condition])
+    ).values()];
+  }
+
+  const nodes = [
+    ...(Array.isArray(matrixNodes?.value) ? findAllNodes(matrixNodes.value) : []),
+    ...(DEFAULT_ENTRY_CONDITIONS || []),
+    ...(DEFAULT_EXIT_CONDITIONS || [])
+  ];
+  const conditionLookup = new Map(nodes.map(node => [node?.id, node]));
+
+  return [...(activeConditions?.value || [])]
+    .map(id => ({ id, label: getSummaryConditionLabel(conditionLookup.get(id) || { id }) }))
+    .filter(condition => condition.label);
+});
+
+const summarySelectedEmotions = computed(() => {
+  const emotions = savedTradeSummary.value?.emotions ?? selectedEmotions?.value ?? [];
+  return [...new Set(Array.isArray(emotions) ? emotions : [])].filter(Boolean);
+});
 </script>
 
 <template>
@@ -780,6 +819,23 @@ const summaryProtocolGroups = computed(() => {
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
                           <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryRatio(summaryDisplayTrade.riskReward) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="mt-2 grid w-full grid-cols-1 gap-8 border-t border-white/10 pt-6 sm:grid-cols-2">
+                        <div class="min-w-0">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ВЫБРАННЫЕ УСЛОВИЯ</span>
+                          <div v-if="summarySelectedConditions.length" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                            <span v-for="condition in summarySelectedConditions" :key="condition.id" class="text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ condition.label }}</span>
+                          </div>
+                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">УСЛОВИЯ НЕ ВЫБРАНЫ</span>
+                        </div>
+                        <div class="min-w-0">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ЭМОЦИИ</span>
+                          <div v-if="summarySelectedEmotions.length" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                            <span v-for="emotion in summarySelectedEmotions" :key="emotion" class="text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ emotion }}</span>
+                          </div>
+                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">ЭМОЦИИ НЕ ВЫБРАНЫ</span>
                         </div>
                       </div>
                     </section>
