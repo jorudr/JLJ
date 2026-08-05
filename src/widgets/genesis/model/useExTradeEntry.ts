@@ -393,6 +393,7 @@ onMounted(() => {
       
       if (usesExitMethod) {
         exitMethodEnabled.value = true
+        exitEntriesSizeLinked.value = false
         exitEntries.value = exitExecs.map(e => ({
           price: e.price,
           size: e.size,
@@ -401,6 +402,7 @@ onMounted(() => {
         }))
       } else {
         exitMethodEnabled.value = false
+        exitEntriesSizeLinked.value = true
         exit.value = exitExecs[0]?.price || t.exit || ''
         exitFee.value = t.exitFee || ''
       }
@@ -1122,7 +1124,7 @@ const activeMultipleEntries = computed(() =>
   entryMethodType.value === 'PYRAMIDING' ? pyramidingEntries.value : averagingDownEntries.value
 )
 
-const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 1)
+const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 0)
 
 const hasActiveMethodNode = computed(() => {
   const pType = entryMethodType.value === 'PYRAMIDING' ? 'pyramiding' : 'averaging'
@@ -1135,6 +1137,7 @@ const addMultipleEntry = () => {
 
 // Exit State
 const exitEntries = ref([])
+const exitEntriesSizeLinked = ref(true)
 const exitMethodEnabled = computed(() => exitEntries.value.length > 0)
 
 const totalExitSize = computed(() => {
@@ -1161,8 +1164,13 @@ const addExitEntry = () => {
   exitEntries.value.push({ id: Date.now(), price: '', size: remaining > 0 ? remaining.toFixed(2) : '' })
 }
 
+const setExitSizeManual = () => {
+  exitEntriesSizeLinked.value = false
+}
+
 const removeExitEntry = (id) => {
   exitEntries.value = exitEntries.value.filter(e => e.id !== id)
+  if (exitEntries.value.length === 0) exitEntriesSizeLinked.value = true
 }
 
 const removeMultipleEntry = (id) => {
@@ -1289,6 +1297,11 @@ const confirmAutoGenerate = () => {
 const totalSize = computed(() => {
   if (!entryMethodEnabled.value || activeMultipleEntries.value.length === 0) return parseFloat(size.value) || 0
   return activeMultipleEntries.value.reduce((sum, e) => sum + (parseFloat(e.size) || 0), 0)
+})
+
+watch(totalSize, (nextTotalSize) => {
+  if (!exitEntriesSizeLinked.value || exitEntries.value.length !== 1) return
+  exitEntries.value[0].size = nextTotalSize > 0 ? nextTotalSize.toFixed(2) : ''
 })
 
 const averageEntry = computed(() => {
@@ -2012,6 +2025,7 @@ watch(isClosed, (closed) => {
   exit.value = ''
   exitFee.value = ''
   exitEntries.value = []
+  exitEntriesSizeLinked.value = true
   overridePnl.value = null
   resultMode.value = 'auto'
 })
@@ -2046,6 +2060,7 @@ const resetForm = () => {
   pyramidingEntries.value = []
   averagingDownEntries.value = []
   exitEntries.value = []
+  exitEntriesSizeLinked.value = true
   showEmotionSelector.value = false
   viewMode.value = 'tactical'
   isTemporalOpen.value = false
@@ -2483,9 +2498,11 @@ const submit = async () => {
     addMultipleEntry,
     exitEntries,
     exitMethodEnabled,
+    exitEntriesSizeLinked,
     totalExitSize,
     averageExit,
     addExitEntry,
+    setExitSizeManual,
     removeExitEntry,
     removeMultipleEntry,
     showAutoPrompt,

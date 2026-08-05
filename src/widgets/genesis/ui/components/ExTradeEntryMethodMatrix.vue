@@ -74,7 +74,7 @@ const closeEntryMethod = () => {
           <ExPanel class="w-full max-w-[500px]" noPadding variant="light" :no-shadow="true">
             <template #header>
               <div class="flex items-center justify-between w-full">
-                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY_METHOD' }}</span>
+                <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black">{{ locale === 'ru' ? 'МЕТОД ВХОДА' : 'ENTRY METHOD' }}</span>
                 <div class="flex items-center gap-12"></div>
               </div>
             </template>
@@ -110,11 +110,11 @@ const closeEntryMethod = () => {
                   <div v-for="(ent, idx) in activeMultipleEntries" :key="ent.id" class="flex items-center gap-4">
                      <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'УРОВЕНЬ_ЦЕНЫ' : 'Price_Lvl' }}</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'УРОВЕНЬ ЦЕНЫ' : 'Price Lvl' }}</span>
 	                        <input v-model="ent.price" type="text" inputmode="decimal" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" @input="sanitizeInlineNumberInput($event, ent, 'price')" />
                      </div>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'РАЗМЕР ЛОТА' : 'Lot Size' }}</span>
 	                        <input v-model="ent.size" type="text" inputmode="decimal" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" @input="sanitizeInlineNumberInput($event, ent, 'size')" />
                      </div>
                      <button @click="removeMultipleEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
@@ -125,7 +125,7 @@ const closeEntryMethod = () => {
                   <div class="flex items-center gap-2 mt-2">
                      <button @click="addMultipleEntry" class="flex-1 py-4 border border-dashed border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                        {{ locale === 'ru' ? 'ДОБАВИТЬ_ПОЗИЦИЮ' : 'Add_Position_Node' }}
+                        {{ locale === 'ru' ? 'ДОБАВИТЬ ПОЗИЦИЮ' : 'Add Position Node' }}
                      </button>
                      <button v-if="hasActiveMethodNode && !showAutoPrompt && activeMultipleEntries.length === 0" @click="toggleAutoPrompt" class="flex-1 py-4 border border-dashed border-black/50 dark:border-white/50 nier-text-primary hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 text-[9px] font-mono tracking-widest uppercase transition-all flex items-center justify-center gap-2">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -137,11 +137,11 @@ const closeEntryMethod = () => {
                   <div v-if="showAutoPrompt" class="mt-2 p-3 border border-black/30 dark:border-white/30 bg-black/5 dark:bg-white/5 flex flex-col gap-3">
                     <div class="flex items-center gap-3">
                       <div class="flex-1">
-                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 nier-text-primary mb-1">{{ locale === 'ru' ? 'Базовая_Цена' : 'Base_Price' }}</span>
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 nier-text-primary mb-1">{{ locale === 'ru' ? 'Базовая Цена' : 'Base Price' }}</span>
 	                        <input v-model="autoEntryBasePrice" type="text" inputmode="decimal" placeholder="Price..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" @input="sanitizeTradeNumberInput($event, 'autoEntryBasePrice')" />
                       </div>
                       <div class="flex-1">
-                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 nier-text-primary mb-1">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
+                        <span class="block text-[7px] uppercase tracking-[0.4em] font-bold opacity-60 nier-text-primary mb-1">{{ locale === 'ru' ? 'РАЗМЕР ЛОТА' : 'Lot Size' }}</span>
 	                        <input v-model="autoEntryBaseLots" type="text" inputmode="decimal" placeholder="Lots..." class="nier-input !text-black dark:!text-white border-b border-black/30 dark:border-white/30 pb-1 w-full bg-transparent focus:border-black dark:focus:border-white focus:outline-none" @input="sanitizeTradeNumberInput($event, 'autoEntryBaseLots')" />
                       </div>
                     </div>
@@ -161,11 +161,11 @@ const closeEntryMethod = () => {
                   <div v-for="(ent, idx) in exitEntries" :key="ent.id" class="flex items-center gap-4">
                      <span class="text-[8px] font-mono opacity-40 font-black tracking-widest w-6">#{{ idx + 1 }}</span>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'Уровень_Выхода' : 'Exit_Lvl' }}</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'Уровень Выхода' : 'Exit Lvl' }}</span>
 	                        <input v-model="ent.price" type="text" inputmode="decimal" placeholder="0.00" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" @input="sanitizeInlineNumberInput($event, ent, 'price')" />
                      </div>
                      <div class="flex-1 flex flex-col gap-1">
-                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'РАЗМЕР_ЛОТА' : 'Lot_Size' }}</span>
+                        <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'РАЗМЕР ЛОТА' : 'Lot Size' }}</span>
 	                        <input v-model="ent.size" type="text" inputmode="decimal" placeholder="0.01" class="nier-input !text-black dark:!text-white border-b border-black/20 dark:border-white/20 pb-1 w-full" @input="sanitizeInlineNumberInput($event, ent, 'size')" />
                      </div>
                      <button @click="removeExitEntry(ent.id)" class="w-8 h-8 flex items-center justify-center border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all mt-4">
@@ -178,7 +178,7 @@ const closeEntryMethod = () => {
                           class="w-full py-4 border border-dashed text-[9px] font-mono tracking-widest uppercase transition-all mt-2 flex items-center justify-center gap-2"
                           :class="(totalSize - totalExitSize <= 0) ? 'border-black/5 dark:border-white/5 text-black/20 dark:text-white/20 cursor-not-allowed' : 'border-black/20 dark:border-white/20 text-black/40 dark:text-white/40 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'">
                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                     {{ (totalSize - totalExitSize <= 0) ? (locale === 'ru' ? 'ОБЪЕМ ИСЧЕРПАН' : 'VOLUME_DEPLETED') : (locale === 'ru' ? 'ДОБАВИТЬ_ВЫХОД' : 'Add_Exit_Node') }}
+                     {{ (totalSize - totalExitSize <= 0) ? (locale === 'ru' ? 'ОБЪЕМ ИСЧЕРПАН' : 'VOLUME DEPLETED') : (locale === 'ru' ? 'ДОБАВИТЬ ВЫХОД' : 'Add Exit Node') }}
                   </button>
                 </div>
               </div>
@@ -188,11 +188,11 @@ const closeEntryMethod = () => {
                 <!-- ENTRY FOOTER -->
                 <div v-if="activeProtocolTab === 'PYRAMIDING' || activeProtocolTab === 'AVERAGING_DOWN'" class="flex items-center justify-between" :class="{ 'opacity-30 grayscale': !entryMethodEnabled }">
                   <div class="flex flex-col gap-1">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВХОДА' : 'Aggregated_Avg_Entry' }}</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВХОДА' : 'Aggregated Avg Entry' }}</span>
                      <span class="text-sm font-mono font-black nier-text-primary">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
                   </div>
                   <div class="flex flex-col gap-1 items-end">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ' : 'Total_Volume' }}</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ' : 'Total Volume' }}</span>
                      <span class="text-sm font-mono font-black nier-text-primary">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
                   </div>
                 </div>
@@ -200,11 +200,11 @@ const closeEntryMethod = () => {
                 <!-- EXIT FOOTER -->
                 <div v-if="activeProtocolTab === 'EXIT'" class="flex items-center justify-between">
                   <div class="flex flex-col gap-1">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВЫХОДА' : 'Aggregated_Avg_Exit' }}</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'СРЕДНЯЯ ЦЕНА ВЫХОДА' : 'Aggregated Avg Exit' }}</span>
                      <span class="text-sm font-mono font-black nier-text-primary">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
                   </div>
                   <div class="flex flex-col gap-1 items-end">
-                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ ВЫХОДА' : 'Total_Exit_Volume' }}</span>
+                     <span class="text-[7px] uppercase tracking-[0.4em] font-bold opacity-40 nier-text-primary">{{ locale === 'ru' ? 'ОБЩИЙ ОБЪЕМ ВЫХОДА' : 'Total Exit Volume' }}</span>
                      <span class="text-sm font-mono font-black" :class="(totalExitSize > totalSize) ? 'text-rose-500' : 'nier-text-primary'">
                         {{ totalExitSize > 0 ? totalExitSize.toFixed(2) : '0.00' }} <span class="opacity-40 text-xs">/ {{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
                      </span>
@@ -232,7 +232,7 @@ const closeEntryMethod = () => {
             <div class="grid grid-cols-2 divide-x divide-black/5 dark:divide-white/5 h-[450px] nier-text-primary">
               <div class="flex flex-col p-10 gap-8">
                 <div class="flex flex-col gap-2">
-                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Часовой_пояс' : 'Time_Zone' }}</span>
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Часовой пояс' : 'Time Zone' }}</span>
                   <div class="relative" @click.stop>
                     <input v-model="timeZoneSearch"
                            spellcheck="false"
@@ -278,12 +278,12 @@ const closeEntryMethod = () => {
                     </Transition>
                   </div>
                   <span class="text-[7px] uppercase tracking-[0.3em] text-black/30 dark:text-white/20">
-                    {{ locale === 'ru' ? 'Будет сохранён в данных сделки' : 'Saved_into_trade_data' }}
+                    {{ locale === 'ru' ? 'Будет сохранён в данных сделки' : 'Saved into trade data' }}
                   </span>
                 </div>
 
                 <div class="flex flex-col gap-2">
-                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">Active_Target</span>
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">Active Target</span>
                   <div class="flex gap-2">
                     <button v-for="t in ['open', 'exit']" :key="t"
                             @click="activeTemporalTarget = t"
@@ -297,11 +297,11 @@ const closeEntryMethod = () => {
                 <div class="flex flex-col gap-4 pt-4 border-t border-black/5 dark:border-white/5">
                   <button @click="setActiveTemporalToNow" 
                           class="w-full py-2 border nier-border-primary text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
-                    Sync_to_Current_System_Time
+                    Sync to Current System Time
                   </button>
                   <button @click="cloneOpenTemporalToExit" 
                           class="w-full py-2 border nier-border-primary text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
-                    Clone_Open_Protocol_to_Exit
+                    Clone Open Protocol to Exit
                   </button>
                 </div>
               </div>

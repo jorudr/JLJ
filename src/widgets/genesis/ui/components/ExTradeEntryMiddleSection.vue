@@ -767,7 +767,7 @@ const summarySelectedEmotions = computed(() => {
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Размер позиции', 'Position size') }}</span>
-                          <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'size')" />
+                          <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" :disabled="entryMethodEnabled" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80 disabled:cursor-not-allowed disabled:opacity-35" :title="entryMethodEnabled ? tr('Размер задаётся в методе входа', 'Position size is set in the entry method') : ''" @input="sanitizeTradeNumberInput($event, 'size')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Результат', 'Trade result') }}</span>
