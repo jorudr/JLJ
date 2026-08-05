@@ -147,7 +147,7 @@ const formatDateTactical = (dateStr) => {
 <template>
 <!-- MIDDLE SECTION: TACTICAL MENUS OR JOURNAL -->
     <div class="w-full flex justify-center">
-      <div class="w-[calc(100vw-3rem)] min-w-0 max-w-[1770px] pb-12 py-8 sm:w-[calc(100vw-5rem)] md:w-[calc(100vw-6rem)] xl:w-[90vw] 2xl:w-[90vw]">
+      <div class="w-full min-w-0 max-w-none pt-8 pb-12">
         <Transition name="sector-swap" mode="out-in">
           <div v-if="viewMode === 'tactical'" key="tactical" class="flex flex-col space-y-12">
             <!-- CONDITION CONFIGURATION PANEL (LEGACY DESCRIPTION AESTHETIC) -->
@@ -354,9 +354,10 @@ const formatDateTactical = (dateStr) => {
 
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
              <div v-else class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
-               <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border-transparent bg-transparent group z-10">
+                <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border-transparent bg-transparent group z-10">
                 <div v-show="activeProjectionMode === 'core'" class="absolute inset-0 flex items-start justify-start overflow-y-auto overflow-x-hidden custom-scrollbar p-10 text-left text-white">
-                  <div class="flex w-full max-w-4xl flex-col items-start gap-14">
+                  <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                    <div class="flex w-full max-w-4xl flex-col items-start gap-14">
                     <section class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
                       <h1 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Актив и направление</h1>
@@ -487,6 +488,7 @@ const formatDateTactical = (dateStr) => {
                         </label>
                       </div>
                     </section>
+                    </div>
                   </div>
                 </div>
 
@@ -495,7 +497,11 @@ const formatDateTactical = (dateStr) => {
                   class="absolute inset-0 h-full w-full"
                   :class="activeProjectionMode === 'chart' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
                 >
-                   <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                  <div class="h-full w-full p-10">
+                    <div class="relative h-full w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                      <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                    </div>
+                  </div>
                 </div>
 
                 <div
@@ -503,15 +509,19 @@ const formatDateTactical = (dateStr) => {
                   class="absolute inset-0 h-full w-full transition-opacity duration-300"
                   :class="activeProjectionMode === 'projection' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
                 >
-                  <div v-if="hasValidProjection" class="absolute inset-0 w-full h-full">
-                     <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
-                  </div>
-                  <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
-                     <div class="w-16 h-px nier-bg-inverted mb-8 group-hover:w-24 transition-all duration-700"></div>
-                     <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
-                     <div class="mt-8 flex gap-2">
-                        <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
+                  <div class="h-full w-full p-10">
+                    <div class="relative h-full w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                      <div v-if="hasValidProjection" class="absolute inset-0 h-full w-full">
+                        <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
+                      </div>
+                      <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
+                        <div class="w-16 h-px nier-bg-inverted mb-8 group-hover:w-24 transition-all duration-700"></div>
+                        <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
+                        <div class="mt-8 flex gap-2">
+                          <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
+                        </div>
                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -557,7 +567,7 @@ const formatDateTactical = (dateStr) => {
              </div>
           </div>
 
-          <div v-else key="journal" class="flex flex-col space-y-8 nier-text-primary">
+          <div v-else key="journal" class="flex flex-col space-y-8 px-6 nier-text-primary sm:px-10 md:px-12 xl:px-16 2xl:px-20">
             <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-6">
               <div class="flex items-center space-x-4">
                 <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45"></div>
