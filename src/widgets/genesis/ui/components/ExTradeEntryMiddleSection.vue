@@ -71,6 +71,7 @@ const expandedNoteIds = ref([]);
 const editingNoteId = ref(null);
 const editNoteTitle = ref("");
 const activeProjectionMode = ref('core');
+const activeEntryFormTab = ref('main');
 
 const startEditContent = (note) => {
   editingContentNoteId.value = note.id;
@@ -396,7 +397,34 @@ const formatDateTactical = (dateStr) => {
                 <div v-show="activeProjectionMode === 'core'" class="absolute inset-0 flex items-start justify-start overflow-y-auto overflow-x-hidden custom-scrollbar p-10 text-left text-white">
                   <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
                     <div class="flex w-full max-w-4xl flex-col items-start gap-14">
-                    <section class="flex flex-col items-start gap-5">
+                    <div class="flex w-full items-center justify-start gap-2 border-b border-white/10 pb-3">
+                      <button
+                        type="button"
+                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        :class="activeEntryFormTab === 'main' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                        @click="activeEntryFormTab = 'main'"
+                      >
+                        ОСНОВНЫЕ
+                      </button>
+                      <button
+                        type="button"
+                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        :class="activeEntryFormTab === 'risk' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                        @click="activeEntryFormTab = 'risk'"
+                      >
+                        РИСК-МЕНЕДЖМЕНТ
+                      </button>
+                      <button
+                        type="button"
+                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        :class="activeEntryFormTab === 'time' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                        @click="activeEntryFormTab = 'time'"
+                      >
+                        ВРЕМЯ
+                      </button>
+                    </div>
+
+                    <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
                       <h1 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Актив и направление</h1>
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
@@ -474,7 +502,7 @@ const formatDateTactical = (dateStr) => {
                       </div>
                     </section>
 
-                    <section class="flex flex-col items-start gap-5">
+                    <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">II.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Точка входа, выхода и размер позиции</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
@@ -493,7 +521,7 @@ const formatDateTactical = (dateStr) => {
                       </div>
                     </section>
 
-                    <section class="flex flex-col items-start gap-5">
+                    <section v-if="activeEntryFormTab === 'risk'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">III.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Стоп лосс и тейк профит</h2>
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
@@ -510,7 +538,7 @@ const formatDateTactical = (dateStr) => {
                       </div>
                     </section>
 
-                    <section class="flex flex-col items-start gap-5">
+                    <section v-if="activeEntryFormTab === 'time'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Время входа и выхода, часовой пояс</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
