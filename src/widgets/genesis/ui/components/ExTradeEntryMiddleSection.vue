@@ -18,6 +18,7 @@ const getForexCurrencyPair = (symbol) => {
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
+import ExButton from '~/shared/ui/ExButton.vue';
 import { computed, ref } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
@@ -144,7 +145,7 @@ const formatNote = (content) => {
     const img = journalEntries.value?.[idx];
     if (img && img.image) {
       const name = img.name || `Visual_Node_${idx}`;
-      return `<div class="my-4 border nier-border-primary bg-black/5 dark:bg-white/5 p-2 relative group"><img src="${img.image}" alt="${name}" class="max-w-full h-auto object-contain max-h-[400px] w-full" /><div class="absolute bottom-4 left-4 nier-bg-panel px-2 py-1 text-[8px] font-mono opacity-80 uppercase tracking-widest border nier-border-primary shadow-lg">${name}</div></div>`;
+      return `<div class="my-4 bg-black/5 dark:bg-white/5 p-2 relative group"><img src="${img.image}" alt="${name}" class="max-w-full h-auto object-contain max-h-[400px] w-full" /><div class="absolute bottom-4 left-4 nier-bg-panel px-2 py-1 text-[8px] font-mono opacity-80 uppercase tracking-widest shadow-lg">${name}</div></div>`;
     }
     return match;
   });
@@ -672,7 +673,7 @@ const formatDateTactical = (dateStr) => {
               </div>
               <div class="flex h-full w-full flex-col space-y-8 overflow-y-auto custom-scrollbar p-10 nier-text-primary">
                 <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-              <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-6">
+              <div class="flex w-full items-center justify-between gap-2 border-b border-white/10 pb-3">
               <div class="flex items-center space-x-4">
                 <div class="flex items-center gap-2">
                    <button @click="archiveMode = 'notes'" 
@@ -699,7 +700,7 @@ const formatDateTactical = (dateStr) => {
             <!-- NOTES TAB CONTENT -->
             <div v-if="archiveMode === 'notes'" class="flex flex-col space-y-8 nier-text-primary">
                <!-- NEW NOTE TEXTAREA -->
-               <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 border nier-border-primary relative nier-text-primary">
+               <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 relative nier-text-primary">
                     <div class="absolute top-4 right-4 flex space-x-4">
                        <button @click="cancelNoteEdit" class="text-[10px] font-mono uppercase tracking-widest opacity-40 hover:opacity-100">{{ locale === 'ru' ? 'Отмена' : 'Cancel' }}</button>
                     </div>
@@ -708,37 +709,37 @@ const formatDateTactical = (dateStr) => {
                     <div class="flex items-center flex-wrap gap-2 pb-4 border-b border-black/5 dark:border-white/5 mb-4">
                        <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-sm mr-4">
                           <button @click="isPreviewMode = false" 
-                                  :class="['px-3 py-1 text-[9px] font-mono transition-all', !isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
+                                  :class="['px-4 py-2 text-[10px] font-mono transition-all', !isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
                              {{ locale === 'ru' ? 'РЕДАКТОР' : 'EDITOR' }}
                           </button>
                           <button @click="isPreviewMode = true" 
-                                  :class="['px-3 py-1 text-[9px] font-mono transition-all', isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
+                                  :class="['px-4 py-2 text-[10px] font-mono transition-all', isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
                              {{ locale === 'ru' ? 'ПРОСМОТР' : 'PREVIEW' }}
                           </button>
                        </div>
 
                        <div v-if="!isPreviewMode" class="flex items-center flex-wrap gap-2">
-                         <button @click="insertFormatting('# ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H1</button>
-                         <button @click="insertFormatting('## ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H2</button>
-                         <button @click="insertFormatting('### ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">H3</button>
-                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('**', '**')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono font-bold transition-all">B</button>
-                         <button @click="insertFormatting('*', '*')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono italic transition-all">I</button>
-                         <button @click="insertFormatting('~~', '~~')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono underline transition-all">U</button>
-                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('- ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">LIST</button>
-                         <button @click="insertFormatting('> ', '')" class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all">QUOTE</button>
-                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('[color=#10b981]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-emerald-500 rounded-full"></div></button>
-                         <button @click="insertFormatting('[color=#ef4444]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-rose-500 rounded-full"></div></button>
-                         <button @click="insertFormatting('[color=#3b82f6]', '[/color]')" class="px-2 py-1 hover:scale-110 transition-all"><div class="w-3 h-3 bg-blue-500 rounded-full"></div></button>
-                         <div class="w-px h-4 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('# ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H1</button>
+                         <button @click="insertFormatting('## ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H2</button>
+                         <button @click="insertFormatting('### ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H3</button>
+                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('**', '**')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono font-bold transition-all">B</button>
+                         <button @click="insertFormatting('*', '*')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono italic transition-all">I</button>
+                         <button @click="insertFormatting('~~', '~~')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono underline transition-all">U</button>
+                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('- ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">LIST</button>
+                         <button @click="insertFormatting('> ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">QUOTE</button>
+                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
+                         <button @click="insertFormatting('[color=#10b981]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-emerald-500 rounded-full"></div></button>
+                         <button @click="insertFormatting('[color=#ef4444]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-rose-500 rounded-full"></div></button>
+                         <button @click="insertFormatting('[color=#3b82f6]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-blue-500 rounded-full"></div></button>
+                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
                          
                          <!-- Visual Attach Dropdown -->
                          <div class="relative group/visuals inline-block">
-                           <button class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all flex items-center gap-1">
+                           <button class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all flex items-center gap-2">
                              {{ locale === 'ru' ? 'ПРИКРЕПИТЬ_МАТЕРИАЛ' : 'ATTACH_VISUAL' }}
-                             <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                            </button>
                            <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
                              <div v-if="!journalEntries?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">{{ locale === 'ru' ? 'НЕТ_СОХРАНЕННЫХ_МАТЕРИАЛОВ' : 'NO_VISUALS_ARCHIVED' }}</div>
@@ -765,21 +766,21 @@ const formatDateTactical = (dateStr) => {
                        </div>
                     </div>
                     <div class="flex justify-end">
-                       <button @click="persistNote" class="group/save relative h-10 px-10 bg-black text-white dark:bg-white dark:text-black font-black border border-black dark:border-white hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all duration-500">
-                         <span class="relative z-10 text-[9px] uppercase tracking-[0.4em]">{{ locale === 'ru' ? 'Сохранить_Запись' : 'Persist_Record' }}</span>
-                       </button>
+                       <ExButton variant="solid" size="sm" @click="persistNote">
+                         {{ locale === 'ru' ? 'СОХРАНИТЬ' : 'SAVE' }}
+                       </ExButton>
                     </div>
                  </div>
                
-               <div v-if="notesList.length === 0 && !isCreatingNote" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
+               <div v-if="notesList.length === 0 && !isCreatingNote" class="flex flex-col items-center justify-center py-32 opacity-30">
                  <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
-                 <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Записи_Не_Найдены' : 'No_Records_Found' }}</span>
+                 <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'НЕТ ЗАПИСЕЙ' : 'NO NOTES' }}</span>
                </div>
 
                <!-- EXISTING NOTES LIST -->
                <div v-else class="flex flex-col space-y-6">
                   <div v-for="note in notesList.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())" :key="note.id" 
-                       class="flex flex-col p-6 border border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.01] relative group/note cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
+                       class="flex flex-col p-6 bg-black/[0.01] dark:bg-white/[0.01] relative group/note cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
                        @click="toggleNote(note.id)"
                        @dblclick="startEditContent(note)">
                      <div class="flex items-center justify-between mb-2 pb-2" :class="expandedNoteIds.includes(note.id) ? 'border-b border-black/5 dark:border-white/5' : ''">
@@ -810,14 +811,14 @@ const formatDateTactical = (dateStr) => {
 
             <!-- IMAGES TAB CONTENT -->
             <div v-else-if="archiveMode === 'images'" class="nier-text-primary">
-              <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
+              <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 opacity-30">
               <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
-              <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Архив_Доказательств_Пуст' : 'No_Evidences_In_The_Archive' }}</span>
+              <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}</span>
             </div>
 
             <div v-else class="grid grid-cols-2 gap-4 nier-text-primary md:grid-cols-4">
                  <div v-for="entry in journalEntries" :key="entry.id"
-                       class="group relative flex flex-col border border-black/10 bg-black/[0.01] transition-all duration-500 hover:border-black/30 dark:border-white/10 dark:bg-white/[0.01] dark:hover:border-white/30 nier-text-primary">
+                       class="group relative flex flex-col bg-black/[0.01] transition-all duration-500 dark:bg-white/[0.01] nier-text-primary">
                     
                     <!-- Remove Button -->
                     <button @click.stop="removeJournalEntry(entry.id)" 
@@ -827,7 +828,7 @@ const formatDateTactical = (dateStr) => {
  
                     <!-- Image Upload Area -->
                     <div @click="triggerUpload(entry.id)" 
-                         class="relative aspect-video cursor-pointer overflow-hidden border-b nier-border-primary bg-black/5 dark:bg-white/5 group/img">
+                         class="relative aspect-video cursor-pointer overflow-hidden bg-black/5 dark:bg-white/5 group/img">
                        <input :id="`file-input-${entry.id}`" type="file" class="hidden" accept="image/*" @change="e => handleImageUpload(entry.id, e)" />
                        
                        <div v-if="entry.image" class="w-full h-full">

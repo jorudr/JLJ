@@ -52,10 +52,7 @@
                  <path d="M5 5v14l12-7z"></path>
                  <path d="M19 5v14"></path>
               </svg>
-              <div v-if="isCubeRevealAnimating"
-                   class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-              </div>
-           </button>
+            </button>
 
            <!-- Compliance Toggle -->
            <button @click="showComplianceStatus = !showComplianceStatus" 
