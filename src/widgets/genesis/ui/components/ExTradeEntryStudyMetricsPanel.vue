@@ -2241,10 +2241,10 @@ const drawChart = () => {
   const geometry = getChartGeometry(canvas)
   const plotWidth = geometry.right - geometry.left
   const plotHeight = geometry.bottom - geometry.top
-  const dark = true
+  const dark = Boolean(isDark?.value)
   const gridColor = dark ? 'rgba(255,255,255,0.075)' : 'rgba(0,0,0,0.075)'
   const textColor = dark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.54)'
-  const upColor = '#ffffff'
+  const upColor = dark ? '#ffffff' : '#000000'
   const downColor = '#fb7185'
 
   ctx.strokeStyle = gridColor
@@ -2626,7 +2626,7 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <div class="absolute -top-12 left-0 z-20 flex h-11 items-center gap-5 border border-black/10 px-4 dark:border-white/10">
+      <div class="absolute -top-12 right-0 z-20 flex h-11 items-center gap-5 px-4">
         <button
           v-for="timeframe in chartTimeframeOptions"
           :key="timeframe.id"
@@ -2727,7 +2727,7 @@ onBeforeUnmount(() => {
               </div>
 
               <template v-else>
-                <div class="absolute left-5 top-5 z-20 flex items-center gap-5">
+                <div class="absolute right-5 top-5 z-20 flex items-center gap-5">
                   <button
                     v-for="timeframe in chartTimeframeOptions"
                     :key="timeframe.id"
