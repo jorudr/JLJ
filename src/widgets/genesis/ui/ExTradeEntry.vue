@@ -86,7 +86,7 @@ const tradeEntryThemeStyle = computed(() => isDark.value
 
 <template>
   <div ref="scrollContainer" 
-       class="trade-entry-shell flex flex-col items-center h-full w-full overflow-x-hidden overflow-y-auto custom-scrollbar transition-colors duration-500 pb-40 bg-theme-bg nier-text-primary"
+       class="trade-entry-shell flex flex-col items-center h-full w-full overflow-hidden transition-colors duration-500 bg-theme-bg nier-text-primary"
        :class="isDark ? 'dark is-dark theme-dark' : 'theme-light'"
        :style="tradeEntryThemeStyle">
      <DesignVignette :is-dark="isDark" />
