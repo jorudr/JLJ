@@ -22,7 +22,7 @@ import ExPanel from '~/shared/ui/ExPanel.vue';
 import { computed, ref } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
-const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars } = tradeState;
+const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
 
 const formatRiskValue = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '--';
 
@@ -61,6 +61,15 @@ const buildRiskInputMessage = (field) => {
 
 const stopLossRiskMessage = computed(() => buildRiskInputMessage('stopLoss'));
 const takeProfitRiskMessage = computed(() => buildRiskInputMessage('takeProfit'));
+const tradeTimeStyleMessage = computed(() => {
+  if (!violatesTradingStyleDuration.value) return '';
+  const isRu = locale.value === 'ru';
+  const actual = actualTradeDurationLabel.value;
+  const required = requiredTradingStyleDurationLabel.value;
+  return isRu
+    ? `Длительность сделки не соответствует стилю торговли: ${actual} / требуется ${required}`
+    : `Trade duration does not match the trading style: ${actual} / required ${required}`;
+});
 
 const isCreatingNote = ref(false);
 const isPreviewMode = ref(false);
@@ -408,19 +417,21 @@ const formatDateTactical = (dateStr) => {
                       </button>
                       <button
                         type="button"
-                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
                         :class="activeEntryFormTab === 'risk' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'risk'"
                       >
                         РИСК-МЕНЕДЖМЕНТ
+                        <span v-if="stopLossRiskMessage || takeProfitRiskMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" aria-label="Есть ошибка риск-менеджмента">!</span>
                       </button>
                       <button
                         type="button"
-                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
                         :class="activeEntryFormTab === 'time' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'time'"
                       >
                         ВРЕМЯ
+                        <span v-if="tradeTimeStyleMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" aria-label="Есть ошибка длительности сделки">!</span>
                       </button>
                     </div>
 
@@ -542,13 +553,15 @@ const formatDateTactical = (dateStr) => {
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Время входа и выхода, часовой пояс</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
-                        <label class="flex flex-col items-start gap-2">
+                        <label class="group/risk relative flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время входа</span>
-                          <input readonly type="text" :value="`${formatPart(openDate, 'year')}.${formatPart(openDate, 'month')}.${formatPart(openDate, 'day')} ${formatPart(openDate, 'hour')}:${formatPart(openDate, 'minute')}`" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors focus:border-white/80" @click="openTemporal('open')" />
+                          <input readonly type="text" :value="`${formatPart(openDate, 'year')}.${formatPart(openDate, 'month')}.${formatPart(openDate, 'day')} ${formatPart(openDate, 'hour')}:${formatPart(openDate, 'minute')}`" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="openTemporal('open')" />
+                          <span v-if="tradeTimeStyleMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ tradeTimeStyleMessage }}</span>
                         </label>
-                        <label class="flex flex-col items-start gap-2">
+                        <label class="group/risk relative flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время выхода</span>
-                          <input readonly type="text" :value="isClosed ? `${formatPart(exitDate, 'year')}.${formatPart(exitDate, 'month')}.${formatPart(exitDate, 'day')} ${formatPart(exitDate, 'hour')}:${formatPart(exitDate, 'minute')}` : '--'" :disabled="!isClosed" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" @click="isClosed && openTemporal('exit')" />
+                          <input readonly type="text" :value="isClosed ? `${formatPart(exitDate, 'year')}.${formatPart(exitDate, 'month')}.${formatPart(exitDate, 'day')} ${formatPart(exitDate, 'hour')}:${formatPart(exitDate, 'minute')}` : '--'" :disabled="!isClosed" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="isClosed && openTemporal('exit')" />
+                          <span v-if="tradeTimeStyleMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ tradeTimeStyleMessage }}</span>
                         </label>
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Часовой пояс</span>
