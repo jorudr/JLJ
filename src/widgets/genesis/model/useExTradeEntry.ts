@@ -801,9 +801,9 @@ const getScenarioConditions = (scenarioId) => {
     
     if (scenarioId === 'default-exit-system') {
       return [
-        { id: 'cond-exit-tp', name: 'TAKE_PROFIT', description: 'STRATEGIC_PROFIT_CAPTURE_TARGET' },
-        { id: 'cond-exit-sl', name: 'STOP_LOSS', description: 'CAPITAL_PRESERVATION_THRESHOLD' },
-        { id: 'cond-exit-fl', name: 'FULL_LIQUIDATION', description: 'TOTAL_EXPOSURE_TERMINATION' }
+        { id: 'cond-exit-tp', name: 'TAKE-PROFIT', description: 'STRATEGIC_PROFIT_CAPTURE_TARGET' },
+        { id: 'cond-exit-sl', name: 'STOP-LOSS', description: 'CAPITAL_PRESERVATION_THRESHOLD' },
+        { id: 'cond-exit-fl', name: 'FULL-LIQUIDATION', description: 'TOTAL_EXPOSURE_TERMINATION' }
       ]
     }
 

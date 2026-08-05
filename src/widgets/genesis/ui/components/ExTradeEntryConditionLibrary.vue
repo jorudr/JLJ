@@ -57,7 +57,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
               
               <!-- FLAT CONDITION LIST (ONLY FOR 'ALL') -->
               <div v-if="libraryFilter === 'ALL'" class="flex flex-wrap gap-4">
-                <ExNTtooltip v-for="cond in flatLibraryConditions" :key="`${cond.scenarioId}:${cond.id}`" :title="cond.isMismatched ? `WRONG_DIRECTION / ${cond.tooltipName}` : cond.tooltipName">
+                <ExNTtooltip v-for="cond in flatLibraryConditions" :key="`${cond.scenarioId}:${cond.id}`" :title="cond.isMismatched ? `WRONG_DIRECTION / ${cond.tooltipName}` : cond.tooltipName" :disabled="cond.scenarioId === 'default-exit-system'">
                   <template #trigger>
                      <div @click="!cond.isMismatched && toggleCondition(cond.id, cond.scenarioId)"
                           class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center transition-all duration-500 group/node"
@@ -167,7 +167,7 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
 
                 <!-- CONDITION MATRIX -->
                 <div class="flex flex-wrap gap-4">
-                  <ExNTtooltip v-for="cond in getFlattenedScenarioConditions(scen.id)" :key="cond.id" :title="cond.name">
+                  <ExNTtooltip v-for="cond in getFlattenedScenarioConditions(scen.id)" :key="cond.id" :title="cond.name" :disabled="scen.id === 'default-exit-system'">
                     <template #trigger>
                        <div @click="toggleCondition(cond.id, scen.id)"
                             class="relative w-14 h-14 border -ml-px -mt-px flex items-center justify-center cursor-pointer transition-all duration-500 group/node"

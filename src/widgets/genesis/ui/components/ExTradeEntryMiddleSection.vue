@@ -19,6 +19,7 @@ const getForexCurrencyPair = (symbol) => {
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExButton from '~/shared/ui/ExButton.vue';
+import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
 import { computed, ref, watch } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
@@ -273,13 +274,29 @@ const getSummaryConditionLabel = (condition) => String(
   || ''
 ).trim().toUpperCase();
 
+const defaultExitConditionLabels = {
+  'cond-exit-tp': 'TAKE-PROFIT',
+  'cond-exit-sl': 'STOP-LOSS',
+  'cond-exit-fl': 'FULL-LIQUIDATION'
+};
+
+const getSummaryConditionMeta = (condition) => {
+  const id = String(condition?.id || '');
+  const defaultLabel = defaultExitConditionLabels[id];
+  return {
+    label: defaultLabel || getSummaryConditionLabel(condition),
+    description: condition?.info?.description || condition?.description || condition?.params?.description || condition?.params?.value || '',
+    isDefaultExitCondition: Boolean(defaultLabel)
+  };
+};
+
 const summarySelectedConditions = computed(() => {
   if (savedTradeSummary.value) {
     return [...new Map(
       summaryProtocolGroups.value
         .flatMap(group => group.conditions.map(condition => ({
           id: `${group.label}-${condition.id || condition.info?.name || condition.name}`,
-          label: getSummaryConditionLabel(condition)
+          ...getSummaryConditionMeta(condition)
         })))
         .filter(condition => condition.label)
         .map(condition => [condition.id, condition])
@@ -294,7 +311,14 @@ const summarySelectedConditions = computed(() => {
   const conditionLookup = new Map(nodes.map(node => [node?.id, node]));
 
   return [...(activeConditions?.value || [])]
-    .map(id => ({ id, label: getSummaryConditionLabel(conditionLookup.get(id) || { id }) }))
+    .map(id => {
+      const condition = conditionLookup.get(id) || { id };
+      const meta = getSummaryConditionMeta(condition);
+      return {
+        id,
+        ...meta
+      };
+    })
     .filter(condition => condition.label);
 });
 
@@ -826,7 +850,15 @@ const summarySelectedEmotions = computed(() => {
                         <div class="min-w-0">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ВЫБРАННЫЕ УСЛОВИЯ</span>
                           <div v-if="summarySelectedConditions.length" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                            <span v-for="condition in summarySelectedConditions" :key="condition.id" class="text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ condition.label }}</span>
+                            <ExNTtooltip v-for="condition in summarySelectedConditions" :key="condition.id" :title="condition.label" :disabled="condition.isDefaultExitCondition">
+                              <template #trigger>
+                                <span class="cursor-pointer text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ condition.label }}</span>
+                              </template>
+                              <div class="flex flex-col gap-1">
+                                <span class="text-[8px] font-mono opacity-40">TELEMETRY_DESCRIPTION</span>
+                                <p class="text-[9px] font-mono uppercase leading-relaxed opacity-60">{{ condition.description || 'NO_METADATA_AVAILABLE' }}</p>
+                              </div>
+                            </ExNTtooltip>
                           </div>
                           <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">УСЛОВИЯ НЕ ВЫБРАНЫ</span>
                         </div>
