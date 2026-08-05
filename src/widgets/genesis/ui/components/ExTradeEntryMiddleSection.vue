@@ -782,8 +782,46 @@ const summarySelectedEmotions = computed(() => {
                       </div>
                     </section>
 
-                    <section v-if="activeEntryFormTab === 'time'" class="flex flex-col items-start gap-5">
+                    <section v-if="activeEntryFormTab === 'risk'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Комиссии для входа и выхода', 'Entry and exit commissions') }}</h2>
+                      <div class="grid w-full max-w-4xl grid-cols-1 items-end gap-4 sm:grid-cols-3">
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Комиссия за вход', 'Entry commission') }} · {{ feeType }}</span>
+                          <input v-model="entryFee" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'entryFee')" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Комиссия за выход', 'Exit commission') }} · {{ feeType }}</span>
+                          <input v-model="exitFee" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'exitFee')" />
+                        </label>
+                        <div class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Единица комиссии', 'Commission unit') }}</span>
+                          <div class="flex">
+                            <button
+                              type="button"
+                              class="h-10 w-14 border border-white/20 px-3 font-mono text-[10px] font-black uppercase tracking-[0.18em] transition-colors"
+                              :class="feeType === '%' ? 'bg-white text-black' : 'text-white/50 hover:text-white'"
+                              :aria-label="tr('Комиссия в процентах', 'Commission in percent')"
+                              @click="feeType = '%'"
+                            >
+                              %
+                            </button>
+                            <button
+                              type="button"
+                              class="-ml-px h-10 w-14 border border-white/20 px-3 font-mono text-[10px] font-black uppercase tracking-[0.18em] transition-colors"
+                              :class="feeType === '$' ? 'bg-white text-black' : 'text-white/50 hover:text-white'"
+                              :aria-label="tr('Комиссия в долларах', 'Commission in dollars')"
+                              @click="feeType = '$'"
+                            >
+                              $
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section v-if="activeEntryFormTab === 'time'" class="flex flex-col items-start gap-5">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Время входа и выхода, часовой пояс', 'Entry and exit time, time zone') }}</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
                         <label class="group/risk relative flex flex-col items-start gap-2">
@@ -804,7 +842,7 @@ const summarySelectedEmotions = computed(() => {
                     </section>
 
                     <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
-                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">VI.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Резюме', 'Summary') }}</h2>
                       <div class="flex w-full max-w-none flex-wrap gap-y-6">
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
