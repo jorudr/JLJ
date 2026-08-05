@@ -2593,7 +2593,7 @@ onBeforeUnmount(() => {
 <template>
   <section
     v-if="isChartSurface"
-    :class="generatedChartCandles.length ? 'relative flex h-full min-h-0 w-full flex-col overflow-visible bg-[#090908] bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:24px_24px] text-white' : 'flex h-full min-h-[420px] w-full flex-col'"
+    :class="generatedChartCandles.length ? 'relative flex h-full min-h-0 w-full flex-col overflow-visible text-white' : 'flex h-full min-h-[420px] w-full flex-col'"
   >
     <div v-if="!generatedChartCandles.length" class="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
       <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
@@ -2613,7 +2613,7 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <div class="absolute -top-12 left-0 z-20 flex h-11 items-center gap-5 border border-black/10 bg-theme-bg px-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+      <div class="absolute -top-12 left-0 z-20 flex h-11 items-center gap-5 border border-black/10 px-4 dark:border-white/10">
         <button
           v-for="timeframe in chartTimeframeOptions"
           :key="timeframe.id"
