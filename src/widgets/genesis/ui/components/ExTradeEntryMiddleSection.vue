@@ -19,10 +19,48 @@ const getForexCurrencyPair = (symbol) => {
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExPanel from '~/shared/ui/ExPanel.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
-const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset } = tradeState;
+const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars } = tradeState;
+
+const formatRiskValue = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '--';
+
+const isRiskMessageForField = (message, field) => {
+  const normalized = String(message || '').toLowerCase();
+  if (field === 'stopLoss') return normalized.includes('stop loss') || normalized.includes('стоп');
+  return normalized.includes('take profit') || normalized.includes('тейк');
+};
+
+const buildRiskInputMessage = (field) => {
+  const messages = [];
+  const directionMessage = riskInputViolationMessage?.value;
+  const isRu = locale.value === 'ru';
+
+  if (isRiskMessageForField(directionMessage, field)) messages.push(directionMessage);
+
+  if (field === 'stopLoss' && violatesRiskPerTrade.value) {
+    const risk = activeRiskManagement.value;
+    const isPercentLimit = risk.riskPerTradeUnit === '%';
+    const actual = isPercentLimit ? `${formatRiskValue(actualRiskPercent.value)}%` : `$${formatRiskValue(actualRiskDollars.value)}`;
+    const limit = isPercentLimit ? `${formatRiskValue(risk.riskPerTradeValue)}%` : `$${formatRiskValue(activeRiskPerTradeDollars.value)}`;
+    messages.push(isRu
+      ? `Риск на сделку превышен: ${actual} / ${limit}`
+      : `Per-trade risk exceeded: ${actual} / ${limit}`);
+  }
+
+  if (field === 'takeProfit' && violatesRR.value) {
+    const required = Number(activeRiskManagement.value.riskRewardRatio);
+    messages.push(isRu
+      ? `Соотношение R:R ниже установленного: ${formatRiskValue(actualRR.value)} / ${formatRiskValue(required)}`
+      : `R:R is below the configured minimum: ${formatRiskValue(actualRR.value)} / ${formatRiskValue(required)}`);
+  }
+
+  return messages.join(' ');
+};
+
+const stopLossRiskMessage = computed(() => buildRiskInputMessage('stopLoss'));
+const takeProfitRiskMessage = computed(() => buildRiskInputMessage('takeProfit'));
 
 const isCreatingNote = ref(false);
 const isPreviewMode = ref(false);
@@ -459,13 +497,15 @@ const formatDateTactical = (dateStr) => {
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">III.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Стоп лосс и тейк профит</h2>
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
-                        <label class="flex flex-col items-start gap-2">
+                        <label class="group/risk relative flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Стоп лосс</span>
-                          <input v-model="stopLoss" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'stopLoss')" />
+                          <input v-model="stopLoss" type="text" inputmode="decimal" placeholder="0.00" :aria-invalid="!!stopLossRiskMessage" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" :class="stopLossRiskMessage ? '!border-rose-500/80 !text-rose-300 placeholder:!text-rose-300/30 focus:!border-rose-400' : ''" @input="sanitizeTradeNumberInput($event, 'stopLoss')" />
+                          <span v-if="stopLossRiskMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] px-3 py-2 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ stopLossRiskMessage }}</span>
                         </label>
-                        <label class="flex flex-col items-start gap-2">
+                        <label class="group/risk relative flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Тейк профит</span>
-                          <input v-model="takeProfit" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'takeProfit')" />
+                          <input v-model="takeProfit" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" :class="takeProfitRiskMessage ? '!border-rose-500/80 !text-rose-300 placeholder:!text-rose-300/30 focus:!border-rose-400' : ''" @input="sanitizeTradeNumberInput($event, 'takeProfit')" />
+                          <span v-if="takeProfitRiskMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] px-3 py-2 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ takeProfitRiskMessage }}</span>
                         </label>
                       </div>
                     </section>
