@@ -1380,7 +1380,7 @@ export const translations = {
         "System_State:": "Состояние_Системы:",
         "Encryption: AES_256": "Шифрование: AES_256",
         "Lattice: v1.0.42": "Решетка: v1.0.42",
-        "NOT_ENOUGH_DATA_FOR_PROJECTION": "НЕДОСТАТОЧНО_ДАННЫХ_ДЛЯ_ПРОЕКЦИИ",
+        "NOT_ENOUGH_DATA_FOR_PROJECTION": "НЕДОСТАТОЧНО ДАННЫХ ДЛЯ ПРОЕКЦИИ",
         "INIT_JOURNAL": "ОТКРЫТЬ_ЖУРНАЛ",
         "EXIT_JOURNAL": "ЗАКРЫТЬ_ЖУРНАЛ",
         "System_ID": "ID_Системы",

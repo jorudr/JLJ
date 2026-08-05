@@ -1964,6 +1964,8 @@ const pnl = computed({
 })
 
 const commitState = ref('idle')
+const showTradeSummary = ref(false)
+const savedTradeSummary = ref(null)
 
 watch(isClosed, (closed) => {
   if (closed) return
@@ -2256,10 +2258,16 @@ const submit = async () => {
     date: cloneDate(committedOpenDate),
     dateExit: isClosed.value ? cloneDate(committedExitDate) : undefined,
     profitInCurrency: isClosed.value ? pnl.value : undefined,
+    profitInPercent: isClosed.value
+      ? ((Number(pnl.value) || 0) / Math.max(1, Number(currentCapital.value) || 0)) * 100
+      : undefined,
+    capitalBeforeTrade: currentCapital.value,
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: selectedStrategyId.value,
     risk: actualRiskDollars.value !== null ? actualRiskDollars.value : undefined,
+    riskPercent: actualRiskPercent.value,
     riskReward: actualRR.value ?? plannedRiskReward,
+    tradeDuration: actualTradeDurationLabel.value,
     tradingStyle: activeRiskManagement.value.tradingStyle || undefined,
     riskManagement: activeRiskSnapshot.value || undefined,
     entryFee: +entryFee.value || 0,
@@ -2287,9 +2295,13 @@ const submit = async () => {
   if (props.initialTrade) {
     const updatedTrade = { ...props.initialTrade, ...newTrade, id: props.initialTrade.id }
     await tradeStore.updateTrade(selectedStrategyId.value, updatedTrade.id, updatedTrade)
+    savedTradeSummary.value = updatedTrade
+    showTradeSummary.value = true
     emit('updateTrade', updatedTrade)
   } else {
     await tradeStore.addTrade(selectedStrategyId.value, newTrade)
+    savedTradeSummary.value = newTrade
+    showTradeSummary.value = true
     emit('addTrade', newTrade)
   }
   
@@ -2298,7 +2310,6 @@ const submit = async () => {
   commitState.value = 'success'
   
   setTimeout(() => {
-    resetForm()
     commitState.value = 'idle'
   }, 2000)
 }
@@ -2343,6 +2354,7 @@ const submit = async () => {
     findAllConnections,
     findNodeById,
     activeRiskManagement,
+    currentCapital,
     activeRiskPerTradeDollars,
     activeRiskSnapshot,
     actualRR,
@@ -2481,6 +2493,8 @@ const submit = async () => {
     scrollContainer,
     pnl,
     commitState,
+    showTradeSummary,
+    savedTradeSummary,
     resetForm,
     submit,
     initialTrade: props.initialTrade

@@ -953,10 +953,13 @@
       :is-trade-entry-open="isTradeEntryOpen"
       :is-simulator-open="showSimulator"
       :is-close-mode-active="isTradeEntryCloseModeActive"
+      :is-trade-saved="isTradeEntrySaved"
       :active-panel="activeTradeEntryPanel"
       :strategies="strategies"
       :selected-strategy-id="selectedStrategyId"
       @toggle-entry="toggleTradeEntry"
+      @save-trade="saveTradeEntry"
+      @cancel-summary="cancelTradeSummary"
       @toggle-close-mode="toggleTradeEntryPanel('close')"
       @open-panel="toggleTradeEntryPanel"
       @update-strategy="updateTradeEntryStrategy"
@@ -967,7 +970,7 @@
                     ref="tradeEntryRef"
                     class="absolute inset-0 z-[2000]"
                     @close="closeTradeEntry"
-                    @addTrade="closeTradeEntry"
+                    @addTrade="handleTradeEntrySaved"
                     @panel-change="handleTradeEntryPanelChange" />
     </Transition>
 
@@ -1071,15 +1074,18 @@ const router = useRouter()
 const isTradeEntryOpen = ref(route.query.entry === 'true')
 const tradeEntryRef = ref<any>(null)
 const isTradeEntryCloseModeActive = ref(true)
+const isTradeEntrySaved = ref(false)
 const activeTradeEntryPanel = ref<'matrix' | 'journal' | 'method' | null>(null)
 
 const toggleTradeEntry = () => {
   if (isTradeEntryOpen.value) {
     tradeEntryRef.value?.closePanels?.()
     activeTradeEntryPanel.value = null
+    isTradeEntrySaved.value = false
   } else {
     isTradeEntryCloseModeActive.value = true
     activeTradeEntryPanel.value = null
+    isTradeEntrySaved.value = false
   }
   isTradeEntryOpen.value = !isTradeEntryOpen.value
 }
@@ -1110,9 +1116,27 @@ const updateTradeEntryStrategy = (strategyId: string) => {
   selectedStrategyId.value = strategyId
 }
 
+const saveTradeEntry = () => {
+  if (!isTradeEntryOpen.value) return
+  tradeEntryRef.value?.saveTrade?.()
+}
+
+const handleTradeEntrySaved = () => {
+  tradeEntryRef.value?.closePanels?.()
+  tradeEntryRef.value?.showSavedSummary?.()
+  isTradeEntrySaved.value = true
+  activeTradeEntryPanel.value = null
+}
+
+const cancelTradeSummary = () => {
+  tradeEntryRef.value?.cancelSavedSummary?.()
+  isTradeEntrySaved.value = false
+}
+
 const closeTradeEntry = () => {
   isTradeEntryOpen.value = false
   isTradeEntryCloseModeActive.value = true
+  isTradeEntrySaved.value = false
   activeTradeEntryPanel.value = null
 }
 

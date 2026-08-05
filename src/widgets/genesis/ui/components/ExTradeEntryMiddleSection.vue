@@ -19,10 +19,11 @@ const getForexCurrencyPair = (symbol) => {
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExButton from '~/shared/ui/ExButton.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
-const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
+const { showTradeSummary, savedTradeSummary } = tradeState;
+const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, currentCapital, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
 
 const formatRiskValue = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '--';
 
@@ -81,6 +82,10 @@ const editingNoteId = ref(null);
 const editNoteTitle = ref("");
 const activeProjectionMode = ref('core');
 const activeEntryFormTab = ref('main');
+
+watch(showTradeSummary, (isVisible) => {
+  activeEntryFormTab.value = isVisible ? 'summary' : 'main';
+});
 
 const startEditContent = (note) => {
   editingContentNoteId.value = note.id;
@@ -190,6 +195,65 @@ const formatDateTactical = (dateStr) => {
   const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   return `${date} // ${time}`;
 };
+
+const formatSummaryNumber = (value) => {
+  if (value === undefined || value === null || value === '') return '--';
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 8 }) : String(value);
+};
+
+const formatSummaryMoney = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '--';
+  const sign = number > 0 ? '+' : number < 0 ? '-' : '';
+  return `${sign}$${Math.abs(number).toFixed(2)}`;
+};
+
+const formatSummaryPercent = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '--';
+  const sign = number > 0 ? '+' : number < 0 ? '-' : '';
+  return `${sign}${Math.abs(number).toFixed(2)}%`;
+};
+
+const summaryProfitPercent = (trade) => {
+  if (!trade) return null;
+  const profit = Number(trade.profitInCurrency);
+  const capital = Number(trade.capitalBeforeTrade) > 0 ? Number(trade.capitalBeforeTrade) : Number(currentCapital.value);
+  if (!Number.isFinite(profit) || !Number.isFinite(capital) || capital <= 0) return null;
+  return (profit / capital) * 100;
+};
+
+const summaryDisplayTrade = computed(() => savedTradeSummary.value || {
+  asset: asset.value,
+  assetType: currentAssetData.value?.type,
+  profitInCurrency: isClosed.value ? pnl.value : null,
+  profitInPercent: null,
+  capitalBeforeTrade: null,
+  risk: actualRiskDollars.value,
+  riskPercent: actualRiskPercent.value,
+  riskReward: actualRR.value,
+  tradeDuration: actualTradeDurationLabel.value
+});
+
+const formatSummaryRatio = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toFixed(2)}R` : '--';
+};
+
+const summaryProtocolGroups = computed(() => {
+  const trade = savedTradeSummary.value;
+  if (!trade) return [];
+
+  return [
+    { label: 'ВХОД', scenario: trade.boardScenarioEntry },
+    { label: 'ВЫХОД', scenario: trade.boardScenarioExit }
+  ].filter(group => group.scenario?.info).map(group => ({
+    label: group.label,
+    name: group.scenario.info.name || '--',
+    conditions: Array.isArray(group.scenario.info.conditions) ? group.scenario.info.conditions : []
+  }));
+});
 </script>
 
 <template>
@@ -199,6 +263,93 @@ const formatDateTactical = (dateStr) => {
         <Transition name="sector-swap" mode="out-in">
           <div key="middle" class="flex flex-col space-y-12">
             <div v-if="viewMode === 'tactical'" class="contents">
+            <div v-if="false" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center text-white">
+              <div class="w-full max-w-3xl px-6 sm:px-10 md:px-12 xl:px-16">
+                <div class="flex flex-col gap-8">
+                  <div class="flex items-end justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <span class="block text-[9px] font-mono uppercase tracking-[0.45em] text-white/45">СОХРАНЕНО</span>
+                      <h1 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">РЕЗЮМЕ СДЕЛКИ</h1>
+                    </div>
+                    <span class="text-[9px] font-mono uppercase tracking-[0.2em] text-white/35">{{ savedTradeSummary.status || '--' }}</span>
+                  </div>
+
+                  <div class="flex flex-col divide-y divide-white/10 border-y border-white/10">
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">АКТИВ</span>
+                      <span class="text-right text-sm font-mono font-black uppercase tracking-[0.18em] text-white">{{ savedTradeSummary.asset || '--' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">НАПРАВЛЕНИЕ</span>
+                      <span class="text-right text-sm font-mono font-black uppercase tracking-[0.18em] text-white">{{ savedTradeSummary.side || '--' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ТОЧКА ВХОДА</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryNumber(savedTradeSummary.entry) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ТОЧКА ВЫХОДА</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryNumber(savedTradeSummary.exit) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">РАЗМЕР ПОЗИЦИИ</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryNumber(savedTradeSummary.size) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">СТОП ЛОСС</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryNumber(savedTradeSummary.stopLoss) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ТЕЙК ПРОФИТ</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryNumber(savedTradeSummary.takeProfit) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ВРЕМЯ ВХОДА</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ formatDateTactical(savedTradeSummary.date) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ВРЕМЯ ВЫХОДА</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ savedTradeSummary.dateExit ? formatDateTactical(savedTradeSummary.dateExit) : '--' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-6 py-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ЧАСОВОЙ ПОЯС</span>
+                      <span class="text-right text-sm font-mono font-black tracking-[0.12em] text-white">{{ savedTradeSummary.timeZone || '--' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="border border-white/10 p-5">
+                      <span class="block text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">РЕЗУЛЬТАТ В $</span>
+                      <span class="mt-3 block text-2xl font-mono font-black tracking-[0.12em]" :class="Number(savedTradeSummary.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">{{ formatSummaryMoney(savedTradeSummary.profitInCurrency) }}</span>
+                    </div>
+                    <div class="border border-white/10 p-5">
+                      <span class="block text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">РЕЗУЛЬТАТ В %</span>
+                      <span class="mt-3 block text-2xl font-mono font-black tracking-[0.12em]" :class="summaryProfitPercent(savedTradeSummary) >= 0 ? 'text-white' : 'text-rose-400'">{{ formatSummaryPercent(summaryProfitPercent(savedTradeSummary)) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-4 border-t border-white/10 pt-6">
+                    <div class="flex items-center justify-between gap-4">
+                      <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ПРОТОКОЛЫ И УСЛОВИЯ</span>
+                      <span class="text-[9px] font-mono uppercase tracking-[0.18em] text-white/35">{{ selectedStrategy?.label || selectedStrategy?.name || savedTradeSummary.strategyId || '--' }}</span>
+                    </div>
+                    <div v-if="summaryProtocolGroups.length" class="flex flex-col gap-4">
+                      <div v-for="group in summaryProtocolGroups" :key="group.label" class="flex flex-col gap-2">
+                        <span class="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white">{{ group.label }} // {{ group.name }}</span>
+                        <div v-if="group.conditions.length" class="flex flex-col gap-1 pl-4">
+                          <span v-for="condition in group.conditions" :key="condition.id" class="text-[9px] font-mono uppercase tracking-[0.12em] text-white/55">
+                            {{ condition.info?.name || condition.name || condition.label || condition.id }}
+                          </span>
+                        </div>
+                        <span v-else class="pl-4 text-[9px] font-mono uppercase tracking-[0.12em] text-white/35">УСЛОВИЯ НЕ ВЫБРАНЫ</span>
+                      </div>
+                    </div>
+                    <span v-else class="text-[9px] font-mono uppercase tracking-[0.12em] text-white/35">ПРОТОКОЛЫ НЕ ВЫБРАНЫ</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="contents">
             <!-- CONDITION CONFIGURATION PANEL (LEGACY DESCRIPTION AESTHETIC) -->
             <div v-if="isArchivalBriefingEnabled && selectedRegistryScenarioId && selectedRegistryScenarioId !== 'default-exit-system'" class="flex flex-col space-y-12 animate-in fade-in zoom-in-95 duration-1000 max-w-5xl mx-auto">
                
@@ -434,6 +585,14 @@ const formatDateTactical = (dateStr) => {
                         ВРЕМЯ
                         <span v-if="tradeTimeStyleMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" aria-label="Есть ошибка длительности сделки">!</span>
                       </button>
+                      <button
+                        type="button"
+                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        :class="activeEntryFormTab === 'summary' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                        @click="activeEntryFormTab = 'summary'"
+                      >
+                        РЕЗЮМЕ
+                      </button>
                     </div>
 
                     <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
@@ -570,6 +729,47 @@ const formatDateTactical = (dateStr) => {
                         </label>
                       </div>
                     </section>
+
+                    <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Резюме</h2>
+                      <div class="flex w-full max-w-none flex-wrap gap-y-6">
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Актив</span>
+                          <span class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
+                            <span v-if="summaryDisplayTrade.assetType === 'Forex' && getForexCurrencyPair(summaryDisplayTrade.asset)" class="relative flex h-7 w-7 shrink-0 items-center">
+                              <img :src="getForexCurrencyPair(summaryDisplayTrade.asset).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
+                              <img :src="getForexCurrencyPair(summaryDisplayTrade.asset).quote" alt="" class="absolute bottom-0 right-0 h-[68%] w-[68%] rounded-full object-cover" />
+                            </span>
+                            <span v-else-if="currentAssetData?.icon && !failedIcons.has(summaryDisplayTrade.asset)" class="flex h-6 w-6 shrink-0 items-center justify-center">
+                              <img :src="currentAssetData.icon" :alt="summaryDisplayTrade.asset" class="h-full w-full object-contain" />
+                            </span>
+                            <span v-else class="flex h-6 w-6 shrink-0 items-center justify-center text-sm">
+                              {{ summaryDisplayTrade.asset?.[0] || '' }}
+                            </span>
+                            {{ summaryDisplayTrade.asset || '--' }}
+                          </span>
+                        </div>
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Результат по сделке</span>
+                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
+                            {{ formatSummaryMoney(summaryDisplayTrade.profitInCurrency) }} / {{ formatSummaryPercent(summaryProfitPercent(summaryDisplayTrade)) }}
+                          </span>
+                        </div>
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ДЛИТЕЛЬНОСТЬ СДЕЛКИ</span>
+                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ summaryDisplayTrade.tradeDuration || '--' }}</span>
+                        </div>
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">РИСК / КАПИТАЛ</span>
+                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryPercent(summaryDisplayTrade.riskPercent) }}</span>
+                        </div>
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
+                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryRatio(summaryDisplayTrade.riskReward) }}</span>
+                        </div>
+                      </div>
+                    </section>
                     </div>
                   </div>
                 </div>
@@ -647,6 +847,7 @@ const formatDateTactical = (dateStr) => {
                 </div>
                </div>
              </div>
+            </div>
           </div>
 
           <div v-else key="journal" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">

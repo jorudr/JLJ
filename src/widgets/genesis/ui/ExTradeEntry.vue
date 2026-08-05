@@ -40,6 +40,16 @@ const closeTradeEntryPanels = () => {
   state.showTradeStudyMetrics.value = false
 }
 
+const showSavedSummary = () => {
+  state.viewMode.value = 'tactical'
+}
+
+const cancelSavedSummary = () => {
+  state.showTradeSummary.value = false
+  state.savedTradeSummary.value = null
+  state.viewMode.value = 'tactical'
+}
+
 const openTradeEntryPanel = (panel) => {
   closeTradeEntryPanels()
 
@@ -62,7 +72,10 @@ const openTradeEntryPanel = (panel) => {
 
 defineExpose({
   openPanel: openTradeEntryPanel,
-  closePanels: closeTradeEntryPanels
+  closePanels: closeTradeEntryPanels,
+  showSavedSummary,
+  cancelSavedSummary,
+  saveTrade: () => state.submit()
 })
 
 const { isDark, scrollContainer } = state

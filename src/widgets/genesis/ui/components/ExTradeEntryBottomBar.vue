@@ -6,6 +6,7 @@ defineProps<{
   isTradeEntryOpen: boolean
   isSimulatorOpen?: boolean
   isCloseModeActive: boolean
+  isTradeSaved?: boolean
   activePanel: 'matrix' | 'journal' | 'method' | null
   strategies: Strategy[]
   selectedStrategyId: string | null
@@ -14,6 +15,8 @@ defineProps<{
 
 const emit = defineEmits<{
   (event: 'toggle-entry'): void
+  (event: 'save-trade'): void
+  (event: 'cancel-summary'): void
   (event: 'toggle-close-mode'): void
   (event: 'open-panel', panel: 'matrix' | 'journal' | 'method'): void
   (event: 'update-strategy', strategyId: string): void
@@ -27,23 +30,35 @@ const emit = defineEmits<{
   >
     <div class="pointer-events-auto flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
       <button
+        v-if="!isTradeEntryOpen"
         type="button"
-        class="group relative flex h-10 w-10 items-center justify-center border transition-all"
-        :class="isTradeEntryOpen ? 'border-white bg-white text-black' : 'border-white bg-white text-black hover:bg-white/80'"
-        :aria-label="isTradeEntryOpen ? 'Выйти из сделки' : 'Новая сделка'"
+        class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
+        aria-label="Новая сделка"
         @click="emit('toggle-entry')"
       >
-        <svg v-if="!isTradeEntryOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
+        <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+          [ НОВАЯ_СДЕЛКА ]
+        </span>
+      </button>
+
+      <button
+        v-if="isTradeEntryOpen"
+        type="button"
+        class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
+        :aria-label="isTradeSaved ? 'Отмена' : 'Сохранить сделку'"
+        @click="emit(isTradeSaved ? 'cancel-summary' : 'save-trade')"
+      >
+        <svg v-if="!isTradeSaved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
+          <path d="M5 12.5 9.5 17 19 7.5" />
+        </svg>
         <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
-          <path d="M10 17l5-5-5-5" />
-          <path d="M15 12H3" />
-          <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-          <path d="M13 21h6a2 2 0 0 0 2-2" />
+          <path d="M6 6l12 12M18 6 6 18" />
         </svg>
         <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-          {{ isTradeEntryOpen ? '[ ВЫЙТИ_ИЗ_СДЕЛКИ ]' : '[ НОВАЯ_СДЕЛКА ]' }}
+          {{ isTradeSaved ? '[ ОТМЕНА ]' : '[ СОХРАНИТЬ_СДЕЛКУ ]' }}
         </span>
       </button>
 
@@ -57,8 +72,9 @@ const emit = defineEmits<{
           aria-label="Режим закрытия сделки"
           @click="emit('toggle-close-mode')"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter" class="h-5 w-5" aria-hidden="true">
-            <path d="M5 12.5 9.5 17 19 7.5" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true">
+            <path d="M4 7h16v13H4z" />
+            <path d="m3 7 2-4h14l2 4M8 11h8" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
             [ РЕЖИМ_ЗАКРЫТИЯ ]
@@ -126,6 +142,23 @@ const emit = defineEmits<{
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
             [ МЕТОД_ВХОДА ]
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
+          aria-label="Выйти из сделки"
+          @click="emit('toggle-entry')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+            <path d="M10 17l5-5-5-5" />
+            <path d="M15 12H3" />
+            <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
+            <path d="M13 21h6a2 2 0 0 0 2-2" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+            [ ВЫЙТИ_ИЗ_СДЕЛКИ ]
           </span>
         </button>
       </template>
