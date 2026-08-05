@@ -15,6 +15,7 @@ import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
+import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 
 export function useExTradeEntry(props, emit) {
 
@@ -188,6 +189,7 @@ const loadMatrixData = async () => {
 
 // Default to Main Diary only unless cores are provided
 const tradeStore = useStrategyTradesStore()
+const matrixState = useMatrixState()
 
 const strategies = computed(() => tradeStore.strategies)
 
@@ -198,6 +200,11 @@ const selectedStrategyId = computed({
 const selectedStrategy = computed(() => {
   const s = tradeStore.strategies.find(s => s.id === selectedStrategyId.value)
   return s || tradeStore.strategies[0] || { id: 'MAIN_DIARY', name: 'MAIN_DIARY' }
+})
+
+const commitStrategyVersionId = computed(() => {
+  if (selectedStrategyId.value === 'MAIN_DIARY') return undefined
+  return matrixState.selectedStrategyVersionId.value || matrixState.strategyVersions.value.at(-1)?.id
 })
 
 const findAllNodes = (nodes) => {
@@ -2018,14 +2025,15 @@ const submit = async () => {
   const committedExitDate = cloneDate(exitDate.value)
   const committedTimeZone = String(tradeTimeZone.value || detectUserTimeZone()).trim() || detectUserTimeZone()
   const plannedRiskReward = activeRiskSnapshot.value?.riskRewardRatio ?? undefined
+  const commitStrategyId = selectedStrategyId.value || 'MAIN_DIARY'
 
-  if (!finalEntry || (isClosed.value && !finalExit) || !finalSize) return
+  if (!finalEntry || (isClosed.value && !finalExit) || !finalSize) return false
   if (riskInputViolationMessage.value) {
     normalizeRiskInputs()
     activeSector.value = 'risk'
-    return
+    return false
   }
-  if (commitState.value !== 'idle') return
+  if (commitState.value !== 'idle') return false
   
   const findActiveScenario = (scenarios) => {
     // First check if the currently selected registry ID belongs to this group
@@ -2263,7 +2271,8 @@ const submit = async () => {
       : undefined,
     capitalBeforeTrade: currentCapital.value,
     assetType: currentAssetData.value?.type || 'Forex',
-    strategyId: selectedStrategyId.value,
+    strategyId: commitStrategyId,
+    strategyVersionId: commitStrategyVersionId.value,
     risk: actualRiskDollars.value !== null ? actualRiskDollars.value : undefined,
     riskPercent: actualRiskPercent.value,
     riskReward: actualRR.value ?? plannedRiskReward,
@@ -2291,27 +2300,24 @@ const submit = async () => {
   }
 
   commitState.value = 'loading'
-  
-  if (props.initialTrade) {
-    const updatedTrade = { ...props.initialTrade, ...newTrade, id: props.initialTrade.id }
-    await tradeStore.updateTrade(selectedStrategyId.value, updatedTrade.id, updatedTrade)
-    savedTradeSummary.value = updatedTrade
-    showTradeSummary.value = true
-    emit('updateTrade', updatedTrade)
-  } else {
-    await tradeStore.addTrade(selectedStrategyId.value, newTrade)
-    savedTradeSummary.value = newTrade
-    showTradeSummary.value = true
-    emit('addTrade', newTrade)
-  }
-  
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  commitState.value = 'success'
-  
-  setTimeout(() => {
+
+  try {
+    if (props.initialTrade) {
+      const updatedTrade = { ...props.initialTrade, ...newTrade, id: props.initialTrade.id }
+      await tradeStore.updateTrade(commitStrategyId, updatedTrade.id, updatedTrade)
+      emit('updateTrade', updatedTrade)
+    } else {
+      await tradeStore.addTrade(commitStrategyId, newTrade)
+      emit('addTrade', newTrade)
+    }
+
+    return true
+  } catch (error) {
+    console.error('Failed to persist trade:', error)
+    return false
+  } finally {
     commitState.value = 'idle'
-  }, 2000)
+  }
 }
 
 

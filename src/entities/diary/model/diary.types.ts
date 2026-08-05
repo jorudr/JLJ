@@ -48,6 +48,7 @@ export interface DiaryEntry {
     assetIcon?: string;
     profitInCurrency?: number;
     strategyId?: string;
+    strategyVersionId?: string;
     boardConditions?: (string | { id: string; info: { name: string; description: string; priority?: string } })[];
     boardRequiredConditionsEntry?: { id: string; info: { name: string; description: string; priority?: string } }[];
     boardRequiredConditionsExit?: { id: string; info: { name: string; description: string; priority?: string } }[];

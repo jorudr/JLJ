@@ -75,7 +75,9 @@ defineExpose({
   closePanels: closeTradeEntryPanels,
   showSavedSummary,
   cancelSavedSummary,
-  saveTrade: () => state.submit()
+  submit: state.submit,
+  saveTrade: state.submit,
+  commitState: state.commitState
 })
 
 const { isDark, scrollContainer } = state

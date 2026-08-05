@@ -52,9 +52,18 @@ export function filterTradesBySelectedStrategyVersion<T>(
   versions: StrategyVersionLike[],
   selectedVersionId?: string | null
 ) {
+  const selectedVersionIndex = getSelectedStrategyVersionIndex(versions, selectedVersionId)
+  const effectiveSelectedVersionId = selectedVersionIndex === -1
+    ? null
+    : versions[selectedVersionIndex]?.id
   const { startTime, endTime } = getSelectedStrategyVersionWindow(versions, selectedVersionId)
 
   return trades.filter(trade => {
+    const explicitVersionId = (trade as any)?.strategyVersionId
+    if (explicitVersionId && effectiveSelectedVersionId) {
+      return explicitVersionId === effectiveSelectedVersionId
+    }
+
     const timestamp = getTradeVersionTimestamp(trade)
     return timestamp > 0 && timestamp >= startTime && timestamp < endTime
   })

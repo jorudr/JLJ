@@ -134,9 +134,13 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   const selectedStrategyId = ref('MAIN_DIARY')
   const isLoading = ref(true)
   const isInitialized = ref(false)
+  let initPromise: Promise<void> | null = null
 
   async function init(force = false) {
     if (isInitialized.value && !force) return
+    if (initPromise && !force) return initPromise
+
+    const currentInit = (async () => {
     isLoading.value = true
     try {
       // Try Main first
@@ -179,13 +183,21 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
         }
       }
 
-      const seededLivermoreTrades = seedLivermoreBtcTrades()
-      if (seededLivermoreTrades) await save()
+      const removedSyntheticTrades = removeSyntheticSeedTrades()
+      if (removedSyntheticTrades) await save()
 
       // Main diary trades are loaded exclusively from disk storage
     } finally {
       isInitialized.value = true
       isLoading.value = false
+    }
+    })()
+
+    initPromise = currentInit
+    try {
+      await currentInit
+    } finally {
+      if (initPromise === currentInit) initPromise = null
     }
   }
 
@@ -204,11 +216,12 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   function getTradesForStrategy(strategyId: string) {
     const trades = tradesByStrategy.value[strategyId] || []
     const hiddenIds = new Set(hiddenTradeIdsByStrategy.value[strategyId] || [])
-    return trades.filter(trade => !hiddenIds.has(trade.id!))
+    return trades.filter(trade => !hiddenIds.has(trade.id!) && !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
   }
 
   function getAllTradesForStrategy(strategyId: string) {
-    return tradesByStrategy.value[strategyId] || []
+    return (tradesByStrategy.value[strategyId] || [])
+      .filter(trade => !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
   }
 
   function isTradeHidden(strategyId: string, tradeId: string) {
@@ -216,6 +229,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   }
 
   async function addTrade(strategyId: string, trade: DiaryEntry) {
+    if (!isInitialized.value) await init()
     if (!tradesByStrategy.value[strategyId]) {
       tradesByStrategy.value[strategyId] = []
     }
@@ -280,29 +294,22 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
       changed = true
     }
 
-    if (seedLivermoreBtcTrades()) {
+    if (removeSyntheticSeedTrades()) {
       changed = true
     }
 
     if (changed) await save()
   }
 
-  function seedLivermoreBtcTrades() {
+  function removeSyntheticSeedTrades() {
     let changed = false
-    strategies.value
-      .filter(strategy => isLivermoreStrategyName(strategy.name))
-      .forEach(strategy => {
-        const trades = tradesByStrategy.value[strategy.id] || []
-        const existingIds = new Set(trades.map(trade => trade.id).filter(Boolean))
-        const missingTrades = createLivermoreBtcSeedTrades(strategy.id)
-          .filter(trade => !existingIds.has(trade.id))
-
-        if (missingTrades.length > 0) {
-          tradesByStrategy.value[strategy.id] = [...trades, ...missingTrades]
-          if (!hiddenTradeIdsByStrategy.value[strategy.id]) hiddenTradeIdsByStrategy.value[strategy.id] = []
-          changed = true
-        }
-      })
+    Object.entries(tradesByStrategy.value).forEach(([strategyId, trades]) => {
+      const filteredTrades = (trades || []).filter(trade => !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
+      if (filteredTrades.length !== (trades || []).length) {
+        tradesByStrategy.value[strategyId] = filteredTrades
+        changed = true
+      }
+    })
 
     return changed
   }
@@ -374,6 +381,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
   }
 
   async function updateTrade(strategyId: string, tradeId: string, updates: Partial<DiaryEntry>) {
+    if (!isInitialized.value) await init()
     if (!tradesByStrategy.value[strategyId]) return
     const index = tradesByStrategy.value[strategyId].findIndex(t => t.id === tradeId)
     if (index !== -1) {

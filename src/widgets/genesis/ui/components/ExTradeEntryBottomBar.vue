@@ -10,7 +10,7 @@ defineProps<{
   isTradeEntryOpen: boolean
   isSimulatorOpen?: boolean
   isCloseModeActive: boolean
-  isTradeSaved?: boolean
+  commitState?: 'idle' | 'loading' | 'success'
   activePanel: 'matrix' | 'journal' | 'method' | null
   strategies: Strategy[]
   selectedStrategyId: string | null
@@ -20,7 +20,6 @@ defineProps<{
 const emit = defineEmits<{
   (event: 'toggle-entry'): void
   (event: 'save-trade'): void
-  (event: 'cancel-summary'): void
   (event: 'toggle-close-mode'): void
   (event: 'open-panel', panel: 'matrix' | 'journal' | 'method'): void
   (event: 'update-strategy', strategyId: string): void
@@ -51,18 +50,19 @@ const emit = defineEmits<{
       <button
         v-if="isTradeEntryOpen"
         type="button"
-        class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
-        :aria-label="isTradeSaved ? tr('Отмена', 'Cancel') : tr('Сохранить сделку', 'Save trade')"
-        @click="emit(isTradeSaved ? 'cancel-summary' : 'save-trade')"
+        class="group relative flex h-10 w-10 cursor-default items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80 disabled:opacity-70"
+        :disabled="commitState !== 'idle'"
+        :aria-label="tr('Сохранить сделку', 'Save trade')"
+        @click="emit('save-trade')"
       >
-        <svg v-if="!isTradeSaved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
+        <svg v-if="commitState === 'loading'" viewBox="0 0 24 24" fill="none" class="h-5 w-5 animate-spin" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" stroke-dasharray="28 22" stroke-linecap="round" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
           <path d="M5 12.5 9.5 17 19 7.5" />
         </svg>
-        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
-          <path d="M6 6l12 12M18 6 6 18" />
-        </svg>
         <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-          {{ isTradeSaved ? `[ ${tr('ОТМЕНА', 'CANCEL')} ]` : `[ ${tr('СОХРАНИТЬ_СДЕЛКУ', 'SAVE_TRADE')} ]` }}
+          [ {{ tr('СОХРАНИТЬ_СДЕЛКУ', 'SAVE_TRADE') }} ]
         </span>
       </button>
 
