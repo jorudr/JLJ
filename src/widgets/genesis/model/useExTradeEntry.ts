@@ -1130,14 +1130,13 @@ const hasEntryMethodPositions = computed(() => (
 
 const entryMethodEnabled = computed(() => activeMultipleEntries.value.length > 0)
 
-const entryMethodPriceViolations = computed(() => {
-  const entries = activeMultipleEntries.value
+const getEntryMethodPriceViolations = (entries, methodType) => {
   if (entries.length < 2) return []
 
   const firstPrice = parseFloat(entries[0]?.price)
   if (!Number.isFinite(firstPrice) || firstPrice <= 0) return []
 
-  const isPyramiding = entryMethodType.value === 'PYRAMIDING'
+  const isPyramiding = methodType === 'PYRAMIDING'
   return entries.reduce((violations, entryItem, index) => {
     if (index === 0) return violations
     const price = parseFloat(entryItem?.price)
@@ -1147,7 +1146,19 @@ const entryMethodPriceViolations = computed(() => {
     if (!isValid) violations.push(index)
     return violations
   }, [])
-})
+}
+
+const entryMethodPriceViolations = computed(() => (
+  getEntryMethodPriceViolations(activeMultipleEntries.value, entryMethodType.value)
+))
+
+const hasPyramidingPriceViolation = computed(() => (
+  getEntryMethodPriceViolations(pyramidingEntries.value, 'PYRAMIDING').length > 0
+))
+
+const hasAveragingDownPriceViolation = computed(() => (
+  getEntryMethodPriceViolations(averagingDownEntries.value, 'AVERAGING_DOWN').length > 0
+))
 
 const hasEntryMethodPriceViolation = computed(() => entryMethodPriceViolations.value.length > 0)
 
@@ -2535,6 +2546,8 @@ const submit = async () => {
     entryMethodPriceViolations,
     hasEntryMethodPriceViolation,
     entryMethodPriceViolationMessage,
+    hasPyramidingPriceViolation,
+    hasAveragingDownPriceViolation,
     hasActiveMethodNode,
     addMultipleEntry,
     exitEntries,
