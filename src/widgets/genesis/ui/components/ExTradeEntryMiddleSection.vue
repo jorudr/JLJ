@@ -443,15 +443,15 @@ const formatDateTactical = (dateStr) => {
                         <div class="asset-select-container relative flex w-full flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Актив</span>
                           <button type="button" class="flex h-10 w-full items-center gap-3 border-b border-white/20 bg-transparent text-left font-mono text-sm uppercase tracking-[0.18em] text-white outline-none transition-colors hover:border-white/80" @click="showAssetMenu = true">
-                            <span v-if="currentAssetData?.type === 'Forex' && getForexCurrencyPair(currentAssetData.symbol)" class="relative flex h-6 w-6 shrink-0 items-center">
+                            <span v-if="asset && currentAssetData?.type === 'Forex' && getForexCurrencyPair(currentAssetData.symbol)" class="relative flex h-6 w-6 shrink-0 items-center">
                               <img :src="getForexCurrencyPair(currentAssetData.symbol).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
                               <img :src="getForexCurrencyPair(currentAssetData.symbol).quote" alt="" class="absolute bottom-0 right-0 h-[68%] w-[68%] rounded-full object-cover" />
                             </span>
-                            <span v-else-if="currentAssetData?.icon && !failedIcons.has(currentAssetData.symbol)" class="flex h-5 w-5 shrink-0 items-center justify-center">
+                            <span v-else-if="asset && currentAssetData?.icon && !failedIcons.has(currentAssetData.symbol)" class="flex h-5 w-5 shrink-0 items-center justify-center">
                               <img :src="currentAssetData.icon" :alt="currentAssetData.symbol" class="h-full w-full object-contain" @error="handleIconError(currentAssetData.symbol)" />
                             </span>
-                            <span v-else class="flex h-5 w-5 shrink-0 items-center justify-center border text-[10px] font-black" :class="isDark ? 'border-white/20 text-white' : 'border-black/20 text-black'">
-                              {{ currentAssetData?.symbol?.[0] || '?' }}
+                            <span v-else-if="asset" class="flex h-5 w-5 shrink-0 items-center justify-center text-[10px] font-black" :class="isDark ? 'text-white' : 'text-black'">
+                              {{ currentAssetData?.symbol?.[0] || asset?.[0] || '' }}
                             </span>
                             <span :class="asset ? 'text-white' : 'text-white/40'">{{ asset || 'Выберите актив' }}</span>
                           </button>
@@ -474,7 +474,7 @@ const formatDateTactical = (dateStr) => {
                                           <img :src="assetOption.icon" :alt="assetOption.symbol" class="h-full w-full object-contain" @error="handleIconError(assetOption.symbol)" />
                                         </span>
                                         <span v-else class="flex h-7 w-7 shrink-0 items-center justify-center border text-xs font-black" :class="isDark ? 'border-white/20 text-white' : 'border-black/20 text-black'">
-                                          {{ assetOption.symbol?.[0] || '?' }}
+                                          {{ assetOption.symbol?.[0] || '' }}
                                         </span>
                                         <span class="truncate text-sm font-black tracking-widest">{{ assetOption.symbol }}</span>
                                       </span>
@@ -738,7 +738,7 @@ const formatDateTactical = (dateStr) => {
                          <!-- Visual Attach Dropdown -->
                          <div class="relative group/visuals inline-block">
                            <button class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all flex items-center gap-2">
-                             {{ locale === 'ru' ? 'ПРИКРЕПИТЬ_МАТЕРИАЛ' : 'ATTACH_VISUAL' }}
+                             {{ locale === 'ru' ? 'ПРИКРЕПИТЬ' : 'ATTACH' }}
                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                            </button>
                            <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
