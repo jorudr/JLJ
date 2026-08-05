@@ -20,7 +20,7 @@ const editingContentNoteId = ref(null);
 const expandedNoteIds = ref([]);
 const editingNoteId = ref(null);
 const editNoteTitle = ref("");
-const activeProjectionMode = ref('projection');
+const activeProjectionMode = ref('core');
 
 const startEditContent = (note) => {
   editingContentNoteId.value = note.id;
@@ -368,7 +368,19 @@ const formatDateTactical = (dateStr) => {
                   </div>
                 </div>
 
-                <div class="absolute -top-12 right-0 z-20 flex items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+                <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+                  <button
+                    type="button"
+                    :aria-label="locale === 'ru' ? 'Основные данные сделки' : 'Trade details'"
+                    class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10"
+                    :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+                    @click="activeProjectionMode = 'core'"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.7" />
+                      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     :aria-label="locale === 'ru' ? 'Проекция' : 'Projection'"
