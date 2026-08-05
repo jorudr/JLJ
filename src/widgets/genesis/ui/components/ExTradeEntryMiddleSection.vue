@@ -236,6 +236,15 @@ const summaryDisplayTrade = computed(() => savedTradeSummary.value || {
   tradeDuration: actualTradeDurationLabel.value
 });
 
+const summaryStrategyLabel = computed(() => {
+  const strategyId = summaryDisplayTrade.value?.strategyId || selectedStrategyId?.value;
+  const strategy = Array.isArray(strategies?.value)
+    ? strategies.value.find(item => item?.id === strategyId)
+    : null;
+  const fallback = selectedStrategy?.value;
+  return strategy?.label || strategy?.name || fallback?.label || fallback?.name || strategyId || '--';
+});
+
 const formatSummaryRatio = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? `${number.toFixed(2)}R` : '--';
@@ -751,8 +760,12 @@ const summaryProtocolGroups = computed(() => {
                           </span>
                         </div>
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">СТРАТЕГИЯ</span>
+                          <span class="mt-2 block truncate text-xl font-mono font-black uppercase tracking-[0.12em] text-white">{{ summaryStrategyLabel }}</span>
+                        </div>
+                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Результат по сделке</span>
-                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
+                          <span class="mt-2 inline-flex whitespace-nowrap text-lg font-mono font-black tracking-[0.1em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
                             {{ formatSummaryMoney(summaryDisplayTrade.profitInCurrency) }} / {{ formatSummaryPercent(summaryProfitPercent(summaryDisplayTrade)) }}
                           </span>
                         </div>
