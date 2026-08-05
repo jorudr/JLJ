@@ -780,8 +780,11 @@ const summaryProtocolGroups = computed(() => {
                   :class="activeProjectionMode === 'chart' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
                 >
                   <div class="h-full w-full p-10">
-                    <div class="relative h-full w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                      <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                    <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">РЫНОЧНЫЙ ГРАФИК</h2>
+                      <div class="relative mt-12 min-h-0 flex-1">
+                        <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -792,17 +795,20 @@ const summaryProtocolGroups = computed(() => {
                   :class="activeProjectionMode === 'projection' ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'"
                 >
                   <div class="h-full w-full p-10">
-                    <div class="relative h-full w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                      <div v-if="hasValidProjection" class="absolute inset-0 h-full w-full">
-                        <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
-                      </div>
-                      <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
-                        <div class="w-16 h-px nier-bg-inverted mb-8 group-hover:w-24 transition-all duration-700"></div>
-                        <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
-                        <div class="mt-8 flex gap-2">
-                          <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
+                    <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">КРИВАЯ КАПИТАЛА</h2>
+                      <div class="relative min-h-0 flex-1">
+                        <div v-if="hasValidProjection" class="absolute inset-0 h-full w-full">
+                          <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
                         </div>
-                     </div>
+                        <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
+                          <div class="mb-8 h-px w-16 nier-bg-inverted transition-all duration-700 group-hover:w-24"></div>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.6em] nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
+                          <div class="mt-8 flex gap-2">
+                            <div v-for="i in 3" :key="i" class="h-1 w-1 rotate-45 bg-black/20 dark:bg-white/20"></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

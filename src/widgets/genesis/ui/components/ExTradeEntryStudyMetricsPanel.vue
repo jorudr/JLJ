@@ -54,6 +54,8 @@ const copy = {
     generateChart: 'GENERATE CHART',
     cooldownButton: 'WAIT {time}',
     apiCooldownHint: 'API requests are paused for {time}. You can always generate the chart through trade edit mode.',
+    minimumDurationButton: 'MIN 5M',
+    minimumDurationExceeded: 'The minimum entry-to-exit duration for generated market data is 5 minutes. Extend the trade duration to generate the chart.',
     rangeTooLongButton: 'MAX 61D',
     dateRangeLimitExceeded: 'The maximum entry-to-exit range for generated market data is 61 days. Shorten the trade duration to generate the chart.',
     dailyTimeframeOnly: 'For trades longer than 3 days, generated market data uses daily candles only.',
@@ -114,6 +116,8 @@ const copy = {
     generateChart: 'СГЕНЕРИРОВАТЬ ГРАФИК',
     cooldownButton: 'ПАУЗА {time}',
     apiCooldownHint: 'API-запросы остановлены на {time}. Вы всегда можете сгенерировать график через режим редактирования сделки.',
+    minimumDurationButton: 'МИН. 5М',
+    minimumDurationExceeded: 'Минимальная длительность сделки от входа до выхода для генерации рыночного графика — 5 минут. Увеличьте длительность сделки, чтобы построить график.',
     rangeTooLongButton: 'МАКС. 61Д',
     dateRangeLimitExceeded: 'Максимальный диапазон от входа до выхода для генерации рыночных данных — 61 день. Сократите длительность сделки, чтобы сгенерировать график.',
     dailyTimeframeOnly: 'Для сделок длиннее 3 дней генерируются только дневные свечи 1D.',
@@ -177,6 +181,7 @@ const DAY_MS = 24 * HOUR_MS
 const MAX_API_CANDLES = 1000
 const API_ERROR_COOLDOWN_MS = MINUTE_MS
 const DAILY_TIMEFRAME_ONLY_AFTER_MS = 3 * DAY_MS
+const MIN_GENERATED_MARKET_DATA_RANGE_MS = 5 * MINUTE_MS
 const MAX_GENERATED_MARKET_DATA_RANGE_MS = 61 * DAY_MS
 
 const timeframeOptions = [
@@ -287,6 +292,11 @@ const tradeDurationMs = computed(() => {
   return tradeTimeRange.value.end - tradeTimeRange.value.start
 })
 
+const isGeneratedMarketDataRangeTooShort = computed(() => {
+  const duration = tradeDurationMs.value
+  return Number.isFinite(duration) && duration > 0 && duration < MIN_GENERATED_MARKET_DATA_RANGE_MS
+})
+
 const isGeneratedMarketDataRangeTooLong = computed(() => {
   const duration = tradeDurationMs.value
   return Number.isFinite(duration) && duration > MAX_GENERATED_MARKET_DATA_RANGE_MS
@@ -300,6 +310,7 @@ const isDailyTimeframeOnlyRange = computed(() => {
 const availableTimeframeOptions = computed(() => {
   const duration = tradeDurationMs.value
   if (!Number.isFinite(duration) || duration <= 0) return []
+  if (isGeneratedMarketDataRangeTooShort.value) return []
   if (isGeneratedMarketDataRangeTooLong.value) return []
   if (isDailyTimeframeOnlyRange.value) return timeframeOptions.filter(timeframe => timeframe.id === '1d')
   if (duration < 15 * MINUTE_MS) return timeframeOptions.filter(timeframe => timeframe.id === '1m')
@@ -333,13 +344,14 @@ const apiCooldownHint = computed(() => {
 
 const generateMarketDataButtonLabel = computed(() => {
   if (generationState.value === 'loading') return ui().generating
+  if (isGeneratedMarketDataRangeTooShort.value) return ui().minimumDurationButton
   if (isGeneratedMarketDataRangeTooLong.value) return ui().rangeTooLongButton
   if (isApiCooldownActive.value) return ui().cooldownButton.replace('{time}', apiCooldownRemainingLabel.value)
   return ui().generateChart
 })
 
 const canGenerateMarketData = computed(() => {
-  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && !isGeneratedMarketDataRangeTooLong.value && commitState?.value !== 'loading' && generationState.value !== 'loading' && !isApiCooldownActive.value
+  return Boolean(selectedTradeAsset.value && tradeTimeRange.value && availableTimeframeOptions.value.length) && !isGeneratedMarketDataRangeTooShort.value && !isGeneratedMarketDataRangeTooLong.value && commitState?.value !== 'loading' && generationState.value !== 'loading' && !isApiCooldownActive.value
 })
 
 const generatedChartCandles = computed(() => {
@@ -371,6 +383,7 @@ const chartTimeframeOptions = computed(() => {
 })
 
 const marketDataStatusMessage = computed(() => {
+  if (isGeneratedMarketDataRangeTooShort.value) return ui().minimumDurationExceeded
   if (isGeneratedMarketDataRangeTooLong.value) return ui().dateRangeLimitExceeded
   if (generationError.value) return `${ui().apiError} ${generationError.value}`
   if (isDailyTimeframeOnlyRange.value) return ui().dailyTimeframeOnly
