@@ -5,6 +5,7 @@ import { useI18n } from '~/shared/i18n/useI18n';
 import ExPanel from '~/shared/ui/ExPanel.vue';
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
+const { setResultMode } = inject('tradeState');
 
 const assetTypeLocales = {
   'ALL': { en: 'ALL', ru: 'ВСЕ' },
@@ -56,8 +57,8 @@ const getForexCurrencyPair = (symbol) => {
         </div>
 
         <div class="flex gap-0.5 bg-black/60 p-1 border-t border-l border-r border-white/30 shrink-0" :class="{ 'opacity-40 pointer-events-none': !isClosed }">
-          <button @click="isClosed && (resultMode = 'auto')" :class="resultMode === 'auto' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'АВТО' : 'AUTO' }}</button>
-          <button @click="isClosed && (resultMode = 'manual')" :class="resultMode === 'manual' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'РУЧНАЯ' : 'MANUAL' }}</button>
+          <button @click="isClosed && setResultMode('auto')" :class="resultMode === 'auto' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'АВТО' : 'AUTO' }}</button>
+          <button @click="isClosed && setResultMode('manual')" :class="resultMode === 'manual' ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'" class="px-4 py-1.5 transition-all relative group text-[8px] uppercase tracking-[0.4em] font-black">{{ locale === 'ru' ? 'РУЧНАЯ' : 'MANUAL' }}</button>
         </div>
       </div>
 

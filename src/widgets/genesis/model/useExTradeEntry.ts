@@ -415,6 +415,14 @@ onMounted(() => {
     }
 
     feeType.value = t.feeType || '%'
+    const storedResultMode = String(t.resultMode || '').toLowerCase()
+    if (storedResultMode === 'manual' && t.profitInCurrency !== undefined && t.profitInCurrency !== null) {
+      resultMode.value = 'manual'
+      overridePnl.value = t.profitInCurrency
+    } else {
+      resultMode.value = 'auto'
+      overridePnl.value = null
+    }
     stopLoss.value = t.stopLoss || ''
     takeProfit.value = t.takeProfit || ''
     tradeTimeZone.value = t.timeZone || t.timezone || detectUserTimeZone()
@@ -1328,11 +1336,30 @@ watch(isFixedFeeAsset, (val) => {
 const overridePnl = ref(null)
 watch(asset, () => { 
   overridePnl.value = null 
+  resultMode.value = 'auto'
 })
 
-watch(isManualEntryAsset, (val) => {
-  resultMode.value = val ? 'manual' : 'auto'
-}, { immediate: true })
+const setResultMode = (mode) => {
+  if (!isClosed.value) return
+  resultMode.value = mode
+  if (mode === 'auto') overridePnl.value = null
+}
+
+const handlePnlInput = (event) => {
+  const target = event?.target
+  const sanitized = sanitizeDecimalInputValue(target?.value ?? '', { allowNegative: true })
+
+  if (target && target.value !== sanitized) target.value = sanitized
+
+  if (!sanitized.trim()) {
+    setResultMode('auto')
+    return
+  }
+
+  if (!isClosed.value) return
+  resultMode.value = 'manual'
+  overridePnl.value = sanitized
+}
 
 // Forex Rates System
 const liveRates = ref({})
@@ -1966,7 +1993,13 @@ const pnl = computed({
     return (resultMode.value === 'manual' && overridePnl.value !== null) ? overridePnl.value : (projectedProfit.value || 0)
   },
   set: (val) => {
-    if (isClosed.value) overridePnl.value = val
+    if (!isClosed.value) return
+    if (val === null || val === undefined || String(val).trim() === '') {
+      setResultMode('auto')
+      return
+    }
+    resultMode.value = 'manual'
+    overridePnl.value = val
   }
 })
 
@@ -1980,6 +2013,7 @@ watch(isClosed, (closed) => {
   exitFee.value = ''
   exitEntries.value = []
   overridePnl.value = null
+  resultMode.value = 'auto'
 })
 
 const resetForm = () => {
@@ -2001,6 +2035,7 @@ const resetForm = () => {
   exitDate.value = new Date()
   tradeTimeZone.value = detectUserTimeZone()
   overridePnl.value = null
+  resultMode.value = 'auto'
   selectedRegistryScenarioId.value = null
   showConditionLibrary.value = false
   showEntryMethod.value = false
@@ -2266,6 +2301,7 @@ const submit = async () => {
     date: cloneDate(committedOpenDate),
     dateExit: isClosed.value ? cloneDate(committedExitDate) : undefined,
     profitInCurrency: isClosed.value ? pnl.value : undefined,
+    resultMode: isClosed.value ? resultMode.value : undefined,
     profitInPercent: isClosed.value
       ? ((Number(pnl.value) || 0) / Math.max(1, Number(currentCapital.value) || 0)) * 100
       : undefined,
@@ -2431,6 +2467,8 @@ const submit = async () => {
     exitFee,
     feeType,
     resultMode,
+    setResultMode,
+    handlePnlInput,
     showEntryMethod,
     showTradeStudyMetrics,
     tradeStudyMetrics,

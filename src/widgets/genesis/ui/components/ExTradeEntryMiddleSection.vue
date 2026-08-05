@@ -24,6 +24,7 @@ import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
 import { computed, ref, watch } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
+const { handlePnlInput } = tradeState;
 const { showTradeSummary, savedTradeSummary } = tradeState;
 const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, currentCapital, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
 
@@ -236,6 +237,11 @@ const summaryDisplayTrade = computed(() => savedTradeSummary.value || {
   riskPercent: actualRiskPercent.value,
   riskReward: actualRR.value,
   tradeDuration: actualTradeDurationLabel.value
+});
+
+const summaryTradeResultLabel = computed(() => {
+  const trade = summaryDisplayTrade.value;
+  return `${formatSummaryMoney(trade?.profitInCurrency)} / ${formatSummaryPercent(summaryProfitPercent(trade))}`;
 });
 
 const summaryStrategyLabel = computed(() => {
@@ -748,8 +754,8 @@ const summarySelectedEmotions = computed(() => {
 
                     <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">II.</div>
-                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Точка входа, выхода и размер позиции', 'Entry, exit and position size') }}</h2>
-                      <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Точка входа, выхода, размер позиции и результат', 'Entry, exit, position size and result') }}</h2>
+                      <div class="grid w-full max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Точка входа', 'Entry price') }}</span>
                           <input v-model="entry" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'entry')" />
@@ -761,6 +767,10 @@ const summarySelectedEmotions = computed(() => {
                         <label class="flex flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Размер позиции', 'Position size') }}</span>
                           <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'size')" />
+                        </label>
+                        <label class="flex flex-col items-start gap-2">
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Результат', 'Trade result') }}</span>
+                          <input :value="pnl" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed" :aria-label="tr('Результат по сделке', 'Trade result')" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :class="resultMode === 'manual' ? 'text-amber-300' : ''" @input="handlePnlInput" />
                         </label>
                       </div>
                     </section>
@@ -844,8 +854,8 @@ const summarySelectedEmotions = computed(() => {
                     <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">VI.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Резюме', 'Summary') }}</h2>
-                      <div class="flex w-full max-w-none flex-wrap gap-y-6">
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                      <div class="grid w-full max-w-none grid-cols-2 gap-y-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_max-content_minmax(0,1fr)]">
+                        <div class="min-w-0 pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Актив', 'Asset') }}</span>
                           <span class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
                             <span v-if="summaryDisplayTrade.assetType === 'Forex' && getForexCurrencyPair(summaryDisplayTrade.asset)" class="relative flex h-7 w-7 shrink-0 items-center">
@@ -861,25 +871,25 @@ const summarySelectedEmotions = computed(() => {
                             {{ summaryDisplayTrade.asset || '--' }}
                           </span>
                         </div>
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                        <div class="min-w-0 pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">СТРАТЕГИЯ</span>
                           <span class="mt-2 block truncate text-xl font-mono font-black uppercase tracking-[0.12em] text-white">{{ summaryStrategyLabel }}</span>
                         </div>
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                        <div class="min-w-0 overflow-visible pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Результат по сделке', 'Trade result') }}</span>
-                          <span class="mt-2 inline-flex whitespace-nowrap text-lg font-mono font-black tracking-[0.1em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
-                            {{ formatSummaryMoney(summaryDisplayTrade.profitInCurrency) }} / {{ formatSummaryPercent(summaryProfitPercent(summaryDisplayTrade)) }}
+                          <span class="mt-2 block whitespace-nowrap text-lg font-mono font-black leading-tight tracking-[0.1em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
+                            {{ summaryTradeResultLabel }}
                           </span>
                         </div>
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                        <div class="min-w-0 overflow-hidden pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('ДЛИТЕЛЬНОСТЬ СДЕЛКИ', 'TRADE DURATION') }}</span>
-                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ summaryDisplayTrade.tradeDuration || '--' }}</span>
+                          <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ summaryDisplayTrade.tradeDuration || '--' }}</span>
                         </div>
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                        <div class="min-w-0 pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('РИСК / КАПИТАЛ', 'RISK / CAPITAL') }}</span>
                           <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryPercent(summaryDisplayTrade.riskPercent) }}</span>
                         </div>
-                        <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
+                        <div class="min-w-0 pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
                           <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryRatio(summaryDisplayTrade.riskReward) }}</span>
                         </div>
