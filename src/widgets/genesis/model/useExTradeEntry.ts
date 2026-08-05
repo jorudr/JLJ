@@ -376,39 +376,41 @@ onMounted(() => {
       const usesExitMethod = exitExecs.length > 1 || exitExecs.some(e => String(e?.label || '').toUpperCase() !== 'SINGLE')
       
       if (usesEntryMethod) {
-        entryMethodEnabled.value = true
-        activeProtocolTab.value = 'PYRAMIDING'
-        entryMethodType.value = 'PYRAMIDING'
-        pyramidingEntries.value = entryExecs.map(e => ({
+        const entryMethodLabel = String(entryExecs.find(e => String(e?.label || '').toUpperCase() !== 'SINGLE')?.label || '').toUpperCase()
+        const restoredEntryMethodType = entryMethodLabel === 'AVERAGING_DOWN' || entryMethodLabel === 'AVERAGING'
+          ? 'AVERAGING_DOWN'
+          : 'PYRAMIDING'
+        const restoredEntries = entryExecs.map(e => ({
+          id: e.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           price: e.price,
           size: e.size,
           fee: e.fee || 0
         }))
+        entryMethodType.value = restoredEntryMethodType
+        activeProtocolTab.value = restoredEntryMethodType
+        if (restoredEntryMethodType === 'AVERAGING_DOWN') averagingDownEntries.value = restoredEntries
+        else pyramidingEntries.value = restoredEntries
       } else {
-        entryMethodEnabled.value = false
         entry.value = entryExecs[0]?.price || t.entry || ''
         size.value = entryExecs[0]?.size || t.size || ''
         entryFee.value = t.entryFee || ''
       }
       
       if (usesExitMethod) {
-        exitMethodEnabled.value = true
         exitEntriesSizeLinked.value = false
         exitEntries.value = exitExecs.map(e => ({
+          id: e.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           price: e.price,
           size: e.size,
           fee: e.fee || 0,
           reason: e.reason || 'MANUAL'
         }))
       } else {
-        exitMethodEnabled.value = false
         exitEntriesSizeLinked.value = true
         exit.value = exitExecs[0]?.price || t.exit || ''
         exitFee.value = t.exitFee || ''
       }
     } else {
-      entryMethodEnabled.value = false
-      exitMethodEnabled.value = false
       entry.value = t.entry || ''
       exit.value = t.exit || ''
       size.value = t.size || ''
@@ -1124,6 +1126,19 @@ const activeMultipleEntries = computed(() =>
   entryMethodType.value === 'PYRAMIDING' ? pyramidingEntries.value : averagingDownEntries.value
 )
 
+const persistedEntryEntries = computed(() => {
+  if (activeMultipleEntries.value.length > 0) return activeMultipleEntries.value
+  if (pyramidingEntries.value.length > 0) return pyramidingEntries.value
+  return averagingDownEntries.value
+})
+
+const persistedEntryMethodType = computed(() => {
+  if (activeMultipleEntries.value.length > 0) return entryMethodType.value
+  if (pyramidingEntries.value.length > 0) return 'PYRAMIDING'
+  if (averagingDownEntries.value.length > 0) return 'AVERAGING_DOWN'
+  return 'SINGLE'
+})
+
 const hasEntryMethodPositions = computed(() => (
   pyramidingEntries.value.length > 0 || averagingDownEntries.value.length > 0
 ))
@@ -1342,8 +1357,8 @@ const confirmAutoGenerate = () => {
 }
 
 const totalSize = computed(() => {
-  if (!entryMethodEnabled.value || activeMultipleEntries.value.length === 0) return parseFloat(size.value) || 0
-  return activeMultipleEntries.value.reduce((sum, e) => sum + (parseFloat(e.size) || 0), 0)
+  if (!hasEntryMethodPositions.value) return parseFloat(size.value) || 0
+  return persistedEntryEntries.value.reduce((sum, e) => sum + (parseFloat(e.size) || 0), 0)
 })
 
 watch(totalSize, (nextTotalSize) => {
@@ -1352,11 +1367,11 @@ watch(totalSize, (nextTotalSize) => {
 })
 
 const averageEntry = computed(() => {
-  if (!entryMethodEnabled.value || activeMultipleEntries.value.length === 0) return parseFloat(entry.value) || 0
+  if (!hasEntryMethodPositions.value) return parseFloat(entry.value) || 0
   
   let totalValue = 0
   let totalQty = 0
-  activeMultipleEntries.value.forEach(e => {
+  persistedEntryEntries.value.forEach(e => {
     const p = parseFloat(e.price) || 0
     const s = parseFloat(e.size) || 0
     if (p > 0 && s > 0) {
@@ -1521,7 +1536,7 @@ const toPositiveTradeNumber = (value) => {
 }
 
 const tradeEntryPrice = computed(() => {
-  return entryMethodEnabled.value ? averageEntry.value : toPositiveTradeNumber(entry.value)
+  return hasEntryMethodPositions.value ? averageEntry.value : toPositiveTradeNumber(entry.value)
 })
 
 const tradePositionSize = computed(() => {
@@ -1932,15 +1947,15 @@ const handleManualDate = (target, unit, val) => {
 // Equity Projection Logic
 const projectedProfit = computed(() => {
   if (!isClosed.value) return null
-  const en = entryMethodEnabled.value ? averageEntry.value : parseFloat(entry.value)
+  const en = hasEntryMethodPositions.value ? averageEntry.value : parseFloat(entry.value)
   const ex = exitMethodEnabled.value ? averageExit.value : parseFloat(exit.value)
-  const sz = exitMethodEnabled.value ? totalExitSize.value : (entryMethodEnabled.value ? totalSize.value : parseFloat(size.value))
+  const sz = exitMethodEnabled.value ? totalExitSize.value : (hasEntryMethodPositions.value ? totalSize.value : parseFloat(size.value))
   if (isNaN(en) || isNaN(ex) || isNaN(sz)) return null
 
   const finalProfit = calculateGrossPriceMoveDollars(en, ex, sz)
   if (!Number.isFinite(finalProfit)) return null
 
-  const entryFeeSize = entryMethodEnabled.value ? totalSize.value : parseFloat(size.value)
+  const entryFeeSize = hasEntryMethodPositions.value ? totalSize.value : parseFloat(size.value)
   const exitFeeSize = sz
   const eFee = calculateTradeFeeDollars(en, entryFeeSize, entryFee.value)
   const xFee = calculateTradeFeeDollars(ex, exitFeeSize, exitFee.value)
@@ -2115,7 +2130,7 @@ const resetForm = () => {
 }
 
 const submit = async () => {
-  const finalEntry = entryMethodEnabled.value ? averageEntry.value : +entry.value
+  const finalEntry = hasEntryMethodPositions.value ? averageEntry.value : +entry.value
   const finalExit = isClosed.value ? (exitMethodEnabled.value ? averageExit.value : +exit.value) : undefined
   const finalSize = totalSize.value
   const committedOpenDate = cloneDate(openDate.value)
@@ -2286,14 +2301,14 @@ const submit = async () => {
 
   const boardRequiredConditionsEntry = activeEntry?.id
     ? getScenarioRequiredConditionsSnapshot(activeEntry.id)
-    : getRequiredConditionsSnapshotForScenarios(entryScenarios.value)
+    : []
   const boardRequiredConditionsExit = (activeExit || activeMini)?.id
     ? getScenarioRequiredConditionsSnapshot((activeExit || activeMini).id)
-    : getRequiredConditionsSnapshotForScenarios(exitScenarios.value)
+    : []
 
   const builtExecutions = []
-  if (entryMethodEnabled.value) {
-    activeMultipleEntries.value.forEach(e => {
+  if (hasEntryMethodPositions.value) {
+    persistedEntryEntries.value.forEach(e => {
        if (e.price && e.size) {
          builtExecutions.push({
            id: e.id.toString(),
@@ -2303,7 +2318,7 @@ const submit = async () => {
            size: parseFloat(e.size) || 0,
            date: cloneDate(committedOpenDate),
            timeZone: committedTimeZone,
-           label: entryMethodType.value
+           label: persistedEntryMethodType.value
          })
        }
     })
@@ -2352,7 +2367,7 @@ const submit = async () => {
     id: Date.now().toString(),
     asset: asset.value || 'UNTITLED',
     side: side.value === 'long' ? 'Long' : 'Short',
-    entry: entryMethodEnabled.value ? averageEntry.value : +entry.value,
+    entry: hasEntryMethodPositions.value ? averageEntry.value : +entry.value,
     exit: isClosed.value ? (exitMethodEnabled.value ? averageExit.value : +exit.value) : undefined,
     size: totalSize.value,
     executions: builtExecutions,
@@ -2372,6 +2387,10 @@ const submit = async () => {
     assetType: currentAssetData.value?.type || 'Forex',
     strategyId: commitStrategyId,
     strategyVersionId: commitStrategyVersionId.value,
+    entryMethodType: persistedEntryMethodType.value,
+    exitMethodType: exitMethodEnabled.value ? 'EXIT_SCALE' : 'SINGLE',
+    boardScenarioEntryId: activeEntry?.id || undefined,
+    boardScenarioExitId: isClosed.value ? ((activeExit || activeMini)?.id || undefined) : undefined,
     risk: actualRiskDollars.value !== null ? actualRiskDollars.value : undefined,
     riskPercent: actualRiskPercent.value,
     riskReward: actualRR.value ?? plannedRiskReward,

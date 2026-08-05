@@ -72,6 +72,8 @@ export interface DiaryEntry {
     };
     boardScenarioEntryId?: string;
     boardScenarioExitId?: string;
+    entryMethodType?: 'SINGLE' | 'PYRAMIDING' | 'AVERAGING_DOWN' | string;
+    exitMethodType?: 'SINGLE' | 'EXIT_SCALE' | string;
     emotions?: string[];
     emotionsEntry?: string[];
     emotionsDuring?: string[];
