@@ -135,7 +135,7 @@ const formatDateTactical = (dateStr) => {
 <template>
 <!-- MIDDLE SECTION: TACTICAL MENUS OR JOURNAL -->
     <div class="w-full flex justify-center">
-      <div class="w-[calc(100vw-5rem)] min-w-0 max-w-[1180px] pb-12 py-8 sm:w-[calc(100vw-8rem)] md:w-[calc(100vw-12rem)] xl:w-[76vw] 2xl:w-[72vw]">
+      <div class="w-[calc(100vw-3rem)] min-w-0 max-w-[1770px] pb-12 py-8 sm:w-[calc(100vw-5rem)] md:w-[calc(100vw-6rem)] xl:w-[90vw] 2xl:w-[90vw]">
         <Transition name="sector-swap" mode="out-in">
           <div v-if="viewMode === 'tactical'" key="tactical" class="flex flex-col space-y-12">
             <!-- CONDITION CONFIGURATION PANEL (LEGACY DESCRIPTION AESTHETIC) -->
@@ -342,7 +342,7 @@ const formatDateTactical = (dateStr) => {
 
              <!-- TACTICAL EQUITY PROJECTION (Replaced Void) -->
              <div v-else class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
-               <div class="relative mx-auto flex h-[clamp(500px,58vh,640px)] w-full max-w-[1040px] flex-col items-center justify-center border border-black/5 bg-black/[0.02] dark:border-white/5 dark:bg-white/[0.02] group z-10">
+               <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border border-black/5 bg-black/[0.02] dark:border-white/5 dark:bg-white/[0.02] group z-10">
                 <div
                   v-show="activeProjectionMode === 'chart'"
                   class="absolute inset-0 h-full w-full"
