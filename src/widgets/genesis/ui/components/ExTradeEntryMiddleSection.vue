@@ -932,7 +932,7 @@ const summarySelectedEmotions = computed(() => {
                   <div class="h-full w-full p-10">
                     <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
                       <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('РЫНОЧНЫЙ ГРАФИК', 'MARKET CHART') }}</h2>
-                      <div class="relative mt-12 min-h-0 flex-1">
+                      <div class="relative mt-16 min-h-0 flex-1">
                         <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
                       </div>
                     </div>
@@ -947,7 +947,7 @@ const summarySelectedEmotions = computed(() => {
                   <div class="h-full w-full p-10">
                     <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
                       <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('КРИВАЯ КАПИТАЛА', 'EQUITY CURVE') }}</h2>
-                      <div class="relative min-h-0 flex-1">
+                      <div class="relative mt-12 min-h-0 flex-1">
                         <div v-if="hasValidProjection" class="absolute inset-0 h-full w-full">
                           <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
                         </div>

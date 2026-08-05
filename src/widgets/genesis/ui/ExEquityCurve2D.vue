@@ -9,7 +9,7 @@
 
         <!-- Axis Labels -->
         <text x="8" y="12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic">$</text>
-        <text :x="width - 8" :y="height - 12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic" text-anchor="end">TIME</text>
+        <text :x="width - 8" :y="height - 12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic" text-anchor="end">{{ locale === 'ru' ? 'ВРЕМЯ' : 'TIME' }}</text>
 
         <!-- Main Path -->
         <path :d="linePath" 
@@ -49,8 +49,8 @@
                 stroke-dasharray="4,4" />
           
           <text v-if="hoveredPoint.date"
-                :x="hoveredPoint.x" :y="height + 18" 
-                class="fill-black/60 dark:fill-white/60 text-[8px] font-mono tracking-widest uppercase"
+                :x="hoveredPoint.x" :y="height + 24"
+                class="fill-black/60 dark:fill-white/60 text-[11.2px] font-mono tracking-widest uppercase"
                 text-anchor="middle">
             {{ formatDate(hoveredPoint.date) }}
           </text>
@@ -64,24 +64,24 @@
                class="fixed pointer-events-none z-[9999] bg-white/95 dark:bg-[#0a0a0a]/95 border nier-border-primary p-5 shadow-2xl flex flex-col space-y-3 backdrop-blur-xl min-w-[200px]"
                :style="{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px`, transform: 'translate(-50%, -120%)' }">
             
-            <div class="flex flex-col space-y-0.5">
+            <div v-if="hoveredPoint.isProjection" class="flex flex-col space-y-0.5">
               <span class="text-[8px] font-mono tracking-[0.3em] text-black/30 dark:text-white/30 uppercase font-black">
-                {{ hoveredPoint.isProjection ? 'PROJECTION_OUTPUT' : 'HISTORICAL_DATA' }}
+                {{ locale === 'ru' ? 'ПРОЕКЦИЯ' : 'PROJECTION OUTPUT' }}
               </span>
               <div class="h-px w-full bg-black/5 dark:white/5 mt-1"></div>
             </div>
 
             <div class="flex flex-col">
-              <span class="text-[8px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-1">AGGREGATE_BALANCE</span>
+              <span class="text-[8px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-1">{{ locale === 'ru' ? 'ИТОГОВЫЙ БАЛАНС' : 'AGGREGATE BALANCE' }}</span>
               <span class="text-2xl font-mono font-bold nier-text-primary tracking-tighter">
                 {{ formatCurrency(hoveredPoint.value) }}
               </span>
             </div>
 
             <div class="flex flex-col">
-              <span class="text-[8px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-1">TACTICAL_SOURCE</span>
+              <span class="text-[8px] font-mono tracking-widest text-black/40 dark:text-white/40 uppercase mb-1">{{ locale === 'ru' ? 'ИСТОЧНИК СДЕЛКИ' : 'TACTICAL SOURCE' }}</span>
               <span class="text-[10px] font-mono nier-text-primary font-bold">
-                {{ hoveredPoint.label }}
+                {{ formatPointLabel(hoveredPoint.label) }}
               </span>
             </div>
 
@@ -97,6 +97,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getTradeCashPnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { locale } = useI18n()
 
 const props = defineProps<{
   trades: any[]
@@ -225,7 +228,15 @@ const projectionPath = computed(() => {
 const formatDate = (date: any) => {
   if (!date) return ''
   const d = new Date(date)
-  return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+  return `${d.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString(locale.value === 'ru' ? 'ru-RU' : undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}`
+}
+
+const formatPointLabel = (label: any) => {
+  if (label === 'INITIAL_DEPOSIT') return locale.value === 'ru' ? 'НАЧАЛЬНЫЙ ДЕПОЗИТ' : 'INITIAL DEPOSIT'
+  if (locale.value !== 'ru') return label
+  return String(label || '')
+    .replace(/\(Long\)$/i, '(ЛОНГ)')
+    .replace(/\(Short\)$/i, '(ШОРТ)')
 }
 
 const formatCurrency = (val: number) => {
