@@ -57,7 +57,7 @@ const addJournalEntry = () => {
   journalEntries.value.push({
     id,
     image: null,
-    name: getArchiveNodeName(id),
+    name: '',
     tags: [],
     tagInput: '',
     createdAt: new Date().toISOString()
@@ -420,7 +420,7 @@ onMounted(() => {
       journalEntries.value = t.images.map((img, index) => ({
         id: Date.now() + index,
         image: img.url,
-        name: img.name,
+        name: img.name && !/^archive_node_/i.test(img.name) ? img.name : '',
         tags: img.tags || [],
         tagInput: '',
         createdAt: img.createdAt || new Date().toISOString()
@@ -2272,7 +2272,7 @@ const submit = async () => {
     boardRequiredConditionsExit,
     images: journalEntries.value.map(e => ({
       url: e.image,
-      name: e.name || getArchiveNodeName(e.id),
+      name: e.name || '',
       tags: Array.isArray(e.tags) ? e.tags : [],
       createdAt: e.createdAt || new Date().toISOString(),
       context: ''

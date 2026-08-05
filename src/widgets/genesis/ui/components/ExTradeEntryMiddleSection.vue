@@ -18,7 +18,6 @@ const getForexCurrencyPair = (symbol) => {
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
 import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
-import ExPanel from '~/shared/ui/ExPanel.vue';
 import { computed, ref } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
@@ -816,9 +815,9 @@ const formatDateTactical = (dateStr) => {
               <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Архив_Доказательств_Пуст' : 'No_Evidences_In_The_Archive' }}</span>
             </div>
 
-            <div v-else class="grid grid-cols-2 gap-8 nier-text-primary">
-                 <ExPanel v-for="entry in journalEntries" :key="entry.id" variant="light" :no-padding="true" :show-corners="true" :no-shadow="true"
-                       class="group flex flex-col transition-all duration-500 hover:!border-black/30 dark:hover:!border-white/30 !border-black/10 dark:!border-white/10 nier-text-primary">
+            <div v-else class="grid grid-cols-2 gap-4 nier-text-primary md:grid-cols-4">
+                 <div v-for="entry in journalEntries" :key="entry.id"
+                       class="group relative flex flex-col border border-black/10 bg-black/[0.01] transition-all duration-500 hover:border-black/30 dark:border-white/10 dark:bg-white/[0.01] dark:hover:border-white/30 nier-text-primary">
                     
                     <!-- Remove Button -->
                     <button @click.stop="removeJournalEntry(entry.id)" 
@@ -834,11 +833,11 @@ const formatDateTactical = (dateStr) => {
                        <div v-if="entry.image" class="w-full h-full">
                           <img :src="entry.image" class="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
                           <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                             <span class="text-[8px] font-mono tracking-widest uppercase text-white font-black bg-black/60 px-4 py-2">Replace_Stream</span>
+                             <span class="text-[8px] font-mono tracking-widest uppercase text-white font-black bg-black/60 px-4 py-2">{{ locale === 'ru' ? 'ЗАМЕНИТЬ' : 'REPLACE' }}</span>
                           </div>
                        </div>
                        <div v-else class="w-full h-full flex flex-col items-center justify-center space-y-4">
-                          <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-30 group-hover/img:opacity-100 nier-text-primary">Upload_Tactical_Capture</span>
+                          <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-30 group-hover/img:opacity-100 nier-text-primary">{{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}</span>
                        </div>
  
                        <!-- SCANNING LINE -->
@@ -848,13 +847,13 @@ const formatDateTactical = (dateStr) => {
                     </div>
  
                     <!-- Controls & Info -->
-                    <div class="p-6 flex flex-col space-y-4 nier-text-primary">
+                    <div class="p-3 flex flex-col space-y-3 nier-text-primary">
                        <!-- Visual metadata aligned with Trade Analytics Visuals -->
                        <div class="relative">
                           <input v-model="entry.name"
                                  type="text"
-                                 placeholder="Archive_Node_Name..."
-                                 class="w-full bg-transparent border border-black/5 dark:border-white/5 px-4 py-3 text-[10px] font-mono tracking-[0.2em] font-black focus:outline-none transition-all nier-text-primary uppercase placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
+                                 :placeholder="locale === 'ru' ? 'НАЗВАНИЕ' : 'NAME'"
+                                 class="w-full bg-transparent border border-black/5 dark:border-white/5 px-2 py-2 text-[9px] font-mono tracking-[0.15em] font-black focus:outline-none transition-all nier-text-primary uppercase placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
                        </div>
 
                        <div class="flex flex-col gap-3">
@@ -868,7 +867,7 @@ const formatDateTactical = (dateStr) => {
                                 </button>
                              </span>
                              <span v-if="!entry.tags?.length" class="text-[8px] font-mono uppercase tracking-[0.3em] opacity-20 self-center nier-text-primary">
-                                No_Tags_Attached
+                                {{ locale === 'ru' ? 'ТЭГОВ НЕТ' : 'NO TAGS' }}
                              </span>
                           </div>
 
@@ -885,15 +884,8 @@ const formatDateTactical = (dateStr) => {
                           </div>
                        </div>
  
-                       <!-- Footer Metadata -->
-                       <div class="flex items-center justify-between opacity-20 nier-text-primary">
-                          <span class="text-[6px] font-mono uppercase tracking-widest">Archive_ID: {{ entry.id.toString(16).toUpperCase().slice(-6) }}</span>
-                          <button @click="removeJournalEntry(entry.id)" class="hover:text-red-500 transition-colors">
-                             <span class="text-[6px] font-mono uppercase tracking-widest">[ DE-SYNC ]</span>
-                          </button>
-                       </div>
                     </div>
-                  </ExPanel>
+                 </div>
               </div>
             </div>
                 </div>

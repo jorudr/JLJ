@@ -13,7 +13,7 @@ const props = defineProps<{
 const emit = defineEmits(['remove', 'fullscreen', 'edit', 'upload', 'update:name', 'update:tags'])
 
 const isEditingName = ref(false)
-const localName = ref(props.name || `Archive_Node_${props.id || '0x42'}`)
+const localName = ref(props.name || '')
 
 const isAddingTag = ref(false)
 const newTag = ref('')
@@ -116,7 +116,7 @@ function getTagColor(tag: string) {
                   @click="isEditingName = true" 
                   class="text-[9px] font-mono uppercase tracking-[0.2em] font-black opacity-60 nier-text-primary cursor-text hover:opacity-100 transition-opacity truncate"
                 >
-                  {{ name || `Archive_Node_${id || '0x42'}` }}
+                  {{ name || '' }}
                 </span>
               </template>
             </div>
