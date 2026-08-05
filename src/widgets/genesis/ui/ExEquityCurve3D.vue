@@ -1094,6 +1094,11 @@ const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method')
     return
   }
 
+  if (panel === 'journal' && activeTradeEntryPanel.value === 'journal') {
+    activeTradeEntryPanel.value = null
+    return
+  }
+
   activeTradeEntryPanel.value = panel
 }
 

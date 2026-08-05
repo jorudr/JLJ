@@ -197,7 +197,8 @@ const formatDateTactical = (dateStr) => {
     <div class="w-full flex justify-center">
       <div class="w-full min-w-0 max-w-none pt-8 pb-12">
         <Transition name="sector-swap" mode="out-in">
-          <div v-if="viewMode === 'tactical'" key="tactical" class="flex flex-col space-y-12">
+          <div key="middle" class="flex flex-col space-y-12">
+            <div v-if="viewMode === 'tactical'" class="contents">
             <!-- CONDITION CONFIGURATION PANEL (LEGACY DESCRIPTION AESTHETIC) -->
             <div v-if="isArchivalBriefingEnabled && selectedRegistryScenarioId && selectedRegistryScenarioId !== 'default-exit-system'" class="flex flex-col space-y-12 animate-in fade-in zoom-in-95 duration-1000 max-w-5xl mx-auto">
                
@@ -648,27 +649,50 @@ const formatDateTactical = (dateStr) => {
              </div>
           </div>
 
-          <div v-else key="journal" class="flex flex-col space-y-8 px-6 nier-text-primary sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-            <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-6">
+          <div v-else key="journal" class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
+            <div class="relative mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col border-transparent bg-transparent">
+              <div class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10">
+                <button type="button" disabled aria-disabled="true" aria-label="Основные данные сделки" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.7" />
+                    <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="square" />
+                  </svg>
+                </button>
+                <button type="button" disabled aria-disabled="true" aria-label="Проекция" class="grid h-11 w-12 cursor-not-allowed place-items-center border-r border-black/10 transition-colors dark:border-white/10" :class="activeProjectionMode === 'projection' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 17l4-5 4 3 5-8 3 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" />
+                    <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                  </svg>
+                </button>
+                <button type="button" disabled aria-disabled="true" aria-label="График" class="grid h-11 w-12 cursor-not-allowed place-items-center transition-colors" :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45'">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 4v16M17 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" />
+                    <path d="M5 8h4v7H5zM15 6h4v10h-4z" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex h-full w-full flex-col space-y-8 overflow-y-auto custom-scrollbar p-10 nier-text-primary">
+                <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+              <div class="flex items-center justify-between w-full border-b border-black/5 dark:border-white/5 pb-6">
               <div class="flex items-center space-x-4">
-                <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45"></div>
-                <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-sm">
+                <div class="flex items-center gap-2">
                    <button @click="archiveMode = 'notes'" 
-                           :class="['px-3 py-1.5 text-[9px] font-mono transition-all font-black uppercase tracking-widest', archiveMode === 'notes' ? 'nier-bg-inverted nier-text-primary' : 'opacity-40 hover:opacity-100']">
-                      {{ locale === 'ru' ? 'Архив_Заметок' : 'Neural_Note_Archive' }}
+                           class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                           :class="archiveMode === 'notes' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'">
+                      {{ locale === 'ru' ? 'ЗАМЕТКИ' : 'NOTES' }}
                    </button>
                    <button @click="archiveMode = 'images'" 
-                           :class="['px-3 py-1.5 text-[9px] font-mono transition-all font-black uppercase tracking-widest', archiveMode === 'images' ? 'nier-bg-inverted nier-text-primary' : 'opacity-40 hover:opacity-100']">
-                      {{ locale === 'ru' ? 'Архив_Доказательств' : 'Evidence_Archive' }}
+                           class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                           :class="archiveMode === 'images' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'">
+                      {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
                    </button>
                 </div>
               </div>
               <div class="flex items-center space-x-6">
-                 <button v-if="!isCreatingNote" @click="archiveMode === 'notes' ? (isCreatingNote = true) : addJournalEntry()" class="flex items-center space-x-3 group px-4 py-1.5 border nier-border-primary hover:bg-black dark:hover:bg-white transition-all">
-                    <span class="text-[8px] font-mono tracking-widest uppercase font-black text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black">
-                       {{ archiveMode === 'notes' ? (locale === 'ru' ? 'Новая_Заметка' : 'Add_New_Record') : (locale === 'ru' ? 'Новый_Слот_Архива' : 'New_Archive_Slot') }}
-                    </span>
-                    <div class="w-1.5 h-1.5 bg-black/20 dark:bg-white/20 rotate-45 group-hover:bg-white dark:group-hover:bg-black"></div>
+                 <button v-if="!isCreatingNote" @click="archiveMode === 'notes' ? (isCreatingNote = true) : addJournalEntry()" type="button" :aria-label="archiveMode === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')" class="group grid h-8 w-8 place-items-center border nier-border-primary hover:bg-black dark:hover:bg-white transition-all">
+                    <svg class="h-4 w-4 text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                    </svg>
                  </button>
               </div>
             </div>
@@ -751,9 +775,6 @@ const formatDateTactical = (dateStr) => {
                <div v-if="notesList.length === 0 && !isCreatingNote" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
                  <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
                  <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Записи_Не_Найдены' : 'No_Records_Found' }}</span>
-                 <div class="mt-6 flex gap-2">
-                   <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
-                 </div>
                </div>
 
                <!-- EXISTING NOTES LIST -->
@@ -764,7 +785,6 @@ const formatDateTactical = (dateStr) => {
                        @dblclick="startEditContent(note)">
                      <div class="flex items-center justify-between mb-2 pb-2" :class="expandedNoteIds.includes(note.id) ? 'border-b border-black/5 dark:border-white/5' : ''">
                         <div class="flex items-center space-x-4">
-                           <div class="w-1.5 h-1.5 nier-bg-inverted transition-transform duration-300" :class="expandedNoteIds.includes(note.id) ? 'rotate-[135deg]' : 'rotate-45'"></div>
                            <div v-if="editingNoteId === note.id" @click.stop class="flex items-center gap-2">
                              <input 
                                v-model="editNoteTitle" 
@@ -794,9 +814,6 @@ const formatDateTactical = (dateStr) => {
               <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 border border-dashed nier-border-primary opacity-30">
               <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
               <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'Архив_Доказательств_Пуст' : 'No_Evidences_In_The_Archive' }}</span>
-              <div class="mt-6 flex gap-2">
-                <div v-for="i in 3" :key="i" class="w-1 h-1 bg-black/20 dark:bg-white/20 rotate-45"></div>
-              </div>
             </div>
 
             <div v-else class="grid grid-cols-2 gap-8 nier-text-primary">
@@ -821,9 +838,6 @@ const formatDateTactical = (dateStr) => {
                           </div>
                        </div>
                        <div v-else class="w-full h-full flex flex-col items-center justify-center space-y-4">
-                          <div class="w-8 h-8 border border-black/20 dark:border-white/20 rotate-45 flex items-center justify-center group-hover/img:border-black dark:group-hover/img:border-white transition-colors">
-                             <div class="w-1.5 h-1.5 bg-black/40 dark:bg-white/40 rotate-45"></div>
-                          </div>
                           <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-30 group-hover/img:opacity-100 nier-text-primary">Upload_Tactical_Capture</span>
                        </div>
  
@@ -882,6 +896,10 @@ const formatDateTactical = (dateStr) => {
                   </ExPanel>
               </div>
             </div>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         </Transition>
       </div>

@@ -52,7 +52,7 @@ const openTradeEntryPanel = (panel) => {
     state.viewMode.value = 'tactical'
     state.showConditionLibrary.value = true
   } else if (panel === 'journal') {
-    state.viewMode.value = 'journal'
+    state.viewMode.value = state.viewMode.value === 'journal' ? 'tactical' : 'journal'
   } else if (panel === 'method') {
     state.showEntryMethod.value = true
   }
