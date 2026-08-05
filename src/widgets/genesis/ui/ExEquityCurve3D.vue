@@ -542,7 +542,6 @@
                   type="button"
                   @click="closeToolsMenu(); showCalendarMode = false; showWinrateCurve = false; handleRobustnessDiagnosticsClick()"
                   :aria-label="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
-                  :title="isRu ? 'Диагностика устойчивости' : 'Robustness diagnostics'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                   :class="showDistribution3D ? 'bg-white/10 text-white' : ''"
                 >
@@ -561,7 +560,6 @@
                   type="button"
                   @click="closeToolsMenu(); showInitialDepositModal = true"
                   :aria-label="isRu ? 'Начальный депозит' : 'Initial deposit'"
-                  :title="isRu ? 'Начальный депозит' : 'Initial deposit'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -577,7 +575,6 @@
                   type="button"
                   @click="closeToolsMenu(); showBenchmarkModal = true"
                   :aria-label="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
-                  :title="isRu ? 'Настройки benchmark' : 'Benchmark settings'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -596,7 +593,6 @@
                   type="button"
                   @click="closeToolsMenu(); showBenchmarkCurves = !showBenchmarkCurves"
                   :aria-label="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
-                  :title="isRu ? 'Benchmark-кривые' : 'Benchmark curves'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                   :class="showBenchmarkCurves ? 'bg-white/10 text-white' : ''"
                 >
@@ -614,7 +610,6 @@
                   type="button"
                   @click="closeToolsMenu(); openSimulator()"
                   :aria-label="isRu ? 'Симулятор' : 'Simulator'"
-                  :title="isRu ? 'Симулятор' : 'Simulator'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -631,7 +626,6 @@
                   type="button"
                   @click="closeToolsMenu(); showBrokerConnectPanel = true"
                   :aria-label="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
-                  :title="isRu ? 'Брокер / биржа' : 'Broker / exchange'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -649,7 +643,6 @@
                   @click="closeToolsMenu(); syncCurrentStrategyApi()"
                   :disabled="isApiSyncing"
                   :aria-label="isRu ? 'Синхронизация API' : 'Sync API'"
-                  :title="isRu ? 'Синхронизация API' : 'Sync API'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6" :class="isApiSyncing ? 'animate-spin' : ''">
@@ -666,7 +659,6 @@
                   type="button"
                   @click="closeToolsMenu(); showClearConfirmation = true"
                   :aria-label="isRu ? 'Удалить записи' : 'Purge records'"
-                  :title="isRu ? 'Удалить записи' : 'Purge records'"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-red-500/70 transition-all hover:bg-red-500/5 hover:text-red-500"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -692,7 +684,6 @@
         <button
           @click="isTradeEntryOpen = true"
           :aria-label="isRu ? 'Новая сделка' : 'New trade'"
-          :title="isRu ? 'Новая сделка' : 'New trade'"
           class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/80"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 transition-transform duration-300 group-hover:rotate-90">
@@ -710,7 +701,6 @@
           <button
             @click="showMetricsPanel = !showMetricsPanel; showCalendarMode = false; showWinrateCurve = false"
             :aria-label="showMetricsPanel ? (isRu ? 'Кривая доходности' : 'Equity curve') : (isRu ? 'Метрики стратегии' : 'Strategy metrics')"
-            :title="showMetricsPanel ? (isRu ? 'Кривая доходности' : 'Equity curve') : (isRu ? 'Метрики стратегии' : 'Strategy metrics')"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showMetricsPanel ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -734,7 +724,6 @@
             type="button"
             @click="isEditMode = !isEditMode"
             :aria-label="isRu ? 'Режим редактирования' : 'Edit mode'"
-            :title="isRu ? 'Режим редактирования' : 'Edit mode'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="isEditMode ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -751,7 +740,6 @@
           <button
             @click="resetView"
             :aria-label="isRu ? 'Центрировать кривую' : 'Center curve'"
-            :title="isRu ? 'Центрировать кривую' : 'Center curve'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
@@ -769,7 +757,6 @@
             v-if="!showMetricsPanel && !showCalendarMode"
             @click="showWinrateMenu = true; showWinrateCurve = false"
             :aria-label="isRu ? 'Выбор цели системы' : 'Select system target'"
-            :title="isRu ? 'Выбор цели системы' : 'Select system target'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showWinrateMenu ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -787,7 +774,6 @@
             v-if="!showMetricsPanel"
             @click="showCalendarMode = !showCalendarMode; showMetricsPanel = false; showWinrateCurve = false"
             :aria-label="showCalendarMode ? (isRu ? 'Вернуться к кривой' : 'Return to curve') : (isRu ? 'Открыть календарь' : 'Open calendar')"
-            :title="showCalendarMode ? (isRu ? 'Вернуться к кривой' : 'Return to curve') : (isRu ? 'Открыть календарь' : 'Open calendar')"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showCalendarMode ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -812,7 +798,6 @@
           <button
             @click="toggleRobustnessMode('normal')"
             :aria-label="isRu ? 'Нормальное распределение' : 'Normal distribution'"
-            :title="isRu ? 'Нормальное распределение' : 'Normal distribution'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showRobustnessNormalDist ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -828,7 +813,6 @@
           <button
             @click="toggleRobustnessMode('studentT')"
             :aria-label="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
-            :title="isRu ? 'Распределение Стьюдента' : 'Student t distribution'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showRobustnessTDist ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -843,7 +827,6 @@
           <button
             @click="toggleRobustnessHistogram"
             :aria-label="isRu ? 'Гистограмма PnL' : 'PnL histogram'"
-            :title="isRu ? 'Гистограмма PnL' : 'PnL histogram'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showRobustnessHistogram ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -862,7 +845,6 @@
           <button
             @click="toggleRobustnessMode('qq')"
             :aria-label="isRu ? 'QQ-график' : 'QQ plot'"
-            :title="isRu ? 'QQ-график' : 'QQ plot'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showQQPlot ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -882,7 +864,6 @@
           <button
             @click="toggleRobustnessMode('explanations')"
             :aria-label="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
-            :title="isRu ? 'Объяснения диагностики' : 'Robustness explanations'"
             class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
             :class="showRobustnessExplanations ? 'border-white/30 bg-white/10 text-white' : ''"
           >
@@ -903,7 +884,6 @@
           @click="showToolsMenu = true"
           type="button"
           :aria-label="isRu ? 'Меню' : 'Menu'"
-          :title="isRu ? 'Меню' : 'Menu'"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
           :class="showToolsMenu ? 'border-white/30 bg-white/10 text-white' : ''"
         >

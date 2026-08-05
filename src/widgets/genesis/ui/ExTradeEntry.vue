@@ -4,7 +4,6 @@ import { useExTradeEntry } from '../model/useExTradeEntry'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 import ExTradeEntryCmeNotice from './components/ExTradeEntryCmeNotice.vue'
-import ExTradeEntryProtocolSelect from './components/ExTradeEntryProtocolSelect.vue'
 import ExTradeEntryMiddleSection from './components/ExTradeEntryMiddleSection.vue'
 import ExTradeEntryEmotionMatrix from './components/ExTradeEntryEmotionMatrix.vue'
 import ExTradeEntryConditionLibrary from './components/ExTradeEntryConditionLibrary.vue'
@@ -93,7 +92,6 @@ const tradeEntryThemeStyle = computed(() => isDark.value
      <DesignVignette :is-dark="isDark" />
      
      <ExTradeEntryCmeNotice />
-     <ExTradeEntryProtocolSelect @close="emit('close')" />
      <ExTradeEntryMiddleSection />
      <ExTradeEntryEmotionMatrix />
      <ExTradeEntryConditionLibrary />

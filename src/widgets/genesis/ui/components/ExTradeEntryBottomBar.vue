@@ -24,7 +24,6 @@ const emit = defineEmits<{
         class="group relative flex h-10 w-10 items-center justify-center border transition-all"
         :class="isTradeEntryOpen ? 'border-white bg-white text-black' : 'border-white bg-white text-black hover:bg-white/80'"
         :aria-label="isTradeEntryOpen ? 'Выйти из сделки' : 'Новая сделка'"
-        :title="isTradeEntryOpen ? 'Выйти из сделки' : 'Новая сделка'"
         @click="emit('toggle-entry')"
       >
         <svg v-if="!isTradeEntryOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true">
@@ -49,7 +48,6 @@ const emit = defineEmits<{
             ? 'border-white/30 bg-white/10 text-white'
             : 'border-transparent text-white/45 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           aria-label="Режим закрытия сделки"
-          title="Режим закрытия сделки"
           @click="emit('toggle-close-mode')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter" class="h-5 w-5" aria-hidden="true">
@@ -67,7 +65,6 @@ const emit = defineEmits<{
             ? 'border-white/30 bg-white/10 text-white'
             : 'border-transparent text-white/70 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           aria-label="Протокол Матрицы"
-          title="Протокол Матрицы"
           @click="emit('open-panel', 'matrix')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
@@ -88,7 +85,6 @@ const emit = defineEmits<{
             ? 'border-white/30 bg-white/10 text-white'
             : 'border-transparent text-white/70 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           aria-label="Открыть журнал"
-          title="Открыть журнал"
           @click="emit('open-panel', 'journal')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
@@ -107,7 +103,6 @@ const emit = defineEmits<{
             ? 'border-white/30 bg-white/10 text-white'
             : 'border-transparent text-white/70 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           aria-label="Метод входа"
-          title="Метод входа"
           @click="emit('open-panel', 'method')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
