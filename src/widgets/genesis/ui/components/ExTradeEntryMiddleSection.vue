@@ -4,6 +4,7 @@ import { inject } from 'vue';
 import { useI18n } from '~/shared/i18n/useI18n';
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
+const tr = (ru, en) => locale.value === 'ru' ? ru : en;
 const isArchivalBriefingEnabled = false;
 
 const getForexCurrencyPair = (symbol) => {
@@ -637,7 +638,7 @@ const summarySelectedEmotions = computed(() => {
                         :class="activeEntryFormTab === 'main' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'main'"
                       >
-                        ОСНОВНЫЕ
+                        {{ tr('ОСНОВНЫЕ', 'MAIN') }}
                       </button>
                       <button
                         type="button"
@@ -645,8 +646,8 @@ const summarySelectedEmotions = computed(() => {
                         :class="activeEntryFormTab === 'risk' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'risk'"
                       >
-                        РИСК-МЕНЕДЖМЕНТ
-                        <span v-if="stopLossRiskMessage || takeProfitRiskMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" aria-label="Есть ошибка риск-менеджмента">!</span>
+                        {{ tr('РИСК-МЕНЕДЖМЕНТ', 'RISK MANAGEMENT') }}
+                        <span v-if="stopLossRiskMessage || takeProfitRiskMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" :aria-label="tr('Есть ошибка риск-менеджмента', 'Risk management error')">!</span>
                       </button>
                       <button
                         type="button"
@@ -654,8 +655,8 @@ const summarySelectedEmotions = computed(() => {
                         :class="activeEntryFormTab === 'time' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'time'"
                       >
-                        ВРЕМЯ
-                        <span v-if="tradeTimeStyleMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" aria-label="Есть ошибка длительности сделки">!</span>
+                        {{ tr('ВРЕМЯ', 'TIME') }}
+                        <span v-if="tradeTimeStyleMessage" class="shrink-0 font-mono text-[13px] font-black leading-none text-rose-500" :aria-label="tr('Есть ошибка длительности сделки', 'Trade duration error')">!</span>
                       </button>
                       <button
                         type="button"
@@ -663,16 +664,16 @@ const summarySelectedEmotions = computed(() => {
                         :class="activeEntryFormTab === 'summary' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'summary'"
                       >
-                        РЕЗЮМЕ
+                        {{ tr('РЕЗЮМЕ', 'SUMMARY') }}
                       </button>
                     </div>
 
                     <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
-                      <h1 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Актив и направление</h1>
+                      <h1 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Актив и направление', 'Asset and direction') }}</h1>
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
                         <div class="asset-select-container relative flex w-full flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Актив</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Актив', 'Asset') }}</span>
                           <button type="button" class="flex h-10 w-full items-center gap-3 border-b border-white/20 bg-transparent text-left font-mono text-sm uppercase tracking-[0.18em] text-white outline-none transition-colors hover:border-white/80" @click="showAssetMenu = true">
                             <span v-if="asset && currentAssetData?.type === 'Forex' && getForexCurrencyPair(currentAssetData.symbol)" class="relative flex h-6 w-6 shrink-0 items-center">
                               <img :src="getForexCurrencyPair(currentAssetData.symbol).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
@@ -684,7 +685,7 @@ const summarySelectedEmotions = computed(() => {
                             <span v-else-if="asset" class="flex h-5 w-5 shrink-0 items-center justify-center text-[10px] font-black" :class="isDark ? 'text-white' : 'text-black'">
                               {{ currentAssetData?.symbol?.[0] || asset?.[0] || '' }}
                             </span>
-                            <span :class="asset ? 'text-white' : 'text-white/40'">{{ asset || 'Выберите актив' }}</span>
+                            <span :class="asset ? 'text-white' : 'text-white/40'">{{ asset || tr('Выберите актив', 'Select asset') }}</span>
                           </button>
 
                           <Teleport to="body">
@@ -692,7 +693,7 @@ const summarySelectedEmotions = computed(() => {
                               <div v-if="showAssetMenu" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 px-6" @click.self="showAssetMenu = false">
                                 <div class="flex h-[500px] max-h-[80vh] w-[800px] max-w-[95vw] flex-col bg-[#0a0a0a] text-white shadow-2xl" @click.stop>
                                   <div class="shrink-0 border-b border-white/10 p-6">
-                                    <input v-model="assetSearch" type="search" placeholder="ПОИСК_АКТИВОВ..." class="w-full bg-transparent text-xl font-black uppercase tracking-widest text-white outline-none placeholder:text-white/20" autofocus />
+                                    <input v-model="assetSearch" type="search" :placeholder="tr('ПОИСК_АКТИВОВ...', 'SEARCH_ASSETS...')" class="w-full bg-transparent text-xl font-black uppercase tracking-widest text-white outline-none placeholder:text-white/20" autofocus />
                                   </div>
                                   <div class="flex-1 overflow-y-auto custom-scrollbar">
                                     <button v-for="assetOption in filteredAssets" :key="assetOption.symbol" type="button" class="grid w-full grid-cols-[9rem_minmax(0,1fr)] items-center gap-4 border-b border-white/5 px-6 py-4 text-left transition-colors hover:bg-white/10" @click="selectAsset(assetOption)">
@@ -714,7 +715,7 @@ const summarySelectedEmotions = computed(() => {
                                         <span class="block truncate text-[8px] uppercase tracking-widest text-white/35">{{ assetOption.description }}</span>
                                       </span>
                                     </button>
-                                    <div v-if="filteredAssets.length === 0" class="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-white/30">Активы не найдены</div>
+                                    <div v-if="filteredAssets.length === 0" class="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-white/30">{{ tr('Активы не найдены', 'No assets found') }}</div>
                                   </div>
                                 </div>
                               </div>
@@ -722,7 +723,7 @@ const summarySelectedEmotions = computed(() => {
                           </Teleport>
                         </div>
                         <div class="flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Направление</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Направление', 'Direction') }}</span>
                           <div class="flex">
                             <button
                               type="button"
@@ -747,18 +748,18 @@ const summarySelectedEmotions = computed(() => {
 
                     <section v-if="activeEntryFormTab === 'main'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">II.</div>
-                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Точка входа, выхода и размер позиции</h2>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Точка входа, выхода и размер позиции', 'Entry, exit and position size') }}</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
                         <label class="flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Точка входа</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Точка входа', 'Entry price') }}</span>
                           <input v-model="entry" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'entry')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Точка выхода</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Точка выхода', 'Exit price') }}</span>
                           <input v-model="exit" type="text" inputmode="decimal" placeholder="0.00" :disabled="!isClosed" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'exit')" />
                         </label>
                         <label class="flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Размер позиции</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Размер позиции', 'Position size') }}</span>
                           <input v-model="size" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" @input="sanitizeTradeNumberInput($event, 'size')" />
                         </label>
                       </div>
@@ -766,15 +767,15 @@ const summarySelectedEmotions = computed(() => {
 
                     <section v-if="activeEntryFormTab === 'risk'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">III.</div>
-                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Стоп лосс и тейк профит</h2>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Стоп лосс и тейк профит', 'Stop loss and take profit') }}</h2>
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
                         <label class="group/risk relative flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Стоп лосс</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Стоп лосс', 'Stop loss') }}</span>
                           <input v-model="stopLoss" type="text" inputmode="decimal" placeholder="0.00" :aria-invalid="!!stopLossRiskMessage" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" :class="stopLossRiskMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 placeholder:!text-rose-300/30 focus:!border-rose-400' : ''" @input="sanitizeTradeNumberInput($event, 'stopLoss')" />
                           <span v-if="stopLossRiskMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ stopLossRiskMessage }}</span>
                         </label>
                         <label class="group/risk relative flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Тейк профит</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Тейк профит', 'Take profit') }}</span>
                           <input v-model="takeProfit" type="text" inputmode="decimal" placeholder="0.00" class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80" :class="takeProfitRiskMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 placeholder:!text-rose-300/30 focus:!border-rose-400' : ''" @input="sanitizeTradeNumberInput($event, 'takeProfit')" />
                           <span v-if="takeProfitRiskMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ takeProfitRiskMessage }}</span>
                         </label>
@@ -783,20 +784,20 @@ const summarySelectedEmotions = computed(() => {
 
                     <section v-if="activeEntryFormTab === 'time'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
-                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Время входа и выхода, часовой пояс</h2>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Время входа и выхода, часовой пояс', 'Entry and exit time, time zone') }}</h2>
                       <div class="grid w-full max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
                         <label class="group/risk relative flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время входа</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Время входа', 'Entry time') }}</span>
                           <input readonly type="text" :value="`${formatPart(openDate, 'year')}.${formatPart(openDate, 'month')}.${formatPart(openDate, 'day')} ${formatPart(openDate, 'hour')}:${formatPart(openDate, 'minute')}`" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="openTemporal('open')" />
                           <span v-if="tradeTimeStyleMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ tradeTimeStyleMessage }}</span>
                         </label>
                         <label class="group/risk relative flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Время выхода</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Время выхода', 'Exit time') }}</span>
                           <input readonly type="text" :value="isClosed ? `${formatPart(exitDate, 'year')}.${formatPart(exitDate, 'month')}.${formatPart(exitDate, 'day')} ${formatPart(exitDate, 'hour')}:${formatPart(exitDate, 'minute')}` : '--'" :disabled="!isClosed" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-30 focus:border-white/80" :class="tradeTimeStyleMessage ? '!border !border-rose-500/80 !pl-3 !text-rose-300 focus:!border-rose-400' : ''" @click="isClosed && openTemporal('exit')" />
                           <span v-if="tradeTimeStyleMessage" class="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[320px] border border-rose-500/40 bg-[#0a0a0a] py-2 pl-4 pr-3 font-mono text-[8px] font-bold uppercase leading-relaxed tracking-[0.12em] text-rose-300 shadow-lg group-hover/risk:block group-focus-within/risk:block">{{ tradeTimeStyleMessage }}</span>
                         </label>
                         <label class="flex flex-col items-start gap-2">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Часовой пояс</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Часовой пояс', 'Time zone') }}</span>
                           <input readonly type="text" :value="`${tradeTimeZone} ${tradeTimeZoneOffset || ''}`.trim()" class="w-full cursor-pointer border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors focus:border-white/80" @click="openTemporal('open')" />
                         </label>
                       </div>
@@ -804,10 +805,10 @@ const summarySelectedEmotions = computed(() => {
 
                     <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
-                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">Резюме</h2>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Резюме', 'Summary') }}</h2>
                       <div class="flex w-full max-w-none flex-wrap gap-y-6">
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Актив</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Актив', 'Asset') }}</span>
                           <span class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
                             <span v-if="summaryDisplayTrade.assetType === 'Forex' && getForexCurrencyPair(summaryDisplayTrade.asset)" class="relative flex h-7 w-7 shrink-0 items-center">
                               <img :src="getForexCurrencyPair(summaryDisplayTrade.asset).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
@@ -827,17 +828,17 @@ const summarySelectedEmotions = computed(() => {
                           <span class="mt-2 block truncate text-xl font-mono font-black uppercase tracking-[0.12em] text-white">{{ summaryStrategyLabel }}</span>
                         </div>
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">Результат по сделке</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Результат по сделке', 'Trade result') }}</span>
                           <span class="mt-2 inline-flex whitespace-nowrap text-lg font-mono font-black tracking-[0.1em]" :class="Number(summaryDisplayTrade.profitInCurrency) >= 0 ? 'text-white' : 'text-rose-400'">
                             {{ formatSummaryMoney(summaryDisplayTrade.profitInCurrency) }} / {{ formatSummaryPercent(summaryProfitPercent(summaryDisplayTrade)) }}
                           </span>
                         </div>
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ДЛИТЕЛЬНОСТЬ СДЕЛКИ</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('ДЛИТЕЛЬНОСТЬ СДЕЛКИ', 'TRADE DURATION') }}</span>
                           <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ summaryDisplayTrade.tradeDuration || '--' }}</span>
                         </div>
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">РИСК / КАПИТАЛ</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('РИСК / КАПИТАЛ', 'RISK / CAPITAL') }}</span>
                           <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryPercent(summaryDisplayTrade.riskPercent) }}</span>
                         </div>
                         <div class="basis-1/2 min-w-0 pr-6 sm:basis-1/4">
@@ -848,7 +849,7 @@ const summarySelectedEmotions = computed(() => {
 
                       <div class="mt-2 grid w-full grid-cols-1 gap-8 border-t border-white/10 pt-6 sm:grid-cols-2">
                         <div class="min-w-0">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ВЫБРАННЫЕ УСЛОВИЯ</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('ВЫБРАННЫЕ УСЛОВИЯ', 'SELECTED CONDITIONS') }}</span>
                           <div v-if="summarySelectedConditions.length" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
                             <ExNTtooltip v-for="condition in summarySelectedConditions" :key="condition.id" :title="condition.label" :disabled="condition.isDefaultExitCondition">
                               <template #trigger>
@@ -860,14 +861,14 @@ const summarySelectedEmotions = computed(() => {
                               </div>
                             </ExNTtooltip>
                           </div>
-                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">УСЛОВИЯ НЕ ВЫБРАНЫ</span>
+                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">{{ tr('УСЛОВИЯ НЕ ВЫБРАНЫ', 'NO CONDITIONS SELECTED') }}</span>
                         </div>
                         <div class="min-w-0">
-                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">ЭМОЦИИ</span>
+                          <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('ЭМОЦИИ', 'EMOTIONS') }}</span>
                           <div v-if="summarySelectedEmotions.length" class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
                             <span v-for="emotion in summarySelectedEmotions" :key="emotion" class="text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ emotion }}</span>
                           </div>
-                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">ЭМОЦИИ НЕ ВЫБРАНЫ</span>
+                          <span v-else class="mt-3 block text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">{{ tr('ЭМОЦИИ НЕ ВЫБРАНЫ', 'NO EMOTIONS SELECTED') }}</span>
                         </div>
                       </div>
                     </section>
@@ -882,7 +883,7 @@ const summarySelectedEmotions = computed(() => {
                 >
                   <div class="h-full w-full p-10">
                     <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">РЫНОЧНЫЙ ГРАФИК</h2>
+                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('РЫНОЧНЫЙ ГРАФИК', 'MARKET CHART') }}</h2>
                       <div class="relative mt-12 min-h-0 flex-1">
                         <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
                       </div>
@@ -897,16 +898,16 @@ const summarySelectedEmotions = computed(() => {
                 >
                   <div class="h-full w-full p-10">
                     <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">КРИВАЯ КАПИТАЛА</h2>
+                      <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('КРИВАЯ КАПИТАЛА', 'EQUITY CURVE') }}</h2>
                       <div class="relative min-h-0 flex-1">
                         <div v-if="hasValidProjection" class="absolute inset-0 h-full w-full">
                           <ExEquityCurve2D :trades="equityCurveTrades" :initial-balance="1000" />
                         </div>
-                        <div v-else class="flex h-full flex-col items-center justify-center py-20 opacity-20">
-                          <div class="mb-8 h-px w-16 nier-bg-inverted transition-all duration-700 group-hover:w-24"></div>
-                          <span class="text-[9px] font-mono uppercase tracking-[0.6em] nier-text-primary">NOT_ENOUGH_DATA_FOR_PROJECTION</span>
+                        <div v-else class="flex h-full flex-col items-center justify-center py-20">
+                          <div class="mb-8 h-px w-16 nier-bg-inverted opacity-20 transition-all duration-700 group-hover:w-24"></div>
+                          <span class="projection-empty-label text-[9px] font-mono uppercase tracking-[0.6em] text-black/35 dark:text-white/35">NOT ENOUGH DATA FOR PROJECTION</span>
                           <div class="mt-8 flex gap-2">
-                            <div v-for="i in 3" :key="i" class="h-1 w-1 rotate-45 bg-black/20 dark:bg-white/20"></div>
+                            <div v-for="i in 3" :key="i" class="h-1 w-1 rotate-45 bg-black/5 dark:bg-white/5"></div>
                           </div>
                         </div>
                       </div>

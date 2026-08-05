@@ -146,6 +146,29 @@ const tradeEntryThemeStyle = computed(() => isDark.value
   color: rgba(255, 255, 255, 0.2);
 }
 
+/* Keep legacy dark-surface utility classes readable when ExTradeEntry uses the light theme. */
+.trade-entry-shell.theme-light [class~="text-white"] {
+  color: #111111 !important;
+}
+
+.trade-entry-shell.theme-light [class*="text-white/"] {
+  color: rgb(17 17 17 / 0.58) !important;
+}
+
+.trade-entry-shell.theme-light [class*="border-white"] {
+  border-color: rgb(17 17 17 / 0.18) !important;
+}
+
+.trade-entry-shell.theme-light input::placeholder,
+.trade-entry-shell.theme-light textarea::placeholder,
+.trade-entry-shell.theme-light [class*="placeholder:text-white"]::placeholder {
+  color: rgb(17 17 17 / 0.32) !important;
+}
+
+.trade-entry-shell.theme-light [class*="bg-[#0a0a0a]"] {
+  background-color: rgb(255 255 255 / 0.96) !important;
+}
+
 input::-webkit-outer-spin-button, 
 input::-webkit-inner-spin-button { 
   -webkit-appearance: none; 
