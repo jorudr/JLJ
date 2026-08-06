@@ -1925,6 +1925,7 @@ const tradeNodePnlRange = computed(() => {
 const getTradeNodeColor = (node: TradeNode) => {
   if (node.isOpenTrade) return isDark.value ? '#facc15' : '#ca8a04'
   if (node.isCore) return isDark.value ? '#f8fafc' : '#0f172a'
+  if (node.isScenario) return isDark.value ? '#cbd5e1' : '#475569'
   if (node.isNote) return isDark.value ? '#94a3b8' : '#64748b'
 
   const pnl = Number(node.pnl)
@@ -2990,6 +2991,8 @@ interface TradeNode {
   pnl?: number
   isNote?: boolean
   isCore?: boolean
+  isScenario?: boolean
+  scenarioTradeCount?: number
   isOpenTrade?: boolean
   parentId?: string
 }
@@ -2997,7 +3000,7 @@ interface TradeNode {
 interface GraphEdge {
   source: string
   target: string
-  kind: 'chronological' | 'note' | 'core'
+  kind: 'chronological' | 'scenario' | 'note' | 'core'
   distance: number
   strength: number
 }
@@ -3254,6 +3257,7 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 
 const getTradeNodeBaseRadius = (node: TradeNode, degree = 1) => {
   if (node.isCore) return 10.5
+  if (node.isScenario) return 8.5
   if (node.isNote) return 2.8
   return 4.6 + Math.min(3, degree) * 0.55
 }
@@ -3279,25 +3283,120 @@ const getGraphSeedPosition = (index: number, total: number): Point3D => {
   }
 }
 
+const flattenMatrixNodesForGraph = (items: any[] = []) => {
+  const result: any[] = []
+  const walk = (nodes: any[]) => {
+    nodes.forEach(node => {
+      result.push(node)
+      if (node.subGraph?.nodes) walk(node.subGraph.nodes)
+    })
+  }
+  walk(items)
+  return result
+}
+
+const strategyScenarioNodes = computed(() => {
+  if (isMainDiaryStrategy.value) return []
+
+  const allNodes = matrixNodes.value as any[]
+  const strategyNode = allNodes.find(node => node.id === selectedStrategyId.value)
+  if (!strategyNode) return allNodes.filter(node => String(node.type).toLowerCase() === 'scenario')
+
+  const scenarioIds = new Set<string>()
+  flattenMatrixNodesForGraph(strategyNode.subGraph?.nodes || [])
+    .filter(node => String(node.type).toLowerCase() === 'scenario')
+    .forEach(node => scenarioIds.add(String(node.id)))
+
+  const visited = new Set<string>([String(strategyNode.id)])
+  const queue = [String(strategyNode.id)]
+  while (queue.length) {
+    const currentId = queue.shift()!
+    matrixConnections.value
+      .filter(connection => String(connection.fromId) === currentId)
+      .forEach(connection => {
+        const nextId = String(connection.toId)
+        if (visited.has(nextId)) return
+        visited.add(nextId)
+        queue.push(nextId)
+        const node = allNodes.find(candidate => String(candidate.id) === nextId)
+        if (String(node?.type).toLowerCase() === 'scenario') scenarioIds.add(nextId)
+      })
+  }
+
+  return allNodes.filter(node => scenarioIds.has(String(node.id)))
+})
+
+const getTradeScenarioIds = (trade: any, knownScenarioIds: Set<string>) => {
+  const ids: string[] = []
+  const add = (value: unknown) => {
+    const id = String(value || '').trim()
+    if (id && knownScenarioIds.has(id) && !ids.includes(id)) ids.push(id)
+  }
+
+  add(trade?.boardScenarioEntry?.id)
+  add(trade?.boardScenarioEntryId)
+  add(trade?.boardScenarioExit?.id)
+  add(trade?.boardScenarioExitId)
+  if (Array.isArray(trade?.scenarios)) trade.scenarios.forEach((scenario: any) => add(scenario?.id))
+  return ids
+}
+
+const getScenarioCanvasId = (scenarioId: string) => `matrix_scenario_${scenarioId}`
+
+const getScenarioTradeOrbitRadius = (tradeCount: number) => {
+  if (tradeCount <= 0) return 0
+  return tradeCount === 1 ? 28 : 22 + Math.sqrt(tradeCount) * 5
+}
+
+const getScenarioClusterRadius = (tradeCount: number) => {
+  return Math.max(18, getScenarioTradeOrbitRadius(tradeCount) + 16)
+}
+
+const getScenarioAngles = (count: number) => {
+  return Array.from({ length: count }, (_, index) => 0.38 + index * GOLDEN_ANGLE)
+}
+
+const getScenarioOrbitRadius = (clusters: Array<{ tradeCount: number }>) => {
+  if (clusters.length <= 1) return 126
+
+  const angles = getScenarioAngles(clusters.length)
+  let requiredOrbitRadius = 126
+
+  // Size the common orbit against the actual free-flowing angles, rather than
+  // assuming evenly spaced 90°/cardinal positions.
+  for (let leftIndex = 0; leftIndex < clusters.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < clusters.length; rightIndex += 1) {
+      const rawDelta = Math.abs(angles[rightIndex]! - angles[leftIndex]!) % (Math.PI * 2)
+      const angularDelta = Math.min(rawDelta, Math.PI * 2 - rawDelta)
+      const chordFactor = Math.max(0.18, 2 * Math.sin(angularDelta / 2))
+      const requiredDistance = getScenarioClusterRadius(clusters[leftIndex]!.tradeCount) +
+        getScenarioClusterRadius(clusters[rightIndex]!.tradeCount) + 28
+      requiredOrbitRadius = Math.max(requiredOrbitRadius, requiredDistance / chordFactor)
+    }
+  }
+
+  return requiredOrbitRadius
+}
+
 const initTrades = () => {
-  // All trades live on one flat canvas now; there is no page/cube partitioning.
   const tradesForCanvas = [...filteredTrades.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   const nodes: TradeNode[] = []
   graphEdges.value = []
+  const isMainDiary = isMainDiaryStrategy.value
+  const rootId = isMainDiary ? 'main_diary_core' : `strategy_core_${selectedStrategyId.value}`
 
-  if (isMainDiaryStrategy.value) {
-    nodes.push({
-      id: 'main_diary_core',
-      label: selectedStrategyLabel.value,
-      faceIndex: 0,
-      seedPos: { x: 0, y: 0, z: 0 },
-      graphPos: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      isCore: true
-    })
-  }
+  nodes.push({
+    id: rootId,
+    label: selectedStrategyLabel.value,
+    faceIndex: 0,
+    seedPos: { x: 0, y: 0, z: 0 },
+    graphPos: { x: 0, y: 0 },
+    velocity: { x: 0, y: 0 },
+    isCore: true
+  })
 
-  tradesForCanvas.forEach((trade, tradeIndex) => {
+  if (isMainDiary) {
+    tradesForCanvas.forEach((trade, tradeIndex) => {
       const tradeSeedPos = getGraphSeedPosition(tradeIndex, tradesForCanvas.length)
       const isOpenTrade = !isClosedDiaryTrade(trade)
 
@@ -3316,7 +3415,6 @@ const initTrades = () => {
         isOpenTrade
       })
 
-      // Add child nodes for notes
       if (trade.notesList && trade.notesList.length > 0) {
         trade.notesList.forEach((note: any, noteIdx: number) => {
           const offsetRadius = 18 + noteIdx * 4
@@ -3328,14 +3426,14 @@ const initTrades = () => {
           }
 
           nodes.push({
-             id: `note_${trade.id}_${note.id}`,
-             label: note.title || 'POST_MORTEM',
-             faceIndex: 0,
-             seedPos: noteSeedPos,
-             graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },
-             velocity: { x: 0, y: 0 },
-             isNote: true,
-             parentId: trade.id
+            id: `note_${trade.id}_${note.id}`,
+            label: note.title || 'POST_MORTEM',
+            faceIndex: 0,
+            seedPos: noteSeedPos,
+            graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },
+            velocity: { x: 0, y: 0 },
+            isNote: true,
+            parentId: trade.id
           })
           graphEdges.value.push({
             source: trade.id!,
@@ -3346,13 +3444,11 @@ const initTrades = () => {
           })
         })
       }
-  })
+    })
 
-  if (isMainDiaryStrategy.value) {
-    // Main Diary connects directly to every trade around the circle.
     tradesForCanvas.forEach(trade => {
       graphEdges.value.push({
-        source: 'main_diary_core',
+        source: rootId,
         target: trade.id!,
         kind: 'core',
         distance: GRAPH_SEED_RADIUS,
@@ -3360,21 +3456,149 @@ const initTrades = () => {
       })
     })
   } else {
-    // Other strategies retain the chronological Obsidian-style graph.
-    tradesForCanvas.slice(1).forEach((trade, index) => {
-      graphEdges.value.push({
-        source: tradesForCanvas[index]!.id!,
-        target: trade.id!,
-        kind: 'chronological',
-        distance: 118,
-        strength: 0.34
+    const scenarioModels = strategyScenarioNodes.value.map((scenario: any) => ({
+      id: String(scenario.id),
+      label: String(scenario.params?.customName || scenario.label || scenario.id).toUpperCase(),
+      tradeIds: [] as string[],
+      tradeCount: 0,
+      position: { x: 0, y: 0 }
+    }))
+    const scenarioById = new Map(scenarioModels.map(model => [model.id, model]))
+    const knownScenarioIds = new Set(scenarioModels.map(model => model.id))
+    const tradeScenarioIds = new Map<string, string[]>()
+
+    tradesForCanvas.forEach(trade => {
+      const ids = getTradeScenarioIds(trade, knownScenarioIds)
+      tradeScenarioIds.set(String(trade.id), ids)
+      ids.forEach(scenarioId => {
+        const model = scenarioById.get(scenarioId)
+        if (!model || model.tradeIds.includes(String(trade.id))) return
+        model.tradeIds.push(String(trade.id))
+        model.tradeCount += 1
       })
+    })
+
+    const scenarioOrbitRadius = getScenarioOrbitRadius(scenarioModels)
+    const scenarioAngles = getScenarioAngles(scenarioModels.length)
+    scenarioModels.forEach((model, index) => {
+      const angle = scenarioAngles[index] || 0.38
+      model.position = {
+        x: Math.cos(angle) * scenarioOrbitRadius,
+        y: Math.sin(angle) * scenarioOrbitRadius
+      }
+
+      const scenarioCanvasId = getScenarioCanvasId(model.id)
+      nodes.push({
+        id: scenarioCanvasId,
+        label: model.label,
+        faceIndex: 0,
+        seedPos: { x: model.position.x, y: model.position.y, z: 0 },
+        graphPos: { ...model.position },
+        velocity: { x: 0, y: 0 },
+        isScenario: true,
+        scenarioTradeCount: model.tradeCount,
+        parentId: rootId
+      })
+      graphEdges.value.push({
+        source: rootId,
+        target: scenarioCanvasId,
+        kind: 'core',
+        distance: scenarioOrbitRadius,
+        strength: 0
+      })
+    })
+
+    tradesForCanvas.forEach((trade, tradeIndex) => {
+      const ids = tradeScenarioIds.get(String(trade.id)) || []
+      const primaryScenario = scenarioById.get(ids[0] || '')
+      const memberIndex = primaryScenario?.tradeIds.indexOf(String(trade.id)) ?? -1
+      const tradeOrbit = primaryScenario
+        ? getScenarioTradeOrbitRadius(primaryScenario.tradeCount)
+        : 52 + Math.sqrt(Math.max(1, tradesForCanvas.length)) * 4
+      const tradePosition = primaryScenario
+        ? {
+            x: primaryScenario.position.x + Math.cos(memberIndex * GOLDEN_ANGLE) * tradeOrbit,
+            y: primaryScenario.position.y + Math.sin(memberIndex * GOLDEN_ANGLE) * tradeOrbit
+          }
+        : {
+            x: Math.cos(tradeIndex * GOLDEN_ANGLE) * tradeOrbit,
+            y: Math.sin(tradeIndex * GOLDEN_ANGLE) * tradeOrbit
+          }
+      const isOpenTrade = !isClosedDiaryTrade(trade)
+
+      nodes.push({
+        id: trade.id!,
+        label: isOpenTrade
+          ? `${formatCubeTradeAssetLabel(trade.asset)} [${openTradeText()}]`
+          : `${formatCubeTradeAssetLabel(trade.asset)} [${(trade.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(trade.profitInCurrency ?? 0).toFixed(2)}$]`,
+        faceIndex: 0,
+        seedPos: { x: tradePosition.x, y: tradePosition.y, z: 0 },
+        graphPos: tradePosition,
+        velocity: { x: 0, y: 0 },
+        date: trade.date,
+        pnl: isOpenTrade ? undefined : getTradePnlValue(trade),
+        isNote: false,
+        isOpenTrade
+      })
+
+      if (ids.length) {
+        ids.forEach(scenarioId => {
+          const model = scenarioById.get(scenarioId)
+          if (!model) return
+          graphEdges.value.push({
+            source: getScenarioCanvasId(scenarioId),
+            target: trade.id!,
+            kind: 'scenario',
+            distance: getScenarioTradeOrbitRadius(model.tradeCount),
+            strength: 0
+          })
+        })
+      } else {
+        graphEdges.value.push({
+          source: rootId,
+          target: trade.id!,
+          kind: 'core',
+          distance: tradeOrbit,
+          strength: 0
+        })
+      }
+
+      if (trade.notesList && trade.notesList.length > 0) {
+        trade.notesList.forEach((note: any, noteIdx: number) => {
+          const offsetRadius = 18 + noteIdx * 4
+          const angle = (Math.PI * 2 / trade.notesList!.length) * noteIdx
+          const notePosition = {
+            x: tradePosition.x + Math.cos(angle) * offsetRadius,
+            y: tradePosition.y + Math.sin(angle) * offsetRadius
+          }
+          const noteId = `note_${trade.id}_${note.id}`
+          nodes.push({
+            id: noteId,
+            label: note.title || 'POST_MORTEM',
+            faceIndex: 0,
+            seedPos: { x: notePosition.x, y: notePosition.y, z: 0 },
+            graphPos: notePosition,
+            velocity: { x: 0, y: 0 },
+            isNote: true,
+            parentId: trade.id
+          })
+          graphEdges.value.push({
+            source: trade.id!,
+            target: noteId,
+            kind: 'note',
+            distance: offsetRadius,
+            strength: 0
+          })
+        })
+      }
     })
   }
 
   facesTrades.value = [nodes]
   currentFace.value = 0
-  graphAlpha.value = !isMainDiaryStrategy.value && nodes.length > 1 ? 1 : 0
+  // Non-main strategies now use a deterministic hierarchy instead of a
+  // chronological force graph, so scenario distances remain intentional.
+  graphAlpha.value = 0
   hoveredTradeNodeId.value = null
   clearCubeRevealAnimation()
 }
@@ -3866,6 +4090,8 @@ const update = () => {
     ctx.strokeStyle = isDark.value ? '#cbd5e1' : '#334155'
     ctx.lineWidth = edge.kind === 'core'
       ? Math.max(0.8, viewScale.value * 0.12)
+      : edge.kind === 'scenario'
+        ? Math.max(0.9, viewScale.value * 0.18)
       : edge.kind === 'chronological'
         ? Math.max(1, viewScale.value * 0.22)
         : Math.max(0.8, viewScale.value * 0.14)
