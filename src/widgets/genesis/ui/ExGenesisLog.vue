@@ -881,6 +881,22 @@
       />
     </div>
 
+    <div
+      v-if="showFiltersPanel && !showNodeMap && viewType === 'cube' && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      class="pointer-events-auto absolute left-1/2 top-8 z-[10010] w-[674px] -translate-x-1/2"
+    >
+      <ExPanel variant="light" :no-padding="true" :show-corners="true" class="!w-full overflow-visible">
+        <ExVerticalTradeList
+          :trades="currentTrades"
+          :filters-only="true"
+          :filters-panel-mode="true"
+          view-mode="list"
+          :result-display-mode="listResultDisplayMode"
+          :color-mode="listColorMode"
+        />
+      </ExPanel>
+    </div>
+
     <!-- CENTERED BOTTOM NAVIGATION -->
     <div
       v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
@@ -900,6 +916,13 @@
           </div>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }} ]</span>
         </button>
+
+        <ExTradeEntryProtocolButton
+          :model-value="selectedStrategyId"
+          :strategies="strategies"
+          :is-loading="isMatrixLoading"
+          @update:model-value="selectStrategy($event)"
+        />
 
         <button
           type="button"
@@ -933,14 +956,24 @@
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ВРЕМЕННОЕ_ДЕРЕВО' : 'TIME_TREE' }} ]</span>
         </button>
 
-        <div class="mx-1 h-7 w-px bg-white/15"></div>
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :aria-label="locale === 'ru' ? 'Фильтры' : 'Filters'"
+          :class="showFiltersPanel ? 'border-white/30 bg-white/10 text-white' : ''"
+          :aria-expanded="showFiltersPanel"
+          @click="toggleFiltersPanel"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+            <circle cx="9" cy="6" r="1.8" fill="currentColor" stroke="none" />
+            <circle cx="15" cy="12" r="1.8" fill="currentColor" stroke="none" />
+            <circle cx="11" cy="18" r="1.8" fill="currentColor" stroke="none" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ФИЛЬТРЫ' : 'FILTERS' }} ]</span>
+        </button>
 
-        <ExTradeEntryProtocolButton
-          :model-value="selectedStrategyId"
-          :strategies="strategies"
-          :is-loading="isMatrixLoading"
-          @update:model-value="selectStrategy($event)"
-        />
+        <div class="mx-1 h-7 w-px bg-white/15"></div>
 
         <button
           type="button"
@@ -1525,6 +1558,7 @@ const showNodeMap = ref(false)
 const isHudVisible = ref(true)
 const showComplianceStatus = ref(false)
 const showToolsMenu = ref(false)
+const showFiltersPanel = ref(false)
 const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
@@ -1571,6 +1605,10 @@ const handleTradeEntryPanelChange = (panel: 'matrix' | 'journal' | 'method' | nu
 
 const updateTradeEntryStrategy = (strategyId: string) => {
   selectedStrategyId.value = strategyId
+}
+
+const toggleFiltersPanel = () => {
+  showFiltersPanel.value = !showFiltersPanel.value
 }
 
 watch(isHudVisible, (val) => {

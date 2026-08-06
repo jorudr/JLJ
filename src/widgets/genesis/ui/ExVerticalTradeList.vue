@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col font-mono select-none nier-text-primary" :class="showFilters ? 'space-y-6' : ''">
+  <div class="flex flex-col font-mono select-none nier-text-primary" :class="showFilters ? (compactFiltersPanel ? 'space-y-0' : 'space-y-6') : ''">
     <!-- FILTER BAR -->
-    <div v-if="showFilters" ref="filterBarRef" class="relative z-30 flex flex-col gap-3 pb-4 border-b nier-border-primary">
-      <div class="flex items-center justify-between gap-4 text-xs">
+    <div v-if="showFilters" ref="filterBarRef" class="relative z-30 flex flex-col" :class="compactFiltersPanel ? 'gap-0 pb-0' : 'gap-3 pb-4 border-b nier-border-primary'">
+      <div v-if="!compactFiltersPanel" class="flex items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3 min-w-0">
           <span class="font-black uppercase tracking-widest">{{ locale === 'ru' ? 'Фильтры' : 'Filters' }}</span>
           <span v-if="activeFilterCount > 0" class="opacity-40 text-[10px] uppercase whitespace-nowrap">({{ activeFilterCount }} {{ locale === 'ru' ? 'Активно' : 'Active' }})</span>
@@ -77,12 +77,12 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <div v-for="filter in filterDropdowns" :key="filter.id" class="relative">
+      <div :class="compactFiltersPanel ? 'flex w-full flex-wrap' : 'flex flex-wrap gap-2'">
+        <div v-for="filter in filterDropdowns" :key="filter.id" :class="compactFiltersPanel ? 'relative w-28 flex-none' : 'relative'">
           <button
             @click.stop="openFilterId = openFilterId === filter.id ? null : filter.id"
             class="h-8 max-w-[220px] px-3 border text-[11px] uppercase tracking-wider transition-colors flex items-center gap-2"
-            :class="filter.isActive || openFilterId === filter.id ? 'bg-black/10 dark:bg-white/10 border-black/40 dark:border-white/40 opacity-100' : 'border-black/20 dark:border-white/20 opacity-55 hover:opacity-100 hover:border-black/40 dark:hover:border-white/40'"
+            :class="[compactFiltersPanel ? 'w-full max-w-none' : '', filter.isActive || openFilterId === filter.id ? 'bg-black/10 dark:bg-white/10 border-black/40 dark:border-white/40 opacity-100' : 'border-black/20 dark:border-white/20 opacity-55 hover:opacity-100 hover:border-black/40 dark:hover:border-white/40']"
           >
             <span class="truncate">{{ filterButtonLabel(filter.id) }}</span>
             <span class="text-[10px] opacity-50">{{ openFilterId === filter.id ? '^' : '⌄' }}</span>
@@ -535,6 +535,7 @@ const props = defineProps<{
   viewMode?: 'list' | 'timeTree'
   resultDisplayMode?: 'currency' | 'percent'
   colorMode?: 'monochrome' | 'colorful'
+  filtersPanelMode?: boolean
   showFullscreenToggle?: boolean
   timeTreeFullscreenActive?: boolean
 }>()
@@ -550,6 +551,7 @@ const emit = defineEmits<{
 
 const filtersOnly = computed(() => props.filtersOnly === true)
 const showFilters = computed(() => props.hideFilters !== true)
+const compactFiltersPanel = computed(() => props.filtersPanelMode === true)
 const activeListViewMode = computed(() => props.viewMode || 'list')
 const showFullscreenToggle = computed(() => props.showFullscreenToggle === true)
 const timeTreeFullscreenActive = computed(() => props.timeTreeFullscreenActive === true)
