@@ -1929,17 +1929,24 @@ const getTradeNodeColor = (node: TradeNode) => {
 
   const pnl = Number(node.pnl)
   const { min, max } = tradeNodePnlRange.value
-  const span = max - min
-  const normalized = span === 0
-    ? (pnl > 0 ? 1 : pnl < 0 ? 0 : 0.85)
-    : Math.min(1, Math.max(0, (pnl - min) / span))
 
-  // The strongest winner is white; the strongest loser is red. Everything in
-  // between is a deliberate shade on the same white-to-red scale.
-  const red = Math.round(239 + (255 - 239) * normalized)
-  const green = Math.round(68 + (255 - 68) * normalized)
-  const blue = Math.round(68 + (255 - 68) * normalized)
-  return `rgb(${red} ${green} ${blue})`
+  // Keep the two signs visually separate: winners are white/grey shades,
+  // while only losing trades are allowed to use the red scale.
+  if (pnl > 0) {
+    const intensity = max > 0 ? Math.min(1, pnl / max) : 1
+    const channel = Math.round(174 + (255 - 174) * intensity)
+    return `rgb(${channel} ${channel} ${channel})`
+  }
+
+  if (pnl < 0) {
+    const intensity = min < 0 ? Math.min(1, Math.abs(pnl) / Math.abs(min)) : 1
+    const red = Math.round(254 - (254 - 239) * intensity)
+    const green = Math.round(202 - (202 - 68) * intensity)
+    const blue = Math.round(202 - (202 - 68) * intensity)
+    return `rgb(${red} ${green} ${blue})`
+  }
+
+  return 'rgb(210 210 210)'
 }
 
 const distributionMetricMode = ref<'pnl' | 'score'>('pnl')
@@ -3889,14 +3896,6 @@ const update = () => {
     ctx.beginPath()
     ctx.arc(proj.x, proj.y, radius * (0.72 + reveal.icon * 0.28), 0, Math.PI * 2)
     ctx.fill()
-    if (isHovered) {
-      ctx.shadowBlur = 0
-      ctx.strokeStyle = isDark.value ? '#ffffff' : '#0f172a'
-      ctx.lineWidth = Math.max(1, focusMultiplier)
-      ctx.beginPath()
-      ctx.arc(proj.x, proj.y, radius + 5 * focusMultiplier, 0, Math.PI * 2)
-      ctx.stroke()
-    }
     ctx.restore()
 
     // Keep the graph clean: labels are shown only for the node currently under the cursor.
@@ -3913,7 +3912,15 @@ const update = () => {
           : getTradeNodeColor(node)
       const dynamicFontSize = Math.max(node.isCore ? 10 : node.isNote ? 8 : 10, Math.floor((node.isCore ? 10 : node.isNote ? 8 : 11) * focusMultiplier))
       ctx.font = `bold ${dynamicFontSize}px Inter`
-      ctx.fillText(node.label, proj.x + radius + 7 * focusMultiplier, proj.y + dynamicFontSize * 0.35)
+      if (node.isCore) {
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'bottom'
+        ctx.fillText(node.label, proj.x, proj.y - radius - 8 * focusMultiplier)
+      } else {
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText(node.label, proj.x + radius + 7 * focusMultiplier, proj.y + dynamicFontSize * 0.35)
+      }
       ctx.restore()
     }
   })
