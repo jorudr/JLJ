@@ -76,21 +76,22 @@
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
         <div
           class="relative z-10 flex h-full w-full flex-col"
-          :class="isTimeTreeFullscreen ? 'px-6 py-10 md:px-10 md:py-12' : 'px-8 py-14 md:px-16 md:py-20'"
+          :class="isTimeTreeFullscreen
+            ? 'px-6 py-10 md:px-10 md:py-12'
+            : viewType === 'timeTree'
+              ? 'px-8 py-8 md:px-16 md:py-10'
+              : 'px-8 py-14 md:px-16 md:py-20'"
         >
-          <div v-if="!isTimeTreeFullscreen" class="mb-5 shrink-0">
+          <div v-if="!isTimeTreeFullscreen && viewType === 'list'" class="mb-5 shrink-0">
             <ExVerticalTradeList
               :trades="currentTradesForList"
               :filters-only="true"
-              :view-mode="viewType === 'list' ? 'list' : 'timeTree'"
+              view-mode="list"
               :result-display-mode="listResultDisplayMode"
               :color-mode="listColorMode"
-              :show-fullscreen-toggle="viewType === 'timeTree'"
-              :time-tree-fullscreen-active="isTimeTreeFullscreen"
               @list-view-mode-change="setListViewMode"
               @display-settings-change="handleListDisplaySettingsChange"
               @filtered-trades-change="handleTimeTreeFilteredTrades"
-              @toggle-time-tree-fullscreen="enterTimeTreeFullscreen"
             />
           </div>
 
