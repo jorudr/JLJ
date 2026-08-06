@@ -282,12 +282,12 @@
                     {{ locale === 'ru' ? 'Начало и конец периода' : 'Start and end of period' }}
                   </span>
                   <span class="text-[7px] uppercase tracking-[0.3em] text-black/30 dark:text-white/20">
-                    {{ locale === 'ru' ? 'Выберите активную границу справа' : 'Select the active boundary below' }}
+                    {{ locale === 'ru' ? 'Выберите точку справа' : 'Select a point below' }}
                   </span>
                 </div>
 
                 <div class="flex flex-col gap-2">
-                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Активная граница' : 'Active Target' }}</span>
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Выбор точки' : 'Select Point' }}</span>
                   <div class="flex gap-2">
                     <button
                       v-for="target in ['start', 'end']"
@@ -297,7 +297,7 @@
                       class="flex-1 border border-black/20 py-3 text-[10px] uppercase tracking-[0.4em] transition-all dark:border-white/20"
                       :class="dateRangeEditorTarget === target ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-transparent text-black/40 hover:bg-black/5 dark:text-white/40 dark:hover:bg-white/5'"
                     >
-                      {{ target === 'start' ? 'START_ARCHIVE' : 'END_ARCHIVE' }}
+                      {{ locale === 'ru' ? (target === 'start' ? 'Начало' : 'Конец') : (target === 'start' ? 'Start' : 'End') }}
                     </button>
                   </div>
                 </div>

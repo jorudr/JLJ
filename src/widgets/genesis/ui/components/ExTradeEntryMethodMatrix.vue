@@ -5,6 +5,17 @@ import { useI18n } from '~/shared/i18n/useI18n';
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
 
+const temporalUnitLabel = (unit) => {
+  if (locale.value !== 'ru') return unit;
+  return {
+    day: 'ДЕНЬ',
+    month: 'МЕСЯЦ',
+    year: 'ГОД',
+    hour: 'ЧАС',
+    minute: 'МИНУТА'
+  }[unit] || unit;
+};
+
 import ExPanel from '~/shared/ui/ExPanel.vue';
 const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJournalEntry, removeJournalEntry, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, toggleCondition, showConditionLibrary, showEmotionSelector, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, getActiveConditionsInScenario, isScenarioSelected, handleMouseLeaveInsight, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, entryMethodEnabled, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, tradeTimeZone, supportedTimeZones, tradeTimeZoneOffset, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, setActiveTemporalToNow, cloneOpenTemporalToExit, scrollContainer, pnl, commitState, resetForm, submit, sanitizeTradeNumberInput } = inject('tradeState');
 const timeZoneMenuOpen = ref(false);
@@ -283,13 +294,13 @@ const closeEntryMethod = () => {
                 </div>
 
                 <div class="flex flex-col gap-2">
-                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">Active Target</span>
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Выбор точки' : 'Select Point' }}</span>
                   <div class="flex gap-2">
                     <button v-for="t in ['open', 'exit']" :key="t"
                             @click="activeTemporalTarget = t"
                             class="flex-1 py-3 border border-black/20 dark:border-white/20 text-[10px] uppercase tracking-[0.4em] transition-all"
                             :class="activeTemporalTarget === t ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-transparent text-black/40 hover:bg-black/5 dark:text-white/40 dark:hover:bg-white/5'">
-                      {{ t.toUpperCase() }}_ARCHIVE
+                      {{ locale === 'ru' ? (t === 'open' ? 'Время открытия' : 'Время закрытия') : (t === 'open' ? 'Opening Time' : 'Closing Time') }}
                     </button>
                   </div>
                 </div>
@@ -297,11 +308,11 @@ const closeEntryMethod = () => {
                 <div class="flex flex-col gap-4 pt-4 border-t border-black/5 dark:border-white/5">
                   <button @click="setActiveTemporalToNow" 
                           class="w-full py-2 border nier-border-primary text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
-                    Sync to Current System Time
+                    {{ locale === 'ru' ? 'Синхронизировать с текущим временем' : 'Sync to Current System Time' }}
                   </button>
                   <button @click="cloneOpenTemporalToExit" 
                           class="w-full py-2 border nier-border-primary text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
-                    Clone Open Protocol to Exit
+                    {{ locale === 'ru' ? 'Клонировать время открытия на закрытие' : 'Clone Open Protocol to Exit' }}
                   </button>
                 </div>
               </div>
@@ -316,7 +327,7 @@ const closeEntryMethod = () => {
                              @input="e => handleManualDate(activeTemporalTarget, unit, e.target.value)"
                              class="w-24 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-tighter nier-text-primary" />
                       <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px nier-bg-inverted"></div></button>
-                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ unit }}</span>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ temporalUnitLabel(unit) }}</span>
                     </div>
                   </div>
 
@@ -330,7 +341,7 @@ const closeEntryMethod = () => {
                              @input="e => handleManualDate(activeTemporalTarget, unit, e.target.value)"
                              class="w-20 bg-transparent text-center outline-none text-4xl font-mono font-bold tracking-widest nier-text-primary" />
                       <button @click="adjustDate(activeTemporalTarget, unit, -1); syncTempParts()" class="p-2 opacity-20 hover:opacity-100 transition-opacity"><div class="w-4 h-px nier-bg-inverted"></div></button>
-                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ unit }}</span>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ temporalUnitLabel(unit) }}</span>
                     </div>
                   </div>
                 </div>
