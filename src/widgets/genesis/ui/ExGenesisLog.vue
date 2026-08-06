@@ -886,7 +886,7 @@
       v-if="showFiltersPanel && !showNodeMap && (viewType === 'cube' || viewType === 'timeTree') && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
       class="pointer-events-auto absolute left-1/2 top-8 z-[10010] w-[562px] -translate-x-1/2"
     >
-      <ExPanel variant="light" :no-padding="true" :show-corners="true" class="!w-full overflow-visible">
+      <ExPanel variant="light" :no-padding="true" :show-corners="false" class="!w-full overflow-visible">
         <ExVerticalTradeList
           :trades="currentTrades"
           :filters-only="true"
