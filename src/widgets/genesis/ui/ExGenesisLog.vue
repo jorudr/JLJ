@@ -13,7 +13,7 @@
               @mousedown="handleMouseDown"
               @mousemove="handleMouseMove"
               @mouseup="handleMouseUp"
-              @mouseleave="handleMouseUp"
+              @mouseleave="handleMouseLeave"
               @dblclick="handleDoubleClick"
               @wheel="handleWheel">
       </canvas>
@@ -42,7 +42,7 @@
               </svg>
            </button>
 
-           <!-- Cube Reveal Animation -->
+           <!-- Trade Reveal Animation -->
            <button @click="toggleCubeRevealAnimation"
                    class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
                    :class="isCubeRevealAnimating
@@ -892,13 +892,13 @@
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
           :class="viewType === 'cube' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
-          :aria-label="locale === 'ru' ? '3D куб' : '3D cube'"
+          :aria-label="locale === 'ru' ? 'Сделки' : 'Trades'"
           @click="viewType = 'cube'"
         >
           <div class="relative flex h-4 w-4 items-center justify-center border-2 transition-all" :class="viewType === 'cube' ? 'rotate-[135deg] scale-110' : 'rotate-45'">
             <div class="h-1 w-1 rotate-45 bg-current"></div>
           </div>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? '3D_КУБ' : '3D_CUBE' }} ]</span>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }} ]</span>
         </button>
 
         <button
@@ -935,22 +935,12 @@
 
         <div class="mx-1 h-7 w-px bg-white/15"></div>
 
-        <button v-if="viewType === 'cube'" type="button" aria-label="Previous cube page" class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/60 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white" @click="prevCubePage">
-          <span class="text-lg leading-none">‹</span>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ПРЕДЫДУЩАЯ_СТРАНИЦА' : 'PREVIOUS_PAGE' }} ]</span>
-        </button>
-
         <ExTradeEntryProtocolButton
           :model-value="selectedStrategyId"
           :strategies="strategies"
           :is-loading="isMatrixLoading"
           @update:model-value="selectStrategy($event)"
         />
-
-        <button v-if="viewType === 'cube'" type="button" aria-label="Next cube page" class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/60 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white" @click="nextCubePage">
-          <span class="text-lg leading-none">›</span>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СЛЕДУЮЩАЯ_СТРАНИЦА' : 'NEXT_PAGE' }} ]</span>
-        </button>
 
         <button
           type="button"
@@ -2954,13 +2944,22 @@ interface TradeNode {
   id: string
   label: string
   faceIndex: number
-  localPos: { x: number; y: number } // -100 to 100
-  worldPos: Point3D
-  neighbors?: number[]
+  seedPos: Point3D
+  graphPos: { x: number; y: number }
+  velocity: { x: number; y: number }
   date?: string | Date
   isNote?: boolean
+  isCore?: boolean
   isOpenTrade?: boolean
   parentId?: string
+}
+
+interface GraphEdge {
+  source: string
+  target: string
+  kind: 'chronological' | 'note' | 'core'
+  distance: number
+  strength: number
 }
 
 // --- STATE --- //
@@ -2968,13 +2967,11 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const currentFace = ref(0)
 const isTransitioning = ref(false)
 
-// Cube rotation state
-const targetRotation = ref({ x: 0, y: 0 }) 
-const currentRotation = ref({ x: 0, y: 0 })
-
 // Trade mapping
-const facesTrades = ref<TradeNode[][]>([[], [], [], [], [], []])
-const internalNodes = ref<TradeNode[]>([])
+const facesTrades = ref<TradeNode[][]>([[]])
+const graphEdges = ref<GraphEdge[]>([])
+const graphAlpha = ref(0)
+const hoveredTradeNodeId = ref<string | null>(null)
 
 const revealProgress = ref(0)
 const cubeRevealAnimationStart = ref<number | null>(null)
@@ -3138,12 +3135,6 @@ watch([matrixNodes, () => tradeStore.isLoading], ([nodes, loading]) => {
   tradeStore.syncStrategies(cores)
 }, { immediate: true, deep: true })
 
-const activeFaceIndices = computed(() => {
-  return facesTrades.value
-    .map((face, index) => face.some(n => !n.id.startsWith('ghost_')) ? index : -1)
-    .filter(index => index !== -1)
-})
-
 const isCubeRevealAnimating = computed(() => cubeRevealAnimationStart.value !== null)
 
 const easeOutCubic = (value: number) => {
@@ -3213,112 +3204,49 @@ watch([selectedStrategyId, filteredTrades, cubeSearchQuery], () => {
   initTrades()
 }, { deep: true })
 
-const viewScale = ref(2.2) 
+// The trade canvas opens at 2x the previous default scale.
+const viewScale = ref(4.4)
 const isPanning = ref(false)
-const draggedNode = ref<TradeNode | null>(null)
 const lastMousePos = ref({ x: 0, y: 0 })
 const viewOffset = ref({ x: 0, y: 0 })
+const GRAPH_SEED_RADIUS = 75
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 
-// --- INITIALIZATION --- //
-const calculateWorldPos = (faceIndex: number, localX: number, localY: number): Point3D => {
-  const S = 100
-  switch(faceIndex) {
-    case 0: return { x: localX, y: localY, z: -S } // Front
-    case 1: return { x: S, y: localY, z: localX }  // Right
-    case 2: return { x: -localX, y: localY, z: S } // Back
-    case 3: return { x: -S, y: localY, z: -localX } // Left
-    case 4: return { x: localX, y: -S, z: localY } // Top
-    case 5: return { x: localX, y: S, z: -localY } // Bottom
-    default: return { x: 0, y: 0, z: 0 }
+// Deterministic initial positions keep the graph stable before the force layout settles.
+const getGraphSeedPosition = (index: number, total: number): Point3D => {
+  if (total <= 1) return { x: 0, y: 0, z: 0 }
+
+  const normalizedY = 1 - (index / (total - 1)) * 2
+  const ringRadius = Math.sqrt(Math.max(0, 1 - normalizedY * normalizedY))
+  const angle = index * GOLDEN_ANGLE
+
+  return {
+    x: Math.cos(angle) * ringRadius * GRAPH_SEED_RADIUS,
+    y: normalizedY * GRAPH_SEED_RADIUS,
+    z: Math.sin(angle) * ringRadius * GRAPH_SEED_RADIUS
   }
-}
-
-const switchFace = (newIndex: number) => {
-  clearCubeRevealAnimation()
-  currentFace.value = newIndex
-  isTransitioning.value = true
-  
-  const orientation = ((newIndex % 6) + 6) % 6
-  switch(orientation) {
-    case 0: targetRotation.value.x = 0; targetRotation.value.y = 0; break;
-    case 1: targetRotation.value.x = 0; targetRotation.value.y = Math.PI / 2; break;
-    case 2: targetRotation.value.x = 0; targetRotation.value.y = Math.PI; break;
-    case 3: targetRotation.value.x = 0; targetRotation.value.y = -Math.PI / 2; break;
-    case 4: targetRotation.value.x = Math.PI / 2; targetRotation.value.y = 0; break;
-    case 5: targetRotation.value.x = -Math.PI / 2; targetRotation.value.y = 0; break;
-  }
-  
-  setTimeout(() => { isTransitioning.value = false }, 800)
-}
-
-const prevCubePage = () => {
-  const totalPages = facesTrades.value.length || 1
-  const newIndex = (currentFace.value - 1 + totalPages) % totalPages
-  switchFace(newIndex)
-}
-
-const nextCubePage = () => {
-  const totalPages = facesTrades.value.length || 1
-  const newIndex = (currentFace.value + 1) % totalPages
-  switchFace(newIndex)
 }
 
 const initTrades = () => {
-  // --- CUBE INITIALIZATION --- //
-  const tradesForCube = [...filteredTrades.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  
-  // Build pages based on the 30-node maximum limit rule
-  const cubePages: any[][] = []
-  let currentCubePageTrades: any[] = []
-  let currentNodeCount = 0
+  // All trades live on one flat canvas now; there is no page/cube partitioning.
+  const tradesForCanvas = [...filteredTrades.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const nodes: TradeNode[] = []
+  graphEdges.value = []
 
-  for (const t of tradesForCube) {
-    const noteCount = t.notesList ? t.notesList.length : 0
-    const nodesForTrade = 1 + noteCount
-
-    currentCubePageTrades.push(t)
-    currentNodeCount += nodesForTrade
-
-    if (currentNodeCount >= 30) {
-      cubePages.push(currentCubePageTrades)
-      currentCubePageTrades = []
-      currentNodeCount = 0
-    }
-  }
-  if (currentCubePageTrades.length > 0) {
-    cubePages.push(currentCubePageTrades)
-  }
-  if (cubePages.length === 0) {
-    cubePages.push([])
+  if (isMainDiaryStrategy.value) {
+    nodes.push({
+      id: 'main_diary_core',
+      label: selectedStrategyLabel.value,
+      faceIndex: 0,
+      seedPos: { x: 0, y: 0, z: 0 },
+      graphPos: { x: 0, y: 0 },
+      velocity: { x: 0, y: 0 },
+      isCore: true
+    })
   }
 
-  facesTrades.value = []
-  cubePages.forEach((realTradesForThisFace, i) => {
-    const nodes: TradeNode[] = []
-    
-    realTradesForThisFace.forEach((trade) => {
-      let localX = 0
-      let localY = 0
-      let attempts = 0
-      const minDistance = 25
-
-      while (attempts < 100) {
-         localX = (Math.random() - 0.5) * 160
-         localY = (Math.random() - 0.5) * 160
-         
-         let collision = false
-         for (const existingNode of nodes) {
-            const dist = Math.sqrt((localX - existingNode.localPos.x) ** 2 + (localY - existingNode.localPos.y) ** 2)
-            if (dist < minDistance) {
-               collision = true
-               break
-            }
-         }
-         
-         if (!collision) break
-         attempts++
-      }
-
+  tradesForCanvas.forEach((trade, tradeIndex) => {
+      const tradeSeedPos = getGraphSeedPosition(tradeIndex, tradesForCanvas.length)
       const isOpenTrade = !isClosedDiaryTrade(trade)
 
       nodes.push({
@@ -3326,9 +3254,10 @@ const initTrades = () => {
         label: isOpenTrade
           ? `${formatCubeTradeAssetLabel(trade.asset)} [${openTradeText()}]`
           : `${formatCubeTradeAssetLabel(trade.asset)} [${(trade.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(trade.profitInCurrency ?? 0).toFixed(2)}$]`,
-        faceIndex: i,
-        localPos: { x: localX, y: localY },
-        worldPos: calculateWorldPos(i, localX, localY),
+        faceIndex: 0,
+        seedPos: tradeSeedPos,
+        graphPos: { x: tradeSeedPos.x * 0.55, y: tradeSeedPos.y * 0.55 },
+        velocity: { x: 0, y: 0 },
         date: trade.date,
         isNote: false,
         isOpenTrade
@@ -3337,66 +3266,64 @@ const initTrades = () => {
       // Add child nodes for notes
       if (trade.notesList && trade.notesList.length > 0) {
         trade.notesList.forEach((note: any, noteIdx: number) => {
-          const offsetRadius = 25 + Math.random() * 10
+          const offsetRadius = 18 + noteIdx * 4
           const angle = (Math.PI * 2 / trade.notesList!.length) * noteIdx
-          
-          const nLocalX = localX + Math.cos(angle) * offsetRadius
-          const nLocalY = localY + Math.sin(angle) * offsetRadius
+          const noteSeedPos = {
+            x: tradeSeedPos.x + Math.cos(angle) * offsetRadius,
+            y: tradeSeedPos.y + Math.sin(angle) * offsetRadius,
+            z: tradeSeedPos.z + (noteIdx % 2 === 0 ? offsetRadius * 0.35 : -offsetRadius * 0.35)
+          }
 
           nodes.push({
              id: `note_${trade.id}_${note.id}`,
              label: note.title || 'POST_MORTEM',
-             faceIndex: i,
-             localPos: { x: nLocalX, y: nLocalY },
-             worldPos: calculateWorldPos(i, nLocalX, nLocalY),
+             faceIndex: 0,
+             seedPos: noteSeedPos,
+             graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },
+             velocity: { x: 0, y: 0 },
              isNote: true,
              parentId: trade.id
           })
+          graphEdges.value.push({
+            source: trade.id!,
+            target: `note_${trade.id}_${note.id}`,
+            kind: 'note',
+            distance: 72,
+            strength: 0.22
+          })
         })
       }
-    })
-
-    facesTrades.value[i] = nodes
   })
 
-  // --- INTERNAL NEURAL CORE NETWORK --- //
-  const innerNodes: TradeNode[] = []
-  for (let i = 0; i < 60; i++) {
-    const rx = (Math.random() - 0.5) * 140
-    const ry = (Math.random() - 0.5) * 140
-    const rz = (Math.random() - 0.5) * 140
-    innerNodes.push({
-      id: `inner_${i}`,
-      label: `CORE_VULT_${i}`,
-      faceIndex: -1,
-      localPos: { x: 0, y: 0 },
-      worldPos: { x: rx, y: ry, z: rz },
-      neighbors: []
+  if (isMainDiaryStrategy.value) {
+    // Main Diary connects directly to every trade around the circle.
+    tradesForCanvas.forEach(trade => {
+      graphEdges.value.push({
+        source: 'main_diary_core',
+        target: trade.id!,
+        kind: 'core',
+        distance: GRAPH_SEED_RADIUS,
+        strength: 0
+      })
+    })
+  } else {
+    // Other strategies retain the chronological Obsidian-style graph.
+    tradesForCanvas.slice(1).forEach((trade, index) => {
+      graphEdges.value.push({
+        source: tradesForCanvas[index]!.id!,
+        target: trade.id!,
+        kind: 'chronological',
+        distance: 118,
+        strength: 0.34
+      })
     })
   }
 
-  innerNodes.forEach((node, i) => {
-    const distances = innerNodes
-      .map((other, idx) => ({ 
-        idx, 
-        dist: i === idx ? Infinity : Math.sqrt(
-          (node.worldPos.x - other.worldPos.x)**2 + 
-          (node.worldPos.y - other.worldPos.y)**2 + 
-          (node.worldPos.z - other.worldPos.z)**2
-        ) 
-      }))
-      .sort((a, b) => a.dist - b.dist)
-    node.neighbors = distances.slice(0, 3).map(d => d.idx)
-  })
-  
-  internalNodes.value = innerNodes
-
-
-
-  if (activeFaceIndices.value.length > 0 && !activeFaceIndices.value.includes(currentFace.value)) {
-    currentFace.value = activeFaceIndices.value[0]!
-    switchFace(currentFace.value)
-  }
+  facesTrades.value = [nodes]
+  currentFace.value = 0
+  graphAlpha.value = !isMainDiaryStrategy.value && nodes.length > 1 ? 1 : 0
+  hoveredTradeNodeId.value = null
+  clearCubeRevealAnimation()
 }
 
 // --- 3D ENGINE --- //
@@ -3410,18 +3337,6 @@ const rotateY = (p: Point3D, angle: number): Point3D => {
   return { x: p.x * cos + p.z * sin, y: p.y, z: -p.x * sin + p.z * cos }
 }
 
-const project = (p: Point3D, width: number, height: number): Point2D => {
-  const focalLength = 1000
-  const z = Math.max(-999, p.z)
-  const scale = focalLength / (focalLength + z)
-  return {
-    x: p.x * scale + width / 2 + viewOffset.value.x,
-    y: p.y * scale + height / 2 + viewOffset.value.y,
-    opacity: Math.max(0.1, (1000 - z) / 1500),
-    depth: p.z
-  }
-}
-
 const projectDistributionPoint = (p: Point3D, width: number, height: number): Point2D => {
   const focalLength = 900
   const z = Math.max(-850, p.z)
@@ -3431,6 +3346,29 @@ const projectDistributionPoint = (p: Point3D, width: number, height: number): Po
     y: p.y * scale + height * 0.68,
     opacity: Math.max(0.18, (900 - z) / 1300),
     depth: p.z
+  }
+}
+
+const projectTradeNode = (node: TradeNode, width: number, height: number): Point2D => {
+  const zoom = viewScale.value
+
+  if (isMainDiaryStrategy.value) {
+    const focalLength = 900
+    const depth = node.isCore ? 0 : node.seedPos.z
+    const perspective = focalLength / (focalLength + depth)
+    return {
+      x: (node.isCore ? 0 : node.seedPos.x) * zoom * perspective + width / 2 + viewOffset.value.x,
+      y: (node.isCore ? 0 : node.seedPos.y) * zoom * perspective + height / 2 + viewOffset.value.y,
+      opacity: node.isCore ? 1 : Math.max(0.28, Math.min(1, 0.42 + (depth + GRAPH_SEED_RADIUS) / (GRAPH_SEED_RADIUS * 2) * 0.58)),
+      depth
+    }
+  }
+
+  return {
+    x: node.graphPos.x * zoom + width / 2 + viewOffset.value.x,
+    y: node.graphPos.y * zoom + height / 2 + viewOffset.value.y,
+    opacity: 1,
+    depth: 0
   }
 }
 
@@ -3628,22 +3566,86 @@ const renderDistributionChart = () => {
   }
 }
 
-const navigateFace = (dir: number) => {
-  if (isTransitioning.value || activeFaceIndices.value.length === 0) return
-  const currentIndex = activeFaceIndices.value.indexOf(currentFace.value)
-  const nextIndex = (currentIndex + dir + activeFaceIndices.value.length) % activeFaceIndices.value.length
-  switchFace(activeFaceIndices.value[nextIndex]!)
-}
-
 // Extract expensive path computation out of RAF loop
 const chronologicalPathNodes = computed(() => {
-  const scopedTrades = currentTrades.value
+  const scopedTrades = [...currentTrades.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   const allTradeNodes = facesTrades.value.flat().filter(n => !n.isNote)
   const nodeMap = new Map(allTradeNodes.map(n => [n.id, n]))
   
   // Use exact diary order
   return scopedTrades.map(t => nodeMap.get(t.id!)).filter(Boolean) as TradeNode[]
 })
+
+// Obsidian-style force layout. Linked nodes behave like springs, while every
+// node repels the others and a light center force keeps the graph in view.
+const simulateGraph = () => {
+  if (isMainDiaryStrategy.value) return
+  const nodes = facesTrades.value[currentFace.value] || []
+  if (nodes.length < 2 || graphAlpha.value <= 0.001) return
+
+  const forces = new Map(nodes.map(node => [node.id, { x: 0, y: 0 }]))
+  const alpha = graphAlpha.value
+
+  for (let i = 0; i < nodes.length; i += 1) {
+    const left = nodes[i]!
+    for (let j = i + 1; j < nodes.length; j += 1) {
+      const right = nodes[j]!
+      let dx = right.graphPos.x - left.graphPos.x
+      let dy = right.graphPos.y - left.graphPos.y
+      const distanceSquared = dx * dx + dy * dy
+      if (distanceSquared < 0.01) {
+        dx = (i + 1) * 0.7
+        dy = (j + 1) * 0.4
+      }
+
+      const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy))
+      const repulsion = Math.min(28, 1450 / (distance * distance)) * alpha
+      const forceX = (dx / distance) * repulsion
+      const forceY = (dy / distance) * repulsion
+      forces.get(left.id)!.x -= forceX
+      forces.get(left.id)!.y -= forceY
+      forces.get(right.id)!.x += forceX
+      forces.get(right.id)!.y += forceY
+    }
+
+    const centerForce = 0.004 * alpha
+    forces.get(left.id)!.x -= left.graphPos.x * centerForce
+    forces.get(left.id)!.y -= left.graphPos.y * centerForce
+  }
+
+  const nodeMap = new Map(nodes.map(node => [node.id, node]))
+  graphEdges.value.forEach(edge => {
+    const source = nodeMap.get(edge.source)
+    const target = nodeMap.get(edge.target)
+    if (!source || !target) return
+
+    const dx = target.graphPos.x - source.graphPos.x
+    const dy = target.graphPos.y - source.graphPos.y
+    const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy))
+    const spring = (distance - edge.distance) * edge.strength * alpha
+    const forceX = (dx / distance) * spring
+    const forceY = (dy / distance) * spring
+    forces.get(source.id)!.x += forceX
+    forces.get(source.id)!.y += forceY
+    forces.get(target.id)!.x -= forceX
+    forces.get(target.id)!.y -= forceY
+  })
+
+  nodes.forEach(node => {
+    const force = forces.get(node.id)!
+    node.velocity.x = (node.velocity.x + force.x) * 0.86
+    node.velocity.y = (node.velocity.y + force.y) * 0.86
+    const speed = Math.sqrt(node.velocity.x ** 2 + node.velocity.y ** 2)
+    if (speed > 8) {
+      node.velocity.x = (node.velocity.x / speed) * 8
+      node.velocity.y = (node.velocity.y / speed) * 8
+    }
+    node.graphPos.x += node.velocity.x * 0.22
+    node.graphPos.y += node.velocity.y * 0.22
+  })
+
+  graphAlpha.value *= 0.992
+}
 
 let rafId: number
 let isLogComponentMounted = false
@@ -3698,348 +3700,197 @@ const update = () => {
   ctx.shadowBlur = 0
   ctx.shadowColor = 'transparent'
 
-  currentRotation.value.x += (targetRotation.value.x - currentRotation.value.x) * 0.08
-  currentRotation.value.y += (targetRotation.value.y - currentRotation.value.y) * 0.08
-
-  // --- RENDER CUBE STRUCTURE (ETHEREAL TESSERACT) --- //
-  const S = 140
-  const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]
-  const cubeVertices: Point3D[] = [
-    {x:-S, y:-S, z:-S}, {x:S, y:-S, z:-S}, {x:S, y:S, z:-S}, {x:-S, y:S, z:-S},
-    {x:-S, y:-S, z:S}, {x:S, y:-S, z:S}, {x:S, y:S, z:S}, {x:-S, y:S, z:S}
-  ]
-  const transformedCube = cubeVertices.map(v => {
-    let p = rotateY(v, currentRotation.value.y)
-    p = rotateX(p, currentRotation.value.x)
-    p.x *= viewScale.value; p.y *= viewScale.value; p.z *= viewScale.value
-    return project(p, w, h)
+  simulateGraph()
+  const face = facesTrades.value[currentFace.value] || []
+  const nodeMap = new Map(face.map(node => [node.id, node]))
+  const degreeMap = new Map<string, number>()
+  graphEdges.value.forEach(edge => {
+    degreeMap.set(edge.source, (degreeMap.get(edge.source) || 0) + 1)
+    degreeMap.set(edge.target, (degreeMap.get(edge.target) || 0) + 1)
   })
+  const connectedToHovered = (id: string) => {
+    if (!hoveredTradeNodeId.value) return true
+    if (id === hoveredTradeNodeId.value) return true
+    return graphEdges.value.some(edge =>
+      (edge.source === hoveredTradeNodeId.value && edge.target === id) ||
+      (edge.target === hoveredTradeNodeId.value && edge.source === id)
+    )
+  }
 
-  // --- CHRONOLOGICAL TRADE PATH REMOVED PER USER REQUEST --- //
+  // Links are rendered first, like Obsidian's graph view. Hovering a node
+  // keeps its neighborhood bright and softly fades unrelated connections.
+  graphEdges.value.forEach(edge => {
+    const source = nodeMap.get(edge.source)
+    const target = nodeMap.get(edge.target)
+    if (!source || !target) return
+    const sourceReveal = getCubeRevealProgress(source).icon
+    const targetReveal = getCubeRevealProgress(target).icon
+    if (Math.min(sourceReveal, targetReveal) <= 0.01) return
 
-  // Draw Full Borders with 50% opacity for structure
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)'
-  ctx.lineWidth = 0.5
-  edges.forEach(edge => {
-    const v1 = transformedCube[edge[0]!]!; const v2 = transformedCube[edge[1]!]!
-    if (v1.depth < -850 || v2.depth < -850) return
-    ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y); ctx.stroke()
-  })
-
-  // Draw Tactical Corner Brackets (High visibility)
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)'
-  ctx.lineWidth = 1.4
-  edges.forEach(edge => {
-    const v1 = transformedCube[edge[0]!]!; const v2 = transformedCube[edge[1]!]!
-    if (v1.depth < -850 || v2.depth < -850) return
-    
-    const bracketSize = 0.15
+    const sourcePoint = projectTradeNode(source, w, h)
+    const targetPoint = projectTradeNode(target, w, h)
+    const active = !hoveredTradeNodeId.value || edge.source === hoveredTradeNodeId.value || edge.target === hoveredTradeNodeId.value
+    ctx.save()
+    const depthOpacity = Math.min(sourcePoint.opacity, targetPoint.opacity)
+    ctx.globalAlpha = Math.min(sourceReveal, targetReveal) * depthOpacity * (active
+      ? (edge.kind === 'core' ? 0.10 : 0.30)
+      : 0.03)
+    ctx.strokeStyle = isDark.value ? '#cbd5e1' : '#334155'
+    ctx.lineWidth = edge.kind === 'core'
+      ? Math.max(0.8, viewScale.value * 0.12)
+      : edge.kind === 'chronological'
+        ? Math.max(1, viewScale.value * 0.22)
+        : Math.max(0.8, viewScale.value * 0.14)
     ctx.beginPath()
-    ctx.moveTo(v1.x, v1.y); ctx.lineTo(v1.x + (v2.x - v1.x) * bracketSize, v1.y + (v2.y - v1.y) * bracketSize)
-    ctx.moveTo(v2.x, v2.y); ctx.lineTo(v2.x + (v1.x - v2.x) * bracketSize, v2.y + (v1.y - v2.y) * bracketSize)
+    ctx.moveTo(sourcePoint.x, sourcePoint.y)
+    ctx.lineTo(targetPoint.x, targetPoint.y)
     ctx.stroke()
+    ctx.restore()
   })
 
+  face.forEach(node => {
+    const proj = projectTradeNode(node, w, h)
+    const reveal = getCubeRevealProgress(node)
+    if (reveal.icon <= 0.01) return
 
-  // --- RENDER INTERNAL NEURAL CORE --- //
-  const pulse = (Math.sin(Date.now() * 0.002) + 1) * 0.5
-  const sweepY = Math.sin(Date.now() * 0.0004) * 140 
-  
-  ctx.lineWidth = 0.4
-  internalNodes.value.forEach((node, idx) => {
-     const p1_orig = rotateY(node.worldPos, currentRotation.value.y)
-     const p1_rot = rotateX(p1_orig, currentRotation.value.x)
-     const p1 = { x: p1_rot.x * viewScale.value, y: p1_rot.y * viewScale.value, z: p1_rot.z * viewScale.value }
-     const pr1 = project(p1, w, h)
+    const degree = degreeMap.get(node.id) || 1
+    const focusMultiplier = Math.max(0.75, viewScale.value / 2.2)
+    const isHovered = hoveredTradeNodeId.value === node.id
+    const isDimmed = hoveredTradeNodeId.value !== null && !connectedToHovered(node.id)
+    const radius = (node.isCore
+      ? 10.5
+      : node.isNote
+        ? 2.8
+        : 4.6 + Math.min(3, degree) * 0.55) * focusMultiplier
+    const color = node.isCore
+      ? (isDark.value ? '#f8fafc' : '#0f172a')
+      : node.isNote
+      ? (isDark.value ? '#94a3b8' : '#64748b')
+      : node.isOpenTrade
+        ? (isDark.value ? '#facc15' : '#ca8a04')
+        : (isDark.value ? '#f8fafc' : '#334155')
 
-     const distToSweep = Math.abs(p1_rot.y - (sweepY / viewScale.value))
-     const isSwept = distToSweep < 15
-     const sweepIntensity = isSwept ? (1 - distToSweep / 15) : 0
+    ctx.save()
+    ctx.globalAlpha = reveal.icon * (isDimmed ? 0.18 : 1)
+    ctx.fillStyle = color
+    ctx.shadowColor = 'transparent'
+    ctx.shadowBlur = 0
+    ctx.beginPath()
+    ctx.arc(proj.x, proj.y, radius * (0.72 + reveal.icon * 0.28), 0, Math.PI * 2)
+    ctx.fill()
+    if (isHovered) {
+      ctx.shadowBlur = 0
+      ctx.strokeStyle = isDark.value ? '#ffffff' : '#0f172a'
+      ctx.lineWidth = Math.max(1, focusMultiplier)
+      ctx.beginPath()
+      ctx.arc(proj.x, proj.y, radius + 5 * focusMultiplier, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+    ctx.restore()
 
-     if (node.neighbors) {
-       node.neighbors.forEach(nIdx => {
-         const other = internalNodes.value[nIdx]!
-         let p2_orig = rotateY(other.worldPos, currentRotation.value.y)
-         let p2_rot = rotateX(p2_orig, currentRotation.value.x)
-         let p2 = { x: p2_rot.x * viewScale.value, y: p2_rot.y * viewScale.value, z: p2_rot.z * viewScale.value }
-         const pr2 = project(p2, w, h)
-
-         const edgeOpacity = Math.min(pr1.opacity, pr2.opacity) * (0.05 + pulse * 0.1 + sweepIntensity * 0.2)
-         ctx.globalAlpha = edgeOpacity
-         ctx.strokeStyle = isSwept ? (isDark.value ? '#ffffff' : '#0f172a') : (isDark.value ? '#475569' : '#64748b')
-         ctx.beginPath(); ctx.moveTo(pr1.x, pr1.y); ctx.lineTo(pr2.x, pr2.y); ctx.stroke()
-       })
-     }
-
-     ctx.shadowBlur = isSwept ? 12 : 4
-     ctx.shadowColor = isSwept ? (isDark.value ? '#ffffff' : '#000000') : (isDark.value ? '#334155' : '#64748b')
-     ctx.globalAlpha = Math.min(1, pr1.opacity * (0.3 + pulse * 0.4 + sweepIntensity * 0.3))
-     ctx.fillStyle = isSwept ? (isDark.value ? '#ffffff' : '#0f172a') : (isDark.value ? '#475569' : '#64748b')
-     const nodeSize = 1.5 + sweepIntensity * 0.8
-     ctx.beginPath(); ctx.arc(pr1.x, pr1.y, nodeSize, 0, Math.PI * 2); ctx.fill()
-     ctx.shadowBlur = 0
-  })
-
-
-
-  facesTrades.value.forEach((face, fIdx) => {
-    const isCurrentFace = fIdx === currentFace.value
-    if (!isCurrentFace) return
-
-    // Pass 1: Draw connections for notes
-    face.forEach(node => {
-      if (node.isNote && node.parentId) {
-        const parentNode = face.find(n => n.id === node.parentId)
-        if (parentNode) {
-           const nodeReveal = getCubeRevealProgress(node)
-           const parentReveal = getCubeRevealProgress(parentNode)
-           const connectionReveal = Math.min(nodeReveal.icon, parentReveal.icon)
-           if (connectionReveal <= 0.01) return
-
-           let p1 = rotateY(node.worldPos, currentRotation.value.y)
-           p1 = rotateX(p1, currentRotation.value.x)
-           p1.x *= viewScale.value; p1.y *= viewScale.value; p1.z *= viewScale.value
-           const proj1 = project(p1, w, h)
-
-           let p2 = rotateY(parentNode.worldPos, currentRotation.value.y)
-           p2 = rotateX(p2, currentRotation.value.x)
-           p2.x *= viewScale.value; p2.y *= viewScale.value; p2.z *= viewScale.value
-           const proj2 = project(p2, w, h)
-
-           if (p1.z >= -850 && p2.z >= -850) {
-             ctx.beginPath()
-             ctx.moveTo(proj1.x, proj1.y)
-             ctx.lineTo(proj2.x, proj2.y)
-             ctx.globalAlpha = connectionReveal
-             ctx.strokeStyle = isDark.value ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
-             ctx.lineWidth = 1 * (viewScale.value / 2.2)
-             ctx.stroke()
-           }
-        }
-      }
-    })
-
-    // Pass 2: Draw nodes
-    face.forEach(node => {
-      let p = rotateY(node.worldPos, currentRotation.value.y)
-      p = rotateX(p, currentRotation.value.x)
-      p.x *= viewScale.value; p.y *= viewScale.value; p.z *= viewScale.value
-      if (p.z < -850) return
-
-      const proj = project(p, w, h); const isCurrentFace = fIdx === currentFace.value
-      const focusMultiplier = viewScale.value / 2.2 // Smooth linear scaling based on initial viewScale (2.2)
-      const reveal = getCubeRevealProgress(node)
-
-      if (node.isNote) {
-        if (isCurrentFace) {
-           if (reveal.icon <= 0.01) return
-           ctx.globalAlpha = Math.min(1, proj.opacity) * reveal.icon
-           const radius = 3 * focusMultiplier * (0.74 + reveal.icon * 0.26)
-           ctx.fillStyle = isDark.value ? '#ffffff' : '#000000'
-           ctx.beginPath()
-           ctx.arc(proj.x, proj.y + (1 - reveal.icon) * 5, radius, 0, Math.PI * 2)
-           ctx.fill()
-           
-           if (proj.opacity > 0.5 && reveal.label > 0.01) {
-             ctx.globalAlpha = reveal.label; ctx.fillStyle = isDark.value ? '#94a3b8' : '#475569'
-             const dynamicFontSize = Math.floor(8 * focusMultiplier)
-             ctx.font = `${dynamicFontSize}px Inter`
-             ctx.fillText(node.label, proj.x + (6 * focusMultiplier), proj.y + (3 * focusMultiplier) + (1 - reveal.label) * 4)
-           }
-        } else {
-           ctx.globalAlpha = proj.opacity * 0.3
-           ctx.fillStyle = isDark.value ? '#ffffff' : '#000000'
-           ctx.beginPath()
-           ctx.arc(proj.x, proj.y, 1.5 * focusMultiplier, 0, Math.PI * 2)
-           ctx.fill()
-        }
-      } else {
-        if (isCurrentFace) {
-          if (reveal.icon <= 0.01) return
-          ctx.globalAlpha = Math.min(1, proj.opacity * 1.5) * reveal.icon
-          const revealLift = (1 - reveal.icon) * 8
-          const baseSize = 8 * focusMultiplier * (0.72 + reveal.icon * 0.28)
-          const thinWidth = baseSize * 0.6
-          
-          const primaryNodeColor = node.isOpenTrade
-            ? (isDark.value ? '#facc15' : '#ca8a04')
-            : (isDark.value ? '#ffffff' : '#334155')
-          const secondaryNodeColor = node.isOpenTrade
-            ? (isDark.value ? '#fde68a' : '#f59e0b')
-            : '#94a3b8'
-
-          ctx.fillStyle = primaryNodeColor
-          ctx.beginPath()
-          ctx.moveTo(proj.x, proj.y - revealLift - baseSize)
-          ctx.lineTo(proj.x + thinWidth, proj.y - revealLift)
-          ctx.lineTo(proj.x, proj.y - revealLift + baseSize)
-          ctx.lineTo(proj.x - thinWidth, proj.y - revealLift)
-          ctx.closePath()
-          ctx.fill()
-          
-          ctx.fillStyle = secondaryNodeColor
-          ctx.beginPath()
-          const offX = proj.x + 1
-          ctx.moveTo(offX, proj.y - revealLift - baseSize)
-          ctx.lineTo(offX + thinWidth, proj.y - revealLift)
-          ctx.lineTo(offX, proj.y - revealLift + baseSize)
-          ctx.lineTo(offX - thinWidth, proj.y - revealLift)
-          ctx.closePath()
-          ctx.fill()
-        } else {
-          ctx.globalAlpha = proj.opacity * 0.4; ctx.fillStyle = node.isOpenTrade ? (isDark.value ? '#eab308' : '#ca8a04') : (isDark.value ? '#64748b' : '#334155')
-          const baseSize = 4 * focusMultiplier
-          const thinWidth = baseSize * 0.6
-          ctx.beginPath()
-          ctx.moveTo(proj.x, proj.y - baseSize)
-          ctx.lineTo(proj.x + thinWidth, proj.y)
-          ctx.lineTo(proj.x, proj.y + baseSize)
-          ctx.lineTo(proj.x - thinWidth, proj.y)
-          ctx.closePath()
-          ctx.fill()
-        }
-        
-        if (isCurrentFace && proj.opacity > 0.5 && reveal.label > 0.01) {
-          ctx.globalAlpha = reveal.label; ctx.fillStyle = node.isOpenTrade ? (isDark.value ? '#fde68a' : '#a16207') : (isDark.value ? '#ffffff' : '#1e293b')
-          const dynamicFontSize = Math.floor(12 * focusMultiplier)
-          ctx.font = `bold ${dynamicFontSize}px Inter`
-          ctx.fillText(node.label, proj.x + (14 * focusMultiplier), proj.y + (5 * focusMultiplier) + (1 - reveal.label) * 6)
-        }
-      }
-    })
+    // Keep the graph clean: labels are shown only for the node currently under the cursor.
+    const shouldShowLabel = isHovered
+    if (shouldShowLabel && !isDimmed && reveal.label > 0.01) {
+      ctx.save()
+      ctx.globalAlpha = reveal.label
+      ctx.fillStyle = node.isCore
+        ? (isDark.value ? '#f8fafc' : '#0f172a')
+        : node.isNote
+        ? (isDark.value ? '#94a3b8' : '#475569')
+        : node.isOpenTrade
+          ? (isDark.value ? '#fde68a' : '#a16207')
+          : (isDark.value ? '#f8fafc' : '#1e293b')
+      const dynamicFontSize = Math.max(node.isCore ? 10 : node.isNote ? 8 : 10, Math.floor((node.isCore ? 10 : node.isNote ? 8 : 11) * focusMultiplier))
+      ctx.font = `bold ${dynamicFontSize}px Inter`
+      ctx.fillText(node.label, proj.x + radius + 7 * focusMultiplier, proj.y + dynamicFontSize * 0.35)
+      ctx.restore()
+    }
   })
 
   rafId = requestAnimationFrame(update)
 }
 
-const handleMouseDown = (e: MouseEvent) => {
-  // 3D Point Selection Logic
-  if (viewType.value === 'cube' && !isTransitioning.value) {
-     const rect = canvasRef.value?.getBoundingClientRect()
-     if (rect) {
-        const mouseX = e.clientX - rect.left
-        const mouseY = e.clientY - rect.top
-        
-        // Find nearest point on current face
-        let nearest: { id: string, dist: number, node: TradeNode } | null = null
-        const currentFaceNodes = facesTrades.value[currentFace.value] || []
-        
-        for (const node of currentFaceNodes) {
-           if (getCubeRevealProgress(node).icon <= 0.2) continue
-           let p = rotateY(node.worldPos, currentRotation.value.y)
-           p = rotateX(p, currentRotation.value.x)
-           p.x *= viewScale.value; p.y *= viewScale.value; p.z *= viewScale.value
-           const proj = project(p, rect.width, rect.height)
-           
-           const d = Math.sqrt((proj.x - mouseX)**2 + (proj.y - mouseY)**2)
-           if (d < 15 * (viewScale.value / 2.2)) {
-              if (!nearest || d < nearest.dist) nearest = { id: node.id, dist: d, node }
-           }
-        }
-        
-        if (nearest) {
-           if (nearest.node.isNote && nearest.node.parentId) {
-              selectedTradeId.value = nearest.node.parentId
-              const noteId = nearest.node.id.split('_').slice(2).join('_')
-              panelInitialPage.value = 5
-              panelInitialNoteId.value = noteId
-              showExtraDetails.value = true
-              showNodeMap.value = true
-           } else {
-              selectedTradeId.value = nearest.id
-              showExtraDetails.value = false
-           }
-           draggedNode.value = nearest.node
-           lastMousePos.value = { x: e.clientX, y: e.clientY }
-           return // Don't start panning if we clicked a point
-        }
-     }
+const findNearestTradeNode = (e: MouseEvent) => {
+  const rect = canvasRef.value?.getBoundingClientRect()
+  if (!rect) return null
+
+  const mouseX = e.clientX - rect.left
+  const mouseY = e.clientY - rect.top
+  const hitRadius = Math.max(18, 15 * (viewScale.value / 2.2))
+  let nearest: { id: string, dist: number, node: TradeNode } | null = null
+
+  for (const node of facesTrades.value[currentFace.value] || []) {
+    if (getCubeRevealProgress(node).icon <= 0.2) continue
+    const proj = projectTradeNode(node, rect.width, rect.height)
+    const dist = Math.sqrt((proj.x - mouseX) ** 2 + (proj.y - mouseY) ** 2)
+    if (dist < hitRadius && (!nearest || dist < nearest.dist)) {
+      nearest = { id: node.id, dist, node }
+    }
   }
 
-  isPanning.value = true; lastMousePos.value = { x: e.clientX, y: e.clientY }
+  return nearest
+}
+
+const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null) => {
+  if (!nearest) return
+  if (nearest.node.isCore) return
+  if (nearest.node.isNote && nearest.node.parentId) {
+    selectedTradeId.value = nearest.node.parentId
+    const noteId = nearest.node.id.split('_').slice(2).join('_')
+    panelInitialPage.value = 5
+    panelInitialNoteId.value = noteId
+    showExtraDetails.value = true
+    showNodeMap.value = true
+  } else {
+    selectedTradeId.value = nearest.id
+    showExtraDetails.value = false
+  }
+}
+
+const handleMouseDown = (e: MouseEvent) => {
+  if (viewType.value === 'cube' && !isTransitioning.value) {
+    const nearest = findNearestTradeNode(e)
+    hoveredTradeNodeId.value = nearest?.id || null
+    selectTradeNode(nearest)
+  }
+
+  // The canvas is now a flat trade surface: dragging always pans it.
+  isPanning.value = true
+  lastMousePos.value = { x: e.clientX, y: e.clientY }
 }
 
 const handleDoubleClick = (e: MouseEvent) => {
-  if (viewType.value === 'cube' && !isTransitioning.value) {
-     const rect = canvasRef.value?.getBoundingClientRect()
-     if (rect) {
-        const mouseX = e.clientX - rect.left
-        const mouseY = e.clientY - rect.top
-        
-        let nearest: { id: string, dist: number, node: TradeNode } | null = null
-        const currentFaceNodes = facesTrades.value[currentFace.value] || []
-        
-        for (const node of currentFaceNodes) {
-           if (getCubeRevealProgress(node).icon <= 0.2) continue
-           let p = rotateY(node.worldPos, currentRotation.value.y)
-           p = rotateX(p, currentRotation.value.x)
-           p.x *= viewScale.value; p.y *= viewScale.value; p.z *= viewScale.value
-           const proj = project(p, rect.width, rect.height)
-           
-           const d = Math.sqrt((proj.x - mouseX)**2 + (proj.y - mouseY)**2)
-           if (d < 15 * (viewScale.value / 2.2)) {
-              if (!nearest || d < nearest.dist) nearest = { id: node.id, dist: d, node }
-           }
-        }
-        
-        if (nearest && nearest.node.isNote && nearest.node.parentId) {
-           selectedTradeId.value = nearest.node.parentId
-           // Extract actual note ID from the composed string "note_tradeId_noteId"
-           const noteId = nearest.node.id.split('_').slice(2).join('_')
-           panelInitialPage.value = 5
-           panelInitialNoteId.value = noteId
-           showExtraDetails.value = true
-        }
-     }
-  }
+  if (viewType.value !== 'cube' || isTransitioning.value) return
+  const nearest = findNearestTradeNode(e)
+  if (!nearest?.node.isNote || !nearest.node.parentId) return
+
+  selectTradeNode(nearest)
 }
 
 const handleMouseMove = (e: MouseEvent) => {
-  if (draggedNode.value) {
-    const dx = e.clientX - lastMousePos.value.x
-    const dy = e.clientY - lastMousePos.value.y
-    
-    let p = rotateY(draggedNode.value.worldPos, currentRotation.value.y)
-    p = rotateX(p, currentRotation.value.x)
-    p.x *= viewScale.value; p.y *= viewScale.value; p.z *= viewScale.value
-    const z = Math.max(-999, p.z)
-    
-    const scale = 1000 / (1000 + z)
-    
-    const adjustedDx = (dx / scale) / viewScale.value
-    const adjustedDy = (dy / scale) / viewScale.value
-    
-    let inv = rotateX({ x: adjustedDx, y: adjustedDy, z: 0 }, -currentRotation.value.x)
-    inv = rotateY(inv, -currentRotation.value.y)
-    
-    draggedNode.value.worldPos.x += inv.x
-    draggedNode.value.worldPos.y += inv.y
-    draggedNode.value.worldPos.z += inv.z
-    
-    lastMousePos.value = { x: e.clientX, y: e.clientY }
+  if (!isPanning.value) {
+    hoveredTradeNodeId.value = findNearestTradeNode(e)?.id || null
     return
   }
 
-  if (isPanning.value) {
-    const dx = e.clientX - lastMousePos.value.x; const dy = e.clientY - lastMousePos.value.y
-    
-    if (e.shiftKey) {
-      viewOffset.value.x += dx
-      viewOffset.value.y += dy
-    } else {
-      targetRotation.value.y += dx * 0.005; targetRotation.value.x += dy * 0.005
-    }
-    
-    lastMousePos.value = { x: e.clientX, y: e.clientY }
-  }
+  const dx = e.clientX - lastMousePos.value.x
+  const dy = e.clientY - lastMousePos.value.y
+  viewOffset.value.x += dx
+  viewOffset.value.y += dy
+  lastMousePos.value = { x: e.clientX, y: e.clientY }
 }
-const handleMouseUp = () => { 
-  isPanning.value = false 
-  draggedNode.value = null
+
+const handleMouseUp = () => {
+  isPanning.value = false
+}
+
+const handleMouseLeave = () => {
+  handleMouseUp()
+  hoveredTradeNodeId.value = null
 }
 const handleWheel = (e: WheelEvent) => {
   e.preventDefault()
-  viewScale.value = Math.max(0.5, Math.min(6, viewScale.value - e.deltaY * 0.001))
+  viewScale.value = Math.max(0.5, Math.min(12, viewScale.value - e.deltaY * 0.001))
 }
 
 const updateDistributionHover = (e: MouseEvent) => {
@@ -4104,7 +3955,6 @@ onMounted(async () => {
   if (!isLogComponentMounted) return
   isMatrixLoading.value = false
   initTrades()
-  switchFace(0)
   update()
 })
 onUnmounted(() => { 
