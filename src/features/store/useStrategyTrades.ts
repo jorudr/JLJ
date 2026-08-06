@@ -17,9 +17,35 @@ export interface StrategyTradesData {
 }
 
 const LIVERMORE_BTC_SEED_PREFIX = 'livermore-btc-seed-'
+const LIVERMORE_NFLXX_SCENARIO_PREFIX = 'livermore-nflxx-scenario-'
+const LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT = 15
 
 function isLivermoreStrategyName(name?: string) {
   return String(name || '').toLowerCase().includes('livermore')
+}
+
+function isNflxxTrade(trade: DiaryEntry) {
+  return String(trade.asset || '').replace(/[^a-z0-9]/gi, '').toUpperCase() === 'NFLXX'
+}
+
+function hasScenario(trade: DiaryEntry) {
+  return Boolean(
+    trade.boardScenarioEntry?.id ||
+    trade.boardScenarioEntryId ||
+    trade.boardScenarioExit?.id ||
+    trade.boardScenarioExitId
+  )
+}
+
+function cloneTrade(trade: DiaryEntry): DiaryEntry {
+  return JSON.parse(JSON.stringify(trade)) as DiaryEntry
+}
+
+function shiftDate(value: unknown, days: number) {
+  if (!value) return value
+  const date = new Date(value as string | number | Date)
+  if (Number.isNaN(date.getTime())) return value
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
 }
 
 function createLivermoreBtcSeedTrades(strategyId: string): DiaryEntry[] {
@@ -184,7 +210,8 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
       }
 
       const removedSyntheticTrades = removeSyntheticSeedTrades()
-      if (removedSyntheticTrades) await save()
+      const addedLivermoreTrades = ensureLivermoreNflxxScenarioTrades()
+      if (removedSyntheticTrades || addedLivermoreTrades) await save()
 
       // Main diary trades are loaded exclusively from disk storage
     } finally {
@@ -211,6 +238,51 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
     // Save to both Main and Backup for safety
     await saveToDisk('strategy_trades_v1', data)
     await saveToDisk('strategy_trades_v1_backup', data)
+  }
+
+  function ensureLivermoreNflxxScenarioTrades() {
+    const livermoreStrategy = strategies.value.find(strategy => isLivermoreStrategyName(strategy.name))
+    if (!livermoreStrategy) return false
+
+    const trades = tradesByStrategy.value[livermoreStrategy.id] || []
+    const sourceTrade = trades.find(trade => isNflxxTrade(trade) && hasScenario(trade))
+    if (!sourceTrade) return false
+
+    const generatedTrades = trades.filter(trade => String(trade.id || '').startsWith(LIVERMORE_NFLXX_SCENARIO_PREFIX))
+    const missingCount = Math.max(0, LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT - generatedTrades.length)
+    if (missingCount === 0) return false
+
+    const existingIds = new Set(generatedTrades.map(trade => trade.id))
+    const newTrades: DiaryEntry[] = []
+
+    for (let index = 1; index <= LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT && newTrades.length < missingCount; index += 1) {
+      const id = `${LIVERMORE_NFLXX_SCENARIO_PREFIX}${String(index).padStart(2, '0')}`
+      if (existingIds.has(id)) continue
+
+      const copiedTrade = cloneTrade(sourceTrade)
+      copiedTrade.id = id
+      copiedTrade.strategyId = livermoreStrategy.id
+      copiedTrade.date = shiftDate(sourceTrade.date, index) as DiaryEntry['date']
+      if (sourceTrade.dateExit) {
+        copiedTrade.dateExit = shiftDate(sourceTrade.dateExit, index) as DiaryEntry['dateExit']
+      }
+      newTrades.push(copiedTrade)
+    }
+
+    if (!newTrades.length) return false
+
+    tradesByStrategy.value[livermoreStrategy.id] = [...trades, ...newTrades]
+    if (!hiddenTradeIdsByStrategy.value[livermoreStrategy.id]) {
+      hiddenTradeIdsByStrategy.value[livermoreStrategy.id] = []
+    }
+
+    const scenarioName = sourceTrade.boardScenarioEntry?.info?.name ||
+      sourceTrade.boardScenarioExit?.info?.name ||
+      sourceTrade.boardScenarioEntryId ||
+      sourceTrade.boardScenarioExitId ||
+      'unknown'
+    console.info(`[StrategyTrades] Added ${newTrades.length} NFLXX trades to ${livermoreStrategy.name} with scenario ${scenarioName}.`)
+    return true
   }
 
   function getTradesForStrategy(strategyId: string) {
@@ -295,6 +367,10 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
     }
 
     if (removeSyntheticSeedTrades()) {
+      changed = true
+    }
+
+    if (ensureLivermoreNflxxScenarioTrades()) {
       changed = true
     }
 
