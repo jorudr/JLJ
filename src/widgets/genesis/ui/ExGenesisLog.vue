@@ -3316,6 +3316,10 @@ const usesMainDiaryNodePositioning = (node: TradeNode) => {
   return isMainDiaryStrategy.value || (!node.isCore && !node.isScenario)
 }
 
+// Main Diary's core is the fixed center of its trade cluster. Strategy
+// scenarios play the same role for their own trade clusters.
+const isTradeClusterAnchor = (node: TradeNode) => node.isCore || node.isScenario
+
 // Deterministic initial positions keep the graph stable before the force layout settles.
 const getGraphSeedPosition = (index: number, total: number): Point3D => {
   if (total <= 1) return { x: 0, y: 0, z: 0 }
@@ -3448,6 +3452,20 @@ const getScenarioCanvasId = (scenarioId: string) => `matrix_scenario_${scenarioI
 const getScenarioTradeOrbitRadius = (tradeCount: number) => {
   if (tradeCount <= 0) return 0
   return tradeCount === 1 ? 28 : 22 + Math.sqrt(tradeCount) * 5
+}
+
+// Keep the same deterministic 3D distribution, but use the compact radius
+// reserved for a scenario cluster instead of the full Main Diary seed radius.
+const getScenarioTradeSeedPosition = (index: number, total: number): Point3D => {
+  const seed = getGraphSeedPosition(index, total)
+  const compactRadius = getScenarioTradeOrbitRadius(total)
+  const radiusScale = GRAPH_SEED_RADIUS > 0 ? compactRadius / GRAPH_SEED_RADIUS : 0
+
+  return {
+    x: seed.x * radiusScale,
+    y: seed.y * radiusScale,
+    z: seed.z * radiusScale
+  }
 }
 
 const getScenarioClusterRadius = (tradeCount: number) => {
@@ -3615,7 +3633,7 @@ const initTrades = () => {
       const primaryScenario = scenarioById.get(ids[0] || '')
       const memberIndex = primaryScenario?.tradeIds.indexOf(String(trade.id)) ?? -1
       const tradeSeedPos = primaryScenario
-        ? getGraphSeedPosition(Math.max(0, memberIndex), primaryScenario.tradeCount)
+        ? getScenarioTradeSeedPosition(Math.max(0, memberIndex), primaryScenario.tradeCount)
         : getGraphSeedPosition(tradeIndex, tradesForCanvas.length)
       const tradeAnchor = primaryScenario?.position
       const isOpenTrade = !isClosedDiaryTrade(trade)
@@ -3644,7 +3662,7 @@ const initTrades = () => {
             source: getScenarioCanvasId(scenarioId),
             target: trade.id!,
             kind: 'scenario',
-            distance: GRAPH_SEED_RADIUS,
+            distance: getScenarioTradeOrbitRadius(model.tradeCount),
             strength: 0
           })
         })
@@ -3739,9 +3757,11 @@ const projectTradeNode = (node: TradeNode, width: number, height: number): Point
     const perspective = focalLength / (focalLength + depth)
     const anchorX = node.isCore ? 0 : (node.anchorPosition?.x || 0)
     const anchorY = node.isCore ? 0 : (node.anchorPosition?.y || 0)
+    const localX = node.isCore ? 0 : node.seedPos.x
+    const localY = node.isCore ? 0 : node.seedPos.y
     return {
-      x: (anchorX + (node.isCore ? 0 : node.seedPos.x)) * zoom * perspective + width / 2 + viewOffset.value.x,
-      y: (anchorY + (node.isCore ? 0 : node.seedPos.y)) * zoom * perspective + height / 2 + viewOffset.value.y,
+      x: anchorX * zoom + localX * zoom * perspective + width / 2 + viewOffset.value.x,
+      y: anchorY * zoom + localY * zoom * perspective + height / 2 + viewOffset.value.y,
       opacity: node.isCore ? 1 : Math.max(0.28, Math.min(1, 0.42 + (depth + GRAPH_SEED_RADIUS) / (GRAPH_SEED_RADIUS * 2) * 0.58)),
       depth
     }
@@ -3814,11 +3834,14 @@ const resolveProjectedTradeNodeOverlaps = (
         const ny = dy / distance
         moved = true
 
-        if (left.isCore && !right.isCore) {
+        const leftIsAnchor = isTradeClusterAnchor(left)
+        const rightIsAnchor = isTradeClusterAnchor(right)
+
+        if (leftIsAnchor && !rightIsAnchor) {
           moveNodeInScreenSpace(right, nx * correction, ny * correction)
-        } else if (right.isCore && !left.isCore) {
+        } else if (rightIsAnchor && !leftIsAnchor) {
           moveNodeInScreenSpace(left, -nx * correction, -ny * correction)
-        } else {
+        } else if (!leftIsAnchor && !rightIsAnchor) {
           moveNodeInScreenSpace(left, -nx * correction * 0.5, -ny * correction * 0.5)
           moveNodeInScreenSpace(right, nx * correction * 0.5, ny * correction * 0.5)
         }
@@ -4178,7 +4201,7 @@ const renderFrame = () => {
     ctx.save()
     const depthOpacity = Math.min(sourcePoint.opacity, targetPoint.opacity)
     ctx.globalAlpha = Math.min(sourceReveal, targetReveal) * depthOpacity * (active
-      ? (edge.kind === 'core' ? 0.10 : 0.30)
+      ? (edge.kind === 'core' || edge.kind === 'scenario' ? 0.10 : 0.30)
       : 0.03)
     ctx.strokeStyle = isDark.value ? '#cbd5e1' : '#334155'
     ctx.lineWidth = edge.kind === 'core'
