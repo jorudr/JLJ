@@ -2072,6 +2072,7 @@ watch(viewType, (next) => {
   if (next === 'distribution') resetDistributionView()
   if (next !== 'timeTree') exitTimeTreeFullscreen()
   if (next !== 'cube') clearCubeRevealAnimation()
+  scheduleRender()
 })
 
 const distributionTooltipStyle = computed(() => {
@@ -3015,6 +3016,8 @@ const facesTrades = ref<TradeNode[][]>([[]])
 const graphEdges = ref<GraphEdge[]>([])
 const graphAlpha = ref(0)
 const hoveredTradeNodeId = ref<string | null>(null)
+let nodeLayoutDirty = true
+let nodeDegreeMap = new Map<string, number>()
 
 const revealProgress = ref(0)
 const cubeRevealAnimationStart = ref<number | null>(null)
@@ -3193,6 +3196,7 @@ const clearCubeRevealAnimation = () => {
   cubeRevealAnimationStart.value = null
   cubeRevealAnimationFace.value = null
   cubeRevealAnimationOrder.value = []
+  scheduleRender()
 }
 
 const getCubeRevealProgress = (node: TradeNode) => {
@@ -3229,6 +3233,7 @@ const startCubeRevealAnimation = () => {
   cubeRevealAnimationTimeout = setTimeout(() => {
     clearCubeRevealAnimation()
   }, totalDuration)
+  scheduleRender()
 }
 
 const toggleCubeRevealAnimation = () => {
@@ -3596,11 +3601,18 @@ const initTrades = () => {
 
   facesTrades.value = [nodes]
   currentFace.value = 0
+  nodeDegreeMap = new Map<string, number>()
+  graphEdges.value.forEach(edge => {
+    nodeDegreeMap.set(edge.source, (nodeDegreeMap.get(edge.source) || 0) + 1)
+    nodeDegreeMap.set(edge.target, (nodeDegreeMap.get(edge.target) || 0) + 1)
+  })
+  nodeLayoutDirty = true
   // Non-main strategies now use a deterministic hierarchy instead of a
   // chronological force graph, so scenario distances remain intentional.
   graphAlpha.value = 0
   hoveredTradeNodeId.value = null
   clearCubeRevealAnimation()
+  scheduleRender()
 }
 
 // --- 3D ENGINE --- //
@@ -3998,31 +4010,22 @@ const simulateGraph = () => {
   graphAlpha.value *= 0.992
 }
 
-let rafId: number
+let rafId: number | null = null
+let renderScheduled = false
 let isLogComponentMounted = false
-const update = () => {
+const renderFrame = () => {
   if (viewType.value === 'distribution') {
     renderDistributionChart()
-    rafId = requestAnimationFrame(update)
     return
   }
 
-  if (viewType.value !== 'cube') {
-    rafId = requestAnimationFrame(update)
-    return
-  }
+  if (viewType.value !== 'cube') return
 
   const canvas = canvasRef.value
-  if (!canvas) {
-    rafId = requestAnimationFrame(update)
-    return
-  }
+  if (!canvas) return
   
   const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    rafId = requestAnimationFrame(update)
-    return
-  }
+  if (!ctx) return
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const width = canvas.clientWidth
@@ -4035,10 +4038,7 @@ const update = () => {
   }
 
   const w = width, h = height
-  if (w === 0 || h === 0) {
-    rafId = requestAnimationFrame(update)
-    return
-  }
+  if (w === 0 || h === 0) return
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, w, h)
@@ -4054,12 +4054,11 @@ const update = () => {
   simulateGraph()
   const face = facesTrades.value[currentFace.value] || []
   const nodeMap = new Map(face.map(node => [node.id, node]))
-  const degreeMap = new Map<string, number>()
-  graphEdges.value.forEach(edge => {
-    degreeMap.set(edge.source, (degreeMap.get(edge.source) || 0) + 1)
-    degreeMap.set(edge.target, (degreeMap.get(edge.target) || 0) + 1)
-  })
-  resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
+  const degreeMap = nodeDegreeMap
+  if (nodeLayoutDirty) {
+    resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
+    nodeLayoutDirty = false
+  }
   const connectedToHovered = (id: string) => {
     if (!hoveredTradeNodeId.value) return true
     if (id === hoveredTradeNodeId.value) return true
@@ -4151,8 +4150,29 @@ const update = () => {
     }
   })
 
-  rafId = requestAnimationFrame(update)
 }
+
+const shouldContinuouslyRender = () => {
+  return viewType.value === 'distribution' || isCubeRevealAnimating.value
+}
+
+const scheduleRender = () => {
+  if (!isLogComponentMounted || renderScheduled) return
+  renderScheduled = true
+  rafId = requestAnimationFrame(() => {
+    renderScheduled = false
+    rafId = null
+    renderFrame()
+    if (shouldContinuouslyRender()) scheduleRender()
+  })
+}
+
+const handleCanvasResize = () => {
+  nodeLayoutDirty = true
+  scheduleRender()
+}
+
+watch(isDark, () => scheduleRender())
 
 const findNearestTradeNode = (e: MouseEvent) => {
   const rect = canvasRef.value?.getBoundingClientRect()
@@ -4196,6 +4216,7 @@ const handleMouseDown = (e: MouseEvent) => {
     const nearest = findNearestTradeNode(e)
     hoveredTradeNodeId.value = nearest?.id || null
     selectTradeNode(nearest)
+    scheduleRender()
   }
 
   // The canvas is now a flat trade surface: dragging always pans it.
@@ -4213,7 +4234,11 @@ const handleDoubleClick = (e: MouseEvent) => {
 
 const handleMouseMove = (e: MouseEvent) => {
   if (!isPanning.value) {
-    hoveredTradeNodeId.value = findNearestTradeNode(e)?.id || null
+    const nextHoveredId = findNearestTradeNode(e)?.id || null
+    if (nextHoveredId !== hoveredTradeNodeId.value) {
+      hoveredTradeNodeId.value = nextHoveredId
+      scheduleRender()
+    }
     return
   }
 
@@ -4222,6 +4247,7 @@ const handleMouseMove = (e: MouseEvent) => {
   viewOffset.value.x += dx
   viewOffset.value.y += dy
   lastMousePos.value = { x: e.clientX, y: e.clientY }
+  scheduleRender()
 }
 
 const handleMouseUp = () => {
@@ -4230,11 +4256,16 @@ const handleMouseUp = () => {
 
 const handleMouseLeave = () => {
   handleMouseUp()
-  hoveredTradeNodeId.value = null
+  if (hoveredTradeNodeId.value !== null) {
+    hoveredTradeNodeId.value = null
+    scheduleRender()
+  }
 }
 const handleWheel = (e: WheelEvent) => {
   e.preventDefault()
   viewScale.value = Math.max(0.5, Math.min(12, viewScale.value - e.deltaY * 0.001))
+  nodeLayoutDirty = true
+  scheduleRender()
 }
 
 const updateDistributionHover = (e: MouseEvent) => {
@@ -4291,6 +4322,7 @@ onMounted(async () => {
   isLogComponentMounted = true
   window.addEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('resize', handleCanvasResize)
   isMatrixLoading.value = true
   await Promise.all([
     ensureMatrixDataRestored(),
@@ -4299,18 +4331,21 @@ onMounted(async () => {
   if (!isLogComponentMounted) return
   isMatrixLoading.value = false
   initTrades()
-  update()
+  scheduleRender()
 })
 onUnmounted(() => { 
   isLogComponentMounted = false
   window.removeEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('resize', handleCanvasResize)
   if (cubeSearchTimeout) {
     clearTimeout(cubeSearchTimeout)
     cubeSearchTimeout = null
   }
   clearCubeRevealAnimation()
-  cancelAnimationFrame(rafId) 
+  if (rafId !== null) cancelAnimationFrame(rafId)
+  rafId = null
+  renderScheduled = false
 })
 </script>
 
