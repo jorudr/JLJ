@@ -3300,36 +3300,90 @@ const flattenMatrixNodesForGraph = (items: any[] = []) => {
   return result
 }
 
+const getTradeScenarioSnapshots = (trade: any) => {
+  const snapshots: any[] = []
+  const append = (snapshot: any, rawId: unknown, phase: 'ENTRY' | 'EXIT') => {
+    const id = String(snapshot?.id || rawId || '').trim()
+    if (!id || snapshots.some(item => item.id === id)) return
+
+    const name = String(
+      snapshot?.info?.name ||
+      snapshot?.params?.customName ||
+      snapshot?.label ||
+      `ARCHIVED_SCENARIO_${id}`
+    ).toUpperCase()
+
+    snapshots.push({
+      id,
+      label: name,
+      type: 'scenario',
+      params: {
+        ...(snapshot?.params || {}),
+        customName: name,
+        phase
+      },
+      isArchived: true
+    })
+  }
+
+  append(trade?.boardScenarioEntry, trade?.boardScenarioEntryId, 'ENTRY')
+  append(trade?.boardScenarioExit, trade?.boardScenarioExitId, 'EXIT')
+  if (Array.isArray(trade?.scenarios)) {
+    trade.scenarios.forEach((scenario: any) => append(scenario, scenario?.id, scenario?.type === 'exit' ? 'EXIT' : 'ENTRY'))
+  }
+  return snapshots
+}
+
 const strategyScenarioNodes = computed(() => {
   if (isMainDiaryStrategy.value) return []
 
   const allNodes = matrixNodes.value as any[]
   const strategyNode = allNodes.find(node => node.id === selectedStrategyId.value)
-  if (!strategyNode) return allNodes.filter(node => String(node.type).toLowerCase() === 'scenario')
-
   const scenarioIds = new Set<string>()
-  flattenMatrixNodesForGraph(strategyNode.subGraph?.nodes || [])
-    .filter(node => String(node.type).toLowerCase() === 'scenario')
-    .forEach(node => scenarioIds.add(String(node.id)))
+  if (strategyNode) {
+    flattenMatrixNodesForGraph(strategyNode.subGraph?.nodes || [])
+      .filter(node => String(node.type).toLowerCase() === 'scenario')
+      .forEach(node => scenarioIds.add(String(node.id)))
 
-  const visited = new Set<string>([String(strategyNode.id)])
-  const queue = [String(strategyNode.id)]
-  while (queue.length) {
-    const currentId = queue.shift()!
-    matrixConnections.value
-      .filter(connection => String(connection.fromId) === currentId)
-      .forEach(connection => {
-        const nextId = String(connection.toId)
-        if (visited.has(nextId)) return
-        visited.add(nextId)
-        queue.push(nextId)
-        const node = allNodes.find(candidate => String(candidate.id) === nextId)
-        if (String(node?.type).toLowerCase() === 'scenario') scenarioIds.add(nextId)
-      })
+    const visited = new Set<string>([String(strategyNode.id)])
+    const queue = [String(strategyNode.id)]
+    while (queue.length) {
+      const currentId = queue.shift()!
+      matrixConnections.value
+        .filter(connection => String(connection.fromId) === currentId)
+        .forEach(connection => {
+          const nextId = String(connection.toId)
+          if (visited.has(nextId)) return
+          visited.add(nextId)
+          queue.push(nextId)
+          const node = allNodes.find(candidate => String(candidate.id) === nextId)
+          if (String(node?.type).toLowerCase() === 'scenario') scenarioIds.add(nextId)
+        })
+    }
   }
 
-  return allNodes.filter(node => scenarioIds.has(String(node.id)))
+  const scenariosById = new Map<string, any>()
+  allNodes
+    .filter(node => scenarioIds.has(String(node.id)))
+    .forEach(node => scenariosById.set(String(node.id), node))
+
+  // A deleted Matrix node is reconstructed from the immutable scenario
+  // snapshot stored on its trades. It remains present while any trade keeps
+  // referencing that scenario.
+  currentTrades.value.forEach(trade => {
+    getTradeScenarioSnapshots(trade).forEach(snapshot => {
+      if (!scenariosById.has(snapshot.id)) scenariosById.set(snapshot.id, snapshot)
+    })
+  })
+
+  return Array.from(scenariosById.values())
 })
+
+watch(strategyScenarioNodes, () => {
+  if (!isLogComponentMounted) return
+  clearCubeRevealAnimation()
+  initTrades()
+}, { deep: true })
 
 const getTradeScenarioIds = (trade: any, knownScenarioIds: Set<string>) => {
   const ids: string[] = []
