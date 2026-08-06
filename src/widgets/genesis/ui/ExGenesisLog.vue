@@ -2996,6 +2996,7 @@ interface TradeNode {
   scenarioTradeCount?: number
   isOpenTrade?: boolean
   parentId?: string
+  anchorPosition?: { x: number; y: number }
 }
 
 interface GraphEdge {
@@ -3271,6 +3272,10 @@ const getTradeNodeFocusMultiplier = () => Math.max(0.75, viewScale.value / 2.2)
 
 const getTradeNodeScreenRadius = (node: TradeNode, degree = 1) => {
   return getTradeNodeBaseRadius(node, degree) * getTradeNodeFocusMultiplier()
+}
+
+const usesMainDiaryNodePositioning = (node: TradeNode) => {
+  return isMainDiaryStrategy.value || (!node.isCore && !node.isScenario)
 }
 
 // Deterministic initial positions keep the graph stable before the force layout settles.
@@ -3571,18 +3576,10 @@ const initTrades = () => {
       const ids = tradeScenarioIds.get(String(trade.id)) || []
       const primaryScenario = scenarioById.get(ids[0] || '')
       const memberIndex = primaryScenario?.tradeIds.indexOf(String(trade.id)) ?? -1
-      const tradeOrbit = primaryScenario
-        ? getScenarioTradeOrbitRadius(primaryScenario.tradeCount)
-        : 52 + Math.sqrt(Math.max(1, tradesForCanvas.length)) * 4
-      const tradePosition = primaryScenario
-        ? {
-            x: primaryScenario.position.x + Math.cos(memberIndex * GOLDEN_ANGLE) * tradeOrbit,
-            y: primaryScenario.position.y + Math.sin(memberIndex * GOLDEN_ANGLE) * tradeOrbit
-          }
-        : {
-            x: Math.cos(tradeIndex * GOLDEN_ANGLE) * tradeOrbit,
-            y: Math.sin(tradeIndex * GOLDEN_ANGLE) * tradeOrbit
-          }
+      const tradeSeedPos = primaryScenario
+        ? getGraphSeedPosition(Math.max(0, memberIndex), primaryScenario.tradeCount)
+        : getGraphSeedPosition(tradeIndex, tradesForCanvas.length)
+      const tradeAnchor = primaryScenario?.position
       const isOpenTrade = !isClosedDiaryTrade(trade)
 
       nodes.push({
@@ -3591,13 +3588,14 @@ const initTrades = () => {
           ? `${formatCubeTradeAssetLabel(trade.asset)} [${openTradeText()}]`
           : `${formatCubeTradeAssetLabel(trade.asset)} [${(trade.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(trade.profitInCurrency ?? 0).toFixed(2)}$]`,
         faceIndex: 0,
-        seedPos: { x: tradePosition.x, y: tradePosition.y, z: 0 },
-        graphPos: tradePosition,
+        seedPos: tradeSeedPos,
+        graphPos: { x: tradeSeedPos.x * 0.55, y: tradeSeedPos.y * 0.55 },
         velocity: { x: 0, y: 0 },
         date: trade.date,
         pnl: isOpenTrade ? undefined : getTradePnlValue(trade),
         isNote: false,
-        isOpenTrade
+        isOpenTrade,
+        anchorPosition: tradeAnchor
       })
 
       if (ids.length) {
@@ -3608,7 +3606,7 @@ const initTrades = () => {
             source: getScenarioCanvasId(scenarioId),
             target: trade.id!,
             kind: 'scenario',
-            distance: getScenarioTradeOrbitRadius(model.tradeCount),
+            distance: GRAPH_SEED_RADIUS,
             strength: 0
           })
         })
@@ -3617,7 +3615,7 @@ const initTrades = () => {
           source: rootId,
           target: trade.id!,
           kind: 'core',
-          distance: tradeOrbit,
+          distance: GRAPH_SEED_RADIUS,
           strength: 0
         })
       }
@@ -3626,20 +3624,22 @@ const initTrades = () => {
         trade.notesList.forEach((note: any, noteIdx: number) => {
           const offsetRadius = 18 + noteIdx * 4
           const angle = (Math.PI * 2 / trade.notesList!.length) * noteIdx
-          const notePosition = {
-            x: tradePosition.x + Math.cos(angle) * offsetRadius,
-            y: tradePosition.y + Math.sin(angle) * offsetRadius
+          const noteSeedPos = {
+            x: tradeSeedPos.x + Math.cos(angle) * offsetRadius,
+            y: tradeSeedPos.y + Math.sin(angle) * offsetRadius,
+            z: tradeSeedPos.z + (noteIdx % 2 === 0 ? offsetRadius * 0.35 : -offsetRadius * 0.35)
           }
           const noteId = `note_${trade.id}_${note.id}`
           nodes.push({
             id: noteId,
             label: note.title || 'POST_MORTEM',
             faceIndex: 0,
-            seedPos: { x: notePosition.x, y: notePosition.y, z: 0 },
-            graphPos: notePosition,
+            seedPos: noteSeedPos,
+            graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },
             velocity: { x: 0, y: 0 },
             isNote: true,
-            parentId: trade.id
+            parentId: trade.id,
+            anchorPosition: tradeAnchor
           })
           graphEdges.value.push({
             source: trade.id!,
@@ -3695,13 +3695,15 @@ const projectDistributionPoint = (p: Point3D, width: number, height: number): Po
 const projectTradeNode = (node: TradeNode, width: number, height: number): Point2D => {
   const zoom = viewScale.value
 
-  if (isMainDiaryStrategy.value) {
+  if (usesMainDiaryNodePositioning(node)) {
     const focalLength = 900
     const depth = node.isCore ? 0 : node.seedPos.z
     const perspective = focalLength / (focalLength + depth)
+    const anchorX = node.isCore ? 0 : (node.anchorPosition?.x || 0)
+    const anchorY = node.isCore ? 0 : (node.anchorPosition?.y || 0)
     return {
-      x: (node.isCore ? 0 : node.seedPos.x) * zoom * perspective + width / 2 + viewOffset.value.x,
-      y: (node.isCore ? 0 : node.seedPos.y) * zoom * perspective + height / 2 + viewOffset.value.y,
+      x: (anchorX + (node.isCore ? 0 : node.seedPos.x)) * zoom * perspective + width / 2 + viewOffset.value.x,
+      y: (anchorY + (node.isCore ? 0 : node.seedPos.y)) * zoom * perspective + height / 2 + viewOffset.value.y,
       opacity: node.isCore ? 1 : Math.max(0.28, Math.min(1, 0.42 + (depth + GRAPH_SEED_RADIUS) / (GRAPH_SEED_RADIUS * 2) * 0.58)),
       depth
     }
@@ -3729,7 +3731,7 @@ const resolveProjectedTradeNodeOverlaps = (
   const iterations = Math.min(12, Math.max(3, nodes.length))
 
   const moveNodeInScreenSpace = (node: TradeNode, dx: number, dy: number) => {
-    if (isMainDiaryStrategy.value) {
+    if (usesMainDiaryNodePositioning(node)) {
       const focalLength = 900
       const depth = node.isCore ? 0 : node.seedPos.z
       const perspective = focalLength / (focalLength + depth)
