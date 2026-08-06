@@ -54,39 +54,6 @@
               </svg>
             </button>
 
-           <!-- Compliance Toggle -->
-           <button @click="showComplianceStatus = !showComplianceStatus" 
-                   class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
-                   :class="showComplianceStatus 
-                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
-                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                 <rect x="18" y="3" width="4" height="18"></rect>
-                 <rect x="10" y="8" width="4" height="13"></rect>
-                 <rect x="2" y="13" width="4" height="8"></rect>
-              </svg>
-              <!-- Indicator Dot -->
-              <div v-if="complianceDotColor" 
-                   class="absolute -top-1 -right-1 w-2 h-2 rounded-full shadow-[0_0_5px_rgba(0,0,0,0.5)]"
-                   :class="complianceDotColor">
-              </div>
-           </button>
-
-           <button @click="toggleCapitalForecast()" 
-                   class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
-                   :class="showCapitalForecast
-                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                            : canOpenCapitalForecast
-                              ? 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'
-                              : 'bg-white/5 dark:bg-black/5 text-black/20 dark:text-white/20 hover:bg-black/10 dark:hover:bg-white/10 ring-1 ring-dashed ring-black/10 dark:ring-white/10'">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                 <path d="M3 17l5-5 4 4 8-9"></path>
-                 <path d="M17 7h3v3"></path>
-              </svg>
-              <div v-if="patternForecastLoading"
-                   class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.55)]">
-              </div>
-           </button>
         </div>
         <!-- Cube Search Query Overlay -->
         <Transition name="fade">
@@ -319,83 +286,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- BOTTOM LEFT: VIEW TOGGLE -->
-      <div
-        v-if="isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
-        class="absolute bottom-12 left-12 z-[10000] flex flex-col space-y-3 pointer-events-auto transition-all duration-300"
-        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
-      >
-         <div class="relative flex items-center gap-2 border nier-border-primary bg-white/5 p-1.5 backdrop-blur-xl dark:bg-black/5">
-            <!-- Brackets -->
-            <div class="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-black/40 dark:border-white/40"></div>
-            <div class="absolute -bottom-px -right-px w-1.5 h-1.5 border-b border-r border-black/40 dark:border-white/40"></div>
-
-            <button @click="viewType = 'cube'" 
-                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'cube' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <div class="relative flex h-4 w-4 shrink-0 items-center justify-center border-2 transition-all duration-700"
-                    :class="viewType === 'cube' ? 'border-white dark:border-black rotate-[135deg] scale-110' : 'border-black/40 dark:border-white/40 group-hover:border-black dark:group-hover:border-white group-hover:rotate-45'">
-                  <div class="w-1 h-1 bg-current rotate-45"></div>
-               </div>
-               <div v-if="viewType === 'cube'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
-
-            <button @click="viewType = 'timeTree'"
-                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'list' || viewType === 'timeTree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <div class="flex shrink-0 flex-col items-center space-y-1.5 transition-all duration-700"
-                    :class="viewType === 'list' || viewType === 'timeTree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'">
-                  <div class="w-5 h-[1.5px] bg-current"></div>
-                  <div class="w-5 h-[1.5px] bg-current opacity-60"></div>
-                  <div class="w-5 h-[1.5px] bg-current opacity-30"></div>
-               </div>
-               <div v-if="viewType === 'list' || viewType === 'timeTree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
-
-            <button @click="viewType = 'distribution'"
-                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'distribution' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
-                    :class="viewType === 'distribution' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round">
-                  <path d="M4 19h16"></path>
-                  <path d="M6 16V9"></path>
-                  <path d="M10 16V5"></path>
-                  <path d="M14 16v-3"></path>
-                  <path d="M18 16V7"></path>
-               </svg>
-               <div v-if="viewType === 'distribution'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
-
-            <button @click="viewType = 'tree'"
-                    class="group relative flex h-12 w-12 items-center justify-center overflow-hidden p-0 transition-all duration-500"
-                    :class="viewType === 'tree' ? 'nier-bg-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'hover:bg-black/5 dark:hover:bg-white/5'">
-               <svg class="h-5 w-5 shrink-0 transition-all duration-700"
-                    :class="viewType === 'tree' ? 'nier-text-primary scale-110' : 'text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:translate-y-[-1px]'"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round">
-                  <path d="M12 4v5"></path>
-                  <path d="M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
-                  <path d="M6 15v3"></path>
-                  <path d="M18 15v3"></path>
-                  <circle cx="12" cy="4" r="2"></circle>
-                  <circle cx="6" cy="19" r="2"></circle>
-                  <circle cx="18" cy="19" r="2"></circle>
-               </svg>
-               <div v-if="viewType === 'tree'" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 nier-bg-inverted opacity-50"></div>
-            </button>
-         </div>
       </div>
 
       <!-- BOTTOM RIGHT: DISTRIBUTION METRIC MODE -->
@@ -991,53 +881,167 @@
       />
     </div>
 
-    <!-- PHANTOM PROTOCOL SELECT -->
+    <!-- CENTERED BOTTOM NAVIGATION -->
     <div
-      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'"
-      class="absolute bottom-14 z-[10000] flex flex-col pointer-events-none opacity-10 hover:opacity-100 transition-all duration-700"
-      :class="[
-        showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : '',
-        viewType === 'list' || viewType === 'timeTree'
-          ? 'right-12 left-auto translate-x-0 items-end'
-          : 'left-1/2 -translate-x-1/2 items-center'
-      ]"
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
+      :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
     >
-       
-       <!-- The Dropdown Menu -->
-
-       <div v-if="viewType === 'cube' && activeFaceIndices.length > 1" class="mb-4 flex items-center justify-center space-x-2 pointer-events-auto">
-          <div v-for="faceIdx in activeFaceIndices" :key="faceIdx"
-               class="w-1.5 h-1.5 border border-slate-500 transition-all rotate-45"
-               :class="faceIdx === currentFace ? 'bg-white border-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'bg-transparent opacity-20'">
+      <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border transition-all"
+          :class="viewType === 'cube' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          :aria-label="locale === 'ru' ? '3D куб' : '3D cube'"
+          @click="viewType = 'cube'"
+        >
+          <div class="relative flex h-4 w-4 items-center justify-center border-2 transition-all" :class="viewType === 'cube' ? 'rotate-[135deg] scale-110' : 'rotate-45'">
+            <div class="h-1 w-1 rotate-45 bg-current"></div>
           </div>
-       </div>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? '3D_КУБ' : '3D_CUBE' }} ]</span>
+        </button>
 
-       <!-- The Pagination + Protocol Select Button Row -->
-       <div class="flex items-center space-x-4">
-          <!-- Left Pagination Arrow -->
-          <button v-if="viewType === 'cube'" @click="prevCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
-             <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-black/30 dark:border-white/30"></div>
-             <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-black/30 dark:border-white/30"></div>
-             <div class="w-2 h-2 border-t-2 border-l-2 border-black dark:border-white -rotate-45 group-hover/arrow:-translate-x-0.5 transition-transform"></div>
-          </button>
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border transition-all"
+          :class="viewType === 'list' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          :aria-label="locale === 'ru' ? 'Список сделок' : 'List of trades'"
+          @click="setListViewMode('list')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <path d="M5 6h14M5 12h14M5 18h14" />
+            <circle cx="3" cy="6" r=".8" fill="currentColor" />
+            <circle cx="3" cy="12" r=".8" fill="currentColor" />
+            <circle cx="3" cy="18" r=".8" fill="currentColor" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СПИСОК_СДЕЛОК' : 'LIST_OF_TRADES' }} ]</span>
+        </button>
 
-          <!-- The Button -->
-          <SystemProtocolSelect
-            v-model="selectedStrategyId"
-            :strategies="strategies"
-            :is-loading="isMatrixLoading"
-            menu-position="top"
-            @update:modelValue="selectStrategy($event)"
-          />
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border transition-all"
+          :class="viewType === 'timeTree' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          :aria-label="locale === 'ru' ? 'Временное дерево' : 'Time tree'"
+          @click="setListViewMode('timeTree')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <path d="M12 4v5M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M6 15v3M18 15v3" />
+            <circle cx="12" cy="4" r="2" />
+            <circle cx="6" cy="19" r="2" />
+            <circle cx="18" cy="19" r="2" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ВРЕМЕННОЕ_ДЕРЕВО' : 'TIME_TREE' }} ]</span>
+        </button>
 
-          <!-- Right Pagination Arrow -->
-          <button v-if="viewType === 'cube'" @click="nextCubePage" class="w-12 h-12 bg-white/5 dark:bg-black/5 border nier-border-primary flex items-center justify-center backdrop-blur-md pointer-events-auto cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all group/arrow relative">
-             <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-black/30 dark:border-white/30"></div>
-             <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-black/30 dark:border-white/30"></div>
-             <div class="w-2 h-2 border-t-2 border-r-2 border-black dark:border-white rotate-45 group-hover/arrow:translate-x-0.5 transition-transform"></div>
-          </button>
-       </div>
+        <div class="mx-1 h-7 w-px bg-white/15"></div>
+
+        <button v-if="viewType === 'cube'" type="button" aria-label="Previous cube page" class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/60 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white" @click="prevCubePage">
+          <span class="text-lg leading-none">‹</span>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ПРЕДЫДУЩАЯ_СТРАНИЦА' : 'PREVIOUS_PAGE' }} ]</span>
+        </button>
+
+        <ExTradeEntryProtocolButton
+          :model-value="selectedStrategyId"
+          :strategies="strategies"
+          :is-loading="isMatrixLoading"
+          @update:model-value="selectStrategy($event)"
+        />
+
+        <button v-if="viewType === 'cube'" type="button" aria-label="Next cube page" class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/60 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white" @click="nextCubePage">
+          <span class="text-lg leading-none">›</span>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СЛЕДУЮЩАЯ_СТРАНИЦА' : 'NEXT_PAGE' }} ]</span>
+        </button>
+
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :class="showToolsMenu ? 'border-white/30 bg-white/10 text-white' : ''"
+          :aria-label="locale === 'ru' ? 'Меню' : 'Menu'"
+          :aria-expanded="showToolsMenu"
+          @click="showToolsMenu = true"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МЕНЮ' : 'MENU' }} ]</span>
+        </button>
+      </div>
     </div>
+
+    <!-- MAIN TOOLS MENU -->
+    <Teleport to="body">
+      <Transition name="protocol-slide">
+        <div
+          v-if="!isTradeEntryOpen && showToolsMenu"
+          @click.self="closeToolsMenu"
+          class="tools-menu-overlay fixed inset-0 z-[10005] flex items-center justify-center p-12 backdrop-blur-md"
+        >
+          <div class="relative w-full max-w-xl">
+            <ExPanel class="tools-menu-panel w-full" noPadding variant="light" :show-corners="true">
+              <div class="grid grid-cols-4 gap-0 p-4 [&>button]:!h-14">
+                <button
+                  type="button"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="viewType === 'distribution' ? 'bg-white/10 text-white' : ''"
+                  @click="openProjectionView('distribution')"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M4 19h16M6 16V9M10 16V5M14 16v-3M18 16V7" />
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ' : 'DISTRIBUTION' }}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="viewType === 'tree' ? 'bg-white/10 text-white' : ''"
+                  @click="openProjectionView('tree')"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M12 4v5M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M6 15v3M18 15v3" />
+                    <circle cx="12" cy="4" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="19" r="2" />
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ locale === 'ru' ? 'ДЕРЕВО_ГЕНЕЗИСА' : 'GENESIS_TREE' }}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="showCapitalForecast ? 'bg-white/10 text-white' : ''"
+                  @click="openCapitalForecastFromMenu"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path d="M3 17l5-5 4 4 8-9" /><path d="M17 7h3v3" />
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ locale === 'ru' ? 'ПРОГНОЗ' : 'FORECAST' }}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="showComplianceStatus ? 'bg-white/10 text-white' : ''"
+                  @click="openComplianceFromMenu"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <rect x="18" y="3" width="4" height="18" /><rect x="10" y="8" width="4" height="13" /><rect x="2" y="13" width="4" height="8" />
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ locale === 'ru' ? 'СТАТУС_СООТВЕТСТВИЯ' : 'COMPLIANCE_STATUS' }}
+                  </span>
+                </button>
+              </div>
+            </ExPanel>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
   <Transition name="page-reify">
     <ExTradeEntry v-if="isTradeEntryOpen"
                   ref="tradeEntryRef"
@@ -1299,6 +1303,7 @@ import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
+import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1311,7 +1316,6 @@ import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
-import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import {
   filterTradesBySelectedStrategyVersion,
@@ -1530,6 +1534,7 @@ const panelInitialNoteId = ref<string | undefined>(undefined)
 const showNodeMap = ref(false)
 const isHudVisible = ref(true)
 const showComplianceStatus = ref(false)
+const showToolsMenu = ref(false)
 const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
@@ -2434,6 +2439,18 @@ const complianceDotColor = computed(() => {
   return null;
 })
 
+const closeToolsMenu = () => {
+  showToolsMenu.value = false
+}
+
+const openProjectionView = (nextView: 'distribution' | 'tree') => {
+  closeToolsMenu()
+  showCapitalForecast.value = false
+  showCapitalForecastIntro.value = false
+  showComplianceStatus.value = false
+  viewType.value = nextView
+}
+
 const toggleCapitalForecast = () => {
   if (!canOpenCapitalForecast.value) {
     showPaywall.value = true
@@ -2446,6 +2463,21 @@ const toggleCapitalForecast = () => {
   }
 
   showCapitalForecastIntro.value = true
+}
+
+const openCapitalForecastFromMenu = () => {
+  closeToolsMenu()
+  viewType.value = 'cube'
+  showComplianceStatus.value = false
+  toggleCapitalForecast()
+}
+
+const openComplianceFromMenu = () => {
+  closeToolsMenu()
+  viewType.value = 'cube'
+  showCapitalForecast.value = false
+  showCapitalForecastIntro.value = false
+  showComplianceStatus.value = !showComplianceStatus.value
 }
 
 const acceptCapitalForecastIntro = () => {
