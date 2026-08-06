@@ -80,7 +80,7 @@
       <div :class="compactFiltersPanel ? 'flex w-full flex-wrap' : 'flex flex-wrap gap-2'">
         <div v-for="filter in filterDropdowns" :key="filter.id" :class="compactFiltersPanel ? 'relative w-28 flex-none' : 'relative'">
           <button
-            @click.stop="openFilterId = openFilterId === filter.id ? null : filter.id"
+            @click.stop="filter.id === 'dateRange' ? openDateRangeEditor('start') : (openFilterId = openFilterId === filter.id ? null : filter.id)"
             class="h-8 max-w-[220px] px-3 border text-[11px] uppercase tracking-wider transition-colors flex items-center gap-2"
             :class="[compactFiltersPanel ? 'w-full max-w-none' : '', filter.isActive || openFilterId === filter.id ? 'bg-black/10 dark:bg-white/10 border-black/40 dark:border-white/40 opacity-100' : 'border-black/20 dark:border-white/20 opacity-55 hover:opacity-100 hover:border-black/40 dark:hover:border-white/40']"
           >
@@ -178,18 +178,6 @@
                 </div>
               </div>
 
-              <div v-else-if="filter.id === 'year'" class="flex items-center gap-2 py-4">
-                <input v-model.number="yearFrom" type="number" :placeholder="locale === 'ru' ? 'От' : 'From'" class="filter-input w-24" />
-                <span class="text-[9px] opacity-40">..</span>
-                <input v-model.number="yearTo" type="number" :placeholder="locale === 'ru' ? 'До' : 'To'" class="filter-input w-24" />
-              </div>
-
-              <div v-else-if="filter.id === 'day'" class="flex items-center gap-2 py-4">
-                <input v-model.number="dayFrom" type="number" min="1" max="31" :placeholder="locale === 'ru' ? 'От' : 'From'" class="filter-input w-20" />
-                <span class="text-[9px] opacity-40">..</span>
-                <input v-model.number="dayTo" type="number" min="1" max="31" :placeholder="locale === 'ru' ? 'До' : 'To'" class="filter-input w-20" />
-              </div>
-
               <div v-else-if="filter.id === 'time'" class="py-2">
                 <button
                   v-for="preset in timeWindowPresets"
@@ -275,6 +263,93 @@
         </button>
       </div>
     </div>
+
+    <Teleport to="body">
+      <Transition name="nier-fade">
+        <div
+          v-if="isDateRangeEditorOpen"
+          @click.self="cancelDateRangeEditor"
+          class="fixed inset-0 z-[11000] flex cursor-pointer items-center justify-center bg-black/20 p-20 backdrop-blur-md dark:bg-black/40"
+        >
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="w-full max-w-4xl !border-black/20 dark:!border-white/20">
+            <div class="flex items-center justify-between border-b nier-border-primary bg-black/[0.02] px-4 py-2 dark:bg-white/[0.02]"></div>
+
+            <div class="grid h-[450px] grid-cols-2 divide-x divide-black/5 nier-text-primary dark:divide-white/5">
+              <div class="flex flex-col gap-8 p-10">
+                <div class="flex flex-col gap-2">
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Диапазон дат' : 'Date Range' }}</span>
+                  <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-black/55 dark:text-white/55">
+                    {{ locale === 'ru' ? 'Начало и конец периода' : 'Start and end of period' }}
+                  </span>
+                  <span class="text-[7px] uppercase tracking-[0.3em] text-black/30 dark:text-white/20">
+                    {{ locale === 'ru' ? 'Выберите активную границу справа' : 'Select the active boundary below' }}
+                  </span>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                  <span class="text-[9px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ locale === 'ru' ? 'Активная граница' : 'Active Target' }}</span>
+                  <div class="flex gap-2">
+                    <button
+                      v-for="target in ['start', 'end']"
+                      :key="target"
+                      type="button"
+                      @click="selectDateRangeEditorTarget(target as 'start' | 'end')"
+                      class="flex-1 border border-black/20 py-3 text-[10px] uppercase tracking-[0.4em] transition-all dark:border-white/20"
+                      :class="dateRangeEditorTarget === target ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-transparent text-black/40 hover:bg-black/5 dark:text-white/40 dark:hover:bg-white/5'"
+                    >
+                      {{ target === 'start' ? 'START_ARCHIVE' : 'END_ARCHIVE' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-4 border-t border-black/5 pt-4 dark:border-white/5">
+                  <button type="button" @click="applyDateRangeEditor" class="w-full border nier-border-primary py-2 text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
+                    {{ locale === 'ru' ? 'Применить диапазон' : 'Apply Range' }}
+                  </button>
+                  <button type="button" @click="clearDateRangeFilter" class="w-full border nier-border-primary py-2 text-[8px] uppercase tracking-widest text-black/60 hover:bg-black/10 dark:text-white/60 dark:hover:bg-white/10">
+                    {{ locale === 'ru' ? 'Сбросить диапазон' : 'Reset Range' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex flex-col justify-center p-10">
+                <div class="flex flex-col items-center gap-10">
+                  <div class="flex items-center gap-4">
+                    <div v-for="unit in ['day', 'month', 'year']" :key="unit" class="flex flex-col items-center gap-2">
+                      <button type="button" @click="adjustDateRangeEditor(unit, 1)" class="p-2 opacity-20 transition-opacity hover:opacity-100"><div class="h-px w-4 nier-bg-inverted"></div></button>
+                      <input
+                        v-model="dateRangeEditorParts[unit as keyof DateRangeEditorParts]"
+                        :maxlength="unit === 'year' ? 4 : 2"
+                        @input="handleDateRangeEditorPart(unit as keyof DateRangeEditorParts, dateRangeEditorParts[unit as keyof DateRangeEditorParts])"
+                        class="w-24 bg-transparent text-center font-mono text-4xl font-bold tracking-tighter outline-none nier-text-primary"
+                      />
+                      <button type="button" @click="adjustDateRangeEditor(unit, -1)" class="p-2 opacity-20 transition-opacity hover:opacity-100"><div class="h-px w-4 nier-bg-inverted"></div></button>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ dateRangeUnitLabel(unit) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="h-px w-20 bg-black/10 dark:bg-white/10"></div>
+
+                  <div class="flex items-center gap-6">
+                    <div v-for="unit in ['hour', 'minute']" :key="unit" class="flex flex-col items-center gap-2">
+                      <button type="button" @click="adjustDateRangeEditor(unit, 1)" class="p-2 opacity-20 transition-opacity hover:opacity-100"><div class="h-px w-4 nier-bg-inverted"></div></button>
+                      <input
+                        v-model="dateRangeEditorParts[unit as keyof DateRangeEditorParts]"
+                        maxlength="2"
+                        @input="handleDateRangeEditorPart(unit as keyof DateRangeEditorParts, dateRangeEditorParts[unit as keyof DateRangeEditorParts])"
+                        class="w-20 bg-transparent text-center font-mono text-4xl font-bold tracking-widest outline-none nier-text-primary"
+                      />
+                      <button type="button" @click="adjustDateRangeEditor(unit, -1)" class="p-2 opacity-20 transition-opacity hover:opacity-100"><div class="h-px w-4 nier-bg-inverted"></div></button>
+                      <span class="text-[7px] uppercase tracking-widest text-black/40 dark:text-white/20">{{ dateRangeUnitLabel(unit) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ExPanel>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- VERTICAL TRADE REGISTRY -->
     <div v-if="!filtersOnly" class="flex flex-col space-y-3 font-mono text-xs pt-2 select-none">
@@ -523,6 +598,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const { locale, t } = useI18n()
 const openTradeText = () => t('genesis.virtualLog.openTrade')
@@ -722,8 +798,7 @@ const activeFilterChips = computed(() => {
       : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
     chips.push({ id: 'profitTier', type: 'PROFIT', label })
   }
-  if (hasYearRangeFilter.value) chips.push({ id: 'yearRange', type: 'YEAR', label: formatRangeLabel(yearFrom.value, yearTo.value) })
-  if (hasDayRangeFilter.value) chips.push({ id: 'dayRange', type: 'DAY', label: formatRangeLabel(dayFrom.value, dayTo.value) })
+  if (hasDateRangeFilter.value) chips.push({ id: 'dateRange', type: 'DATE', label: dateRangeLabel.value })
   if (selectedMarketSession.value !== 'ALL') chips.push({ id: 'marketSession', type: 'SESSION', label: marketSessionOptions.value.find(x => x.id === selectedMarketSession.value)?.label || selectedMarketSession.value })
   if (hasTimeWindowFilter.value) chips.push({ id: 'timeWindow', type: 'TIME', label: timeWindowLabel.value })
   if (hasDurationWindowFilter.value) chips.push({ id: 'durationWindow', type: 'DURATION', label: durationWindowLabel.value })
@@ -753,14 +828,7 @@ const removeFilterChip = (id: string) => {
     customProfitMin.value = null
     customProfitMax.value = null
   }
-  if (id === 'yearRange') {
-    yearFrom.value = null
-    yearTo.value = null
-  }
-  if (id === 'dayRange') {
-    dayFrom.value = null
-    dayTo.value = null
-  }
+  if (id === 'dateRange') clearDateRangeFilter()
   if (id === 'marketSession') selectedMarketSession.value = 'ALL'
   if (id === 'timeWindow') resetFilterById('time')
   if (id === 'durationWindow') resetFilterById('duration')
@@ -1107,10 +1175,29 @@ const conditionMatchMode = ref<'INCLUDED' | 'EXACT'>('INCLUDED')
 const selectedAsset = ref<string[]>([])
 const selectedStatus = ref<string[]>([])
 const selectedDirection = ref('ALL')
-const yearFrom = ref<number | null>(null)
-const yearTo = ref<number | null>(null)
-const dayFrom = ref<number | null>(null)
-const dayTo = ref<number | null>(null)
+const dateRangeStart = ref<Date | null>(null)
+const dateRangeEnd = ref<Date | null>(null)
+
+type DateRangeEditorTarget = 'start' | 'end'
+type DateRangeEditorParts = {
+  day: string
+  month: string
+  year: string
+  hour: string
+  minute: string
+}
+
+const isDateRangeEditorOpen = ref(false)
+const dateRangeEditorTarget = ref<DateRangeEditorTarget>('start')
+const dateRangeDraftStart = ref<Date | null>(null)
+const dateRangeDraftEnd = ref<Date | null>(null)
+const dateRangeEditorParts = ref<DateRangeEditorParts>({
+  day: '01',
+  month: '01',
+  year: '2024',
+  hour: '00',
+  minute: '00'
+})
 
 const statusList = computed(() => [
   { id: 'ALL', label: locale.value === 'ru' ? 'ВСЕ' : 'ALL' },
@@ -1190,23 +1277,138 @@ const filteredProfitTierOptions = computed(() => {
   })
 })
 
-const hasRangeValue = (value: number | null) => value !== null && value !== undefined && value !== '' as any
-const hasYearRangeFilter = computed(() => hasRangeValue(yearFrom.value) || hasRangeValue(yearTo.value))
-const hasDayRangeFilter = computed(() => hasRangeValue(dayFrom.value) || hasRangeValue(dayTo.value))
-
-const formatRangeLabel = (from: number | null, to: number | null) => {
-  const start = hasRangeValue(from) ? from : '-∞'
-  const end = hasRangeValue(to) ? to : '+∞'
-  return `${start} .. ${end}`
+const getTradeDateForRange = (trade: any) => {
+  const rawDate = trade?.dateObj || trade?.dateRaw || trade?.date || trade?.dateTime
+  const date = rawDate instanceof Date ? new Date(rawDate) : new Date(rawDate)
+  return Number.isFinite(date.getTime()) ? date : null
 }
 
-const isWithinRange = (value: number, from: number | null, to: number | null) => {
-  if (!hasRangeValue(from) && !hasRangeValue(to)) return true
-  const rawMin = hasRangeValue(from) ? Number(from) : -Infinity
-  const rawMax = hasRangeValue(to) ? Number(to) : Infinity
-  const min = Math.min(rawMin, rawMax)
-  const max = Math.max(rawMin, rawMax)
-  return value >= min && value <= max
+const getDateRangeBounds = () => {
+  const dates = activeTrades.value
+    .map(getTradeDateForRange)
+    .filter((date): date is Date => date !== null)
+    .sort((a, b) => a.getTime() - b.getTime())
+
+  return {
+    start: dates[0] ? new Date(dates[0]) : new Date(),
+    end: dates.at(-1) ? new Date(dates.at(-1) as Date) : new Date()
+  }
+}
+
+const hasDateRangeFilter = computed(() => dateRangeStart.value !== null || dateRangeEnd.value !== null)
+
+const formatDateTimeFilter = (date: Date | null) => {
+  if (!date || !Number.isFinite(date.getTime())) return locale.value === 'ru' ? 'НЕ ВЫБРАНО' : 'NOT SET'
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+const dateRangeLabel = computed(() => {
+  if (!hasDateRangeFilter.value) return locale.value === 'ru' ? 'Диапазон дат' : 'Date Range'
+  return `${formatDateTimeFilter(dateRangeStart.value)} .. ${formatDateTimeFilter(dateRangeEnd.value)}`
+})
+
+const getDateRangeEditorDate = () => dateRangeEditorTarget.value === 'start' ? dateRangeDraftStart.value : dateRangeDraftEnd.value
+
+const setDateRangeEditorDate = (date: Date) => {
+  if (dateRangeEditorTarget.value === 'start') dateRangeDraftStart.value = new Date(date)
+  else dateRangeDraftEnd.value = new Date(date)
+}
+
+const syncDateRangeEditorParts = () => {
+  const date = getDateRangeEditorDate()
+  if (!date || !Number.isFinite(date.getTime())) return
+  dateRangeEditorParts.value = {
+    day: String(date.getDate()).padStart(2, '0'),
+    month: String(date.getMonth() + 1).padStart(2, '0'),
+    year: String(date.getFullYear()),
+    hour: String(date.getHours()).padStart(2, '0'),
+    minute: String(date.getMinutes()).padStart(2, '0')
+  }
+}
+
+const dateRangeUnitLabel = (unit: string) => {
+  const labels: Record<string, string> = locale.value === 'ru'
+    ? { day: 'ДЕНЬ', month: 'МЕСЯЦ', year: 'ГОД', hour: 'ЧАС', minute: 'МИНУТА' }
+    : { day: 'DAY', month: 'MONTH', year: 'YEAR', hour: 'HOUR', minute: 'MINUTE' }
+  return labels[unit] || unit
+}
+
+const selectDateRangeEditorTarget = (target: DateRangeEditorTarget) => {
+  dateRangeEditorTarget.value = target
+  syncDateRangeEditorParts()
+}
+
+const openDateRangeEditor = (target: DateRangeEditorTarget = 'start') => {
+  const bounds = getDateRangeBounds()
+  dateRangeDraftStart.value = new Date(dateRangeStart.value || bounds.start)
+  dateRangeDraftEnd.value = new Date(dateRangeEnd.value || bounds.end)
+  dateRangeEditorTarget.value = target
+  syncDateRangeEditorParts()
+  isDateRangeEditorOpen.value = true
+  openFilterId.value = null
+}
+
+const adjustDateRangeEditor = (unit: string, delta: number) => {
+  const current = getDateRangeEditorDate()
+  if (!current) return
+  const date = new Date(current)
+
+  if (unit === 'year') date.setFullYear(date.getFullYear() + delta)
+  if (unit === 'month') {
+    const day = date.getDate()
+    date.setDate(1)
+    date.setMonth(date.getMonth() + delta)
+    date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()))
+  }
+  if (unit === 'day') date.setDate(date.getDate() + delta)
+  if (unit === 'hour') date.setHours(date.getHours() + delta)
+  if (unit === 'minute') date.setMinutes(date.getMinutes() + delta)
+
+  setDateRangeEditorDate(date)
+  syncDateRangeEditorParts()
+}
+
+const handleDateRangeEditorPart = (unit: keyof DateRangeEditorParts, value: string) => {
+  dateRangeEditorParts.value[unit] = value
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return
+
+  const parts = dateRangeEditorParts.value
+  const year = Number(parts.year)
+  const month = Number(parts.month)
+  const day = Number(parts.day)
+  const hour = Number(parts.hour)
+  const minute = Number(parts.minute)
+  if (!year || month < 1 || month > 12 || day < 1 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return
+
+  const lastDay = new Date(year, month, 0).getDate()
+  if (day > lastDay) {
+    parts.day = String(lastDay).padStart(2, '0')
+  }
+
+  const date = new Date(year, month - 1, Math.min(day, lastDay), hour, minute)
+  setDateRangeEditorDate(date)
+}
+
+const applyDateRangeEditor = () => {
+  if (!dateRangeDraftStart.value || !dateRangeDraftEnd.value) return
+  const startTime = dateRangeDraftStart.value.getTime()
+  const endTime = dateRangeDraftEnd.value.getTime()
+  dateRangeStart.value = new Date(Math.min(startTime, endTime))
+  dateRangeEnd.value = new Date(Math.max(startTime, endTime))
+  isDateRangeEditorOpen.value = false
+}
+
+const cancelDateRangeEditor = () => {
+  isDateRangeEditorOpen.value = false
+}
+
+const clearDateRangeFilter = () => {
+  dateRangeStart.value = null
+  dateRangeEnd.value = null
+  dateRangeDraftStart.value = null
+  dateRangeDraftEnd.value = null
+  isDateRangeEditorOpen.value = false
 }
 
 const mockTrades = ref([
@@ -1439,9 +1641,8 @@ const activeFilterCount = computed(() => {
   if (selectedAsset.value.length > 0) count += selectedAsset.value.length
   if (selectedStatus.value.length > 0) count += selectedStatus.value.length
   if (selectedDirection.value !== 'ALL') count++
-  if (hasYearRangeFilter.value) count++
+  if (hasDateRangeFilter.value) count++
   if (selectedProfitTier.value !== 'ALL') count++
-  if (hasDayRangeFilter.value) count++
   if (selectedMarketSession.value !== 'ALL') count++
   if (minTimeMinute.value > ABS_MIN_TIME_MIN || maxTimeMinute.value < ABS_MAX_TIME_MIN) count++
   if (minDuration.value > ABS_MIN_DURATION || maxDuration.value < ABS_MAX_DURATION) count++
@@ -1454,13 +1655,10 @@ const resetAllFilters = () => {
   selectedAsset.value = []
   selectedStatus.value = []
   selectedDirection.value = 'ALL'
-  yearFrom.value = null
-  yearTo.value = null
+  clearDateRangeFilter()
   selectedProfitTier.value = 'ALL'
   customProfitMin.value = null
   customProfitMax.value = null
-  dayFrom.value = null
-  dayTo.value = null
   selectedMarketSession.value = 'ALL'
   minTimeMinute.value = ABS_MIN_TIME_MIN
   maxTimeMinute.value = ABS_MAX_TIME_MIN
@@ -1871,8 +2069,7 @@ const filterDropdowns = computed(() => [
   { id: 'asset', label: locale.value === 'ru' ? 'Актив' : 'Asset', type: 'options', options: assetsList.value, isActive: selectedAsset.value.length > 0 },
   { id: 'status', label: locale.value === 'ru' ? 'Статус' : 'Status', type: 'options', options: statusList.value, isActive: selectedStatus.value.length > 0 },
   { id: 'profit', label: locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier', type: 'custom', options: [], isActive: selectedProfitTier.value !== 'ALL' },
-  { id: 'year', label: locale.value === 'ru' ? 'Диапазон лет' : 'Year Range', type: 'range', options: [], isActive: hasYearRangeFilter.value },
-  { id: 'day', label: locale.value === 'ru' ? 'Диапазон дней' : 'Day Range', type: 'range', options: [], isActive: hasDayRangeFilter.value },
+  { id: 'dateRange', label: locale.value === 'ru' ? 'Диапазон дат' : 'Date Range', type: 'range', options: [], isActive: hasDateRangeFilter.value },
   { id: 'session', label: locale.value === 'ru' ? 'Сессия' : 'Session', type: 'options', options: marketSessionOptions.value, isActive: selectedMarketSession.value !== 'ALL' },
   { id: 'time', label: locale.value === 'ru' ? 'Временное окно' : 'Time Window', type: 'custom', options: [], isActive: hasTimeWindowFilter.value },
   { id: 'duration', label: locale.value === 'ru' ? 'Длительность' : 'Duration Window', type: 'custom', options: [], isActive: hasDurationWindowFilter.value }
@@ -1885,8 +2082,7 @@ const filterButtonLabel = (id: string) => {
   if (id === 'asset') return selectedAsset.value.length === 0 ? (locale.value === 'ru' ? 'Актив' : 'Asset') : `${locale.value === 'ru' ? 'Актив' : 'Asset'} (${selectedAsset.value.length})`
   if (id === 'status') return selectedStatus.value.length === 0 ? (locale.value === 'ru' ? 'Статус' : 'Status') : `${locale.value === 'ru' ? 'Статус' : 'Status'} (${selectedStatus.value.length})`
   if (id === 'profit') return selectedProfitTier.value === 'ALL' ? (locale.value === 'ru' ? 'Уровень прибыли' : 'Profit Tier') : selectedProfitTier.value === 'CUSTOM' ? (locale.value === 'ru' ? 'Польз. Прибыль' : 'Custom Profit') : profitTierOptions.value.find(x => x.id === selectedProfitTier.value)?.label || selectedProfitTier.value
-  if (id === 'year') return hasYearRangeFilter.value ? `${locale.value === 'ru' ? 'Год' : 'Year'} ${formatRangeLabel(yearFrom.value, yearTo.value)}` : (locale.value === 'ru' ? 'Диапазон лет' : 'Year Range')
-  if (id === 'day') return hasDayRangeFilter.value ? `${locale.value === 'ru' ? 'День' : 'Day'} ${formatRangeLabel(dayFrom.value, dayTo.value)}` : (locale.value === 'ru' ? 'Диапазон дней' : 'Day Range')
+  if (id === 'dateRange') return dateRangeLabel.value
   if (id === 'session') return selectedMarketSession.value === 'ALL' ? (locale.value === 'ru' ? 'Сессия' : 'Session') : marketSessionOptions.value.find(x => x.id === selectedMarketSession.value)?.label || selectedMarketSession.value
   if (id === 'time') return hasTimeWindowFilter.value ? timeWindowLabel.value : (locale.value === 'ru' ? 'Временное окно' : 'Time Window')
   if (id === 'duration') return hasDurationWindowFilter.value ? durationWindowLabel.value : (locale.value === 'ru' ? 'Длительность' : 'Duration Window')
@@ -1936,14 +2132,7 @@ const resetFilterById = (id: string) => {
     customProfitMin.value = null
     customProfitMax.value = null
   }
-  if (id === 'year') {
-    yearFrom.value = null
-    yearTo.value = null
-  }
-  if (id === 'day') {
-    dayFrom.value = null
-    dayTo.value = null
-  }
+  if (id === 'dateRange') clearDateRangeFilter()
   if (id === 'session') selectedMarketSession.value = 'ALL'
   if (id === 'time') {
     minTimeMinute.value = ABS_MIN_TIME_MIN
@@ -1958,24 +2147,6 @@ const resetFilterById = (id: string) => {
 const closeFilterDropdownOnOutside = (event: MouseEvent) => {
   if (!filterBarRef.value) return
   if (!filterBarRef.value.contains(event.target as Node)) openFilterId.value = null
-}
-
-const getTradeYear = (trade: any) => {
-  if (trade.dateObj) return trade.dateObj.getFullYear()
-  if (trade.dateTime && trade.dateTime.includes('.')) {
-    const parts = trade.dateTime.split('.')
-    if (parts.length === 3) return parseInt(parts[2], 10)
-  }
-  return 2026
-}
-
-const getTradeDay = (trade: any) => {
-  if (trade.dateObj) return trade.dateObj.getDate()
-  if (trade.dateTime && trade.dateTime.includes('.')) {
-    const parts = trade.dateTime.split('.')
-    return parseInt(parts[0], 10)
-  }
-  return 10
 }
 
 const getTradeTimeMinutes = (trade: any) => {
@@ -2026,7 +2197,15 @@ const filteredTrades = computed(() => {
     if (selectedStatus.value.length > 0 && !selectedStatus.value.includes(trade.status)) return false
     if (selectedDirection.value !== 'ALL' && trade.direction !== selectedDirection.value) return false
     
-    if (hasYearRangeFilter.value && !isWithinRange(getTradeYear(trade), yearFrom.value, yearTo.value)) return false
+    if (hasDateRangeFilter.value) {
+      const tradeDate = getTradeDateForRange(trade)
+      if (!tradeDate) return false
+      const rangeStart = dateRangeStart.value?.getTime() ?? -Infinity
+      const rangeEnd = dateRangeEnd.value?.getTime() ?? Infinity
+      const min = Math.min(rangeStart, rangeEnd)
+      const max = Math.max(rangeStart, rangeEnd)
+      if (tradeDate.getTime() < min || tradeDate.getTime() > max) return false
+    }
 
     if (selectedProfitTier.value !== 'ALL') {
       if (!isClosedTradeRecord(trade)) return false
@@ -2045,8 +2224,6 @@ const filteredTrades = computed(() => {
         if (tier.max !== undefined && p > tier.max) return false
       }
     }
-
-    if (hasDayRangeFilter.value && !isWithinRange(getTradeDay(trade), dayFrom.value, dayTo.value)) return false
 
     if (!isTradeInMarketSession(trade)) return false
 
