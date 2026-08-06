@@ -77,9 +77,9 @@
         <div
           class="relative z-10 flex h-full w-full flex-col"
           :class="isTimeTreeFullscreen
-            ? 'px-6 py-10 md:px-10 md:py-12'
+            ? 'px-0 py-10 md:px-0 md:py-12'
             : viewType === 'timeTree'
-              ? 'px-8 py-8 md:px-16 md:py-10'
+              ? 'px-0 py-8 md:px-0 md:py-10'
               : 'px-8 py-14 md:px-16 md:py-20'"
         >
           <div v-if="!isTimeTreeFullscreen && viewType === 'list'" class="mb-5 shrink-0">
@@ -119,7 +119,7 @@
               class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-32"
               :class="isTimeTreeFullscreen ? 'time-tree-scroll--fullscreen' : ''"
             >
-              <div v-if="timeTreeGroups.length" class="relative mx-auto w-full max-w-7xl pb-12 pt-2">
+              <div v-if="timeTreeGroups.length" class="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-2 md:px-8">
                 <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15 dark:bg-white/15"></div>
 
                 <div
@@ -883,7 +883,7 @@
     </div>
 
     <div
-      v-if="showFiltersPanel && !showNodeMap && viewType === 'cube' && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      v-if="showFiltersPanel && !showNodeMap && (viewType === 'cube' || viewType === 'timeTree') && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
       class="pointer-events-auto absolute left-1/2 top-8 z-[10010] w-[562px] -translate-x-1/2"
     >
       <ExPanel variant="light" :no-padding="true" :show-corners="true" class="!w-full overflow-visible">
