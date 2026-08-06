@@ -1910,6 +1910,38 @@ const getTradePnlValue = (trade: any) => {
   return Number.isFinite(value) ? value : 0
 }
 
+// Keep the node palette consistent with the complete visible diary, even when
+// the canvas is filtered down to only winners or only losers.
+const tradeNodePnlRange = computed(() => {
+  const values = currentTrades.value
+    .filter(isClosedDiaryTrade)
+    .map(getTradePnlValue)
+    .filter(value => Number.isFinite(value))
+
+  if (!values.length) return { min: 0, max: 0 }
+  return { min: Math.min(...values), max: Math.max(...values) }
+})
+
+const getTradeNodeColor = (node: TradeNode) => {
+  if (node.isOpenTrade) return isDark.value ? '#facc15' : '#ca8a04'
+  if (node.isCore) return isDark.value ? '#f8fafc' : '#0f172a'
+  if (node.isNote) return isDark.value ? '#94a3b8' : '#64748b'
+
+  const pnl = Number(node.pnl)
+  const { min, max } = tradeNodePnlRange.value
+  const span = max - min
+  const normalized = span === 0
+    ? (pnl > 0 ? 1 : pnl < 0 ? 0 : 0.85)
+    : Math.min(1, Math.max(0, (pnl - min) / span))
+
+  // The strongest winner is white; the strongest loser is red. Everything in
+  // between is a deliberate shade on the same white-to-red scale.
+  const red = Math.round(239 + (255 - 239) * normalized)
+  const green = Math.round(68 + (255 - 68) * normalized)
+  const blue = Math.round(68 + (255 - 68) * normalized)
+  return `rgb(${red} ${green} ${blue})`
+}
+
 const distributionMetricMode = ref<'pnl' | 'score'>('pnl')
 
 const distributionClosedTrades = computed(() => {
@@ -2948,6 +2980,7 @@ interface TradeNode {
   graphPos: { x: number; y: number }
   velocity: { x: number; y: number }
   date?: string | Date
+  pnl?: number
   isNote?: boolean
   isCore?: boolean
   isOpenTrade?: boolean
@@ -3212,6 +3245,18 @@ const viewOffset = ref({ x: 0, y: 0 })
 const GRAPH_SEED_RADIUS = 75
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 
+const getTradeNodeBaseRadius = (node: TradeNode, degree = 1) => {
+  if (node.isCore) return 10.5
+  if (node.isNote) return 2.8
+  return 4.6 + Math.min(3, degree) * 0.55
+}
+
+const getTradeNodeFocusMultiplier = () => Math.max(0.75, viewScale.value / 2.2)
+
+const getTradeNodeScreenRadius = (node: TradeNode, degree = 1) => {
+  return getTradeNodeBaseRadius(node, degree) * getTradeNodeFocusMultiplier()
+}
+
 // Deterministic initial positions keep the graph stable before the force layout settles.
 const getGraphSeedPosition = (index: number, total: number): Point3D => {
   if (total <= 1) return { x: 0, y: 0, z: 0 }
@@ -3259,6 +3304,7 @@ const initTrades = () => {
         graphPos: { x: tradeSeedPos.x * 0.55, y: tradeSeedPos.y * 0.55 },
         velocity: { x: 0, y: 0 },
         date: trade.date,
+        pnl: isOpenTrade ? undefined : getTradePnlValue(trade),
         isNote: false,
         isOpenTrade
       })
@@ -3369,6 +3415,80 @@ const projectTradeNode = (node: TradeNode, width: number, height: number): Point
     y: node.graphPos.y * zoom + height / 2 + viewOffset.value.y,
     opacity: 1,
     depth: 0
+  }
+}
+
+// Resolve collisions in screen space so the guarantee still holds for the
+// perspective layout used by the main diary and for the flat strategy graph.
+const resolveProjectedTradeNodeOverlaps = (
+  nodes: TradeNode[],
+  width: number,
+  height: number,
+  degreeMap: Map<string, number>
+) => {
+  if (nodes.length < 2) return
+
+  const zoom = Math.max(0.5, viewScale.value)
+  const iterations = Math.min(12, Math.max(3, nodes.length))
+
+  const moveNodeInScreenSpace = (node: TradeNode, dx: number, dy: number) => {
+    if (isMainDiaryStrategy.value) {
+      const focalLength = 900
+      const depth = node.isCore ? 0 : node.seedPos.z
+      const perspective = focalLength / (focalLength + depth)
+      node.seedPos.x += dx / (zoom * perspective)
+      node.seedPos.y += dy / (zoom * perspective)
+      return
+    }
+
+    node.graphPos.x += dx / zoom
+    node.graphPos.y += dy / zoom
+  }
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    let moved = false
+    const projected = nodes.map(node => projectTradeNode(node, width, height))
+
+    for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
+      const left = nodes[leftIndex]!
+      const leftPoint = projected[leftIndex]!
+      const leftRadius = getTradeNodeScreenRadius(left, degreeMap.get(left.id) || 1)
+
+      for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+        const right = nodes[rightIndex]!
+        const rightPoint = projected[rightIndex]!
+        const rightRadius = getTradeNodeScreenRadius(right, degreeMap.get(right.id) || 1)
+        let dx = rightPoint.x - leftPoint.x
+        let dy = rightPoint.y - leftPoint.y
+        let distance = Math.sqrt(dx * dx + dy * dy)
+
+        if (distance < 0.01) {
+          const angle = (leftIndex * 1.7 + rightIndex * 2.3) % (Math.PI * 2)
+          dx = Math.cos(angle)
+          dy = Math.sin(angle)
+          distance = 1
+        }
+
+        const requiredDistance = leftRadius + rightRadius + 3
+        if (distance >= requiredDistance) continue
+
+        const correction = requiredDistance - distance
+        const nx = dx / distance
+        const ny = dy / distance
+        moved = true
+
+        if (left.isCore && !right.isCore) {
+          moveNodeInScreenSpace(right, nx * correction, ny * correction)
+        } else if (right.isCore && !left.isCore) {
+          moveNodeInScreenSpace(left, -nx * correction, -ny * correction)
+        } else {
+          moveNodeInScreenSpace(left, -nx * correction * 0.5, -ny * correction * 0.5)
+          moveNodeInScreenSpace(right, nx * correction * 0.5, ny * correction * 0.5)
+        }
+      }
+    }
+
+    if (!moved) break
   }
 }
 
@@ -3708,6 +3828,7 @@ const update = () => {
     degreeMap.set(edge.source, (degreeMap.get(edge.source) || 0) + 1)
     degreeMap.set(edge.target, (degreeMap.get(edge.target) || 0) + 1)
   })
+  resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
   const connectedToHovered = (id: string) => {
     if (!hoveredTradeNodeId.value) return true
     if (id === hoveredTradeNodeId.value) return true
@@ -3754,21 +3875,11 @@ const update = () => {
     if (reveal.icon <= 0.01) return
 
     const degree = degreeMap.get(node.id) || 1
-    const focusMultiplier = Math.max(0.75, viewScale.value / 2.2)
+    const focusMultiplier = getTradeNodeFocusMultiplier()
     const isHovered = hoveredTradeNodeId.value === node.id
     const isDimmed = hoveredTradeNodeId.value !== null && !connectedToHovered(node.id)
-    const radius = (node.isCore
-      ? 10.5
-      : node.isNote
-        ? 2.8
-        : 4.6 + Math.min(3, degree) * 0.55) * focusMultiplier
-    const color = node.isCore
-      ? (isDark.value ? '#f8fafc' : '#0f172a')
-      : node.isNote
-      ? (isDark.value ? '#94a3b8' : '#64748b')
-      : node.isOpenTrade
-        ? (isDark.value ? '#facc15' : '#ca8a04')
-        : (isDark.value ? '#f8fafc' : '#334155')
+    const radius = getTradeNodeScreenRadius(node, degree)
+    const color = getTradeNodeColor(node)
 
     ctx.save()
     ctx.globalAlpha = reveal.icon * (isDimmed ? 0.18 : 1)
@@ -3799,7 +3910,7 @@ const update = () => {
         ? (isDark.value ? '#94a3b8' : '#475569')
         : node.isOpenTrade
           ? (isDark.value ? '#fde68a' : '#a16207')
-          : (isDark.value ? '#f8fafc' : '#1e293b')
+          : getTradeNodeColor(node)
       const dynamicFontSize = Math.max(node.isCore ? 10 : node.isNote ? 8 : 10, Math.floor((node.isCore ? 10 : node.isNote ? 8 : 11) * focusMultiplier))
       ctx.font = `bold ${dynamicFontSize}px Inter`
       ctx.fillText(node.label, proj.x + radius + 7 * focusMultiplier, proj.y + dynamicFontSize * 0.35)
