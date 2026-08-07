@@ -129,15 +129,7 @@ const close = async () => {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      rgb(var(--theme-bg-rgb) / 0.28),
-      rgb(var(--theme-bg-rgb) / 0.12) 62%,
-      transparent
-    );
-  backdrop-filter: blur(10px) saturate(130%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  background: transparent;
 }
 
 .window-control {
