@@ -18,8 +18,8 @@ export const translations = {
         channel: "@GANDR_TRADE"
       },
       tryDemo: "TRY DEMO",
-      downloadMac: "DOWNLOAD FOR MAC",
-      downloadWindows: "DOWNLOAD FOR WINDOWS",
+      downloadMac: "Download for macOS",
+      downloadWindows: "Download for Windows",
       downloadPage: {
         demoEyebrow: "DEMO DOWNLOAD",
         demoTitle: "Download Demo",
@@ -33,7 +33,7 @@ export const translations = {
         downloadWindows: "DOWNLOAD FOR WINDOWS",
         downloadMacos: "DOWNLOAD FOR MACOS"
       },
-      heroTitleLine1: "A TRADING JOURNAL",
+      heroTitleLine1: "A trading journal - market depth and refined aesthetic.",
       heroTitleLine2: "",
       scrollToExplore: "SCROLL_TO_EXPLORE",
       nav: {
@@ -319,8 +319,8 @@ export const translations = {
         channel: "@GANDR_TRADE"
       },
       tryDemo: "ПОПРОБОВАТЬ ДЕМО",
-      downloadMac: "СКАЧАТЬ ДЛЯ MAC",
-      downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
+      downloadMac: "Скачать для macOS",
+      downloadWindows: "Скачать для Windows",
       downloadPage: {
         demoEyebrow: "СКАЧИВАНИЕ ДЕМО",
         demoTitle: "Скачать демо",
@@ -334,7 +334,7 @@ export const translations = {
         downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
         downloadMacos: "СКАЧАТЬ ДЛЯ MACOS"
       },
-      heroTitleLine1: "ТОРГОВЫЙ ЖУРНАЛ",
+      heroTitleLine1: "Торговый журнал — глубина рынка и утончённая эстетика.",
       heroTitleLine2: "",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {

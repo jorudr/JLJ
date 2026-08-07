@@ -295,14 +295,22 @@
           class="flex flex-col items-center justify-center w-full"
         >
           <div
-            class="mb-8 text-center text-[18px] sm:text-[22px] font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
+            class="hero-signature mb-2 h-8 w-36 overflow-hidden opacity-0 transition-all duration-1000 ease-out sm:h-9 sm:w-44"
+            :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-80' : 'translate-y-4'"
+            aria-hidden="true"
+          >
+            <img src="/assets/signature.svg" alt="" class="h-full w-full object-cover object-center" />
+          </div>
+
+          <div
+            class="mb-8 text-center text-2xl sm:text-4xl lg:text-5xl font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
             J.L.JÖRMUNGANDR
           </div>
 
-          <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-[0.12em] sm:tracking-[0.16em] lg:tracking-[0.2em] text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <div class="openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
@@ -313,20 +321,14 @@
           <!-- OS Specific Download Button -->
           <router-link
             to="/announcement"
-            class="flex cursor-pointer items-center space-x-3 px-8 py-3.5 transition-all duration-1000 hover:scale-105 group bg-white text-black shadow-md border border-black/5 hover:bg-slate-50"
+            class="download-button flex cursor-pointer items-center justify-center rounded-[25px] px-8 py-2 text-center transition-colors duration-200 group bg-black text-white shadow-md border border-white/10 hover:bg-neutral-950"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'"
           >
             <template v-if="os === 'mac'">
-              <svg class="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
-                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-              </svg>
-              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadMac') }}</span>
+              <span class="nav-openai-font">{{ t('landing.downloadMac') }}</span>
             </template>
             <template v-else>
-              <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
-                <path d="M0 93.6l183.6-25.3v177.4H0V93.6zm203.6-28L448 32v213.6H203.6V65.6zM0 274.5h183.6V443L0 417.6V274.5zm203.6 0H448v213.6L203.6 448V274.5z"/>
-              </svg>
-              <span class="text-xs tracking-[0.3em] font-mono mt-0.5">{{ t('landing.downloadWindows') }}</span>
+              <span class="nav-openai-font">{{ t('landing.downloadWindows') }}</span>
             </template>
           </router-link>
         </div>
@@ -710,14 +712,6 @@ const scrollToFeatures = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
 
-@font-face {
-  font-family: "OpenAI Sans";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2") format("woff2");
-}
-
 /* Keep the foreground readable over the light Gradflow hero. */
 .hero-header > header *,
 .hero-header > main *,
@@ -790,8 +784,24 @@ const scrollToFeatures = () => {
   );
 }
 
+.hero-header > main .download-button,
+.hero-header > main .download-button * {
+  color: #fff !important;
+}
+
+.hero-header > main .download-button .nav-openai-font {
+  font-weight: 300 !important;
+}
+
 .nav-openai-font {
-  font-family: "OpenAI Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
+  font-size: 0.95rem;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em;
+}
+
+.openai-typeface {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
   font-size: 0.95rem;
   font-weight: 400 !important;
   letter-spacing: -0.01em;
