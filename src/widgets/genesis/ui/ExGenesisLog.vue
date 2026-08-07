@@ -351,12 +351,12 @@
 
     <div
       v-if="timeTreeTradeDetailsOpen"
-      class="absolute inset-0 z-[10020] flex items-center justify-center bg-black/20 backdrop-blur-[2px] dark:bg-black/45"
+      class="absolute inset-0 z-[10020] flex items-center justify-center bg-black/20 p-4 backdrop-blur-[2px] dark:bg-black/45 md:p-8"
       @click.self="closeTimeTreeTradeDetails"
     >
-      <div class="relative flex min-h-[82vh] w-[calc(100%-2rem)] max-w-5xl max-h-[96vh] md:w-[calc(100%-4rem)]">
+      <div class="relative flex h-[72vh] max-h-[calc(100%-2rem)] w-full max-w-5xl">
           <ExPanel variant="light" title="trade-details" :no-padding="true" :show-corners="false" :no-shadow="true" class="!h-full !w-full overflow-hidden !border-black/15 dark:!border-white/15">
-              <div class="max-h-[calc(96vh-32px)] overflow-y-auto custom-scrollbar px-5 pb-5 md:px-8">
+              <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-5 pb-5 md:px-8">
                 <ExVerticalTradeList
                 :trades="selectedTimeTreeTrade ? [selectedTimeTreeTrade] : []"
                 :details-only="true"

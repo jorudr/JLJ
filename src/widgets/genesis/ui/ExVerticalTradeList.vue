@@ -480,7 +480,7 @@
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Размер Позиции' : 'Position Size' }}</span>
-                  <span class="font-bold mt-0.5 text-xs">{{ trade.size }}</span>
+                  <span class="font-bold mt-0.5 text-xs">{{ formatExecutionMetric(trade.size) }}</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Результат' : 'Result' }}</span>
@@ -492,11 +492,11 @@
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Стоп Лосс' : 'Stop Loss' }}</span>
-                  <span class="font-bold mt-0.5">{{ trade.stopLoss || (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ Number(trade.stopLoss) > 0 ? formatExecutionMetric(trade.stopLoss) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Тейк Профит' : 'Take Profit' }}</span>
-                  <span class="font-bold mt-0.5">{{ trade.takeProfit || (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ Number(trade.takeProfit) > 0 ? formatExecutionMetric(trade.takeProfit) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Входа' : 'Date Entry' }}</span>
@@ -518,7 +518,7 @@
               <div class="flex items-center justify-between">
                 <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'Методы входа-выхода' : 'Entry-Exit Methods' }}</span>
               </div>
-              <div v-if="getExecutionGroup(trade, 'entry').length > 0 || getExecutionGroup(trade, 'exit').length > 0" class="p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
+              <div class="p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="flex flex-col space-y-2 md:pr-4 md:border-r md:border-black/10 md:dark:border-white/10">
                     <div class="flex items-center justify-between">
@@ -526,7 +526,7 @@
                         {{ getExecutionGroupLabel(trade, 'entry') }}
                       </span>
                     </div>
-                    <div class="max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                    <div class="h-28 max-h-28 overflow-y-auto custom-scrollbar pr-2">
                       <div v-if="getExecutionGroup(trade, 'entry').length > 0" class="flex flex-col space-y-2">
                         <div
                           v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
@@ -556,7 +556,7 @@
                         {{ getMethodLabel(getExecutionGroup(trade, 'exit')) }}
                       </span>
                     </div>
-                    <div class="max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                    <div class="h-28 max-h-28 overflow-y-auto custom-scrollbar pr-2">
                       <div v-if="getExecutionGroup(trade, 'exit').length > 0" class="flex flex-col space-y-2">
                         <div
                           v-for="(exec, index) in getExecutionGroup(trade, 'exit')"
@@ -575,17 +575,17 @@
                   </div>
                 </div>
               </div>
-              <div v-else class="border nier-border-primary bg-black/5 p-3.5 text-[9px] uppercase tracking-[0.25em] opacity-45 dark:bg-white/5">
-                {{ locale === 'ru' ? 'НЕТ ДАННЫХ' : 'NO DATA' }}
-              </div>
             </div>
 
             <!-- ATTACHED NOTES -->
             <div class="flex flex-col space-y-3">
-              <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'Прикрепленные Заметки' : 'Attached Notes' }} ({{ trade.notes.length }})</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'Прикрепленные Заметки' : 'Attached Notes' }} ({{ trade.notes.length }})</span>
+                <span class="shrink-0 text-[9px] uppercase tracking-widest opacity-40">{{ locale === 'ru' ? 'ПОСЛЕДНИЕ' : 'LATEST' }}</span>
+              </div>
               <div v-if="trade.notes.length > 0" class="max-h-32 overflow-y-auto custom-scrollbar flex flex-col space-y-1.5 pt-1 pr-2">
                 <div 
-                  v-for="(note, nIdx) in trade.notes" 
+                  v-for="(note, nIdx) in getLatestNotes(trade.notes)"
                   :key="note.id" 
                   class="flex flex-col py-1.5 border-b nier-border-primary cursor-pointer group"
                   @click.stop="onNoteClick(trade.id, note.id)"
@@ -705,6 +705,31 @@ const hasMethodLabel = (group: any[]) => {
 const getMethodLabel = (group: any[]) => {
   const exec = group.find(item => String(item?.label || '').toUpperCase() !== 'SINGLE')
   return exec ? getNormalizedExecutionLabel(exec) : ''
+}
+
+const formatExecutionMetric = (value: unknown) => {
+  const number = Number(value)
+  return Number.isFinite(number) ? number.toFixed(2) : '—'
+}
+
+const getLatestNotes = (notes: any[]) => {
+  if (notes.length <= 2) return notes
+
+  const getNoteTime = (note: any) => {
+    const rawDate = note?.date || note?.createdAt || note?.timestamp
+    const time = rawDate instanceof Date ? rawDate.getTime() : new Date(rawDate || 0).getTime()
+    return Number.isFinite(time) ? time : 0
+  }
+
+  return notes
+    .map((note, index) => ({ note, index }))
+    .sort((a, b) => {
+      const timeDifference = getNoteTime(b.note) - getNoteTime(a.note)
+      return timeDifference !== 0 ? timeDifference : b.index - a.index
+    })
+    .slice(0, 2)
+    .sort((a, b) => a.index - b.index)
+    .map(({ note }) => note)
 }
 
 const formatExecutionRow = (exec: any) => {
