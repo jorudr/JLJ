@@ -21,15 +21,14 @@
 
     <!-- ── LANGUAGE SWITCH (top-left) ── -->
     <div
-      v-if="shouldShowAuthLanguageSwitch"
-      class="fixed left-8 top-16 z-[100] flex items-center border border-theme-border bg-theme-bg/30 backdrop-blur-sm"
+      class="fixed left-8 top-8 z-[100] flex items-center gap-4"
       role="group"
       :aria-label="locale === 'ru' ? 'Смена языка' : 'Language switcher'"
     >
       <button
         type="button"
-        class="px-3 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
-        :class="locale === 'ru' ? 'bg-theme-text text-theme-bg opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
+        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
+        :class="locale === 'ru' ? 'text-theme-text font-bold opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
         :aria-pressed="locale === 'ru'"
         @click="setLocale('ru')"
       >
@@ -37,8 +36,8 @@
       </button>
       <button
         type="button"
-        class="border-l border-theme-border px-3 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
-        :class="locale === 'en' ? 'bg-theme-text text-theme-bg opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
+        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
+        :class="locale === 'en' ? 'text-theme-text font-bold opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
         :aria-pressed="locale === 'en'"
         @click="setLocale('en')"
       >
@@ -51,7 +50,7 @@
 	      <button
 	        v-if="isAuthenticated && phase === 'auth'"
 	        @click="doSignOut"
-	        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
+	        class="fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
 	      >Sign_Out</button>
     </Transition>
 
@@ -286,8 +285,8 @@ const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const isGradflowReady = ref(false)
 const primaryButtonStyle = computed(() => ({
-  background: 'var(--theme-text)',
-  color: 'var(--theme-bg)'
+  background: isDark.value ? '#F6F0E6' : 'var(--theme-text)',
+  color: isDark.value ? '#0A0A0A' : 'var(--theme-bg)'
 }))
 const activeTabStyle = computed(() => ({
   ...primaryButtonStyle.value,
@@ -297,11 +296,6 @@ const activeTabStyle = computed(() => ({
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAuthResolving = computed(() => phase.value === 'auth' && !authStore.authReady)
-const shouldShowAuthLanguageSwitch = computed(() => (
-  phase.value === 'auth' &&
-  authStore.authReady &&
-  !isAuthenticated.value
-))
 
 // ── Auth state ──
 const authTab = ref<'login' | 'register'>('login')
