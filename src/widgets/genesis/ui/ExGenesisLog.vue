@@ -3,7 +3,7 @@
     
     
 
-    <div v-if="!showNodeMap && !isTradeEntryOpen" class="contents">
+    <div v-if="!showTimeTreeTradeDetails && !showNodeMap && !isTradeEntryOpen" class="contents">
 
       <!-- CANVAS LAYER (Shared) -->
       <canvas v-show="viewType === 'cube'"
@@ -120,7 +120,7 @@
                         :key="trade.id"
                         class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
                         :class="group.side === 'left' ? 'text-right' : 'text-left'"
-                        @click="handleTimeTreeTradeClick({ tradeId: trade.id })"
+                        @click="handleTimeTreeTradeClick({ tradeId: trade.id, event: $event })"
                       >
                         <div
                           class="flex min-w-0 items-center justify-between gap-4"
@@ -372,7 +372,7 @@
       </Teleport>
 
       <div
-        v-if="timeTreeTradeDetailsOpen"
+        v-if="false"
       class="absolute inset-0 z-[10020] flex items-center justify-center bg-black/20 p-4 backdrop-blur-[2px] dark:bg-black/45 md:p-8"
       @click.self="closeTimeTreeTradeDetails"
     >
@@ -439,6 +439,12 @@
             </ExPanel>
       </div>
     </div>
+
+    <ExTimeTreeTradeEntry
+      v-if="showTimeTreeTradeDetails"
+      class="absolute inset-0 z-[2000]"
+      :is-dark="isDark"
+    />
 
     <!-- NODE MAP VISUALIZATION OVERLAY -->
     <ExTacticalNodeMap 
@@ -1234,6 +1240,7 @@ import globalAssets from '~/shared/data/global_assets.json'
 import { getIconForAsset } from '~/shared/api/asset.service'
 import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
+import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
@@ -1422,7 +1429,7 @@ const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
 const selectedTradeId = ref<string | null>(null)
-const tradeContextMenu = ref<{ x: number; y: number; tradeId: string } | null>(null)
+const tradeContextMenu = ref<{ x: number; y: number; tradeId: string; source: 'canvas' | 'timeTree' } | null>(null)
 const editingTrade = ref<any>(undefined)
 const tradeEntryRef = ref<any>(null)
 const isTradeEntryCloseModeActive = ref(true)
@@ -1568,6 +1575,7 @@ const currentTradesForList = computed(() => {
 
 const timeTreeFilteredTrades = ref<any[] | null>(null)
 const timeTreeSelectedTradeId = ref<string | null>(null)
+const showTimeTreeTradeDetails = ref(false)
 
 const enterTimeTreeFullscreen = () => {
   if (viewType.value !== 'timeTree') return
@@ -1582,11 +1590,19 @@ const exitTimeTreeFullscreen = () => {
 const handleTimeTreeFullscreenKeydown = (e: KeyboardEvent) => {
   if (e.key !== 'Escape') return
 
-  if (timeTreeTradeDetailsOpen.value) {
+  if (showTimeTreeTradeDetails.value) {
     e.preventDefault()
     e.stopPropagation()
     e.stopImmediatePropagation()
     closeTimeTreeTradeDetails()
+    return
+  }
+
+  if (tradeContextMenu.value) {
+    e.preventDefault()
+    e.stopPropagation()
+    e.stopImmediatePropagation()
+    closeTradeContextMenu()
     return
   }
 
@@ -1619,13 +1635,29 @@ const selectedTimeTreeTrade = computed(() => {
 
 const timeTreeTradeDetailsOpen = computed(() => Boolean(selectedTimeTreeTrade.value))
 
-const handleTimeTreeTradeClick = (payload: { tradeId: string }) => {
+const handleTimeTreeTradeClick = (payload: { tradeId: string; event?: MouseEvent }) => {
   if (!payload?.tradeId) return
+  const event = payload.event
+  const viewportWidth = typeof window === 'undefined' ? 0 : window.innerWidth
+  const viewportHeight = typeof window === 'undefined' ? 0 : window.innerHeight
+  const menuWidth = 230
+  const menuHeight = 260
+  const x = event?.clientX ?? Math.max(16, viewportWidth / 2 - menuWidth / 2)
+  const y = event?.clientY ?? Math.max(16, viewportHeight / 2 - menuHeight / 2)
+
+  showTimeTreeTradeDetails.value = false
   timeTreeSelectedTradeId.value = String(payload.tradeId)
+  tradeContextMenu.value = {
+    x: Math.min(Math.max(8, x), Math.max(8, viewportWidth - menuWidth)),
+    y: Math.min(Math.max(8, y), Math.max(8, viewportHeight - menuHeight)),
+    tradeId: String(payload.tradeId),
+    source: 'timeTree'
+  }
 }
 
 const closeTimeTreeTradeDetails = () => {
   timeTreeSelectedTradeId.value = null
+  showTimeTreeTradeDetails.value = false
 }
 
 const editSelectedTimeTreeTrade = () => {
@@ -1675,13 +1707,22 @@ const getTradeForContextMenu = (tradeId: string) => {
 }
 
 const openTradeDetailsFromContextMenu = () => {
-  const tradeId = tradeContextMenu.value?.tradeId
+  const menu = tradeContextMenu.value
+  const tradeId = menu?.tradeId
   if (!tradeId) return
 
-  timeTreeSelectedTradeId.value = tradeId
+  if (menu.source === 'timeTree') {
+    timeTreeSelectedTradeId.value = tradeId
+    showTimeTreeTradeDetails.value = true
+    closeTradeContextMenu()
+    return
+  }
+
+  selectedTradeId.value = tradeId
   panelInitialPage.value = undefined
   panelInitialNoteId.value = undefined
   showExtraDetails.value = false
+  showNodeMap.value = true
   closeTradeContextMenu()
 }
 
@@ -4167,7 +4208,8 @@ const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } 
       tradeContextMenu.value = {
         x: event.clientX,
         y: event.clientY,
-        tradeId: nearest.id
+        tradeId: nearest.id,
+        source: 'canvas'
       }
     }
   }
