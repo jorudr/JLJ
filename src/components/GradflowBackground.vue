@@ -1,0 +1,96 @@
+<template>
+  <div class="gradflow-background" :class="{ 'is-ready': isReady }" aria-hidden="true">
+    <div ref="mountEl" class="gradflow-canvas"></div>
+  </div>
+</template>
+
+<script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+const props = defineProps({
+  config: {
+    type: Object,
+    default: undefined,
+  },
+  preset: {
+    type: String,
+    default: undefined,
+  },
+})
+
+const mountEl = ref(null)
+const isReady = ref(false)
+let reactRoot = null
+let readyFrame = null
+let hasAnnouncedReady = false
+
+const announceReady = () => {
+  if (hasAnnouncedReady) return
+
+  hasAnnouncedReady = true
+  isReady.value = true
+}
+
+const waitForCanvas = () => {
+  if (!mountEl.value || hasAnnouncedReady) return
+
+  const canvas = mountEl.value.querySelector('canvas')
+  if (canvas && canvas.width > 0 && canvas.height > 0) {
+    readyFrame = window.requestAnimationFrame(announceReady)
+    return
+  }
+
+  readyFrame = window.requestAnimationFrame(waitForCanvas)
+}
+
+onMounted(async () => {
+  if (!mountEl.value) return
+
+  const [{ createElement }, { createRoot }, { GradFlow }] = await Promise.all([
+    import('react'),
+    import('react-dom/client'),
+    import('gradflow'),
+  ])
+
+  if (!mountEl.value) return
+
+  reactRoot = createRoot(mountEl.value)
+  reactRoot.render(createElement(GradFlow, { config: props.config, preset: props.preset }))
+  waitForCanvas()
+})
+
+onBeforeUnmount(() => {
+  if (readyFrame !== null) window.cancelAnimationFrame(readyFrame)
+  reactRoot?.unmount()
+  reactRoot = null
+})
+</script>
+
+<style scoped>
+.gradflow-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: transparent;
+}
+
+.gradflow-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.gradflow-background.is-ready .gradflow-canvas {
+  opacity: 1;
+}
+
+.gradflow-canvas :deep(canvas) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+</style>

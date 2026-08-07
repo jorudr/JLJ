@@ -1,7 +1,7 @@
 <template>
   <div
     class="relative w-full min-h-screen overflow-x-hidden flex flex-col select-none transition-all duration-1000"
-    :class="isDark ? 'theme-dark bg-[#070708] text-white/80' : 'theme-light bg-[#FFFFFF] text-[#2c2c2a]'"
+    :class="isDark ? 'theme-dark bg-black text-white/80' : 'theme-light bg-[#FFFFFF] text-[#2c2c2a]'"
     style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Background Ambience -->
@@ -69,78 +69,77 @@
     </div>
 
     <!-- Hero Section (First Viewport) -->
-    <div class="w-full min-h-screen flex flex-col justify-between px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10 relative z-10">
+    <div class="hero-header relative z-10 flex w-full min-h-screen flex-col justify-between overflow-visible px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10">
+      <GradflowBackground class="hero-gradflow" preset="mystic" :config="gradflowConfig" />
+      <div class="hero-gradient-fade" aria-hidden="true"></div>
+
       <!-- Header / Top Bar -->
-      <header class="relative mx-auto flex w-full max-w-[1280px] items-center justify-between text-[10px] tracking-[0.3em]">
-        <!-- Left Section: App Name -->
-        <div class="flex items-center z-50">
-          <!-- App Name & Logo -->
-          <div class="flex items-center space-x-6 cursor-pointer">
-            <div class="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
-              <div class="absolute inset-0 border animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
-              <div class="absolute inset-1 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
-              <div class="w-1 h-1 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
-              <div class="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-              <div class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-            </div>
-            <span 
-              class="text-[12px] sm:text-[14px] tracking-[0.5em] font-light uppercase"
-              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-              style="font-family: 'Cormorant Garamond', serif;"
-            >
-              J.L.JÖRMUNGANDR
-            </span>
+        <header
+          class="fixed left-0 right-0 top-0 z-[100] flex w-full items-center justify-start px-6 pt-4 pb-4 text-[10px] tracking-[0.3em] sm:px-10 sm:pt-6 sm:pb-6"
+          :class="{ 'nav-open': isMegaMenuVisible }"
+        >
+        <div class="mx-auto flex w-full max-w-[1280px] items-center justify-start">
+          <!-- Left Section: App Name -->
+          <div class="flex items-center z-50">
+            <router-link to="/" class="nav-logo" aria-label="J.L.JÖRMUNGANDR home">
+              <div class="relative flex h-5 w-5 shrink-0 items-center justify-center sm:h-6 sm:w-6">
+                <div class="absolute inset-0 border border-black/40 animate-[spin_10s_linear_infinite]"></div>
+                <div class="absolute inset-1 border border-black/60 animate-[spin_6s_linear_infinite_reverse]"></div>
+                <div class="h-1 w-1 rotate-45 bg-black animate-pulse"></div>
+                <div class="absolute -left-0.5 -top-0.5 h-1.5 w-1.5 border-l border-t border-black"></div>
+                <div class="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 border-b border-r border-black"></div>
+              </div>
+            </router-link>
           </div>
 
-        </div>
-
-        <!-- Centered Navigation -->
-        <nav class="absolute left-1/2 hidden -translate-x-1/2 items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" style="font-family: 'Cormorant Garamond', serif;">
+          <!-- Primary Navigation -->
+          <nav class="ml-10 hidden items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" style="font-family: 'Cormorant Garamond', serif;">
           <a href="#"
              @mouseenter="showMegaMenu('products')" @mouseleave="hideMegaMenu"
-             class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+             class="nav-openai-font flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
             {{ t('landing.nav.products') }}
             <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'products'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </a>
           <a href="#"
              @mouseenter="showMegaMenu('useCases')" @mouseleave="hideMegaMenu"
-             class="flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
+             class="nav-openai-font flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
             {{ t('landing.nav.useCases') }}
             <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'useCases'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </a>
-          <router-link to="/pricing" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/philosophy" class="transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
-        </nav>
+          <router-link to="/pricing" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
+          <router-link to="/philosophy" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
+          </nav>
 
-        <!-- Right Section: Language Switcher -->
-        <div class="hidden items-center space-x-4 z-50 md:flex">
-          <button 
-            @click="setLocale('en')"
-            class="transition-colors hover:text-white/50 cursor-pointer"
-            :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
-          >
-            EN
-          </button>
-          <span :class="isDark ? 'text-white/30' : 'text-[#2c2c2a]/30'">/</span>
+          <!-- Right Section: Language Switcher -->
+          <div class="hidden items-center space-x-4 z-50 md:ml-auto md:flex">
           <button 
             @click="setLocale('ru')"
-            class="transition-colors hover:text-white/50 cursor-pointer"
+            class="nav-openai-font transition-colors hover:text-white/50 cursor-pointer"
             :class="locale === 'ru' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
-            RU
+            ru
+          </button>
+          <span class="nav-language-divider">/</span>
+          <button 
+            @click="setLocale('en')"
+            class="nav-openai-font transition-colors hover:text-white/50 cursor-pointer"
+            :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
+          >
+            en
+          </button>
+          </div>
+
+          <button
+            type="button"
+            class="mobile-menu-trigger z-50 ml-auto cursor-pointer md:hidden"
+            aria-label="Open navigation"
+            :aria-expanded="isMobileMenuOpen"
+            @click="toggleMobileMenu"
+          >
+            <span></span>
+            <span></span>
           </button>
         </div>
-
-        <button
-          type="button"
-          class="mobile-menu-trigger z-50 cursor-pointer md:hidden"
-          aria-label="Open navigation"
-          :aria-expanded="isMobileMenuOpen"
-          @click="toggleMobileMenu"
-        >
-          <span></span>
-          <span></span>
-        </button>
       </header>
 
       <div v-if="isMobileMenuOpen" class="mobile-menu md:hidden" @click.self="closeMobileMenu">
@@ -152,7 +151,7 @@
 
           <nav class="mobile-menu__nav" aria-label="Mobile navigation">
             <div class="mobile-menu__group">
-              <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleMobileSection('products')">
+              <button type="button" class="mobile-menu__parent nav-openai-font cursor-pointer" @click="toggleMobileSection('products')">
                 <span>{{ t('landing.nav.products') }}</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
               </button>
@@ -169,7 +168,7 @@
             </div>
 
             <div class="mobile-menu__group">
-              <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleMobileSection('useCases')">
+              <button type="button" class="mobile-menu__parent nav-openai-font cursor-pointer" @click="toggleMobileSection('useCases')">
                 <span>{{ t('landing.nav.useCases') }}</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'useCases' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
               </button>
@@ -180,14 +179,14 @@
               </div>
             </div>
 
-            <router-link to="/pricing" class="mobile-menu__link" @click="closeMobileMenu">{{ t('landing.nav.pricing') }}</router-link>
-            <router-link to="/philosophy" class="mobile-menu__link" @click="closeMobileMenu">{{ t('landing.nav.philosophy') }}</router-link>
+            <router-link to="/pricing" class="mobile-menu__link nav-openai-font" @click="closeMobileMenu">{{ t('landing.nav.pricing') }}</router-link>
+            <router-link to="/philosophy" class="mobile-menu__link nav-openai-font" @click="closeMobileMenu">{{ t('landing.nav.philosophy') }}</router-link>
           </nav>
 
           <div class="mobile-menu__locale">
-            <button type="button" class="cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">EN</button>
+            <button type="button" class="nav-openai-font cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">ru</button>
             <span>/</span>
-            <button type="button" class="cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">RU</button>
+            <button type="button" class="nav-openai-font cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">en</button>
           </div>
         </div>
       </div>
@@ -196,9 +195,10 @@
       <div 
         @mouseenter="showMegaMenu"
         @mouseleave="hideMegaMenu"
-        class="absolute top-16 sm:top-20 left-0 w-full z-40 transition-all duration-500 overflow-hidden"
+        class="mega-menu-panel fixed top-14 left-0 z-40 w-full overflow-hidden transition-[opacity,transform] duration-500 sm:top-[72px]"
         :class="[
           isMegaMenuVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none',
+          isMegaMenuVisible ? 'mega-menu-panel--open bg-black' : 'bg-transparent',
           isDark ? 'text-white' : 'text-[#2c2c2a]'
         ]"
       >
@@ -300,11 +300,11 @@
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
           >
             <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
-              <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite]" :class="isDark ? 'border-white/40' : 'border-[#2c2c2a]/40'"></div>
-              <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse]" :class="isDark ? 'border-white/60' : 'border-[#2c2c2a]/60'"></div>
-              <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse" :class="isDark ? 'bg-white' : 'bg-[#2c2c2a]'"></div>
-              <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
-              <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2" :class="isDark ? 'border-white' : 'border-[#2c2c2a]'"></div>
+              <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite] border-black/40"></div>
+              <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse] border-black/60"></div>
+              <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse bg-black"></div>
+              <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2 border-black"></div>
+              <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2 border-black"></div>
             </div>
             <span 
               class="text-[18px] sm:text-[22px] tracking-[0.4em] font-light uppercase"
@@ -413,7 +413,7 @@
                 <span class="relative z-10">EXPLORE</span>
                 <span 
                   class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-0 transition-transform duration-300 ease-out z-0"
-                  :class="isDark ? 'bg-[#070708]' : 'bg-[#f8f9fa]'"
+                  :class="isDark ? 'bg-black' : 'bg-[#f8f9fa]'"
                 ></span>
               </button>
             </div>
@@ -560,8 +560,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import GradflowBackground from './GradflowBackground.vue'
 
 const { t, locale, setLocale } = useI18n()
+
+const gradflowConfig = {
+  color1: { r: 2, g: 145, b: 135 },
+  color2: { r: 165, g: 249, b: 193 },
+  color3: { r: 153, g: 151, b: 231 },
+  speed: 0.5,
+  scale: 2,
+  type: 'smoke',
+  noise: 0.22,
+}
 
 const os = ref('unknown')
 
@@ -712,6 +723,114 @@ const scrollToFeatures = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
 
+@font-face {
+  font-family: "OpenAI Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2") format("woff2");
+}
+
+/* Keep the foreground readable over the light Gradflow hero. */
+.hero-header > header *,
+.hero-header > main *,
+.hero-header > .absolute:not(.gradflow-background):not(.mobile-menu) * {
+  color: #050505;
+}
+
+.hero-header > header {
+  background-color: #000;
+}
+
+.hero-header > header .nav-openai-font,
+.hero-header > header .nav-language-divider {
+  color: #f5f5f0 !important;
+  opacity: 1 !important;
+}
+
+.hero-header > header .nav-openai-font svg {
+  color: #f5f5f0 !important;
+  opacity: 1 !important;
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header .nav-openai-font svg path {
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header .nav-logo {
+  filter: invert(1);
+}
+
+.hero-gradflow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  height: 135%;
+}
+
+.hero-header {
+  padding-top: 56px;
+}
+
+.hero-gradient-fade {
+  position: absolute;
+  right: 0;
+  bottom: -35vh;
+  left: 0;
+  z-index: 1;
+  height: 70vh;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0, 0, 0, 0.98) 12%,
+    rgba(0, 0, 0, 0.86) 30%,
+    rgba(0, 0, 0, 0.56) 52%,
+    rgba(0, 0, 0, 0.22) 74%,
+    transparent 100%
+  );
+}
+
+.nav-openai-font {
+  font-family: "OpenAI Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
+  font-size: 0.95rem;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em;
+}
+
+.nav-logo {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mega-menu-panel--open,
+.mega-menu-panel--open * {
+  color: #f5f5f0 !important;
+}
+
+@media (min-width: 768px) {
+  .hero-header {
+    padding-top: 72px;
+  }
+
+  .hero-header > header.nav-open {
+    background-color: #000;
+  }
+
+  .hero-header > header.nav-open .nav-openai-font {
+    color: #f5f5f0 !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .hero-header > header.nav-open .nav-logo {
+    filter: invert(1);
+  }
+}
+
 /* Digital Grid Backgrounds */
 .grid-dark {
   background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
@@ -826,7 +945,7 @@ const scrollToFeatures = () => {
   inset: 0;
   z-index: 100;
   overflow-y: auto;
-  background: #070708;
+  background: #000;
   color: white;
 }
 
