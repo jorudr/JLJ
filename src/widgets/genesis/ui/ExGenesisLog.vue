@@ -817,6 +817,7 @@
           view-mode="list"
           :result-display-mode="listResultDisplayMode"
           :color-mode="listColorMode"
+          @filtered-trades-change="handleTimeTreeFilteredTrades"
         />
       </ExPanel>
     </div>
@@ -2736,6 +2737,8 @@ const availableAssets = computed(() => {
 })
 
 const filteredTrades = computed(() => {
+  if (timeTreeFilteredTrades.value) return timeTreeFilteredTrades.value
+
   return currentTrades.value.filter(t => {
     // Side Filter
     if (filterSide.value !== 'ALL' && t.side !== filterSide.value) return false
