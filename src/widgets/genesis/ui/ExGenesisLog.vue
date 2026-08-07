@@ -66,7 +66,7 @@
       </div>
 
       <div
-        v-if="viewType === 'list' || viewType === 'timeTree'"
+        v-if="viewType === 'timeTree'"
         class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
         :class="[
           showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : '',
@@ -82,39 +82,8 @@
               ? 'px-0 py-8 md:px-0 md:py-10'
               : 'px-8 py-14 md:px-16 md:py-20'"
         >
-          <div v-if="!isTimeTreeFullscreen && viewType === 'list'" class="mb-5 shrink-0">
-            <ExVerticalTradeList
-              :trades="currentTradesForList"
-              :filters-only="true"
-              view-mode="list"
-              :result-display-mode="listResultDisplayMode"
-              :color-mode="listColorMode"
-              @list-view-mode-change="setListViewMode"
-              @display-settings-change="handleListDisplaySettingsChange"
-              @filtered-trades-change="handleTimeTreeFilteredTrades"
-            />
-          </div>
-
           <Transition name="page-reify" mode="out-in">
             <div
-              v-if="viewType === 'list'"
-              key="vertical-list-content"
-              class="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-4 pb-40 md:px-8 md:pb-48"
-            >
-              <ExVerticalTradeList
-                :trades="timeTreeSourceTrades"
-                :hide-filters="true"
-                view-mode="list"
-                :result-display-mode="listResultDisplayMode"
-                :color-mode="listColorMode"
-                @display-settings-change="handleListDisplaySettingsChange"
-                @open-note="handleOpenNote"
-                @open-trade="handleOpenTrade"
-              />
-            </div>
-
-            <div
-              v-else
               key="time-tree-content"
               class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-32"
               :class="isTimeTreeFullscreen ? 'time-tree-scroll--fullscreen' : ''"
@@ -221,7 +190,7 @@
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExGenesisTree @open-trade-archive="handleTreeOpenTrade" />
+        <ExGenesisTree />
       </div>
 
       <!-- PNL DISTRIBUTION LAYER -->
@@ -418,174 +387,6 @@
       </div>
     </div>
 
-    <!-- TACTICAL PROTOCOL INSIGHT (FIXED RIGHT - ARCHIVE) -->
-    <Teleport to="body">
-       <Transition name="panel-slide" mode="out-in">
-          <div v-if="selectedTrade && !showExtraDetails && !showNodeMap && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'tree'" 
-               key="trade-archive-insight"
-               class="fixed right-12 top-1/2 -translate-y-1/2 w-[440px] z-[10005] transition-colors duration-500 shadow-[16px_16px_0_0_rgba(0,0,0,0.25)] dark:shadow-[16px_16px_0_0_rgba(0,0,0,0.5)]">
-             
-             <!-- CLOSE HANDLE (LEFT EDGE) -->
-             <button @click="selectedTradeId = null"
-                     class="absolute -left-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-l border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors">
-               <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 -rotate-90 whitespace-nowrap">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.closeArchive')) }}</span>
-             </button>
- 
-             <ExPanel 
-               class="!bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
-               :no-shadow="true"
-               :title="formatArchivalFunctionalLabel(t('genesis.virtualLog.archivalRecord'))"
-               :show-corners="true"
-               variant="light"
-             >
-               <div class="flex flex-col space-y-6 p-6">
-                 <div class="flex items-center space-x-6">
-                    <div v-if="assetIcon && !imageLoadError" class="w-16 h-16 border nier-border-primary flex items-center justify-center bg-white p-2 shadow-inner">
-                      <img :src="assetIcon" class="w-full h-full object-contain" @error="imageLoadError = true" />
-                    </div>
-                    <div v-else class="w-16 h-16 border nier-border-primary flex items-center justify-center bg-black/5 dark:bg-white/5 shadow-inner">
-                      <span class="text-2xl font-black opacity-20 font-mono nier-text-primary uppercase">{{ selectedTrade?.asset?.slice(0, 2) }}</span>
-                    </div>
-                   <div class="flex flex-col">
-                     <h3 class="text-3xl font-light font-serif tracking-[0.2em] uppercase nier-text-primary mt-1 leading-none">
-                       {{ selectedTrade?.asset }}
-                     </h3>
-                   </div>
-                 </div>
-                 
-                 <div v-if="selectedTrade && isClosedDiaryTrade(selectedTrade)" class="flex items-baseline space-x-3">
-                   <span class="text-4xl font-bold font-mono tracking-tighter bg-clip-text text-transparent"
-                         :class="(Number(selectedTrade.profitInCurrency) || 0) >= 0 ? 'bg-gradient-to-br from-green-500 to-green-300 dark:from-green-400 dark:to-green-600' : 'bg-gradient-to-br from-red-500 to-red-300 dark:from-red-400 dark:to-red-600'">
-                     {{ (Number(selectedTrade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(selectedTrade.profitInCurrency) || 0).toFixed(2) }}
-                   </span>
-                   <span class="text-xl font-bold font-mono tracking-widest opacity-80"
-                         :class="(Number(selectedTrade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-                     {{ (Number(selectedTrade.profitInCurrency) || 0) >= 0 ? '+' : '' }}{{ (((Number(selectedTrade.profitInCurrency) || 0) / Math.max(1, selectedTradeBalanceBefore)) * 100).toFixed(3) }}%
-                   </span>
-                 </div>
-                 <div v-else-if="selectedTrade" class="flex items-baseline space-x-3">
-                   <span class="text-3xl font-bold font-mono tracking-[0.18em] uppercase text-amber-500/80">
-                     {{ openTradeText() }}
-                   </span>
-                 </div>
-                  <div class="h-px w-full bg-gradient-to-r from-black/10 via-transparent to-transparent dark:from-white/10"></div>
-
-                  <!-- TACTICAL DATA GRID -->
-                  <div class="grid grid-cols-2 gap-x-8 gap-y-8 px-6 pb-6 mt-4">
-                    <!-- ENTRY -->
-                    <div class="flex flex-col">
-                      <span v-if="hasMultipleEntries" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ ВХОД' : 'AVERAGE ENTRY' }}</span>
-                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.entryPrice')) }}</span>
-                      <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.entry)">{{ formatFullPrice(selectedTrade?.entry) }}</span>
-                      <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ formatFullDate(selectedTrade?.date).replace('\n', ' // ') }}</span>
-                    </div>
-
-                    <!-- EXIT -->
-                    <div class="flex flex-col">
-                      <span v-if="hasMultipleExits" class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'СРЕДНИЙ ВЫХОД' : 'AVERAGE EXIT' }}</span>
-                      <span v-else class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.exitPrice')) }}</span>
-                      <span class="font-mono font-bold nier-text-primary mt-2 leading-none" :class="getDynamicPriceClass(selectedTrade?.exit)">{{ isClosedDiaryTrade(selectedTrade) ? formatFullPrice(selectedTrade?.exit) : '—' }}</span>
-                      <span class="text-[12px] font-mono opacity-50 nier-text-primary mt-2 leading-tight uppercase">{{ isClosedDiaryTrade(selectedTrade) ? formatFullDate(selectedTrade?.dateExit).replace('\n', ' // ') : openTradeText() }}</span>
-                    </div>
-
-                    <div v-if="selectedTradeTimeZone" class="col-span-2 flex justify-start">
-                      <span class="max-w-full truncate text-left text-[10px] font-mono font-black uppercase tracking-[0.22em] opacity-45 nier-text-primary">
-                        {{ formatTradeTimeZone(selectedTrade) }}
-                      </span>
-                    </div>
-
-                    <!-- RISK MANAGEMENT -->
-                    <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.riskExposure')) }}</span>
-                      <div class="flex flex-col mt-2 space-y-2">
-                        <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.stopLoss')) }}</span>
-                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.stopLoss) }}</span>
-                        </div>
-                        <div class="flex items-baseline justify-between">
-                          <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.takeProfit')) }}</span>
-                          <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatOptionalTradePrice(selectedTrade?.takeProfit) }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- PERFORMANCE -->
-                    <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.tradeMetrics')) }}</span>
-                      <div class="flex flex-col mt-2 space-y-2">
-                         <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'НАПР.' : 'DIRECTION' }}</span>
-                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">{{ formatTradeDirection(selectedTrade) }}</span>
-                         </div>
-                         <div class="flex items-baseline justify-between">
-                           <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.rrRatio')) }}</span>
-                           <span class="text-sm font-mono font-bold nier-text-primary tracking-widest">1:{{ calculateRR(selectedTrade) }}</span>
-                         </div>
-                      </div>
-                    </div>
-
-                    <!-- COMMISSIONS -->
-                    <div class="flex flex-col pt-4 border-t border-black/5 dark:border-white/5 col-span-2" v-if="selectedTrade?.entryFee || selectedTrade?.exitFee">
-                      <span class="text-[8px] font-mono opacity-40 uppercase tracking-[0.4em] nier-text-primary">{{ locale === 'ru' ? 'КОМИССИИ' : 'COMMISSIONS' }}</span>
-                      <div class="flex mt-2 space-x-8">
-                         <div class="flex flex-col flex-1 space-y-1">
-                            <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'ВХОДНАЯ' : 'ENTRY' }}</span>
-                            <span class="text-sm font-mono font-bold text-amber-500/80 tracking-widest">{{ getEntryFeeDisplay(selectedTrade) }}</span>
-                         </div>
-                         <div class="flex flex-col flex-1 space-y-1">
-                            <span class="text-[8px] font-mono opacity-30 nier-text-primary uppercase">{{ locale === 'ru' ? 'ВЫХОДНАЯ' : 'EXIT' }}</span>
-                            <span class="text-sm font-mono font-bold text-amber-500/80 tracking-widest">{{ getExitFeeDisplay(selectedTrade) }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- DURATION -->
-                    <div class="col-span-2 flex flex-col items-center justify-center border-t border-black/5 pt-4 text-center dark:border-white/5">
-                      <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-40 nier-text-primary">{{ formatArchivalFunctionalLabel(t('genesis.virtualLog.duration')) }}</span>
-                      <span class="mt-2 inline-flex max-w-full flex-wrap items-baseline justify-center gap-x-2 gap-y-1 break-words text-center text-base font-mono font-black tracking-[0.22em] nier-text-primary">
-                        {{ calculateDuration(selectedTrade) }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <template #footer>
-                  <div class="flex items-center space-x-2 w-full">
-                    <ExButton 
-                      variant="ghost" 
-                      class="flex-1" 
-                      @click="openNodeMap"
-                    >
-                       {{ formatArchivalFunctionalLabel(t('genesis.virtualLog.showDetails')) }}
-                    </ExButton>
-                    <ExButton 
-                      variant="solid" 
-                      class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
-                      @click="editTrade(selectedTrade)"
-                    >
-                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                       </svg>
-                    </ExButton>
-                    <ExButton 
-                      variant="solid" 
-                      class="!w-[38px] !h-[38px] !p-0 shrink-0 flex items-center justify-center" 
-                      @click="showShareCardModal = true"
-                    >
-                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                         <polyline points="16 6 12 2 8 6" />
-                         <line x1="12" y1="2" x2="12" y2="15" />
-                       </svg>
-                    </ExButton>
-                  </div>
-                </template>
-              </ExPanel>
-          </div>
-       </Transition>
-    </Teleport>
-    
     <!-- NODE MAP VISUALIZATION OVERLAY -->
     <ExTacticalNodeMap 
       v-if="showNodeMap" 
@@ -997,25 +798,9 @@
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
-          :class="viewType === 'list' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
-          :aria-label="locale === 'ru' ? 'Список сделок' : 'List of trades'"
-          @click="setListViewMode('list')"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
-            <path d="M5 6h14M5 12h14M5 18h14" />
-            <circle cx="3" cy="6" r=".8" fill="currentColor" />
-            <circle cx="3" cy="12" r=".8" fill="currentColor" />
-            <circle cx="3" cy="18" r=".8" fill="currentColor" />
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СПИСОК_СДЕЛОК' : 'LIST_OF_TRADES' }} ]</span>
-        </button>
-
-        <button
-          type="button"
-          class="group relative flex h-10 w-10 items-center justify-center border transition-all"
           :class="viewType === 'timeTree' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           :aria-label="locale === 'ru' ? 'Временное дерево' : 'Time tree'"
-          @click="setListViewMode('timeTree')"
+          @click="viewType = 'timeTree'"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
             <path d="M12 4v5M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M6 15v3M18 15v3" />
@@ -1422,7 +1207,6 @@ const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
 const numberLocale = computed(() => locale.value === 'ru' ? 'ru-RU' : 'en-US')
 const openTradeText = () => locale.value === 'ru' ? 'НЕЗАКР. СД.' : 'OPEN TRD.'
-const formatArchivalFunctionalLabel = (value: string) => value.replace(/_/g, ' ')
 const authStore = useAuthStore()
 const {
   nodes: matrixStateNodes,
@@ -1544,27 +1328,6 @@ const tradeNetResult = computed(() => {
   return `${sign}$${absProfit}`
 })
 
-const hasMultipleEntries = computed(() => {
-  if (!selectedTrade.value || !selectedTrade.value.executions) return false
-  return selectedTrade.value.executions.filter((e: any) => e.type === 'entry').length > 1
-})
-
-const hasMultipleExits = computed(() => {
-  if (!selectedTrade.value || !selectedTrade.value.executions) return false
-  return selectedTrade.value.executions.filter((e: any) => e.type === 'exit').length > 1
-})
-
-const methodLabels = computed(() => {
-  if (!selectedTrade.value || !selectedTrade.value.executions) return []
-  const labels = new Set<string>()
-  selectedTrade.value.executions.forEach((e: any) => {
-    if (e.label && e.label !== 'SINGLE') {
-      labels.add(e.label.replace('_DOWN', ''))
-    }
-  })
-  return Array.from(labels)
-})
-
 const downloadCardPng = async () => {
   const cardElement = document.querySelector('#share-card-export-target') as HTMLElement
   if (!cardElement) return
@@ -1597,7 +1360,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'list' | 'timeTree' | 'distribution' | 'tree'>('cube')
+const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('cube')
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
@@ -1632,8 +1395,6 @@ const showFiltersPanel = ref(false)
 const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
-const imageLoadError = ref(false)
-
 const closeTradeEntryPanels = () => {
   tradeEntryRef.value?.closePanels?.()
   activeTradeEntryPanel.value = null
@@ -1711,11 +1472,6 @@ const handleOpenTrade = (payload: { tradeId: string }) => {
   emit('openTrade', payload)
 }
 
-const handleTreeOpenTrade = (trade: { id?: string }) => {
-  if (!trade?.id) return
-  handleOpenTrade({ tradeId: trade.id })
-}
-
 watch(showNodeMap, (val) => {
   emit('nodeMapState', val)
 })
@@ -1736,66 +1492,6 @@ const formatFullDate = (d: any) => {
   return `${datePart}\n${timePart}`
 }
 
-const getTradeTimeZone = (trade: any) => {
-  return String(trade?.timeZone || trade?.timezone || '').trim()
-}
-
-const getTimeZoneOffsetLabel = (timeZone: string, dateLike?: any) => {
-  const zone = String(timeZone || '').trim()
-  if (!zone) return ''
-  try {
-    const date = dateLike ? new Date(dateLike) : new Date()
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: zone,
-      timeZoneName: 'shortOffset'
-    }).formatToParts(Number.isNaN(date.getTime()) ? new Date() : date)
-    return parts.find(part => part.type === 'timeZoneName')?.value || ''
-  } catch (e) {
-    return ''
-  }
-}
-
-const selectedTradeTimeZone = computed(() => getTradeTimeZone(selectedTrade.value))
-
-const formatTradeTimeZone = (trade: any) => {
-  const zone = getTradeTimeZone(trade)
-  if (!zone) return ''
-  const offset = getTimeZoneOffsetLabel(zone, trade?.date || trade?.dateExit)
-  return offset ? `${zone} (${offset})` : zone
-}
-
-const formatFullPrice = (value: unknown) => {
-  if (value === undefined || value === null || value === '') return '0'
-  const number = Number(value)
-  if (!Number.isFinite(number)) return String(value)
-  return Number.isInteger(number) ? String(number) : number.toString()
-}
-
-const formatOptionalTradePrice = (value: unknown) => {
-  if (value === undefined || value === null || value === '') return '—'
-  const number = Number(value)
-  if (!Number.isFinite(number) || number === 0) return '—'
-  return Number.isInteger(number) ? String(number) : number.toString()
-}
-
-const formatTradeDirection = (trade: any) => {
-  const rawDirection = String(trade?.side || trade?.direction || '').trim().toLowerCase()
-  const isShort = rawDirection.includes('short') || rawDirection.includes('sell')
-  return locale.value === 'ru'
-    ? (isShort ? 'КОРОТКАЯ' : 'ДЛИННАЯ')
-    : (isShort ? 'SHORT' : 'LONG')
-}
-
-const getDynamicPriceClass = (price: unknown) => {
-  const str = formatFullPrice(price)
-  const len = str.length
-  if (len > 14) return 'text-[10px]'
-  if (len > 11) return 'text-xs'
-  if (len > 8) return 'text-sm'
-  if (len > 6) return 'text-base'
-  return 'text-xl'
-}
-
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
 
 const isClosedDiaryTrade = (trade: any) => trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open'
@@ -1814,10 +1510,6 @@ const currentTradesForList = computed(() => {
 
 const timeTreeFilteredTrades = ref<any[] | null>(null)
 const timeTreeSelectedTradeId = ref<string | null>(null)
-
-const setListViewMode = (mode: 'list' | 'timeTree') => {
-  viewType.value = mode
-}
 
 const enterTimeTreeFullscreen = () => {
   if (viewType.value !== 'timeTree') return
@@ -2709,85 +2401,6 @@ const calculateRR = (trade: any) => {
   return (reward / risk).toFixed(2)
 }
 
-const FEE_FALLBACK_RATES: Record<string, number> = {
-  EUR: 0.92,
-  GBP: 0.78,
-  JPY: 155,
-  AUD: 1.53,
-  CAD: 1.37,
-  CHF: 0.90,
-  NZD: 1.66
-}
-
-const getFeeConversionRate = (currency: string) => {
-  const normalized = String(currency || 'USD').toUpperCase()
-  if (normalized === 'USD') return 1
-  try {
-    const cached = typeof localStorage !== 'undefined'
-      ? JSON.parse(localStorage.getItem('genesis_forex_rates') || '{}')
-      : {}
-    const cachedRate = Number(cached?.[normalized])
-    if (Number.isFinite(cachedRate) && cachedRate > 0) return cachedRate
-  } catch (error) {}
-  return FEE_FALLBACK_RATES[normalized] || 1
-}
-
-const resolveTradeAssetData = (trade: any) => {
-  const variants = getAssetSymbolVariants(trade?.asset || trade?.symbol || trade?.ticker)
-  return (globalAssets as any[]).find((asset) => {
-    const symbol = normalizeAssetSymbol(asset?.symbol)
-    const name = normalizeAssetSymbol(asset?.name)
-    const compactSymbol = symbol.replace(/[^A-Z0-9]/g, '')
-    return variants.has(symbol) || variants.has(name) || variants.has(compactSymbol)
-  })
-}
-
-const getExecutionSizeForFee = (trade: any, executionType: 'entry' | 'exit') => {
-  const executions = Array.isArray(trade?.executions) ? trade.executions : []
-  const executionSize = executions
-    .filter((execution: any) => String(execution?.type || '').toLowerCase() === executionType)
-    .reduce((sum: number, execution: any) => {
-      const size = Number(execution?.size)
-      return sum + (Number.isFinite(size) && size > 0 ? size : 0)
-    }, 0)
-
-  if (executionSize > 0) return executionSize
-
-  const size = Number(trade?.size)
-  return Number.isFinite(size) && size > 0 ? size : 0
-}
-
-const formatFeeCurrency = (value: number) => {
-  if (!Number.isFinite(value)) return '0$'
-  return `${parseFloat(value.toFixed(8)).toString()}$`
-}
-
-const getTradeFeeDisplay = (trade: any, side: 'entry' | 'exit') => {
-  const rawFee = Number(side === 'entry' ? trade?.entryFee : trade?.exitFee)
-  if (!trade || !Number.isFinite(rawFee) || rawFee <= 0) return '0$'
-  if (trade.feeType !== '%') return formatFeeCurrency(rawFee)
-
-  const price = Number(side === 'entry' ? trade?.entry : trade?.exit)
-  const size = getExecutionSizeForFee(trade, side)
-  if (!Number.isFinite(price) || price <= 0 || size <= 0) return '0$'
-
-  const assetData = resolveTradeAssetData(trade)
-  let notional = price * size
-  if (assetData?.contractSize) {
-    notional *= Number(assetData.contractSize) || 1
-    const assetCurrency = String(assetData.currency || 'USD').toUpperCase()
-    if (assetCurrency !== 'USD') {
-      notional /= getFeeConversionRate(assetCurrency)
-    }
-  }
-
-  return formatFeeCurrency((notional * rawFee) / 100)
-}
-
-const getEntryFeeDisplay = (trade: any) => getTradeFeeDisplay(trade, 'entry')
-
-const getExitFeeDisplay = (trade: any) => getTradeFeeDisplay(trade, 'exit')
-
 const calculateDuration = (trade: any) => {
   if (!trade || !trade.date || !trade.dateExit) return t('genesis.virtualLog.notAvailable')
   const start = new Date(trade.date).getTime()
@@ -3107,52 +2720,6 @@ const selectedTrade = computed(() => {
   return currentTrades.value.find(t => t.id === selectedTradeId.value) ||
     currentTradesForList.value.find(t => t.id === selectedTradeId.value) ||
     null
-})
-
-const toCashPnl = (trade: any) => {
-  const val = Number(trade?.profitInCurrency ?? trade?.pnl ?? 0);
-  return Number.isFinite(val) ? val : 0;
-};
-
-const selectedTradeBalanceBefore = computed(() => {
-  if (!selectedTrade.value) return 1000;
-  
-  const strategyId = selectedTrade.value.strategyId || selectedStrategyId.value;
-  const currentEntryTs = new Date(selectedTrade.value.date || (selectedTrade.value as any).entryTime || selectedTrade.value.dateExit || Date.now()).getTime();
-  const currentTradeId = selectedTrade.value.id;
-  const startBalance = tradeStore.getInitialDeposit(strategyId) || 1000;
-  
-  const priorTrades = closedCurrentTrades.value
-    .filter((trade: any) => {
-      if (currentTradeId && trade?.id === currentTradeId) return false;
-      const tradeExitTs = new Date(trade?.dateExit || trade?.date || 0).getTime();
-      return tradeExitTs > 0 && tradeExitTs < currentEntryTs;
-    })
-    .sort((a: any, b: any) => {
-      const aTs = new Date(a?.dateExit || a?.date || 0).getTime();
-      const bTs = new Date(b?.dateExit || b?.date || 0).getTime();
-      return aTs - bTs;
-    });
-    
-  return priorTrades.reduce((balance: number, trade: any) => balance + toCashPnl(trade), startBalance);
-});
-
-watch(selectedTradeId, () => {
-  imageLoadError.value = false
-})
-
-const assetIcon = computed(() => {
-  const trade = selectedTrade.value
-  if (!trade) return null
-  
-  const assetName = trade.asset || ""
-  const assetData = (globalAssets as any[]).find(a => 
-    a.symbol.toUpperCase() === assetName.toUpperCase() ||
-    a.name.toUpperCase() === assetName.toUpperCase()
-  )
-  
-  if (assetData?.icon) return assetData.icon
-  return getIconForAsset(assetName, trade.assetType || 'Crypto')
 })
 
 // --- 3D MATH TYPES --- //
