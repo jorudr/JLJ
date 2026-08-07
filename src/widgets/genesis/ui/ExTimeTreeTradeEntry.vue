@@ -4,11 +4,67 @@ import { useI18n } from '~/shared/i18n/useI18n'
 
 const props = defineProps<{
   isDark?: boolean
+  trade?: Record<string, any> | null
 }>()
 
 const { locale } = useI18n()
-const activeEntryFormTab = ref<'main' | 'risk' | 'time'>('main')
+const activeEntryFormTab = ref<'main' | 'advanced' | 'notes' | 'images'>('main')
 const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
+
+const displayValue = (value: unknown) => value === null || value === undefined || value === '' ? '--' : String(value)
+
+const formatPrice = (value: unknown) => {
+  if (value === null || value === undefined || value === '') return '--'
+  const number = Number(value)
+  return Number.isFinite(number) ? number.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 8 }) : String(value)
+}
+
+const formatDateValue = (value: unknown) => {
+  if (!value) return '--'
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) return displayValue(value)
+  return date.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatDuration = () => {
+  if (props.trade?.tradeDuration) return String(props.trade.tradeDuration)
+  const start = new Date(String(props.trade?.date || '')).getTime()
+  const end = new Date(String(props.trade?.dateExit || '')).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return '--'
+  const minutes = Math.round((end - start) / 60000)
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return locale.value === 'ru'
+    ? `${hours ? `${hours} ч ` : ''}${remainder} мин`
+    : `${hours ? `${hours}h ` : ''}${remainder}m`
+}
+
+const formatRiskReward = () => {
+  if (props.trade?.riskReward !== undefined && props.trade?.riskReward !== null && props.trade?.riskReward !== '') {
+    return formatPrice(props.trade.riskReward)
+  }
+  const entry = Number(props.trade?.entry)
+  const stopLoss = Number(props.trade?.stopLoss)
+  const takeProfit = Number(props.trade?.takeProfit)
+  if (![entry, stopLoss, takeProfit].every(Number.isFinite) || entry === stopLoss) return '--'
+  return Math.abs((takeProfit - entry) / (entry - stopLoss)).toFixed(2)
+}
+
+const formatRiskPerTrade = () => {
+  const value = props.trade?.riskPerTrade ?? props.trade?.riskPerTradeValue ?? props.trade?.riskPercent
+  if (value === undefined || value === null || value === '') return '--'
+  return `${formatPrice(value)}${props.trade?.riskPerTradeUnit === '%' || props.trade?.riskPercent !== undefined ? '%' : ''}`
+}
+
+const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || props.trade?.ticker || '--').toUpperCase()
+const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
+const tradeAssetIcon = () => props.trade?.assetIcon || props.trade?.icon || ''
 
 const tradeEntryThemeStyle = computed(() => props.isDark
   ? {
@@ -91,22 +147,96 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
-                  :class="activeEntryFormTab === 'risk' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
-                  @click="activeEntryFormTab = 'risk'"
+                  :class="activeEntryFormTab === 'advanced' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                  @click="activeEntryFormTab = 'advanced'"
                 >
-                  {{ locale === 'ru' ? 'РИСК-МЕНЕДЖМЕНТ' : 'RISK MANAGEMENT' }}
+                  {{ locale === 'ru' ? 'ПРОДВИНУТЫЕ' : 'ADVANCED' }}
                 </button>
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
-                  :class="activeEntryFormTab === 'time' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
-                  @click="activeEntryFormTab = 'time'"
+                  :class="activeEntryFormTab === 'notes' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                  @click="activeEntryFormTab = 'notes'"
                 >
-                  {{ locale === 'ru' ? 'ВРЕМЯ' : 'TIME' }}
+                  {{ locale === 'ru' ? 'ЗАМЕТКИ' : 'NOTES' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                  :class="activeEntryFormTab === 'images' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                  @click="activeEntryFormTab = 'images'"
+                >
+                  {{ locale === 'ru' ? 'КАРТИНКИ' : 'IMAGES' }}
                 </button>
               </div>
 
-              <section class="min-h-[420px] w-full" :aria-label="activeEntryFormTab"></section>
+              <section v-if="activeEntryFormTab === 'main'" class="flex w-full flex-col items-start gap-8">
+                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
+                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                  {{ locale === 'ru' ? 'РЕЗЮМЕ' : 'SUMMARY' }}
+                </h2>
+
+                <div class="grid w-full grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
+                    <div class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
+                      <span class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden border border-white/20 bg-white/5 p-1">
+                        <img v-if="tradeAssetIcon()" :src="tradeAssetIcon()" :alt="tradeAsset()" class="h-full w-full object-contain" />
+                        <span v-else class="text-[10px]">{{ tradeAsset().slice(0, 1) }}</span>
+                      </span>
+                      <span class="truncate">{{ tradeAsset() }}</span>
+                    </div>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'НАПРАВЛЕНИЕ' : 'DIRECTION' }}</span>
+                    <span
+                      class="mt-2 block text-xl font-mono font-black uppercase tracking-[0.16em]"
+                      :class="tradeDirection() === 'SHORT' || tradeDirection() === 'SELL' ? 'text-rose-400' : 'text-emerald-400'"
+                    >
+                      {{ tradeDirection() }}
+                    </span>
+                  </div>
+
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВХОДА' : 'ENTRY PRICE' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.entry) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВЫХОДА' : 'EXIT PRICE' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.exit) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВХОДА' : 'ENTRY TIME' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.date) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВЫХОДА' : 'EXIT TIME' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.dateExit) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ДЛИТЕЛЬНОСТЬ' : 'DURATION' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDuration() }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">STOP LOSS</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.stopLoss) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">TAKE PROFIT</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.takeProfit) }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskReward() }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК НА СДЕЛКУ' : 'RISK PER TRADE' }}</span>
+                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskPerTrade() }}</span>
+                  </div>
+                </div>
+              </section>
+
+              <section v-else class="min-h-[420px] w-full" :aria-label="activeEntryFormTab"></section>
             </div>
           </div>
         </div>

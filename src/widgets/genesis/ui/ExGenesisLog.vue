@@ -444,6 +444,7 @@
       v-if="showTimeTreeTradeDetails"
       class="absolute inset-0 z-[2000]"
       :is-dark="isDark"
+      :trade="selectedTimeTreeTradeForDetails"
     />
 
     <!-- NODE MAP VISUALIZATION OVERLAY -->
@@ -1575,6 +1576,7 @@ const currentTradesForList = computed(() => {
 
 const timeTreeFilteredTrades = ref<any[] | null>(null)
 const timeTreeSelectedTradeId = ref<string | null>(null)
+const selectedTimeTreeTradeForDetails = ref<Record<string, any> | null>(null)
 const showTimeTreeTradeDetails = ref(false)
 
 const enterTimeTreeFullscreen = () => {
@@ -1657,6 +1659,7 @@ const handleTimeTreeTradeClick = (payload: { tradeId: string; event?: MouseEvent
 
 const closeTimeTreeTradeDetails = () => {
   timeTreeSelectedTradeId.value = null
+  selectedTimeTreeTradeForDetails.value = null
   showTimeTreeTradeDetails.value = false
 }
 
@@ -1712,6 +1715,12 @@ const openTradeDetailsFromContextMenu = () => {
   if (!tradeId) return
 
   if (menu.source === 'timeTree') {
+    const trade = selectedTimeTreeTrade.value
+      || getTradeForContextMenu(tradeId)
+
+    selectedTimeTreeTradeForDetails.value = trade
+      ? { ...trade, assetIcon: trade.assetIcon || resolveTimeTreeAssetIcon(trade) }
+      : null
     timeTreeSelectedTradeId.value = tradeId
     showTimeTreeTradeDetails.value = true
     closeTradeContextMenu()
