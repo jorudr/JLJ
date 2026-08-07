@@ -151,7 +151,7 @@
                         :key="trade.id"
                         class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
                         :class="group.side === 'left' ? 'text-right' : 'text-left'"
-                        @click="handleOpenTrade({ tradeId: trade.id })"
+                        @click="handleTimeTreeTradeClick({ tradeId: trade.id })"
                       >
                         <div
                           class="flex min-w-0 items-center justify-between gap-4"
@@ -346,6 +346,75 @@
             </svg>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div
+      v-if="timeTreeTradeDetailsOpen"
+      class="absolute inset-0 z-[10020] flex items-center justify-center bg-black/20 backdrop-blur-[2px] dark:bg-black/45"
+      @click.self="closeTimeTreeTradeDetails"
+    >
+      <div class="relative flex min-h-[82vh] w-[calc(100%-2rem)] max-w-5xl max-h-[96vh] md:w-[calc(100%-4rem)]">
+          <ExPanel variant="light" title="trade-details" :no-padding="true" :show-corners="false" :no-shadow="true" class="!h-full !w-full overflow-hidden !border-black/15 dark:!border-white/15">
+              <div class="max-h-[calc(96vh-32px)] overflow-y-auto custom-scrollbar px-5 pb-5 md:px-8">
+                <ExVerticalTradeList
+                :trades="selectedTimeTreeTrade ? [selectedTimeTreeTrade] : []"
+                :details-only="true"
+                :hide-filters="true"
+                view-mode="list"
+                :result-display-mode="listResultDisplayMode"
+                  :color-mode="listColorMode"
+                />
+              </div>
+              <div class="flex items-center gap-2 border-t border-black/10 px-5 py-3 dark:border-white/10 md:px-7">
+                <ExButton
+                  variant="ghost"
+                  class="!flex-1 !px-3 !py-2 text-[9px] tracking-[0.18em]"
+                  @click="showSelectedTimeTreeTradeDetails"
+                >
+                  {{ locale === 'ru' ? 'Подробности' : 'Details' }}
+                </ExButton>
+                <ExButton
+                  variant="solid"
+                  class="!h-[38px] !w-[38px] !shrink-0 !p-0"
+                  :aria-label="locale === 'ru' ? 'Поделиться' : 'Share'"
+                  :title="locale === 'ru' ? 'Поделиться' : 'Share'"
+                  @click="shareSelectedTimeTreeTrade"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                </ExButton>
+                <ExButton
+                  variant="solid"
+                  class="!h-[38px] !w-[38px] !shrink-0 !p-0"
+                  :aria-label="locale === 'ru' ? 'Редактировать' : 'Edit'"
+                  :title="locale === 'ru' ? 'Редактировать' : 'Edit'"
+                  @click="editSelectedTimeTreeTrade"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </ExButton>
+                <ExButton
+                  variant="solid"
+                  class="!h-[38px] !w-[38px] !shrink-0 !border-red-600 !bg-red-600 !p-0 !text-white"
+                  :aria-label="locale === 'ru' ? 'Удалить' : 'Delete'"
+                  :title="locale === 'ru' ? 'Удалить' : 'Delete'"
+                  @click="removeSelectedTimeTreeTrade"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </ExButton>
+              </div>
+            </ExPanel>
       </div>
     </div>
 
@@ -1744,6 +1813,7 @@ const currentTradesForList = computed(() => {
 })
 
 const timeTreeFilteredTrades = ref<any[] | null>(null)
+const timeTreeSelectedTradeId = ref<string | null>(null)
 
 const setListViewMode = (mode: 'list' | 'timeTree') => {
   viewType.value = mode
@@ -1760,7 +1830,17 @@ const exitTimeTreeFullscreen = () => {
 }
 
 const handleTimeTreeFullscreenKeydown = (e: KeyboardEvent) => {
-  if (!isTimeTreeFullscreen.value || e.key !== 'Escape') return
+  if (e.key !== 'Escape') return
+
+  if (timeTreeTradeDetailsOpen.value) {
+    e.preventDefault()
+    e.stopPropagation()
+    e.stopImmediatePropagation()
+    closeTimeTreeTradeDetails()
+    return
+  }
+
+  if (!isTimeTreeFullscreen.value) return
   e.preventDefault()
   e.stopPropagation()
   e.stopImmediatePropagation()
@@ -1777,6 +1857,62 @@ const handleListDisplaySettingsChange = (settings: { resultDisplayMode: 'currenc
 }
 
 const timeTreeSourceTrades = computed(() => timeTreeFilteredTrades.value ?? currentTradesForList.value)
+
+const selectedTimeTreeTrade = computed(() => {
+  const selectedId = timeTreeSelectedTradeId.value
+  if (!selectedId) return null
+
+  return timeTreeSourceTrades.value.find((trade: any) => String(trade?.id || '') === selectedId)
+    || currentTradesForList.value.find((trade: any) => String(trade?.id || '') === selectedId)
+    || null
+})
+
+const timeTreeTradeDetailsOpen = computed(() => viewType.value === 'timeTree' && Boolean(selectedTimeTreeTrade.value))
+
+const handleTimeTreeTradeClick = (payload: { tradeId: string }) => {
+  if (!payload?.tradeId) return
+  timeTreeSelectedTradeId.value = String(payload.tradeId)
+}
+
+const closeTimeTreeTradeDetails = () => {
+  timeTreeSelectedTradeId.value = null
+}
+
+const editSelectedTimeTreeTrade = () => {
+  const trade = selectedTimeTreeTrade.value
+  if (!trade) return
+  closeTimeTreeTradeDetails()
+  editTrade(trade)
+}
+
+const showSelectedTimeTreeTradeDetails = () => {
+  const trade = selectedTimeTreeTrade.value
+  if (!trade?.id) return
+
+  selectedTradeId.value = String(trade.id)
+  panelInitialPage.value = undefined
+  panelInitialNoteId.value = undefined
+  showExtraDetails.value = false
+  closeTimeTreeTradeDetails()
+  openNodeMap()
+}
+
+const shareSelectedTimeTreeTrade = () => {
+  const trade = selectedTimeTreeTrade.value
+  if (!trade?.id) return
+
+  selectedTradeId.value = String(trade.id)
+  closeTimeTreeTradeDetails()
+  showShareCardModal.value = true
+}
+
+const removeSelectedTimeTreeTrade = async () => {
+  const tradeId = selectedTimeTreeTrade.value?.id
+  if (!tradeId) return
+
+  closeTimeTreeTradeDetails()
+  await handleRemoveTrade(String(tradeId))
+}
 
 const getTradeTimelineTimestamp = (trade: any) => {
   const rawDate = trade?.date || trade?.dateObj || trade?.createdAt || trade?.dateExit || trade?.dateEntryStr || trade?.dateTime
@@ -2109,7 +2245,10 @@ const resetDistributionView = () => {
 
 watch(viewType, (next) => {
   if (next === 'distribution') resetDistributionView()
-  if (next !== 'timeTree') exitTimeTreeFullscreen()
+  if (next !== 'timeTree') {
+    exitTimeTreeFullscreen()
+    closeTimeTreeTradeDetails()
+  }
   if (next !== 'cube') clearCubeRevealAnimation()
   scheduleRender()
 })

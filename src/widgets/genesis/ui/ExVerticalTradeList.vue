@@ -352,9 +352,9 @@
     </Teleport>
 
     <!-- VERTICAL TRADE REGISTRY -->
-    <div v-if="!filtersOnly" class="flex flex-col space-y-3 font-mono text-xs pt-2 select-none">
+    <div v-if="!filtersOnly" class="flex flex-col font-mono text-xs select-none" :class="detailsOnly ? 'pt-0' : 'space-y-3 pt-2'">
       <!-- TABLE CONTROLS & HEADER GRID -->
-      <div class="flex items-center justify-between pb-1 text-[10px] opacity-60 uppercase tracking-widest px-2">
+      <div v-if="!detailsOnly" class="flex items-center justify-between pb-1 text-[10px] opacity-60 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
           <button @click="toggleSelectAllTrades" class="hover:opacity-100 transition-opacity font-bold">
             {{ isAllSelected ? (locale === 'ru' ? '[Отменить выбор]' : '[Deselect All]') : (locale === 'ru' ? '[Выбрать все]' : '[Select All]') }}
@@ -388,7 +388,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b nier-border-primary text-[10px] opacity-40 uppercase tracking-widest px-2">
+      <div v-if="!detailsOnly" class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center pb-3 border-b nier-border-primary text-[10px] opacity-40 uppercase tracking-widest px-2">
         <div class="flex items-center space-x-3">
           <button @click.stop="toggleSelectAllTrades" class="w-3.5 h-3.5 border border-black dark:border-white flex items-center justify-center transition-all hover:opacity-100 shrink-0" :class="isAllSelected ? 'nier-bg-inverted nier-text-inverted opacity-100' : 'opacity-40'">
             <span v-if="isAllSelected" class="text-[8px] font-bold">✓</span>
@@ -403,20 +403,24 @@
         <span class="w-6"></span>
       </div>
 
-      <div v-if="filteredTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
+      <div v-if="!detailsOnly && filteredTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
         {{ locale === 'ru' ? 'Нет результатов' : 'No Results' }}
       </div>
 
       <!-- TRADE ROWS -->
-      <div v-else class="flex flex-col space-y-3.5 pt-2">
+      <div v-if="filteredTrades.length > 0" class="flex flex-col" :class="detailsOnly ? 'space-y-0' : 'space-y-3.5 pt-2'">
         <div 
           v-for="trade in filteredTrades" 
           :key="trade.id"
-          class="flex flex-col group transition-opacity duration-150 border-b border-black/5 dark:border-white/5 pb-2"
-          :class="isTradeHidden(trade) ? 'opacity-40' : ''"
+          class="flex flex-col group transition-opacity duration-150"
+          :class="[
+            detailsOnly ? '' : 'border-b border-black/5 pb-2 dark:border-white/5',
+            isTradeHidden(trade) ? 'opacity-40' : ''
+          ]"
         >
           <!-- ROW GRID -->
           <div 
+            v-if="!detailsOnly"
             class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr_auto] gap-2 items-center py-3 px-2 opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer"
             :class="isTradeHidden(trade) ? 'opacity-45 group-hover:opacity-70' : ''"
             @click="emit('open-trade', { tradeId: trade.id })"
@@ -455,14 +459,15 @@
           </div>
 
           <!-- EXPANDED TELEMETRY -->
-          <div v-if="expandedTradeId === trade.id" class="my-2 ml-2 pl-6 border-l border-black/20 dark:border-white/20 flex flex-col space-y-6 py-3 text-[11px] opacity-80 animate-[fadeIn_0.2s_ease-out]">
+          <div
+            v-if="detailsOnly || expandedTradeId === trade.id"
+            class="flex flex-col space-y-6 py-3 text-[11px] opacity-80 animate-[fadeIn_0.2s_ease-out]"
+            :class="detailsOnly ? '' : 'my-2 ml-2 border-l border-black/20 pl-6 dark:border-white/20'"
+          >
             <!-- TRADE EXECUTION DATA GRID -->
             <div class="flex flex-col space-y-2">
               <div class="flex items-center justify-between">
-                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// МЕТРИКИ ИСПОЛНЕНИЯ' : '// EXECUTION METRICS' }}</span>
-                <button @click.stop="toggleTradeExpand(trade.id)" class="text-[9px] uppercase opacity-40 hover:opacity-100 font-bold tracking-widest transition-opacity">
-                  {{ locale === 'ru' ? '[Закрыть]' : '[Close]' }}
-                </button>
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'МЕТРИКИ ИСПОЛНЕНИЯ' : 'EXECUTION METRICS' }}</span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
                 <div class="flex flex-col">
@@ -501,15 +506,19 @@
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Выхода' : 'Date Exit' }}</span>
                   <span class="font-bold mt-0.5 opacity-80">{{ trade.dateExitStr }}</span>
                 </div>
+                <div class="flex flex-col sm:col-span-1">
+                  <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Часовой пояс' : 'Time Zone' }}</span>
+                  <span class="font-bold mt-0.5 opacity-80">{{ formatTradeTimeZone(trade) }}</span>
+                </div>
               </div>
             </div>
 
             <!-- ENTRY-EXIT METHODS -->
-            <div v-if="hasExecutionBreakdown(trade)" class="flex flex-col space-y-2">
+            <div v-if="detailsOnly || hasExecutionBreakdown(trade)" class="flex flex-col space-y-2">
               <div class="flex items-center justify-between">
-                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Методы входа-выхода' : '// Entry-Exit Methods' }}</span>
+                <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'Методы входа-выхода' : 'Entry-Exit Methods' }}</span>
               </div>
-              <div class="p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
+              <div v-if="getExecutionGroup(trade, 'entry').length > 0 || getExecutionGroup(trade, 'exit').length > 0" class="p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="flex flex-col space-y-2 md:pr-4 md:border-r md:border-black/10 md:dark:border-white/10">
                     <div class="flex items-center justify-between">
@@ -517,22 +526,24 @@
                         {{ getExecutionGroupLabel(trade, 'entry') }}
                       </span>
                     </div>
-                    <div v-if="getExecutionGroup(trade, 'entry').length > 0" class="flex flex-col space-y-2">
-                      <div
-                        v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
-                        :key="exec.id || `entry-${index}`"
-                        class="flex items-center justify-end gap-2 pb-1 border-b border-black/5 dark:border-white/5"
-                      >
-                        <span class="font-bold whitespace-nowrap text-right">
-                          {{ formatExecutionRow(exec) }}
-                        </span>
-                        <span v-if="Number(index) > 0" class="text-[8px] uppercase tracking-wider opacity-60">
-                          {{ getEntryMethodType(trade, exec, Number(index)) }}
-                        </span>
+                    <div class="max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                      <div v-if="getExecutionGroup(trade, 'entry').length > 0" class="flex flex-col space-y-2">
+                        <div
+                          v-for="(exec, index) in getExecutionGroup(trade, 'entry')"
+                          :key="exec.id || `entry-${index}`"
+                          class="flex items-center justify-end gap-2 pb-1 border-b border-black/5 dark:border-white/5"
+                        >
+                          <span class="font-bold whitespace-nowrap text-right">
+                            {{ formatExecutionRow(exec) }}
+                          </span>
+                          <span v-if="Number(index) > 0" class="text-[8px] uppercase tracking-wider opacity-60">
+                            {{ getEntryMethodType(trade, exec, Number(index)) }}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
-                      {{ locale === 'ru' ? 'НЕТ_ВХОДОВ' : 'NO_ENTRIES' }}
+                      <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
+                        {{ locale === 'ru' ? 'НЕТ_ВХОДОВ' : 'NO_ENTRIES' }}
+                      </div>
                     </div>
                   </div>
 
@@ -545,29 +556,34 @@
                         {{ getMethodLabel(getExecutionGroup(trade, 'exit')) }}
                       </span>
                     </div>
-                    <div v-if="getExecutionGroup(trade, 'exit').length > 0" class="flex flex-col space-y-2">
-                      <div
-                        v-for="(exec, index) in getExecutionGroup(trade, 'exit')"
-                        :key="exec.id || `exit-${index}`"
-                        class="flex items-center justify-end gap-3 pb-1 border-b border-black/5 dark:border-white/5"
-                      >
-                        <span class="font-bold whitespace-nowrap text-right">
-                          {{ formatExecutionRow(exec) }}
-                        </span>
+                    <div class="max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                      <div v-if="getExecutionGroup(trade, 'exit').length > 0" class="flex flex-col space-y-2">
+                        <div
+                          v-for="(exec, index) in getExecutionGroup(trade, 'exit')"
+                          :key="exec.id || `exit-${index}`"
+                          class="flex items-center justify-end gap-3 pb-1 border-b border-black/5 dark:border-white/5"
+                        >
+                          <span class="font-bold whitespace-nowrap text-right">
+                            {{ formatExecutionRow(exec) }}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
-                      {{ locale === 'ru' ? 'НЕТ_ВЫХОДОВ' : 'NO_EXITS' }}
+                      <div v-else class="opacity-25 uppercase tracking-[0.2em] text-[8px]">
+                        {{ locale === 'ru' ? 'НЕТ_ВЫХОДОВ' : 'NO_EXITS' }}
+                      </div>
                     </div>
                   </div>
                 </div>
+              </div>
+              <div v-else class="border nier-border-primary bg-black/5 p-3.5 text-[9px] uppercase tracking-[0.25em] opacity-45 dark:bg-white/5">
+                {{ locale === 'ru' ? 'НЕТ ДАННЫХ' : 'NO DATA' }}
               </div>
             </div>
 
             <!-- ATTACHED NOTES -->
             <div class="flex flex-col space-y-3">
-              <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '// Прикрепленные Заметки' : '// Attached Notes' }} ({{ trade.notes.length }})</span>
-              <div v-if="trade.notes.length > 0" class="flex flex-col space-y-1.5 pt-1">
+              <span class="block text-[9px] opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? 'Прикрепленные Заметки' : 'Attached Notes' }} ({{ trade.notes.length }})</span>
+              <div v-if="trade.notes.length > 0" class="max-h-32 overflow-y-auto custom-scrollbar flex flex-col space-y-1.5 pt-1 pr-2">
                 <div 
                   v-for="(note, nIdx) in trade.notes" 
                   :key="note.id" 
@@ -612,6 +628,7 @@ const props = defineProps<{
   resultDisplayMode?: 'currency' | 'percent'
   colorMode?: 'monochrome' | 'colorful'
   filtersPanelMode?: boolean
+  detailsOnly?: boolean
   showFullscreenToggle?: boolean
   timeTreeFullscreenActive?: boolean
 }>()
@@ -628,6 +645,7 @@ const emit = defineEmits<{
 const filtersOnly = computed(() => props.filtersOnly === true)
 const showFilters = computed(() => props.hideFilters !== true)
 const compactFiltersPanel = computed(() => props.filtersPanelMode === true)
+const detailsOnly = computed(() => props.detailsOnly === true)
 const activeListViewMode = computed(() => props.viewMode || 'list')
 const showFullscreenToggle = computed(() => props.showFullscreenToggle === true)
 const timeTreeFullscreenActive = computed(() => props.timeTreeFullscreenActive === true)
@@ -674,8 +692,6 @@ const getExecutionGroup = (trade: any, type: 'entry' | 'exit') => {
 }
 
 const getExecutionGroupLabel = (trade: any, type: 'entry' | 'exit') => {
-  const group = getExecutionGroup(trade, type)
-  if (group.length === 0) return ''
   if (type === 'entry') {
     return locale.value === 'ru' ? 'МЕТОДЫ ВХОДА' : 'ENTRY METHODS'
   }
@@ -728,6 +744,23 @@ const hasExecutionBreakdown = (trade: any) => {
     entryExecutions.some((exec: any) => String(exec?.label || '').toUpperCase() !== 'SINGLE') ||
     exitExecutions.some((exec: any) => String(exec?.label || '').toUpperCase() !== 'SINGLE')
   )
+}
+
+const formatTradeTimeZone = (trade: any) => {
+  const zone = String(trade?.timeZone || trade?.timezone || '').trim()
+  if (!zone) return locale.value === 'ru' ? 'НЕТ ДАННЫХ' : 'NO DATA'
+
+  try {
+    const date = trade?.dateObj instanceof Date ? trade.dateObj : new Date(trade?.dateRaw || trade?.date || Date.now())
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      timeZoneName: 'shortOffset'
+    }).formatToParts(Number.isNaN(date.getTime()) ? new Date() : date)
+    const offset = parts.find(part => part.type === 'timeZoneName')?.value || ''
+    return offset && offset !== 'GMT' ? `${zone} (${offset})` : zone
+  } catch {
+    return zone
+  }
 }
 
 const onNoteClick = (tradeId: string, noteId: string) => {
@@ -1758,7 +1791,7 @@ const activeTrades = computed(() => {
         dateTime: t.date ? new Date(t.date).toLocaleDateString() : '10.05.2026',
         dateObj: t.date ? new Date(t.date) : new Date(),
         dateRaw: t.date,
-        timeZone: t.timeZone,
+        timeZone: t.timeZone || t.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
         duration: durStr,
         durationMinutes: diffMins,
         status: isClosed ? (currencyProfit > 0 ? 'WIN' : currencyProfit < 0 ? 'LOSS' : 'SCRATCH') : 'OPEN',
