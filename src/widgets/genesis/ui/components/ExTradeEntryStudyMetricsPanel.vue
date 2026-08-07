@@ -42,6 +42,13 @@ const props = defineProps({
 
 const isChartSurface = computed(() => props.surface === 'chart')
 
+const usesThreeDecimalTradePrice = computed(() => {
+  const assetType = String(currentAssetData?.value?.type || initialTrade?.assetType || '')
+    .trim()
+    .toLowerCase()
+  return ['stocks', 'stock', 'xstocks', 'xstock', 'crypto', 'cryptocurrency'].includes(assetType)
+})
+
 const copy = {
   en: {
     title: 'TRADE_STUDY_METRICS',
@@ -2103,8 +2110,9 @@ const clearGeneratedChart = () => {
   nextTick(() => drawChart())
 }
 
-const formatPrice = (value) => {
+const formatPrice = (value, isEntryOrExit = false) => {
   if (!Number.isFinite(value)) return 'N/A'
+  if (isEntryOrExit && usesThreeDecimalTradePrice.value) return value.toFixed(3)
   if (value >= 1000) return value.toFixed(2)
   if (value >= 1) return value.toFixed(4)
   return value.toFixed(6)
@@ -2217,7 +2225,7 @@ const drawTradeLevelLines = (ctx, geometry, yForPrice) => {
 
     ctx.setLineDash([])
     ctx.fillStyle = level.color
-    ctx.fillText(`${level.label} ${formatPrice(level.value)}`, geometry.right - 8, y - 4)
+    ctx.fillText(`${level.label} ${formatPrice(level.value, level.id === 'entry' || level.id === 'exit')}`, geometry.right - 8, y - 4)
   })
 
   ctx.restore()

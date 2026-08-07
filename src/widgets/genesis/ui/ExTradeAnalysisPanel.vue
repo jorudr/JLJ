@@ -2017,10 +2017,13 @@ const getInTradeSessionDaySeconds = (preferGenerated = true) => {
   return IN_TRADE_SESSION_DAY_SECONDS[getTradeAssetKind(props.trade)] || IN_TRADE_SESSION_DAY_SECONDS.unknown;
 };
 
-const formatStudyPrice = (value: any) => {
+const formatStudyPrice = (value: any, isEntryOrExit = false) => {
   const numeric = parseStudyNumber(value);
   if (!Number.isFinite(numeric)) return studyMetricText.value.na;
   if (isStudyForexTrade.value) return `${numeric.toFixed(5)} ${studyMetricText.value.points}`;
+  if (isEntryOrExit && ['stock', 'xstock', 'crypto'].includes(getTradeAssetKind(props.trade))) {
+    return `$${numeric.toFixed(3)}`;
+  }
   return `$${numeric.toFixed(2)}`;
 };
 
@@ -2158,7 +2161,7 @@ const getMoveMetricDetail = (kind: 'drawdown' | 'favorable') => {
   const target = getDirectionalExtremePrice(kind);
   const pct = kind === 'drawdown' ? inTradeMoveMetrics.value.maePct : inTradeMoveMetrics.value.mfePct;
   return [
-    metricDetailRow(text.from, formatStudyPrice(entry)),
+    metricDetailRow(text.from, formatStudyPrice(entry, true)),
     metricDetailRow(text.to, formatStudyPrice(target)),
     metricDetailRow(kind === 'drawdown' ? text.lossLevel : text.profitLevel, formatSignedStudyPercent(pct))
   ];
@@ -2184,7 +2187,7 @@ const getCaptureMetricDetail = () => {
     metricDetailRow(text.favorable, formatStudyPrice(favorableMove)),
     metricDetailRow(text.captured, formatCaptureRatio(inTradeMoveMetrics.value.captureRatio)),
     metricDetailRow(text.left, formatStudyPrice(leftMove)),
-    metricDetailRow(text.exit, formatStudyPrice(exit))
+    metricDetailRow(text.exit, formatStudyPrice(exit, true))
   ];
 };
 

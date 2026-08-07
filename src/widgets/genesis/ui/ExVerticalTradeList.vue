@@ -472,11 +472,11 @@
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3.5 bg-black/5 dark:bg-white/5 border nier-border-primary font-mono text-[10px]">
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Цена Входа' : 'Entry Price' }}</span>
-                  <span class="font-bold mt-0.5 text-xs">{{ trade.entryPrice }}</span>
+                  <span class="font-bold mt-0.5 text-xs">{{ formatExecutionPrice(trade.entryPrice, trade) }}</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Цена Выхода' : 'Exit Price' }}</span>
-                  <span class="font-bold mt-0.5 text-xs">{{ trade.exitPrice }}</span>
+                  <span class="font-bold mt-0.5 text-xs">{{ formatExecutionPrice(trade.exitPrice, trade) }}</span>
                 </div>
                 <div class="flex flex-col">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Размер Позиции' : 'Position Size' }}</span>
@@ -615,6 +615,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import globalAssets from '~/shared/data/global_assets.json'
 
 const { locale, t } = useI18n()
 const openTradeText = () => t('genesis.virtualLog.openTrade')
@@ -718,6 +719,26 @@ const getMethodLabel = (group: any[]) => {
 const formatExecutionMetric = (value: unknown) => {
   const number = Number(value)
   return Number.isFinite(number) ? number.toFixed(2) : '—'
+}
+
+const getExecutionAssetType = (trade: any) => {
+  const explicitType = trade?.assetType || trade?.instrumentType || trade?.asset?.type
+  if (explicitType) return String(explicitType).trim().toLowerCase()
+
+  const symbol = String(typeof trade?.asset === 'string' ? trade.asset : trade?.symbol || '')
+    .split(/[/:\s]/)[0]
+    .toUpperCase()
+  return String(globalAssets.find((asset: any) => String(asset.symbol || '').toUpperCase() === symbol)?.type || '')
+    .trim()
+    .toLowerCase()
+}
+
+const formatExecutionPrice = (value: unknown, trade: any) => {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '—'
+  const assetType = getExecutionAssetType(trade)
+  const usesThreeDecimals = ['stocks', 'stock', 'xstocks', 'xstock', 'crypto', 'cryptocurrency'].includes(assetType)
+  return number.toFixed(usesThreeDecimals ? 3 : 2)
 }
 
 const getLatestNotes = (notes: any[]) => {
@@ -1831,6 +1852,7 @@ const activeTrades = computed(() => {
         dateObj: t.date ? new Date(t.date) : new Date(),
         dateRaw: t.date,
         timeZone: t.timeZone || t.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        assetType: t.assetType || t.instrumentType || t.asset?.type || '',
         duration: durStr,
         durationMinutes: diffMins,
         status: isClosed ? (currencyProfit > 0 ? 'WIN' : currencyProfit < 0 ? 'LOSS' : 'SCRATCH') : 'OPEN',
