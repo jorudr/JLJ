@@ -9,7 +9,7 @@ const props = defineProps<{
 }>()
 
 const { locale } = useI18n()
-const activeEntryFormTab = ref<'main' | 'advanced' | 'notes' | 'images'>('main')
+const activeEntryFormTab = ref<'main' | 'advanced' | 'metrics' | 'notes' | 'images'>('main')
 const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
 
 const isMainDiaryTrade = computed(() => {
@@ -153,11 +153,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
         </div>
 
         <div class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
-          <div class="h-full min-h-0 w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <div class="p-10">
+          <div class="h-full min-h-0 w-full flex flex-col overflow-hidden">
+            <div class="shrink-0 px-10 pt-10">
               <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                <div class="flex w-full max-w-4xl flex-col items-start gap-14">
-              <div class="sticky top-0 z-20 flex w-full shrink-0 items-center justify-start gap-2 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
+                <div class="flex w-full max-w-4xl flex-col items-start">
+                  <div class="z-20 flex w-full shrink-0 items-center justify-start gap-2 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
@@ -177,6 +177,14 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                  :class="activeEntryFormTab === 'metrics' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                  @click="activeEntryFormTab = 'metrics'"
+                >
+                  {{ locale === 'ru' ? 'МЕТРИКИ' : 'METRICS' }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
                   :class="activeEntryFormTab === 'notes' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                   @click="activeEntryFormTab = 'notes'"
                 >
@@ -190,7 +198,15 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 >
                   {{ locale === 'ru' ? 'КАРТИНКИ' : 'IMAGES' }}
                 </button>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div class="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar [scrollbar-gutter:stable]">
+              <div class="px-10 pb-10">
+                <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                  <div class="flex w-full max-w-4xl flex-col items-start gap-14">
 
               <section v-if="activeEntryFormTab === 'main'" class="flex w-full flex-col items-start gap-8">
                 <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
@@ -202,7 +218,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
                     <div class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
-                      <span class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden border border-white/20 bg-white/5 p-1">
+                      <span class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden border border-white/20 bg-white p-1">
                         <img v-if="tradeAssetIcon()" :src="tradeAssetIcon()" :alt="tradeAsset()" class="h-full w-full object-contain" />
                         <span v-else class="text-[10px]">{{ tradeAsset().slice(0, 1) }}</span>
                       </span>
@@ -278,11 +294,31 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 />
               </section>
 
+              <section v-else-if="activeEntryFormTab === 'metrics'" class="flex w-full flex-col items-start gap-8">
+                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">III.</div>
+                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                  {{ locale === 'ru' ? 'МЕТРИКИ' : 'METRICS' }}
+                </h2>
+
+                <ExTradeAnalysisPanel
+                  v-if="!isMainDiaryTrade"
+                  class="w-full min-h-[620px]"
+                  :trade="analysisTrade"
+                  :initial-page="3"
+                  embedded
+                  embedded-brief
+                  metrics-only
+                />
+                <p v-else class="max-w-2xl text-sm font-mono uppercase leading-relaxed tracking-[0.16em] text-white/60">
+                  {{ locale === 'ru' ? 'Для Main Diary метрики недоступны.' : 'Metrics are unavailable for Main Diary.' }}
+                </p>
+              </section>
+
               <section v-else class="min-h-[420px] w-full" :aria-label="activeEntryFormTab"></section>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
 
       </div>
@@ -291,6 +327,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 

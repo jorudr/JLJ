@@ -68,6 +68,7 @@ interface TradeAnalysisProps {
   initialExpandedNoteId?: string;
   embedded?: boolean;
   embeddedBrief?: boolean;
+  metricsOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<TradeAnalysisProps>(), {
@@ -83,7 +84,8 @@ const props = withDefaults(defineProps<TradeAnalysisProps>(), {
   }),
   globalStability: 64,
   embedded: false,
-  embeddedBrief: false
+  embeddedBrief: false,
+  metricsOnly: false
 })
 
 const analysisPanelContainer = computed(() => props.embeddedBrief ? 'div' : ExPanel)
@@ -4148,7 +4150,7 @@ const simpleMetricInsights = computed(() => {
     <div v-else-if="enrichedTrade" :class="props.embeddedBrief ? 'relative flex w-full overflow-hidden nier-text-primary' : 'relative flex h-full overflow-hidden nier-text-primary'">
       
       <!-- MINIMALIST NAVIGATION SIDEBAR (INTERNAL) -->
-      <div v-if="!activeCorrelationMetric && !props.embedded" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
+      <div v-if="!activeCorrelationMetric && !props.embedded && !props.metricsOnly" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
         <div class="flex flex-col space-y-6">
           <button v-for="(tab, idx) in [
             { id: 3, label: 'REPORT', icon: 'M9 17H15M9 13H15M9 9H10M13 3H14.6C15.7201 3 16.2802 3 16.708 3.21799C17.0843 3.40973 17.3903 3.71569 17.582 4.09202C17.8 4.51984 17.8 5.07989 17.8 6.2V17.8C17.8 18.9201 17.8 19.4802 17.582 19.908C17.3903 20.2843 17.0843 20.5903 16.708 20.782C16.2802 21 15.7201 21 14.6 21H9.4C8.2798 21 7.71984 21 7.29202 20.782C6.91569 20.5903 6.60973 20.2843 6.41799 19.908C6.2 19.4802 6.2 18.9201 6.2 17.8V6.2C6.2 5.07989 6.2 4.51984 6.41799 4.09202C6.60973 3.71569 6.91569 3.40973 7.29202 3.21799C7.71984 3 8.27989 3 9.4 3H10.2M12 3V5' },
@@ -4241,7 +4243,7 @@ const simpleMetricInsights = computed(() => {
                   : (activeCorrelationMetric ? 'relative h-full min-h-0 overflow-hidden' : 'relative min-h-full flex flex-col p-4 space-y-6')"
               >
                 <div
-                  v-if="activeCorrelationMetric && selectedCorrelationAnalysis"
+                  v-if="activeCorrelationMetric && selectedCorrelationAnalysis && !props.metricsOnly"
                   class="absolute inset-0 z-30 flex h-full min-h-0 flex-col overflow-hidden bg-[#f7f5ef]/95 p-4 text-black backdrop-blur-xl dark:bg-[#080806]/95 dark:text-white md:p-5"
                 >
                   <div class="mb-4 flex shrink-0 items-center gap-4">
@@ -4329,7 +4331,7 @@ const simpleMetricInsights = computed(() => {
                   </div>
                 </div>
                 <!-- Temporal Verification -->
-                <div v-if="!activeCorrelationMetric && !props.embeddedBrief" class="flex flex-col space-y-6 w-full p-4 md:p-6">
+                <div v-if="!props.metricsOnly && !activeCorrelationMetric && !props.embeddedBrief" class="flex flex-col space-y-6 w-full p-4 md:p-6">
                    <div class="flex flex-col space-y-3">
                       <div class="flex justify-between items-center text-[9px] font-mono opacity-30 uppercase tracking-[0.2em] nier-text-primary">
                          <span>Execution Duration</span>
@@ -4376,12 +4378,12 @@ const simpleMetricInsights = computed(() => {
                 </div>
 
                 <!-- TOP SECTION: EQUITY TRAJECTORY (Expanded) -->
-                <div v-if="!props.embeddedBrief" class="flex-grow relative min-h-[300px]">
+                <div v-if="!props.metricsOnly && !props.embeddedBrief" class="flex-grow relative min-h-[300px]">
                    <ExEquityCurve2D :trades="reportTrades" :initialBalance="initialBalance" />
                 </div>
 
                 <!-- BOTTOM SECTION: PERFORMANCE BENCHMARK (Detailed Grid) -->
-                <div v-if="!props.embeddedBrief" class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
+                <div v-if="!props.metricsOnly && !props.embeddedBrief" class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
                   <div class="flex flex-col">
                     <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">
                       {{ props.embeddedBrief ? (locale === 'ru' ? 'Диагностический бриф' : 'Diagnostic Brief') : 'Performance Benchmark' }}
@@ -4404,7 +4406,7 @@ const simpleMetricInsights = computed(() => {
                   </div>
                 </div>
 
-                <div v-if="props.embeddedBrief || activeReportMetricMode === 'simple'" class="pb-6">
+                <div v-if="!props.metricsOnly && (props.embeddedBrief || activeReportMetricMode === 'simple')" class="pb-6">
                   <div
                     v-for="(item, index) in simpleMetricInsights"
                     :key="item.id"
