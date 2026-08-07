@@ -95,6 +95,7 @@ const isDark = computed(() => themeStore.settings.isDark);
 const analysisPanelRoot = ref<HTMLElement | null>(null);
 useDomI18n(analysisPanelRoot, 'genesis.dom');
 const { locale } = useI18n();
+const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g, ' ');
 
 const tradeStore = useStrategyTradesStore();
 const {
@@ -324,7 +325,7 @@ const formatNote = (content: string) => {
     const idx = parseInt(idxStr);
     const img = enrichedTrade.value?.images?.[idx];
     if (img && img.url) {
-      const name = img.name || `Visual_Node_${idx}`;
+      const name = formatDisplayLabel(img.name || `Visual_Node_${idx}`);
       return `<div class="my-4 border nier-border-primary bg-black/5 dark:bg-white/5 p-2 relative group"><img src="${img.url}" alt="${name}" class="max-w-full h-auto object-contain max-h-[400px] w-full" /><div class="absolute bottom-4 left-4 nier-bg-panel px-2 py-1 text-[8px] font-mono opacity-80 uppercase tracking-widest border nier-border-primary shadow-lg">${name}</div></div>`;
     }
     return match;
@@ -686,7 +687,7 @@ const advancedMetricCopy = computed(() => {
   return { labels, descriptions, formulas, benchmarks };
 });
 
-const getAdvancedMetricLabel = (id: string) => advancedMetricCopy.value.labels[id] || id;
+const getAdvancedMetricLabel = (id: string) => formatDisplayLabel(advancedMetricCopy.value.labels[id] || id);
 
 const getAdvancedMetricTooltip = (id: string) => ({
   description: advancedMetricCopy.value.descriptions[id] || (locale.value === 'ru'
@@ -4103,14 +4104,14 @@ const simpleMetricInsights = computed(() => {
     <button @click="emit('close')"
             class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors z-[100]">
        <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-       <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close_Analysis</span>
+       <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close Analysis</span>
     </button>
 
     <ExPanel class="h-full w-full" title="" telemetry="" variant="light" noPadding>
     <div v-if="isInitializing" class="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-[#ffffff]/90 dark:bg-[#070707]/80 backdrop-blur-md z-50 nier-text-primary">
       <div class="w-12 h-12 border-t-2 border-r-2 border-black dark:border-white rounded-full animate-spin"></div>
       <div class="flex flex-col items-center space-y-1">
-        <span class="text-xs font-mono font-black uppercase tracking-[0.4em] opacity-80">Loading_Matrix_Data</span>
+        <span class="text-xs font-mono font-black uppercase tracking-[0.4em] opacity-80">Loading Matrix Data</span>
         <span class="text-[9px] font-mono opacity-40 tracking-widest uppercase">Initializing neural telemetry protocols...</span>
       </div>
     </div>
@@ -4137,7 +4138,7 @@ const simpleMetricInsights = computed(() => {
             
             <!-- Tooltip (Minimal) -->
             <div class="absolute left-full ml-4 px-2 py-1 nier-bg-inverted nier-text-primary text-[7px] font-mono tracking-widest uppercase opacity-0 group-hover/nav-item:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-               {{ tab.label }}
+               {{ formatDisplayLabel(tab.label) }}
             </div>
           </button>
         </div>
@@ -4181,8 +4182,8 @@ const simpleMetricInsights = computed(() => {
           
           <div class="flex flex-col items-center space-y-3 max-w-sm">
              <div class="flex flex-col items-center space-y-1">
-                <span class="text-[10px] font-mono uppercase tracking-[0.6em] font-black text-red-500/40">Diagnostic_Lockout</span>
-                <ExHeading level="h3" variant="module" class="!text-2xl nier-text-primary text-center animate-glow-red">PROTOCOL_UNDEFINED</ExHeading>
+                <span class="text-[10px] font-mono uppercase tracking-[0.6em] font-black text-red-500/40">Diagnostic Lockout</span>
+                <ExHeading level="h3" variant="module" class="!text-2xl nier-text-primary text-center animate-glow-red">PROTOCOL UNDEFINED</ExHeading>
              </div>
              <ExText variant="small" class="opacity-40 uppercase tracking-[0.2em] leading-relaxed text-center">
                 High-fidelity analysis requires a specific strategy protocol. Tactical mapping is currently disabled for generic [Main Diary] entries.
@@ -4191,7 +4192,7 @@ const simpleMetricInsights = computed(() => {
           
           <div class="pt-6 flex flex-col items-center space-y-4">
              <div class="w-16 h-px bg-black/10 dark:bg-white/10"></div>
-             <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-20">Initialization_Pending...</span>
+             <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-20">Initialization Pending...</span>
           </div>
       </div>
 
@@ -4224,7 +4225,7 @@ const simpleMetricInsights = computed(() => {
 
                     <div class="min-w-0">
                       <h2 class="truncate font-serif text-2xl italic leading-tight tracking-normal md:text-3xl">
-                        {{ selectedCorrelationAnalysis.metric.label.replaceAll('_', ' ') }}
+                        {{ formatDisplayLabel(selectedCorrelationAnalysis.metric.label) }}
                       </h2>
                     </div>
 
@@ -4232,7 +4233,7 @@ const simpleMetricInsights = computed(() => {
                       v-if="selectedMetricEquityCurve"
                       class="ml-auto shrink-0 font-mono text-[10px] font-black uppercase tracking-[0.22em] opacity-65"
                     >
-                      {{ selectedMetricEquityCurve.relationshipMode }}
+                        {{ formatDisplayLabel(selectedMetricEquityCurve.relationshipMode) }}
                       <span v-if="Number.isFinite(selectedMetricEquityCurve.relationshipScore)">
                         {{ selectedMetricEquityCurve.relationshipScore }}%
                       </span>
@@ -4299,8 +4300,8 @@ const simpleMetricInsights = computed(() => {
                 <div v-if="!activeCorrelationMetric" class="flex flex-col space-y-6 w-full p-4 md:p-6">
                    <div class="flex flex-col space-y-3">
                       <div class="flex justify-between items-center text-[9px] font-mono opacity-30 uppercase tracking-[0.2em] nier-text-primary">
-                         <span>Execution_Duration</span>
-                         <span>Risk_Element_Type</span>
+                         <span>Execution Duration</span>
+                         <span>Risk Element Type</span>
                       </div>
                       <div class="flex justify-between items-baseline">
                          <span class="text-3xl font-serif italic nier-text-primary leading-none">
@@ -4311,16 +4312,16 @@ const simpleMetricInsights = computed(() => {
                           <div class="flex items-center gap-2">
                              <div class="w-1 h-1 nier-bg-inverted rotate-45"></div>
                              <span class="text-[10px] font-mono font-black uppercase tracking-widest nier-text-primary">
-                               {{ resolvedTradingStyle }} 
-                               <span class="opacity-40 ml-1">{{ durationContextLabel }}</span>
+                               {{ formatDisplayLabel(resolvedTradingStyle) }}
+                               <span class="opacity-40 ml-1">{{ formatDisplayLabel(durationContextLabel) }}</span>
                              </span>
                           </div>
                        </div>
                     </div>
                     <div class="space-y-2">
                        <div class="flex justify-between items-center text-[8px] font-mono uppercase tracking-widest opacity-30 nier-text-primary">
-                          <span>Start_Point</span>
-                          <span>{{ durationAxisLabel }}</span>
+                          <span>Start Point</span>
+                          <span>{{ formatDisplayLabel(durationAxisLabel) }}</span>
                        </div>
                        <div class="h-1 w-full bg-black/5 dark:bg-white/5 relative group">
                           <div class="h-full transition-all duration-1000 ease-[var(--nier-ease)]"
@@ -4342,15 +4343,15 @@ const simpleMetricInsights = computed(() => {
                    </div>
                 </div>
 
-                <!-- TOP SECTION: EQUITY_TRAJECTORY (Expanded) -->
+                <!-- TOP SECTION: EQUITY TRAJECTORY (Expanded) -->
                 <div class="flex-grow relative min-h-[300px]">
                    <ExEquityCurve2D :trades="reportTrades" :initialBalance="initialBalance" />
                 </div>
 
-                <!-- BOTTOM SECTION: PERFORMANCE_BENCHMARK (Detailed Grid) -->
+                <!-- BOTTOM SECTION: PERFORMANCE BENCHMARK (Detailed Grid) -->
                 <div class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
                   <div class="flex flex-col">
-                    <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">Performance_Benchmark</span>
+                    <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">Performance Benchmark</span>
                     <span class="text-[10px] font-mono uppercase tracking-[0.22em] opacity-60 nier-text-primary">
                       {{ activeReportMetricMode === 'simple' ? 'Readable diagnostic brief' : 'Advanced telemetry grid' }}
                     </span>
@@ -4364,7 +4365,7 @@ const simpleMetricInsights = computed(() => {
                       :class="activeReportMetricMode === mode.id
                         ? 'nier-bg-inverted nier-text-primary shadow-sm'
                         : 'text-black/45 dark:text-white/45 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'">
-                      {{ mode.label }}
+                      {{ formatDisplayLabel(mode.label) }}
                     </button>
                   </div>
                 </div>
@@ -4388,7 +4389,7 @@ const simpleMetricInsights = computed(() => {
                     <div class="min-w-0">
                       <div class="mb-2 flex items-center gap-3">
                         <span class="text-[8px] font-mono font-black uppercase tracking-[0.32em] opacity-35 transition-opacity group-hover:opacity-60">
-                          {{ item.label }}
+                          {{ formatDisplayLabel(item.label) }}
                         </span>
                         <span class="h-px min-w-8 flex-1 bg-current opacity-10"></span>
                       </div>
@@ -4430,7 +4431,7 @@ const simpleMetricInsights = computed(() => {
                           >
                             <template #trigger>
                               <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
-                                <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ pattern.label }}</span>
+                                <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
                                 <span class="max-w-[220px] truncate text-right text-[10px] font-mono font-black nier-text-primary">
                                   {{ pattern.value }}
                                 </span>
@@ -4492,7 +4493,7 @@ const simpleMetricInsights = computed(() => {
                             ></span>
                             <span class="min-w-0">
                               <span class="block truncate text-[10px] font-mono font-black uppercase tracking-[0.22em]">
-                                {{ condition.name }}
+                                {{ formatDisplayLabel(condition.name) }}
                               </span>
                               <span
                                 v-if="condition.description"
@@ -4532,7 +4533,7 @@ const simpleMetricInsights = computed(() => {
                   class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer"
                   :class="activeMetricTab === tab.id ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 nier-text-primary font-bold shadow-sm' : 'nier-border-primary text-black/50 dark:text-white/50 hover:border-black/30 dark:hover:border-white/30'">
                     <div v-if="activeMetricTab === tab.id" class="w-1.5 h-1.5 nier-bg-inverted rotate-45 animate-pulse"></div>
-                    <span class="text-[10px] font-mono tracking-wider uppercase">{{ tab.label }}</span>
+                    <span class="text-[10px] font-mono tracking-wider uppercase">{{ formatDisplayLabel(tab.label) }}</span>
                     <span class="text-[8px] font-mono px-1.5 py-0.5 bg-black/10 dark:bg-white/10 rounded-full opacity-60">{{ tab.count }}</span>
                   </button>
                 </div>
@@ -5318,7 +5319,7 @@ const simpleMetricInsights = computed(() => {
                            </div>
                         </template>
                         <div class="w-full text-[10px] font-mono uppercase tracking-wider leading-relaxed flex flex-col space-y-1">
-                           <div>Compares the worst value between planned stop risk and realized loss against the Risk_Per_Trade budget defined in the Genesis Matrix.</div>
+                           <div>Compares the worst value between planned stop risk and realized loss against the Risk Per Trade budget defined in the Genesis Matrix.</div>
                            <div class="pt-2 border-t nier-border-primary">
                               <span class="text-[9px] opacity-40 block uppercase tracking-widest font-black mb-1">Formula</span>
                               <code class="block p-1 bg-black/5 dark:bg-white/5 rounded text-[9px] font-mono font-bold nier-text-primary tracking-tighter">
@@ -5636,7 +5637,7 @@ const simpleMetricInsights = computed(() => {
                         <template #trigger>
                            <div class="flex flex-col space-y-1 group cursor-pointer" :data-correlation-metric-id="`in_trade:${metric.id}`">
                               <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest font-black group-hover:opacity-60 transition-opacity">
-                                 {{ metric.label }}
+                                 {{ formatDisplayLabel(metric.label) }}
                               </span>
                               <div class="flex flex-col justify-center space-y-0.5 py-1 overflow-hidden">
                                  <span
@@ -5646,7 +5647,7 @@ const simpleMetricInsights = computed(() => {
                                    {{ metric.value }}
                                  </span>
                                  <span class="truncate text-[8px] font-mono uppercase tracking-[0.15em] text-black/60 dark:text-white/60">
-                                   {{ metric.subvalue }}
+                                   {{ formatDisplayLabel(metric.subvalue) }}
                                  </span>
                               </div>
                            </div>
@@ -5657,7 +5658,7 @@ const simpleMetricInsights = computed(() => {
                               <div class="mb-1 font-black opacity-45">{{ studyMetricText.detail.data }}</div>
                               <div class="grid grid-cols-[minmax(80px,0.55fr)_minmax(0,1fr)] gap-x-3 gap-y-1">
                                  <template v-for="row in metric.detail" :key="row.label">
-                                    <span class="opacity-45">{{ row.label }}</span>
+                                    <span class="opacity-45">{{ formatDisplayLabel(row.label) }}</span>
                                     <span class="min-w-0 break-words font-black nier-text-primary">{{ row.value }}</span>
                                  </template>
                               </div>
@@ -5674,12 +5675,12 @@ const simpleMetricInsights = computed(() => {
                <div v-else-if="currentPage === 4" :key="'visuals'" class="min-h-full flex flex-col p-8 space-y-8 overflow-y-auto custom-scrollbar">
                   <div class="flex items-center justify-between border-b nier-border-primary pb-4">
                      <div class="flex flex-col">
-                       <span class="text-[10px] font-mono font-black uppercase tracking-[0.4em] opacity-40 nier-text-primary">Archival_Visual_Stream</span>
-                       <h2 class="text-xl font-mono tracking-widest uppercase font-black nier-text-primary mt-1">SITUATIONAL_EVIDENCE</h2>
+                       <span class="text-[10px] font-mono font-black uppercase tracking-[0.4em] opacity-40 nier-text-primary">Archival Visual Stream</span>
+                       <h2 class="text-xl font-mono tracking-widest uppercase font-black nier-text-primary mt-1">SITUATIONAL EVIDENCE</h2>
                      </div>
                      <ExButton variant="solid" @click="addImageSlot">
                         <div class="flex items-center space-x-3">
-                           <span class="text-[10px] font-mono font-black uppercase tracking-widest">ADD_VISUAL_SLOT</span>
+                           <span class="text-[10px] font-mono font-black uppercase tracking-widest">ADD VISUAL SLOT</span>
                            <div class="w-2 h-2 border border-current rotate-45"></div>
                         </div>
                      </ExButton>
@@ -5689,7 +5690,7 @@ const simpleMetricInsights = computed(() => {
                      <div class="w-24 h-24 border border-black dark:border-white border-dashed rotate-45 flex items-center justify-center">
                        <span class="text-4xl font-light -rotate-45">+</span>
                      </div>
-                     <span class="text-[10px] font-mono uppercase tracking-[0.8em]">NO_VISUAL_DATA_FOUND</span>
+                     <span class="text-[10px] font-mono uppercase tracking-[0.8em]">NO VISUAL DATA FOUND</span>
                   </div>
 
                   <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
@@ -5722,12 +5723,12 @@ const simpleMetricInsights = computed(() => {
                <div v-else-if="currentPage === 5" :key="'notes'" class="min-h-full flex flex-col p-8 space-y-8 overflow-y-auto custom-scrollbar pb-20">
                   <div class="flex items-center justify-between border-b nier-border-primary pb-4">
                      <div class="flex flex-col">
-                       <span class="text-[10px] font-mono font-black uppercase tracking-[0.4em] opacity-40 nier-text-primary">Neural_Note_Archive</span>
-                       <h2 class="text-xl font-mono tracking-widest uppercase font-black nier-text-primary mt-1">SESSION_POST_MORTEM</h2>
+                       <span class="text-[10px] font-mono font-black uppercase tracking-[0.4em] opacity-40 nier-text-primary">Neural Note Archive</span>
+                       <h2 class="text-xl font-mono tracking-widest uppercase font-black nier-text-primary mt-1">SESSION POST MORTEM</h2>
                      </div>
                      <div class="flex items-center space-x-6">
                         <ExButton variant="solid" @click="isCreatingNote = true" v-if="!isCreatingNote">
-                           <span class="text-[10px] font-mono font-black uppercase tracking-widest">ADD_NEW_RECORD</span>
+                           <span class="text-[10px] font-mono font-black uppercase tracking-widest">ADD NEW RECORD</span>
                         </ExButton>
                      </div>
                   </div>
@@ -5772,13 +5773,13 @@ const simpleMetricInsights = computed(() => {
                             <!-- Visual Attach Dropdown -->
                             <div class="relative group/visuals inline-block">
                               <button class="px-2 py-1 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[9px] font-mono transition-all flex items-center gap-1">
-                                ATTACH_VISUAL
+                                ATTACH VISUAL
                                 <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                               </button>
                               <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
-                                <div v-if="!enrichedTrade?.images?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">NO_VISUALS_ARCHIVED</div>
+                                <div v-if="!enrichedTrade?.images?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">NO VISUALS ARCHIVED</div>
                                 <button v-else v-for="(img, idx) in enrichedTrade.images" :key="img.url" @click.prevent="insertFormatting(`[VISUAL_REF:${idx}]`, '')" class="px-3 py-2 text-[9px] font-mono text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors truncate max-w-[200px]">
-                                  {{ img.name || `Visual_Node_${idx}` }}
+                                  {{ formatDisplayLabel(img.name || `Visual_Node_${idx}`) }}
                                 </button>
                               </div>
                             </div>
@@ -5796,12 +5797,12 @@ const simpleMetricInsights = computed(() => {
                           ></textarea>
                           <div v-else 
                                class="w-full h-full font-mono text-[13px] leading-relaxed tracking-wider overflow-y-auto custom-scrollbar min-h-[200px]"
-                               v-html="formatNote(noteText || 'NO_CONTENT_TO_PREVIEW')">
+                               v-html="formatNote(noteText || 'NO CONTENT TO PREVIEW')">
                           </div>
                        </div>
                        <div class="flex justify-end">
                           <button @click="addNote" class="group/save relative h-10 px-10 bg-black text-white dark:bg-white dark:text-black font-black border border-black dark:border-white hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all duration-500">
-                            <span class="relative z-10 text-[9px] uppercase tracking-[0.4em]">Persist_Record</span>
+                            <span class="relative z-10 text-[9px] uppercase tracking-[0.4em]">Persist Record</span>
                           </button>
                        </div>
                     </div>
@@ -5823,9 +5824,9 @@ const simpleMetricInsights = computed(() => {
                                   class="bg-transparent border-b border-black/30 dark:border-white/30 outline-none text-[9px] font-mono font-black uppercase tracking-[0.2em] nier-text-primary"
                                   autofocus
                                 />
-                                <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">(ENTER_TO_SAVE)</span>
+                                <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">(ENTER TO SAVE)</span>
                               </div>
-                              <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || 'ARCHIVED_RECORD' }}</span>
+                              <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ formatDisplayLabel(note.title || 'ARCHIVED_RECORD') }}</span>
                            </div>
                            <div class="flex items-center space-x-4">
                               <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>
@@ -5885,7 +5886,7 @@ const simpleMetricInsights = computed(() => {
           <div class="flex items-center justify-between px-10 py-6 border-b nier-border-primary">
             <div class="flex items-center gap-4">
               <div class="w-2 h-2 nier-bg-inverted rotate-45"></div>
-              <span class="text-xs uppercase tracking-[0.8em] font-black nier-text-primary">Emotion_Matrix_Protocol</span>
+              <span class="text-xs uppercase tracking-[0.8em] font-black nier-text-primary">Emotion Matrix Protocol</span>
             </div>
           </div>
 
@@ -5894,7 +5895,7 @@ const simpleMetricInsights = computed(() => {
               <div v-for="(emotions, category) in emotionsByCategory" :key="category" class="flex flex-col space-y-8">
                 <div class="flex items-center gap-4">
                   <div class="h-[1px] flex-1 bg-black/10 dark:bg-white/10"></div>
-                  <span class="text-[9px] font-mono tracking-[0.5em] text-black/40 dark:text-white/40 uppercase">{{ category }}</span>
+                  <span class="text-[9px] font-mono tracking-[0.5em] text-black/40 dark:text-white/40 uppercase">{{ formatDisplayLabel(category) }}</span>
                 </div>
                 
                 <div class="flex flex-col space-y-3">
@@ -5910,7 +5911,7 @@ const simpleMetricInsights = computed(() => {
                           ]">
                     <span class="text-[13px] font-mono font-black tracking-widest uppercase transition-colors"
                           :class="selectedEmotions.includes(emotion.label) ? 'nier-text-primary' : 'text-black/80 dark:text-white/80 group-hover:text-black dark:group-hover:text-white'">
-                      {{ emotion.label }}
+                      {{ formatDisplayLabel(emotion.label) }}
                     </span>
                     <span class="text-[10px] font-mono uppercase mt-2 leading-relaxed"
                           :class="selectedEmotions.includes(emotion.label) ? 'text-white/80 dark:text-black/80' : 'text-black/80 dark:text-white/80'">
@@ -5928,7 +5929,7 @@ const simpleMetricInsights = computed(() => {
             </div>
             <button @click="saveEmotions" 
                     class="group/save relative h-12 px-16 bg-black text-white dark:bg-white dark:text-black font-black border border-black dark:border-white hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-all duration-500 ease-in-out">
-              <span class="relative z-10 text-[10px] uppercase tracking-[0.8em]">Update_Protocol</span>
+              <span class="relative z-10 text-[10px] uppercase tracking-[0.8em]">Update Protocol</span>
             </button>
             <div class="flex gap-1 opacity-40">
               <div v-for="i in 3" :key="i" class="w-1 h-1 nier-bg-inverted rotate-45"></div>
@@ -5952,7 +5953,7 @@ const simpleMetricInsights = computed(() => {
           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
-        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Show_Fullscreen</span>
+        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Show Fullscreen</span>
       </button>
 
       <button @click="editImage(activeContextMenu.idx); closeContextMenu()" 
@@ -5960,7 +5961,7 @@ const simpleMetricInsights = computed(() => {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-indigo-500 group-hover/ctx:text-white transition-colors">
           <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
         </svg>
-        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Edit_Visuals</span>
+        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Edit Visuals</span>
       </button>
 
       <div class="h-px bg-black/5 dark:bg-white/5 my-1"></div>
@@ -5970,7 +5971,7 @@ const simpleMetricInsights = computed(() => {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-rose-500 group-hover/ctx:text-white transition-colors">
           <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Remove_Slot</span>
+        <span class="text-[10px] font-mono font-black uppercase tracking-widest text-black/80 dark:text-white/80 group-hover/ctx:text-white">Remove Slot</span>
       </button>
     </div>
   </Teleport>
