@@ -68,7 +68,7 @@
 
       <!-- Identity -->
       <div class="flex flex-col items-center space-y-1 text-center">
-        <h1 class="text-3xl tracking-[0.5em] uppercase font-light animate-glitch" >J.L.Jörmungandr</h1>
+        <h1 class="text-3xl tracking-[0.5em] uppercase font-light text-black animate-glitch" >J.L.Jörmungandr</h1>
         <p class="text-[8px] font-mono tracking-[0.6em] uppercase text-black">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ АНАЛИТИЧЕСКАЯ ПЛАТФОРМА' : 'Universal Analytical Platform' }}</p>
       </div>
 
