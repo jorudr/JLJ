@@ -180,19 +180,6 @@
             </svg>
           </button>
 
-          <!-- Theme Toggle -->
-          <button
-            class="dashboard-icon-toggle opacity-30 hover:opacity-100 transition-all duration-300"
-            @click="themeStore.toggleDark"
-          >
-            <template v-if="themeStore.isReady">
-              <img
-                alt="Toggle Theme"
-                :src="themeStore.settings.isDark ? '/assets/light-mode-switcher.svg' : '/assets/dark-mode-switcher.svg'"
-                class="block"
-              />
-            </template>
-          </button>
         </div>
 
       </div>

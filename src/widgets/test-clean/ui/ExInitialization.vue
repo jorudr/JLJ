@@ -6,7 +6,12 @@
   >
     <!-- Ethereal Background -->
     <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
-    <GradflowBackground preset="mystic" :config="initializationGradflowConfig" />
+    <GradflowBackground preset="mystic" :config="initializationGradflowConfig" @ready="isGradflowReady = true" />
+    <div
+      class="pointer-events-none absolute inset-0 z-[1] bg-white/[0.08] transition-opacity duration-500"
+      :class="isGradflowReady ? 'opacity-0' : 'opacity-100'"
+      aria-hidden="true"
+    ></div>
     <!-- Background Ambience -->
     <!-- <div class="absolute inset-0 opacity-20 pointer-events-none">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--theme-text)_0%,transparent_70%)] opacity-5"></div>
@@ -279,6 +284,7 @@ const { locale, setLocale } = useI18n()
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
+const isGradflowReady = ref(false)
 const primaryButtonStyle = computed(() => ({
   background: 'var(--theme-text)',
   color: 'var(--theme-bg)'
