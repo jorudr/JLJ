@@ -1,5 +1,7 @@
 <template>
-  <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden py-1.5 lg:py-2" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-6 lg:px-10'">
+  <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden py-1.5 pb-4 lg:py-2 lg:pb-4" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-6 lg:px-10'">
+    <GradflowBackground preset="mystic" :config="dashboardGradflowConfig" />
+
     <!-- Update Notification Widget -->
     <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] nier-bg-inverted p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
       
@@ -60,7 +62,9 @@
       </div>
     </div>
 
-    <header class="dashboard-top-bar absolute left-6 right-6 top-1.5 z-[200] flex min-h-14 items-center justify-between px-4 py-2 backdrop-blur-md lg:left-10 lg:right-10 lg:top-2 lg:px-5">
+    <div class="absolute inset-x-0 top-0 z-[190] h-[84px] bg-black" aria-hidden="true"></div>
+
+    <header class="dashboard-top-bar absolute left-6 right-6 top-0 z-[200] flex h-[84px] items-center justify-between bg-black px-4 backdrop-blur-md lg:left-10 lg:right-10 lg:px-5">
       <div class="flex items-center gap-4">
         <ExTag class="shrink-0">v{{ appVersion.toUpperCase().replace('-', '_') }}</ExTag>
       </div>
@@ -266,20 +270,22 @@
 
     <!-- 3. Bottom Navigation Bar -->
     <nav
-      class="dashboard-bottom-nav absolute bottom-2 left-1/2 z-[200] flex w-[min(920px,calc(100vw-48px))] -translate-x-1/2 items-center justify-center gap-2 p-2 backdrop-blur-md"
+      class="dashboard-bottom-nav absolute bottom-0 left-0 z-[200] flex w-full items-center justify-center bg-black px-6 py-[22px] backdrop-blur-md lg:px-10"
       aria-label="Tactical dashboard pages"
     >
-      <ExButton
-        v-for="module in dashboardModules"
-        :key="module.id"
-        variant="ghost"
-        size="none"
-        class="dashboard-page-button min-h-10 flex-1 !border-transparent !bg-transparent px-4 py-2 text-center text-[9px] tracking-[0.26em]"
-        :class="activeDashboardPanel === module.id ? ['is-active opacity-100', themeStore.settings.isDark ? 'is-active-dark' : ''] : 'opacity-50 hover:opacity-100'"
-        @click="handleDashboardModuleClick(module.id)"
-      >
-        {{ t(module.titleKey) }}
-      </ExButton>
+      <div class="flex w-[min(920px,calc(100vw-48px))] items-center justify-center gap-2">
+        <ExButton
+          v-for="module in dashboardModules"
+          :key="module.id"
+          variant="ghost"
+          size="none"
+          class="dashboard-page-button min-h-10 flex-1 !border-transparent !bg-transparent px-4 py-2 text-center text-[9px] tracking-[0.26em]"
+          :class="activeDashboardPanel === module.id ? ['is-active opacity-100', themeStore.settings.isDark ? 'is-active-dark' : ''] : 'opacity-50 hover:opacity-100'"
+          @click="handleDashboardModuleClick(module.id)"
+        >
+          {{ t(module.titleKey) }}
+        </ExButton>
+      </div>
     </nav>
 
     <ExProfileOverlay :open="showProfileOverlay" @close="closeProfileOverlay" />
@@ -308,6 +314,7 @@ import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
 import ExForum from '~/widgets/exforum/ui/ExForum.vue'
 import ExTournamentView from '~/widgets/tournament/ui/ExTournamentView.vue'
 import { initTournamentListener } from '~/widgets/tournament/model/useTournament'
+import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 
 const props = withDefaults(defineProps<{
   isMusicMuted?: boolean
@@ -321,6 +328,16 @@ const { t, locale, setLocale } = useI18n()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
 const appVersion = String(tauriConfig.version || '0.0.0')
+
+const dashboardGradflowConfig = {
+  color1: { r: 2, g: 145, b: 135 },
+  color2: { r: 165, g: 249, b: 193 },
+  color3: { r: 153, g: 151, b: 231 },
+  speed: 0.5,
+  scale: 2,
+  type: 'smoke' as const,
+  noise: 0.22
+}
 
 // User menu
 const userMenuOpen = ref(false)

@@ -268,7 +268,7 @@ const initializationGradflowConfig = {
   color1: { r: 2, g: 145, b: 135 },
   color2: { r: 165, g: 249, b: 193 },
   color3: { r: 153, g: 151, b: 231 },
-  speed: 0.8,
+  speed: 0.5,
   scale: 2,
   type: 'smoke' as const,
   noise: 0.22

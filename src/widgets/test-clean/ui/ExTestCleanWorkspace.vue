@@ -31,7 +31,7 @@
     <div
       v-if="canEnterWorkspace"
       class="relative z-10 flex inset-0 h-full min-h-0"
-      :class="!activeTab ? 'items-start justify-center py-4' : (activeTab === 'forum' || activeTab === 'genesis' ? 'items-start justify-center py-0' : 'items-center justify-center py-20')"
+      :class="!activeTab ? 'items-start justify-center pt-0 pb-0' : (activeTab === 'forum' || activeTab === 'genesis' ? 'items-start justify-center py-0' : 'items-center justify-center py-20')"
     >
        <Transition name="page-reify" mode="out-in">
          <!-- Dashboard Hub (No Tab) -->
