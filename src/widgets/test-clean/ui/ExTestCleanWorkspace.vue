@@ -21,7 +21,6 @@
     </Transition>
 
     <EtherealBackground v-if="canEnterWorkspace" :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
-    <GradflowBackground v-if="canEnterWorkspace" preset="mystic" :config="workspaceGradflowConfig" />
     <TesseractCanvas v-if="canEnterWorkspace && isTesseractEnabled" :is-dark="isDark" />
     <DesignVignette v-if="canEnterWorkspace" :is-dark="isDark" />
      <div 
@@ -82,7 +81,7 @@
              </div>
 
              <nav
-               class="genesis-bottom-bar absolute bottom-0 left-0 z-[7000] flex w-full items-center justify-center border-t border-theme-border bg-theme-bg/55 px-4 backdrop-blur-md transition-transform duration-500 ease-[var(--nier-ease)]"
+               class="genesis-bottom-bar absolute bottom-0 left-0 z-[7000] flex w-full items-center justify-center border-t border-theme-border bg-theme-bg/90 px-4 backdrop-blur-md transition-transform duration-500 ease-[var(--nier-ease)]"
                :class="isGenesisBottomBarHidden ? 'translate-y-full' : 'translate-y-0'"
                :style="{ height: `${genesisBottomBarHeight}px` }"
                aria-label="Genesis pages"
@@ -290,7 +289,6 @@ import { ref, watch, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
-import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 import TesseractCanvas from '~/widgets/style/ui/TesseractCanvas.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
@@ -324,15 +322,6 @@ const router = useRouter()
 const genesisBasePath = '/genesis'
 const defaultGenesisMode = 'diary'
 const genesisBottomBarHeight = 56
-const workspaceGradflowConfig = {
-  color1: { r: 2, g: 145, b: 135 },
-  color2: { r: 165, g: 249, b: 193 },
-  color3: { r: 153, g: 151, b: 231 },
-  speed: 0.8,
-  scale: 2,
-  type: 'smoke',
-  noise: 0.16
-}
 const validTabs = ['activity', 'genesis', 'matrix']
 const genesisModeItems = [
   { id: 'diary', title: 'Ex Equity Curve 3D' },

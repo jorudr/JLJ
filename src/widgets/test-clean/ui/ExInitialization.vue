@@ -6,6 +6,7 @@
   >
     <!-- Ethereal Background -->
     <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    <GradflowBackground preset="mystic" :config="initializationGradflowConfig" />
     <!-- Background Ambience -->
     <!-- <div class="absolute inset-0 opacity-20 pointer-events-none">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--theme-text)_0%,transparent_70%)] opacity-5"></div>
@@ -245,6 +246,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 import tauriConfig from '../../../../src-tauri/tauri.conf.json'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {
@@ -263,6 +265,16 @@ import { useThemeStore } from '~/features/store/useTheme'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
 const appVersion = String(tauriConfig.version || '0.0.0')
+
+const initializationGradflowConfig = {
+  color1: { r: 2, g: 145, b: 135 },
+  color2: { r: 165, g: 249, b: 193 },
+  color3: { r: 153, g: 151, b: 231 },
+  speed: 0.8,
+  scale: 2,
+  type: 'smoke' as const,
+  noise: 0.22
+}
 
 const emit = defineEmits(['initiate'])
 const { locale, setLocale } = useI18n()
