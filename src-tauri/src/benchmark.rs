@@ -172,7 +172,6 @@ pub async fn get_benchmark_and_beta(
         let lock = state.0.lock().unwrap();
         if lock.has_fetched && lock.cached_period == Some(benchmark_period) {
             if let Some(beta) = lock.cached_betas.get(&strategy_key) {
-                log::info!("[benchmark] Using in-memory cached benchmark data for strategy {} -> rate: {:.2}%, beta: {:.2}, risk_free: {:.2}%", strategy_key, lock.cached_rate, beta, lock.cached_risk_free);
                 return Ok(BenchmarkResponse {
                     benchmark_rate: lock.cached_rate,
                     beta: *beta,
@@ -267,7 +266,6 @@ pub async fn get_benchmark_and_beta(
     if strategy_returns.len() < 2 {
         if let Ok(cache_path) = get_cache_path() {
             if let Some(response) = load_cached_strategy(&cache_path, &strategy_key, benchmark_period) {
-                log::info!("[benchmark] Strategy {} has < 2 returns; using cached beta {:.2} from local JSON.", strategy_key, response.beta);
                 cache_response_in_memory(&response, &strategy_key);
                 return Ok(response);
             }
@@ -290,8 +288,6 @@ pub async fn get_benchmark_and_beta(
     match bench_beta_res {
         Ok((rate, beta)) => {
             let risk_free = risk_free_res.unwrap_or(5.00);
-            log::info!("[benchmark] Successfully fetched live benchmark data for strategy {} -> rate: {:.2}%, beta: {:.2}, risk_free: {:.2}%", strategy_key, rate, beta, risk_free);
-
             if let Ok(cache_path) = get_cache_path() {
                 save_strategy_cache(
                     &cache_path,
@@ -317,7 +313,6 @@ pub async fn get_benchmark_and_beta(
 
             if let Ok(cache_path) = get_cache_path() {
                 if let Some(response) = load_cached_strategy(&cache_path, &strategy_key, benchmark_period) {
-                    log::info!("[benchmark] Successfully loaded cached benchmark data for strategy {} -> rate: {:.2}%, beta: {:.2}, risk_free: {:.2}%", strategy_key, response.benchmark_rate, response.beta, response.risk_free_rate);
                     cache_response_in_memory(&response, &strategy_key);
                     return Ok(response);
                 }
@@ -399,10 +394,6 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Optio
                     })
                     .collect();
 
-                log::info!(
-                    "[benchmark_diagnostic] Parsed {} in-period adjusted close prices from Yahoo Finance.",
-                    price_points.len()
-                );
                 let benchmark_start = start_ts
                     .and_then(|start| {
                         all_price_points
@@ -423,20 +414,8 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Optio
                     .or_else(|| price_points.last().copied());
 
                 if let (Some(first), Some(last)) = (benchmark_start, benchmark_end) {
-                    log::info!(
-                        "[benchmark_diagnostic] Benchmark anchor range: Start TS={}, End TS={}",
-                        first.0,
-                        last.0
-                    );
-
                     if first.1 > 0.0 {
                         benchmark_rate = ((last.1 / first.1) - 1.0) * 100.0;
-                        log::info!(
-                            "[benchmark_diagnostic] Calculated completed-calendar-year benchmark: (({} / {}) - 1) * 100 = {:.2}%",
-                            last.1,
-                            first.1,
-                            benchmark_rate
-                        );
                     }
                 } else {
                     log::warn!("[benchmark_diagnostic] No valid S&P 500 prices found inside the completed calendar year.");
@@ -453,7 +432,6 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Optio
                         .collect();
 
                     let n_strat = strategy_returns.len();
-                    log::info!("[benchmark_diagnostic] Strategy returns count: {}, Market returns count: {}", n_strat, market_returns.len());
                     if n_strat >= 2 && !market_returns.is_empty() {
                         let n_take = n_strat.min(market_returns.len());
                         let s_slice = &strategy_returns[n_strat - n_take..];
@@ -516,10 +494,6 @@ async fn fetch_live_risk_free_rate(start_ts: Option<i64>, end_ts: Option<i64>) -
     if let Some(meta) = &result.meta {
         if let Some(price) = meta.regular_market_price {
             if price > 0.0 && start_ts.is_none() {
-                log::info!(
-                    "[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX): {:.2}%",
-                    price
-                );
                 return Ok(price);
             }
         }
@@ -534,12 +508,10 @@ async fn fetch_live_risk_free_rate(start_ts: Option<i64>, end_ts: Option<i64>) -
                         let sum: f64 = valid_prices.iter().sum();
                         let mean = sum / (valid_prices.len() as f64);
                         if mean > 0.0 {
-                            log::info!("[benchmark_diagnostic] Fetched Historical Risk-Free Rate (^IRX) mean: {:.2}%", mean);
                             return Ok(mean);
                         }
                     } else if let Some(&last_close) = valid_prices.last() {
                         if last_close > 0.0 {
-                            log::info!("[benchmark_diagnostic] Fetched live Risk-Free Rate (^IRX) from last close: {:.2}%", last_close);
                             return Ok(last_close);
                         }
                     }
@@ -597,21 +569,10 @@ pub async fn get_historical_curves(
                 .last()
                 .map_or(false, |p| p.timestamp >= end_ts - 86400);
             if has_start && has_end {
-                log::info!(
-                    "[benchmark] Serving historical curves from cache for strategy {}",
-                    strategy_key
-                );
                 return Ok(cached);
             }
         }
     }
-
-    log::info!(
-        "[benchmark] Fetching live historical curves for strategy {} from {} to {}",
-        strategy_key,
-        start_ts,
-        end_ts
-    );
 
     let fetch_curve = |symbol: String| async move {
         // Yahoo expects timestamps in seconds.
