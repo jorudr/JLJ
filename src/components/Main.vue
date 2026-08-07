@@ -69,13 +69,13 @@
     </div>
 
     <!-- Hero Section (First Viewport) -->
-    <div class="hero-header relative z-10 flex w-full min-h-screen flex-col justify-between overflow-visible px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10">
+    <div class="hero-header relative flex w-full min-h-screen flex-col justify-between overflow-visible px-6 pt-4 pb-6 sm:px-10 sm:pt-6 sm:pb-10">
       <GradflowBackground class="hero-gradflow" preset="mystic" :config="gradflowConfig" />
       <div class="hero-gradient-fade" aria-hidden="true"></div>
 
       <!-- Header / Top Bar -->
         <header
-          class="fixed left-0 right-0 top-0 z-[100] flex w-full items-center justify-start px-0 pt-2 pb-2 text-[10px] tracking-[0.3em] sm:pt-4 sm:pb-4 xl:px-8"
+          class="fixed left-0 right-0 top-0 z-[2147483647] flex w-full items-center justify-start px-0 pt-2 pb-2 text-[10px] tracking-[0.3em] sm:pt-4 sm:pb-4 xl:px-8"
           :class="{ 'nav-open': isMegaMenuVisible, 'nav-scrolled': isNavScrolled }"
         >
         <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
@@ -824,7 +824,9 @@ const scrollToFeatures = () => {
 }
 
 .hero-header > header.nav-scrolled {
-  background-color: #000;
+  background-color: #000 !important;
+  isolation: isolate;
+  z-index: 2147483647;
 }
 
 .hero-header > header.nav-scrolled .nav-openai-font,

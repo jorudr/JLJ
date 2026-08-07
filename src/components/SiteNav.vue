@@ -71,7 +71,7 @@ onUnmounted(() => {
   top: 0;
   right: 0;
   left: 0;
-  z-index: 100;
+  z-index: 2147483647;
   width: 100%;
   padding: 8px 0;
   background: transparent;
@@ -142,7 +142,9 @@ onUnmounted(() => {
 
 .site-nav:hover,
 .site-nav--scrolled {
-  background: #000;
+  background: #000 !important;
+  isolation: isolate;
+  z-index: 2147483647;
 }
 
 .site-nav:hover .site-nav__link,
