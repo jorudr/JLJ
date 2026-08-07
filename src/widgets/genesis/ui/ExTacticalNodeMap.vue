@@ -589,12 +589,6 @@ const emotionalStatus = computed(() => {
       <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,transparent_0%,currentColor_1px,transparent_1px)] bg-[length:40px_40px]"></div>
     </div>
     
-    <!-- Global Tactical Corners -->
-    <div class="absolute top-12 left-12 w-12 h-12 border-t border-l z-[100] pointer-events-none" :class="isDark ? 'border-white/20' : 'border-black/20'"></div>
-    <div class="absolute top-12 right-12 w-12 h-12 border-t border-r z-[100] pointer-events-none" :class="isDark ? 'border-white/20' : 'border-black/20'"></div>
-    <div class="absolute bottom-12 left-12 w-12 h-12 border-b border-l z-[100] pointer-events-none" :class="isDark ? 'border-white/20' : 'border-black/20'"></div>
-    <div class="absolute bottom-12 right-12 w-12 h-12 border-b border-r z-[100] pointer-events-none" :class="isDark ? 'border-white/20' : 'border-black/20'"></div>
-
     <!-- HUD Overlay (Fixed) -->
     <div class="absolute inset-0 pointer-events-none z-[100]">
       <!-- Top Center Percentile Rank Label -->

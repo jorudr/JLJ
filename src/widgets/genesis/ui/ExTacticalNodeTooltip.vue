@@ -19,10 +19,6 @@
           >
             {{ node.name }}
           </span>
-          <div class="flex items-center space-x-1">
-            <div class="w-1 h-1 rounded-full animate-pulse" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-            <span class="text-[6px] font-mono opacity-30 uppercase tracking-widest">{{ t('tacticalNodeMap.liveAnalysis') }}</span>
-          </div>
         </div>
 
         <div
@@ -81,9 +77,6 @@
               </div>
             </div>
           </div>
-          <span class="text-[6px] font-mono opacity-20 uppercase tracking-tighter" :class="isDark ? 'text-white' : 'text-black'">
-            {{ t('tacticalNodeMap.liveHistory') }}
-          </span>
         </div>
 
         <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l" :class="isDark ? 'border-white/30' : 'border-black'"></div>
