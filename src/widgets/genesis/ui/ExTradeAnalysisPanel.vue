@@ -66,6 +66,7 @@ interface TradeAnalysisProps {
   globalStability?: number; // 0 to 100
   initialPage?: number;
   initialExpandedNoteId?: string;
+  embedded?: boolean;
 }
 
 const props = withDefaults(defineProps<TradeAnalysisProps>(), {
@@ -79,7 +80,8 @@ const props = withDefaults(defineProps<TradeAnalysisProps>(), {
     emotions: ['Confidence', 'Slight Anxiety', 'Patience'],
     rr: 2.8
   }),
-  globalStability: 64
+  globalStability: 64,
+  embedded: false
 })
 
 const emit = defineEmits(['close', 'requestEmotionEdit']);
@@ -4112,7 +4114,7 @@ const simpleMetricInsights = computed(() => {
 <template>
   <div ref="analysisPanelRoot" class="relative h-full w-full">
     <!-- CLOSE HANDLE (RIGHT EDGE) -->
-    <button @click="emit('close')"
+    <button v-if="!props.embedded" @click="emit('close')"
             class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors z-[100]">
        <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
        <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close Analysis</span>
@@ -4129,7 +4131,7 @@ const simpleMetricInsights = computed(() => {
     <div v-else-if="enrichedTrade" class="relative flex overflow-hidden h-full nier-text-primary">
       
       <!-- MINIMALIST NAVIGATION SIDEBAR (INTERNAL) -->
-      <div v-if="!activeCorrelationMetric" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
+      <div v-if="!activeCorrelationMetric && !props.embedded" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
         <div class="flex flex-col space-y-6">
           <button v-for="(tab, idx) in [
             { id: 3, label: 'REPORT', icon: 'M9 17H15M9 13H15M9 9H10M13 3H14.6C15.7201 3 16.2802 3 16.708 3.21799C17.0843 3.40973 17.3903 3.71569 17.582 4.09202C17.8 4.51984 17.8 5.07989 17.8 6.2V17.8C17.8 18.9201 17.8 19.4802 17.582 19.908C17.3903 20.2843 17.0843 20.5903 16.708 20.782C16.2802 21 15.7201 21 14.6 21H9.4C8.2798 21 7.71984 21 7.29202 20.782C6.91569 20.5903 6.60973 20.2843 6.41799 19.908C6.2 19.4802 6.2 18.9201 6.2 17.8V6.2C6.2 5.07989 6.2 4.51984 6.41799 4.09202C6.60973 3.71569 6.91569 3.40973 7.29202 3.21799C7.71984 3 8.27989 3 9.4 3H10.2M12 3V5' },

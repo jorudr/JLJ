@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
 
 const props = defineProps<{
   isDark?: boolean
@@ -10,6 +11,25 @@ const props = defineProps<{
 const { locale } = useI18n()
 const activeEntryFormTab = ref<'main' | 'advanced' | 'notes' | 'images'>('main')
 const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
+
+const isMainDiaryTrade = computed(() => {
+  const trade = props.trade
+  return trade?.tradingStyle === 'Main Diary' || trade?.strategyId === 'MAIN_DIARY'
+})
+
+const analysisTrade = computed(() => {
+  const trade = props.trade || {}
+
+  return {
+    ...trade,
+    id: trade.id || 'time-tree-trade',
+    entryTime: trade.entryTime || trade.date || '',
+    exitTime: trade.exitTime || trade.dateExit || '',
+    pnl: Number.isFinite(Number(trade.pnl)) ? Number(trade.pnl) : 0,
+    scenarios: Array.isArray(trade.scenarios) ? trade.scenarios : [],
+    emotions: Array.isArray(trade.emotions) ? trade.emotions : []
+  }
+})
 
 const displayValue = (value: unknown) => value === null || value === undefined || value === '' ? '--' : String(value)
 
@@ -184,7 +204,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                         <img v-if="tradeAssetIcon()" :src="tradeAssetIcon()" :alt="tradeAsset()" class="h-full w-full object-contain" />
                         <span v-else class="text-[10px]">{{ tradeAsset().slice(0, 1) }}</span>
                       </span>
-                      <span class="truncate">{{ tradeAsset() }}</span>
+                      <span class="break-words whitespace-normal">{{ tradeAsset() }}</span>
                     </div>
                   </div>
                   <div class="min-w-0 pr-6">
@@ -199,40 +219,59 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВХОДА' : 'ENTRY PRICE' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.entry) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.entry) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВЫХОДА' : 'EXIT PRICE' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.exit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.exit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВХОДА' : 'ENTRY TIME' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.date) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.date) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВЫХОДА' : 'EXIT TIME' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.dateExit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.dateExit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ДЛИТЕЛЬНОСТЬ' : 'DURATION' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDuration() }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDuration() }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">STOP LOSS</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.stopLoss) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.stopLoss) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">TAKE PROFIT</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.takeProfit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.takeProfit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskReward() }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskReward() }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК НА СДЕЛКУ' : 'RISK PER TRADE' }}</span>
-                    <span class="mt-2 block truncate text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskPerTrade() }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskPerTrade() }}</span>
                   </div>
+                </div>
+              </section>
+
+              <section v-else-if="activeEntryFormTab === 'advanced'" class="flex w-full flex-col items-start gap-8">
+                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">II.</div>
+                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                  {{ locale === 'ru' ? 'ПРОДВИНУТЫЕ МЕТРИКИ' : 'ADVANCED METRICS' }}
+                </h2>
+
+                <p v-if="isMainDiaryTrade" class="max-w-2xl text-sm font-mono uppercase leading-relaxed tracking-[0.16em] text-white/60">
+                  {{ locale === 'ru' ? 'Для Main Diary продвинутый анализ недоступен.' : 'Advanced analysis is unavailable for Main Diary.' }}
+                </p>
+
+                <div v-else class="advanced-report w-full min-h-[620px] overflow-hidden border border-white/10 bg-black/5">
+                  <ExTradeAnalysisPanel
+                    :trade="analysisTrade"
+                    :initial-page="3"
+                    embedded
+                  />
                 </div>
               </section>
 
@@ -269,5 +308,9 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
 .trade-entry-shell.theme-light [class*="border-white"] {
   border-color: rgb(17 17 17 / 0.18) !important;
+}
+
+.advanced-report :deep(> div > button) {
+  display: none;
 }
 </style>
