@@ -7,11 +7,15 @@ import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import ExTacticalNodeTooltip from '~/widgets/genesis/ui/ExTacticalNodeTooltip.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
 import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const tr = (ru: string, en: string) => locale.value === 'ru' ? ru : en
+const mapRoot = ref<HTMLElement | null>(null)
+useDomI18n(mapRoot, 'genesis.dom')
 
 const props = withDefaults(defineProps<{
   isOpen: boolean
@@ -283,7 +287,7 @@ const entryHubData = computed(() => {
   
   return {
     id: s.id,
-    name: s.name || 'ENTRY_SCENARIO',
+    name: s.name || tr('Сценарий входа', 'Entry Scenario'),
     freq: lastFreq.toFixed(1) + '%',
     freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
     pf: lastPf.toFixed(2),
@@ -306,7 +310,7 @@ const exitHubData = computed(() => {
 
   return {
     id: s.id,
-    name: s.name || 'EXIT_SCENARIO',
+    name: s.name || tr('Сценарий выхода', 'Exit Scenario'),
     freq: lastFreq.toFixed(1) + '%',
     freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
     pf: lastPf.toFixed(2),
@@ -551,16 +555,16 @@ const calculatedStabilityIndex = computed(() => {
 
 const emotionalStatus = computed(() => {
   const s = calculatedStabilityIndex.value;
-  if (s > 80) return { label: 'OPTIMAL', color: 'bg-emerald-400' };
-  if (s > 60) return { label: 'STABLE', color: 'bg-green-300' };
-  if (s > 40) return { label: 'NEUTRAL', color: 'bg-yellow-200' };
-  if (s > 20) return { label: 'UNSTABLE', color: 'bg-orange-400' };
-  return { label: 'CRITICAL', color: 'bg-red-500' };
+  if (s > 80) return { label: tr('ОПТИМАЛЬНО', 'OPTIMAL'), color: 'bg-emerald-400' };
+  if (s > 60) return { label: tr('СТАБИЛЬНО', 'STABLE'), color: 'bg-green-300' };
+  if (s > 40) return { label: tr('НЕЙТРАЛЬНО', 'NEUTRAL'), color: 'bg-yellow-200' };
+  if (s > 20) return { label: tr('НЕСТАБИЛЬНО', 'UNSTABLE'), color: 'bg-orange-400' };
+  return { label: tr('КРИТИЧНО', 'CRITICAL'), color: 'bg-red-500' };
 })
 </script>
 
 <template>
-  <div v-if="isOpen" 
+  <div v-if="isOpen" ref="mapRoot"
        class="ethereal-void fixed inset-0 z-[10000] overflow-hidden flex flex-col select-none transition-all duration-1000 backdrop-blur-xl"
        :class="[isDark ? 'is-dark dark theme-dark bg-nier-black/40' : 'theme-light bg-nier-white/40']"
        @mousedown="startPan">

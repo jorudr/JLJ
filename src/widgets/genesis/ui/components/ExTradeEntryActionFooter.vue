@@ -5,6 +5,7 @@ import { useI18n } from '~/shared/i18n/useI18n';
 import ExPanel from '~/shared/ui/ExPanel.vue';
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
+const tr = (ru, en) => locale.value === 'ru' ? ru : en;
 const { setResultMode } = inject('tradeState');
 
 const assetTypeLocales = {
@@ -93,7 +94,7 @@ const getForexCurrencyPair = (symbol) => {
                   </span>
                 </div>
                 <span class="truncate text-[12px] font-mono font-bold tracking-widest uppercase transition-colors group-hover/asset-btn:text-white" :class="asset ? 'text-white' : 'text-white/40'">
-                  {{ asset || (locale === 'ru' ? 'БЕЗ_НАЗВАНИЯ' : 'UNTITLED') }}
+                  {{ asset || (locale === 'ru' ? 'Без названия' : 'Untitled') }}
                 </span>
               </div>
 
@@ -105,7 +106,7 @@ const getForexCurrencyPair = (symbol) => {
                       <ExPanel variant="light" :no-padding="true" :no-shadow="true" class="h-[500px] max-h-[80vh] flex flex-col bg-black/80">
                         <!-- Search Header -->
                         <div class="p-6 border-b border-white/10 flex items-center gap-4 shrink-0 bg-black/20">
-                          <input v-model="assetSearch" :placeholder="locale === 'ru' ? 'ПОИСК_АКТИВОВ...' : 'SEARCH_ASSETS...'" class="w-full uppercase text-xl font-black tracking-widest bg-transparent border-0 outline-none text-white placeholder-white/20 font-mono" autofocus />
+                          <input v-model="assetSearch" :placeholder="locale === 'ru' ? 'Поиск активов...' : 'Search assets...'" class="w-full uppercase text-xl font-black tracking-widest bg-transparent border-0 outline-none text-white placeholder-white/20 font-mono" autofocus />
                         </div>
                         
                         <!-- Filter row -->
@@ -145,7 +146,7 @@ const getForexCurrencyPair = (symbol) => {
                             </div>
                           </div>
                           <div v-if="filteredAssets.length === 0" class="flex flex-col items-center justify-center h-full text-white/30 uppercase tracking-[0.3em] font-mono text-[10px] mt-10">
-                            {{ locale === 'ru' ? 'АКТИВЫ НЕ НАЙДЕНЫ' : 'NO_ASSETS_FOUND' }}
+                            {{ tr('Активы не найдены', 'No assets found') }}
                           </div>
                         </div>
                       </ExPanel>
@@ -171,21 +172,21 @@ const getForexCurrencyPair = (symbol) => {
               <div v-if="activeSector === 'core'" :key="'core'" class="flex items-center gap-10">
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': entryMethodEnabled }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="entryMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
-                     {{ entryMethodEnabled ? 'Avg_Entry_Lvl' : 'Entry_Lvl' }}
+                     {{ entryMethodEnabled ? tr('Средний уровень входа', 'Average Entry Level') : tr('Уровень входа', 'Entry Level') }}
                   </span>
                   <input v-if="!entryMethodEnabled" v-model="entry" type="text" inputmode="decimal" placeholder="0.00" class="nier-input w-20 font-mono" @input="sanitizeTradeNumberInput($event, 'entry')"/>
                   <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ averageEntry > 0 ? averageEntry.toFixed(5) : '0.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': exitMethodEnabled || !isClosed }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="exitMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
-                    {{ exitMethodEnabled ? 'Avg_Exit_Lvl' : 'Exit_Lvl' }}
+                    {{ exitMethodEnabled ? tr('Средний уровень выхода', 'Average Exit Level') : tr('Уровень выхода', 'Exit Level') }}
                   </span>
                   <input v-if="!exitMethodEnabled" v-model="exit" type="text" inputmode="decimal" placeholder="0.00" class="nier-input w-20 font-mono" :disabled="!isClosed" @input="sanitizeTradeNumberInput($event, 'exit')"/>
                   <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ averageExit > 0 ? averageExit.toFixed(5) : '0.00' }}</span>
                 </div>
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-50 pointer-events-none': entryMethodEnabled }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold transition-colors" :class="entryMethodEnabled ? 'text-amber-500/80' : 'text-white/40'">
-                    {{ entryMethodEnabled ? 'Total_Vol' : (isForex ? 'Lot_Size' : 'Unit_Qty') }}
+                    {{ entryMethodEnabled ? tr('Общий объем', 'Total Volume') : (isForex ? tr('Размер лота', 'Lot Size') : tr('Количество единиц', 'Unit Quantity')) }}
                   </span>
                   <input v-if="!entryMethodEnabled" v-model="size" type="text" inputmode="decimal" :placeholder="isForex ? '0.01' : '1.0'" class="nier-input w-16 font-mono" @input="sanitizeTradeNumberInput($event, 'size')"/>
                   <span v-else class="text-[11px] font-mono font-bold tracking-[0.15em] text-white">{{ totalSize > 0 ? totalSize.toFixed(2) : '0.00' }}</span>
@@ -195,7 +196,7 @@ const getForexCurrencyPair = (symbol) => {
               <div v-else-if="activeSector === 'risk'" :key="'risk'" class="flex items-center gap-8">
                 <div class="flex items-center gap-10">
                   <div class="flex flex-col gap-0.5 text-left">
-                    <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-rose-500/60">Stop_Loss</span>
+                    <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-rose-500/60">{{ locale === 'ru' ? 'Стоп-лосс' : 'Stop Loss' }}</span>
                     <input
                       v-model="stopLoss"
 	                      type="text"
@@ -208,7 +209,7 @@ const getForexCurrencyPair = (symbol) => {
                     />
                   </div>
                   <div class="flex flex-col gap-0.5 text-left">
-                    <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-emerald-500/60">Take_Profit</span>
+                    <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-emerald-500/60">{{ locale === 'ru' ? 'Тейк-профит' : 'Take Profit' }}</span>
                     <input
                       v-model="takeProfit"
 	                      type="text"
@@ -246,14 +247,14 @@ const getForexCurrencyPair = (symbol) => {
 
                 <div class="flex flex-col gap-0.5 text-left">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-amber-500/60">
-                    {{ locale === 'ru' ? 'ВХОДНАЯ КОМ.' : 'ENTRY_FEE' }}
+                    {{ tr('Комиссия входа', 'Entry Fee') }}
                   </span>
                   <input v-model="entryFee" type="text" inputmode="decimal" placeholder="0.00" class="nier-input w-20 font-mono text-amber-400" @input="sanitizeTradeNumberInput($event, 'entryFee')"/>
                 </div>
                 
                 <div class="flex flex-col gap-0.5 text-left" :class="{ 'opacity-40 pointer-events-none': !isClosed }">
                   <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-amber-500/60">
-                    {{ locale === 'ru' ? 'ВЫХОДНАЯ КОМ.' : 'EXIT_FEE' }}
+                    {{ tr('Комиссия выхода', 'Exit Fee') }}
                   </span>
                   <input v-model="exitFee" type="text" inputmode="decimal" placeholder="0.00" class="nier-input w-20 font-mono text-amber-400" @input="sanitizeTradeNumberInput($event, 'exitFee')"/>
                 </div>
@@ -264,7 +265,7 @@ const getForexCurrencyPair = (symbol) => {
           <!-- BLOCK: OUTPUT -->
           <div class="flex items-center gap-10 pl-8 border-l border-white/10 w-[240px] shrink-0 justify-end">
             <div class="flex flex-col items-end gap-0.5">
-              <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">Yield_Est</span>
+              <span class="text-[7px] uppercase tracking-[0.4em] font-bold text-white/40">{{ locale === 'ru' ? 'Ожидаемая доходность' : 'Expected Yield' }}</span>
               <div v-if="!isClosed" class="text-[10px] font-mono font-black uppercase tracking-[0.24em] text-white/45">
                 --
               </div>

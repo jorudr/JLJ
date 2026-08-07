@@ -175,7 +175,7 @@
 
               <div v-else class="flex h-full items-center justify-center">
                 <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
-                  {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ДЕРЕВА' : 'NO_TRADES_FOR_TREE' }}
+                  {{ locale === 'ru' ? 'Нет сделок для дерева' : 'No trades for tree' }}
                 </div>
               </div>
             </div>
@@ -204,7 +204,7 @@
           <div class="mx-10 mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-black/10 pb-5 dark:border-white/10 md:mx-20">
             <div class="flex flex-col gap-2">
               <span class="text-[9px] font-mono uppercase tracking-[0.45em] opacity-40">
-                {{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_СДЕЛОК' : 'TRADE_DISTRIBUTION') : (locale === 'ru' ? 'РАСПРЕДЕЛЕНИЕ_SCORE' : 'SCORE_DISTRIBUTION') }}
+                {{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'Распределение сделок' : 'Trade Distribution') : (locale === 'ru' ? 'Распределение score' : 'Score Distribution') }}
               </span>
               <span class="text-xs font-mono uppercase tracking-[0.25em] opacity-70">
                 {{ distributionMetricMode === 'pnl' ? (locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО УБЫТКА К МАКСИМАЛЬНОЙ ПРИБЫЛИ' : 'MAX LOSS TO MAX PROFIT') : (locale === 'ru' ? 'ОТ МАКСИМАЛЬНОГО SCORE К МИНИМАЛЬНОМУ' : 'MAX SCORE TO MIN SCORE') }}
@@ -252,7 +252,7 @@
 
           <div v-else class="flex flex-1 items-center justify-center">
             <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
-              {{ locale === 'ru' ? 'НЕТ_СДЕЛОК_ДЛЯ_ГРАФИКА' : 'NO_TRADES_FOR_CHART' }}
+              {{ locale === 'ru' ? 'Нет сделок для графика' : 'No trades for chart' }}
             </div>
           </div>
         </div>
@@ -348,7 +348,7 @@
                   <div class="absolute inset-y-0 left-0 w-0 bg-nier-text-light transition-all duration-500 group-hover:w-1.5 dark:bg-nier-text-dark"></div>
                 </button>
                 <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">Trade_Protocol_Execution // Ready</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">Trade Protocol Execution // Ready</span>
                 </div>
               </div>
 
@@ -363,7 +363,7 @@
                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 transition-all duration-500 group-hover:w-1.5"></div>
                 </button>
                 <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent_Trade_Erasure</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent Trade Erasure</span>
                 </div>
               </div>
             </div>
@@ -377,7 +377,7 @@
       @click.self="closeTimeTreeTradeDetails"
     >
       <div class="relative flex h-[72vh] max-h-[calc(100%-2rem)] w-full max-w-5xl">
-          <ExPanel variant="light" title="trade-details" :no-padding="true" :show-corners="false" :no-shadow="true" class="!h-full !w-full overflow-hidden !border-black/15 dark:!border-white/15">
+          <ExPanel variant="light" :title="locale === 'ru' ? 'Детали сделки' : 'Trade details'" :no-padding="true" :show-corners="false" :no-shadow="true" class="!h-full !w-full overflow-hidden !border-black/15 dark:!border-white/15">
               <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-5 pb-5 md:px-8">
                 <ExVerticalTradeList
                 :trades="selectedTimeTreeTrade ? [selectedTimeTreeTrade] : []"
@@ -469,7 +469,7 @@
             :metrics="complianceMetricsConfigs"
             :values="complianceMetricsValues"
             :selected-metric-key="activeComplianceMetricKey"
-            strategy-name="Protocol_Compliance"
+                    strategy-name="Protocol Compliance"
             :is-live="true"
             :editable="false"
             @metric-select="activeComplianceMetricKey = $event"
@@ -489,7 +489,7 @@
               </div>
 
               <div v-if="complianceViolations.violatingTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
-                {{ locale === 'ru' ? 'НАРУШЕНИЙ RISK_PER_TRADE НЕ ОБНАРУЖЕНО' : 'NO RISK_PER_TRADE VIOLATIONS DETECTED' }}
+                {{ locale === 'ru' ? 'Нарушений риска на сделку не обнаружено' : 'No risk per trade violations detected' }}
               </div>
 
               <div v-else class="flex flex-col space-y-3.5 pt-2">
@@ -541,7 +541,7 @@
               </div>
 
               <div v-if="complianceViolations.violatingSessions.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
-                {{ locale === 'ru' ? 'НАРУШЕНИЙ RISK_PER_SESSION НЕ ОБНАРУЖЕНО' : 'NO RISK_PER_SESSION VIOLATIONS DETECTED' }}
+                {{ locale === 'ru' ? 'Нарушений риска на сессию не обнаружено' : 'No risk per session violations detected' }}
               </div>
               <div v-else class="flex flex-col space-y-3.5 pt-2">
                 <div v-for="session in complianceViolations.violatingSessions" :key="session.date" class="flex flex-col group transition-opacity duration-150 border-b border-black/5 dark:border-white/5 pb-2">
@@ -646,7 +646,7 @@
               </div>
 
               <div v-if="complianceViolations.violatingStyleTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
-                {{ locale === 'ru' ? 'НАРУШЕНИЙ TRADING_STYLE НЕ ОБНАРУЖЕНО' : 'NO TRADING_STYLE VIOLATIONS DETECTED' }}
+                {{ locale === 'ru' ? 'Нарушений стиля торговли не обнаружено' : 'No trading style violations detected' }}
               </div>
 
               <div v-else class="flex flex-col space-y-3.5 pt-2">
@@ -693,7 +693,7 @@
               </div>
 
               <div v-if="complianceViolations.violatingNeuralTrades.length === 0" class="py-16 text-center opacity-40 text-xs uppercase tracking-widest">
-                {{ locale === 'ru' ? 'НАРУШЕНИЙ NEURAL_STATUS НЕ ОБНАРУЖЕНО' : 'NO NEURAL_STATUS VIOLATIONS DETECTED' }}
+                {{ locale === 'ru' ? 'Нарушений нейростатуса не обнаружено' : 'No neural status violations detected' }}
               </div>
 
               <div v-else class="flex flex-col space-y-3.5 pt-2">
@@ -861,7 +861,7 @@
             <circle cx="6" cy="19" r="2" />
             <circle cx="18" cy="19" r="2" />
           </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ВРЕМЕННОЕ_ДЕРЕВО' : 'TIME_TREE' }} ]</span>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'Временное дерево' : 'Time tree' }} ]</span>
         </button>
 
         <button
@@ -935,7 +935,7 @@
                     <circle cx="12" cy="4" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="19" r="2" />
                   </svg>
                   <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                    {{ locale === 'ru' ? 'ДЕРЕВО_ГЕНЕЗИСА' : 'GENESIS_TREE' }}
+                    {{ locale === 'ru' ? 'Дерево Генезиса' : 'Genesis tree' }}
                   </span>
                 </button>
 
@@ -963,7 +963,7 @@
                     <rect x="18" y="3" width="4" height="18" /><rect x="10" y="8" width="4" height="13" /><rect x="2" y="13" width="4" height="8" />
                   </svg>
                   <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                    {{ locale === 'ru' ? 'СТАТУС_СООТВЕТСТВИЯ' : 'COMPLIANCE_STATUS' }}
+                    {{ locale === 'ru' ? 'Статус соответствия' : 'Compliance status' }}
                   </span>
                 </button>
               </div>
@@ -1140,7 +1140,7 @@
             <div class="mb-5 flex items-center justify-between gap-6 border-b border-black/10 pb-4 dark:border-white/10">
               <div>
                 <div class="text-[8px] font-mono uppercase tracking-[0.42em] opacity-45">
-                  {{ locale === 'ru' ? 'ПРОГНОЗ_ПАТТЕРНОВ' : 'PATTERN_FORECAST' }}
+                  {{ locale === 'ru' ? 'Прогноз паттернов' : 'Pattern forecast' }}
                 </div>
                 <h2 class="mt-2 text-lg font-mono font-black uppercase tracking-[0.18em]">
                   {{ locale === 'ru' ? 'Предупреждение перед запуском' : 'Forecast Preview Notice' }}
@@ -1157,11 +1157,11 @@
             <div class="font-mono text-[10px] uppercase tracking-[0.12em] leading-relaxed">
               <div class="grid grid-cols-2 gap-3 border-b border-black/10 pb-4 dark:border-white/10">
                 <div>
-                  <div class="opacity-40">{{ locale === 'ru' ? 'ВАШИ_СДЕЛКИ' : 'YOUR_TRADES' }}</div>
+                  <div class="opacity-40">{{ locale === 'ru' ? 'Ваши сделки' : 'Your trades' }}</div>
                   <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.userTrades }}</div>
                 </div>
                 <div>
-                  <div class="opacity-40">{{ locale === 'ru' ? 'ИСТОРИИ_ТРЕЙДЕРОВ' : 'TRADER_HISTORIES' }}</div>
+                  <div class="opacity-40">{{ locale === 'ru' ? 'Истории трейдеров' : 'Trader histories' }}</div>
                   <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.historicalProfiles }}</div>
                 </div>
               </div>
@@ -1238,6 +1238,7 @@ import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeE
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
 import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
@@ -1258,6 +1259,8 @@ const emit = defineEmits(['exit', 'nodeMapState', 'hudState', 'openNote', 'openT
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const { t, locale } = useI18n()
+const container = ref<HTMLElement | null>(null)
+useDomI18n(container, 'genesis.dom')
 const numberLocale = computed(() => locale.value === 'ru' ? 'ru-RU' : 'en-US')
 const openTradeText = () => locale.value === 'ru' ? 'НЕЗАКР. СД.' : 'OPEN TRD.'
 const authStore = useAuthStore()
@@ -2366,7 +2369,7 @@ const emotionalStatus = computed(() => {
 const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
   {
     key: 'riskPerTrade',
-    label: locale.value === 'ru' ? 'РИСК_НА_СДЕЛКУ' : 'Risk_Per_Trade',
+    label: locale.value === 'ru' ? 'Риск на сделку' : 'Risk Per Trade',
     sub: 'Compliance',
     desc: 'Adherence to max risk per trade.',
     formula: 'actual / limit',
@@ -2384,7 +2387,7 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
   },
   {
     key: 'riskPerSession',
-    label: locale.value === 'ru' ? 'РИСК_НА_СЕССИЮ' : 'Risk_Per_Session',
+    label: locale.value === 'ru' ? 'Риск на сессию' : 'Risk Per Session',
     sub: 'Compliance',
     desc: 'Adherence to session risk limits.',
     formula: 'actual / limit',
@@ -2402,7 +2405,7 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
   },
   {
     key: 'tradingStyle',
-    label: locale.value === 'ru' ? 'СТИЛЬ_ТОРГОВЛИ' : 'Trading_Style',
+    label: locale.value === 'ru' ? 'Стиль торговли' : 'Trading Style',
     sub: 'Compliance',
     desc: 'Adherence to defined trading style.',
     formula: 'actual / limit',
@@ -2420,7 +2423,7 @@ const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
   },
   {
     key: 'emotionalState',
-    label: locale.value === 'ru' ? 'НЕЙРОСТАТУС' : 'Neural_Status',
+    label: locale.value === 'ru' ? 'Нейростатус' : 'Neural Status',
     sub: 'Overall',
     desc: 'Emotional stability.',
     formula: 'avg(emotions)',
@@ -3373,7 +3376,7 @@ const initTrades = () => {
 
           nodes.push({
             id: `note_${trade.id}_${note.id}`,
-            label: note.title || 'POST_MORTEM',
+            label: note.title || (locale.value === 'ru' ? 'Послесессионный разбор' : 'Post Mortem'),
             faceIndex: 0,
             seedPos: noteSeedPos,
             graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },
@@ -3514,7 +3517,7 @@ const initTrades = () => {
           const noteId = `note_${trade.id}_${note.id}`
           nodes.push({
             id: noteId,
-            label: note.title || 'POST_MORTEM',
+            label: note.title || (locale.value === 'ru' ? 'Послесессионный разбор' : 'Post Mortem'),
             faceIndex: 0,
             seedPos: noteSeedPos,
             graphPos: { x: noteSeedPos.x * 0.55, y: noteSeedPos.y * 0.55 },

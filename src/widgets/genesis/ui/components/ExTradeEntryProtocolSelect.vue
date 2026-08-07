@@ -11,8 +11,8 @@ const { themeStore, isDark, viewMode, journalEntries, getArchiveNodeName, addJou
 
 const labels = {
   en: {
-    panelRisk: 'Panel_Risk',
-    tradeStyle: 'Trade_Style',
+    panelRisk: 'Panel Risk',
+    tradeStyle: 'Trade Style',
     protocolConstraints: 'Protocol Constraints',
     requiredRR: 'Required R:R:',
     maxRiskPerTrade: 'Max Risk Per Trade:',
@@ -22,8 +22,8 @@ const labels = {
     actualDuration: 'Actual Duration:'
   },
   ru: {
-    panelRisk: 'РИСК_ПАНЕЛИ',
-    tradeStyle: 'СТИЛЬ_СДЕЛКИ',
+    panelRisk: 'Риск панели',
+    tradeStyle: 'Стиль сделки',
     protocolConstraints: 'Ограничения протокола',
     requiredRR: 'Требуемый R:R:',
     maxRiskPerTrade: 'Макс. риск на сделку:',
@@ -71,11 +71,11 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
             <!-- Price Group -->
             <div class="flex gap-8">
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">Entry_Point</span>
+                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">{{ locale === 'ru' ? 'Точка входа' : 'Entry Point' }}</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(entry) }}</span>
 	              </div>
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">Exit_Target</span>
+                 <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-black/60 dark:text-white/70">{{ locale === 'ru' ? 'Цель выхода' : 'Exit Target' }}</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold nier-text-primary tabular-nums">{{ formatSnapshotValue(exit) }}</span>
 	              </div>
             </div>
@@ -85,11 +85,11 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
            <!-- Risk Group -->
            <div class="flex gap-8">
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-rose-500/60 font-black">Stop_Loss</span>
+                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-rose-500/60 font-black">{{ locale === 'ru' ? 'Стоп-лосс' : 'Stop Loss' }}</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-rose-500/80 tabular-nums">{{ formatSnapshotValue(stopLoss) }}</span>
 	              </div>
 	              <div class="flex flex-col">
-	                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-emerald-500/60 font-black">Take_Profit</span>
+                 <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] text-emerald-500/60 font-black">{{ locale === 'ru' ? 'Тейк-профит' : 'Take Profit' }}</span>
 	                 <span class="block max-w-[78px] truncate text-[12px] font-mono font-bold text-emerald-500/80 tabular-nums">{{ formatSnapshotValue(takeProfit) }}</span>
 	              </div>
            </div>
@@ -116,7 +116,7 @@ const formatSnapshotMetric = (value, suffix = '', fallback = '--') => {
 	                 <div class="flex flex-col">
 	                    <span class="text-[7px] font-mono opacity-40 uppercase tracking-[0.3em] font-bold">{{ l('tradeStyle') }}</span>
 	                    <span class="text-[12px] font-mono font-bold nier-text-primary truncate max-w-[100px]">
-	                       {{ activeRiskManagement.tradingStyle || (locale === 'ru' ? 'НЕ_СВЯЗАНО' : 'UNLINKED') }}
+                       {{ activeRiskManagement.tradingStyle || (locale === 'ru' ? 'Не связано' : 'Unlinked') }}
 	                    </span>
                  </div>
                </div>

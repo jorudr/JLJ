@@ -686,6 +686,14 @@ const getNormalizedExecutionLabel = (exec: any) => {
   return rawLabel.replace(/_/g, ' ')
 }
 
+const translateExecutionLabel = (exec: any) => {
+  const rawLabel = String(exec?.label || '').toUpperCase().replace(/\s+/g, '_')
+  if (rawLabel === 'PYRAMIDING') return locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING'
+  if (rawLabel === 'AVERAGING' || rawLabel === 'AVERAGING_DOWN') return locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING'
+  if (rawLabel === 'EXIT_SCALE' || rawLabel === 'EXIT') return locale.value === 'ru' ? 'ВЫХОД' : 'EXIT'
+  return getNormalizedExecutionLabel(exec)
+}
+
 const getExecutionGroup = (trade: any, type: 'entry' | 'exit') => {
   const executions = Array.isArray(trade?.executions) ? trade.executions : []
   return executions.filter((exec: any) => exec?.type === type)
@@ -704,7 +712,7 @@ const hasMethodLabel = (group: any[]) => {
 
 const getMethodLabel = (group: any[]) => {
   const exec = group.find(item => String(item?.label || '').toUpperCase() !== 'SINGLE')
-  return exec ? getNormalizedExecutionLabel(exec) : ''
+  return exec ? translateExecutionLabel(exec) : ''
 }
 
 const formatExecutionMetric = (value: unknown) => {
@@ -740,6 +748,8 @@ const formatExecutionRow = (exec: any) => {
 
 const getEntryMethodType = (trade: any, exec: any, index: number | string) => {
   if (Number(index) === 0) return ''
+  const explicitLabel = String(exec?.label || '').toUpperCase().replace(/\s+/g, '_')
+  if (explicitLabel && explicitLabel !== 'SINGLE') return translateExecutionLabel(exec)
   const entries = getExecutionGroup(trade, 'entry')
   const firstPrice = Number(entries[0]?.price || 0)
   const currentPrice = Number(exec?.price || 0)
@@ -752,9 +762,13 @@ const getEntryMethodType = (trade: any, exec: any, index: number | string) => {
   const isLong = sideStr === 'LONG' || sideStr === 'BUY' || sideStr === ''
   
   if (isLong) {
-    return currentPrice > firstPrice ? 'PYRAMIDING' : 'AVERAGING DOWN'
+    return currentPrice > firstPrice
+      ? (locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING')
+      : (locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING')
   } else {
-    return currentPrice < firstPrice ? 'PYRAMIDING' : 'AVERAGING DOWN'
+    return currentPrice < firstPrice
+      ? (locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING')
+      : (locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING')
   }
 }
 

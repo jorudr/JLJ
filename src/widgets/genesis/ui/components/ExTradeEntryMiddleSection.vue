@@ -116,7 +116,7 @@ const toggleNote = (id) => {
 const startEditNote = (note, event) => {
   event.stopPropagation();
   editingNoteId.value = note.id;
-  editNoteTitle.value = note.title || (locale.value === 'ru' ? "АРХИВНАЯ_ЗАПИСЬ" : "ARCHIVED_RECORD");
+  editNoteTitle.value = note.title || (locale.value === 'ru' ? 'Архивная запись' : 'Archived record');
 };
 
 const saveNoteTitle = (noteId) => {
@@ -437,7 +437,7 @@ const summarySelectedEmotions = computed(() => {
                <div class="flex flex-col space-y-6 border-b border-black/5 dark:border-white/5 pb-10">
                   <div class="flex items-center gap-4">
                      <div class="w-2 h-2 nier-bg-inverted rotate-45"></div>
-                     <span class="text-[9px] font-mono tracking-[0.6em] text-black/80 dark:text-white/80 uppercase">Archival_Briefing_Protocol</span>
+                     <span class="text-[9px] font-mono tracking-[0.6em] text-black/80 dark:text-white/80 uppercase">{{ tr('Протокол архивного брифинга', 'Archival Briefing Protocol') }}</span>
                   </div>
                   
                   <div class="flex items-start justify-between">
@@ -455,7 +455,7 @@ const summarySelectedEmotions = computed(() => {
 
                      <div class="flex flex-col items-end gap-6">
                         <div class="flex flex-col items-end">
-                           <span class="text-[7px] font-mono opacity-20 uppercase tracking-widest">Protocol_Hash</span>
+                           <span class="text-[7px] font-mono opacity-20 uppercase tracking-widest">{{ tr('Хэш протокола', 'Protocol Hash') }}</span>
                            <span class="text-[9px] font-mono text-black/70 dark:text-white/80 uppercase tracking-tighter">0x{{ selectedRegistryScenarioId.slice(0, 8).toUpperCase() }}</span>
                         </div>
                         <button @click="showConditionLibrary = true; selectedRegistryScenarioId = null" 
@@ -469,8 +469,8 @@ const summarySelectedEmotions = computed(() => {
                <!-- Conditions Matrix (Hierarchical Tree) -->
                <div class="flex flex-col space-y-12">
                   <div class="flex items-center justify-between">
-                     <span class="text-[10px] font-mono tracking-[0.4em] text-black/80 dark:text-white/75 uppercase">Tactical_Requirements_Chain</span>
-                     <span class="text-[10px] font-mono text-black/80 dark:text-white/80 uppercase tracking-widest">{{ currentRegistryScenarioConditions.length }}_Root_Nodes</span>
+                     <span class="text-[10px] font-mono tracking-[0.4em] text-black/80 dark:text-white/75 uppercase">{{ tr('Цепочка тактических требований', 'Tactical Requirements Chain') }}</span>
+                     <span class="text-[10px] font-mono text-black/80 dark:text-white/80 uppercase tracking-widest">{{ currentRegistryScenarioConditions.length }} {{ tr('корневых узлов', 'Root Nodes') }}</span>
                   </div>
 
                   <div v-if="currentRegistryScenarioConditions.length > 0" class="flex flex-col space-y-10">
@@ -616,18 +616,18 @@ const summarySelectedEmotions = computed(() => {
                     </div>
                   </div>
                   <div v-else class="flex flex-col items-center justify-center py-24 border border-dashed border-white/5 opacity-20">
-                     <span class="text-[10px] font-mono tracking-[0.4em] uppercase">No_Checkpoints_Detected</span>
+                     <span class="text-[10px] font-mono tracking-[0.4em] uppercase">{{ tr('Контрольные точки не найдены', 'No Checkpoints Detected') }}</span>
                   </div>
                </div>
 
                <!-- Footer Metadata -->
                <div class="flex items-center justify-between pt-10 border-t border-white/5 opacity-20">
-                  <span class="text-[7px] font-mono tracking-widest uppercase">System_State: {{ viewMode.toUpperCase() }}</span>
+                  <span class="text-[7px] font-mono tracking-widest uppercase">{{ tr('Состояние системы', 'System State') }}: {{ viewMode.toUpperCase() }}</span>
                   <div class="flex gap-4">
-                     <span class="text-[7px] font-mono tracking-widest uppercase">Encryption: AES_256</span>
+                     <span class="text-[7px] font-mono tracking-widest uppercase">{{ tr('Шифрование', 'Encryption') }}: AES-256</span>
                      <span class="text-[7px] font-mono tracking-widest uppercase">Lattice: v1.0.42</span>
                      <!-- DEBUG UI -->
-                     <span class="text-[7px] font-mono tracking-widest uppercase text-red-400">DEBUG_STRAT: {{ selectedStrategyId }} | HIST: {{ equityCurveTrades.length }}</span>
+                     <span class="text-[7px] font-mono tracking-widest uppercase text-red-400">{{ tr('Отладка стратегии', 'Strategy Debug') }}: {{ selectedStrategyId }} | {{ tr('История', 'History') }}: {{ equityCurveTrades.length }}</span>
                   </div>
                </div>
             </div>
@@ -906,8 +906,8 @@ const summarySelectedEmotions = computed(() => {
                                 <span class="cursor-pointer text-[10px] font-mono uppercase tracking-[0.14em] text-white/75">{{ condition.label }}</span>
                               </template>
                               <div class="flex flex-col gap-1">
-                                <span class="text-[8px] font-mono opacity-40">TELEMETRY_DESCRIPTION</span>
-                                <p class="text-[9px] font-mono uppercase leading-relaxed opacity-60">{{ condition.description || 'NO_METADATA_AVAILABLE' }}</p>
+                                <span class="text-[8px] font-mono opacity-40">{{ tr('Описание телеметрии', 'Telemetry Description') }}</span>
+                                <p class="text-[9px] font-mono uppercase leading-relaxed opacity-60">{{ condition.description || tr('Метаданные отсутствуют', 'No metadata available') }}</p>
                               </div>
                             </ExNTtooltip>
                           </div>
@@ -1101,7 +1101,7 @@ const summarySelectedEmotions = computed(() => {
                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                            </button>
                            <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
-                             <div v-if="!journalEntries?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">{{ locale === 'ru' ? 'НЕТ_СОХРАНЕННЫХ_МАТЕРИАЛОВ' : 'NO_VISUALS_ARCHIVED' }}</div>
+                             <div v-if="!journalEntries?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">{{ locale === 'ru' ? 'Нет сохраненных материалов' : 'No visuals archived' }}</div>
                              <button v-else v-for="(img, idx) in journalEntries" :key="img.id" @click.prevent="insertFormatting(`[VISUAL_REF:${idx}]`, '')" class="px-3 py-2 text-[9px] font-mono text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors truncate max-w-[200px]">
                                {{ img.name || `Visual_Node_${idx}` }}
                              </button>
@@ -1121,7 +1121,7 @@ const summarySelectedEmotions = computed(() => {
                        ></textarea>
                        <div v-else 
                             class="w-full h-full font-mono text-[13px] leading-relaxed tracking-wider overflow-y-auto custom-scrollbar min-h-[200px]"
-                            v-html="formatNote(noteText || (locale === 'ru' ? 'НЕТ_КОНТЕНТА_ДЛЯ_ОТОБРАЖЕНИЯ' : 'NO_CONTENT_TO_PREVIEW'))">
+                            v-html="formatNote(noteText || tr('Нет контента для отображения', 'No content to preview'))">
                        </div>
                     </div>
                     <div class="flex justify-end">
@@ -1152,9 +1152,9 @@ const summarySelectedEmotions = computed(() => {
                                class="bg-transparent border-b border-black/30 dark:border-white/30 outline-none text-[9px] font-mono font-black uppercase tracking-[0.2em] nier-text-primary"
                                autofocus
                              />
-                             <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '(ENTER_ДЛЯ_СОХРАНЕНИЯ)' : '(ENTER_TO_SAVE)' }}</span>
+                             <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '(Enter для сохранения)' : '(Enter to save)' }}</span>
                            </div>
-                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || (locale === 'ru' ? 'АРХИВНАЯ_ЗАПИСЬ' : 'ARCHIVED_RECORD') }}</span>
+                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || (locale === 'ru' ? 'Архивная запись' : 'Archived record') }}</span>
                         </div>
                         <div class="flex items-center space-x-4">
                            <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>
@@ -1235,11 +1235,11 @@ const summarySelectedEmotions = computed(() => {
                              <input v-model="entry.tagInput"
                                     @keyup.enter="addJournalEntryTag(entry)"
                                     type="text"
-                                    placeholder="Custom_Tag..."
+                                    :placeholder="locale === 'ru' ? 'Пользовательский тег...' : 'Custom tag...'"
                                     class="flex-1 bg-transparent border border-black/5 dark:border-white/5 px-3 py-2 text-[9px] font-mono uppercase tracking-widest focus:outline-none transition-all nier-text-primary placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
                              <button @click="addJournalEntryTag(entry)"
                                      class="px-3 py-2 border nier-border-primary text-[8px] font-mono uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
-                                Add_Tag
+                                {{ locale === 'ru' ? 'Добавить тег' : 'Add tag' }}
                              </button>
                           </div>
                        </div>

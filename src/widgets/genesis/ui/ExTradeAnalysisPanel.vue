@@ -96,6 +96,14 @@ const analysisPanelRoot = ref<HTMLElement | null>(null);
 useDomI18n(analysisPanelRoot, 'genesis.dom');
 const { locale } = useI18n();
 const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g, ' ');
+const localizedTradingStyleLabel = (label: string) => {
+  if (locale.value !== 'ru') return formatDisplayLabel(label)
+  return {
+    'Day Trading Style': 'Стиль дневной торговли',
+    'Swing Trading': 'Свинг-трейдинг',
+    Investing: 'Инвестирование'
+  }[label] || formatDisplayLabel(label)
+}
 
 const tradeStore = useStrategyTradesStore();
 const {
@@ -608,33 +616,33 @@ const percentileRank = computed(() => {
 const advancedMetricCopy = computed(() => {
   const isRu = locale.value === 'ru';
   const labels: Record<string, string> = {
-    required_adherence: isRu ? 'Соблюдение required' : 'Required_Adherence',
-    additional_alpha: isRu ? 'Дополнительная alpha' : 'Additional_Alpha',
-    protocol_strictness: isRu ? 'Строгость протокола' : 'Protocol_Strictness',
-    conditional_pnl_ratio: isRu ? 'PnL на условие' : 'Conditional_PnL_Ratio',
-    setup_complexity: isRu ? 'Сложность setup' : 'Setup_Complexity',
-    cognitive_stability: isRu ? 'Когнитивная стабильность' : 'Cognitive_Stability',
-    dominant_bias: isRu ? 'Главный bias' : 'Dominant_Bias',
-    emotional_pnl_drag: isRu ? 'Эмоциональный PnL drag' : 'Emotional_PnL_Drag',
-    friction_density: isRu ? 'Плотность friction' : 'Friction_Density',
-    net_result_variance: isRu ? 'Отклонение результата' : 'Net_Result_Variance',
-    yield_efficiency: isRu ? 'Эффективность доходности' : 'Yield_Efficiency',
-    profit_velocity: isRu ? 'Скорость прибыли' : 'Profit_Velocity',
-    actual_vs_target_rr: isRu ? 'Факт против target R/R' : 'Actual_vs_Target_RR',
-    planned_vs_realized_risk: isRu ? 'Плановый и факт. риск' : 'Planned_vs_Realized_Risk',
-    temporal_exposure: isRu ? 'Временная экспозиция' : 'Temporal_Exposure',
-    asset_protocol: isRu ? 'Протокол актива' : 'Asset_Protocol',
-    stop_loss_distance: isRu ? 'Дистанция stop loss' : 'Stop_Loss_Distance',
-    take_profit_distance: isRu ? 'Дистанция take profit' : 'Take_Profit_Distance',
-    sl_execution_drag: isRu ? 'Проскальзывание stop loss' : 'Stop_Loss_Execution_Drag',
-    risk_budget_adherence: isRu ? 'Соблюдение risk budget' : 'Risk_Budget_Adherence',
-    tp_capture_ratio: isRu ? 'Захват take profit' : 'TP_Capture_Ratio',
-    edge_capture_quotient: isRu ? 'Коэффициент edge capture' : 'Edge_Capture_Quotient',
-    unrealized_alpha_left: isRu ? 'Незабранная alpha' : 'Unrealized_Alpha_Left',
-    horizon_sync_rating: isRu ? 'Синхронизация горизонта' : 'Horizon_Sync_Rating',
-    velocity_variance_index: isRu ? 'Индекс отклонения скорости' : 'Velocity_Variance_Index',
-    conditional_alpha_decay: isRu ? 'Угасание alpha условий' : 'Conditional_Alpha_Decay',
-    execution_confidence_index: isRu ? 'Индекс уверенности исполнения' : 'Execution_Confidence_Index'
+    required_adherence: isRu ? 'Соблюдение required' : 'Required Adherence',
+    additional_alpha: isRu ? 'Дополнительная alpha' : 'Additional Alpha',
+    protocol_strictness: isRu ? 'Строгость протокола' : 'Protocol Strictness',
+    conditional_pnl_ratio: isRu ? 'PnL на условие' : 'Conditional PnL Ratio',
+    setup_complexity: isRu ? 'Сложность setup' : 'Setup Complexity',
+    cognitive_stability: isRu ? 'Когнитивная стабильность' : 'Cognitive Stability',
+    dominant_bias: isRu ? 'Главный bias' : 'Dominant Bias',
+    emotional_pnl_drag: isRu ? 'Эмоциональный PnL drag' : 'Emotional PnL Drag',
+    friction_density: isRu ? 'Плотность friction' : 'Friction Density',
+    net_result_variance: isRu ? 'Отклонение результата' : 'Net Result Variance',
+    yield_efficiency: isRu ? 'Эффективность доходности' : 'Yield Efficiency',
+    profit_velocity: isRu ? 'Скорость прибыли' : 'Profit Velocity',
+    actual_vs_target_rr: isRu ? 'Факт против target R/R' : 'Actual vs Target R/R',
+    planned_vs_realized_risk: isRu ? 'Плановый и факт. риск' : 'Planned vs Realized Risk',
+    temporal_exposure: isRu ? 'Временная экспозиция' : 'Temporal Exposure',
+    asset_protocol: isRu ? 'Протокол актива' : 'Asset Protocol',
+    stop_loss_distance: isRu ? 'Дистанция stop loss' : 'Stop Loss Distance',
+    take_profit_distance: isRu ? 'Дистанция take profit' : 'Take Profit Distance',
+    sl_execution_drag: isRu ? 'Проскальзывание stop loss' : 'Stop Loss Execution Drag',
+    risk_budget_adherence: isRu ? 'Соблюдение risk budget' : 'Risk Budget Adherence',
+    tp_capture_ratio: isRu ? 'Захват take profit' : 'TP Capture Ratio',
+    edge_capture_quotient: isRu ? 'Коэффициент edge capture' : 'Edge Capture Quotient',
+    unrealized_alpha_left: isRu ? 'Незабранная alpha' : 'Unrealized Alpha Left',
+    horizon_sync_rating: isRu ? 'Синхронизация горизонта' : 'Horizon Sync Rating',
+    velocity_variance_index: isRu ? 'Индекс отклонения скорости' : 'Velocity Variance Index',
+    conditional_alpha_decay: isRu ? 'Угасание alpha условий' : 'Conditional Alpha Decay',
+    execution_confidence_index: isRu ? 'Индекс уверенности исполнения' : 'Execution Confidence Index'
   };
 
   const descriptions: Record<string, string> = {
@@ -849,7 +857,7 @@ const resolvedStyleNode = computed(() => {
   const risk = resolvedRiskManagement.value;
   if (!risk.tradingStyle && risk.tradingStyleExtraType === null) return null;
   return {
-    label: risk.tradingStyle || 'STYLE_UNDEFINED',
+    label: risk.tradingStyle || 'Style Undefined',
     params: {
       extraType: risk.tradingStyleExtraType
     }
@@ -867,14 +875,14 @@ const resolvedTradingStyle = computed(() => {
         if (extraType === 1) return 'Свинг-трейдинг';
         if (extraType === 2) return 'Инвестирование';
       }
-      return limit.label;
+      return localizedTradingStyleLabel(limit.label);
     }
   }
-  const label = resolvedStyleNode.value?.label?.replace(/_/g, ' ') || 'STYLE_UNDEFINED';
-  if (isRu && label === 'STYLE_UNDEFINED') {
+  const label = resolvedStyleNode.value?.label?.replace(/_/g, ' ') || 'Style Undefined';
+  if (isRu && label === 'Style Undefined') {
     return 'Неопределенный стиль';
   }
-  return label;
+  return localizedTradingStyleLabel(label);
 });
 
 const resolvedExtraType = computed(() => {
@@ -1936,10 +1944,10 @@ const studyMetricText = computed(() => {
       recoveryPeriod: isRu ? 'восстановление' : 'recovery'
     },
     sources: {
-      manual: isRu ? 'РУЧНЫЕ_ЭКСТРЕМУМЫ' : 'MANUAL_EXTREMES',
-      manualInput: isRu ? 'РУЧНЫЕ_ДАННЫЕ' : 'MANUAL_INPUT',
-      generated: isRu ? 'СГЕНЕРИРОВАННЫЕ_ДАННЫЕ' : 'GENERATED_DATA',
-      mixed: isRu ? 'СМЕШАННЫЕ_ДАННЫЕ' : 'MIXED_DATA',
+      manual: isRu ? 'Ручные экстремумы' : 'Manual Extremes',
+      manualInput: isRu ? 'Ручные данные' : 'Manual Input',
+      generated: isRu ? 'Сгенерированные данные' : 'Generated Data',
+      mixed: isRu ? 'Смешанные данные' : 'Mixed Data',
       none: 'N/A'
     },
     shapes: {

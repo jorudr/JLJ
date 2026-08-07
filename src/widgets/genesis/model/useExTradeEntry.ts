@@ -30,6 +30,38 @@ const isDark = computed(() => themeStore?.settings?.isDark ?? false)
 const viewMode = ref('tactical') // 'tactical' or 'journal'
 const journalEntries = ref([])
 
+const normalizeJournalImage = (image, index = 0) => {
+  const source = typeof image === 'string' ? { url: image } : (image || {})
+  const url = source.url || source.image || source.src || ''
+  return {
+    id: source.id || `${Date.now()}-${index}`,
+    image: url,
+    name: source.name || '',
+    tags: Array.isArray(source.tags) ? [...source.tags] : [],
+    tagInput: '',
+    createdAt: source.createdAt || source.timestamp || source.date || new Date().toISOString(),
+    context: source.context || ''
+  }
+}
+
+const normalizeTradeNote = (note, index = 0) => {
+  if (typeof note === 'string') {
+    return {
+      id: `note-${Date.now()}-${index}`,
+      content: note,
+      date: new Date().toISOString(),
+      title: `SESSION_LOG_${index + 1}`
+    }
+  }
+
+  return {
+    id: note?.id || `note-${Date.now()}-${index}`,
+    content: note?.content || note?.text || '',
+    date: note?.date || note?.createdAt || note?.timestamp || new Date().toISOString(),
+    title: note?.title || `SESSION_LOG_${index + 1}`
+  }
+}
+
 const getArchiveNodeName = (id) => `Archive_Node_${id.toString(16).toUpperCase().slice(-6)}`
 
 const archiveMode = ref('notes') // 'notes' or 'images'
@@ -376,10 +408,13 @@ onMounted(() => {
       const usesExitMethod = exitExecs.length > 1 || exitExecs.some(e => String(e?.label || '').toUpperCase() !== 'SINGLE')
       
       if (usesEntryMethod) {
-        const entryMethodLabel = String(entryExecs.find(e => String(e?.label || '').toUpperCase() !== 'SINGLE')?.label || '').toUpperCase()
-        const restoredEntryMethodType = entryMethodLabel === 'AVERAGING_DOWN' || entryMethodLabel === 'AVERAGING'
-          ? 'AVERAGING_DOWN'
-          : 'PYRAMIDING'
+        const entryMethodLabel = String(entryExecs.find(e => String(e?.label || '').toUpperCase() !== 'SINGLE')?.label || '').toUpperCase().replace(/\s+/g, '_')
+        const storedEntryMethodType = String(t.entryMethodType || '').toUpperCase().replace(/\s+/g, '_')
+        const restoredEntryMethodType = ['PYRAMIDING', 'AVERAGING_DOWN'].includes(storedEntryMethodType)
+          ? storedEntryMethodType
+          : (entryMethodLabel === 'AVERAGING_DOWN' || entryMethodLabel === 'AVERAGING'
+            ? 'AVERAGING_DOWN'
+            : 'PYRAMIDING')
         const restoredEntries = entryExecs.map(e => ({
           id: e.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           price: e.price,
@@ -435,16 +470,19 @@ onMounted(() => {
     selectedEmotions.value = Array.isArray(t.emotions) ? [...t.emotions] : []
     hydrateTradeStudyMetrics(t.tradeStudyMetrics || t.studyMetrics)
 
-    if (t.images && Array.isArray(t.images)) {
-      journalEntries.value = t.images.map((img, index) => ({
-        id: Date.now() + index,
-        image: img.url,
-        name: img.name && !/^archive_node_/i.test(img.name) ? img.name : '',
-        tags: img.tags || [],
-        tagInput: '',
-        createdAt: img.createdAt || new Date().toISOString()
-      }))
-    }
+    const storedImages = Array.isArray(t.images)
+      ? t.images
+      : (Array.isArray(t.journalEntries)
+        ? t.journalEntries
+        : (Array.isArray(t.visuals) ? t.visuals : (Array.isArray(t.attachments) ? t.attachments : [])))
+    journalEntries.value = storedImages
+      .map((img, index) => normalizeJournalImage(img, index))
+      .filter(entry => Boolean(entry.image))
+
+    const storedNotes = Array.isArray(t.notesList)
+      ? t.notesList
+      : (Array.isArray(t.notes) ? t.notes : (typeof t.notes === 'string' && t.notes.trim() ? [t.notes] : []))
+    notesList.value = storedNotes.map((note, index) => normalizeTradeNote(note, index))
 
     // Reconstruct active conditions
     const reconstructConditions = (scenario) => {
@@ -2410,9 +2448,9 @@ const submit = async () => {
       name: e.name || '',
       tags: Array.isArray(e.tags) ? e.tags : [],
       createdAt: e.createdAt || new Date().toISOString(),
-      context: ''
+      context: e.context || ''
     })).filter(img => img.url),
-    notes: '',
+    notes: props.initialTrade?.notes ?? '',
     notesList: [...notesList.value],
     tradeStudyMetrics: { ...tradeStudyMetrics.value }
   }

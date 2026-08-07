@@ -44,7 +44,7 @@ const emit = defineEmits<{
           <path d="M12 5v14M5 12h14" />
         </svg>
         <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-          [ {{ tr('НОВАЯ_СДЕЛКА', 'NEW_TRADE') }} ]
+          [ {{ tr('Новая сделка', 'New trade') }} ]
         </span>
       </button>
 
@@ -63,7 +63,7 @@ const emit = defineEmits<{
           <path d="M5 12.5 9.5 17 19 7.5" />
         </svg>
         <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-          [ {{ isEditing ? tr('ОБНОВИТЬ_СДЕЛКУ', 'UPDATE_TRADE') : tr('СОХРАНИТЬ_СДЕЛКУ', 'SAVE_TRADE') }} ]
+          [ {{ isEditing ? tr('Обновить сделку', 'Update trade') : tr('Сохранить сделку', 'Save trade') }} ]
         </span>
       </button>
 
@@ -82,7 +82,7 @@ const emit = defineEmits<{
             <path d="m3 7 2-4h14l2 4M8 11h8" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            [ {{ tr('РЕЖИМ_ЗАКРЫТИЯ', 'CLOSE_MODE') }} ]
+            [ {{ tr('Режим закрытия', 'Close mode') }} ]
           </span>
         </button>
 
@@ -109,7 +109,7 @@ const emit = defineEmits<{
             <rect x="14" y="14" width="7" height="7" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            [ {{ tr('ПРОТОКОЛ_МАТРИЦЫ', 'MATRIX_PROTOCOL') }} ]
+            [ {{ tr('Протокол матрицы', 'Matrix protocol') }} ]
           </span>
         </button>
 
@@ -127,7 +127,7 @@ const emit = defineEmits<{
             <path d="M9 8h6M9 12h6M9 16h4" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            [ {{ tr('ОТКРЫТЬ_ЖУРНАЛ', 'OPEN_JOURNAL') }} ]
+            [ {{ tr('Открыть журнал', 'Open journal') }} ]
           </span>
         </button>
 
@@ -146,7 +146,7 @@ const emit = defineEmits<{
             <path d="M4 20h16" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            [ {{ tr('МЕТОД_ВХОДА', 'ENTRY_METHOD') }} ]
+            [ {{ tr('Метод входа', 'Entry method') }} ]
           </span>
         </button>
 
@@ -163,7 +163,7 @@ const emit = defineEmits<{
             <path d="M13 21h6a2 2 0 0 0 2-2" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-            [ {{ tr('ВЫЙТИ_ИЗ_СДЕЛКИ', 'EXIT_TRADE_ENTRY') }} ]
+            [ {{ tr('Выйти из сделки', 'Exit trade entry') }} ]
           </span>
         </button>
       </template>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, provide, watch } from 'vue'
 import { useExTradeEntry } from '../model/useExTradeEntry'
+import { useDomI18n } from '~/shared/i18n/useDomI18n'
 
 import ExTradeEntryCmeNotice from './components/ExTradeEntryCmeNotice.vue'
 import ExTradeEntryMiddleSection from './components/ExTradeEntryMiddleSection.vue'
@@ -19,6 +20,7 @@ const props = defineProps({
 
 const state = useExTradeEntry(props, emit)
 provide('tradeState', state)
+useDomI18n(state.scrollContainer, 'genesis.dom')
 
 const getActivePanel = () => {
   if (state.showConditionLibrary.value) return 'matrix'
