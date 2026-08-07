@@ -46,9 +46,7 @@
 	      <button
 	        v-if="isAuthenticated && phase === 'auth'"
 	        @click="doSignOut"
-	        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-theme-border px-4 py-2 transition-all duration-300 text-theme-text opacity-30 hover:opacity-100"
-	        @mouseenter="(e) => (e.currentTarget as HTMLElement).style.opacity = '1'"
-	        @mouseleave="(e) => (e.currentTarget as HTMLElement).style.opacity = '0.3'"
+	        class="fixed top-16 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
 	      >Sign_Out</button>
     </Transition>
 
@@ -67,7 +65,7 @@
       <!-- Identity -->
       <div class="flex flex-col items-center space-y-1 text-center">
         <h1 class="text-3xl tracking-[0.5em] uppercase font-light animate-glitch" >J.L.Jörmungandr</h1>
-        <p class="text-[8px] font-mono tracking-[0.6em] uppercase opacity-30">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ_АНАЛИТИЧЕСКАЯ_ПЛАТФОРМА' : 'Universal_Analytical_Platform' }}</p>
+        <p class="text-[8px] font-mono tracking-[0.6em] uppercase text-black">{{ locale === 'ru' ? 'УНИВЕРСАЛЬНАЯ АНАЛИТИЧЕСКАЯ ПЛАТФОРМА' : 'Universal Analytical Platform' }}</p>
       </div>
 
       <!-- ── PHASE SWITCHER ── -->
@@ -82,11 +80,11 @@
 
         <!-- ── AUTHENTICATED: boot prompt ── -->
         <div v-else-if="isAuthenticated && phase === 'auth'" key="authenticated" class="w-full flex flex-col items-center space-y-5">
-	          <div class="w-full border border-theme-border bg-theme-text/[0.05] p-4 flex items-center space-x-4">
-            <div class="w-2 h-2 nier-bg-inverted rounded-full animate-pulse shrink-0"></div>
+	          <div class="w-full border border-theme-border bg-black/[0.05] p-4 flex items-center space-x-4">
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse shrink-0"></div>
             <div class="flex flex-col min-w-0">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-50">Operator_Authenticated</span>
-              <span class="text-[11px] font-mono font-black uppercase tracking-widest truncate" >{{ authStore.user?.email }}</span>
+              <span class="text-[8px] font-mono uppercase tracking-[0.4em] text-white">Operator Authenticated</span>
+              <span class="text-[11px] font-mono font-black uppercase tracking-widest truncate text-white" >{{ authStore.user?.email }}</span>
             </div>
           </div>
           <button
@@ -200,22 +198,22 @@
         <div v-else-if="phase === 'boot'" key="boot" class="w-full flex flex-col items-center space-y-6">
           <div class="w-full flex flex-col space-y-3">
             <div class="flex justify-between items-end">
-              <span class="text-[9px] font-mono uppercase tracking-widest" style="opacity: 0.4; ">System_Initialization</span>
-              <span class="text-[9px] font-mono font-black" >{{ Math.floor(progress) }}%</span>
+              <span class="text-[9px] font-mono uppercase tracking-widest text-black" style="opacity: 0.4; ">System_Initialization</span>
+              <span class="text-[9px] font-mono font-black text-black" >{{ Math.floor(progress) }}%</span>
             </div>
-            <div class="h-px w-full relative overflow-hidden" style="background: var(--theme-text); opacity: 0.1;">
+            <div class="h-px w-full relative overflow-hidden" style="background: #000; opacity: 0.1;">
               <div
                 class="absolute top-0 left-0 h-full transition-all duration-300"
-                style="background: var(--theme-text); opacity: 1;"
+                style="background: #000; opacity: 1;"
                 :style="{ width: `${progress}%` }"
               ></div>
-              <div class="absolute inset-y-0 left-0 w-8 blur-sm animate-scan" style="background: var(--theme-text); opacity: 0.4;"></div>
+              <div class="absolute inset-y-0 left-0 w-8 blur-sm animate-scan" style="background: #000; opacity: 0.4;"></div>
             </div>
           </div>
 
           <div class="h-8 overflow-hidden relative w-full">
             <Transition name="log-slide" mode="out-in">
-              <p :key="currentLog" class="text-center lowercase italic text-[10px] font-mono" style="opacity: 0.2; ">
+              <p :key="currentLog" class="text-center lowercase italic text-[10px] font-mono text-black" style="opacity: 0.2; ">
                 {{ currentLog }}
               </p>
             </Transition>
@@ -229,7 +227,7 @@
             class="px-10 py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all hover:opacity-90"
             :style="primaryButtonStyle"
           >{{ locale === 'ru' ? 'Продолжить' : 'Continue' }}</button>
-          <p class="text-[8px] font-mono lowercase italic" style="opacity: 0.2; ">Operator authenticated. System ready.</p>
+          <p class="text-[8px] font-mono lowercase italic text-black" style="opacity: 0.2; ">Operator authenticated. System ready.</p>
         </div>
 
       </Transition>
@@ -237,7 +235,7 @@
 
     <!-- Bottom Telemetry -->
     <div class="fixed bottom-10 left-0 right-0 px-12 flex justify-between items-center pointer-events-none">
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; ">ID: {{ appVersion }} // VOSHE COMPANY D.O.O</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest text-black">ID: {{ appVersion }} // VOSHE COMPANY D.O.O</span>
       <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; ">ALPHA VERSION</span>
     </div>
   </div>
