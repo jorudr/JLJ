@@ -1,13 +1,13 @@
 <template>
-  <div class="ethereal-void h-screen relative overflow-y-auto transition-all duration-1000"
+  <div class="design-gradflow-page ethereal-void h-screen relative overflow-y-auto transition-all duration-1000"
        :class="[isDark ? 'is-dark dark theme-dark' : 'theme-light']">
     
-    <!-- SYSTEM BACKGROUNDS -->
-    <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    <!-- SYSTEM BACKGROUND -->
+    <GradflowBackground preset="mystic" :config="gradflowConfig" />
     <DesignVignette :is-dark="isDark" />
 
 
-    <div class="p-16 bg-theme-bg text-theme-text min-h-screen">
+    <div class="relative z-10 p-16 bg-transparent text-theme-text min-h-screen">
       <!-- HEADER -->
       <header class="mb-24 flex flex-col items-start text-theme-text">
         <div class="flex items-center space-x-4 mb-4">
@@ -1016,7 +1016,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
-import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
@@ -1045,6 +1045,16 @@ const isEditorOpen = ref(false)
 const isPreviewMode = ref(false)
 const showNodeMap = ref(false)
 const demoImageUrl = '/assets/ui/tactical_chart_preview.png'
+
+const gradflowConfig = {
+  color1: { r: 210, g: 170, b: 255 },
+  color2: { r: 10, g: 0, b: 30 },
+  color3: { r: 80, g: 30, b: 130 },
+  speed: 0.8,
+  scale: 2,
+  type: 'smoke' as const,
+  noise: 0.16
+}
 
 const handleEditMetrics = () => {
 }
@@ -1452,6 +1462,10 @@ const getDiaryHeatmapFontClasses = (trade: any) => {
   background-color: var(--theme-bg);
   color: var(--theme-text);
   font-family: 'Cormorant Garamond', serif;
+}
+
+.design-gradflow-page {
+  background-color: transparent !important;
 }
 
 .ethereal-void.is-dark {
