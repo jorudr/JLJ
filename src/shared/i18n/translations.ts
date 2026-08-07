@@ -132,7 +132,7 @@ export const translations = {
       footer: {
         experience: "Experience the future of trading analysis",
         with: "with",
-        company: "VOSHE COMPANY D.O.O"
+        company: "Voshe Company D.O.O"
       },
       pricing: {
         eyebrow: "ACCESS PROTOCOL // 02",
@@ -433,7 +433,7 @@ export const translations = {
       footer: {
         experience: "Откройте для себя будущее торгового анализа",
         with: "с",
-        company: "VOSHE COMPANY D.O.O"
+        company: "Voshe Company D.O.O"
       },
       pricing: {
         eyebrow: "ПРОТОКОЛ ДОСТУПА // 02",

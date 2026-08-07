@@ -1,36 +1,7 @@
 <template>
-  <div class="pricing-page min-h-screen bg-[#070708] text-white/80">
+  <div class="pricing-page min-h-screen bg-black text-white/80">
     <div class="pricing-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
-      <header class="relative mx-auto flex w-full max-w-[1280px] items-center justify-between text-[10px] tracking-[0.3em]">
-        <div class="flex items-center">
-          <router-link to="/" class="flex items-center space-x-6" aria-label="J.L.JÖRMUNGANDR home">
-            <div class="relative flex h-5 w-5 shrink-0 items-center justify-center sm:h-6 sm:w-6">
-              <div class="absolute inset-0 animate-[spin_10s_linear_infinite] border border-white/40"></div>
-              <div class="absolute inset-1 animate-[spin_6s_linear_infinite_reverse] border border-white/60"></div>
-              <div class="h-1 w-1 rotate-45 animate-pulse bg-white"></div>
-              <div class="absolute -left-0.5 -top-0.5 h-1.5 w-1.5 border-l border-t border-white"></div>
-              <div class="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 border-b border-r border-white"></div>
-            </div>
-            <span class="text-[12px] font-light uppercase tracking-[0.5em] text-white sm:text-[14px]" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR</span>
-          </router-link>
-
-        </div>
-
-        <nav class="absolute left-1/2 hidden -translate-x-1/2 items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" aria-label="Primary navigation" style="font-family: 'Cormorant Garamond', serif;">
-          <router-link to="/" class="flex items-center text-white/80 transition-colors hover:opacity-50">
-            {{ t('landing.nav.products') }}
-            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </router-link>
-          <router-link to="/use-cases" class="flex items-center text-white/80 transition-colors hover:opacity-50">
-            {{ t('landing.nav.useCases') }}
-            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </router-link>
-          <router-link to="/pricing" class="text-white/80 transition-colors hover:opacity-50">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/philosophy" class="text-white/80 transition-colors hover:opacity-50">{{ t('landing.nav.philosophy') }}</router-link>
-        </nav>
-
-        <MobileMenu />
-      </header>
+      <SiteNav :always-dark="true" />
 
       <main class="pricing-main flex-1">
         <section class="pricing-list" aria-label="Pricing plans">
@@ -88,10 +59,10 @@
 
       <footer class="w-full border-t border-white/[0.08] py-8 text-center text-[9px] uppercase tracking-[0.2em] text-white/90" style="font-family: 'Cormorant Garamond', serif;">
         <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row sm:text-left">
-          <div class="flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
-            <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
+          <div class="order-2 flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
+            <span class="footer-nav-font text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
           </div>
-          <nav class="flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] text-white/90 sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" aria-label="Footer navigation">
+          <nav class="footer-nav-font order-1 flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] text-white/90 sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" aria-label="Footer navigation">
             <router-link to="/" class="transition-colors hover:text-white">{{ t('landing.nav.products') }}</router-link>
             <router-link to="/use-cases" class="transition-colors hover:text-white">{{ t('landing.nav.useCases') }}</router-link>
             <router-link to="/pricing" class="transition-colors hover:text-white">{{ t('landing.nav.pricing') }}</router-link>
@@ -105,7 +76,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import MobileMenu from './MobileMenu.vue'
+import SiteNav from './SiteNav.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, tm, locale, setLocale } = useI18n()
@@ -271,7 +242,7 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 
 .pricing-plan__action--bright {
   background: white;
-  color: #070708;
+  color: #000;
 }
 
 .pricing-plan__action--bright:hover {

@@ -22,6 +22,14 @@
   border-color: var(--theme-border);
 }
 
+.footer-nav-font {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+}
+
 /* Keep the layout width identical between routes with and without page scroll. */
 html {
   overflow-y: scroll;

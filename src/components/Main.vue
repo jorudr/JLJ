@@ -76,7 +76,7 @@
       <!-- Header / Top Bar -->
         <header
           class="fixed left-0 right-0 top-0 z-[100] flex w-full items-center justify-start px-0 pt-2 pb-2 text-[10px] tracking-[0.3em] sm:pt-4 sm:pb-4 xl:px-8"
-          :class="{ 'nav-open': isMegaMenuVisible }"
+          :class="{ 'nav-open': isMegaMenuVisible, 'nav-scrolled': isNavScrolled }"
         >
         <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
           <!-- Left Section: App Name -->
@@ -112,7 +112,7 @@
 
           <router-link
             to="/announcement"
-            class="nav-download-button ml-auto flex items-center justify-center rounded-[25px] bg-white px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-200"
+            class="nav-download-button ml-auto flex items-center justify-center rounded-[25px] bg-black px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-900"
           >
             <span class="nav-openai-font">Попробовать</span>
             <svg class="ml-2 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -549,10 +549,10 @@
     <!-- Bottom Telemetry Footer -->
     <footer class="relative z-10 w-full border-t px-6 pb-16 pt-10 text-[9px] tracking-[0.2em] uppercase" :class="isDark ? 'border-white/10 text-white/75' : 'border-black/10 text-black/75'" style="font-family: 'Cormorant Garamond', serif;">
       <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row">
-        <div class="flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
-          <span class="text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
+        <div class="order-2 flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
+          <span class="footer-nav-font text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
         </div>
-        <nav class="flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
+        <nav class="footer-nav-font order-1 flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" :class="isDark ? 'text-white/75' : 'text-black/75'" aria-label="Footer navigation">
           <router-link to="/" class="transition-opacity hover:opacity-100">{{ t('landing.nav.products') }}</router-link>
           <router-link to="/use-cases" class="transition-opacity hover:opacity-100">{{ t('landing.nav.useCases') }}</router-link>
           <router-link to="/pricing" class="transition-opacity hover:opacity-100">{{ t('landing.nav.pricing') }}</router-link>
@@ -631,6 +631,7 @@ const hideMegaMenu = () => {
 }
 
 const isDark = ref(true)
+const isNavScrolled = ref(false)
 const featuresSection = ref(null)
 const videoContainer = ref(null)
 
@@ -687,6 +688,7 @@ watch(() => locale.value, () => {
 
 let scrollTimeout = null
 const handleScroll = () => {
+  isNavScrolled.value = window.scrollY > 8
   document.body.classList.add('is-scrolling')
   if (scrollTimeout) clearTimeout(scrollTimeout)
   scrollTimeout = setTimeout(() => {
@@ -709,6 +711,7 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
 })
 
 onUnmounted(() => {
@@ -738,12 +741,13 @@ const scrollToFeatures = () => {
 }
 
 .hero-header > header {
-  background-color: #000;
+  background-color: transparent;
+  transition: background-color 200ms ease;
 }
 
 .hero-header > header .nav-openai-font,
 .hero-header > header .nav-language-divider {
-  color: #f5f5f0 !important;
+  color: #050505 !important;
   opacity: 1 !important;
 }
 
@@ -757,18 +761,18 @@ const scrollToFeatures = () => {
 }
 
 .hero-header > header .nav-openai-font svg {
-  color: #f5f5f0 !important;
+  color: #050505 !important;
   opacity: 1 !important;
-  stroke: #f5f5f0 !important;
+  stroke: #050505 !important;
 }
 
 .hero-header > header .nav-openai-font svg path {
-  stroke: #f5f5f0 !important;
+  stroke: #050505 !important;
 }
 
 .hero-header > header .nav-download-button,
 .hero-header > header .nav-download-button * {
-  color: #000 !important;
+  color: #fff !important;
 }
 
 .hero-header > header .nav-download-button .nav-openai-font {
@@ -776,7 +780,84 @@ const scrollToFeatures = () => {
 }
 
 .hero-header > header .nav-logo {
+  filter: none;
+}
+
+.hero-header > header:hover,
+.hero-header > header.nav-open {
+  background-color: #000;
+}
+
+.hero-header > header:hover .nav-openai-font,
+.hero-header > header:hover .nav-language-divider,
+.hero-header > header.nav-open .nav-openai-font,
+.hero-header > header.nav-open .nav-language-divider {
+  color: #f5f5f0 !important;
+}
+
+.hero-header > header:hover .nav-openai-font svg,
+.hero-header > header.nav-open .nav-openai-font svg {
+  color: #f5f5f0 !important;
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header:hover .nav-openai-font svg path,
+.hero-header > header.nav-open .nav-openai-font svg path {
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header:hover .nav-download-button,
+.hero-header > header:hover .nav-download-button *,
+.hero-header > header.nav-open .nav-download-button,
+.hero-header > header.nav-open .nav-download-button * {
+  color: #000 !important;
+}
+
+.hero-header > header:hover .nav-download-button,
+.hero-header > header.nav-open .nav-download-button {
+  background-color: #fff !important;
+}
+
+.hero-header > header:hover .nav-logo,
+.hero-header > header.nav-open .nav-logo {
   filter: invert(1);
+}
+
+.hero-header > header.nav-scrolled {
+  background-color: #000;
+}
+
+.hero-header > header.nav-scrolled .nav-openai-font,
+.hero-header > header.nav-scrolled .nav-language-divider {
+  color: #f5f5f0 !important;
+}
+
+.hero-header > header.nav-scrolled .nav-openai-font svg {
+  color: #f5f5f0 !important;
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header.nav-scrolled .nav-openai-font svg path {
+  stroke: #f5f5f0 !important;
+}
+
+.hero-header > header.nav-scrolled .nav-download-button,
+.hero-header > header.nav-scrolled .nav-download-button * {
+  color: #000 !important;
+}
+
+.hero-header > header.nav-scrolled .nav-download-button {
+  background-color: #fff !important;
+}
+
+.hero-header > header.nav-scrolled .nav-logo {
+  filter: invert(1);
+}
+
+.hero-header > header:hover .nav-download-button .nav-openai-font,
+.hero-header > header.nav-open .nav-download-button .nav-openai-font,
+.hero-header > header.nav-scrolled .nav-download-button .nav-openai-font {
+  color: #000 !important;
 }
 
 .hero-gradflow {
