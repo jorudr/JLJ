@@ -75,10 +75,10 @@
 
       <!-- Header / Top Bar -->
         <header
-          class="fixed left-0 right-0 top-0 z-[100] flex w-full items-center justify-start px-6 pt-4 pb-4 text-[10px] tracking-[0.3em] sm:px-10 sm:pt-6 sm:pb-6"
+          class="fixed left-0 right-0 top-0 z-[100] flex w-full items-center justify-start px-0 pt-2 pb-2 text-[10px] tracking-[0.3em] sm:pt-4 sm:pb-4 xl:px-8"
           :class="{ 'nav-open': isMegaMenuVisible }"
         >
-        <div class="mx-auto flex w-full max-w-[1280px] items-center justify-start">
+        <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
           <!-- Left Section: App Name -->
           <div class="flex items-center z-50">
             <router-link to="/" class="nav-logo" aria-label="J.L.JÖRMUNGANDR home">
@@ -110,8 +110,18 @@
           <router-link to="/philosophy" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
           </nav>
 
+          <router-link
+            to="/announcement"
+            class="nav-download-button ml-auto flex items-center justify-center rounded-[25px] bg-white px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-200"
+          >
+            <span class="nav-openai-font">Попробовать</span>
+            <svg class="ml-2 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 19L19 5M8 5h11v11" />
+            </svg>
+          </router-link>
+
           <!-- Right Section: Language Switcher -->
-          <div class="hidden items-center space-x-4 z-50 md:ml-auto md:flex">
+          <div class="hidden">
           <button 
             @click="setLocale('ru')"
             class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
@@ -195,7 +205,7 @@
       <div 
         @mouseenter="showMegaMenu"
         @mouseleave="hideMegaMenu"
-        class="mega-menu-panel fixed top-14 left-0 z-40 w-full overflow-hidden transition-[opacity,transform] duration-500 sm:top-[72px]"
+        class="mega-menu-panel fixed top-14 left-0 z-40 w-full overflow-hidden transition-[opacity,transform] duration-500 sm:top-[56px]"
         :class="[
           isMegaMenuVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none',
           isMegaMenuVisible ? 'mega-menu-panel--open bg-black' : 'bg-transparent',
@@ -754,6 +764,15 @@ const scrollToFeatures = () => {
 
 .hero-header > header .nav-openai-font svg path {
   stroke: #f5f5f0 !important;
+}
+
+.hero-header > header .nav-download-button,
+.hero-header > header .nav-download-button * {
+  color: #000 !important;
+}
+
+.hero-header > header .nav-download-button .nav-openai-font {
+  font-weight: 300 !important;
 }
 
 .hero-header > header .nav-logo {
