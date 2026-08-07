@@ -119,7 +119,7 @@
           >
             ru
           </button>
-          <span class="nav-language-divider">/</span>
+          <span class="nav-openai-font nav-language-divider">/</span>
           <button 
             @click="setLocale('en')"
             class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
@@ -292,7 +292,7 @@
         <!-- MAIN CONTENT -->
         <div 
           v-show="heroAnimationState >= 2"
-          class="flex flex-col items-center justify-center w-full"
+          class="flex flex-col items-center justify-center w-full space-y-6"
         >
           <div
             class="hero-signature mb-2 h-8 w-36 overflow-hidden opacity-0 transition-all duration-1000 ease-out sm:h-9 sm:w-44"
@@ -303,14 +303,21 @@
           </div>
 
           <div
-            class="mb-8 text-center text-2xl sm:text-4xl lg:text-5xl font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
+            class="mb-0 text-center text-2xl sm:text-4xl lg:text-5xl font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
             J.L.JÖRMUNGANDR
           </div>
 
-          <div class="openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <div
+            class="!mt-8 w-4/5 max-w-[720px] transition-all duration-1000 ease-out"
+            :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'"
+          >
+            <ExDivider variant="tactical" spacing="none" />
+          </div>
+
+          <div class="hero-tagline openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
@@ -550,6 +557,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
 import GradflowBackground from './GradflowBackground.vue'
+import ExDivider from '../shared/ui/ExDivider.vue'
 
 const { t, locale, setLocale } = useI18n()
 
@@ -805,6 +813,10 @@ const scrollToFeatures = () => {
   font-size: 0.95rem;
   font-weight: 400 !important;
   letter-spacing: -0.01em;
+}
+
+.hero-tagline {
+  font-size: 1.2rem;
 }
 
 .nav-language-button {
