@@ -114,7 +114,7 @@
           <div class="hidden items-center space-x-4 z-50 md:ml-auto md:flex">
           <button 
             @click="setLocale('ru')"
-            class="nav-openai-font transition-colors hover:text-white/50 cursor-pointer"
+            class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
             :class="locale === 'ru' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
             ru
@@ -122,7 +122,7 @@
           <span class="nav-language-divider">/</span>
           <button 
             @click="setLocale('en')"
-            class="nav-openai-font transition-colors hover:text-white/50 cursor-pointer"
+            class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
             :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
             en
@@ -184,9 +184,9 @@
           </nav>
 
           <div class="mobile-menu__locale">
-            <button type="button" class="nav-openai-font cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">ru</button>
+            <button type="button" class="nav-openai-font nav-language-button cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">ru</button>
             <span>/</span>
-            <button type="button" class="nav-openai-font cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">en</button>
+            <button type="button" class="nav-openai-font nav-language-button cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">en</button>
           </div>
         </div>
       </div>
@@ -294,25 +294,12 @@
           v-show="heroAnimationState >= 2"
           class="flex flex-col items-center justify-center w-full"
         >
-          <!-- Core Icon & Name -->
-          <div 
-            class="flex items-center space-x-8 mb-8 scale-[0.8] origin-center transition-all duration-1000 ease-out"
+          <div
+            class="mb-8 text-center text-[18px] sm:text-[22px] font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+            style="font-family: 'Cormorant Garamond', serif;"
           >
-            <div class="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
-              <div class="absolute inset-0 border-2 animate-[spin_10s_linear_infinite] border-black/40"></div>
-              <div class="absolute inset-1.5 sm:inset-2 border animate-[spin_6s_linear_infinite_reverse] border-black/60"></div>
-              <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 rotate-45 animate-pulse bg-black"></div>
-              <div class="absolute -top-1 -left-1 sm:-top-1.5 sm:-left-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-t-2 border-l-2 border-black"></div>
-              <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-2 h-2 sm:w-2.5 sm:h-2.5 border-b-2 border-r-2 border-black"></div>
-            </div>
-            <span 
-              class="text-[18px] sm:text-[22px] tracking-[0.4em] font-light uppercase"
-              :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-              style="font-family: 'Cormorant Garamond', serif;"
-            >
-              J.L.JÖRMUNGANDR
-            </span>
+            J.L.JÖRMUNGANDR
           </div>
 
           <div class="text-2xl sm:text-4xl lg:text-5xl font-thin tracking-[0.12em] sm:tracking-[0.16em] lg:tracking-[0.2em] text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
@@ -748,6 +735,15 @@ const scrollToFeatures = () => {
   opacity: 1 !important;
 }
 
+.hero-header > header .nav-language-button {
+  opacity: 0.28 !important;
+  transition: opacity 180ms ease;
+}
+
+.hero-header > header .nav-language-button.font-bold {
+  opacity: 0.96 !important;
+}
+
 .hero-header > header .nav-openai-font svg {
   color: #f5f5f0 !important;
   opacity: 1 !important;
@@ -799,6 +795,25 @@ const scrollToFeatures = () => {
   font-size: 0.95rem;
   font-weight: 400 !important;
   letter-spacing: -0.01em;
+}
+
+.nav-language-button {
+  opacity: 0.32;
+  transition: opacity 180ms ease;
+}
+
+.nav-language-button.is-active {
+  opacity: 0.96;
+}
+
+@media (min-width: 768px) {
+  .hero-header > header nav:has(.nav-openai-font:hover) .nav-openai-font {
+    opacity: 0.38 !important;
+  }
+
+  .hero-header > header nav:has(.nav-openai-font:hover) .nav-openai-font:hover {
+    opacity: 1 !important;
+  }
 }
 
 .nav-logo {
