@@ -316,10 +316,63 @@
           </button>
         </div>
       </div>
-    </div>
+      </div>
 
-    <div
-      v-if="timeTreeTradeDetailsOpen"
+      <!-- TRADE NODE CONTEXT MENU -->
+      <Teleport to="body">
+        <Transition name="nt-tooltip-fade">
+          <div
+            v-if="tradeContextMenu"
+            data-trade-context-menu
+            class="fixed z-[100000000] pointer-events-auto context-menu-container"
+            :style="{ left: `${tradeContextMenu.x}px`, top: `${tradeContextMenu.y}px` }"
+            @click.stop
+          >
+            <div class="flex flex-col space-y-1.5">
+              <div class="absolute -left-1 -top-1 h-2 w-2 rotate-45 bg-nier-text-light animate-pulse dark:bg-nier-text-dark"></div>
+
+              <div
+                v-for="(action, index) in tradeContextMenuActions"
+                :key="action.id"
+                class="group relative"
+                :style="{ marginLeft: `${index * 12}px` }"
+              >
+                <button
+                  type="button"
+                  class="relative flex min-w-[180px] items-center justify-between overflow-hidden border border-nier-border-light bg-nier-white px-6 py-2.5 text-left transition-all duration-500 hover:translate-x-4 hover:border-nier-text-light dark:border-nier-border-dark dark:bg-nier-black dark:hover:border-nier-text-dark"
+                  @click="action.action()"
+                >
+                  <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-[0.03]"></div>
+                  <span class="relative z-10 text-[9px] font-mono font-black uppercase tracking-[0.5em] text-nier-text-light transition-all duration-500 group-hover:tracking-[0.8em] dark:text-nier-text-dark">{{ action.label }}</span>
+                  <span class="relative z-10 text-[7px] font-mono opacity-20 transition-opacity group-hover:opacity-100 text-nier-text-light dark:text-nier-text-dark">[{{ action.id }}]</span>
+                  <div class="absolute inset-y-0 left-0 w-0 bg-nier-text-light transition-all duration-500 group-hover:w-1.5 dark:bg-nier-text-dark"></div>
+                </button>
+                <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">Trade_Protocol_Execution // Ready</span>
+                </div>
+              </div>
+
+              <div class="group relative pt-2" :style="{ marginLeft: `${tradeContextMenuActions.length * 12}px` }">
+                <button
+                  type="button"
+                  class="relative flex min-w-[180px] items-center justify-between overflow-hidden border border-red-500/30 bg-nier-white px-6 py-3 text-left transition-all duration-500 hover:translate-x-4 hover:border-red-500 hover:bg-red-500/10 dark:bg-nier-black"
+                  @click="deleteTradeFromContextMenu"
+                >
+                  <span class="text-[9px] font-mono font-black uppercase tracking-[0.5em] text-red-500 transition-colors group-hover:text-red-400">{{ locale === 'ru' ? 'УДАЛИТЬ' : 'DELETE' }}</span>
+                  <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
+                  <div class="absolute inset-y-0 left-0 w-0 bg-red-500 transition-all duration-500 group-hover:w-1.5"></div>
+                </button>
+                <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent_Trade_Erasure</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+
+      <div
+        v-if="timeTreeTradeDetailsOpen"
       class="absolute inset-0 z-[10020] flex items-center justify-center bg-black/20 p-4 backdrop-blur-[2px] dark:bg-black/45 md:p-8"
       @click.self="closeTimeTreeTradeDetails"
     >
@@ -1365,6 +1418,7 @@ const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
 const selectedTradeId = ref<string | null>(null)
+const tradeContextMenu = ref<{ x: number; y: number; tradeId: string } | null>(null)
 const editingTrade = ref<any>(undefined)
 const tradeEntryRef = ref<any>(null)
 const isTradeEntryCloseModeActive = ref(true)
@@ -1559,7 +1613,7 @@ const selectedTimeTreeTrade = computed(() => {
     || null
 })
 
-const timeTreeTradeDetailsOpen = computed(() => viewType.value === 'timeTree' && Boolean(selectedTimeTreeTrade.value))
+const timeTreeTradeDetailsOpen = computed(() => Boolean(selectedTimeTreeTrade.value))
 
 const handleTimeTreeTradeClick = (payload: { tradeId: string }) => {
   if (!payload?.tradeId) return
@@ -1605,6 +1659,70 @@ const removeSelectedTimeTreeTrade = async () => {
   closeTimeTreeTradeDetails()
   await handleRemoveTrade(String(tradeId))
 }
+
+const closeTradeContextMenu = () => {
+  tradeContextMenu.value = null
+}
+
+const getTradeForContextMenu = (tradeId: string) => {
+  return currentTrades.value.find((trade: any) => String(trade?.id || '') === tradeId)
+    || currentTradesForList.value.find((trade: any) => String(trade?.id || '') === tradeId)
+    || null
+}
+
+const openTradeDetailsFromContextMenu = () => {
+  const tradeId = tradeContextMenu.value?.tradeId
+  if (!tradeId) return
+
+  timeTreeSelectedTradeId.value = tradeId
+  panelInitialPage.value = undefined
+  panelInitialNoteId.value = undefined
+  showExtraDetails.value = false
+  closeTradeContextMenu()
+}
+
+const shareTradeFromContextMenu = () => {
+  const tradeId = tradeContextMenu.value?.tradeId
+  if (!tradeId) return
+
+  selectedTradeId.value = tradeId
+  closeTradeContextMenu()
+  showShareCardModal.value = true
+}
+
+const editTradeFromContextMenu = () => {
+  const trade = tradeContextMenu.value ? getTradeForContextMenu(tradeContextMenu.value.tradeId) : null
+  if (!trade) return
+
+  closeTradeContextMenu()
+  editTrade(trade)
+}
+
+const deleteTradeFromContextMenu = async () => {
+  const tradeId = tradeContextMenu.value?.tradeId
+  if (!tradeId) return
+
+  closeTradeContextMenu()
+  await handleRemoveTrade(tradeId)
+}
+
+const tradeContextMenuActions = computed(() => [
+  {
+    label: locale.value === 'ru' ? 'ПОДРОБНОСТИ' : 'DETAILS',
+    id: '0x01',
+    action: openTradeDetailsFromContextMenu
+  },
+  {
+    label: locale.value === 'ru' ? 'ПОДЕЛИТЬСЯ' : 'SHARE',
+    id: '0x02',
+    action: shareTradeFromContextMenu
+  },
+  {
+    label: locale.value === 'ru' ? 'РЕДАКТИРОВАТЬ' : 'EDIT',
+    id: '0x03',
+    action: editTradeFromContextMenu
+  }
+])
 
 const getTradeTimelineTimestamp = (trade: any) => {
   const rawDate = trade?.date || trade?.dateObj || trade?.createdAt || trade?.dateExit || trade?.dateEntryStr || trade?.dateTime
@@ -1936,6 +2054,7 @@ const resetDistributionView = () => {
 }
 
 watch(viewType, (next) => {
+  closeTradeContextMenu()
   if (next === 'distribution') resetDistributionView()
   if (next !== 'timeTree') {
     exitTimeTreeFullscreen()
@@ -3996,6 +4115,11 @@ const handleCanvasResize = () => {
   scheduleRender()
 }
 
+const handleTradeContextMenuPointerDown = (event: PointerEvent) => {
+  const target = event.target as HTMLElement | null
+  if (!target?.closest('[data-trade-context-menu]')) closeTradeContextMenu()
+}
+
 watch(isDark, () => scheduleRender())
 
 const findNearestTradeNode = (e: MouseEvent) => {
@@ -4019,10 +4143,11 @@ const findNearestTradeNode = (e: MouseEvent) => {
   return nearest
 }
 
-const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null) => {
+const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null, event?: MouseEvent) => {
   if (!nearest) return
   if (nearest.node.isCore) return
   if (nearest.node.isNote && nearest.node.parentId) {
+    closeTradeContextMenu()
     selectedTradeId.value = nearest.node.parentId
     const noteId = nearest.node.id.split('_').slice(2).join('_')
     panelInitialPage.value = 5
@@ -4032,6 +4157,13 @@ const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } 
   } else {
     selectedTradeId.value = nearest.id
     showExtraDetails.value = false
+    if (event) {
+      tradeContextMenu.value = {
+        x: event.clientX,
+        y: event.clientY,
+        tradeId: nearest.id
+      }
+    }
   }
 }
 
@@ -4039,7 +4171,8 @@ const handleMouseDown = (e: MouseEvent) => {
   if (viewType.value === 'cube' && !isTransitioning.value) {
     const nearest = findNearestTradeNode(e)
     hoveredTradeNodeId.value = nearest?.id || null
-    selectTradeNode(nearest)
+    if (!nearest || nearest.node.isCore) closeTradeContextMenu()
+    selectTradeNode(nearest, e)
     scheduleRender()
   }
 
@@ -4146,6 +4279,7 @@ onMounted(async () => {
   isLogComponentMounted = true
   window.addEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.addEventListener('resize', handleCanvasResize)
   isMatrixLoading.value = true
   await Promise.all([
@@ -4161,6 +4295,7 @@ onUnmounted(() => {
   isLogComponentMounted = false
   window.removeEventListener('keydown', handleTimeTreeFullscreenKeydown, true)
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.removeEventListener('resize', handleCanvasResize)
   if (cubeSearchTimeout) {
     clearTimeout(cubeSearchTimeout)
