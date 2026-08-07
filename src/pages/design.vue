@@ -1047,9 +1047,9 @@ const showNodeMap = ref(false)
 const demoImageUrl = '/assets/ui/tactical_chart_preview.png'
 
 const gradflowConfig = {
-  color1: { r: 210, g: 170, b: 255 },
-  color2: { r: 10, g: 0, b: 30 },
-  color3: { r: 80, g: 30, b: 130 },
+  color1: { r: 2, g: 145, b: 135 },
+  color2: { r: 165, g: 249, b: 193 },
+  color3: { r: 153, g: 151, b: 231 },
   speed: 0.8,
   scale: 2,
   type: 'smoke' as const,
