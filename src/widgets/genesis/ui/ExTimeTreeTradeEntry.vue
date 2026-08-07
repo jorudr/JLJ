@@ -152,10 +152,12 @@ const tradeEntryThemeStyle = computed(() => props.isDark
           </button>
         </div>
 
-        <div class="absolute inset-0 flex items-start justify-start overflow-y-auto overflow-x-hidden custom-scrollbar p-10 text-left text-white">
-          <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-            <div class="flex w-full max-w-4xl flex-col items-start gap-14">
-              <div class="flex w-full items-center justify-start gap-2 border-b border-white/10 pb-3">
+        <div class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
+          <div class="h-full min-h-0 w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+            <div class="p-10">
+              <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                <div class="flex w-full max-w-4xl flex-col items-start gap-14">
+              <div class="sticky top-0 z-20 flex w-full shrink-0 items-center justify-start gap-2 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
@@ -266,16 +268,19 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   {{ locale === 'ru' ? 'Для Main Diary продвинутый анализ недоступен.' : 'Advanced analysis is unavailable for Main Diary.' }}
                 </p>
 
-                <div v-else class="advanced-report w-full min-h-[620px] overflow-hidden border border-white/10 bg-black/5">
-                  <ExTradeAnalysisPanel
-                    :trade="analysisTrade"
-                    :initial-page="3"
-                    embedded
-                  />
-                </div>
+                <ExTradeAnalysisPanel
+                  v-else
+                  class="w-full min-h-[620px]"
+                  :trade="analysisTrade"
+                  :initial-page="3"
+                  embedded
+                  :embedded-brief="true"
+                />
               </section>
 
               <section v-else class="min-h-[420px] w-full" :aria-label="activeEntryFormTab"></section>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,7 +315,12 @@ const tradeEntryThemeStyle = computed(() => props.isDark
   border-color: rgb(17 17 17 / 0.18) !important;
 }
 
-.advanced-report :deep(> div > button) {
-  display: none;
+.trade-entry-shell :deep(image[href*="gothic_corners"]) {
+  display: none !important;
 }
+
+.trade-entry-shell :deep([class*="overflow-visible"][class*="z-50"]) {
+  display: none !important;
+}
+
 </style>

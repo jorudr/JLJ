@@ -67,6 +67,7 @@ interface TradeAnalysisProps {
   initialPage?: number;
   initialExpandedNoteId?: string;
   embedded?: boolean;
+  embeddedBrief?: boolean;
 }
 
 const props = withDefaults(defineProps<TradeAnalysisProps>(), {
@@ -81,8 +82,14 @@ const props = withDefaults(defineProps<TradeAnalysisProps>(), {
     rr: 2.8
   }),
   globalStability: 64,
-  embedded: false
+  embedded: false,
+  embeddedBrief: false
 })
+
+const analysisPanelContainer = computed(() => props.embeddedBrief ? 'div' : ExPanel)
+const analysisPanelContainerProps = computed(() => props.embeddedBrief
+  ? {}
+  : { title: '', telemetry: '', variant: 'light', noPadding: true })
 
 const emit = defineEmits(['close', 'requestEmotionEdit']);
 
@@ -4112,7 +4119,13 @@ const simpleMetricInsights = computed(() => {
 </script>
 
 <template>
-  <div ref="analysisPanelRoot" class="relative h-full w-full">
+  <div
+    ref="analysisPanelRoot"
+    :class="[
+      props.embeddedBrief ? 'embedded-brief' : '',
+      props.embeddedBrief ? 'relative min-h-full w-full' : 'relative h-full w-full'
+    ]"
+  >
     <!-- CLOSE HANDLE (RIGHT EDGE) -->
     <button v-if="!props.embedded" @click="emit('close')"
             class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-theme-bg dark:bg-[#070707] border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-theme-surface dark:hover:bg-[#111] transition-colors z-[100]">
@@ -4120,7 +4133,11 @@ const simpleMetricInsights = computed(() => {
        <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">Close Analysis</span>
     </button>
 
-    <ExPanel class="h-full w-full" title="" telemetry="" variant="light" noPadding>
+    <component
+      :is="analysisPanelContainer"
+      :class="props.embeddedBrief ? 'w-full' : 'h-full w-full'"
+      v-bind="analysisPanelContainerProps"
+    >
     <div v-if="isInitializing" class="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-[#ffffff]/90 dark:bg-[#070707]/80 backdrop-blur-md z-50 nier-text-primary">
       <div class="w-12 h-12 border-t-2 border-r-2 border-black dark:border-white rounded-full animate-spin"></div>
       <div class="flex flex-col items-center space-y-1">
@@ -4128,7 +4145,7 @@ const simpleMetricInsights = computed(() => {
         <span class="text-[9px] font-mono opacity-40 tracking-widest uppercase">Initializing neural telemetry protocols...</span>
       </div>
     </div>
-    <div v-else-if="enrichedTrade" class="relative flex overflow-hidden h-full nier-text-primary">
+    <div v-else-if="enrichedTrade" :class="props.embeddedBrief ? 'relative flex w-full overflow-hidden nier-text-primary' : 'relative flex h-full overflow-hidden nier-text-primary'">
       
       <!-- MINIMALIST NAVIGATION SIDEBAR (INTERNAL) -->
       <div v-if="!activeCorrelationMetric && !props.embedded" class="w-12 h-full flex flex-col items-center py-6 border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] z-20 shrink-0">
@@ -4157,9 +4174,9 @@ const simpleMetricInsights = computed(() => {
         </div>
       </div>
 
-      <div class="relative flex-grow overflow-hidden h-full">
+      <div :class="props.embeddedBrief ? 'relative flex-grow overflow-visible' : 'relative flex-grow overflow-hidden h-full'">
       <!-- ADAPTIVE BACKGROUND DECORATIONS -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40">
+      <div v-if="!props.embeddedBrief" class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40">
         <!-- Tesseract / 3D Wireframe -->
         <div class="absolute -top-20 -right-20 w-96 h-96 border nier-border-primary rounded-full">
            <div class="absolute inset-10 border border-black/5 dark:border-white/5 rotate-45"></div>
@@ -4213,13 +4230,15 @@ const simpleMetricInsights = computed(() => {
         <!-- MAIN ANALYSIS (HIDDEN DURING REPORT) -->
       <div :key="'analysis'" class="flex flex-col h-full overflow-hidden">
           <!-- 2. DYNAMIC CONTENT GRID (SWAPPABLE) -->
-          <div class="p-3 md:p-4 flex-grow relative overflow-y-auto custom-scrollbar overflow-x-hidden">
+          <div :class="props.embeddedBrief ? 'p-0 flex-grow relative overflow-visible' : 'p-3 md:p-4 flex-grow relative overflow-y-auto custom-scrollbar overflow-x-hidden'">
             <Transition name="page-slide" mode="out-in">
               <!-- REPORT VIEW (MODE 3) -->
               <div
                 v-if="currentPage === 3"
                 :key="'report'"
-                :class="activeCorrelationMetric ? 'relative h-full min-h-0 overflow-hidden' : 'relative min-h-full flex flex-col p-4 space-y-6'"
+                :class="props.embeddedBrief
+                  ? 'relative min-h-full flex flex-col'
+                  : (activeCorrelationMetric ? 'relative h-full min-h-0 overflow-hidden' : 'relative min-h-full flex flex-col p-4 space-y-6')"
               >
                 <div
                   v-if="activeCorrelationMetric && selectedCorrelationAnalysis"
@@ -4310,7 +4329,7 @@ const simpleMetricInsights = computed(() => {
                   </div>
                 </div>
                 <!-- Temporal Verification -->
-                <div v-if="!activeCorrelationMetric" class="flex flex-col space-y-6 w-full p-4 md:p-6">
+                <div v-if="!activeCorrelationMetric && !props.embeddedBrief" class="flex flex-col space-y-6 w-full p-4 md:p-6">
                    <div class="flex flex-col space-y-3">
                       <div class="flex justify-between items-center text-[9px] font-mono opacity-30 uppercase tracking-[0.2em] nier-text-primary">
                          <span>Execution Duration</span>
@@ -4357,19 +4376,21 @@ const simpleMetricInsights = computed(() => {
                 </div>
 
                 <!-- TOP SECTION: EQUITY TRAJECTORY (Expanded) -->
-                <div class="flex-grow relative min-h-[300px]">
+                <div v-if="!props.embeddedBrief" class="flex-grow relative min-h-[300px]">
                    <ExEquityCurve2D :trades="reportTrades" :initialBalance="initialBalance" />
                 </div>
 
                 <!-- BOTTOM SECTION: PERFORMANCE BENCHMARK (Detailed Grid) -->
-                <div class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
+                <div v-if="!props.embeddedBrief" class="flex flex-col gap-3 border-b nier-border-primary pb-3 mb-4 md:flex-row md:items-center md:justify-between">
                   <div class="flex flex-col">
-                    <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">Performance Benchmark</span>
+                    <span class="text-[8px] font-mono uppercase tracking-[0.4em] opacity-30 nier-text-primary">
+                      {{ props.embeddedBrief ? (locale === 'ru' ? 'Диагностический бриф' : 'Diagnostic Brief') : 'Performance Benchmark' }}
+                    </span>
                     <span class="text-[10px] font-mono uppercase tracking-[0.22em] opacity-60 nier-text-primary">
-                      {{ activeReportMetricMode === 'simple' ? 'Readable diagnostic brief' : 'Advanced telemetry grid' }}
+                      {{ props.embeddedBrief ? 'Readable diagnostic brief' : (activeReportMetricMode === 'simple' ? 'Readable diagnostic brief' : 'Advanced telemetry grid') }}
                     </span>
                   </div>
-                  <div class="flex items-center border nier-border-primary bg-black/[0.02] dark:bg-white/[0.02] p-1 shrink-0">
+                  <div v-if="!props.embeddedBrief" class="flex items-center border nier-border-primary bg-black/[0.02] dark:bg-white/[0.02] p-1 shrink-0">
                     <button
                       v-for="mode in reportMetricModes"
                       :key="mode.id"
@@ -4383,7 +4404,7 @@ const simpleMetricInsights = computed(() => {
                   </div>
                 </div>
 
-                <div v-if="activeReportMetricMode === 'simple'" class="pb-6">
+                <div v-if="props.embeddedBrief || activeReportMetricMode === 'simple'" class="pb-6">
                   <div
                     v-for="(item, index) in simpleMetricInsights"
                     :key="item.id"
@@ -4394,7 +4415,7 @@ const simpleMetricInsights = computed(() => {
 
                     <div class="flex items-center justify-center">
                       <div class="relative flex h-7 w-7 items-center justify-center text-[9px] font-mono font-black opacity-45 transition-all duration-300 group-hover:opacity-100">
-                        <div class="absolute inset-0 rotate-45 border nier-border-primary transition-transform duration-300 group-hover:scale-110"></div>
+                        <div v-if="!props.embeddedBrief" class="absolute inset-0 rotate-45 border nier-border-primary transition-transform duration-300 group-hover:scale-110"></div>
                         <span class="relative">{{ index + 1 }}</span>
                       </div>
                     </div>
@@ -5858,15 +5879,12 @@ const simpleMetricInsights = computed(() => {
           </div>
         </div>
       </Transition>
-           <!-- Archival Framing -->
-           <div class="absolute top-4 left-4 w-6 h-6 border-t border-l border-black/40 dark:border-white/40 pointer-events-none"></div>
-           <div class="absolute bottom-4 right-4 w-6 h-6 border-b border-r border-black/40 dark:border-white/40 pointer-events-none"></div>
        </div>
       </div>
     </div>
 
 
-  </ExPanel>
+    </component>
 
   <!-- DEEP DIVE EFFICIENCY MODAL -->
   <Teleport to="body">
@@ -6070,6 +6088,10 @@ const simpleMetricInsights = computed(() => {
 
 :global(.dark .custom-scrollbar) {
   scrollbar-color: rgba(255, 255, 255, 0.9) transparent !important;
+}
+
+.embedded-brief :deep([class*="overflow-visible"][class*="z-50"]) {
+  display: none !important;
 }
 
 .page-slide-enter-active,
