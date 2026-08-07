@@ -86,6 +86,21 @@ const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || pro
 const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
 const tradeAssetIcon = () => props.trade?.assetIcon || props.trade?.icon || ''
 
+const tradeNotes = computed(() => {
+  const notesList = Array.isArray(props.trade?.notesList)
+    ? props.trade.notesList.filter((note: any) => note?.content || note?.title)
+    : []
+  if (notesList.length > 0) return notesList
+
+  const note = String(props.trade?.notes || '').trim()
+  return note ? [{ id: 'trade-note', content: note, title: '' }] : []
+})
+
+const tradeImages = computed(() => {
+  if (!Array.isArray(props.trade?.images)) return []
+  return props.trade.images.filter((image: any) => image?.url)
+})
+
 const tradeEntryThemeStyle = computed(() => props.isDark
   ? {
       '--theme-bg': '#000000',
@@ -196,7 +211,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   :class="activeEntryFormTab === 'images' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                   @click="activeEntryFormTab = 'images'"
                 >
-                  {{ locale === 'ru' ? 'КАРТИНКИ' : 'IMAGES' }}
+                  {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
                 </button>
                   </div>
                 </div>
@@ -204,7 +219,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             </div>
 
             <div class="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar [scrollbar-gutter:stable]">
-              <div class="px-10 pb-10">
+              <div class="px-10 pb-10 pt-10">
                 <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
                   <div class="flex w-full max-w-4xl flex-col items-start gap-14">
 
@@ -312,6 +327,54 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 <p v-else class="max-w-2xl text-sm font-mono uppercase leading-relaxed tracking-[0.16em] text-white/60">
                   {{ locale === 'ru' ? 'Для Main Diary метрики недоступны.' : 'Metrics are unavailable for Main Diary.' }}
                 </p>
+              </section>
+
+              <section v-else-if="activeEntryFormTab === 'notes'" class="flex w-full flex-col items-start gap-8">
+                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
+                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                  {{ locale === 'ru' ? 'ЗАМЕТКИ' : 'NOTES' }}
+                </h2>
+
+                <div v-if="tradeNotes.length" class="flex w-full flex-col gap-4">
+                  <article
+                    v-for="(note, index) in tradeNotes"
+                    :key="note.id || `trade-note-${index}`"
+                    class="w-full border border-white/10 bg-white/[0.03] p-5"
+                  >
+                    <div v-if="note.title" class="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.24em] text-white/55">
+                      {{ note.title }}
+                    </div>
+                    <p class="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
+                      {{ note.content || '--' }}
+                    </p>
+                  </article>
+                </div>
+                <div v-else class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
+                  {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
+                </div>
+              </section>
+
+              <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
+                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
+                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                  {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
+                </h2>
+
+                <div v-if="tradeImages.length" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
+                  <figure
+                    v-for="(image, index) in tradeImages"
+                    :key="image.url || `trade-image-${index}`"
+                    class="overflow-hidden border border-white/10 bg-white/[0.03]"
+                  >
+                    <img :src="image.url" :alt="image.name || `Trade image ${index + 1}`" class="block h-auto max-h-[420px] w-full object-contain" />
+                    <figcaption v-if="image.name || image.context" class="border-t border-white/10 px-4 py-3 font-mono text-[9px] uppercase tracking-[0.2em] text-white/55">
+                      {{ image.name || image.context }}
+                    </figcaption>
+                  </figure>
+                </div>
+                <div v-else class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
+                  {{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}
+                </div>
               </section>
 
               <section v-else class="min-h-[420px] w-full" :aria-label="activeEntryFormTab"></section>
