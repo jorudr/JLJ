@@ -281,64 +281,6 @@
         </div>
       </div>
 
-      <!-- BOTTOM RIGHT: DISTRIBUTION METRIC MODE -->
-      <div
-        v-if="isHudVisible && !isTradeEntryOpen && viewType === 'distribution'"
-        class="absolute bottom-12 right-12 z-[10000] pointer-events-auto transition-all duration-300"
-        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
-      >
-        <div class="relative flex items-center gap-2 border nier-border-primary bg-white/5 p-1.5 font-mono text-[9px] uppercase tracking-[0.24em] backdrop-blur-xl dark:bg-black/5">
-          <div class="absolute -top-px -left-px h-1.5 w-1.5 border-l border-t border-black/40 dark:border-white/40"></div>
-          <div class="absolute -bottom-px -right-px h-1.5 w-1.5 border-b border-r border-black/40 dark:border-white/40"></div>
-          <button
-            aria-label="PnL"
-            class="flex h-12 w-12 items-center justify-center p-0 transition-all duration-500"
-            :class="distributionMetricMode === 'pnl' ? 'nier-bg-inverted nier-text-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'opacity-45 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/5'"
-            @click="distributionMetricMode = 'pnl'"
-          >
-            <svg
-              class="h-5 w-5 shrink-0 transition-transform duration-500"
-              :class="distributionMetricMode === 'pnl' ? 'scale-110' : ''"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M4 19h16"></path>
-              <path d="M6 16l3.5-5 3.5 3 5-8"></path>
-              <path d="M18 6h-4"></path>
-              <path d="M18 6v4"></path>
-            </svg>
-          </button>
-          <button
-            :disabled="isMainDiaryStrategy"
-            aria-label="Score"
-            class="flex h-12 w-12 items-center justify-center p-0 transition-all duration-500"
-            :class="isMainDiaryStrategy
-              ? 'cursor-not-allowed opacity-20'
-              : (distributionMetricMode === 'score' ? 'nier-bg-inverted nier-text-inverted shadow-[0_0_20px_rgba(0,0,0,0.1)]' : 'opacity-45 hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/5')"
-            @click="distributionMetricMode = 'score'"
-          >
-            <svg
-              class="h-5 w-5 shrink-0 transition-transform duration-500"
-              :class="distributionMetricMode === 'score' ? 'scale-110' : ''"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="8"></circle>
-              <path d="M8.5 15.5l7-7"></path>
-              <circle cx="9" cy="9" r="1"></circle>
-              <circle cx="15" cy="15" r="1"></circle>
-            </svg>
-          </button>
-        </div>
-      </div>
       </div>
 
       <!-- TRADE NODE CONTEXT MENU -->
@@ -849,7 +791,7 @@
 
     <!-- CENTERED BOTTOM NAVIGATION -->
     <div
-      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'distribution'"
       class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
       :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
     >
@@ -937,6 +879,58 @@
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МЕНЮ' : 'MENU' }} ]</span>
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType === 'distribution'"
+      class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
+      :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
+    >
+      <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/85"
+          :aria-label="locale === 'ru' ? 'Выйти из распределения' : 'Exit distribution'"
+          @click="exitDistributionView"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+            <path d="M19 12H5M11 6l-6 6 6 6" stroke-linecap="square" stroke-linejoin="miter" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }} ]</span>
+        </button>
+
+        <button
+          type="button"
+          aria-label="PnL"
+          class="group relative flex h-10 w-10 items-center justify-center border transition-all duration-300"
+          :class="distributionMetricMode === 'pnl' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/45 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          @click="distributionMetricMode = 'pnl'"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+            <path d="M4 19h16M6 16l3.5-5 3.5 3 5-8M18 6h-4M18 6v4" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МАКС УБЫТОК → ПРИБЫЛЬ' : 'MAX LOSS → PROFIT' }} ]</span>
+        </button>
+
+        <button
+          type="button"
+          :disabled="isMainDiaryStrategy"
+          aria-label="Score"
+          class="group relative flex h-10 w-10 items-center justify-center border transition-all duration-300"
+          :class="isMainDiaryStrategy
+            ? 'cursor-not-allowed border-transparent text-white/20'
+            : (distributionMetricMode === 'score' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/45 hover:border-white/20 hover:bg-white/5 hover:text-white')"
+          @click="distributionMetricMode = 'score'"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M8.5 15.5l7-7" />
+            <circle cx="9" cy="9" r="1" />
+            <circle cx="15" cy="15" r="1" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МАКС SCORE → МИН SCORE' : 'MAX SCORE → MIN SCORE' }} ]</span>
         </button>
       </div>
     </div>
@@ -2055,6 +2049,7 @@ const getTradeNodeColor = (node: TradeNode) => {
 }
 
 const distributionMetricMode = ref<'pnl' | 'score'>('pnl')
+const previousProjectionView = ref<'cube' | 'timeTree' | 'tree'>('cube')
 
 const distributionClosedTrades = computed(() => {
   return filteredTrades.value.filter(isClosedDiaryTrade)
@@ -2594,8 +2589,16 @@ const closeToolsMenu = () => {
 }
 
 const openProjectionView = (nextView: 'distribution' | 'tree') => {
+  if (nextView === 'distribution' && viewType.value !== 'distribution') {
+    previousProjectionView.value = viewType.value
+  }
   closeNavigationOverlays()
   viewType.value = nextView
+}
+
+const exitDistributionView = () => {
+  closeNavigationOverlays()
+  viewType.value = previousProjectionView.value
 }
 
 const toggleCapitalForecast = () => {
