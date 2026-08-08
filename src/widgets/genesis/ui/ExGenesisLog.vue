@@ -10,7 +10,11 @@
       :trade="selectedTimeTreeTradeForDetails"
     />
 
-    <div v-if="!showTimeTreeTradeDetails && !showNodeMap && !isTradeEntryOpen" class="contents">
+    <div
+      v-if="!showNodeMap && !isTradeEntryOpen"
+      v-show="!showTimeTreeTradeDetails"
+      class="contents"
+    >
 
       <!-- CANVAS LAYER (Shared) -->
       <canvas v-show="viewType === 'cube'"
@@ -24,6 +28,18 @@
               @dblclick="handleDoubleClick"
               @wheel="handleWheel">
       </canvas>
+
+      <div
+        v-if="isCubeGraphLoading"
+        class="pointer-events-none absolute inset-0 z-[120] flex items-center justify-center"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="flex flex-col items-center gap-3 font-mono text-[9px] uppercase tracking-[0.28em] nier-text-primary">
+          <span class="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80"></span>
+          <span class="opacity-55">{{ locale === 'ru' ? 'ЗАГРУЗКА УЗЛОВ' : 'LOADING NODES' }}</span>
+        </div>
+      </div>
 
       <!-- CUBE LAYER (UI ONLY) -->
       <div
@@ -1246,7 +1262,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -2164,7 +2180,18 @@ watch(viewType, (next) => {
     closeTimeTreeTradeDetails()
   }
   if (next !== 'cube') clearCubeRevealAnimation()
+  if (next === 'cube') {
+    isTradeGraphLoading.value = true
+    void refreshCubeGraphLayout()
+  }
   scheduleRender()
+})
+
+watch(showTimeTreeTradeDetails, (isOpen) => {
+  if (!isOpen && viewType.value === 'cube') {
+    isTradeGraphLoading.value = true
+    void refreshCubeGraphLayout()
+  }
 })
 
 const distributionTooltipStyle = computed(() => {
@@ -3013,6 +3040,8 @@ const formatCubeTradeAssetLabel = (asset?: string) => {
 }
 
 const isMatrixLoading = ref(true)
+const isTradeGraphLoading = ref(true)
+const isCubeGraphLoading = computed(() => viewType.value === 'cube' && (isMatrixLoading.value || isTradeGraphLoading.value))
 const showStrategyMenu = ref(false)
 
 const getStats = (id: string, allTrades: any[], scenarioId?: string | null) => {
@@ -3214,7 +3243,9 @@ const toggleCubeRevealAnimation = () => {
 // Immediate update when trades are added, strategy changes, or filters are modified
 watch([selectedStrategyId, filteredTrades, cubeSearchQuery], () => {
   clearCubeRevealAnimation()
+  if (viewType.value === 'cube') isTradeGraphLoading.value = true
   initTrades()
+  if (viewType.value === 'cube') void refreshCubeGraphLayout()
 }, { deep: true })
 
 // The trade canvas opens at 2x the previous default scale.
@@ -3355,7 +3386,9 @@ const strategyScenarioNodes = computed(() => {
 watch(strategyScenarioNodes, () => {
   if (!isLogComponentMounted) return
   clearCubeRevealAnimation()
+  if (viewType.value === 'cube') isTradeGraphLoading.value = true
   initTrades()
+  if (viewType.value === 'cube') void refreshCubeGraphLayout()
 }, { deep: true })
 
 const getTradeScenarioIds = (trade: any, knownScenarioIds: Set<string>) => {
@@ -4083,6 +4116,8 @@ const renderFrame = () => {
   const w = width, h = height
   if (w === 0 || h === 0) return
 
+  isTradeGraphLoading.value = false
+
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, w, h)
 
@@ -4208,6 +4243,29 @@ const scheduleRender = () => {
     renderFrame()
     if (shouldContinuouslyRender()) scheduleRender()
   })
+}
+
+let graphLayoutRequestId = 0
+let graphResizeObserver: ResizeObserver | null = null
+
+const waitForNextFrame = () => new Promise<void>((resolve) => {
+  requestAnimationFrame(() => resolve())
+})
+
+const refreshCubeGraphLayout = async () => {
+  const requestId = ++graphLayoutRequestId
+  await nextTick()
+  await waitForNextFrame()
+  await waitForNextFrame()
+
+  if (requestId !== graphLayoutRequestId || viewType.value !== 'cube') return
+
+  const canvas = canvasRef.value
+  if (!canvas || canvas.clientWidth <= 0 || canvas.clientHeight <= 0) return
+
+  nodeLayoutDirty = true
+  renderFrame()
+  scheduleRender()
 }
 
 const handleCanvasResize = () => {
@@ -4378,6 +4436,15 @@ onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.addEventListener('resize', handleCanvasResize)
+  if (typeof ResizeObserver !== 'undefined' && canvasRef.value) {
+    graphResizeObserver = new ResizeObserver(() => {
+      handleCanvasResize()
+      if (viewType.value === 'cube' && canvasRef.value?.clientWidth && canvasRef.value?.clientHeight) {
+        void refreshCubeGraphLayout()
+      }
+    })
+    graphResizeObserver.observe(canvasRef.value)
+  }
   isMatrixLoading.value = true
   await Promise.all([
     ensureMatrixDataRestored(),
@@ -4386,6 +4453,7 @@ onMounted(async () => {
   if (!isLogComponentMounted) return
   isMatrixLoading.value = false
   initTrades()
+  void refreshCubeGraphLayout()
   scheduleRender()
 })
 onUnmounted(() => { 
@@ -4394,6 +4462,8 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.removeEventListener('resize', handleCanvasResize)
+  graphResizeObserver?.disconnect()
+  graphResizeObserver = null
   if (cubeSearchTimeout) {
     clearTimeout(cubeSearchTimeout)
     cubeSearchTimeout = null
