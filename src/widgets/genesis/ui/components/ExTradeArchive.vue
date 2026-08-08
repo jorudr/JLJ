@@ -109,8 +109,8 @@
                 </svg>
               </div>
               
-              <span class="text-right font-bold" :class="(trade.result || 0) >= 0 ? 'text-white' : 'text-white/60'">
-                {{ (trade.result || 0) >= 0 ? '+' : '' }}{{ (trade.result || 0).toFixed(2) }}
+              <span class="text-right font-bold" :class="getTradePnl(trade) >= 0 ? 'text-white' : 'text-white/60'">
+                {{ getTradePnl(trade) >= 0 ? '+' : '' }}{{ getTradePnl(trade).toFixed(2) }}
               </span>
               
               <span class="text-right opacity-80" :class="getTradeR(trade) >= 0 ? 'text-white' : 'text-white/60'">
@@ -162,20 +162,24 @@ const trades = computed(() => {
 })
 
 // Metrics
+const getTradePnl = (trade: any) => {
+  return Number(trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0)
+}
+
 const totalPnl = computed(() => {
-  return trades.value.reduce((acc, trade) => acc + (trade.result || 0), 0)
+  return trades.value.reduce((acc, trade) => acc + getTradePnl(trade), 0)
 })
 
 const winRate = computed(() => {
   if (trades.value.length === 0) return 0
-  const wins = trades.value.filter(t => (t.result || 0) > 0).length
+  const wins = trades.value.filter(t => getTradePnl(t) > 0).length
   return wins / trades.value.length
 })
 
 const getTradeR = (trade: any) => {
   if (trade.riskReward !== undefined) return trade.riskReward
   // Fallback estimation if R is not available
-  return (trade.result || 0) > 0 ? 2.0 : -1.0
+  return getTradePnl(trade) > 0 ? 2.0 : -1.0
 }
 
 const getTradeTime = (trade: any) => {
@@ -233,7 +237,7 @@ const groupedTrades = computed(() => {
       }
     }
     groups[key].trades.push(trade)
-    groups[key].totalPnl += (trade.result || 0)
+    groups[key].totalPnl += getTradePnl(trade)
     groups[key].totalR += getTradeR(trade)
   })
 
@@ -243,7 +247,7 @@ const groupedTrades = computed(() => {
 // Sparkline generation (mocked for visual flair as seen in image)
 const generateSparkline = (trade: any) => {
   // If trade has actual path data, use it. Otherwise, generate a fake curve based on PNL.
-  const isWin = (trade.result || 0) > 0
+  const isWin = getTradePnl(trade) > 0
   const points = []
   let y = 10
   points.push(`M 0,${y}`)
@@ -261,7 +265,7 @@ const generateSparkline = (trade: any) => {
 }
 
 const getSparklineEnd = (trade: any) => {
-  const isWin = (trade.result || 0) > 0
+  const isWin = getTradePnl(trade) > 0
   return isWin ? 4 : 16
 }
 
