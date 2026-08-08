@@ -8,7 +8,6 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
-import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
 
 const { t, locale } = useI18n()
 const tr = (ru: string, en: string) => locale.value === 'ru' ? ru : en
@@ -162,10 +161,6 @@ const currentInitialDeposit = computed(() => {
   return tradeStore.getInitialDeposit(props.trade.strategyId || 'MAIN_DIARY')
 })
 
-const getNormalizedPnl = (tr: any) => {
-  return getTradePnlForScore(tr, currentInitialDeposit.value)
-}
-
 const getEmotionName = (emotion: any) => {
   if (!emotion) return ''
   if (typeof emotion === 'string') return emotion
@@ -174,148 +169,142 @@ const getEmotionName = (emotion: any) => {
   return String(emotion)
 }
 
-const scoreSourceTrades = computed(() => {
-  const list = [...allTrades.value]
-  const idx = list.findIndex(t => t.id === props.trade?.id)
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], ...props.trade }
-  } else if (props.trade?.id) {
-    list.push(props.trade)
-  }
-  return list
-})
-
-const tradeProfitabilityScoreIndex = computed(() => {
-  return buildTradeProfitabilityScoreIndex(scoreSourceTrades.value, currentInitialDeposit.value)
-})
-
-const percentileRank = computed(() => {
-  const trade = props.trade as any
-  if (!trade) return 0
-  const score = tradeProfitabilityScoreIndex.value.get(String(trade.id || '')) ?? tradeProfitabilityScoreIndex.value.get(trade)
-  return score?.score ?? 0
-})
-
 const contentTransform = computed(() => ({
   transform: `translate(${viewState.value.panX}px, ${viewState.value.panY}px) scale(${viewState.value.scale})`,
   transformOrigin: '0 0'
 }))
 
-// MOCK DATA WITH SPATIAL COORDINATES
-const entryConditions = computed(() => {
-  const s = props.trade?.scenarios?.find((s: any) => s.type === 'entry')
-  if (!s || !s.conditions) return []
-  
-  const filteredConditions = s.conditions.filter((c: any) => {
-    const systemNames = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION']
-    if (systemNames.includes(s.name?.toUpperCase()) && c.name?.toUpperCase() === s.name?.toUpperCase()) {
-      return false
-    }
-    return true
-  })
+const systemScenarioNames = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION']
 
-  return filteredConditions.map((c: any, i: number) => {
-    const pfHistory = c.history?.pf || Array.from({ length: 21 }, () => 1.0)
-    const freqHistory = c.history?.freq || Array.from({ length: 21 }, () => 100)
-    
-    const lastFreq = freqHistory[freqHistory.length - 1]
-    const prevFreq = freqHistory[freqHistory.length - 2] || lastFreq
-    const lastPf = pfHistory[pfHistory.length - 1]
-    const prevPf = pfHistory[pfHistory.length - 2] || lastPf
+const toMetricNumber = (value: unknown, fallback: number) => {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}
 
-    return {
-      id: c.id,
-      name: c.name,
-      x: TACTICAL_BLUEPRINT.ENTRY_SLOTS[i]?.x || 0,
-      y: TACTICAL_BLUEPRINT.ENTRY_SLOTS[i]?.y || 0,
-      freq: lastFreq.toFixed(1) + '%',
-      freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
-      pf: lastPf.toFixed(2),
-      pfTrend: lastPf >= prevPf ? 'up' : 'down' as const,
-      history: { pf: pfHistory, freq: freqHistory }
-    }
-  })
+const getNodeName = (item: any, fallbackName: string) => {
+  if (typeof item === 'string') return item
+  return item?.name || item?.displayName || item?.label || item?.info?.name || fallbackName
+}
+
+const sourceScenarios = computed(() => {
+  const explicitScenarios = Array.isArray(props.trade?.scenarios) ? props.trade.scenarios : []
+  if (explicitScenarios.length > 0) return explicitScenarios
+
+  return [
+    props.trade?.boardScenarioEntry ? { ...props.trade.boardScenarioEntry, type: 'entry' } : null,
+    props.trade?.boardScenarioExit ? { ...props.trade.boardScenarioExit, type: 'exit' } : null
+  ]
+    .filter(Boolean)
+    .map((scenario: any) => {
+      const rawConditions = Array.isArray(scenario.conditions)
+        ? scenario.conditions
+        : Array.isArray(scenario.info?.conditions) ? scenario.info.conditions : []
+
+      return {
+        ...scenario,
+        id: scenario.id || scenario.info?.id,
+        name: getNodeName(scenario, scenario.type === 'entry' ? tr('Сценарий входа', 'Entry Scenario') : tr('Сценарий выхода', 'Exit Scenario')),
+        conditions: rawConditions.map((condition: any, index: number) => ({
+          ...(typeof condition === 'object' ? condition : {}),
+          id: typeof condition === 'object' ? condition.id || condition.info?.id || `${scenario.id}-condition-${index}` : `${scenario.id}-condition-${index}`,
+          name: getNodeName(condition, typeof condition === 'string' ? condition : tr('Условие', 'Condition'))
+        }))
+      }
+    })
 })
 
-const exitConditions = computed(() => {
-  const s = props.trade?.scenarios?.find((s: any) => s.type === 'exit')
-  if (!s || !s.conditions) return []
-  
-  const filteredConditions = s.conditions.filter((c: any) => {
-    const systemNames = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION']
-    if (systemNames.includes(s.name?.toUpperCase()) && c.name?.toUpperCase() === s.name?.toUpperCase()) {
-      return false
-    }
-    return true
-  })
+const getMetricHistory = (item: any, key: 'pf' | 'freq', fallback: number) => {
+  const history = item?.history?.[key]
+  if (Array.isArray(history) && history.length > 0) {
+    return history.map((value: unknown) => toMetricNumber(value, fallback))
+  }
+  const directValue = key === 'pf' ? item?.profitability ?? item?.pf : item?.frequency ?? item?.freq
+  return [toMetricNumber(directValue, fallback)]
+}
 
-  return filteredConditions.map((c: any, i: number) => {
-    const pfHistory = c.history?.pf || Array.from({ length: 21 }, () => 1.0)
-    const freqHistory = c.history?.freq || Array.from({ length: 21 }, () => 100)
-
-    const lastFreq = freqHistory[freqHistory.length - 1]
-    const prevFreq = freqHistory[freqHistory.length - 2] || lastFreq
-    const lastPf = pfHistory[pfHistory.length - 1]
-    const prevPf = pfHistory[pfHistory.length - 2] || lastPf
-
-    return {
-      id: c.id,
-      name: c.name,
-      x: TACTICAL_BLUEPRINT.EXIT_SLOTS[i]?.x || 0,
-      y: TACTICAL_BLUEPRINT.EXIT_SLOTS[i]?.y || 0,
-      freq: lastFreq.toFixed(1) + '%',
-      freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
-      pf: lastPf.toFixed(2),
-      pfTrend: lastPf >= prevPf ? 'up' : 'down' as const,
-      history: { pf: pfHistory, freq: freqHistory }
-    }
-  })
-})
-
-const entryHubData = computed(() => {
-  const s = props.trade?.scenarios?.find((s: any) => s.type === 'entry')
-  if (!s) return null
-  
-  const pfHistory = s.history?.pf || Array.from({ length: 21 }, () => 1.0)
-  const freqHistory = s.history?.freq || Array.from({ length: 21 }, () => 100)
-  
+const buildMetricNode = (item: any, fallbackName: string) => {
+  const name = getNodeName(item, fallbackName)
+  const pfHistory = getMetricHistory(item, 'pf', 1)
+  const freqHistory = getMetricHistory(item, 'freq', 100)
   const lastFreq = freqHistory[freqHistory.length - 1]
-  const prevFreq = freqHistory[freqHistory.length - 2] || lastFreq
+  const prevFreq = freqHistory[freqHistory.length - 2] ?? lastFreq
   const lastPf = pfHistory[pfHistory.length - 1]
-  const prevPf = pfHistory[pfHistory.length - 2] || lastPf
-  
+  const prevPf = pfHistory[pfHistory.length - 2] ?? lastPf
+
   return {
-    id: s.id,
-    name: s.name || tr('Сценарий входа', 'Entry Scenario'),
+    id: String(item?.id || name),
+    name,
     freq: lastFreq.toFixed(1) + '%',
     freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
     pf: lastPf.toFixed(2),
     pfTrend: lastPf >= prevPf ? 'up' : 'down' as const,
     history: { pf: pfHistory, freq: freqHistory }
   }
-})
+}
 
-const exitHubData = computed(() => {
-  const s = props.trade?.scenarios?.find((s: any) => s.type === 'exit')
-  if (!s) return null
-  
-  const pfHistory = s.history?.pf || Array.from({ length: 21 }, () => 1.0)
-  const freqHistory = s.history?.freq || Array.from({ length: 21 }, () => 100)
+const buildScenarioNodes = (type: 'entry' | 'exit') => {
+  const scenarios = sourceScenarios.value
+    .filter((scenario: any) => String(scenario?.type || '').toLowerCase() === type)
 
-  const lastFreq = freqHistory[freqHistory.length - 1]
-  const prevFreq = freqHistory[freqHistory.length - 2] || lastFreq
-  const lastPf = pfHistory[pfHistory.length - 1]
-  const prevPf = pfHistory[pfHistory.length - 2] || lastPf
+  let laneTop = 80
 
-  return {
-    id: s.id,
-    name: s.name || tr('Сценарий выхода', 'Exit Scenario'),
-    freq: lastFreq.toFixed(1) + '%',
-    freqTrend: lastFreq >= prevFreq ? 'up' : 'down' as const,
-    pf: lastPf.toFixed(2),
-    pfTrend: lastPf >= prevPf ? 'up' : 'down' as const,
-    history: { pf: pfHistory, freq: freqHistory }
-  }
+  return scenarios.map((scenario: any, scenarioIndex: number) => {
+    const filteredConditions = (Array.isArray(scenario.conditions) ? scenario.conditions : [])
+      .filter((condition: any) => {
+        const scenarioName = String(getNodeName(scenario, '')).toUpperCase()
+        const conditionName = String(getNodeName(condition, '')).toUpperCase()
+        return !(systemScenarioNames.includes(scenarioName) && conditionName === scenarioName)
+      })
+
+    const laneHeight = Math.max(240, filteredConditions.length * 96 + 96)
+    const hubX = type === 'entry' ? 120 : 1600
+    const hubY = laneTop + Math.max(0, ((filteredConditions.length - 1) * 96) / 2)
+    const hub = {
+      ...buildMetricNode(scenario, type === 'entry' ? tr('Сценарий входа', 'Entry Scenario') : tr('Сценарий выхода', 'Exit Scenario')),
+      id: String(scenario.id || `${type}-${scenarioIndex}`),
+      x: hubX,
+      y: hubY,
+      centerX: hubX + 160,
+      centerY: hubY + 64,
+      scenarioIndex,
+      type
+    }
+
+    const conditions = filteredConditions.map((condition: any, conditionIndex: number) => {
+      const conditionNode = buildMetricNode(condition, tr('Условие', 'Condition'))
+      const conditionX = type === 'entry' ? 620 : 1220
+      const conditionY = laneTop + conditionIndex * 96
+
+      return {
+        ...conditionNode,
+        id: `${hub.id}:${String(condition.id || condition.name || conditionIndex)}`,
+        sourceId: String(condition.id || condition.name || conditionIndex),
+        scenarioId: hub.id,
+        scenarioName: hub.name,
+        x: conditionX,
+        y: conditionY,
+        hubCenterX: hub.centerX,
+        hubCenterY: hub.centerY,
+        type
+      }
+    })
+
+    laneTop += laneHeight
+    return { ...hub, conditions }
+  })
+}
+
+const entryHubData = computed(() => buildScenarioNodes('entry'))
+const exitHubData = computed(() => buildScenarioNodes('exit'))
+const entryConditions = computed(() => entryHubData.value.flatMap(scenario => scenario.conditions))
+const exitConditions = computed(() => exitHubData.value.flatMap(scenario => scenario.conditions))
+
+const scenarioLinks = computed(() => {
+  const count = Math.min(entryHubData.value.length, exitHubData.value.length)
+  return Array.from({ length: count }, (_, index) => ({
+    entry: entryHubData.value[index],
+    exit: exitHubData.value[index]
+  }))
 })
 
 const displayEmotions = computed(() => {
@@ -490,8 +479,12 @@ const getIndicatorState = (worldX: number, worldY: number, hubWidth = 256, hubHe
   return { x: clampedX, y: clampedY, dist, angle }
 }
 
-const entryIndicator = computed(() => getIndicatorState(150, 300))
-const exitIndicator = computed(() => getIndicatorState(1200, 700))
+const entryIndicators = computed(() => entryHubData.value
+  .map((hub) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
+  .filter((item) => item.indicator))
+const exitIndicators = computed(() => exitHubData.value
+  .map((hub) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
+  .filter((item) => item.indicator))
 
 function getLinePath(x1: number, y1: number, x2: number, y2: number) {
   const dx = x2 - x1
@@ -561,44 +554,34 @@ const calculatedStabilityIndex = computed(() => {
        @mousedown="startPan">
     <!-- HUD Overlay (Fixed) -->
     <div class="absolute inset-0 pointer-events-none z-[100]">
-      <!-- Top Center Percentile Rank Label -->
-      <div class="absolute top-12 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto z-[200]">
-        <div class="px-6 py-2 transition-all duration-500"
-             :class="isDark ? 'text-white/40 hover:text-white/70' : 'text-black/40 hover:text-black/70'">
-          <span class="text-base font-serif tracking-widest">
-            {{ t('tacticalNodeMap.betterThan') }} <span class="font-bold nier-text-primary">{{ percentileRank }}%</span> {{ t('tacticalNodeMap.ofYourTrades') }}
-          </span>
-        </div>
-      </div>
-
       <!-- Off-Screen Indicators -->
-      <div v-if="entryIndicator" 
+      <div v-for="item in entryIndicators" :key="`entry-indicator-${item.hub.id}`"
            class="absolute pointer-events-auto flex flex-col items-center transition-all duration-300"
-           :style="{ left: entryIndicator.x + 'px', top: entryIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
+           :style="{ left: item.indicator.x + 'px', top: item.indicator.y + 'px', transform: 'translate(-50%, -50%)' }">
         <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100"
-             :style="{ transform: `rotate(${entryIndicator.angle}deg)` }">
+             :style="{ transform: `rotate(${item.indicator.angle}deg)` }">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :class="isDark ? 'text-white' : 'text-black'">
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="flex flex-col items-center mt-1">
-          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.entryHub') }}</span>
-          <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryIndicator.dist }}px</span>
+          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ item.hub.name }}</span>
+          <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ item.indicator.dist }}px</span>
         </div>
       </div>
 
-      <div v-if="exitIndicator" 
+      <div v-for="item in exitIndicators" :key="`exit-indicator-${item.hub.id}`"
            class="absolute pointer-events-auto flex flex-col items-center transition-all duration-300"
-           :style="{ left: exitIndicator.x + 'px', top: exitIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
+           :style="{ left: item.indicator.x + 'px', top: item.indicator.y + 'px', transform: 'translate(-50%, -50%)' }">
         <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100"
-             :style="{ transform: `rotate(${exitIndicator.angle}deg)` }">
+             :style="{ transform: `rotate(${item.indicator.angle}deg)` }">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :class="isDark ? 'text-white' : 'text-black'">
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="flex flex-col items-center mt-1">
-          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.exitHub') }}</span>
-          <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitIndicator.dist }}px</span>
+          <span class="text-[8px] font-mono font-bold tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ item.hub.name }}</span>
+          <span class="text-[7px] font-mono opacity-60 font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ item.indicator.dist }}px</span>
         </div>
       </div>
     </div>
@@ -612,34 +595,30 @@ const calculatedStabilityIndex = computed(() => {
              style="width: 5000px; height: 5000px;">
           
           <!-- Connections to Entry Conditions -->
-          <template v-if="entryHubData">
-            <g v-for="cond in entryConditions" :key="'e-line-' + cond.id">
-              <path 
-                :d="getLinePath(310, 364, cond.x, cond.y + 30)" 
-                fill="none" 
-                :stroke="connectionColor" 
-                :stroke-opacity="connectionOpacity"
-                stroke-width="1"
-              />
-            </g>
+          <template v-for="cond in entryConditions" :key="'e-line-' + cond.id">
+            <path
+              :d="getLinePath(cond.hubCenterX, cond.hubCenterY, cond.x, cond.y + 30)"
+              fill="none"
+              :stroke="connectionColor"
+              :stroke-opacity="connectionOpacity"
+              stroke-width="1"
+            />
           </template>
 
           <!-- Connections to Exit Conditions -->
-          <template v-if="exitHubData">
-            <g v-for="cond in exitConditions" :key="'ex-line-' + cond.id">
-              <path 
-                :d="getLinePath(1360, 764, cond.x + 280, cond.y + 30)" 
-                fill="none" 
-                :stroke="connectionColor" 
-                :stroke-opacity="connectionOpacity"
-                stroke-width="1"
-              />
-            </g>
+          <template v-for="cond in exitConditions" :key="'ex-line-' + cond.id">
+            <path
+              :d="getLinePath(cond.hubCenterX, cond.hubCenterY, cond.x + 280, cond.y + 30)"
+              fill="none"
+              :stroke="connectionColor"
+              :stroke-opacity="connectionOpacity"
+              stroke-width="1"
+            />
           </template>
 
           <!-- Main Hub Neural Link -->
-          <path v-if="entryHubData && exitHubData"
-            :d="getLinePath(310, 364, 1360, 764)" 
+          <path v-for="link in scenarioLinks" :key="`scenario-link-${link.entry.id}-${link.exit.id}`"
+            :d="getLinePath(link.entry.centerX, link.entry.centerY, link.exit.centerX, link.exit.centerY)"
             fill="none" 
             :stroke="connectionColor" 
             :stroke-opacity="mainLinkOpacity"
@@ -647,36 +626,38 @@ const calculatedStabilityIndex = computed(() => {
           />
         </svg>
 
-        <!-- Scenario Hub: Entry -->
-        <div v-if="entryHubData" class="absolute node-element group cursor-pointer" style="left: 150px; top: 300px;" 
-             @mouseenter="handleNodeHover($event, entryHubData)"
+        <!-- Scenario Hubs: Entry -->
+        <div v-for="scenario in entryHubData" :key="`entry-scenario-${scenario.id}`"
+             class="absolute node-element group cursor-pointer"
+             :style="{ left: scenario.x + 'px', top: scenario.y + 'px' }"
+             @mouseenter="handleNodeHover($event, scenario)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
-               :class="isDark ? 'border-nier-border-dark group-hover:border-nier-text-dark' : 'border-nier-border-light group-hover:border-nier-text-light'">
+               :class="isDark ? 'border-white/10 group-hover:border-white/35' : 'border-black/10 group-hover:border-black/35'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             
             <div class="mb-4 text-center w-full px-2">
-              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ entryHubData.name }}</div>
+              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.name }}</div>
             </div>
 
             <div class="flex items-center justify-around w-full border-t nier-border-primary pt-4">
               <div class="flex flex-col items-center">
                 <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryHubData.freq }}</span>
-                  <svg v-if="entryHubData.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.freq }}</span>
+                  <svg v-if="scenario.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
               <div class="flex flex-col items-center">
                 <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ entryHubData.pf }}</span>
-                  <svg v-if="entryHubData.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.pf }}</span>
+                  <svg v-if="scenario.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
@@ -684,36 +665,38 @@ const calculatedStabilityIndex = computed(() => {
           </div>
         </div>
 
-        <!-- Scenario Hub: Exit -->
-        <div v-if="exitHubData" class="absolute node-element group cursor-pointer" style="left: 1200px; top: 700px;" 
-             @mouseenter="handleNodeHover($event, exitHubData)"
+        <!-- Scenario Hubs: Exit -->
+        <div v-for="scenario in exitHubData" :key="`exit-scenario-${scenario.id}`"
+             class="absolute node-element group cursor-pointer"
+             :style="{ left: scenario.x + 'px', top: scenario.y + 'px' }"
+             @mouseenter="handleNodeHover($event, scenario)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
-               :class="isDark ? 'border-nier-border-dark group-hover:border-nier-text-dark' : 'border-nier-border-light group-hover:border-nier-text-light'">
+               :class="isDark ? 'border-white/10 group-hover:border-white/35' : 'border-black/10 group-hover:border-black/35'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             
             <div class="mb-4 text-center w-full px-2">
-              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ exitHubData.name }}</div>
+              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.name }}</div>
             </div>
 
             <div class="flex items-center justify-around w-full border-t nier-border-primary pt-4">
               <div class="flex flex-col items-center">
                 <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitHubData.freq }}</span>
-                  <svg v-if="exitHubData.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.freq }}</span>
+                  <svg v-if="scenario.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
               <div class="flex flex-col items-center">
                 <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ exitHubData.pf }}</span>
-                  <svg v-if="exitHubData.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.pf }}</span>
+                  <svg v-if="scenario.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
@@ -724,7 +707,7 @@ const calculatedStabilityIndex = computed(() => {
         <!-- Distributed Condition Nodes: Entry -->
         <div v-for="cond in entryConditions" :key="cond.id"
              class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
-             :class="isDark ? 'border-white/10 hover:border-white' : 'border-black/10 hover:border-black'"
+             :class="isDark ? 'border-white/5 hover:border-white/25' : 'border-black/5 hover:border-black/25'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
              @mousemove="handleNodeMove"
@@ -756,7 +739,7 @@ const calculatedStabilityIndex = computed(() => {
         <!-- Distributed Condition Nodes: Exit -->
         <div v-for="cond in exitConditions" :key="cond.id"
              class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
-             :class="isDark ? 'border-white/10 hover:border-white' : 'border-black/10 hover:border-black'"
+             :class="isDark ? 'border-white/5 hover:border-white/25' : 'border-black/5 hover:border-black/25'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
              @mousemove="handleNodeMove"

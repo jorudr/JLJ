@@ -393,7 +393,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             type="button"
             :aria-label="locale === 'ru' ? 'Основные данные сделки' : 'Trade details'"
             class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10"
-            :class="activeProjectionMode === 'mapping' ? 'nier-text-primary' : activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+            :class="activeProjectionMode === 'core' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
             @click="activeProjectionMode = 'core'"
           >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -405,7 +405,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     type="button"
                     :aria-label="locale === 'ru' ? 'Второй режим' : 'Second mode'"
                     class="grid h-11 w-12 place-items-center border-r border-black/10 transition-colors dark:border-white/10"
-                    :class="activeProjectionMode === 'mapping' ? 'nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+                    :class="activeProjectionMode === 'mapping' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
                     @click="activeProjectionMode = 'mapping'"
                   >
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -419,7 +419,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             type="button"
             :aria-label="locale === 'ru' ? 'График' : 'Chart'"
             class="grid h-11 w-12 place-items-center transition-colors"
-            :class="activeProjectionMode === 'mapping' ? 'nier-text-primary' : activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
+            :class="activeProjectionMode === 'chart' ? 'nier-bg-inverted nier-text-primary' : 'nier-text-primary opacity-45 hover:opacity-100'"
             @click="activeProjectionMode = 'chart'"
           >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -491,7 +491,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                       type="button"
                       :disabled="activeEntryFormTab === 'images' && activeTradeImageIndex !== null ? false : !canEditTradeArchive || (activeEntryFormTab === 'notes' && isPersistingArchive)"
                       :class="activeEntryFormTab === 'images' && activeTradeImageIndex !== null ? 'border-white bg-white text-black' : 'border-white/20 hover:bg-white hover:text-black'"
-                      class="group grid h-9 w-9 shrink-0 place-items-center border transition-colors disabled:cursor-default disabled:opacity-30"
+                      class="group grid h-7 w-7 shrink-0 place-items-center border transition-colors disabled:cursor-default disabled:opacity-30"
                       :aria-label="activeEntryFormTab === 'notes'
                         ? (locale === 'ru' ? 'Добавить заметку' : 'Add note')
                         : activeTradeImageIndex !== null
@@ -508,11 +508,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                           ? closeTradeImage()
                           : addTradeImageSlot()"
                     >
-                      <svg v-if="activeEntryFormTab === 'images' && activeTradeImageIndex !== null" class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <svg v-if="activeEntryFormTab === 'images' && activeTradeImageIndex !== null" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
                         <path d="m4 4 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                       </svg>
-                      <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                       </svg>
                     </button>
