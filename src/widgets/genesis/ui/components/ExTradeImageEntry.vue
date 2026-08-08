@@ -5,11 +5,9 @@ import { useI18n } from '~/shared/i18n/useI18n'
 const props = withDefaults(defineProps<{
   image: Record<string, any>
   index: number
-  tagDraft?: string
   canEdit?: boolean
   isPersisting?: boolean
 }>(), {
-  tagDraft: '',
   canEdit: false,
   isPersisting: false
 })
@@ -18,8 +16,6 @@ const emit = defineEmits<{
   (event: 'upload', index: number, payload: Event): void
   (event: 'remove', index: number): void
   (event: 'name-change', index: number, payload: Event): void
-  (event: 'tag-draft', index: number, payload: Event): void
-  (event: 'add-tag', index: number): void
   (event: 'remove-tag', index: number, tag: string): void
 }>()
 
@@ -58,38 +54,28 @@ const getTagColor = (tag: string) => {
 const triggerUpload = () => {
   fileInput.value?.click()
 }
+
+const viewImage = () => {
+  if (!props.image.url) return
+  window.open(props.image.url, '_blank', 'noopener,noreferrer')
+}
 </script>
 
 <template>
-  <figure class="group relative flex h-fit self-start flex-col bg-black/[0.01] transition-all duration-500 dark:bg-white/[0.01]">
-    <button
-      type="button"
-      :disabled="!props.canEdit || props.isPersisting"
-      class="absolute right-0 top-0 z-30 flex h-8 w-8 items-center justify-center border-b border-l border-white/10 bg-transparent font-mono text-[10px] text-white opacity-0 transition-all duration-300 hover:bg-red-500/80 hover:text-white group-hover:opacity-100 disabled:cursor-default disabled:opacity-20"
-      :aria-label="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
-      @click="emit('remove', props.index)"
-    >
-      ✕
-    </button>
-
+  <figure class="group relative flex h-fit self-start flex-col bg-black/[0.01] px-4 transition-all duration-500 dark:bg-white/[0.01]">
     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="emit('upload', props.index, $event)" />
-    <button type="button" class="group/img relative flex aspect-video w-full cursor-pointer items-center justify-center overflow-hidden bg-black/5 dark:bg-white/5" @click="triggerUpload">
+    <div class="group/img relative flex aspect-video w-full items-center justify-center overflow-hidden bg-black/5 dark:bg-white/5">
       <div v-if="props.image.url" class="h-full w-full">
         <img :src="props.image.url" :alt="props.image.name || `Trade image ${props.index + 1}`" class="h-full w-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
-        <div class="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/img:opacity-100">
-          <span class="bg-black/60 px-4 py-2 text-[8px] font-mono font-black uppercase tracking-widest text-white">
-            {{ locale === 'ru' ? 'ЗАМЕНИТЬ' : 'REPLACE' }}
-          </span>
-        </div>
       </div>
       <div v-else class="flex h-full w-full flex-col items-center justify-center space-y-4">
         <span class="text-[8px] font-mono uppercase tracking-[0.4em] text-white/30 transition-opacity group-hover/img:text-white">
           {{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}
         </span>
       </div>
-    </button>
+    </div>
 
-    <div class="flex flex-col space-y-3 p-3">
+    <div class="flex flex-col space-y-3 py-3">
       <div class="relative">
         <input
           :value="props.image.name || ''"
@@ -100,8 +86,48 @@ const triggerUpload = () => {
         />
       </div>
 
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          :disabled="!props.image.url"
+          class="grid h-8 w-8 place-items-center border border-white/15 text-white/60 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-20"
+          :aria-label="locale === 'ru' ? 'Посмотреть изображение' : 'View image'"
+          :title="locale === 'ru' ? 'Посмотреть' : 'View'"
+          @click="viewImage"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.6" />
+            <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          :disabled="!props.canEdit || props.isPersisting"
+          class="grid h-8 w-8 place-items-center border border-white/15 text-white/60 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-20"
+          :aria-label="locale === 'ru' ? 'Заменить изображение' : 'Replace image'"
+          :title="locale === 'ru' ? 'Заменить' : 'Replace'"
+          @click="triggerUpload"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h10M4 7l3-3M4 7l3 3M20 17H10m10 0-3-3m3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          :disabled="!props.canEdit || props.isPersisting"
+          class="grid h-8 w-8 place-items-center border border-white/15 text-white/60 transition-colors hover:bg-red-500 hover:text-white disabled:cursor-default disabled:opacity-20"
+          :aria-label="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
+          :title="locale === 'ru' ? 'Удалить' : 'Remove'"
+          @click="emit('remove', props.index)"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 7h14M10 11v6m4-6v6M9 7V4h6v3m-9 0 1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" />
+          </svg>
+        </button>
+      </div>
+
       <div class="flex flex-col gap-3">
-        <div class="flex min-h-7 flex-wrap gap-2">
+        <div v-if="(props.image.tags || []).length" class="flex min-h-7 flex-wrap gap-2">
           <span
             v-for="tag in (props.image.tags || [])"
             :key="tag"
@@ -113,32 +139,8 @@ const triggerUpload = () => {
               x
             </button>
           </span>
-          <span v-if="!(props.image.tags || []).length" class="self-center text-[8px] font-mono uppercase tracking-[0.3em] text-white/20">
-            {{ locale === 'ru' ? 'ТЭГОВ НЕТ' : 'NO TAGS' }}
-          </span>
         </div>
 
-        <div class="flex items-center gap-2">
-          <input
-            :value="props.tagDraft"
-            type="text"
-            :placeholder="locale === 'ru' ? 'Пользовательский тег...' : 'Custom tag...'"
-            class="min-w-0 flex-1 border border-white/10 bg-transparent px-3 py-2 text-[9px] font-mono uppercase tracking-widest text-white outline-none placeholder:text-white/20 focus:border-white/30"
-            @input="emit('tag-draft', props.index, $event)"
-            @keyup.enter="emit('add-tag', props.index)"
-          />
-          <button
-            type="button"
-            class="grid h-8 w-8 shrink-0 place-items-center border border-white/15 text-white/60 transition-all hover:bg-white hover:text-black"
-            :aria-label="locale === 'ru' ? 'Добавить тег' : 'Add tag'"
-            :title="locale === 'ru' ? 'Добавить тег' : 'Add tag'"
-            @click="emit('add-tag', props.index)"
-          >
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
-            </svg>
-          </button>
-        </div>
       </div>
     </div>
   </figure>

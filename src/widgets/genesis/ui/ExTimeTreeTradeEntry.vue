@@ -21,7 +21,6 @@ const tradeNoteDraft = ref('')
 const isPersistingArchive = ref(false)
 const expandedTradeNoteIds = ref<string[]>([])
 const editingTradeNoteContentId = ref<string | null>(null)
-const tradeImageTagDrafts = ref<Record<number, string>>({})
 
 const isMainDiaryTrade = computed(() => {
   const trade = props.trade
@@ -108,7 +107,7 @@ const renderTradeNote = (note: any) => {
     if (!image?.url) return match
 
     const name = String(image.name || `Visual_Node_${index}`)
-    return `<div class="trade-note-visual"><img src="${escapeTradeNoteHtml(image.url)}" alt="${escapeTradeNoteHtml(name)}"><div>${escapeTradeNoteHtml(name)}</div></div>`
+    return `<div class="trade-note-visual"><img src="${escapeTradeNoteHtml(image.url)}" alt="${escapeTradeNoteHtml(name)}"></div>`
   })
 }
 
@@ -286,22 +285,6 @@ const updateTradeImageName = async (index: number, event: Event) => {
   const images = getCurrentTradeImages()
   if (!images[index]) return
   images[index] = { ...images[index], name }
-  await persistTradeArchiveUpdate({ images })
-}
-
-const updateTradeImageTagDraft = (index: number, event: Event) => {
-  tradeImageTagDrafts.value[index] = (event.target as HTMLInputElement)?.value || ''
-}
-
-const addTradeImageTag = async (index: number) => {
-  const tag = String(tradeImageTagDrafts.value[index] || '').trim()
-  if (!tag) return
-  const images = getCurrentTradeImages()
-  if (!images[index]) return
-  const tags = Array.isArray(images[index].tags) ? [...images[index].tags] : []
-  if (!tags.includes(tag)) tags.push(tag)
-  images[index] = { ...images[index], tags }
-  tradeImageTagDrafts.value[index] = ''
   await persistTradeArchiveUpdate({ images })
 }
 
@@ -575,19 +558,20 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 />
 
                 <div v-if="sortedTradeNotes.length" class="flex w-full flex-col gap-6">
-                  <ExTradeNoteListItem
-                    v-for="(note, index) in sortedTradeNotes"
-                    :key="note.id || `trade-note-${index}`"
-                    :note="note"
-                    :expanded="expandedTradeNoteIds.includes(note.id)"
-                    :can-edit="canEditTradeArchive"
-                    :is-persisting="isPersistingArchive"
-                    :render-content="renderTradeNote"
-                    @toggle="toggleTradeNote"
-                    @edit-content="startEditTradeNoteContent"
-                    @update-title="updateTradeNoteTitle"
-                    @remove="removeTradeNote"
-                  />
+                  <template v-for="(note, index) in sortedTradeNotes" :key="note.id || `trade-note-${index}`">
+                    <ExTradeNoteListItem
+                      v-if="editingTradeNoteContentId !== note.id"
+                      :note="note"
+                      :expanded="expandedTradeNoteIds.includes(note.id)"
+                      :can-edit="canEditTradeArchive"
+                      :is-persisting="isPersistingArchive"
+                      :render-content="renderTradeNote"
+                      @toggle="toggleTradeNote"
+                      @edit-content="startEditTradeNoteContent"
+                      @update-title="updateTradeNoteTitle"
+                      @remove="removeTradeNote"
+                    />
+                  </template>
                 </div>
                 <div v-else-if="!isCreatingTradeNote" class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
                   {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
@@ -601,14 +585,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     :key="image.url || image.createdAt || `trade-image-${index}`"
                     :image="image"
                     :index="index"
-                    :tag-draft="tradeImageTagDrafts[index] || ''"
                     :can-edit="canEditTradeArchive"
                     :is-persisting="isPersistingArchive"
                     @upload="handleTradeImageUpload"
                     @remove="removeTradeImage"
                     @name-change="updateTradeImageName"
-                    @tag-draft="updateTradeImageTagDraft"
-                    @add-tag="addTradeImageTag"
                     @remove-tag="removeTradeImageTag"
                   />
                 </div>
@@ -749,17 +730,8 @@ const tradeEntryThemeStyle = computed(() => props.isDark
   object-fit: contain;
 }
 
-.trade-note-rich :deep(.trade-note-visual div) {
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(0 0 0 / 0.72);
-  padding: 0.25rem 0.5rem;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.trade-note-rich :deep(.trade-note-visual > div) {
+  display: none;
 }
 
 </style>

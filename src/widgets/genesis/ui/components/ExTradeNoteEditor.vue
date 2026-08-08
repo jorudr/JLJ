@@ -22,6 +22,7 @@ const editor = ref<HTMLElement | null>(null)
 const savedSelection = ref<Range | null>(null)
 const activeTextColor = ref('currentColor')
 const isAttachMenuOpen = ref(false)
+const visualRevision = ref(0)
 
 const attachableImages = () => props.images.filter(image => Boolean(image?.url))
 
@@ -31,8 +32,11 @@ const syncEditor = () => {
 }
 
 const syncEditorFromModel = () => {
-  if (!editor.value || editor.value.innerHTML === props.modelValue) return
-  editor.value.innerHTML = props.modelValue
+  if (!editor.value) return
+  const modelHtml = replaceVisualReferences(props.modelValue)
+  if (editor.value.innerHTML === modelHtml) return
+  editor.value.innerHTML = modelHtml
+  visualRevision.value += 1
 }
 
 const saveSelection = () => {
@@ -75,12 +79,87 @@ const handleColorInput = (event: Event) => {
   if (color) applyColor(color)
 }
 
+const escapeHtml = (value: unknown) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+
+const getVisualHtml = (image: { url?: string; name?: string }, index: number) => {
+  return [
+    `<div class="trade-note-visual" data-trade-visual-ref="${index}" contenteditable="false">`,
+    `<img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.name || `Visual_Node_${index}`)}">`,
+    '</div>',
+    '<p><br></p>'
+  ].join('')
+}
+
+const replaceVisualReferences = (html: string) => String(html).replace(/\[VISUAL_REF:(\d+)\]/gim, (match, indexValue) => {
+  const index = Number.parseInt(indexValue, 10)
+  const image = attachableImages()[index]
+  return image?.url ? getVisualHtml(image, index) : match
+})
+
 const insertVisualReference = (index: number) => {
+  const image = attachableImages()[index]
+  if (!image?.url || !editor.value) return
+
   restoreSelection()
-  document.execCommand('insertText', false, `[VISUAL_REF:${index}]`)
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+
+  const range = selection.getRangeAt(0)
+  if (!editor.value.contains(range.commonAncestorContainer)) return
+
+  range.deleteContents()
+  const template = document.createElement('template')
+  template.innerHTML = getVisualHtml(image, index)
+  const fragment = template.content
+  const lastNode = fragment.lastElementChild
+  range.insertNode(fragment)
+
+  const nextRange = document.createRange()
+  if (lastNode) {
+    nextRange.selectNodeContents(lastNode)
+    nextRange.collapse(false)
+  } else {
+    nextRange.setStartAfter(range.startContainer)
+    nextRange.collapse(true)
+  }
+  selection.removeAllRanges()
+  selection.addRange(nextRange)
   syncEditor()
+  visualRevision.value += 1
   saveSelection()
   isAttachMenuOpen.value = false
+}
+
+const hasVisualReference = (index: number) => {
+  visualRevision.value
+  return Boolean(editor.value?.querySelector(`.trade-note-visual[data-trade-visual-ref="${index}"]`))
+}
+
+const removeVisualReference = (index: number) => {
+  if (!editor.value) return
+  const visuals = Array.from(editor.value.querySelectorAll(`.trade-note-visual[data-trade-visual-ref="${index}"]`))
+  if (!visuals.length) return
+
+  visuals.forEach((visual) => {
+    const spacer = visual.nextElementSibling
+    visual.remove()
+    if (spacer?.tagName === 'P' && spacer.innerHTML === '<br>') spacer.remove()
+  })
+
+  syncEditor()
+  visualRevision.value += 1
+  saveSelection()
+  isAttachMenuOpen.value = false
+}
+
+const toggleVisualReference = (index: number) => {
+  if (hasVisualReference(index)) removeVisualReference(index)
+  else insertVisualReference(index)
 }
 
 const handleBeforeInput = (event: InputEvent) => {
@@ -168,10 +247,13 @@ onMounted(async () => {
             v-else
             :key="image.url || index"
             type="button"
-            class="truncate px-3 py-2 text-left font-mono text-[9px] transition-colors hover:bg-white/10"
-            @mousedown.stop.prevent="insertVisualReference(index)"
+            :class="hasVisualReference(index) ? 'bg-white text-black' : 'text-white hover:bg-white/10'"
+            class="flex items-center justify-between gap-3 truncate px-3 py-2 text-left font-mono text-[9px] transition-colors"
+            :aria-pressed="hasVisualReference(index)"
+            @mousedown.stop.prevent="toggleVisualReference(index)"
           >
-            {{ image.name || `Visual_Node_${index}` }}
+            <span class="truncate">{{ image.name || `Visual_Node_${index}` }}</span>
+            <span v-if="hasVisualReference(index)" aria-hidden="true">✓</span>
           </button>
         </div>
       </div>
@@ -271,5 +353,24 @@ onMounted(async () => {
 
 .trade-note-rich :deep(li) {
   margin: 0.18em 0;
+}
+
+.trade-note-rich :deep(.trade-note-visual) {
+  position: relative;
+  margin: 1rem 0;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.04);
+  padding: 0.5rem;
+}
+
+.trade-note-rich :deep(.trade-note-visual img) {
+  display: block;
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.trade-note-rich :deep(.trade-note-visual > div) {
+  display: none;
 }
 </style>
