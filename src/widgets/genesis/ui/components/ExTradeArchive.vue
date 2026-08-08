@@ -1,5 +1,5 @@
 <template>
-  <div class="ex-trade-archive w-full h-full text-white/80 font-mono pt-24 px-6 pb-12 relative flex flex-col">
+  <div class="ex-trade-archive w-full h-full text-white font-mono pt-24 px-6 pb-12 relative flex flex-col">
     <!-- Grid overlay -->
     <div class="absolute inset-0 pointer-events-none opacity-20 bg-[#030303]"
          style="background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 24px 24px;"></div>
