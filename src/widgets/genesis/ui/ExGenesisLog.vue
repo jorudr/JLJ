@@ -16,18 +16,20 @@
       class="contents"
     >
 
-      <!-- CANVAS LAYER (Shared) -->
-      <canvas v-show="viewType === 'cube'"
-              ref="canvasRef"
-              class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-30 transition-all duration-300"
-              :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
-              @mousedown="handleMouseDown"
-              @mousemove="handleMouseMove"
-              @mouseup="handleMouseUp"
-              @mouseleave="handleMouseLeave"
-              @dblclick="handleDoubleClick"
-              @wheel="handleWheel">
-      </canvas>
+      <!-- FORCE GRAPH LAYER -->
+      <ExTradeForceGraph
+        v-show="viewType === 'cube'"
+        class="z-30 transition-all duration-300"
+        :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
+        :nodes="tradeForceGraphNodes"
+        :links="tradeForceGraphLinks"
+        :is-dark="isDark"
+        :cache-key="tradeForceGraphCacheKey"
+        :pnl-min="tradeNodePnlRange.min"
+        :pnl-max="tradeNodePnlRange.max"
+        @node-click="handleForceGraphNodeClick"
+        @ready="handleTradeForceGraphReady"
+      />
 
       <div
         v-if="isCubeGraphLoading"
@@ -64,18 +66,6 @@
                  <line x1="1" y1="1" x2="23" y2="23"></line>
               </svg>
            </button>
-
-           <!-- Trade Reveal Animation -->
-           <button @click="toggleCubeRevealAnimation"
-                   class="relative w-8 h-8 flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
-                   :class="isCubeRevealAnimating
-                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                            : 'bg-white/5 dark:bg-black/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                 <path d="M5 5v14l12-7z"></path>
-                 <path d="M19 5v14"></path>
-              </svg>
-            </button>
 
         </div>
         <!-- Cube Search Query Overlay -->
@@ -1330,6 +1320,7 @@ import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
 import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
+import ExTradeForceGraph from '~/widgets/genesis/ui/components/ExTradeForceGraph.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1652,6 +1643,15 @@ const handleOpenTrade = (payload: { tradeId: string }) => {
   showExtraDetails.value = false
   showNodeMap.value = false
   emit('openTrade', payload)
+}
+
+const handleForceGraphNodeClick = (payload: { node: TradeNode; event: MouseEvent }) => {
+  if (viewType.value !== 'cube' || isTransitioning.value) return
+  selectTradeNode({ id: payload.node.id, dist: 0, node: payload.node }, payload.event)
+}
+
+const handleTradeForceGraphReady = () => {
+  if (viewType.value === 'cube') isTradeGraphLoading.value = false
 }
 
 watch(showNodeMap, (val) => {
@@ -2234,19 +2234,12 @@ watch(viewType, (next) => {
     exitTimeTreeFullscreen()
     closeTimeTreeTradeDetails()
   }
-  if (next !== 'cube') clearCubeRevealAnimation()
-  if (next === 'cube') {
-    isTradeGraphLoading.value = true
-    void refreshCubeGraphLayout()
-  }
+  if (next === 'cube') isTradeGraphLoading.value = false
   scheduleRender()
 })
 
 watch(showTimeTreeTradeDetails, (isOpen) => {
-  if (!isOpen && viewType.value === 'cube') {
-    isTradeGraphLoading.value = true
-    void refreshCubeGraphLayout()
-  }
+  if (!isOpen && viewType.value === 'cube') isTradeGraphLoading.value = false
 })
 
 const distributionTooltipStyle = computed(() => {
@@ -3077,27 +3070,27 @@ interface GraphEdge {
 }
 
 // --- STATE --- //
-const canvasRef = ref<HTMLCanvasElement | null>(null)
 const currentFace = ref(0)
 const isTransitioning = ref(false)
 
 // Trade mapping
 const facesTrades = ref<TradeNode[][]>([[]])
 const graphEdges = ref<GraphEdge[]>([])
-const graphAlpha = ref(0)
-const hoveredTradeNodeId = ref<string | null>(null)
-let nodeLayoutDirty = true
-let nodeDegreeMap = new Map<string, number>()
-
-const revealProgress = ref(0)
-const cubeRevealAnimationStart = ref<number | null>(null)
-const cubeRevealAnimationFace = ref<number | null>(null)
-const cubeRevealAnimationOrder = ref<string[]>([])
-let cubeRevealAnimationTimeout: ReturnType<typeof setTimeout> | null = null
 const tradeStore = useStrategyTradesStore()
 const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }
+})
+
+const tradeForceGraphNodes = computed(() => facesTrades.value[currentFace.value] || [])
+const tradeForceGraphLinks = computed(() => graphEdges.value)
+const tradeForceGraphCacheKey = computed(() => {
+  const nodeIds = tradeForceGraphNodes.value.map(node => node.id).sort().join(',')
+  const edgeIds = tradeForceGraphLinks.value
+    .map(edge => `${edge.kind}:${edge.source}:${edge.target}`)
+    .sort()
+    .join(',')
+  return `${selectedStrategyId.value}|${isMainDiaryStrategy.value ? 'main' : 'strategy'}|${nodeIds}|${edgeIds}`
 })
 
 watch(selectedStrategyId, () => {
@@ -3253,108 +3246,14 @@ watch([matrixNodes, () => tradeStore.isLoading], ([nodes, loading]) => {
   tradeStore.syncStrategies(cores)
 }, { immediate: true, deep: true })
 
-const isCubeRevealAnimating = computed(() => cubeRevealAnimationStart.value !== null)
-
-const easeOutCubic = (value: number) => {
-  const clamped = Math.min(1, Math.max(0, value))
-  return 1 - Math.pow(1 - clamped, 3)
-}
-
-const clearCubeRevealAnimation = () => {
-  if (cubeRevealAnimationTimeout) {
-    clearTimeout(cubeRevealAnimationTimeout)
-    cubeRevealAnimationTimeout = null
-  }
-  cubeRevealAnimationStart.value = null
-  cubeRevealAnimationFace.value = null
-  cubeRevealAnimationOrder.value = []
-  scheduleRender()
-}
-
-const getCubeRevealProgress = (node: TradeNode) => {
-  const start = cubeRevealAnimationStart.value
-  if (start === null || cubeRevealAnimationFace.value !== currentFace.value || node.faceIndex !== cubeRevealAnimationFace.value) {
-    return { icon: 1, label: 1 }
-  }
-
-  const lookupId = node.isNote && node.parentId ? node.parentId : node.id
-  const index = cubeRevealAnimationOrder.value.indexOf(lookupId)
-  if (index === -1) return { icon: 1, label: 1 }
-
-  const elapsed = performance.now() - start
-  const nodeDelay = 2000 + index * 1000
-  const icon = easeOutCubic((elapsed - nodeDelay) / 650)
-  const label = easeOutCubic((elapsed - nodeDelay - 360) / 650)
-  return { icon, label }
-}
-
-const startCubeRevealAnimation = () => {
-  if (viewType.value !== 'cube') return
-
-  const pageTradeNodes = chronologicalPathNodes.value
-    .filter(node => node.faceIndex === currentFace.value && !node.isNote)
-
-  if (pageTradeNodes.length === 0) return
-
-  clearCubeRevealAnimation()
-  cubeRevealAnimationFace.value = currentFace.value
-  cubeRevealAnimationOrder.value = pageTradeNodes.map(node => node.id)
-  cubeRevealAnimationStart.value = performance.now()
-
-  const totalDuration = 2000 + Math.max(0, pageTradeNodes.length - 1) * 1000 + 1200
-  cubeRevealAnimationTimeout = setTimeout(() => {
-    clearCubeRevealAnimation()
-  }, totalDuration)
-  scheduleRender()
-}
-
-const toggleCubeRevealAnimation = () => {
-  if (isCubeRevealAnimating.value) {
-    clearCubeRevealAnimation()
-    return
-  }
-
-  startCubeRevealAnimation()
-}
-
-
 // Immediate update when trades are added, strategy changes, or filters are modified
 watch([selectedStrategyId, filteredTrades, cubeSearchQuery], () => {
-  clearCubeRevealAnimation()
   if (viewType.value === 'cube') isTradeGraphLoading.value = true
   initTrades()
-  if (viewType.value === 'cube') void refreshCubeGraphLayout()
 }, { deep: true })
 
-// The trade canvas opens at 2x the previous default scale.
-const viewScale = ref(4.4)
-const isPanning = ref(false)
-const lastMousePos = ref({ x: 0, y: 0 })
-const viewOffset = ref({ x: 0, y: 0 })
 const GRAPH_SEED_RADIUS = 75
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
-
-const getTradeNodeBaseRadius = (node: TradeNode, degree = 1) => {
-  if (node.isCore) return 10.5
-  if (node.isScenario) return 8.5
-  if (node.isNote) return 2.8
-  return 4.6 + Math.min(3, degree) * 0.55
-}
-
-const getTradeNodeFocusMultiplier = () => Math.max(0.75, viewScale.value / 2.2)
-
-const getTradeNodeScreenRadius = (node: TradeNode, degree = 1) => {
-  return getTradeNodeBaseRadius(node, degree) * getTradeNodeFocusMultiplier()
-}
-
-const usesMainDiaryNodePositioning = (node: TradeNode) => {
-  return isMainDiaryStrategy.value || (!node.isCore && !node.isScenario)
-}
-
-// Main Diary's core is the fixed center of its trade cluster. Strategy
-// scenarios play the same role for their own trade clusters.
-const isTradeClusterAnchor = (node: TradeNode) => node.isCore || node.isScenario
-
 // Deterministic initial positions keep the graph stable before the force layout settles.
 const getGraphSeedPosition = (index: number, total: number): Point3D => {
   if (total <= 1) return { x: 0, y: 0, z: 0 }
@@ -3463,10 +3362,8 @@ const strategyScenarioNodes = computed(() => {
 
 watch(strategyScenarioNodes, () => {
   if (!isLogComponentMounted) return
-  clearCubeRevealAnimation()
   if (viewType.value === 'cube') isTradeGraphLoading.value = true
   initTrades()
-  if (viewType.value === 'cube') void refreshCubeGraphLayout()
 }, { deep: true })
 
 const getTradeScenarioIds = (trade: any, knownScenarioIds: Set<string>) => {
@@ -3536,7 +3433,12 @@ const getScenarioOrbitRadius = (clusters: Array<{ tradeCount: number }>) => {
 }
 
 const initTrades = () => {
-  const tradesForCanvas = [...filteredTrades.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const uniqueTrades = new Map<string, any>()
+  filteredTrades.value.forEach((trade: any) => {
+    const tradeId = String(trade?.id || '').trim()
+    if (tradeId && !uniqueTrades.has(tradeId)) uniqueTrades.set(tradeId, trade)
+  })
+  const tradesForCanvas = [...uniqueTrades.values()].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   const nodes: TradeNode[] = []
   graphEdges.value = []
   const isMainDiary = isMainDiaryStrategy.value
@@ -3746,20 +3648,12 @@ const initTrades = () => {
     })
   }
 
-  facesTrades.value = [nodes]
+  const uniqueNodes = [...new Map(nodes.map(node => [node.id, node])).values()]
+  graphEdges.value = [...new Map(
+    graphEdges.value.map(edge => [`${edge.kind}:${edge.source}:${edge.target}`, edge])
+  ).values()]
+  facesTrades.value = [uniqueNodes]
   currentFace.value = 0
-  nodeDegreeMap = new Map<string, number>()
-  graphEdges.value.forEach(edge => {
-    nodeDegreeMap.set(edge.source, (nodeDegreeMap.get(edge.source) || 0) + 1)
-    nodeDegreeMap.set(edge.target, (nodeDegreeMap.get(edge.target) || 0) + 1)
-  })
-  nodeLayoutDirty = true
-  // Non-main strategies now use a deterministic hierarchy instead of a
-  // chronological force graph, so scenario distances remain intentional.
-  graphAlpha.value = 0
-  hoveredTradeNodeId.value = null
-  clearCubeRevealAnimation()
-  scheduleRender()
 }
 
 // --- 3D ENGINE --- //
@@ -3785,6 +3679,7 @@ const projectDistributionPoint = (p: Point3D, width: number, height: number): Po
   }
 }
 
+/* Legacy trade-canvas projection and collision solver replaced by ExTradeForceGraph.
 const projectTradeNode = (node: TradeNode, width: number, height: number): Point2D => {
   const zoom = viewScale.value
 
@@ -3888,6 +3783,8 @@ const resolveProjectedTradeNodeOverlaps = (
     if (!moved) break
   }
 }
+
+*/
 
 const getDistributionFaceColor = (pnl: number, face: 'front' | 'back' | 'side' | 'top' | 'bottom', active: boolean, scoreOpacity?: number) => {
   const boost = active ? 0.14 : 0
@@ -4083,6 +3980,7 @@ const renderDistributionChart = () => {
   }
 }
 
+/* Legacy trade-canvas renderer replaced by ExTradeForceGraph.
 // Extract expensive path computation out of RAF loop
 const chronologicalPathNodes = computed(() => {
   const scopedTrades = [...currentTrades.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -4167,6 +4065,7 @@ const simulateGraph = () => {
 let rafId: number | null = null
 let renderScheduled = false
 let isLogComponentMounted = false
+let nodeLayoutDebounceTimeout: ReturnType<typeof setTimeout> | null = null
 const renderFrame = () => {
   if (viewType.value === 'distribution') {
     renderDistributionChart()
@@ -4212,8 +4111,22 @@ const renderFrame = () => {
   const nodeMap = new Map(face.map(node => [node.id, node]))
   const degreeMap = nodeDegreeMap
   if (nodeLayoutDirty) {
-    resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
-    nodeLayoutDirty = false
+    // The minimum scale is the most collision-heavy state. Do this pass
+    // synchronously so the first frame at max zoom-out already has the final
+    // positions instead of waiting for the worker response.
+    const requiresImmediateLayout = viewScale.value <= MIN_TRADE_GRAPH_SCALE
+    if (requiresImmediateLayout && face.length > 1) {
+      resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
+      nodeLayoutDirty = false
+      saveTradeLayoutToCache(face, graphEdges.value)
+    } else if (tradeLayoutWorker && !tradeLayoutWorkerBusy && face.length > 1) {
+      nodeLayoutDirty = false
+      requestTradeLayoutWorker(face, w, h)
+    } else if (!tradeLayoutWorker || face.length <= 1) {
+      resolveProjectedTradeNodeOverlaps(face, w, h, degreeMap)
+      nodeLayoutDirty = false
+      saveTradeLayoutToCache(face, graphEdges.value)
+    }
   }
   const connectedToHovered = (id: string) => {
     if (!hoveredTradeNodeId.value) return true
@@ -4323,6 +4236,87 @@ const scheduleRender = () => {
   })
 }
 
+const applyTradeLayoutWorkerResult = (updates: Array<{
+  id: string
+  seedPos: Point3D
+  graphPos: { x: number; y: number }
+}>) => {
+  const nodes = facesTrades.value[currentFace.value] || []
+  const nodeMap = new Map(nodes.map(node => [node.id, node]))
+
+  updates.forEach(update => {
+    const node = nodeMap.get(update.id)
+    if (!node || !isValidCachedTradeLayoutNode(update)) return
+    node.seedPos = { ...update.seedPos }
+    node.graphPos = { ...update.graphPos }
+    node.velocity = { x: 0, y: 0 }
+  })
+}
+
+const requestTradeLayoutWorker = (nodes: TradeNode[], width: number, height: number) => {
+  if (!tradeLayoutWorker || tradeLayoutWorkerBusy) return false
+
+  tradeLayoutWorkerBusy = true
+  tradeLayoutWorkerRequestId += 1
+  tradeLayoutWorkerRevision = tradeLayoutRevision
+
+  tradeLayoutWorker.postMessage({
+    type: 'resolve',
+    requestId: tradeLayoutWorkerRequestId,
+    width,
+    height,
+    zoom: viewScale.value,
+    isMainDiary: isMainDiaryStrategy.value,
+    degreeMap: Array.from(nodeDegreeMap.entries()),
+    nodes: nodes.map(node => ({
+      id: node.id,
+      isCore: node.isCore,
+      isScenario: node.isScenario,
+      seedPos: { ...node.seedPos },
+      graphPos: { ...node.graphPos },
+      anchorPosition: node.anchorPosition ? { ...node.anchorPosition } : undefined
+    }))
+  })
+  return true
+}
+
+const handleTradeLayoutWorkerMessage = (event: MessageEvent<any>) => {
+  const result = event.data
+  if (result?.type !== 'resolved' || result.requestId !== tradeLayoutWorkerRequestId) return
+
+  tradeLayoutWorkerBusy = false
+  if (viewType.value !== 'cube') return
+
+  if (tradeLayoutWorkerRevision !== tradeLayoutRevision) {
+    scheduleRender()
+    return
+  }
+
+  applyTradeLayoutWorkerResult(result.nodes || [])
+  const nodes = facesTrades.value[currentFace.value] || []
+  nodeLayoutDirty = false
+  saveTradeLayoutToCache(nodes, graphEdges.value)
+  scheduleRender()
+}
+
+const initTradeLayoutWorker = () => {
+  if (typeof window === 'undefined' || typeof Worker === 'undefined') return
+
+  try {
+    tradeLayoutWorker = new Worker(new URL('./workers/trade-layout.worker.ts', import.meta.url), { type: 'module' })
+    tradeLayoutWorker.onmessage = handleTradeLayoutWorkerMessage
+    tradeLayoutWorker.onerror = () => {
+      tradeLayoutWorker?.terminate()
+      tradeLayoutWorker = null
+      tradeLayoutWorkerBusy = false
+      nodeLayoutDirty = true
+      scheduleRender()
+    }
+  } catch {
+    tradeLayoutWorker = null
+  }
+}
+
 let graphLayoutRequestId = 0
 let graphResizeObserver: ResizeObserver | null = null
 
@@ -4341,12 +4335,12 @@ const refreshCubeGraphLayout = async () => {
   const canvas = canvasRef.value
   if (!canvas || canvas.clientWidth <= 0 || canvas.clientHeight <= 0) return
 
-  nodeLayoutDirty = true
   renderFrame()
   scheduleRender()
 }
 
 const handleCanvasResize = () => {
+  tradeLayoutRevision += 1
   nodeLayoutDirty = true
   scheduleRender()
 }
@@ -4378,6 +4372,38 @@ const findNearestTradeNode = (e: MouseEvent) => {
 
   return nearest
 }
+
+*/
+
+let rafId: number | null = null
+let renderScheduled = false
+let isLogComponentMounted = false
+
+const renderFrame = () => {
+  if (viewType.value === 'distribution') renderDistributionChart()
+}
+
+const shouldContinuouslyRender = () => viewType.value === 'distribution'
+
+const scheduleRender = () => {
+  if (!isLogComponentMounted || renderScheduled) return
+  renderScheduled = true
+  rafId = requestAnimationFrame(() => {
+    renderScheduled = false
+    rafId = null
+    renderFrame()
+    if (shouldContinuouslyRender()) scheduleRender()
+  })
+}
+
+const handleCanvasResize = () => scheduleRender()
+
+const handleTradeContextMenuPointerDown = (event: PointerEvent) => {
+  const target = event.target as HTMLElement | null
+  if (!target?.closest('[data-trade-context-menu]')) closeTradeContextMenu()
+}
+
+watch(isDark, () => scheduleRender())
 
 const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null, event?: MouseEvent) => {
   if (!nearest) return
@@ -4453,8 +4479,35 @@ const handleMouseLeave = () => {
 }
 const handleWheel = (e: WheelEvent) => {
   e.preventDefault()
-  viewScale.value = Math.max(0.5, Math.min(12, viewScale.value - e.deltaY * 0.001))
-  nodeLayoutDirty = true
+  const nextScale = Math.max(
+    MIN_TRADE_GRAPH_SCALE,
+    Math.min(MAX_TRADE_GRAPH_SCALE, viewScale.value - e.deltaY * 0.001)
+  )
+  viewScale.value = nextScale
+  tradeLayoutRevision += 1
+
+  // At the lower bound the projected nodes change most abruptly. Recalculate
+  // before the next frame so the graph never flashes its previous layout.
+  const reachedMinimumScale = nextScale === MIN_TRADE_GRAPH_SCALE
+  if (reachedMinimumScale) {
+    if (nodeLayoutDebounceTimeout) {
+      clearTimeout(nodeLayoutDebounceTimeout)
+      nodeLayoutDebounceTimeout = null
+    }
+
+    const currentNodes = facesTrades.value[currentFace.value] || []
+    const restoredFromCache = restoreTradeLayoutFromCache(currentNodes, graphEdges.value)
+    nodeLayoutDirty = !restoredFromCache
+  }
+
+  if (!reachedMinimumScale) {
+    if (nodeLayoutDebounceTimeout) clearTimeout(nodeLayoutDebounceTimeout)
+    nodeLayoutDebounceTimeout = setTimeout(() => {
+      nodeLayoutDebounceTimeout = null
+      nodeLayoutDirty = true
+      scheduleRender()
+    }, 80)
+  }
   scheduleRender()
 }
 
@@ -4514,15 +4567,6 @@ onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.addEventListener('resize', handleCanvasResize)
-  if (typeof ResizeObserver !== 'undefined' && canvasRef.value) {
-    graphResizeObserver = new ResizeObserver(() => {
-      handleCanvasResize()
-      if (viewType.value === 'cube' && canvasRef.value?.clientWidth && canvasRef.value?.clientHeight) {
-        void refreshCubeGraphLayout()
-      }
-    })
-    graphResizeObserver.observe(canvasRef.value)
-  }
   isMatrixLoading.value = true
   await Promise.all([
     ensureMatrixDataRestored(),
@@ -4531,7 +4575,6 @@ onMounted(async () => {
   if (!isLogComponentMounted) return
   isMatrixLoading.value = false
   initTrades()
-  void refreshCubeGraphLayout()
   scheduleRender()
 })
 onUnmounted(() => { 
@@ -4540,13 +4583,10 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('pointerdown', handleTradeContextMenuPointerDown)
   window.removeEventListener('resize', handleCanvasResize)
-  graphResizeObserver?.disconnect()
-  graphResizeObserver = null
   if (cubeSearchTimeout) {
     clearTimeout(cubeSearchTimeout)
     cubeSearchTimeout = null
   }
-  clearCubeRevealAnimation()
   if (rafId !== null) cancelAnimationFrame(rafId)
   rafId = null
   renderScheduled = false
@@ -4555,7 +4595,11 @@ onUnmounted(() => {
 
 <style scoped>
 .diary-3d-hub { font-family: 'Inter', sans-serif; }
-canvas { image-rendering: pixelated; }
+canvas {
+  image-rendering: pixelated;
+  transform: translateZ(0);
+  will-change: transform;
+}
 
 .protocol-slide-enter-active, .protocol-slide-leave-active {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
