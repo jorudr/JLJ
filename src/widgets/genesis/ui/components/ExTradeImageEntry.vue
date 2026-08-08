@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (event: 'remove', index: number): void
   (event: 'name-change', index: number, payload: Event): void
   (event: 'remove-tag', index: number, tag: string): void
+  (event: 'view', index: number): void
 }>()
 
 const { locale } = useI18n()
@@ -55,10 +56,6 @@ const triggerUpload = () => {
   fileInput.value?.click()
 }
 
-const viewImage = () => {
-  if (!props.image.url) return
-  window.open(props.image.url, '_blank', 'noopener,noreferrer')
-}
 </script>
 
 <template>
@@ -93,7 +90,7 @@ const viewImage = () => {
           class="grid h-8 w-8 place-items-center border border-white/15 text-white/60 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-20"
           :aria-label="locale === 'ru' ? 'Посмотреть изображение' : 'View image'"
           :title="locale === 'ru' ? 'Посмотреть' : 'View'"
-          @click="viewImage"
+          @click.stop.prevent="emit('view', props.index)"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.6" />

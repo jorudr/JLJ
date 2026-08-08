@@ -134,8 +134,17 @@ const sortedTradeNotes = computed(() => [...tradeNotes.value].sort((a: any, b: a
 const tradeImages = computed(() => {
   if (!Array.isArray(props.trade?.images)) return []
   return props.trade.images
-    .map((image: any) => typeof image === 'string' ? { url: image } : image)
+    .map((image: any) => {
+      const normalized = typeof image === 'string' ? { url: image } : { ...(image || {}) }
+      return normalized.url ? normalized : { ...normalized, url: normalized.image || normalized.src || '' }
+    })
     .filter((image: any) => image && (image.url || image.name || image.createdAt || image.timestamp || image.date))
+})
+
+const activeTradeImageIndex = ref<number | null>(null)
+const activeTradeImage = computed(() => {
+  if (activeTradeImageIndex.value === null) return null
+  return tradeImages.value[activeTradeImageIndex.value] || null
 })
 
 const attachableTradeImages = computed(() => tradeImages.value.filter((image: any) => Boolean(image?.url)))
@@ -285,7 +294,17 @@ const updateTradeImageName = async (index: number, event: Event) => {
   const images = getCurrentTradeImages()
   if (!images[index]) return
   images[index] = { ...images[index], name }
+  if (props.trade) (props.trade as any).images = images
   await persistTradeArchiveUpdate({ images })
+}
+
+const openTradeImage = (index: number) => {
+  if (!tradeImages.value[index]?.url) return
+  activeTradeImageIndex.value = index
+}
+
+const closeTradeImage = () => {
+  activeTradeImageIndex.value = null
 }
 
 const removeTradeImageTag = async (index: number, tag: string) => {
@@ -301,6 +320,9 @@ const removeTradeImageTag = async (index: number, tag: string) => {
 const removeTradeImage = async (index: number) => {
   const images = getCurrentTradeImages()
   images.splice(index, 1)
+  if (props.trade) (props.trade as any).images = images
+  if (activeTradeImageIndex.value === index) closeTradeImage()
+  else if (activeTradeImageIndex.value !== null && activeTradeImageIndex.value > index) activeTradeImageIndex.value -= 1
   await persistTradeArchiveUpdate({ images })
 }
 
@@ -421,13 +443,30 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <button
                       v-if="activeEntryFormTab === 'notes' || activeEntryFormTab === 'images'"
                       type="button"
-                      :disabled="!canEditTradeArchive || (activeEntryFormTab === 'notes' && isPersistingArchive)"
-                      class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-30"
-                      :aria-label="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
-                      :title="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
-                      @click="activeEntryFormTab === 'notes' ? startTradeNoteCreation() : addTradeImageSlot()"
+                      :disabled="activeEntryFormTab === 'images' && activeTradeImageIndex !== null ? false : !canEditTradeArchive || (activeEntryFormTab === 'notes' && isPersistingArchive)"
+                      :class="activeEntryFormTab === 'images' && activeTradeImageIndex !== null ? 'border-white bg-white text-black' : 'border-white/20 hover:bg-white hover:text-black'"
+                      class="group grid h-9 w-9 shrink-0 place-items-center border transition-colors disabled:cursor-default disabled:opacity-30"
+                      :aria-label="activeEntryFormTab === 'notes'
+                        ? (locale === 'ru' ? 'Добавить заметку' : 'Add note')
+                        : activeTradeImageIndex !== null
+                          ? (locale === 'ru' ? 'Скрыть просмотр изображения' : 'Hide image preview')
+                          : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
+                      :title="activeEntryFormTab === 'notes'
+                        ? (locale === 'ru' ? 'Добавить заметку' : 'Add note')
+                        : activeTradeImageIndex !== null
+                          ? (locale === 'ru' ? 'Скрыть просмотр изображения' : 'Hide image preview')
+                          : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
+                      @click="activeEntryFormTab === 'notes'
+                        ? startTradeNoteCreation()
+                        : activeTradeImageIndex !== null
+                          ? closeTradeImage()
+                          : addTradeImageSlot()"
                     >
-                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <svg v-if="activeEntryFormTab === 'images' && activeTradeImageIndex !== null" class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
+                        <path d="m4 4 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                      </svg>
+                      <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                       </svg>
                     </button>
@@ -579,7 +618,14 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
-                <div v-if="tradeImages.length" class="grid w-full grid-cols-2 items-start gap-6 md:grid-cols-3">
+                <div v-if="activeTradeImage?.url" class="flex min-h-[620px] w-full items-center justify-center overflow-hidden bg-black/5 p-6 dark:bg-white/5">
+                  <img
+                    :src="activeTradeImage.url"
+                    :alt="activeTradeImage.name || 'Trade image'"
+                    class="max-h-[calc(100vh-16rem)] w-full object-contain"
+                  />
+                </div>
+                <div v-else-if="tradeImages.length" class="grid w-full grid-cols-2 items-start gap-6 md:grid-cols-3">
                   <ExTradeImageEntry
                     v-for="(image, index) in tradeImages"
                     :key="image.url || image.createdAt || `trade-image-${index}`"
@@ -591,6 +637,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     @remove="removeTradeImage"
                     @name-change="updateTradeImageName"
                     @remove-tag="removeTradeImageTag"
+                    @view="openTradeImage"
                   />
                 </div>
                 <div v-else class="flex w-full flex-col items-center justify-center py-32 opacity-30">
