@@ -114,6 +114,34 @@ const renderTradeNote = (note: any) => {
 const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || props.trade?.ticker || '--').toUpperCase()
 const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
 const tradeAssetIcon = () => props.trade?.assetIcon || props.trade?.icon || ''
+const tradeResultValue = () => props.trade?.pnl ?? props.trade?.profitInCurrency ?? props.trade?.profit ?? props.trade?.result
+const tradeResultPercentValue = () => {
+  const storedPercent = props.trade?.profitInPercent ?? props.trade?.pnlPercent ?? props.trade?.resultPercent
+  if (storedPercent !== undefined && storedPercent !== null && storedPercent !== '') return storedPercent
+
+  const result = Number(tradeResultValue())
+  const capital = Number(props.trade?.capitalBeforeTrade ?? props.trade?.currentCapital ?? props.trade?.initialCapital)
+  if (!Number.isFinite(result) || !Number.isFinite(capital) || capital <= 0) return null
+  return (result / capital) * 100
+}
+const tradeResultClass = (rawValue) => {
+  const value = Number(rawValue)
+  if (!Number.isFinite(value) || value === 0) return 'text-white'
+  return value > 0 ? 'text-emerald-400' : 'text-rose-400'
+}
+const formatTradeResultMoney = (value) => {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '--'
+  const sign = number > 0 ? '+' : number < 0 ? '-' : ''
+  return `${sign}$${Math.abs(number).toFixed(2)}`
+}
+const formatTradeResultPercent = (value) => {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '--'
+  const sign = number > 0 ? '+' : number < 0 ? '-' : ''
+  return `${sign}${Math.abs(number).toFixed(2)}%`
+}
+const tradeResultDisplay = () => `${formatTradeResultMoney(tradeResultValue())} / ${formatTradeResultPercent(tradeResultPercentValue())}`
 
 const tradeNotes = computed(() => {
   const notesList = Array.isArray(props.trade?.notesList)
@@ -496,6 +524,12 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                       </span>
                       <span class="break-words whitespace-normal">{{ tradeAsset() }}</span>
                     </div>
+                  </div>
+                  <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РЕЗУЛЬТАТ' : 'RESULT' }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em]" :class="tradeResultClass(tradeResultValue())">
+                      {{ tradeResultDisplay() }}
+                    </span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'НАПРАВЛЕНИЕ' : 'DIRECTION' }}</span>
