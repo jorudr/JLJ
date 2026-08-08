@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
+import ExTradeNoteEditor from './components/ExTradeNoteEditor.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const props = defineProps<{
@@ -15,9 +16,6 @@ const activeEntryFormTab = ref<'main' | 'advanced' | 'metrics' | 'notes' | 'imag
 const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
 const isCreatingTradeNote = ref(false)
 const tradeNoteDraft = ref('')
-const tradeNoteEditor = ref<HTMLElement | null>(null)
-const savedTradeNoteSelection = ref<Range | null>(null)
-const activeTradeNoteColor = ref('currentColor')
 const isPersistingArchive = ref(false)
 
 const isMainDiaryTrade = computed(() => {
@@ -168,7 +166,6 @@ const saveTradeNote = async () => {
 
 const cancelTradeNote = () => {
   tradeNoteDraft.value = ''
-  savedTradeNoteSelection.value = null
   isCreatingTradeNote.value = false
 }
 
@@ -182,90 +179,9 @@ const getTradeNotePlainText = (html: string) => String(html)
   .replace(/&gt;/gi, '>')
   .replace(/\n{3,}/g, '\n\n')
 
-const syncTradeNoteEditor = () => {
-  const editor = tradeNoteEditor.value
-  if (!editor) return
-  tradeNoteDraft.value = editor.innerHTML
-}
-
-const syncTradeNoteEditorFromDraft = () => {
-  const editor = tradeNoteEditor.value
-  if (!editor || editor.innerHTML === tradeNoteDraft.value) return
-  editor.innerHTML = tradeNoteDraft.value
-}
-
-const saveTradeNoteSelection = () => {
-  const selection = window.getSelection()
-  const editor = tradeNoteEditor.value
-  if (!selection?.rangeCount || !editor) return
-  const range = selection.getRangeAt(0)
-  if (!editor.contains(range.commonAncestorContainer)) return
-  savedTradeNoteSelection.value = range.cloneRange()
-}
-
-const restoreTradeNoteSelection = () => {
-  const editor = tradeNoteEditor.value
-  if (!editor) return
-  editor.focus()
-  const selection = window.getSelection()
-  if (!selection) return
-  selection.removeAllRanges()
-  if (savedTradeNoteSelection.value) selection.addRange(savedTradeNoteSelection.value)
-}
-
-const applyTradeNoteCommand = (command: string, value?: string) => {
-  if (!tradeNoteEditor.value) return
-  restoreTradeNoteSelection()
-  document.execCommand('styleWithCSS', false, 'true')
-  document.execCommand(command, false, value)
-  syncTradeNoteEditor()
-  saveTradeNoteSelection()
-}
-
-const applyTradeNoteBlock = (block: 'h1' | 'h2' | 'h3' | 'p' | 'blockquote') => {
-  applyTradeNoteCommand('formatBlock', block)
-}
-
-const applyTradeNoteColor = (color: string) => {
-  activeTradeNoteColor.value = color
-  applyTradeNoteCommand('foreColor', color)
-}
-
-const handleTradeNoteBeforeInput = (event: InputEvent) => {
-  if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
-  if (activeTradeNoteColor.value === 'currentColor') return
-
-  const editor = tradeNoteEditor.value
-  const selection = window.getSelection()
-  if (!editor || !selection?.rangeCount) return
-  const range = selection.getRangeAt(0)
-  if (!editor.contains(range.commonAncestorContainer)) return
-
-  event.preventDefault()
-  range.deleteContents()
-
-  const span = document.createElement('span')
-  span.style.color = activeTradeNoteColor.value
-  span.appendChild(document.createTextNode(event.data))
-  range.insertNode(span)
-
-  const nextRange = document.createRange()
-  nextRange.setStartAfter(span)
-  nextRange.collapse(true)
-  selection.removeAllRanges()
-  selection.addRange(nextRange)
-  syncTradeNoteEditor()
-  saveTradeNoteSelection()
-}
-
-const startTradeNoteCreation = async () => {
+const startTradeNoteCreation = () => {
   isCreatingTradeNote.value = true
   tradeNoteDraft.value = ''
-  savedTradeNoteSelection.value = null
-  activeTradeNoteColor.value = 'currentColor'
-  await nextTick()
-  syncTradeNoteEditorFromDraft()
-  tradeNoteEditor.value?.focus()
 }
 
 const addTradeImageSlot = async () => {
@@ -557,43 +473,13 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'notes'" class="flex w-full flex-col items-start gap-8">
-                <div v-if="isCreatingTradeNote" class="flex w-full flex-col gap-4 border border-white/10 bg-white/[0.03] p-5">
-                  <div class="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h1')">H1</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h2')">H2</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h3')">H3</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-bold transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('bold')">B</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] italic transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('italic')">I</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] underline transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('underline')">U</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('insertUnorderedList')">LIST</button>
-                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('blockquote')">QUOTE</button>
-                    <button type="button" class="h-7 w-7 bg-emerald-500" aria-label="Green text" @mousedown.stop.prevent="applyTradeNoteColor('#10b981')"></button>
-                    <button type="button" class="h-7 w-7 bg-rose-500" aria-label="Red text" @mousedown.stop.prevent="applyTradeNoteColor('#ef4444')"></button>
-                    <button type="button" class="h-7 w-7 bg-blue-500" aria-label="Blue text" @mousedown.stop.prevent="applyTradeNoteColor('#3b82f6')"></button>
-                  </div>
-                  <div
-                    ref="tradeNoteEditor"
-                    contenteditable="true"
-                    data-text-editable="true"
-                    data-placeholder="WRITE_YOUR_TRADE_NOTE..."
-                    autofocus
-                    :placeholder="locale === 'ru' ? 'ЗАПИШИТЕ МЫСЛИ ПО СДЕЛКЕ...' : 'WRITE YOUR TRADE NOTE...'"
-                    class="trade-note-rich min-h-[320px] w-full resize-y overflow-y-auto border border-white/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-white outline-none focus:border-white/35"
-                    @beforeinput="handleTradeNoteBeforeInput"
-                    @input="syncTradeNoteEditor"
-                    @mouseup="saveTradeNoteSelection"
-                    @keyup="saveTradeNoteSelection"
-                    @focus="saveTradeNoteSelection"
-                  ></div>
-                  <div class="flex items-center justify-end gap-3">
-                    <button type="button" class="border border-white/15 px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.2em] text-white/50 transition-colors hover:border-white/40 hover:text-white" @click="cancelTradeNote">
-                      {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
-                    </button>
-                    <button type="button" :disabled="!getTradeNotePlainText(tradeNoteDraft).trim() || isPersistingArchive" class="border border-white bg-white px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.2em] text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-35" @click="saveTradeNote">
-                      {{ locale === 'ru' ? 'СОХРАНИТЬ' : 'SAVE' }}
-                    </button>
-                  </div>
-                </div>
+                <ExTradeNoteEditor
+                  v-if="isCreatingTradeNote"
+                  v-model="tradeNoteDraft"
+                  :is-persisting="isPersistingArchive"
+                  @save="saveTradeNote"
+                  @cancel="cancelTradeNote"
+                />
 
                 <div v-if="tradeNotes.length" class="flex w-full flex-col gap-4">
                   <article
