@@ -59,17 +59,24 @@ const triggerUpload = () => {
 </script>
 
 <template>
-  <figure class="group relative flex h-fit self-start flex-col bg-black/[0.01] px-4 transition-all duration-500 dark:bg-white/[0.01]">
+  <figure class="group relative flex h-fit self-start flex-col bg-black/[0.01] px-4 pt-2 transition-all duration-500 dark:bg-white/[0.01]">
     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="emit('upload', props.index, $event)" />
     <div class="group/img relative flex aspect-video w-full items-center justify-center overflow-hidden bg-black/5 dark:bg-white/5">
       <div v-if="props.image.url" class="h-full w-full">
         <img :src="props.image.url" :alt="props.image.name || `Trade image ${props.index + 1}`" class="h-full w-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
       </div>
-      <div v-else class="flex h-full w-full flex-col items-center justify-center space-y-4">
+      <button
+        v-else
+        type="button"
+        :disabled="!props.canEdit || props.isPersisting"
+        class="flex h-full w-full cursor-pointer flex-col items-center justify-center space-y-4 disabled:cursor-default disabled:opacity-40"
+        :aria-label="locale === 'ru' ? 'Загрузить изображение' : 'Upload image'"
+        @click="triggerUpload"
+      >
         <span class="text-[8px] font-mono uppercase tracking-[0.4em] text-white/30 transition-opacity group-hover/img:text-white">
           {{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}
         </span>
-      </div>
+      </button>
     </div>
 
     <div class="flex flex-col space-y-3 py-3">
@@ -99,7 +106,7 @@ const triggerUpload = () => {
         </button>
         <button
           type="button"
-          :disabled="!props.canEdit || props.isPersisting"
+          :disabled="!props.image.url || !props.canEdit || props.isPersisting"
           class="grid h-8 w-8 place-items-center border border-white/15 text-white/60 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-20"
           :aria-label="locale === 'ru' ? 'Заменить изображение' : 'Replace image'"
           :title="locale === 'ru' ? 'Заменить' : 'Replace'"

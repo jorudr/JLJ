@@ -612,8 +612,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     />
                   </template>
                 </div>
-                <div v-else-if="!isCreatingTradeNote" class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
-                  {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
+                <div v-else-if="!isCreatingTradeNote" class="flex w-full flex-col items-center justify-center py-32 opacity-30">
+                  <div class="mb-6 h-px w-12 bg-white animate-pulse"></div>
+                  <span class="text-[9px] font-mono uppercase tracking-[0.6em] text-white">
+                    {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
+                  </span>
                 </div>
               </section>
 
