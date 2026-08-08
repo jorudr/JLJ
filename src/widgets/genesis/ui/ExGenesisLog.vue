@@ -68,104 +68,7 @@
         ]"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <div
-          class="relative z-10 flex h-full w-full flex-col"
-          :class="isTimeTreeFullscreen
-            ? 'px-0 py-10 md:px-0 md:py-12'
-            : viewType === 'timeTree'
-              ? 'px-0 py-8 md:px-0 md:py-10'
-              : 'px-8 py-14 md:px-16 md:py-20'"
-        >
-          <Transition name="page-reify" mode="out-in">
-            <div
-              key="time-tree-content"
-              class="relative min-h-0 flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-32"
-              :class="isTimeTreeFullscreen ? 'time-tree-scroll--fullscreen' : ''"
-            >
-              <div v-if="timeTreeGroups.length" class="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-2 md:px-8">
-                <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15 dark:bg-white/15"></div>
-
-                <div
-                  v-for="(group, index) in timeTreeGroups"
-                  :key="group.key"
-                  class="relative grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] items-start gap-y-5 py-4"
-                >
-                  <div
-                    class="relative min-w-0"
-                    :class="group.side === 'left' ? 'col-start-1 pr-6' : 'col-start-3 pl-6'"
-                  >
-                    <div
-                      class="flex flex-col gap-1.5"
-                      :class="group.side === 'left' ? 'items-end text-right' : 'items-start text-left'"
-                    >
-                      <div class="mb-0.5 font-mono uppercase tracking-[0.22em]">
-                        <div class="text-[8px] opacity-45">{{ group.weekday }}</div>
-                        <div class="relative mt-0.5 text-[10px] font-black nier-text-primary">
-                          <div
-                            class="absolute top-1/2 h-px -translate-y-1/2 bg-black/20 dark:bg-white/20"
-                            :class="group.side === 'left' ? 'right-[-32px] w-6' : 'left-[-32px] w-6'"
-                          ></div>
-                          {{ group.label }}
-                        </div>
-                      </div>
-
-                      <button
-                        v-for="trade in group.trades"
-                        :key="trade.id"
-                        class="group/tree-trade w-full max-w-[340px] border nier-border-primary bg-white/60 px-3 py-2 text-left font-mono uppercase backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-black/35 hover:bg-white/90 dark:bg-black/45 dark:hover:border-white/35 dark:hover:bg-black/70"
-                        :class="group.side === 'left' ? 'text-right' : 'text-left'"
-                        @click="handleTimeTreeTradeClick({ tradeId: trade.id, event: $event })"
-                      >
-                        <div
-                          class="flex min-w-0 items-center justify-between gap-4"
-                          :class="group.side === 'left' ? 'flex-row-reverse' : ''"
-                        >
-                          <div
-                            class="flex min-w-0 items-center gap-2"
-                            :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
-                          >
-                            <span class="min-w-0">
-                              <span class="block truncate text-xs font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</span>
-                              <span class="mt-1 block text-[9px] tracking-[0.22em] opacity-45">{{ trade.time }}</span>
-                            </span>
-                            <span
-                              class="shrink-0 border px-1.5 py-0.5 text-[7px] font-black tracking-[0.18em]"
-                              :class="trade.side === 'SHORT'
-                                ? 'border-rose-500/30 text-rose-500'
-                                : 'border-emerald-500/30 text-emerald-500'"
-                            >
-                              {{ trade.side }}
-                            </span>
-                          </div>
-                          <div
-                            class="shrink-0 text-base font-black leading-none tracking-[0.12em]"
-                          :style="{ color: trade.resultColor }"
-                          :class="group.side === 'left' ? 'text-left' : 'text-right'"
-                        >
-                            {{ trade.resultLabel }}
-                        </div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="col-start-2 row-start-1 flex justify-center pt-3">
-                    <div class="relative flex h-8 w-8 items-center justify-center border nier-border-primary bg-white/85 font-mono text-[10px] font-black backdrop-blur-xl dark:bg-black/75">
-                      <div class="absolute h-1.5 w-1.5 rotate-45 nier-bg-inverted"></div>
-                      <span class="relative z-10 opacity-0">{{ index + 1 }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="flex h-full items-center justify-center">
-                <div class="border border-dashed border-black/20 px-8 py-6 text-center font-mono text-[10px] uppercase tracking-[0.35em] opacity-40 dark:border-white/20">
-                  {{ locale === 'ru' ? 'Нет сделок для дерева' : 'No trades for tree' }}
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
+        <ExTradeArchive class="relative z-10" />
       </div>
 
       <!-- STRATEGY TREE LAYER -->
@@ -1294,6 +1197,7 @@ import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryB
 import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
 import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
 import ExTradeForceGraph from '~/widgets/genesis/ui/components/ExTradeForceGraph.vue'
+import ExTradeArchive from '~/widgets/genesis/ui/components/ExTradeArchive.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1618,9 +1522,9 @@ const handleOpenTrade = (payload: { tradeId: string }) => {
   emit('openTrade', payload)
 }
 
-const handleForceGraphNodeClick = (payload: { node: TradeNode; event: MouseEvent }) => {
+const handleForceGraphNodeClick = (payload: { node: any; event: MouseEvent }) => {
   if (viewType.value !== 'cube' || isTransitioning.value) return
-  selectTradeNode({ id: payload.node.id, dist: 0, node: payload.node }, payload.event)
+  selectTradeNode(payload.node, payload.event)
 }
 
 const handleTradeForceGraphReady = () => {
@@ -4373,13 +4277,13 @@ const handleTradeContextMenuPointerDown = (event: PointerEvent) => {
 
 watch(isDark, () => scheduleRender())
 
-const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null, event?: MouseEvent) => {
-  if (!nearest) return
-  if (nearest.node.isCore) return
+const selectTradeNode = (trade: any, event?: MouseEvent) => {
+  if (!trade) return
+  if (trade.isCore) return
 
-  const tradeId = nearest.node.isNote && nearest.node.parentId
-    ? nearest.node.parentId
-    : nearest.id
+  const tradeId = trade.isNote && trade.parentId
+    ? trade.parentId
+    : trade.id
 
   selectedTradeId.value = tradeId
   showExtraDetails.value = false
@@ -4392,91 +4296,6 @@ const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } 
       source: 'canvas'
     }
   }
-}
-
-const handleMouseDown = (e: MouseEvent) => {
-  if (viewType.value === 'cube' && !isTransitioning.value) {
-    const nearest = findNearestTradeNode(e)
-    hoveredTradeNodeId.value = nearest?.id || null
-    if (!nearest || nearest.node.isCore) closeTradeContextMenu()
-    selectTradeNode(nearest, e)
-    scheduleRender()
-  }
-
-  // The canvas is now a flat trade surface: dragging always pans it.
-  isPanning.value = true
-  lastMousePos.value = { x: e.clientX, y: e.clientY }
-}
-
-const handleDoubleClick = (e: MouseEvent) => {
-  if (viewType.value !== 'cube' || isTransitioning.value) return
-  const nearest = findNearestTradeNode(e)
-  if (!nearest?.node.isNote || !nearest.node.parentId) return
-
-  selectTradeNode(nearest)
-}
-
-const handleMouseMove = (e: MouseEvent) => {
-  if (!isPanning.value) {
-    const nextHoveredId = findNearestTradeNode(e)?.id || null
-    if (nextHoveredId !== hoveredTradeNodeId.value) {
-      hoveredTradeNodeId.value = nextHoveredId
-      scheduleRender()
-    }
-    return
-  }
-
-  const dx = e.clientX - lastMousePos.value.x
-  const dy = e.clientY - lastMousePos.value.y
-  viewOffset.value.x += dx
-  viewOffset.value.y += dy
-  lastMousePos.value = { x: e.clientX, y: e.clientY }
-  scheduleRender()
-}
-
-const handleMouseUp = () => {
-  isPanning.value = false
-}
-
-const handleMouseLeave = () => {
-  handleMouseUp()
-  if (hoveredTradeNodeId.value !== null) {
-    hoveredTradeNodeId.value = null
-    scheduleRender()
-  }
-}
-const handleWheel = (e: WheelEvent) => {
-  e.preventDefault()
-  const nextScale = Math.max(
-    MIN_TRADE_GRAPH_SCALE,
-    Math.min(MAX_TRADE_GRAPH_SCALE, viewScale.value - e.deltaY * 0.001)
-  )
-  viewScale.value = nextScale
-  tradeLayoutRevision += 1
-
-  // At the lower bound the projected nodes change most abruptly. Recalculate
-  // before the next frame so the graph never flashes its previous layout.
-  const reachedMinimumScale = nextScale === MIN_TRADE_GRAPH_SCALE
-  if (reachedMinimumScale) {
-    if (nodeLayoutDebounceTimeout) {
-      clearTimeout(nodeLayoutDebounceTimeout)
-      nodeLayoutDebounceTimeout = null
-    }
-
-    const currentNodes = facesTrades.value[currentFace.value] || []
-    const restoredFromCache = restoreTradeLayoutFromCache(currentNodes, graphEdges.value)
-    nodeLayoutDirty = !restoredFromCache
-  }
-
-  if (!reachedMinimumScale) {
-    if (nodeLayoutDebounceTimeout) clearTimeout(nodeLayoutDebounceTimeout)
-    nodeLayoutDebounceTimeout = setTimeout(() => {
-      nodeLayoutDebounceTimeout = null
-      nodeLayoutDirty = true
-      scheduleRender()
-    }, 80)
-  }
-  scheduleRender()
 }
 
 const updateDistributionHover = (e: MouseEvent) => {
