@@ -212,14 +212,14 @@ onMounted(async () => {
     </button>
 
     <div class="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4 pr-24">
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h1')">H1</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h2')">H2</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h3')">H3</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-bold transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('bold')">B</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] italic transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('italic')">I</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] underline transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('underline')">U</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('insertUnorderedList')">LIST</button>
-      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('blockquote')">QUOTE</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h1')">H1</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h2')">H2</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('h3')">H3</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('bold')">B</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black italic uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('italic')">I</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] underline transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('underline')">U</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('insertUnorderedList')">LIST</button>
+      <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('blockquote')">QUOTE</button>
       <label class="relative flex h-7 w-8 cursor-pointer items-center justify-center border border-white/10" aria-label="Choose text color">
         <span class="h-4 w-4 border border-white/20" :style="{ backgroundColor: activeTextColor === 'currentColor' ? '#ffffff' : activeTextColor }"></span>
         <input
@@ -232,14 +232,14 @@ onMounted(async () => {
         />
       </label>
       <div class="relative inline-block">
-        <button type="button" class="flex items-center gap-2 border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @click.stop="isAttachMenuOpen = !isAttachMenuOpen">
+        <button type="button" class="flex items-center gap-2 border border-white/10 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors hover:bg-white hover:text-black" @click.stop="isAttachMenuOpen = !isAttachMenuOpen">
           {{ locale === 'ru' ? 'ПРИКРЕПИТЬ' : 'ATTACH' }}
           <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
           </svg>
         </button>
-        <div v-if="isAttachMenuOpen" class="absolute left-0 top-full z-50 flex min-w-[180px] flex-col border border-white/10 bg-black shadow-xl">
-          <div v-if="!attachableImages().length" class="px-3 py-2 font-mono text-[8px] uppercase opacity-50">
+        <div v-if="isAttachMenuOpen" class="absolute left-0 top-full z-50 flex max-h-[360px] min-w-[280px] flex-col overflow-y-auto border border-white/10 bg-black shadow-xl">
+          <div v-if="!attachableImages().length" class="px-4 py-4 font-mono text-[8px] uppercase tracking-[0.16em] opacity-50">
             {{ locale === 'ru' ? 'Нет сохраненных материалов' : 'No visuals archived' }}
           </div>
           <button
@@ -248,11 +248,14 @@ onMounted(async () => {
             :key="image.url || index"
             type="button"
             :class="hasVisualReference(index) ? 'bg-white text-black' : 'text-white hover:bg-white/10'"
-            class="flex items-center justify-between gap-3 truncate px-3 py-2 text-left font-mono text-[9px] transition-colors"
+            class="flex min-h-14 items-center justify-between gap-4 px-4 py-3 text-left font-mono text-[9px] font-black uppercase tracking-[0.12em] transition-colors"
             :aria-pressed="hasVisualReference(index)"
             @mousedown.stop.prevent="toggleVisualReference(index)"
           >
-            <span class="truncate">{{ image.name || `Visual_Node_${index}` }}</span>
+            <span class="flex min-w-0 items-center gap-3">
+              <img :src="image.url" :alt="image.name || `Visual Node ${index}`" class="h-10 w-14 shrink-0 object-cover" />
+              <span class="truncate">{{ image.name || `Visual Node ${index}` }}</span>
+            </span>
             <span v-if="hasVisualReference(index)" aria-hidden="true">✓</span>
           </button>
         </div>
@@ -263,7 +266,7 @@ onMounted(async () => {
       ref="editor"
       contenteditable="true"
       data-text-editable="true"
-      data-placeholder="WRITE_YOUR_TRADE_NOTE..."
+      data-placeholder="WRITE YOUR TRADE NOTE..."
       :placeholder="locale === 'ru' ? 'ЗАПИШИТЕ МЫСЛИ ПО СДЕЛКЕ...' : 'WRITE YOUR TRADE NOTE...'"
       class="trade-note-rich min-h-[320px] w-full resize-none overflow-y-auto bg-transparent p-4 font-mono text-sm leading-relaxed text-white outline-none"
       @beforeinput="handleBeforeInput"
