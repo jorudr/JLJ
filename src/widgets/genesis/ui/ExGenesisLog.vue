@@ -1476,7 +1476,7 @@ const downloadCardPng = async () => {
   }
 }
 
-const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('cube')
+const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('timeTree')
 const genesisTreeRef = ref<any>(null)
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')

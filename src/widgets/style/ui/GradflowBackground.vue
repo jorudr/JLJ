@@ -21,10 +21,13 @@ type GradFlowPreset =
   | 'dream'
   | 'borealis'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   config?: GradientConfigInput
   preset?: GradFlowPreset
-}>()
+  paused?: boolean
+}>(), {
+  paused: false
+})
 
 const emit = defineEmits<{
   ready: []
@@ -72,7 +75,11 @@ onMounted(async () => {
   if (!mountEl.value) return
 
   reactRoot = createRoot(mountEl.value)
-  reactRoot.render(createElement(GradFlow, { config: props.config, preset: props.preset }))
+  reactRoot.render(createElement(GradFlow, {
+    config: props.config,
+    preset: props.preset,
+    paused: props.paused
+  }))
   waitForCanvas()
 })
 
