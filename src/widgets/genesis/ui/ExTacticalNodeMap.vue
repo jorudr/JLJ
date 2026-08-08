@@ -549,7 +549,7 @@ const calculatedStabilityIndex = computed(() => {
 
 <template>
   <div v-if="isOpen" ref="mapRoot"
-       class="ethereal-void overflow-hidden flex flex-col select-none"
+       class="ethereal-void bg-theme-bg overflow-hidden flex flex-col select-none"
        :class="embedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-[10000]'"
        @mousedown="startPan">
     <!-- HUD Overlay (Fixed) -->
@@ -829,7 +829,7 @@ const calculatedStabilityIndex = computed(() => {
   transform: translateY(-2px);
 }
 
-.ethereal-void { background: none !important; }
+.ethereal-void { background-color: var(--theme-bg) !important; }
 
 .fade-tooltip-enter-active, .fade-tooltip-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;

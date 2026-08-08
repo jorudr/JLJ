@@ -363,20 +363,17 @@ const tradeEntryThemeStyle = computed(() => props.isDark
       '--theme-text': '#F9F6F0',
       '--theme-text-rgb': '249 246 240',
       '--theme-border': 'rgba(249, 246, 240, 0.12)',
-      backgroundColor: activeProjectionMode.value === 'mapping' ? 'transparent' : '#000000'
+      backgroundColor: '#000000'
     }
   : {
-      backgroundColor: activeProjectionMode.value === 'mapping' ? 'transparent' : 'var(--theme-bg)'
+      backgroundColor: 'var(--theme-bg)'
     })
 </script>
 
 <template>
   <div
     class="trade-entry-shell flex h-full w-full flex-col items-center overflow-hidden transition-colors duration-500 nier-text-primary"
-    :class="[
-      activeProjectionMode === 'mapping' ? 'bg-transparent' : 'bg-theme-bg',
-      props.isDark ? 'dark is-dark theme-dark' : 'theme-light'
-    ]"
+    :class="[ 'bg-theme-bg', props.isDark ? 'dark is-dark theme-dark' : 'theme-light' ]"
     :style="tradeEntryThemeStyle"
   >
     <div class="w-full flex justify-center">
@@ -386,8 +383,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             <div class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
       <div class="relative z-10 mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border-transparent bg-transparent group">
         <div
-          class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 dark:border-white/10"
-          :class="activeProjectionMode === 'mapping' ? 'bg-transparent shadow-none' : 'bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)]'"
+          class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10"
         >
           <button
             type="button"

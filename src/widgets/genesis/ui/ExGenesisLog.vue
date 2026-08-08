@@ -3,6 +3,13 @@
     
     
 
+    <ExTimeTreeTradeEntry
+      v-if="showTimeTreeTradeDetails"
+      class="absolute inset-0 z-[2000]"
+      :is-dark="isDark"
+      :trade="selectedTimeTreeTradeForDetails"
+    />
+
     <div v-if="!showTimeTreeTradeDetails && !showNodeMap && !isTradeEntryOpen" class="contents">
 
       <!-- CANVAS LAYER (Shared) -->
@@ -440,13 +447,6 @@
       </div>
     </div>
 
-    <ExTimeTreeTradeEntry
-      v-if="showTimeTreeTradeDetails"
-      class="absolute inset-0 z-[2000]"
-      :is-dark="isDark"
-      :trade="selectedTimeTreeTradeForDetails"
-    />
-
     <!-- NODE MAP VISUALIZATION OVERLAY -->
     <ExTacticalNodeMap 
       v-if="showNodeMap" 
@@ -829,6 +829,8 @@
       </ExPanel>
     </div>
 
+  </div>
+
     <!-- CENTERED BOTTOM NAVIGATION -->
     <div
       v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
@@ -837,13 +839,27 @@
     >
       <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
         <button
+          v-if="showTimeTreeTradeDetails"
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white/30 bg-white/10 text-white transition-all"
+          :aria-label="locale === 'ru' ? 'Открытая сделка' : 'Open trade'"
+          @click="closeTimeTreeTradeDetails"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <rect x="4" y="3" width="16" height="18" rx="1" />
+            <path d="M8 8h8M8 12h8M8 16h5" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }} ]</span>
+        </button>
+
+        <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
-          :class="viewType === 'cube' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          :class="viewType === 'cube' && !showTimeTreeTradeDetails ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           :aria-label="locale === 'ru' ? 'Сделки' : 'Trades'"
-          @click="viewType = 'cube'"
+          @click="activateBottomView('cube')"
         >
-          <div class="relative flex h-4 w-4 items-center justify-center border-2 transition-all" :class="viewType === 'cube' ? 'rotate-[135deg] scale-110' : 'rotate-45'">
+          <div class="relative flex h-4 w-4 items-center justify-center border-2 transition-all" :class="viewType === 'cube' && !showTimeTreeTradeDetails ? 'rotate-[135deg] scale-110' : 'rotate-45'">
             <div class="h-1 w-1 rotate-45 bg-current"></div>
           </div>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }} ]</span>
@@ -853,15 +869,17 @@
           :model-value="selectedStrategyId"
           :strategies="strategies"
           :is-loading="isMatrixLoading"
+          :close-signal="protocolMenuCloseSignal"
+          @click="activateProtocolButton"
           @update:model-value="selectStrategy($event)"
         />
 
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
-          :class="viewType === 'timeTree' ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
+          :class="viewType === 'timeTree' && !showTimeTreeTradeDetails ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
           :aria-label="locale === 'ru' ? 'Временное дерево' : 'Time tree'"
-          @click="viewType = 'timeTree'"
+          @click="activateBottomView('timeTree')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
             <path d="M12 4v5M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M6 15v3M18 15v3" />
@@ -897,7 +915,7 @@
           :class="showToolsMenu ? 'border-white/30 bg-white/10 text-white' : ''"
           :aria-label="locale === 'ru' ? 'Меню' : 'Menu'"
           :aria-expanded="showToolsMenu"
-          @click="showToolsMenu = true"
+          @click="openToolsMenuFromBottomBar"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5" aria-hidden="true">
             <path d="M4 7h16M4 12h16M4 17h16" />
@@ -911,7 +929,7 @@
     <Teleport to="body">
       <Transition name="protocol-slide">
         <div
-          v-if="!isTradeEntryOpen && showToolsMenu"
+          v-if="!isTradeEntryOpen && !showTimeTreeTradeDetails && showToolsMenu"
           @click.self="closeToolsMenu"
           class="tools-menu-overlay fixed inset-0 z-[10005] flex items-center justify-center p-12 backdrop-blur-md"
         >
@@ -1003,6 +1021,7 @@
     :strategies="strategies"
     :selected-strategy-id="selectedStrategyId"
     :is-matrix-loading="isMatrixLoading"
+    :protocol-close-signal="protocolMenuCloseSignal"
     @toggle-entry="closeTradeEntry"
     @save-trade="saveTradeEntry"
     @toggle-close-mode="toggleTradeEntryPanel('close')"
@@ -1010,7 +1029,6 @@
     @update-strategy="updateTradeEntryStrategy"
   />
 
-  </div>
 
     <Teleport to="body">
        <Transition name="fade-blur">
@@ -1458,6 +1476,7 @@ const isHudVisible = ref(true)
 const showComplianceStatus = ref(false)
 const showToolsMenu = ref(false)
 const showFiltersPanel = ref(false)
+const protocolMenuCloseSignal = ref(0)
 const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
 const showAssetMenu = ref(false)
@@ -1481,6 +1500,7 @@ const saveTradeEntry = () => {
 const toggleTradeEntryPanel = (panel: 'close' | 'matrix' | 'journal' | 'method') => {
   if (!isTradeEntryOpen.value) return
 
+  protocolMenuCloseSignal.value += 1
   const result = tradeEntryRef.value?.openPanel?.(panel)
   if (panel === 'close') {
     isTradeEntryCloseModeActive.value = result !== false
@@ -1504,8 +1524,34 @@ const updateTradeEntryStrategy = (strategyId: string) => {
   selectedStrategyId.value = strategyId
 }
 
+const closeNavigationOverlays = (keepProtocol = false) => {
+  if (!keepProtocol) protocolMenuCloseSignal.value += 1
+  showFiltersPanel.value = false
+  showToolsMenu.value = false
+  showCapitalForecast.value = false
+  showCapitalForecastIntro.value = false
+  showComplianceStatus.value = false
+  if (showTimeTreeTradeDetails.value) closeTimeTreeTradeDetails()
+}
+
+const activateBottomView = (nextView: 'cube' | 'timeTree') => {
+  closeNavigationOverlays()
+  viewType.value = nextView
+}
+
+const activateProtocolButton = () => {
+  closeNavigationOverlays(true)
+}
+
 const toggleFiltersPanel = () => {
-  showFiltersPanel.value = !showFiltersPanel.value
+  const shouldOpen = !showFiltersPanel.value
+  closeNavigationOverlays()
+  showFiltersPanel.value = shouldOpen
+}
+
+const openToolsMenuFromBottomBar = () => {
+  closeNavigationOverlays()
+  showToolsMenu.value = true
 }
 
 watch(isHudVisible, (val) => {
@@ -1674,12 +1720,7 @@ const showSelectedTimeTreeTradeDetails = () => {
   const trade = selectedTimeTreeTrade.value
   if (!trade?.id) return
 
-  selectedTradeId.value = String(trade.id)
-  panelInitialPage.value = undefined
-  panelInitialNoteId.value = undefined
-  showExtraDetails.value = false
-  closeTimeTreeTradeDetails()
-  openNodeMap()
+  openTimeTreeTradeDetailsForTrade(trade)
 }
 
 const shareSelectedTimeTreeTrade = () => {
@@ -1703,6 +1744,24 @@ const closeTradeContextMenu = () => {
   tradeContextMenu.value = null
 }
 
+const openTimeTreeTradeDetailsForTrade = (trade: any) => {
+  if (!trade?.id) return
+
+  closeNavigationOverlays()
+  selectedTradeId.value = String(trade.id)
+  timeTreeSelectedTradeId.value = String(trade.id)
+  selectedTimeTreeTradeForDetails.value = {
+    ...trade,
+    assetIcon: trade.assetIcon || resolveTimeTreeAssetIcon(trade)
+  }
+  panelInitialPage.value = undefined
+  panelInitialNoteId.value = undefined
+  showExtraDetails.value = false
+  showNodeMap.value = false
+  showTimeTreeTradeDetails.value = true
+  closeTradeContextMenu()
+}
+
 const getTradeForContextMenu = (tradeId: string) => {
   return currentTrades.value.find((trade: any) => String(trade?.id || '') === tradeId)
     || currentTradesForList.value.find((trade: any) => String(trade?.id || '') === tradeId)
@@ -1718,21 +1777,11 @@ const openTradeDetailsFromContextMenu = () => {
     const trade = selectedTimeTreeTrade.value
       || getTradeForContextMenu(tradeId)
 
-    selectedTimeTreeTradeForDetails.value = trade
-      ? { ...trade, assetIcon: trade.assetIcon || resolveTimeTreeAssetIcon(trade) }
-      : null
-    timeTreeSelectedTradeId.value = tradeId
-    showTimeTreeTradeDetails.value = true
-    closeTradeContextMenu()
+    openTimeTreeTradeDetailsForTrade(trade)
     return
   }
 
-  selectedTradeId.value = tradeId
-  panelInitialPage.value = undefined
-  panelInitialNoteId.value = undefined
-  showExtraDetails.value = false
-  showNodeMap.value = true
-  closeTradeContextMenu()
+  openTimeTreeTradeDetailsForTrade(getTradeForContextMenu(tradeId))
 }
 
 const shareTradeFromContextMenu = () => {
@@ -2518,10 +2567,7 @@ const closeToolsMenu = () => {
 }
 
 const openProjectionView = (nextView: 'distribution' | 'tree') => {
-  closeToolsMenu()
-  showCapitalForecast.value = false
-  showCapitalForecastIntro.value = false
-  showComplianceStatus.value = false
+  closeNavigationOverlays()
   viewType.value = nextView
 }
 
@@ -2540,18 +2586,16 @@ const toggleCapitalForecast = () => {
 }
 
 const openCapitalForecastFromMenu = () => {
-  closeToolsMenu()
+  closeNavigationOverlays()
   viewType.value = 'cube'
-  showComplianceStatus.value = false
   toggleCapitalForecast()
 }
 
 const openComplianceFromMenu = () => {
-  closeToolsMenu()
+  const shouldOpen = !showComplianceStatus.value
+  closeNavigationOverlays()
   viewType.value = 'cube'
-  showCapitalForecast.value = false
-  showCapitalForecastIntro.value = false
-  showComplianceStatus.value = !showComplianceStatus.value
+  showComplianceStatus.value = shouldOpen
 }
 
 const acceptCapitalForecastIntro = () => {
@@ -4202,24 +4246,20 @@ const findNearestTradeNode = (e: MouseEvent) => {
 const selectTradeNode = (nearest: { id: string, dist: number, node: TradeNode } | null, event?: MouseEvent) => {
   if (!nearest) return
   if (nearest.node.isCore) return
-  if (nearest.node.isNote && nearest.node.parentId) {
-    closeTradeContextMenu()
-    selectedTradeId.value = nearest.node.parentId
-    const noteId = nearest.node.id.split('_').slice(2).join('_')
-    panelInitialPage.value = 5
-    panelInitialNoteId.value = noteId
-    showExtraDetails.value = true
-    showNodeMap.value = true
-  } else {
-    selectedTradeId.value = nearest.id
-    showExtraDetails.value = false
-    if (event) {
-      tradeContextMenu.value = {
-        x: event.clientX,
-        y: event.clientY,
-        tradeId: nearest.id,
-        source: 'canvas'
-      }
+
+  const tradeId = nearest.node.isNote && nearest.node.parentId
+    ? nearest.node.parentId
+    : nearest.id
+
+  selectedTradeId.value = tradeId
+  showExtraDetails.value = false
+
+  if (event) {
+    tradeContextMenu.value = {
+      x: event.clientX,
+      y: event.clientY,
+      tradeId,
+      source: 'canvas'
     }
   }
 }

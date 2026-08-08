@@ -16,6 +16,7 @@ defineProps<{
   strategies: Strategy[]
   selectedStrategyId: string | null
   isMatrixLoading?: boolean
+  protocolCloseSignal?: number
 }>()
 
 const emit = defineEmits<{
@@ -90,6 +91,7 @@ const emit = defineEmits<{
           :model-value="selectedStrategyId"
           :strategies="strategies"
           :is-loading="isMatrixLoading"
+          :close-signal="protocolCloseSignal"
           @update:model-value="emit('update-strategy', $event)"
         />
 

@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import ExPanel from '~/shared/ui/ExPanel.vue'
@@ -64,6 +64,7 @@ const props = withDefaults(defineProps<{
   modelValue: string | null
   strategies: Strategy[]
   isLoading?: boolean
+  closeSignal?: number
 }>(), {
   isLoading: false,
 })
@@ -73,6 +74,9 @@ const emit = defineEmits<{
 }>()
 
 const showStrategyMenu = ref(false)
+watch(() => props.closeSignal, () => {
+  showStrategyMenu.value = false
+})
 const matrixState = useMatrixState()
 const { locale } = useI18n()
 const tr = (ru: string, en: string) => locale.value === 'ru' ? ru : en
