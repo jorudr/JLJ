@@ -757,42 +757,6 @@
     >
       <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
         <button
-          v-if="showTimeTreeTradeDetails"
-          type="button"
-          class="group relative flex h-10 w-10 items-center justify-center border border-white/30 bg-white/10 text-white transition-all"
-          :aria-label="locale === 'ru' ? 'Открытая сделка' : 'Open trade'"
-          @click="closeTimeTreeTradeDetails"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
-            <rect x="4" y="3" width="16" height="18" rx="1" />
-            <path d="M8 8h8M8 12h8M8 16h5" />
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }} ]</span>
-        </button>
-
-        <button
-          type="button"
-          class="group relative flex h-10 w-10 items-center justify-center border transition-all"
-          :class="viewType === 'cube' && !showTimeTreeTradeDetails ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
-          :aria-label="locale === 'ru' ? 'Сделки' : 'Trades'"
-          @click="activateBottomView('cube')"
-        >
-          <div class="relative flex h-4 w-4 items-center justify-center border-2 transition-all" :class="viewType === 'cube' && !showTimeTreeTradeDetails ? 'rotate-[135deg] scale-110' : 'rotate-45'">
-            <div class="h-1 w-1 rotate-45 bg-current"></div>
-          </div>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКИ' : 'TRADES' }} ]</span>
-        </button>
-
-        <ExTradeEntryProtocolButton
-          :model-value="selectedStrategyId"
-          :strategies="strategies"
-          :is-loading="isMatrixLoading"
-          :close-signal="protocolMenuCloseSignal"
-          @click="activateProtocolButton"
-          @update:model-value="selectStrategy($event)"
-        />
-
-        <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
           :class="viewType === 'timeTree' && !showTimeTreeTradeDetails ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
@@ -807,6 +771,29 @@
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'Временное дерево' : 'Time tree' }} ]</span>
         </button>
+
+        <button
+          v-if="showTimeTreeTradeDetails"
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white/30 bg-white/10 text-white transition-all"
+          :aria-label="locale === 'ru' ? 'Открытая сделка' : 'Open trade'"
+          @click="closeTimeTreeTradeDetails"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <rect x="4" y="3" width="16" height="18" rx="1" />
+            <path d="M8 8h8M8 12h8M8 16h5" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }} ]</span>
+        </button>
+
+        <ExTradeEntryProtocolButton
+          :model-value="selectedStrategyId"
+          :strategies="strategies"
+          :is-loading="isMatrixLoading"
+          :close-signal="protocolMenuCloseSignal"
+          @click="activateProtocolButton"
+          @update:model-value="selectStrategy($event)"
+        />
 
         <button
           type="button"
@@ -962,7 +949,21 @@
         >
           <div class="relative w-full max-w-xl">
             <ExPanel class="tools-menu-panel w-full" noPadding variant="light" :show-corners="true">
-              <div class="grid grid-cols-4 gap-0 p-4 [&>button]:!h-14">
+              <div class="grid grid-cols-5 gap-0 p-4 [&>button]:!h-14">
+                <button
+                  type="button"
+                  class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                  :class="viewType === 'cube' ? 'bg-white/10 text-white' : ''"
+                  @click="viewType === 'cube' ? activateBottomView('timeTree') : activateBottomView('cube')"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6" aria-hidden="true">
+                    <path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z" />
+                  </svg>
+                  <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                    {{ locale === 'ru' ? 'ТЕПЛОВАЯ КАРТА' : 'HEATMAP' }}
+                  </span>
+                </button>
+
                 <button
                   type="button"
                   class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
@@ -2633,7 +2634,7 @@ const centerGenesisTree = () => {
 
 const exitTreeView = () => {
   closeNavigationOverlays()
-  viewType.value = previousProjectionView.value
+  viewType.value = 'timeTree'
 }
 
 const toggleCapitalForecast = () => {
