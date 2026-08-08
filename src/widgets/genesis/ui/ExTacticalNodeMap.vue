@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, isRef, watch } from 'vue'
-import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
-import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
@@ -26,6 +24,7 @@ const props = withDefaults(defineProps<{
   initialPage?: number
   initialExpandedNoteId?: string
   openAnalyticsOnMount?: boolean
+  embedded?: boolean
 }>(), {
   isDark: false,
   emotionalRank: 64,
@@ -553,46 +552,13 @@ const calculatedStabilityIndex = computed(() => {
   return Math.min(Math.max(Math.round(score), 0), 100)
 })
 
-const emotionalStatus = computed(() => {
-  const s = calculatedStabilityIndex.value;
-  if (s > 80) return { label: tr('ОПТИМАЛЬНО', 'OPTIMAL'), color: 'bg-emerald-400' };
-  if (s > 60) return { label: tr('СТАБИЛЬНО', 'STABLE'), color: 'bg-green-300' };
-  if (s > 40) return { label: tr('НЕЙТРАЛЬНО', 'NEUTRAL'), color: 'bg-yellow-200' };
-  if (s > 20) return { label: tr('НЕСТАБИЛЬНО', 'UNSTABLE'), color: 'bg-orange-400' };
-  return { label: tr('КРИТИЧНО', 'CRITICAL'), color: 'bg-red-500' };
-})
 </script>
 
 <template>
   <div v-if="isOpen" ref="mapRoot"
-       class="ethereal-void fixed inset-0 z-[10000] overflow-hidden flex flex-col select-none transition-all duration-1000 backdrop-blur-xl"
-       :class="[isDark ? 'is-dark dark theme-dark bg-nier-black/40' : 'theme-light bg-nier-white/40']"
+       class="ethereal-void overflow-hidden flex flex-col select-none"
+       :class="embedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-[10000]'"
        @mousedown="startPan">
-    
-    <!-- SYSTEM BACKGROUNDS -->
-    <EtherealBackground :is-dark="!!isDark" :is-assembled="true" :show-bloom="false" />
-    <DesignVignette :is-dark="!!isDark" />
-
-    <!-- ADAPTIVE BACKGROUND DECORATIONS -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-20 dark:opacity-40 nier-text-primary">
-      <!-- Tesseract / 3D Wireframe -->
-      <div class="absolute -top-[240px] -right-[240px] w-[1152px] h-[1152px] border nier-border-primary rounded-full">
-         <div class="absolute inset-[120px] border border-black/5 dark:border-white/5 rotate-45"></div>
-         <div class="absolute inset-[240px] border border-black/5 dark:border-white/5 -rotate-12"></div>
-      </div>
-
-      <!-- Floating Squares / Tesseracts -->
-      <div class="absolute top-1/4 left-10 w-12 h-12 border border-black/20 dark:border-white/20 rotate-12"></div>
-      <div class="absolute bottom-1/4 right-10 w-24 h-24 border nier-border-primary -rotate-45"></div>
-
-      <!-- Geometric Pulse Circles -->
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-black/[0.03] dark:border-white/[0.03] rounded-full"></div>
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-black/[0.02] dark:border-white/[0.02] rounded-full"></div>
-      
-      <!-- Tactical Grid Accents -->
-      <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,transparent_0%,currentColor_1px,transparent_1px)] bg-[length:40px_40px]"></div>
-    </div>
-    
     <!-- HUD Overlay (Fixed) -->
     <div class="absolute inset-0 pointer-events-none z-[100]">
       <!-- Top Center Percentile Rank Label -->
@@ -605,39 +571,13 @@ const emotionalStatus = computed(() => {
         </div>
       </div>
 
-      <!-- Vertical Phantom Menu -->
-      <div class="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col items-center p-2.5 space-y-3 pointer-events-auto z-[200] border backdrop-blur-xl shadow-2xl"
-           :class="isDark ? 'bg-[#0a0a0a]/30 border-white/10' : 'bg-white/30 border-black/10'">
-        
-        <!-- View Trade Analytics Reified -->
-        <button @click.stop="activeAnalyticsPage = 3; analyticsModalOpen = true"
-                class="w-10 h-10 flex items-center justify-center transition-all duration-300 cursor-pointer pointer-events-auto"
-                :class="isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-black/50 hover:text-black'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 3v18h18" />
-            <path d="M7 16l5-5 3 3 5-5" />
-            <path d="M17 9h4v4" />
-          </svg>
-        </button>
-        
-        <div class="w-6 h-px opacity-20" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-
-        <!-- Close Map Button -->
-        <button @click="emit('close')" 
-                class="w-10 h-10 flex items-center justify-center transition-all duration-300 hover:bg-red-500/20 text-red-500/70 hover:text-red-500 cursor-pointer">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
-
       <!-- Off-Screen Indicators -->
       <div v-if="entryIndicator" 
            class="absolute pointer-events-auto flex flex-col items-center transition-all duration-300"
            :style="{ left: entryIndicator.x + 'px', top: entryIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
         <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100"
              :style="{ transform: `rotate(${entryIndicator.angle}deg)` }">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="drop-shadow-sm" :class="isDark ? 'text-white' : 'text-black'">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :class="isDark ? 'text-white' : 'text-black'">
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
@@ -652,7 +592,7 @@ const emotionalStatus = computed(() => {
            :style="{ left: exitIndicator.x + 'px', top: exitIndicator.y + 'px', transform: 'translate(-50%, -50%)' }">
         <div class="w-10 h-10 flex items-center justify-center transition-transform duration-100"
              :style="{ transform: `rotate(${exitIndicator.angle}deg)` }">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="drop-shadow-sm" :class="isDark ? 'text-white' : 'text-black'">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" :class="isDark ? 'text-white' : 'text-black'">
             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
@@ -712,8 +652,8 @@ const emotionalStatus = computed(() => {
              @mouseenter="handleNodeHover($event, entryHubData)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
-          <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
-               :class="[isDark ? 'bg-[#0a0a0a]/10 border-2 border-nier-border-dark group-hover:border-nier-text-dark' : 'bg-white/10 border-2 border-nier-border-light group-hover:border-nier-text-light']">
+          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
+               :class="isDark ? 'border-nier-border-dark group-hover:border-nier-text-dark' : 'border-nier-border-light group-hover:border-nier-text-light'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
@@ -749,8 +689,8 @@ const emotionalStatus = computed(() => {
              @mouseenter="handleNodeHover($event, exitHubData)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
-          <div class="relative w-[320px] h-32 backdrop-blur-sm flex flex-col justify-center p-6 transition-all duration-700 shadow-2xl"
-               :class="[isDark ? 'bg-[#0a0a0a]/10 border-2 border-nier-border-dark group-hover:border-nier-text-dark' : 'bg-white/10 border-2 border-nier-border-light group-hover:border-nier-text-light']">
+          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
+               :class="isDark ? 'border-nier-border-dark group-hover:border-nier-text-dark' : 'border-nier-border-light group-hover:border-nier-text-light'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
@@ -783,8 +723,8 @@ const emotionalStatus = computed(() => {
 
         <!-- Distributed Condition Nodes: Entry -->
         <div v-for="cond in entryConditions" :key="cond.id"
-             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 backdrop-blur-sm shadow-xl"
-             :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
+             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
+             :class="isDark ? 'border-white/10 hover:border-white' : 'border-black/10 hover:border-black'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
              @mousemove="handleNodeMove"
@@ -815,8 +755,8 @@ const emotionalStatus = computed(() => {
 
         <!-- Distributed Condition Nodes: Exit -->
         <div v-for="cond in exitConditions" :key="cond.id"
-             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 backdrop-blur-sm shadow-xl"
-             :class="[isDark ? 'bg-[#0a0a0a]/5 border-white/10 hover:border-white' : 'bg-white/5 border-black/10 hover:border-black']"
+             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
+             :class="isDark ? 'border-white/10 hover:border-white' : 'border-black/10 hover:border-black'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
              @mousemove="handleNodeMove"
@@ -851,10 +791,10 @@ const emotionalStatus = computed(() => {
 
     <!-- Equity Impact Modal -->
     <div v-if="equityModalOpen" 
-         class="absolute inset-0 z-[20000] bg-white/30 dark:bg-black/20 backdrop-blur-sm flex items-center justify-center pointer-events-auto"
+         class="absolute inset-0 z-[20000] flex items-center justify-center pointer-events-auto"
          @mousedown.stop
          @click="equityModalOpen = false">
-      <div class="relative w-[1100px] h-[600px] bg-white/75 dark:bg-[#0a0a0a]/75 backdrop-blur-xl border nier-border-primary p-8 shadow-2xl overflow-visible nier-text-primary" @click.stop>
+      <div class="relative w-[1100px] h-[600px] border nier-border-primary p-8 overflow-visible nier-text-primary" @click.stop>
         <!-- Tactical Corners -->
         <div class="absolute -top-1 -left-1 w-6 h-6 border-t border-l opacity-60 z-50 border-black/30 dark:border-white/30"></div>
         <div class="absolute -top-1 -right-1 w-6 h-6 border-t border-r opacity-60 z-50 border-black/30 dark:border-white/30"></div>
@@ -862,7 +802,7 @@ const emotionalStatus = computed(() => {
         <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b border-r opacity-60 z-50 border-black/30 dark:border-white/30"></div>
         
         <!-- Close Button -->
-        <button @click="equityModalOpen = false" class="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center border border-dashed nier-border-primary hover:bg-black/5 dark:hover:bg-white/5 transition-all nier-text-primary">
+        <button @click="equityModalOpen = false" class="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center border border-dashed nier-border-primary transition-all nier-text-primary">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
@@ -874,7 +814,7 @@ const emotionalStatus = computed(() => {
 
     <!-- Trade Analytics Reified Modal -->
     <div v-if="analyticsModalOpen" 
-         class="absolute inset-0 z-[20000] bg-white/30 dark:bg-black/20 backdrop-blur-sm flex items-center justify-center pointer-events-auto"
+         class="absolute inset-0 z-[20000] flex items-center justify-center pointer-events-auto"
          @mousedown.stop
          @click="analyticsModalOpen = false">
       <div class="w-[1100px] h-[85vh]" @click.stop>
@@ -894,122 +834,19 @@ const emotionalStatus = computed(() => {
       :is-dark="isDark"
     />
 
-    <!-- Bottom Emotional Rank Stability Index -->
-    <div v-if="isOpen" 
-         class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[10001] flex flex-col items-center">
-      
-      <!-- THE CIRCULAR GAUGE -->
-      <div class="relative w-24 h-24 flex items-center justify-center shrink-0 group/gauge cursor-pointer">
-         <!-- Atmosphere Glow -->
-         <div class="absolute inset-0 rounded-full transition-all duration-1000 opacity-20 blur-2xl scale-125" :class="emotionalStatus.color"></div>
-         
-         <!-- Rotating Outer Ring -->
-         <div class="absolute inset-0 rounded-full border border-current border-dashed animate-[spin_30s_linear_infinite] opacity-20" :class="isDark ? 'text-white' : 'text-black'"></div>
-         <div class="absolute inset-3 rounded-full border border-current opacity-10 -rotate-45" :class="isDark ? 'text-white' : 'text-black'"></div>
-         
-         <!-- The Core Gauge -->
-         <div class="relative w-16 h-16 rounded-full flex flex-col items-center justify-center overflow-hidden transition-all duration-700 group-hover/gauge:scale-110 shadow-2xl z-10"
-              :class="emotionalStatus.color">
-            <!-- Noise Overlay -->
-            <div class="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
-            
-            <span class="text-xl font-serif italic nier-text-primary leading-none drop-shadow-md">{{ calculatedStabilityIndex }}</span>
-            
-            <!-- Scanning effect -->
-            <div class="absolute inset-0 bg-white/10 animate-[scan_4s_linear_infinite] pointer-events-none"></div>
-         </div>
-
-         <!-- HUD Brackets -->
-         <div class="absolute -inset-1 border-l border-t border-current w-4 h-4 opacity-20" :class="isDark ? 'text-white' : 'text-black'"></div>
-         <div class="absolute -inset-1 bottom-auto left-auto border-r border-t border-current w-4 h-4 opacity-20" :class="isDark ? 'text-white' : 'text-black'"></div>
-         <div class="absolute -inset-1 top-auto right-auto border-l border-b border-current w-4 h-4 opacity-20" :class="isDark ? 'text-white' : 'text-black'"></div>
-         <div class="absolute -inset-1 top-auto left-auto border-r border-b border-current w-4 h-4 opacity-20" :class="isDark ? 'text-white' : 'text-black'"></div>
-
-         <!-- EMOTIONS LIST OVERLAY (Revealed on hover) -->
-         <div class="absolute bottom-full left-1/2 -translate-x-1/2 pb-6 pointer-events-none group-hover/gauge:pointer-events-auto opacity-0 group-hover/gauge:opacity-100 translate-y-4 group-hover/gauge:translate-y-0 transition-all duration-700 w-64">
-            <div class="flex flex-col space-y-2">
-               
-               <div v-for="emotion in displayEmotions" :key="emotion.name" 
-                    class="relative flex items-center justify-between px-4 py-3 border backdrop-blur-md transition-all duration-500 shadow-xl"
-                    :class="[
-                      isDark ? 'bg-[#0a0a0a]/40 border-white/10 hover:border-white' : 'bg-white/40 border-black/10 hover:border-black'
-                    ]"
-                    @mouseenter="handleNodeHover($event, emotion)"
-                    @mousemove="handleNodeMove"
-                    @mouseleave="handleNodeLeave">
-                  <!-- Mini Corners -->
-                  <div class="absolute -top-[1px] -left-[1px] w-1.5 h-1.5 border-t border-l opacity-40" :class="isDark ? 'border-white' : 'border-black'"></div>
-                  <div class="absolute -bottom-[1px] -right-[1px] w-1.5 h-1.5 border-b border-r opacity-40" :class="isDark ? 'border-white' : 'border-black'"></div>
-
-                  <div class="flex flex-col">
-                    <span class="text-[11px] font-mono font-black uppercase tracking-widest" :class="isDark ? 'text-white' : 'text-black'">{{ emotion.name }}</span>
-                  </div>
-
-                  <div class="flex flex-col space-y-1 items-end">
-                    <div class="flex items-center space-x-2">
-                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
-                      <div class="flex items-center space-x-0.5">
-                        <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ emotion.freq }}</span>
-                        <svg v-if="emotion.freqTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
-                      <div class="flex items-center space-x-0.5">
-                        <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ emotion.pf }}</span>
-                        <svg v-if="emotion.pfTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      </div>
-                    </div>
-                  </div>
-               </div>
-            </div>
-
-            <!-- Connection Line to Gauge -->
-            <div class="h-6 w-px bg-current mx-auto opacity-20 mt-2" :class="isDark ? 'text-white' : 'text-black'"></div>
-         </div>
-      </div>
-
-    </div>
   </div>
 </template>
 
 <style scoped>
-.ethereal-void {
-  perspective: 1000px;
-}
-
 .node-element {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .node-element:hover {
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
-.dark .node-element:hover {
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.03);
-}
-
-.ethereal-void {
-  background-color: transparent !important;
-}
-
-
-/* Explicit backdrop-filter support for WebKit/Tauri */
-[class*='backdrop-blur'] {
-  backdrop-filter: blur(var(--blur-amount, 8px));
-  -webkit-backdrop-filter: blur(var(--blur-amount, 8px));
-}
-
-.backdrop-blur-sm { --blur-amount: 4px; }
-.backdrop-blur-md { --blur-amount: 12px; }
-.backdrop-blur-lg { --blur-amount: 16px; }
-.backdrop-blur-xl { --blur-amount: 24px; }
-.backdrop-blur-2xl { --blur-amount: 40px; }
-.backdrop-blur-3xl { --blur-amount: 64px; }
+.ethereal-void { background: none !important; }
 
 .fade-tooltip-enter-active, .fade-tooltip-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -1019,76 +856,4 @@ const emotionalStatus = computed(() => {
   transform: translate(10px, -50%) scale(0.95) !important;
 }
 
-@keyframes scan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes scan-x {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* BACKGROUND DECORATION ANIMATIONS */
-@keyframes slow-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes reverse-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(12deg); }
-  50% { transform: translateY(-20px) rotate(15deg); }
-}
-
-@keyframes float-delayed {
-  0%, 100% { transform: translateY(0) rotate(-45deg); }
-  50% { transform: translateY(20px) rotate(-40deg); }
-}
-
-@keyframes pulse-slow {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.1; }
-}
-
-@keyframes orbit {
-  0% { transform: rotate(0deg) translateX(50px) rotate(0deg); opacity: 0; }
-  25% { opacity: 1; }
-  75% { opacity: 1; }
-  100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); opacity: 0; }
-}
-
-.animate-slow-rotate {
-  animation: slow-rotate 60s linear infinite;
-}
-
-.animate-reverse-rotate {
-  animation: reverse-rotate 40s linear infinite;
-}
-
-.animate-float {
-  animation: float 8s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-  animation: float-delayed 10s ease-in-out infinite;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 15s ease-in-out infinite;
-}
-
-.animate-orbit {
-  animation: orbit 20s linear infinite;
-}
 </style>
