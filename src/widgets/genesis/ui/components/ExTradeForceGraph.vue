@@ -20,9 +20,9 @@
           :height="block.height"
           :rx="0"
           :fill="block.fill"
-          :stroke="block.textColor"
+          stroke="#000000"
           :stroke-width="safeStrokeWidth"
-          stroke-opacity="0.42"
+          stroke-opacity="1"
           shape-rendering="crispEdges"
         />
 
@@ -179,6 +179,30 @@ const interpolateColor = (from: [number, number, number], to: [number, number, n
   return `rgb(${channels.join(' ')})`
 }
 
+const interpolateStops = (stops: Array<[number, number, number]>, ratio: number) => {
+  const safeRatio = Math.min(1, Math.max(0, ratio))
+  const segmentCount = stops.length - 1
+  const scaledRatio = safeRatio * segmentCount
+  const segmentIndex = Math.min(segmentCount - 1, Math.floor(scaledRatio))
+  const segmentRatio = scaledRatio - segmentIndex
+
+  return interpolateColor(stops[segmentIndex]!, stops[segmentIndex + 1]!, segmentRatio)
+}
+
+const neutralColor = '#374151'
+const lossColorStops: Array<[number, number, number]> = [
+  [55, 65, 81],
+  [127, 29, 29],
+  [220, 38, 38],
+  [255, 31, 31]
+]
+const profitColorStops: Array<[number, number, number]> = [
+  [55, 65, 81],
+  [20, 83, 45],
+  [22, 163, 74],
+  [0, 230, 118]
+]
+
 type TreemapArea = {
   aggregate: AssetAggregate
   x: number
@@ -251,13 +275,16 @@ const layout = computed(() => {
 
   const blocks = areas.map(({ aggregate: asset, x, y, width, height }): HeatmapBlock => {
     const isLoss = asset.pnl < 0
+    const isProfit = asset.pnl > 0
     const intensity = isLoss
       ? (maxNegativeMagnitude > 0 ? Math.abs(asset.pnl) / maxNegativeMagnitude : 0)
       : (maxPositivePnl > 0 ? asset.pnl / maxPositivePnl : 1)
     const fill = isLoss
-      ? interpolateColor([255, 205, 205], [198, 28, 28], intensity)
-      : interpolateColor([226, 226, 226], [255, 255, 255], intensity)
-    const textColor = isLoss && intensity > 0.42 ? '#fff8f5' : '#111111'
+      ? interpolateStops(lossColorStops, intensity)
+      : isProfit
+        ? interpolateStops(profitColorStops, intensity)
+        : neutralColor
+    const textColor = '#FFFFFF'
     const textScale = Math.min(width, height)
 
     return {
