@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
+import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const props = defineProps<{
   isDark?: boolean
@@ -9,8 +10,15 @@ const props = defineProps<{
 }>()
 
 const { locale } = useI18n()
+const tradeStore = useStrategyTradesStore()
 const activeEntryFormTab = ref<'main' | 'advanced' | 'metrics' | 'notes' | 'images'>('main')
 const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
+const isCreatingTradeNote = ref(false)
+const tradeNoteDraft = ref('')
+const tradeNoteEditor = ref<HTMLElement | null>(null)
+const savedTradeNoteSelection = ref<Range | null>(null)
+const activeTradeNoteColor = ref('currentColor')
+const isPersistingArchive = ref(false)
 
 const isMainDiaryTrade = computed(() => {
   const trade = props.trade
@@ -98,8 +106,212 @@ const tradeNotes = computed(() => {
 
 const tradeImages = computed(() => {
   if (!Array.isArray(props.trade?.images)) return []
-  return props.trade.images.filter((image: any) => image?.url)
+  return props.trade.images
+    .map((image: any) => typeof image === 'string' ? { url: image } : image)
+    .filter((image: any) => image && (image.url || image.name || image.createdAt || image.timestamp || image.date))
 })
+
+const canEditTradeArchive = computed(() => Boolean(props.trade?.strategyId && props.trade?.id))
+
+const getCurrentTradeNotes = () => {
+  if (Array.isArray(props.trade?.notesList)) return [...props.trade.notesList]
+  const legacyNote = String(props.trade?.notes || '').trim()
+  return legacyNote
+    ? [{ id: 'legacy-trade-note', content: legacyNote, date: new Date().toISOString(), title: '' }]
+    : []
+}
+
+const getCurrentTradeImages = () => {
+  if (!Array.isArray(props.trade?.images)) return []
+  return props.trade.images.map((image: any) => typeof image === 'string' ? { url: image } : { ...image })
+}
+
+const persistTradeArchiveUpdate = async (updates: Record<string, any>) => {
+  if (!canEditTradeArchive.value || !props.trade?.strategyId || !props.trade?.id) return false
+
+  isPersistingArchive.value = true
+  try {
+    await tradeStore.updateTrade(props.trade.strategyId, props.trade.id, updates)
+    Object.entries(updates).forEach(([key, value]) => {
+      if (props.trade) (props.trade as any)[key] = value
+    })
+    return true
+  } finally {
+    isPersistingArchive.value = false
+  }
+}
+
+const saveTradeNote = async () => {
+  const html = tradeNoteDraft.value.trim()
+  const content = getTradeNotePlainText(html).trim()
+  if (!content) return
+
+  const notes = getCurrentTradeNotes()
+  const saved = await persistTradeArchiveUpdate({
+    notesList: [
+      ...notes,
+      {
+        id: `note_${Date.now()}`,
+        content,
+        html,
+        date: new Date().toISOString(),
+        title: `SESSION_LOG_${notes.length + 1}`
+      }
+    ]
+  })
+
+  if (saved) {
+    tradeNoteDraft.value = ''
+    isCreatingTradeNote.value = false
+  }
+}
+
+const cancelTradeNote = () => {
+  tradeNoteDraft.value = ''
+  savedTradeNoteSelection.value = null
+  isCreatingTradeNote.value = false
+}
+
+const getTradeNotePlainText = (html: string) => String(html)
+  .replace(/<br\s*\/?>/gi, '\n')
+  .replace(/<\/p>|<\/div>|<\/h[1-6]>|<\/blockquote>|<\/li>/gi, '\n')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/\n{3,}/g, '\n\n')
+
+const syncTradeNoteEditor = () => {
+  const editor = tradeNoteEditor.value
+  if (!editor) return
+  tradeNoteDraft.value = editor.innerHTML
+}
+
+const syncTradeNoteEditorFromDraft = () => {
+  const editor = tradeNoteEditor.value
+  if (!editor || editor.innerHTML === tradeNoteDraft.value) return
+  editor.innerHTML = tradeNoteDraft.value
+}
+
+const saveTradeNoteSelection = () => {
+  const selection = window.getSelection()
+  const editor = tradeNoteEditor.value
+  if (!selection?.rangeCount || !editor) return
+  const range = selection.getRangeAt(0)
+  if (!editor.contains(range.commonAncestorContainer)) return
+  savedTradeNoteSelection.value = range.cloneRange()
+}
+
+const restoreTradeNoteSelection = () => {
+  const editor = tradeNoteEditor.value
+  if (!editor) return
+  editor.focus()
+  const selection = window.getSelection()
+  if (!selection) return
+  selection.removeAllRanges()
+  if (savedTradeNoteSelection.value) selection.addRange(savedTradeNoteSelection.value)
+}
+
+const applyTradeNoteCommand = (command: string, value?: string) => {
+  if (!tradeNoteEditor.value) return
+  restoreTradeNoteSelection()
+  document.execCommand('styleWithCSS', false, 'true')
+  document.execCommand(command, false, value)
+  syncTradeNoteEditor()
+  saveTradeNoteSelection()
+}
+
+const applyTradeNoteBlock = (block: 'h1' | 'h2' | 'h3' | 'p' | 'blockquote') => {
+  applyTradeNoteCommand('formatBlock', block)
+}
+
+const applyTradeNoteColor = (color: string) => {
+  activeTradeNoteColor.value = color
+  applyTradeNoteCommand('foreColor', color)
+}
+
+const handleTradeNoteBeforeInput = (event: InputEvent) => {
+  if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
+  if (activeTradeNoteColor.value === 'currentColor') return
+
+  const editor = tradeNoteEditor.value
+  const selection = window.getSelection()
+  if (!editor || !selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  if (!editor.contains(range.commonAncestorContainer)) return
+
+  event.preventDefault()
+  range.deleteContents()
+
+  const span = document.createElement('span')
+  span.style.color = activeTradeNoteColor.value
+  span.appendChild(document.createTextNode(event.data))
+  range.insertNode(span)
+
+  const nextRange = document.createRange()
+  nextRange.setStartAfter(span)
+  nextRange.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(nextRange)
+  syncTradeNoteEditor()
+  saveTradeNoteSelection()
+}
+
+const startTradeNoteCreation = async () => {
+  isCreatingTradeNote.value = true
+  tradeNoteDraft.value = ''
+  savedTradeNoteSelection.value = null
+  activeTradeNoteColor.value = 'currentColor'
+  await nextTick()
+  syncTradeNoteEditorFromDraft()
+  tradeNoteEditor.value?.focus()
+}
+
+const addTradeImageSlot = async () => {
+  await persistTradeArchiveUpdate({
+    images: [
+      ...getCurrentTradeImages(),
+      { url: '', context: '', name: '', tags: [], createdAt: new Date().toISOString() }
+    ]
+  })
+}
+
+const triggerTradeImageUpload = (index: number) => {
+  document.getElementById(`time-tree-image-upload-${index}`)?.click()
+}
+
+const handleTradeImageUpload = (index: number, event: Event) => {
+  const file = (event.target as HTMLInputElement)?.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async () => {
+    const images = getCurrentTradeImages()
+    if (!images[index]) return
+    images[index] = {
+      ...images[index],
+      url: String(reader.result || ''),
+      createdAt: images[index].createdAt || new Date().toISOString()
+    }
+    await persistTradeArchiveUpdate({ images })
+  }
+  reader.readAsDataURL(file)
+}
+
+const updateTradeImageName = async (index: number, event: Event) => {
+  const name = (event.target as HTMLInputElement)?.value || ''
+  const images = getCurrentTradeImages()
+  if (!images[index]) return
+  images[index] = { ...images[index], name }
+  await persistTradeArchiveUpdate({ images })
+}
+
+const removeTradeImage = async (index: number) => {
+  const images = getCurrentTradeImages()
+  images.splice(index, 1)
+  await persistTradeArchiveUpdate({ images })
+}
 
 const tradeEntryThemeStyle = computed(() => props.isDark
   ? {
@@ -221,7 +433,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             <div class="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar [scrollbar-gutter:stable]">
               <div class="px-10 pb-10 pt-10">
                 <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                  <div class="flex w-full max-w-4xl flex-col items-start gap-14">
+                  <div class="flex w-full flex-col items-start gap-14">
 
               <section v-if="activeEntryFormTab === 'main'" class="flex w-full flex-col items-start gap-8">
                 <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">I.</div>
@@ -330,10 +542,58 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'notes'" class="flex w-full flex-col items-start gap-8">
-                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">IV.</div>
-                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
-                  {{ locale === 'ru' ? 'ЗАМЕТКИ' : 'NOTES' }}
-                </h2>
+                <div class="flex w-full items-center justify-end gap-4">
+                  <button
+                    type="button"
+                    :disabled="!canEditTradeArchive || isPersistingArchive"
+                    class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+                    :aria-label="locale === 'ru' ? 'Добавить заметку' : 'Add note'"
+                    :title="locale === 'ru' ? 'Добавить заметку' : 'Add note'"
+                    @click="startTradeNoteCreation"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div v-if="isCreatingTradeNote" class="flex w-full flex-col gap-4 border border-white/10 bg-white/[0.03] p-5">
+                  <div class="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h1')">H1</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h2')">H2</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h3')">H3</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] font-bold transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('bold')">B</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] italic transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('italic')">I</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] underline transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('underline')">U</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteCommand('insertUnorderedList')">LIST</button>
+                    <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('blockquote')">QUOTE</button>
+                    <button type="button" class="h-7 w-7 bg-emerald-500" aria-label="Green text" @mousedown.stop.prevent="applyTradeNoteColor('#10b981')"></button>
+                    <button type="button" class="h-7 w-7 bg-rose-500" aria-label="Red text" @mousedown.stop.prevent="applyTradeNoteColor('#ef4444')"></button>
+                    <button type="button" class="h-7 w-7 bg-blue-500" aria-label="Blue text" @mousedown.stop.prevent="applyTradeNoteColor('#3b82f6')"></button>
+                  </div>
+                  <div
+                    ref="tradeNoteEditor"
+                    contenteditable="true"
+                    data-text-editable="true"
+                    data-placeholder="WRITE_YOUR_TRADE_NOTE..."
+                    autofocus
+                    :placeholder="locale === 'ru' ? 'ЗАПИШИТЕ МЫСЛИ ПО СДЕЛКЕ...' : 'WRITE YOUR TRADE NOTE...'"
+                    class="trade-note-rich min-h-[320px] w-full resize-y overflow-y-auto border border-white/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-white outline-none focus:border-white/35"
+                    @beforeinput="handleTradeNoteBeforeInput"
+                    @input="syncTradeNoteEditor"
+                    @mouseup="saveTradeNoteSelection"
+                    @keyup="saveTradeNoteSelection"
+                    @focus="saveTradeNoteSelection"
+                  ></div>
+                  <div class="flex items-center justify-end gap-3">
+                    <button type="button" class="border border-white/15 px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.2em] text-white/50 transition-colors hover:border-white/40 hover:text-white" @click="cancelTradeNote">
+                      {{ locale === 'ru' ? 'ОТМЕНА' : 'CANCEL' }}
+                    </button>
+                    <button type="button" :disabled="!getTradeNotePlainText(tradeNoteDraft).trim() || isPersistingArchive" class="border border-white bg-white px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.2em] text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-35" @click="saveTradeNote">
+                      {{ locale === 'ru' ? 'СОХРАНИТЬ' : 'SAVE' }}
+                    </button>
+                  </div>
+                </div>
 
                 <div v-if="tradeNotes.length" class="flex w-full flex-col gap-4">
                   <article
@@ -344,7 +604,12 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <div v-if="note.title" class="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.24em] text-white/55">
                       {{ note.title }}
                     </div>
-                    <p class="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
+                    <div
+                      v-if="note.html"
+                      class="trade-note-rich font-mono text-sm leading-relaxed text-white/80"
+                      v-html="note.html"
+                    ></div>
+                    <p v-else class="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
                       {{ note.content || '--' }}
                     </p>
                   </article>
@@ -356,20 +621,48 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
               <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
                 <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
-                <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
-                  {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
-                </h2>
+                <div class="flex w-full items-center justify-between gap-4">
+                  <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+                    {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
+                  </h2>
+                  <button
+                    type="button"
+                    :disabled="!canEditTradeArchive || isPersistingArchive"
+                    class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+                    :aria-label="locale === 'ru' ? 'Добавить изображение' : 'Add image'"
+                    :title="locale === 'ru' ? 'Добавить изображение' : 'Add image'"
+                    @click="addTradeImageSlot"
+                  >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                    </svg>
+                  </button>
+                </div>
 
                 <div v-if="tradeImages.length" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
                   <figure
                     v-for="(image, index) in tradeImages"
-                    :key="image.url || `trade-image-${index}`"
-                    class="overflow-hidden border border-white/10 bg-white/[0.03]"
+                    :key="image.url || image.createdAt || `trade-image-${index}`"
+                    class="group relative overflow-hidden border border-white/10 bg-white/[0.03]"
                   >
-                    <img :src="image.url" :alt="image.name || `Trade image ${index + 1}`" class="block h-auto max-h-[420px] w-full object-contain" />
-                    <figcaption v-if="image.name || image.context" class="border-t border-white/10 px-4 py-3 font-mono text-[9px] uppercase tracking-[0.2em] text-white/55">
-                      {{ image.name || image.context }}
-                    </figcaption>
+                    <button
+                      type="button"
+                      class="absolute right-0 top-0 z-10 grid h-8 w-8 place-items-center border-b border-l border-white/10 bg-black/45 font-mono text-xs text-white/60 opacity-0 transition-opacity hover:bg-rose-500 hover:text-white group-hover:opacity-100"
+                      :aria-label="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
+                      @click="removeTradeImage(index)"
+                    >
+                      ×
+                    </button>
+                    <input :id="`time-tree-image-upload-${index}`" type="file" accept="image/*" class="hidden" @change="handleTradeImageUpload(index, $event)" />
+                    <button type="button" class="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-black/10" @click="triggerTradeImageUpload(index)">
+                      <img v-if="image.url" :src="image.url" :alt="image.name || `Trade image ${index + 1}`" class="h-full w-full object-contain" />
+                      <span v-else class="font-mono text-[9px] font-black uppercase tracking-[0.28em] text-white/35 transition-colors group-hover:text-white/75">
+                        {{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}
+                      </span>
+                    </button>
+                    <div class="border-t border-white/10 p-3">
+                      <input :value="image.name || ''" type="text" :placeholder="locale === 'ru' ? 'НАЗВАНИЕ' : 'NAME'" class="w-full border border-white/10 bg-transparent px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none placeholder:text-white/20 focus:border-white/35" @change="updateTradeImageName(index, $event)" />
+                    </div>
                   </figure>
                 </div>
                 <div v-else class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
@@ -421,6 +714,74 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
 .trade-entry-shell :deep([class*="overflow-visible"][class*="z-50"]) {
   display: none !important;
+}
+
+.trade-note-rich {
+  line-height: 1.5;
+  text-transform: none;
+  user-select: text;
+  cursor: text;
+  white-space: normal;
+}
+
+.trade-note-rich:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.25;
+}
+
+.trade-note-rich :deep(h1) {
+  margin: 0.4em 0 0.7em;
+  font-size: 1.8em;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+}
+
+.trade-note-rich :deep(h2) {
+  margin: 0.35em 0 0.6em;
+  border-bottom: 1px solid rgb(255 255 255 / 0.2);
+  padding-bottom: 0.25em;
+  font-size: 1.45em;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+}
+
+.trade-note-rich :deep(h3) {
+  margin: 0.3em 0 0.5em;
+  font-size: 1.15em;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+}
+
+.trade-note-rich :deep(p) {
+  margin: 0 0 0.55em;
+}
+
+.trade-note-rich :deep(blockquote) {
+  margin: 0.45em 0;
+  border-left: 2px solid currentColor;
+  padding-left: 0.8em;
+  opacity: 0.78;
+}
+
+.trade-note-rich :deep(ul),
+.trade-note-rich :deep(ol) {
+  margin: 0.35em 0;
+  padding-left: 1.5em;
+}
+
+.trade-note-rich :deep(ul) {
+  list-style-type: disc;
+}
+
+.trade-note-rich :deep(ol) {
+  list-style-type: decimal;
+}
+
+.trade-note-rich :deep(li) {
+  margin: 0.18em 0;
 }
 
 </style>
