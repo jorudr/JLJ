@@ -1,9 +1,9 @@
 <template>
-  <div class="asset-heatmap">
+  <div ref="heatmapRoot" class="asset-heatmap">
     <svg
       class="asset-heatmap__svg"
       :viewBox="layout.viewBox"
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid meet"
       width="100%"
       height="100%"
       role="img"
@@ -31,72 +31,86 @@
             <text
               class="asset-heatmap__ticker"
               :x="block.width / 2"
-              :y="block.height * 0.42"
+              :y="block.tickerTextY"
               :font-size="block.tickerFontSize"
               :fill="block.textColor"
               text-anchor="middle"
               dominant-baseline="middle"
               pointer-events="none"
             >
-              {{ block.ticker }}
+              <tspan
+                v-for="(line, lineIndex) in block.tickerLines"
+                :key="`ticker-line-${lineIndex}`"
+                :x="block.width / 2"
+                :dy="lineIndex === 0 ? 0 : block.tickerLineHeight"
+              >
+                {{ line }}
+              </tspan>
             </text>
 
             <text
               class="asset-heatmap__result"
               :x="block.width / 2"
-              :y="block.height * 0.67"
+              :y="block.resultTextY"
               :font-size="block.resultFontSize"
               :fill="block.textColor"
               text-anchor="middle"
               dominant-baseline="middle"
               pointer-events="none"
             >
-              {{ formatDollar(block.pnl) }}
+              <tspan
+                v-for="(line, lineIndex) in block.resultLines"
+                :key="`result-line-${lineIndex}`"
+                :x="block.width / 2"
+                :dy="lineIndex === 0 ? 0 : block.resultLineHeight"
+              >
+                {{ line }}
+              </tspan>
             </text>
           </template>
         </g>
       </g>
     </svg>
 
-    <div v-if="layout.blocks.length" class="asset-heatmap__tooltip-layer" aria-hidden="true">
-      <ExTooltip
+    <div v-if="layout.blocks.length" class="asset-heatmap__tooltip-layer">
+      <div
         v-for="block in layout.blocks"
         :key="`tooltip-${block.key}`"
-        :is-dark="isDark"
-        :title="block.ticker"
-        placement="top"
         class="asset-heatmap__tooltip-trigger"
         :style="{
           position: 'absolute',
-          left: `${block.x / 10}%`,
-          top: `${block.y / 6.4}%`,
-          width: `${block.width / 10}%`,
-          height: `${block.height / 6.4}%`
+          left: `${(block.x / layout.width) * 100}%`,
+          top: `${(block.y / layout.height) * 100}%`,
+          width: `${(block.width / layout.width) * 100}%`,
+          height: `${(block.height / layout.height) * 100}%`
+        }"
+        @mouseenter="handleBlockHover($event, block)"
+        @mousemove="handleBlockHover($event, block)"
+        @mouseleave="handleBlockLeave"
+      ></div>
+    </div>
+
+    <Teleport to="body">
+      <div
+        v-if="hoveredBlock"
+        class="asset-heatmap__cursor-tooltip"
+        :style="{
+          left: `${tooltipPosition.x}px`,
+          top: `${tooltipPosition.y}px`
         }"
       >
-        <template #trigger>
-          <span class="asset-heatmap__tooltip-hitbox"></span>
-        </template>
-        <template #default>
-          <div class="asset-heatmap__tooltip-content">
-            <div class="asset-heatmap__tooltip-row">
-              <span>RESULT</span>
-              <strong>{{ formatDollar(block.pnl) }}</strong>
-            </div>
-            <div class="asset-heatmap__tooltip-row">
-              <span>TRADES</span>
-              <strong>{{ block.tradeCount }}</strong>
-            </div>
-          </div>
-        </template>
-      </ExTooltip>
-    </div>
+        <span>{{ hoveredBlock.ticker }}</span>
+        <span>·</span>
+        <span>{{ formatDollar(hoveredBlock.pnl) }}</span>
+        <span>·</span>
+        <span>{{ hoveredBlock.tradeCount }} TRADES</span>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, watch } from 'vue'
-import ExTooltip from '~/shared/ui/ExTooltip.vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 type Trade = Record<string, any>
 
@@ -116,6 +130,12 @@ type HeatmapBlock = AssetAggregate & {
   textColor: string
   tickerFontSize: number
   resultFontSize: number
+  tickerLines: string[]
+  resultLines: string[]
+  tickerTextY: number
+  resultTextY: number
+  tickerLineHeight: number
+  resultLineHeight: number
   showText: boolean
 }
 
@@ -149,6 +169,11 @@ const emit = defineEmits<{
 
 const inputTrades = computed(() => props.trades ?? props.nodes ?? [])
 const safeStrokeWidth = computed(() => Math.max(0.1, Number(props.strokeWidth) || 0.8))
+const heatmapRoot = ref<HTMLDivElement | null>(null)
+const containerAspectRatio = ref(1000 / 640)
+const hoveredBlock = ref<HeatmapBlock | null>(null)
+const tooltipPosition = ref({ x: 0, y: 0 })
+let resizeObserver: ResizeObserver | null = null
 
 const getNestedValue = (trade: Trade, key: string) => trade[key] ?? trade.trade?.[key]
 
@@ -181,6 +206,18 @@ const resolvePnl = (trade: Trade) => {
     : Number(value)
 
   return Number.isFinite(normalized) ? normalized : 0
+}
+
+const handleBlockHover = (event: MouseEvent, block: HeatmapBlock) => {
+  hoveredBlock.value = block
+  tooltipPosition.value = {
+    x: event.clientX + 14,
+    y: event.clientY + 14
+  }
+}
+
+const handleBlockLeave = () => {
+  hoveredBlock.value = null
 }
 
 const aggregateByAsset = (trades: Trade[]): AssetAggregate[] => {
@@ -243,6 +280,17 @@ const profitColorStops: Array<[number, number, number]> = [
   [0, 230, 118]
 ]
 
+const wrapText = (value: string, maxCharacters: number) => {
+  const safeMaxCharacters = Math.max(1, maxCharacters)
+  const lines: string[] = []
+
+  for (let start = 0; start < value.length; start += safeMaxCharacters) {
+    lines.push(value.slice(start, start + safeMaxCharacters))
+  }
+
+  return lines.length ? lines : ['']
+}
+
 type TreemapArea = {
   aggregate: AssetAggregate
   x: number
@@ -304,13 +352,20 @@ const splitTreemap = (
 }
 
 const layout = computed(() => {
+  const heatmapWidth = 1000
+  const heatmapHeight = heatmapWidth / Math.max(containerAspectRatio.value, 0.1)
   const aggregates = aggregateByAsset(inputTrades.value)
-  if (!aggregates.length) return { blocks: [] as HeatmapBlock[], viewBox: '0 0 1 1' }
+  if (!aggregates.length) {
+    return {
+      blocks: [] as HeatmapBlock[],
+      width: heatmapWidth,
+      height: heatmapHeight,
+      viewBox: `0 0 ${heatmapWidth} ${heatmapHeight}`
+    }
+  }
 
   const maxPositivePnl = Math.max(0, ...aggregates.map(asset => asset.pnl))
   const maxNegativeMagnitude = Math.max(0, ...aggregates.map(asset => asset.pnl < 0 ? Math.abs(asset.pnl) : 0))
-  const heatmapWidth = 1000
-  const heatmapHeight = 640
   const areas = splitTreemap(aggregates, 0, 0, heatmapWidth, heatmapHeight)
 
   const blocks = areas.map(({ aggregate: asset, x, y, width, height }): HeatmapBlock => {
@@ -326,13 +381,29 @@ const layout = computed(() => {
         : neutralColor
     const textColor = '#FFFFFF'
     const textScale = Math.min(width, height)
-    const tickerFontSize = Math.max(7, Math.min(18, textScale * 0.17))
-    const resultFontSize = Math.max(6.5, Math.min(13, textScale * 0.13))
-    const tickerWidth = asset.ticker.length * tickerFontSize * 0.64
-    const resultWidth = formatDollar(asset.pnl).length * resultFontSize * 0.62
-    const requiredTextWidth = Math.max(tickerWidth, resultWidth) + 16
-    const requiredTextHeight = tickerFontSize + resultFontSize + 12
-    const showText = width >= requiredTextWidth && height >= requiredTextHeight
+    const resultLabel = formatDollar(asset.pnl)
+    // Keep the original block-size scaling, then wrap each label to the
+    // number of characters that fits inside its own block.
+    const tickerFontSize = Math.max(4, Math.min(52, textScale * 0.18))
+    const resultFontSize = Math.max(3.5, Math.min(34, textScale * 0.12))
+    const textPadding = 16
+    const tickerLines = wrapText(
+      asset.ticker,
+      Math.floor(Math.max(1, width - textPadding) / Math.max(1, tickerFontSize * 0.72))
+    )
+    const resultLines = wrapText(
+      resultLabel,
+      Math.floor(Math.max(1, width - textPadding) / Math.max(1, resultFontSize * 0.7))
+    )
+    const tickerLineHeight = tickerFontSize * 1.05
+    const resultLineHeight = resultFontSize * 1.05
+    const lineGap = 6
+    const textHeight = tickerLines.length * tickerLineHeight + resultLines.length * resultLineHeight + lineGap
+    const textTop = Math.max(0, (height - textHeight) / 2)
+    const tickerTextY = textTop + tickerFontSize * 0.82
+    const resultTextY = textTop + tickerLines.length * tickerLineHeight + lineGap + resultFontSize * 0.82
+    const minimumLineWidth = Math.max(tickerFontSize * 0.72, resultFontSize * 0.7) + textPadding
+    const showText = width >= minimumLineWidth && height >= textHeight + 4
 
     return {
       ...asset,
@@ -344,12 +415,20 @@ const layout = computed(() => {
       textColor,
       tickerFontSize,
       resultFontSize,
+      tickerLines,
+      resultLines,
+      tickerTextY,
+      resultTextY,
+      tickerLineHeight,
+      resultLineHeight,
       showText
     }
   })
 
   return {
     blocks,
+    width: heatmapWidth,
+    height: heatmapHeight,
     viewBox: `0 0 ${heatmapWidth} ${heatmapHeight}`
   }
 })
@@ -368,7 +447,19 @@ const formatDollar = (value: number) => {
 
 const emitReady = () => nextTick(() => emit('ready'))
 
-onMounted(emitReady)
+onMounted(() => {
+  emitReady()
+
+  if (!heatmapRoot.value || typeof ResizeObserver === 'undefined') return
+
+  resizeObserver = new ResizeObserver(([entry]) => {
+    if (!entry || entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return
+    containerAspectRatio.value = entry.contentRect.width / entry.contentRect.height
+  })
+  resizeObserver.observe(heatmapRoot.value)
+})
+
+onBeforeUnmount(() => resizeObserver?.disconnect())
 watch(layout, emitReady)
 </script>
 
@@ -409,21 +500,23 @@ watch(layout, emitReady)
   cursor: default;
 }
 
-.asset-heatmap__tooltip-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.asset-heatmap__tooltip-row {
+.asset-heatmap__cursor-tooltip {
+  position: fixed;
+  z-index: 2147483647;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.asset-heatmap__tooltip-row span {
-  opacity: 0.58;
+  gap: 0.55rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: #000000;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.22);
 }
 
 .asset-heatmap__block {
