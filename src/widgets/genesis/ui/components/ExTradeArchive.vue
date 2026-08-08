@@ -95,13 +95,13 @@
           <!-- Trades in Month -->
           <div class="flex flex-col gap-1">
             <div v-for="trade in group.trades" :key="trade.id" 
-                 class="grid grid-cols-[1.5fr_1fr_1fr_1.5fr_1fr_1fr_auto] items-center text-[10px] tracking-widest px-2 py-3 hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5 rounded-sm">
+                 class="grid grid-cols-[1.5fr_1fr_1fr_1.5fr_1fr_1fr] items-center text-[10px] tracking-widest px-2 py-3 hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5 rounded-sm">
               
               <span class="opacity-70">{{ formatDate(getTradeTime(trade)) }}</span>
               <span class="font-bold">{{ trade.asset }}</span>
               <span class="opacity-70">{{ trade.side === 'Long' || trade.side === 'long' ? 'LONG' : 'SHORT' }}</span>
               
-              <!-- Mini Sparkline (Placeholder) -->
+              <!-- Mini Sparkline -->
               <div class="flex items-center h-4 w-24">
                 <svg viewBox="0 0 100 20" preserveAspectRatio="none" class="w-full h-full opacity-50">
                   <path :d="generateSparkline(trade)" fill="none" stroke="currentColor" stroke-width="1" />
@@ -116,8 +116,6 @@
               <span class="text-right opacity-80" :class="getTradeR(trade) >= 0 ? 'text-white' : 'text-white/60'">
                 {{ getTradeR(trade) >= 0 ? '+' : '' }}{{ getTradeR(trade).toFixed(1) }}R
               </span>
-
-              <span class="opacity-30 pl-6 text-[12px]">></span>
             </div>
           </div>
 
@@ -244,29 +242,59 @@ const groupedTrades = computed(() => {
   return Object.values(groups).sort((a, b) => b.ts - a.ts)
 })
 
-// Sparkline generation (mocked for visual flair as seen in image)
+// Equity Curve and Sparklines
+const tradesChronological = computed(() => {
+  return [...trades.value].sort((a, b) => getTradeTime(a) - getTradeTime(b))
+})
+
+const equityCurve = computed(() => {
+  let balance = 0
+  return tradesChronological.value.map(t => {
+    balance += getTradePnl(t)
+    return { id: t.id, balance }
+  })
+})
+
 const generateSparkline = (trade: any) => {
-  // If trade has actual path data, use it. Otherwise, generate a fake curve based on PNL.
-  const isWin = getTradePnl(trade) > 0
-  const points = []
-  let y = 10
-  points.push(`M 0,${y}`)
-  
-  for (let i = 1; i <= 10; i++) {
-    const x = i * 10
-    // random walk trending towards win or loss
-    const step = (Math.random() * 4 - 2) + (isWin ? -1 : 1)
-    y = Math.max(2, Math.min(18, y + step))
-    if (i === 10) y = isWin ? 4 : 16 // force final point
-    points.push(`L ${x},${y}`)
+  const index = tradesChronological.value.findIndex(t => t.id === trade.id)
+  if (index === -1) return ''
+
+  const balances: number[] = [0]
+  for (let i = 0; i <= index; i++) {
+    balances.push(equityCurve.value[i]?.balance ?? 0)
   }
+
+  const minBal = Math.min(...balances)
+  const maxBal = Math.max(...balances)
+  const range = maxBal - minBal || 1
+
+  const points: string[] = []
+  const stepX = 100 / Math.max(1, balances.length - 1)
+  
+  balances.forEach((bal, idx) => {
+    const x = idx * stepX
+    const y = 18 - ((bal - minBal) / range) * 16
+    points.push(`${idx === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`)
+  })
   
   return points.join(' ')
 }
 
 const getSparklineEnd = (trade: any) => {
-  const isWin = getTradePnl(trade) > 0
-  return isWin ? 4 : 16
+  const index = tradesChronological.value.findIndex(t => t.id === trade.id)
+  if (index === -1) return 10
+  
+  const balances: number[] = [0]
+  for (let i = 0; i <= index; i++) {
+    balances.push(equityCurve.value[i]?.balance ?? 0)
+  }
+  
+  const minBal = Math.min(...balances)
+  const maxBal = Math.max(...balances)
+  const range = maxBal - minBal || 1
+  
+  const lastBal = balances[balances.length - 1] ?? 0
+  return 18 - ((lastBal - minBal) / range) * 16
 }
 
 </script>
