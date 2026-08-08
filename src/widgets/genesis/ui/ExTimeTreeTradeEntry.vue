@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
 import ExTradeNoteEditor from './components/ExTradeNoteEditor.vue'
+import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const props = defineProps<{
@@ -17,6 +18,8 @@ const activeProjectionMode = ref<'core' | 'projection' | 'chart'>('core')
 const isCreatingTradeNote = ref(false)
 const tradeNoteDraft = ref('')
 const isPersistingArchive = ref(false)
+const expandedTradeNoteIds = ref<string[]>([])
+const editingTradeNoteContentId = ref<string | null>(null)
 
 const isMainDiaryTrade = computed(() => {
   const trade = props.trade
@@ -88,6 +91,25 @@ const formatRiskPerTrade = () => {
   return `${formatPrice(value)}${props.trade?.riskPerTradeUnit === '%' || props.trade?.riskPercent !== undefined ? '%' : ''}`
 }
 
+const escapeTradeNoteHtml = (value: unknown) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+
+const renderTradeNote = (note: any) => {
+  const content = String(note?.html || '')
+  return content.replace(/\[VISUAL_REF:(\d+)\]/gim, (match, indexValue) => {
+    const index = Number.parseInt(indexValue, 10)
+    const image = attachableTradeImages.value[index]
+    if (!image?.url) return match
+
+    const name = String(image.name || `Visual_Node_${index}`)
+    return `<div class="trade-note-visual"><img src="${escapeTradeNoteHtml(image.url)}" alt="${escapeTradeNoteHtml(name)}"><div>${escapeTradeNoteHtml(name)}</div></div>`
+  })
+}
+
 const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || props.trade?.ticker || '--').toUpperCase()
 const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
 const tradeAssetIcon = () => props.trade?.assetIcon || props.trade?.icon || ''
@@ -99,8 +121,14 @@ const tradeNotes = computed(() => {
   if (notesList.length > 0) return notesList
 
   const note = String(props.trade?.notes || '').trim()
-  return note ? [{ id: 'trade-note', content: note, title: '' }] : []
+  return note ? [{ id: 'legacy-trade-note', content: note, title: '' }] : []
 })
+
+const sortedTradeNotes = computed(() => [...tradeNotes.value].sort((a: any, b: any) => {
+  const bTime = new Date(String(b.date || b.createdAt || '')).getTime()
+  const aTime = new Date(String(a.date || a.createdAt || '')).getTime()
+  return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0)
+}))
 
 const tradeImages = computed(() => {
   if (!Array.isArray(props.trade?.images)) return []
@@ -108,6 +136,8 @@ const tradeImages = computed(() => {
     .map((image: any) => typeof image === 'string' ? { url: image } : image)
     .filter((image: any) => image && (image.url || image.name || image.createdAt || image.timestamp || image.date))
 })
+
+const attachableTradeImages = computed(() => tradeImages.value.filter((image: any) => Boolean(image?.url)))
 
 const canEditTradeArchive = computed(() => Boolean(props.trade?.strategyId && props.trade?.id))
 
@@ -145,28 +175,35 @@ const saveTradeNote = async () => {
   if (!content) return
 
   const notes = getCurrentTradeNotes()
+  const nextNotes = editingTradeNoteContentId.value
+    ? notes.map((note: any) => note.id === editingTradeNoteContentId.value
+      ? { ...note, content, html }
+      : note)
+    : [
+        ...notes,
+        {
+          id: `note_${Date.now()}`,
+          content,
+          html,
+          date: new Date().toISOString(),
+          title: `SESSION_LOG_${notes.length + 1}`
+        }
+      ]
   const saved = await persistTradeArchiveUpdate({
-    notesList: [
-      ...notes,
-      {
-        id: `note_${Date.now()}`,
-        content,
-        html,
-        date: new Date().toISOString(),
-        title: `SESSION_LOG_${notes.length + 1}`
-      }
-    ]
+    notesList: nextNotes
   })
 
   if (saved) {
     tradeNoteDraft.value = ''
     isCreatingTradeNote.value = false
+    editingTradeNoteContentId.value = null
   }
 }
 
 const cancelTradeNote = () => {
   tradeNoteDraft.value = ''
   isCreatingTradeNote.value = false
+  editingTradeNoteContentId.value = null
 }
 
 const getTradeNotePlainText = (html: string) => String(html)
@@ -182,6 +219,36 @@ const getTradeNotePlainText = (html: string) => String(html)
 const startTradeNoteCreation = () => {
   isCreatingTradeNote.value = true
   tradeNoteDraft.value = ''
+  editingTradeNoteContentId.value = null
+}
+
+const toggleTradeNote = (id: string) => {
+  const index = expandedTradeNoteIds.value.indexOf(id)
+  if (index === -1) expandedTradeNoteIds.value.push(id)
+  else expandedTradeNoteIds.value.splice(index, 1)
+}
+
+const startEditTradeNoteContent = (note: any) => {
+  editingTradeNoteContentId.value = note.id
+  tradeNoteDraft.value = note.html || note.content || ''
+  isCreatingTradeNote.value = true
+}
+
+const updateTradeNoteTitle = async (payload: { id: string; title: string }) => {
+  const notes = getCurrentTradeNotes()
+  const nextNotes = notes.map((note: any) => note.id === payload.id
+    ? { ...note, title: payload.title }
+    : note)
+  await persistTradeArchiveUpdate({ notesList: nextNotes })
+}
+
+const removeTradeNote = async (noteId: string) => {
+  if (!canEditTradeArchive.value || isPersistingArchive.value) return
+  const notes = getCurrentTradeNotes().filter((note: any) => note.id !== noteId)
+  const saved = await persistTradeArchiveUpdate({ notesList: notes })
+  if (!saved) return
+  expandedTradeNoteIds.value = expandedTradeNoteIds.value.filter(id => id !== noteId)
+  if (editingTradeNoteContentId.value === noteId) cancelTradeNote()
 }
 
 const addTradeImageSlot = async () => {
@@ -477,30 +544,27 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   v-if="isCreatingTradeNote"
                   v-model="tradeNoteDraft"
                   :is-persisting="isPersistingArchive"
+                  :images="attachableTradeImages"
                   @save="saveTradeNote"
                   @cancel="cancelTradeNote"
                 />
 
-                <div v-if="tradeNotes.length" class="flex w-full flex-col gap-4">
-                  <article
-                    v-for="(note, index) in tradeNotes"
+                <div v-if="sortedTradeNotes.length" class="flex w-full flex-col gap-6">
+                  <ExTradeNoteListItem
+                    v-for="(note, index) in sortedTradeNotes"
                     :key="note.id || `trade-note-${index}`"
-                    class="w-full border border-white/10 bg-white/[0.03] p-5"
-                  >
-                    <div v-if="note.title" class="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.24em] text-white/55">
-                      {{ note.title }}
-                    </div>
-                    <div
-                      v-if="note.html"
-                      class="trade-note-rich font-mono text-sm leading-relaxed text-white/80"
-                      v-html="note.html"
-                    ></div>
-                    <p v-else class="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
-                      {{ note.content || '--' }}
-                    </p>
-                  </article>
+                    :note="note"
+                    :expanded="expandedTradeNoteIds.includes(note.id)"
+                    :can-edit="canEditTradeArchive"
+                    :is-persisting="isPersistingArchive"
+                    :render-content="renderTradeNote"
+                    @toggle="toggleTradeNote"
+                    @edit-content="startEditTradeNoteContent"
+                    @update-title="updateTradeNoteTitle"
+                    @remove="removeTradeNote"
+                  />
                 </div>
-                <div v-else class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
+                <div v-else-if="!isCreatingTradeNote" class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
                   {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
                 </div>
               </section>
@@ -656,6 +720,34 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
 .trade-note-rich :deep(li) {
   margin: 0.18em 0;
+}
+
+.trade-note-rich :deep(.trade-note-visual) {
+  position: relative;
+  margin: 1rem 0;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.04);
+  padding: 0.5rem;
+}
+
+.trade-note-rich :deep(.trade-note-visual img) {
+  display: block;
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.trade-note-rich :deep(.trade-note-visual div) {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(0 0 0 / 0.72);
+  padding: 0.25rem 0.5rem;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 </style>

@@ -5,8 +5,10 @@ import { useI18n } from '~/shared/i18n/useI18n'
 const props = withDefaults(defineProps<{
   modelValue: string
   isPersisting?: boolean
+  images?: Array<{ url?: string; name?: string }>
 }>(), {
-  isPersisting: false
+  isPersisting: false,
+  images: () => []
 })
 
 const emit = defineEmits<{
@@ -19,6 +21,9 @@ const { locale } = useI18n()
 const editor = ref<HTMLElement | null>(null)
 const savedSelection = ref<Range | null>(null)
 const activeTextColor = ref('currentColor')
+const isAttachMenuOpen = ref(false)
+
+const attachableImages = () => props.images.filter(image => Boolean(image?.url))
 
 const syncEditor = () => {
   if (!editor.value) return
@@ -65,6 +70,19 @@ const applyColor = (color: string) => {
   applyCommand('foreColor', color)
 }
 
+const handleColorInput = (event: Event) => {
+  const color = (event.target as HTMLInputElement)?.value
+  if (color) applyColor(color)
+}
+
+const insertVisualReference = (index: number) => {
+  restoreSelection()
+  document.execCommand('insertText', false, `[VISUAL_REF:${index}]`)
+  syncEditor()
+  saveSelection()
+  isAttachMenuOpen.value = false
+}
+
 const handleBeforeInput = (event: InputEvent) => {
   if (event.inputType !== 'insertText' || !event.data || event.isComposing) return
   if (activeTextColor.value === 'currentColor') return
@@ -93,6 +111,7 @@ const handleBeforeInput = (event: InputEvent) => {
 
 const handleCancel = () => {
   savedSelection.value = null
+  isAttachMenuOpen.value = false
   emit('cancel')
 }
 
@@ -122,9 +141,40 @@ onMounted(async () => {
       <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] underline transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('underline')">U</button>
       <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyCommand('insertUnorderedList')">LIST</button>
       <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyBlock('blockquote')">QUOTE</button>
-      <button type="button" class="h-7 w-7 bg-emerald-500" aria-label="Green text" @mousedown.stop.prevent="applyColor('#10b981')"></button>
-      <button type="button" class="h-7 w-7 bg-rose-500" aria-label="Red text" @mousedown.stop.prevent="applyColor('#ef4444')"></button>
-      <button type="button" class="h-7 w-7 bg-blue-500" aria-label="Blue text" @mousedown.stop.prevent="applyColor('#3b82f6')"></button>
+      <label class="relative flex h-7 w-8 cursor-pointer items-center justify-center border border-white/10" aria-label="Choose text color">
+        <span class="h-4 w-4 border border-white/20" :style="{ backgroundColor: activeTextColor === 'currentColor' ? '#ffffff' : activeTextColor }"></span>
+        <input
+          type="color"
+          :value="activeTextColor === 'currentColor' ? '#ffffff' : activeTextColor"
+          class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          aria-label="Choose text color"
+          @mousedown.stop
+          @input="handleColorInput"
+        />
+      </label>
+      <div class="relative inline-block">
+        <button type="button" class="flex items-center gap-2 border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @click.stop="isAttachMenuOpen = !isAttachMenuOpen">
+          {{ locale === 'ru' ? 'ПРИКРЕПИТЬ' : 'ATTACH' }}
+          <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+          </svg>
+        </button>
+        <div v-if="isAttachMenuOpen" class="absolute left-0 top-full z-50 flex min-w-[180px] flex-col border border-white/10 bg-black shadow-xl">
+          <div v-if="!attachableImages().length" class="px-3 py-2 font-mono text-[8px] uppercase opacity-50">
+            {{ locale === 'ru' ? 'Нет сохраненных материалов' : 'No visuals archived' }}
+          </div>
+          <button
+            v-for="(image, index) in attachableImages()"
+            v-else
+            :key="image.url || index"
+            type="button"
+            class="truncate px-3 py-2 text-left font-mono text-[9px] transition-colors hover:bg-white/10"
+            @mousedown.stop.prevent="insertVisualReference(index)"
+          >
+            {{ image.name || `Visual_Node_${index}` }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div
@@ -133,7 +183,7 @@ onMounted(async () => {
       data-text-editable="true"
       data-placeholder="WRITE_YOUR_TRADE_NOTE..."
       :placeholder="locale === 'ru' ? 'ЗАПИШИТЕ МЫСЛИ ПО СДЕЛКЕ...' : 'WRITE YOUR TRADE NOTE...'"
-      class="trade-note-rich min-h-[320px] w-full resize-y overflow-y-auto bg-transparent p-4 font-mono text-sm leading-relaxed text-white outline-none"
+      class="trade-note-rich min-h-[320px] w-full resize-none overflow-y-auto bg-transparent p-4 font-mono text-sm leading-relaxed text-white outline-none"
       @beforeinput="handleBeforeInput"
       @input="syncEditor"
       @mouseup="saveSelection"
