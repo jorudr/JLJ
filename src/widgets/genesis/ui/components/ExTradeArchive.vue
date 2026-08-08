@@ -4,7 +4,11 @@
     <div class="absolute inset-0 pointer-events-none opacity-20 bg-[#030303]"
          style="background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-    <div class="relative z-10 max-w-6xl mx-auto h-[calc(100vh-14rem)] max-h-[860px] w-full overflow-y-auto custom-scrollbar pr-4">
+    <div 
+      class="relative z-10 max-w-6xl mx-auto h-[calc(100vh-14rem)] max-h-[860px] w-full overflow-y-auto archive-scrollbar pr-4"
+      :class="{ 'is-scrolling': isScrolling }"
+      @scroll="handleScroll"
+    >
       <!-- HEADER / STRATEGY SELECTOR -->
       <div class="flex flex-col relative w-max mb-12">
         <div class="flex items-center space-x-3 cursor-pointer group/strat" @click="showStrategyMenu = !showStrategyMenu">
@@ -129,6 +133,17 @@ import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const tradeStore = useStrategyTradesStore()
 const showStrategyMenu = ref(false)
+
+const isScrolling = ref(false)
+let scrollTimeout: ReturnType<typeof setTimeout> | null = null
+
+const handleScroll = () => {
+  isScrolling.value = true
+  if (scrollTimeout) clearTimeout(scrollTimeout)
+  scrollTimeout = setTimeout(() => {
+    isScrolling.value = false
+  }, 1000)
+}
 
 const strategies = computed(() => tradeStore.strategies)
 const selectedStrategyId = computed({
@@ -263,17 +278,22 @@ const getSparklineEnd = (trade: any) => {
   transform: translateY(-10px);
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+.archive-scrollbar::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 8px;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
+.archive-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+.archive-scrollbar::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 0;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+.archive-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.archive-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.9) !important;
 }
 </style>
