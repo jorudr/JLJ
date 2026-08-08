@@ -254,7 +254,7 @@ const removeTradeNote = async (noteId: string) => {
 }
 
 const addTradeImageSlot = async () => {
-  if (!canEditTradeArchive.value || isPersistingArchive.value) return
+  if (!canEditTradeArchive.value) return
   const images = [
     ...getCurrentTradeImages(),
     { url: '', context: '', name: '', tags: [], tagInput: '', createdAt: new Date().toISOString() }
@@ -438,7 +438,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <button
                       v-if="activeEntryFormTab === 'notes' || activeEntryFormTab === 'images'"
                       type="button"
-                      :disabled="!canEditTradeArchive || isPersistingArchive"
+                      :disabled="!canEditTradeArchive || (activeEntryFormTab === 'notes' && isPersistingArchive)"
                       class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-30"
                       :aria-label="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
                       :title="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
@@ -595,7 +595,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
-                <div v-if="tradeImages.length" class="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
+                <div v-if="tradeImages.length" class="grid w-full grid-cols-2 items-start gap-6 md:grid-cols-3">
                   <ExTradeImageEntry
                     v-for="(image, index) in tradeImages"
                     :key="image.url || image.createdAt || `trade-image-${index}`"
