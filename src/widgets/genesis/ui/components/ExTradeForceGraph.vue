@@ -1,63 +1,102 @@
 <template>
-  <svg
-    class="asset-heatmap"
-    :viewBox="layout.viewBox"
-    preserveAspectRatio="none"
-    width="100%"
-    height="100%"
-    role="img"
-    aria-label="Asset trading heatmap"
-  >
-    <g v-if="layout.blocks.length" class="asset-heatmap__blocks">
-      <g
-        v-for="block in layout.blocks"
-        :key="block.key"
-        class="asset-heatmap__block"
-        :transform="`translate(${block.x} ${block.y})`"
-      >
-        <rect
-          :width="block.width"
-          :height="block.height"
-          :rx="0"
-          :fill="block.fill"
-          stroke="#000000"
-          :stroke-width="safeStrokeWidth"
-          stroke-opacity="1"
-          shape-rendering="crispEdges"
-        />
-
-        <text
-          class="asset-heatmap__ticker"
-          :x="block.width / 2"
-          :y="block.height * 0.42"
-          :font-size="block.tickerFontSize"
-          :fill="block.textColor"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          pointer-events="none"
+  <div class="asset-heatmap">
+    <svg
+      class="asset-heatmap__svg"
+      :viewBox="layout.viewBox"
+      preserveAspectRatio="none"
+      width="100%"
+      height="100%"
+      role="img"
+      aria-label="Asset trading heatmap"
+    >
+      <g v-if="layout.blocks.length" class="asset-heatmap__blocks">
+        <g
+          v-for="block in layout.blocks"
+          :key="block.key"
+          class="asset-heatmap__block"
+          :transform="`translate(${block.x} ${block.y})`"
         >
-          {{ block.ticker }}
-        </text>
+          <rect
+            :width="block.width"
+            :height="block.height"
+            :rx="0"
+            :fill="block.fill"
+            stroke="#000000"
+            :stroke-width="safeStrokeWidth"
+            stroke-opacity="1"
+            shape-rendering="crispEdges"
+          />
 
-        <text
-          class="asset-heatmap__result"
-          :x="block.width / 2"
-          :y="block.height * 0.67"
-          :font-size="block.resultFontSize"
-          :fill="block.textColor"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          pointer-events="none"
-        >
-          {{ formatDollar(block.pnl) }}
-        </text>
+          <template v-if="block.showText">
+            <text
+              class="asset-heatmap__ticker"
+              :x="block.width / 2"
+              :y="block.height * 0.42"
+              :font-size="block.tickerFontSize"
+              :fill="block.textColor"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              pointer-events="none"
+            >
+              {{ block.ticker }}
+            </text>
+
+            <text
+              class="asset-heatmap__result"
+              :x="block.width / 2"
+              :y="block.height * 0.67"
+              :font-size="block.resultFontSize"
+              :fill="block.textColor"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              pointer-events="none"
+            >
+              {{ formatDollar(block.pnl) }}
+            </text>
+          </template>
+        </g>
       </g>
-    </g>
-  </svg>
+    </svg>
+
+    <div v-if="layout.blocks.length" class="asset-heatmap__tooltip-layer" aria-hidden="true">
+      <ExTooltip
+        v-for="block in layout.blocks"
+        :key="`tooltip-${block.key}`"
+        :is-dark="isDark"
+        :title="block.ticker"
+        placement="top"
+        class="asset-heatmap__tooltip-trigger"
+        :style="{
+          position: 'absolute',
+          left: `${block.x / 10}%`,
+          top: `${block.y / 6.4}%`,
+          width: `${block.width / 10}%`,
+          height: `${block.height / 6.4}%`
+        }"
+      >
+        <template #trigger>
+          <span class="asset-heatmap__tooltip-hitbox"></span>
+        </template>
+        <template #default>
+          <div class="asset-heatmap__tooltip-content">
+            <div class="asset-heatmap__tooltip-row">
+              <span>RESULT</span>
+              <strong>{{ formatDollar(block.pnl) }}</strong>
+            </div>
+            <div class="asset-heatmap__tooltip-row">
+              <span>TRADES</span>
+              <strong>{{ block.tradeCount }}</strong>
+            </div>
+          </div>
+        </template>
+      </ExTooltip>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, watch } from 'vue'
+import ExTooltip from '~/shared/ui/ExTooltip.vue'
 
 type Trade = Record<string, any>
 
@@ -77,6 +116,7 @@ type HeatmapBlock = AssetAggregate & {
   textColor: string
   tickerFontSize: number
   resultFontSize: number
+  showText: boolean
 }
 
 const props = withDefaults(defineProps<{
@@ -286,6 +326,13 @@ const layout = computed(() => {
         : neutralColor
     const textColor = '#FFFFFF'
     const textScale = Math.min(width, height)
+    const tickerFontSize = Math.max(7, Math.min(18, textScale * 0.17))
+    const resultFontSize = Math.max(6.5, Math.min(13, textScale * 0.13))
+    const tickerWidth = asset.ticker.length * tickerFontSize * 0.64
+    const resultWidth = formatDollar(asset.pnl).length * resultFontSize * 0.62
+    const requiredTextWidth = Math.max(tickerWidth, resultWidth) + 16
+    const requiredTextHeight = tickerFontSize + resultFontSize + 12
+    const showText = width >= requiredTextWidth && height >= requiredTextHeight
 
     return {
       ...asset,
@@ -295,8 +342,9 @@ const layout = computed(() => {
       height,
       fill,
       textColor,
-      tickerFontSize: Math.max(7, Math.min(18, textScale * 0.17)),
-      resultFontSize: Math.max(6.5, Math.min(13, textScale * 0.13))
+      tickerFontSize,
+      resultFontSize,
+      showText
     }
   })
 
@@ -328,11 +376,54 @@ watch(layout, emitReady)
 .asset-heatmap {
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
   overflow: hidden;
   color: inherit;
+}
+
+.asset-heatmap__svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.asset-heatmap__tooltip-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.asset-heatmap__tooltip-trigger {
+  display: block;
+  pointer-events: auto;
+}
+
+.asset-heatmap__tooltip-hitbox {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.asset-heatmap__tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.asset-heatmap__tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.asset-heatmap__tooltip-row span {
+  opacity: 0.58;
 }
 
 .asset-heatmap__block {
