@@ -733,17 +733,7 @@ const summarySelectedEmotions = computed(() => {
                       <div class="grid w-full max-w-2xl grid-cols-1 gap-8 sm:grid-cols-2">
                         <div class="asset-select-container relative flex w-full flex-col items-start gap-2">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ tr('Актив', 'Asset') }}</span>
-                          <button type="button" class="flex h-10 w-full items-center gap-3 border-b border-white/20 bg-transparent text-left font-mono text-sm uppercase tracking-[0.18em] text-white outline-none transition-colors hover:border-white/80" @click="showAssetMenu = true">
-                            <span v-if="asset && currentAssetData?.type === 'Forex' && getForexCurrencyPair(currentAssetData.symbol)" class="relative flex h-6 w-6 shrink-0 items-center">
-                              <img :src="getForexCurrencyPair(currentAssetData.symbol).base" alt="" class="absolute left-0 top-0 z-10 h-[68%] w-[68%] rounded-full object-cover" />
-                              <img :src="getForexCurrencyPair(currentAssetData.symbol).quote" alt="" class="absolute bottom-0 right-0 h-[68%] w-[68%] rounded-full object-cover" />
-                            </span>
-                            <span v-else-if="asset && currentAssetData?.icon && !failedIcons.has(currentAssetData.symbol)" class="flex h-5 w-5 shrink-0 items-center justify-center">
-                              <img :src="currentAssetData.icon" :alt="currentAssetData.symbol" class="h-full w-full object-contain" @error="handleIconError(currentAssetData.symbol)" />
-                            </span>
-                            <span v-else-if="asset" class="flex h-5 w-5 shrink-0 items-center justify-center text-[10px] font-black" :class="isDark ? 'text-white' : 'text-black'">
-                              {{ currentAssetData?.symbol?.[0] || asset?.[0] || '' }}
-                            </span>
+                          <button type="button" class="flex h-10 w-full items-center border-b border-white/20 bg-transparent text-left font-mono text-sm uppercase tracking-[0.18em] text-white outline-none transition-colors hover:border-white/80" @click="showAssetMenu = true">
                             <span :class="asset ? 'text-white' : 'text-white/40'">{{ asset || tr('Выберите актив', 'Select asset') }}</span>
                           </button>
 

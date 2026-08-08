@@ -124,15 +124,6 @@
                             class="flex min-w-0 items-center gap-2"
                             :class="group.side === 'left' ? 'flex-row-reverse text-right' : 'text-left'"
                           >
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-black/10 bg-white/80 p-0.5 dark:border-white dark:bg-white">
-                              <img
-                                v-if="trade.assetIcon"
-                                :src="trade.assetIcon"
-                                class="h-full w-full object-contain"
-                                alt=""
-                                @error="hideBrokenAssetIcon"
-                              />
-                            </span>
                             <span class="min-w-0">
                               <span class="block truncate text-xs font-black tracking-[0.16em] nier-text-primary">{{ trade.asset }}</span>
                               <span class="mt-1 block text-[9px] tracking-[0.22em] opacity-45">{{ trade.time }}</span>
@@ -1981,11 +1972,6 @@ const formatTimeTreeResult = (percentValue: number, currencyValue: number) => {
   if (!Number.isFinite(percentValue) && !Number.isFinite(currencyValue)) return openTradeText()
   if (listResultDisplayMode.value === 'currency') return formatDistributionCurrency(currencyValue)
   return formatSignedPercent(percentValue)
-}
-
-const hideBrokenAssetIcon = (event: Event) => {
-  const image = event.currentTarget as HTMLImageElement | null
-  if (image) image.style.display = 'none'
 }
 
 const timeTreeGroups = computed(() => {

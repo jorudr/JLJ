@@ -114,7 +114,6 @@ const renderTradeNote = (note: any) => {
 
 const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || props.trade?.ticker || '--').toUpperCase()
 const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
-const tradeAssetIcon = () => props.trade?.assetIcon || props.trade?.icon || ''
 const tradeResultValue = () => props.trade?.pnl ?? props.trade?.profitInCurrency ?? props.trade?.profit ?? props.trade?.result
 const tradeResultPercentValue = () => {
   const storedPercent = props.trade?.profitInPercent ?? props.trade?.pnlPercent ?? props.trade?.resultPercent
@@ -531,11 +530,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 <div class="grid w-full grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
-                    <div class="mt-2 flex items-center gap-3 text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
-                      <span class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden border border-white/20 bg-white p-1">
-                        <img v-if="tradeAssetIcon()" :src="tradeAssetIcon()" :alt="tradeAsset()" class="h-full w-full object-contain" />
-                        <span v-else class="text-[10px]">{{ tradeAsset().slice(0, 1) }}</span>
-                      </span>
+                    <div class="mt-2 flex items-center text-xl font-mono font-black uppercase tracking-[0.16em] text-white">
                       <span class="break-words whitespace-normal">{{ tradeAsset() }}</span>
                     </div>
                   </div>
