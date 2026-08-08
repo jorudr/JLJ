@@ -213,7 +213,7 @@
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExGenesisTree />
+        <ExGenesisTree ref="genesisTreeRef" />
       </div>
 
       <!-- PNL DISTRIBUTION LAYER -->
@@ -787,11 +787,9 @@
       </ExPanel>
     </div>
 
-  </div>
-
     <!-- CENTERED BOTTOM NAVIGATION -->
     <div
-      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'distribution'"
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType !== 'distribution' && viewType !== 'tree'"
       class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
       :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
     >
@@ -880,6 +878,63 @@
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МЕНЮ' : 'MENU' }} ]</span>
         </button>
+      </div>
+    </div>
+
+    <div
+      v-if="!showNodeMap && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen && viewType === 'tree'"
+      class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
+      :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
+    >
+      <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/85"
+          :aria-label="locale === 'ru' ? 'Выйти из дерева' : 'Exit tree'"
+          @click="exitTreeView"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+            <path d="M19 12H5M11 6l-6 6 6 6" stroke-linecap="square" stroke-linejoin="miter" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }} ]</span>
+        </button>
+
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :aria-label="locale === 'ru' ? 'Пресеты' : 'Presets'"
+          @click="openGenesisTreePresets"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+            <circle cx="8" cy="7" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="10" cy="17" r="1.5" fill="currentColor" stroke="none" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ПРЕСЕТЫ' : 'PRESETS' }} ]</span>
+        </button>
+
+        <button
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :aria-label="locale === 'ru' ? 'Центрировать дерево' : 'Center tree'"
+          @click="centerGenesisTree"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+            <circle cx="12" cy="12" r="7" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'ЦЕНТР' : 'CENTER' }} ]</span>
+        </button>
+
+        <ExTradeEntryVersionButton
+          :model-value="selectedStrategyVersionId"
+          :versions="strategyVersions"
+          :strategy-name="selectedStrategyLabel"
+          :is-loading="isMatrixLoading"
+          :close-signal="protocolMenuCloseSignal"
+          @update:model-value="selectStrategyVersion($event)"
+        />
       </div>
     </div>
 
@@ -1253,6 +1308,8 @@
   </Teleport>
 
   <ExPaywallOverlay :isOpen="showPaywall" @close="showPaywall = false" />
+
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -1272,6 +1329,7 @@ import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
+import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1306,6 +1364,7 @@ const {
   connections: matrixStateConnections,
   strategyVersions,
   selectedStrategyVersionId,
+  selectStrategyVersion,
   ensureMatrixDataRestored
 } = useMatrixState()
 
@@ -1454,6 +1513,7 @@ const downloadCardPng = async () => {
 }
 
 const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('cube')
+const genesisTreeRef = ref<any>(null)
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
@@ -2597,6 +2657,21 @@ const openProjectionView = (nextView: 'distribution' | 'tree') => {
 }
 
 const exitDistributionView = () => {
+  closeNavigationOverlays()
+  viewType.value = previousProjectionView.value
+}
+
+const openGenesisTreePresets = () => {
+  protocolMenuCloseSignal.value += 1
+  genesisTreeRef.value?.openPresetPanel?.()
+}
+
+const centerGenesisTree = () => {
+  protocolMenuCloseSignal.value += 1
+  genesisTreeRef.value?.resetView?.()
+}
+
+const exitTreeView = () => {
   closeNavigationOverlays()
   viewType.value = previousProjectionView.value
 }

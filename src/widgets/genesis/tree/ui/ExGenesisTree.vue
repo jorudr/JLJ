@@ -289,54 +289,13 @@
     </template>
     </div> <!-- Close panLayerStyle -->
 
-    <!-- RECENTER BUTTON -->
-    <div class="absolute right-8 bottom-8 z-[90] pointer-events-auto"
-         @pointerdown.stop
-         @pointermove.stop
-         @click.stop>
-      <button class="relative flex h-11 w-11 items-center justify-center border border-white/10 bg-[#0a0a0a]/90 text-white/55 transition-colors hover:border-white/35 hover:text-white"
-              @click="resetView">
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-          <path d="M4 4v6h6"></path>
-          <path d="M20 20v-6h-6"></path>
-          <path d="M20 9A8 8 0 0 0 6.3 5.3L4 7.5"></path>
-          <path d="M4 15a8 8 0 0 0 13.7 3.7L20 16.5"></path>
-        </svg>
-        <div class="absolute left-1 top-1 h-1 w-1 border-l border-t border-white/30"></div>
-        <div class="absolute bottom-1 right-1 h-1 w-1 border-b border-r border-white/30"></div>
-      </button>
-    </div>
-
-    <!-- VERSIONS PAGINATION (Bottom Center) -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[90] pointer-events-auto flex items-center gap-4 bg-[#0a0a0a]/90 backdrop-blur-md border border-white/10 p-2 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
-         v-if="strategyVersions.length > 0">
-      <button class="w-8 h-8 flex items-center justify-center border border-white/10 text-white/55 hover:text-white hover:border-white/35 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              :disabled="!hasPrevVersion"
-              @click="navigateVersion('prev')">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <div class="flex flex-col items-center min-w-[140px]">
-        <span class="font-mono text-[10px] font-black uppercase tracking-widest text-white/80 truncate max-w-[120px]">
-          {{ currentVersionLabel }}
-        </span>
-        <span class="font-mono text-[8px] font-bold uppercase tracking-widest text-white/40 mt-0.5">
-          {{ currentVersionIndex + 1 }} / {{ strategyVersions.length }}
-        </span>
-      </div>
-      <button class="w-8 h-8 flex items-center justify-center border border-white/10 text-white/55 hover:text-white hover:border-white/35 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              :disabled="!hasNextVersion"
-              @click="navigateVersion('next')">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
-    </div>
-
     <div class="absolute left-8 top-1/2 z-[80] -translate-y-1/2 pointer-events-auto"
          @pointerdown.stop
          @pointermove.stop
          @click.stop>
       <div class="relative h-[620px] transition-[width] duration-500"
            :class="isPresetPanelCollapsed ? 'w-0' : 'w-80'">
-      <ExPanel variant="light" no-padding no-shadow
+      <ExPanel variant="light" no-padding no-shadow :show-corners="false"
              class="absolute left-0 top-0 h-[620px] w-80 transition-all duration-500 !bg-white dark:!bg-[#0a0a0a]"
              :class="isPresetPanelCollapsed ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'">
         <div class="h-full w-full p-4 flex flex-col">
@@ -393,14 +352,6 @@
         </div>
         </div>
       </ExPanel>
-      <button class="absolute top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-r border-b border-black/20 dark:border-white/20 nier-bg-panel transition-colors hover:bg-black/5 dark:hover:bg-[#111] group/preset-tab"
-              :class="isPresetPanelCollapsed ? 'right-0' : '-right-6'"
-              @click="isPresetPanelCollapsed = !isPresetPanelCollapsed">
-        <div class="h-16 w-[1px] bg-black/10 dark:bg-white/10 transition-all duration-300 group-hover/preset-tab:bg-black/40 dark:group-hover/preset-tab:bg-white/40"></div>
-        <span class="absolute rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-black/10 dark:text-white/10 transition-colors group-hover/preset-tab:text-black/40 dark:group-hover/preset-tab:text-white/40">
-          {{ isPresetPanelCollapsed ? t('genesis.tree.presets.handle.open') : t('genesis.tree.presets.handle.close') }}
-        </span>
-      </button>
       </div>
     </div>
 
@@ -599,6 +550,10 @@ const resetView = () => {
   pan.value = { x: 0, y: 0 }
 }
 
+const openPresetPanel = () => {
+  isPresetPanelCollapsed.value = false
+}
+
 const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
   selectedTreeNode.value = node
   selectedTreeNodeType.value = type
@@ -669,6 +624,11 @@ const navigateVersion = (direction: 'prev' | 'next') => {
   const v = strategyVersions.value[nextIndex]
   if (v) selectStrategyVersion(v.id)
 }
+
+defineExpose({
+  resetView,
+  openPresetPanel
+})
 
 
 const openTradeArchive = (trade: { id?: string, strategyId?: string } | null | undefined) => {
