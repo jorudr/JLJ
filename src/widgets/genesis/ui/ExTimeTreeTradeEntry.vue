@@ -4,6 +4,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
 import ExTradeNoteEditor from './components/ExTradeNoteEditor.vue'
 import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
+import ExTradeImageEntry from './components/ExTradeImageEntry.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const props = defineProps<{
@@ -20,6 +21,7 @@ const tradeNoteDraft = ref('')
 const isPersistingArchive = ref(false)
 const expandedTradeNoteIds = ref<string[]>([])
 const editingTradeNoteContentId = ref<string | null>(null)
+const tradeImageTagDrafts = ref<Record<number, string>>({})
 
 const isMainDiaryTrade = computed(() => {
   const trade = props.trade
@@ -252,16 +254,13 @@ const removeTradeNote = async (noteId: string) => {
 }
 
 const addTradeImageSlot = async () => {
-  await persistTradeArchiveUpdate({
-    images: [
-      ...getCurrentTradeImages(),
-      { url: '', context: '', name: '', tags: [], createdAt: new Date().toISOString() }
-    ]
-  })
-}
-
-const triggerTradeImageUpload = (index: number) => {
-  document.getElementById(`time-tree-image-upload-${index}`)?.click()
+  if (!canEditTradeArchive.value || isPersistingArchive.value) return
+  const images = [
+    ...getCurrentTradeImages(),
+    { url: '', context: '', name: '', tags: [], tagInput: '', createdAt: new Date().toISOString() }
+  ]
+  if (props.trade) (props.trade as any).images = images
+  await persistTradeArchiveUpdate({ images })
 }
 
 const handleTradeImageUpload = (index: number, event: Event) => {
@@ -287,6 +286,32 @@ const updateTradeImageName = async (index: number, event: Event) => {
   const images = getCurrentTradeImages()
   if (!images[index]) return
   images[index] = { ...images[index], name }
+  await persistTradeArchiveUpdate({ images })
+}
+
+const updateTradeImageTagDraft = (index: number, event: Event) => {
+  tradeImageTagDrafts.value[index] = (event.target as HTMLInputElement)?.value || ''
+}
+
+const addTradeImageTag = async (index: number) => {
+  const tag = String(tradeImageTagDrafts.value[index] || '').trim()
+  if (!tag) return
+  const images = getCurrentTradeImages()
+  if (!images[index]) return
+  const tags = Array.isArray(images[index].tags) ? [...images[index].tags] : []
+  if (!tags.includes(tag)) tags.push(tag)
+  images[index] = { ...images[index], tags }
+  tradeImageTagDrafts.value[index] = ''
+  await persistTradeArchiveUpdate({ images })
+}
+
+const removeTradeImageTag = async (index: number, tag: string) => {
+  const images = getCurrentTradeImages()
+  if (!images[index]) return
+  images[index] = {
+    ...images[index],
+    tags: (Array.isArray(images[index].tags) ? images[index].tags : []).filter((item: string) => item !== tag)
+  }
   await persistTradeArchiveUpdate({ images })
 }
 
@@ -414,7 +439,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                       v-if="activeEntryFormTab === 'notes' || activeEntryFormTab === 'images'"
                       type="button"
                       :disabled="!canEditTradeArchive || isPersistingArchive"
-                      class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+                      class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-30"
                       :aria-label="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
                       :title="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
                       @click="activeEntryFormTab === 'notes' ? startTradeNoteCreation() : addTradeImageSlot()"
@@ -570,41 +595,28 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
-                <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
-                <div class="flex w-full items-center justify-start gap-4">
-                  <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
-                    {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
-                  </h2>
-                </div>
-
-                <div v-if="tradeImages.length" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
-                  <figure
+                <div v-if="tradeImages.length" class="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
+                  <ExTradeImageEntry
                     v-for="(image, index) in tradeImages"
                     :key="image.url || image.createdAt || `trade-image-${index}`"
-                    class="group relative overflow-hidden border border-white/10 bg-white/[0.03]"
-                  >
-                    <button
-                      type="button"
-                      class="absolute right-0 top-0 z-10 grid h-8 w-8 place-items-center border-b border-l border-white/10 bg-black/45 font-mono text-xs text-white/60 opacity-0 transition-opacity hover:bg-rose-500 hover:text-white group-hover:opacity-100"
-                      :aria-label="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
-                      @click="removeTradeImage(index)"
-                    >
-                      ×
-                    </button>
-                    <input :id="`time-tree-image-upload-${index}`" type="file" accept="image/*" class="hidden" @change="handleTradeImageUpload(index, $event)" />
-                    <button type="button" class="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-black/10" @click="triggerTradeImageUpload(index)">
-                      <img v-if="image.url" :src="image.url" :alt="image.name || `Trade image ${index + 1}`" class="h-full w-full object-contain" />
-                      <span v-else class="font-mono text-[9px] font-black uppercase tracking-[0.28em] text-white/35 transition-colors group-hover:text-white/75">
-                        {{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}
-                      </span>
-                    </button>
-                    <div class="border-t border-white/10 p-3">
-                      <input :value="image.name || ''" type="text" :placeholder="locale === 'ru' ? 'НАЗВАНИЕ' : 'NAME'" class="w-full border border-white/10 bg-transparent px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none placeholder:text-white/20 focus:border-white/35" @change="updateTradeImageName(index, $event)" />
-                    </div>
-                  </figure>
+                    :image="image"
+                    :index="index"
+                    :tag-draft="tradeImageTagDrafts[index] || ''"
+                    :can-edit="canEditTradeArchive"
+                    :is-persisting="isPersistingArchive"
+                    @upload="handleTradeImageUpload"
+                    @remove="removeTradeImage"
+                    @name-change="updateTradeImageName"
+                    @tag-draft="updateTradeImageTagDraft"
+                    @add-tag="addTradeImageTag"
+                    @remove-tag="removeTradeImageTag"
+                  />
                 </div>
-                <div v-else class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
-                  {{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}
+                <div v-else class="flex w-full flex-col items-center justify-center py-32 opacity-30">
+                  <div class="mb-6 h-px w-12 bg-white animate-pulse"></div>
+                  <span class="text-[9px] font-mono uppercase tracking-[0.6em] text-white">
+                    {{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}
+                  </span>
                 </div>
               </section>
 
