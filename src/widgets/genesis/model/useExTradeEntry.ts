@@ -57,6 +57,7 @@ const normalizeTradeNote = (note, index = 0) => {
   return {
     id: note?.id || `note-${Date.now()}-${index}`,
     content: note?.content || note?.text || '',
+    html: note?.html || '',
     date: note?.date || note?.createdAt || note?.timestamp || new Date().toISOString(),
     title: note?.title || `SESSION_LOG_${index + 1}`
   }

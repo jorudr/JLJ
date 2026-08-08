@@ -22,6 +22,9 @@ import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
 import ExTradeEntryMethodContent from './ExTradeEntryMethodContent.vue';
 import ExButton from '~/shared/ui/ExButton.vue';
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
+import ExTradeNoteEditor from './ExTradeNoteEditor.vue';
+import ExTradeNoteListItem from './ExTradeNoteListItem.vue';
+import ExTradeImageEntry from './ExTradeImageEntry.vue';
 import { computed, ref, watch } from 'vue';
 const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, isScenarioSelected, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, hasEntryMethodPositions, entryMethodEnabled, hasEntryMethodPriceViolation, hasPyramidingPriceViolation, hasAveragingDownPriceViolation, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
@@ -77,118 +80,166 @@ const tradeTimeStyleMessage = computed(() => {
 });
 
 const isCreatingNote = ref(false);
-const isPreviewMode = ref(false);
 const noteText = ref("");
-const noteTextArea = ref(null);
 const editingContentNoteId = ref(null);
 const expandedNoteIds = ref([]);
-const editingNoteId = ref(null);
-const editNoteTitle = ref("");
 const activeProjectionMode = ref('core');
 const activeEntryFormTab = ref('main');
+const activeJournalImageIndex = ref(null);
+const isArchivePersisting = computed(() => tradeState.commitState?.value === 'loading');
 
-watch(showTradeSummary, (isVisible) => {
-  activeEntryFormTab.value = isVisible ? 'summary' : 'main';
-});
+const journalImages = computed(() => journalEntries.value
+  .map((entry, index) => ({
+    ...entry,
+    url: entry?.image || entry?.url || entry?.src || '',
+    index
+  }))
+  .filter((entry) => entry && (entry.url || entry.name || entry.createdAt)));
 
-const startEditContent = (note) => {
-  editingContentNoteId.value = note.id;
-  noteText.value = note.content || "";
+const attachableJournalImages = computed(() => journalImages.value.filter((entry) => Boolean(entry.url)));
+const activeJournalImage = computed(() => activeJournalImageIndex.value === null
+  ? null
+  : journalImages.value[activeJournalImageIndex.value] || null);
+
+const getJournalEntryIndex = (displayIndex) => journalImages.value[displayIndex]?.index ?? displayIndex;
+
+const startNoteCreation = () => {
   isCreatingNote.value = true;
-  isPreviewMode.value = false;
+  editingContentNoteId.value = null;
+  noteText.value = '';
 };
 
 const cancelNoteEdit = () => {
   isCreatingNote.value = false;
   editingContentNoteId.value = null;
-  noteText.value = "";
+  noteText.value = '';
 };
 
-const toggleNote = (id) => {
-  const index = expandedNoteIds.value.indexOf(id);
-  if (index === -1) {
-    expandedNoteIds.value.push(id);
-  } else {
-    expandedNoteIds.value.splice(index, 1);
-  }
-};
+const getNotePlainText = (html) => String(html || '')
+  .replace(/<br\s*\/?>(\r?\n)?/gi, '\n')
+  .replace(/<\/p>|<\/div>|<\/h[1-6]>|<\/blockquote>|<\/li>/gi, '\n')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/\n{3,}/g, '\n\n');
 
-const startEditNote = (note, event) => {
-  event.stopPropagation();
-  editingNoteId.value = note.id;
-  editNoteTitle.value = note.title || (locale.value === 'ru' ? 'Архивная запись' : 'Archived record');
-};
+const saveJournalNote = () => {
+  const html = String(noteText.value || '').trim();
+  const content = getNotePlainText(html).trim();
+  if (!content && !html.includes('trade-note-visual')) return;
 
-const saveNoteTitle = (noteId) => {
-  if (editingNoteId.value === noteId) {
-    const n = notesList.value.find(n => n.id === noteId);
-    if (n) n.title = editNoteTitle.value;
-    editingNoteId.value = null;
-  }
-};
-
-const insertFormatting = (prefix, suffix = "") => {
-  if (!noteTextArea.value) return;
-  const el = noteTextArea.value;
-  const start = el.selectionStart;
-  const end = el.selectionEnd;
-  const text = el.value;
-  const before = text.substring(0, start);
-  const selection = text.substring(start, end);
-  const after = text.substring(end);
-
-  noteText.value = before + prefix + (selection || "") + suffix + after;
-  
-  setTimeout(() => {
-    el.focus();
-    const newCursorPos = start + prefix.length + (selection ? selection.length + suffix.length : 0);
-    el.setSelectionRange(newCursorPos, newCursorPos);
-  }, 0);
-};
-
-const formatNote = (content) => {
-  if (!content) return "";
-  
-  let processedContent = content.replace(/\[VISUAL_REF:(\d+)\]/gim, (match, idxStr) => {
-    const idx = parseInt(idxStr);
-    const img = journalEntries.value?.[idx];
-    if (img && img.image) {
-      const name = img.name || `Visual_Node_${idx}`;
-      return `<div class="my-4 bg-black/5 dark:bg-white/5 p-2 relative group"><img src="${img.image}" alt="${name}" class="max-w-full h-auto object-contain max-h-[400px] w-full" /><div class="absolute bottom-4 left-4 nier-bg-panel px-2 py-1 text-[8px] font-mono opacity-80 uppercase tracking-widest shadow-lg">${name}</div></div>`;
-    }
-    return match;
-  });
-
-  return processedContent
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-black uppercase tracking-widest mt-4 mb-2 nier-text-primary">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-black uppercase tracking-[0.2em] mt-6 mb-3 nier-text-primary border-b nier-border-primary pb-1">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-black uppercase tracking-[0.4em] mt-8 mb-4 nier-text-primary border-b-2 border-black/20 dark:border-white/20 pb-2">$1</h1>')
-    .replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-black/20 dark:border-white/20 pl-6 my-4 italic opacity-80">$1</blockquote>')
-    .replace(/^\- (.*$)/gim, '<li class="ml-6 list-disc opacity-80">$1</li>')
-    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
-    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
-    .replace(/\~\~(.*?)\~\~/gim, '<u>$1</u>')
-    .replace(/\[color\=(.*?)\](.*?)\[\/color\]/gim, '<span style="color: $1">$2</span>')
-    .replace(/\n/gim, '<br />');
-};
-
-const persistNote = () => {
-  if (!noteText.value.trim()) return;
   if (editingContentNoteId.value) {
-    const n = notesList.value.find(n => n.id === editingContentNoteId.value);
-    if (n) n.content = noteText.value;
+    const note = notesList.value.find((item) => item.id === editingContentNoteId.value);
+    if (note) {
+      note.html = html;
+      note.content = content;
+    }
   } else {
     notesList.value.push({
       id: `note_${Date.now()}`,
-      content: noteText.value,
+      content,
+      html,
       date: new Date().toISOString(),
       title: `SESSION_LOG_${notesList.value.length + 1}`
     });
   }
-  noteText.value = "";
-  isCreatingNote.value = false;
-  editingContentNoteId.value = null;
+
+  cancelNoteEdit();
 };
+
+const startEditContent = (note) => {
+  editingContentNoteId.value = note.id;
+  noteText.value = note.html || note.content || '';
+  isCreatingNote.value = true;
+};
+
+const toggleNote = (id) => {
+  const index = expandedNoteIds.value.indexOf(id);
+  if (index === -1) expandedNoteIds.value.push(id);
+  else expandedNoteIds.value.splice(index, 1);
+};
+
+const updateJournalNoteTitle = ({ id, title }) => {
+  const note = notesList.value.find((item) => item.id === id);
+  if (note) note.title = title;
+};
+
+const removeJournalNote = (id) => {
+  removeNote(id);
+  expandedNoteIds.value = expandedNoteIds.value.filter((noteId) => noteId !== id);
+  if (editingContentNoteId.value === id) cancelNoteEdit();
+};
+
+const escapeJournalHtml = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
+const renderJournalNote = (note) => {
+  const rawContent = String(note?.html || note?.content || '');
+  const content = note?.html
+    ? rawContent
+    : escapeJournalHtml(rawContent)
+      .replace(/^###\s(.+)$/gim, '<h3>$1</h3>')
+      .replace(/^##\s(.+)$/gim, '<h2>$1</h2>')
+      .replace(/^#\s(.+)$/gim, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br />');
+  return content.replace(/\[VISUAL_REF:(\d+)\]/gim, (match, indexValue) => {
+    const index = Number.parseInt(indexValue, 10);
+    const image = attachableJournalImages.value[index];
+    if (!image?.url) return match;
+    return `<div class="trade-note-visual"><img src="${escapeJournalHtml(image.url)}" alt="${escapeJournalHtml(image.name || `Visual_Node_${index}`)}"></div>`;
+  });
+};
+
+const openJournalImage = (index) => {
+  if (!journalImages.value[index]?.url) return;
+  activeJournalImageIndex.value = index;
+};
+
+const closeJournalImage = () => {
+  activeJournalImageIndex.value = null;
+};
+
+const handleJournalImageUpload = (index, event) => {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const entry = journalEntries.value[getJournalEntryIndex(index)];
+    if (entry) entry.image = String(reader.result || '');
+  };
+  reader.readAsDataURL(file);
+};
+
+const updateJournalImageName = (index, event) => {
+  const entry = journalEntries.value[getJournalEntryIndex(index)];
+  if (entry) entry.name = event?.target?.value || '';
+};
+
+const removeJournalImage = (index) => {
+  const sourceIndex = getJournalEntryIndex(index);
+  const entry = journalEntries.value[sourceIndex];
+  if (!entry) return;
+  removeJournalEntry(entry.id);
+  if (activeJournalImageIndex.value === index) closeJournalImage();
+  else if (activeJournalImageIndex.value !== null && activeJournalImageIndex.value > index) activeJournalImageIndex.value -= 1;
+};
+
+const removeJournalImageTag = (index, tag) => {
+  const entry = journalEntries.value[getJournalEntryIndex(index)];
+  if (entry) removeJournalEntryTag(entry, tag);
+};
+
+watch(showTradeSummary, (isVisible) => {
+  activeEntryFormTab.value = isVisible ? 'summary' : 'main';
+});
 
 const formatDateTactical = (dateStr) => {
   if (!dateStr) return 'DATE_UNASSIGNED';
@@ -1048,8 +1099,28 @@ const summarySelectedEmotions = computed(() => {
                 </div>
               </div>
               <div class="flex items-center space-x-6">
-                 <button v-if="!isCreatingNote" @click="archiveMode === 'notes' ? (isCreatingNote = true) : addJournalEntry()" type="button" :aria-label="archiveMode === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')" class="group grid h-8 w-8 place-items-center border nier-border-primary hover:bg-black dark:hover:bg-white transition-all">
-                    <svg class="h-4 w-4 text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                 <button
+                   v-if="archiveMode === 'images' || !isCreatingNote"
+                   type="button"
+                   :disabled="archiveMode === 'images' && activeJournalImageIndex !== null ? false : isArchivePersisting"
+                   :class="archiveMode === 'images' && activeJournalImageIndex !== null ? 'nier-bg-inverted nier-text-primary' : ''"
+                   :aria-label="archiveMode === 'notes'
+                     ? (locale === 'ru' ? 'Добавить заметку' : 'Add note')
+                     : activeJournalImageIndex !== null
+                       ? (locale === 'ru' ? 'Скрыть просмотр изображения' : 'Hide image preview')
+                       : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
+                   class="group grid h-8 w-8 place-items-center border nier-border-primary transition-all hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black disabled:cursor-default disabled:opacity-30"
+                   @click="archiveMode === 'notes'
+                     ? startNoteCreation()
+                     : activeJournalImageIndex !== null
+                       ? closeJournalImage()
+                       : addJournalEntry()"
+                 >
+                    <svg v-if="archiveMode === 'images' && activeJournalImageIndex !== null" class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
+                      <path d="m4 4 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                    </svg>
+                    <svg v-else class="h-4 w-4 text-black/40 dark:text-white/80 group-hover:text-white dark:group-hover:text-black" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
                     </svg>
                  </button>
@@ -1057,197 +1128,64 @@ const summarySelectedEmotions = computed(() => {
             </div>
 
             <!-- NOTES TAB CONTENT -->
-            <div v-if="archiveMode === 'notes'" class="flex flex-col space-y-8 nier-text-primary">
-               <!-- NEW NOTE TEXTAREA -->
-               <div v-if="isCreatingNote" class="flex flex-col space-y-4 bg-black/[0.03] dark:bg-white/[0.03] p-8 relative nier-text-primary">
-                    <div class="absolute top-4 right-4 flex space-x-4">
-                       <button @click="cancelNoteEdit" class="text-[10px] font-mono uppercase tracking-widest opacity-40 hover:opacity-100">{{ locale === 'ru' ? 'Отмена' : 'Cancel' }}</button>
-                    </div>
-                 
-                    <!-- FORMATTING TOOLBAR -->
-                    <div class="flex items-center flex-wrap gap-2 pb-4 border-b border-black/5 dark:border-white/5 mb-4">
-                       <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-sm mr-4">
-                          <button @click="isPreviewMode = false" 
-                                  :class="['px-4 py-2 text-[10px] font-mono transition-all', !isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
-                             {{ locale === 'ru' ? 'РЕДАКТОР' : 'EDITOR' }}
-                          </button>
-                          <button @click="isPreviewMode = true" 
-                                  :class="['px-4 py-2 text-[10px] font-mono transition-all', isPreviewMode ? 'nier-bg-inverted nier-text-primary' : 'opacity-40']">
-                             {{ locale === 'ru' ? 'ПРОСМОТР' : 'PREVIEW' }}
-                          </button>
-                       </div>
+            <section v-if="archiveMode === 'notes'" class="flex w-full flex-col items-start gap-8 pt-10 nier-text-primary">
+              <ExTradeNoteEditor
+                v-if="isCreatingNote"
+                v-model="noteText"
+                :is-persisting="isArchivePersisting"
+                :images="attachableJournalImages"
+                @save="saveJournalNote"
+                @cancel="cancelNoteEdit"
+              />
 
-                       <div v-if="!isPreviewMode" class="flex items-center flex-wrap gap-2">
-                         <button @click="insertFormatting('# ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H1</button>
-                         <button @click="insertFormatting('## ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H2</button>
-                         <button @click="insertFormatting('### ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">H3</button>
-                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('**', '**')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono font-bold transition-all">B</button>
-                         <button @click="insertFormatting('*', '*')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono italic transition-all">I</button>
-                         <button @click="insertFormatting('~~', '~~')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono underline transition-all">U</button>
-                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('- ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">LIST</button>
-                         <button @click="insertFormatting('> ', '')" class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all">QUOTE</button>
-                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         <button @click="insertFormatting('[color=#10b981]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-emerald-500 rounded-full"></div></button>
-                         <button @click="insertFormatting('[color=#ef4444]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-rose-500 rounded-full"></div></button>
-                         <button @click="insertFormatting('[color=#3b82f6]', '[/color]')" class="px-3 py-2 hover:scale-110 transition-all"><div class="w-4 h-4 bg-blue-500 rounded-full"></div></button>
-                         <div class="w-px h-5 bg-black/10 dark:bg-white/10 mx-1"></div>
-                         
-                         <!-- Visual Attach Dropdown -->
-                         <div class="relative group/visuals inline-block">
-                           <button class="px-4 py-2 bg-black/[0.05] dark:bg-white/[0.05] hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-[10px] font-mono transition-all flex items-center gap-2">
-                             {{ locale === 'ru' ? 'ПРИКРЕПИТЬ' : 'ATTACH' }}
-                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                           </button>
-                           <div class="absolute top-full left-0 hidden group-hover/visuals:flex flex-col nier-bg-panel border nier-border-primary shadow-xl z-50 min-w-[150px]">
-                             <div v-if="!journalEntries?.length" class="px-3 py-2 text-[8px] font-mono opacity-50 uppercase whitespace-nowrap">{{ locale === 'ru' ? 'Нет сохраненных материалов' : 'No visuals archived' }}</div>
-                             <button v-else v-for="(img, idx) in journalEntries" :key="img.id" @click.prevent="insertFormatting(`[VISUAL_REF:${idx}]`, '')" class="px-3 py-2 text-[9px] font-mono text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors truncate max-w-[200px]">
-                               {{ img.name || `Visual_Node_${idx}` }}
-                             </button>
-                           </div>
-                         </div>
-                       </div>
-                    </div>
-
-                    <div class="relative min-h-[200px]">
-                       <textarea 
-                          v-if="!isPreviewMode"
-                          ref="noteTextArea"
-                          v-model="noteText" 
-                          :placeholder="locale === 'ru' ? 'МАТЕРИАЛИЗУЙТЕ СВОИ МЫСЛИ...' : 'REIFY SESSION THOUGHTS HERE...'"
-                          class="w-full h-full bg-transparent border-0 font-mono text-[13px] leading-relaxed tracking-wider outline-none resize-none placeholder:opacity-20 min-h-[200px]"
-                          autofocus
-                       ></textarea>
-                       <div v-else 
-                            class="w-full h-full font-mono text-[13px] leading-relaxed tracking-wider overflow-y-auto custom-scrollbar min-h-[200px]"
-                            v-html="formatNote(noteText || tr('Нет контента для отображения', 'No content to preview'))">
-                       </div>
-                    </div>
-                    <div class="flex justify-end">
-                       <ExButton variant="solid" size="sm" @click="persistNote">
-                         {{ locale === 'ru' ? 'СОХРАНИТЬ' : 'SAVE' }}
-                       </ExButton>
-                    </div>
-                 </div>
-               
-               <div v-if="notesList.length === 0 && !isCreatingNote" class="flex flex-col items-center justify-center py-32 opacity-30">
-                 <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
-                 <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'НЕТ ЗАПИСЕЙ' : 'NO NOTES' }}</span>
-               </div>
-
-               <!-- EXISTING NOTES LIST -->
-               <div v-else class="flex flex-col space-y-6">
-                  <div v-for="note in notesList.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())" :key="note.id" 
-                       class="flex flex-col p-6 bg-black/[0.01] dark:bg-white/[0.01] relative group/note cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
-                       @click="toggleNote(note.id)"
-                       @dblclick="startEditContent(note)">
-                     <div class="flex items-center justify-between mb-2 pb-2" :class="expandedNoteIds.includes(note.id) ? 'border-b border-black/5 dark:border-white/5' : ''">
-                        <div class="flex items-center space-x-4">
-                           <div v-if="editingNoteId === note.id" @click.stop class="flex items-center gap-2">
-                             <input 
-                               v-model="editNoteTitle" 
-                               @keydown.enter.prevent="saveNoteTitle(note.id)" 
-                               @blur="saveNoteTitle(note.id)"
-                               class="bg-transparent border-b border-black/30 dark:border-white/30 outline-none text-[9px] font-mono font-black uppercase tracking-[0.2em] nier-text-primary"
-                               autofocus
-                             />
-                             <span class="text-[7px] font-mono opacity-40 uppercase tracking-widest">{{ locale === 'ru' ? '(Enter для сохранения)' : '(Enter to save)' }}</span>
-                           </div>
-                           <span v-else @click.stop="startEditNote(note, $event)" class="text-[9px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-50 transition-opacity cursor-text">{{ note.title || (locale === 'ru' ? 'Архивная запись' : 'Archived record') }}</span>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                           <span class="text-[10px] font-mono font-bold opacity-60 tracking-wider nier-text-primary">{{ formatDateTactical(note.date) }}</span>
-                           <button type="button" @click.stop="removeNote(note.id)" class="opacity-0 group-hover/note:opacity-40 hover:!opacity-100 transition-opacity text-rose-500">
-                              <span class="text-[9px] font-mono font-black uppercase tracking-widest">{{ locale === 'ru' ? '[Удалить]' : '[Delete]' }}</span>
-                           </button>
-                        </div>
-                     </div>
-                     <div v-if="expandedNoteIds.includes(note.id)" class="text-[12px] font-mono leading-relaxed opacity-70 whitespace-pre-wrap mt-2 animate-fade-in" v-html="formatNote(note.content)"></div>
-                  </div>
-               </div>
-            </div>
+              <div v-if="notesList.length" class="flex w-full flex-col gap-6">
+                <template v-for="note in notesList.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())" :key="note.id">
+                  <ExTradeNoteListItem
+                    v-if="editingContentNoteId !== note.id"
+                    :note="note"
+                    :expanded="expandedNoteIds.includes(note.id)"
+                    :can-edit="true"
+                    :is-persisting="isArchivePersisting"
+                    :render-content="renderJournalNote"
+                    @toggle="toggleNote"
+                    @edit-content="startEditContent"
+                    @update-title="updateJournalNoteTitle"
+                    @remove="removeJournalNote"
+                  />
+                </template>
+              </div>
+              <div v-else-if="!isCreatingNote" class="w-full border border-white/10 px-5 py-8 text-center font-mono text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
+                {{ locale === 'ru' ? 'НЕТ ЗАМЕТОК' : 'NO NOTES' }}
+              </div>
+            </section>
 
             <!-- IMAGES TAB CONTENT -->
-            <div v-else-if="archiveMode === 'images'" class="nier-text-primary">
-              <div v-if="journalEntries.length === 0" class="flex flex-col items-center justify-center py-32 opacity-30">
-              <div class="w-12 h-px nier-bg-inverted mb-6 animate-pulse"></div>
-              <span class="text-[9px] font-mono tracking-[0.6em] uppercase nier-text-primary">{{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}</span>
-            </div>
-
-            <div v-else class="grid grid-cols-2 gap-4 nier-text-primary md:grid-cols-4">
-                 <div v-for="entry in journalEntries" :key="entry.id"
-                       class="group relative flex flex-col bg-black/[0.01] transition-all duration-500 dark:bg-white/[0.01] nier-text-primary">
-                    
-                    <!-- Remove Button -->
-                    <button @click.stop="removeJournalEntry(entry.id)" 
-                            class="absolute top-0 right-0 z-30 w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-500/80 hover:text-white nier-text-primary border-l border-b nier-border-primary">
-                       <span class="text-[10px] font-mono">✕</span>
-                    </button>
- 
-                    <!-- Image Upload Area -->
-                    <div @click="triggerUpload(entry.id)" 
-                         class="relative aspect-video cursor-pointer overflow-hidden bg-black/5 dark:bg-white/5 group/img">
-                       <input :id="`file-input-${entry.id}`" type="file" class="hidden" accept="image/*" @change="e => handleImageUpload(entry.id, e)" />
-                       
-                       <div v-if="entry.image" class="w-full h-full">
-                          <img :src="entry.image" class="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
-                          <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                             <span class="text-[8px] font-mono tracking-widest uppercase text-white font-black bg-black/60 px-4 py-2">{{ locale === 'ru' ? 'ЗАМЕНИТЬ' : 'REPLACE' }}</span>
-                          </div>
-                       </div>
-                       <div v-else class="w-full h-full flex flex-col items-center justify-center space-y-4">
-                          <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-30 group-hover/img:opacity-100 nier-text-primary">{{ locale === 'ru' ? 'ЗАГРУЗИТЬ' : 'UPLOAD' }}</span>
-                       </div>
- 
-                       <!-- SCANNING LINE -->
-                       <div class="absolute inset-0 pointer-events-none opacity-[0.05] overflow-hidden">
-                          <div class="w-full h-px nier-bg-inverted animate-scan"></div>
-                       </div>
-                    </div>
- 
-                    <!-- Controls & Info -->
-                    <div class="p-3 flex flex-col space-y-3 nier-text-primary">
-                       <!-- Visual metadata aligned with Trade Analytics Visuals -->
-                       <div class="relative">
-                          <input v-model="entry.name"
-                                 type="text"
-                                 :placeholder="locale === 'ru' ? 'НАЗВАНИЕ' : 'NAME'"
-                                 class="w-full bg-transparent border border-black/5 dark:border-white/5 px-2 py-2 text-[9px] font-mono tracking-[0.15em] font-black focus:outline-none transition-all nier-text-primary uppercase placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
-                       </div>
-
-                       <div class="flex flex-col gap-3">
-                          <div class="flex flex-wrap gap-2 min-h-7">
-                             <span v-for="tag in entry.tags" :key="tag"
-                                   class="flex items-center gap-2 border nier-border-primary px-2 py-1 text-[8px] font-mono uppercase tracking-widest text-black/60 dark:text-white/70">
-                                {{ tag }}
-                                <button @click="removeJournalEntryTag(entry, tag)"
-                                        class="text-[9px] leading-none opacity-40 hover:opacity-100 hover:text-red-500 transition-all">
-                                   x
-                                </button>
-                             </span>
-                             <span v-if="!entry.tags?.length" class="text-[8px] font-mono uppercase tracking-[0.3em] opacity-20 self-center nier-text-primary">
-                                {{ locale === 'ru' ? 'ТЭГОВ НЕТ' : 'NO TAGS' }}
-                             </span>
-                          </div>
-
-                          <div class="flex items-center gap-2">
-                             <input v-model="entry.tagInput"
-                                    @keyup.enter="addJournalEntryTag(entry)"
-                                    type="text"
-                                    :placeholder="locale === 'ru' ? 'Пользовательский тег...' : 'Custom tag...'"
-                                    class="flex-1 bg-transparent border border-black/5 dark:border-white/5 px-3 py-2 text-[9px] font-mono uppercase tracking-widest focus:outline-none transition-all nier-text-primary placeholder:opacity-20 focus:border-black/20 dark:focus:border-white/20" />
-                             <button @click="addJournalEntryTag(entry)"
-                                     class="px-3 py-2 border nier-border-primary text-[8px] font-mono uppercase tracking-widest opacity-50 hover:opacity-100 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
-                                {{ locale === 'ru' ? 'Добавить тег' : 'Add tag' }}
-                             </button>
-                          </div>
-                       </div>
- 
-                    </div>
-                 </div>
+            <section v-else-if="archiveMode === 'images'" class="flex w-full flex-col items-start gap-8 pt-10 nier-text-primary">
+              <div v-if="activeJournalImage?.url" class="flex min-h-[620px] w-full items-center justify-center overflow-hidden bg-black/5 p-6 dark:bg-white/5">
+                <img :src="activeJournalImage.url" :alt="activeJournalImage.name || 'Journal image'" class="max-h-[calc(100vh-16rem)] w-full object-contain" />
               </div>
-            </div>
+              <div v-else-if="journalImages.length" class="grid w-full grid-cols-2 items-start gap-6 md:grid-cols-3">
+                <ExTradeImageEntry
+                  v-for="(image, index) in journalImages"
+                  :key="image.id || image.url || `journal-image-${index}`"
+                  :image="image"
+                  :index="index"
+                  :can-edit="true"
+                  :is-persisting="isArchivePersisting"
+                  @upload="handleJournalImageUpload"
+                  @remove="removeJournalImage"
+                  @name-change="updateJournalImageName"
+                  @remove-tag="removeJournalImageTag"
+                  @view="openJournalImage"
+                />
+              </div>
+              <div v-else class="flex w-full flex-col items-center justify-center py-32 opacity-30">
+                <div class="mb-6 h-px w-12 bg-white"></div>
+                <span class="text-[9px] font-mono uppercase tracking-[0.6em] text-white">
+                  {{ locale === 'ru' ? 'НЕТ ИЗОБРАЖЕНИЙ' : 'NO IMAGES' }}
+                </span>
+              </div>
+            </section>
                 </div>
               </div>
             </div>

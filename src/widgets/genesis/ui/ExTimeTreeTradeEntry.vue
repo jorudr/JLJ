@@ -100,7 +100,7 @@ const escapeTradeNoteHtml = (value: unknown) => String(value)
   .replace(/'/g, '&#039;')
 
 const renderTradeNote = (note: any) => {
-  const content = String(note?.html || '')
+  const content = String(note?.html || note?.content || '')
   return content.replace(/\[VISUAL_REF:(\d+)\]/gim, (match, indexValue) => {
     const index = Number.parseInt(indexValue, 10)
     const image = attachableTradeImages.value[index]

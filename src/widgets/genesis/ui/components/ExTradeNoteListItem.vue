@@ -96,7 +96,7 @@ const formatDate = (dateValue: unknown) => {
     </div>
 
     <div
-      v-if="props.expanded && props.note.html"
+      v-if="props.expanded && props.renderContent"
       class="trade-note-rich mt-2 font-mono text-[12px] leading-relaxed text-white/70"
       v-html="props.renderContent ? props.renderContent(props.note) : props.note.html"
     ></div>
