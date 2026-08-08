@@ -383,8 +383,9 @@ const tradeEntryThemeStyle = computed(() => props.isDark
           <div class="h-full min-h-0 w-full flex flex-col overflow-hidden">
             <div class="shrink-0 px-10 pt-10">
               <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
-                <div class="flex w-full max-w-4xl flex-col items-start">
-                  <div class="z-20 flex w-full shrink-0 items-center justify-start gap-2 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
+                <div class="z-20 w-full shrink-0 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
+                  <div class="flex w-full items-center justify-between gap-4">
+                    <div class="flex min-w-0 flex-1 items-center justify-start gap-2">
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
@@ -425,6 +426,20 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                 >
                   {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
                 </button>
+                    </div>
+                    <button
+                      v-if="activeEntryFormTab === 'notes' || activeEntryFormTab === 'images'"
+                      type="button"
+                      :disabled="!canEditTradeArchive || isPersistingArchive"
+                      class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+                      :aria-label="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
+                      :title="activeEntryFormTab === 'notes' ? (locale === 'ru' ? 'Добавить заметку' : 'Add note') : (locale === 'ru' ? 'Добавить изображение' : 'Add image')"
+                      @click="activeEntryFormTab === 'notes' ? startTradeNoteCreation() : addTradeImageSlot()"
+                    >
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -542,21 +557,6 @@ const tradeEntryThemeStyle = computed(() => props.isDark
               </section>
 
               <section v-else-if="activeEntryFormTab === 'notes'" class="flex w-full flex-col items-start gap-8">
-                <div class="flex w-full items-center justify-end gap-4">
-                  <button
-                    type="button"
-                    :disabled="!canEditTradeArchive || isPersistingArchive"
-                    class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
-                    :aria-label="locale === 'ru' ? 'Добавить заметку' : 'Add note'"
-                    :title="locale === 'ru' ? 'Добавить заметку' : 'Add note'"
-                    @click="startTradeNoteCreation"
-                  >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
-                    </svg>
-                  </button>
-                </div>
-
                 <div v-if="isCreatingTradeNote" class="flex w-full flex-col gap-4 border border-white/10 bg-white/[0.03] p-5">
                   <div class="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
                     <button type="button" class="border border-white/10 px-3 py-2 font-mono text-[9px] transition-colors hover:bg-white hover:text-black" @mousedown.stop.prevent="applyTradeNoteBlock('h1')">H1</button>
@@ -621,22 +621,10 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
               <section v-else-if="activeEntryFormTab === 'images'" class="flex w-full flex-col items-start gap-8">
                 <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">V.</div>
-                <div class="flex w-full items-center justify-between gap-4">
+                <div class="flex w-full items-center justify-start gap-4">
                   <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
                     {{ locale === 'ru' ? 'ИЗОБРАЖЕНИЯ' : 'IMAGES' }}
                   </h2>
-                  <button
-                    type="button"
-                    :disabled="!canEditTradeArchive || isPersistingArchive"
-                    class="group grid h-9 w-9 shrink-0 place-items-center border border-white/20 transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
-                    :aria-label="locale === 'ru' ? 'Добавить изображение' : 'Add image'"
-                    :title="locale === 'ru' ? 'Добавить изображение' : 'Add image'"
-                    @click="addTradeImageSlot"
-                  >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" />
-                    </svg>
-                  </button>
                 </div>
 
                 <div v-if="tradeImages.length" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
