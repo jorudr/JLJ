@@ -1,16 +1,12 @@
 <template>
-  <div class="ex-trade-archive w-full h-full text-white/80 font-mono pt-32 p-12 relative flex flex-col">
+  <div class="ex-trade-archive w-full h-full text-white/80 font-mono pt-24 px-6 pb-12 relative flex flex-col">
     <!-- Grid overlay -->
     <div class="absolute inset-0 pointer-events-none opacity-20 bg-[#030303]"
          style="background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-    <div 
-      class="relative z-10 max-w-6xl mx-auto h-[calc(100vh-14rem)] max-h-[860px] w-full overflow-y-auto archive-scrollbar pr-4"
-      :class="{ 'is-scrolling': isScrolling }"
-      @scroll="handleScroll"
-    >
+    <div class="relative z-10 max-w-7xl mx-auto h-[calc(100vh-12rem)] max-h-[860px] w-full flex flex-col">
       <!-- HEADER / STRATEGY SELECTOR -->
-      <div class="flex flex-col relative w-max mb-12">
+      <div class="flex flex-col relative w-max mb-12 shrink-0">
         <div class="flex items-center space-x-3 cursor-pointer group/strat" @click="showStrategyMenu = !showStrategyMenu">
           <div class="w-1.5 h-1.5 bg-white rotate-45 transition-all duration-500" :class="showStrategyMenu ? 'scale-150 rotate-[225deg]' : 'animate-pulse'"></div>
           <span class="text-[10px] tracking-[0.5em] uppercase font-black transition-opacity group-hover/strat:opacity-100" :class="showStrategyMenu ? 'opacity-100' : 'opacity-70'">
@@ -37,7 +33,7 @@
       </div>
 
       <!-- SUMMARY ROW -->
-      <div class="flex flex-wrap items-end gap-16 border-b border-white/10 pb-8 mb-8">
+      <div class="flex flex-wrap items-end gap-16 border-b border-white/10 pb-8 mb-8 shrink-0 pr-4">
         <div class="flex flex-col">
           <span class="text-6xl font-bold tracking-tighter leading-none">{{ trades.length }}</span>
           <span class="text-[8px] tracking-[0.3em] opacity-40 uppercase mt-4">TRADES RECORDED</span>
@@ -72,7 +68,13 @@
         </div>
       </div>
 
-      <!-- TRADES LIST GROUPED BY MONTH -->
+      <!-- TRADES SCROLL CONTAINER -->
+      <div 
+        class="flex-1 w-full overflow-y-auto archive-scrollbar pr-4 pb-12"
+        :class="{ 'is-scrolling': isScrolling }"
+        @scroll="handleScroll"
+      >
+        <!-- TRADES LIST GROUPED BY MONTH -->
       <div class="flex flex-col space-y-12 pb-32">
         <div v-for="group in groupedTrades" :key="group.month" class="flex flex-col">
           
@@ -119,12 +121,11 @@
             </div>
           </div>
 
-        </div>
       </div>
     </div>
-
-
   </div>
+</div>
+</div>
 </template>
 
 <script setup lang="ts">
