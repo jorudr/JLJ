@@ -1,10 +1,10 @@
 <template>
-  <div class="ex-trade-archive h-full w-full bg-[#030303] text-white/80 font-mono p-12 overflow-y-auto relative custom-scrollbar">
+  <div class="ex-trade-archive w-full h-full text-white/80 font-mono pt-32 p-12 relative flex flex-col">
     <!-- Grid overlay -->
-    <div class="absolute inset-0 pointer-events-none opacity-20"
+    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[#030303]"
          style="background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-    <div class="relative z-10 max-w-6xl mx-auto">
+    <div class="relative z-10 max-w-6xl mx-auto h-[calc(100vh-14rem)] max-h-[860px] w-full overflow-y-auto custom-scrollbar pr-4">
       <!-- HEADER / STRATEGY SELECTOR -->
       <div class="flex flex-col relative w-max mb-12">
         <div class="flex items-center space-x-3 cursor-pointer group/strat" @click="showStrategyMenu = !showStrategyMenu">
