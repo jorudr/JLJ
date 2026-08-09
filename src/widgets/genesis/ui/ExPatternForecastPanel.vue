@@ -105,16 +105,21 @@
       <template v-if="activeTab === 'summary'">
       <div class="grid grid-cols-1 gap-0">
         <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-b border-black/10 px-5 py-4 dark:border-white/10'">
-          <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+          <div v-if="props.compactNavigation" class="mb-6">
             <div>
               <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">I.</div>
               <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
                 {{ locale === 'ru' ? 'ВЕРОЯТНЫЙ ИТОГ' : 'LIKELY OUTCOME' }}
               </h2>
             </div>
-            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ formatMoney(forecast.currentCapital) }}
-            </span>
+            <div class="mt-4 flex flex-col items-start gap-1">
+              <span class="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/50 dark:text-white/50">
+                {{ locale === 'ru' ? 'ТЕКУЩИЙ КАПИТАЛ' : 'CURRENT CAPITAL' }}
+              </span>
+              <span class="font-mono text-xl font-black tracking-[0.08em] nier-text-primary md:text-2xl">
+                {{ formatMoney(forecast.currentCapital) }}
+              </span>
+            </div>
           </div>
           <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
@@ -126,32 +131,44 @@
           </div>
           <div class="mt-3 grid grid-cols-2 gap-3">
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Вероятный итог за 10 сделок' : 'Likely outcome over 10 trades' }}
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px]'"
+              >
+                {{ locale === 'ru' ? 'ВЕРОЯТНЫЙ РЕЗУЛЬТАТ ЧЕРЕЗ 10 СДЕЛОК' : 'LIKELY RESULT AFTER 10 TRADES' }}
               </div>
-              <div class="mt-2 font-mono text-sm font-black nier-text-primary">
+              <div class="mt-2 font-mono text-sm font-black" :class="forecastValueClass(forecast.tactical.horizons[0]?.p50 ?? 0)">
                 {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p50 ?? 0, forecast.currentCapital) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Вероятный итог за 20 сделок' : 'Likely outcome over 20 trades' }}
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px]'"
+              >
+                {{ locale === 'ru' ? 'ВЕРОЯТНЫЙ РЕЗУЛЬТАТ ЧЕРЕЗ 20 СДЕЛОК' : 'LIKELY RESULT AFTER 20 TRADES' }}
               </div>
-              <div class="mt-2 font-mono text-sm font-black nier-text-primary">
+              <div class="mt-2 font-mono text-sm font-black" :class="forecastValueClass(forecast.tactical.horizons[1]?.p50 ?? 0)">
                 {{ formatPercentWithCapital(forecast.tactical.horizons[1]?.p50 ?? 0, forecast.currentCapital) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Похожесть на прибыльные истории' : 'Similarity to profitable histories' }}
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px]'"
+              >
+                {{ locale === 'ru' ? 'СХОЖЕСТЬ С ПРИБЫЛЬНЫМИ ТРЕЙДЕРАМИ' : 'SIMILARITY TO PROFITABLE TRADERS' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Шанс завершиться в плюсе' : 'Chance to finish in profit' }}
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px]'"
+              >
+                {{ locale === 'ru' ? 'ВЕРОЯТНОСТЬ ВЫЙТИ В ПЛЮС' : 'PROBABILITY OF FINISHING IN PROFIT' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatPercent(forecast.lifecycle.affinityPositive, false) }}
@@ -169,7 +186,7 @@
               {{ locale === 'ru' ? 'ТАКТИЧЕСКОЕ ПРОДОЛЖЕНИЕ' : 'TACTICAL CONTINUATION' }}
             </h2>
           </div>
-          <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+          <span v-if="!props.compactNavigation" class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
             {{ `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
           </span>
         </div>
@@ -186,42 +203,55 @@
           <div
             v-for="horizon in forecast.tactical.horizons"
             :key="horizon.horizonTrades"
-            class="border border-black/10 px-4 py-4 dark:border-white/10"
+            class="border border-black/10 px-4 dark:border-white/10"
+            :class="props.compactNavigation ? 'py-2' : 'py-4'"
           >
             <div class="flex items-center justify-between gap-3">
-              <span class="font-mono text-[8px] font-black uppercase tracking-[0.25em] nier-text-primary">
+              <span v-if="!props.compactNavigation" class="font-mono text-[8px] font-black uppercase tracking-[0.25em] nier-text-primary">
                 {{ horizon.horizonTrades }}T
               </span>
-              <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
+              <span v-if="!props.compactNavigation" class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
                 {{ locale === 'ru' ? 'Вероятное продолжение' : 'Likely continuation' }}
               </span>
             </div>
-            <div class="mt-3 grid grid-cols-2 gap-3">
+            <div :class="props.compactNavigation ? 'mt-1' : 'mt-3'" class="grid grid-cols-2 gap-3">
             <div>
-              <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px] tracking-[0.25em] text-black/35 dark:text-white/35'"
+              >
                 {{ locale === 'ru' ? 'Вероятный итог' : 'Likely outcome' }}
               </div>
-              <div class="mt-1 font-mono text-lg font-black nier-text-primary">
+              <div class="mt-1 font-mono text-lg font-black" :class="forecastValueClass(horizon.p50)">
                   {{ formatPercentWithCapital(horizon.p50, forecast.currentCapital) }}
               </div>
             </div>
             <div>
-              <div class="font-mono text-[7px] uppercase tracking-[0.25em] text-black/35 dark:text-white/35">
+              <div
+                class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+                :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[7px] tracking-[0.25em] text-black/35 dark:text-white/35'"
+              >
                   {{ locale === 'ru' ? 'Шанс на прибыль' : 'Profit chance' }}
                 </div>
-                <div class="mt-1 font-mono text-lg font-black nier-text-primary">
+                <div class="mt-1 font-mono text-lg font-black" :class="forecastValueClass(horizon.probabilityPositive)">
                   {{ formatPercent(horizon.probabilityPositive, false) }}
                 </div>
               </div>
             </div>
-            <div class="mt-3 grid grid-cols-1 gap-1">
-              <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+            <div :class="props.compactNavigation ? 'mt-2' : 'mt-3'" class="grid grid-cols-1 gap-1">
+              <div
+                class="font-mono text-black/45 dark:text-white/45"
+                :class="props.compactNavigation ? 'text-[11px] font-black uppercase tracking-[0.18em] leading-relaxed' : 'text-[10px]'"
+              >
                 {{ locale === 'ru' ? 'Вероятный максимум по пути' : 'Likely peak along the way' }}:
-                {{ formatPercentWithCapital(horizon.medianPeakPct, forecast.currentCapital) }}
+                <span :class="forecastValueClass(horizon.medianPeakPct)">{{ formatPercentWithCapital(horizon.medianPeakPct, forecast.currentCapital) }}</span>
               </div>
-              <div class="font-mono text-[10px] text-red-600 dark:text-red-300">
+              <div
+                class="font-mono text-red-600 dark:text-red-300"
+                :class="props.compactNavigation ? 'text-[11px] font-black uppercase tracking-[0.18em] leading-relaxed' : 'text-[10px]'"
+              >
                 {{ locale === 'ru' ? 'Вероятная просадка по пути' : 'Likely drawdown along the way' }}:
-                {{ formatPercentWithCapital(horizon.medianTroughPct, forecast.currentCapital) }}
+                <span :class="forecastValueClass(horizon.medianTroughPct)">{{ formatPercentWithCapital(horizon.medianTroughPct, forecast.currentCapital) }}</span>
               </div>
             </div>
           </div>
@@ -229,16 +259,16 @@
       </div>
 
       <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-t border-black/10 px-5 py-4 dark:border-white/10'">
-        <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+        <div v-if="props.compactNavigation" class="mb-6">
           <div>
             <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">III.</div>
             <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
               {{ locale === 'ru' ? 'ИТОГОВАЯ БЛИЗОСТЬ' : 'TERMINAL AFFINITY' }}
             </h2>
           </div>
-          <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-            {{ locale === 'ru' ? 'финальные исходы' : 'terminal outcomes' }}
-          </span>
+          <div class="mt-4 font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/50 dark:text-white/50">
+            {{ locale === 'ru' ? 'ФИНАЛЬНЫЕ ВЫВОДЫ' : 'FINAL CONCLUSIONS' }}
+          </div>
         </div>
         <div v-else class="flex items-center justify-between gap-3">
           <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
@@ -250,25 +280,14 @@
         </div>
 
         <div class="mt-4 border border-black/10 px-4 py-4 dark:border-white/10">
-          <div class="font-mono text-[8px] uppercase tracking-[0.28em] text-black/35 dark:text-white/35">
+          <div
+            class="font-mono uppercase tracking-[0.18em] text-black/55 dark:text-white/55"
+            :class="props.compactNavigation ? 'text-[11px] font-black leading-relaxed' : 'text-[8px] tracking-[0.28em] text-black/35 dark:text-white/35'"
+          >
             {{ locale === 'ru' ? 'Ключевой вывод' : 'Key takeaway' }}
           </div>
           <div class="mt-2 font-mono text-sm font-black nier-text-primary">
             {{ lifecycleSummary }}
-          </div>
-          <div class="mt-2 grid grid-cols-1 gap-1 md:grid-cols-3">
-            <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Похожесть на прибыльные истории' : 'Similarity to profitable histories' }}:
-              {{ formatPercent(forecast.lifecycle.affinityAbove30, false) }}
-            </div>
-            <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Шанс завершиться в плюсе' : 'Chance to finish in profit' }}:
-              {{ formatPercent(forecast.lifecycle.affinityPositive, false) }}
-            </div>
-            <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-              {{ locale === 'ru' ? 'Вероятный остаток пути' : 'Likely remaining path' }}:
-              {{ formatPercent(forecast.lifecycle.medianContinuationToEndPct) }}
-            </div>
           </div>
         </div>
 
@@ -281,13 +300,25 @@
               ? 'bg-white text-black dark:bg-white dark:text-black'
               : ''"
           >
-            <div class="font-mono text-[8px] font-black uppercase tracking-[0.22em]" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black' : 'nier-text-primary'">
-              {{ group.label }}
+            <div
+              class="font-mono font-black uppercase tracking-[0.18em]"
+              :class="[
+                props.compactNavigation ? 'text-[11px] leading-relaxed' : 'text-[8px] tracking-[0.22em]',
+                topLifecycleGroupKeys.has(group.key) ? 'text-black' : 'nier-text-primary'
+              ]"
+            >
+              {{ formatOutcomeGroupLabel(group.label) }}
             </div>
             <div class="mt-2 font-mono text-base font-black" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black' : 'nier-text-primary'">
               {{ formatPercent(group.affinityScore, false) }}
             </div>
-            <div class="mt-1 font-mono text-[10px]" :class="topLifecycleGroupKeys.has(group.key) ? 'text-black/55' : 'text-black/40 dark:text-white/40'">
+            <div
+              class="mt-1 font-mono"
+              :class="[
+                props.compactNavigation ? 'text-[11px] font-black tracking-[0.18em]' : 'text-[10px]',
+                topLifecycleGroupKeys.has(group.key) ? 'text-black/55' : 'text-black/40 dark:text-white/40'
+              ]"
+            >
               {{ group.matchesCount }} matches
             </div>
           </div>
@@ -362,9 +393,9 @@
                 {{ locale === 'ru' ? 'Вероятный диапазон результата' : 'Likely result range' }}
               </div>
               <div class="mt-2 font-mono text-[10px] font-black nier-text-primary">
-                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.currentCapital) }}
+                <span :class="forecastValueClass(Math.min(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.tactical.horizons[0]?.p75 ?? 0))">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.currentCapital) }}</span>
                 ...
-                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p75 ?? 0, forecast.currentCapital) }}
+                <span :class="forecastValueClass(forecast.tactical.horizons[0]?.p75 ?? 0)">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p75 ?? 0, forecast.currentCapital) }}</span>
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
@@ -372,7 +403,7 @@
                 {{ locale === 'ru' ? 'Простой расчет по текущему профилю' : 'Simple estimate from current profile' }}
               </div>
               <div class="mt-2 font-mono text-[10px] font-black nier-text-primary">
-                {{ formatPercentWithCapital(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0, forecast.currentCapital) }}
+                <span :class="forecastValueClass(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0)">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0, forecast.currentCapital) }}</span>
               </div>
             </div>
           </div>
@@ -687,11 +718,32 @@ const topLifecycleGroupKeys = computed(() => {
 })
 
 const lifecycleSummary = computed(() => {
+  const groupLabel = formatOutcomeGroupLabel(forecast.value.lifecycle.strongestGroupLabel)
   if (locale.value === 'ru') {
-    return `Ваша торговая история ближе всего к фазам, которые в итоге заканчивались с результатом ${forecast.value.lifecycle.strongestGroupLabel} со сходством ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)}.`
+    return `Ваша торговая история ближе всего к фазам, которые в итоге заканчивались с результатом ${groupLabel} со сходством ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)}.`
   }
-  return `The current profile is closest to phases that eventually finished in the ${forecast.value.lifecycle.strongestGroupLabel} group with ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)} affinity.`
+  return `The current profile is closest to phases that eventually finished in the ${groupLabel} group with ${formatPercent(forecast.value.lifecycle.strongestGroupAffinity, false)} affinity.`
 })
+
+const formatOutcomeGroupLabel = (label: string) => {
+  const labels = locale.value === 'ru'
+    ? {
+        '< 0%': 'меньше 0%',
+        '0% to 15%': 'от 0% до 15%',
+        '15% to 30%': 'от 15% до 30%',
+        '30% to 60%': 'от 30% до 60%',
+        '60%+': 'больше 60%'
+      }
+    : {
+        '< 0%': 'less than 0%',
+        '0% to 15%': 'from 0% to 15%',
+        '15% to 30%': 'from 15% to 30%',
+        '30% to 60%': 'from 30% to 60%',
+        '60%+': 'more than 60%'
+      }
+
+  return labels[label as keyof typeof labels] || label.replace('<', 'less than').replace('>', 'more than').replace('+', '')
+}
 
 const formatNumber = (value: number, digits = 1) => {
   if (!Number.isFinite(value)) return '0'
@@ -706,11 +758,15 @@ const formatPercent = (value: number, signed = true) => {
   return `${sign}${formatNumber(value, 1)}%`
 }
 
+const forecastValueClass = (value: number) => {
+  return Number(value) < 0 ? 'text-red-600 dark:text-red-300' : 'nier-text-primary'
+}
+
 const formatPercentWithCapital = (value: number, capital: number) => {
   const percent = formatPercent(value)
-  const projectedCapital = Number.isFinite(capital) ? capital * (1 + value / 100) : Number.NaN
-  if (!Number.isFinite(projectedCapital)) return percent
-  return `${percent} (${formatMoney(projectedCapital)})`
+  const resultDollars = Number.isFinite(capital) ? capital * (value / 100) : Number.NaN
+  if (!Number.isFinite(resultDollars)) return percent
+  return `${percent} (${formatMoney(resultDollars)})`
 }
 
 const formatMoney = (value: number) => {
