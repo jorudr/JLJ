@@ -626,7 +626,7 @@
     </div>
 
     <div
-      v-if="!showNodeMap && viewType === 'cube' && showCapitalForecast && isHudVisible && canOpenCapitalForecast"
+      v-if="!showNodeMap && (viewType === 'cube' || viewType === 'timeTree') && showCapitalForecast && isHudVisible && canOpenCapitalForecast"
       class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[8990] w-[1100px] max-w-[95vw] pointer-events-auto opacity-30 hover:opacity-100 transition-opacity duration-500"
     >
       <ExPatternForecastPanel
@@ -2585,7 +2585,7 @@ const toggleCapitalForecast = () => {
 
 const openCapitalForecastFromMenu = () => {
   closeNavigationOverlays()
-  viewType.value = 'cube'
+  viewType.value = 'timeTree'
   toggleCapitalForecast()
 }
 

@@ -93,6 +93,7 @@
     <Teleport to="body">
       <div
         v-if="hoveredBlock"
+        ref="tooltipElement"
         class="asset-heatmap__cursor-tooltip"
         :style="{
           left: `${tooltipPosition.x}px`,
@@ -173,6 +174,7 @@ const heatmapRoot = ref<HTMLDivElement | null>(null)
 const containerAspectRatio = ref(1000 / 640)
 const hoveredBlock = ref<HeatmapBlock | null>(null)
 const tooltipPosition = ref({ x: 0, y: 0 })
+const tooltipElement = ref<HTMLDivElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
 const getNestedValue = (trade: Trade, key: string) => trade[key] ?? trade.trade?.[key]
@@ -208,12 +210,35 @@ const resolvePnl = (trade: Trade) => {
   return Number.isFinite(normalized) ? normalized : 0
 }
 
+const updateTooltipPosition = (event: MouseEvent) => {
+  const gap = 14
+  const padding = 8
+  const tooltipWidth = tooltipElement.value?.offsetWidth || 220
+  const tooltipHeight = tooltipElement.value?.offsetHeight || 28
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  const preferredX = event.clientX + gap
+  const preferredY = event.clientY + gap
+  const x = preferredX + tooltipWidth <= viewportWidth - padding
+    ? preferredX
+    : event.clientX - tooltipWidth - gap
+  const y = preferredY + tooltipHeight <= viewportHeight - padding
+    ? preferredY
+    : event.clientY - tooltipHeight - gap
+
+  tooltipPosition.value = {
+    x: Math.max(padding, Math.min(x, viewportWidth - tooltipWidth - padding)),
+    y: Math.max(padding, Math.min(y, viewportHeight - tooltipHeight - padding))
+  }
+}
+
 const handleBlockHover = (event: MouseEvent, block: HeatmapBlock) => {
   hoveredBlock.value = block
-  tooltipPosition.value = {
-    x: event.clientX + 14,
-    y: event.clientY + 14
-  }
+  updateTooltipPosition(event)
+  void nextTick(() => {
+    if (hoveredBlock.value?.key === block.key) updateTooltipPosition(event)
+  })
 }
 
 const handleBlockLeave = () => {
