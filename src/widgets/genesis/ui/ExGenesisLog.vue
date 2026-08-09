@@ -68,7 +68,7 @@
         ]"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExTradeArchive class="relative z-10" />
+        <ExTradeArchive class="relative z-10" @trade-context-menu="handleArchiveTradeClick" />
       </div>
 
       <!-- STRATEGY TREE LAYER -->
@@ -1386,7 +1386,7 @@ const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
 const selectedTradeId = ref<string | null>(null)
-const tradeContextMenu = ref<{ x: number; y: number; tradeId: string; source: 'canvas' | 'timeTree' } | null>(null)
+const tradeContextMenu = ref<{ x: number; y: number; tradeId: string; source: 'canvas' | 'timeTree' | 'archive' } | null>(null)
 const editingTrade = ref<any>(undefined)
 const tradeEntryRef = ref<any>(null)
 const isTradeEntryCloseModeActive = ref(true)
@@ -1647,6 +1647,27 @@ const handleTimeTreeTradeClick = (payload: { tradeId: string; event?: MouseEvent
     y: Math.min(Math.max(8, y), Math.max(8, viewportHeight - menuHeight)),
     tradeId: String(payload.tradeId),
     source: 'timeTree'
+  }
+}
+
+const handleArchiveTradeClick = (payload: { tradeId: string; event?: MouseEvent }) => {
+  if (!payload?.tradeId) return
+
+  const event = payload.event
+  const viewportWidth = typeof window === 'undefined' ? 0 : window.innerWidth
+  const viewportHeight = typeof window === 'undefined' ? 0 : window.innerHeight
+  const menuWidth = 230
+  const menuHeight = 260
+  const x = event?.clientX ?? Math.max(16, viewportWidth / 2 - menuWidth / 2)
+  const y = event?.clientY ?? Math.max(16, viewportHeight / 2 - menuHeight / 2)
+
+  selectedTradeId.value = String(payload.tradeId)
+  showTimeTreeTradeDetails.value = false
+  tradeContextMenu.value = {
+    x: Math.min(Math.max(8, x), Math.max(8, viewportWidth - menuWidth)),
+    y: Math.min(Math.max(8, y), Math.max(8, viewportHeight - menuHeight)),
+    tradeId: String(payload.tradeId),
+    source: 'archive'
   }
 }
 

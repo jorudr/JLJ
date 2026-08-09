@@ -95,7 +95,8 @@
           <!-- Trades in Month -->
           <div class="flex flex-col gap-1">
             <div v-for="trade in group.trades" :key="trade.id" 
-                 class="grid grid-cols-[1.5fr_1fr_1fr_1.5fr_1fr_1fr] items-center text-[10px] tracking-widest px-2 py-3 hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5 rounded-sm">
+                 class="grid grid-cols-[1.5fr_1fr_1fr_1.5fr_1fr_1fr] items-center text-[10px] tracking-widest px-2 py-3 hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5 rounded-sm"
+                 @click="handleTradeClick($event, trade)">
               
               <span class="opacity-70">{{ formatDate(getTradeTime(trade)) }}</span>
               <span class="font-bold">{{ trade.asset }}</span>
@@ -130,6 +131,10 @@
 import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
+const emit = defineEmits<{
+  (event: 'trade-context-menu', payload: { tradeId: string; event: MouseEvent }): void
+}>()
+
 const tradeStore = useStrategyTradesStore()
 const showStrategyMenu = ref(false)
 
@@ -158,6 +163,14 @@ const trades = computed(() => {
   if (!selectedStrategyId.value) return []
   return tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
 })
+
+const handleTradeClick = (event: MouseEvent, trade: any) => {
+  if (!trade?.id) return
+  emit('trade-context-menu', {
+    tradeId: String(trade.id),
+    event
+  })
+}
 
 // Metrics
 const getTradePnl = (trade: any) => {
