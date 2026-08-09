@@ -107,6 +107,7 @@
 
               <div v-if="filter.type === 'options'" class="max-h-64 overflow-y-auto custom-scrollbar py-2">
                 <button
+                  v-if="filter.options.length"
                   v-for="item in filter.options"
                   :key="item.id"
                   @click.stop="selectDropdownOption(filter.id, item.id)"
@@ -119,6 +120,12 @@
                   </span>
                   <span v-if="isDropdownOptionActive(filter.id, item.id)" class="text-[8px] opacity-60">{{ locale === 'ru' ? 'АКТИВНО' : 'ACTIVE' }}</span>
                 </button>
+                <span
+                  v-else-if="filter.id === 'conditions'"
+                  class="block px-2.5 py-3 text-[10px] uppercase tracking-wider opacity-45"
+                >
+                  {{ locale === 'ru' ? 'НЕТ УСЛОВИЙ' : 'NO CONDITIONS' }}
+                </span>
               </div>
 
               <div v-else-if="filter.id === 'profit'" class="py-2">
@@ -2064,31 +2071,40 @@ const getScenarioConditions = (scenarioId: string) => {
   return tacticalUnits
 }
 
+const formatScenarioFilterLabel = (value: unknown) => {
+  const raw = String(value || '').trim()
+  const normalized = raw.toUpperCase()
+  const defaultScenarioIds = new Set(['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION'])
+  return defaultScenarioIds.has(normalized) ? normalized.replace(/_/g, ' ') : raw
+}
+
 const scenariosList = computed(() => {
   const items = new Map<string, string>()
   if (props.trades && props.trades.length > 0) {
     props.trades.forEach(t => { 
       const s = t.boardScenarioEntry?.info?.name || t.scenario
-      if (s) items.set(s, s) 
+      if (s) items.set(s, formatScenarioFilterLabel(s))
     })
   } else {
     mockTrades.value.forEach((t: any) => { 
       const s = t.boardScenarioEntry?.info?.name || t.scenario
-      if (s) items.set(s, s) 
+      if (s) items.set(s, formatScenarioFilterLabel(s))
     })
   }
 
   strategyScenarios.value.forEach(s => {
     const name = (s.params?.customName || s.label || '').toUpperCase()
-    if (name) items.set(name, name)
+    if (name) items.set(name, formatScenarioFilterLabel(name))
   })
 
   // Exit scenarios requested by user
-  items.set('TAKE_PROFIT', 'TAKE_PROFIT')
-  items.set('STOP_LOSS', 'STOP_LOSS')
-  items.set('FULL_LIQUIDATION', 'FULL_LIQUIDATION')
+  items.set('TAKE_PROFIT', formatScenarioFilterLabel('TAKE_PROFIT'))
+  items.set('STOP_LOSS', formatScenarioFilterLabel('STOP_LOSS'))
+  items.set('FULL_LIQUIDATION', formatScenarioFilterLabel('FULL_LIQUIDATION'))
 
-  const list = Array.from(items.values()).sort().map(s => ({ id: s, label: s }))
+  const list = Array.from(items.entries())
+    .sort(([, leftLabel], [, rightLabel]) => leftLabel.localeCompare(rightLabel))
+    .map(([id, label]) => ({ id, label }))
   return [{ id: 'ALL', label: 'ALL' }, ...list]
 })
 
