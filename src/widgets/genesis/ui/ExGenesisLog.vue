@@ -12,7 +12,6 @@
 
     <div
       v-if="!showNodeMap && !isTradeEntryOpen"
-      v-show="!showTimeTreeTradeDetails"
       class="contents"
     >
 
@@ -640,7 +639,8 @@
     </div>
 
     <div
-      v-if="showFiltersPanel && !showNodeMap && (viewType === 'cube' || viewType === 'timeTree') && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      v-if="!showNodeMap && (viewType === 'cube' || viewType === 'timeTree') && isHudVisible && !isTradeEntryOpen && !isTimeTreeFullscreen"
+      v-show="showFiltersPanel"
       class="pointer-events-auto absolute left-1/2 top-8 z-[10010] w-[562px] -translate-x-1/2"
     >
       <ExPanel variant="light" :no-padding="true" :show-corners="false" class="!w-full overflow-visible">
@@ -652,6 +652,7 @@
           :result-display-mode="listResultDisplayMode"
           :color-mode="listColorMode"
           @filtered-trades-change="handleTimeTreeFilteredTrades"
+          @filters-active-change="handleTradeFiltersActiveChange"
         />
       </ExPanel>
     </div>
@@ -663,6 +664,19 @@
       :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
     >
       <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+        <button
+          v-if="showTimeTreeTradeDetails"
+          type="button"
+          class="group relative flex h-10 w-10 items-center justify-center border border-white bg-white text-black transition-all hover:bg-white/85"
+          :aria-label="locale === 'ru' ? 'Назад к архиву' : 'Back to archive'"
+          @click="closeTimeTreeTradeDetails"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+            <path d="M19 12H5M11 6l-6 6 6 6" stroke-linecap="square" stroke-linejoin="miter" />
+          </svg>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }} ]</span>
+        </button>
+
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
@@ -680,24 +694,10 @@
         </button>
 
         <button
-          v-if="showTimeTreeTradeDetails"
-          type="button"
-          class="group relative flex h-10 w-10 items-center justify-center border border-white/30 bg-white/10 text-white transition-all"
-          :aria-label="locale === 'ru' ? 'Открытая сделка' : 'Open trade'"
-          @click="closeTimeTreeTradeDetails"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
-            <rect x="4" y="3" width="16" height="18" rx="1" />
-            <path d="M8 8h8M8 12h8M8 16h5" />
-          </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }} ]</span>
-        </button>
-
-        <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
           :aria-label="locale === 'ru' ? 'Фильтры' : 'Filters'"
-          :class="showFiltersPanel ? 'border-white/30 bg-white/10 text-white' : ''"
+          :class="showFiltersPanel || hasActiveTradeFilters ? 'border-white/70 bg-white/10 text-white' : ''"
           :aria-expanded="showFiltersPanel"
           @click="toggleFiltersPanel"
         >
@@ -1408,6 +1408,7 @@ const isHudVisible = ref(true)
 const showComplianceStatus = ref(false)
 const showToolsMenu = ref(false)
 const showFiltersPanel = ref(false)
+const hasActiveTradeFilters = ref(false)
 const protocolMenuCloseSignal = ref(0)
 const activeComplianceMetricKey = ref('riskPerTrade')
 const isTradeEntryOpen = ref(false)
@@ -1475,6 +1476,10 @@ const toggleFiltersPanel = () => {
   const shouldOpen = !showFiltersPanel.value
   closeNavigationOverlays()
   showFiltersPanel.value = shouldOpen
+}
+
+const handleTradeFiltersActiveChange = (isActive: boolean) => {
+  hasActiveTradeFilters.value = isActive
 }
 
 const openToolsMenuFromBottomBar = () => {

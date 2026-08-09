@@ -638,6 +638,7 @@ const emit = defineEmits<{
   (e: 'open-note', payload: { tradeId: string; noteId: string }): void
   (e: 'open-trade', payload: { tradeId: string }): void
   (e: 'filtered-trades-change', payload: any[]): void
+  (e: 'filters-active-change', payload: boolean): void
   (e: 'list-view-mode-change', payload: 'list' | 'timeTree'): void
   (e: 'display-settings-change', payload: { resultDisplayMode: 'currency' | 'percent'; colorMode: 'monochrome' | 'colorful' }): void
   (e: 'toggle-time-tree-fullscreen'): void
@@ -1741,6 +1742,10 @@ const activeFilterCount = computed(() => {
   if (minDuration.value > ABS_MIN_DURATION || maxDuration.value < ABS_MAX_DURATION) count++
   return count
 })
+
+watch(activeFilterCount, (count) => {
+  if (filtersOnly.value) emit('filters-active-change', count > 0)
+}, { immediate: true })
 
 const resetAllFilters = () => {
   selectedScenario.value = []

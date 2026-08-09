@@ -425,13 +425,22 @@ const tradeEntryThemeStyle = computed(() => props.isDark
         </div>
 
         <ExTacticalNodeMap
-          v-if="activeProjectionMode === 'mapping'"
+          v-if="activeProjectionMode === 'mapping' && !isMainDiaryTrade"
           :is-open="true"
           :is-dark="Boolean(props.isDark)"
           :trade="analysisTrade"
           embedded
           @close="activeProjectionMode = 'core'"
         />
+
+        <div
+          v-else-if="activeProjectionMode === 'mapping'"
+          class="absolute inset-0 flex items-center justify-center px-10 text-center"
+        >
+          <p class="max-w-2xl text-sm font-mono uppercase leading-relaxed tracking-[0.16em] text-white/60">
+            {{ locale === 'ru' ? 'Для Main Diary данные Node Mapping недоступны.' : 'Node Mapping data is unavailable for Main Diary.' }}
+          </p>
+        </div>
 
         <div v-if="activeProjectionMode === 'core'" class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
           <div class="h-full min-h-0 w-full flex flex-col overflow-hidden">
