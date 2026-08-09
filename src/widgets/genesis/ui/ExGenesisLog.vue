@@ -1618,8 +1618,8 @@ const selectedTimeTreeTrade = computed(() => {
   const selectedId = timeTreeSelectedTradeId.value
   if (!selectedId) return null
 
-  return timeTreeSourceTrades.value.find((trade: any) => String(trade?.id || '') === selectedId)
-    || currentTradesForList.value.find((trade: any) => String(trade?.id || '') === selectedId)
+  return currentTradesForList.value.find((trade: any) => String(trade?.id || '') === selectedId)
+    || timeTreeSourceTrades.value.find((trade: any) => String(trade?.id || '') === selectedId)
     || null
 })
 
@@ -1710,12 +1710,21 @@ const closeTradeContextMenu = () => {
 const openTimeTreeTradeDetailsForTrade = (trade: any) => {
   if (!trade?.id) return
 
+  // The archive can keep a filtered snapshot of the trades. Resolve the
+  // selected item from the store first so newly saved tradeStudyMetrics,
+  // including generatedMarketData, are passed to the details view.
+  const freshTrade = currentTradesForList.value.find((candidate: any) => (
+    String(candidate?.id || '') === String(trade.id)
+  )) || currentTrades.value.find((candidate: any) => (
+    String(candidate?.id || '') === String(trade.id)
+  )) || trade
+
   closeNavigationOverlays()
-  selectedTradeId.value = String(trade.id)
-  timeTreeSelectedTradeId.value = String(trade.id)
+  selectedTradeId.value = String(freshTrade.id)
+  timeTreeSelectedTradeId.value = String(freshTrade.id)
   selectedTimeTreeTradeForDetails.value = {
-    ...trade,
-    assetIcon: trade.assetIcon || resolveTimeTreeAssetIcon(trade)
+    ...freshTrade,
+    assetIcon: freshTrade.assetIcon || resolveTimeTreeAssetIcon(freshTrade)
   }
   panelInitialPage.value = undefined
   panelInitialNoteId.value = undefined

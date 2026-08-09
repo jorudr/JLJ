@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExTradeAnalysisPanel from './ExTradeAnalysisPanel.vue'
 import ExTacticalNodeMap from './ExTacticalNodeMap.vue'
+import ExTradeGeneratedChart from './components/ExTradeGeneratedChart.vue'
 import ExTradeNoteEditor from './components/ExTradeNoteEditor.vue'
 import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
 import ExTradeImageEntry from './components/ExTradeImageEntry.vue'
@@ -440,6 +441,24 @@ const tradeEntryThemeStyle = computed(() => props.isDark
           <p class="max-w-2xl text-sm font-mono uppercase leading-relaxed tracking-[0.16em] text-white/60">
             {{ locale === 'ru' ? 'Для Main Diary данные Node Mapping недоступны.' : 'Node Mapping data is unavailable for Main Diary.' }}
           </p>
+        </div>
+
+        <div
+          v-if="activeProjectionMode === 'chart'"
+          class="absolute inset-0 h-full w-full p-10"
+        >
+          <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+            <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">
+              {{ locale === 'ru' ? 'РЫНОЧНЫЙ ГРАФИК' : 'MARKET CHART' }}
+            </h2>
+            <div class="relative mt-16 min-h-0 flex-1">
+              <ExTradeGeneratedChart
+                :trade="props.trade"
+                :is-dark="Boolean(props.isDark)"
+                :visible="true"
+              />
+            </div>
+          </div>
         </div>
 
         <div v-if="activeProjectionMode === 'core'" class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">

@@ -1140,6 +1140,24 @@ const createTradeStudyMetrics = () => ({
 
 const tradeStudyMetrics = ref(createTradeStudyMetrics())
 
+const persistGeneratedTradeStudyMetrics = async (metrics = tradeStudyMetrics.value) => {
+  const tradeId = props.initialTrade?.id
+  if (!tradeId) return false
+
+  const strategyId = selectedStrategyId.value || 'MAIN_DIARY'
+  const snapshot = JSON.parse(JSON.stringify(metrics || createTradeStudyMetrics()))
+  const currentTrade = tradeStore.getAllTradesForStrategy(strategyId)
+    .find(trade => String(trade?.id || '') === String(tradeId))
+
+  if (!currentTrade) return false
+
+  // Keep the editor object and the persisted store in sync immediately after
+  // chart generation, even before the full trade form is saved.
+  props.initialTrade.tradeStudyMetrics = snapshot
+  await tradeStore.updateTrade(strategyId, tradeId, { tradeStudyMetrics: snapshot })
+  return true
+}
+
 const hydrateTradeStudyMetrics = (metrics = {}) => {
   const defaults = createTradeStudyMetrics()
   const normalized = {}
@@ -2593,6 +2611,7 @@ const submit = async () => {
     showEntryMethod,
     showTradeStudyMetrics,
     tradeStudyMetrics,
+    persistGeneratedTradeStudyMetrics,
     resetTradeStudyMetrics,
     activeProtocolTab,
     entryMethodType,

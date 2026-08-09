@@ -26,7 +26,8 @@ const {
   averageEntry,
   averageExit,
   commitState,
-  initialTrade
+  initialTrade,
+  persistGeneratedTradeStudyMetrics
 } = inject('tradeState')
 
 const props = defineProps({
@@ -37,6 +38,14 @@ const props = defineProps({
   visible: {
     type: Boolean,
     default: true
+  },
+  readOnly: {
+    type: Boolean,
+    default: false
+  },
+  storedMarketData: {
+    type: Object,
+    default: null
   }
 })
 
@@ -70,6 +79,7 @@ const copy = {
     selectedAsset: 'Selected asset',
     generatedSource: 'Resolved API symbol',
     noCandles: 'No generated candle data yet',
+    chartUnavailable: 'No generated chart data is available for this trade.',
     chartHint: 'Wheel to zoom. Drag to pan.',
     apiError: 'Unable to resolve or load public OHLC data for this asset.',
     warning: 'Generated data may differ slightly from the data you used while trading. It will be automatically adjusted to your entered values for a more precise analysis.',
@@ -132,6 +142,7 @@ const copy = {
     selectedAsset: 'Выбранный актив',
     generatedSource: 'Символ API',
     noCandles: 'Сгенерированных свечей пока нет',
+    chartUnavailable: 'Для этой сделки нет сохранённых данных графика.',
     chartHint: 'Колесо - zoom. Перетаскивание - pan.',
     apiError: 'Не удалось найти или загрузить публичные OHLC данные для этого актива.',
     warning: 'Полученные данные могут немного отличаться от тех, что вы использовали для торговли. Они будут подстроены автоматически под введенные вами значения для более точного анализа.',
@@ -326,7 +337,10 @@ const availableTimeframeOptions = computed(() => {
 
 const availableTimeframeIds = computed(() => new Set(availableTimeframeOptions.value.map(timeframe => timeframe.id)))
 
-const isTimeframeSelectable = (timeframe) => availableTimeframeIds.value.has(timeframe?.id)
+const isTimeframeSelectable = (timeframe) => {
+  if (props.readOnly) return Boolean(generatedMarketData.value?.[timeframe?.id]?.length)
+  return availableTimeframeIds.value.has(timeframe?.id)
+}
 
 const selectGeneratedTimeframe = (timeframe) => {
   if (!isTimeframeSelectable(timeframe)) return
@@ -362,16 +376,16 @@ const canGenerateMarketData = computed(() => {
 })
 
 const generatedChartCandles = computed(() => {
-  if (!availableTimeframeIds.value.has(activeGeneratedTimeframe.value)) return []
+  if (!props.readOnly && !availableTimeframeIds.value.has(activeGeneratedTimeframe.value)) return []
   return generatedMarketData.value?.[activeGeneratedTimeframe.value] || []
 })
 
 const getGeneratedTimeframeIds = (candlesByTimeframe = generatedMarketData.value) => {
   const knownIds = timeframeOptions
     .map(timeframe => timeframe.id)
-    .filter(id => candlesByTimeframe?.[id]?.length && availableTimeframeIds.value.has(id))
+    .filter(id => candlesByTimeframe?.[id]?.length && (props.readOnly || availableTimeframeIds.value.has(id)))
   const customIds = Object.keys(candlesByTimeframe || {})
-    .filter(id => candlesByTimeframe?.[id]?.length && !knownIds.includes(id) && availableTimeframeIds.value.has(id))
+    .filter(id => candlesByTimeframe?.[id]?.length && !knownIds.includes(id) && (props.readOnly || availableTimeframeIds.value.has(id)))
   return [...knownIds, ...customIds]
 }
 
@@ -1580,13 +1594,15 @@ const loadPublicMarketData = async () => {
     preferredCatalogProviders = ['BYBIT', 'BINANCE', 'KRAKEN']
     loaders = [loadBybitMarketData, loadBinanceMarketData, loadKrakenMarketData]
   } else if (isLikelyXStockAsset.value) {
+    // xStocks use the public market history of their underlying equity.
+    // The local catalog keeps the exact mapping, e.g. NFLXX -> NFLX,
+    // so resolve it before trying fuzzy Yahoo symbol candidates.
+    preferredCatalogProviders = ['YAHOO_LOCAL']
     loaders = [loadYahooMarketData]
   }
 
   let lastError = null
-  const catalogMatch = wantedKind === 'xstock'
-    ? null
-    : await resolveCatalogMarketAsset(preferredCatalogProviders)
+  const catalogMatch = await resolveCatalogMarketAsset(preferredCatalogProviders)
   if (catalogMatch) {
     try {
       return await loadCatalogMatchedMarketData(catalogMatch)
@@ -1938,7 +1954,7 @@ const normalizeCandlesByTimeframe = (candlesByTimeframe) => {
 
   return Object.fromEntries(
     Object.entries(candlesByTimeframe)
-      .filter(([timeframe]) => availableTimeframeIds.value.has(timeframe))
+      .filter(([timeframe]) => props.readOnly || availableTimeframeIds.value.has(timeframe))
       .map(([timeframe, candles]) => [
         timeframe,
         Array.isArray(candles)
@@ -1949,7 +1965,7 @@ const normalizeCandlesByTimeframe = (candlesByTimeframe) => {
   )
 }
 
-const persistGeneratedChartSnapshot = (candlesByTimeframe) => {
+const persistGeneratedChartSnapshot = async (candlesByTimeframe) => {
   const normalizedCandles = normalizeCandlesByTimeframe(candlesByTimeframe)
   if (!Object.keys(normalizedCandles).length) return
 
@@ -1964,10 +1980,15 @@ const persistGeneratedChartSnapshot = (candlesByTimeframe) => {
     sourceAsset: generatedSourceAsset.value || selectedTradeAsset.value || '',
     generatedAt: new Date().toISOString()
   }
+
+  if (typeof persistGeneratedTradeStudyMetrics === 'function') {
+    await persistGeneratedTradeStudyMetrics(tradeStudyMetrics.value)
+  }
 }
 
 const getStoredGeneratedMarketData = () => {
   const candidates = [
+    props.storedMarketData,
     tradeStudyMetrics.value?.generatedMarketData,
     initialTrade?.tradeStudyMetrics?.generatedMarketData,
     initialTrade?.studyMetrics?.generatedMarketData,
@@ -2059,7 +2080,7 @@ const generateMarketData = async () => {
     resolvedMarketSymbol.value = result.symbol
     resolvedMarketProvider.value = result.provider
     generatedSourceAsset.value = selectedTradeAsset.value
-    persistGeneratedChartSnapshot(result.candlesByTimeframe)
+    await persistGeneratedChartSnapshot(result.candlesByTimeframe)
     generationState.value = 'success'
     resetChartViewport()
   } catch (error) {
@@ -2074,6 +2095,7 @@ const generateMarketData = async () => {
 }
 
 const reconcileGeneratedMarketDataWithDuration = () => {
+  if (props.readOnly) return
   const normalizedCandles = normalizeCandlesByTimeframe(generatedMarketData.value)
   const currentKeys = Object.keys(generatedMarketData.value || {})
   const normalizedKeys = Object.keys(normalizedCandles)
@@ -2558,6 +2580,7 @@ watch(side, (vector) => {
 
 watch(availableTimeframeOptions, () => {
   syncActiveGeneratedTimeframe()
+  if (props.readOnly) return
   reconcileGeneratedMarketDataWithDuration()
 }, { immediate: true })
 
@@ -2618,12 +2641,13 @@ onBeforeUnmount(() => {
   >
     <div v-if="!generatedChartCandles.length" class="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
       <p class="mb-5 max-w-xl text-[8px] font-mono font-bold uppercase leading-loose tracking-[0.22em] text-black/35 dark:text-white/35">
-        {{ marketDataStatusMessage }}
+        {{ props.readOnly ? ui().chartUnavailable : marketDataStatusMessage }}
       </p>
-      <p v-if="apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
+      <p v-if="!props.readOnly && apiCooldownHint" class="-mt-3 mb-5 max-w-xl text-[8px] font-mono font-black uppercase leading-loose tracking-[0.22em] text-amber-500/80">
         {{ apiCooldownHint }}
       </p>
       <button
+        v-if="!props.readOnly"
         type="button"
         class="h-14 border border-black/25 px-8 text-[10px] font-mono font-black uppercase tracking-[0.28em] nier-text-primary transition-colors hover:bg-black hover:text-white disabled:opacity-30 dark:border-white/25 dark:hover:bg-white dark:hover:text-black"
         :disabled="!canGenerateMarketData"

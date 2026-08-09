@@ -18,7 +18,7 @@ const getForexCurrencyPair = (symbol) => {
 };
 
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue';
-import ExTradeEntryStudyMetricsPanel from './ExTradeEntryStudyMetricsPanel.vue';
+import ExTradeGeneratedChart from './ExTradeGeneratedChart.vue';
 import ExTradeEntryMethodContent from './ExTradeEntryMethodContent.vue';
 import ExButton from '~/shared/ui/ExButton.vue';
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue';
@@ -976,7 +976,7 @@ const summarySelectedEmotions = computed(() => {
                     <div class="flex h-full w-full flex-col px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
                       <h2 class="shrink-0 text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('РЫНОЧНЫЙ ГРАФИК', 'MARKET CHART') }}</h2>
                       <div class="relative mt-16 min-h-0 flex-1">
-                        <ExTradeEntryStudyMetricsPanel surface="chart" :visible="activeProjectionMode === 'chart'" />
+                        <ExTradeGeneratedChart :visible="activeProjectionMode === 'chart'" />
                       </div>
                     </div>
                   </div>
