@@ -16,18 +16,20 @@
         </div>
 
         <Transition name="fade">
-          <div v-if="showStrategyMenu" class="absolute top-full left-0 mt-4 w-64 z-[100] pointer-events-auto bg-[#0a0a0a] border border-white/10 shadow-2xl">
-            <div class="py-2">
-              <div v-for="s in strategies" :key="s.id"
-                   @click.stop="selectedStrategyId = s.id; showStrategyMenu = false"
-                   class="group/item relative px-6 py-3 cursor-pointer transition-all duration-300 border-b border-white/5 last:border-0"
-                   :class="selectedStrategyId === s.id ? 'bg-white text-black' : 'hover:bg-white/5 text-white/60'">
-                <span class="text-[9px] tracking-[0.2em] uppercase font-bold group-hover/item:tracking-[0.3em] transition-all">
-                  {{ s.name }}
-                </span>
-                <div v-if="selectedStrategyId === s.id" class="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-black rotate-45"></div>
+          <div v-if="showStrategyMenu" class="absolute top-full left-0 mt-4 w-64 z-[100] pointer-events-auto shadow-2xl">
+            <ExPanel variant="light" :no-padding="true" :show-corners="true" class="bg-[#0a0a0a] border border-white/10 w-full">
+              <div class="py-2">
+                <div v-for="s in strategies" :key="s.id"
+                     @click.stop="selectedStrategyId = s.id; showStrategyMenu = false"
+                     class="group/item relative px-6 py-3 cursor-pointer transition-all duration-300 border-b border-white/5 last:border-0"
+                     :class="selectedStrategyId === s.id ? 'bg-white text-black' : 'hover:bg-white/5 text-white/60'">
+                  <span class="text-[9px] tracking-[0.2em] uppercase font-bold group-hover/item:tracking-[0.3em] transition-all">
+                    {{ s.name }}
+                  </span>
+                  <div v-if="selectedStrategyId === s.id" class="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-black rotate-45"></div>
+                </div>
               </div>
-            </div>
+            </ExPanel>
           </div>
         </Transition>
       </div>
@@ -130,6 +132,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const emit = defineEmits<{
   (event: 'trade-context-menu', payload: { tradeId: string; event: MouseEvent }): void
