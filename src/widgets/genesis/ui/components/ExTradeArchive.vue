@@ -134,6 +134,10 @@ import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
+const props = defineProps<{
+  trades?: any[]
+}>()
+
 const emit = defineEmits<{
   (event: 'trade-context-menu', payload: { tradeId: string; event: MouseEvent }): void
 }>()
@@ -163,6 +167,7 @@ const selectedStrategy = computed(() => {
 })
 
 const trades = computed(() => {
+  if (Array.isArray(props.trades)) return props.trades
   if (!selectedStrategyId.value) return []
   return tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
 })
@@ -197,8 +202,27 @@ const getTradeR = (trade: any) => {
 }
 
 const getTradeTime = (trade: any) => {
-  const val = trade.dateExit || trade.date
-  return val ? new Date(val).getTime() : 0
+  const dateCandidates = [
+    trade?.dateExit,
+    trade?.date,
+    trade?.dateRaw,
+    trade?.dateObj,
+    trade?.dateEntryStr,
+    trade?.dateTime
+  ]
+
+  for (const value of dateCandidates) {
+    if (!value) continue
+    const timestamp = value instanceof Date
+      ? value.getTime()
+      : typeof value === 'number'
+        ? value
+        : new Date(value).getTime()
+
+    if (Number.isFinite(timestamp) && timestamp > 0) return timestamp
+  }
+
+  return 0
 }
 
 const totalR = computed(() => {

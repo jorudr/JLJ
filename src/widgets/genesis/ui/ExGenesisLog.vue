@@ -68,7 +68,11 @@
         ]"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExTradeArchive class="relative z-10" @trade-context-menu="handleArchiveTradeClick" />
+        <ExTradeArchive
+          class="relative z-10"
+          :trades="timeTreeSourceTrades"
+          @trade-context-menu="handleArchiveTradeClick"
+        />
       </div>
 
       <!-- STRATEGY TREE LAYER -->
@@ -689,15 +693,6 @@
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }} ]</span>
         </button>
 
-        <ExTradeEntryProtocolButton
-          :model-value="selectedStrategyId"
-          :strategies="strategies"
-          :is-loading="isMatrixLoading"
-          :close-signal="protocolMenuCloseSignal"
-          @click="activateProtocolButton"
-          @update:model-value="selectStrategy($event)"
-        />
-
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
@@ -1194,7 +1189,6 @@ import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
-import ExTradeEntryProtocolButton from '~/widgets/genesis/ui/components/ExTradeEntryProtocolButton.vue'
 import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
 import ExTradeForceGraph from '~/widgets/genesis/ui/components/ExTradeForceGraph.vue'
 import ExTradeArchive from '~/widgets/genesis/ui/components/ExTradeArchive.vue'
@@ -1475,10 +1469,6 @@ const closeNavigationOverlays = (keepProtocol = false) => {
 const activateBottomView = (nextView: 'cube' | 'timeTree') => {
   closeNavigationOverlays()
   viewType.value = nextView
-}
-
-const activateProtocolButton = () => {
-  closeNavigationOverlays(true)
 }
 
 const toggleFiltersPanel = () => {
@@ -2973,6 +2963,10 @@ const tradeStore = useStrategyTradesStore()
 const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }
+})
+
+watch(selectedStrategyId, () => {
+  timeTreeFilteredTrades.value = null
 })
 
 const tradeForceGraphNodes = computed(() => facesTrades.value[currentFace.value] || [])
