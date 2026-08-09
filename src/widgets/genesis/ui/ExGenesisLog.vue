@@ -76,8 +76,9 @@
 
       <!-- STRATEGY TREE LAYER -->
       <div
-        v-if="viewType === 'tree'"
-        class="absolute inset-0 z-40 overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
+        v-if="hasOpenedGenesisTree"
+        v-show="viewType === 'tree'"
+        class="absolute inset-0 z-40 overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
@@ -1375,6 +1376,7 @@ const downloadCardPng = async () => {
 }
 
 const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('timeTree')
+const hasOpenedGenesisTree = ref(false)
 const genesisTreeRef = ref<any>(null)
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
@@ -2542,6 +2544,7 @@ const openProjectionView = (nextView: 'distribution' | 'tree') => {
   if (nextView === 'distribution' && viewType.value !== 'distribution') {
     previousProjectionView.value = viewType.value
   }
+  if (nextView === 'tree') hasOpenedGenesisTree.value = true
   closeNavigationOverlays()
   viewType.value = nextView
 }
