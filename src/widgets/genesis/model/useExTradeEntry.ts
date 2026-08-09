@@ -392,6 +392,7 @@ onMounted(() => {
   loadMatrixData()
   tradeStore.init()
 
+  isHydratingInitialTrade.value = Boolean(props.initialTrade)
   if (props.initialTrade) {
     const t = props.initialTrade
     if (t.strategyId) {
@@ -512,6 +513,7 @@ onMounted(() => {
     reconstructConditions(t.boardScenarioEntry)
     reconstructConditions(t.boardScenarioExit)
   }
+  isHydratingInitialTrade.value = false
 })
 
 const selectedScenarioNode = computed(() => {
@@ -1466,10 +1468,12 @@ watch(isFixedFeeAsset, (val) => {
 }, { immediate: true })
 
 const overridePnl = ref(null)
-watch(asset, () => { 
+const isHydratingInitialTrade = ref(false)
+watch(asset, () => {
+  if (isHydratingInitialTrade.value) return
   overridePnl.value = null 
   resultMode.value = 'auto'
-})
+}, { flush: 'sync' })
 
 const setResultMode = (mode) => {
   if (!isClosed.value) return
