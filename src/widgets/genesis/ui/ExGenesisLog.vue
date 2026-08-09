@@ -8,6 +8,11 @@
       class="absolute inset-0 z-[2000]"
       :is-dark="isDark"
       :trade="selectedTimeTreeTradeForDetails"
+      :mode="timeTreeEntryMode"
+      :forecast-trades="currentTrades"
+      :forecast-initial-capital="tradeStore.getInitialDeposit(selectedStrategyId) || 1000"
+      :forecast-strategy-id="String(selectedStrategyId || 'MAIN_DIARY')"
+      :forecast-strategy-name="selectedStrategy.name"
     />
 
     <div
@@ -1108,14 +1113,10 @@
             </div>
 
             <div class="font-mono text-[10px] uppercase tracking-[0.12em] leading-relaxed">
-              <div class="grid grid-cols-2 gap-3 border-b border-black/10 pb-4 dark:border-white/10">
-                <div>
+              <div class="grid grid-cols-1 gap-3 border-b border-black/10 pb-4 dark:border-white/10">
+                <div class="text-center">
                   <div class="opacity-40">{{ locale === 'ru' ? 'Ваши сделки' : 'Your trades' }}</div>
                   <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.userTrades }}</div>
-                </div>
-                <div>
-                  <div class="opacity-40">{{ locale === 'ru' ? 'Истории трейдеров' : 'Trader histories' }}</div>
-                  <div class="mt-1 text-base font-black">{{ patternForecastIntroStats.historicalProfiles }}</div>
                 </div>
               </div>
 
@@ -1132,8 +1133,8 @@
                   <span class="font-black opacity-35">02</span>
                   <span>
                     {{ locale === 'ru'
-                      ? `Сравниваем вашу динамику, риск, длительность сделок, серии win/loss и структурные блоки с ${patternForecastIntroStats.historicalProfiles} историями других трейдеров.`
-                      : `We compare your performance path, risk, trade duration, win/loss streaks, and structural blocks with ${patternForecastIntroStats.historicalProfiles} histories from other traders.` }}
+                      ? 'Сравниваем вашу динамику, риск, длительность сделок, серии win/loss и структурные блоки с историями других трейдеров.'
+                      : 'We compare your performance path, risk, trade duration, win/loss streaks, and structural blocks with histories from other traders.' }}
                   </span>
                 </li>
                 <li class="grid grid-cols-[32px_1fr] gap-3">
@@ -1568,6 +1569,7 @@ const timeTreeFilteredTrades = ref<any[] | null>(null)
 const timeTreeSelectedTradeId = ref<string | null>(null)
 const selectedTimeTreeTradeForDetails = ref<Record<string, any> | null>(null)
 const showTimeTreeTradeDetails = ref(false)
+const timeTreeEntryMode = ref<'trade' | 'forecast'>('trade')
 
 const enterTimeTreeFullscreen = () => {
   if (viewType.value !== 'timeTree') return
@@ -1671,6 +1673,7 @@ const handleArchiveTradeClick = (payload: { tradeId: string; event?: MouseEvent 
 const closeTimeTreeTradeDetails = () => {
   timeTreeSelectedTradeId.value = null
   selectedTimeTreeTradeForDetails.value = null
+  timeTreeEntryMode.value = 'trade'
   showTimeTreeTradeDetails.value = false
 }
 
@@ -1728,6 +1731,7 @@ const openTimeTreeTradeDetailsForTrade = (trade: any) => {
     ...freshTrade,
     assetIcon: freshTrade.assetIcon || resolveTimeTreeAssetIcon(freshTrade)
   }
+  timeTreeEntryMode.value = 'trade'
   panelInitialPage.value = undefined
   panelInitialNoteId.value = undefined
   showExtraDetails.value = false
@@ -2598,7 +2602,14 @@ const openComplianceFromMenu = () => {
 
 const acceptCapitalForecastIntro = () => {
   showCapitalForecastIntro.value = false
-  showCapitalForecast.value = true
+  showCapitalForecast.value = false
+  viewType.value = 'timeTree'
+  selectedTradeId.value = null
+  timeTreeSelectedTradeId.value = null
+  selectedTimeTreeTradeForDetails.value = null
+  timeTreeEntryMode.value = 'forecast'
+  showTimeTreeTradeDetails.value = true
+  closeTradeContextMenu()
 }
 
 const rejectCapitalForecastIntro = () => {

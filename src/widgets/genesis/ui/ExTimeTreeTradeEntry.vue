@@ -7,15 +7,25 @@ import ExTradeGeneratedChart from './components/ExTradeGeneratedChart.vue'
 import ExTradeNoteEditor from './components/ExTradeNoteEditor.vue'
 import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
 import ExTradeImageEntry from './components/ExTradeImageEntry.vue'
+import ExPatternForecastPanel from './ExPatternForecastPanel.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 
 const props = defineProps<{
   isDark?: boolean
   trade?: Record<string, any> | null
+  mode?: 'trade' | 'forecast'
+  forecastTrades?: Record<string, any>[]
+  forecastInitialCapital?: number
+  forecastStrategyId?: string
+  forecastStrategyName?: string
 }>()
 
 const { locale } = useI18n()
 const tradeStore = useStrategyTradesStore()
+const isForecastMode = computed(() => props.mode === 'forecast')
+const isForecastLoading = ref(true)
+const forecastTab = ref<'summary' | 'settings'>('summary')
+const forecastIncludeAverageRR = ref(false)
 const activeEntryFormTab = ref<'main' | 'advanced' | 'metrics' | 'notes' | 'images'>('main')
 const activeProjectionMode = ref<'core' | 'mapping' | 'chart'>('core')
 const isCreatingTradeNote = ref(false)
@@ -383,6 +393,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             <div class="flex min-h-[calc(100dvh-4rem)] items-center justify-center">
       <div class="relative z-10 mx-auto flex h-[clamp(600px,69.6vh,768px)] w-full max-w-[1560px] flex-col items-center justify-center border-transparent bg-transparent group">
         <div
+          v-if="!isForecastMode"
           class="absolute -top-12 left-1/2 z-20 flex -translate-x-1/2 items-center border border-black/10 bg-theme-bg shadow-[0_12px_30px_rgba(0,0,0,0.08)] dark:border-white/10"
         >
           <button
@@ -461,7 +472,80 @@ const tradeEntryThemeStyle = computed(() => props.isDark
           </div>
         </div>
 
-        <div v-if="activeProjectionMode === 'core'" class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
+        <div v-if="isForecastMode" class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
+          <div class="h-full min-h-0 w-full flex flex-col overflow-hidden">
+            <div class="shrink-0 px-10 pt-10">
+              <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                <div class="z-20 w-full shrink-0 border-b border-white/10 bg-black/60 pb-3 pt-1 backdrop-blur-md">
+                  <div class="flex w-full items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                      :class="forecastTab === 'summary' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                      @click="forecastTab = 'summary'"
+                    >
+                      {{ locale === 'ru' ? 'ОСНОВНЫЕ' : 'MAIN' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                      :class="forecastTab === 'settings' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                      @click="forecastTab = 'settings'"
+                    >
+                      {{ locale === 'ru' ? 'НАСТРОЙКИ' : 'SETTINGS' }}
+                    </button>
+                    </div>
+                    <label class="flex cursor-pointer items-center gap-2 select-none text-white/60">
+                      <input v-model="forecastIncludeAverageRR" type="checkbox" class="peer sr-only" />
+                      <span
+                        class="flex h-5 w-5 items-center justify-center border border-white/25 bg-black/40 transition-colors"
+                        :class="forecastIncludeAverageRR ? 'bg-white text-black' : 'text-transparent'"
+                      >
+                        <svg viewBox="0 0 12 12" class="h-3 w-3" fill="none" aria-hidden="true">
+                          <path d="M2.2 6.2L4.7 8.7L9.8 3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em]">
+                        {{ locale === 'ru' ? 'Учитывать Avg RR' : 'Include Avg RR' }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="min-h-0 flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+              <div class="h-full min-h-full px-10 pb-10 pt-10">
+                <div class="relative h-full w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">
+                  <div v-if="isForecastLoading" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 text-center">
+                    <span class="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white" aria-hidden="true"></span>
+                    <span class="max-w-md font-mono text-[10px] font-black uppercase leading-relaxed tracking-[0.25em] text-white/55">
+                      {{ locale === 'ru' ? 'ИДЁТ АНАЛИЗ. ЭТО МОЖЕТ ЗАНЯТЬ НЕМНОГО ВРЕМЕНИ.' : 'ANALYSIS IN PROGRESS. THIS MAY TAKE A LITTLE TIME.' }}
+                    </span>
+                  </div>
+                  <ExPatternForecastPanel
+                    v-show="!isForecastLoading"
+                    class="h-full w-full"
+                    :visible="true"
+                    :trades="props.forecastTrades || []"
+                    :initial-capital="Number(props.forecastInitialCapital) || 1000"
+                    :strategy-id="props.forecastStrategyId || 'MAIN_DIARY'"
+                    :strategy-name="props.forecastStrategyName || 'MAIN DIARY'"
+                    compact-navigation
+                    :active-tab="forecastTab"
+                    :include-average-rr="forecastIncludeAverageRR"
+                    @update:active-tab="forecastTab = $event"
+                    @update:include-average-rr="forecastIncludeAverageRR = $event"
+                    @loading-change="isForecastLoading = $event"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="activeProjectionMode === 'core'" class="absolute inset-0 flex flex-col overflow-hidden text-left text-white">
           <div class="h-full min-h-0 w-full flex flex-col overflow-hidden">
             <div class="shrink-0 px-10 pt-10">
               <div class="w-full px-6 sm:px-10 md:px-12 xl:px-16 2xl:px-20">

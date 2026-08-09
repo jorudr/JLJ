@@ -3,7 +3,9 @@
     variant="light"
     :no-padding="true"
     :no-shadow="true"
-    class="!h-[52rem] !max-h-[82vh] !bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10"
+    :class="props.compactNavigation
+      ? 'compact-forecast-panel !h-auto !max-h-none !border-0 !bg-transparent !shadow-none'
+      : '!h-[52rem] !max-h-[82vh] !bg-gray-50/50 dark:!bg-[#070707]/60 !border-black/10 dark:!border-white/10'"
   >
 
     <div v-if="loading" class="shrink-0 border-b border-black/10 px-5 py-3 dark:border-white/10">
@@ -23,7 +25,7 @@
       </div>
     </div>
 
-    <div class="shrink-0 border-b border-black/10 px-5 py-2 dark:border-white/10">
+    <div v-if="!props.compactNavigation" class="shrink-0 border-b border-black/10 px-5 py-2 dark:border-white/10">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
@@ -102,8 +104,19 @@
     <div class="min-h-0 flex-1 overflow-y-auto px-0 pb-6 custom-scrollbar">
       <template v-if="activeTab === 'summary'">
       <div class="grid grid-cols-1 gap-0">
-        <div class="border-b border-black/10 px-5 py-4 dark:border-white/10">
-          <div class="flex items-center justify-between gap-3">
+        <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-b border-black/10 px-5 py-4 dark:border-white/10'">
+          <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">I.</div>
+              <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+                {{ locale === 'ru' ? 'ВЕРОЯТНЫЙ ИТОГ' : 'LIKELY OUTCOME' }}
+              </h2>
+            </div>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ formatMoney(forecast.currentCapital) }}
+            </span>
+          </div>
+          <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
               {{ locale === 'ru' ? 'Вероятный итог' : 'Likely outcome' }}
             </span>
@@ -148,8 +161,19 @@
         </div>
       </div>
 
-      <div class="border-t border-black/10 px-5 py-4 dark:border-white/10">
-        <div class="flex items-center justify-between gap-3">
+      <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-t border-black/10 px-5 py-4 dark:border-white/10'">
+        <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">II.</div>
+            <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+              {{ locale === 'ru' ? 'ТАКТИЧЕСКОЕ ПРОДОЛЖЕНИЕ' : 'TACTICAL CONTINUATION' }}
+            </h2>
+          </div>
+          <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+            {{ `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
+          </span>
+        </div>
+        <div v-else class="flex items-center justify-between gap-3">
           <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
             {{ locale === 'ru' ? 'Тактическое продолжение после похожих фаз' : 'Tactical continuation after similar phases' }}
           </span>
@@ -204,8 +228,19 @@
         </div>
       </div>
 
-      <div class="border-t border-black/10 px-5 py-4 dark:border-white/10">
-        <div class="flex items-center justify-between gap-3">
+      <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-t border-black/10 px-5 py-4 dark:border-white/10'">
+        <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">III.</div>
+            <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+              {{ locale === 'ru' ? 'ИТОГОВАЯ БЛИЗОСТЬ' : 'TERMINAL AFFINITY' }}
+            </h2>
+          </div>
+          <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+            {{ locale === 'ru' ? 'финальные исходы' : 'terminal outcomes' }}
+          </span>
+        </div>
+        <div v-else class="flex items-center justify-between gap-3">
           <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
             {{ locale === 'ru' ? 'Итоговая близость по финальным исходам' : 'Terminal outcome affinity' }}
           </span>
@@ -261,8 +296,19 @@
       </template>
 
       <template v-else>
-        <div class="border-b border-black/10 px-5 py-4 dark:border-white/10">
-          <div class="flex items-center justify-between gap-3">
+        <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-b border-black/10 px-5 py-4 dark:border-white/10'">
+          <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">I.</div>
+              <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+                {{ locale === 'ru' ? 'СТИЛЬ ТОРГОВЛИ' : 'TRADING STYLE' }}
+              </h2>
+            </div>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ forecast.styleProfile.styleLabel }}
+            </span>
+          </div>
+          <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
               {{ locale === 'ru' ? 'Стиль торговли' : 'Trading style' }}
             </span>
@@ -332,8 +378,19 @@
           </div>
         </div>
 
-        <div class="px-5 py-4">
-          <div class="flex items-center justify-between gap-3">
+        <div :class="props.compactNavigation ? 'px-0 py-4' : 'px-5 py-4'">
+          <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">II.</div>
+              <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+                {{ locale === 'ru' ? 'ПАТТЕРН ПОЛЬЗОВАТЕЛЯ' : 'USER PATTERN' }}
+              </h2>
+            </div>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ forecast.currentPattern.sequenceLabel }}
+            </span>
+          </div>
+          <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
               {{ locale === 'ru' ? 'Паттерн пользователя' : 'User pattern' }}
             </span>
@@ -374,8 +431,19 @@
           </div>
         </div>
 
-        <div class="border-t border-black/10 px-5 py-4 dark:border-white/10">
-          <div class="flex items-center justify-between gap-3">
+        <div :class="props.compactNavigation ? 'px-0 py-4' : 'border-t border-black/10 px-5 py-4 dark:border-white/10'">
+          <div v-if="props.compactNavigation" class="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <div class="font-mono text-[10px] font-black uppercase tracking-[0.6em] text-black/45 dark:text-white/45">III.</div>
+              <h2 class="mt-2 text-2xl font-mono font-black uppercase tracking-[0.22em] nier-text-primary md:text-3xl">
+                {{ locale === 'ru' ? 'ЛУЧШИЕ ИСТОРИЧЕСКИЕ СОВПАДЕНИЯ' : 'BEST HISTORICAL MATCHES' }}
+              </h2>
+            </div>
+            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+              {{ locale === 'ru' ? 'стиль + паттерн' : 'style + pattern' }}
+            </span>
+          </div>
+          <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
               {{ locale === 'ru' ? 'Лучшие исторические совпадения' : 'Best historical matches' }}
             </span>
@@ -454,10 +522,15 @@ const props = defineProps<{
   initialCapital: number
   strategyId: string
   strategyName: string
+  compactNavigation?: boolean
+  activeTab?: 'summary' | 'settings'
+  includeAverageRr?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'loading-change', value: boolean): void
+  (e: 'update:active-tab', value: 'summary' | 'settings'): void
+  (e: 'update:include-average-rr', value: boolean): void
 }>()
 
 const { locale } = useI18n()
@@ -467,6 +540,22 @@ const forecast = ref<PatternForecastResult>(createEmptyPatternForecast())
 const activeTab = ref<'summary' | 'settings'>('summary')
 const includeAverageRR = ref(false)
 let requestId = 0
+
+watch(() => props.activeTab, (value) => {
+  if (value) activeTab.value = value
+}, { immediate: true })
+
+watch(() => props.includeAverageRr, (value) => {
+  if (value !== undefined) includeAverageRR.value = value
+}, { immediate: true })
+
+watch(activeTab, (value) => {
+  if (props.compactNavigation) emit('update:active-tab', value)
+})
+
+watch(includeAverageRR, (value) => {
+  if (props.compactNavigation) emit('update:include-average-rr', value)
+})
 
 const persistPatternForecastSnapshot = async (result: PatternForecastResult) => {
   const savedAt = new Date().toISOString()
@@ -683,6 +772,10 @@ function sanitizeFileSegment(value: string) {
 </script>
 
 <style scoped>
+.compact-forecast-panel :deep(.ex-panel-backdrop) {
+  display: none;
+}
+
 .forecast-loading-bar {
   animation: forecast-loading-shift 1.1s linear infinite;
   transform: translateX(-55%);
