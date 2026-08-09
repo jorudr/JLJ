@@ -291,6 +291,10 @@
           </div>
         </div>
 
+        <div v-if="props.compactNavigation" class="mt-6 font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/50 dark:text-white/50">
+          {{ locale === 'ru' ? 'СХОДСТВА С ДРУГИМИ ТРЕЙДЕРАМИ' : 'SIMILARITIES WITH OTHER TRADERS' }}
+        </div>
+
         <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
           <div
             v-for="group in forecast.lifecycle.groups"
