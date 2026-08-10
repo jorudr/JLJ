@@ -840,19 +840,6 @@ const labelTypes = [
 
 const scenarioDocumentationTypes = [
   {
-    label: 'TEXT PANEL',
-    type: 'text-panel',
-    color: 'currentColor',
-    description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
-    params: {
-      shortCode: 'TXT',
-      menuLabel: 'TEXT',
-      protocol: 'TEXT INPUT PANEL',
-      description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
-      value: 'Scenario thesis:\nTrigger:\nExecution notes:'
-    }
-  },
-  {
     label: 'CHECKLIST PANEL',
     type: 'checklist-panel',
     color: 'currentColor',

@@ -168,7 +168,7 @@
                   <div class="w-8 h-8 border border-nier-border-light dark:border-nier-border-dark mb-4 animate-pulse rotate-45 flex items-center justify-center">
                      <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark"></div>
                   </div>
-                  <ExText variant="telemetry" class="opacity-40">Awaiting Visual Protocol</ExText>
+                  <ExText variant="telemetry" class="opacity-40">Double Click To Upload Image</ExText>
                </div>
                             <div v-else class="w-full h-full border-2 border-nier-border-light dark:border-nier-border-dark p-1 bg-nier-white dark:bg-nier-black relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                  <img :src="node.params.imageUrl"
