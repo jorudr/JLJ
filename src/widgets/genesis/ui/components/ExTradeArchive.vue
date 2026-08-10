@@ -134,6 +134,8 @@ import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import { getTradeCashPnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 
 const props = defineProps<{
   trades?: any[]
@@ -174,6 +176,8 @@ const trades = computed(() => {
   return tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
 })
 
+const closedTrades = computed(() => trades.value.filter(isClosedTradeForMetrics))
+
 const handleTradeClick = (event: MouseEvent, trade: any) => {
   if (!trade?.id) return
   emit('trade-context-menu', {
@@ -184,23 +188,34 @@ const handleTradeClick = (event: MouseEvent, trade: any) => {
 
 // Metrics
 const getTradePnl = (trade: any) => {
-  return Number(trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0)
+  if (!isClosedTradeForMetrics(trade)) return 0
+  const strategyId = trade?.strategyId || selectedStrategyId.value
+  return getTradeCashPnl(trade, tradeStore.getInitialDeposit(strategyId || 'MAIN_DIARY'))
 }
 
 const totalPnl = computed(() => {
-  return trades.value.reduce((acc, trade) => acc + getTradePnl(trade), 0)
+  return closedTrades.value.reduce((acc, trade) => acc + getTradePnl(trade), 0)
 })
 
 const winRate = computed(() => {
-  if (trades.value.length === 0) return 0
-  const wins = trades.value.filter(t => getTradePnl(t) > 0).length
-  return wins / trades.value.length
+  if (closedTrades.value.length === 0) return 0
+  const wins = closedTrades.value.filter(t => getTradePnl(t) > 0).length
+  return wins / closedTrades.value.length
 })
 
 const getTradeR = (trade: any) => {
-  if (trade.riskReward !== undefined) return trade.riskReward
-  // Fallback estimation if R is not available
-  return getTradePnl(trade) > 0 ? 2.0 : -1.0
+  if (!isClosedTradeForMetrics(trade)) return 0
+
+  const storedRealizedR = Number(trade?.realizedR ?? trade?.rMultiple)
+  if (Number.isFinite(storedRealizedR)) return storedRealizedR
+
+  const plannedRisk = getTradePlannedStopRiskDollars(trade)
+  const fallbackRisk = Number(trade?.risk)
+
+  // riskReward is a target ratio, not a realized R. Do not report it as if
+  // the trade actually captured that amount.
+  const risk = Number.isFinite(plannedRisk) && plannedRisk > 0 ? plannedRisk : fallbackRisk
+  return Number.isFinite(risk) && risk > 0 ? getTradePnl(trade) / risk : 0
 }
 
 const getTradeTime = (trade: any) => {
@@ -228,12 +243,12 @@ const getTradeTime = (trade: any) => {
 }
 
 const totalR = computed(() => {
-  return trades.value.reduce((acc, trade) => acc + getTradeR(trade), 0)
+  return closedTrades.value.reduce((acc, trade) => acc + getTradeR(trade), 0)
 })
 
 const avgR = computed(() => {
-  if (trades.value.length === 0) return 0
-  return totalR.value / trades.value.length
+  if (closedTrades.value.length === 0) return 0
+  return totalR.value / closedTrades.value.length
 })
 
 // Formatting and Grouping
@@ -286,7 +301,7 @@ const groupedTrades = computed(() => {
 
 // Equity Curve and Sparklines
 const tradesChronological = computed(() => {
-  return [...trades.value].sort((a, b) => getTradeTime(a) - getTradeTime(b))
+  return [...closedTrades.value].sort((a, b) => getTradeTime(a) - getTradeTime(b))
 })
 
 const equityCurve = computed(() => {

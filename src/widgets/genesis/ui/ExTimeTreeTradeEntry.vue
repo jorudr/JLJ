@@ -9,6 +9,7 @@ import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
 import ExTradeImageEntry from './components/ExTradeImageEntry.vue'
 import ExPatternForecastPanel from './ExPatternForecastPanel.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { getTradeCashPnl, getTradeReturnPct } from '~/widgets/genesis/model/tradePnl'
 
 const props = defineProps<{
   isDark?: boolean
@@ -41,13 +42,14 @@ const isMainDiaryTrade = computed(() => {
 
 const analysisTrade = computed(() => {
   const trade = props.trade || {}
+  const initialCapital = props.forecastInitialCapital || tradeStore.getInitialDeposit(trade.strategyId || 'MAIN_DIARY')
 
   return {
     ...trade,
     id: trade.id || 'time-tree-trade',
     entryTime: trade.entryTime || trade.date || '',
     exitTime: trade.exitTime || trade.dateExit || '',
-    pnl: Number.isFinite(Number(trade.pnl)) ? Number(trade.pnl) : 0,
+    pnl: getTradeCashPnl(trade, initialCapital),
     scenarios: Array.isArray(trade.scenarios) ? trade.scenarios : [],
     emotions: Array.isArray(trade.emotions) ? trade.emotions : []
   }
@@ -95,7 +97,12 @@ const formatRiskReward = () => {
   const stopLoss = Number(props.trade?.stopLoss)
   const takeProfit = Number(props.trade?.takeProfit)
   if (![entry, stopLoss, takeProfit].every(Number.isFinite) || entry === stopLoss) return '--'
-  return Math.abs((takeProfit - entry) / (entry - stopLoss)).toFixed(2)
+
+  const isShort = String(props.trade?.side || props.trade?.direction || '').toLowerCase().includes('short')
+  const risk = isShort ? stopLoss - entry : entry - stopLoss
+  const reward = isShort ? entry - takeProfit : takeProfit - entry
+  if (risk <= 0 || reward <= 0) return '--'
+  return (reward / risk).toFixed(2)
 }
 
 const formatRiskPerTrade = () => {
@@ -125,15 +132,20 @@ const renderTradeNote = (note: any) => {
 
 const tradeAsset = () => String(props.trade?.asset || props.trade?.symbol || props.trade?.ticker || '--').toUpperCase()
 const tradeDirection = () => String(props.trade?.side || props.trade?.direction || '--').toUpperCase()
-const tradeResultValue = () => props.trade?.pnl ?? props.trade?.profitInCurrency ?? props.trade?.profit ?? props.trade?.result
+const tradeResultValue = () => {
+  const trade = props.trade
+  if (!trade) return null
+  const initialCapital = props.forecastInitialCapital || tradeStore.getInitialDeposit(trade.strategyId || 'MAIN_DIARY')
+  return getTradeCashPnl(trade, initialCapital)
+}
 const tradeResultPercentValue = () => {
-  const storedPercent = props.trade?.profitInPercent ?? props.trade?.pnlPercent ?? props.trade?.resultPercent
-  if (storedPercent !== undefined && storedPercent !== null && storedPercent !== '') return storedPercent
-
-  const result = Number(tradeResultValue())
-  const capital = Number(props.trade?.capitalBeforeTrade ?? props.trade?.currentCapital ?? props.trade?.initialCapital)
-  if (!Number.isFinite(result) || !Number.isFinite(capital) || capital <= 0) return null
-  return (result / capital) * 100
+  const trade = props.trade
+  if (!trade) return null
+  const initialCapital = props.forecastInitialCapital || tradeStore.getInitialDeposit(trade.strategyId || 'MAIN_DIARY')
+  const balanceBefore = Number(trade.capitalBeforeTrade) > 0
+    ? Number(trade.capitalBeforeTrade)
+    : initialCapital
+  return getTradeReturnPct(trade, balanceBefore)
 }
 const tradeResultClass = (rawValue) => {
   const value = Number(rawValue)

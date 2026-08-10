@@ -623,6 +623,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import globalAssets from '~/shared/data/global_assets.json'
+import { getTradeCashPnl, getTradeReturnPct } from '~/widgets/genesis/model/tradePnl'
 
 const { locale, t } = useI18n()
 const openTradeText = () => t('genesis.virtualLog.openTrade')
@@ -837,7 +838,15 @@ const onNoteClick = (tradeId: string, noteId: string) => {
 
 const getResultMetricValue = (trade: any) => {
   if (!isClosedTradeRecord(trade)) return Number.NaN
-  return resultDisplayMode.value === 'currency' ? Number(trade.profitInCurrency || 0) : Number(trade.profitValue || 0)
+  if (resultDisplayMode.value === 'currency') {
+    return getTradeCashPnl(trade, strategyStore.getInitialDeposit(resolveTradeStrategyId(trade)))
+  }
+
+  const storedPercent = Number(trade.profitValue)
+  if (Number.isFinite(storedPercent)) return storedPercent
+
+  const initialDeposit = strategyStore.getInitialDeposit(resolveTradeStrategyId(trade))
+  return getTradeReturnPct(trade, initialDeposit) ?? 0
 }
 
 const resultMetricLabel = computed(() => resultDisplayMode.value === 'currency' ? '$' : '%')
@@ -1802,8 +1811,8 @@ const activeTrades = computed(() => {
       let runningCapital = strategyStore.getInitialDeposit(sId)
       for (const t of stratTrades) {
         const closed = isClosedTradeRecord(t)
-        const currencyProfit = t.profitInCurrency !== undefined ? t.profitInCurrency : (t.pnl !== undefined ? t.pnl : (t.result || 0))
         const capAtTrade = runningCapital > 0 ? runningCapital : 1000
+        const currencyProfit = closed ? getTradeCashPnl(t, capAtTrade) : 0
         const calcPercent = closed ? Math.round((currencyProfit / capAtTrade) * 10000) / 100 : 0
         
         if (closed) runningCapital += currencyProfit
@@ -1815,8 +1824,12 @@ const activeTrades = computed(() => {
     return props.trades.map(t => {
       const strategyId = resolveTradeStrategyId(t)
       const enriched = enrichedTradesMap[t.id || 'TRD-XX'] || {
-        currencyProfit: t.profitInCurrency !== undefined ? t.profitInCurrency : (t.pnl !== undefined ? t.pnl : (t.result || 0)),
-        calcPercent: 0
+        currencyProfit: isClosedTradeRecord(t)
+          ? getTradeCashPnl(t, strategyStore.getInitialDeposit(strategyId))
+          : 0,
+        calcPercent: isClosedTradeRecord(t)
+          ? (getTradeReturnPct(t, strategyStore.getInitialDeposit(strategyId)) ?? 0)
+          : 0
       }
       const currencyProfit = enriched.currencyProfit
       const calcPercent = enriched.calcPercent
@@ -1881,7 +1894,7 @@ const activeTrades = computed(() => {
     size: (t as any).size || 1,
     stopLoss: (t as any).stopLoss || 49500,
     takeProfit: (t as any).takeProfit || 52000,
-    profitInCurrency: (t as any).profitInCurrency || t.profitValue,
+    profitInCurrency: getTradeCashPnl(t, strategyStore.getInitialDeposit(resolveTradeStrategyId(t))),
     dateEntryStr: (t as any).dateEntryStr || '10.05.2026, 14:30:00',
     dateExitStr: (t as any).dateExitStr || '10.05.2026, 15:15:00',
     dateObj: new Date(2026, 4, parseInt((t.dateTime || '10.05.2026').split('.')[0] || '10', 10)),

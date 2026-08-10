@@ -337,7 +337,7 @@
                     <div class="w-[15%] flex items-center space-x-3 truncate">
                       <span
                         class="w-1 h-1 rounded-full shrink-0"
-                        :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
+                        :class="getTradePnlValue(trade) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
                       ></span>
                       <span class="font-bold uppercase tracking-widest">{{ trade.side || trade.direction || 'N/A' }}</span>
                     </div>
@@ -358,8 +358,8 @@
                       {{ trade._positionRisk > 0 ? '-$' + trade._positionRisk.toFixed(2) : '$0.00' }}
                       <span v-if="trade._positionRisk > trade._maxRiskDollars" class="text-[9px] opacity-60 ml-0.5">(-${{ (trade._positionRisk - trade._maxRiskDollars).toFixed(2) }})</span>
                     </span>
-                    <span class="w-[16%] font-bold text-right tracking-wider" :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-                      {{ (Number(trade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(trade.profitInCurrency) || 0).toFixed(2) }}
+                    <span class="w-[16%] font-bold text-right tracking-wider" :class="getTradePnlValue(trade) >= 0 ? 'text-green-500' : 'text-red-500'">
+                      {{ getTradePnlValue(trade) >= 0 ? '+$' : '-$' }}{{ Math.abs(getTradePnlValue(trade)).toFixed(2) }}
                     </span>
                   </div>
                 </div>
@@ -440,7 +440,7 @@
                         <div class="w-[15%] flex items-center space-x-3 truncate">
                           <span
                             class="w-1 h-1 rounded-full shrink-0"
-                            :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
+                            :class="getTradePnlValue(trade) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
                           ></span>
                           <span class="font-bold uppercase tracking-widest">{{ trade.side || trade.direction || 'N/A' }}</span>
                         </div>
@@ -461,8 +461,8 @@
                           {{ trade._positionRisk > 0 ? '-$' + trade._positionRisk.toFixed(2) : '$0.00' }}
                           <span v-if="trade._positionRisk > trade._maxRiskDollars" class="text-[9px] opacity-60 ml-0.5">(-${{ (trade._positionRisk - trade._maxRiskDollars).toFixed(2) }})</span>
                         </span>
-                        <span class="w-[16%] font-bold text-right tracking-wider" :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-                          {{ (Number(trade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(trade.profitInCurrency) || 0).toFixed(2) }}
+                        <span class="w-[16%] font-bold text-right tracking-wider" :class="getTradePnlValue(trade) >= 0 ? 'text-green-500' : 'text-red-500'">
+                          {{ getTradePnlValue(trade) >= 0 ? '+$' : '-$' }}{{ Math.abs(getTradePnlValue(trade)).toFixed(2) }}
                         </span>
                       </div>
                     </div>
@@ -494,7 +494,7 @@
                     <div class="w-[15%] flex items-center space-x-3 truncate">
                       <span
                         class="w-1 h-1 rounded-full shrink-0"
-                        :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
+                        :class="getTradePnlValue(trade) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30'"
                       ></span>
                       <span class="font-bold uppercase tracking-widest">{{ trade.side || trade.direction || 'N/A' }}</span>
                     </div>
@@ -510,8 +510,8 @@
                     <span class="w-[16%] opacity-60 text-right tracking-wider truncate">
                       {{ trade._expectedStyle }}
                     </span>
-                    <span class="w-[16%] font-bold text-right tracking-wider" :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-                      {{ (Number(trade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(trade.profitInCurrency) || 0).toFixed(2) }}
+                    <span class="w-[16%] font-bold text-right tracking-wider" :class="getTradePnlValue(trade) >= 0 ? 'text-green-500' : 'text-red-500'">
+                      {{ getTradePnlValue(trade) >= 0 ? '+$' : '-$' }}{{ Math.abs(getTradePnlValue(trade)).toFixed(2) }}
                     </span>
                   </div>
                 </div>
@@ -550,7 +550,7 @@
                     <div class="w-[15%] flex items-center space-x-3 truncate relative z-10">
                       <span
                         class="w-1 h-1 rounded-full shrink-0"
-                        :class="expandedNeuralTrades.has(trade.id) ? ((Number(trade.profitInCurrency) || 0) >= 0 ? 'bg-[#F9F6F0] dark:bg-black' : 'bg-[#F9F6F0]/30 dark:bg-black/30') : ((Number(trade.profitInCurrency) || 0) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30')"
+                        :class="expandedNeuralTrades.has(trade.id) ? (getTradePnlValue(trade) >= 0 ? 'bg-[#F9F6F0] dark:bg-black' : 'bg-[#F9F6F0]/30 dark:bg-black/30') : (getTradePnlValue(trade) >= 0 ? 'bg-black dark:bg-[#F9F6F0]' : 'bg-black/30 dark:bg-white/30')"
                       ></span>
                       <span class="font-bold uppercase tracking-widest">{{ trade.side || trade.direction || 'N/A' }}</span>
                     </div>
@@ -567,8 +567,8 @@
                       {{ trade._neuralScore }}%
                     </span>
                     <div class="w-[16%] flex items-center justify-end space-x-2">
-                      <span class="font-bold text-right tracking-wider" :class="(Number(trade.profitInCurrency) || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-                        {{ (Number(trade.profitInCurrency) || 0) >= 0 ? '+$' : '-$' }}{{ Math.abs(Number(trade.profitInCurrency) || 0).toFixed(2) }}
+                      <span class="font-bold text-right tracking-wider" :class="getTradePnlValue(trade) >= 0 ? 'text-green-500' : 'text-red-500'">
+                        {{ getTradePnlValue(trade) >= 0 ? '+$' : '-$' }}{{ Math.abs(getTradePnlValue(trade)).toFixed(2) }}
                       </span>
                       <button @click.stop="toggleNeuralTrade(trade.id)" class="w-6 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity cursor-pointer">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -610,10 +610,10 @@
                               : (locale === 'ru' ? 'НЕЙТРАЛЬНО' : 'NEUTRAL') }}
                         </span>
                         <span class="w-[25%] text-right font-mono font-bold text-[11px] uppercase tracking-wider truncate opacity-80">
-                          {{ (getStats(typeof emotion === 'string' ? emotion : emotion.name, currentTrades).freq * 100).toFixed(1) }}%
+                          {{ (getStats(typeof emotion === 'string' ? emotion : emotion.name, closedCurrentTrades).freq * 100).toFixed(1) }}%
                         </span>
-                        <span class="w-[25%] text-right font-mono font-bold text-[11px] tracking-wider truncate" :class="getStats(typeof emotion === 'string' ? emotion : emotion.name, currentTrades).pf >= 1 ? 'text-green-500' : 'text-red-500'">
-                          {{ getStats(typeof emotion === 'string' ? emotion : emotion.name, currentTrades).pf.toFixed(2) }}
+                        <span class="w-[25%] text-right font-mono font-bold text-[11px] tracking-wider truncate" :class="getStats(typeof emotion === 'string' ? emotion : emotion.name, closedCurrentTrades).pf >= 1 ? 'text-green-500' : 'text-red-500'">
+                          {{ getStats(typeof emotion === 'string' ? emotion : emotion.name, closedCurrentTrades).pf.toFixed(2) }}
                         </span>
                       </div>
                     </div>
@@ -1207,6 +1207,8 @@ import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
 import { PATTERN_FORECAST_LIMITS } from '~/widgets/genesis/model/patternForecast'
 import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
+import { getTradeCashPnl, getTradeReturnPct, hasFiniteTradePnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
@@ -1342,7 +1344,7 @@ const tradeEmotionalState = computed(() => {
 
 const tradeNetResult = computed(() => {
   if (!selectedTrade.value) return '+$0.00'
-  const profit = selectedTrade.value.profitInCurrency || 0
+  const profit = getTradePnlValue(selectedTrade.value)
   const sign = profit >= 0 ? '+' : '-'
   const absProfit = Math.abs(profit).toLocaleString(numberLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return `${sign}$${absProfit}`
@@ -1554,7 +1556,7 @@ const formatFullDate = (d: any) => {
 
 const translateTemporalUnit = (unit: string) => t(`genesis.virtualLog.units.${unit}`)
 
-const isClosedDiaryTrade = (trade: any) => trade?.isClosed !== false && String(trade?.status || '').toLowerCase() !== 'open'
+const isClosedDiaryTrade = (trade: any) => isClosedTradeForMetrics(trade)
 
 const currentTrades = computed(() => {
   return scopeTradesToSelectedVersion(tradeStore.getTradesForStrategy(selectedStrategyId.value))
@@ -1861,13 +1863,12 @@ const formatSignedPercent = (value: number) => {
 
 const getTradeResultPercent = (trade: any) => {
   if (!isClosedDiaryTrade(trade)) return Number.NaN
-  const explicitResult = Number(trade?.result)
-  if (Number.isFinite(explicitResult)) return explicitResult
-
-  const pnl = getTradePnlValue(trade)
   const strategyId = trade?.strategyId || selectedStrategyId.value
   const deposit = tradeStore.getInitialDeposit(strategyId) || 1000
-  return deposit > 0 ? (pnl / deposit) * 100 : Number.NaN
+  const balanceBefore = Number(trade?.capitalBeforeTrade) > 0
+    ? Number(trade.capitalBeforeTrade)
+    : deposit
+  return getTradeReturnPct(trade, balanceBefore) ?? Number.NaN
 }
 
 const normalizeAssetSymbol = (asset: unknown) => String(asset || '').trim().toUpperCase()
@@ -1956,7 +1957,7 @@ const patternForecastClosedTradesCount = computed(() => {
   return closedCurrentTrades.value.filter((trade: any) => {
     return Number.isFinite(new Date(trade?.date).getTime()) &&
       Number.isFinite(new Date(trade?.dateExit).getTime()) &&
-      Number.isFinite(Number(trade?.profitInCurrency))
+      hasFiniteTradePnl(trade)
   }).length
 })
 
@@ -1969,9 +1970,8 @@ const patternForecastIntroStats = computed(() => ({
 }))
 
 const getTradePnlValue = (trade: any) => {
-  const raw = trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0
-  const value = typeof raw === 'string' ? Number.parseFloat(raw) : Number(raw)
-  return Number.isFinite(value) ? value : 0
+  const strategyId = trade?.strategyId || selectedStrategyId.value
+  return getTradeCashPnl(trade, tradeStore.getInitialDeposit(strategyId) || 1000)
 }
 
 // Keep the node palette consistent with the complete visible diary, even when
@@ -2168,15 +2168,10 @@ const activeMatrixNodes = computed(() => {
 const getTradeRiskComponents = (trade: any) => {
   const configuredRisk = Number(trade?.risk)
   const hasConfiguredRisk = Number.isFinite(configuredRisk) && configuredRisk > 0
-  const entryPrice = Number(trade?.entry)
-  const stopPrice = Number(trade?.stopLoss)
-  const size = Number(trade?.size) || 1
-  const priceRisk = Number.isFinite(entryPrice) && Number.isFinite(stopPrice)
-    ? Math.abs(entryPrice - stopPrice) * size
-    : 0
+  const priceRisk = getTradePlannedStopRiskDollars(trade)
   const positionRisk = Math.max(hasConfiguredRisk ? configuredRisk : 0, Number.isFinite(priceRisk) ? priceRisk : 0)
-  const pnl = Number(trade?.profitInCurrency)
-  const realizedLoss = Number.isFinite(pnl) && pnl < 0 ? Math.abs(pnl) : 0
+  const pnl = getTradePnlValue(trade)
+  const realizedLoss = pnl < 0 ? Math.abs(pnl) : 0
 
   return {
     configuredRisk: hasConfiguredRisk ? configuredRisk : 0,
@@ -2190,6 +2185,13 @@ const tradeViolatesRiskLimit = (trade: any, limit: number) => {
   if (!Number.isFinite(limit)) return false
   const risk = getTradeRiskComponents(trade)
   return risk.realizedLoss > limit || risk.positionRisk > limit
+}
+
+const getTradeDurationDays = (trade: any) => {
+  const start = new Date(trade?.date).getTime()
+  const end = new Date(trade?.dateExit).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return Number.NaN
+  return (end - start) / 86400000
 }
 
 const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number, tradingStyle: number }>(() => {
@@ -2224,12 +2226,8 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
     if (!tradeViolatesRiskLimit(t, maxRiskDollars)) compliantTradeCount++;
 
     // Trading Style
-    let durationMins = 0;
-    if (t.date && t.dateExit) {
-      durationMins = (new Date(t.dateExit).getTime() - new Date(t.date).getTime()) / 60000;
-    }
-    const durationDays = durationMins / 60 / 24;
-    let styleCompliant = true;
+    const durationDays = getTradeDurationDays(t);
+    let styleCompliant = extraType == null ? true : Number.isFinite(durationDays);
     if (extraType != null && styleLimits[extraType as keyof typeof styleLimits]) {
       const limit = styleLimits[extraType as keyof typeof styleLimits];
       if (limit) {
@@ -2240,7 +2238,7 @@ const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number,
     if (styleCompliant) compliantStyleCount++;
 
     const risk = getTradeRiskComponents(t);
-    const pnl = Number((t as any).profitInCurrency) || 0;
+    const pnl = getTradePnlValue(t);
     const dateStr = new Date(t.date).toDateString();
     
     if (!sessionRiskMap[dateStr]) {
@@ -2308,12 +2306,8 @@ const complianceViolations = computed(() => {
       });
     }
 
-    let durationMins = 0;
-    if (t.date && t.dateExit) {
-      durationMins = (new Date(t.dateExit).getTime() - new Date(t.date).getTime()) / 60000;
-    }
-    const durationDays = durationMins / 60 / 24;
-    let styleCompliant = true;
+    const durationDays = getTradeDurationDays(t);
+    let styleCompliant = extraType == null ? true : Number.isFinite(durationDays);
     if (extraType != null && styleLimits[extraType as keyof typeof styleLimits]) {
       const limit = styleLimits[extraType as keyof typeof styleLimits];
       if (limit) {
@@ -2355,7 +2349,7 @@ const complianceViolations = computed(() => {
       }
     }
 
-    const pnl = Number((t as any).profitInCurrency) || 0;
+    const pnl = getTradePnlValue(t);
     const dateStr = new Date(t.date).toDateString();
     
     if (!sessionRiskMap[dateStr]) {
@@ -2377,7 +2371,7 @@ const complianceViolations = computed(() => {
   Object.values(sessionRiskMap).forEach(sessionData => {
     const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionData.balanceAtStart);
     if (sessionData.realizedLoss > maxSessionRiskDollars || sessionData.positionRisk > maxSessionRiskDollars) {
-      const sViolatingTrades = sessionData.trades.filter((t: any) => (Number(t.profitInCurrency) || 0) < 0);
+      const sViolatingTrades = sessionData.trades;
       violatingSessions.push({
         ...sessionData,
         _maxSessionRiskDollars: maxSessionRiskDollars,
@@ -2854,7 +2848,7 @@ const filteredTrades = computed(() => {
     
     // PnL Filter
     if (!isClosedDiaryTrade(t) && filterPnL.value !== 'ALL') return false
-    const pnl = t.profitInCurrency || 0
+    const pnl = getTradePnlValue(t)
     if (filterPnL.value === 'PROFIT' && pnl < 0) return false
     if (filterPnL.value === 'LOSS' && pnl >= 0) return false
 
@@ -3040,7 +3034,7 @@ const getStats = (id: string, allTrades: any[], scenarioId?: string | null) => {
   
   let gProf = 0, gLoss = 0
   presentIn.forEach(tr => {
-    const p = tr.profitInCurrency || 0
+    const p = getTradePnlValue(tr)
     if (p > 0) gProf += p
     else gLoss += Math.abs(p)
   })
@@ -3103,7 +3097,7 @@ const mappedTradeForAnalysis = computed(() => {
   return {
     ...t,
     percentileRank,
-    pnl: t.profitInCurrency || 0,
+    pnl: getTradePnlValue(t),
     scenarios: [
       ...(t.boardScenarioEntry ? [{ ...t.boardScenarioEntry, type: 'entry' }] : []),
       ...(t.boardScenarioExit ? [{ ...t.boardScenarioExit, type: 'exit' }] : [])
@@ -3381,7 +3375,7 @@ const initTrades = () => {
         id: trade.id!,
         label: isOpenTrade
           ? `${formatCubeTradeAssetLabel(trade.asset)} [${openTradeText()}]`
-          : `${formatCubeTradeAssetLabel(trade.asset)} [${(trade.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(trade.profitInCurrency ?? 0).toFixed(2)}$]`,
+          : `${formatCubeTradeAssetLabel(trade.asset)} [${getTradePnlValue(trade) >= 0 ? '+' : ''}${getTradePnlValue(trade).toFixed(2)}$]`,
         faceIndex: 0,
         seedPos: tradeSeedPos,
         graphPos: { x: tradeSeedPos.x * 0.55, y: tradeSeedPos.y * 0.55 },
@@ -3499,7 +3493,7 @@ const initTrades = () => {
         id: trade.id!,
         label: isOpenTrade
           ? `${formatCubeTradeAssetLabel(trade.asset)} [${openTradeText()}]`
-          : `${formatCubeTradeAssetLabel(trade.asset)} [${(trade.profitInCurrency ?? 0) >= 0 ? '+' : ''}${Number(trade.profitInCurrency ?? 0).toFixed(2)}$]`,
+          : `${formatCubeTradeAssetLabel(trade.asset)} [${getTradePnlValue(trade) >= 0 ? '+' : ''}${getTradePnlValue(trade).toFixed(2)}$]`,
         faceIndex: 0,
         seedPos: tradeSeedPos,
         graphPos: { x: tradeSeedPos.x * 0.55, y: tradeSeedPos.y * 0.55 },

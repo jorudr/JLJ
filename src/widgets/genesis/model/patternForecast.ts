@@ -1,5 +1,6 @@
 import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import { HISTORICAL_FORECAST_FILES } from './protocolForecastFiles'
+import { getTradeCashPnl, hasFiniteTradePnl, isClosedTradeForMetrics } from './tradePnl'
 
 type PatternForecastConfidence = 'low' | 'medium' | 'high'
 
@@ -185,10 +186,16 @@ let historicalPatternTimelinesPromise: Promise<HistoricalPatternTimeline[]> | nu
 
 export function calculatePatternForecastCurrentCapital(trades: DiaryEntry[], initialCapital: number) {
   const baseCapital = finitePositive(initialCapital) ? initialCapital : 1000
-  const totalProfit = trades
+  let capital = baseCapital
+
+  trades
     .filter(isRealizedDiaryTrade)
-    .reduce((sum, trade) => sum + readDiaryTradeProfit(trade), 0)
-  const capital = baseCapital + totalProfit
+    .slice()
+    .sort((left, right) => parseDate(left.dateExit) - parseDate(right.dateExit))
+    .forEach((trade) => {
+      capital += readDiaryTradeProfit(trade, capital)
+    })
+
   return Number.isFinite(capital) ? capital : baseCapital
 }
 
@@ -864,10 +871,10 @@ function prepareUserTrades(trades: DiaryEntry[], initialCapital: number): Prepar
   return sortedTrades.flatMap((trade): PreparedTrade[] => {
     const timestamp = parseDate(trade.dateExit)
     const entryTimestamp = parseDate(trade.date)
-    const profit = readDiaryTradeProfit(trade)
     if (!Number.isFinite(timestamp) || !Number.isFinite(entryTimestamp)) return []
 
     const baseEquity = equity > 0 ? equity : baseCapital
+    const profit = readDiaryTradeProfit(trade, baseEquity)
     equity += profit
 
     return [{
@@ -1147,14 +1154,14 @@ function isSecondaryStatementSection(value: string) {
 }
 
 function isRealizedDiaryTrade(trade: DiaryEntry) {
-  return Number.isFinite(parseDate(trade.date)) &&
+  return isClosedTradeForMetrics(trade) &&
+    Number.isFinite(parseDate(trade.date)) &&
     Number.isFinite(parseDate(trade.dateExit)) &&
-    Number.isFinite(Number(trade.profitInCurrency))
+    hasFiniteTradePnl(trade)
 }
 
-function readDiaryTradeProfit(trade: DiaryEntry) {
-  const profit = Number(trade.profitInCurrency)
-  return Number.isFinite(profit) ? profit : 0
+function readDiaryTradeProfit(trade: DiaryEntry, balanceBeforeTrade = 1000) {
+  return getTradeCashPnl(trade, balanceBeforeTrade)
 }
 
 function buildRelativeEquity(returns: number[]) {

@@ -112,6 +112,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 
 type Trade = Record<string, any>
 
@@ -197,17 +198,10 @@ const resolveTicker = (trade: Trade) => {
 }
 
 const resolvePnl = (trade: Trade) => {
-  const value = getNestedValue(trade, 'profitInCurrency') ??
-    getNestedValue(trade, 'pnl') ??
-    getNestedValue(trade, 'profit') ??
-    getNestedValue(trade, 'result') ??
-    0
-
-  const normalized = typeof value === 'string'
-    ? Number.parseFloat(value.replace(/[$,\s]/g, ''))
-    : Number(value)
-
-  return Number.isFinite(normalized) ? normalized : 0
+  const source = trade.trade && typeof trade.trade === 'object'
+    ? { ...trade.trade, ...trade }
+    : trade
+  return getTradeCashPnl(source, Number(source.initialCapital) || 1000)
 }
 
 const updateTooltipPosition = (event: MouseEvent) => {
