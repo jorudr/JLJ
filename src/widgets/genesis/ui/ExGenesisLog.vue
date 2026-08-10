@@ -63,21 +63,13 @@
         </Transition>
       </div>
 
-      <div
+      <ExTrades
         v-if="viewType === 'timeTree'"
-        class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
-        :class="[
-          showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : '',
-          isTimeTreeFullscreen ? '!fixed !inset-0 !z-[10080]' : ''
-        ]"
-      >
-        <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExTradeArchive
-          class="relative z-10"
-          :trades="timeTreeSourceTrades"
-          @trade-context-menu="handleArchiveTradeClick"
-        />
-      </div>
+        :trades="timeTreeSourceTrades"
+        :show-capital-forecast="showCapitalForecast"
+        :is-fullscreen="isTimeTreeFullscreen"
+        @trade-context-menu="handleArchiveTradeClick"
+      />
 
       <!-- STRATEGY TREE LAYER -->
       <div
@@ -1195,7 +1187,7 @@ import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
 import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
 import ExTradeForceGraph from '~/widgets/genesis/ui/components/ExTradeForceGraph.vue'
-import ExTradeArchive from '~/widgets/genesis/ui/components/ExTradeArchive.vue'
+import ExTrades from '~/widgets/genesis/ui/ExTrades.vue'
 import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
 import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
