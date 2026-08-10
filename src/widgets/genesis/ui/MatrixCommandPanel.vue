@@ -19,12 +19,19 @@
         <div
           v-if="state.activeMenuCategory.value"
           ref="menuContentElement"
-          class="command-menu-content w-full flex justify-center"
+          class="command-menu-content w-full flex flex-col items-center justify-center"
           :class="[
             { 'is-visible': isMenuContentVisible },
             isMenuContentVisible ? 'overflow-visible' : 'overflow-hidden'
           ]"
           :aria-hidden="!isMenuContentVisible">
+
+          <div v-if="commandSectionDescription"
+               class="flex items-center justify-center gap-3 mb-4 w-full pointer-events-none">
+            <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+            <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40 text-center">{{ commandSectionDescription }}</span>
+            <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
+          </div>
 
           <!-- TEXT FORMAT TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'TEXT_FORMAT' && state.activeTextNode.value" class="flex flex-wrap items-center justify-center gap-4 pointer-events-auto px-4 w-full">
@@ -322,11 +329,6 @@
 
           <!-- SCENARIO DOCUMENTATION TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_DOCS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
-            <div class="flex items-center gap-3 mb-5">
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Scenario Explanation Layer</span>
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-            </div>
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="type.label">
                 <template #trigger>
@@ -348,11 +350,6 @@
 
           <!-- SCENARIO VISUALS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_VISUALS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
-            <div class="flex items-center gap-3 mb-5">
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Evidence And Markup Layer</span>
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-            </div>
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="type.label">
                 <template #trigger>
@@ -374,11 +371,6 @@
 
           <!-- SCENARIO AUDIO TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_AUDIO'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
-            <div class="flex items-center gap-3 mb-5">
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Audio Note Layer</span>
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-            </div>
             <div class="flex items-center gap-3 overflow-visible px-2 py-2 max-w-full">
               <div v-if="audio.matrixAudioErrorLabel.value" class="min-w-[180px] h-14 border border-red-500/40 bg-red-500/5 backdrop-blur-md flex flex-col justify-center px-4">
                 <span class="text-[7px] font-mono tracking-[0.12em] uppercase text-red-500 truncate">{{ audio.matrixAudioErrorLabel.value }}</span>
@@ -478,7 +470,6 @@
           <!-- SCALING TOOLS ( Entry Configuration ) -->
           <div v-if="state.activeMenuCategory.value === 'SCALING' && !state.isScenarioContext.value" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex flex-col items-center w-full space-y-3">
-               <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40">Configure Scaling Entry</span>
                <div class="flex items-end space-x-2">
 
                   <!-- Size Mode + Value (combined) -->
@@ -754,6 +745,29 @@ const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   TEXT_FORMAT: 'TEXT',
   LABELS: 'LABELS'
 }
+
+const commandSectionDescriptions: Partial<Record<MenuCategory, string>> = {
+  TEXT_FORMAT: 'Format and style text',
+  INDICATORS: 'Choose indicators and conditions',
+  EMOTIONS: 'Add an emotional state',
+  STEPS: 'Choose a sequence step',
+  LOGIC: 'Build strategy logic',
+  LABELS: 'Add text and information panels',
+  SCENARIO_DOCS: 'Explain the scenario',
+  SCENARIO_VISUALS: 'Add visual evidence and markup',
+  SCENARIO_AUDIO: 'Record an audio note',
+  DOMAINS: 'Define trading zones',
+  METHODS: 'Choose an entry method',
+  SCALING: 'Configure position scaling',
+  RISK: 'Set risk management rules',
+  DATA: 'Find and add an asset',
+  SYSTEM: 'Manage saved matrix data'
+}
+
+const commandSectionDescription = computed(() => {
+  const category = props.state.activeMenuCategory.value
+  return category ? commandSectionDescriptions[category] || '' : ''
+})
 
 const commandLinkCategories = computed(() => {
   const categories = props.state.isScenarioContext.value ? scenarioCommandCategories : defaultCommandCategories

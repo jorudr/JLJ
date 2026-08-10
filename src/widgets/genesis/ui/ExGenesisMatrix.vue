@@ -19,9 +19,6 @@
         <span class="block text-[8px] font-mono uppercase tracking-[0.28em] font-black truncate max-w-[160px]">
           {{ getPageLabel(page, index) }}
         </span>
-        <span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] font-mono uppercase tracking-[0.18em] opacity-40 whitespace-nowrap">
-          {{ getPageStrategyCount(page) }}/1 Strategy
-        </span>
       </button>
       <button @click="state.addMatrixPage()"
               class="h-9 w-9 border border-nier-border-light dark:border-nier-border-dark bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl text-[14px] font-mono font-black opacity-50 hover:opacity-100 transition-all">
@@ -163,9 +160,6 @@
                   </button>
                   <span v-if="idx < state.breadcrumbs.value.length - 1" class="mx-4 opacity-10 text-[10px]">/</span>
                </div>
-            </div>
-            <div class="mt-2 text-[7px] font-mono tracking-[0.6em] uppercase opacity-20 italic">
-               Diagnostic Neural Path // Sub Sequence Active
             </div>
          </div>
       </Transition>
@@ -327,7 +321,6 @@ const undoManager = useExGenesisMatrixUndo()
 const isGitPanelOpen = ref(false)
 const activeFilePreviewNode = ref<any | null>(null)
 
-const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
 const getPageLabel = (page: any, index: number) => {
   const strategyNode = (page.nodes || []).find(isStrategyNode)
   const label = strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
