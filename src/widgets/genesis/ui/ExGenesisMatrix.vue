@@ -144,7 +144,6 @@
       </div>
 
       <!-- CENTERED NAVIGATION HUB -->
-      <Transition name="hud-pop">
          <div v-if="state.navigationStack.value.length > 0" 
               class="absolute top-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center pointer-events-auto">
             <div class="flex items-center space-x-8 bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark px-10 py-3 shadow-2xl relative">
@@ -162,7 +161,6 @@
                </div>
             </div>
          </div>
-      </Transition>
 
       <!-- SEQUENTIAL PROMPT (Nier Style) -->
       <div v-if="state.shouldShowInitializePrompt.value" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">

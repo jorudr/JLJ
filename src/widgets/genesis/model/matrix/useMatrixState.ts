@@ -775,9 +775,12 @@ export function useMatrixState() {
   const breadcrumbs = computed(() => {
     const list = navigationStack.value.map(id => {
       const node = findNodeById(rootNodes.value, id)
-      return { id, label: node?.params?.customName || node?.label || 'SCENARIO' }
+      const rawLabel = node?.params?.customName || node?.params?.name || node?.label || node?.type || 'SCENARIO'
+      return { id, label: String(rawLabel).replace(/_/g, ' ') }
     })
-    return [{ id: null, label: 'MAIN' }, ...list]
+    const strategy = rootNodes.value.find(isStrategyNode)
+    const rawMainLabel = strategy ? getMatrixStrategyName(strategy) : activePage.value?.name || 'Strategy'
+    return [{ id: null, label: String(rawMainLabel).replace(/_/g, ' ') }, ...list]
   })
 
   function getNode(id: string) {
