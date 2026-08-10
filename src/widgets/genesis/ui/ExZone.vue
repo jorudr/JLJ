@@ -35,7 +35,7 @@
 
        <span class="font-mono tracking-[0.4em] uppercase opacity-40 group-hover:opacity-100 transition-opacity whitespace-nowrap"
              :style="zoneHeaderLabelStyle">
-         {{ zone.type === 'session' ? localizedSessionLabel : (locale === 'ru' && t(zone.label) && t(zone.label) !== zone.label ? t(zone.label) : zone.label) }}
+         {{ zone.type === 'session' ? localizedSessionLabel : (locale === 'ru' && t(zone.label) && t(zone.label) !== zone.label ? t(zone.label) : zone.label).replace(/_/g, ' ') }}
        </span>
     </div>
 
@@ -98,10 +98,10 @@ const sessionReferences: Record<string, { start: number, end: number }> = {
 }
 
 const localizedSessionLabel = computed(() => {
-  if (props.zone.type !== 'session') return props.zone.label
+  if (props.zone.type !== 'session') return props.zone.label.replace(/_/g, ' ')
   
   const ref = sessionReferences[props.zone.label]
-  if (!ref) return props.zone.label
+  if (!ref) return props.zone.label.replace(/_/g, ' ')
   
   const offset = -new Date().getTimezoneOffset() / 60
   const formatTime = (hour: number) => {
@@ -114,7 +114,7 @@ const localizedSessionLabel = computed(() => {
   const offsetValue = offset || 0
   const offsetLabel = offsetValue === 0 ? 'GMT' : `GMT${offsetValue >= 0 ? '+' : ''}${offsetValue}`
   
-  const labelText = locale.value === 'ru' && t(props.zone.label) ? t(props.zone.label) : props.zone.label
+  const labelText = (locale.value === 'ru' && t(props.zone.label) ? t(props.zone.label) : props.zone.label).replace(/_/g, ' ')
   return `${labelText} (${formatTime(ref.start)} - ${formatTime(ref.end)}) [${offsetLabel}]`
 })
 

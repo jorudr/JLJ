@@ -16,7 +16,7 @@
                   class="absolute inset-0 h-full w-full pointer-events-none"></canvas>
           <div v-if="!drawing.activeDrawingNode.value.params?.strokes?.length"
                class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">Press_And_Draw</span>
+            <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">Press And Draw</span>
           </div>
           <div v-if="drawing.isDrawingCursorVisible.value"
                class="absolute rounded-full border pointer-events-none z-20"
@@ -32,7 +32,7 @@
           <div class="flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
             <div class="flex items-center gap-3">
               <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
-              <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Matrix_Command_Link</span>
+              <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Matrix Command Link</span>
             </div>
             <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">{{ drawing.activeDrawingNode.value.label }}</span>
           </div>

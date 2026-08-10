@@ -23,7 +23,7 @@
                 @blur="node.params.isEditingDescription = false"
                 @keyup.enter.shift="node.params.isEditingDescription = false"
                 v-autofocus
-                placeholder="ENTER_DESCRIPTION..."
+                placeholder="ENTER DESCRIPTION..."
                 class="w-full h-full bg-transparent text-nier-text-light dark:text-nier-text-dark p-4 text-[12px] font-mono tracking-widest outline-none resize-none"
               ></textarea>
             </ExPanel>
@@ -51,7 +51,7 @@
                     node.params?.direction === 'LONG' ? '!bg-green-500/50' : '',
                     node.params?.direction === 'SHORT' ? '!bg-red-500/50' : '',
                     node.type === 'risk-element' ? '!bg-red-500/5' : '',
-                    node.type === 'instrument' ? 'dark:!bg-white/50' : ''
+                    node.type === 'instrument' ? '!bg-transparent' : ''
                   ]"></div>
 
            <!-- Selection Brackets -->
@@ -71,24 +71,15 @@
            <div v-if="node.type === 'instrument' || ['indicator', 'pattern', 'smc', 'emotion-state', 'step', 'scaling-entry', 'risk-element'].includes(node.type)"
                 class="w-full h-full flex items-center justify-center overflow-hidden relative"
                 :class="(node.type === 'step' || node.type === 'scaling-entry') ? 'p-0' : 'p-[15%]'">
-              <img v-if="node.type === 'instrument' && node.params?.logo && !imageError"
-                   :src="node.params.logo"
-                   @error="imageError = true"
-                   loading="eager"
-                   decoding="async"
-                   fetchpriority="high"
-                   draggable="false"
-                   class="w-full h-full object-contain opacity-100 grayscale transition-all duration-700 select-none pointer-events-none"
-                   style="image-rendering: -webkit-optimize-contrast; transform: translateZ(0); will-change: transform, opacity;"
-                   :class="{ 'opacity-100 grayscale-0': isSelected }" />
-              <div v-else class="font-mono transition-all tracking-tighter text-center"
+              <div class="font-mono transition-all tracking-tighter text-center whitespace-nowrap"
                      :class="[
                       (node.type === 'step' || node.type === 'scaling-entry') ? 'text-nier-white dark:text-nier-black opacity-100 font-light' : 'text-nier-text-light dark:text-nier-text-dark opacity-100 font-black',
                       isSelected ? 'opacity-100' : ''
                     ]"
                     :style="{
                       ...(displayColor ? { color: displayColor } : (node.type === 'risk-element' ? { color: '#ef4444' } : {})),
-                      fontSize: node.type === 'emotion-state' ? `${36 * scale}px` : 
+                      fontSize: node.type === 'instrument' ? instrumentDisplayFontSize :
+                                node.type === 'emotion-state' ? `${36 * scale}px` :
                                 (node.type === 'scaling-entry' || node.type === 'step') ? (node.label && node.label.length > 3 ? `${12 * scale}px` : `${24 * scale}px`) : 
                                 `${24 * scale}px`
                     }">
@@ -96,6 +87,7 @@
                    node.type === 'emotion-state' ? (node.label || 'EN').slice(0, 2).toUpperCase() :
                    (node.type === 'step' || node.type === 'scaling-entry') ? (node.label || '') :
                    node.type === 'risk-element' ? (node.params?.riskType === 'trade' ? 'RT' : node.params?.riskType === 'day' ? 'RD' : node.params?.riskType === 'style' ? (node.label || 'ST').slice(0, 2).toUpperCase() : 'RR') :
+                   node.type === 'instrument' ? instrumentDisplayCode :
                    matrixNodeDisplayCode
                 }}
               </div>
@@ -121,7 +113,7 @@
                        :style="{ padding: `${scaledRiskPx(8)} ${scaledRiskPx(16)}` }">
                     <div class="flex items-center" :style="{ gap: scaledRiskPx(12) }">
                       <div class="rotate-45 bg-nier-text-light dark:bg-nier-text-dark" :style="{ width: scaledRiskPx(8), height: scaledRiskPx(8) }"></div>
-                      <span class="font-mono uppercase tracking-[0.28em] font-black nier-text-primary" :style="{ fontSize: scaledRiskPx(9), lineHeight: scaledRiskPx(12) }">Risk_Management</span>
+                      <span class="font-mono uppercase tracking-[0.28em] font-black nier-text-primary" :style="{ fontSize: scaledRiskPx(9), lineHeight: scaledRiskPx(12) }">Risk Management</span>
                     </div>
                     <span class="font-mono uppercase tracking-[0.18em] nier-text-primary opacity-50" :style="{ fontSize: scaledRiskPx(8), lineHeight: scaledRiskPx(10) }">Panel</span>
                   </div>
@@ -176,7 +168,7 @@
                   <div class="w-8 h-8 border border-nier-border-light dark:border-nier-border-dark mb-4 animate-pulse rotate-45 flex items-center justify-center">
                      <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark"></div>
                   </div>
-                  <ExText variant="telemetry" class="opacity-40">Awaiting_Visual_Protocol</ExText>
+                  <ExText variant="telemetry" class="opacity-40">Awaiting Visual Protocol</ExText>
                </div>
                             <div v-else class="w-full h-full border-2 border-nier-border-light dark:border-nier-border-dark p-1 bg-nier-white dark:bg-nier-black relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                  <img :src="node.params.imageUrl"
@@ -225,7 +217,7 @@
                     </div>
                     <div class="flex items-center justify-between text-[8px] font-mono opacity-60">
                        <span>{{ formatAudioTime(audioCurrentTime) }}</span>
-                       <span class="truncate px-2 flex-1 text-center font-black">{{ node.params.audioName || 'AUDIO_NOTE' }}</span>
+                       <span class="truncate px-2 flex-1 text-center font-black">{{ node.params.audioName || 'AUDIO NOTE' }}</span>
                        <span>{{ formatAudioTime(audioDuration) }}</span>
                     </div>
                  </div>
@@ -245,7 +237,7 @@
            <!-- Scenario documentation panels -->
             <div v-if="isScenarioPanel"
                  class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
-               <div v-if="true" class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
+               <div v-if="node.type !== 'text-panel'" class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
                     :style="{ padding: `${8 * scale * headerScaleMult}px ${12 * scale * headerScaleMult}px` }">
                   <span class="font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px` }">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
                   <span class="font-mono tracking-widest uppercase opacity-30 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px`, maxWidth: `${96 * scale * headerScaleMult}px` }">{{ scenarioPanelHeaderCode }}</span>
@@ -274,7 +266,7 @@
                                class="opacity-70" />
                   </svg>
                   <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <span class="text-[8px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">Double_Click_To_Draw</span>
+                     <span class="text-[8px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">Double Click To Draw</span>
                   </div>
                </div>
 
@@ -322,7 +314,7 @@
                        class="matrix-embed-preview-image h-full w-full object-contain p-1.5 select-none"
                        @error="embedImageError = true" />
                      <span v-else class="text-[8px] font-mono tracking-[0.25em] uppercase opacity-35 break-all px-3 text-center">
-                       {{ embedImageUrl ? 'Image_Preview_Unavailable' : 'Embed_URL' }}
+                       {{ embedImageUrl ? 'Image Preview Unavailable' : 'Embed URL' }}
                      </span>
                   </div>
                </div>
@@ -365,9 +357,9 @@
 
                <div v-else-if="node.type === 'file-attachment'" class="flex-1 min-h-0 p-3 flex flex-col items-center justify-center gap-3">
                   <div v-if="!node.params.fileDataUrl" class="px-3 py-1.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
-                     <span class="text-[10px] font-mono font-black">FILE_ATTACHMENT (PDF)</span>
+                     <span class="text-[10px] font-mono font-black">FILE ATTACHMENT (PDF)</span>
                   </div>
-                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double_Click_To_Attach' }}</span>
+                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double Click To Attach' }}</span>
                   <button
                     v-if="node.params.fileDataUrl"
                     type="button"
@@ -524,31 +516,36 @@
              </div>
            </template>
            <!-- Default tooltip body for other node types -->
-           <div v-else-if="node.params?.customDescription || node.params?.description || node.params?.value || node.type === 'scaling-entry'">
+           <div v-else>
               <p v-if="node.params?.customDescription" class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide whitespace-pre-wrap">
                  {{ node.params.customDescription }}
               </p>
-              <p v-else class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
+              <p v-else-if="node.params?.description || node.params?.value || node.type === 'scaling-entry' || node.type === 'instrument' || (node.type === 'smc' && smcTooltipData?.description)" class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide">
                  <template v-if="node.type === 'scaling-entry'">
                     <template v-if="locale === 'ru'">
-                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА_ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% КАПИТАЛА' : node.params.lots + ' ЛОТОВ' }} в {{ node.params.step === 0 && node.params.unit === '$' ? 'ЦЕНА ВХОДА' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
                     </template>
                     <template v-else>
-                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY_PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
+                       {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + '% CAP' : node.params.lots + ' LOTS' }} in {{ node.params.step === 0 && node.params.unit === '$' ? 'ENTRY PRICE' : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}
                     </template>
                  </template>
                  <template v-else-if="node.type === 'smc'">
                     {{ smcTooltipData?.description }}
                  </template>
+                 <template v-else-if="node.type === 'instrument'">
+                   {{ node.params?.name || node.params?.symbol || node.label }}
+                 </template>
                  <template v-else>
                    {{ locale === 'ru' ? t(node.params.description || node.params.value || '') : (node.params.description || node.params.value || '') }}
                  </template>
               </p>
+              <p v-else class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide opacity-45">
+                NO DESCRIPTION
+              </p>
            </div>
-          <div class="flex items-center space-x-4 opacity-40 text-[8px] font-mono">
-             <span>{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}: {{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</span>
+          <div class="flex items-center space-x-4 text-[9px] font-mono font-semibold opacity-70">
+             <span><span class="opacity-60">{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}:</span> <strong class="font-black opacity-100">{{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</strong></span>
              <span v-if="node.type === 'condition'">{{ locale === 'ru' ? 'ПРИОРИТЕТ' : 'PRIORITY' }}: {{ node.params?.priority === 'REQUIRED' ? (locale === 'ru' ? 'ОБЯЗАТЕЛЬНО' : 'REQUIRED') : node.params?.priority === 'ADDITIONAL' ? (locale === 'ru' ? 'ДОПОЛНИТЕЛЬНО' : 'ADDITIONAL') : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
-             <span>{{ locale === 'ru' ? 'СТАТУС' : 'STATUS' }}: {{ locale === 'ru' ? 'АКТИВИРОВАНО' : 'REIFIED' }}</span>
            </div>
         </div>
      </ExNTtooltip>
@@ -558,7 +555,7 @@
            class="absolute top-full left-1/2 -translate-x-1/2 mt-4 pointer-events-auto z-[2000]">
         <button @click.stop="$emit('merge', node.params.isIndicatorSide ? { fromId: node.id, toId: node.params.mergePartnerId } : { fromId: node.params.mergePartnerId, toId: node.id })"
                 class="bg-nier-white dark:bg-nier-black border border-nier-text-light dark:border-nier-text-dark px-8 py-3 text-[10px] font-mono tracking-[0.3em] uppercase font-black hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all shadow-xl whitespace-nowrap">
-          MERGE_PROTOCOL
+          MERGE PROTOCOL
         </button>
       </div>
 
@@ -631,7 +628,7 @@
               @blur="node.params.isEditingName = false"
               @keyup.enter="node.params.isEditingName = false"
               v-autofocus
-              placeholder="ENTER_ID..."
+              placeholder="ENTER ID..."
               class="bg-nier-white dark:bg-nier-black"
             />
          </div>
@@ -729,7 +726,7 @@
                                @keyup.enter.shift="commitCommentEdit(comment)"
                                @input="adjustTextareaHeight($event)"
                                v-autofocus
-                               placeholder="ENTRY_DATA_REQUIRED..."
+                               placeholder="ENTRY DATA REQUIRED..."
                                class="w-full bg-transparent text-nier-text-light dark:text-nier-text-dark font-mono outline-none resize-none uppercase tracking-wide leading-relaxed p-0 overflow-hidden"
                                :style="{ height: 'auto', minHeight: scaledPx(180), fontSize: scaledPx(22), lineHeight: scaledPx(34) }"></textarea>
                   </div>
@@ -740,7 +737,7 @@
                        :style="{ padding: scaledPx(24) }">
                      <p class="font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed"
                         :style="{ fontSize: scaledPx(22), lineHeight: scaledPx(34) }">
-                        {{ comment.text || '[ NO_DATA_AVAILABLE ]' }}
+                        {{ comment.text || '[ NO DATA AVAILABLE ]' }}
                      </p>
                   </div>
 
@@ -869,7 +866,6 @@ const riskElementTooltipTitle = computed(() => {
 interface Comment { id: string, text: string, x: number, y: number, isEditing: boolean }
 
 const isDragging = ref(false)
-const imageError = ref(false)
 const embedImageError = ref(false)
 const identityDraftStart = ref('')
 const descriptionDraftStart = ref('')
@@ -944,6 +940,14 @@ const matrixNodeDisplayCode = computed(() => {
     return identity.replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase() || matrixNodeTypeSuffix.value.slice(0, 3).toUpperCase()
   }
   return (props.node.label || 'NOD').slice(0, 3).toUpperCase()
+})
+const instrumentDisplayCode = computed(() => (
+  String(props.node.label || props.node.params?.symbol || 'AST').trim().replace(/\s+/g, '').toUpperCase() || 'AST'
+))
+const instrumentDisplayFontSize = computed(() => {
+  const length = instrumentDisplayCode.value.length
+  const baseSize = length <= 4 ? 24 : length <= 6 ? 20 : length <= 8 ? 16 : length <= 10 ? 13 : 10
+  return `${Math.max(6, baseSize * props.scale)}px`
 })
 const riskTradingStyles = ['DAY_TRADING', 'SWING_TRADING', 'INVESTING']
 const riskParams = computed(() => {
@@ -1057,7 +1061,7 @@ function stopAudioAnimationLoop() {
   cancelAnimationFrame(audioAnimationId)
 }
 const scenarioPanelHeaderTitle = computed(() => {
-  if (isAudioNote.value) return props.node.params?.audioName || props.node.label || 'Audio_Note'
+  if (isAudioNote.value) return props.node.params?.audioName || props.node.label || 'Audio Note'
   return props.node.params?.menuLabel || props.node.label
 })
 const scenarioPanelHeaderCode = computed(() => {
@@ -1416,7 +1420,7 @@ function addChecklistItem() {
   if (!Array.isArray(props.node.params.items)) props.node.params.items = []
   const newItem = {
     id: 'c' + Date.now().toString(36),
-    text: 'NEW_CHECK',
+    text: 'NEW CHECK',
     done: false
   }
   props.node.params.items.push(newItem)

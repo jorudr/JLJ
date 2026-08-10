@@ -109,7 +109,7 @@
             <button @click="isManualOpen = false"
                     class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-nier-white dark:bg-nier-black border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors z-[100]">
                <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ locale === 'ru' ? 'Закрыть_Руководство' : 'Close_Manual' }}</span>
+               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ locale === 'ru' ? 'Закрыть Руководство' : 'Close Manual' }}</span>
             </button>
 
             <div class="flex h-[75vh]">
@@ -158,7 +158,7 @@
                  <div class="mt-12 flex items-center space-x-3 opacity-20 relative z-10">
                    <div class="w-2 h-2 border border-current rotate-45"></div>
                    <div class="w-16 h-px bg-current"></div>
-                   <span class="text-[8px] tracking-widest uppercase">{{ locale === 'ru' ? 'Конец_Модуля' : 'End_Of_Module' }}</span>
+                   <span class="text-[8px] tracking-widest uppercase">{{ locale === 'ru' ? 'Конец Модуля' : 'End Of Module' }}</span>
                    <div class="flex-1 h-px bg-gradient-to-r from-current to-transparent"></div>
                  </div>
               </div>

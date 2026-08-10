@@ -234,7 +234,7 @@
                 </div>
                 <div class="flex flex-col space-y-2">
                   <span class="font-mono text-[14px] font-black uppercase tracking-widest text-nier-text-light dark:text-nier-text-dark">
-                    Critical_System_Alert
+                    Critical System Alert
                   </span>
                   <p class="font-mono text-[11px] uppercase leading-relaxed tracking-widest text-nier-text-light/60 dark:text-nier-text-dark/60">
                     {{ reviewText('deleteWarningIntro', { version: getVersionTitle(pendingDeleteVersion) }) }}
@@ -371,7 +371,7 @@ async function confirmDeleteVersion() {
 
 const reviewTextMap: Record<string, { en: string; ru: string }> = {
   closeReview: { en: 'Close version review', ru: 'Закрыть обзор версий' },
-  closeReviewShort: { en: 'Close_Review', ru: 'Закрыть_Обзор' },
+  closeReviewShort: { en: 'Close Review', ru: 'Закрыть Обзор' },
   noTreeChanges: { en: 'No tree changes from previous version', ru: 'Нет изменений дерева с предыдущей версии' },
   noSavedVersions: { en: 'No saved versions', ru: 'Нет сохраненных версий' },
   selectVersion: { en: 'Select version', ru: 'Выбрать версию' },
@@ -381,23 +381,23 @@ const reviewTextMap: Record<string, { en: string; ru: string }> = {
   deleteWarningBody: { en: 'The version snapshot and its review history backup will be purged from the current matrix archive.', ru: 'Снимок версии и его backup истории обзора будут очищены из текущего архива матрицы.' },
   irreversible: { en: 'This action is irreversible.', ru: 'Это действие необратимо.' },
   cancel: { en: 'CANCEL', ru: 'ОТМЕНА' },
-  executeDelete: { en: 'EXECUTE_DELETE', ru: 'УДАЛИТЬ_ВЕРСИЮ' },
+  executeDelete: { en: 'EXECUTE DELETE', ru: 'УДАЛИТЬ ВЕРСИЮ' },
   collapseVersion: { en: 'Collapse version', ru: 'Свернуть версию' },
   showMoreEvents: { en: 'Show {count} more events', ru: 'Показать еще {count} событий' },
-  updatedNode: { en: '[~] UPDATED_NODE', ru: '[~] ОБНОВЛЕН_УЗЕЛ' },
-  reifiedNode: { en: '[+] REIFIED_NODE', ru: '[+] СОЗДАН_УЗЕЛ' },
+  updatedNode: { en: '[~] UPDATED NODE', ru: '[~] ОБНОВЛЕН УЗЕЛ' },
+  reifiedNode: { en: '[+] REIFIED NODE', ru: '[+] СОЗДАН УЗЕЛ' },
   systemObjectUpdated: { en: 'System Object Updated', ru: 'Системный объект обновлен' },
   systemObjectInitialized: { en: 'System Object Initialized', ru: 'Системный объект инициализирован' }
 }
 
 const eventTitleMap: Record<string, { en: string; ru: string }> = {
-  ADD_NODE: { en: 'ADD_NODE', ru: 'ДОБАВЛЕН_УЗЕЛ' },
-  UPDATE_NODE: { en: 'UPDATE_NODE', ru: 'ОБНОВЛЕН_УЗЕЛ' },
-  DELETE_NODE: { en: 'DELETE_NODE', ru: 'УДАЛЕН_УЗЕЛ' },
-  CONNECT_NODE: { en: 'CONNECT_NODE', ru: 'СВЯЗАН_УЗЕЛ' },
-  CONNECT_NODES: { en: 'CONNECT_NODES', ru: 'СВЯЗАНЫ_УЗЛЫ' },
-  CLEAR_NODE: { en: 'CLEAR_NODE', ru: 'ОЧИЩЕН_УЗЕЛ' },
-  CLEAR_TREE: { en: 'CLEAR_TREE', ru: 'ОЧИЩЕНО_ДЕРЕВО' }
+  ADD_NODE: { en: 'ADD NODE', ru: 'ДОБАВЛЕН УЗЕЛ' },
+  UPDATE_NODE: { en: 'UPDATE NODE', ru: 'ОБНОВЛЕН УЗЕЛ' },
+  DELETE_NODE: { en: 'DELETE NODE', ru: 'УДАЛЕН УЗЕЛ' },
+  CONNECT_NODE: { en: 'CONNECT NODE', ru: 'СВЯЗАН УЗЕЛ' },
+  CONNECT_NODES: { en: 'CONNECT NODES', ru: 'СВЯЗАНЫ УЗЛЫ' },
+  CLEAR_NODE: { en: 'CLEAR NODE', ru: 'ОЧИЩЕН УЗЕЛ' },
+  CLEAR_TREE: { en: 'CLEAR TREE', ru: 'ОЧИЩЕНО ДЕРЕВО' }
 }
 
 const detailLabelMap: Record<string, { en: string; ru: string }> = {
@@ -408,8 +408,8 @@ const detailLabelMap: Record<string, { en: string; ru: string }> = {
   'trading style': { en: 'trading style', ru: 'стиль торговли' },
   table: { en: 'table', ru: 'таблица' },
   screenshot: { en: 'screenshot', ru: 'скриншот' },
-  drawing_panel: { en: 'drawing_panel', ru: 'панель_рисования' },
-  file_attachment: { en: 'file_attachment', ru: 'файл_вложение' },
+  drawing_panel: { en: 'drawing panel', ru: 'панель рисования' },
+  file_attachment: { en: 'file attachment', ru: 'файл вложение' },
   change: { en: 'change', ru: 'изменение' }
 }
 
@@ -532,7 +532,7 @@ function riskReviewFields(node: any) {
     { label: 'risk per trade', value: tradeUnit === '$' ? `$${tradeValue}` : `${tradeValue}%` },
     { label: 'risk per session', value: sessionUnit === '$' ? `$${sessionValue}` : `${sessionValue}%` },
     { label: 'risk reward ratio', value: `1:${params.riskRR ?? 3}` },
-    { label: 'trading style', value: params.tradingStyle || 'DAY_TRADING' }
+    { label: 'trading style', value: String(params.tradingStyle || 'DAY TRADING').replace(/_/g, ' ') }
   ].map(field => ({
     id: `risk-field:${field.label}`,
     label: field.label,
@@ -570,8 +570,8 @@ function splitNode(node: string) {
 function formatTreeValue(label: string, value: unknown) {
   if (label === 'table') return locale.value === 'ru' ? 'изменение таблицы' : 'table change'
   if (label === 'screenshot') return locale.value === 'ru' ? 'изменение скриншота' : 'screenshot change'
-  if (label === 'drawing_panel') return locale.value === 'ru' ? 'изменение панели рисования' : 'drawing_panel change'
-  if (label === 'file_attachment') return locale.value === 'ru' ? 'изменение вложенного файла' : 'file_attachment change'
+  if (label === 'drawing_panel') return locale.value === 'ru' ? 'изменение панели рисования' : 'drawing panel change'
+  if (label === 'file_attachment') return locale.value === 'ru' ? 'изменение вложенного файла' : 'file attachment change'
   const flat = String(value ?? '').replace(/[\r\n]+/g, ' ')
   return flat.length > 140 ? `${flat.slice(0, 140)}...` : flat
 }

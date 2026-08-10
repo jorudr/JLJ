@@ -71,7 +71,7 @@
                 class="absolute border border-current opacity-20 pointer-events-none"
                 :style="zoneTools.drawPreviewStyle.value">
               <div class="absolute -top-6 left-0 text-[8px] font-mono tracking-widest uppercase italic opacity-40">
-                Constructing_{{ zoneTools.selectedZoneType.value }}_Domain...
+                Constructing {{ zoneTools.selectedZoneType.value.replace(/_/g, ' ') }} Domain...
               </div>
            </div>
            <input type="file" :ref="(el) => { uploads.imageInput.value = el as HTMLInputElement }" class="hidden" accept="image/*" @change="uploads.handleImageUpload" />
@@ -165,7 +165,7 @@
                </div>
             </div>
             <div class="mt-2 text-[7px] font-mono tracking-[0.6em] uppercase opacity-20 italic">
-               Diagnostic_Neural_Path // Sub_Sequence_Active
+               Diagnostic Neural Path // Sub Sequence Active
             </div>
          </div>
       </Transition>
@@ -212,7 +212,7 @@
                 <div class="flex items-center space-x-3">
                    <div class="w-1.5 h-1.5 bg-current rotate-45"></div>
                    <span class="text-[9px] font-mono tracking-[0.3em] font-black uppercase">
-                      [ SYSTEM_INTEL_v1.07 ]
+                      [ SYSTEM INTEL v1.07 ]
                    </span>
                 </div>
                 <div class="w-full h-px border-t theme-tooltip-divider"></div>
@@ -244,7 +244,7 @@
                 @click="closeFilePreview"
                 class="absolute -right-6 top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-r border-t border-b border-black/20 bg-[#ffffff] transition-colors hover:bg-black/5 dark:border-white/20 dark:bg-[#070707] dark:hover:bg-[#111] group/close-tab">
                 <div class="h-16 w-px bg-black/10 transition-all duration-300 group-hover/close-tab:bg-black/40 dark:bg-white/10 dark:group-hover/close-tab:bg-white/40"></div>
-                <span class="absolute rotate-90 whitespace-nowrap text-[7px] font-mono uppercase tracking-[0.4em] text-black/10 transition-colors group-hover/close-tab:text-black/40 dark:text-white/10 dark:group-hover/close-tab:text-white/40">Close_File</span>
+                <span class="absolute rotate-90 whitespace-nowrap text-[7px] font-mono uppercase tracking-[0.4em] text-black/10 transition-colors group-hover/close-tab:text-black/40 dark:text-white/10 dark:group-hover/close-tab:text-white/40">Close File</span>
               </button>
 
               <ExPanel
@@ -256,7 +256,7 @@
                 <div class="flex h-full min-h-0 flex-col bg-white/80 dark:bg-black/30">
                   <div class="flex items-center justify-between gap-6 border-b border-black/10 px-4 py-2 dark:border-white/10">
                     <div class="flex min-w-0 items-center gap-4">
-                      <span class="shrink-0 text-[9px] font-mono font-black uppercase tracking-[0.4em] nier-text-primary">FILE_PDF_VIEWER</span>
+                      <span class="shrink-0 text-[9px] font-mono font-black uppercase tracking-[0.4em] nier-text-primary">FILE PDF VIEWER</span>
                       <span class="truncate text-[8px] font-mono uppercase tracking-[0.24em] opacity-45 nier-text-primary">{{ activeFilePreviewNode.params?.fileName }}</span>
                     </div>
                     <a
@@ -330,7 +330,8 @@ const activeFilePreviewNode = ref<any | null>(null)
 const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
 const getPageLabel = (page: any, index: number) => {
   const strategyNode = (page.nodes || []).find(isStrategyNode)
-  return strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
+  const label = strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
+  return String(label).replace(/_/g, ' ')
 }
 
 const canCreateStrategyVersion = computed(() => {

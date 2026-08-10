@@ -9,7 +9,6 @@ import {
 } from '@/shared/api/fundamentalIndicators.service'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useMatrixChangeTree } from './useMatrixChangeTree'
-import { preloadImageUrls } from './useMatrixImagePreload'
 
 export type TextFormatPreset = 'h' | 'p' | 'quote'
 
@@ -144,7 +143,6 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
   const assetSearchQuery = ref('')
   const assetResults = ref<AssetInfo[]>([])
   const isSearchingAssets = ref(false)
-  const failedIcons = ref<Set<string>>(new Set())
   let searchTimeout: any = null
 
   const scalingLots = ref(1)
@@ -241,7 +239,6 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
       try {
         const results = await searchAssets(query)
         if (query !== assetSearchQuery.value) return
-        await preloadImageUrls(results.map(asset => asset.icon), { timeoutMs: 1500, concurrency: 8 })
         if (query !== assetSearchQuery.value) return
         assetResults.value = results
       } finally {
@@ -1006,7 +1003,6 @@ export function useMatrixMenu(state: ReturnType<typeof useMatrixState>) {
     assetSearchQuery,
     assetResults,
     isSearchingAssets,
-    failedIcons,
     scalingLots,
     scalingStep,
     scalingUnit,

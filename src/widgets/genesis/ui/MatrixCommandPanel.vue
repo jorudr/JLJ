@@ -93,8 +93,9 @@
               <div class="flex items-center space-x-3 w-full max-w-sm mb-4">
                  <div class="relative flex-grow">
                     <ExInput v-model="menu.indicatorSearchQuery.value"
+                             variant="terminal"
                              :prefix="`search`"
-                             placeholder="IDENTIFY_INDICATOR // FILTER..." />
+                             placeholder="ENTER INDICATOR" />
                  </div>
                  <ExButton @click="menu.isConditionCreatorOpen.value = true" variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light dark:border-nier-border-dark">
                     <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-text-dark dark:group-hover:text-nier-text-light transition-colors font-black">+</span>
@@ -109,9 +110,13 @@
 
               <!-- Indicators Grid -->
               <div class="flex space-x-4 overflow-x-auto pb-4 w-full max-w-full justify-start px-2 no-scrollbar scroll-smooth">
-                <div v-if="menu.activeIndicatorCategory.value === 'PERSONAL' && menu.indicatorTypes.value.length === 0" 
+                <div v-if="menu.activeIndicatorCategory.value === 'PERSONAL' && !menu.indicatorSearchQuery.value.trim() && menu.indicatorTypes.value.length === 0"
                      class="flex flex-col items-center justify-center w-full py-4 opacity-30">
                    <span class="text-[8px] font-mono tracking-[0.5em] uppercase">no personal conditions</span>
+                </div>
+                <div v-if="menu.indicatorSearchQuery.value.trim() && menu.indicatorTypes.value.length === 0"
+                     class="flex flex-col items-center justify-center w-full py-4 opacity-40">
+                   <span class="text-[8px] font-mono tracking-[0.35em] uppercase">NO INDICATORS FOUND</span>
                 </div>
                 <ExNTtooltip v-for="type in menu.indicatorTypes.value" :key="type.label" :title="type.label">
                   <template #trigger>
@@ -133,7 +138,7 @@
                     </button>
                   </template>
                   <div class="flex flex-col gap-1 min-w-[180px]">
-                    <p class="text-[11px] font-mono font-bold leading-relaxed uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || 'INITIALIZE_SIGNAL_INDICATOR' }}</p>
+                    <p class="text-[11px] font-mono font-bold leading-relaxed uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || 'INITIALIZE SIGNAL INDICATOR' }}</p>
                   </div>
                 </ExNTtooltip>
               </div>
@@ -196,8 +201,7 @@
                    <!-- Page 0: Numeric -->
                    <div v-if="menu.currentStepPage.value === 0" class="flex flex-col items-center animate-in fade-in slide-in-from-left-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[7px] font-mono uppercase opacity-30 tracking-[0.3em] italic">Registry</span>
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">01 // NUMERIC_PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">01 // NUMERIC PROTOCOL</span>
                       </div>
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="num in stepPresets.numeric" :key="num" :title="`Step ${num}`">
@@ -217,8 +221,7 @@
                    <!-- Page 1: Alpha -->
                    <div v-if="menu.currentStepPage.value === 1" class="flex flex-col items-center animate-in fade-in slide-in-from-right-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[7px] font-mono uppercase opacity-30 tracking-[0.3em] italic">Protocol</span>
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">02 // ALPHA_PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">02 // ALPHA PROTOCOL</span>
                       </div>
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="alpha in stepPresets.alpha" :key="alpha" :title="`Step ${alpha}`">
@@ -238,8 +241,7 @@
                    <!-- Page 2: Roman -->
                    <div v-if="menu.currentStepPage.value === 2" class="flex flex-col items-center animate-in fade-in slide-in-from-right-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[7px] font-mono uppercase opacity-30 tracking-[0.3em] italic">System</span>
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">03 // ROMAN_PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">03 // ROMAN PROTOCOL</span>
                       </div>
                       <div class="flex gap-3">
                          <ExNTtooltip v-for="rom in stepPresets.roman" :key="rom" :title="`Step ${rom}`">
@@ -265,17 +267,6 @@
                 </button>
              </div>
 
-             <!-- Custom Step Input -->
-             <div class="flex items-center w-full max-w-sm space-x-2 border-t border-nier-text-light/5 dark:border-nier-text-dark/5 pt-6 justify-center">
-                <ExInput v-model="customStepInput"
-                       @keyup.enter="customStepInput ? state.setPendingNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
-                       placeholder="IDENTIFY_SEQUENCE_ID..."
-                       class="flex-1 hide-spinners" />
-                <ExButton @click="customStepInput ? state.setPendingNode({ type: 'step', label: customStepInput }) : null; customStepInput = ''"
-                          variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light dark:border-nier-border-dark">
-                   <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-text-dark dark:group-hover:text-nier-text-light transition-colors">+</span>
-                </ExButton>
-             </div>
           </div>
 
           <!-- LOGIC TOOLS -->
@@ -301,7 +292,7 @@
                 </button>
               </template>
               <div class="flex flex-col gap-1 min-w-[220px]">
-                <span class="text-[8px] font-mono opacity-40 uppercase">REIFY_SEQUENCE</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase">REIFY SEQUENCE</span>
                 <p v-if="type.description" class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
                 <p v-else class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Establish high-level tactical logic node for strategic branch validation.</p>
               </div>
@@ -310,11 +301,6 @@
 
           <!-- LABELS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'LABELS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
-            <div class="flex items-center gap-3 mb-5">
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">{{ t('Label_Sequence_Layer') }}</span>
-              <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-            </div>
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
               <ExNTtooltip v-for="type in labelTypes" :key="type.label" :title="t(type.label)">
                 <template #trigger>
@@ -338,7 +324,7 @@
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_DOCS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Scenario_Explanation_Layer</span>
+              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Scenario Explanation Layer</span>
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
             </div>
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
@@ -364,7 +350,7 @@
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_VISUALS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Evidence_And_Markup_Layer</span>
+              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Evidence And Markup Layer</span>
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
             </div>
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
@@ -390,7 +376,7 @@
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_AUDIO'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Audio_Note_Layer</span>
+              <span class="text-[8px] font-mono tracking-[0.45em] uppercase opacity-40">Audio Note Layer</span>
               <div class="w-8 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
             </div>
             <div class="flex items-center gap-3 overflow-visible px-2 py-2 max-w-full">
@@ -446,7 +432,7 @@
             <div class="w-px h-12 bg-nier-text-light/10 dark:bg-nier-text-dark/10 mx-2"></div>
 
             <!-- New Session Tool -->
-            <ExNTtooltip :title="locale === 'ru' && t('SESSION_ZONE') ? t('SESSION_ZONE') : 'SESSION_ZONE'">
+            <ExNTtooltip :title="locale === 'ru' && t('SESSION_ZONE') ? t('SESSION_ZONE') : 'SESSION ZONE'">
               <template #trigger>
                 <button @click="$emit('activate-zone', 'session')"
                         :class="[
@@ -483,7 +469,7 @@
                 </button>
               </template>
               <div class="flex flex-col gap-1 min-w-[220px]">
-                <span class="text-[8px] font-mono opacity-40 uppercase">EXECUTION_METHOD</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase">EXECUTION METHOD</span>
                 <p class="text-[11px] font-mono font-bold opacity-80">{{ type.description }}</p>
               </div>
             </ExNTtooltip>
@@ -492,7 +478,7 @@
           <!-- SCALING TOOLS ( Entry Configuration ) -->
           <div v-if="state.activeMenuCategory.value === 'SCALING' && !state.isScenarioContext.value" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex flex-col items-center w-full space-y-3">
-               <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40">Configure_Scaling_Entry</span>
+               <span class="text-[8px] font-mono tracking-[0.4em] uppercase opacity-40">Configure Scaling Entry</span>
                <div class="flex items-end space-x-2">
 
                   <!-- Size Mode + Value (combined) -->
@@ -546,7 +532,7 @@
           <div v-if="state.activeMenuCategory.value === 'RISK' && !state.isScenarioContext.value" class="flex items-center justify-center pointer-events-auto px-4 w-full">
             <div class="flex items-center gap-3 border border-red-500/20 bg-red-500/[0.03] px-5 py-3">
               <div class="w-2 h-2 rotate-45 bg-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
-              <span class="text-[9px] font-mono uppercase tracking-[0.32em] font-black text-nier-text-light dark:text-nier-text-dark">Risk_Management_Panel</span>
+              <span class="text-[9px] font-mono uppercase tracking-[0.32em] font-black text-nier-text-light dark:text-nier-text-dark">Risk Management Panel</span>
             </div>
           </div>
 
@@ -561,21 +547,14 @@
                     <button @click="menu.addAssetNode(asset)"
                             class="group flex flex-col items-center space-y-1 min-w-[60px] transition-transform hover:scale-110">
                        <div class="w-10 h-10 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center relative overflow-hidden">
-                          <img v-if="asset.icon && !menu.failedIcons.value.has(asset.symbol)" 
-                               :src="asset.icon" 
-                               @error="menu.failedIcons.value.add(asset.symbol)"
-                               loading="eager"
-                               decoding="async"
-                               class="w-full h-full object-contain p-1 opacity-40 group-hover:opacity-100 grayscale group-hover:grayscale-0 transition-all" />
-                          <span v-else class="text-[10px] font-bold opacity-40 uppercase">{{ asset.symbol.slice(0, 2) }}</span>
-                          <div class="absolute inset-x-0 bottom-0 h-0.5 bg-nier-text-light dark:bg-nier-text-dark opacity-20 transition-all group-hover:opacity-100"></div>
+                          <span class="max-w-full px-0.5 text-center text-[8px] font-mono font-black leading-none tracking-tight opacity-60 group-hover:opacity-100 break-all">{{ asset.symbol }}</span>
                        </div>
                        <span class="text-[7px] font-mono tracking-tighter opacity-40 group-hover:opacity-100 uppercase">{{ asset.symbol }}</span>
                     </button>
                   </template>
                   <div class="flex flex-col">
                     <span class="text-xs">Establish data link: {{ asset.name }}</span>
-                    <span class="opacity-40 text-[9px] mt-1">ASSET_TICKER: {{ asset.symbol }}</span>
+                    <span class="opacity-40 text-[9px] mt-1">ASSET TICKER: {{ asset.symbol }}</span>
                   </div>
                </ExNTtooltip>
                 </div>
@@ -585,33 +564,29 @@
             <!-- Tactical Input -->
             <div class="relative w-full max-w-sm">
                <ExInput v-model="menu.assetSearchQuery.value"
-                        placeholder="ESTABLISH_DATA_LINK // ENTER_TICKER..."
+                        variant="terminal"
+                        placeholder="ENTER TICKER"
                         @update:modelValue="menu.handleAssetSearch" />
                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
                   <div v-for="i in 3" :key="i" class="w-1 h-3 border-r border-nier-text-light dark:border-nier-text-dark opacity-10" :class="{ 'animate-pulse opacity-40': menu.isSearchingAssets.value }"></div>
                </div>
+            </div>
+            <div v-if="menu.assetSearchQuery.value.trim() && !menu.isSearchingAssets.value && menu.assetResults.value.length === 0"
+                 class="flex items-center justify-center w-full py-3 opacity-40">
+               <span class="text-[8px] font-mono tracking-[0.35em] uppercase">NO ASSETS FOUND</span>
             </div>
           </div>
 
           <!-- SYSTEM TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SYSTEM' && !state.isScenarioContext.value" class="flex flex-col items-center justify-center pointer-events-auto px-4 w-full pt-6 pb-6">
              <div class="flex flex-col items-center justify-center space-y-6">
-                <div class="flex flex-col items-center">
-                   <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60 mb-2">Registry_Maintenance</span>
-                   <div class="w-12 h-px bg-nier-text-light dark:bg-nier-text-dark opacity-10"></div>
-                </div>
-
                 <ExButton @click="isClearPanelOpen = true" variant="ghost" class="border-red-500/40 hover:border-red-500 min-w-[240px]">
                    <div class="flex items-center space-x-3 text-red-500">
                       <div class="w-1.5 h-1.5 bg-red-500 rotate-45"></div>
-                      <span>CLEAR_ARCHIVE_DATA</span>
+                      <span>CLEAR ARCHIVE DATA</span>
                    </div>
                 </ExButton>
 
-                <div class="flex flex-col items-center opacity-20">
-                   <span class="text-[7px] font-mono tracking-widest uppercase">Warning: Permanent_System_Purge</span>
-                   <span class="text-[7px] font-mono tracking-widest uppercase">Protocol_v1.07 // 0x44_ERASE</span>
-                </div>
              </div>
           </div>
         </div>
@@ -652,7 +627,7 @@
                             </svg>
                          </div>
                          <div class="flex flex-col space-y-2">
-                            <span class="text-[14px] font-mono font-black tracking-widest text-nier-text-light dark:text-nier-text-dark uppercase">Critical_System_Alert</span>
+                            <span class="text-[14px] font-mono font-black tracking-widest text-nier-text-light dark:text-nier-text-dark uppercase">Critical System Alert</span>
                             <p class="text-[11px] font-mono text-nier-text-light/60 dark:text-nier-text-dark/60 leading-relaxed uppercase tracking-widest">
                                Initiating this protocol will result in the permanent erasure of all tactical nodes, connections, and archival domains within the current matrix. 
                                <br><br>
@@ -666,7 +641,7 @@
                             CANCEL
                          </ExButton>
                          <ExButton @click="executePurge" variant="solid" size="md" class="!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 transition-colors">
-                            EXECUTE_PURGE
+                            EXECUTE PURGE
                          </ExButton>
                       </div>
                    </div>
@@ -709,7 +684,6 @@ const emit = defineEmits(['personal-contextmenu', 'activate-zone'])
 
 const { locale, t } = useI18n()
 
-const customStepInput = ref('')
 const isClearPanelOpen = ref(false)
 const isMenuContentVisible = ref(false)
 const isMenuExpansionSettled = ref(false)
@@ -836,14 +810,14 @@ const methodTypes = computed(() => [
 
 const labelTypes = [
   {
-    label: 'TEXT_PANEL',
+    label: 'TEXT PANEL',
     type: 'text-panel',
     color: 'currentColor',
     description: 'Free-form text label for long labels or sentences.',
     params: {
       shortCode: 'LBL',
       menuLabel: 'LABEL',
-      protocol: 'TEXT_INPUT_PANEL',
+      protocol: 'TEXT INPUT PANEL',
       description: 'Free-form text label for long labels or sentences.',
       value: ''
     }
@@ -852,43 +826,43 @@ const labelTypes = [
 
 const scenarioDocumentationTypes = [
   {
-    label: 'TEXT_PANEL',
+    label: 'TEXT PANEL',
     type: 'text-panel',
     color: 'currentColor',
     description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
     params: {
       shortCode: 'TXT',
       menuLabel: 'TEXT',
-      protocol: 'TEXT_INPUT_PANEL',
+      protocol: 'TEXT INPUT PANEL',
       description: 'Free-form scenario explanation panel for thesis, trigger logic, and execution notes.',
       value: 'Scenario thesis:\nTrigger:\nExecution notes:'
     }
   },
   {
-    label: 'CHECKLIST_PANEL',
+    label: 'CHECKLIST PANEL',
     type: 'checklist-panel',
     color: 'currentColor',
     description: 'Interactive checklist panel for scenario tasks and validation points.',
     params: {
       shortCode: 'CHK',
       menuLabel: 'CHECK',
-      protocol: 'CHECKLIST_PANEL',
+      protocol: 'CHECKLIST PANEL',
       description: 'Interactive checklist panel for scenario tasks and validation points.',
       items: [
-        { id: 'c1', text: 'FIRST_CHECK', done: false },
-        { id: 'c2', text: 'SECOND_CHECK', done: false }
+        { id: 'c1', text: 'FIRST CHECK', done: false },
+        { id: 'c2', text: 'SECOND CHECK', done: false }
       ]
     }
   },
   {
-    label: 'TABLE_PANEL',
+    label: 'TABLE PANEL',
     type: 'table-panel',
     color: 'currentColor',
     description: 'Structured table panel with fixed full-cell inputs and auto sizing.',
     params: {
       shortCode: 'TBL',
       menuLabel: 'TABLE',
-      protocol: 'STRUCTURED_TABLE_PANEL',
+      protocol: 'STRUCTURED TABLE PANEL',
       description: 'Structured table panel with fixed full-cell inputs and auto sizing.',
       rows: 3,
       cols: 3,
@@ -900,14 +874,14 @@ const scenarioDocumentationTypes = [
     }
   },
   {
-    label: 'EMBED_PANEL',
+    label: 'EMBED PANEL',
     type: 'embed-panel',
     color: 'currentColor',
     description: 'Embed panel for external URLs, references, and media links.',
     params: {
       shortCode: 'EMB',
       menuLabel: 'EMBED',
-      protocol: 'EMBED_PANEL',
+      protocol: 'EMBED PANEL',
       description: 'Embed panel for external URLs, references, and media links.',
       embedUrl: ''
     }
@@ -923,34 +897,34 @@ const scenarioVisualTypes = [
     params: {
       shortCode: 'IMG',
       menuLabel: 'SHOT',
-      protocol: 'SCREENSHOT_EVIDENCE',
+      protocol: 'SCREENSHOT EVIDENCE',
       description: 'Screenshot evidence node for chart states, execution examples, and annotations.',
       value: 'Attach screenshot evidence.'
     }
   },
   {
-    label: 'DRAWING_PANEL',
+    label: 'DRAWING PANEL',
     type: 'drawing-panel',
     color: 'currentColor',
     description: 'Fullscreen drawing panel for mapping scenario structure, paths, and notes.',
     params: {
       shortCode: 'DRW',
       menuLabel: 'DRAW',
-      protocol: 'FULLSCREEN_DRAWING_BOARD',
+      protocol: 'FULLSCREEN DRAWING BOARD',
       description: 'Fullscreen drawing panel for mapping scenario structure, paths, and notes.',
       value: 'Double click to open fullscreen drawing mode.',
       strokes: []
     }
   },
   {
-    label: 'FILE_ATTACHMENT',
+    label: 'FILE ATTACHMENT',
     type: 'file-attachment',
     color: 'currentColor',
     description: 'Attach a file to the scenario archive.',
     params: {
       shortCode: 'FIL',
       menuLabel: 'FILE',
-      protocol: 'FILE_ATTACHMENT',
+      protocol: 'FILE ATTACHMENT',
       description: 'Attach a file to the scenario archive.'
     }
   }

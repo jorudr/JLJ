@@ -182,7 +182,7 @@ const gitTextMap: Record<string, { en: string; ru: string }> = {
   deleteVersion: { en: 'Delete version', ru: 'Удалить версию' },
   justNow: { en: 'just now', ru: 'только что' },
   checkpoint: { en: 'checkpoint ', ru: 'контрольная точка ' },
-  changeTimeline: { en: 'change_timeline', ru: 'лента_изменений' },
+  changeTimeline: { en: 'change timeline', ru: 'лента изменений' },
   timeline: { en: 'timeline', ru: 'лента' },
   terminated: { en: 'terminated', ru: 'завершено' },
   expandChanges: { en: '... (expand {count} more changes)', ru: '... (развернуть еще {count} изменений)' },
@@ -191,18 +191,18 @@ const gitTextMap: Record<string, { en: string; ru: string }> = {
   tableChange: { en: 'table change', ru: 'изменение таблицы' },
   tableChangeIndexed: { en: 'table change {index}', ru: 'изменение таблицы {index}' },
   screenshotChange: { en: 'screenshot change', ru: 'изменение скриншота' },
-  drawingPanelChange: { en: 'drawing_panel change', ru: 'изменение панели рисования' },
-  fileAttachmentChange: { en: 'file_attachment change', ru: 'изменение вложенного файла' },
+  drawingPanelChange: { en: 'drawing panel change', ru: 'изменение панели рисования' },
+  fileAttachmentChange: { en: 'file attachment change', ru: 'изменение вложенного файла' },
   off: { en: 'off', ru: 'выкл' }
 }
 
 const eventTitleMap: Record<string, { en: string; ru: string }> = {
-  ADD_NODE: { en: 'ADD_NODE', ru: 'УЗЕЛ СОЗДАН' },
-  'ADD_NODE*': { en: 'ADD_NODE*', ru: 'УЗЕЛ СОЗДАН*' },
-  UPDATE_NODE: { en: 'UPDATE_NODE', ru: 'УЗЕЛ ОБНОВЛЕН' },
-  DELETE_NODE: { en: 'DELETE_NODE', ru: 'УЗЕЛ УДАЛЕН' },
-  SET_STRATEGY_VERSION: { en: 'SET_STRATEGY_VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ СОЗДАНА' },
-  UPDATE_STRATEGY_VERSION: { en: 'UPDATE_STRATEGY_VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ ОБНОВЛЕНА' }
+  ADD_NODE: { en: 'ADD NODE', ru: 'УЗЕЛ СОЗДАН' },
+  'ADD_NODE*': { en: 'ADD NODE*', ru: 'УЗЕЛ СОЗДАН*' },
+  UPDATE_NODE: { en: 'UPDATE NODE', ru: 'УЗЕЛ ОБНОВЛЕН' },
+  DELETE_NODE: { en: 'DELETE NODE', ru: 'УЗЕЛ УДАЛЕН' },
+  SET_STRATEGY_VERSION: { en: 'SET STRATEGY VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ СОЗДАНА' },
+  UPDATE_STRATEGY_VERSION: { en: 'UPDATE STRATEGY VERSION', ru: 'ВЕРСИЯ СТРАТЕГИИ ОБНОВЛЕНА' }
 }
 
 const labelMap: Record<string, { en: string; ru: string }> = {
@@ -222,20 +222,20 @@ const labelMap: Record<string, { en: string; ru: string }> = {
   'risk per session': { en: 'risk per session', ru: 'риск на сессию' },
   'risk reward ratio': { en: 'risk reward ratio', ru: 'соотношение риск/прибыль' },
   'trading style': { en: 'trading style', ru: 'стиль торговли' },
-  SCALING_ENTRY: { en: 'SCALING_ENTRY', ru: 'МАСШТАБИРУЮЩИЙ_ВХОД' },
-  NODES_HOLDER: { en: 'NODES_HOLDER', ru: 'КОНТЕЙНЕР_УЗЛОВ' },
+  SCALING_ENTRY: { en: 'SCALING ENTRY', ru: 'МАСШТАБИРУЮЩИЙ ВХОД' },
+  NODES_HOLDER: { en: 'NODES HOLDER', ru: 'КОНТЕЙНЕР УЗЛОВ' },
   add: { en: 'add', ru: 'создан' },
   remove: { en: 'remove', ru: 'удален' },
-  node_added: { en: 'node_added', ru: 'узел_создан' },
-  node_removed: { en: 'node_removed', ru: 'узел_удален' },
-  default: { en: 'default', ru: 'по_умолчанию' },
+  node_added: { en: 'node added', ru: 'узел создан' },
+  node_removed: { en: 'node removed', ru: 'узел удален' },
+  default: { en: 'default', ru: 'по умолчанию' },
   collapsed: { en: 'collapsed', ru: 'свернуто' },
   expanded: { en: 'expanded', ru: 'развернуто' },
   table: { en: 'table', ru: 'таблица' },
   screenshot: { en: 'screenshot', ru: 'скриншот' },
-  drawing_panel: { en: 'drawing_panel', ru: 'панель_рисования' },
-  file_attachment: { en: 'file_attachment', ru: 'файл_вложение' },
-  ITEM_TEXT: { en: 'ITEM_TEXT', ru: 'ТЕКСТ_ЭЛЕМЕНТА' },
+  drawing_panel: { en: 'drawing panel', ru: 'панель рисования' },
+  file_attachment: { en: 'file attachment', ru: 'файл вложение' },
+  ITEM_TEXT: { en: 'ITEM TEXT', ru: 'ТЕКСТ ЭЛЕМЕНТА' },
   text: { en: 'text', ru: 'текст' }
 }
 
@@ -248,7 +248,7 @@ const valueMap: Record<string, { en: string; ru: string }> = {
   ADDITIONAL: { en: 'ADDITIONAL', ru: 'ДОПОЛНИТЕЛЬНО' },
   ENTRY: { en: 'ENTRY', ru: 'ВХОД' },
   EXIT: { en: 'EXIT', ru: 'ВЫХОД' },
-  DAY_TRADING: { en: 'DAY_TRADING', ru: 'ДЕЙТРЕЙДИНГ' }
+  DAY_TRADING: { en: 'DAY TRADING', ru: 'ДЕЙТРЕЙДИНГ' }
 }
 
 const nodeTypeMap: Record<string, { en: string; ru: string }> = {
@@ -416,7 +416,7 @@ const treeRows = computed<TreeRow[]>(() => {
     {
       parts: [
         { text: '*', class: 'tree-head' },
-        { text: ` ${line}_${gitText('changeTimeline')}` }
+        { text: ` ${line} ${gitText('changeTimeline')}` }
       ]
     }
   ]
