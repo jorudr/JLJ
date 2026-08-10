@@ -1,10 +1,10 @@
 <template>
-  <div class="ex-trade-archive w-full h-full text-white font-mono pt-24 px-6 pb-12 relative flex flex-col">
+  <div class="ex-trade-archive w-full h-full min-h-0 text-white font-mono pt-24 px-6 pb-12 relative flex flex-col">
     <!-- Grid overlay -->
     <div class="absolute inset-0 pointer-events-none opacity-20 bg-[#030303]"
          style="background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
-    <div class="relative z-10 max-w-7xl mx-auto h-[calc(100vh-12rem)] max-h-[860px] w-full flex flex-col">
+    <div class="relative z-10 max-w-7xl mx-auto min-h-0 flex-1 w-full flex flex-col">
       <!-- HEADER / STRATEGY SELECTOR -->
       <div class="flex flex-col relative w-max mb-12 shrink-0">
         <div class="flex items-center space-x-3 cursor-pointer group/strat" @click="showStrategyMenu = !showStrategyMenu">
@@ -72,7 +72,7 @@
 
       <!-- TRADES SCROLL CONTAINER -->
       <div 
-        class="flex-1 w-full overflow-y-auto archive-scrollbar pr-4 pb-12"
+        class="min-h-0 flex-1 w-full overflow-y-auto overscroll-contain archive-scrollbar pr-4 pb-12"
         :class="{ 'is-scrolling': isScrolling }"
         @scroll="handleScroll"
       >
