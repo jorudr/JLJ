@@ -1118,7 +1118,7 @@ function syncTextEditorFromNode() {
   if (props.node.type !== 'text-panel') return
   nextTick(() => {
     const editor = textEditorElement.value
-    if (!editor || isEditingTextPanel.value || editor.contains(document.activeElement)) return
+    if (!editor) return
     const nextHtml = textPanelHtml.value
     if (editor.innerHTML === nextHtml) return
     isSyncingTextEditor = true
