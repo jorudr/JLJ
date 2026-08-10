@@ -187,7 +187,7 @@
                   <div class="absolute inset-y-0 left-0 w-0 bg-nier-text-light transition-all duration-500 group-hover:w-1.5 dark:bg-nier-text-dark"></div>
                 </button>
                 <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">Trade Protocol Execution // Ready</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">{{ locale === 'ru' ? 'Исполнение торгового протокола // Готово' : 'Trade Protocol Execution // Ready' }}</span>
                 </div>
               </div>
 
@@ -202,7 +202,7 @@
                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 transition-all duration-500 group-hover:w-1.5"></div>
                 </button>
                 <div class="pointer-events-none absolute -bottom-4 left-6 opacity-0 transition-all duration-500 group-hover:opacity-40">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent Trade Erasure</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">{{ locale === 'ru' ? 'Предупреждение: безвозвратное удаление сделки' : 'Warning: Permanent Trade Erasure' }}</span>
                 </div>
               </div>
             </div>
@@ -603,7 +603,11 @@
                         </div>
                         <span class="w-[25%] font-bold uppercase tracking-wider truncate text-[10px]"
                               :class="getEmotionWeight(emotion) > 0 ? 'text-green-500 opacity-60' : getEmotionWeight(emotion) < 0 ? 'text-red-500 opacity-80' : 'text-yellow-500 opacity-60'">
-                          {{ getEmotionWeight(emotion) > 0 ? 'POSITIVE' : getEmotionWeight(emotion) < 0 ? 'NEGATIVE' : 'NEUTRAL' }}
+                          {{ getEmotionWeight(emotion) > 0
+                            ? (locale === 'ru' ? 'ПОЗИТИВНО' : 'POSITIVE')
+                            : getEmotionWeight(emotion) < 0
+                              ? (locale === 'ru' ? 'НЕГАТИВНО' : 'NEGATIVE')
+                              : (locale === 'ru' ? 'НЕЙТРАЛЬНО' : 'NEUTRAL') }}
                         </span>
                         <span class="w-[25%] text-right font-mono font-bold text-[11px] uppercase tracking-wider truncate opacity-80">
                           {{ (getStats(typeof emotion === 'string' ? emotion : emotion.name, currentTrades).freq * 100).toFixed(1) }}%

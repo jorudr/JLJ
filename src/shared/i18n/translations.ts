@@ -275,7 +275,18 @@ export const translations = {
         "Update Protocol": "Update Protocol",
         "Show Fullscreen": "Show Fullscreen",
         "Edit Visuals": "Edit Visuals",
-        "Remove Slot": "Remove Slot"
+        "Remove Slot": "Remove Slot",
+        "Simple": "Simple",
+        "Editor": "Editor",
+        "Preview": "Preview",
+        "Readable diagnostic brief": "Readable diagnostic brief",
+        "Advanced telemetry grid": "Advanced telemetry grid",
+        "Not enough data": "Not enough data",
+        "Cancel": "Cancel",
+        "ARCHIVED_RECORD": "ARCHIVED_RECORD",
+        "TREE": "TREE",
+        "EDITOR": "EDITOR",
+        "PREVIEW": "PREVIEW"
       }
     },
     common: {
@@ -1980,7 +1991,15 @@ export const translations = {
         "Update Protocol": "Обновить протокол",
         "Show Fullscreen": "Открыть на весь экран",
         "Edit Visuals": "Редактировать визуалы",
-        "Remove Slot": "Удалить слот"
+        "Remove Slot": "Удалить слот",
+        "Simple": "Базовые",
+        "Editor": "Редактор",
+        "Preview": "Предпросмотр",
+        "Readable diagnostic brief": "Диагностический бриф",
+        "Advanced telemetry grid": "Продвинутая телеметрия",
+        "Not enough data": "Недостаточно данных",
+        "ARCHIVED_RECORD": "АРХИВНАЯ_ЗАПИСЬ",
+        "TREE": "ДЕРЕВО"
       }
     },
     common: {

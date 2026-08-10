@@ -10,7 +10,7 @@
         <div class="flex items-center space-x-3 cursor-pointer group/strat" @click="showStrategyMenu = !showStrategyMenu">
           <div class="w-1.5 h-1.5 bg-white rotate-45 transition-all duration-500" :class="showStrategyMenu ? 'scale-150 rotate-[225deg]' : 'animate-pulse'"></div>
           <span class="text-[10px] tracking-[0.5em] uppercase font-black transition-opacity group-hover/strat:opacity-100" :class="showStrategyMenu ? 'opacity-100' : 'opacity-70'">
-            TRADE ARCHIVE <span v-if="selectedStrategy" class="opacity-50 ml-2">// {{ selectedStrategy.name }}</span>
+            {{ locale === 'ru' ? 'АРХИВ СДЕЛОК' : 'TRADE ARCHIVE' }} <span v-if="selectedStrategy" class="opacity-50 ml-2">// {{ selectedStrategy.name }}</span>
           </span>
           <div class="w-2 h-2 border-b border-r border-white/40 rotate-45 transition-transform duration-500 ml-2" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-0.5' : ''"></div>
         </div>
@@ -38,31 +38,31 @@
       <div class="flex flex-wrap items-end gap-16 border-b border-white/10 pb-8 mb-8 shrink-0 pr-4">
         <div class="flex flex-col">
           <span class="text-6xl font-bold tracking-tighter leading-none">{{ trades.length }}</span>
-          <span class="text-[8px] tracking-[0.3em] opacity-40 uppercase mt-4">TRADES RECORDED</span>
+          <span class="text-[8px] tracking-[0.3em] opacity-40 uppercase mt-4">{{ locale === 'ru' ? 'СДЕЛОК ЗАПИСАНО' : 'TRADES RECORDED' }}</span>
         </div>
 
         <div class="flex space-x-12 pb-1">
           <div class="flex flex-col space-y-2">
-            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">TOTAL P/L</span>
+            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">{{ locale === 'ru' ? 'ОБЩИЙ P/L' : 'TOTAL P/L' }}</span>
             <span class="text-[13px] font-bold" :class="totalPnl >= 0 ? 'text-white' : 'text-white/60'">
               {{ totalPnl >= 0 ? '+' : '' }}{{ totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
             </span>
           </div>
 
           <div class="flex flex-col space-y-2">
-            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">WIN RATE</span>
+            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">{{ locale === 'ru' ? 'ДОЛЯ ПРИБЫЛЬНЫХ' : 'WIN RATE' }}</span>
             <span class="text-[13px] font-bold">{{ (winRate * 100).toFixed(1) }}%</span>
           </div>
 
           <div class="flex flex-col space-y-2">
-            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">TOTAL R</span>
+            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">{{ locale === 'ru' ? 'ОБЩИЙ R' : 'TOTAL R' }}</span>
             <span class="text-[13px] font-bold" :class="totalR >= 0 ? 'text-white' : 'text-white/60'">
               {{ totalR >= 0 ? '+' : '' }}{{ totalR.toFixed(1) }}R
             </span>
           </div>
 
           <div class="flex flex-col space-y-2">
-            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">AVG R</span>
+            <span class="text-[8px] tracking-[0.2em] opacity-40 uppercase">{{ locale === 'ru' ? 'СРЕДНИЙ R' : 'AVG R' }}</span>
             <span class="text-[13px] font-bold" :class="avgR >= 0 ? 'text-white' : 'text-white/60'">
               {{ avgR >= 0 ? '+' : '' }}{{ avgR.toFixed(2) }}R
             </span>
@@ -84,7 +84,7 @@
           <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4 text-[9px] tracking-[0.3em] uppercase opacity-50 font-bold">
             <span>{{ group.month }}</span>
             <div class="flex space-x-8">
-              <span>{{ group.trades.length }} TRADES</span>
+              <span>{{ group.trades.length }} {{ locale === 'ru' ? 'СДЕЛОК' : 'TRADES' }}</span>
               <span :class="group.totalPnl >= 0 ? 'text-white' : ''">
                 {{ group.totalPnl >= 0 ? '+' : '' }}{{ group.totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
               </span>
@@ -102,7 +102,7 @@
               
               <span class="opacity-70">{{ formatDate(getTradeTime(trade)) }}</span>
               <span class="font-bold">{{ trade.asset }}</span>
-              <span class="opacity-70">{{ trade.side === 'Long' || trade.side === 'long' ? 'LONG' : 'SHORT' }}</span>
+              <span class="opacity-70">{{ trade.side === 'Long' || trade.side === 'long' ? (locale === 'ru' ? 'ЛОНГ' : 'LONG') : (locale === 'ru' ? 'ШОРТ' : 'SHORT') }}</span>
               
               <!-- Mini Sparkline -->
               <div class="flex items-center h-4 w-24">
@@ -132,6 +132,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 
 const props = defineProps<{
@@ -143,6 +144,7 @@ const emit = defineEmits<{
 }>()
 
 const tradeStore = useStrategyTradesStore()
+const { locale } = useI18n()
 const showStrategyMenu = ref(false)
 
 const isScrolling = ref(false)
@@ -239,7 +241,7 @@ const formatDate = (ts?: number) => {
   if (!ts) return ''
   const d = new Date(ts)
   const day = d.getDate()
-  const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
+  const month = d.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' }).toUpperCase()
   const year = d.getFullYear()
   const hours = d.getHours().toString().padStart(2, '0')
   const mins = d.getMinutes().toString().padStart(2, '0')
@@ -247,9 +249,9 @@ const formatDate = (ts?: number) => {
 }
 
 const getMonthKey = (ts?: number) => {
-  if (!ts) return 'UNKNOWN DATE'
+  if (!ts) return locale.value === 'ru' ? 'НЕИЗВЕСТНАЯ ДАТА' : 'UNKNOWN DATE'
   const d = new Date(ts)
-  const month = d.toLocaleString('en-US', { month: 'long' }).toUpperCase()
+  const month = d.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { month: 'long' }).toUpperCase()
   const year = d.getFullYear()
   return `${month} ${year}`
 }

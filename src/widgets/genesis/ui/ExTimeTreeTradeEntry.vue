@@ -683,15 +683,15 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDuration() }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">STOP LOSS</span>
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'СТОП-ЛОСС' : 'STOP LOSS' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.stopLoss) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">TAKE PROFIT</span>
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТЕЙК-ПРОФИТ' : 'TAKE PROFIT' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.takeProfit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК / НАГРАДА' : 'RISK / REWARD' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskReward() }}</span>
                   </div>
                   <div class="min-w-0 pr-6">

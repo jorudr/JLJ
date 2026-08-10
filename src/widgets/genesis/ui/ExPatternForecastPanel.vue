@@ -187,7 +187,9 @@
             </h2>
           </div>
           <span v-if="!props.compactNavigation" class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-            {{ `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
+            {{ locale === 'ru'
+              ? `${forecast.tactical.matchesCount} совпадений / ${forecast.tactical.sourceFilesCount} файлов`
+              : `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
           </span>
         </div>
         <div v-else class="flex items-center justify-between gap-3">
@@ -195,7 +197,9 @@
             {{ locale === 'ru' ? 'Тактическое продолжение после похожих фаз' : 'Tactical continuation after similar phases' }}
           </span>
           <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-            {{ `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
+            {{ locale === 'ru'
+              ? `${forecast.tactical.matchesCount} совпадений / ${forecast.tactical.sourceFilesCount} файлов`
+              : `${forecast.tactical.matchesCount} matches / ${forecast.tactical.sourceFilesCount} files` }}
           </span>
         </div>
 
@@ -323,7 +327,7 @@
                 topLifecycleGroupKeys.has(group.key) ? 'text-black/55' : 'text-black/40 dark:text-white/40'
               ]"
             >
-              {{ group.matchesCount }} matches
+              {{ group.matchesCount }} {{ locale === 'ru' ? 'совпадений' : 'matches' }}
             </div>
           </div>
         </div>
@@ -340,7 +344,7 @@
               </h2>
             </div>
             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ forecast.styleProfile.styleLabel }}
+              {{ tradingStyleLabel(forecast.styleProfile.styleLabel) }}
             </span>
           </div>
           <div v-else class="flex items-center justify-between gap-3">
@@ -348,13 +352,13 @@
               {{ locale === 'ru' ? 'Стиль торговли' : 'Trading style' }}
             </span>
             <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ forecast.styleProfile.styleLabel }}
+              {{ tradingStyleLabel(forecast.styleProfile.styleLabel) }}
             </span>
           </div>
           <div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
-                {{ locale === 'ru' ? 'Средний duration' : 'Avg duration' }}
+                {{ locale === 'ru' ? 'Средняя длительность' : 'Avg duration' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatHours(forecast.styleProfile.averageDurationHours) }}
@@ -362,7 +366,7 @@
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
-                {{ locale === 'ru' ? 'Median abs / trade' : 'Median abs / trade' }}
+                {{ locale === 'ru' ? 'Медианный абсолютный результат / сделка' : 'Median abs / trade' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatPercent(forecast.styleProfile.medianAbsReturnPct, false) }}
@@ -386,7 +390,7 @@
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
               <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
-                Avg RR
+                {{ locale === 'ru' ? 'Средний RR' : 'Avg RR' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatNumber(forecast.styleProfile.averageRR, 2) }}
@@ -446,10 +450,10 @@
                   <span :class="forecastValueClass(block.returnPct)">{{ formatPercent(block.returnPct) }}</span>
                 </div>
                 <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black text-black/60 dark:text-white/60' : 'font-mono text-[10px] text-black/45 dark:text-white/45'">
-                  Duration: {{ formatHours(block.averageDurationHours) }}
+                  {{ locale === 'ru' ? 'Длительность' : 'Duration' }}: {{ formatHours(block.averageDurationHours) }}
                 </div>
                 <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black text-black/60 dark:text-white/60' : 'font-mono text-[10px] text-black/45 dark:text-white/45'">
-                  WR: {{ formatPercent(block.winRate, false) }}
+                  {{ locale === 'ru' ? 'Доля прибыльных' : 'Win rate' }}: {{ formatPercent(block.winRate, false) }}
                 </div>
                 <div :class="props.compactNavigation ? 'font-mono text-[10px] font-black text-black/50 dark:text-white/50' : 'font-mono text-[10px] text-black/35 dark:text-white/35'">
                   {{ formatCloseRange(block.firstCloseTimestamp, block.lastCloseTimestamp) }}
@@ -517,7 +521,7 @@
                   class="font-mono"
                   :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']"
                 >
-                  Avg RR: {{ formatNumber(match.matchedAverageRR, 2) }}
+                  {{ locale === 'ru' ? 'Средний RR' : 'Avg RR' }}: {{ formatNumber(match.matchedAverageRR, 2) }}
                 </div>
                 </div>
               </div>
@@ -649,7 +653,7 @@ const refreshForecast = async () => {
     if (requestId === nextRequestId) {
       forecast.value = createEmptyPatternForecast({
         message: locale.value === 'ru'
-          ? 'Не удалось собрать structural pattern forecast.'
+          ? 'Не удалось собрать прогноз структурного паттерна.'
           : 'Unable to build the structural pattern forecast.'
       })
     }
@@ -802,7 +806,7 @@ const formatHours = (hours: number) => {
 
 const formatCloseRange = (firstTimestamp: number, lastTimestamp: number) => {
   if (!Number.isFinite(firstTimestamp) || !Number.isFinite(lastTimestamp)) {
-    return locale.value === 'ru' ? 'Даты закрытия: n/a' : 'Close dates: n/a'
+    return locale.value === 'ru' ? 'Даты закрытия: н/д' : 'Close dates: n/a'
   }
 
   const formatter = new Intl.DateTimeFormat(locale.value === 'ru' ? 'ru-RU' : 'en-GB', {
@@ -831,6 +835,17 @@ const phaseLabel = (phase: string) => {
   if (phase === 'drawdown') return 'Drawdown'
   if (phase === 'recovery') return 'Recovery'
   return 'Range'
+}
+
+const tradingStyleLabel = (label: string) => {
+  if (locale.value !== 'ru') return label
+  const labels: Record<string, string> = {
+    'Scalp / Intraday': 'Скальпинг / интрадей',
+    'Intraday / Short Swing': 'Интрадей / короткий свинг',
+    Swing: 'Свинг',
+    'Position / Long Swing': 'Позиционная / длинный свинг'
+  }
+  return labels[label] || label
 }
 
 const phaseClass = (phase: string) => {

@@ -17,14 +17,14 @@
               class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
               :class="activeListViewMode === 'timeTree' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
             >
-              TREE
+              {{ locale === 'ru' ? 'ДЕРЕВО' : 'TREE' }}
             </button>
             <button
               @click="emit('list-view-mode-change', 'list')"
               class="h-5 px-1.5 border text-[9px] font-bold uppercase tracking-[0.14em] transition-colors"
               :class="activeListViewMode === 'list' ? 'bg-black text-white dark:bg-[#F9F6F0] dark:text-black border-black dark:border-white' : 'border-black/20 dark:border-white/20 opacity-45 hover:opacity-100'"
             >
-              LIST
+              {{ locale === 'ru' ? 'СПИСОК' : 'LIST' }}
             </button>
           </div>
           <div class="flex items-center gap-1 pr-3 border-r nier-border-primary">
@@ -197,7 +197,7 @@
                     <span class="truncate">{{ preset.label }}</span>
                     <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ preset.description }}</span>
                   </span>
-                  <span v-if="isTimeWindowPresetActive(preset)" class="text-[8px] opacity-60">ACTIVE</span>
+                  <span v-if="isTimeWindowPresetActive(preset)" class="text-[8px] opacity-60">{{ locale === 'ru' ? 'АКТИВНО' : 'ACTIVE' }}</span>
                 </button>
 
                 <div class="mt-3 pt-3 border-t nier-border-primary">
@@ -225,7 +225,7 @@
                     <span class="truncate">{{ preset.label }}</span>
                     <span class="text-[8px] opacity-50 normal-case tracking-normal">{{ preset.description }}</span>
                   </span>
-                  <span v-if="isDurationWindowPresetActive(preset)" class="text-[8px] opacity-60">ACTIVE</span>
+                  <span v-if="isDurationWindowPresetActive(preset)" class="text-[8px] opacity-60">{{ locale === 'ru' ? 'АКТИВНО' : 'ACTIVE' }}</span>
                 </button>
 
                 <div class="mt-3 pt-3 border-t nier-border-primary">

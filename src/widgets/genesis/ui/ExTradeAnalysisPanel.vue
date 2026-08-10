@@ -1850,10 +1850,10 @@ const tacticalAdvice = computed(() => {
 // ADVANCED METRIC TAB FILTERING & TELEMETRY CALCULATIONS
 // -------------------------------------------------------------
 const activeReportMetricMode = ref<'simple' | 'advanced'>('simple');
-const reportMetricModes: Array<{ id: 'simple' | 'advanced'; label: string }> = [
-  { id: 'simple', label: 'Simple' },
-  { id: 'advanced', label: 'Advanced' }
-];
+const reportMetricModes = computed<Array<{ id: 'simple' | 'advanced'; label: string }>>(() => [
+  { id: 'simple', label: locale.value === 'ru' ? 'Базовые' : 'Simple' },
+  { id: 'advanced', label: locale.value === 'ru' ? 'Продвинутые' : 'Advanced' }
+]);
 const activeMetricTab = ref('all'); // 'all', 'adherence', 'behavioural', 'execution'
 const isTradeScoreExpanded = ref(false);
 
