@@ -112,17 +112,18 @@
                   variant="light"
                   no-padding
                   no-shadow
-                  class="risk-panel-frame !border-red-500/30 dark:!border-red-400/30"
+                  :show-corners="false"
+                  class="risk-panel-frame"
                   :style="riskPanelPanelStyle"
                   :class="{ 'risk-panel-collapsed': isRiskPanelContentHidden, 'risk-panel-theme-light': !isDark, 'risk-panel-theme-dark': isDark }">
                   <div v-if="isRiskPanelContentHidden" class="risk-panel-hatch"></div>
-                  <div class="relative z-10 flex items-center justify-between border-b nier-border-primary bg-red-500/[0.03]"
+                  <div v-if="!isRiskPanelContentHidden" class="relative z-10 flex items-center justify-between border-b nier-border-primary bg-black/[0.03] dark:bg-white/[0.03]"
                        :style="{ padding: `${scaledRiskPx(8)} ${scaledRiskPx(16)}` }">
                     <div class="flex items-center" :style="{ gap: scaledRiskPx(12) }">
-                      <div class="rotate-45 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]" :style="{ width: scaledRiskPx(8), height: scaledRiskPx(8) }"></div>
+                      <div class="rotate-45 bg-nier-text-light dark:bg-nier-text-dark" :style="{ width: scaledRiskPx(8), height: scaledRiskPx(8) }"></div>
                       <span class="font-mono uppercase tracking-[0.28em] font-black nier-text-primary" :style="{ fontSize: scaledRiskPx(9), lineHeight: scaledRiskPx(12) }">Risk_Management</span>
                     </div>
-                    <span class="font-mono uppercase tracking-[0.18em] text-red-500/70" :style="{ fontSize: scaledRiskPx(8), lineHeight: scaledRiskPx(10) }">Panel</span>
+                    <span class="font-mono uppercase tracking-[0.18em] nier-text-primary opacity-50" :style="{ fontSize: scaledRiskPx(8), lineHeight: scaledRiskPx(10) }">Panel</span>
                   </div>
 
                   <div v-show="!isRiskPanelContentHidden" class="flex flex-col" :style="{ gap: scaledRiskPx(12), padding: `${scaledRiskPx(16)} ${scaledRiskPx(16)} ${scaledRiskPx(28)}` }">
@@ -2155,14 +2156,16 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 
 .risk-panel-collapsed {
   background: rgb(10 10 10 / 0.62);
-  border-color: rgb(239 68 68 / 0.85) !important;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2), 0 0 22px rgb(239 68 68 / 0.28);
+  border-color: rgb(255 255 255 / 0.28) !important;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2), 0 0 22px rgb(255 255 255 / 0.08);
   overflow: hidden;
   position: relative;
 }
 
 .risk-panel-theme-light.risk-panel-collapsed {
   background: rgb(255 255 255);
+  border-color: rgb(0 0 0 / 0.22) !important;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12), 0 0 22px rgb(0 0 0 / 0.08);
 }
 :deep(.risk-panel-collapsed > div:first-child) {
   display: none;
@@ -2171,8 +2174,8 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 .risk-panel-hatch {
   background-image: repeating-linear-gradient(
     135deg,
-    rgb(239 68 68 / 0.28) 0,
-    rgb(239 68 68 / 0.28) 1px,
+    rgb(255 255 255 / 0.16) 0,
+    rgb(255 255 255 / 0.16) 1px,
     transparent 1px,
     transparent 12px
   );
@@ -2180,6 +2183,16 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
   pointer-events: none;
   position: absolute;
   z-index: 1;
+}
+
+.risk-panel-theme-light .risk-panel-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(0 0 0 / 0.14) 0,
+    rgb(0 0 0 / 0.14) 1px,
+    transparent 1px,
+    transparent 12px
+  );
 }
 
 .risk-panel-field > span {
@@ -2270,7 +2283,12 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-panel-control button:hover {
-  background: rgb(239 68 68 / 0.14);
+  background: rgb(0 0 0 / 0.08);
+}
+
+.risk-panel-theme-dark .risk-panel-control button:hover,
+:global(html.dark) .risk-panel-control button:hover {
+  background: rgb(255 255 255 / 0.08);
 }
 
 .risk-panel-prefix {
@@ -2338,13 +2356,15 @@ input, textarea, .matrix-text-rich, .matrix-table-input {
 }
 
 .risk-style-control button.is-active {
-  background: rgb(239 68 68 / 0.18);
-  box-shadow: inset 0 0 0 1px rgb(239 68 68 / 0.45), 0 0 18px rgb(239 68 68 / 0.18);
+  background: rgb(0 0 0 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.28), 0 0 18px rgb(0 0 0 / 0.08);
   color: #000;
 }
 
 .risk-panel-theme-dark .risk-style-control button.is-active,
 :global(html.dark) .risk-style-control button.is-active {
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.32), 0 0 18px rgb(255 255 255 / 0.08);
   color: #fff;
 }
 
