@@ -662,7 +662,7 @@ const refreshForecast = async () => {
 }
 
 watch(
-  () => [props.visible, props.strategyId, props.initialCapital, props.trades, locale.value, includeAverageRR.value],
+  () => [props.visible, props.strategyId, props.initialCapital, props.trades, includeAverageRR.value],
   () => {
     if (props.visible) {
       void refreshForecast()
