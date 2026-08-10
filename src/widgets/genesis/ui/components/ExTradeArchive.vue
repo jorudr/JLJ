@@ -106,17 +106,22 @@
               
               <!-- Mini Sparkline -->
               <div class="flex items-center h-4 w-24">
-                <svg viewBox="0 0 100 20" preserveAspectRatio="none" class="w-full h-full opacity-50">
+                <span v-if="!isTradeClosed(trade)" class="text-[8px] font-bold uppercase tracking-[0.12em] text-white/50">
+                  {{ locale === 'ru' ? 'НЕЗАКРЫТАЯ' : 'OPEN' }}
+                </span>
+                <svg v-else viewBox="0 0 100 20" preserveAspectRatio="none" class="w-full h-full opacity-50">
                   <path :d="generateSparkline(trade)" fill="none" stroke="currentColor" stroke-width="1" />
                   <circle :cx="100" :cy="getSparklineEnd(trade)" r="1.5" fill="currentColor" />
                 </svg>
               </div>
               
-              <span class="text-right font-bold" :class="getTradePnl(trade) >= 0 ? 'text-white' : 'text-white/60'">
+              <span v-if="!isTradeClosed(trade)" class="text-right font-bold text-white/50">-</span>
+              <span v-else class="text-right font-bold" :class="getTradePnl(trade) >= 0 ? 'text-white' : 'text-white/60'">
                 {{ getTradePnl(trade) >= 0 ? '+' : '' }}{{ getTradePnl(trade).toFixed(2) }}
               </span>
               
-              <span class="text-right opacity-80" :class="getTradeR(trade) >= 0 ? 'text-white' : 'text-white/60'">
+              <span v-if="!isTradeClosed(trade)" class="text-right font-bold text-white/50">-</span>
+              <span v-else class="text-right opacity-80" :class="getTradeR(trade) >= 0 ? 'text-white' : 'text-white/60'">
                 {{ getTradeR(trade) >= 0 ? '+' : '' }}{{ getTradeR(trade).toFixed(1) }}R
               </span>
             </div>
@@ -130,33 +135,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
-import {
-  buildArchiveEquityCurve,
-  buildArchiveMetrics,
-  buildSparklinePath,
-  getSparklineEndY,
-  groupArchiveTradesByMonth,
-  getTradePnl as getCashTradePnl,
-  getTradeRealizedR,
-  getTradeTimelineTimestamp
-} from '~/widgets/genesis/model/metrics'
+import { useTradeArchive } from '~/widgets/genesis/model/useTradeArchive'
 
-const props = defineProps<{
-  trades?: any[]
-}>()
+const props = defineProps<{ trades?: any[] }>()
 
 const emit = defineEmits<{
   (event: 'trade-context-menu', payload: { tradeId: string; event: MouseEvent }): void
 }>()
 
-const tradeStore = useStrategyTradesStore()
 const { locale } = useI18n()
 const showStrategyMenu = ref(false)
+
+const {
+  strategies,
+  selectedStrategyId,
+  selectedStrategy,
+  trades,
+  getTradePnl,
+  getTradeR,
+  isTradeClosed,
+  getTradeTime,
+  totalPnl,
+  winRate,
+  totalR,
+  avgR,
+  groupedTrades,
+  generateSparkline,
+  getSparklineEnd,
+  formatDate
+} = useTradeArchive(props, locale)
 
 const isScrolling = ref(false)
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
@@ -169,105 +179,12 @@ const handleScroll = () => {
   }, 1000)
 }
 
-const strategies = computed(() => tradeStore.strategies)
-const selectedStrategyId = computed({
-  get: () => tradeStore.selectedStrategyId,
-  set: (val) => { tradeStore.selectedStrategyId = val }
-})
-
-const selectedStrategy = computed(() => {
-  return tradeStore.strategies.find(s => s.id === selectedStrategyId.value) || tradeStore.strategies[0]
-})
-
-const trades = computed(() => {
-  if (Array.isArray(props.trades)) return props.trades
-  if (!selectedStrategyId.value) return []
-  return tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
-})
-
-const initialCapital = computed(() => tradeStore.getInitialDeposit(selectedStrategyId.value || 'MAIN_DIARY') || 1000)
-const archiveMetrics = computed(() => buildArchiveMetrics(trades.value, initialCapital.value))
-const closedTrades = computed(() => archiveMetrics.value.closedTrades)
-
 const handleTradeClick = (event: MouseEvent, trade: any) => {
   if (!trade?.id) return
   emit('trade-context-menu', {
     tradeId: String(trade.id),
     event
   })
-}
-
-// Metrics
-const getTradePnl = (trade: any) => isClosedTradeForMetrics(trade) ? getCashTradePnl(trade, initialCapital.value) : 0
-
-const totalPnl = computed(() => {
-  return archiveMetrics.value.totalPnl
-})
-
-const winRate = computed(() => {
-  if (closedTrades.value.length === 0) return 0
-  return archiveMetrics.value.winRate
-})
-
-const getTradeR = (trade: any) => isClosedTradeForMetrics(trade) ? getTradeRealizedR(trade, initialCapital.value) : 0
-const getTradeTime = (trade: any) => getTradeTimelineTimestamp(trade)
-
-const totalR = computed(() => {
-  return archiveMetrics.value.totalR
-})
-
-const avgR = computed(() => {
-  if (closedTrades.value.length === 0) return 0
-  return archiveMetrics.value.avgR
-})
-
-// Formatting and Grouping
-const formatDate = (ts?: number) => {
-  if (!ts) return ''
-  const d = new Date(ts)
-  const day = d.getDate()
-  const month = d.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' }).toUpperCase()
-  const year = d.getFullYear()
-  const hours = d.getHours().toString().padStart(2, '0')
-  const mins = d.getMinutes().toString().padStart(2, '0')
-  return `${day} ${month} ${year}  ${hours}:${mins}`
-}
-
-const groupedTrades = computed(() => {
-  return groupArchiveTradesByMonth(trades.value, initialCapital.value, locale.value)
-})
-
-// Equity Curve and Sparklines
-const tradesChronological = computed(() => {
-  return [...closedTrades.value].sort((a, b) => getTradeTime(a) - getTradeTime(b))
-})
-
-const equityCurve = computed(() => {
-  return buildArchiveEquityCurve(tradesChronological.value, 0)
-})
-
-const generateSparkline = (trade: any) => {
-  const index = tradesChronological.value.findIndex(t => t.id === trade.id)
-  if (index === -1) return ''
-
-  const balances: number[] = [0]
-  for (let i = 0; i <= index; i++) {
-    balances.push(equityCurve.value[i]?.balance ?? 0)
-  }
-
-  return buildSparklinePath(balances)
-}
-
-const getSparklineEnd = (trade: any) => {
-  const index = tradesChronological.value.findIndex(t => t.id === trade.id)
-  if (index === -1) return 10
-  
-  const balances: number[] = [0]
-  for (let i = 0; i <= index; i++) {
-    balances.push(equityCurve.value[i]?.balance ?? 0)
-  }
-  
-  return getSparklineEndY(balances)
 }
 
 </script>
