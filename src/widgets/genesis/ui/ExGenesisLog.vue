@@ -691,16 +691,14 @@
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border transition-all"
           :class="viewType === 'timeTree' && !showTimeTreeTradeDetails ? 'border-white/30 bg-white/10 text-white' : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/5 hover:text-white'"
-          :aria-label="locale === 'ru' ? 'Временное дерево' : 'Time tree'"
+          :aria-label="locale === 'ru' ? 'Сделки' : 'Trades'"
           @click="activateBottomView('timeTree')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
-            <path d="M12 4v5M6 15v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M6 15v3M18 15v3" />
-            <circle cx="12" cy="4" r="2" />
-            <circle cx="6" cy="19" r="2" />
-            <circle cx="18" cy="19" r="2" />
+            <rect x="4" y="4" width="16" height="16" rx="1" />
+            <path d="M8 9h8M8 12h8M8 15h5" stroke-linecap="square" />
           </svg>
-          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'Временное дерево' : 'Time tree' }} ]</span>
+          <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'Сделки' : 'Trades' }} ]</span>
         </button>
 
         <button
