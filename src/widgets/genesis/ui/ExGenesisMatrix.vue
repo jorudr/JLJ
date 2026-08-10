@@ -68,7 +68,7 @@
                 class="absolute border border-current opacity-20 pointer-events-none"
                 :style="zoneTools.drawPreviewStyle.value">
               <div class="absolute -top-6 left-0 text-[8px] font-mono tracking-widest uppercase italic opacity-40">
-                Constructing {{ zoneTools.selectedZoneType.value.replace(/_/g, ' ') }} Domain...
+                {{ t('matrix.constructingDomain') }} {{ matrixText(t, `${zoneTools.selectedZoneType.value.replace(/_/g, ' ').toUpperCase()} ZONE`) }}...
               </div>
            </div>
            <input type="file" :ref="(el) => { uploads.imageInput.value = el as HTMLInputElement }" class="hidden" accept="image/*" @change="uploads.handleImageUpload" />
@@ -165,7 +165,7 @@
       <!-- SEQUENTIAL PROMPT (Nier Style) -->
       <div v-if="state.shouldShowInitializePrompt.value" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
          <div class="flex flex-col items-center space-y-4">
-            <span class="text-[10px] font-mono tracking-[1em] uppercase">INIT FIRST STEP</span>
+            <span class="text-[10px] font-mono tracking-[1em] uppercase">{{ t('matrix.initFirstStep') }}</span>
             <div class="w-1 h-32 bg-current animate-pulse"></div>
          </div>
       </div>
@@ -204,7 +204,7 @@
                 <div class="flex items-center space-x-3">
                    <div class="w-1.5 h-1.5 bg-current rotate-45"></div>
                    <span class="text-[9px] font-mono tracking-[0.3em] font-black uppercase">
-                      [ SYSTEM INTEL v1.07 ]
+                      [ {{ t('matrix.systemIntel') }} v1.07 ]
                    </span>
                 </div>
                 <div class="w-full h-px border-t theme-tooltip-divider"></div>
@@ -236,7 +236,7 @@
                 @click="closeFilePreview"
                 class="absolute -right-6 top-1/2 z-[100] flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-r border-t border-b border-black/20 bg-[#ffffff] transition-colors hover:bg-black/5 dark:border-white/20 dark:bg-[#070707] dark:hover:bg-[#111] group/close-tab">
                 <div class="h-16 w-px bg-black/10 transition-all duration-300 group-hover/close-tab:bg-black/40 dark:bg-white/10 dark:group-hover/close-tab:bg-white/40"></div>
-                <span class="absolute rotate-90 whitespace-nowrap text-[7px] font-mono uppercase tracking-[0.4em] text-black/10 transition-colors group-hover/close-tab:text-black/40 dark:text-white/10 dark:group-hover/close-tab:text-white/40">Close File</span>
+                <span class="absolute rotate-90 whitespace-nowrap text-[7px] font-mono uppercase tracking-[0.4em] text-black/10 transition-colors group-hover/close-tab:text-black/40 dark:text-white/10 dark:group-hover/close-tab:text-white/40">{{ t('matrix.closeFile') }}</span>
               </button>
 
               <ExPanel
@@ -248,7 +248,7 @@
                 <div class="flex h-full min-h-0 flex-col bg-white/80 dark:bg-black/30">
                   <div class="flex items-center justify-between gap-6 border-b border-black/10 px-4 py-2 dark:border-white/10">
                     <div class="flex min-w-0 items-center gap-4">
-                      <span class="shrink-0 text-[9px] font-mono font-black uppercase tracking-[0.4em] nier-text-primary">FILE PDF VIEWER</span>
+                      <span class="shrink-0 text-[9px] font-mono font-black uppercase tracking-[0.4em] nier-text-primary">{{ t('matrix.pdfViewer') }}</span>
                       <span class="truncate text-[8px] font-mono uppercase tracking-[0.24em] opacity-45 nier-text-primary">{{ activeFilePreviewNode.params?.fileName }}</span>
                     </div>
                     <a
@@ -256,12 +256,12 @@
                       :download="activeFilePreviewNode.params?.fileName || 'matrix-file.pdf'"
                       class="shrink-0 text-[8px] font-mono uppercase tracking-[0.24em] opacity-40 underline transition-opacity hover:opacity-100 nier-text-primary"
                       @click.stop>
-                      Download
+                      {{ t('matrix.download') }}
                     </a>
                   </div>
                   <iframe
                     :src="activeFilePreviewNode.params?.fileDataUrl"
-                    :title="activeFilePreviewNode.params?.fileName || 'PDF preview'"
+                    :title="activeFilePreviewNode.params?.fileName || t('matrix.pdfPreview')"
                     class="h-full min-h-0 w-full flex-1 bg-white"
                   ></iframe>
                 </div>
@@ -303,6 +303,8 @@ import { collectMatrixImageUrls, preloadImageUrls } from '../model/matrix/useMat
 import { useAppBootStore } from '~/features/store/useAppBoot'
 
 import { initAssetService } from '@/shared/api/asset.service'
+import { useI18n } from '~/shared/i18n/useI18n'
+import { matrixText } from '../model/matrix/matrixLabels'
 
 const state = useMatrixState()
 const canvas = useMatrixCanvas(state)
@@ -318,10 +320,11 @@ const pathMath = usePathMath(state)
 const undoManager = useExGenesisMatrixUndo()
 const isGitPanelOpen = ref(false)
 const activeFilePreviewNode = ref<any | null>(null)
+const { t } = useI18n()
 
 const getPageLabel = (page: any, index: number) => {
   const strategyNode = (page.nodes || []).find(isStrategyNode)
-  const label = strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `Strategy Page ${index + 1}`
+  const label = strategyNode ? getMatrixStrategyName(strategyNode) : page.name || `${t('matrix.strategyPage')} ${index + 1}`
   return String(label).replace(/_/g, ' ')
 }
 
@@ -387,7 +390,7 @@ const strategyIndicators = computed(() => {
     if (!indicator) return null
     return {
       id: node.id,
-      name: node.params?.identityName || node.label || 'Strategy Core',
+      name: node.params?.identityName || node.label || t('matrix.strategyCore'),
       ...indicator
     }
   }).filter(Boolean) as any[]

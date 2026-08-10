@@ -23,7 +23,7 @@
                 @blur="node.params.isEditingDescription = false"
                 @keyup.enter.shift="node.params.isEditingDescription = false"
                 v-autofocus
-                placeholder="ENTER DESCRIPTION..."
+                :placeholder="t('matrix.enterDescription')"
                 class="w-full h-full bg-transparent text-nier-text-light dark:text-nier-text-dark p-4 text-[12px] font-mono tracking-widest outline-none resize-none"
               ></textarea>
             </ExPanel>
@@ -113,14 +113,14 @@
                        :style="{ padding: `${scaledRiskPx(8)} ${scaledRiskPx(16)}` }">
                     <div class="flex items-center" :style="{ gap: scaledRiskPx(12) }">
                       <div class="rotate-45 bg-nier-text-light dark:bg-nier-text-dark" :style="{ width: scaledRiskPx(8), height: scaledRiskPx(8) }"></div>
-                      <span class="font-mono uppercase tracking-[0.28em] font-black nier-text-primary" :style="{ fontSize: scaledRiskPx(9), lineHeight: scaledRiskPx(12) }">Risk Management</span>
+                      <span class="font-mono uppercase tracking-[0.28em] font-black nier-text-primary" :style="{ fontSize: scaledRiskPx(9), lineHeight: scaledRiskPx(12) }">{{ t('matrix.riskManagement') }}</span>
                     </div>
-                    <span class="font-mono uppercase tracking-[0.18em] nier-text-primary opacity-50" :style="{ fontSize: scaledRiskPx(8), lineHeight: scaledRiskPx(10) }">Panel</span>
+                    <span class="font-mono uppercase tracking-[0.18em] nier-text-primary opacity-50" :style="{ fontSize: scaledRiskPx(8), lineHeight: scaledRiskPx(10) }">{{ t('matrix.panel') }}</span>
                   </div>
 
                   <div v-show="!isRiskPanelContentHidden" class="flex flex-col" :style="{ gap: scaledRiskPx(12), padding: `${scaledRiskPx(16)} ${scaledRiskPx(16)} ${scaledRiskPx(28)}` }">
                     <label class="risk-panel-field">
-                      <span>Risk / Trade</span>
+                      <span>{{ t('matrix.riskTrade') }}</span>
                       <div class="risk-panel-control">
                         <input v-model.number="riskParams.riskLossTrade" type="number" step="0.1" @change="commitRiskPanel" />
                         <button @click="toggleRiskUnit('riskLossTradeUnit')" @mousedown.stop>{{ riskParams.riskLossTradeUnit }}</button>
@@ -128,7 +128,7 @@
                     </label>
 
                     <label class="risk-panel-field">
-                      <span>Risk / Session</span>
+                      <span>{{ t('matrix.riskSession') }}</span>
                       <div class="risk-panel-control">
                         <input v-model.number="riskParams.riskLossDay" type="number" step="0.1" @change="commitRiskPanel" />
                         <button @click="toggleRiskUnit('riskLossDayUnit')" @mousedown.stop>{{ riskParams.riskLossDayUnit }}</button>
@@ -136,7 +136,7 @@
                     </label>
 
                     <label class="risk-panel-field">
-                      <span>Risk Reward</span>
+                      <span>{{ t('matrix.riskReward') }}</span>
                       <div class="risk-panel-control">
                         <span class="risk-panel-prefix">1:</span>
                         <input v-model.number="riskParams.riskRR" type="number" step="0.1" @change="commitRiskPanel" />
@@ -144,7 +144,7 @@
                     </label>
 
                     <label class="risk-panel-field">
-                      <span>Trading Style</span>
+                      <span>{{ t('matrix.tradingStyle') }}</span>
                       <div class="risk-style-control">
                         <button
                           v-for="style in riskTradingStyles"
@@ -168,7 +168,7 @@
                   <div class="w-8 h-8 border border-nier-border-light dark:border-nier-border-dark mb-4 animate-pulse rotate-45 flex items-center justify-center">
                      <div class="w-2 h-2 bg-nier-text-light dark:bg-nier-text-dark"></div>
                   </div>
-                  <ExText variant="telemetry" class="opacity-40">Double Click To Upload Image</ExText>
+                  <ExText variant="telemetry" class="opacity-40">{{ t('matrix.uploadImage') }}</ExText>
                </div>
                             <div v-else class="w-full h-full border-2 border-nier-border-light dark:border-nier-border-dark p-1 bg-nier-white dark:bg-nier-black relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                  <img :src="node.params.imageUrl"
@@ -217,7 +217,7 @@
                     </div>
                     <div class="flex items-center justify-between text-[8px] font-mono opacity-60">
                        <span>{{ formatAudioTime(audioCurrentTime) }}</span>
-                       <span class="truncate px-2 flex-1 text-center font-black">{{ node.params.audioName || 'AUDIO NOTE' }}</span>
+                       <span class="truncate px-2 flex-1 text-center font-black">{{ node.params.audioName || t('matrix.audioNoteFallback') }}</span>
                        <span>{{ formatAudioTime(audioDuration) }}</span>
                     </div>
                  </div>
@@ -239,7 +239,7 @@
                  class="w-full h-full min-h-0 flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
                <div class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
                     :style="{ padding: `${8 * scale * headerScaleMult}px ${12 * scale * headerScaleMult}px` }">
-                  <span class="font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px` }">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
+                  <span class="font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px` }">{{ matrixPanelLabel(scenarioPanelHeaderTitle) }}</span>
                   <span class="font-mono tracking-widest uppercase opacity-30 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px`, maxWidth: `${96 * scale * headerScaleMult}px` }">{{ scenarioPanelHeaderCode }}</span>
                </div>
 
@@ -266,7 +266,7 @@
                                class="opacity-70" />
                   </svg>
                   <div v-if="!node.params?.strokes?.length" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <span class="text-[8px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">Double Click To Draw</span>
+                     <span class="text-[8px] font-mono tracking-[0.28em] uppercase text-nier-text-light/35 dark:text-nier-text-dark/35">{{ t('matrix.pressAndDraw') }}</span>
                   </div>
                </div>
 
@@ -314,7 +314,7 @@
                        class="matrix-embed-preview-image h-full w-full object-contain p-1.5 select-none"
                        @error="embedImageError = true" />
                      <span v-else class="text-[8px] font-mono tracking-[0.25em] uppercase opacity-35 break-all px-3 text-center">
-                       {{ embedImageUrl ? 'Image Preview Unavailable' : 'Embed URL' }}
+                       {{ embedImageUrl ? t('matrix.imagePreviewUnavailable') : t('matrix.embedPreview') }}
                      </span>
                   </div>
                </div>
@@ -322,19 +322,19 @@
                <div v-else-if="node.type === 'table-panel'" class="flex-1 w-full h-full min-h-0 flex flex-col bg-nier-white/40 dark:bg-nier-black/40">
                   <div class="h-11 flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark px-3 bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] gap-3">
                      <div class="table-stepper">
-                        <span class="table-stepper-label">Rows</span>
+                        <span class="table-stepper-label">{{ t('matrix.rows') }}</span>
                         <div class="table-stepper-control">
-                           <button @mousedown.stop @click.stop="resizeTable(-1, 0)" class="table-stepper-button" aria-label="Remove row">-</button>
+                           <button @mousedown.stop @click.stop="resizeTable(-1, 0)" class="table-stepper-button" :aria-label="t('matrix.removeRow')">-</button>
                            <span class="table-stepper-value">{{ tableRows }}</span>
-                           <button @mousedown.stop @click.stop="resizeTable(1, 0)" class="table-stepper-button" aria-label="Add row">+</button>
+                           <button @mousedown.stop @click.stop="resizeTable(1, 0)" class="table-stepper-button" :aria-label="t('matrix.addRow')">+</button>
                         </div>
                      </div>
                      <div class="table-stepper">
-                        <span class="table-stepper-label">Cols</span>
+                        <span class="table-stepper-label">{{ t('matrix.cols') }}</span>
                         <div class="table-stepper-control">
-                           <button @mousedown.stop @click.stop="resizeTable(0, -1)" class="table-stepper-button" aria-label="Remove column">-</button>
+                           <button @mousedown.stop @click.stop="resizeTable(0, -1)" class="table-stepper-button" :aria-label="t('matrix.removeColumn')">-</button>
                            <span class="table-stepper-value">{{ tableCols }}</span>
-                           <button @mousedown.stop @click.stop="resizeTable(0, 1)" class="table-stepper-button" aria-label="Add column">+</button>
+                           <button @mousedown.stop @click.stop="resizeTable(0, 1)" class="table-stepper-button" :aria-label="t('matrix.addColumn')">+</button>
                         </div>
                      </div>
                   </div>
@@ -357,16 +357,16 @@
 
                <div v-else-if="node.type === 'file-attachment'" class="flex-1 min-h-0 p-3 flex flex-col items-center justify-center gap-3">
                   <div v-if="!node.params.fileDataUrl" class="px-3 py-1.5 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center">
-                     <span class="text-[10px] font-mono font-black">FILE ATTACHMENT (PDF)</span>
+                     <span class="text-[10px] font-mono font-black">{{ t('matrix.fileAttachmentPdf') }}</span>
                   </div>
-                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || 'Double Click To Attach' }}</span>
+                  <span class="text-[8px] font-mono tracking-[0.18em] uppercase opacity-55 text-center break-all">{{ node.params.fileName || t('matrix.attachFile') }}</span>
                   <button
                     v-if="node.params.fileDataUrl"
                     type="button"
                     @mousedown.stop
                     @click.stop="$emit('open-file', node)"
                     class="text-[8px] font-mono uppercase underline opacity-60 hover:opacity-100 transition-opacity">
-                    OPEN
+                    {{ t('matrix.open') }}
                   </button>
                </div>
 
@@ -540,12 +540,12 @@
                  </template>
               </p>
               <p v-else class="text-[11px] leading-relaxed text-nier-text-light dark:text-nier-text-dark font-bold uppercase tracking-wide opacity-45">
-                NO DESCRIPTION
+                {{ t('matrix.noDescription') }}
               </p>
            </div>
           <div class="flex items-center space-x-4 text-[9px] font-mono font-semibold opacity-70">
-             <span><span class="opacity-60">{{ locale === 'ru' ? 'ТИП' : 'TYPE' }}:</span> <strong class="font-black opacity-100">{{ locale === 'ru' && t(node.type) && t(node.type) !== node.type ? t(node.type).toUpperCase() : node.type.toUpperCase() }}</strong></span>
-             <span v-if="node.type === 'condition'">{{ locale === 'ru' ? 'ПРИОРИТЕТ' : 'PRIORITY' }}: {{ node.params?.priority === 'REQUIRED' ? (locale === 'ru' ? 'ОБЯЗАТЕЛЬНО' : 'REQUIRED') : node.params?.priority === 'ADDITIONAL' ? (locale === 'ru' ? 'ДОПОЛНИТЕЛЬНО' : 'ADDITIONAL') : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+             <span><span class="opacity-60">{{ t('matrix.type') }}:</span> <strong class="font-black opacity-100">{{ matrixNodeTypeLabel(t, node.type).toUpperCase() }}</strong></span>
+             <span v-if="node.type === 'condition'">{{ t('matrix.priority') }}: {{ node.params?.priority === 'REQUIRED' ? t('matrix.required') : node.params?.priority === 'ADDITIONAL' ? t('matrix.additional') : t('matrix.none') }}</span>
            </div>
         </div>
      </ExNTtooltip>
@@ -555,7 +555,7 @@
            class="absolute top-full left-1/2 -translate-x-1/2 mt-4 pointer-events-auto z-[2000]">
         <button @click.stop="$emit('merge', node.params.isIndicatorSide ? { fromId: node.id, toId: node.params.mergePartnerId } : { fromId: node.params.mergePartnerId, toId: node.id })"
                 class="bg-nier-white dark:bg-nier-black border border-nier-text-light dark:border-nier-text-dark px-8 py-3 text-[10px] font-mono tracking-[0.3em] uppercase font-black hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all shadow-xl whitespace-nowrap">
-          MERGE PROTOCOL
+          {{ t('matrix.mergeProtocol') }}
         </button>
       </div>
 
@@ -573,11 +573,11 @@
 
              <span class="font-mono font-black tracking-[0.06em] text-nier-text-light dark:text-nier-text-dark uppercase whitespace-nowrap"
                    :style="{ fontSize: scaledPx(13), lineHeight: scaledPx(13) }">
-               {{ node.params.lotsMode === 'PERCENT' ? (locale === 'ru' ? node.params.lots + '%депо' : node.params.lots + '%cap') : (locale === 'ru' ? node.params.lots + ' ЛОТОВ' : node.params.lots + ' LOTS') }}
+               {{ node.params.lotsMode === 'PERCENT' ? node.params.lots + ' ' + t('matrix.percentCap') : node.params.lots + ' ' + t('matrix.lots') }}
              </span>
-             <span class="font-mono opacity-35" :style="{ fontSize: scaledPx(10), lineHeight: scaledPx(10) }">{{ locale === 'ru' ? 'в' : 'in' }}</span>
+             <span class="font-mono opacity-35" :style="{ fontSize: scaledPx(10), lineHeight: scaledPx(10) }">{{ t('matrix.in') }}</span>
              <span class="font-mono font-bold tracking-tight text-nier-text-light dark:text-nier-text-dark/60 uppercase whitespace-nowrap"
-                   :style="{ fontSize: scaledPx(13), lineHeight: scaledPx(13) }">{{ node.params.step === 0 && node.params.unit === '$' ? (locale === 'ru' ? 'ВХОД' : 'ENTRY') : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
+                   :style="{ fontSize: scaledPx(13), lineHeight: scaledPx(13) }">{{ node.params.step === 0 && node.params.unit === '$' ? t('matrix.entry') : `${node.params.step > 0 ? '+' : ''}${node.params.step}${node.params.unit}` }}</span>
           </div>
       </div>
 
@@ -594,9 +594,9 @@
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-red-500/5 to-transparent h-1/2 animate-scan pointer-events-none"></div>
             <ExText variant="telemetry" class="!text-red-500 !opacity-100 font-black tracking-[0.2em] whitespace-nowrap"
                     :style="{ fontSize: scaledPx(12), lineHeight: scaledPx(14) }">
-              <template v-if="node.params.riskType === 'trade'">RISK PER TRADE</template>
-              <template v-else-if="node.params.riskType === 'day'">RISK PER SESSION</template>
-              <template v-else-if="node.params.riskType === 'rr'">RISK REWARD RATIO</template>
+              <template v-if="node.params.riskType === 'trade'">{{ t('matrix.riskPerTrade') }}</template>
+              <template v-else-if="node.params.riskType === 'day'">{{ t('matrix.riskPerSession') }}</template>
+              <template v-else-if="node.params.riskType === 'rr'">{{ t('matrix.riskRewardRatio') }}</template>
               <template v-else>{{ node.label }}</template>
             </ExText>
             <ExText variant="telemetry" class="!text-red-500/60 !opacity-100 font-mono tracking-[0.12em] whitespace-nowrap"
@@ -628,7 +628,7 @@
               @blur="node.params.isEditingName = false"
               @keyup.enter="node.params.isEditingName = false"
               v-autofocus
-              placeholder="ENTER ID..."
+              :placeholder="t('matrix.enterId')"
               class="bg-nier-white dark:bg-nier-black"
             />
          </div>
@@ -706,7 +706,7 @@
                     :style="{ padding: `${scaledPx(8)} ${scaledPx(16)}` }"
                     @mousedown.stop="startCommentDrag($event, comment)">
                   <div class="flex items-center" :style="{ gap: scaledPx(12) }">
-                     <span class="font-black tracking-[0.4em] uppercase font-sans" :style="{ fontSize: scaledPx(13), lineHeight: scaledPx(16) }">Comment {{ Number(idx) + 1 }}</span>
+                     <span class="font-black tracking-[0.4em] uppercase font-sans" :style="{ fontSize: scaledPx(13), lineHeight: scaledPx(16) }">{{ t('matrix.comment') }} {{ Number(idx) + 1 }}</span>
                   </div>
                   <button @mousedown.stop.prevent
                           @click.stop="removeComment(comment.id)"
@@ -726,7 +726,7 @@
                                @keyup.enter.shift="commitCommentEdit(comment)"
                                @input="adjustTextareaHeight($event)"
                                v-autofocus
-                               placeholder="ENTRY DATA REQUIRED..."
+                               :placeholder="t('matrix.entryDataRequired')"
                                class="w-full bg-transparent text-nier-text-light dark:text-nier-text-dark font-mono outline-none resize-none uppercase tracking-wide leading-relaxed p-0 overflow-hidden"
                                :style="{ height: 'auto', minHeight: scaledPx(180), fontSize: scaledPx(22), lineHeight: scaledPx(34) }"></textarea>
                   </div>
@@ -737,7 +737,7 @@
                        :style="{ padding: scaledPx(24) }">
                      <p class="font-mono text-nier-text-light dark:text-nier-text-dark uppercase tracking-wide whitespace-pre-wrap leading-relaxed"
                         :style="{ fontSize: scaledPx(22), lineHeight: scaledPx(34) }">
-                        {{ comment.text || '[ NO DATA AVAILABLE ]' }}
+                        {{ comment.text || t('matrix.noDataAvailable') }}
                      </p>
                   </div>
 
@@ -771,6 +771,7 @@ import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { useMatrixChangeTree } from '../model/matrix/useMatrixChangeTree'
 import { useMatrixState } from '../model/matrix/useMatrixState'
 import { useMatrixZones } from '../model/matrix/useMatrixZones'
+import { matrixText, matrixNodeTypeLabel } from '../model/matrix/matrixLabels'
 
 const { locale, t } = useI18n()
 const state = useMatrixState()
@@ -857,11 +858,15 @@ const customNodeAccentStyle = computed(() => {
 
 const riskElementTooltipTitle = computed(() => {
   const riskType = props.node.params?.riskType
-  if (riskType === 'trade') return 'Risk Per Trade'
-  if (riskType === 'day') return 'Risk Per Session'
-  if (riskType === 'rr') return 'Risk Reward Ratio'
-  return 'RISK-ELEMENT'
+  if (riskType === 'trade') return t('matrix.riskPerTrade')
+  if (riskType === 'day') return t('matrix.riskPerSession')
+  if (riskType === 'rr') return t('matrix.riskRewardRatio')
+  return matrixNodeTypeLabel(t, 'risk-element').toUpperCase()
 })
+
+function matrixPanelLabel(value: string) {
+  return matrixText(t, value)
+}
 
 interface Comment { id: string, text: string, x: number, y: number, isEditing: boolean }
 
@@ -923,9 +928,7 @@ const riskPanelPanelStyle = computed(() => ({
 }))
 const configNodeCode = computed(() => (props.node.label || 'CFG').slice(0, 3).toUpperCase())
 const matrixNodeTypeSuffix = computed(() => {
-  if (props.node.type === 'scenario') return locale.value === 'ru' ? 'СЦЕНАРИЙ' : 'SCENARIO'
-  if (props.node.type === 'condition') return locale.value === 'ru' ? 'УСЛОВИЕ' : 'CONDITION'
-  return props.node.type
+  return matrixNodeTypeLabel(t, props.node.type).toUpperCase()
 })
 const matrixNodeDisplayLabel = computed(() => {
   const identity = String(props.node.params?.customName || '').trim()
@@ -1042,7 +1045,12 @@ function setRiskTradingStyle(style: string) {
 }
 
 function formatRiskTradingStyle(style: string) {
-  return style.replace('_TRADING', '').replace(/_/g, ' ')
+  const keys: Record<string, string> = {
+    DAY_TRADING: 'matrix.styleDayTrading',
+    SWING_TRADING: 'matrix.styleSwingTrading',
+    INVESTING: 'matrix.styleInvesting'
+  }
+  return t(keys[style] || style)
 }
 
 function startAudioAnimationLoop() {
@@ -1962,13 +1970,11 @@ const tooltipTitle = computed(() => {
   if (props.node.type === 'emotion-state') return undefined
   if (props.node.type === 'instrument') return props.node.label
   if (props.node.type === 'indicator') return props.node.label
-  if (props.node.type === 'smc') return smcTooltipData.value?.title || 'SMC'
-  if (props.node.type === 'risk-element') return locale.value === 'ru' ? t(riskElementTooltipTitle.value) : riskElementTooltipTitle.value
+  if (props.node.type === 'smc') return smcTooltipData.value?.title || t('matrix.smc')
+  if (props.node.type === 'risk-element') return riskElementTooltipTitle.value
   if (props.node.type === 'scenario' || props.node.type === 'condition') return matrixNodeDisplayLabel.value
 
-  const typeKey = props.node.type.toUpperCase()
-  const translatedType = t(typeKey)
-  return locale.value === 'ru' && translatedType ? translatedType : typeKey
+  return matrixNodeTypeLabel(t, props.node.type).toUpperCase()
 })
 
 const normalizeEmotionKey = (value: string | undefined) => {
@@ -2021,7 +2027,7 @@ const emotionTooltipData = computed(() => {
   })
 
   return {
-    title: emotion?.label || props.node.label || 'Emotion',
+    title: emotion?.label || props.node.label || t('matrix.emotion'),
     description: emotion?.description || props.node.params?.description || ''
   }
 })

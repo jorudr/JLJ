@@ -9,11 +9,11 @@
        </ExGenesisHudButton>
       <ExGenesisHudFlyout placement="right" parent-orientation="vertical">
         <template #trigger>
-          <ExGenesisHudButton :aria-label="locale === 'ru' ? 'Масштаб' : 'Scale'">
+          <ExGenesisHudButton :aria-label="t('matrix.scale')">
             <span class="font-mono text-[9px] tracking-tight">{{ Math.round(viewState.scale * 100) }}%</span>
           </ExGenesisHudButton>
         </template>
-        <ExGenesisHudPanel aria-label="Scale options">
+        <ExGenesisHudPanel :aria-label="t('matrix.scaleOptions')">
           <ExGenesisHudButton
             v-for="zoom in matrixScaleOptions"
             :key="zoom"
@@ -27,9 +27,9 @@
       </ExGenesisHudFlyout>
        <ExGenesisHudButton
          :active="isToolsMenuOpen"
-         :tooltip="locale === 'ru' ? 'Меню' : 'Menu'"
+         :tooltip="t('matrix.menu')"
          tooltip-position="right"
-         :aria-label="locale === 'ru' ? 'Меню' : 'Menu'"
+         :aria-label="t('matrix.menu')"
          :aria-expanded="isToolsMenuOpen"
          @click.stop="toggleToolsMenu"
        >
@@ -71,7 +71,7 @@
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                 </svg>
                 <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                  {{ locale === 'ru' ? 'РУКОВОДСТВО' : 'MANUAL' }}
+                  {{ t('matrix.manual') }}
                 </span>
               </button>
 
@@ -88,7 +88,7 @@
                   {{ strategyVersions.length }}
                 </span>
                 <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-                  {{ locale === 'ru' ? 'ОБЗОР ВЕРСИЙ' : 'VERSION REVIEW' }}
+                  {{ t('matrix.versionReview') }}
                 </span>
               </button>
             </div>
@@ -103,13 +103,13 @@
     <Transition name="fade">
       <div v-if="isManualOpen" class="fixed inset-0 z-[100000] bg-transparent" @click="isManualOpen = false">
         <div @click.stop class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl">
-          <ExPanel :title="locale === 'ru' ? 'МАТРИЦА ГЕНЕЗИСА // РУКОВОДСТВО' : 'GENESIS MATRIX // MANUAL'" variant="light" :showCorners="true" :noPadding="true" class="w-full shadow-2xl relative">
+          <ExPanel :title="t('matrix.manualTitle')" variant="light" :showCorners="true" :noPadding="true" class="w-full shadow-2xl relative">
             
             <!-- Close Tab on the right edge -->
             <button @click="isManualOpen = false"
                     class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-nier-white dark:bg-nier-black border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors z-[100]">
                <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ locale === 'ru' ? 'Закрыть Руководство' : 'Close Manual' }}</span>
+               <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">{{ t('matrix.closeManual') }}</span>
             </button>
 
             <div class="flex h-[75vh]">
@@ -119,7 +119,7 @@
                  <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(circle_at_center,currentColor_1px,transparent_1px)] bg-[size:12px_12px]"></div>
                  
                  <div class="p-4 border-b border-black/10 dark:border-white/10 flex items-center relative z-10">
-                   <h2 class="text-[10px] font-mono tracking-[0.3em] uppercase opacity-50">{{ locale === 'ru' ? 'Оглавление / Модули' : 'Index / Modules' }}</h2>
+                   <h2 class="text-[10px] font-mono tracking-[0.3em] uppercase opacity-50">{{ t('matrix.indexModules') }}</h2>
                  </div>
                  <button v-for="(section, idx) in manualSections" :key="idx"
                          @click="activeManualSection = idx"
@@ -158,7 +158,7 @@
                  <div class="mt-12 flex items-center space-x-3 opacity-20 relative z-10">
                    <div class="w-2 h-2 border border-current rotate-45"></div>
                    <div class="w-16 h-px bg-current"></div>
-                   <span class="text-[8px] tracking-widest uppercase">{{ locale === 'ru' ? 'Конец Модуля' : 'End Of Module' }}</span>
+                   <span class="text-[8px] tracking-widest uppercase">{{ t('matrix.endOfModule') }}</span>
                    <div class="flex-1 h-px bg-gradient-to-r from-current to-transparent"></div>
                  </div>
               </div>
@@ -209,7 +209,7 @@ const emit = defineEmits([
   'close-context-menus'
 ])
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const isToolsMenuOpen = ref(false)
 const isManualOpen = ref(false)
@@ -220,23 +220,15 @@ const matrixScaleOptions = [25, 50, 75, 100, 150, 200]
 const strategyVersions = computed(() => props.strategyVersions || [])
 
 function matrixToolLabel(key: string) {
-  const ru: Record<string, string> = {
-    reset: 'Сбросить вид',
-    versionReview: 'Обзор версий',
-    manual: 'Руководство',
-    createVersion: 'Создать версию',
-    updateVersion: 'Обновить версию',
-    clearChanges: 'Сбросить изменения'
+  const keys: Record<string, string> = {
+    reset: 'matrix.resetView',
+    versionReview: 'matrix.versionReview',
+    manual: 'matrix.manual',
+    createVersion: 'matrix.createVersion',
+    updateVersion: 'matrix.updateVersion',
+    clearChanges: 'matrix.clearChanges'
   }
-  const en: Record<string, string> = {
-    reset: 'Reset View',
-    versionReview: 'Version Review',
-    manual: 'Manual',
-    createVersion: 'Create Version',
-    updateVersion: 'Update Version',
-    clearChanges: 'Clear Changes'
-  }
-  return (locale.value === 'ru' ? ru : en)[key] || key
+  return t(keys[key] || key)
 }
 
 function setGitPanelOpen(value: boolean) {

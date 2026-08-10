@@ -6,7 +6,7 @@
 
        <div class="flex flex-col items-center space-y-3 relative z-10">
           <div class="w-16 h-px bg-theme-text opacity-20"></div>
-          <span class="text-[10px] font-mono tracking-[0.8em] uppercase font-black animate-pulse text-theme-text">Establishing Neural Link</span>
+          <span class="text-[10px] font-mono tracking-[0.8em] uppercase font-black animate-pulse text-theme-text">{{ t('matrix.bootEstablishingLink') }}</span>
           <div class="w-16 h-px bg-theme-text opacity-20"></div>
        </div>
 
@@ -17,8 +17,8 @@
        </div>
 
        <div class="flex flex-col items-center space-y-1 opacity-40 text-theme-text relative z-10">
-          <span class="text-[7px] font-mono tracking-widest uppercase">System Code: 0x44 REIFY</span>
-          <span class="text-[7px] font-mono tracking-widest uppercase">Matrix Stability: {{ Math.min(100, Math.round(bootProgress)) }}%</span>
+          <span class="text-[7px] font-mono tracking-widest uppercase">{{ t('matrix.bootSystemCode') }}: 0x44 REIFY</span>
+          <span class="text-[7px] font-mono tracking-widest uppercase">{{ t('matrix.bootMatrixStability') }}: {{ Math.min(100, Math.round(bootProgress)) }}%</span>
        </div>
        
        <!-- Scanline effect for boot -->
@@ -29,6 +29,9 @@
 
 <script setup lang="ts">
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { t } = useI18n()
 
 defineProps<{
   isInitializing: boolean

@@ -16,7 +16,7 @@
                   class="absolute inset-0 h-full w-full pointer-events-none"></canvas>
           <div v-if="!drawing.activeDrawingNode.value.params?.strokes?.length"
                class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">Press And Draw</span>
+            <span class="text-[10px] font-mono tracking-[0.45em] uppercase opacity-25">{{ t('matrix.pressAndDraw') }}</span>
           </div>
           <div v-if="drawing.isDrawingCursorVisible.value"
                class="absolute rounded-full border pointer-events-none z-20"
@@ -32,7 +32,7 @@
           <div class="flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
             <div class="flex items-center gap-3">
               <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
-              <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Matrix Command Link</span>
+              <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">{{ t('matrix.commandLink') }}</span>
             </div>
             <span class="text-[8px] font-mono opacity-20 uppercase tracking-widest">{{ drawing.activeDrawingNode.value.label }}</span>
           </div>
@@ -40,6 +40,7 @@
             <div class="flex items-center border border-nier-border-light dark:border-nier-border-dark">
               <button @mousedown.stop
                       @click.stop="drawing.drawingTool.value = 'brush'"
+                      :aria-label="t('matrix.brush')"
                       class="h-9 w-11 flex items-center justify-center transition-all"
                       :class="drawing.drawingTool.value === 'brush' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'opacity-55 hover:opacity-100'">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -49,6 +50,7 @@
               </button>
               <button @mousedown.stop
                       @click.stop="drawing.drawingTool.value = 'eraser'"
+                      :aria-label="t('matrix.eraser')"
                       class="h-9 w-11 border-l border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all"
                       :class="drawing.drawingTool.value === 'eraser' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'opacity-55 hover:opacity-100'">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -82,6 +84,7 @@
             </div>
             <button @mousedown.stop
                     @click.stop="drawing.clearDrawingFullscreen"
+                    :aria-label="t('matrix.clearDrawing')"
                     class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 hover:border-nier-text-light dark:hover:border-nier-text-dark transition-all">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 6h18" />
@@ -92,6 +95,7 @@
             </button>
             <button @mousedown.stop
                     @click.stop="drawing.closeDrawingFullscreen"
+                    :aria-label="t('matrix.closeDrawing')"
                     class="h-9 w-11 border border-nier-text-light dark:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black flex items-center justify-center hover:opacity-80 transition-all">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10 6H6v12h4" />
@@ -108,6 +112,9 @@
 
 <script setup lang="ts">
 import type { useMatrixDrawing } from '../model/matrix/useMatrixDrawing'
+import { useI18n } from '~/shared/i18n/useI18n'
+
+const { t } = useI18n()
 
 defineProps<{
   drawing: ReturnType<typeof useMatrixDrawing>

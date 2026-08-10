@@ -22,7 +22,7 @@
        <button @click.stop="$emit('cycle-type', zone.id)"
                class="tactical-button border-[2px] border-current/20 flex items-center justify-center hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all font-mono opacity-40 hover:opacity-100 uppercase tracking-widest whitespace-nowrap"
                :style="zoneHeaderButtonStyle">
-          {{ locale === 'ru' && t(zone.type) ? t(zone.type) : zone.type }}
+          {{ zoneTypeLabel(zone.type) }}
        </button>
 
        <div class="rotate-45 border-[2px] border-current opacity-40" :style="zoneHeaderDiamondStyle"></div>
@@ -35,13 +35,13 @@
 
        <span class="font-mono tracking-[0.4em] uppercase opacity-40 group-hover:opacity-100 transition-opacity whitespace-nowrap"
              :style="zoneHeaderLabelStyle">
-         {{ zone.type === 'session' ? localizedSessionLabel : (locale === 'ru' && t(zone.label) && t(zone.label) !== zone.label ? t(zone.label) : zone.label).replace(/_/g, ' ') }}
+         {{ zone.type === 'session' ? localizedSessionLabel : zoneLabel(zone.label) }}
        </span>
     </div>
 
     <!-- Drag Handle -->
     <button class="tactical-button absolute top-2 left-2 w-6 h-6 cursor-move pointer-events-auto z-20 border border-current/25 bg-nier-white/70 dark:bg-nier-black/70 flex items-center justify-center opacity-45 hover:opacity-100 hover:bg-nier-text-light dark:hover:bg-nier-text-dark hover:text-nier-white dark:hover:text-nier-black transition-all"
-            aria-label="Move zone with contents"
+            :aria-label="t('matrix.moveZone')"
             @mousedown.stop.prevent="$emit('drag-start', $event)">
        <span class="grid grid-cols-2 gap-[3px]">
          <span v-for="i in 4" :key="i" class="w-[3px] h-[3px] bg-current"></span>
@@ -85,7 +85,17 @@ const props = defineProps<{
 const emit = defineEmits(['drag-start', 'resize-start', 'remove', 'cycle-type'])
 
 import { useI18n } from '~/shared/i18n/useI18n'
+import { matrixText } from '../model/matrix/matrixLabels'
 const { locale, t } = useI18n()
+
+function zoneTypeLabel(type: Zone['type']) {
+  return matrixText(t, type === 'session' ? 'SESSION ZONE' : `${type.toUpperCase()} ZONE`)
+}
+
+function zoneLabel(label: string) {
+  const normalized = label.replace(/_/g, ' ')
+  return matrixText(t, normalized)
+}
 
 const scaledNumber = (value: number, min = 1) => Math.max(min, value * props.scale)
 const scaledPx = (value: number, min = 1) => `${scaledNumber(value, min)}px`
@@ -114,7 +124,14 @@ const localizedSessionLabel = computed(() => {
   const offsetValue = offset || 0
   const offsetLabel = offsetValue === 0 ? 'GMT' : `GMT${offsetValue >= 0 ? '+' : ''}${offsetValue}`
   
-  const labelText = (locale.value === 'ru' && t(props.zone.label) ? t(props.zone.label) : props.zone.label).replace(/_/g, ' ')
+  const sessionLabelKey = props.zone.label === 'NEW_YORK' ? 'NEW YORK' : props.zone.label.replace(/_/g, ' ')
+  const sessionLabelMap: Record<string, string> = {
+    SYDNEY: 'СИДНЕЙ',
+    TOKYO: 'ТОКИО',
+    LONDON: 'ЛОНДОН',
+    'NEW YORK': 'НЬЮ-ЙОРК'
+  }
+  const labelText = locale.value === 'ru' ? (sessionLabelMap[sessionLabelKey] || sessionLabelKey) : sessionLabelKey
   return `${labelText} (${formatTime(ref.start)} - ${formatTime(ref.end)}) [${offsetLabel}]`
 })
 

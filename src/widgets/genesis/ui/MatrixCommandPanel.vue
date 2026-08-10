@@ -71,7 +71,7 @@
             </label>
             <button @mousedown.stop.prevent="menu.resetTextColor"
                     class="h-9 w-11 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center opacity-60 hover:opacity-100 transition-all"
-                    aria-label="Default text color">
+                    :aria-label="t('matrix.defaultTextColor')">
               <span class="w-5 h-5 border border-nier-border-light dark:border-nier-border-dark bg-nier-text-light dark:bg-nier-text-dark relative">
                 <span class="absolute left-1/2 top-[-3px] h-[26px] w-px bg-red-500 rotate-45 origin-center"></span>
               </span>
@@ -102,7 +102,7 @@
                     <ExInput v-model="menu.indicatorSearchQuery.value"
                              variant="terminal"
                              :prefix="`search`"
-                             placeholder="ENTER INDICATOR" />
+                             :placeholder="t('matrix.enterIndicator')" />
                  </div>
                  <ExButton @click="menu.isConditionCreatorOpen.value = true" variant="ghost" size="none" class="w-12 h-[34px] border-nier-border-light dark:border-nier-border-dark">
                     <span class="text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-text-dark dark:group-hover:text-nier-text-light transition-colors font-black">+</span>
@@ -119,11 +119,11 @@
               <div class="flex space-x-4 overflow-x-auto pb-4 w-full max-w-full justify-start px-2 no-scrollbar scroll-smooth">
                 <div v-if="menu.activeIndicatorCategory.value === 'PERSONAL' && !menu.indicatorSearchQuery.value.trim() && menu.indicatorTypes.value.length === 0"
                      class="flex flex-col items-center justify-center w-full py-4 opacity-30">
-                   <span class="text-[8px] font-mono tracking-[0.5em] uppercase">no personal conditions</span>
+                   <span class="text-[8px] font-mono tracking-[0.5em] uppercase">{{ t('matrix.noPersonalConditions') }}</span>
                 </div>
                 <div v-if="menu.indicatorSearchQuery.value.trim() && menu.indicatorTypes.value.length === 0"
                      class="flex flex-col items-center justify-center w-full py-4 opacity-40">
-                   <span class="text-[8px] font-mono tracking-[0.35em] uppercase">NO INDICATORS FOUND</span>
+                   <span class="text-[8px] font-mono tracking-[0.35em] uppercase">{{ t('matrix.noIndicatorsFound') }}</span>
                 </div>
                 <ExNTtooltip v-for="type in menu.indicatorTypes.value" :key="type.label" :title="type.label">
                   <template #trigger>
@@ -145,7 +145,7 @@
                     </button>
                   </template>
                   <div class="flex flex-col gap-1 min-w-[180px]">
-                    <p class="text-[11px] font-mono font-bold leading-relaxed uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || 'INITIALIZE SIGNAL INDICATOR' }}</p>
+                    <p class="text-[11px] font-mono font-bold leading-relaxed uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description || type.params?.description || t('matrix.initializeSignalIndicator') }}</p>
                   </div>
                 </ExNTtooltip>
               </div>
@@ -208,10 +208,10 @@
                    <!-- Page 0: Numeric -->
                    <div v-if="menu.currentStepPage.value === 0" class="flex flex-col items-center animate-in fade-in slide-in-from-left-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">01 // NUMERIC PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.stepNumericProtocol') }}</span>
                       </div>
                       <div class="flex gap-3">
-                         <ExNTtooltip v-for="num in stepPresets.numeric" :key="num" :title="`Step ${num}`">
+                         <ExNTtooltip v-for="num in stepPresets.numeric" :key="num" :title="`${t('matrix.step')} ${num}`">
                            <template #trigger>
                              <button @click="state.setPendingNode({ type: 'step', label: num })"
                                      class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
@@ -220,7 +220,7 @@
                                <span class="text-[14px] font-mono font-black">{{ num }}</span>
                              </button>
                            </template>
-                           <span class="text-xs">Initialize numerical sequence step {{ num }}</span>
+                           <span class="text-xs">{{ t('matrix.initializeNumericStep') }} {{ num }}</span>
                          </ExNTtooltip>
                       </div>
                    </div>
@@ -228,10 +228,10 @@
                    <!-- Page 1: Alpha -->
                    <div v-if="menu.currentStepPage.value === 1" class="flex flex-col items-center animate-in fade-in slide-in-from-right-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">02 // ALPHA PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.stepAlphaProtocol') }}</span>
                       </div>
                       <div class="flex gap-3">
-                         <ExNTtooltip v-for="alpha in stepPresets.alpha" :key="alpha" :title="`Step ${alpha}`">
+                         <ExNTtooltip v-for="alpha in stepPresets.alpha" :key="alpha" :title="`${t('matrix.step')} ${alpha}`">
                            <template #trigger>
                              <button @click="state.setPendingNode({ type: 'step', label: alpha })"
                                      class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
@@ -240,7 +240,7 @@
                                <span class="text-[14px] font-mono font-black">{{ alpha }}</span>
                              </button>
                            </template>
-                           <span class="text-xs">Initialize alphabetic sequence step {{ alpha }}</span>
+                           <span class="text-xs">{{ t('matrix.initializeAlphaStep') }} {{ alpha }}</span>
                          </ExNTtooltip>
                       </div>
                    </div>
@@ -248,10 +248,10 @@
                    <!-- Page 2: Roman -->
                    <div v-if="menu.currentStepPage.value === 2" class="flex flex-col items-center animate-in fade-in slide-in-from-right-4 duration-500">
                       <div class="flex flex-col items-center mb-4">
-                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">03 // ROMAN PROTOCOL</span>
+                         <span class="text-[9px] font-mono uppercase font-black tracking-widest text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.stepRomanProtocol') }}</span>
                       </div>
                       <div class="flex gap-3">
-                         <ExNTtooltip v-for="rom in stepPresets.roman" :key="rom" :title="`Step ${rom}`">
+                         <ExNTtooltip v-for="rom in stepPresets.roman" :key="rom" :title="`${t('matrix.step')} ${rom}`">
                            <template #trigger>
                              <button @click="state.setPendingNode({ type: 'step', label: rom })"
                                      class="group relative min-w-[48px] px-3 h-12 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:scale-110 hover:border-nier-text-light dark:hover:border-nier-text-dark bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black backdrop-blur-md">
@@ -260,7 +260,7 @@
                                <span class="text-[12px] font-mono font-black tracking-widest">{{ rom }}</span>
                              </button>
                            </template>
-                           <span class="text-xs">Initialize roman sequence step {{ rom }}</span>
+                           <span class="text-xs">{{ t('matrix.initializeRomanStep') }} {{ rom }}</span>
                          </ExNTtooltip>
                       </div>
                    </div>
@@ -278,7 +278,7 @@
 
           <!-- LOGIC TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'LOGIC' && !state.isScenarioContext.value" class="flex space-x-6 pointer-events-auto">
-            <ExNTtooltip v-for="type in skillTypes" :key="type.label" :title="type.label">
+            <ExNTtooltip v-for="type in skillTypes" :key="type.label" :title="matrixNodeTypeLabel(t, type.type)">
               <template #trigger>
                 <button @click="state.setPendingNode(type)"
                         class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
@@ -299,9 +299,9 @@
                 </button>
               </template>
               <div class="flex flex-col gap-1 min-w-[220px]">
-                <span class="text-[8px] font-mono opacity-40 uppercase">REIFY SEQUENCE</span>
-                <p v-if="type.description" class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
-                <p v-else class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">Establish high-level tactical logic node for strategic branch validation.</p>
+                <span class="text-[8px] font-mono opacity-40 uppercase">{{ t('matrix.reifySequence') }}</span>
+                <p v-if="type.description" class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ matrixText(t, type.description) }}</p>
+                <p v-else class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.logicNodeFallback') }}</p>
               </div>
             </ExNTtooltip>
           </div>
@@ -309,19 +309,19 @@
           <!-- LABELS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'LABELS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
-              <ExNTtooltip v-for="type in labelTypes" :key="type.label" :title="t(type.label)">
+              <ExNTtooltip v-for="type in labelTypes" :key="type.label" :title="matrixText(t, type.label)">
                 <template #trigger>
                   <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
-                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t(type.params.menuLabel) }}</span>
+                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ matrixText(t, type.params.menuLabel) }}</span>
                     <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                     <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                   </button>
                 </template>
                 <div class="flex flex-col gap-1 min-w-[220px]">
-                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ t(type.params.protocol) }}</span>
-                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ t(type.description) }}</p>
+                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ matrixText(t, type.params.protocol) }}</span>
+                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ matrixText(t, type.description) }}</p>
                 </div>
               </ExNTtooltip>
             </div>
@@ -330,19 +330,19 @@
           <!-- SCENARIO DOCUMENTATION TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_DOCS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
-              <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="type.label">
+              <ExNTtooltip v-for="type in scenarioDocumentationTypes" :key="type.label" :title="matrixText(t, type.label)">
                 <template #trigger>
                   <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
-                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ matrixText(t, type.params.menuLabel) }}</span>
                     <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                     <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                   </button>
                 </template>
                 <div class="flex flex-col gap-1 min-w-[220px]">
-                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
-                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ matrixText(t, type.params.protocol) }}</span>
+                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ matrixText(t, type.description) }}</p>
                 </div>
               </ExNTtooltip>
             </div>
@@ -351,19 +351,19 @@
           <!-- SCENARIO VISUALS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'SCENARIO_VISUALS'" class="flex flex-col items-center pointer-events-auto px-4 w-full">
             <div class="flex space-x-4 overflow-visible px-2 py-2 max-w-full">
-              <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="type.label">
+              <ExNTtooltip v-for="type in scenarioVisualTypes" :key="type.label" :title="matrixText(t, type.label)">
                 <template #trigger>
                   <button @click="state.setPendingNode(type)"
                           class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                     <span class="text-[8px] font-mono tracking-widest uppercase opacity-45 group-hover:opacity-100 transition-opacity">{{ type.params.shortCode }}</span>
-                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ type.params.menuLabel }}</span>
+                    <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-1 opacity-35 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ matrixText(t, type.params.menuLabel) }}</span>
                     <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                     <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                   </button>
                 </template>
                 <div class="flex flex-col gap-1 min-w-[220px]">
-                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ type.params.protocol }}</span>
-                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ type.description }}</p>
+                  <span class="text-[8px] font-mono opacity-40 uppercase">{{ matrixText(t, type.params.protocol) }}</span>
+                  <p class="text-[9px] font-mono leading-relaxed opacity-60 uppercase text-nier-text-light dark:text-nier-text-dark">{{ matrixText(t, type.description) }}</p>
                 </div>
               </ExNTtooltip>
             </div>
@@ -379,7 +379,7 @@
                       @click="audio.startMatrixAudioRecording"
                       class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                 <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">START</span>
+                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t('matrix.start') }}</span>
                 <div class="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
                 <div class="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
               </button>
@@ -387,26 +387,26 @@
                       @click="audio.pauseMatrixAudioRecording"
                       class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                 <span class="w-4 h-4 border-x-4 border-nier-text-light dark:border-nier-text-dark"></span>
-                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">PAUSE</span>
+                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t('matrix.pause') }}</span>
               </button>
               <button v-if="audio.matrixAudioRecordingState.value === 'paused'"
                       @click="audio.resumeMatrixAudioRecording"
                       class="group relative min-w-[64px] h-14 border border-nier-border-light dark:border-nier-border-dark flex flex-col items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-105 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md px-3">
                 <span class="w-0 h-0 border-y-[7px] border-y-transparent border-l-[12px] border-l-nier-text-light dark:border-l-nier-text-dark ml-1"></span>
-                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">RESUME</span>
+                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-45 group-hover:opacity-80 transition-opacity whitespace-nowrap">{{ t('matrix.resume') }}</span>
               </button>
               <button v-if="audio.matrixAudioRecordingState.value !== 'idle'"
                       @click="audio.finishMatrixAudioRecording"
                       class="group relative min-w-[64px] h-14 border border-red-500/50 flex flex-col items-center justify-center transition-all hover:border-red-500 hover:scale-105 bg-red-500/5 backdrop-blur-md px-3">
                 <span class="w-3 h-3 bg-red-500"></span>
-                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-55 group-hover:opacity-90 transition-opacity whitespace-nowrap">FINISH</span>
+                <span class="text-[7px] font-mono tracking-[0.18em] uppercase mt-2 opacity-55 group-hover:opacity-90 transition-opacity whitespace-nowrap">{{ t('matrix.finish') }}</span>
               </button>
             </div>
           </div>
 
           <!-- DOMAINS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'DOMAINS' && !state.isScenarioContext.value" class="flex space-x-6 pointer-events-auto">
-            <ExNTtooltip v-for="zoneType in (['entry', 'in-trade', 'exit'] as const)" :key="zoneType" :title="locale === 'ru' && t(`${zoneType.toUpperCase()}_ZONE`) ? t(`${zoneType.toUpperCase()}_ZONE`) : `${zoneType.toUpperCase()}_ZONE`">
+            <ExNTtooltip v-for="zoneType in (['entry', 'in-trade', 'exit'] as const)" :key="zoneType" :title="zoneTypeLabel(zoneType)">
               <template #trigger>
                 <button @click="$emit('activate-zone', zoneType)"
                         :class="[
@@ -418,13 +418,13 @@
                    <div v-if="zoneType === 'exit'" class="w-4 h-4 border-2 border-nier-text-light dark:border-nier-text-dark opacity-40 group-hover:opacity-100"></div>
                 </button>
               </template>
-              <span class="text-xs">{{ locale === 'ru' ? 'Создать поведенческую зону' : 'Construct behavioral domain' }}: {{ locale === 'ru' && t(zoneType) ? t(zoneType).toUpperCase() : zoneType.toUpperCase() }}</span>
+              <span class="text-xs">{{ t('matrix.constructBehavioralDomain') }}: {{ zoneTypeLabel(zoneType) }}</span>
             </ExNTtooltip>
             
             <div class="w-px h-12 bg-nier-text-light/10 dark:bg-nier-text-dark/10 mx-2"></div>
 
             <!-- New Session Tool -->
-            <ExNTtooltip :title="locale === 'ru' && t('SESSION_ZONE') ? t('SESSION_ZONE') : 'SESSION ZONE'">
+            <ExNTtooltip :title="t('matrix.zoneSession')">
               <template #trigger>
                 <button @click="$emit('activate-zone', 'session')"
                         :class="[
@@ -437,13 +437,13 @@
                    </svg>
                 </button>
               </template>
-              <span class="text-xs">{{ locale === 'ru' ? 'Создать временную зону сессии' : 'Establish temporal session domain' }}</span>
+              <span class="text-xs">{{ t('matrix.establishTemporalSession') }}</span>
             </ExNTtooltip>
           </div>
 
           <!-- METHODS TOOLS -->
           <div v-if="state.activeMenuCategory.value === 'METHODS' && !state.isScenarioContext.value" class="flex space-x-6 pointer-events-auto">
-            <ExNTtooltip v-for="type in methodTypes" :key="type.label" :title="type.label">
+            <ExNTtooltip v-for="type in methodTypes" :key="type.label" :title="matrixText(t, type.label)">
               <template #trigger>
                 <button @click="state.setPendingNode(type)"
                         class="group relative w-12 h-12 border border-nier-border-light dark:border-nier-border-dark flex items-center justify-center transition-all hover:border-nier-text-light dark:hover:border-nier-text-dark hover:scale-110 bg-nier-text-light/5 dark:bg-nier-text-dark/5 backdrop-blur-md">
@@ -461,8 +461,8 @@
                 </button>
               </template>
               <div class="flex flex-col gap-1 min-w-[220px]">
-                <span class="text-[8px] font-mono opacity-40 uppercase">EXECUTION METHOD</span>
-                <p class="text-[11px] font-mono font-bold opacity-80">{{ type.description }}</p>
+                <span class="text-[8px] font-mono opacity-40 uppercase">{{ t('matrix.executionMethod') }}</span>
+                <p class="text-[11px] font-mono font-bold opacity-80">{{ matrixText(t, type.description) }}</p>
               </div>
             </ExNTtooltip>
           </div>
@@ -479,12 +479,12 @@
                         <button @click="menu.scalingMode.value = 'LOTS'"
                                 :class="menu.scalingMode.value === 'LOTS' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'bg-transparent text-nier-text-light dark:text-nier-text-dark opacity-40 hover:opacity-100'"
                                 class="px-2 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider transition-all h-[18px]">
-                           LOTS
+                           {{ t('matrix.lots') }}
                         </button>
                         <button @click="menu.scalingMode.value = 'PERCENT'"
                                 :class="menu.scalingMode.value === 'PERCENT' ? 'bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black' : 'bg-transparent text-nier-text-light dark:text-nier-text-dark opacity-40 hover:opacity-100'"
                                 class="px-2 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider transition-all h-[18px]">
-                           %CAP
+                           {{ t('matrix.percentCap') }}
                         </button>
                      </div>
                      <ExInput v-model.number="menu.scalingLots.value" type="number" min="0.01" step="0.01"
@@ -492,11 +492,11 @@
                   </div>
 
                   <!-- "in" separator -->
-                  <span class="text-[9px] font-mono opacity-30 pb-2">in</span>
+                  <span class="text-[9px] font-mono opacity-30 pb-2">{{ t('matrix.in') }}</span>
 
                   <!-- Step value + Unit toggle -->
                   <div class="flex flex-col items-center">
-                     <span class="text-[7px] font-mono uppercase opacity-40 mb-1">Distance</span>
+                     <span class="text-[7px] font-mono uppercase opacity-40 mb-1">{{ t('matrix.distance') }}</span>
                      <div class="flex">
                         <ExInput v-model.number="menu.scalingStep.value" type="number" step="0.01"
                                class="w-20 hide-spinners" />
@@ -510,10 +510,10 @@
                   <!-- Action Button -->
                   <ExButton v-if="state.effectiveSelectedNode.value?.type === 'scaling-entry'" 
                             @click="menu.updateScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-4">
-                     CHANGE <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">⟳</span>
+                     {{ t('matrix.change') }} <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">⟳</span>
                   </ExButton>
                   <ExButton v-else @click="menu.addScalingEntry" variant="ghost" size="sm" class="h-[34px] border-nier-text-light/60 dark:border-nier-text-dark/60 px-4">
-                     ADD <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
+                     {{ t('matrix.add') }} <span class="ml-2 text-nier-text-light dark:text-nier-text-dark group-hover:text-nier-white dark:group-hover:text-nier-black transition-colors">+</span>
                   </ExButton>
                </div>
             </div>
@@ -523,7 +523,7 @@
           <div v-if="state.activeMenuCategory.value === 'RISK' && !state.isScenarioContext.value" class="flex items-center justify-center pointer-events-auto px-4 w-full">
             <div class="flex items-center gap-3 border border-red-500/20 bg-red-500/[0.03] px-5 py-3">
               <div class="w-2 h-2 rotate-45 bg-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.7)]"></div>
-              <span class="text-[9px] font-mono uppercase tracking-[0.32em] font-black text-nier-text-light dark:text-nier-text-dark">Risk Management Panel</span>
+              <span class="text-[9px] font-mono uppercase tracking-[0.32em] font-black text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.riskManagementPanel') }}</span>
             </div>
           </div>
 
@@ -544,8 +544,8 @@
                     </button>
                   </template>
                   <div class="flex flex-col">
-                    <span class="text-xs">Establish data link: {{ asset.name }}</span>
-                    <span class="opacity-40 text-[9px] mt-1">ASSET TICKER: {{ asset.symbol }}</span>
+                    <span class="text-xs">{{ t('matrix.establishDataLink') }}: {{ asset.name }}</span>
+                    <span class="opacity-40 text-[9px] mt-1">{{ t('matrix.assetTicker') }}: {{ asset.symbol }}</span>
                   </div>
                </ExNTtooltip>
                 </div>
@@ -556,7 +556,7 @@
             <div class="relative w-full max-w-sm">
                <ExInput v-model="menu.assetSearchQuery.value"
                         variant="terminal"
-                        placeholder="ENTER TICKER"
+                        :placeholder="t('matrix.enterTicker')"
                         @update:modelValue="menu.handleAssetSearch" />
                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1">
                   <div v-for="i in 3" :key="i" class="w-1 h-3 border-r border-nier-text-light dark:border-nier-text-dark opacity-10" :class="{ 'animate-pulse opacity-40': menu.isSearchingAssets.value }"></div>
@@ -564,7 +564,7 @@
             </div>
             <div v-if="menu.assetSearchQuery.value.trim() && !menu.isSearchingAssets.value && menu.assetResults.value.length === 0"
                  class="flex items-center justify-center w-full py-3 opacity-40">
-               <span class="text-[8px] font-mono tracking-[0.35em] uppercase">NO ASSETS FOUND</span>
+               <span class="text-[8px] font-mono tracking-[0.35em] uppercase">{{ t('matrix.noAssetsFound') }}</span>
             </div>
           </div>
 
@@ -574,7 +574,7 @@
                 <ExButton @click="isClearPanelOpen = true" variant="ghost" class="border-red-500/40 hover:border-red-500 min-w-[240px]">
                    <div class="flex items-center space-x-3 text-red-500">
                       <div class="w-1.5 h-1.5 bg-red-500 rotate-45"></div>
-                      <span>CLEAR ARCHIVE DATA</span>
+                      <span>{{ t('matrix.clearArchiveData') }}</span>
                    </div>
                 </ExButton>
 
@@ -608,7 +608,7 @@
              <div class="w-full max-w-lg">
                 <ExPanel variant="light">
                    <template #telemetry>
-                      <span class="sr-only">Purge panel controls</span>
+                      <span class="sr-only">{{ t('matrix.purgeControls') }}</span>
                    </template>
                    <div class="flex flex-col space-y-6">
                       <div class="flex items-start space-x-6">
@@ -618,21 +618,21 @@
                             </svg>
                          </div>
                          <div class="flex flex-col space-y-2">
-                            <span class="text-[14px] font-mono font-black tracking-widest text-nier-text-light dark:text-nier-text-dark uppercase">Critical System Alert</span>
+                            <span class="text-[14px] font-mono font-black tracking-widest text-nier-text-light dark:text-nier-text-dark uppercase">{{ t('matrix.criticalSystemAlert') }}</span>
                             <p class="text-[11px] font-mono text-nier-text-light/60 dark:text-nier-text-dark/60 leading-relaxed uppercase tracking-widest">
-                               Initiating this protocol will result in the permanent erasure of all tactical nodes, connections, and archival domains within the current matrix. 
+                               {{ t('matrix.purgeWarning') }}
                                <br><br>
-                               This action is <span class="text-red-500 font-black">irreversible</span>.
+                               This action is <span class="text-red-500 font-black">{{ t('matrix.irreversible') }}</span>.
                             </p>
                          </div>
                       </div>
 
                       <div class="flex justify-end space-x-4 pt-4 border-t border-nier-border-light dark:border-nier-border-dark">
                          <ExButton @click="isClearPanelOpen = false" variant="ghost" size="md">
-                            CANCEL
+                            {{ t('matrix.cancel') }}
                          </ExButton>
                          <ExButton @click="executePurge" variant="solid" size="md" class="!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 transition-colors">
-                            EXECUTE PURGE
+                            {{ t('matrix.executePurge') }}
                          </ExButton>
                       </div>
                    </div>
@@ -659,6 +659,7 @@ import ExConditionCreator from '@/widgets/genesis/ui/ExConditionCreator.vue'
 import ExConfigSetter from '@/widgets/genesis/ui/ExConfigSetter.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
+import { matrixText, matrixNodeTypeLabel } from '../model/matrix/matrixLabels'
 
 const props = defineProps<{
   state: ReturnType<typeof useMatrixState>
@@ -746,27 +747,27 @@ const commandCategoryLabels: Partial<Record<MenuCategory, string>> = {
   LABELS: 'LABELS'
 }
 
-const commandSectionDescriptions: Partial<Record<MenuCategory, string>> = {
-  TEXT_FORMAT: 'Format and style text',
-  INDICATORS: 'Choose indicators and conditions',
-  EMOTIONS: 'Add an emotional state',
-  STEPS: 'Choose a sequence step',
-  LOGIC: 'Build strategy logic',
-  LABELS: 'Add text and information panels',
-  SCENARIO_DOCS: 'Explain the scenario',
-  SCENARIO_VISUALS: 'Add visual evidence and markup',
-  SCENARIO_AUDIO: 'Record an audio note',
-  DOMAINS: 'Define trading zones',
-  METHODS: 'Choose an entry method',
-  SCALING: 'Configure position scaling',
-  RISK: 'Set risk management rules',
-  DATA: 'Find and add an asset',
-  SYSTEM: 'Manage saved matrix data'
+const commandSectionDescriptionKeys: Partial<Record<MenuCategory, string>> = {
+  TEXT_FORMAT: 'matrix.descriptionTextFormat',
+  INDICATORS: 'matrix.descriptionIndicators',
+  EMOTIONS: 'matrix.descriptionEmotions',
+  STEPS: 'matrix.descriptionSteps',
+  LOGIC: 'matrix.descriptionLogic',
+  LABELS: 'matrix.descriptionLabels',
+  SCENARIO_DOCS: 'matrix.descriptionScenarioDocs',
+  SCENARIO_VISUALS: 'matrix.descriptionScenarioVisuals',
+  SCENARIO_AUDIO: 'matrix.descriptionScenarioAudio',
+  DOMAINS: 'matrix.descriptionDomains',
+  METHODS: 'matrix.descriptionMethods',
+  SCALING: 'matrix.descriptionScaling',
+  RISK: 'matrix.descriptionRisk',
+  DATA: 'matrix.descriptionData',
+  SYSTEM: 'matrix.descriptionSystem'
 }
 
 const commandSectionDescription = computed(() => {
   const category = props.state.activeMenuCategory.value
-  return category ? commandSectionDescriptions[category] || '' : ''
+  return category ? t(commandSectionDescriptionKeys[category] || '') : ''
 })
 
 const commandLinkCategories = computed(() => {
@@ -777,7 +778,11 @@ const commandLinkCategories = computed(() => {
 
 function getCommandCategoryLabel(category: MenuCategory) {
   const labelKey = commandCategoryLabels[category] || category
-  return t(labelKey)
+  return matrixText(t, labelKey)
+}
+
+function zoneTypeLabel(zoneType: 'entry' | 'in-trade' | 'exit') {
+  return matrixText(t, `${zoneType.toUpperCase()} ZONE`)
 }
 
 function shouldShowCommandCategory(category: MenuCategory) {

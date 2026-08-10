@@ -44,11 +44,11 @@
                         </div>
                         <div class="mt-1 pl-7 flex flex-col gap-0.5 font-mono text-[10px] uppercase tracking-[0.16em] opacity-40">
                           <div>
-                            <span class="opacity-50 mr-2">{{ locale === 'ru' ? 'СОЗДАН:' : 'CREATED:' }}</span>
+                            <span class="opacity-50 mr-2">{{ reviewText('created') }}</span>
                             <span>{{ formatTimestamp(version.createdAt || version.updatedAt) }}</span>
                           </div>
                           <div v-if="version.updatedAt && version.updatedAt !== version.createdAt">
-                            <span class="opacity-50 mr-2">{{ locale === 'ru' ? 'ОБНОВЛЕН:' : 'UPDATED:' }}</span>
+                            <span class="opacity-50 mr-2">{{ reviewText('updated') }}</span>
                             <span>{{ formatTimestamp(version.updatedAt) }}</span>
                           </div>
                         </div>
@@ -133,7 +133,7 @@
                                    {{ nodePreviewTitle(change) }}
                                  </span>
                                  <div class="flex items-baseline gap-2">
-                                    <span class="diff-node-type shrink-0 text-[11px]">{{ change.nodeType }}</span>
+                                    <span class="diff-node-type shrink-0 text-[11px]">{{ reviewNodeType(change.nodeType) }}</span>
                                     <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate text-[11px]">{{ change.nodeName }}</span>
                                  </div>
                                  <span class="font-mono text-[7px] tracking-[0.2em] uppercase opacity-40 mt-0.5">
@@ -145,7 +145,7 @@
                           <div v-else class="flex min-w-0 items-baseline gap-2">
                             <span class="shrink-0 font-bold" :class="`diff-event-${change.tone}`">{{ eventTitle(change.title) }}</span>
                             <span class="opacity-25">::</span>
-                            <span class="diff-node-type shrink-0">{{ change.nodeType }}</span>
+                            <span class="diff-node-type shrink-0">{{ reviewNodeType(change.nodeType) }}</span>
                             <span v-if="change.nodeName" class="diff-node-name min-w-0 truncate">{{ change.nodeName }}</span>
                             <span
                               v-if="change.kind !== 'unchanged'"
@@ -223,7 +223,7 @@
         <div class="w-full max-w-lg" @click.stop>
           <ExPanel variant="light">
             <template #telemetry>
-              <span class="sr-only">Version delete confirmation controls</span>
+              <span class="sr-only">{{ reviewText('versionDeleteControls') }}</span>
             </template>
             <div class="flex flex-col space-y-6">
               <div class="flex items-start space-x-6">
@@ -234,7 +234,7 @@
                 </div>
                 <div class="flex flex-col space-y-2">
                   <span class="font-mono text-[14px] font-black uppercase tracking-widest text-nier-text-light dark:text-nier-text-dark">
-                    Critical System Alert
+                    {{ reviewText('criticalAlert') }}
                   </span>
                   <p class="font-mono text-[11px] uppercase leading-relaxed tracking-widest text-nier-text-light/60 dark:text-nier-text-dark/60">
                     {{ reviewText('deleteWarningIntro', { version: getVersionTitle(pendingDeleteVersion) }) }}
@@ -387,7 +387,11 @@ const reviewTextMap: Record<string, { en: string; ru: string }> = {
   updatedNode: { en: '[~] UPDATED NODE', ru: '[~] ОБНОВЛЕН УЗЕЛ' },
   reifiedNode: { en: '[+] REIFIED NODE', ru: '[+] СОЗДАН УЗЕЛ' },
   systemObjectUpdated: { en: 'System Object Updated', ru: 'Системный объект обновлен' },
-  systemObjectInitialized: { en: 'System Object Initialized', ru: 'Системный объект инициализирован' }
+  systemObjectInitialized: { en: 'System Object Initialized', ru: 'Системный объект инициализирован' },
+  created: { en: 'CREATED:', ru: 'СОЗДАН:' },
+  updated: { en: 'UPDATED:', ru: 'ОБНОВЛЕН:' },
+  versionDeleteControls: { en: 'Version delete confirmation controls', ru: 'Управление подтверждением удаления версии' },
+  criticalAlert: { en: 'Critical System Alert', ru: 'Критическое системное предупреждение' }
 }
 
 const eventTitleMap: Record<string, { en: string; ru: string }> = {
@@ -426,6 +430,27 @@ function eventTitle(title: string) {
 
 function detailLabel(label: string) {
   return detailLabelMap[label]?.[locale.value === 'ru' ? 'ru' : 'en'] || label
+}
+
+const reviewNodeTypeMap: Record<string, { en: string; ru: string }> = {
+  strategy: { en: 'strategy', ru: 'стратегия' },
+  scenario: { en: 'scenario', ru: 'сценарий' },
+  condition: { en: 'condition', ru: 'условие' },
+  indicator: { en: 'indicator', ru: 'индикатор' },
+  pattern: { en: 'pattern', ru: 'паттерн' },
+  smc: { en: 'smc', ru: 'smc' },
+  risk: { en: 'risk', ru: 'риск' },
+  instrument: { en: 'instrument', ru: 'инструмент' },
+  emotion: { en: 'emotion', ru: 'эмоция' },
+  'scaling-entry': { en: 'scaling entry', ru: 'масштабирование входа' }
+}
+
+function reviewNodeType(value: string) {
+  const separator = value.indexOf(':')
+  const rawType = separator === -1 ? value : value.slice(0, separator).trim()
+  const name = separator === -1 ? '' : value.slice(separator + 1).trim()
+  const type = reviewNodeTypeMap[rawType]?.[locale.value === 'ru' ? 'ru' : 'en'] || rawType
+  return name ? `${type}: ${name}` : type
 }
 
 function nodePreviewTitle(change: ReviewChange) {

@@ -14,22 +14,22 @@
 
               <!-- Segmented Blades -->
               <div v-for="(btn, i) in [
-                { label: 'SET IDENTITY', id: '0x01', condition: menu.nodeContextMenu.value && ['condition', 'scenario', 'strategy'].includes(state.getNode(menu.nodeContextMenu.value.nodeId)?.type || ''), action: () => menu.nodeContextMenu.value && menu.setNodeCustomName(menu.nodeContextMenu.value.nodeId) },
-                { label: 'SET DESCRIPTION', id: '0x01_desc', condition: menu.nodeContextMenu.value && ['condition', 'scenario', 'strategy'].includes(state.getNode(menu.nodeContextMenu.value.nodeId)?.type || ''), action: () => menu.nodeContextMenu.value && menu.setNodeCustomDescription(menu.nodeContextMenu.value.nodeId) },
-                { label: 'ADD COMMENT', id: '0x02', action: () => menu.nodeContextMenu.value && menu.addCommentToNode(menu.nodeContextMenu.value.nodeId) },
+                { label: t('matrix.setIdentity'), id: '0x01', condition: menu.nodeContextMenu.value && ['condition', 'scenario', 'strategy'].includes(state.getNode(menu.nodeContextMenu.value.nodeId)?.type || ''), action: () => menu.nodeContextMenu.value && menu.setNodeCustomName(menu.nodeContextMenu.value.nodeId) },
+                { label: t('matrix.setDescription'), id: '0x01_desc', condition: menu.nodeContextMenu.value && ['condition', 'scenario', 'strategy'].includes(state.getNode(menu.nodeContextMenu.value.nodeId)?.type || ''), action: () => menu.nodeContextMenu.value && menu.setNodeCustomDescription(menu.nodeContextMenu.value.nodeId) },
+                { label: t('matrix.addComment'), id: '0x02', action: () => menu.nodeContextMenu.value && menu.addCommentToNode(menu.nodeContextMenu.value.nodeId) },
                 { 
                   label: menu.nodeContextMenu.value && (function() {
                     const dir = state.getNode(menu.nodeContextMenu.value!.nodeId)?.params?.direction;
-                    if (!dir || dir === 'NONE') return 'SET LONG';
-                    if (dir === 'LONG') return 'SET SHORT';
-                    return 'REMOVE DIRECTION';
+                    if (!dir || dir === 'NONE') return t('matrix.setLong');
+                    if (dir === 'LONG') return t('matrix.setShort');
+                    return t('matrix.removeDirection');
                   })(),
                   id: '0x03', 
                   condition: menu.nodeContextMenu.value && state.getNode(menu.nodeContextMenu.value.nodeId)?.type === 'scenario', 
                   action: () => menu.nodeContextMenu.value && menu.cycleNodeDirection(menu.nodeContextMenu.value.nodeId) 
                 },
                 { 
-                  label: 'UPDATE VISUAL',
+                  label: t('matrix.updateVisual'),
                   id: '0x04', 
                   condition: menu.nodeContextMenu.value && state.getNode(menu.nodeContextMenu.value.nodeId)?.type === 'image', 
                   action: () => menu.nodeContextMenu.value && $emit('trigger-image-upload', menu.nodeContextMenu.value.nodeId) 
@@ -37,9 +37,9 @@
                 { 
                   label: menu.nodeContextMenu.value && (function() {
                     const phase = state.getNode(menu.nodeContextMenu.value!.nodeId)?.params?.phase;
-                    if (!phase || phase === 'NONE') return 'SET ENTRY';
-                    if (phase === 'ENTRY') return 'SET EXIT';
-                    return 'REMOVE TYPE';
+                    if (!phase || phase === 'NONE') return t('matrix.setEntry');
+                    if (phase === 'ENTRY') return t('matrix.setExit');
+                    return t('matrix.removeType');
                   })(),
                   id: '0x05', 
                   condition: menu.nodeContextMenu.value && state.getNode(menu.nodeContextMenu.value.nodeId)?.type === 'scenario', 
@@ -48,9 +48,9 @@
                 { 
                   label: menu.nodeContextMenu.value && (function() {
                     const prio = state.getNode(menu.nodeContextMenu.value!.nodeId)?.params?.priority;
-                    if (!prio || prio === 'NONE') return 'SET REQUIRED';
-                    if (prio === 'REQUIRED') return 'SET ADDITIONAL';
-                    return 'REMOVE PRIORITY';
+                    if (!prio || prio === 'NONE') return t('matrix.setRequired');
+                    if (prio === 'REQUIRED') return t('matrix.setAdditional');
+                    return t('matrix.removePriority');
                   })(),
                   id: '0x06', 
                   condition: menu.nodeContextMenu.value && state.getNode(menu.nodeContextMenu.value.nodeId)?.type === 'condition', 
@@ -77,7 +77,7 @@
 
                 <!-- Tactical Metadata Revealed on Hover -->
                 <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">Protocol Execution Sequence // Ready</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-nier-text-light dark:text-nier-text-dark">{{ t('matrix.contextProtocolReady') }}</span>
                 </div>
               </div>
 
@@ -87,12 +87,12 @@
                    class="group relative pt-2">
                  <button @click="state.removeNode(menu.nodeContextMenu.value.nodeId); menu.nodeContextMenu.value = null"
                          class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-3 min-w-[180px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden">
-                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">REMOVE NODE</span>
+                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">{{ t('matrix.removeNode') }}</span>
                    <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
                    <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
                  </button>
                  <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Permanent Archive Erasure</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">{{ t('matrix.archiveWarning') }}</span>
                 </div>
               </div>
             </div>
@@ -116,7 +116,7 @@
                 
                 <button @click="menu.setConnectionLabel(opt)"
                         class="bg-nier-white dark:bg-nier-black border border-nier-border-light dark:border-nier-border-dark px-6 py-2 min-w-[160px] text-left transition-all duration-500 hover:border-nier-text-light dark:hover:border-nier-text-dark hover:translate-x-4 flex items-center justify-between relative overflow-hidden shadow-[10px_10px_0_rgba(0,0,0,0.1)]">
-                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black group-hover:tracking-[0.8em] transition-all duration-500 relative z-10 text-nier-text-light dark:text-nier-text-dark">{{ locale === 'ru' ? t(opt) : opt }}</span>
+                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black group-hover:tracking-[0.8em] transition-all duration-500 relative z-10 text-nier-text-light dark:text-nier-text-dark">{{ connectionLabel(opt) }}</span>
                   <span class="text-[7px] font-mono opacity-20 group-hover:opacity-100 transition-opacity relative z-10 text-nier-text-light dark:text-nier-text-dark">[0x0{{ idx + 1 }}]</span>
                   <div class="absolute inset-y-0 left-0 w-0 bg-nier-text-light dark:bg-nier-text-dark group-hover:w-1.5 transition-all duration-500"></div>
                 </button>
@@ -125,7 +125,7 @@
               <div class="group relative pt-2" :style="{ marginLeft: '32px' }">
                 <button @click="menu.setConnectionLabel(null)"
                         class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-2.5 min-w-[160px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden">
-                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500">CLEAR LINK</span>
+                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500">{{ t('matrix.clearLink') }}</span>
                   <span class="text-[7px] font-mono text-red-500 opacity-40">[CLR]</span>
                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
                 </button>
@@ -150,15 +150,13 @@
               <div class="group relative">
                 <button @click="menu.removePersonalCondition(menu.personalCondContextMenu.value.indicator)"
                         class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-2.5 min-w-[160px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden group">
-                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">
-                    {{ locale === 'ru' ? 'УДАЛИТЬ' : 'REMOVE' }}
-                  </span>
+                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">{{ t('matrix.remove') }}</span>
                   <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
                 </button>
                 <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
                   <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">
-                    {{ locale === 'ru' ? 'Внимание: Безвозвратное стирание' : 'Warning: Permanent Erasure' }}
+                    {{ t('matrix.permanentWarning') }}
                   </span>
                 </div>
               </div>
@@ -181,12 +179,12 @@
               <div class="group relative">
                 <button @click="state.removeMatrixPage(menu.pageContextMenu.value.pageId); menu.pageContextMenu.value = null"
                         class="bg-nier-white dark:bg-nier-black border border-red-500/30 px-6 py-3 min-w-[190px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden">
-                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">REMOVE BOARD</span>
+                  <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">{{ t('matrix.removeBoard') }}</span>
                   <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
                 </button>
                 <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
-                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">Warning: Strategy Page Erasure</span>
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">{{ t('matrix.strategyPageWarning') }}</span>
                 </div>
               </div>
             </div>
@@ -210,6 +208,16 @@ defineProps<{
 defineEmits(['trigger-image-upload'])
 
 const { locale, t } = useI18n()
+
+function connectionLabel(option: string) {
+  const keys: Record<string, string> = {
+    IF: 'matrix.connectionIf',
+    THEREFORE: 'matrix.connectionTherefore',
+    AND: 'matrix.connectionAnd',
+    OR: 'matrix.connectionOr'
+  }
+  return t(keys[option] || option)
+}
 </script>
 
 <style scoped>

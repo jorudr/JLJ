@@ -14,6 +14,7 @@
             type="button"
             class="version-selector-trigger"
             :aria-expanded="isVersionMenuOpen"
+            :aria-label="gitText('selectVersion')"
             @click.stop="isVersionMenuOpen = !isVersionMenuOpen"
           >
             <span class="version-selector-mark">[v]</span>
@@ -37,6 +38,7 @@
               </div>
               <div
                 class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-red-500/80 hover:text-red-500 hover:font-bold font-mono tracking-widest text-[10px] bg-inherit"
+                :aria-label="gitText('deleteVersion')"
                 @click.stop="state.removeStrategyVersion(version.id)"
               >
                 [X]
@@ -193,7 +195,8 @@ const gitTextMap: Record<string, { en: string; ru: string }> = {
   screenshotChange: { en: 'screenshot change', ru: 'изменение скриншота' },
   drawingPanelChange: { en: 'drawing panel change', ru: 'изменение панели рисования' },
   fileAttachmentChange: { en: 'file attachment change', ru: 'изменение вложенного файла' },
-  off: { en: 'off', ru: 'выкл' }
+  off: { en: 'off', ru: 'выкл' },
+  strategy: { en: 'strategy', ru: 'стратегия' }
 }
 
 const eventTitleMap: Record<string, { en: string; ru: string }> = {
@@ -410,13 +413,13 @@ const treeRows = computed<TreeRow[]>(() => {
     {
       parts: [
         { text: `${workspace} // `, class: 'tree-muted' },
-        { text: line, class: 'tree-current' }
+        { text: gitText('strategy'), class: 'tree-current' }
       ]
     },
     {
       parts: [
         { text: '*', class: 'tree-head' },
-        { text: ` ${line} ${gitText('changeTimeline')}` }
+        { text: ` ${gitText('strategy')} ${gitText('changeTimeline')}` }
       ]
     }
   ]
@@ -566,7 +569,7 @@ const treeRows = computed<TreeRow[]>(() => {
     rows.push({ parts: [{ text: '|' }] })
   }
 
-  rows.push({ parts: [{ text: 'o ' }, { text: `${line} ${gitText('timeline')}`, class: 'tree-current' }] })
+  rows.push({ parts: [{ text: 'o ' }, { text: `${gitText('strategy')} ${gitText('timeline')}`, class: 'tree-current' }] })
 
   return rows
 })
