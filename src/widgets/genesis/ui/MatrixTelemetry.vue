@@ -7,24 +7,24 @@
        <ExGenesisHudButton :tooltip="matrixToolLabel('reset')" tooltip-position="right" @click.stop="$emit('reset-view')">
          <span class="italic text-[10px] font-mono">[R]</span>
        </ExGenesisHudButton>
-       <div class="matrix-scale-tool">
-         <ExGenesisHudButton :aria-label="locale === 'ru' ? 'Масштаб' : 'Scale'">
-           <span class="font-mono text-[9px] tracking-tight">{{ Math.round(viewState.scale * 100) }}%</span>
-         </ExGenesisHudButton>
-         <div class="matrix-scale-menu" aria-label="Scale options">
-           <ExGenesisHudPanel>
-             <ExGenesisHudButton
-               v-for="zoom in matrixScaleOptions"
-               :key="zoom"
-               :active="Math.round(viewState.scale * 100) === zoom"
-               :aria-label="`${zoom}%`"
-               @click.stop="$emit('update-scale', zoom / 100)"
-             >
-               <span class="font-mono text-[9px] tracking-tight">{{ zoom }}%</span>
-             </ExGenesisHudButton>
-           </ExGenesisHudPanel>
-         </div>
-       </div>
+      <ExGenesisHudFlyout placement="right" parent-orientation="vertical">
+        <template #trigger>
+          <ExGenesisHudButton :aria-label="locale === 'ru' ? 'Масштаб' : 'Scale'">
+            <span class="font-mono text-[9px] tracking-tight">{{ Math.round(viewState.scale * 100) }}%</span>
+          </ExGenesisHudButton>
+        </template>
+        <ExGenesisHudPanel aria-label="Scale options">
+          <ExGenesisHudButton
+            v-for="zoom in matrixScaleOptions"
+            :key="zoom"
+            :active="Math.round(viewState.scale * 100) === zoom"
+            :aria-label="`${zoom}%`"
+            @click.stop="$emit('update-scale', zoom / 100)"
+          >
+            <span class="font-mono text-[9px] tracking-tight">{{ zoom }}%</span>
+          </ExGenesisHudButton>
+        </ExGenesisHudPanel>
+      </ExGenesisHudFlyout>
        <ExGenesisHudButton
          :active="isToolsMenuOpen"
          :tooltip="locale === 'ru' ? 'Меню' : 'Menu'"
@@ -187,6 +187,7 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExGenesisHudPanel from './ExGenesisHudPanel.vue'
 import ExGenesisHudButton from './ExGenesisHudButton.vue'
+import ExGenesisHudFlyout from './ExGenesisHudFlyout.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 import ExMatrixVersionReview from './ExMatrixVersionReview.vue'
 import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
@@ -466,25 +467,3 @@ const manualSections = computed(() => {
   return locale.value === 'ru' ? manualSectionsRu : manualSectionsEn
 })
 </script>
-
-<style scoped>
-.matrix-scale-menu {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  z-index: 20;
-  padding-left: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%) translateX(-4px);
-  transition: opacity 140ms ease, transform 140ms ease;
-}
-
-.matrix-scale-tool:hover .matrix-scale-menu,
-.matrix-scale-tool:focus-within .matrix-scale-menu {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(-50%) translateX(0);
-}
-
-</style>
