@@ -9,7 +9,12 @@ import ExTradeNoteListItem from './components/ExTradeNoteListItem.vue'
 import ExTradeImageEntry from './components/ExTradeImageEntry.vue'
 import ExPatternForecastPanel from './ExPatternForecastPanel.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
-import { getTradeCashPnl, getTradeReturnPct } from '~/widgets/genesis/model/tradePnl'
+import {
+  getTradeDurationMs,
+  getTradePnl,
+  getTradeResultPercent,
+  getTradeRiskReward
+} from '~/widgets/genesis/model/metrics'
 
 const props = defineProps<{
   isDark?: boolean
@@ -49,7 +54,7 @@ const analysisTrade = computed(() => {
     id: trade.id || 'time-tree-trade',
     entryTime: trade.entryTime || trade.date || '',
     exitTime: trade.exitTime || trade.dateExit || '',
-    pnl: getTradeCashPnl(trade, initialCapital),
+    pnl: getTradePnl(trade, initialCapital),
     scenarios: Array.isArray(trade.scenarios) ? trade.scenarios : [],
     emotions: Array.isArray(trade.emotions) ? trade.emotions : []
   }
@@ -78,10 +83,9 @@ const formatDateValue = (value: unknown) => {
 
 const formatDuration = () => {
   if (props.trade?.tradeDuration) return String(props.trade.tradeDuration)
-  const start = new Date(String(props.trade?.date || '')).getTime()
-  const end = new Date(String(props.trade?.dateExit || '')).getTime()
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return '--'
-  const minutes = Math.round((end - start) / 60000)
+  const durationMs = getTradeDurationMs(props.trade)
+  if (!Number.isFinite(durationMs)) return '--'
+  const minutes = Math.round(durationMs / 60000)
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60
   return locale.value === 'ru'
@@ -93,16 +97,8 @@ const formatRiskReward = () => {
   if (props.trade?.riskReward !== undefined && props.trade?.riskReward !== null && props.trade?.riskReward !== '') {
     return formatPrice(props.trade.riskReward)
   }
-  const entry = Number(props.trade?.entry)
-  const stopLoss = Number(props.trade?.stopLoss)
-  const takeProfit = Number(props.trade?.takeProfit)
-  if (![entry, stopLoss, takeProfit].every(Number.isFinite) || entry === stopLoss) return '--'
-
-  const isShort = String(props.trade?.side || props.trade?.direction || '').toLowerCase().includes('short')
-  const risk = isShort ? stopLoss - entry : entry - stopLoss
-  const reward = isShort ? entry - takeProfit : takeProfit - entry
-  if (risk <= 0 || reward <= 0) return '--'
-  return (reward / risk).toFixed(2)
+  const ratio = getTradeRiskReward(props.trade)
+  return Number.isFinite(ratio) ? ratio.toFixed(2) : '--'
 }
 
 const formatRiskPerTrade = () => {
@@ -136,7 +132,7 @@ const tradeResultValue = () => {
   const trade = props.trade
   if (!trade) return null
   const initialCapital = props.forecastInitialCapital || tradeStore.getInitialDeposit(trade.strategyId || 'MAIN_DIARY')
-  return getTradeCashPnl(trade, initialCapital)
+  return getTradePnl(trade, initialCapital)
 }
 const tradeResultPercentValue = () => {
   const trade = props.trade
@@ -145,7 +141,7 @@ const tradeResultPercentValue = () => {
   const balanceBefore = Number(trade.capitalBeforeTrade) > 0
     ? Number(trade.capitalBeforeTrade)
     : initialCapital
-  return getTradeReturnPct(trade, balanceBefore)
+  return getTradeResultPercent(trade, balanceBefore)
 }
 const tradeResultClass = (rawValue) => {
   const value = Number(rawValue)

@@ -112,7 +112,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
+import { getTradePnl } from '~/widgets/genesis/model/metrics'
+import { aggregateTradesByAsset, getAssetHeatmapColor } from '~/widgets/genesis/model/metrics'
 
 type Trade = Record<string, any>
 
@@ -201,7 +202,7 @@ const resolvePnl = (trade: Trade) => {
   const source = trade.trade && typeof trade.trade === 'object'
     ? { ...trade.trade, ...trade }
     : trade
-  return getTradeCashPnl(source, Number(source.initialCapital) || 1000)
+  return getTradePnl(source, Number(source.initialCapital) || 1000)
 }
 
 const updateTooltipPosition = (event: MouseEvent) => {
@@ -239,65 +240,7 @@ const handleBlockLeave = () => {
   hoveredBlock.value = null
 }
 
-const aggregateByAsset = (trades: Trade[]): AssetAggregate[] => {
-  const aggregates = new Map<string, AssetAggregate>()
-
-  trades
-    .filter(trade => !trade?.isCore && !trade?.isNote && !trade?.isScenario)
-    .forEach((trade, index) => {
-      const ticker = resolveTicker(trade)
-      const key = ticker.toUpperCase()
-      const existing = aggregates.get(key)
-
-      if (existing) {
-        existing.tradeCount += 1
-        existing.pnl += resolvePnl(trade)
-        return
-      }
-
-      aggregates.set(key, {
-        key: `${key}-${index}`,
-        ticker,
-        tradeCount: 1,
-        pnl: resolvePnl(trade)
-      })
-    })
-
-  return Array.from(aggregates.values()).sort((left, right) => {
-    if (right.tradeCount !== left.tradeCount) return right.tradeCount - left.tradeCount
-    return right.pnl - left.pnl
-  })
-}
-
-const interpolateColor = (from: [number, number, number], to: [number, number, number], ratio: number) => {
-  const safeRatio = Math.min(1, Math.max(0, ratio))
-  const channels = from.map((channel, index) => Math.round(channel + (to[index]! - channel) * safeRatio))
-  return `rgb(${channels.join(' ')})`
-}
-
-const interpolateStops = (stops: Array<[number, number, number]>, ratio: number) => {
-  const safeRatio = Math.min(1, Math.max(0, ratio))
-  const segmentCount = stops.length - 1
-  const scaledRatio = safeRatio * segmentCount
-  const segmentIndex = Math.min(segmentCount - 1, Math.floor(scaledRatio))
-  const segmentRatio = scaledRatio - segmentIndex
-
-  return interpolateColor(stops[segmentIndex]!, stops[segmentIndex + 1]!, segmentRatio)
-}
-
-const neutralColor = '#374151'
-const lossColorStops: Array<[number, number, number]> = [
-  [55, 65, 81],
-  [127, 29, 29],
-  [220, 38, 38],
-  [255, 31, 31]
-]
-const profitColorStops: Array<[number, number, number]> = [
-  [55, 65, 81],
-  [20, 83, 45],
-  [22, 163, 74],
-  [0, 230, 118]
-]
+const aggregateByAsset = (trades: Trade[]): AssetAggregate[] => aggregateTradesByAsset(trades, resolveTicker, resolvePnl) as AssetAggregate[]
 
 const wrapText = (value: string, maxCharacters: number) => {
   const safeMaxCharacters = Math.max(1, maxCharacters)
@@ -388,16 +331,7 @@ const layout = computed(() => {
   const areas = splitTreemap(aggregates, 0, 0, heatmapWidth, heatmapHeight)
 
   const blocks = areas.map(({ aggregate: asset, x, y, width, height }): HeatmapBlock => {
-    const isLoss = asset.pnl < 0
-    const isProfit = asset.pnl > 0
-    const intensity = isLoss
-      ? (maxNegativeMagnitude > 0 ? Math.abs(asset.pnl) / maxNegativeMagnitude : 0)
-      : (maxPositivePnl > 0 ? asset.pnl / maxPositivePnl : 1)
-    const fill = isLoss
-      ? interpolateStops(lossColorStops, intensity)
-      : isProfit
-        ? interpolateStops(profitColorStops, intensity)
-        : neutralColor
+    const fill = getAssetHeatmapColor(asset.pnl, maxPositivePnl, maxNegativeMagnitude)
     const textColor = '#FFFFFF'
     const textScale = Math.min(width, height)
     const resultLabel = formatDollar(asset.pnl)

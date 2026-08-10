@@ -7,6 +7,7 @@ import ExTacticalNodeTooltip from '~/widgets/genesis/ui/ExTacticalNodeTooltip.vu
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
+import { getEmotionWeight } from '~/widgets/genesis/model/metrics'
 import { filterTradesBySelectedStrategyVersion } from '~/shared/utils/strategyVersionScope'
 
 const { t, locale } = useI18n()
@@ -509,26 +510,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateWindowSize)
 })
 
-const EMOTION_WEIGHTS: Record<string, number> = {
-  // Positive
-  'CALMNESS': 15,
-  'DISCIPLINE': 25,
-  'FOCUS': 20,
-  'PATIENCE': 15,
-  'CONFIDENCE': 15,
-  // Neutral
-  'HOPE': -10,
-  'BOREDOM': -10,
-  'FATIGUE': -15,
-  // Negative
-  'FOMO': -20,
-  'REVENGE': -30,
-  'GREED': -20,
-  'FEAR': -20,
-  'TILT': -40,
-  'ANXIETY': -15
-}
-
 const calculatedStabilityIndex = computed(() => {
   const emotions = displayEmotions.value
   if (!emotions || emotions.length === 0) {
@@ -537,8 +518,7 @@ const calculatedStabilityIndex = computed(() => {
   
   let score = 60 // Baseline stability
   emotions.forEach((e: any) => {
-    const key = (e.name || '').toUpperCase()
-    const weight = EMOTION_WEIGHTS[key] || 0
+    const weight = getEmotionWeight(e)
     score += weight
   })
   

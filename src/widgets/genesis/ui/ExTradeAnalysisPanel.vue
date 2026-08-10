@@ -20,7 +20,14 @@ import {
   getSelectedStrategyVersionSnapshot
 } from '~/shared/utils/strategyVersionScope'
 import { buildTradeProfitabilityScoreIndex } from '~/widgets/genesis/model/tradeProfitabilityScore'
-import { getTradeCashPnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import {
+  getTradeBalanceBefore,
+  getTradeDurationHours,
+  getTradePnl,
+  getTradeRiskReward
+} from '~/widgets/genesis/model/metrics'
+import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 import globalAssets from '~/shared/data/global_assets.json'
 
 interface Condition {
@@ -592,7 +599,7 @@ function isClosedAnalysisTrade(trade: any) {
 const closedAllTrades = computed(() => allTrades.value.filter(isClosedAnalysisTrade));
 
 const getNormalizedPnl = (tr: any) => {
-  return getTradeCashPnl(tr, initialBalance.value);
+  return getTradePnl(tr, initialBalance.value);
 };
 
 const currentTradePnl = computed(() => props.trade ? getNormalizedPnl(props.trade) : 0);
@@ -1358,7 +1365,7 @@ const balanceBeforeTrade = computed(() => {
   const startBalance = tradeStore.getInitialDeposit(strategyId);
 
   const toCashPnl = (trade: any) => {
-    return getTradeCashPnl(trade, startBalance);
+    return getTradePnl(trade, startBalance);
   };
 
   const priorTrades = allTrades.value
@@ -2944,66 +2951,25 @@ const normalizeMetricLookupKey = (value: any) => String(value || '')
   .replace(/\s+/g, '_')
   .toUpperCase();
 
-const getTradePnlValue = (trade: any) => getNormalizedPnl(trade);
-
-const getTradeDurationHoursForMetric = (trade: any) => {
-  const start = new Date(trade?.date || trade?.entryTime || 0).getTime();
-  const end = new Date(trade?.dateExit || trade?.exitTime || trade?.date || 0).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return Number.NaN;
-  return (end - start) / (1000 * 60 * 60);
-};
+const getTradePnlValue = (trade: any) => getTradePnl(trade, initialBalance.value);
+const getTradeDurationHoursForMetric = (trade: any) => getTradeDurationHours(trade);
 
 const getCashPnlForMetric = (trade: any) => {
-  return getTradeCashPnl(trade, initialBalance.value);
+  return getTradePnl(trade, initialBalance.value);
 };
 
 const getBalanceBeforeTradeForMetric = (trade: any) => {
   const strategyId = trade?.strategyId || props.trade?.strategyId || '';
   const startBalance = tradeStore.getInitialDeposit(strategyId) || 1000;
-  const currentEntryTs = new Date(trade?.date || trade?.entryTime || trade?.dateExit || Date.now()).getTime();
-  const currentTradeId = trade?.id;
-
-  return allTrades.value
-    .filter((item: any) => {
-      if (currentTradeId && item?.id === currentTradeId) return false;
-      if (!isClosedAnalysisTrade(item)) return false;
-      const tradeExitTs = new Date(item?.dateExit || item?.date || 0).getTime();
-      return tradeExitTs > 0 && tradeExitTs < currentEntryTs;
-    })
-    .reduce((balance: number, item: any) => balance + getCashPnlForMetric(item), startBalance);
+  return getTradeBalanceBefore(allTrades.value, trade, startBalance);
 };
 
 const getTradeRrForMetric = (trade: any) => {
-  const stored = parseStudyNumber(trade?.rr ?? trade?.riskReward);
-  if (Number.isFinite(stored) && stored > 0) return stored;
-  const entry = parsePositiveTradePrice(trade?.entry);
-  const stopLoss = parsePositiveTradePrice(trade?.stopLoss);
-  const takeProfit = parsePositiveTradePrice(trade?.takeProfit);
-  const direction = getTradeDirection(trade);
-  const stopDistance = getDirectionalStopDistance(entry, stopLoss, direction);
-  const targetDistance = getDirectionalTargetDistance(entry, takeProfit, direction);
-  return Number.isFinite(stopDistance) && stopDistance > 0 && Number.isFinite(targetDistance) && targetDistance > 0
-    ? targetDistance / stopDistance
-    : Number.NaN;
+  return getTradeRiskReward(trade);
 };
 
 const getPlannedStopRiskDollarsForMetric = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry);
-  const stopLoss = parsePositiveTradePrice(trade?.stopLoss);
-  const stopDistance = getDirectionalStopDistance(entry, stopLoss, getTradeDirection(trade));
-  let size = parseStudyNumber(trade?.size);
-
-  if (!Number.isFinite(stopDistance)) return Number.NaN;
-  if (!Number.isFinite(size) || size <= 0) {
-    const sizeInCurrency = parseStudyNumber(trade?.sizeInCurrency);
-    if (Number.isFinite(sizeInCurrency) && sizeInCurrency > 0 && Number.isFinite(entry) && entry > 0) {
-      size = sizeInCurrency / entry;
-    }
-  }
-
-  if (!Number.isFinite(size) || size <= 0) return Number.NaN;
-  const risk = Math.abs(calculateTradePriceMoveDollars(trade, entry, stopLoss, size));
-  return Number.isFinite(risk) ? risk : stopDistance * size;
+  return getTradePlannedStopRiskDollars(trade);
 };
 
 const getRealizedRiskDollarsForMetric = (trade: any) => {

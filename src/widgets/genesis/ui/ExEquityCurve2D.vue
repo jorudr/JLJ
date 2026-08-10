@@ -96,7 +96,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getTradeCashPnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { getTradePnl } from '~/widgets/genesis/model/metrics'
 import { useI18n } from '~/shared/i18n/useI18n'
 
 const { locale } = useI18n()
@@ -176,7 +177,7 @@ const points = computed(() => {
   let runningBalance = initial
   const balances = [initial]
   sortedTrades.forEach(t => {
-    runningBalance += getTradeCashPnl(t, initial)
+    runningBalance += getTradePnl(t, initial)
     balances.push(runningBalance)
   })
 

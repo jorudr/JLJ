@@ -134,8 +134,17 @@ import { ref, computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import { getTradeCashPnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
-import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
+import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import {
+  buildArchiveEquityCurve,
+  buildArchiveMetrics,
+  buildSparklinePath,
+  getSparklineEndY,
+  groupArchiveTradesByMonth,
+  getTradePnl as getCashTradePnl,
+  getTradeRealizedR,
+  getTradeTimelineTimestamp
+} from '~/widgets/genesis/model/metrics'
 
 const props = defineProps<{
   trades?: any[]
@@ -176,7 +185,9 @@ const trades = computed(() => {
   return tradeStore.getTradesForStrategy(selectedStrategyId.value) || []
 })
 
-const closedTrades = computed(() => trades.value.filter(isClosedTradeForMetrics))
+const initialCapital = computed(() => tradeStore.getInitialDeposit(selectedStrategyId.value || 'MAIN_DIARY') || 1000)
+const archiveMetrics = computed(() => buildArchiveMetrics(trades.value, initialCapital.value))
+const closedTrades = computed(() => archiveMetrics.value.closedTrades)
 
 const handleTradeClick = (event: MouseEvent, trade: any) => {
   if (!trade?.id) return
@@ -187,68 +198,27 @@ const handleTradeClick = (event: MouseEvent, trade: any) => {
 }
 
 // Metrics
-const getTradePnl = (trade: any) => {
-  if (!isClosedTradeForMetrics(trade)) return 0
-  const strategyId = trade?.strategyId || selectedStrategyId.value
-  return getTradeCashPnl(trade, tradeStore.getInitialDeposit(strategyId || 'MAIN_DIARY'))
-}
+const getTradePnl = (trade: any) => isClosedTradeForMetrics(trade) ? getCashTradePnl(trade, initialCapital.value) : 0
 
 const totalPnl = computed(() => {
-  return closedTrades.value.reduce((acc, trade) => acc + getTradePnl(trade), 0)
+  return archiveMetrics.value.totalPnl
 })
 
 const winRate = computed(() => {
   if (closedTrades.value.length === 0) return 0
-  const wins = closedTrades.value.filter(t => getTradePnl(t) > 0).length
-  return wins / closedTrades.value.length
+  return archiveMetrics.value.winRate
 })
 
-const getTradeR = (trade: any) => {
-  if (!isClosedTradeForMetrics(trade)) return 0
-
-  const storedRealizedR = Number(trade?.realizedR ?? trade?.rMultiple)
-  if (Number.isFinite(storedRealizedR)) return storedRealizedR
-
-  const plannedRisk = getTradePlannedStopRiskDollars(trade)
-  const fallbackRisk = Number(trade?.risk)
-
-  // riskReward is a target ratio, not a realized R. Do not report it as if
-  // the trade actually captured that amount.
-  const risk = Number.isFinite(plannedRisk) && plannedRisk > 0 ? plannedRisk : fallbackRisk
-  return Number.isFinite(risk) && risk > 0 ? getTradePnl(trade) / risk : 0
-}
-
-const getTradeTime = (trade: any) => {
-  const dateCandidates = [
-    trade?.dateExit,
-    trade?.date,
-    trade?.dateRaw,
-    trade?.dateObj,
-    trade?.dateEntryStr,
-    trade?.dateTime
-  ]
-
-  for (const value of dateCandidates) {
-    if (!value) continue
-    const timestamp = value instanceof Date
-      ? value.getTime()
-      : typeof value === 'number'
-        ? value
-        : new Date(value).getTime()
-
-    if (Number.isFinite(timestamp) && timestamp > 0) return timestamp
-  }
-
-  return 0
-}
+const getTradeR = (trade: any) => isClosedTradeForMetrics(trade) ? getTradeRealizedR(trade, initialCapital.value) : 0
+const getTradeTime = (trade: any) => getTradeTimelineTimestamp(trade)
 
 const totalR = computed(() => {
-  return closedTrades.value.reduce((acc, trade) => acc + getTradeR(trade), 0)
+  return archiveMetrics.value.totalR
 })
 
 const avgR = computed(() => {
   if (closedTrades.value.length === 0) return 0
-  return totalR.value / closedTrades.value.length
+  return archiveMetrics.value.avgR
 })
 
 // Formatting and Grouping
@@ -263,40 +233,8 @@ const formatDate = (ts?: number) => {
   return `${day} ${month} ${year}  ${hours}:${mins}`
 }
 
-const getMonthKey = (ts?: number) => {
-  if (!ts) return locale.value === 'ru' ? 'НЕИЗВЕСТНАЯ ДАТА' : 'UNKNOWN DATE'
-  const d = new Date(ts)
-  const month = d.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { month: 'long' }).toUpperCase()
-  const year = d.getFullYear()
-  return `${month} ${year}`
-}
-
 const groupedTrades = computed(() => {
-  const groups: Record<string, any> = {}
-  
-  // Sort trades newest first
-  const sortedTrades = [...trades.value].sort((a, b) => {
-    return getTradeTime(b) - getTradeTime(a)
-  })
-
-  sortedTrades.forEach(trade => {
-    const time = getTradeTime(trade)
-    const key = getMonthKey(time)
-    if (!groups[key]) {
-      groups[key] = {
-        month: key,
-        trades: [],
-        totalPnl: 0,
-        totalR: 0,
-        ts: time
-      }
-    }
-    groups[key].trades.push(trade)
-    groups[key].totalPnl += getTradePnl(trade)
-    groups[key].totalR += getTradeR(trade)
-  })
-
-  return Object.values(groups).sort((a, b) => b.ts - a.ts)
+  return groupArchiveTradesByMonth(trades.value, initialCapital.value, locale.value)
 })
 
 // Equity Curve and Sparklines
@@ -305,11 +243,7 @@ const tradesChronological = computed(() => {
 })
 
 const equityCurve = computed(() => {
-  let balance = 0
-  return tradesChronological.value.map(t => {
-    balance += getTradePnl(t)
-    return { id: t.id, balance }
-  })
+  return buildArchiveEquityCurve(tradesChronological.value, 0)
 })
 
 const generateSparkline = (trade: any) => {
@@ -321,20 +255,7 @@ const generateSparkline = (trade: any) => {
     balances.push(equityCurve.value[i]?.balance ?? 0)
   }
 
-  const minBal = Math.min(...balances)
-  const maxBal = Math.max(...balances)
-  const range = maxBal - minBal || 1
-
-  const points: string[] = []
-  const stepX = 100 / Math.max(1, balances.length - 1)
-  
-  balances.forEach((bal, idx) => {
-    const x = idx * stepX
-    const y = 18 - ((bal - minBal) / range) * 16
-    points.push(`${idx === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`)
-  })
-  
-  return points.join(' ')
+  return buildSparklinePath(balances)
 }
 
 const getSparklineEnd = (trade: any) => {
@@ -346,12 +267,7 @@ const getSparklineEnd = (trade: any) => {
     balances.push(equityCurve.value[i]?.balance ?? 0)
   }
   
-  const minBal = Math.min(...balances)
-  const maxBal = Math.max(...balances)
-  const range = maxBal - minBal || 1
-  
-  const lastBal = balances[balances.length - 1] ?? 0
-  return 18 - ((lastBal - minBal) / range) * 16
+  return getSparklineEndY(balances)
 }
 
 </script>

@@ -1207,12 +1207,23 @@ import ExPaywallOverlay from '~/widgets/genesis/ui/ExPaywallOverlay.vue'
 import ExPatternForecastPanel from '~/widgets/genesis/ui/ExPatternForecastPanel.vue'
 import { PATTERN_FORECAST_LIMITS } from '~/widgets/genesis/model/patternForecast'
 import { buildTradeProfitabilityScoreIndex, getTradePnlForScore } from '~/widgets/genesis/model/tradeProfitabilityScore'
-import { getTradeCashPnl, getTradeReturnPct, hasFiniteTradePnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
-import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
+import { hasFiniteTradePnl, isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import {
+  buildComplianceAudit,
+  buildTradeDistributionBars,
+  getDistributionStats,
+  getEmotionWeight as getGenesisEmotionWeight,
+  getTradePnl as getGenesisTradePnl,
+  getTradeResultPercent as getGenesisTradeResultPercent,
+  getTradeRiskReward,
+  formatTradeDurationCompact,
+  getTradeTimelineTimestamp as getGenesisTradeTimelineTimestamp,
+  GENESIS_EMOTION_WEIGHTS
+} from '~/widgets/genesis/model/metrics'
 import { useAuthStore } from '~/entities/user/auth.store'
 import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
 import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
-import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
+import { resolveRiskManagementForStrategy } from '~/widgets/genesis/model/riskManagement'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import {
   filterTradesBySelectedStrategyVersion,
@@ -1307,23 +1318,6 @@ const tradeExitPrice = computed(() => {
   return `$${Number(selectedTrade.value.exit).toLocaleString(numberLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 })
 
-const EMOTION_WEIGHTS_STABILITY = {
-  'CALMNESS': 15,
-  'DISCIPLINE': 25,
-  'FOCUS': 20,
-  'PATIENCE': 15,
-  'CONFIDENCE': 15,
-  'HOPE': -10,
-  'BOREDOM': -10,
-  'FATIGUE': -15,
-  'FOMO': -20,
-  'REVENGE': -30,
-  'GREED': -20,
-  'FEAR': -20,
-  'TILT': -40,
-  'ANXIETY': -15
-} as Record<string, number>
-
 const tradeEmotionalState = computed(() => {
   if (!selectedTrade.value) return '60%'
   const emotions = selectedTrade.value.emotions || []
@@ -1334,7 +1328,7 @@ const tradeEmotionalState = computed(() => {
   let score = 60 // Baseline stability
   emotions.forEach((e: any) => {
     const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase()
-    const weight = EMOTION_WEIGHTS_STABILITY[key] || 0
+    const weight = GENESIS_EMOTION_WEIGHTS[key] || 0
     score += weight
   })
   
@@ -1810,11 +1804,7 @@ const tradeContextMenuActions = computed(() => [
   }
 ])
 
-const getTradeTimelineTimestamp = (trade: any) => {
-  const rawDate = trade?.date || trade?.dateObj || trade?.createdAt || trade?.dateExit || trade?.dateEntryStr || trade?.dateTime
-  const timestamp = new Date(rawDate).getTime()
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
+const getTradeTimelineTimestamp = getGenesisTradeTimelineTimestamp
 
 const formatTimeTreeDayKey = (timestamp: number) => {
   const date = new Date(timestamp)
@@ -1868,7 +1858,7 @@ const getTradeResultPercent = (trade: any) => {
   const balanceBefore = Number(trade?.capitalBeforeTrade) > 0
     ? Number(trade.capitalBeforeTrade)
     : deposit
-  return getTradeReturnPct(trade, balanceBefore) ?? Number.NaN
+  return getGenesisTradeResultPercent(trade, balanceBefore)
 }
 
 const normalizeAssetSymbol = (asset: unknown) => String(asset || '').trim().toUpperCase()
@@ -1971,7 +1961,7 @@ const patternForecastIntroStats = computed(() => ({
 
 const getTradePnlValue = (trade: any) => {
   const strategyId = trade?.strategyId || selectedStrategyId.value
-  return getTradeCashPnl(trade, tradeStore.getInitialDeposit(strategyId) || 1000)
+  return getGenesisTradePnl(trade, tradeStore.getInitialDeposit(strategyId) || 1000)
 }
 
 // Keep the node palette consistent with the complete visible diary, even when
@@ -2060,54 +2050,17 @@ const getTradeOverallScorePercent = (trade: any) => {
 }
 
 const tradeDistributionBars = computed(() => {
-  const getDistributionValue = (trade: any) => {
-    if (distributionMetricMode.value === 'score') {
-      return getTradeOverallScorePercent(trade)
-    }
-    return getTradePnlValue(trade)
-  }
-
-  const sortedTrades = distributionClosedTrades.value
-    .map((trade) => ({
-      trade,
-      pnl: getTradePnlValue(trade),
-      value: getDistributionValue(trade)
-    }))
-    .sort((a, b) => distributionMetricMode.value === 'score' ? b.value - a.value : a.value - b.value)
-
-  const maxAbsValue = Math.max(1, ...sortedTrades.map(item => Math.abs(item.value)))
-
-  return sortedTrades.map((item, index) => {
-    const normalized = distributionMetricMode.value === 'score'
-      ? Math.min(Math.max(item.value / 100, 0), 1)
-      : Math.abs(item.value) / maxAbsValue
-    const height = Math.max(3, normalized * 100)
-    const asset = String(item.trade?.asset || 'UNKNOWN').toUpperCase()
-    return {
-      id: item.trade?.id || `${asset}-${index}`,
-      trade: item.trade,
-      pnl: item.pnl,
-      value: item.value,
-      asset,
-      height,
-      opacity: distributionMetricMode.value === 'score'
-        ? Math.min(1, 0.18 + normalized * 0.72)
-        : Math.min(1, 0.45 + normalized * 0.55),
-      label: `${asset} ${formatDistributionValue(item.value, distributionMetricMode.value === 'score')}`
-    }
+  return buildTradeDistributionBars({
+    trades: distributionClosedTrades.value,
+    mode: distributionMetricMode.value,
+    getPnl: getTradePnlValue,
+    getScore: getTradeOverallScorePercent,
+    formatValue: formatDistributionValue
   })
 })
 
 const tradeDistributionStats = computed(() => {
-  const values = tradeDistributionBars.value.map(bar => bar.value)
-  if (!values.length) {
-    return { count: 0, min: 0, max: 0 }
-  }
-  return {
-    count: values.length,
-    min: Math.min(...values),
-    max: Math.max(...values)
-  }
+  return getDistributionStats(tradeDistributionBars.value)
 })
 
 const distributionCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -2165,228 +2118,26 @@ const activeMatrixNodes = computed(() => {
   return resolveRiskManagementForStrategy(matrixNodes.value, matrixConnections.value, stratId);
 });
 
-const getTradeRiskComponents = (trade: any) => {
-  const configuredRisk = Number(trade?.risk)
-  const hasConfiguredRisk = Number.isFinite(configuredRisk) && configuredRisk > 0
-  const priceRisk = getTradePlannedStopRiskDollars(trade)
-  const positionRisk = Math.max(hasConfiguredRisk ? configuredRisk : 0, Number.isFinite(priceRisk) ? priceRisk : 0)
-  const pnl = getTradePnlValue(trade)
-  const realizedLoss = pnl < 0 ? Math.abs(pnl) : 0
+const complianceAudit = computed(() => buildComplianceAudit({
+  trades: closedCurrentTrades.value,
+  initialCapital: tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000,
+  riskManagement: activeMatrixNodes.value,
+  emotionWeights: GENESIS_EMOTION_WEIGHTS,
+  getDurationLabel: (trade) => calculateDuration(trade),
+  getExpectedStyleLabel: (extraType) => extraType === 0
+    ? (locale.value === 'ru' ? '< 1Д' : '< 1D')
+    : extraType === 1
+      ? (locale.value === 'ru' ? '1-14Д (ВНУТРИДНЕВНАЯ)' : '1-14D (Intraday)')
+      : (locale.value === 'ru' ? '> 14Д (СВИНГ)' : '> 14D (Swing)'),
+  getNeuralReason: (kind, count) => kind === 'no-emotions'
+    ? (locale.value === 'ru' ? 'НЕТ ЭМОЦИЙ' : 'NO EMOTIONS')
+    : kind === 'negative-emotions'
+      ? (locale.value === 'ru' ? `${count} НЕГАТИВНЫХ ЭМОЦИЙ` : `${count} NEGATIVE EMOTIONS`)
+      : (locale.value === 'ru' ? 'БАЛЛ < 50%' : 'SCORE < 50%')
+}))
 
-  return {
-    configuredRisk: hasConfiguredRisk ? configuredRisk : 0,
-    priceRisk,
-    positionRisk,
-    realizedLoss
-  }
-}
-
-const tradeViolatesRiskLimit = (trade: any, limit: number) => {
-  if (!Number.isFinite(limit)) return false
-  const risk = getTradeRiskComponents(trade)
-  return risk.realizedLoss > limit || risk.positionRisk > limit
-}
-
-const getTradeDurationDays = (trade: any) => {
-  const start = new Date(trade?.date).getTime()
-  const end = new Date(trade?.dateExit).getTime()
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return Number.NaN
-  return (end - start) / 86400000
-}
-
-const complianceStats = computed<{ riskPerTrade: number, riskPerSession: number, tradingStyle: number }>(() => {
-  const trades = closedCurrentTrades.value;
-  if (trades.length === 0) return { riskPerTrade: 100, riskPerSession: 100, tradingStyle: 100 };
-
-  let compliantTradeCount = 0;
-  let compliantStyleCount = 0;
-
-  const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
-  
-  const riskUnit = activeMatrixNodes.value.riskPerTradeUnit;
-  const riskVal = activeMatrixNodes.value.riskPerTradeValue;
-
-  const sessionRiskUnit = activeMatrixNodes.value.riskPerSessionUnit;
-  const sessionRiskVal = activeMatrixNodes.value.riskPerSessionValue;
-
-  const styleLimits: Record<number, { max?: number, min?: number, maxExclusive?: boolean }> = {
-    0: { max: 1, maxExclusive: true },
-    1: { min: 1, max: 14 },
-    2: { min: 14 }
-  };
-  const extraType = activeMatrixNodes.value.tradingStyleExtraType;
-
-  const sessionRiskMap: Record<string, { realizedLoss: number, positionRisk: number, balanceAtStart: number }> = {};
-
-  const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  let currentBalance = initDep;
-
-  sortedTrades.forEach(t => {
-    const maxRiskDollars = riskValueToDollars(riskVal, riskUnit, currentBalance);
-    if (!tradeViolatesRiskLimit(t, maxRiskDollars)) compliantTradeCount++;
-
-    // Trading Style
-    const durationDays = getTradeDurationDays(t);
-    let styleCompliant = extraType == null ? true : Number.isFinite(durationDays);
-    if (extraType != null && styleLimits[extraType as keyof typeof styleLimits]) {
-      const limit = styleLimits[extraType as keyof typeof styleLimits];
-      if (limit) {
-        if (limit.min !== undefined && durationDays < limit.min) styleCompliant = false;
-        if (limit.max !== undefined && (limit.maxExclusive ? durationDays >= limit.max : durationDays > limit.max)) styleCompliant = false;
-      }
-    }
-    if (styleCompliant) compliantStyleCount++;
-
-    const risk = getTradeRiskComponents(t);
-    const pnl = getTradePnlValue(t);
-    const dateStr = new Date(t.date).toDateString();
-    
-    if (!sessionRiskMap[dateStr]) {
-      sessionRiskMap[dateStr] = { realizedLoss: 0, positionRisk: 0, balanceAtStart: currentBalance };
-    }
-    sessionRiskMap[dateStr].realizedLoss += risk.realizedLoss;
-    sessionRiskMap[dateStr].positionRisk += risk.positionRisk;
-
-    currentBalance += pnl;
-  });
-
-  let validSessions = 0;
-  const sessionKeys = Object.keys(sessionRiskMap);
-  sessionKeys.forEach(k => {
-    const sessionData = sessionRiskMap[k];
-    if (!sessionData) return;
-    const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionData.balanceAtStart);
-    if (sessionData.realizedLoss <= maxSessionRiskDollars && sessionData.positionRisk <= maxSessionRiskDollars) validSessions++;
-  });
-
-  return {
-    riskPerTrade: (compliantTradeCount / trades.length) * 100,
-    riskPerSession: sessionKeys.length > 0 ? (validSessions / sessionKeys.length) * 100 : 100,
-    tradingStyle: (compliantStyleCount / trades.length) * 100
-  };
-});
-
-const complianceViolations = computed(() => {
-  const trades = closedCurrentTrades.value;
-  if (trades.length === 0) return { violatingTrades: [], violatingSessions: [], violatingStyleTrades: [], violatingNeuralTrades: [] };
-
-  const initDep = tradeStore.getInitialDeposit(selectedStrategyId.value) || 1000;
-  
-  const riskUnit = activeMatrixNodes.value.riskPerTradeUnit;
-  const riskVal = activeMatrixNodes.value.riskPerTradeValue;
-
-  const sessionRiskUnit = activeMatrixNodes.value.riskPerSessionUnit;
-  const sessionRiskVal = activeMatrixNodes.value.riskPerSessionValue;
-
-  const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  let currentBalance = initDep;
-
-  const styleLimits: Record<number, { max?: number, min?: number, maxExclusive?: boolean }> = {
-    0: { max: 1, maxExclusive: true },
-    1: { min: 1, max: 14 },
-    2: { min: 14 }
-  };
-  const extraType = activeMatrixNodes.value.tradingStyleExtraType;
-
-  const violatingTrades: any[] = [];
-  const sessionRiskMap: Record<string, { date: string, realizedLoss: number, positionRisk: number, balanceAtStart: number, trades: any[] }> = {};
-  const violatingStyleTrades: any[] = [];
-  const violatingNeuralTrades: any[] = [];
-
-  sortedTrades.forEach(t => {
-    const maxRiskDollars = riskValueToDollars(riskVal, riskUnit, currentBalance);
-    const risk = getTradeRiskComponents(t);
-
-    if (risk.realizedLoss > maxRiskDollars || risk.positionRisk > maxRiskDollars) {
-      violatingTrades.push({
-        ...t,
-        _realizedLoss: risk.realizedLoss,
-        _positionRisk: risk.positionRisk,
-        _maxRiskDollars: maxRiskDollars
-      });
-    }
-
-    const durationDays = getTradeDurationDays(t);
-    let styleCompliant = extraType == null ? true : Number.isFinite(durationDays);
-    if (extraType != null && styleLimits[extraType as keyof typeof styleLimits]) {
-      const limit = styleLimits[extraType as keyof typeof styleLimits];
-      if (limit) {
-        if (limit.min !== undefined && durationDays < limit.min) styleCompliant = false;
-        if (limit.max !== undefined && (limit.maxExclusive ? durationDays >= limit.max : durationDays > limit.max)) styleCompliant = false;
-      }
-    }
-    if (!styleCompliant) {
-      violatingStyleTrades.push({
-        ...t,
-        _durationStr: (t as any).duration || calculateDuration(t),
-        _expectedStyle: extraType === 0 ? (locale.value === 'ru' ? '< 1Д' : '< 1D') : (extraType === 1 ? (locale.value === 'ru' ? '1-14Д (ВНУТРИДНЕВНАЯ)' : '1-14D (Intraday)') : (locale.value === 'ru' ? '> 14Д (СВИНГ)' : '> 14D (Swing)')),
-      });
-    }
-
-    const emotions = t.emotions || [];
-    if (emotions.length === 0) {
-      violatingNeuralTrades.push({
-        ...t,
-        _neuralScore: 0,
-        _neuralReason: locale.value === 'ru' ? 'НЕТ ЭМОЦИЙ' : 'NO EMOTIONS',
-      });
-    } else {
-      let tradeScore = 60;
-      let negativeCount = 0;
-      emotions.forEach((e: any) => {
-        const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase();
-        const weight = EMOTION_WEIGHTS_STABILITY[key as keyof typeof EMOTION_WEIGHTS_STABILITY] || 0;
-        if (weight < 0) negativeCount++;
-        tradeScore += weight;
-      });
-      const finalScore = Math.min(Math.max(Math.round(tradeScore), 0), 100);
-      if (finalScore < 50) {
-        violatingNeuralTrades.push({
-          ...t,
-          _neuralScore: finalScore,
-          _neuralReason: negativeCount > 0 ? (locale.value === 'ru' ? `${negativeCount} НЕГАТИВНЫХ ЭМОЦИЙ` : `${negativeCount} NEGATIVE EMOTIONS`) : (locale.value === 'ru' ? 'БАЛЛ < 50%' : 'SCORE < 50%'),
-        });
-      }
-    }
-
-    const pnl = getTradePnlValue(t);
-    const dateStr = new Date(t.date).toDateString();
-    
-    if (!sessionRiskMap[dateStr]) {
-      sessionRiskMap[dateStr] = { date: dateStr, realizedLoss: 0, positionRisk: 0, balanceAtStart: currentBalance, trades: [] };
-    }
-    sessionRiskMap[dateStr].realizedLoss += risk.realizedLoss;
-    sessionRiskMap[dateStr].positionRisk += risk.positionRisk;
-    sessionRiskMap[dateStr].trades.push({
-      ...t,
-      _realizedLoss: risk.realizedLoss,
-      _positionRisk: risk.positionRisk,
-      _maxRiskDollars: maxRiskDollars
-    });
-
-    currentBalance += pnl;
-  });
-
-  const violatingSessions: any[] = [];
-  Object.values(sessionRiskMap).forEach(sessionData => {
-    const maxSessionRiskDollars = riskValueToDollars(sessionRiskVal, sessionRiskUnit, sessionData.balanceAtStart);
-    if (sessionData.realizedLoss > maxSessionRiskDollars || sessionData.positionRisk > maxSessionRiskDollars) {
-      const sViolatingTrades = sessionData.trades;
-      violatingSessions.push({
-        ...sessionData,
-        _maxSessionRiskDollars: maxSessionRiskDollars,
-        violatingTrades: sViolatingTrades
-      });
-    }
-  });
-
-  return {
-    violatingTrades: violatingTrades.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    violatingSessions: violatingSessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    violatingStyleTrades: violatingStyleTrades.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    violatingNeuralTrades: violatingNeuralTrades.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  };
-});
+const complianceStats = computed(() => complianceAudit.value.stats)
+const complianceViolations = computed(() => complianceAudit.value.violations)
 
 const expandedSessions = ref<Set<string>>(new Set());
 const toggleSession = (date: string) => {
@@ -2405,40 +2156,17 @@ const toggleNeuralTrade = (tradeId: string) => {
 };
 
 const getEmotionWeight = (emotion: any) => {
-  if (!emotion) return 0;
-  const key = (typeof emotion === 'string' ? emotion : (emotion.name || '')).toUpperCase();
-  return EMOTION_WEIGHTS_STABILITY[key as keyof typeof EMOTION_WEIGHTS_STABILITY] || 0;
+  return getGenesisEmotionWeight(emotion)
 };
 
 const emotionalStatus = computed(() => {
-  const trades = closedCurrentTrades.value;
-  
-  if (trades.length === 0) return { score: 60, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
-
-  let totalScore = 0;
-  let count = 0;
-
-  trades.forEach(t => {
-    const emotions = t.emotions || [];
-    if (emotions.length > 0) {
-      let tradeScore = 60;
-      emotions.forEach((e: any) => {
-        const key = (typeof e === 'string' ? e : (e.name || '')).toUpperCase();
-        const weight = EMOTION_WEIGHTS_STABILITY[key] || 0;
-        tradeScore += weight;
-      });
-      totalScore += tradeScore;
-      count++;
-    }
-  });
-
-  if (count === 0) return { score: 60, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
-  
-  const avg = totalScore / count;
-  
-  if (avg < 40) return { score: avg, label: 'NEGATIVE', colorClass: 'bg-rose-500', textClass: 'text-rose-500' };
-  if (avg > 70) return { score: avg, label: 'POSITIVE', colorClass: 'bg-emerald-500', textClass: 'text-emerald-500' };
-  return { score: avg, label: 'NEUTRAL', colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  const { score, label } = complianceAudit.value.emotional;
+  const appearance = label === 'NEGATIVE'
+    ? { colorClass: 'bg-rose-500', textClass: 'text-rose-500' }
+    : label === 'POSITIVE'
+      ? { colorClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
+      : { colorClass: 'bg-yellow-500', textClass: 'text-yellow-500' };
+  return { score, label, ...appearance };
 });
 
 const complianceMetricsConfigs = computed<MetricConfig[]>(() => [
@@ -2614,61 +2342,12 @@ const rejectCapitalForecastIntro = () => {
 }
 
 const calculateRR = (trade: any) => {
-  if (!trade || !trade.entry || !trade.stopLoss || !trade.takeProfit) return '0.00'
-  const entry = +trade.entry
-  const sl = +trade.stopLoss
-  const tp = +trade.takeProfit
-  const risk = Math.abs(entry - sl)
-  const reward = Math.abs(tp - entry)
-  if (risk === 0) return '∞'
-  return (reward / risk).toFixed(2)
+  const ratio = getTradeRiskReward(trade)
+  return Number.isFinite(ratio) ? ratio.toFixed(2) : '0.00'
 }
 
 const calculateDuration = (trade: any) => {
-  if (!trade || !trade.date || !trade.dateExit) return t('genesis.virtualLog.notAvailable')
-  const start = new Date(trade.date).getTime()
-  const end = new Date(trade.dateExit).getTime()
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return t('genesis.virtualLog.notAvailable')
-  const diff = end - start
-  if (diff < 0) return '0M'
-
-  const totalMinutes = Math.floor(diff / 60000)
-  if (totalMinutes < 1) return '<1M'
-
-  const totalHours = Math.floor(totalMinutes / 60)
-  const totalDays = Math.floor(totalHours / 24)
-  const totalWeeks = Math.floor(totalDays / 7)
-  const totalMonths = Math.floor(totalDays / 30)
-  const totalYears = Math.floor(totalDays / 365)
-
-  if (totalYears > 0) {
-    const remainingMonths = Math.floor((totalDays % 365) / 30)
-    return remainingMonths > 0 ? `${totalYears}Y ${remainingMonths}MO` : `${totalYears}Y`
-  }
-
-  if (totalMonths > 0) {
-    const remainingWeeks = Math.floor((totalDays % 30) / 7)
-    return remainingWeeks > 0 ? `${totalMonths}MO ${remainingWeeks}W` : `${totalMonths}MO`
-  }
-
-  if (totalWeeks >= 2) {
-    const remainingDays = totalDays % 7
-    return remainingDays > 0 ? `${totalWeeks}W ${remainingDays}D` : `${totalWeeks}W`
-  }
-
-  if (totalDays > 0) {
-    const remainingHours = totalHours % 24
-    return remainingHours > 0 ? `${totalDays}D ${remainingHours}H` : `${totalDays}D`
-  }
-
-  if (totalHours >= 6) return `${totalHours}H`
-
-  const remainingMinutes = totalMinutes % 60
-  return totalHours > 0 && remainingMinutes > 0
-    ? `${totalHours}H ${remainingMinutes}M`
-    : totalHours > 0
-      ? `${totalHours}H`
-      : `${totalMinutes}M`
+  return formatTradeDurationCompact(trade, t('genesis.virtualLog.notAvailable'))
 }
 
 const filterSide = ref<'ALL' | 'Long' | 'Short'>('ALL')
