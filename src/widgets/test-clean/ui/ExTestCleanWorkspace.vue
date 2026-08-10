@@ -209,46 +209,6 @@
                    <button
                      type="button"
                      class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
-                     :aria-label="genesisBottomTooltip('theme')"
-                     @click="themeStore.toggleDark"
-                   >
-                     <svg
-                       v-if="themeStore.settings.isDark"
-                       viewBox="0 0 24 24"
-                       fill="none"
-                       stroke="currentColor"
-                       stroke-width="1.7"
-                       stroke-linecap="square"
-                       stroke-linejoin="miter"
-                       class="h-5 w-5"
-                       aria-hidden="true"
-                     >
-                       <circle cx="12" cy="12" r="4" />
-                       <path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" />
-                     </svg>
-                     <svg
-                       v-else
-                       viewBox="0 0 24 24"
-                       fill="none"
-                       stroke="currentColor"
-                       stroke-width="1.7"
-                       stroke-linecap="square"
-                       stroke-linejoin="miter"
-                       class="h-5 w-5"
-                       aria-hidden="true"
-                     >
-                       <path d="M20 15.4A8.2 8.2 0 0 1 8.6 4 8.5 8.5 0 1 0 20 15.4z" />
-                     </svg>
-                   </button>
-                   <span class="genesis-bottom-tooltip tooltip-right">
-                     {{ genesisBottomTooltip('theme') }}
-                   </span>
-                 </div>
-
-                 <div class="genesis-bottom-tool">
-                   <button
-                     type="button"
-                     class="genesis-bottom-icon-button text-theme-text opacity-35 hover:opacity-100"
                      :aria-label="genesisBottomTooltip('hide')"
                      @click="hideGenesisBottomBar"
                    >
@@ -335,7 +295,6 @@ const genesisBottomTooltip = (key) => {
     diary: 'Кривая капитала',
     matrix: 'Матрица генезиса',
     log: 'Журнал генезиса',
-    theme: themeStore.settings.isDark ? 'Светлая тема' : 'Темная тема',
     language: 'Язык интерфейса',
     hide: 'Скрыть панель',
     show: 'Показать панель'
@@ -345,7 +304,6 @@ const genesisBottomTooltip = (key) => {
     diary: 'Ex Equity Curve 3D',
     matrix: 'Ex Genesis Matrix',
     log: 'Ex Genesis Log',
-    theme: themeStore.settings.isDark ? 'Light Theme' : 'Dark Theme',
     language: 'Interface Language',
     hide: 'Hide Bar',
     show: 'Show Bar'

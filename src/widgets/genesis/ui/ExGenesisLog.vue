@@ -775,6 +775,7 @@
         </button>
 
         <ExTradeEntryVersionButton
+          v-if="!isMainDiaryStrategy"
           :model-value="selectedStrategyVersionId"
           :versions="strategyVersions"
           :strategy-name="selectedStrategyLabel"

@@ -174,7 +174,23 @@ export const useGenesisTree = () => {
 
   const { nodes: activeNodes, connections: activeConnections, strategyVersions, selectedStrategyVersionId } = useMatrixState()
 
+  const selectedStrategyId = computed<string | null>({
+    get: () => tradeStore.selectedStrategyId,
+    set: (val) => {
+      tradeStore.selectedStrategyId = val as string
+    }
+  })
+
+  const isMainDiaryStrategy = computed(() => selectedStrategyId.value === 'MAIN_DIARY')
+
   const selectedVersionSnapshot = computed(() => {
+    // Main Diary is the implicit current strategy and is never versioned.
+    // Do not apply matrix strategy versions to it, otherwise versions from
+    // another strategy can leak into the Genesis Tree.
+    if (isMainDiaryStrategy.value) {
+      return { nodes: activeNodes.value || [], connections: activeConnections.value || [] }
+    }
+
     const versions = strategyVersions.value
     if (!versions || versions.length === 0) {
       // Fallback to activeNodes if there are no versions at all (e.g., brand new state)
@@ -216,19 +232,14 @@ export const useGenesisTree = () => {
     return allConns
   })
 
-  const selectedStrategyId = computed<string | null>({
-    get: () => tradeStore.selectedStrategyId,
-    set: (val) => {
-      tradeStore.selectedStrategyId = val as string
-    }
-  })
-
   const getTradeTimestamp = (trade: any) => {
     return getTradeVersionTimestamp(trade)
   }
 
   const getTradesForStrategyInTime = (strategyId: string) => {
     const allTrades = tradeStore.getTradesForStrategy(strategyId)
+    if (strategyId === 'MAIN_DIARY') return allTrades
+
     return filterTradesBySelectedStrategyVersion(
       allTrades,
       strategyVersions.value || [],
