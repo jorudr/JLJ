@@ -1,9 +1,9 @@
 <template>
   <div
     v-if="!isScenarioContext"
-    class="matrix-telemetry absolute top-32 left-2 flex items-start gap-3 z-[40] pointer-events-none"
+    class="matrix-telemetry absolute top-1/2 left-2 -translate-y-1/2 flex items-start gap-3 z-[40] pointer-events-none"
     :class="{ 'is-dark': isDark }">
-     <div class="relative ml-3 flex flex-col items-center gap-2">
+     <div class="matrix-tool-panel pointer-events-auto relative flex flex-col items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
        <div class="matrix-tool">
          <button type="button" @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono" :aria-label="matrixToolLabel('reset')">
            [R]
@@ -34,7 +34,7 @@
            :aria-label="matrixToolLabel('tree')"
            @click.stop="toggleTree"
          >
-           <svg class="w-4 h-4 transition-all duration-500 scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+           <svg class="w-4 h-4 transition-all duration-500 scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 5v14"></path>
               <path d="M12 9H7"></path>
               <path d="M12 13h5"></path>
@@ -49,8 +49,7 @@
        </div>
        <div class="matrix-tool">
          <button type="button" @click.stop="openManual" :aria-label="matrixToolLabel('manual')"
-                 class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]">
-           <div class="absolute -top-1 -right-1 w-2 h-2 bg-current animate-pulse"></div>
+                 class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group">
            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 group-hover:scale-110 transition-transform">
              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
@@ -58,11 +57,12 @@
          </button>
          <span class="matrix-tool-tooltip">{{ matrixToolLabel('manual') }}</span>
        </div>
+       <div v-if="canCreateStrategyVersion || (hasSelectedStrategyVersion && hasStrategyVersionChanges)" class="mx-1 h-px w-7 bg-white/15"></div>
        <div v-if="canCreateStrategyVersion" class="matrix-tool">
          <button
            type="button"
            @click.stop="$emit('strategy-version-create')"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100"
            :aria-label="matrixToolLabel('createVersion')"
          >
            <Icon name="lucide:bookmark-plus" class="w-4 h-4" />
@@ -73,7 +73,7 @@
          <button
            type="button"
            @click.stop="$emit('strategy-version-update')"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100"
            :aria-label="matrixToolLabel('updateVersion')"
          >
            <Icon name="lucide:refresh-cw" class="w-4 h-4" />
@@ -84,7 +84,7 @@
          <button
            type="button"
            @click.stop="$emit('strategy-version-clear')"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-red-700/70 text-red-700 dark:text-red-400 flex items-center justify-center hover:bg-red-700/10 transition-all opacity-100 shadow-[0_0_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+           class="tactical-button tactical-clear-button pointer-events-auto relative w-8 h-8 text-red-700 dark:text-red-400 flex items-center justify-center hover:bg-red-700/10 transition-all opacity-100"
            :aria-label="matrixToolLabel('clearChanges')"
          >
            <Icon name="lucide:undo-2" class="w-4 h-4" />
@@ -476,25 +476,31 @@ const manualSections = computed(() => {
   pointer-events: auto;
 }
 
-.matrix-tool .tactical-button {
+.matrix-tool-panel .tactical-button {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
   opacity: 1 !important;
-  background-color: #ffffff !important;
-  color: rgb(44 44 42 / 0.52);
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  color: rgb(249 246 240 / 0.7) !important;
 }
 
-.matrix-tool .tactical-button:hover {
-  background-color: #ffffff !important;
-  color: #2c2c2a;
+.matrix-tool-panel .tactical-button:hover {
+  background-color: rgb(255 255 255 / 0.05) !important;
+  border-color: rgb(255 255 255 / 0.2) !important;
+  color: #f9f6f0 !important;
 }
 
-.matrix-telemetry.is-dark .matrix-tool .tactical-button {
-  background-color: #000000 !important;
-  color: rgb(249 246 240 / 0.58);
+.matrix-tool-panel .tactical-button.tactical-clear-button {
+  border-color: transparent !important;
+  color: rgb(248 113 113) !important;
 }
 
-.matrix-telemetry.is-dark .matrix-tool .tactical-button:hover {
-  background-color: #000000 !important;
-  color: #f9f6f0;
+.matrix-tool-panel .tactical-button.tactical-clear-button:hover {
+  border-color: rgb(255 255 255 / 0.2) !important;
+  color: rgb(248 113 113) !important;
 }
 
 .matrix-zoom-button {

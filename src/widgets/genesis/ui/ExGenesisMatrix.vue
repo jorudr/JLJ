@@ -5,12 +5,6 @@
     <!-- GLOBAL DRAG OVERLAY TO PREVENT HOVER/CLICKS ON UNDERLYING ELEMENTS -->
     <div v-if="state.isCommentDragging.value" class="fixed inset-0 z-[99999] cursor-move pointer-events-auto"></div>
 
-    <!-- TACTICAL CORNER BRACKETS -->
-    <div class="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
-    <div class="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 nier-border-primary opacity-50 z-[100] pointer-events-none"></div>
-
     <!-- STRATEGY PAGE SWITCHER -->
     <div v-if="state.navigationStack.value.length === 0"
          class="absolute top-6 left-1/2 -translate-x-1/2 transform-gpu z-[180] flex items-center gap-2 pointer-events-auto">
@@ -660,24 +654,4 @@ defineEmits(['exit', 'back'])
   50%       { box-shadow: 0 8px 50px rgba(239, 68, 68, 0.55); }
 }
 
-.tactical-corners::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: 
-    linear-gradient(to right, white 2px, transparent 2px) 0 0,
-    linear-gradient(to bottom, white 2px, transparent 2px) 0 0,
-    linear-gradient(to left, white 2px, transparent 2px) 100% 0,
-    linear-gradient(to bottom, white 2px, transparent 2px) 100% 0,
-    linear-gradient(to right, white 2px, transparent 2px) 0 100%,
-    linear-gradient(to top, white 2px, transparent 2px) 0 100%,
-    linear-gradient(to left, white 2px, transparent 2px) 100% 100%,
-    linear-gradient(to top, white 2px, transparent 2px) 100% 100%;
-  background-repeat: no-repeat;
-  background-size: 12px 12px;
-  pointer-events: none;
-}
 </style>
