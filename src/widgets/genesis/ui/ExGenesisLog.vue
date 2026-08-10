@@ -292,7 +292,7 @@
     />
 
     <!-- TOP CENTER COMPLIANCE DASHBOARD -->
-    <div v-if="!showNodeMap && viewType === 'cube' && showComplianceStatus && !showCapitalForecast && isHudVisible" class="absolute top-8 left-1/2 -translate-x-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto">
+    <div v-if="!showNodeMap && viewType === 'timeTree' && showComplianceStatus && !showCapitalForecast && isHudVisible" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9000] w-[1100px] max-w-[95vw] pointer-events-auto">
        <ExPanel
          variant="light"
          :show-corners="true"
@@ -1470,7 +1470,6 @@ const closeNavigationOverlays = (keepProtocol = false) => {
   showToolsMenu.value = false
   showCapitalForecast.value = false
   showCapitalForecastIntro.value = false
-  showComplianceStatus.value = false
   if (showTimeTreeTradeDetails.value) closeTimeTreeTradeDetails()
 }
 
@@ -2600,7 +2599,7 @@ const openCapitalForecastFromMenu = () => {
 const openComplianceFromMenu = () => {
   const shouldOpen = !showComplianceStatus.value
   closeNavigationOverlays()
-  viewType.value = 'cube'
+  viewType.value = 'timeTree'
   showComplianceStatus.value = shouldOpen
 }
 
