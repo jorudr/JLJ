@@ -353,7 +353,7 @@
           </div>
           <div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 {{ locale === 'ru' ? 'Средний duration' : 'Avg duration' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
@@ -361,7 +361,7 @@
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 {{ locale === 'ru' ? 'Median abs / trade' : 'Median abs / trade' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
@@ -369,7 +369,7 @@
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 {{ locale === 'ru' ? 'Сделок в неделю' : 'Trades / week' }}
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
@@ -377,37 +377,32 @@
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 {{ locale === 'ru' ? 'Текущий капитал' : 'Current capital' }}
               </div>
-              <div class="mt-2 font-mono text-sm font-black nier-text-primary">
+              <div class="mt-2 font-mono text-sm font-black" :class="forecastValueClass(forecast.currentCapital)">
                 {{ formatMoney(forecast.currentCapital) }}
               </div>
             </div>
             <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 Avg RR
               </div>
               <div class="mt-2 font-mono text-sm font-black nier-text-primary">
                 {{ formatNumber(forecast.styleProfile.averageRR, 2) }}
               </div>
             </div>
-            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
+            <div class="col-span-2 border border-black/10 px-3 py-3 dark:border-white/10 md:col-span-5">
+              <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/55 dark:text-white/55' : 'font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35'">
                 {{ locale === 'ru' ? 'Вероятный диапазон результата' : 'Likely result range' }}
               </div>
-              <div class="mt-2 font-mono text-[10px] font-black nier-text-primary">
+              <div
+                class="mt-2 min-w-0 max-w-full whitespace-normal break-words font-mono font-black nier-text-primary"
+                :class="likelyRangeValueClass"
+              >
                 <span :class="forecastValueClass(Math.min(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.tactical.horizons[0]?.p75 ?? 0))">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p25 ?? 0, forecast.currentCapital) }}</span>
                 ...
                 <span :class="forecastValueClass(forecast.tactical.horizons[0]?.p75 ?? 0)">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.p75 ?? 0, forecast.currentCapital) }}</span>
-              </div>
-            </div>
-            <div class="border border-black/10 px-3 py-3 dark:border-white/10">
-              <div class="font-mono text-[7px] uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
-                {{ locale === 'ru' ? 'Простой расчет по текущему профилю' : 'Simple estimate from current profile' }}
-              </div>
-              <div class="mt-2 font-mono text-[10px] font-black nier-text-primary">
-                <span :class="forecastValueClass(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0)">{{ formatPercentWithCapital(forecast.tactical.horizons[0]?.userLinearEstimatePct ?? 0, forecast.currentCapital) }}</span>
               </div>
             </div>
           </div>
@@ -421,16 +416,10 @@
                 {{ locale === 'ru' ? 'ПАТТЕРН ПОЛЬЗОВАТЕЛЯ' : 'USER PATTERN' }}
               </h2>
             </div>
-            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ forecast.currentPattern.sequenceLabel }}
-            </span>
           </div>
           <div v-else class="flex items-center justify-between gap-3">
             <span class="font-mono text-[8px] font-black uppercase tracking-[0.35em] text-black/45 dark:text-white/45">
               {{ locale === 'ru' ? 'Паттерн пользователя' : 'User pattern' }}
-            </span>
-            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
-              {{ forecast.currentPattern.sequenceLabel }}
             </span>
           </div>
 
@@ -441,24 +430,28 @@
               class="border border-black/10 px-4 py-4 dark:border-white/10"
             >
               <div class="flex items-center justify-between gap-3">
-                <span class="font-mono text-[8px] font-black uppercase tracking-[0.24em]" :class="phaseClass(block.phase)">
+                <span
+                  class="font-mono uppercase tracking-[0.2em]"
+                  :class="[
+                    phaseClass(block.phase),
+                    props.compactNavigation ? 'text-[11px] font-black' : 'text-[8px] font-black tracking-[0.24em]'
+                  ]"
+                >
                   {{ phaseLabel(block.phase) }}
-                </span>
-                <span class="font-mono text-[8px] uppercase tracking-[0.22em] text-black/40 dark:text-white/40">
-                  {{ block.tradeCount }}T
                 </span>
               </div>
               <div class="mt-3 grid grid-cols-1 gap-1">
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
-                  {{ locale === 'ru' ? 'Результат' : 'Return' }}: {{ formatPercent(block.returnPct) }}
+                <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black text-black/60 dark:text-white/60' : 'font-mono text-[10px] text-black/45 dark:text-white/45'">
+                  {{ locale === 'ru' ? 'Результат' : 'Return' }}:
+                  <span :class="forecastValueClass(block.returnPct)">{{ formatPercent(block.returnPct) }}</span>
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black text-black/60 dark:text-white/60' : 'font-mono text-[10px] text-black/45 dark:text-white/45'">
                   Duration: {{ formatHours(block.averageDurationHours) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/45 dark:text-white/45">
+                <div :class="props.compactNavigation ? 'font-mono text-[11px] font-black text-black/60 dark:text-white/60' : 'font-mono text-[10px] text-black/45 dark:text-white/45'">
                   WR: {{ formatPercent(block.winRate, false) }}
                 </div>
-                <div class="font-mono text-[10px] text-black/35 dark:text-white/35">
+                <div :class="props.compactNavigation ? 'font-mono text-[10px] font-black text-black/50 dark:text-white/50' : 'font-mono text-[10px] text-black/35 dark:text-white/35'">
                   {{ formatCloseRange(block.firstCloseTimestamp, block.lastCloseTimestamp) }}
                 </div>
               </div>
@@ -474,7 +467,7 @@
                 {{ locale === 'ru' ? 'ЛУЧШИЕ ИСТОРИЧЕСКИЕ СОВПАДЕНИЯ' : 'BEST HISTORICAL MATCHES' }}
               </h2>
             </div>
-            <span class="font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40">
+            <span :class="props.compactNavigation ? 'font-mono text-[11px] font-black uppercase tracking-[0.18em] text-black/60 dark:text-white/60' : 'font-mono text-[8px] uppercase tracking-[0.25em] text-black/40 dark:text-white/40'">
               {{ locale === 'ru' ? 'стиль + паттерн' : 'style + pattern' }}
             </span>
           </div>
@@ -491,44 +484,41 @@
           <div
             v-for="(match, index) in forecast.topMatches"
             :key="`${match.sourceFile}-${index}`"
-            class="border border-black/10 px-4 py-4 dark:border-white/10"
-            :class="index < 2 ? 'bg-black text-white dark:bg-black dark:text-white' : ''"
+            class="min-w-0"
           >
-              <div class="flex items-center justify-between gap-3">
-                <div class="flex flex-col">
-                  <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em]" :class="index < 2 ? 'text-white' : 'nier-text-primary'">
-                    {{ index + 1 }}
-                  </span>
-                </div>
-                <span class="font-mono text-[8px] uppercase tracking-[0.22em]" :class="index < 2 ? 'text-white/80' : 'text-black/40 dark:text-white/40'">
-                  {{ match.matchedPhaseLabel }}
-                </span>
+              <div class="mb-2 pl-1 font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/50 dark:text-white/50">
+                {{ index + 1 }}
               </div>
-              <div class="mt-3 grid grid-cols-2 gap-2">
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+              <div
+                class="border border-black/10 px-4 py-4 dark:border-white/10"
+                :class="index < 2 ? 'bg-black text-white dark:bg-black dark:text-white' : ''"
+              >
+                <div class="grid grid-cols-2 gap-2">
+                <div class="font-mono" :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']">
                   {{ locale === 'ru' ? 'Стиль' : 'Style' }}: {{ formatPercent(match.styleScore, false) }}
                 </div>
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
+                <div class="font-mono" :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']">
                   {{ locale === 'ru' ? 'Паттерн' : 'Pattern' }}: {{ formatPercent(match.patternScore, false) }}
                 </div>
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
-                  {{ locale === 'ru' ? 'Через 10 сделок' : '+10T' }}: {{ formatPercent(match.continuation10Pct) }}
+                <div class="font-mono" :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']">
+                  {{ locale === 'ru' ? 'Через 10 сделок' : '+10T' }}:
+                  <span :class="matchMetricValueClass(match.continuation10Pct, index)">{{ formatPercent(match.continuation10Pct) }}</span>
                 </div>
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
-                  {{ locale === 'ru' ? 'Через 20 сделок' : '+20T' }}: {{ formatPercent(match.continuation20Pct) }}
+                <div class="font-mono" :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']">
+                  {{ locale === 'ru' ? 'Через 20 сделок' : '+20T' }}:
+                  <span :class="matchMetricValueClass(match.continuation20Pct, index)">{{ formatPercent(match.continuation20Pct) }}</span>
                 </div>
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white' : 'nier-text-primary'">
-                  {{ locale === 'ru' ? 'До конца' : 'End' }}: {{ formatPercent(match.continuationToEndPct) }}
-                </div>
-                <div class="font-mono text-[10px]" :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'">
-                  {{ locale === 'ru' ? 'Итог файла' : 'File total' }}: {{ formatPercent(match.totalFileReturnPct) }}
+                <div class="font-mono" :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']">
+                  {{ locale === 'ru' ? 'Итог торговли' : 'Trading total' }}:
+                  <span class="font-black" :class="matchMetricValueClass(match.totalFileReturnPct, index)">{{ formatPercent(match.totalFileReturnPct) }}</span>
                 </div>
                 <div
                   v-if="includeAverageRR"
-                  class="font-mono text-[10px]"
-                  :class="index < 2 ? 'text-white/80' : 'text-black/45 dark:text-white/45'"
+                  class="font-mono"
+                  :class="[props.compactNavigation ? 'text-[11px] font-black' : 'text-[10px]', index < 2 ? 'text-white/80' : 'text-black/55 dark:text-white/55']"
                 >
                   Avg RR: {{ formatNumber(match.matchedAverageRR, 2) }}
+                </div>
                 </div>
               </div>
             </div>
@@ -766,6 +756,11 @@ const forecastValueClass = (value: number) => {
   return Number(value) < 0 ? 'text-red-600 dark:text-red-300' : 'nier-text-primary'
 }
 
+const matchMetricValueClass = (value: number, index: number) => {
+  if (Number(value) < 0) return 'text-red-600 dark:text-red-300'
+  return index < 2 ? 'text-white' : 'nier-text-primary'
+}
+
 const formatPercentWithCapital = (value: number, capital: number) => {
   const percent = formatPercent(value)
   const resultDollars = Number.isFinite(capital) ? capital * (value / 100) : Number.NaN
@@ -777,6 +772,25 @@ const formatMoney = (value: number) => {
   const sign = value < 0 ? '-$' : '$'
   return `${sign}${formatNumber(Math.abs(value), 0)}`
 }
+
+const likelyRangeValueClass = computed(() => {
+  const horizon = forecast.value.tactical.horizons[0]
+  const lower = formatPercentWithCapital(
+    Math.min(horizon?.p25 ?? 0, horizon?.p75 ?? 0),
+    forecast.value.currentCapital
+  )
+  const upper = formatPercentWithCapital(
+    horizon?.p75 ?? 0,
+    forecast.value.currentCapital
+  )
+  const longestValueLength = Math.max(lower.length, upper.length)
+
+  if (longestValueLength > 34) return 'text-[6px] leading-tight'
+  if (longestValueLength > 27) return 'text-[7px] leading-tight'
+  if (longestValueLength > 21) return 'text-[8px] leading-tight'
+  if (longestValueLength > 16) return 'text-[9px] leading-tight'
+  return 'text-[10px] leading-normal'
+})
 
 const formatHours = (hours: number) => {
   if (!Number.isFinite(hours) || hours <= 0) return '0H'
