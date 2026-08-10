@@ -14,7 +14,7 @@
               @contextmenu.prevent.stop="menu.handlePageContextMenu($event, page.id)"
               class="group relative h-9 min-w-[120px] border px-4 bg-nier-white/80 dark:bg-nier-black/80 backdrop-blur-xl transition-opacity duration-300"
               :class="state.activePageId.value === page.id
-                ? 'border-nier-text-light dark:border-nier-text-dark opacity-100'
+                ? '!border-black !bg-white !text-black opacity-100'
                 : 'border-nier-border-light dark:border-nier-border-dark opacity-35 hover:opacity-100'">
         <span class="block text-[8px] font-mono uppercase tracking-[0.28em] font-black truncate max-w-[160px]">
           {{ getPageLabel(page, index) }}
