@@ -670,7 +670,7 @@
       class="pointer-events-none absolute bottom-12 left-0 right-0 z-[10000] flex items-center justify-center transition-all duration-300"
       :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75' : ''"
     >
-      <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+      <ExGenesisHudPanel>
         <button
           v-if="showTimeTreeTradeDetails"
           type="button"
@@ -730,7 +730,7 @@
           </svg>
           <span class="pointer-events-none absolute bottom-full mb-2 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">[ {{ locale === 'ru' ? 'МЕНЮ' : 'MENU' }} ]</span>
         </button>
-      </div>
+      </ExGenesisHudPanel>
     </div>
 
     <div
@@ -1191,6 +1191,7 @@ import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExTimeTreeTradeEntry from '~/widgets/genesis/ui/ExTimeTreeTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
+import ExGenesisHudPanel from './ExGenesisHudPanel.vue'
 import ExTradeEntryVersionButton from '~/widgets/genesis/ui/components/ExTradeEntryVersionButton.vue'
 import ExTradeForceGraph from '~/widgets/genesis/ui/components/ExTradeForceGraph.vue'
 import ExTrades from '~/widgets/genesis/ui/ExTrades.vue'

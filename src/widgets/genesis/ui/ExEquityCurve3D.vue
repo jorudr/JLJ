@@ -679,7 +679,7 @@
     <!-- MINIMAL BOTTOM CONTROL PANEL -->
     <div v-if="!isTradeEntryOpen && !showSimulator"
          class="absolute bottom-12 left-0 right-0 z-40 flex items-center justify-center pointer-events-none">
-      <div class="pointer-events-auto relative flex items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+      <ExGenesisHudPanel>
         <!-- ADD TRADE -->
         <button
           @click="isTradeEntryOpen = true"
@@ -894,7 +894,7 @@
             {{ isRu ? '[ МЕНЮ ]' : '[ MENU ]' }}
           </span>
         </button>
-      </div>
+      </ExGenesisHudPanel>
     </div>
 
 
@@ -1011,6 +1011,7 @@ import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import ExTradeEntryBottomBar from '~/widgets/genesis/ui/components/ExTradeEntryBottomBar.vue'
+import ExGenesisHudPanel from './ExGenesisHudPanel.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExButton from '~/shared/ui/ExButton.vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'

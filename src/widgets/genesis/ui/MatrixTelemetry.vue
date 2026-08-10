@@ -3,122 +3,100 @@
     v-if="!isScenarioContext"
     class="matrix-telemetry absolute top-1/2 left-2 -translate-y-1/2 flex items-start gap-3 z-[40] pointer-events-none"
     :class="{ 'is-dark': isDark }">
-     <div class="matrix-tool-panel pointer-events-auto relative flex flex-col items-center gap-1.5 rounded-sm border border-white/20 bg-[#0a0a0a]/90 p-1.5 shadow-2xl backdrop-blur-xl">
-       <div class="matrix-tool">
-         <button type="button" @click.stop="$emit('reset-view')" class="tactical-button pointer-events-auto w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-30 hover:opacity-100 italic text-[10px] font-mono" :aria-label="matrixToolLabel('reset')">
-           [R]
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('reset') }}</span>
+     <ExGenesisHudPanel orientation="vertical">
+       <ExGenesisHudButton :tooltip="matrixToolLabel('reset')" tooltip-position="right" @click.stop="$emit('reset-view')">
+         <span class="italic text-[10px] font-mono">[R]</span>
+       </ExGenesisHudButton>
+       <div class="matrix-scale-tool">
+         <ExGenesisHudButton :aria-label="locale === 'ru' ? 'Масштаб' : 'Scale'">
+           <span class="font-mono text-[9px] tracking-tight">{{ Math.round(viewState.scale * 100) }}%</span>
+         </ExGenesisHudButton>
+         <div class="matrix-scale-menu" aria-label="Scale options">
+           <ExGenesisHudPanel>
+             <ExGenesisHudButton
+               v-for="zoom in matrixScaleOptions"
+               :key="zoom"
+               :active="Math.round(viewState.scale * 100) === zoom"
+               :aria-label="`${zoom}%`"
+               @click.stop="$emit('update-scale', zoom / 100)"
+             >
+               <span class="font-mono text-[9px] tracking-tight">{{ zoom }}%</span>
+             </ExGenesisHudButton>
+           </ExGenesisHudPanel>
+         </div>
        </div>
-       <div class="matrix-tool">
-         <button
-           type="button"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           :aria-label="matrixToolLabel('versionReview')"
-           @click.stop="openVersionReview"
-         >
-           <Icon name="lucide:history" class="w-4 h-4" />
-           <span
-             v-if="strategyVersions.length"
-             class="absolute -right-1 -top-1 flex h-3 min-w-3 items-center justify-center bg-nier-text-light px-0.5 font-mono text-[6px] leading-none text-nier-white dark:bg-nier-text-dark dark:text-nier-black"
-           >
-             {{ strategyVersions.length }}
-           </span>
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('versionReview') }}</span>
-       </div>
-       <div class="matrix-tool">
-         <button
-           type="button"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-nier-text-light/20 dark:border-nier-text-dark/20 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-colors opacity-40 hover:opacity-100"
-           :aria-label="matrixToolLabel('tree')"
-           @click.stop="toggleTree"
-         >
-           <svg class="w-4 h-4 transition-all duration-500 scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 5v14"></path>
-              <path d="M12 9H7"></path>
-              <path d="M12 13h5"></path>
-              <path d="M7 9v4"></path>
-              <path d="M17 13v4"></path>
-              <rect x="5" y="4" width="4" height="4" rx="0.8"></rect>
-              <rect x="15" y="10" width="4" height="4" rx="0.8"></rect>
-              <rect x="10" y="17" width="4" height="4" rx="0.8"></rect>
+       <ExGenesisHudButton
+         :active="isToolsMenuOpen"
+         :tooltip="locale === 'ru' ? 'Меню' : 'Menu'"
+         tooltip-position="right"
+         :aria-label="locale === 'ru' ? 'Меню' : 'Menu'"
+         :aria-expanded="isToolsMenuOpen"
+         @click.stop="toggleToolsMenu"
+       >
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5" aria-hidden="true">
+             <path d="M4 7h16M4 12h16M4 17h16" />
            </svg>
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('tree') }}</span>
-       </div>
-       <div class="matrix-tool">
-         <button type="button" @click.stop="openManual" :aria-label="matrixToolLabel('manual')"
-                 class="tactical-button pointer-events-auto relative w-8 h-8 border border-current flex items-center justify-center bg-nier-text-light/5 dark:bg-nier-text-dark/5 hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100 group">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 group-hover:scale-110 transition-transform">
-             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-           </svg>
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('manual') }}</span>
-       </div>
+       </ExGenesisHudButton>
        <div v-if="canCreateStrategyVersion || (hasSelectedStrategyVersion && hasStrategyVersionChanges)" class="mx-1 h-px w-7 bg-white/15"></div>
-       <div v-if="canCreateStrategyVersion" class="matrix-tool">
-         <button
-           type="button"
-           @click.stop="$emit('strategy-version-create')"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100"
-           :aria-label="matrixToolLabel('createVersion')"
-         >
+       <ExGenesisHudButton v-if="canCreateStrategyVersion" :tooltip="matrixToolLabel('createVersion')" tooltip-position="right" @click.stop="$emit('strategy-version-create')">
            <Icon name="lucide:bookmark-plus" class="w-4 h-4" />
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('createVersion') }}</span>
-       </div>
-       <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
-         <button
-           type="button"
-           @click.stop="$emit('strategy-version-update')"
-           class="tactical-button pointer-events-auto relative w-8 h-8 border border-current bg-nier-text-light/5 dark:bg-nier-text-dark/5 flex items-center justify-center hover:bg-nier-text-light/10 dark:hover:bg-nier-text-dark/10 transition-all opacity-100"
-           :aria-label="matrixToolLabel('updateVersion')"
-         >
+       </ExGenesisHudButton>
+       <ExGenesisHudButton v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" :tooltip="matrixToolLabel('updateVersion')" tooltip-position="right" @click.stop="$emit('strategy-version-update')">
            <Icon name="lucide:refresh-cw" class="w-4 h-4" />
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('updateVersion') }}</span>
-       </div>
-       <div v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" class="matrix-tool">
-         <button
-           type="button"
-           @click.stop="$emit('strategy-version-clear')"
-           class="tactical-button tactical-clear-button pointer-events-auto relative w-8 h-8 text-red-700 dark:text-red-400 flex items-center justify-center hover:bg-red-700/10 transition-all opacity-100"
-           :aria-label="matrixToolLabel('clearChanges')"
-         >
+       </ExGenesisHudButton>
+       <ExGenesisHudButton v-if="hasSelectedStrategyVersion && hasStrategyVersionChanges" :tooltip="matrixToolLabel('clearChanges')" tooltip-position="right" @click.stop="$emit('strategy-version-clear')">
            <Icon name="lucide:undo-2" class="w-4 h-4" />
-         </button>
-         <span class="matrix-tool-tooltip">{{ matrixToolLabel('clearChanges') }}</span>
-       </div>
-     </div>
-
-     <div class="flex flex-col gap-6 border-l border-nier-text-light/20 dark:border-nier-text-dark/20 pl-4 py-1">
-        <div class="flex flex-col">
-           <span class="text-[8px] font-mono tracking-widest opacity-40 uppercase">
-             Viewport_Telemetry
-           </span>
-           <span class="text-[12px] font-mono tracking-widest opacity-80 uppercase">{{ (viewState.scale * 100).toFixed(0) }}% // FOCUS</span>
-        </div>
-
-        <!-- FOCUS SELECTOR STRIP -->
-        <div class="flex flex-col space-y-1">
-           <button v-for="zoom in [25, 50, 75, 100, 150, 200]" :key="zoom"
-                   @click.stop="$emit('update-scale', zoom / 100)"
-                   :class="[
-                      'matrix-zoom-button',
-                      Math.round(viewState.scale * 100) === zoom 
-                        ? 'is-active bg-nier-text-light dark:bg-nier-text-dark text-nier-white dark:text-nier-black opacity-100'
-                        : 'opacity-30 hover:opacity-100 hover:bg-nier-text-light/5 dark:hover:bg-nier-text-dark/5'
-                   ]"
-                   class="pointer-events-auto w-12 h-5 border border-nier-text-light/20 dark:border-nier-text-dark/20 text-[9px] font-mono tracking-tighter transition-all flex items-center justify-center relative overflow-hidden group/zoom">
-              <div v-if="Math.round(viewState.scale * 100) === zoom" class="absolute inset-0 bg-nier-text-light/10 dark:bg-nier-text-dark/10 animate-pulse"></div>
-              {{ zoom }}%
-              <div class="absolute right-0 top-0 w-1 h-1 bg-current opacity-20"></div>
-           </button>
-        </div>
-     </div>
+       </ExGenesisHudButton>
+     </ExGenesisHudPanel>
   </div>
+
+  <!-- MATRIX TOOLS MENU -->
+  <Teleport to="body">
+    <Transition name="protocol-slide">
+      <div
+        v-if="isToolsMenuOpen"
+        @click.self="closeToolsMenu"
+        class="tools-menu-overlay fixed inset-0 z-[10005] flex items-center justify-center p-12 backdrop-blur-md"
+      >
+        <div class="relative w-full max-w-xl">
+          <ExPanel class="tools-menu-panel w-full" noPadding variant="light" :show-corners="true">
+            <div class="grid grid-cols-2 gap-0 p-4 [&>button]:!h-14">
+              <button
+                type="button"
+                class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                @click="openManualFromMenu"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                  {{ locale === 'ru' ? 'РУКОВОДСТВО' : 'MANUAL' }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group relative flex h-20 items-center justify-center border-0 bg-transparent text-white/55 transition-all hover:bg-white/5 hover:text-white"
+                @click="openVersionReviewFromMenu"
+              >
+                <Icon name="lucide:history" class="h-6 w-6" />
+                <span
+                  v-if="strategyVersions.length"
+                  class="absolute right-1/2 top-1/2 flex h-4 min-w-4 translate-x-5 -translate-y-5 items-center justify-center bg-white px-1 font-mono text-[7px] leading-none text-black"
+                >
+                  {{ strategyVersions.length }}
+                </span>
+                <span class="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 whitespace-nowrap bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                  {{ locale === 'ru' ? 'ОБЗОР ВЕРСИЙ' : 'VERSION REVIEW' }}
+                </span>
+              </button>
+            </div>
+          </ExPanel>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- MANUAL OVERLAY -->
   <Teleport to="body">
@@ -207,6 +185,8 @@
 import { ref, computed } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
+import ExGenesisHudPanel from './ExGenesisHudPanel.vue'
+import ExGenesisHudButton from './ExGenesisHudButton.vue'
 import ExMatrixGitPanel from './ExMatrixGitPanel.vue'
 import ExMatrixVersionReview from './ExMatrixVersionReview.vue'
 import type { MatrixStrategyVersion } from '../model/matrix/useMatrixState'
@@ -229,15 +209,16 @@ const emit = defineEmits([
   'strategy-version-create',
   'strategy-version-update',
   'strategy-version-clear',
-  'toggle-tree',
   'close-context-menus'
 ])
 
 const { locale } = useI18n()
 
+const isToolsMenuOpen = ref(false)
 const isManualOpen = ref(false)
 const isVersionReviewOpen = ref(false)
 const activeManualSection = ref(0)
+const matrixScaleOptions = [25, 50, 75, 100, 150, 200]
 
 const strategyVersions = computed(() => props.strategyVersions || [])
 
@@ -245,7 +226,6 @@ function matrixToolLabel(key: string) {
   const ru: Record<string, string> = {
     reset: 'Сбросить вид',
     versionReview: 'Обзор версий',
-    tree: 'Дерево',
     manual: 'Руководство',
     createVersion: 'Создать версию',
     updateVersion: 'Обновить версию',
@@ -254,7 +234,6 @@ function matrixToolLabel(key: string) {
   const en: Record<string, string> = {
     reset: 'Reset View',
     versionReview: 'Version Review',
-    tree: 'Tree View',
     manual: 'Manual',
     createVersion: 'Create Version',
     updateVersion: 'Update Version',
@@ -268,6 +247,7 @@ function setGitPanelOpen(value: boolean) {
 }
 
 function openVersionReview() {
+  isToolsMenuOpen.value = false
   emit('close-context-menus')
   isManualOpen.value = false
   setGitPanelOpen(false)
@@ -275,16 +255,33 @@ function openVersionReview() {
 }
 
 function openManual() {
+  isToolsMenuOpen.value = false
   emit('close-context-menus')
   isVersionReviewOpen.value = false
   setGitPanelOpen(false)
   isManualOpen.value = true
 }
 
-function toggleTree() {
+function toggleToolsMenu() {
   emit('close-context-menus')
+  isManualOpen.value = false
+  isVersionReviewOpen.value = false
   setGitPanelOpen(false)
-  emit('toggle-tree')
+  isToolsMenuOpen.value = !isToolsMenuOpen.value
+}
+
+function closeToolsMenu() {
+  isToolsMenuOpen.value = false
+}
+
+function openManualFromMenu() {
+  closeToolsMenu()
+  openManual()
+}
+
+function openVersionReviewFromMenu() {
+  closeToolsMenu()
+  openVersionReview()
 }
 
 const manualSectionsEn = [
@@ -471,94 +468,22 @@ const manualSections = computed(() => {
 </script>
 
 <style scoped>
-.matrix-tool {
-  position: relative;
-  pointer-events: auto;
-}
-
-.matrix-tool-panel .tactical-button {
-  width: 2.5rem !important;
-  height: 2.5rem !important;
-  opacity: 1 !important;
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  filter: none !important;
-  color: rgb(249 246 240 / 0.7) !important;
-}
-
-.matrix-tool-panel .tactical-button:hover {
-  background-color: rgb(255 255 255 / 0.05) !important;
-  border-color: rgb(255 255 255 / 0.2) !important;
-  color: #f9f6f0 !important;
-}
-
-.matrix-tool-panel .tactical-button.tactical-clear-button {
-  border-color: transparent !important;
-  color: rgb(248 113 113) !important;
-}
-
-.matrix-tool-panel .tactical-button.tactical-clear-button:hover {
-  border-color: rgb(255 255 255 / 0.2) !important;
-  color: rgb(248 113 113) !important;
-}
-
-.matrix-zoom-button {
-  opacity: 1 !important;
-  background-color: #ffffff !important;
-  color: rgb(44 44 42 / 0.52);
-}
-
-.matrix-zoom-button:hover {
-  background-color: #ffffff !important;
-  color: #2c2c2a;
-}
-
-.matrix-zoom-button.is-active {
-  background-color: #2c2c2a !important;
-  color: #ffffff;
-}
-
-.matrix-telemetry.is-dark .matrix-zoom-button {
-  background-color: #000000 !important;
-  color: rgb(249 246 240 / 0.58);
-}
-
-.matrix-telemetry.is-dark .matrix-zoom-button:hover {
-  background-color: #000000 !important;
-  color: #f9f6f0;
-}
-
-.matrix-telemetry.is-dark .matrix-zoom-button.is-active {
-  background-color: #f9f6f0 !important;
-  color: #000000;
-}
-
-.matrix-tool-tooltip {
+.matrix-scale-menu {
   position: absolute;
-  left: calc(100% + 10px);
   top: 50%;
-  transform: translateY(-50%) translateX(-4px);
+  left: 100%;
+  z-index: 20;
+  padding-left: 8px;
   opacity: 0;
   pointer-events: none;
-  white-space: nowrap;
-  border: 1px solid rgb(249 246 240 / 0.18);
-  background: rgb(10 10 10 / 0.96);
-  color: #f9f6f0;
-  padding: 4px 7px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  line-height: 1;
+  transform: translateY(-50%) translateX(-4px);
   transition: opacity 140ms ease, transform 140ms ease;
-  z-index: 100002;
 }
 
-.matrix-tool:hover .matrix-tool-tooltip,
-.matrix-tool:focus-within .matrix-tool-tooltip {
+.matrix-scale-tool:hover .matrix-scale-menu,
+.matrix-scale-tool:focus-within .matrix-scale-menu {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(-50%) translateX(0);
 }
 

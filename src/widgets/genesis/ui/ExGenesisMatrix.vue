@@ -127,38 +127,7 @@
                        @strategy-version-update="state.updateSelectedStrategyVersion"
                        @strategy-version-clear="state.clearStrategyVersionChanges"
                        @git-panel-state="isGitPanelOpen = $event"
-                       @close-context-menus="closeContextMenus"
-                       @toggle-tree="isTreeOpen = !isTreeOpen" />
-
-      <!-- GENESIS TREE OVERLAY -->
-      <Teleport to="body">
-        <Transition name="fade-blur">
-          <div v-if="isTreeOpen" class="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-8 pointer-events-auto">
-            <div class="absolute inset-0 z-0" @click="isTreeOpen = false"></div>
-            
-            <div class="relative z-10 w-full max-w-[85vw] h-[85vh]">
-              <!-- Right-side close button -->
-              <button @click="isTreeOpen = false"
-                      class="absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-40 bg-gray-50/80 dark:bg-[#070707]/80 border-t border-r border-b border-black/20 dark:border-white/20 flex items-center justify-center group/close-tab cursor-pointer hover:bg-black/5 dark:hover:bg-[#111] transition-colors z-[100]">
-                <div class="w-[1px] h-16 bg-black/10 dark:bg-white/10 group-hover/close-tab:bg-black/40 dark:group-hover/close-tab:bg-white/40 transition-all duration-300"></div>
-                <span class="absolute text-[7px] font-mono tracking-[0.4em] uppercase text-black/10 dark:text-white/10 group-hover/close-tab:text-black/40 dark:group-hover/close-tab:text-white/40 rotate-90 whitespace-nowrap">CLOSE_TREE</span>
-              </button>
-
-              <ExPanel 
-                variant="light"
-                title=" "
-                :show-corners="true"
-                :no-padding="true"
-                class="w-full h-full shadow-[0_0_80px_rgba(0,0,0,0.6)] relative flex flex-col !bg-gray-50/80 dark:!bg-[#070707]/80 !border-black/20 dark:!border-white/20"
-              >
-                <div class="relative flex-grow w-full h-full overflow-hidden">
-                  <ExGenesisTree />
-                </div>
-              </ExPanel>
-            </div>
-          </div>
-        </Transition>
-      </Teleport>
+                       @close-context-menus="closeContextMenus" />
 
       <!-- OFFSCREEN STRATEGY INDICATORS -->
       <div v-for="indicator in strategyIndicators" :key="indicator.id" 
@@ -322,7 +291,6 @@ import ExZone from './ExZone.vue'
 import MatrixBootOverlay from './MatrixBootOverlay.vue'
 import MatrixTelemetry from './MatrixTelemetry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import ExGenesisTree from '~/widgets/genesis/tree/ui/ExGenesisTree.vue'
 import MatrixDrawingPanel from './MatrixDrawingPanel.vue'
 import MatrixCommandPanel from './MatrixCommandPanel.vue'
 import MatrixContextMenus from './MatrixContextMenus.vue'
@@ -357,7 +325,6 @@ const uploads = useMatrixUploads(state)
 const pathMath = usePathMath(state)
 const undoManager = useExGenesisMatrixUndo()
 const isGitPanelOpen = ref(false)
-const isTreeOpen = ref(false)
 const activeFilePreviewNode = ref<any | null>(null)
 
 const getPageStrategyCount = (page: any) => (page.nodes || []).filter(isStrategyNode).length
@@ -443,7 +410,6 @@ const focusNode = (id: string) => {
     state.viewState.value.panY = (rect.height / 2) - node.y
     state.lastSelectedId.value = null
     isGitPanelOpen.value = false
-    isTreeOpen.value = false
   }
 }
 
