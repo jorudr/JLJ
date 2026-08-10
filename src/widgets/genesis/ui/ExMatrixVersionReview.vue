@@ -3,8 +3,7 @@
     <Transition name="version-review-fade">
       <div
         v-if="isOpen"
-        class="version-review-theme fixed inset-0 z-[100002] flex items-center justify-center p-8 backdrop-blur-[2px]"
-        :class="isDark ? 'is-dark dark theme-dark bg-black/45' : 'theme-light bg-black/20'"
+        class="version-review-theme is-dark dark theme-dark fixed inset-0 z-[100002] flex items-center justify-center bg-transparent p-8"
         @click="$emit('close')"
       >
         <div class="relative h-[82vh] w-full max-w-6xl" @click.stop>
@@ -274,7 +273,6 @@ import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '@/shared/ui/ExPanel.vue'
 import ExButton from '@/shared/ui/ExButton.vue'
 import ExSkillNode from './ExSkillNode.vue'
-import { useThemeStore } from '~/features/store/useTheme'
 import { useMatrixState, type MatrixStrategyVersion } from '../model/matrix/useMatrixState'
 import type { MatrixChangeEvent, MatrixChangeType } from '../model/matrix/useMatrixChangeTree'
 
@@ -287,10 +285,9 @@ defineEmits<{
   close: []
 }>()
 
-const themeStore = useThemeStore()
 const { locale } = useI18n()
 const state = useMatrixState()
-const isDark = computed(() => themeStore.settings.isDark)
+const isDark = computed(() => true)
 const expandedVersions = ref(new Set<string>())
 const pendingDeleteVersionId = ref<string | null>(null)
 const pendingDeleteVersion = computed(() => props.versions.find(version => version.id === pendingDeleteVersionId.value) || null)
@@ -821,18 +818,29 @@ function formatTimestamp(timestamp: number) {
   scrollbar-width: thin;
 }
 
+.version-review-theme {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 .version-diff {
   border-radius: 4px;
 }
 
 .version-review-panel :deep(.ex-panel-backdrop) {
-  background-color: rgb(var(--theme-panel-rgb) / 0.55) !important;
+  background-color: rgb(10 10 10 / 0.9) !important;
   backdrop-filter: blur(8px) saturate(115%) !important;
   -webkit-backdrop-filter: blur(8px) saturate(115%) !important;
 }
 
 .version-review-theme.is-dark .version-review-panel :deep(.ex-panel-backdrop) {
-  background-color: rgb(var(--theme-panel-rgb) / 0.48) !important;
+  background-color: rgb(10 10 10 / 0.9) !important;
+}
+
+.version-review-theme.is-dark .version-review-panel {
+  background-color: rgb(10 10 10 / 0.9) !important;
+  border-color: rgb(255 255 255 / 0.2) !important;
 }
 
 .diff-marker-added {
