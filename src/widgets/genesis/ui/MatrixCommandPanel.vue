@@ -4,22 +4,8 @@
          class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center w-full max-w-3xl bg-nier-white/90 dark:bg-nier-black/90 backdrop-blur-xl border border-nier-border-light dark:border-nier-border-dark shadow-[0_30px_60px_rgba(0,0,0,0.4)] pointer-events-auto text-nier-text-light dark:text-nier-text-dark transition-colors duration-500"
          style="-webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); transform: translateX(-50%) translateZ(0);">
       
-      <!-- Corner Brackets -->
-      <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
-      <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-nier-text-light dark:border-nier-text-dark opacity-40"></div>
-
-      <!-- Header Registry (Nier Style) -->
-      <div class="w-full flex items-center justify-between px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]">
-        <div class="flex items-center space-x-3">
-          <div class="w-1.5 h-1.5 bg-nier-text-light dark:bg-nier-text-dark rotate-45 opacity-50"></div>
-          <span class="text-[9px] font-mono tracking-[0.4em] uppercase font-black opacity-60">Command_Panel</span>
-        </div>
-        <div class="flex items-center space-x-4">
-           <div class="flex space-x-1">
-              <div v-for="i in 3" :key="i" class="w-1 h-2 border-r border-nier-text-light dark:border-nier-text-dark opacity-20"></div>
-           </div>
-        </div>
-      </div>
+      <!-- Empty top bar -->
+      <div class="w-full px-6 py-2 border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03]"></div>
 
       <!-- Tier 2: Expansion Layer -->
       <div
