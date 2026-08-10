@@ -118,9 +118,8 @@
                  <!-- Grid Background -->
                  <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(circle_at_center,currentColor_1px,transparent_1px)] bg-[size:12px_12px]"></div>
                  
-                 <div class="p-4 border-b border-black/10 dark:border-white/10 flex justify-between items-center relative z-10">
+                 <div class="p-4 border-b border-black/10 dark:border-white/10 flex items-center relative z-10">
                    <h2 class="text-[10px] font-mono tracking-[0.3em] uppercase opacity-50">{{ locale === 'ru' ? 'Оглавление / Модули' : 'Index / Modules' }}</h2>
-                   <div class="text-[8px] opacity-30 font-mono tracking-widest">v1.07</div>
                  </div>
                  <button v-for="(section, idx) in manualSections" :key="idx"
                          @click="activeManualSection = idx"
@@ -151,9 +150,6 @@
                      <span class="opacity-30 mr-3 text-[14px] font-light">[{{ String(activeManualSection + 1).padStart(2, '0') }}]</span>
                      {{ manualSections[activeManualSection]?.title }}
                    </h1>
-                   <div class="text-[8px] tracking-[0.4em] uppercase opacity-30 animate-pulse hidden sm:block">
-                     SYS_ACTIVE //
-                   </div>
                  </div>
                  
                  <div class="manual-html-content relative z-10" v-html="manualSections[activeManualSection]?.content"></div>
