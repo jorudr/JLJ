@@ -236,8 +236,8 @@
 
            <!-- Scenario documentation panels -->
             <div v-if="isScenarioPanel"
-                 class="w-full h-full flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
-               <div v-if="node.type !== 'text-panel'" class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
+                 class="w-full h-full min-h-0 flex flex-col bg-nier-white/70 dark:bg-nier-black/70 overflow-hidden">
+               <div class="flex items-center justify-between border-b border-nier-border-light dark:border-nier-border-dark bg-nier-text-light/[0.03] dark:bg-nier-text-dark/[0.03] flex-shrink-0"
                     :style="{ padding: `${8 * scale * headerScaleMult}px ${12 * scale * headerScaleMult}px` }">
                   <span class="font-mono tracking-[0.18em] uppercase font-black opacity-60 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px` }">{{ locale === 'ru' ? t(scenarioPanelHeaderTitle) : scenarioPanelHeaderTitle }}</span>
                   <span class="font-mono tracking-widest uppercase opacity-30 truncate" :style="{ fontSize: `${8 * scale * headerScaleMult}px`, maxWidth: `${96 * scale * headerScaleMult}px` }">{{ scenarioPanelHeaderCode }}</span>
@@ -386,7 +386,7 @@
                         @blur="blurTextPanel"
                         @beforeinput="handleTextPanelBeforeInput"
                         @input="updateTextPanelHtml"
-                        class="matrix-text-rich absolute inset-0 bg-transparent font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar select-text cursor-text overflow-y-auto"></div>
+                        class="matrix-text-rich absolute inset-0 box-border bg-transparent font-mono tracking-wide text-nier-text-light dark:text-nier-text-dark outline-none custom-scrollbar select-text cursor-text overflow-y-auto"></div>
                </div>
 
                <div v-if="!isTablePanel"
