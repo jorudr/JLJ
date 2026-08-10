@@ -569,6 +569,7 @@ const forecast = ref<PatternForecastResult>(createEmptyPatternForecast())
 const activeTab = ref<'summary' | 'settings'>('summary')
 const includeAverageRR = ref(false)
 let requestId = 0
+let refreshTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(() => props.activeTab, (value) => {
   if (value) activeTab.value = value
@@ -646,7 +647,9 @@ const refreshForecast = async () => {
           }
         : result
       if (result.status === 'ready') {
-        await persistPatternForecastSnapshot(result)
+        // Persistence is secondary work. Do not keep the forecast screen in a
+        // loading state while disk/index writes are happening.
+        void persistPatternForecastSnapshot(result).catch(() => undefined)
       }
     }
   } catch (error) {
@@ -665,19 +668,38 @@ const refreshForecast = async () => {
   }
 }
 
+const scheduleForecastRefresh = () => {
+  if (refreshTimer !== null) {
+    clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
+
+  if (!props.visible) {
+    emit('loading-change', false)
+    return
+  }
+
+  // Let Vue commit the entry screen and let the browser paint its loading
+  // state before starting the CPU-heavy historical pattern analysis.
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null
+    void refreshForecast()
+  }, 0)
+}
+
 watch(
   () => [props.visible, props.strategyId, props.initialCapital, props.trades, includeAverageRR.value],
   () => {
-    if (props.visible) {
-      void refreshForecast()
-    } else {
-      emit('loading-change', false)
-    }
+    scheduleForecastRefresh()
   },
   { deep: true, immediate: true }
 )
 
 onUnmounted(() => {
+  if (refreshTimer !== null) {
+    clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
   emit('loading-change', false)
 })
 

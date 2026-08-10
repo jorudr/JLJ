@@ -281,7 +281,7 @@ export async function calculatePatternForecast(input: PatternForecastInput): Pro
   }
 
   const timelines = await loadHistoricalPatternTimelines()
-  const matches = selectPatternMatches(userPatternBlocks, userStyle, timelines, includeAverageRR)
+  const matches = await selectPatternMatches(userPatternBlocks, userStyle, timelines, includeAverageRR)
 
   if (!matches.length) {
     return createEmptyPatternForecast({
@@ -376,19 +376,50 @@ async function loadHistoricalPatternTimelines(): Promise<HistoricalPatternTimeli
   }
 
   if (!historicalPatternTimelinesPromise) {
-    historicalPatternTimelinesPromise = Promise.allSettled(
-      HISTORICAL_FORECAST_FILES.map(async (file) => {
-        const response = await fetch(encodeURI(file))
-        if (!response.ok) return null
-        return parseHistoricalPatternTimeline(await response.text(), file)
-      })
-    ).then((results) => results
-      .filter((result): result is PromiseFulfilledResult<HistoricalPatternTimeline | null> => result.status === 'fulfilled')
-      .map((result) => result.value)
-      .filter((timeline): timeline is HistoricalPatternTimeline => Boolean(timeline)))
+    historicalPatternTimelinesPromise = (async () => {
+      const timelines: Array<HistoricalPatternTimeline | null> = []
+      let nextFileIndex = 0
+      const workerCount = Math.min(4, HISTORICAL_FORECAST_FILES.length)
+
+      const loadWorker = async () => {
+        while (nextFileIndex < HISTORICAL_FORECAST_FILES.length) {
+          const fileIndex = nextFileIndex
+          const file = HISTORICAL_FORECAST_FILES[fileIndex]
+          nextFileIndex += 1
+          if (!file) continue
+
+          try {
+            const response = await fetch(encodeURI(file))
+            if (response.ok) {
+              const timeline = parseHistoricalPatternTimeline(await response.text(), file)
+              if (timeline) timelines[fileIndex] = timeline
+            }
+          } catch {
+            // One malformed or unavailable history must not stop all forecasts.
+          }
+
+          // Keep the UI responsive while the large local history is parsed.
+          await yieldToBrowser()
+        }
+      }
+
+      await Promise.all(Array.from({ length: workerCount }, () => loadWorker()))
+      return timelines.filter((timeline): timeline is HistoricalPatternTimeline => Boolean(timeline))
+    })()
   }
 
   return historicalPatternTimelinesPromise
+}
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => resolve())
+      return
+    }
+
+    setTimeout(resolve, 0)
+  })
 }
 
 function parseHistoricalPatternTimeline(csvText: string, file: string): HistoricalPatternTimeline | null {
@@ -471,15 +502,15 @@ function rowsToHistoricalPatternTimeline(rows: ParsedStatementRow[], sourceFile:
   }
 }
 
-function selectPatternMatches(
+async function selectPatternMatches(
   userBlocks: StructuralBlock[],
   userStyle: StyleProfile,
   timelines: HistoricalPatternTimeline[],
   includeAverageRR = false
-): PatternMatch[] {
+): Promise<PatternMatch[]> {
   const candidates: PatternMatch[] = []
 
-  for (const timeline of timelines) {
+  for (const [timelineIndex, timeline] of timelines.entries()) {
     const styleScore = calculateStyleCompatibility(userStyle, timeline.style, includeAverageRR)
     if (styleScore < 0.18) continue
 
@@ -526,6 +557,10 @@ function selectPatternMatches(
           )
         ).medianAbsReturnPct
       })
+    }
+
+    if (timelineIndex % 4 === 0) {
+      await yieldToBrowser()
     }
   }
 

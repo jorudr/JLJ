@@ -3,26 +3,29 @@
     
     
 
-    <ExTimeTreeTradeEntry
-      v-if="showTimeTreeTradeDetails"
-      class="absolute inset-0 z-[2000]"
-      :is-dark="isDark"
-      :trade="selectedTimeTreeTradeForDetails"
-      :mode="timeTreeEntryMode"
-      :forecast-trades="currentTrades"
-      :forecast-initial-capital="tradeStore.getInitialDeposit(selectedStrategyId) || 1000"
-      :forecast-strategy-id="String(selectedStrategyId || 'MAIN_DIARY')"
-      :forecast-strategy-name="selectedStrategy.name"
-    />
+    <Transition name="page-reify" mode="out-in">
+      <ExTimeTreeTradeEntry
+        v-if="showTimeTreeTradeDetails"
+        :key="`trade-details-${selectedTimeTreeTradeForDetails?.id || 'empty'}-${timeTreeEntryMode}`"
+        class="absolute inset-0 z-[2000]"
+        :is-dark="isDark"
+        :trade="selectedTimeTreeTradeForDetails"
+        :mode="timeTreeEntryMode"
+        :forecast-trades="currentTrades"
+        :forecast-initial-capital="tradeStore.getInitialDeposit(selectedStrategyId) || 1000"
+        :forecast-strategy-id="String(selectedStrategyId || 'MAIN_DIARY')"
+        :forecast-strategy-name="selectedStrategy.name"
+      />
+    </Transition>
 
     <div
-      v-if="!showNodeMap && !isTradeEntryOpen"
-      class="contents"
+      v-show="!showNodeMap && !isTradeEntryOpen"
+      class="absolute inset-0"
     >
 
+      <div v-show="viewType === 'cube'" class="absolute inset-0">
       <!-- FORCE GRAPH LAYER -->
       <ExTradeForceGraph
-        v-show="viewType === 'cube'"
         class="z-30 transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
         :nodes="tradeForceGraphNodes"
@@ -49,7 +52,7 @@
 
       <!-- CUBE LAYER (UI ONLY) -->
       <div
-        v-if="viewType === 'cube'"
+        v-show="viewType === 'cube'"
         class="w-full h-full absolute inset-0 transition-all duration-300 pointer-events-none opacity-100 z-40"
       >
         
@@ -62,14 +65,16 @@
           </div>
         </Transition>
       </div>
+      </div>
 
-      <ExTrades
-        v-if="viewType === 'timeTree'"
-        :trades="timeTreeSourceTrades"
-        :show-capital-forecast="showCapitalForecast"
-        :is-fullscreen="isTimeTreeFullscreen"
-        @trade-context-menu="handleArchiveTradeClick"
-      />
+      <div v-show="viewType === 'timeTree'" class="absolute inset-0">
+          <ExTrades
+            :trades="timeTreeSourceTrades"
+            :show-capital-forecast="showCapitalForecast"
+            :is-fullscreen="isTimeTreeFullscreen"
+            @trade-context-menu="handleArchiveTradeClick"
+          />
+      </div>
 
       <!-- STRATEGY TREE LAYER -->
       <div
@@ -84,7 +89,7 @@
 
       <!-- PNL DISTRIBUTION LAYER -->
       <div
-        v-if="viewType === 'distribution'"
+        v-show="viewType === 'distribution'"
         class="absolute inset-0 z-40 flex flex-col overflow-hidden theme-surface backdrop-blur-3xl pointer-events-auto transition-all duration-300"
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
@@ -147,7 +152,7 @@
         </div>
       </div>
 
-      </div>
+    </div>
 
       <!-- TRADE NODE CONTEXT MENU -->
       <Teleport to="body">
@@ -4146,7 +4151,7 @@ canvas {
 
 .page-reify-enter-active,
 .page-reify-leave-active {
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .page-reify-enter-from,
 .page-reify-leave-to {
