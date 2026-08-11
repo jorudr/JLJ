@@ -1073,7 +1073,7 @@ const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru')
 const route = useRoute()
 const router = useRouter()
-const isTradeEntryOpen = ref(route.query.entry === 'true')
+const isTradeEntryOpen = ref(false)
 const tradeEntryRef = ref<any>(null)
 const isTradeEntryCloseModeActive = ref(true)
 const activeTradeEntryPanel = ref<'matrix' | 'journal' | 'method' | null>(null)
@@ -1134,7 +1134,7 @@ const closeTradeEntry = () => {
 }
 
 watch(isTradeEntryOpen, (isOpen) => {
-  router.push({ 
+  router.replace({ 
     query: { 
       ...route.query, 
       entry: isOpen ? 'true' : undefined 
@@ -4410,6 +4410,19 @@ const updateNetworkState = () => {
 }
 
 onMounted(() => {
+  if (route.query.entry !== undefined) {
+    router.replace({
+      query: {
+        ...route.query,
+        entry: undefined
+      }
+    })
+  }
+
+  isTradeEntryOpen.value = false
+  isTradeEntryCloseModeActive.value = true
+  activeTradeEntryPanel.value = null
+
   window.addEventListener('online', updateNetworkState)
   window.addEventListener('offline', updateNetworkState)
 
