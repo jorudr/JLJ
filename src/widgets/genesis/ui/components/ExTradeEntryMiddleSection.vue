@@ -6,6 +6,18 @@ const emit = defineEmits(['close']);
 const { locale } = useI18n();
 const tr = (ru, en) => locale.value === 'ru' ? ru : en;
 const isArchivalBriefingEnabled = false;
+const assetTypeTabs = ['ALL', 'Stocks', 'Crypto', 'Forex', 'Commodities', 'Metals', 'Indices'];
+const assetTypeLocales = {
+  ALL: { ru: 'ВСЕ', en: 'ALL' },
+  Stocks: { ru: 'АКЦИИ', en: 'STOCKS' },
+  'US Equities': { ru: 'US АКЦИИ', en: 'US EQUITIES' },
+  Crypto: { ru: 'КРИПТО', en: 'CRYPTO' },
+  Forex: { ru: 'ФОРЕКС', en: 'FOREX' },
+  Commodities: { ru: 'СЫРЬЕ', en: 'COMMODITIES' },
+  Metals: { ru: 'МЕТАЛЛЫ', en: 'METALS' },
+  Indices: { ru: 'ИНДЕКСЫ', en: 'INDICES' }
+};
+const getAssetTypeLabel = (type) => assetTypeLocales[type]?.[locale.value] || type;
 
 const getForexCurrencyPair = (symbol) => {
   const match = String(symbol || '').toUpperCase().replace(/[^A-Z]/g, '').match(/^([A-Z]{3})([A-Z]{3})$/);
@@ -26,7 +38,7 @@ import ExTradeNoteEditor from './ExTradeNoteEditor.vue';
 import ExTradeNoteListItem from './ExTradeNoteListItem.vue';
 import ExTradeImageEntry from './ExTradeImageEntry.vue';
 import { computed, ref, watch } from 'vue';
-const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, isScenarioSelected, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, hasEntryMethodPositions, entryMethodEnabled, hasEntryMethodPriceViolation, hasPyramidingPriceViolation, hasAveragingDownPriceViolation, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
+const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, getArchiveNodeName, addJournalEntry, removeJournalEntry, addNote, removeNote, addJournalEntryTag, removeJournalEntryTag, handleImageUpload, triggerUpload, showCmeNotice, rememberCmeNotice, closeCmeNotice, showAssetMenu, asset, assetSearch, assetTypeFilter, filteredAssets, currentAssetData, selectAsset, matrixNodes, matrixConnections, matrixZones, isMatrixLoading, loadMatrixData, tradeStore, strategies, selectedStrategyId, selectedStrategy, findAllNodes, findAllConnections, findNodeById, activeRiskManagement, activeRiskPerTradeDollars, activeRiskSnapshot, actualRR, actualRiskPercent, violatesRR, violatesRiskPerTrade, riskViolationMessage, getReachableNodes, getNodeZoneType, showStrategyMenu, failedIcons, handleIconError, closeAssetMenu, selectedScenarioNode, getNodesForStrategy, DEFAULT_ENTRY_CONDITIONS, DEFAULT_ENTRY_SCENARIOS, DEFAULT_EXIT_CONDITIONS, DEFAULT_EXIT_SCENARIOS, entryConditions, entryScenarios, exitConditions, exitScenarios, miniExitScenarios, regularExitScenarios, filteredRegistryEntryScenarios, filteredRegistryExitScenarios, currentRegistryScenarioConditions, mismatchedNodeIds, hasVectorMismatch, activeConditions, isConditionActive, toggleCondition, showConditionLibrary, showEmotionSelector, showTradeStudyMetrics, registrySearchQuery, libraryFilter, filteredLibraryScenarios, flatLibraryConditions, selectedRegistryScenarioId, hoverTimeout, hoveredScenarioId, handleMouseEnterScenario, handleMouseLeaveScenario, handleMouseEnterInsight, isScenarioSelected, getScenarioConditions, getFlattenedScenarioConditions, activeSector, sectors, side, entry, exit, size, entryFee, exitFee, feeType, resultMode, showEntryMethod, activeProtocolTab, entryMethodType, pyramidingEntries, averagingDownEntries, activeMultipleEntries, hasEntryMethodPositions, entryMethodEnabled, hasEntryMethodPriceViolation, hasPyramidingPriceViolation, hasAveragingDownPriceViolation, hasActiveMethodNode, addMultipleEntry, exitEntries, exitMethodEnabled, totalExitSize, averageExit, addExitEntry, removeExitEntry, removeMultipleEntry, showAutoPrompt, autoEntryBasePrice, autoEntryBaseLots, toggleAutoPrompt, confirmAutoGenerate, totalSize, averageEntry, isForex, isManualEntryAsset, isFixedFeeAsset, overridePnl, liveRates, FALLBACK_RATES, fetchLiveRates, getRate, EMOTION_LIBRARY, emotionsByCategory, showEmotions, selectedEmotions, hoveredEmotion, mousePos, EMOTION_OPPOSITES, toggleEmotion, isEmotionDisabled, stopLoss, takeProfit, openDate, exitDate, cloneDate, adjustDate, formatPart, handleManualDate, projectedProfit, hasValidProjection, equityCurveTrades, isTemporalOpen, activeTemporalTarget, _now, tempDateParts, syncTempParts, openTemporal, scrollContainer, pnl, commitState, resetForm, submit } = inject('tradeState');
 const tradeState = inject('tradeState');
 const { handlePnlInput } = tradeState;
 const { showTradeSummary, savedTradeSummary } = tradeState;
@@ -740,11 +752,25 @@ const summarySelectedEmotions = computed(() => {
                           <Teleport to="body">
                             <Transition name="nier-fade">
                               <div v-if="showAssetMenu" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 px-6" @click.self="showAssetMenu = false">
-                                <div class="flex h-[500px] max-h-[80vh] w-[800px] max-w-[95vw] flex-col bg-[#0a0a0a] text-white shadow-2xl" @click.stop>
-                                  <div class="shrink-0 border-b border-white/10 p-6">
-                                    <input v-model="assetSearch" type="search" :placeholder="tr('ПОИСК_АКТИВОВ...', 'SEARCH_ASSETS...')" class="w-full bg-transparent text-xl font-black uppercase tracking-widest text-white outline-none placeholder:text-white/20" autofocus />
-                                  </div>
-                                  <div class="flex-1 overflow-y-auto custom-scrollbar">
+	                                <div class="flex h-[500px] max-h-[80vh] w-[800px] max-w-[95vw] flex-col bg-[#0a0a0a] text-white shadow-2xl" @click.stop>
+	                                  <div class="shrink-0 border-b border-white/10 p-6">
+		                                    <input v-model="assetSearch" type="search" :placeholder="tr('ПОИСК АКТИВОВ...', 'SEARCH ASSETS...')" class="w-full bg-transparent text-xl font-black uppercase tracking-widest text-white outline-none placeholder:text-white/20" autofocus />
+	                                  </div>
+	                                  <div class="shrink-0 border-b border-white/10">
+	                                    <div class="flex w-fit max-w-full gap-0.5 overflow-x-auto custom-scrollbar">
+	                                      <button
+	                                        v-for="assetTypeTab in assetTypeTabs"
+	                                        :key="assetTypeTab"
+	                                        type="button"
+		                                        class="shrink-0 px-5 py-3 transition-all duration-300 relative group"
+	                                        :class="assetTypeFilter === assetTypeTab ? 'bg-white text-black' : 'bg-[#0a0a0a]/80 text-white/70 hover:bg-[#222] hover:text-white'"
+	                                        @click="assetTypeFilter = assetTypeTab"
+	                                      >
+		                                        <span class="relative z-10 font-sans text-[9px] font-black uppercase tracking-[0.26em]">{{ getAssetTypeLabel(assetTypeTab) }}</span>
+	                                      </button>
+	                                    </div>
+	                                  </div>
+	                                  <div class="flex-1 overflow-y-auto custom-scrollbar">
                                     <button v-for="assetOption in filteredAssets" :key="assetOption.symbol" type="button" class="grid w-full grid-cols-[9rem_minmax(0,1fr)] items-center gap-4 border-b border-white/5 px-6 py-4 text-left transition-colors hover:bg-white/10" @click="selectAsset(assetOption)">
                                       <span class="flex min-w-0 items-center gap-3">
                                         <span v-if="assetOption.type === 'Forex' && getForexCurrencyPair(assetOption.symbol)" class="relative flex h-7 w-7 shrink-0 items-center">
