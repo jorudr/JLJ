@@ -1,7 +1,7 @@
 <template>
   <div
     class="ex-initialization fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden ethereal-void nier-text-primary"
-    :class="{ 'is-dark': isDark, 'is-startup': isStartupIntro }"
+    :class="{ 'is-dark': isDark, 'is-startup': isStartupView }"
     style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Ethereal Background -->
@@ -10,7 +10,7 @@
       preset="mystic"
       :config="initializationGradflowConfig"
       class="transition-opacity duration-1000"
-      :class="isStartupIntro ? 'opacity-0' : 'opacity-100'"
+      :class="isStartupView ? 'opacity-0' : 'opacity-100'"
       @ready="isGradflowReady = true"
     />
     <div
@@ -56,7 +56,7 @@
 	      <button
 	        v-if="isAuthenticated"
 	        @click="doSignOut"
-	        class="fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
+	        class="initialization-sign-out-button fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
 	      >{{ locale === 'ru' ? 'Выйти' : 'Sign Out' }}</button>
     </Transition>
 
@@ -108,20 +108,18 @@
         <div v-else-if="authStore.authReady && !isAuthenticated && phase === 'auth'" key="auth-panel" class="w-full flex flex-col space-y-5">
 
           <!-- Tab switcher -->
-	          <div class="flex border border-theme-border">
+	          <div class="initialization-auth-tabs flex border border-theme-border">
             <button
               @click="authTab = 'login'"
-              class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
-              :style="authTab === 'login'
-	                ? activeTabStyle
-	                : 'color: var(--theme-muted);'"
+              class="initialization-auth-tab flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
+              :class="{ 'is-active': authTab === 'login' }"
+              :style="getAuthTabStyle('login')"
             >{{ locale === 'ru' ? 'Войти' : 'Sign In' }}</button>
             <button
               @click="authTab = 'register'"
-              class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
-              :style="authTab === 'register'
-	                ? activeTabStyle
-	                : 'color: var(--theme-muted);'"
+              class="initialization-auth-tab flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
+              :class="{ 'is-active': authTab === 'register' }"
+              :style="getAuthTabStyle('register')"
             >{{ locale === 'ru' ? 'Регистрация' : 'Register' }}</button>
           </div>
 
@@ -289,7 +287,9 @@ const { locale, setLocale } = useI18n()
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const isGradflowReady = ref(false)
+const FORCE_STARTUP_PREVIEW = false
 const isStartupIntro = ref(true)
+const isStartupView = computed(() => FORCE_STARTUP_PREVIEW || isStartupIntro.value)
 let startupIntroTimer: ReturnType<typeof setTimeout> | null = null
 const primaryButtonStyle = computed(() => ({
   background: '#171717',
@@ -299,6 +299,26 @@ const activeTabStyle = computed(() => ({
   ...primaryButtonStyle.value,
   fontWeight: '900'
 }))
+const getAuthTabStyle = (tab: 'login' | 'register') => {
+  const isActive = authTab.value === tab
+
+  if (isStartupView.value) {
+    return isActive
+      ? {
+          background: '#eee9df',
+          color: '#10110f',
+          fontWeight: '900'
+        }
+      : {
+          background: 'transparent',
+          color: '#eee9df'
+        }
+  }
+
+  return isActive
+    ? activeTabStyle.value
+    : { color: 'var(--theme-muted)' }
+}
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -572,6 +592,8 @@ const doSignOut = async () => {
 }
 
 onMounted(() => {
+  if (FORCE_STARTUP_PREVIEW) return
+
   startupIntroTimer = setTimeout(() => {
     isStartupIntro.value = false
     startupIntroTimer = null
@@ -606,13 +628,16 @@ onBeforeUnmount(() => {
 }
 
 .ex-initialization.is-startup {
-  --theme-bg: #000000;
-  --theme-text: #ffffff;
-  --theme-muted: rgba(255, 255, 255, 0.56);
-  --theme-border: rgba(255, 255, 255, 0.22);
-  --theme-border-strong: rgba(255, 255, 255, 0.55);
-  background: #000000;
-  color: #ffffff;
+  --startup-dark: #000000;
+  --startup-light: #eee9df;
+  --startup-light-rgb: 238, 233, 223;
+  --theme-bg: var(--startup-dark);
+  --theme-text: var(--startup-light);
+  --theme-muted: rgba(var(--startup-light-rgb), 0.56);
+  --theme-border: rgba(var(--startup-light-rgb), 0.22);
+  --theme-border-strong: rgba(var(--startup-light-rgb), 0.55);
+  background: var(--startup-dark);
+  color: var(--startup-light);
 }
 
 .ex-initialization.is-startup :deep(.gradflow-background),
@@ -679,48 +704,100 @@ onBeforeUnmount(() => {
 
 .ex-initialization.is-startup .initialization-auth-input {
   background: transparent;
-  border-bottom-color: rgba(255, 255, 255, 0.42);
-  color: #111614;
+  border-bottom-color: rgba(var(--startup-light-rgb), 0.42);
+  color: var(--startup-light);
 }
 
 .ex-initialization.is-startup .initialization-auth-input:focus,
 .ex-initialization.is-startup .initialization-auth-input:focus-visible,
 .ex-initialization.is-startup .initialization-auth-input:active {
-  border-bottom-color: rgba(255, 255, 255, 0.42);
+  border-bottom-color: rgba(var(--startup-light-rgb), 0.42);
   box-shadow: none !important;
   outline: none !important;
 }
 
 .ex-initialization.is-startup .initialization-auth-input::placeholder {
-  color: #111614;
+  color: var(--startup-light);
   opacity: 0.52;
 }
 
 .ex-initialization.is-startup .initialization-auth-divider-line {
-  background: #ffffff;
+  background: var(--startup-light);
   opacity: 0.1;
 }
 
 .ex-initialization.is-startup .initialization-auth-divider-text {
-  color: #ffffff;
+  color: var(--startup-light);
   opacity: 0.3;
 }
 
 .ex-initialization.is-startup .text-black,
 .ex-initialization.is-startup .text-theme-text,
 .ex-initialization.is-startup .nier-text-primary {
-  color: #ffffff !important;
+  color: var(--startup-light) !important;
+}
+
+.ex-initialization.is-startup h1,
+.ex-initialization.is-startup p,
+.ex-initialization.is-startup span,
+.ex-initialization.is-startup input {
+  color: var(--startup-light) !important;
+}
+
+.ex-initialization.is-startup button {
+  background: var(--startup-light) !important;
+  border-color: var(--startup-light) !important;
+  color: var(--startup-dark) !important;
+}
+
+.ex-initialization.is-startup button span {
+  color: var(--startup-dark) !important;
+}
+
+.ex-initialization.is-startup [aria-label="Смена языка"] button,
+.ex-initialization.is-startup [aria-label="Language switcher"] button {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--startup-light) !important;
+}
+
+.ex-initialization.is-startup .initialization-sign-out-button {
+  background: transparent !important;
+  color: var(--startup-light) !important;
+}
+
+.ex-initialization.is-startup .initialization-auth-tab {
+  opacity: 0.72;
+}
+
+.ex-initialization.is-startup .initialization-auth-tabs {
+  border-color: rgba(var(--startup-light-rgb), 0.28) !important;
+}
+
+.ex-initialization.is-startup .initialization-auth-tab:not(.is-active) {
+  background: transparent !important;
+  color: var(--startup-light) !important;
+}
+
+.ex-initialization.is-startup .initialization-auth-tab.is-active {
+  background: var(--startup-light) !important;
+  color: var(--startup-dark) !important;
+  opacity: 1;
+}
+
+.ex-initialization.is-startup .initialization-auth-tab.is-active span {
+  color: var(--startup-dark) !important;
 }
 
 .ex-initialization.is-startup .bg-black,
 .ex-initialization.is-startup .nier-bg-inverted {
-  background-color: #ffffff !important;
+  background-color: var(--startup-light) !important;
 }
 
 .ex-initialization.is-startup .border-black,
 .ex-initialization.is-startup .border-theme-text,
 .ex-initialization.is-startup .border-theme-border {
-  border-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(var(--startup-light-rgb), 0.75) !important;
 }
 
 .step-fade-enter-active, .step-fade-leave-active {
