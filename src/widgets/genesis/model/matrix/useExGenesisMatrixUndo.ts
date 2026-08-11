@@ -56,6 +56,11 @@ export function useExGenesisMatrixUndo() {
     saveBuffer(buffer)
   }
 
+  const resetSnapshot = () => {
+    if (typeof sessionStorage === 'undefined') return
+    saveBuffer([captureSnapshot()])
+  }
+
   const undo = () => {
     const buffer = getBuffer()
     if (buffer.length <= 1) return // Nothing to undo
@@ -138,9 +143,7 @@ export function useExGenesisMatrixUndo() {
   watch(
     () => [state.activePageId.value, state.selectedStrategyVersionId.value],
     () => {
-      if (getBuffer().length === 0) {
-        pushSnapshot()
-      }
+      resetSnapshot()
     }
   )
 
@@ -157,6 +160,7 @@ export function useExGenesisMatrixUndo() {
 
   return {
     undo,
-    pushSnapshot
+    pushSnapshot,
+    resetSnapshot
   }
 }

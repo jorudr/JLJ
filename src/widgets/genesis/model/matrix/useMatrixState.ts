@@ -2081,15 +2081,17 @@ export function useMatrixState() {
       if (node.type === 'text-panel') {
         const { firstChange, lastActiveChange } = getNodeContentReplay(node.id, 'text')
         if (firstChange) {
-          const source = lastActiveChange?.payload
-            ? lastActiveChange.payload
-            : firstChange.payload
-          node.params.html = lastActiveChange
-            ? String(source?.nextHtml ?? node.params.html ?? '')
-            : String(source?.previousHtml ?? '')
-          node.params.value = lastActiveChange
-            ? String(source?.nextValue ?? lastActiveChange.value ?? '')
-            : String(source?.previousValue ?? '')
+          if (lastActiveChange) {
+            const source = lastActiveChange.payload
+            node.params.html = String(source?.nextHtml ?? node.params.html ?? '')
+            node.params.value = String(source?.nextValue ?? lastActiveChange.value ?? '')
+          } else {
+            const source = firstChange.payload
+            if (source && ('previousHtml' in source || 'previousValue' in source)) {
+              node.params.html = String(source.previousHtml ?? '')
+              node.params.value = String(source.previousValue ?? '')
+            }
+          }
         }
       } else if (node.type === 'embed-panel') {
         const { firstChange, lastActiveChange } = getNodeContentReplay(node.id, 'url')

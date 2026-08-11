@@ -122,7 +122,7 @@
                        @reset-view="canvas.resetView" @update-scale="(s) => state.viewState.value.scale = s"
                        @strategy-version-create="state.createStrategyVersion"
                        @strategy-version-update="state.updateSelectedStrategyVersion"
-                       @strategy-version-clear="state.clearStrategyVersionChanges"
+                       @strategy-version-clear="clearStrategyVersionChanges"
                        @git-panel-state="isGitPanelOpen = $event"
                        @close-context-menus="closeContextMenus" />
 
@@ -321,6 +321,11 @@ const undoManager = useExGenesisMatrixUndo()
 const isGitPanelOpen = ref(false)
 const activeFilePreviewNode = ref<any | null>(null)
 const { t } = useI18n()
+
+const clearStrategyVersionChanges = async () => {
+  await state.clearStrategyVersionChanges()
+  undoManager.resetSnapshot()
+}
 
 const getPageLabel = (page: any, index: number) => {
   const strategyNode = (page.nodes || []).find(isStrategyNode)
