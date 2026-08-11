@@ -1,10 +1,15 @@
 <template>
   <section class="access-gate flex h-full w-full items-center justify-center px-5 py-10 sm:px-8 relative overflow-hidden ethereal-void" :class="{ 'is-dark': isDark }">
+    <!-- Gradflow Background -->
+    <GradflowBackground preset="mystic" :config="accessGradflowConfig" />
+
     <!-- Ethereal Background -->
-    <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    <div class="access-gate__ethereal-layer" aria-hidden="true">
+      <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
+    </div>
     <DesignVignette v-if="!isDark" :is-dark="isDark" />
 
-    <ExPanel variant="light" no-padding no-shadow class="w-full max-w-[34rem] overflow-visible relative z-10">
+    <div class="access-gate__panel w-full max-w-[34rem] overflow-visible relative z-10">
       <div class="px-7 py-9 sm:px-11 sm:py-12">
 
       <div v-if="state === 'checking'" class="flex min-h-48 flex-col items-center justify-center text-center">
@@ -13,7 +18,6 @@
       </div>
 
       <div v-else class="text-center">
-        <p class="access-gate__eyebrow mb-5">EXGENESIS // ACCESS PROTOCOL</p>
         <ExHeading level="h1" variant="cinematic" class="access-gate__title">
           {{ isRussian ? 'АКТИВАЦИЯ ДОСТУПА' : 'ACCESS ACTIVATION' }}
         </ExHeading>
@@ -73,22 +77,31 @@
         </button>
       </div>
       </div>
-    </ExPanel>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import ExHeading from '~/shared/ui/ExHeading.vue'
-import ExPanel from '~/shared/ui/ExPanel.vue'
 import type { AccessActivationState } from '~/features/access/model/useAccessActivation'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
+import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const PATREON_URL = 'https://www.patreon.com/cw/jlgandr'
+const accessGradflowConfig = {
+  color1: { r: 2, g: 145, b: 135 },
+  color2: { r: 165, g: 249, b: 193 },
+  color3: { r: 153, g: 151, b: 231 },
+  speed: 0.55,
+  scale: 2.2,
+  type: 'smoke' as const,
+  noise: 0.18
+}
 
 const props = withDefaults(defineProps<{
   state: AccessActivationState
@@ -117,23 +130,93 @@ const lockDurationText = computed(() => {
   const seconds = totalSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 })
+
+const localizedAccessError = (error: string) => {
+  const normalized = error.trim().toLowerCase()
+
+  if (
+    normalized.includes('invalid access key') ||
+    normalized.includes('invalid key') ||
+    normalized.includes('key is invalid') ||
+    normalized.includes('access key invalid')
+  ) {
+    return isRussian.value
+      ? 'Неверный ключ доступа. Проверьте код и попробуйте снова.'
+      : 'Invalid access key. Check the code and try again.'
+  }
+
+  if (
+    normalized.includes('too many activation attempts') ||
+    normalized.includes('too many invalid attempts') ||
+    normalized.includes('too many attempts') ||
+    normalized.includes('rate limit') ||
+    normalized.includes('rate-limited')
+  ) {
+    return isRussian.value
+      ? 'Слишком много неверных попыток. Подождите и попробуйте снова.'
+      : 'Too many invalid attempts. Please wait and try again.'
+  }
+
+  if (
+    normalized.includes('temporarily locked') ||
+    normalized.includes('please wait before trying again') ||
+    normalized.includes('locked')
+  ) {
+    return isRussian.value
+      ? `Ввод временно заблокирован. Попробуйте снова через ${lockDurationText.value}.`
+      : `Activation is temporarily locked. Try again in ${lockDurationText.value}.`
+  }
+
+  if (
+    normalized.includes('authentication session has expired') ||
+    normalized.includes('session has expired') ||
+    normalized.includes('sign in again')
+  ) {
+    return isRussian.value
+      ? 'Сессия авторизации истекла. Войдите в аккаунт снова.'
+      : 'Your authentication session has expired. Please sign in again.'
+  }
+
+  if (
+    normalized.includes('unable to verify') ||
+    normalized.includes('verify your access status')
+  ) {
+    return isRussian.value
+      ? 'Не удалось проверить статус доступа. Повторите проверку.'
+      : 'Unable to verify your access status. Please retry the check.'
+  }
+
+  if (
+    normalized.includes('unable to reach') ||
+    normalized.includes('access service') ||
+    normalized.includes('network') ||
+    normalized.includes('fetch')
+  ) {
+    return isRussian.value
+      ? 'Не удалось подключиться к сервису активации. Попробуйте снова.'
+      : 'Unable to reach the access service. Please try again.'
+  }
+
+  if (normalized.includes('unable to activate')) {
+    return isRussian.value
+      ? 'Не удалось активировать доступ. Попробуйте снова.'
+      : 'Unable to activate access. Please try again.'
+  }
+
+  return error.trim()
+}
+
 const visibleError = computed(() => {
   if (isLocked.value) {
     return isRussian.value
-      ? `Слишком много неверных попыток. Попробуйте снова через ${lockDurationText.value}.`
-      : `Too many invalid attempts. Try again in ${lockDurationText.value}.`
+      ? `Ввод временно заблокирован. Попробуйте снова через ${lockDurationText.value}.`
+      : `Activation is temporarily locked. Try again in ${lockDurationText.value}.`
   }
 
   const normalizedError = props.error.trim().toLowerCase()
   if (!normalizedError) return ''
 
-  if (normalizedError.includes('too many activation attempts')) {
-    return isRussian.value
-      ? 'Слишком много попыток. Подождите и попробуйте снова.'
-      : 'Too many attempts. Please wait and try again.'
-  }
-
-  return props.error
+  return localizedAccessError(props.error)
 })
 
 const formatKey = () => {
@@ -176,6 +259,47 @@ const openPatreon = async (event: MouseEvent) => {
 </script>
 
 <style scoped>
+.access-gate {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.58), transparent 42%),
+    var(--theme-bg);
+}
+
+.access-gate.is-dark {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(246, 240, 230, 0.08), transparent 44%),
+    #050505;
+}
+
+.access-gate :deep(.gradflow-background),
+.access-gate :deep(.gradflow-canvas),
+.access-gate :deep(.gradflow-canvas canvas) {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.access-gate :deep(.gradflow-background) {
+  position: fixed;
+  inset: 0;
+}
+
+.access-gate__ethereal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.42;
+}
+
+.access-gate__panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
 .access-gate__eyebrow,
 .access-gate__retry,
 .access-gate__error {
@@ -198,18 +322,22 @@ const openPatreon = async (event: MouseEvent) => {
 }
 
 .access-gate__description {
-  color: var(--theme-muted);
-  font-size: 12px;
+  color: #171717;
+  font-size: 15px;
   line-height: 1.8;
   margin: 1.4rem auto 0;
   max-width: 25rem;
 }
 
+.access-gate.is-dark .access-gate__description {
+  color: #171717;
+}
+
 .access-gate__input {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--theme-border-strong);
-  color: var(--theme-text);
+  border-bottom: 1px solid rgba(23, 23, 23, 0.72);
+  color: #171717;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 800;
@@ -222,14 +350,14 @@ const openPatreon = async (event: MouseEvent) => {
 }
 
 .access-gate__input::placeholder {
-  color: var(--theme-muted);
+  color: #171717;
   font-size: 8px;
   letter-spacing: 0.04em;
-  opacity: 0.42;
+  opacity: 0.48;
 }
 
 .access-gate__input:focus {
-  border-color: var(--theme-text);
+  border-color: #171717;
 }
 
 .access-gate__actions {
@@ -259,8 +387,8 @@ const openPatreon = async (event: MouseEvent) => {
 .access-gate__patreon {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--theme-border-strong);
-  color: var(--theme-text);
+  border: 1px solid rgba(23, 23, 23, 0.72);
+  color: #171717;
   display: inline-flex;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 9px;
@@ -279,8 +407,9 @@ const openPatreon = async (event: MouseEvent) => {
 }
 
 .access-gate__patreon:hover {
-  background: var(--theme-text);
-  color: var(--theme-bg);
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
   transform: translateY(-1px);
 }
 
@@ -296,8 +425,13 @@ const openPatreon = async (event: MouseEvent) => {
 }
 
 .access-gate__error {
-  color: #d05a5a;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(23, 23, 23, 0.35);
+  color: #171717;
   line-height: 1.55;
+  padding: 0.8rem 1rem;
+  text-align: center;
+  backdrop-filter: blur(14px);
 }
 
 .access-gate__retry {
