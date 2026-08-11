@@ -691,7 +691,15 @@
           :aria-label="locale === 'ru' ? 'Сделки' : 'Trades'"
           @click="activateBottomView('timeTree')"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            class="h-5 w-5"
+            :class="isGenesisTreePresetPanelOpen ? 'text-black' : ''"
+            aria-hidden="true"
+          >
             <rect x="4" y="4" width="16" height="16" rx="1" />
             <path d="M8 9h8M8 12h8M8 15h5" stroke-linecap="square" />
           </svg>
@@ -754,7 +762,9 @@
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
+          :class="isGenesisTreePresetPanelOpen ? 'border-white bg-white text-black hover:bg-white/85 hover:text-black' : ''"
           :aria-label="locale === 'ru' ? 'Пресеты' : 'Presets'"
+          :aria-pressed="isGenesisTreePresetPanelOpen"
           @click="openGenesisTreePresets"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
@@ -1376,6 +1386,7 @@ const downloadCardPng = async () => {
 const viewType = ref<'cube' | 'timeTree' | 'distribution' | 'tree'>('timeTree')
 const hasOpenedGenesisTree = ref(false)
 const genesisTreeRef = ref<any>(null)
+const isGenesisTreePresetPanelOpen = ref(false)
 const listResultDisplayMode = ref<'currency' | 'percent'>('percent')
 const listColorMode = ref<'monochrome' | 'colorful'>('colorful')
 const isTimeTreeFullscreen = ref(false)
@@ -1463,6 +1474,8 @@ const closeNavigationOverlays = (keepProtocol = false) => {
   showToolsMenu.value = false
   showCapitalForecast.value = false
   showCapitalForecastIntro.value = false
+  genesisTreeRef.value?.closePresetPanel?.()
+  isGenesisTreePresetPanelOpen.value = false
   if (showTimeTreeTradeDetails.value) closeTimeTreeTradeDetails()
 }
 
@@ -2281,8 +2294,12 @@ const exitDistributionView = () => {
 }
 
 const openGenesisTreePresets = () => {
-  protocolMenuCloseSignal.value += 1
-  genesisTreeRef.value?.openPresetPanel?.()
+  const shouldOpen = !isGenesisTreePresetPanelOpen.value
+  closeNavigationOverlays()
+
+  if (shouldOpen) {
+    isGenesisTreePresetPanelOpen.value = genesisTreeRef.value?.openPresetPanel?.() ?? true
+  }
 }
 
 const centerGenesisTree = () => {

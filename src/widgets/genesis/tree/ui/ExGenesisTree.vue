@@ -356,97 +356,14 @@
     </div>
 
     <Transition name="tree-detail-panel">
-      <div v-if="selectedTreeNode"
-           class="absolute right-8 top-1/2 z-[90] max-h-[calc(100vh-4rem)] w-[360px] -translate-y-1/2 nier-text-primary pointer-events-auto"
-           @pointerdown.stop
-           @pointermove.stop
-           @click.stop>
-        <button class="absolute -left-6 top-1/2 flex h-40 w-6 -translate-y-1/2 cursor-pointer items-center justify-center border-t border-l border-b border-black/20 dark:border-white/20 bg-[#FFFFFF] dark:bg-[#070707] transition-colors hover:bg-black/5 dark:hover:bg-[#111] group/node-detail"
-                @click="closeSelectedTreeNode">
-          <div class="h-16 w-[1px] bg-black/10 dark:bg-white/10 transition-all duration-300 group-hover/node-detail:bg-black/40 dark:group-hover/node-detail:bg-white/40"></div>
-          <span class="absolute -rotate-90 whitespace-nowrap font-mono text-[7px] uppercase tracking-[0.4em] text-black/10 dark:text-white/10 transition-colors group-hover/node-detail:text-black/40 dark:group-hover/node-detail:text-white/40">
-            {{ t('genesis.tree.details.close') }}
-          </span>
-        </button>
-
-        <ExPanel variant="light" no-padding class="max-h-[calc(100vh-4rem)] overflow-hidden !border-black/20 dark:!border-white/20 !bg-white dark:!bg-[#0a0a0a]">
-        <div class="p-5 nier-text-primary">
-          <div class="mb-5 border-b nier-border-primary pb-4">
-            <div class="mb-2 flex items-center justify-between">
-              <span class="font-mono text-[8px] font-black uppercase tracking-[0.32em] text-black/35 dark:text-white/35">
-                {{ selectedTreeNodeTypeLabel }}
-              </span>
-              <span class="font-mono text-[8px] font-black uppercase tracking-[0.22em]"
-                    :class="Number(selectedTreeNode.netPnlValue || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'">
-                {{ selectedTreeNode.netPnlLabel || '$0.00' }}
-              </span>
-            </div>
-            <h3 class="font-mono text-[18px] font-black uppercase leading-tight tracking-wide nier-text-primary">
-              {{ selectedTreeNodeTitle }}
-            </h3>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div class="border nier-border-primary bg-black/[0.015] dark:bg-white/[0.025] p-3">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.trades') }}</span>
-              <p class="mt-2 font-mono text-[20px] font-black nier-text-primary">{{ selectedTreeNode.tradeCountLabel || '0' }}</p>
-            </div>
-            <div class="border nier-border-primary bg-black/[0.015] dark:bg-white/[0.025] p-3">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.winrate') }}</span>
-              <p class="mt-2 font-mono text-[20px] font-black" :class="selectedTreeNode.winrateColorClass || 'text-rose-400'">{{ selectedTreeNode.winrateLabel || '0%' }}</p>
-            </div>
-            <div class="border nier-border-primary bg-black/[0.015] dark:bg-white/[0.025] p-3">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.pf') }}</span>
-              <p class="mt-2 font-mono text-[20px] font-black" :class="selectedTreeNode.profitFactorRatioColorClass || 'text-amber-400'">{{ selectedTreeNode.profitFactorRatioLabel || '0.00' }}</p>
-            </div>
-            <div class="border nier-border-primary bg-black/[0.015] dark:bg-white/[0.025] p-3">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.netPnl') }}</span>
-              <p class="mt-2 font-mono text-[20px] font-black" :class="Number(selectedTreeNode.netPnlValue || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ selectedTreeNode.netPnlLabel || '$0.00' }}</p>
-            </div>
-          </div>
-
-          <div class="mt-4 grid grid-cols-2 gap-3">
-            <button class="border nier-border-primary p-3 text-left transition-colors hover:border-black/35 dark:hover:border-white/35 disabled:cursor-default disabled:hover:border-black/10 dark:disabled:hover:border-white/10"
-                    :disabled="!selectedTreeNode.bestTrade?.id"
-                    @click="openTradeArchive(selectedTreeNode.bestTrade)">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.bestTrade') }}</span>
-              <p class="mt-2 font-mono text-[11px] font-black uppercase nier-text-primary">{{ selectedTreeNode.bestTrade?.asset || 'N/A' }}</p>
-              <p class="mt-1 font-mono text-[10px] font-bold" :class="tradePnlClass(selectedTreeNode.bestTrade)">{{ selectedTreeNode.bestTrade?.pnlLabel || '$0.00' }}</p>
-            </button>
-            <button class="border nier-border-primary p-3 text-left transition-colors hover:border-black/35 dark:hover:border-white/35 disabled:cursor-default disabled:hover:border-black/10 dark:disabled:hover:border-white/10"
-                    :disabled="!selectedTreeNode.worstTrade?.id"
-                    @click="openTradeArchive(selectedTreeNode.worstTrade)">
-              <span class="font-mono text-[7px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ t('genesis.tree.details.worstTrade') }}</span>
-              <p class="mt-2 font-mono text-[11px] font-black uppercase nier-text-primary">{{ selectedTreeNode.worstTrade?.asset || 'N/A' }}</p>
-              <p class="mt-1 font-mono text-[10px] font-bold" :class="tradePnlClass(selectedTreeNode.worstTrade)">{{ selectedTreeNode.worstTrade?.pnlLabel || '$0.00' }}</p>
-            </button>
-          </div>
-
-          <div class="mt-5 border-t nier-border-primary pt-4">
-            <div class="mb-3 font-mono text-[8px] font-black uppercase tracking-[0.3em] text-black/45 dark:text-white/45">
-              {{ t('genesis.tree.details.recentTrades') }}
-            </div>
-            <div class="flex max-h-[104px] flex-col gap-2 overflow-y-auto overscroll-contain pb-2 pr-1 [scrollbar-gutter:stable]">
-              <button v-for="trade in (selectedTreeNode.recentTrades || [])"
-                      :key="trade.id || `${trade.asset}-${trade.date}-${trade.pnl}`"
-                      class="flex shrink-0 items-center justify-between border nier-border-primary bg-black/[0.01] dark:bg-white/[0.02] px-3 py-2 text-left transition-colors hover:border-black/35 dark:hover:border-white/35 disabled:cursor-default disabled:hover:border-black/10 dark:disabled:hover:border-white/10"
-                      :disabled="!trade.id"
-                      @click="openTradeArchive(trade)">
-                <div>
-                  <p class="font-mono text-[10px] font-black uppercase tracking-wide nier-text-primary">{{ trade.asset }}</p>
-                  <p class="font-mono text-[8px] font-bold uppercase tracking-widest text-black/30 dark:text-white/30">{{ trade.date }}</p>
-                </div>
-                <span class="font-mono text-[10px] font-black" :class="tradePnlClass(trade)">{{ trade.pnlLabel }}</span>
-              </button>
-              <div v-if="!(selectedTreeNode.recentTrades || []).length"
-                   class="shrink-0 border nier-border-primary px-3 py-4 text-center font-mono text-[9px] font-bold uppercase tracking-widest text-black/25 dark:text-white/25">
-                {{ t('genesis.tree.details.noTrades') }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </ExPanel>
-    </div>
+      <ExGenesisTreeNodeDetailsPanel
+        v-if="selectedTreeNode"
+        :node="selectedTreeNode"
+        :title="selectedTreeNodeTitle"
+        :type-label="selectedTreeNodeTypeLabel"
+        @close="closeSelectedTreeNode"
+        @open-trade-archive="openTradeArchive"
+      />
   </Transition>
 </div>
 </template>
@@ -455,6 +372,7 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExGenesisTreeNodeDetailsPanel from './ExGenesisTreeNodeDetailsPanel.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
 import { useMatrixState } from '../../model/matrix/useMatrixState'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -552,6 +470,21 @@ const resetView = () => {
 
 const openPresetPanel = () => {
   isPresetPanelCollapsed.value = false
+  return true
+}
+
+const closePresetPanel = () => {
+  isPresetPanelCollapsed.value = true
+  return false
+}
+
+const togglePresetPanel = () => {
+  isPresetPanelCollapsed.value = !isPresetPanelCollapsed.value
+  return !isPresetPanelCollapsed.value
+}
+
+const isPresetPanelOpen = () => {
+  return !isPresetPanelCollapsed.value
 }
 
 const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
@@ -627,7 +560,10 @@ const navigateVersion = (direction: 'prev' | 'next') => {
 
 defineExpose({
   resetView,
-  openPresetPanel
+  openPresetPanel,
+  closePresetPanel,
+  togglePresetPanel,
+  isPresetPanelOpen
 })
 
 
@@ -693,19 +629,9 @@ const heatmapButtonClass = (_mode: string) => {
 }
 
 const nodeSurfaceClass = (node: any) => {
-  if (isNodeHighlighted(node)) return 'bg-white border-white shadow-[0_0_18px_rgba(255,255,255,0.35)]'
-  if ((node?.treeKey || node?.id) === selectedTreeNodeKey.value) {
-    return `${getHeatmapClass(node) || 'bg-[#ffffff] dark:bg-[#0a0a0a]'} !border-white`
-  }
+  if (isNodeHighlighted(node)) return 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.35)]'
 
   return getHeatmapClass(node) || 'bg-[#ffffff] dark:bg-[#0a0a0a]'
-}
-
-const tradePnlClass = (trade: any) => {
-  const pnl = Number(trade?.pnl || 0)
-  if (pnl > 0) return 'text-emerald-600 dark:text-emerald-400'
-  if (pnl < 0) return 'text-rose-600 dark:text-rose-400'
-  return 'text-black/45 dark:text-white/45'
 }
 
 const activePreset = computed(() => {
@@ -758,9 +684,10 @@ const isTargetNode = (node: any) => {
 }
 
 const isNodeHighlighted = (node: any) => {
-  if (typeof node === 'string') return highlightedNodeIds.value.has(node)
+  if (typeof node === 'string') return highlightedNodeIds.value.has(node) || selectedTreeNodeKey.value === node
 
-  return highlightedNodeIds.value.has(node?.treeKey || '') || highlightedNodeIds.value.has(node?.id || '')
+  const nodeKey = node?.treeKey || node?.id || ''
+  return highlightedNodeIds.value.has(node?.treeKey || '') || highlightedNodeIds.value.has(node?.id || '') || selectedTreeNodeKey.value === nodeKey
 }
 
 const strategyHasHighlight = (strategy: any) => {
