@@ -1328,72 +1328,13 @@
             </button>
           </div>
           <ExForumDrawingPanel :drawing="drawing" />
-          <Teleport to="body">
-            <Transition name="fade">
-              <div
-                v-if="activeAssetNodeId"
-                class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/20"
-                @click.self="closeAssetPicker"
-              >
-                <div class="w-[800px] max-w-[95vw] max-h-[80vh] flex flex-col relative" @click.stop>
-                  <ExPanel variant="light" :no-padding="true" :no-shadow="true" class="h-[500px] max-h-[80vh] flex flex-col bg-black/85 text-white border-white/10">
-                    <div class="p-6 border-b border-white/10 flex items-center gap-4 shrink-0 bg-black/20">
-                      <input
-                        v-model="assetSearch"
-                        :placeholder="boardUiLabels.searchAssets"
-                        class="w-full uppercase text-xl font-black tracking-widest bg-transparent border-0 outline-none text-white placeholder-white/20 font-mono"
-                        autofocus
-                      />
-                    </div>
-                    <div class="flex items-center gap-6 px-6 py-4 border-b border-white/10 overflow-x-auto scroll-minimal shrink-0 bg-black/20">
-                      <button
-                        v-for="assetType in assetTypeOptions"
-                        :key="assetType"
-                        class="text-[9px] uppercase tracking-[0.3em] font-bold transition-all whitespace-nowrap"
-                        :class="assetTypeFilter === assetType ? 'text-white border-b border-white pb-0.5' : 'text-white/40 hover:text-white/70'"
-                        @click="assetTypeFilter = assetType"
-                      >
-                        {{ getAssetTypeLoc(assetType) }}
-                      </button>
-                    </div>
-                    <div class="flex-1 overflow-y-auto scroll-minimal py-2">
-                      <div
-                        v-for="asset in filteredAssets"
-                        :key="asset.symbol"
-                        class="group/asset flex items-center justify-start gap-4 px-6 py-4 cursor-pointer border-b border-white/5 last:border-0 hover:bg-white/10 transition-all text-left w-full"
-                        @click="selectBoardAsset(asset)"
-                      >
-                        <div
-                          class="w-10 h-10 rounded-full overflow-hidden border border-white/10 group-hover/asset:border-white/40 flex items-center justify-center shrink-0 transition-colors"
-                          :class="asset.type === 'US Equities' || asset.type === 'Stocks' ? 'bg-white' : 'bg-white/5'"
-                        >
-                          <img
-                            v-if="asset.icon && !failedAssetIcons.has(asset.symbol)"
-                            :src="asset.icon"
-                            class="w-full h-full object-contain"
-                            @error="handleAssetIconError(asset.symbol)"
-                          />
-                          <span v-else class="text-[14px] font-black uppercase transition-colors" :class="asset.type === 'US Equities' || asset.type === 'Stocks' ? 'text-black' : 'text-white'">
-                            {{ asset.symbol[0] }}
-                          </span>
-                        </div>
-                        <div class="flex flex-col min-w-0 flex-1 gap-0.5">
-                          <span class="text-[14px] font-bold tracking-widest text-white">{{ asset.symbol }}</span>
-                          <span class="text-[10px] text-white/40 truncate uppercase tracking-tighter">{{ asset.name }}</span>
-                        </div>
-                        <div class="shrink-0 text-[8px] uppercase tracking-[0.2em] text-white/20 group-hover/asset:text-white/60 border border-white/10 px-2 py-1 transition-colors">
-                          {{ getAssetTypeLoc(asset.type) }}
-                        </div>
-                      </div>
-                      <div v-if="filteredAssets.length === 0" class="flex flex-col items-center justify-center h-full text-white/30 uppercase tracking-[0.3em] font-mono text-[10px] mt-10">
-                        {{ boardUiLabels.noAssetsFound }}
-                      </div>
-                    </div>
-                  </ExPanel>
-                </div>
-              </div>
-            </Transition>
-          </Teleport>
+          <ExAssetPickerMenu
+            :open="Boolean(activeAssetNodeId)"
+            :placeholder="boardUiLabels.searchAssets"
+            :no-results-label="boardUiLabels.noAssetsFound"
+            @update:open="value => { if (!value) closeAssetPicker() }"
+            @select="selectBoardAsset"
+          />
           <Transition name="fade">
               <div
                 v-if="activeStrategyNodeId"
@@ -2247,6 +2188,7 @@ import type { JournalArticle, JournalArticleBoard, JournalArticleBoardConnection
 import ExUserStatusBadge from '~/entities/user/ui/ExUserStatusBadge.vue'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
+import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 
@@ -2832,9 +2774,6 @@ const activeAssetNodeId = ref<string | null>(null)
 const activeStrategyNodeId = ref<string | null>(null)
 const activeTradeNodeId = ref<string | null>(null)
 const expandedTradeStrategyId = ref<string | null>(null)
-const assetSearch = ref('')
-const assetTypeFilter = ref('ALL')
-const failedAssetIcons = ref(new Set<string>())
 const assetTypeLocales: Record<string, { en: string; ru: string }> = {
   ALL: { en: 'ALL', ru: 'ВСЕ' },
   'US Equities': { en: 'US Equities', ru: 'АКЦИИ' },
@@ -2844,28 +2783,6 @@ const assetTypeLocales: Record<string, { en: string; ru: string }> = {
   Indices: { en: 'Indices', ru: 'ИНДЕКСЫ' },
   Stocks: { en: 'Stocks', ru: 'АКЦИИ' }
 }
-const assetTypeOptions = ['ALL', 'US Equities', 'Crypto', 'Forex', 'Commodities', 'Indices']
-const filteredAssets = computed(() => {
-  const query = assetSearch.value.trim().toLowerCase()
-  let assets = allAssets as any[]
-  if (assetTypeFilter.value !== 'ALL') {
-    assets = assets.filter(asset => String(asset.type || '').toUpperCase() === assetTypeFilter.value.toUpperCase())
-  }
-  if (!query) return assets.slice(0, 50)
-  return assets
-    .filter(asset => String(asset.symbol || '').toLowerCase().includes(query) || String(asset.name || '').toLowerCase().includes(query))
-    .sort((a, b) => {
-      const aSymbol = String(a.symbol || '').toUpperCase()
-      const bSymbol = String(b.symbol || '').toUpperCase()
-      const exact = assetSearch.value.trim().toUpperCase()
-      if (aSymbol === exact) return -1
-      if (bSymbol === exact) return 1
-      if (aSymbol.startsWith(exact) && !bSymbol.startsWith(exact)) return -1
-      if (!aSymbol.startsWith(exact) && bSymbol.startsWith(exact)) return 1
-      return aSymbol.localeCompare(bSymbol)
-    })
-    .slice(0, 20)
-})
 
 // Article Creation State
 const isCreatingArticle = ref(false)
@@ -4285,8 +4202,6 @@ const getAssetNodeTypeLabel = (node: any) => {
 const openAssetPicker = (node: any) => {
   if (node?.type !== 'asset') return
   activeAssetNodeId.value = node.id
-  assetSearch.value = ''
-  assetTypeFilter.value = 'ALL'
 }
 
 const closeAssetPicker = () => {
@@ -4299,12 +4214,6 @@ const selectBoardAsset = (asset: any) => {
     node.asset = asset.symbol
   }
   closeAssetPicker()
-}
-
-const handleAssetIconError = (symbol: string) => {
-  const next = new Set(failedAssetIcons.value)
-  next.add(symbol)
-  failedAssetIcons.value = next
 }
 
 const isSignalBoardValid = computed(() => {
