@@ -81,7 +81,7 @@ export const translations = {
     },
     activityMonitor: {
       title: "Activity Monitor",
-      subtitle: "Matrix of Your Trading and Analytical Activity.",
+      subtitle: "Your Trading and Analytical Activity.",
       archiveDate: "Archive_Date:",
       initializing: "Initializing...",
       sessionActive: "Session_Active",
@@ -682,7 +682,7 @@ export const translations = {
     },
     activityMonitor: {
       title: "Мониторинг Активности",
-      subtitle: "Матрица истории вашей торговой и аналитической активности.",
+      subtitle: "История вашей торговой и аналитической активности.",
       archiveDate: "Дата_Архива:",
       initializing: "Инициализация...",
       sessionActive: "Сессия_Активна",

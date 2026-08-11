@@ -7,7 +7,7 @@
       <!-- Header Section -->
       <div class="flex flex-col items-center mb-12 md:mb-14 text-center z-10 w-full">
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif uppercase tracking-[0.18em] mb-5">{{ t('activityMonitor.title') }}</h1>
-        <p class="text-xs md:text-sm font-mono uppercase tracking-[0.36em] opacity-40 max-w-3xl">{{ t('activityMonitor.subtitle') }}</p>
+        <p class="text-xs md:text-sm font-mono uppercase tracking-[0.36em] text-[#2c2c2a] max-w-3xl">{{ t('activityMonitor.subtitle') }}</p>
       </div>
 
       <!-- The Grid Aspect Ratio Wrapper -->

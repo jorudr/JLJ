@@ -516,11 +516,11 @@ const handleDashboardCenterAfterLeave = (el: Element) => {
 }
 
 .dashboard-page-button.is-active :deep(> span) {
-  color: rgb(255 255 255) !important;
+  color: rgb(0 0 0) !important;
 }
 
 .dashboard-page-button.is-active-dark :deep(> span) {
-  color: rgb(255 255 255) !important;
+  color: rgb(0 0 0) !important;
 }
 
 .dashboard-center-stage {
