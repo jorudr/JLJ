@@ -317,7 +317,7 @@ const getAuthTabStyle = (tab: 'login' | 'register') => {
 
   return isActive
     ? activeTabStyle.value
-    : { color: tab === 'register' ? '#171717' : 'var(--theme-muted)' }
+    : { color: '#171717' }
 }
 
 const authStore = useAuthStore()
@@ -653,7 +653,7 @@ onBeforeUnmount(() => {
 .initialization-auth-input {
   appearance: none;
   -webkit-appearance: none;
-  background: transparent;
+  background: rgba(17, 22, 20, 0.08);
   border: 0;
   border-bottom: 1px solid rgba(17, 22, 20, 0.42);
   border-radius: 0;
@@ -667,7 +667,7 @@ onBeforeUnmount(() => {
 .initialization-auth-input:active {
   appearance: none;
   -webkit-appearance: none;
-  background: transparent;
+  background: rgba(17, 22, 20, 0.08);
   border-bottom-color: rgba(17, 22, 20, 0.42);
   box-shadow: none !important;
   outline: none !important;
