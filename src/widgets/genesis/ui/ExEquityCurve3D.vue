@@ -1698,9 +1698,63 @@ const getTradeRiskReward = (trade: any): number | null => {
   return setupRR > 0 ? setupRR : null
 }
 
+const getDateTimestamp = (value: any): number => {
+  if (!value) return 0
+  if (value instanceof Date) {
+    const time = value.getTime()
+    return Number.isFinite(time) ? time : 0
+  }
+  if (typeof value === 'number') {
+    const time = value < 1_000_000_000_000 ? value * 1000 : value
+    return Number.isFinite(time) ? time : 0
+  }
+  if (typeof value === 'object') {
+    if (typeof value.toMillis === 'function') {
+      const time = value.toMillis()
+      return Number.isFinite(time) ? time : 0
+    }
+    if (Number.isFinite(value.seconds)) {
+      return value.seconds * 1000
+    }
+  }
+  if (typeof value === 'string') {
+    const raw = value.trim()
+    if (!raw) return 0
+
+    const europeanDateMatch = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})(?:[,\sT]+(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?)?/)
+    if (europeanDateMatch) {
+      const [, dayRaw, monthRaw, yearRaw, hourRaw, minuteRaw, secondRaw] = europeanDateMatch
+      const day = Number(dayRaw)
+      const month = Number(monthRaw)
+      const year = Number(yearRaw?.length === 2 ? `20${yearRaw}` : yearRaw)
+      const hour = Number(hourRaw || 0)
+      const minute = Number(minuteRaw || 0)
+      const second = Number(secondRaw || 0)
+      if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+        const parsed = new Date(year, month - 1, day, hour, minute, second).getTime()
+        return Number.isFinite(parsed) ? parsed : 0
+      }
+    }
+
+    const nativeTime = new Date(raw).getTime()
+    if (Number.isFinite(nativeTime)) return nativeTime
+  }
+
+  const fallbackTime = new Date(value).getTime()
+  return Number.isFinite(fallbackTime) ? fallbackTime : 0
+}
+
 const getTradeTimestamp = (trade: any): number => {
-  const time = new Date(trade?.dateExit || trade?.date || 0).getTime()
-  return Number.isFinite(time) ? time : 0
+  return getDateTimestamp(trade?.dateExit || trade?.exitTime || trade?.date || trade?.entryTime || trade?.timestamp || trade?.createdAt)
+}
+
+const getStableTradeDepth = (trade: any, index: number): number => {
+  const source = String(trade?.id || trade?.dateExit || trade?.date || index)
+  let hash = 0
+  for (let i = 0; i < source.length; i++) {
+    hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0
+  }
+  return ((Math.abs(hash) % 1000) / 999 - 0.5) * 40
 }
 
 const getTradePnl = (trade: any, initialDeposit: number): number => {
@@ -2944,13 +2998,18 @@ const initData = () => {
   const initialDeposit = props.initialBalance || tradeStore.getInitialDeposit(strategyId)
   depositInput.value = initialDeposit
   
-  const sortedTrades = [...currentTrades].sort((a, b) => {
-      const d1 = a.dateExit || a.date
-      const d2 = b.dateExit || b.date
-      const dateA = d1 instanceof Date ? d1 : new Date(d1)
-      const dateB = d2 instanceof Date ? d2 : new Date(d2)
-      return dateA.getTime() - dateB.getTime()
-  })
+  const sortedTrades = [...currentTrades]
+    .map((trade, index) => ({
+      trade,
+      index,
+      timestamp: getTradeTimestamp(trade)
+    }))
+    .sort((a, b) => {
+      const timeA = a.timestamp > 0 ? a.timestamp : Number.POSITIVE_INFINITY
+      const timeB = b.timestamp > 0 ? b.timestamp : Number.POSITIVE_INFINITY
+      return timeA - timeB || a.index - b.index
+    })
+    .map(item => item.trade)
 
   let runningBalance = initialDeposit
   equityPoints3D.value = []
@@ -2997,12 +3056,14 @@ const initData = () => {
     runningBalance += tradePnl
     const x = -200 + (i + 1) * step
     const y = range === 0 ? 50 : 95 - (runningBalance - minBal) * yScaling
-    const z = (Math.random() - 0.5) * 40
+    const z = getStableTradeDepth(trade, i)
     
-    const dVal = trade.dateExit || trade.date
-    const date = dVal instanceof Date ? dVal : new Date(dVal)
+    const tradeTimestamp = getTradeTimestamp(trade)
+    const date = tradeTimestamp > 0 ? new Date(tradeTimestamp) : null
     const dateLocale = isRu.value ? 'ru-RU' : 'en-US'
-    const dateLabel = `${date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}`
+    const dateLabel = date
+      ? `${date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}`
+      : 'DATE_UNKNOWN'
     
     equityPoints3D.value.push({ 
       x, y, z, 
@@ -3051,8 +3112,9 @@ const initData = () => {
 
     sortedTrades.forEach((trade, i) => {
       const x = -200 + (i + 1) * step
-      const dVal = trade.dateExit || trade.date
-      const date = dVal instanceof Date ? dVal : new Date(dVal)
+      const tradeTimestamp = getTradeTimestamp(trade)
+      if (tradeTimestamp <= 0) return
+      const date = new Date(tradeTimestamp)
       const dayStr = date.toISOString().slice(0, 10)
       const dayStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
 
@@ -3063,8 +3125,9 @@ const initData = () => {
     })
 
     const lastTrade = sortedTrades[sortedTrades.length - 1]!
-    const lastDateVal = lastTrade.dateExit || lastTrade.date
-    const lastDate = lastDateVal instanceof Date ? lastDateVal : new Date(lastDateVal)
+    const lastTradeTimestamp = getTradeTimestamp(lastTrade)
+    const lastDate = lastTradeTimestamp > 0 ? new Date(lastTradeTimestamp) : null
+    if (!lastDate || !Number.isFinite(firstDateTime)) return
     const endDateTime = Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth(), lastDate.getUTCDate())
     
     const daysTotal = Math.max(0, Math.floor((endDateTime - firstDateTime) / dayMs))
