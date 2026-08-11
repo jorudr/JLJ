@@ -167,7 +167,7 @@
             <button
               type="submit"
               :disabled="authLoading"
-              class="w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all mt-1 disabled:opacity-40 hover:opacity-90"
+              class="initialization-auth-submit-button w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all mt-1 disabled:opacity-40 hover:opacity-90"
               :style="primaryButtonStyle"
             >
               <span v-if="authLoading">{{ locale === 'ru' ? 'Обработка...' : 'Processing...' }}</span>
@@ -187,7 +187,7 @@
           <button
             @click="doGoogleLogin"
             :disabled="authLoading"
-	            class="initialization-google-button w-full border py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40"
+	            class="initialization-google-button w-full border py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40"
           >
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -317,7 +317,7 @@ const getAuthTabStyle = (tab: 'login' | 'register') => {
 
   return isActive
     ? activeTabStyle.value
-    : { color: 'var(--theme-muted)' }
+    : { color: tab === 'register' ? '#171717' : 'var(--theme-muted)' }
 }
 
 const authStore = useAuthStore()
@@ -706,6 +706,7 @@ onBeforeUnmount(() => {
   background: transparent;
   border-bottom-color: rgba(var(--startup-light-rgb), 0.42);
   color: var(--startup-light);
+  opacity: 0.8;
 }
 
 .ex-initialization.is-startup .initialization-auth-input:focus,
@@ -767,7 +768,12 @@ onBeforeUnmount(() => {
 }
 
 .ex-initialization.is-startup .initialization-auth-tab {
-  opacity: 0.72;
+  opacity: 0.8 !important;
+}
+
+.ex-initialization.is-startup .initialization-auth-submit-button,
+.ex-initialization.is-startup .initialization-google-button {
+  opacity: 0.8 !important;
 }
 
 .ex-initialization.is-startup .initialization-auth-tabs {
@@ -782,7 +788,7 @@ onBeforeUnmount(() => {
 .ex-initialization.is-startup .initialization-auth-tab.is-active {
   background: var(--startup-light) !important;
   color: var(--startup-dark) !important;
-  opacity: 1;
+  opacity: 0.8 !important;
 }
 
 .ex-initialization.is-startup .initialization-auth-tab.is-active span {
