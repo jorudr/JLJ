@@ -1,12 +1,18 @@
 <template>
   <div
-    class="fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden ethereal-void nier-text-primary"
-    :class="{ 'is-dark': isDark }"
+    class="ex-initialization fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden ethereal-void nier-text-primary"
+    :class="{ 'is-dark': isDark, 'is-startup': isStartupIntro }"
     style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Ethereal Background -->
     <EtherealBackground :is-dark="isDark" :is-assembled="true" :show-bloom="false" />
-    <GradflowBackground preset="mystic" :config="initializationGradflowConfig" @ready="isGradflowReady = true" />
+    <GradflowBackground
+      preset="mystic"
+      :config="initializationGradflowConfig"
+      class="transition-opacity duration-1000"
+      :class="isStartupIntro ? 'opacity-0' : 'opacity-100'"
+      @ready="isGradflowReady = true"
+    />
     <div
       class="pointer-events-none absolute inset-0 z-[1] bg-white/[0.08] transition-opacity duration-500"
       :class="isGradflowReady ? 'opacity-0' : 'opacity-100'"
@@ -84,7 +90,7 @@
 
         <!-- ── AUTHENTICATED: boot prompt ── -->
         <div v-else-if="isAuthenticated && phase === 'auth'" key="authenticated" class="w-full flex flex-col items-center space-y-5">
-	          <div class="w-full border border-theme-border bg-black/[0.05] p-4 flex items-center space-x-4">
+	          <div class="initialization-auth-card w-full border bg-black/[0.05] p-4 flex items-center space-x-4">
             <div class="w-2 h-2 bg-white rounded-full animate-pulse shrink-0"></div>
             <div class="flex flex-col min-w-0">
               <span class="text-[8px] font-mono uppercase tracking-[0.4em] text-white">Operator Authenticated</span>
@@ -246,7 +252,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
 import tauriConfig from '../../../../src-tauri/tauri.conf.json'
@@ -284,6 +290,8 @@ const { locale, setLocale } = useI18n()
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
 const isGradflowReady = ref(false)
+const isStartupIntro = ref(true)
+let startupIntroTimer: ReturnType<typeof setTimeout> | null = null
 const primaryButtonStyle = computed(() => ({
   background: isDark.value ? '#F6F0E6' : 'var(--theme-text)',
   color: isDark.value ? '#0A0A0A' : 'var(--theme-bg)'
@@ -565,11 +573,76 @@ const doSignOut = async () => {
 }
 
 onMounted(() => {
+  startupIntroTimer = setTimeout(() => {
+    isStartupIntro.value = false
+    startupIntroTimer = null
+  }, 2200)
+
   if (isAuthenticated.value) startBoot()
+})
+
+onBeforeUnmount(() => {
+  if (!startupIntroTimer) return
+  clearTimeout(startupIntroTimer)
+  startupIntroTimer = null
 })
 </script>
 
 <style scoped>
+.ex-initialization {
+  transition: background-color 900ms ease, color 900ms ease;
+}
+
+.ex-initialization :deep(.gradflow-background),
+.ex-initialization :deep(.gradflow-canvas),
+.ex-initialization :deep(.gradflow-canvas canvas) {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.ex-initialization :deep(.gradflow-background) {
+  position: fixed;
+  inset: 0;
+}
+
+.ex-initialization.is-startup {
+  --theme-bg: #000000;
+  --theme-text: #ffffff;
+  --theme-muted: rgba(255, 255, 255, 0.56);
+  --theme-border: rgba(255, 255, 255, 0.22);
+  --theme-border-strong: rgba(255, 255, 255, 0.55);
+  background: #000000;
+  color: #ffffff;
+}
+
+.ex-initialization.is-startup :deep(.gradflow-background),
+.ex-initialization.is-startup :deep(.background-system),
+.ex-initialization.is-startup :deep(.vignette-system) {
+  opacity: 0 !important;
+}
+
+.initialization-auth-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ex-initialization.is-startup .text-black,
+.ex-initialization.is-startup .text-theme-text,
+.ex-initialization.is-startup .nier-text-primary {
+  color: #ffffff !important;
+}
+
+.ex-initialization.is-startup .bg-black,
+.ex-initialization.is-startup .nier-bg-inverted {
+  background-color: #ffffff !important;
+}
+
+.ex-initialization.is-startup .border-black,
+.ex-initialization.is-startup .border-theme-text,
+.ex-initialization.is-startup .border-theme-border {
+  border-color: rgba(255, 255, 255, 0.75) !important;
+}
+
 .step-fade-enter-active, .step-fade-leave-active {
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
