@@ -744,7 +744,7 @@
     </article>
 
     <!-- ARTICLE CREATION VIEW -->
-    <div v-else-if="isCreatingArticle" class="absolute inset-0 z-50 bg-theme-bg overflow-hidden flex flex-col w-full" key="creator">
+    <div v-else-if="isCreatingArticle" class="absolute inset-0 z-50 overflow-hidden flex flex-col w-full" key="creator">
       <Transition name="fade-slide" mode="out-in">
         
         <!-- METADATA STEP -->
@@ -838,29 +838,32 @@
 
             <button
               class="group relative flex h-12 w-64 items-center justify-center gap-3 overflow-hidden border-2 px-5 transition-all duration-500"
-              :class="isNewArticleFormValid && !isSubmittingArticle ? 'border-black hover:bg-black cursor-pointer' : 'border-current/20 cursor-not-allowed'"
+              :class="isNewArticleFormValid || isSubmittingArticle ? 'border-black bg-black text-white cursor-pointer hover:bg-black/85' : 'border-current/20 cursor-not-allowed'"
               :disabled="!isNewArticleFormValid || isSubmittingArticle"
               @click="submitNewArticle"
             >
               <span class="text-[11px] font-mono tracking-[0.4em] uppercase relative z-10 font-bold transition-all duration-500" 
                     :class="[
-                      isSubmittingArticle ? 'opacity-0' : '',
-                      isNewArticleFormValid ? 'text-black opacity-100 group-hover:text-white' : 'text-current opacity-30'
+                      isSubmittingArticle ? '!opacity-0' : '',
+                      isNewArticleFormValid ? 'text-white opacity-100' : 'text-current opacity-30'
                     ]">
                 {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
               </span>
               <span class="relative z-10 shrink-0 text-xl font-light leading-none transition-all duration-500"
                     :class="[
-                      isSubmittingArticle ? 'opacity-0' : 'opacity-100',
-                      isNewArticleFormValid ? 'text-black group-hover:text-white group-hover:translate-x-1' : 'text-current opacity-30'
+                      isSubmittingArticle ? '!opacity-0' : 'opacity-100',
+                      isNewArticleFormValid ? 'text-white group-hover:translate-x-1' : 'text-current opacity-30'
                     ]">
                 →
               </span>
-              <svg class="w-5 h-5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 animate-spin text-white transition-opacity duration-300" 
-                   :class="isSubmittingArticle ? 'opacity-100' : 'opacity-0'"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-              </svg>
+              <span
+                class="absolute left-1/2 top-1/2 z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-white transition-opacity duration-300"
+                :class="isSubmittingArticle ? 'opacity-100' : 'opacity-0'"
+              >
+                <svg class="h-full w-full animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -868,7 +871,7 @@
         <!-- BOARD STEP -->
         <div v-else-if="creationStep === 'board'"
              ref="boardStageRef"
-             class="absolute inset-0 z-[100] overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] text-[#2c2c2a]"
+             class="absolute inset-0 z-[100] overflow-hidden bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] text-[#2c2c2a]"
              :class="isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (activeBoardTool === 'pencil' ? 'cursor-none' : (activeBoardTool ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'))"
              @pointermove="handleBoardHover"
              @pointerdown="startBoardPan"
@@ -1311,11 +1314,11 @@
               </button>
             </template>
             <template v-else>
-              <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+              <button class="article-board-secondary-action px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest"
                       @click="creationStep = 'metadata'">
                 {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}
               </button>
-              <button class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+              <button class="article-board-secondary-action px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest"
                       @click="saveDraftAndExit">
                 {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
               </button>
@@ -5234,6 +5237,21 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 .article-board-tool:focus-within .article-board-tool-tooltip {
   opacity: 1;
   transform: translateY(-50%) translateX(0);
+}
+
+.article-board-secondary-action {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.article-board-secondary-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 0, 0, 0.48);
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .journal-wrapper.exforum-edge-shadows {
