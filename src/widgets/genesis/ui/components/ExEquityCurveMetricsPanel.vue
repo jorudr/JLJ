@@ -53,7 +53,7 @@
                     {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.category }}
                   </span>
                   <span class="text-[10px] font-serif font-light opacity-50 px-3 py-1 border nier-border-primary nier-text-primary tracking-widest uppercase">
-                    {{ allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!.sub }}
+                    {{ metricDisplaySub(allAvailableConfigs.find(c => c.key === selectedDeepDiveMetricKey)!) }}
                   </span>
                 </div>
               </div>
@@ -170,7 +170,7 @@
                       </span>
                       <span class="text-[9px] font-mono px-2 py-0.5 border transition-colors"
                             :class="activeMetricKeys.includes(cfg.key) ? 'border-white/20 dark:border-black/20 text-white/80 dark:text-black/80' : 'nier-border-primary opacity-50'">
-                        {{ cfg.sub }}
+                        {{ metricDisplaySub(cfg) }}
                       </span>
                     </div>
                     <p class="text-[10px] font-mono leading-relaxed transition-colors mt-1"
@@ -240,7 +240,8 @@ const {
   getMetricCalculationSteps,
   getMetricRationale,
   metricDisplayLabel,
-  metricDisplayDesc
+  metricDisplayDesc,
+  metricDisplaySub
 } = props.panel
 
 const openDeepDive = (metricKey: string) => {
