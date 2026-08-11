@@ -54,10 +54,10 @@
     <!-- ── SIGN OUT (top-right, only when authenticated) ── -->
     <Transition name="fade-quick">
 	      <button
-	        v-if="isAuthenticated && phase === 'auth'"
+	        v-if="isAuthenticated"
 	        @click="doSignOut"
 	        class="fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
-	      >Sign Out</button>
+	      >{{ locale === 'ru' ? 'Выйти' : 'Sign Out' }}</button>
     </Transition>
 
     <!-- Center Assembly -->
@@ -115,14 +115,14 @@
               :style="authTab === 'login'
 	                ? activeTabStyle
 	                : 'color: var(--theme-muted);'"
-            >Sign_In</button>
+            >{{ locale === 'ru' ? 'Войти' : 'Sign In' }}</button>
             <button
               @click="authTab = 'register'"
               class="flex-1 py-2.5 text-[9px] font-mono uppercase tracking-[0.4em] transition-all duration-300"
               :style="authTab === 'register'
 	                ? activeTabStyle
 	                : 'color: var(--theme-muted);'"
-            >Register</button>
+            >{{ locale === 'ru' ? 'Регистрация' : 'Register' }}</button>
           </div>
 
           <!-- Error display -->
@@ -134,38 +134,35 @@
 
           <!-- Form -->
           <form @submit.prevent="authTab === 'login' ? doLogin() : doRegister()" class="flex flex-col space-y-4">
-            <div class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Email_Address</span>
+            <div class="flex flex-col">
               <input
                 v-model="authEmail"
                 type="email"
                 required
                 autocomplete="email"
-                placeholder="OPERATOR@SYSTEM.IO"
-	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all uppercase text-theme-text placeholder:opacity-20"
+                :placeholder="locale === 'ru' ? 'Email адрес' : 'Email Address'"
+	                class="initialization-auth-input px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all uppercase"
               />
             </div>
 
-            <div class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Access_Code</span>
+            <div class="flex flex-col">
               <input
                 v-model="authPassword"
                 type="password"
                 required
                 autocomplete="current-password"
-                placeholder="••••••••"
-	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20"
+                :placeholder="locale === 'ru' ? 'ПАРОЛЬ' : 'PASSWORD'"
+	                class="initialization-auth-input px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
               />
             </div>
 
-            <div v-if="authTab === 'register'" class="flex flex-col space-y-1.5">
-              <span class="text-[8px] font-mono uppercase tracking-[0.4em]" style="opacity: 0.4; ">Confirm_Code</span>
+            <div v-if="authTab === 'register'" class="flex flex-col">
               <input
                 v-model="authPasswordConfirm"
                 type="password"
                 required
-                placeholder="••••••••"
-	                class="bg-transparent border border-theme-border px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none focus:border-theme-text transition-all text-theme-text placeholder:opacity-20"
+                :placeholder="locale === 'ru' ? 'ПАРОЛЬ' : 'PASSWORD'"
+	                class="initialization-auth-input px-4 py-2.5 text-[11px] font-mono tracking-widest focus:outline-none transition-all"
               />
             </div>
 
@@ -175,24 +172,24 @@
               class="w-full py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all mt-1 disabled:opacity-40 hover:opacity-90"
               :style="primaryButtonStyle"
             >
-              <span v-if="authLoading">Processing...</span>
-              <span v-else-if="authTab === 'login'">Access_System</span>
-              <span v-else>Create_Operator</span>
+              <span v-if="authLoading">{{ locale === 'ru' ? 'Обработка...' : 'Processing...' }}</span>
+              <span v-else-if="authTab === 'login'">{{ locale === 'ru' ? 'Войти в систему' : 'Access System' }}</span>
+              <span v-else>{{ locale === 'ru' ? 'Создать оператора' : 'Create Operator' }}</span>
             </button>
           </form>
 
           <!-- Divider -->
           <div class="flex items-center space-x-4">
-            <div class="flex-1 h-px" style="background: var(--theme-text); opacity: 0.1;"></div>
-            <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.3; ">or</span>
-            <div class="flex-1 h-px" style="background: var(--theme-text); opacity: 0.1;"></div>
+            <div class="initialization-auth-divider-line flex-1 h-px"></div>
+            <span class="initialization-auth-divider-text text-[8px] font-mono uppercase tracking-widest">{{ locale === 'ru' ? 'или' : 'or' }}</span>
+            <div class="initialization-auth-divider-line flex-1 h-px"></div>
           </div>
 
           <!-- Google sign-in -->
           <button
             @click="doGoogleLogin"
             :disabled="authLoading"
-	            class="w-full border border-theme-border py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40 text-theme-text opacity-60 hover:opacity-100 hover:border-theme-text"
+	            class="initialization-google-button w-full border py-3 font-mono text-[9px] tracking-[0.4em] uppercase transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-40"
           >
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -200,7 +197,7 @@
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            <span>{{ locale === 'ru' ? 'Продолжить_С_Google' : 'Continue_With_Google' }}</span>
+            <span>{{ locale === 'ru' ? 'Продолжить С Google' : 'Continue With Google' }}</span>
           </button>
         </div>
 
@@ -237,7 +234,9 @@
             class="px-10 py-3 font-mono text-[9px] tracking-[0.5em] uppercase font-black transition-all hover:opacity-90"
             :style="primaryButtonStyle"
           >{{ locale === 'ru' ? 'Продолжить' : 'Continue' }}</button>
-          <p class="text-[8px] font-mono lowercase italic text-black" style="opacity: 0.2; ">Operator authenticated. System ready.</p>
+          <p class="text-[8px] font-mono lowercase italic text-black" style="opacity: 0.2; ">
+            {{ locale === 'ru' ? 'оператор авторизован. система готова.' : 'Operator authenticated. System ready.' }}
+          </p>
         </div>
 
       </Transition>
@@ -246,7 +245,7 @@
     <!-- Bottom Telemetry -->
     <div class="fixed bottom-10 left-0 right-0 px-12 flex justify-between items-center pointer-events-none">
       <span class="text-[8px] font-mono uppercase tracking-widest text-black">ID: {{ appVersion }} // VOSHE COMPANY D.O.O</span>
-      <span class="text-[8px] font-mono uppercase tracking-widest" style="opacity: 0.2; ">ALPHA VERSION</span>
+      <span class="text-[8px] font-mono uppercase tracking-widest text-black">ALPHA VERSION</span>
     </div>
   </div>
 </template>
@@ -293,8 +292,8 @@ const isGradflowReady = ref(false)
 const isStartupIntro = ref(true)
 let startupIntroTimer: ReturnType<typeof setTimeout> | null = null
 const primaryButtonStyle = computed(() => ({
-  background: isDark.value ? '#F6F0E6' : 'var(--theme-text)',
-  color: isDark.value ? '#0A0A0A' : 'var(--theme-bg)'
+  background: '#171717',
+  color: '#ffffff'
 }))
 const activeTabStyle = computed(() => ({
   ...primaryButtonStyle.value,
@@ -624,6 +623,87 @@ onBeforeUnmount(() => {
 
 .initialization-auth-card {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.initialization-auth-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 22, 20, 0.42);
+  border-radius: 0;
+  color: #111614;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.initialization-auth-input:focus,
+.initialization-auth-input:focus-visible,
+.initialization-auth-input:active {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border-bottom-color: rgba(17, 22, 20, 0.42);
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.initialization-auth-input::placeholder {
+  color: #111614;
+  opacity: 0.52;
+}
+
+.initialization-google-button {
+  background: #171717;
+  border-color: #171717;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.initialization-google-button:hover:not(:disabled) {
+  background: #171717;
+  border-color: #171717;
+  color: #ffffff;
+  opacity: 0.86;
+}
+
+.initialization-auth-divider-line {
+  background: #000000;
+  opacity: 0.22;
+}
+
+.initialization-auth-divider-text {
+  color: #000000;
+  opacity: 0.46;
+}
+
+.ex-initialization.is-startup .initialization-auth-input {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.42);
+  color: #111614;
+}
+
+.ex-initialization.is-startup .initialization-auth-input:focus,
+.ex-initialization.is-startup .initialization-auth-input:focus-visible,
+.ex-initialization.is-startup .initialization-auth-input:active {
+  border-bottom-color: rgba(255, 255, 255, 0.42);
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.ex-initialization.is-startup .initialization-auth-input::placeholder {
+  color: #111614;
+  opacity: 0.52;
+}
+
+.ex-initialization.is-startup .initialization-auth-divider-line {
+  background: #ffffff;
+  opacity: 0.1;
+}
+
+.ex-initialization.is-startup .initialization-auth-divider-text {
+  color: #ffffff;
+  opacity: 0.3;
 }
 
 .ex-initialization.is-startup .text-black,
