@@ -537,6 +537,40 @@ export const useForumStore = defineStore('forum', {
       return links
     },
 
+    async syncContributionThreadLinks(fromThreadId: string, toThreadIds: string[]): Promise<ThreadLink[]> {
+      const uniqueTargetIds = Array.from(new Set(toThreadIds.filter(id => id && id !== fromThreadId))).slice(0, 3)
+      const linksCollection = collection(db, 'threadLinks').withConverter(threadLinkConverter)
+      const existingQuery = query(
+        linksCollection,
+        where('fromThreadId', '==', fromThreadId)
+      )
+      const existingSnap = await getDocs(existingQuery)
+      const existingContributionLinks = existingSnap.docs
+        .map(d => d.data())
+        .filter(link => link.type === 'extends')
+
+      await Promise.all(existingContributionLinks.map(link => deleteDoc(doc(db, 'threadLinks', link.id))))
+
+      const createdLinks = await Promise.all(uniqueTargetIds.map(async (toThreadId) => {
+        const linkRef = doc(collection(db, 'threadLinks'))
+        const link: ThreadLink = {
+          id: linkRef.id,
+          fromThreadId,
+          toThreadId,
+          type: 'extends'
+        }
+        await setDoc(linkRef.withConverter(threadLinkConverter), link)
+        return link
+      }))
+
+      this.threadLinks.delete(fromThreadId)
+      uniqueTargetIds.forEach(threadId => this.threadLinks.delete(threadId))
+      existingContributionLinks.forEach(link => this.threadLinks.delete(link.toThreadId))
+      this.allThreadLinks.clear()
+
+      return createdLinks
+    },
+
     clearThread(threadId: string) {
       this.replies.delete(threadId)
       this.threadLinks.delete(threadId)

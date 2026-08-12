@@ -828,6 +828,7 @@
                 </span>
               </div>
             </div>
+
           </div>
 
           <!-- LAUNCH FOOTER -->
@@ -870,6 +871,153 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
                 </svg>
               </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- CONTRIBUTION STEP -->
+        <div v-else-if="creationStep === 'contribution'" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-10 relative overflow-hidden w-full max-w-7xl mx-auto" key="contribution">
+          <div class="relative z-20 flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
+            <div class="flex flex-col space-y-2">
+              <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                {{ locale === 'ru' ? 'Редактор' : 'Editor' }} // {{ formatJournalDate() }}
+              </span>
+              <span class="font-serif italic text-2xl text-current/80">{{ currentUserName }}</span>
+            </div>
+            <div class="flex flex-col md:items-end space-y-2">
+              <span class="text-xs md:text-sm font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                CONTRIBUTION
+              </span>
+              <span class="font-mono text-[10px] uppercase tracking-[0.24em] opacity-40">
+                {{ newArticleForm.contributionIds.length }} / 3
+              </span>
+            </div>
+          </div>
+
+          <div class="relative z-10 flex-grow flex flex-col w-full max-w-5xl mx-auto space-y-8 min-h-0 pt-2 pb-6" :class="isContributionPickerOpen ? 'justify-start' : 'justify-center'">
+            <div v-if="!isContributionPickerOpen" class="flex flex-col items-center text-center">
+              <span class="mb-4 text-xs md:text-sm font-sans tracking-[0.2em] font-light uppercase opacity-60">
+                {{ locale === 'ru' ? 'Связь с существующими статьями' : 'Link to existing articles' }}
+              </span>
+              <h2 class="w-full text-4xl md:text-6xl lg:text-7xl font-serif italic tracking-tighter leading-none text-current/90">
+                {{ locale === 'ru' ? 'Хотите сделать contribution?' : 'Do you want to make a contribution?' }}
+              </h2>
+            </div>
+
+            <div v-if="!isContributionPickerOpen" class="w-16 h-px bg-current/30 mx-auto shrink-0"></div>
+
+            <div v-if="!isContributionPickerOpen" class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4">
+              <div class="flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  class="flex h-12 min-w-64 items-center justify-center gap-3 border-2 px-5 font-mono text-[11px] font-bold uppercase tracking-[0.3em] transition-colors"
+                  :class="'border-current/20 bg-white/60 text-current/70 hover:border-current/50 hover:text-current'"
+                  @click="openContributionPicker"
+                >
+                  <span>{{ locale === 'ru' ? 'Открыть меню статей' : 'Open Article Menu' }}</span>
+                  <span class="text-[9px] opacity-70">{{ newArticleForm.contributionIds.length }}/3</span>
+                </button>
+                <button
+                  v-if="newArticleForm.contributionIds.length"
+                  type="button"
+                  class="flex h-12 items-center justify-center border-2 border-current/10 px-5 font-mono text-[11px] font-bold uppercase tracking-[0.3em] text-current/45 transition-colors hover:border-current/30 hover:text-current"
+                  @click="newArticleForm.contributionIds = []"
+                >
+                  {{ locale === 'ru' ? 'Очистить' : 'Clear' }}
+                </button>
+              </div>
+
+              <div v-if="selectedContributionArticles.length" class="grid w-full gap-px border border-current/10 bg-current/10">
+                <div
+                  v-for="thread in selectedContributionArticles"
+                  :key="thread.id"
+                  class="grid grid-cols-[1fr_auto] items-center gap-4 bg-white/70 px-4 py-3 font-mono"
+                >
+                  <span class="min-w-0">
+                    <span class="block truncate text-[11px] font-black uppercase tracking-[0.16em] text-current/80">{{ thread.title }}</span>
+                    <span class="mt-1 block truncate text-[8px] uppercase tracking-[0.22em] text-current/35">
+                      {{ thread.categoryLabel || thread.subcategory || getThreadMode(thread) }} // {{ formatArticleListDate(thread.publishedAt || thread.createdAt) }}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    class="h-7 w-7 border border-current/15 text-[13px] font-black text-current/45 transition-colors hover:border-current/40 hover:text-current"
+                    :aria-label="locale === 'ru' ? 'Убрать contribution' : 'Remove contribution'"
+                    @click="removeContributionArticle(thread.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="flex min-h-0 flex-1 flex-col">
+              <div class="flex shrink-0 flex-col gap-3 border-b border-current/10 py-4">
+                <label class="relative block w-full">
+                  <input
+                    v-model="contributionSearchQuery"
+                    type="text"
+                    class="min-w-0 w-full border border-current/10 bg-transparent px-4 pr-12 font-mono text-[11px] font-black uppercase tracking-[0.18em] outline-none placeholder:text-current/25 focus:border-current/40"
+                    style="height: 56px; min-height: 56px; line-height: 56px;"
+                    :placeholder="locale === 'ru' ? 'Поиск по названию или автору...' : 'Search by title or author...'"
+                  />
+                  <svg class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-current/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                    <path d="M16 16l5 5"></path>
+                  </svg>
+                </label>
+              </div>
+
+              <div class="min-h-0 flex-1 overflow-y-auto scroll-minimal">
+                <button
+                  v-for="thread in filteredContributionArticleOptions"
+                  :key="thread.id"
+                  type="button"
+                  class="grid w-full grid-cols-[1fr_auto] items-center gap-4 border-b px-5 py-4 text-left font-mono transition-colors last:border-0 disabled:cursor-not-allowed disabled:opacity-30"
+                  :class="isContributionSelected(thread.id)
+                    ? 'border-black/70 bg-black/75 text-white'
+                    : 'border-current/5 bg-transparent text-current hover:bg-black/[0.035]'"
+                  :disabled="!isContributionSelected(thread.id) && newArticleForm.contributionIds.length >= 3"
+                  @click="toggleContributionArticle(thread.id)"
+                >
+                  <span class="min-w-0">
+                    <span class="block truncate text-[13px] font-black uppercase tracking-[0.16em]" :class="isContributionSelected(thread.id) ? 'text-white' : 'text-current/85'">{{ thread.title }}</span>
+                    <span class="mt-1 block truncate text-[9px] uppercase tracking-[0.22em]" :class="isContributionSelected(thread.id) ? 'text-white/55' : 'text-current/35'">
+                      {{ thread.categoryLabel || thread.subcategory || getThreadMode(thread) }} // {{ getThreadAuthorName(thread) }}
+                    </span>
+                  </span>
+                  <span class="text-right text-[9px] uppercase tracking-[0.18em]" :class="isContributionSelected(thread.id) ? 'text-white/55' : 'text-current/30'">
+                    {{ formatArticleListDate(thread.publishedAt || thread.createdAt) }}
+                  </span>
+                </button>
+                <div v-if="filteredContributionArticleOptions.length === 0" class="px-4 py-16 text-center font-mono text-[9px] uppercase tracking-[0.28em] text-current/30">
+                  {{ contributionArticleOptions.length === 0
+                    ? (locale === 'ru' ? 'Статей пока нет' : 'No articles yet')
+                    : (locale === 'ru' ? 'Ничего не найдено' : 'No matching articles') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative z-20 border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
+            <button type="button" class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/back"
+                    @click="creationStep = 'metadata'">
+              <svg class="w-4 h-4 transition-transform group-hover/back:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+              </svg>
+              <span>{{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}</span>
+            </button>
+
+            <button
+              class="group relative flex h-12 w-64 items-center justify-center gap-3 overflow-hidden border-2 border-black bg-black px-5 text-white transition-all duration-500 hover:bg-black/85"
+              @click="continueFromContribution"
+            >
+              <span class="relative z-10 text-[11px] font-mono font-bold uppercase tracking-[0.4em]">
+                {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
+              </span>
+              <svg class="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7"></path>
+              </svg>
             </button>
           </div>
         </div>
@@ -1320,8 +1468,8 @@
               </button>
             </template>
             <template v-else>
-              <button class="article-board-secondary-action px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest"
-                      @click="creationStep = 'metadata'">
+                    <button class="article-board-secondary-action px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest"
+                      @click="creationStep = 'contribution'">
                 {{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}
               </button>
               <button class="article-board-secondary-action px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest"
@@ -2811,7 +2959,7 @@ const assetTypeLocales: Record<string, { en: string; ru: string }> = {
 
 // Article Creation State
 const isCreatingArticle = ref(false)
-const creationStep = ref<'metadata' | 'board' | 'preview'>('metadata')
+const creationStep = ref<'metadata' | 'contribution' | 'board' | 'preview'>('metadata')
 const showPublishConfirmation = ref(false)
 const editingArticleId = ref<string | null>(null)
 const drawing = useForumDrawing()
@@ -2826,7 +2974,17 @@ if (typeof localStorage !== 'undefined') {
 const newArticleForm = ref({
   title: '',
   description: '',
-  type: ''
+  type: '',
+  contributionIds: [] as string[]
+})
+
+const normalizeArticleForm = (form: any = {}) => ({
+  title: String(form.title || ''),
+  description: String(form.description || ''),
+  type: String(form.type || ''),
+  contributionIds: Array.isArray(form.contributionIds)
+    ? form.contributionIds.filter((id: any): id is string => typeof id === 'string').slice(0, 3)
+    : []
 })
 
 const isEditingArticle = computed(() => !!editingArticleId.value)
@@ -2834,12 +2992,65 @@ const editingArticleThread = computed(() => {
   if (!editingArticleId.value) return null
   return journalThreads.value.find(thread => thread.id === editingArticleId.value) || null
 })
+const isContributionPickerOpen = ref(false)
+const contributionSearchQuery = ref('')
+
+const contributionArticleOptions = computed(() => journalThreads.value
+  .filter(thread => thread.id !== editingArticleId.value)
+  .sort((a, b) => new Date(getThreadPublishedAt(b)).getTime() - new Date(getThreadPublishedAt(a)).getTime()))
+
+const filteredContributionArticleOptions = computed(() => {
+  const query = contributionSearchQuery.value.trim().toLowerCase()
+  if (!query) return contributionArticleOptions.value
+  return contributionArticleOptions.value.filter(thread => {
+    const title = String(thread.title || '').toLowerCase()
+    const author = getThreadAuthorName(thread).toLowerCase()
+    return title.includes(query) || author.includes(query)
+  })
+})
+
+const selectedContributionArticles = computed(() => newArticleForm.value.contributionIds
+  .map(id => journalThreads.value.find(thread => thread.id === id))
+  .filter((thread): thread is Thread & Record<string, any> => Boolean(thread)))
+
+const isContributionSelected = (threadId: string) => newArticleForm.value.contributionIds.includes(threadId)
+
+const toggleContributionArticle = (threadId: string) => {
+  const current = [...newArticleForm.value.contributionIds]
+  const existingIndex = current.indexOf(threadId)
+  if (existingIndex !== -1) {
+    current.splice(existingIndex, 1)
+    newArticleForm.value.contributionIds = current
+    return
+  }
+  if (current.length >= 3) return
+  newArticleForm.value.contributionIds = [...current, threadId]
+}
+
+const removeContributionArticle = (threadId: string) => {
+  newArticleForm.value.contributionIds = newArticleForm.value.contributionIds.filter(id => id !== threadId)
+}
+
+const openContributionPicker = () => {
+  isContributionPickerOpen.value = true
+  contributionSearchQuery.value = ''
+}
+
+const createContributionTargetSnapshot = (thread: Thread & Record<string, any>) => ({
+  id: thread.id,
+  title: thread.title || boardUiLabels.value.untitled,
+  category: thread.categoryLabel || thread.subcategory || getThreadMode(thread),
+  author: getThreadAuthorName(thread),
+  publishedAt: getThreadPublishedAt(thread)
+})
 
 const resetArticleEditorState = () => {
   stopBoardDrawingMode()
   showPublishConfirmation.value = false
   editingArticleId.value = null
-  newArticleForm.value = { title: '', description: '', type: '' }
+  isContributionPickerOpen.value = false
+  contributionSearchQuery.value = ''
+  newArticleForm.value = normalizeArticleForm()
   boardNodes.value = []
   boardConnections.value = []
   boardStrokes.value = []
@@ -2853,7 +3064,7 @@ const loadDraft = () => {
     try {
       editingArticleId.value = null
       const draft = JSON.parse(draftStr)
-      newArticleForm.value = draft.form
+      newArticleForm.value = normalizeArticleForm(draft.form)
       boardNodes.value = draft.nodes
       boardConnections.value = draft.connections || []
       boardStrokes.value = draft.strokes || []
@@ -3033,11 +3244,12 @@ const startEditArticle = (thread: Thread & Record<string, any>) => {
   closeReader()
   resetArticleEditorState()
   editingArticleId.value = thread.id
-  newArticleForm.value = {
+  newArticleForm.value = normalizeArticleForm({
     title: thread.title || '',
     description: thread.description || thread.summary || '',
-    type: getThreadMode(thread)
-  }
+    type: getThreadMode(thread),
+    contributionIds: thread.contributionIds || thread.contributesToThreadIds || []
+  })
 
   const board = getThreadBoard(thread)
   boardNodes.value = cloneBoardNodes(board.nodes)
@@ -3069,8 +3281,14 @@ const submitNewArticle = () => {
   // Animation duration matches the 700ms in CSS, user asked to not add actual saving logic yet
   setTimeout(() => {
     isSubmittingArticle.value = false
-    creationStep.value = 'board'
+    creationStep.value = 'contribution'
   }, 1000)
+}
+
+const continueFromContribution = () => {
+  isContributionPickerOpen.value = false
+  contributionSearchQuery.value = ''
+  creationStep.value = 'board'
 }
 
 const publishArticle = () => {
@@ -3219,6 +3437,8 @@ const createThreadPayloadFromArticle = () => {
   const authorName = currentUserName.value
   const categoryMode = newArticleForm.value.type
   const categoryLabel = selectedTypeLabel.value
+  const contributionIds = newArticleForm.value.contributionIds.slice(0, 3)
+  const contributionTargets = selectedContributionArticles.value.map(createContributionTargetSnapshot)
   const signal = getThreadSignal({
     id: 'pending',
     title: newArticleForm.value.title,
@@ -3271,12 +3491,16 @@ const createThreadPayloadFromArticle = () => {
     boardStrokes: board.strokes,
     textBlocks,
     textBlockOrder,
+    contributionIds,
+    contributionTargets,
+    contributesToThreadIds: contributionIds,
     content: {
       type: 'exforum-article-board',
       board,
       thesis,
       textBlocks,
-      textBlockOrder
+      textBlockOrder,
+      contributionIds
     },
     signal: signal || null,
     tags: []
@@ -3303,6 +3527,8 @@ const confirmPublishArticle = async () => {
     const savedThread = isEditingArticle.value && editingArticleId.value
       ? await forumStore.updateThread(editingArticleId.value, payload as Partial<Thread> & Record<string, any>)
       : await forumStore.createThread(payload as Omit<Thread, 'id'> & Record<string, any>)
+
+    await forumStore.syncContributionThreadLinks(savedThread.id, newArticleForm.value.contributionIds)
 
     showPublishConfirmation.value = false
     if (!isEditingArticle.value) {
