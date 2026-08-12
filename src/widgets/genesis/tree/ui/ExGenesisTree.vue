@@ -109,12 +109,12 @@
               {{ isHeatmapActive ? heatmapMetricLabel(emotion) : (emotion.shortName || emotion.label.slice(0, 3)) }}
             </div>
           </template>
-          <div class="flex max-w-[220px] flex-col gap-2">
-            <p class="font-mono text-[13px] font-black uppercase tracking-wide nier-text-primary">
+          <div class="flex max-w-[280px] flex-col gap-2.5">
+            <p class="font-mono text-[14px] font-black uppercase tracking-wide nier-text-primary">
               {{ emotion.label }}
             </p>
             <div class="h-px w-full bg-black/15 dark:bg-white/20"></div>
-            <p class="font-mono text-[9px] font-bold uppercase leading-relaxed text-black/55 dark:text-white/55">
+            <p class="font-mono text-[11px] font-black uppercase leading-[1.65] tracking-[0.04em] text-black/78 dark:text-white/78">
               {{ emotion.description }}
             </p>
             <div class="grid grid-cols-4 gap-2 border-t nier-border-primary pt-2 font-mono uppercase">

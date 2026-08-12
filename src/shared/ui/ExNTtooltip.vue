@@ -27,7 +27,8 @@
             </div>
           </div>
           <!-- Tooltip Stem -->
-          <div class="theme-tooltip-stem w-3 h-3 border-r border-b absolute -bottom-1.5"
+          <div class="theme-tooltip-stem absolute h-3 w-3"
+               :class="stemClass"
                :style="stemStyle"></div>
         </div>
       </Transition>
@@ -46,7 +47,12 @@ const props = defineProps<{
 const isVisible = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
 const tooltipRef = ref<HTMLElement | null>(null)
-const tooltipPosition = ref({ left: 0, top: 0, stemLeft: 0 })
+const tooltipPosition = ref<{ left: number, top: number, stemLeft: number, placement: 'top' | 'bottom' }>({
+  left: 0,
+  top: 0,
+  stemLeft: 0,
+  placement: 'top'
+})
 const viewportPadding = 20
 const tooltipGap = 24
 
@@ -67,11 +73,13 @@ const positionTooltip = () => {
   const fallbackTop = triggerRect.bottom + tooltipGap
   const maxTop = Math.max(viewportPadding, window.innerHeight - tooltipHeight - viewportPadding)
   const top = clamp(preferredTop >= viewportPadding ? preferredTop : fallbackTop, viewportPadding, maxTop)
+  const placement = top > triggerRect.top ? 'bottom' : 'top'
 
   tooltipPosition.value = {
     left: Math.round(left),
     top: Math.round(top),
-    stemLeft: Math.round(clamp(triggerCenterX - left, 12, tooltipWidth - 12))
+    stemLeft: Math.round(clamp(triggerCenterX - left, 12, tooltipWidth - 12)),
+    placement
   }
 }
 
@@ -113,6 +121,12 @@ const stemStyle = computed(() => {
     left: `${tooltipPosition.value.stemLeft}px`,
     transform: 'translateX(-50%) rotate(45deg)'
   }
+})
+
+const stemClass = computed(() => {
+  return tooltipPosition.value.placement === 'bottom'
+    ? '-top-1.5 border-l border-t'
+    : '-bottom-1.5 border-r border-b'
 })
 </script>
 
