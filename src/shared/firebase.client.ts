@@ -34,7 +34,8 @@ let dbInstance: Firestore;
 if (typeof window !== 'undefined') {
     try {
         dbInstance = initializeFirestore(app, {
-            localCache: persistentLocalCache()
+            localCache: persistentLocalCache(),
+            experimentalAutoDetectLongPolling: true
         });
     } catch (error) {
         // Another Firebase module may have initialized Firestore first, or
