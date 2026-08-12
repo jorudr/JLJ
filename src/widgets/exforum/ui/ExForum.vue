@@ -281,12 +281,13 @@
 
         <section
           v-if="articleViewMode === 'board'"
-          class="article-reader-board group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 cursor-pointer select-none overflow-hidden border-y border-x-0 border-current/10 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
+          ref="articleBoardPreviewRef"
+          class="article-reader-board group relative box-border h-[68vh] min-h-[460px] w-full max-w-full flex-1 select-none overflow-hidden border-y border-x-0 border-current/10 bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:22px_22px] bg-center shadow-inner sm:min-h-[min(72vh,780px)] sm:bg-[length:28px_28px]"
           :aria-label="articleLabels.board"
-          @click="openBoardFullscreen"
         >
           <div
             class="pointer-events-none absolute left-0 top-0 origin-top-left"
+            :class="isBoardPreviewReady ? 'opacity-100' : 'opacity-0'"
             :style="[boardWorldStyle, boardPreviewTransformStyle]"
           >
             <svg class="pointer-events-none absolute left-0 top-0 h-full w-full overflow-visible text-current/35">
@@ -401,9 +402,13 @@
           </div>
 
           <div class="pointer-events-none absolute inset-0 bg-black/[0.025]"></div>
-          <div class="pointer-events-none absolute right-4 top-4 border border-current/10 bg-white/85 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.28em] text-current/35">
+          <button
+            type="button"
+            class="absolute right-4 top-4 border border-current/15 bg-white/90 px-4 py-2.5 font-mono text-[8px] font-bold uppercase tracking-[0.28em] text-current/50 transition-colors hover:border-current/40 hover:bg-black hover:text-white"
+            @click.stop="openBoardFullscreen"
+          >
             {{ articleLabels.openBoard }}
-          </div>
+          </button>
         </section>
 
         <!-- TEXT SECTION -->
@@ -571,12 +576,16 @@
           <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
         </div>
 
-        <section v-if="selectedArticleContributions.length" class="article-contributions">
+        <section v-if="isContributionLinksLoading || selectedArticleContributions.length" class="article-contributions">
           <div class="article-contributions-head">
             <span>Contributions</span>
-            <strong>{{ selectedArticleContributions.length }}</strong>
+            <strong v-if="!isContributionLinksLoading">{{ selectedArticleContributions.length }}</strong>
+            <span v-else class="article-contributions-spinner" aria-hidden="true"></span>
           </div>
-          <div class="article-contributions-carousel">
+          <div v-if="isContributionLinksLoading" class="article-contributions-loading">
+            <span class="article-contributions-spinner" aria-hidden="true"></span>
+          </div>
+          <div v-else class="article-contributions-carousel">
             <button
               type="button"
               class="article-contributions-arrow article-contributions-arrow--left"
@@ -971,28 +980,6 @@
                 </button>
               </div>
 
-              <div v-if="selectedContributionArticles.length" class="grid w-full gap-px border border-current/10 bg-current/10">
-                <div
-                  v-for="thread in selectedContributionArticles"
-                  :key="thread.id"
-                  class="grid grid-cols-[1fr_auto] items-center gap-4 bg-white/70 px-4 py-3 font-mono"
-                >
-                  <span class="min-w-0">
-                    <span class="block truncate text-[11px] font-black uppercase tracking-[0.16em] text-current/80">{{ thread.title }}</span>
-                    <span class="mt-1 block truncate text-[8px] uppercase tracking-[0.22em] text-current/35">
-                      {{ thread.categoryLabel || thread.subcategory || getThreadMode(thread) }} // {{ formatArticleListDate(thread.publishedAt || thread.createdAt) }}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    class="h-7 w-7 border border-current/15 text-[13px] font-black text-current/45 transition-colors hover:border-current/40 hover:text-current"
-                    :aria-label="locale === 'ru' ? 'Убрать contribution' : 'Remove contribution'"
-                    @click="removeContributionArticle(thread.id)"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div v-else class="flex min-h-0 flex-1 flex-col">
@@ -2989,6 +2976,7 @@ const toggleReplyForm = (id: string) => {
 }
 
 const journalWrapperRef = ref<HTMLElement | null>(null)
+const articleBoardPreviewRef = ref<HTMLElement | null>(null)
 const boardViewportRef = ref<HTMLElement | null>(null)
 const boardStageRef = ref<HTMLElement | null>(null)
 const boardWorldRef = ref<HTMLElement | null>(null)
@@ -2999,6 +2987,7 @@ const boardStrokes = ref<any[]>([])
 const boardPan = ref({ x: 48, y: 36 })
 const boardScale = ref(1)
 const boardScaleOptions = [25, 50, 75, 100, 150, 200]
+const isBoardPreviewReady = ref(false)
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
 const boardFullscreenHudStyle = ref<Record<string, string>>({})
@@ -4137,7 +4126,7 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
   const nodeCenterX = (mainNode.position.x + (mainNode.size.width / 2)) * grid
   const nodeCenterY = (mainNode.position.y + (mainNode.size.height / 2)) * grid
   
-  const viewportRect = isFullScreen ? getArticleBoardViewportRect() : null
+  const viewportRect = isFullScreen ? getArticleBoardViewportRect() : getArticleBoardPreviewRect()
   const vWidth = viewportRect?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 1200)
   const vHeight = viewportRect?.height ?? (typeof window !== 'undefined' ? (isFullScreen ? window.innerHeight : window.innerHeight * 0.68) : 800)
   const scale = isFullScreen ? boardScale.value : 0.82
@@ -4146,6 +4135,10 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
     x: (vWidth / 2) - (nodeCenterX * scale),
     y: (vHeight / 2.5) - (nodeCenterY * scale)
   })
+}
+
+const getArticleBoardPreviewRect = () => {
+  return articleBoardPreviewRef.value?.getBoundingClientRect() || null
 }
 
 const getArticleBoardViewportRect = () => {
@@ -4186,6 +4179,7 @@ const resetArticleBoardFullscreenView = () => {
 const isLiked = ref(false)
 const isBookmarked = ref(false)
 const isArticleLikePending = ref(false)
+const isContributionLinksLoading = ref(false)
 let articleInteractionLoadRequestId = 0
 
 const toggleLike = async () => {
@@ -4227,16 +4221,29 @@ watch([
   const requestId = ++articleInteractionLoadRequestId
   isArticleLikePending.value = false
   const article = selectedArticle.value
+  isBoardPreviewReady.value = false
+  isContributionLinksLoading.value = Boolean(article)
   boardNodes.value = article ? cloneBoardNodes(article.board.nodes) : []
   boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
   isLiked.value = false
   isBookmarked.value = false
+  centerBoardOnMainNode()
 
   if (article) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
-    forumStore.fetchThreadLinks(article.id)
+    void forumStore.fetchThreadLinks(article.id)
+      .catch((error) => {
+        console.warn('[Forum] Failed to load contribution links:', error)
+      })
+      .finally(() => {
+        if (requestId === articleInteractionLoadRequestId && selectedArticle.value?.id === article.id) {
+          isContributionLinksLoading.value = false
+        }
+      })
+  } else {
+    isContributionLinksLoading.value = false
   }
 
   if (article && userId) {
@@ -4252,9 +4259,21 @@ watch([
 
   nextTick(() => {
     resizeCommentInput()
-    centerBoardOnMainNode()
+    if (requestId === articleInteractionLoadRequestId) {
+      centerBoardOnMainNode()
+      isBoardPreviewReady.value = Boolean(selectedArticle.value)
+    }
   })
 }, { immediate: true })
+
+watch(articleViewMode, (mode) => {
+  if (mode !== 'board' || !selectedArticle.value) return
+  isBoardPreviewReady.value = false
+  nextTick(() => {
+    centerBoardOnMainNode()
+    isBoardPreviewReady.value = true
+  })
+})
 
 const submitComment = async (parentId?: string) => {
   const article = selectedArticle.value
@@ -6035,6 +6054,30 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: rgba(44, 44, 42, 0.62);
+}
+
+.article-contributions-loading {
+  display: grid;
+  min-height: 80px;
+  place-items: center;
+  border: 1px solid rgba(44, 44, 42, 0.1);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.article-contributions-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(44, 44, 42, 0.18);
+  border-top-color: rgba(44, 44, 42, 0.78);
+  border-radius: 999px;
+  animation: article-contributions-spin 0.72s linear infinite;
+}
+
+@keyframes article-contributions-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .article-contributions-carousel {
