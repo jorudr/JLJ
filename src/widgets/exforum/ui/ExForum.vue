@@ -571,6 +571,50 @@
           <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
         </div>
 
+        <section v-if="selectedArticleContributions.length" class="article-contributions">
+          <div class="article-contributions-head">
+            <span>Contributions</span>
+            <strong>{{ selectedArticleContributions.length }}</strong>
+          </div>
+          <div class="article-contributions-carousel">
+            <button
+              type="button"
+              class="article-contributions-arrow article-contributions-arrow--left"
+              :aria-label="locale === 'ru' ? 'Листать назад' : 'Scroll back'"
+              @click="scrollContributionCarousel(-1)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+                <path d="M15 5l-7 7 7 7"></path>
+              </svg>
+            </button>
+
+            <div ref="contributionCarouselRef" class="article-contributions-track">
+              <button
+                v-for="thread in selectedArticleContributions"
+                :key="thread.id"
+                type="button"
+                class="article-contribution-card"
+                @click="navigateToNode(thread.id)"
+              >
+                <span>{{ thread.categoryLabel || thread.subcategory || getThreadMode(thread) }}</span>
+                <strong>{{ thread.title || boardUiLabels.untitled }}</strong>
+                <small>{{ getThreadAuthorName(thread) }} // {{ formatArticleListDate(thread.publishedAt || thread.createdAt) }}</small>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="article-contributions-arrow article-contributions-arrow--right"
+              :aria-label="locale === 'ru' ? 'Листать вперед' : 'Scroll forward'"
+              @click="scrollContributionCarousel(1)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+                <path d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </section>
+
         <form class="article-comment-composer" @submit.prevent="() => submitComment()">
           <div class="article-comment-composer-title">
             <div>
@@ -2746,6 +2790,19 @@ const comments = computed(() => {
   if (!selectedArticle.value) return []
   return forumStore.replies.get(selectedArticle.value.id) || []
 })
+const contributionCarouselRef = ref<HTMLElement | null>(null)
+const selectedArticleContributionIds = computed(() => {
+  const thread = selectedThread.value as (Thread & Record<string, any>) | undefined
+  if (!thread) return []
+
+  return Array.from(new Set((forumStore.threadLinks.get(thread.id) || [])
+    .filter(link => link.toThreadId === thread.id && link.type === 'extends')
+    .map(link => link.fromThreadId)))
+    .filter(id => typeof id === 'string' && id && id !== thread.id)
+})
+const selectedArticleContributions = computed(() => selectedArticleContributionIds.value
+  .map(id => journalThreads.value.find(thread => thread.id === id))
+  .filter((thread): thread is Thread & Record<string, any> => Boolean(thread)))
 function getSelectedAuthorStatus(authorId?: string): UserProfileStatus | null {
   if (!authorId) return null
   const user = forumStore.users.get(authorId)
@@ -4134,6 +4191,7 @@ watch([
 
   if (article) {
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
+    forumStore.fetchThreadLinks(article.id)
   }
 
   if (article && userId) {
@@ -4193,6 +4251,15 @@ const submitComment = async (parentId?: string) => {
 const deleteComment = async (reply: any) => {
   if (reply.authorId !== authStore.user?.uid) return
   await forumStore.softDeleteReply(reply)
+}
+
+const scrollContributionCarousel = (direction: -1 | 1) => {
+  const track = contributionCarouselRef.value
+  if (!track) return
+  track.scrollBy({
+    left: direction * Math.max(240, track.clientWidth * 0.72),
+    behavior: 'smooth'
+  })
 }
 
 const closeReader = () => {
@@ -5902,6 +5969,119 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   opacity: 0.72;
 }
 
+.article-contributions {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.article-contributions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.article-contributions-head span,
+.article-contributions-head strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(44, 44, 42, 0.62);
+}
+
+.article-contributions-carousel {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.article-contributions-track {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.article-contributions-track::-webkit-scrollbar {
+  display: none;
+}
+
+.article-contribution-card {
+  display: grid;
+  flex: 0 0 min(360px, 82vw);
+  gap: 10px;
+  min-height: 126px;
+  scroll-snap-align: start;
+  border: 1px solid rgba(44, 44, 42, 0.16);
+  border-left: 3px solid rgba(44, 44, 42, 0.56);
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.article-contribution-card:hover {
+  border-color: rgba(44, 44, 42, 0.38);
+  background: rgba(255, 255, 255, 0.94);
+  transform: translateY(-1px);
+}
+
+.article-contribution-card span,
+.article-contribution-card small {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(44, 44, 42, 0.42);
+}
+
+.article-contribution-card strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.18rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.1;
+  color: rgba(44, 44, 42, 0.86);
+}
+
+.article-contributions-arrow {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  place-items: center;
+  border: 1px solid rgba(44, 44, 42, 0.18);
+  background: rgba(248, 248, 246, 0.86);
+  color: rgba(44, 44, 42, 0.58);
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.article-contributions-arrow:hover {
+  border-color: rgba(44, 44, 42, 0.42);
+  background: rgba(44, 44, 42, 0.9);
+  color: #fff;
+}
+
+.article-contributions-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
 .article-comment-composer {
   display: flex;
   flex-direction: column;
@@ -6202,6 +6382,21 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     flex-direction: column;
     text-align: left;
     white-space: normal;
+  }
+
+  .article-contributions-carousel {
+    gap: 6px;
+  }
+
+  .article-contributions-arrow {
+    flex-basis: 34px;
+    width: 34px;
+  }
+
+  .article-contribution-card {
+    flex-basis: min(300px, 78vw);
+    min-height: 116px;
+    padding: 16px;
   }
 }
 </style>
