@@ -13,7 +13,7 @@
       <section
         v-if="isBoardFullscreen"
         ref="boardViewportRef"
-        class="fixed z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
+        class="exforum-board-scale-renderer fixed z-[9000] cursor-grab select-none overflow-hidden bg-white bg-[radial-gradient(circle,rgba(0,0,0,0.1)_1px,transparent_1.6px)] bg-[length:28px_28px] bg-center text-[#2c2c2a] active:cursor-grabbing"
         :style="boardFullscreenViewportStyle"
         :aria-label="articleLabels.fullscreenBoard"
         @pointerdown="startBoardPan"
@@ -75,7 +75,7 @@
             </div>
 
             <div v-else-if="node.type === 'price'" class="flex h-full w-full flex-col items-center justify-center bg-white/80 font-mono" :style="getBoardPriceShellStyle()">
-              <span class="font-black uppercase tracking-[0.2em] text-black/40" :style="getBoardPriceLabelStyle()">
+              <span class="exforum-board-functional-label font-black uppercase tracking-[0.2em] text-black/40" :style="getBoardPriceLabelStyle()">
                 {{ node.priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'PROJECTED PRICE') }}
               </span>
               <span
@@ -89,10 +89,10 @@
 
             <div v-else-if="node.type === 'asset'" class="flex h-full w-full items-center justify-center bg-white/80 font-mono" :style="getBoardAssetShellStyle()">
               <div class="flex min-w-0 flex-col items-center justify-center text-center" :style="getBoardAssetInnerStyle()">
-                <span class="max-w-full truncate font-black uppercase tracking-widest text-black/75" :style="getBoardAssetLabelStyle()">
+                <span class="exforum-board-functional-label max-w-full truncate font-black uppercase tracking-widest text-black/75" :style="getBoardAssetLabelStyle()">
                   {{ getAssetNodeLabel(node) }}
                 </span>
-                <span v-if="getAssetNodeTypeLabel(node)" class="max-w-full truncate font-black uppercase tracking-[0.3em] text-black/35" :style="getBoardAssetTypeStyle()">
+                <span v-if="getAssetNodeTypeLabel(node)" class="exforum-board-functional-label max-w-full truncate font-black uppercase tracking-[0.3em] text-black/35" :style="getBoardAssetTypeStyle()">
                   {{ getAssetNodeTypeLabel(node) }}
                 </span>
               </div>
@@ -102,23 +102,23 @@
               <span class="truncate font-black uppercase tracking-widest text-black/80" :style="getBoardDataTitleStyle(16)">{{ getStrategyNodeLabel(node) }}</span>
               <div v-if="getStrategyNodeMetrics(node)" class="grid grid-cols-5 text-center uppercase" :style="getBoardDataGridStyle(6)">
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.profitFactorShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.profitFactorShort }}</small>
                   <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.winRateShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.winRateShort }}</small>
                   <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.resultShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.resultShort }}</small>
                   <strong class="truncate font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)" :style="getBoardDataValueStyle(14)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.startShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.startShort }}</small>
                   <strong class="truncate font-black text-black/85" :style="getBoardDataValueStyle(14)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.endShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.18em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.endShort }}</small>
                   <strong class="truncate font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)" :style="getBoardDataValueStyle(14)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
                 </span>
               </div>
@@ -128,7 +128,7 @@
               <div class="flex items-start justify-between" :style="getBoardDataGridStyle(12)">
                 <div class="flex min-w-0 flex-col text-left">
                   <span class="truncate font-black uppercase tracking-widest text-black/80" :style="getBoardDataTitleStyle(16)">{{ getTradeNodeAssetLabel(node) }}</span>
-                  <span class="truncate font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)" :style="getBoardDataLabelStyle(9)">{{ getTradeNodeVector(node) }}</span>
+                  <span class="exforum-board-functional-label truncate font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)" :style="getBoardDataLabelStyle(9)">{{ getTradeNodeVector(node) }}</span>
                 </div>
                 <span class="max-w-[45%] truncate text-right font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)" :style="getBoardDataValueStyle(12)">
                   {{ getTradeNodeResult(node) || boardUiLabels.select }}
@@ -136,11 +136,11 @@
               </div>
               <div class="grid grid-cols-2 text-center uppercase" :style="getBoardDataGridStyle(6)">
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.entryShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.entryShort }}</small>
                   <strong class="truncate font-black text-black/80" :style="getBoardDataValueStyle(11)">{{ getTradeNodeEntryDate(node) }}</strong>
                 </span>
                 <span class="flex min-w-0 flex-col border border-black/10" :style="getBoardDataCellStyle(6, 4)">
-                  <small class="font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.exitShort }}</small>
+                  <small class="exforum-board-functional-label font-black tracking-[0.16em] text-black/40" :style="getBoardDataLabelStyle(8)">{{ boardUiLabels.exitShort }}</small>
                   <strong class="truncate font-black text-black/80" :style="getBoardDataValueStyle(11)">{{ getTradeNodeExitDate(node) }}</strong>
                 </span>
               </div>
@@ -4005,6 +4005,20 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 const scaledBoardNumber = (value: number, min = 1) => Math.max(min, value * boardRenderScale.value)
 const scaledBoardPx = (value: number, min = 1) => `${scaledBoardNumber(value, min)}px`
+const getBoardFunctionalTextScaleStyle = (fontSize: number, lineHeight: number) => {
+  if (!isBoardFullscreen.value || boardRenderScale.value >= 1) {
+    return {
+      fontSize: scaledBoardPx(fontSize),
+      lineHeight: scaledBoardPx(lineHeight)
+    }
+  }
+
+  return {
+    fontSize: `${fontSize}px`,
+    lineHeight: `${lineHeight}px`,
+    zoom: boardRenderScale.value
+  }
+}
 
 const getBoardTextShellStyle = () => ({
   gap: scaledBoardPx(12),
@@ -4034,8 +4048,7 @@ const getBoardPriceShellStyle = () => ({
 
 const getBoardPriceLabelStyle = () => ({
   marginBottom: scaledBoardPx(4),
-  fontSize: scaledBoardPx(8),
-  lineHeight: scaledBoardPx(10)
+  ...getBoardFunctionalTextScaleStyle(8, 10)
 })
 
 const getBoardPriceValueStyle = () => ({
@@ -4053,13 +4066,11 @@ const getBoardAssetInnerStyle = () => ({
 })
 
 const getBoardAssetLabelStyle = () => ({
-  fontSize: scaledBoardPx(18),
-  lineHeight: scaledBoardPx(22)
+  ...getBoardFunctionalTextScaleStyle(18, 22)
 })
 
 const getBoardAssetTypeStyle = () => ({
-  fontSize: scaledBoardPx(8),
-  lineHeight: scaledBoardPx(10)
+  ...getBoardFunctionalTextScaleStyle(8, 10)
 })
 
 const getBoardDataShellStyle = (gap: number, paddingX: number) => ({
@@ -4082,8 +4093,7 @@ const getBoardDataTitleStyle = (fontSize: number) => ({
 })
 
 const getBoardDataLabelStyle = (fontSize: number) => ({
-  fontSize: scaledBoardPx(fontSize),
-  lineHeight: scaledBoardPx(fontSize + 3)
+  ...getBoardFunctionalTextScaleStyle(fontSize, fontSize + 3)
 })
 
 const getBoardDataValueStyle = (fontSize: number) => ({
@@ -5177,6 +5187,21 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 .article-reader-board {
   z-index: 2;
   background-color: rgba(255, 255, 255, 0.94);
+}
+
+.exforum-board-scale-renderer {
+  image-rendering: -webkit-optimize-contrast;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
+.exforum-board-functional-label {
+  backface-visibility: hidden;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .exforum-board-hud-panel {
