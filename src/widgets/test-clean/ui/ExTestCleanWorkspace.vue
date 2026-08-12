@@ -20,7 +20,6 @@
       />
     </Transition>
 
-    <EtherealBackground v-if="canEnterWorkspace" :is-dark="isDark" :is-assembled="isAssembled" :show-bloom="showBloom" />
     <TesseractCanvas v-if="canEnterWorkspace && isTesseractEnabled" :is-dark="isDark" />
     <DesignVignette v-if="canEnterWorkspace" :is-dark="isDark" />
      <div 
@@ -248,7 +247,6 @@
 import { ref, watch, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
-import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import TesseractCanvas from '~/widgets/style/ui/TesseractCanvas.vue'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
@@ -662,12 +660,11 @@ watch(shouldPlayDashboardScore, (shouldPlay) => {
 const handleInitializationComplete = () => {
   if (!activeTab.value) primeDashboardScore()
   hasInitialized.value = true
-  
+  // Mount the destination before the initialization overlay finishes leaving,
+  // so the transition never exposes the workspace background between screens.
+  isAssembled.value = true
   setTimeout(() => {
     showBloom.value = false
-    setTimeout(() => {
-      isAssembled.value = true
-    }, 400)
   }, 500)
 }
 

@@ -310,8 +310,8 @@ const openPatreon = async (event: MouseEvent) => {
 }
 
 .access-gate__eyebrow {
-  color: var(--theme-text);
-  opacity: 0.5;
+  color: #000000;
+  opacity: 1;
 }
 
 .access-gate__title {
@@ -447,12 +447,15 @@ const openPatreon = async (event: MouseEvent) => {
 .access-gate__spinner,
 .access-gate__button-spinner {
   animation: access-gate-spin 800ms linear infinite;
-  border: 1px solid var(--theme-border-strong);
-  border-top-color: var(--theme-text);
   border-radius: 999px;
   display: inline-block;
   height: 1.4rem;
   width: 1.4rem;
+}
+
+.access-gate__spinner {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000000;
 }
 
 .access-gate__button-spinner {
