@@ -569,16 +569,9 @@
       </div>
 
       <footer class="article-comments-footer relative z-10">
-        <div class="article-comments-heading">
-          <div>
-            <span>{{ articleLabels.comments }}</span>
-          </div>
-          <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
-        </div>
-
         <section v-if="isContributionLinksLoading || selectedArticleContributions.length" class="article-contributions">
           <div class="article-contributions-head">
-            <span>Contributions</span>
+            <span>{{ locale === 'ru' ? 'Контрибуции' : 'Contributions' }}</span>
             <strong v-if="!isContributionLinksLoading">{{ selectedArticleContributions.length }}</strong>
             <span v-else class="article-contributions-spinner" aria-hidden="true"></span>
           </div>
@@ -623,6 +616,13 @@
             </button>
           </div>
         </section>
+
+        <div class="article-comments-heading">
+          <div>
+            <span>{{ articleLabels.comments }}</span>
+          </div>
+          <strong>{{ articleLabels.published }}: {{ articleComments.length }}</strong>
+        </div>
 
         <form class="article-comment-composer" @submit.prevent="() => submitComment()">
           <div class="article-comment-composer-title">
@@ -679,20 +679,20 @@
                   <svg class="article-comment-like__heart" :class="isReplyLiked(comment.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
                   {{ isReplyLiked(comment.id) ? articleLabels.liked : articleLabels.like }}
                 </button>
-                <button @click="toggleReplyForm(comment.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                <button @click="toggleReplyForm(comment.id)" class="article-reply-action">
                   {{ replyingToId === comment.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                 </button>
-                <button v-if="comment.authorId === authStore.user?.uid" @click="deleteComment(comment)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                <button v-if="comment.authorId === authStore.user?.uid" @click="deleteComment(comment)" class="article-reply-action ml-4">
                   {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
                 </button>
               </div>
 
               <!-- Level 1 Reply Form -->
               <form v-if="replyingToId === comment.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(comment.id)">
-                <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                <textarea :value="getReplyDraft(comment.id)" class="article-reply-input" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'" @input="setReplyDraftFromEvent(comment.id, $event)"></textarea>
                 <div class="flex justify-end gap-3 items-center">
-                  <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
-                  <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                  <span class="article-reply-counter">{{ getReplyDraft(comment.id).length }}/1000</span>
+                  <button type="submit" :disabled="!getReplyDraft(comment.id).trim()" class="article-reply-submit">
                     {{ locale === 'ru' ? 'Отправить' : 'Send' }}
                   </button>
                 </div>
@@ -719,20 +719,20 @@
                       <svg class="article-comment-like__heart" :class="isReplyLiked(reply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
                       {{ isReplyLiked(reply.id) ? articleLabels.liked : articleLabels.like }}
                     </button>
-                    <button @click="toggleReplyForm(reply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                    <button @click="toggleReplyForm(reply.id)" class="article-reply-action">
                       {{ replyingToId === reply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                     </button>
-                    <button v-if="reply.authorId === authStore.user?.uid" @click="deleteComment(reply)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                    <button v-if="reply.authorId === authStore.user?.uid" @click="deleteComment(reply)" class="article-reply-action ml-4">
                       {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
                     </button>
                   </div>
 
                   <!-- Level 2 Reply Form -->
                   <form v-if="replyingToId === reply.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(reply.id)">
-                    <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                    <textarea :value="getReplyDraft(reply.id)" class="article-reply-input" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'" @input="setReplyDraftFromEvent(reply.id, $event)"></textarea>
                     <div class="flex justify-end gap-3 items-center">
-                      <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
-                      <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                      <span class="article-reply-counter">{{ getReplyDraft(reply.id).length }}/1000</span>
+                      <button type="submit" :disabled="!getReplyDraft(reply.id).trim()" class="article-reply-submit">
                         {{ locale === 'ru' ? 'Отправить' : 'Send' }}
                       </button>
                     </div>
@@ -759,20 +759,20 @@
                           <svg class="article-comment-like__heart" :class="isReplyLiked(subreply.id) ? 'fill-rose-500 text-rose-500' : 'fill-transparent'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
                           {{ isReplyLiked(subreply.id) ? articleLabels.liked : articleLabels.like }}
                         </button>
-                        <button @click="toggleReplyForm(subreply.id)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">
+                        <button @click="toggleReplyForm(subreply.id)" class="article-reply-action">
                           {{ replyingToId === subreply.id ? (locale === 'ru' ? 'Отмена' : 'Cancel') : (locale === 'ru' ? 'Ответить' : 'Reply') }}
                         </button>
-                        <button v-if="subreply.authorId === authStore.user?.uid" @click="deleteComment(subreply)" class="text-[9px] font-mono tracking-widest uppercase opacity-40 hover:opacity-100 hover:text-red-500 transition-opacity ml-4">
+                        <button v-if="subreply.authorId === authStore.user?.uid" @click="deleteComment(subreply)" class="article-reply-action ml-4">
                           {{ locale === 'ru' ? 'Удалить' : 'Delete' }}
                         </button>
                       </div>
 
                       <!-- Level 3 Reply Form -->
                       <form v-if="replyingToId === subreply.id" class="mt-3 ml-4 border-l-2 border-current/20 pl-4 flex flex-col gap-2" @submit.prevent="submitComment(subreply.id)">
-                        <textarea v-model="commentDraft" class="bg-black/5 p-3 text-xs w-full outline-none resize-none" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'"></textarea>
+                        <textarea :value="getReplyDraft(subreply.id)" class="article-reply-input" rows="2" :placeholder="locale === 'ru' ? 'Написать ответ...' : 'Write a reply...'" @input="setReplyDraftFromEvent(subreply.id, $event)"></textarea>
                         <div class="flex justify-end gap-3 items-center">
-                          <span class="text-[9px] font-mono opacity-40">{{ commentDraft.length }}/1000</span>
-                          <button type="submit" :disabled="!commentDraft.trim()" class="text-[9px] font-mono uppercase bg-black text-white px-3 py-1.5 disabled:opacity-50">
+                          <span class="article-reply-counter">{{ getReplyDraft(subreply.id).length }}/1000</span>
+                          <button type="submit" :disabled="!getReplyDraft(subreply.id).trim()" class="article-reply-submit">
                             {{ locale === 'ru' ? 'Отправить' : 'Send' }}
                           </button>
                         </div>
@@ -2969,7 +2969,19 @@ const nestedComments = computed(() => {
 })
 
 const replyingToId = ref<string | null>(null)
+const replyDrafts = ref<Record<string, string>>({})
 const expandedComments = ref<Set<string>>(new Set())
+
+const getReplyDraft = (replyId: string) => replyDrafts.value[replyId] || ''
+const setReplyDraft = (replyId: string, value: string) => {
+  replyDrafts.value = {
+    ...replyDrafts.value,
+    [replyId]: value.slice(0, 1000)
+  }
+}
+const setReplyDraftFromEvent = (replyId: string, event: Event) => {
+  setReplyDraft(replyId, (event.target as HTMLTextAreaElement | null)?.value || '')
+}
 
 const toggleCommentExpand = (id: string) => {
   const newSet = new Set(expandedComments.value)
@@ -2983,8 +2995,7 @@ const toggleReplyForm = (id: string) => {
     replyingToId.value = null
   } else {
     replyingToId.value = id
-    commentDraft.value = ''
-    nextTick(resizeCommentInput)
+    if (!replyDrafts.value[id]) setReplyDraft(id, '')
   }
 }
 
@@ -4240,6 +4251,8 @@ watch([
   boardConnections.value = article?.board.connections ? JSON.parse(JSON.stringify(article.board.connections)) : []
   boardStrokes.value = article?.board.strokes ? JSON.parse(JSON.stringify(article.board.strokes)) : []
   commentDraft.value = ''
+  replyDrafts.value = {}
+  replyingToId.value = null
   isLiked.value = false
   isBookmarked.value = false
   centerBoardOnMainNode()
@@ -4291,7 +4304,7 @@ watch(articleViewMode, (mode) => {
 const submitComment = async (parentId?: string) => {
   const article = selectedArticle.value
   const user = authStore.user
-  const text = commentDraft.value.trim()
+  const text = (parentId ? getReplyDraft(parentId) : commentDraft.value).trim()
 
   if (!article || !user || !text) return
 
@@ -4314,10 +4327,12 @@ const submitComment = async (parentId?: string) => {
 
   try {
     await forumStore.createReply(article.id, replyData)
-    commentDraft.value = ''
     if (parentId) {
+      setReplyDraft(parentId, '')
       replyingToId.value = null
       expandedComments.value.add(parentId)
+    } else {
+      commentDraft.value = ''
     }
     nextTick(resizeCommentInput)
   } catch (error) {
@@ -6040,9 +6055,9 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .article-comments-heading span,
 .article-comments-heading strong {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.2em;
   opacity: 0.72;
 }
 
@@ -6062,11 +6077,11 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 .article-contributions-head span,
 .article-contributions-head strong {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.26em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(44, 44, 42, 0.62);
+  opacity: 0.72;
 }
 
 .article-contributions-loading {
@@ -6318,6 +6333,76 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   background: rgba(44, 44, 42, 0.42);
   border-color: rgba(44, 44, 42, 0.42);
   opacity: 1;
+}
+
+.article-reply-action {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: rgba(44, 44, 42, 0.68);
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.article-reply-action:hover {
+  color: rgba(44, 44, 42, 1);
+}
+
+.article-reply-input {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  border: 1px solid rgba(44, 44, 42, 0.18);
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.56);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: rgba(44, 44, 42, 0.92);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.article-reply-input::placeholder {
+  color: rgba(44, 44, 42, 0.62);
+  opacity: 1;
+}
+
+.article-reply-input:focus {
+  border-color: rgba(44, 44, 42, 0.54);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.article-reply-counter {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(44, 44, 42, 0.54);
+}
+
+.article-reply-submit {
+  border: 1px solid rgba(44, 44, 42, 0.88);
+  padding: 9px 13px;
+  background: rgba(44, 44, 42, 0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: #fff;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.article-reply-submit:hover:not(:disabled) {
+  background: rgba(44, 44, 42, 1);
+}
+
+.article-reply-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .article-comments-list {
