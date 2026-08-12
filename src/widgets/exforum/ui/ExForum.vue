@@ -18,61 +18,6 @@
         :aria-label="articleLabels.fullscreenBoard"
         @pointerdown="startBoardPan"
       >
-        <button
-          class="absolute left-1/2 top-5 z-20 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 border border-black/20 bg-white/90 px-4 py-3 text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.2em] text-black/65 shadow-[0_8px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-black/40 hover:text-black sm:px-5"
-          type="button"
-          @click.stop="closeBoardFullscreen"
-        >
-          {{ fullscreenExitLabel }}
-        </button>
-
-        <div
-          class="absolute left-2 top-32 z-30 flex items-start gap-3 text-black pointer-events-none"
-          data-board-chrome
-          @pointerdown.stop
-          @click.stop
-        >
-          <div class="relative ml-3 flex flex-col items-center gap-2">
-            <div class="article-board-tool">
-              <button
-                type="button"
-                class="pointer-events-auto flex h-8 w-8 items-center justify-center border border-black/20 bg-white text-[10px] font-mono italic opacity-70 transition-colors hover:bg-black/5 hover:opacity-100"
-                :aria-label="locale === 'ru' ? 'Сбросить вид' : 'Reset view'"
-                @click.stop="resetArticleBoardFullscreenView"
-              >
-                [R]
-              </button>
-              <span class="article-board-tool-tooltip">{{ locale === 'ru' ? 'Сбросить вид' : 'Reset view' }}</span>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-6 border-l border-black/20 py-1 pl-4">
-            <div class="flex flex-col">
-              <span class="text-[8px] font-mono uppercase tracking-widest opacity-40">
-                Viewport_Telemetry
-              </span>
-              <span class="text-[12px] font-mono uppercase tracking-widest opacity-80">
-                {{ (boardScale * 100).toFixed(0) }}% // FOCUS
-              </span>
-            </div>
-
-            <div class="flex flex-col space-y-1">
-              <button
-                v-for="zoom in boardScaleOptions"
-                :key="zoom"
-                type="button"
-                class="pointer-events-auto relative flex h-5 w-12 items-center justify-center overflow-hidden border border-black/20 bg-white text-[9px] font-mono tracking-tighter transition-all"
-                :class="Math.round(boardScale * 100) === zoom ? '!border-black !bg-black !text-white opacity-100' : 'text-black/55 opacity-70 hover:bg-black/5 hover:text-black hover:opacity-100'"
-                @click.stop="setArticleBoardScale(zoom / 100)"
-              >
-                <div v-if="Math.round(boardScale * 100) === zoom" class="absolute inset-0 bg-white/10 animate-pulse"></div>
-                <span class="relative z-10" :class="Math.round(boardScale * 100) === zoom ? '!text-white' : ''">{{ zoom }}%</span>
-                <div class="absolute right-0 top-0 h-1 w-1 bg-current opacity-20"></div>
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div
           class="absolute left-0 top-0 origin-top-left"
           :style="[boardWorldStyle, boardTransformStyle]"
@@ -206,6 +151,67 @@
         <div class="pointer-events-none absolute inset-0 bg-black/[0.025]"></div>
       </section>
     </Transition>
+
+    <Teleport to="body">
+      <div
+        v-if="isBoardFullscreen"
+        class="exforum-board-fullscreen-hud pointer-events-none fixed z-[2147483647] flex items-center justify-center px-4"
+        :style="boardFullscreenHudStyle"
+        data-board-chrome
+        @pointerdown.stop
+        @click.stop
+      >
+        <div class="exforum-board-hud-panel" :aria-label="articleLabels.fullscreenBoard">
+          <button
+            type="button"
+            class="exforum-board-hud-button exforum-board-hud-exit group"
+            :aria-label="fullscreenExitLabel"
+            @click.stop="closeBoardFullscreen"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="square" stroke-linejoin="miter" class="h-5 w-5" aria-hidden="true">
+              <path d="M15 6 9 12l6 6" />
+              <path d="M9 12h12" />
+            </svg>
+            <span class="exforum-board-hud-tooltip">[ {{ fullscreenExitLabel }} ]</span>
+          </button>
+
+          <button
+            type="button"
+            class="exforum-board-hud-button group"
+            :aria-label="locale === 'ru' ? 'Сбросить вид' : 'Reset view'"
+            @click.stop="resetArticleBoardFullscreenView"
+          >
+            <span class="italic text-[10px] font-mono">[R]</span>
+            <span class="exforum-board-hud-tooltip">[ {{ locale === 'ru' ? 'Сбросить вид' : 'Reset view' }} ]</span>
+          </button>
+
+          <div class="exforum-board-hud-flyout">
+            <button
+              type="button"
+              class="exforum-board-hud-button"
+              :aria-label="locale === 'ru' ? 'Масштаб' : 'Scale'"
+            >
+              <span class="font-mono text-[9px] tracking-tight">{{ Math.round(boardScale * 100) }}%</span>
+            </button>
+            <div class="exforum-board-hud-flyout-content">
+              <div class="exforum-board-hud-panel" :aria-label="locale === 'ru' ? 'Варианты масштаба' : 'Scale options'">
+                <button
+                  v-for="zoom in boardScaleOptions"
+                  :key="zoom"
+                  type="button"
+                  class="exforum-board-hud-button"
+                  :class="{ 'is-active': Math.round(boardScale * 100) === zoom }"
+                  :aria-label="`${zoom}%`"
+                  @click.stop="setArticleBoardScale(zoom / 100)"
+                >
+                  <span class="font-mono text-[9px] tracking-tight">{{ zoom }}%</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <Transition name="fade-slide" mode="out-in">
     <!-- READER VIEW: Detailed Content -->
@@ -2765,6 +2771,7 @@ const boardScale = ref(1)
 const boardScaleOptions = [25, 50, 75, 100, 150, 200]
 const isBoardFullscreen = ref(false)
 const boardFullscreenViewportStyle = ref<Record<string, string>>({})
+const boardFullscreenHudStyle = ref<Record<string, string>>({})
 const activeBoardWire = ref<{
   fromId: string
   fromPort: JournalArticleBoardPort
@@ -3965,6 +3972,11 @@ const syncBoardFullscreenViewport = () => {
     left: `${rect.left}px`,
     width: `${rect.width}px`,
     height: `${rect.height}px`
+  }
+  boardFullscreenHudStyle.value = {
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+    bottom: `${Math.max(12, window.innerHeight - rect.bottom + 32)}px`
   }
 }
 
@@ -5167,6 +5179,122 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   background-color: rgba(255, 255, 255, 0.94);
 }
 
+.exforum-board-hud-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-color: rgb(0 0 0 / 0.16);
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.94);
+  padding: 6px;
+  color: #111;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  pointer-events: auto;
+}
+
+.exforum-board-hud-button {
+  position: relative;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: rgb(0 0 0 / 0.68);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.exforum-board-hud-button:hover {
+  border-color: rgb(0 0 0 / 0.18);
+  background: rgb(0 0 0 / 0.05);
+  color: #000;
+}
+
+.exforum-board-hud-button.is-active {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+
+.exforum-board-hud-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 20;
+  white-space: nowrap;
+  border-color: rgb(0 0 0 / 0.14);
+  border-style: solid;
+  border-width: 1px;
+  background: rgb(255 255 255 / 0.98);
+  padding: 6px 12px;
+  color: #000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  transition: opacity 160ms ease;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.exforum-board-hud-button:hover .exforum-board-hud-tooltip,
+.exforum-board-hud-button:focus-visible .exforum-board-hud-tooltip {
+  opacity: 1;
+}
+
+.exforum-board-hud-exit {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+
+.exforum-board-hud-exit:hover {
+  border-color: #000;
+  background: rgb(0 0 0 / 0.86);
+  color: #fff;
+}
+
+.exforum-board-hud-flyout {
+  position: relative;
+  pointer-events: auto;
+}
+
+.exforum-board-hud-flyout-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 20;
+  padding-bottom: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.exforum-board-hud-flyout-content .exforum-board-hud-panel {
+  flex-direction: column;
+}
+
+.exforum-board-hud-flyout:hover .exforum-board-hud-flyout-content,
+.exforum-board-hud-flyout:focus-within .exforum-board-hud-flyout-content {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
 .exforum-page-reify-enter-active,
 .exforum-page-reify-leave-active {
   transition:
@@ -5203,40 +5331,6 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     transform: none;
     filter: none;
   }
-}
-
-.article-board-tool {
-  position: relative;
-  pointer-events: auto;
-}
-
-.article-board-tool-tooltip {
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 10px);
-  z-index: 9001;
-  border: 1px solid rgba(44, 44, 42, 0.18);
-  padding: 4px 7px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.08);
-  color: #2c2c2a;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  line-height: 1;
-  opacity: 0;
-  pointer-events: none;
-  text-transform: uppercase;
-  transform: translateY(-50%) translateX(-4px);
-  transition: opacity 140ms ease, transform 140ms ease;
-  white-space: nowrap;
-}
-
-.article-board-tool:hover .article-board-tool-tooltip,
-.article-board-tool:focus-within .article-board-tool-tooltip {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
 }
 
 .article-board-secondary-action {
