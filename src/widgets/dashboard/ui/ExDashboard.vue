@@ -1,6 +1,11 @@
 <template>
   <div class="dashboard-shell h-full min-h-0 w-full relative overflow-hidden py-1.5 pb-4 lg:py-2 lg:pb-4" :class="activeDashboardPanel === 'forum' ? 'px-0' : 'px-6 lg:px-10'">
-    <GradflowBackground preset="mystic" :config="dashboardGradflowConfig" />
+    <div
+      class="pointer-events-none absolute inset-0 transition-opacity duration-[900ms] ease-in-out"
+      :class="isEventsPanelActive ? 'opacity-0' : 'opacity-100'"
+    >
+      <GradflowBackground preset="mystic" :config="dashboardGradflowConfig" />
+    </div>
 
     <!-- Update Notification Widget -->
     <div v-if="updateNotification.showUpdate" class="absolute top-0 left-12 right-12 z-[250] nier-bg-inverted p-5 flex justify-between items-center overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_10px_40px_rgba(255,255,255,0.2)]">
@@ -334,6 +339,7 @@ const menuStyle = ref<Record<string, string>>({})
 const showProfileOverlay = ref(false)
 const activeDashboardPanel = ref<string | null>(null)
 const isDashboardForumLeaving = ref(false)
+const isEventsPanelActive = computed(() => activeDashboardPanel.value === 'tournament')
 const isOfflineRestrictedPanel = computed(() => (
   authStore.isOffline &&
   ['forum', 'activity', 'tournament'].includes(activeDashboardPanel.value || '')
