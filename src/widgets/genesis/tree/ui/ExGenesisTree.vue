@@ -310,19 +310,20 @@
                class="mb-3 h-10 w-full border nier-border-primary bg-black/[0.03] dark:bg-white/[0.03] px-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] nier-text-primary outline-none transition-colors placeholder:text-black/25 dark:placeholder:text-white/25 focus:border-black/45 dark:focus:border-white/45"
                :placeholder="t('genesis.tree.presets.searchPlaceholder')"
                @keydown.stop />
-        <div class="mb-3 border nier-border-primary bg-black/[0.02] dark:bg-white/[0.02] p-3">
+        <div class="mb-3">
           <div class="mb-2 font-mono text-[7px] font-black uppercase tracking-[0.3em] text-black/35 dark:text-white/35">
             {{ t('genesis.tree.controls.heatmap') }}
           </div>
-          <div class="grid grid-cols-4 gap-1">
+          <div class="grid grid-cols-4 border nier-border-primary">
             <button v-for="mode in heatmapModes"
                     :key="mode.id"
-                    class="relative overflow-hidden border px-2 py-2 font-mono text-[7px] font-black uppercase tracking-[0.12em] transition-all duration-300"
-                    :class="heatmapMode === mode.id ? heatmapButtonClass(mode.id) : 'nier-border-primary bg-black/[0.02] dark:bg-[#050505] text-black/35 dark:text-white/35 hover:border-black/30 dark:hover:border-white/30 hover:text-black dark:hover:text-white'"
+                    class="border-r nier-border-primary px-2 py-2 font-mono text-[8px] font-black uppercase tracking-[0.14em] transition-colors last:border-r-0"
+                    :class="heatmapMode === mode.id ? heatmapButtonClass(mode.id) : 'bg-black/[0.02] dark:bg-white/[0.02] text-black/35 dark:text-white/35 hover:text-black dark:hover:text-white'"
                     @click="heatmapMode = mode.id">
               <span class="relative z-10">{{ t(mode.labelKey) }}</span>
             </button>
           </div>
+          <div class="mt-3 w-full border-t nier-border-primary"></div>
         </div>
         <div class="mb-3 grid grid-cols-4 border nier-border-primary">
           <button v-for="tab in presetTabs"
@@ -355,16 +356,6 @@
       </div>
     </div>
 
-    <Transition name="tree-detail-panel">
-      <ExGenesisTreeNodeDetailsPanel
-        v-if="selectedTreeNode"
-        :node="selectedTreeNode"
-        :title="selectedTreeNodeTitle"
-        :type-label="selectedTreeNodeTypeLabel"
-        @close="closeSelectedTreeNode"
-        @open-trade-archive="openTradeArchive"
-      />
-  </Transition>
 </div>
 </template>
 
@@ -372,7 +363,6 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import ExNTtooltip from '~/shared/ui/ExNTtooltip.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import ExGenesisTreeNodeDetailsPanel from './ExGenesisTreeNodeDetailsPanel.vue'
 import { useGenesisTree } from '../model/useGenesisTree'
 import { useMatrixState } from '../../model/matrix/useMatrixState'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -389,9 +379,6 @@ const {
   treePresetOptions
 } = useGenesisTree()
 const { t } = useI18n()
-const emit = defineEmits<{
-  openTradeArchive: [trade: { id?: string, strategyId?: string }]
-}>()
 
 const pan = ref({ x: 0, y: 0 })
 const lastPointer = ref({ x: 0, y: 0 })
@@ -487,10 +474,8 @@ const isPresetPanelOpen = () => {
   return !isPresetPanelCollapsed.value
 }
 
-const selectTreeNode = (node: any, type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
-  selectedTreeNode.value = node
-  selectedTreeNodeType.value = type
-  selectedTreeNodeKey.value = node.treeKey || node.id || null
+const selectTreeNode = (_node: any, _type: 'strategy' | 'scenario' | 'condition' | 'emotion') => {
+  closeSelectedTreeNode()
 }
 
 const closeSelectedTreeNode = () => {
@@ -566,24 +551,6 @@ defineExpose({
   isPresetPanelOpen
 })
 
-
-const openTradeArchive = (trade: { id?: string, strategyId?: string } | null | undefined) => {
-  if (!trade?.id) return
-  emit('openTradeArchive', trade)
-}
-
-const selectedTreeNodeTitle = computed(() => {
-  const node = selectedTreeNode.value
-  if (!node) return ''
-
-  return node.displayName || node.label || node.name || node.id || ''
-})
-
-const selectedTreeNodeTypeLabel = computed(() => {
-  if (!selectedTreeNodeType.value) return ''
-  return t(`genesis.tree.details.types.${selectedTreeNodeType.value}`)
-})
-
 const getNodeMetricValue = (node: any) => {
   if (heatmapMode.value === 'winrate') return Number(node?.winrateValue || 0)
   if (heatmapMode.value === 'pf') return Math.min(Number(node?.profitFactorRatioValue || 0) / 2, 1)
@@ -625,7 +592,7 @@ const heatmapMetricColorClass = (node: any) => {
 }
 
 const heatmapButtonClass = (_mode: string) => {
-  return 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+  return 'bg-black text-white dark:bg-white dark:text-black'
 }
 
 const nodeSurfaceClass = (node: any) => {
@@ -684,10 +651,9 @@ const isTargetNode = (node: any) => {
 }
 
 const isNodeHighlighted = (node: any) => {
-  if (typeof node === 'string') return highlightedNodeIds.value.has(node) || selectedTreeNodeKey.value === node
+  if (typeof node === 'string') return highlightedNodeIds.value.has(node)
 
-  const nodeKey = node?.treeKey || node?.id || ''
-  return highlightedNodeIds.value.has(node?.treeKey || '') || highlightedNodeIds.value.has(node?.id || '') || selectedTreeNodeKey.value === nodeKey
+  return highlightedNodeIds.value.has(node?.treeKey || '') || highlightedNodeIds.value.has(node?.id || '')
 }
 
 const strategyHasHighlight = (strategy: any) => {
@@ -878,27 +844,3 @@ const conditionRowsPath = (
 }
 
 </script>
-
-<style scoped>
-.tree-detail-panel-enter-active,
-.tree-detail-panel-leave-active {
-  transition:
-    opacity 260ms ease,
-    transform 260ms ease,
-    filter 260ms ease;
-}
-
-.tree-detail-panel-enter-from,
-.tree-detail-panel-leave-to {
-  opacity: 0;
-  filter: blur(8px);
-  transform: translate(18px, -50%) scale(0.985);
-}
-
-.tree-detail-panel-enter-to,
-.tree-detail-panel-leave-from {
-  opacity: 1;
-  filter: blur(0);
-  transform: translate(0, -50%) scale(1);
-}
-</style>

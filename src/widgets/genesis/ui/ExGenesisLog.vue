@@ -762,12 +762,20 @@
         <button
           type="button"
           class="group relative flex h-10 w-10 items-center justify-center border border-transparent text-white/70 transition-all hover:border-white/20 hover:bg-white/5 hover:text-white"
-          :class="isGenesisTreePresetPanelOpen ? 'border-white bg-white text-black hover:bg-white/85 hover:text-black' : ''"
+          :class="isGenesisTreePresetPanelOpen ? '!border-white !bg-white !text-black hover:!bg-white/85 hover:!text-black' : ''"
           :aria-label="locale === 'ru' ? 'Пресеты' : 'Presets'"
           :aria-pressed="isGenesisTreePresetPanelOpen"
           @click="openGenesisTreePresets"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            class="h-5 w-5"
+            :class="isGenesisTreePresetPanelOpen ? '!text-black' : ''"
+            aria-hidden="true"
+          >
             <path d="M4 7h16M4 12h16M4 17h16" />
             <circle cx="8" cy="7" r="1.5" fill="currentColor" stroke="none" />
             <circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none" />
