@@ -6113,13 +6113,12 @@ watch(() => [route.query.nodeId, route.query.page], () => {
   padding: 18px;
   background: rgba(255, 255, 255, 0.72);
   text-align: left;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .article-contribution-card:hover {
   border-color: rgba(44, 44, 42, 0.38);
   background: rgba(255, 255, 255, 0.94);
-  transform: translateY(-1px);
 }
 
 .article-contribution-card span,
