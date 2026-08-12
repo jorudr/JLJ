@@ -38,7 +38,7 @@
             v-for="node in boardNodes"
             :key="node.id"
             data-board-node
-            class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+            class="absolute box-border overflow-hidden border border-black/20 bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)]"
             :style="getBoardNodeStyle(node)"
           >
               <div v-if="node.type === 'text'" class="flex h-full flex-col" :style="getBoardTextShellStyle()">
@@ -305,7 +305,7 @@
               v-for="node in boardNodes"
               :key="node.id"
               data-board-node
-              class="absolute box-border overflow-hidden border border-current/20 bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm"
+              class="absolute box-border overflow-hidden border border-current/20 bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.08)]"
               :style="getBoardNodeStyle(node)"
             >
               <div v-if="node.type === 'text'" class="flex h-full flex-col gap-3 p-4">
@@ -922,7 +922,7 @@
               :key="node.id"
               data-board-node
               :data-node-id="node.id"
-              class="absolute box-border overflow-visible bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] backdrop-blur-sm group/node transition-all border"
+              class="absolute box-border overflow-visible bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] group/node transition-all border"
               :class="[
                 selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20',
                 activeBoardTool === 'pencil' ? 'pointer-events-none select-none' : ''
@@ -2779,6 +2779,21 @@ const activeBoardWire = ref<{
   originalToPort?: JournalArticleBoardPort
   current: { x: number; y: number }
 } | null>(null)
+
+const getBoardDevicePixelRatio = () => (
+  typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
+    ? window.devicePixelRatio
+    : 1
+)
+const snapBoardCssPixel = (value: number) => {
+  if (!Number.isFinite(value)) return 0
+  const ratio = getBoardDevicePixelRatio()
+  return Math.round(value * ratio) / ratio
+}
+const snapBoardPoint = (point: { x: number; y: number }) => ({
+  x: snapBoardCssPixel(point.x),
+  y: snapBoardCssPixel(point.y)
+})
 const passivePortRevealDistance = 96
 const activeAssetNodeId = ref<string | null>(null)
 const activeStrategyNodeId = ref<string | null>(null)
@@ -3759,15 +3774,14 @@ const boardBaseWorldSize = computed(() => ({
   height: boardUnitSize.value.height * boardRenderGridSize.value
 }))
 const boardWorldStyle = computed(() => ({
-  width: `${boardBaseWorldSize.value.width}px`,
-  height: `${boardBaseWorldSize.value.height}px`
+  width: `${snapBoardCssPixel(boardBaseWorldSize.value.width)}px`,
+  height: `${snapBoardCssPixel(boardBaseWorldSize.value.height)}px`
 }))
 const boardTransformStyle = computed(() => ({
-  transform: `translate3d(${boardPan.value.x}px, ${boardPan.value.y}px, 0)`,
-  willChange: 'transform'
+  transform: `translate(${snapBoardCssPixel(boardPan.value.x)}px, ${snapBoardCssPixel(boardPan.value.y)}px)`
 }))
 const boardPreviewTransformStyle = computed(() => ({
-  transform: `translate(${boardPan.value.x}px, ${boardPan.value.y}px) scale(0.82)`
+  transform: `translate(${snapBoardCssPixel(boardPan.value.x)}px, ${snapBoardCssPixel(boardPan.value.y)}px) scale(0.82)`
 }))
 
 const cloneBoardNodes = (nodes: JournalArticleBoardNode[]) => JSON.parse(JSON.stringify(nodes || [])) as JournalArticleBoardNode[]
@@ -3800,10 +3814,10 @@ const centerBoardOnMainNode = (isFullScreen = false) => {
   const vHeight = viewportRect?.height ?? (typeof window !== 'undefined' ? (isFullScreen ? window.innerHeight : window.innerHeight * 0.68) : 800)
   const scale = isFullScreen ? boardScale.value : 0.82
   
-  boardPan.value = {
+  boardPan.value = snapBoardPoint({
     x: (vWidth / 2) - (nodeCenterX * scale),
     y: (vHeight / 2.5) - (nodeCenterY * scale)
-  }
+  })
 }
 
 const getArticleBoardViewportRect = () => {
@@ -3831,10 +3845,10 @@ const setArticleBoardScale = (nextScale: number) => {
   }
 
   boardScale.value = scale
-  boardPan.value = {
+  boardPan.value = snapBoardPoint({
     x: screenCenter.x - worldCenter.x * scale,
     y: screenCenter.y - worldCenter.y * scale
-  }
+  })
 }
 
 const resetArticleBoardFullscreenView = () => {
@@ -4003,22 +4017,13 @@ const navigateToNode = (id: string) => {
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
-const scaledBoardNumber = (value: number, min = 1) => Math.max(min, value * boardRenderScale.value)
+const scaledBoardNumber = (value: number, min = 1) => snapBoardCssPixel(Math.max(min, value * boardRenderScale.value))
 const scaledBoardPx = (value: number, min = 1) => `${scaledBoardNumber(value, min)}px`
-const getBoardFunctionalTextScaleStyle = (fontSize: number, lineHeight: number) => {
-  if (!isBoardFullscreen.value || boardRenderScale.value >= 1) {
-    return {
-      fontSize: scaledBoardPx(fontSize),
-      lineHeight: scaledBoardPx(lineHeight)
-    }
-  }
-
-  return {
-    fontSize: `${fontSize}px`,
-    lineHeight: `${lineHeight}px`,
-    zoom: boardRenderScale.value
-  }
-}
+const scaledBoardFontPx = (value: number) => `${snapBoardCssPixel(Math.max(1, value * boardRenderScale.value))}px`
+const getBoardFunctionalTextScaleStyle = (fontSize: number, lineHeight: number) => ({
+  fontSize: scaledBoardFontPx(fontSize),
+  lineHeight: scaledBoardFontPx(lineHeight)
+})
 
 const getBoardTextShellStyle = () => ({
   gap: scaledBoardPx(12),
@@ -4026,19 +4031,19 @@ const getBoardTextShellStyle = () => ({
 })
 
 const getBoardTextTitleStyle = () => ({
-  fontSize: scaledBoardPx(20),
-  lineHeight: scaledBoardPx(20)
+  fontSize: scaledBoardFontPx(20),
+  lineHeight: scaledBoardFontPx(20)
 })
 
 const getBoardTextBodyStyle = (node: JournalArticleBoardNode) => ({
-  fontSize: scaledBoardPx((node as any).isQuestion ? 30 : 14),
-  lineHeight: scaledBoardPx((node as any).isQuestion ? 36 : 22)
+  fontSize: scaledBoardFontPx((node as any).isQuestion ? 30 : 14),
+  lineHeight: scaledBoardFontPx((node as any).isQuestion ? 36 : 22)
 })
 
 const getBoardCaptionStyle = () => ({
   padding: `${scaledBoardPx(8)} ${scaledBoardPx(12)}`,
-  fontSize: scaledBoardPx(8),
-  lineHeight: scaledBoardPx(12)
+  fontSize: scaledBoardFontPx(8),
+  lineHeight: scaledBoardFontPx(12)
 })
 
 const getBoardPriceShellStyle = () => ({
@@ -4052,8 +4057,8 @@ const getBoardPriceLabelStyle = () => ({
 })
 
 const getBoardPriceValueStyle = () => ({
-  fontSize: scaledBoardPx(20),
-  lineHeight: scaledBoardPx(20)
+  fontSize: scaledBoardFontPx(20),
+  lineHeight: scaledBoardFontPx(20)
 })
 
 const getBoardAssetShellStyle = () => ({
@@ -4088,8 +4093,8 @@ const getBoardDataCellStyle = (paddingX: number, paddingY: number) => ({
 })
 
 const getBoardDataTitleStyle = (fontSize: number) => ({
-  fontSize: scaledBoardPx(fontSize),
-  lineHeight: scaledBoardPx(fontSize + 4)
+  fontSize: scaledBoardFontPx(fontSize),
+  lineHeight: scaledBoardFontPx(fontSize + 4)
 })
 
 const getBoardDataLabelStyle = (fontSize: number) => ({
@@ -4097,15 +4102,15 @@ const getBoardDataLabelStyle = (fontSize: number) => ({
 })
 
 const getBoardDataValueStyle = (fontSize: number) => ({
-  fontSize: scaledBoardPx(fontSize),
-  lineHeight: scaledBoardPx(fontSize + 3)
+  fontSize: scaledBoardFontPx(fontSize),
+  lineHeight: scaledBoardFontPx(fontSize + 3)
 })
 
 const getBoardNodeStyle = (node: JournalArticleBoardNode) => ({
-  left: `${node.position.x * boardRenderGridSize.value}px`,
-  top: `${node.position.y * boardRenderGridSize.value}px`,
-  width: `${node.size.width * boardRenderGridSize.value}px`,
-  height: `${node.size.height * boardRenderGridSize.value}px`
+  left: `${snapBoardCssPixel(node.position.x * boardRenderGridSize.value)}px`,
+  top: `${snapBoardCssPixel(node.position.y * boardRenderGridSize.value)}px`,
+  width: `${snapBoardCssPixel(node.size.width * boardRenderGridSize.value)}px`,
+  height: `${snapBoardCssPixel(node.size.height * boardRenderGridSize.value)}px`
 })
 
 const getBoardNodeRect = (node: JournalArticleBoardNode) => ({
@@ -4785,10 +4790,10 @@ const focusBoardNode = (id: string) => {
   const node = boardNodes.value.find((n: any) => n.id === id)
   if (node && boardStageRef.value) {
     const rect = boardStageRef.value.getBoundingClientRect()
-    boardPan.value = {
+    boardPan.value = snapBoardPoint({
       x: (rect.width / 2) - (node.position.x * boardGridSize.value) - ((node.size.width * boardGridSize.value) / 2),
       y: (rect.height / 2) - (node.position.y * boardGridSize.value) - ((node.size.height * boardGridSize.value) / 2)
-    }
+    })
   }
 }
 
@@ -5007,10 +5012,10 @@ const handleBoardPointerMove = (event: PointerEvent) => {
   if (!interaction) return
 
   if (interaction.type === 'pan') {
-    boardPan.value = {
+    boardPan.value = snapBoardPoint({
       x: interaction.startPanX + event.clientX - interaction.startClientX,
       y: interaction.startPanY + event.clientY - interaction.startClientY
-    }
+    })
   } else if (interaction.type === 'moveNode') {
     const deltaWorldX = event.clientX - interaction.startClientX
     const deltaWorldY = event.clientY - interaction.startClientY
@@ -5190,18 +5195,12 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 }
 
 .exforum-board-scale-renderer {
-  image-rendering: -webkit-optimize-contrast;
-  -webkit-font-smoothing: subpixel-antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
 }
 
 .exforum-board-functional-label {
-  backface-visibility: hidden;
   text-size-adjust: none;
   -webkit-text-size-adjust: none;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 .exforum-board-hud-panel {
