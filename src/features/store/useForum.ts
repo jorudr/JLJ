@@ -201,6 +201,33 @@ export const useForumStore = defineStore('forum', {
         this.threadLinks.delete(threadId)
       },
 
+      async deleteThreadPermanently(threadId: string): Promise<void> {
+        this.loading = true
+        try {
+          const threadRef = doc(db, 'threads', threadId)
+          const outgoingLinksQuery = query(
+            collection(db, 'threadLinks').withConverter(threadLinkConverter),
+            where('fromThreadId', '==', threadId)
+          )
+          const outgoingLinksSnap = await getDocs(outgoingLinksQuery)
+
+          await Promise.all(outgoingLinksSnap.docs.map(linkDoc => deleteDoc(doc(db, 'threadLinks', linkDoc.id))))
+          await deleteDoc(threadRef)
+
+          this.threads.delete(threadId)
+          this.replies.delete(threadId)
+          this.threadLinks.delete(threadId)
+          outgoingLinksSnap.docs.forEach((linkDoc) => {
+            const link = linkDoc.data()
+            this.threadLinks.delete(link.toThreadId)
+          })
+          this.allThreadLinks.clear()
+          this.threads = new Map(this.threads)
+        } finally {
+          this.loading = false
+        }
+      },
+
       addThread(thread: Thread) {
         this.threads.set(thread.id, thread)
         this.threads = new Map(this.threads)

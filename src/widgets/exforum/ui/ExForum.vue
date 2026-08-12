@@ -2133,16 +2133,40 @@
                   {{ getThreadDescription(thread) }}
                 </span>
               </button>
-              <button
-                class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-all opacity-0 group-hover:opacity-100 hover:border-current/40 hover:bg-current/5 hover:text-current"
-                type="button"
-                @click="startEditArticle(thread)"
-              >
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                </svg>
-              </button>
+              <div class="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  class="flex h-11 w-11 items-center justify-center border border-current/15 text-current/45 transition-all hover:border-current/40 hover:bg-current/5 hover:text-current"
+                  type="button"
+                  :aria-label="locale === 'ru' ? 'Редактировать статью' : 'Edit article'"
+                  @click="startEditArticle(thread)"
+                >
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                  </svg>
+                </button>
+                <button
+                  class="flex h-11 items-center justify-center border transition-all"
+                  :class="pendingDeleteArticleId === thread.id
+                    ? 'w-36 border-black bg-black px-4 text-white'
+                    : 'w-11 border-red-500/15 text-red-600/45 hover:border-red-600/40 hover:bg-red-500/5 hover:text-red-700'"
+                  type="button"
+                  :aria-label="pendingDeleteArticleId === thread.id
+                    ? (locale === 'ru' ? 'Подтвердить удаление статьи' : 'Confirm article deletion')
+                    : (locale === 'ru' ? 'Удалить статью' : 'Delete article')"
+                  @click="deleteMyArticle(thread)"
+                >
+                  <span v-if="pendingDeleteArticleId === thread.id" class="font-mono text-[9px] font-bold uppercase tracking-[0.24em]">
+                    {{ locale === 'ru' ? 'Подтвердить' : 'Confirm' }}
+                  </span>
+                  <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M6 6l1 15h10l1-15" />
+                    <path d="M10 11v6M14 11v6" />
+                  </svg>
+                </button>
+              </div>
             </article>
 
             <div v-if="myArticleThreads.length === 0" class="flex flex-col items-center justify-center gap-4 py-24 text-center">
@@ -2705,7 +2729,8 @@ const currentPage = computed(() => Number(route.query.page) || 1)
 const nodesPerPage = 12
 
 const journalThreads = computed(() => {
-  return Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>
+  return (Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
+    .filter(thread => thread.status !== 'hidden')
 })
 const myArticleThreads = computed(() => {
   const userId = authStore.user?.uid
@@ -3258,6 +3283,7 @@ watch([newArticleForm, boardNodes, boardConnections, boardStrokes, creationStep]
 const isDropdownOpen = ref(false)
 const isSubmittingArticle = ref(false)
 const isPublishingArticle = ref(false)
+const pendingDeleteArticleId = ref<string | null>(null)
 
 const articleTypes = computed(() => journalFilters.value.map(filter => ({
   value: filter.mode,
@@ -3298,6 +3324,7 @@ const getArticleTextBlockOrder = (thread: Thread & Record<string, any>) => {
 const startEditArticle = (thread: Thread & Record<string, any>) => {
   if (!authStore.user || thread.authorId !== authStore.user.uid) return
 
+  pendingDeleteArticleId.value = null
   closeReader()
   resetArticleEditorState()
   editingArticleId.value = thread.id
@@ -3329,6 +3356,24 @@ const cancelArticleEditing = () => {
   }
   resetArticleEditorState()
   isCreatingArticle.value = false
+}
+
+const deleteMyArticle = async (thread: Thread & Record<string, any>) => {
+  if (thread.authorId !== authStore.user?.uid) return
+
+  if (pendingDeleteArticleId.value !== thread.id) {
+    pendingDeleteArticleId.value = thread.id
+    return
+  }
+
+  try {
+    await forumStore.deleteThreadPermanently(thread.id)
+    pendingDeleteArticleId.value = null
+    if (selectedArticle.value?.id === thread.id) closeReader()
+  } catch (error) {
+    console.error('[Forum] Failed to delete article:', error)
+    alert(locale.value === 'ru' ? 'Не удалось удалить статью.' : 'Failed to delete article.')
+  }
 }
 
 const submitNewArticle = () => {
