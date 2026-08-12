@@ -22,8 +22,7 @@
               :class="[
                 cell.active 
                   ? 'bg-[#050505] dark:bg-white border-black/15 dark:border-white/10 shadow-[0_0_12px_rgba(255,255,255,0.1)]' 
-                  : 'bg-theme-text/5 border-black/15 dark:border-white/10',
-                cell.isFuture ? 'opacity-20' : ''
+                  : 'bg-[#2c2c2a]/35 border-[#2c2c2a]/25 opacity-20 dark:bg-[#1f1f1f] dark:border-white/10'
               ]"
             ></div>
           </template>
