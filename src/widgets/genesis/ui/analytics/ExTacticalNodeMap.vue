@@ -244,11 +244,11 @@ const buildMetricNode = (item: any, fallbackName: string) => {
   }
 }
 
-const buildScenarioNodes = (type: 'entry' | 'exit') => {
+const buildScenarioNodes = (type: 'entry' | 'exit', initialOffset: number = 0) => {
   const scenarios = sourceScenarios.value
     .filter((scenario: any) => String(scenario?.type || '').toLowerCase() === type)
 
-  let laneTop = 80
+  let laneTop = 80 + initialOffset
 
   return scenarios.map((scenario: any, scenarioIndex: number) => {
     const filteredConditions = (Array.isArray(scenario.conditions) ? scenario.conditions : [])
@@ -296,8 +296,15 @@ const buildScenarioNodes = (type: 'entry' | 'exit') => {
   })
 }
 
-const entryHubData = computed(() => buildScenarioNodes('entry'))
-const exitHubData = computed(() => buildScenarioNodes('exit'))
+const entryHubData = computed(() => buildScenarioNodes('entry', 0))
+const exitHubData = computed(() => {
+  const entryTotalHeight = entryHubData.value.reduce((acc: number, scenario: any) => {
+    const len = Array.isArray(scenario.conditions) ? scenario.conditions.length : 0
+    return acc + Math.max(240, len * 96 + 96)
+  }, 0)
+  const offset = Math.max(320, Math.min(500, entryTotalHeight * 0.75))
+  return buildScenarioNodes('exit', offset)
+})
 const entryConditions = computed(() => entryHubData.value.flatMap((scenario: any) => scenario.conditions))
 const exitConditions = computed(() => exitHubData.value.flatMap((scenario: any) => scenario.conditions))
 
