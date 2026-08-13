@@ -1400,19 +1400,6 @@
               </svg>
             </ExGenesisHudButton>
             
-            <ExGenesisHudButton
-              :active="activeBoardTool === 'drawing'"
-              :tooltip="locale === 'ru' ? 'Рисунок' : 'Drawing'"
-              tooltip-position="right"
-              @click.stop="activeBoardTool = activeBoardTool === 'drawing' ? null : 'drawing'"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-                <path d="M2 2l7.586 7.586"/>
-                <circle cx="11" cy="11" r="2"/>
-              </svg>
-            </ExGenesisHudButton>
 
             <ExGenesisHudButton
               :active="activeBoardTool === 'pencil'"
@@ -1529,7 +1516,7 @@
               {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
             </button>
           </div>
-          <ExForumDrawingPanel :drawing="drawing" />
+
           <ExAssetPickerMenu
             :open="Boolean(activeAssetNodeId)"
             :placeholder="boardUiLabels.searchAssets"
@@ -2395,7 +2382,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useForumDrawing } from '../model/useForumDrawing'
 import { useBoardDrawing } from '../model/useBoardDrawing'
-import ExForumDrawingPanel from './ExForumDrawingPanel.vue'
+import ExDrawingPanel from '~/shared/ui/ExDrawingPanel.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useForumStore } from '~/features/store/useForum'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'

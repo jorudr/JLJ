@@ -185,7 +185,7 @@
                           @trigger-image-upload="uploads.triggerImageUpload" />
 
       <!-- DRAWING PANEL -->
-      <MatrixDrawingPanel :drawing="drawing" />
+      <ExDrawingPanel :drawing="drawing" />
 
       <!-- BOOT OVERLAY -->
       <MatrixBootOverlay :is-initializing="boot.isInitializing.value" :boot-progress="boot.bootProgress.value" :is-dark="isDark" />
@@ -283,7 +283,7 @@ import ExZone from './ExZone.vue'
 import MatrixBootOverlay from './MatrixBootOverlay.vue'
 import MatrixTelemetry from './MatrixTelemetry.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import MatrixDrawingPanel from './MatrixDrawingPanel.vue'
+import ExDrawingPanel from '~/shared/ui/ExDrawingPanel.vue'
 import MatrixCommandPanel from './MatrixCommandPanel.vue'
 import MatrixContextMenus from './MatrixContextMenus.vue'
 import MatrixConnections from './MatrixConnections.vue'
