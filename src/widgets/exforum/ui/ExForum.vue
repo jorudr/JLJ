@@ -1375,62 +1375,76 @@
                @pointerdown.stop
                @pointermove.stop
                @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false">
-          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex flex-col items-center py-2 px-1 border-black/20 !w-fit">
-            <button class="p-2 transition-colors group relative" 
-                    :class="activeBoardTool === 'text' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    @click.stop="activeBoardTool = activeBoardTool === 'text' ? null : 'text'">
-              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'text' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <ExGenesisHudPanel orientation="vertical">
+            <ExGenesisHudButton
+              :active="activeBoardTool === 'text'"
+              :tooltip="locale === 'ru' ? 'Текст' : 'Text'"
+              tooltip-position="right"
+              @click.stop="activeBoardTool = activeBoardTool === 'text' ? null : 'text'"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-            </button>
-            <div class="w-6 h-px bg-black/10 my-1"></div>
-            <button class="p-2 transition-colors group relative" 
-                    :class="activeBoardTool === 'image' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    @click.stop="activeBoardTool = activeBoardTool === 'image' ? null : 'image'">
-              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'image' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            </ExGenesisHudButton>
+            
+            <ExGenesisHudButton
+              :active="activeBoardTool === 'image'"
+              :tooltip="locale === 'ru' ? 'Изображение' : 'Image'"
+              tooltip-position="right"
+              @click.stop="activeBoardTool = activeBoardTool === 'image' ? null : 'image'"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <circle cx="8.5" cy="8.5" r="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <polyline points="21 15 16 10 5 21" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-            </button>
-            <div class="w-6 h-px bg-black/10 my-1"></div>
-            <button class="p-2 transition-colors group relative" 
-                    :class="activeBoardTool === 'drawing' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    @click.stop="activeBoardTool = activeBoardTool === 'drawing' ? null : 'drawing'">
-              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'drawing' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            </ExGenesisHudButton>
+            
+            <ExGenesisHudButton
+              :active="activeBoardTool === 'drawing'"
+              :tooltip="locale === 'ru' ? 'Рисунок' : 'Drawing'"
+              tooltip-position="right"
+              @click.stop="activeBoardTool = activeBoardTool === 'drawing' ? null : 'drawing'"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 19l7-7 3 3-7 7-3-3z"/>
                 <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
                 <path d="M2 2l7.586 7.586"/>
                 <circle cx="11" cy="11" r="2"/>
               </svg>
-            </button>
-            <div class="w-6 h-px bg-black/10 my-1"></div>
-            <button class="p-2 transition-colors group relative" 
-                    :class="activeBoardTool === 'pencil' ? 'bg-black/10' : 'hover:bg-black/5'"
-                    @click.stop="activeBoardTool = activeBoardTool === 'pencil' ? null : 'pencil'">
-              <svg class="w-5 h-5 transition-colors" :class="activeBoardTool === 'pencil' ? 'text-black' : 'text-black/60 group-hover:text-black'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            </ExGenesisHudButton>
+
+            <ExGenesisHudButton
+              :active="activeBoardTool === 'pencil'"
+              :tooltip="locale === 'ru' ? 'Карандаш' : 'Pencil'"
+              tooltip-position="right"
+              @click.stop="activeBoardTool = activeBoardTool === 'pencil' ? null : 'pencil'"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
               </svg>
-            </button>
+            </ExGenesisHudButton>
+            
             <template v-if="!isSignalArticle">
-              <div class="w-6 h-px bg-black/10 my-1"></div>
-              <button
-                class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
-                :class="activeBoardTool === 'strategy-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+              <ExGenesisHudButton
+                :active="activeBoardTool === 'strategy-node'"
+                :tooltip="locale === 'ru' ? 'Стратегия' : 'Strategy'"
+                tooltip-position="right"
                 @click.stop="activeBoardTool = activeBoardTool === 'strategy-node' ? null : 'strategy-node'"
               >
-                {{ boardUiLabels.strategyTool }}
-              </button>
-              <div class="w-6 h-px bg-black/10 my-1"></div>
-              <button
-                class="flex h-9 w-9 items-center justify-center font-mono text-[9px] font-black uppercase tracking-widest transition-colors"
-                :class="activeBoardTool === 'trade-node' ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5 hover:text-black'"
+                <span class="font-mono text-[9px] font-black uppercase tracking-widest text-current">{{ boardUiLabels.strategyTool }}</span>
+              </ExGenesisHudButton>
+              
+              <ExGenesisHudButton
+                :active="activeBoardTool === 'trade-node'"
+                :tooltip="locale === 'ru' ? 'Сделка' : 'Trade'"
+                tooltip-position="right"
                 @click.stop="activeBoardTool = activeBoardTool === 'trade-node' ? null : 'trade-node'"
               >
-                {{ boardUiLabels.tradeTool }}
-              </button>
+                <span class="font-mono text-[9px] font-black uppercase tracking-widest text-current">{{ boardUiLabels.tradeTool }}</span>
+              </ExGenesisHudButton>
             </template>
-          </ExPanel>
+          </ExGenesisHudPanel>
           </div>
           
           <!-- Right Vertical Toolbar (Pencil Settings) -->
@@ -2402,6 +2416,8 @@ import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+import ExGenesisHudPanel from '~/widgets/genesis/ui/ExGenesisHudPanel.vue'
+import ExGenesisHudButton from '~/widgets/genesis/ui/ExGenesisHudButton.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 
 const route = useRoute()
