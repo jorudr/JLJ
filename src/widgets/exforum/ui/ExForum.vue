@@ -1101,7 +1101,7 @@
               :key="node.id"
               data-board-node
               :data-node-id="node.id"
-              class="absolute box-border overflow-visible bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] group/node transition-all border"
+              class="absolute box-border overflow-visible bg-white/90 shadow-[0_16px_40px_rgba(0,0,0,0.08)] group/node transition-[border-color,box-shadow,opacity] border"
               :class="[
                 selectedBoardNodeId === node.id ? 'border-black/60 ring-2 ring-black/10' : 'border-black/20',
                 activeBoardTool === 'pencil' ? 'pointer-events-none select-none' : ''
@@ -5292,7 +5292,7 @@ const startBoardPan = (event: PointerEvent) => {
           strategyId: '',
           strategyName: '',
           position: { x: gridX, y: gridY },
-          size: { width: 18, height: 7 }
+          size: { width: 18, height: 4 }
         }
         boardNodes.value.push(newNode as any)
       } else if (isTradeTool) {
@@ -5302,7 +5302,7 @@ const startBoardPan = (event: PointerEvent) => {
           tradeId: '',
           tradeSnapshot: null,
           position: { x: gridX, y: gridY },
-          size: { width: 16, height: 6 }
+          size: { width: 16, height: 4 }
         }
         boardNodes.value.push(newNode as any)
       }
@@ -5409,8 +5409,8 @@ const handleBoardPointerMove = (event: PointerEvent) => {
     const deltaWorldY = event.clientY - interaction.startClientY
     
     // Smooth fractional position
-    const freeX = interaction.startNodeX + deltaWorldX / boardGridSize.value
-    const freeY = interaction.startNodeY + deltaWorldY / boardGridSize.value
+    const freeX = interaction.startNodeX + deltaWorldX / boardRenderGridSize.value
+    const freeY = interaction.startNodeY + deltaWorldY / boardRenderGridSize.value
     
     interaction.node.position.x = freeX
     interaction.node.position.y = freeY
@@ -5419,7 +5419,7 @@ const handleBoardPointerMove = (event: PointerEvent) => {
     const deltaWorldY = event.clientY - interaction.startClientY
     
     // Smooth fractional size
-    const freeW = interaction.startNodeW + deltaWorldX / boardGridSize.value
+    const freeW = interaction.startNodeW + deltaWorldX / boardRenderGridSize.value
     const newWidth = Math.max(4, freeW)
     
     let newHeight = interaction.node.size.height
@@ -5427,7 +5427,7 @@ const handleBoardPointerMove = (event: PointerEvent) => {
       const aspect = interaction.startNodeW / interaction.startNodeH
       newHeight = Math.max(4, newWidth / aspect)
     } else {
-      const freeH = interaction.startNodeH + deltaWorldY / boardGridSize.value
+      const freeH = interaction.startNodeH + deltaWorldY / boardRenderGridSize.value
       newHeight = Math.max(4, freeH)
     }
 
@@ -5440,14 +5440,9 @@ const stopBoardInteraction = () => {
   const interaction = activeBoardInteraction.value
   if (interaction) {
     if (interaction.type === 'moveNode') {
-      // Snap to grid on drop
-      const snappedX = Math.round(interaction.node.position.x)
-      const snappedY = Math.round(interaction.node.position.y)
-      
       // Check overlap
-      if (!checkNodeOverlap(snappedX, snappedY, Math.round(interaction.node.size.width), Math.round(interaction.node.size.height), interaction.node.id)) {
-        interaction.node.position.x = snappedX
-        interaction.node.position.y = snappedY
+      if (!checkNodeOverlap(interaction.node.position.x, interaction.node.position.y, interaction.node.size.width, interaction.node.size.height, interaction.node.id)) {
+        // Position is valid, leave it as is
       } else {
         // Revert if invalid
         interaction.node.position.x = interaction.startNodeX
