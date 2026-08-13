@@ -133,7 +133,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import { mockLogEntries, type LogEntry } from '../../../entities/diary/model/mockLogData'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 interface Node {
   id: string; label: string; type: 'strategy' | 'trade' | 'note';

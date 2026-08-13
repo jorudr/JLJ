@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExPanel from "~/shared/ui/ExPanel.vue"
 import ExHeading from "~/shared/ui/ExHeading.vue"
@@ -124,6 +125,9 @@ const localizedTradingStyleLabel = (label: string) => {
 }
 
 const tradeStore = useStrategyTradesStore();
+const genesisTrades = useGenesisTrades();
+const genesisMatrix = useGenesisMatrixData();
+
 const {
   nodes: matrixStateNodes,
   connections: matrixStateConnections,

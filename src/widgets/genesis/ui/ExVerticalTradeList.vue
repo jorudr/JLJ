@@ -1782,8 +1782,12 @@ const resetAllFilters = () => {
 
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { loadFromDisk } from '~/shared/diskStorage'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 
 const strategyStore = useStrategyTradesStore()
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 const resolveTradeStrategyId = (trade: any) => trade.strategyId || strategyStore.selectedStrategyId
 

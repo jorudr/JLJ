@@ -124,6 +124,11 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 
 const props = defineProps<{
@@ -814,7 +819,8 @@ const handleWheel = (e: WheelEvent) => {
 
 
 onMounted(() => {
-  tradeStore.init().then(() => {
+  genesisMatrix.loadMatrix()
+  genesisTrades.init().then(() => {
     initTrades()
     update()
   })

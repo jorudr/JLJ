@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades } from '~/entities/genesis'
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
 import {
   buildArchiveEquityCurve,

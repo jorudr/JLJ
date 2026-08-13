@@ -2,7 +2,12 @@
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 const { locale } = useI18n()
 

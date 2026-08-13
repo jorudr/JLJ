@@ -129,7 +129,9 @@ import ExButton from '~/shared/ui/ExButton.vue'
 import ExInput from '~/shared/ui/ExInput.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useGenesisMatrixData } from '~/entities/genesis'
 
+const genesisMatrix = useGenesisMatrixData()
 const { t } = useI18n()
 
 const props = withDefaults(defineProps<{

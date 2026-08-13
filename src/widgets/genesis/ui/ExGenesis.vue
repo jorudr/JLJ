@@ -171,6 +171,11 @@ import { useThemeStore } from '@/features/store/useTheme'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { useAuthStore } from '~/entities/user/auth.store'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
@@ -271,6 +276,8 @@ const backToOrigin = () => {
 }
 
 onMounted(() => {
+  genesisTrades.init()
+  genesisMatrix.loadMatrix()
   syncModeFromRoute()
   window.addEventListener('keydown', handleKeydown)
 })

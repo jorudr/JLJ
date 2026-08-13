@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, isRef, watch } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
 import ExTacticalNodeTooltip from '~/widgets/genesis/ui/ExTacticalNodeTooltip.vue'

@@ -93,6 +93,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 export interface MetricConfig {
   key: string;

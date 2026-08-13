@@ -301,10 +301,15 @@ import { getMatrixStrategyName, isStrategyNode } from '../model/matrix/useMatrix
 import { useExGenesisMatrixUndo } from '../model/matrix/useExGenesisMatrixUndo'
 import { collectMatrixImageUrls, preloadImageUrls } from '../model/matrix/useMatrixImagePreload'
 import { useAppBootStore } from '~/features/store/useAppBoot'
+import { useGenesisMatrixData, useGenesisTrades } from '~/entities/genesis'
 
 import { initAssetService } from '@/shared/api/asset.service'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { matrixText } from '../model/matrix/matrixLabels'
+
+const genesisMatrixData = useGenesisMatrixData()
+const genesisTrades = useGenesisTrades()
+
 
 const state = useMatrixState()
 const canvas = useMatrixCanvas(state)

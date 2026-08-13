@@ -1196,6 +1196,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import { useThemeStore } from '~/features/store/useTheme'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
@@ -2686,6 +2687,9 @@ const isTransitioning = ref(false)
 const facesTrades = ref<TradeNode[][]>([[]])
 const graphEdges = ref<GraphEdge[]>([])
 const tradeStore = useStrategyTradesStore()
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 const selectedStrategyId = computed({
   get: () => tradeStore.selectedStrategyId,
   set: (val) => { tradeStore.selectedStrategyId = val }

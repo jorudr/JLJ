@@ -1007,6 +1007,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
 import { useAppBootStore } from '~/features/store/useAppBoot'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import ExTradeEntry from '~/widgets/genesis/ui/ExTradeEntry.vue'
@@ -1203,10 +1204,12 @@ const studentTPDF = (x: number, mean: number, scale: number, nu: number): number
 
 const matrixNodes = ref<any[]>([])
 const matrixConnections = ref<any[]>([])
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 const loadMatrixData = async () => {
   try {
-    const appBootStore = useAppBootStore()
-    const data = appBootStore.genesisMatrixCache || await loadFromDisk<{ nodes: any[], connections?: any[] }>('genesis_matrix_v2')
+    const data = await genesisMatrix.loadMatrix()
     if (data && data.nodes) {
       matrixNodes.value = data.nodes
       matrixConnections.value = data.connections || []

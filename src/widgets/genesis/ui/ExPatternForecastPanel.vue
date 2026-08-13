@@ -537,7 +537,12 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { loadFromDisk, saveToDisk } from '~/shared/diskStorage'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import ExPanel from '~/shared/ui/ExPanel.vue'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 import {
   calculatePatternForecast,
   createEmptyPatternForecast

@@ -139,6 +139,11 @@ import { ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import { useTradeArchive } from '~/widgets/genesis/model/useTradeArchive'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
+
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 
 const props = defineProps<{ trades?: any[] }>()
 

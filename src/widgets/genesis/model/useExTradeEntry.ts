@@ -10,12 +10,14 @@ import ExText from '~/shared/ui/ExText.vue'
 import ExEquityCurve2D from '~/widgets/genesis/ui/ExEquityCurve2D.vue'
 import { useThemeStore } from '~/features/store/useTheme'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis'
 import { useI18n } from '~/shared/i18n/useI18n'
 import { GENESIS_EMOTION_LIBRARY } from '~/widgets/genesis/model/emotionLibrary'
 import { resolveRiskManagementForStrategy, riskValueToDollars } from '~/widgets/genesis/model/riskManagement'
 import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
 import { SystemProtocolSelect } from '~/widgets/system-protocol-select'
 import { useMatrixState } from '~/widgets/genesis/model/matrix/useMatrixState'
+
 
 export function useExTradeEntry(props, emit) {
 
@@ -204,10 +206,13 @@ const matrixConnections = ref([])
 const matrixZones = ref([])
 const isMatrixLoading = ref(true)
 
+const genesisTrades = useGenesisTrades()
+const genesisMatrix = useGenesisMatrixData()
+
 const loadMatrixData = async () => {
   isMatrixLoading.value = true
   try {
-    const data = await loadFromDisk('genesis_matrix_v2')
+    const data = await genesisMatrix.loadMatrix()
     if (data && data.nodes) {
       matrixNodes.value = data.nodes
       matrixConnections.value = data.connections || []
