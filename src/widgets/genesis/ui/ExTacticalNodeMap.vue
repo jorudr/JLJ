@@ -227,9 +227,9 @@ const buildMetricNode = (item: any, fallbackName: string) => {
   const name = getNodeName(item, fallbackName)
   const pfHistory = getMetricHistory(item, 'pf', 1)
   const freqHistory = getMetricHistory(item, 'freq', 100)
-  const lastFreq = freqHistory[freqHistory.length - 1]
+  const lastFreq = freqHistory[freqHistory.length - 1] ?? 100
   const prevFreq = freqHistory[freqHistory.length - 2] ?? lastFreq
-  const lastPf = pfHistory[pfHistory.length - 1]
+  const lastPf = pfHistory[pfHistory.length - 1] ?? 1
   const prevPf = pfHistory[pfHistory.length - 2] ?? lastPf
 
   return {
@@ -297,8 +297,8 @@ const buildScenarioNodes = (type: 'entry' | 'exit') => {
 
 const entryHubData = computed(() => buildScenarioNodes('entry'))
 const exitHubData = computed(() => buildScenarioNodes('exit'))
-const entryConditions = computed(() => entryHubData.value.flatMap(scenario => scenario.conditions))
-const exitConditions = computed(() => exitHubData.value.flatMap(scenario => scenario.conditions))
+const entryConditions = computed(() => entryHubData.value.flatMap((scenario: any) => scenario.conditions))
+const exitConditions = computed(() => exitHubData.value.flatMap((scenario: any) => scenario.conditions))
 
 const scenarioLinks = computed(() => {
   const count = Math.min(entryHubData.value.length, exitHubData.value.length)
@@ -481,11 +481,11 @@ const getIndicatorState = (worldX: number, worldY: number, hubWidth = 256, hubHe
 }
 
 const entryIndicators = computed(() => entryHubData.value
-  .map((hub) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
-  .filter((item) => item.indicator))
+  .map((hub: any) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
+  .filter((item: any) => item.indicator))
 const exitIndicators = computed(() => exitHubData.value
-  .map((hub) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
-  .filter((item) => item.indicator))
+  .map((hub: any) => ({ hub, indicator: getIndicatorState(hub.x, hub.y) }))
+  .filter((item: any) => item.indicator))
 
 function getLinePath(x1: number, y1: number, x2: number, y2: number) {
   const dx = x2 - x1

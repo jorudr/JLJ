@@ -736,8 +736,8 @@ const getExecutionAssetType = (trade: any) => {
 
   const symbol = String(typeof trade?.asset === 'string' ? trade.asset : trade?.symbol || '')
     .split(/[/:\s]/)[0]
-    .toUpperCase()
-  return String(globalAssets.find((asset: any) => String(asset.symbol || '').toUpperCase() === symbol)?.type || '')
+    ?.toUpperCase() || ''
+  return String((globalAssets as any[]).find((asset: any) => String(asset.symbol || '').toUpperCase() === symbol)?.type || '')
     .trim()
     .toLowerCase()
 }

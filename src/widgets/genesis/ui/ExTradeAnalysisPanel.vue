@@ -773,11 +773,11 @@ const scorePatternMetricConfigs = () => {
   return [...baseMetrics, ...scorePatternInTradeMetricConfigs()];
 };
 
-const scorePatternQuantile = (values: number[], ratio: number) => {
+const scorePatternQuantile = (values: number[], ratio: number): number => {
   if (!values.length) return Number.NaN;
   const sorted = values.slice().sort((a, b) => a - b);
   const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)));
-  return sorted[index];
+  return sorted[index] ?? Number.NaN;
 };
 
 const formatScoreMetricPatternValue = (value: number | string, format: CorrelationMetricFormat) => {
@@ -847,7 +847,7 @@ const buildMajorityScorePatterns = (useProfitablePatterns: boolean) => {
     })
     .filter(Boolean)
     .sort((a: any, b: any) => b.frequency - a.frequency || String(a.label).localeCompare(String(b.label)))
-    .slice(0, 18);
+    .slice(0, 18) as any[];
 };
 
 const getScorePatternTooltip = (metricId: string) => {
@@ -2027,12 +2027,12 @@ const IN_TRADE_SESSION_DAY_SECONDS: Record<string, number> = {
   unknown: 24 * 3600
 };
 
-const getInTradeSessionDaySeconds = (preferGenerated = true) => {
+const getInTradeSessionDaySeconds = (preferGenerated = true): number => {
   if (preferGenerated) {
     const generatedSessionDay = parseStudyNumber(generatedInTradeAnalysis.value?.sessionDaySeconds);
     if (Number.isFinite(generatedSessionDay) && generatedSessionDay > 0) return generatedSessionDay;
   }
-  return IN_TRADE_SESSION_DAY_SECONDS[getTradeAssetKind(props.trade)] || IN_TRADE_SESSION_DAY_SECONDS.unknown;
+  return IN_TRADE_SESSION_DAY_SECONDS[getTradeAssetKind(props.trade)] || 86400;
 };
 
 const formatStudyPrice = (value: any, isEntryOrExit = false) => {
@@ -2049,7 +2049,7 @@ const formatStudyDuration = (seconds: number) => {
   if (!Number.isFinite(seconds) || seconds <= 0) return studyMetricText.value.na;
 
   const isRu = locale.value === 'ru';
-  const sessionDaySeconds = getInTradeSessionDaySeconds();
+  const sessionDaySeconds = getInTradeSessionDaySeconds() || 86400;
   const days = Math.floor(seconds / sessionDaySeconds);
   const hours = Math.floor((seconds % sessionDaySeconds) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -2091,11 +2091,12 @@ const formatSessionLength = (seconds: number) => {
 
 const getStudyDurationSeconds = (prefix: string) => {
   const metrics = currentTradeStudyMetrics.value;
+  if (!metrics) return 0;
   const days = parseStudyNumber(metrics[`${prefix}Days`]) || 0;
   const hours = parseStudyNumber(metrics[`${prefix}Hours`]) || 0;
   const minutes = parseStudyNumber(metrics[`${prefix}Minutes`]) || 0;
   const seconds = parseStudyNumber(metrics[`${prefix}Seconds`]) || 0;
-  return (days * getInTradeSessionDaySeconds()) + (hours * 3600) + (minutes * 60) + seconds;
+  return (days * (getInTradeSessionDaySeconds() || 86400)) + (hours * 3600) + (minutes * 60) + seconds;
 };
 
 const getTradeTimestamp = (value: any) => {
@@ -2504,8 +2505,8 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const { timeframe, candles } = getStoredAnalysisCandles(metrics);
   if (!direction || !Number.isFinite(entry) || !candles.length) return {};
 
-  const highs = candles.map(candle => Number(candle.high)).filter(Number.isFinite);
-  const lows = candles.map(candle => Number(candle.low)).filter(Number.isFinite);
+  const highs = candles.map((candle: any) => Number(candle.high)).filter(Number.isFinite);
+  const lows = candles.map((candle: any) => Number(candle.low)).filter(Number.isFinite);
   if (!highs.length || !lows.length) return {};
 
   const { maxPrice, minPrice } = getBodyAwareExtremePrices(candles, entry);
@@ -2526,7 +2527,7 @@ const buildGeneratedAnalysisFromStoredMarketData = (metrics: Record<string, any>
   const states: string[] = [];
   const pathSegments: Array<{ state: string; start: number; end: number }> = [];
 
-  candles.forEach((candle, index) => {
+  candles.forEach((candle: any, index: number) => {
     const state = classifyStoredCandleState(candle, direction, entry, lossLimit, profitLimit);
     const isLoss = state === 'loss';
     const isProfit = state === 'profit';
@@ -3129,9 +3130,11 @@ const getScenarioDurationRangeForMetric = (trade: any) => {
 const getHorizonSyncForMetric = (trade: any) => {
   const range = getScenarioDurationRangeForMetric(trade);
   if (!range.count) return Number.NaN;
+  const maxDays = range.maxDays ?? 0;
+  const minDays = range.minDays ?? 0;
   const days = getTradeDurationHoursForMetric(trade) / 24;
-  const span = Math.max(range.maxDays - range.minDays, 0.0001);
-  return Math.min(100, Math.max(0, ((days - range.minDays) / span) * 100));
+  const span = Math.max(maxDays - minDays, 0.0001);
+  return Math.min(100, Math.max(0, ((days - minDays) / span) * 100));
 };
 
 const getVelocityVarianceForMetric = (trade: any) => {
@@ -3370,8 +3373,11 @@ const selectedMetricEquityCurve = computed(() => {
   let compared = 0;
 
   for (let index = 1; index < rawPoints.length; index += 1) {
-    const metricDelta = rawPoints[index].metricValue - rawPoints[index - 1].metricValue;
-    const equityDelta = rawPoints[index].equity - rawPoints[index - 1].equity;
+    const pt = rawPoints[index];
+    const prev = rawPoints[index - 1];
+    if (!pt || !prev) continue;
+    const metricDelta = pt.metricValue - prev.metricValue;
+    const equityDelta = pt.equity - prev.equity;
     if (Math.abs(metricDelta) < 0.000001 || Math.abs(equityDelta) < 0.000001) continue;
     compared += 1;
     if (Math.sign(metricDelta) === Math.sign(equityDelta)) directMatches += 1;

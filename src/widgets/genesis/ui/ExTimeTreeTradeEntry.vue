@@ -143,18 +143,18 @@ const tradeResultPercentValue = () => {
     : initialCapital
   return getTradeResultPercent(trade, balanceBefore)
 }
-const tradeResultClass = (rawValue) => {
+const tradeResultClass = (rawValue: any) => {
   const value = Number(rawValue)
   if (!Number.isFinite(value) || value === 0) return 'text-white'
   return value > 0 ? 'text-emerald-400' : 'text-rose-400'
 }
-const formatTradeResultMoney = (value) => {
+const formatTradeResultMoney = (value: any) => {
   const number = Number(value)
   if (!Number.isFinite(number)) return '--'
   const sign = number > 0 ? '+' : number < 0 ? '-' : ''
   return `${sign}$${Math.abs(number).toFixed(2)}`
 }
-const formatTradeResultPercent = (value) => {
+const formatTradeResultPercent = (value: any) => {
   const number = Number(value)
   if (!Number.isFinite(number)) return '--'
   const sign = number > 0 ? '+' : number < 0 ? '-' : ''
@@ -472,7 +472,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
             </h2>
             <div class="relative mt-16 min-h-0 flex-1">
               <ExTradeGeneratedChart
-                :trade="props.trade"
+                :trade="props.trade || undefined"
                 :is-dark="Boolean(props.isDark)"
                 :visible="true"
               />
@@ -536,7 +536,7 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     v-show="!isForecastLoading"
                     class="h-full w-full"
                     :visible="true"
-                    :trades="props.forecastTrades || []"
+                    :trades="(props.forecastTrades as any[]) || []"
                     :initial-capital="Number(props.forecastInitialCapital) || 1000"
                     :strategy-id="props.forecastStrategyId || 'MAIN_DIARY'"
                     :strategy-name="props.forecastStrategyName || 'MAIN DIARY'"
