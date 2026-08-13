@@ -84,7 +84,16 @@
         :class="showCapitalForecast ? 'blur-sm brightness-75 saturate-75 scale-[1.01]' : ''"
       >
         <div class="absolute inset-0 theme-grid opacity-30 pointer-events-none"></div>
-        <ExGenesisTree ref="genesisTreeRef" />
+        <template v-if="!isMainDiaryStrategy">
+          <ExGenesisTree ref="genesisTreeRef" />
+        </template>
+        <template v-else>
+          <div class="flex h-full w-full items-center justify-center px-8 text-center">
+            <p class="max-w-xl text-[10px] font-mono font-bold uppercase leading-loose tracking-[0.25em] text-white/50 dark:text-white/50">
+              {{ locale === 'ru' ? 'Прежде нужно выбрать стратегию' : 'Please select a strategy first' }}
+            </p>
+          </div>
+        </template>
       </div>
 
       <!-- PNL DISTRIBUTION LAYER -->
