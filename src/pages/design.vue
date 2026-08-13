@@ -1024,17 +1024,17 @@ import ExHeading from '~/shared/ui/ExHeading.vue'
 import ExText from '~/shared/ui/ExText.vue'
 import ExInput from '~/shared/ui/ExInput.vue'
 import ExTooltip from '~/shared/ui/ExTooltip.vue'
-import ExGenesisMenu from '~/widgets/genesis/ui/ExGenesisMenu.vue'
-import ExInitialization from '~/widgets/test-clean/ui/ExInitialization.vue'
-import ExDashboard from '~/widgets/dashboard/ui/ExDashboard.vue'
-import ExTradeAnalysisPanel from '~/widgets/genesis/ui/ExTradeAnalysisPanel.vue'
-import ExImageArchiveSlot from '~/widgets/genesis/ui/ExImageArchiveSlot.vue'
-import ExImageEditor from '~/widgets/genesis/ui/ExImageEditor.vue'
-import ExTacticalNodeMap from '~/widgets/genesis/ui/ExTacticalNodeMap.vue'
-import ExVerticalTradeList from '~/widgets/genesis/ui/ExVerticalTradeList.vue'
-import OpenStrategyMetrics from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
-import ExActivityMonitor from '~/widgets/dashboard/ui/ExActivityMonitor.vue'
-import ExTradeShareCardPreview from '~/widgets/genesis/ui/ExTradeShareCardPreview.vue'
+import ExGenesisMenu from '~/widgets/genesis/ui/common/ExGenesisMenu.vue'
+import ExInitialization from '~/widgets/workspace/ui/init/ExInitialization.vue'
+import ExDashboard from '~/widgets/dashboard/ui/main/ExDashboard.vue'
+import ExTradeAnalysisPanel from '~/widgets/genesis/ui/analytics/ExTradeAnalysisPanel.vue'
+import ExImageArchiveSlot from '~/widgets/genesis/ui/common/ExImageArchiveSlot.vue'
+import ExImageEditor from '~/widgets/genesis/ui/common/ExImageEditor.vue'
+import ExTacticalNodeMap from '~/widgets/genesis/ui/analytics/ExTacticalNodeMap.vue'
+import ExVerticalTradeList from '~/widgets/genesis/ui/diary/ExVerticalTradeList.vue'
+import OpenStrategyMetrics from '~/widgets/genesis/ui/analytics/ExStrategyMetricsPanel.vue'
+import ExActivityMonitor from '~/widgets/dashboard/ui/activity/ExActivityMonitor.vue'
+import ExTradeShareCardPreview from '~/widgets/genesis/ui/common/ExTradeShareCardPreview.vue'
 import ExProfileSettings from '~/widgets/profile/ui/ExProfileSettings.vue'
 import { useAuthStore } from '~/entities/user/auth.store'
 
@@ -1059,7 +1059,7 @@ const gradflowConfig = {
 const handleEditMetrics = () => {
 }
 
-import type { MetricConfig } from '~/widgets/genesis/ui/Open_Strategy_Metrics.vue'
+import type { MetricConfig } from '~/widgets/genesis/ui/analytics/ExStrategyMetricsPanel.vue'
 
 const mockMetricsConfigs: MetricConfig[] = [
   {

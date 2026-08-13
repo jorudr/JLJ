@@ -2403,8 +2403,8 @@ import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
-import ExGenesisHudPanel from '~/widgets/genesis/ui/ExGenesisHudPanel.vue'
-import ExGenesisHudButton from '~/widgets/genesis/ui/ExGenesisHudButton.vue'
+import ExGenesisHudPanel from '~/widgets/genesis/ui/common/ExGenesisHudPanel.vue'
+import ExGenesisHudButton from '~/widgets/genesis/ui/common/ExGenesisHudButton.vue'
 import ExGothicCorners from '~/shared/ui/ExGothicCorners.vue'
 
 const route = useRoute()
