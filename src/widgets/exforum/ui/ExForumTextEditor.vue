@@ -148,18 +148,6 @@
             <span class="font-mono text-xs font-bold">H2</span>
           </ExGenesisHudButton>
 
-          <!-- Code Snippet -->
-          <ExGenesisHudButton
-            :active="activeFormats.code"
-            :tooltip="locale === 'ru' ? 'Код' : 'Code'"
-            @click="applyFormat('code')"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
-          </ExGenesisHudButton>
-
           <!-- Blockquote -->
           <ExGenesisHudButton
             :active="activeFormats.blockquote"
@@ -172,52 +160,13 @@
             </svg>
           </ExGenesisHudButton>
 
-          <!-- Unordered List -->
+          <!-- Unordered List (LI) -->
           <ExGenesisHudButton
             :active="activeFormats.unorderedList"
             :tooltip="locale === 'ru' ? 'Список' : 'Bullet List'"
             @click="applyFormat('unorderedList')"
           >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="8" y1="6" x2="21" y2="6" />
-              <line x1="8" y1="12" x2="21" y2="12" />
-              <line x1="8" y1="18" x2="21" y2="18" />
-              <line x1="3" y1="6" x2="3.01" y2="6" />
-              <line x1="3" y1="12" x2="3.01" y2="12" />
-              <line x1="3" y1="18" x2="3.01" y2="18" />
-            </svg>
-          </ExGenesisHudButton>
-
-          <div class="w-px h-5 bg-white/15 my-auto"></div>
-
-          <!-- Color Preset Dropdown / Picker -->
-          <div class="relative group/color">
-            <ExGenesisHudButton
-              :tooltip="locale === 'ru' ? 'Цвет текста' : 'Text Color'"
-            >
-              <div class="w-4 h-4 rounded-full border border-white/40" :style="{ backgroundColor: activeColor }"></div>
-            </ExGenesisHudButton>
-            
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/color:flex items-center gap-1.5 p-2 bg-black/95 border border-white/20 rounded shadow-xl backdrop-blur-xl">
-              <button
-                v-for="color in colorPresets"
-                :key="color"
-                class="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition-transform"
-                :style="{ backgroundColor: color }"
-                @click="applyFormat('color', color)"
-              ></button>
-            </div>
-          </div>
-
-          <!-- Clear Formatting -->
-          <ExGenesisHudButton
-            :tooltip="locale === 'ru' ? 'Сбросить формат' : 'Clear Formatting'"
-            @click="applyFormat('clear')"
-          >
-            <svg class="w-4 h-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18" />
-              <path d="M6 6l12 12" />
-            </svg>
+            <span class="font-mono text-xs font-bold lowercase">li</span>
           </ExGenesisHudButton>
         </ExGenesisHudPanel>
       </div>
@@ -268,7 +217,6 @@ const {
   isToolbarVisible,
   toolbarPosition,
   activeFormats,
-  activeColor,
   handleContextMenu,
   applyFormat,
   syncContentFromDom
@@ -282,15 +230,6 @@ const isContentEmpty = computed(() => {
   const plainText = content.value.replace(/<[^>]*>/g, '').trim()
   return plainText.length === 0
 })
-
-const colorPresets = [
-  '#000000',
-  '#2563eb', // blue
-  '#10b981', // emerald
-  '#ef4444', // red
-  '#f59e0b', // amber
-  '#8b5cf6'  // purple
-]
 </script>
 
 <style scoped>
@@ -319,7 +258,7 @@ const colorPresets = [
 
 :deep(.editor-rich-content h1) {
   font-size: 2.25rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   line-height: 1.2;
@@ -327,7 +266,7 @@ const colorPresets = [
 
 :deep(.editor-rich-content h2) {
   font-size: 1.65rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-top: 1rem;
   margin-bottom: 0.4rem;
   line-height: 1.25;

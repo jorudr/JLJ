@@ -100,6 +100,26 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
    */
   function updateActiveFormats() {
     if (typeof document === 'undefined') return
+
+    // If editor text content is completely empty, reset all active format states
+    if (editorRef.value) {
+      const rawText = editorRef.value.textContent?.replace(/[\n\r\t\s]/g, '') || ''
+      if (rawText.length === 0) {
+        activeFormats.value = {
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          underline: false,
+          code: false,
+          h1: false,
+          h2: false,
+          blockquote: false,
+          unorderedList: false
+        }
+        return
+      }
+    }
+
     activeFormats.value = {
       bold: document.queryCommandState('bold'),
       italic: document.queryCommandState('italic'),
@@ -168,9 +188,24 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
 
   /**
    * Synchronize DOM innerHTML changes back to content ref
+   * If all text characters are deleted, clear residual HTML format tags (blockquote, h1, etc.)
    */
   function syncContentFromDom() {
     if (!editorRef.value) return
+
+    const rawText = editorRef.value.textContent?.replace(/[\n\r\t\s]/g, '') || ''
+
+    // If user deleted all text characters, wipe residual DOM formatting wrapper elements
+    if (rawText.length === 0) {
+      if (editorRef.value.innerHTML !== '') {
+        editorRef.value.innerHTML = ''
+      }
+      content.value = ''
+      isToolbarVisible.value = false
+      updateActiveFormats()
+      return
+    }
+
     content.value = editorRef.value.innerHTML
   }
 
@@ -240,14 +275,19 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
   }
 
   /**
-   * Handle Click outside to dismiss toolbar
+   * Handle Click anywhere to dismiss context formatting toolbar
    */
   function handleClickOutside(event: MouseEvent) {
+    if (!isToolbarVisible.value) return
+
+    // Dismiss only on left clicks
+    if (event.button !== 0) return
+
     const target = event.target as HTMLElement | null
     if (!target) return
 
-    // If click is inside context toolbar or editor, ignore
-    if (target.closest('[data-text-toolbar]') || target.closest('[data-text-editor]')) {
+    // If click is inside context toolbar buttons, do not close
+    if (target.closest('[data-text-toolbar]')) {
       return
     }
 

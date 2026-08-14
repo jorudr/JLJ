@@ -25,7 +25,7 @@ withDefaults(defineProps<{
     <span
       v-if="tooltip"
       :class="[
-        'ex-genesis-hud-tooltip pointer-events-none absolute z-20 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100',
+        'ex-genesis-hud-tooltip pointer-events-none absolute z-20 whitespace-nowrap border border-white/20 bg-white px-3 py-1.5 text-[9px] font-mono font-normal uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100',
         tooltipPosition === 'right' ? 'is-right' : 'is-top'
       ]"
     >
