@@ -32,6 +32,8 @@
       class="absolute inset-0 z-20 h-full w-full pointer-events-none"
     ></canvas>
 
+
+
     <!-- Board World (Pan Only) -->
     <div
       ref="boardWorldRef"
@@ -398,6 +400,8 @@
       @pointerenter="boardDrawing.isBoardDrawingCursorVisible.value = false"
     >
       <ExGenesisHudPanel orientation="vertical">
+
+
         <ExGenesisHudButton
           :active="activeBoardTool === 'text'"
           :tooltip="locale === 'ru' ? 'Текст' : 'Text'"
@@ -570,26 +574,33 @@
       </button>
     </div>
 
-    <!-- Node Context Menu -->
-    <Transition name="fade">
-      <div
-        v-if="nodeContextMenu"
-        data-board-chrome
-        class="fixed z-[9999] flex flex-col border border-black/20 bg-white shadow-xl py-1 min-w-[160px] font-mono text-[10px] uppercase tracking-widest text-black"
-        :style="{ left: `${nodeContextMenu.x}px`, top: `${nodeContextMenu.y}px` }"
-        @click.stop
-      >
-        <button
-          class="px-4 py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors flex items-center justify-between gap-3"
-          @click="removeBoardNode(nodeContextMenu.nodeId)"
-        >
-          <span>{{ boardUiLabels.removeNode }}</span>
-          <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
-    </Transition>
+    <!-- Node Context Menu Overlay -->
+    <Teleport to="body">
+      <Transition name="fade-slide">
+        <div v-if="nodeContextMenu" 
+             class="fixed z-[100000000] pointer-events-auto"
+             :style="{ left: nodeContextMenu.x + 'px', top: nodeContextMenu.y + 'px' }"
+             @pointerdown.stop
+             @contextmenu.prevent.stop>
+             
+            <div class="flex flex-col space-y-1.5">
+              <div class="w-2 h-2 bg-black rotate-45 absolute -left-1 -top-1 animate-pulse"></div>
+
+              <div class="group relative pt-2">
+                 <button @click="removeBoardNode(nodeContextMenu.nodeId)"
+                         class="bg-white border border-red-500/30 px-6 py-3 min-w-[180px] text-left transition-all duration-500 hover:border-red-500 hover:bg-red-500/10 hover:translate-x-4 flex items-center justify-between relative overflow-hidden shadow-[10px_10px_0_rgba(0,0,0,0.1)] text-[#2c2c2a]">
+                   <span class="text-[9px] font-mono tracking-[0.5em] uppercase font-black text-red-500 group-hover:text-red-400">{{ boardUiLabels.removeNode }}</span>
+                   <span class="text-[7px] font-mono text-red-500 opacity-40">[DEL]</span>
+                   <div class="absolute inset-y-0 left-0 w-0 bg-red-500 group-hover:w-1.5 transition-all duration-500"></div>
+                 </button>
+                 <div class="absolute -bottom-4 left-6 opacity-0 group-hover:opacity-40 transition-all duration-500 pointer-events-none">
+                  <span class="text-[7px] font-mono uppercase tracking-[0.3em] text-red-500">{{ boardUiLabels.removeWarning }}</span>
+                </div>
+              </div>
+            </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Modals & Pickers -->
     <ExAssetPickerMenu
@@ -796,6 +807,8 @@ const emit = defineEmits<{
 }>()
 
 const { boardNodes, boardConnections, boardStrokes, articleType, locale, isEditingArticle } = toRefs(props)
+
+
 
 const editor = useExForumBoardEditor({
   boardNodes,

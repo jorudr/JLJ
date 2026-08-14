@@ -1053,6 +1053,125 @@
           </div>
         </div>
 
+        <!-- MODE SELECTION STEP (After Contribution) -->
+        <div v-else-if="creationStep === 'mode'" class="flex flex-col h-full px-8 md:px-16 xl:px-32 py-10 relative overflow-hidden w-full max-w-7xl mx-auto" key="mode">
+          <!-- HEADER -->
+          <div class="relative z-20 flex flex-col md:flex-row justify-between md:items-end border-b-2 border-current/20 pb-4 mb-6 mt-6 space-y-4 md:space-y-0 shrink-0">
+            <div class="flex flex-col space-y-2">
+              <span class="text-[10px] font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                {{ locale === 'ru' ? 'ФОРМАТ РЕДАКТИРОВАНИЯ' : 'EDITING FORMAT' }} // {{ formatJournalDate() }}
+              </span>
+              <span class="font-serif italic text-2xl text-current/80">{{ currentUserName }}</span>
+            </div>
+            
+            <div class="flex flex-col md:items-end space-y-1">
+              <span class="text-xs md:text-sm font-mono tracking-[0.4em] uppercase opacity-70 font-bold">
+                {{ locale === 'ru' ? 'Выберите формат публикации' : 'Choose Publication Format' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- CARDS SELECTOR CONTAINER -->
+          <div class="relative z-10 flex-grow flex flex-col justify-center items-center w-full max-w-5xl mx-auto min-h-0 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+              <!-- CARD 1: TEXT EDITOR MODE -->
+              <button
+                type="button"
+                class="group relative flex flex-col justify-between border-2 border-current/20 hover:border-black bg-white/50 p-8 text-left transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+                @click="creationStep = 'text'"
+              >
+                <div class="flex flex-col space-y-4">
+                  <div class="w-12 h-12 rounded bg-black text-white flex items-center justify-center font-mono text-xl font-bold group-hover:scale-110 transition-transform">
+                    TXT
+                  </div>
+                  <h3 class="font-serif italic text-3xl font-bold text-black/90">
+                    {{ locale === 'ru' ? 'Текстовый режим' : 'Text Mode' }}
+                  </h3>
+                  <p class="font-serif text-sm text-black/60 leading-relaxed">
+                    {{ locale === 'ru' ? 'Классическое написание статьи в сфокусированном редакторе текста. Выделяйте фрагменты и вызывайте панель форматирования по правому клику.' : 'Classic article writing in a focused text editor. Highlight snippets and call formatting toolbar on right click.' }}
+                  </p>
+                </div>
+                
+                <div class="mt-8 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.3em] text-black group-hover:translate-x-2 transition-transform">
+                  <span>{{ locale === 'ru' ? 'ОТКРЫТЬ ТЕКСТОВЫЙ РЕДАКТОР' : 'OPEN TEXT EDITOR' }}</span>
+                  <span>→</span>
+                </div>
+              </button>
+
+              <!-- CARD 2: BOARD MODE -->
+              <button
+                type="button"
+                class="group relative flex flex-col justify-between border-2 border-current/20 hover:border-black bg-white/50 p-8 text-left transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+                @click="creationStep = 'board'"
+              >
+                <div class="flex flex-col space-y-4">
+                  <div class="w-12 h-12 rounded bg-black text-white flex items-center justify-center font-mono text-xl font-bold group-hover:scale-110 transition-transform">
+                    BRD
+                  </div>
+                  <h3 class="font-serif italic text-3xl font-bold text-black/90">
+                    {{ locale === 'ru' ? 'Режим доски' : 'Board Mode' }}
+                  </h3>
+                  <p class="font-serif text-sm text-black/60 leading-relaxed">
+                    {{ locale === 'ru' ? 'Интерактивный матричный холст. Размещайте узлы текста, изображений, цен, стратегий, сделок и рисуйте связи между ними.' : 'Interactive matrix canvas. Place text, image, price, strategy, and trade nodes and draw connections between them.' }}
+                  </p>
+                </div>
+
+                <div class="mt-8 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.3em] text-black group-hover:translate-x-2 transition-transform">
+                  <span>{{ locale === 'ru' ? 'ОТКРЫТЬ РЕЖИМ ДОСКИ' : 'OPEN BOARD MODE' }}</span>
+                  <span>→</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="relative z-20 border-t-2 border-current/20 pt-4 mt-auto flex justify-between items-center shrink-0">
+            <button type="button" class="text-[11px] font-mono tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/back"
+                    @click="creationStep = 'contribution'">
+              <svg class="w-4 h-4 transition-transform group-hover/back:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M5 12l7-7M5 12l7 7"></path>
+              </svg>
+              <span>{{ locale === 'ru' ? 'НАЗАД' : 'BACK' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TEXT EDITOR STEP -->
+        <div v-else-if="creationStep === 'text'" class="flex flex-col h-full relative overflow-hidden w-full bg-white" key="text">
+          <div class="flex-1 w-full relative overflow-hidden pb-16">
+            <ExForumTextEditor
+              v-model="textEditorContent"
+              :locale="locale"
+              class="w-full h-full"
+            />
+          </div>
+
+          <!-- BOTTOM ACTIONS BAR -->
+          <div class="absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-black/10 bg-white/95 px-8 py-3 backdrop-blur-md">
+            <button
+              class="px-6 py-2.5 border border-black/20 bg-white text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
+              @click="creationStep = 'mode'"
+            >
+              {{ locale === 'ru' ? 'НАЗАД К ВЫБОРУ РЕЖИМА' : 'BACK TO MODE SELECT' }}
+            </button>
+            
+            <div class="flex items-center gap-4">
+              <button
+                class="px-6 py-2.5 border border-black/20 bg-white text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
+                @click="saveDraftAndExit"
+              >
+                {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
+              </button>
+              <button
+                class="px-8 py-2.5 border border-black/20 bg-black text-white text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+                @click="publishArticle"
+              >
+                {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- BOARD STEP -->
         <ExForumBoardEditor
           v-else-if="creationStep === 'board'"
@@ -1063,7 +1182,7 @@
           :article-type="newArticleForm.type"
           :locale="locale"
           :is-editing-article="isEditingArticle"
-          @back="creationStep = 'contribution'"
+          @back="creationStep = 'mode'"
           @save-draft="saveDraftAndExit"
           @continue="publishArticle"
           @cancel-edit="cancelArticleEditing"
@@ -1798,11 +1917,12 @@ import type { ExNode, ExNodeMode, ExNodeSignal } from '~/entities/exnode/model/e
 import type { StrategyProfile } from '~/features/store/useStrategyTrades'
 import type { Thread } from '~/entities/thread/model/thread.types'
 import { normalizeUserProfileStatuses, type UserProfileStatus } from '~/entities/user/model/user-status.types'
-import type { JournalArticle, JournalArticleBoard, JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort } from '~/entities/journal-article/types/journal-article.types'
+import type { JournalArticle, JournalArticleBoard, JournalArticleBoardConnection, JournalArticleBoardNode, JournalArticleBoardPort, JournalArticleBoardTextNode } from '~/entities/journal-article/types/journal-article.types'
 import ExUserStatusBadge from '~/entities/user/ui/ExUserStatusBadge.vue'
 import ExNodeCard from '~/entities/exnode/ui/ExNodeCard.vue'
 import ExJournalSpotlight from '~/widgets/exforum/ui/ExJournalSpotlight.vue'
 import ExForumBoardEditor from '~/widgets/exforum/ui/ExForumBoardEditor.vue'
+import ExForumTextEditor from '~/widgets/exforum/ui/ExForumTextEditor.vue'
 import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGenesisHudPanel from '~/widgets/genesis/ui/common/ExGenesisHudPanel.vue'
@@ -2459,7 +2579,7 @@ const assetTypeLocales: Record<string, { en: string; ru: string }> = {
 
 // Article Creation State
 const isCreatingArticle = ref(false)
-const creationStep = ref<'metadata' | 'contribution' | 'board' | 'preview'>('metadata')
+const creationStep = ref<'metadata' | 'contribution' | 'mode' | 'board' | 'text' | 'preview'>('metadata')
 const showPublishConfirmation = ref(false)
 const editingArticleId = ref<string | null>(null)
 const drawing = useForumDrawing()
@@ -2808,8 +2928,31 @@ const submitNewArticle = () => {
 const continueFromContribution = () => {
   isContributionPickerOpen.value = false
   contributionSearchQuery.value = ''
-  creationStep.value = 'board'
+  creationStep.value = 'mode'
 }
+
+const textEditorContent = computed({
+  get() {
+    const textNode = boardNodes.value.find((n): n is JournalArticleBoardTextNode => n.type === 'text')
+    return textNode ? (textNode.text || '') : ''
+  },
+  set(val: string) {
+    const textNode = boardNodes.value.find((n): n is JournalArticleBoardTextNode => n.type === 'text')
+    if (!textNode) {
+      const newNode: JournalArticleBoardTextNode = {
+        id: 'node-' + Date.now().toString(36),
+        type: 'text',
+        position: { x: 4, y: 4 },
+        size: { width: 14, height: 8 },
+        title: '',
+        text: val
+      }
+      boardNodes.value.push(newNode)
+    } else {
+      textNode.text = val
+    }
+  }
+})
 
 const publishArticle = () => {
   if (isSignalArticle.value && !isSignalBoardValid.value) {

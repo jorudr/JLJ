@@ -312,8 +312,16 @@ export function useExForumBoardEditor(options: UseExForumBoardEditorOptions) {
   }
 
   const removeBoardNode = (nodeId: string) => {
-    boardNodes.value = boardNodes.value.filter((n) => n.id !== nodeId)
-    boardConnections.value = boardConnections.value.filter((connection) => connection.fromId !== nodeId && connection.toId !== nodeId)
+    const nodeIndex = boardNodes.value.findIndex((n) => n.id === nodeId)
+    if (nodeIndex !== -1) {
+      boardNodes.value.splice(nodeIndex, 1)
+    }
+    for (let i = boardConnections.value.length - 1; i >= 0; i--) {
+      const connection = boardConnections.value[i]
+      if (connection && (connection.fromId === nodeId || connection.toId === nodeId)) {
+        boardConnections.value.splice(i, 1)
+      }
+    }
     if (selectedBoardNodeId.value === nodeId) selectedBoardNodeId.value = null
     closeNodeContextMenu()
   }
@@ -977,19 +985,30 @@ export function useExForumBoardEditor(options: UseExForumBoardEditorOptions) {
       fromPort: activeBoardWire.value.fromPort,
       toPort: port
     }
-    boardConnections.value = boardConnections.value.filter(
-      (connection) => !(connection.toId === node.id && (connection.toPort || 'left') === port)
-    )
+    for (let i = boardConnections.value.length - 1; i >= 0; i--) {
+      const connection = boardConnections.value[i]
+      if (connection && connection.toId === node.id && (connection.toPort || 'left') === port) {
+        boardConnections.value.splice(i, 1)
+      }
+    }
     boardConnections.value.push(nextConnection)
     cancelBoardWire()
   }
 
   const clearBoardInput = (node: JournalArticleBoardNode) => {
-    boardConnections.value = boardConnections.value.filter((connection) => connection.toId !== node.id)
+    for (let i = boardConnections.value.length - 1; i >= 0; i--) {
+      if (boardConnections.value[i]?.toId === node.id) {
+        boardConnections.value.splice(i, 1)
+      }
+    }
   }
 
   const clearBoardOutput = (node: JournalArticleBoardNode) => {
-    boardConnections.value = boardConnections.value.filter((connection) => connection.fromId !== node.id)
+    for (let i = boardConnections.value.length - 1; i >= 0; i--) {
+      if (boardConnections.value[i]?.fromId === node.id) {
+        boardConnections.value.splice(i, 1)
+      }
+    }
   }
 
   function stopBoardDrawingMode() {
