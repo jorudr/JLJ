@@ -1,46 +1,84 @@
 <template>
-  <div class="relative flex flex-col w-full h-full min-h-[400px] bg-white text-[#2c2c2a] selection:bg-black selection:text-white">
-    <!-- Header / Stats Info Bar -->
-    <div class="flex items-center justify-between border-b border-black/10 px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-black/50 select-none">
-      <div class="flex items-center gap-4">
-        <span class="flex items-center gap-1.5 font-bold text-black/70">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          {{ locale === 'ru' ? 'ТЕКСТОВЫЙ РЕДАКТОР' : 'TEXT EDITOR' }}
+  <div class="relative flex flex-col w-full h-full bg-[#f8f8f7] text-[#2c2c2a] selection:bg-black selection:text-white overflow-hidden exforum-edge-shadows">
+    <!-- Top & Bottom Edge Gradient Shadow Overlays (Matching ExForum Edge Shadows) -->
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/15 via-black/[0.04] to-transparent z-20"></div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/15 via-black/[0.04] to-transparent z-20"></div>
+
+    <!-- Background Decorative Elements & Shadows -->
+    <div class="pointer-events-none absolute inset-0 overflow-hidden select-none z-0">
+      <div class="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-black/[0.04] blur-3xl"></div>
+      <div class="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-black/[0.05] blur-3xl"></div>
+    </div>
+
+    <!-- Main Centered Text Editor Canvas Container -->
+    <div class="relative z-10 flex-1 min-h-0 w-full max-w-4xl mx-auto flex flex-col pt-16 sm:pt-20 pb-24 px-6 sm:px-12 overflow-hidden">
+      <!-- Article Title Above Textarea -->
+      <div class="w-full border-b border-black/10 pb-5 mb-6 text-left shrink-0 relative z-10 mt-4">
+        <span class="block text-[10px] font-mono uppercase tracking-[0.2em] text-black/40 mb-2 font-bold select-none">
+          {{ locale === 'ru' ? 'Заголовок' : 'Title' }}
         </span>
-        <span class="opacity-30">|</span>
-        <span>{{ wordCount }} {{ locale === 'ru' ? 'СЛОВ' : 'WORDS' }}</span>
-        <span class="opacity-30">•</span>
-        <span>{{ charCount }} {{ locale === 'ru' ? 'СИМВОЛОВ' : 'CHARS' }}</span>
+        <input
+          :value="title"
+          type="text"
+          class="w-full bg-transparent text-3xl sm:text-4xl md:text-5xl font-serif italic font-bold tracking-tight text-left text-black/90 outline-none placeholder:text-black/20"
+          :placeholder="locale === 'ru' ? 'Заголовок статьи...' : 'Article Title...'"
+          @input="emit('update:title', ($event.target as HTMLInputElement).value)"
+        />
       </div>
 
-      <div class="flex items-center gap-4 text-black/40">
-        <span>~{{ readingTimeMins }} {{ locale === 'ru' ? 'МИН ЧТЕНИЯ' : 'MIN READ' }}</span>
-        <span class="opacity-30">|</span>
-        <span class="text-[9px] text-black/30">
-          {{ locale === 'ru' ? 'ВЫДЕЛИТЕ ТЕКСТ & ПРАВЫЙ КЛИК ДЛЯ ФОРМАТИРОВАНИЯ' : 'SELECT TEXT & RIGHT CLICK TO FORMAT' }}
-        </span>
+      <!-- Main Contenteditable Text Area -->
+      <div class="relative flex-1 min-h-0 w-full overflow-hidden">
+        <div
+          :ref="setEditorRef"
+          data-text-editor
+          contenteditable="true"
+          class="w-full h-full outline-none font-serif text-lg md:text-xl leading-relaxed text-black/85 break-words whitespace-pre-wrap cursor-text selection:bg-black selection:text-white editor-rich-content relative z-10 overflow-y-auto pr-2"
+          :data-placeholder="placeholder"
+          @contextmenu="handleContextMenu"
+          @input="syncContentFromDom"
+        ></div>
+
+        <!-- Placeholder Overlay -->
+        <div
+          v-if="isContentEmpty"
+          class="pointer-events-none absolute left-0 top-0 z-0 font-serif text-lg md:text-xl italic text-black/30 select-none"
+        >
+          {{ placeholder }}
+        </div>
       </div>
     </div>
 
-    <!-- Main Editor Text Area / Contenteditable Container -->
-    <div class="relative flex-1 w-full overflow-y-auto p-8 sm:p-12">
-      <div
-        :ref="setEditorRef"
-        data-text-editor
-        contenteditable="true"
-        class="w-full h-full min-h-[300px] outline-none font-serif text-lg leading-relaxed text-black/85 break-words whitespace-pre-wrap cursor-text selection:bg-black selection:text-white editor-rich-content"
-        :data-placeholder="placeholder"
-        @contextmenu="handleContextMenu"
-        @input="syncContentFromDom"
-      ></div>
-
-      <!-- Empty State Placeholder Overlay -->
-      <div
-        v-if="isContentEmpty"
-        class="pointer-events-none absolute left-8 sm:left-12 top-8 sm:top-12 font-serif text-lg italic text-black/30 select-none"
+    <!-- Bottom Left Actions (Back to Mode Select) -->
+    <div
+      class="absolute bottom-6 left-6 z-50 flex items-center gap-4 cursor-auto pointer-events-auto"
+    >
+      <button
+        type="button"
+        class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+        @click="emit('back')"
       >
-        {{ placeholder }}
-      </div>
+        {{ locale === 'ru' ? 'НАЗАД К ВЫБОРУ РЕЖИМА' : 'BACK TO MODE SELECT' }}
+      </button>
+    </div>
+
+    <!-- Bottom Right Actions (Save Draft & Continue) -->
+    <div
+      class="absolute bottom-6 right-6 z-50 flex items-center gap-4 cursor-auto pointer-events-auto"
+    >
+      <button
+        type="button"
+        class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
+        @click="emit('saveDraft')"
+      >
+        {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
+      </button>
+      <button
+        type="button"
+        class="px-8 py-3 border border-black/20 bg-black text-white shadow-sm text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
+        @click="emit('continue')"
+      >
+        {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
+      </button>
     </div>
 
     <!-- Floating Context Formatting Panel (ExGenesis HUD style) -->
@@ -196,21 +234,27 @@ import ExGenesisHudButton from '~/widgets/genesis/ui/common/ExGenesisHudButton.v
 const props = withDefaults(
   defineProps<{
     modelValue?: string
+    title?: string
     placeholder?: string
     locale?: 'ru' | 'en'
   }>(),
   {
     modelValue: '',
-    placeholder: 'Напишите здесь текст вашей статьи...',
+    title: '',
+    placeholder: 'Текст статьи...',
     locale: 'ru'
   }
 )
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
+  (e: 'update:title', val: string): void
+  (e: 'back'): void
+  (e: 'saveDraft'): void
+  (e: 'continue'): void
 }>()
 
-const { modelValue, placeholder, locale } = toRefs(props)
+const { modelValue, title, placeholder, locale } = toRefs(props)
 
 // Sync modelValue prop with v-model emit
 const contentModel = computed({
@@ -225,9 +269,6 @@ const {
   toolbarPosition,
   activeFormats,
   activeColor,
-  charCount,
-  wordCount,
-  readingTimeMins,
   handleContextMenu,
   applyFormat,
   syncContentFromDom
@@ -253,6 +294,18 @@ const colorPresets = [
 </script>
 
 <style scoped>
+.exforum-edge-shadows {
+  background-attachment: local, local, local, local;
+  background-image:
+    radial-gradient(ellipse 120% 86% at 50% 0%, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.08) 28%, rgba(0, 0, 0, 0.03) 58%, rgba(0, 0, 0, 0) 82%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 34%, rgba(0, 0, 0, 0.015) 68%, rgba(0, 0, 0, 0) 100%),
+    radial-gradient(ellipse 120% 86% at 50% 100%, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.08) 28%, rgba(0, 0, 0, 0.03) 58%, rgba(0, 0, 0, 0) 82%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 34%, rgba(0, 0, 0, 0.015) 68%, rgba(0, 0, 0, 0) 100%);
+  background-position: top, top, bottom, bottom;
+  background-repeat: no-repeat;
+  background-size: 100% 280px, 100% 280px, 100% 280px, 100% 280px;
+}
+
 .hud-pop-enter-active,
 .hud-pop-leave-active {
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -265,38 +318,38 @@ const colorPresets = [
 }
 
 :deep(.editor-rich-content h1) {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 800;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   line-height: 1.2;
 }
 
 :deep(.editor-rich-content h2) {
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  margin-top: 0.85rem;
+  margin-top: 1rem;
   margin-bottom: 0.4rem;
   line-height: 1.25;
 }
 
 :deep(.editor-rich-content blockquote) {
   border-left: 3px solid #000;
-  padding-left: 1rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   font-style: italic;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 :deep(.editor-rich-content pre) {
   background: #f4f4f5;
   border-radius: 4px;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
   font-family: monospace;
-  font-size: 0.9rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   overflow-x: auto;
 }
 

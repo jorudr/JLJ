@@ -1138,38 +1138,15 @@
 
         <!-- TEXT EDITOR STEP -->
         <div v-else-if="creationStep === 'text'" class="flex flex-col h-full relative overflow-hidden w-full bg-white" key="text">
-          <div class="flex-1 w-full relative overflow-hidden pb-16">
-            <ExForumTextEditor
-              v-model="textEditorContent"
-              :locale="locale"
-              class="w-full h-full"
-            />
-          </div>
-
-          <!-- BOTTOM ACTIONS BAR -->
-          <div class="absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-black/10 bg-white/95 px-8 py-3 backdrop-blur-md">
-            <button
-              class="px-6 py-2.5 border border-black/20 bg-white text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
-              @click="creationStep = 'mode'"
-            >
-              {{ locale === 'ru' ? 'НАЗАД К ВЫБОРУ РЕЖИМА' : 'BACK TO MODE SELECT' }}
-            </button>
-            
-            <div class="flex items-center gap-4">
-              <button
-                class="px-6 py-2.5 border border-black/20 bg-white text-[10px] font-mono uppercase tracking-widest hover:border-black/50 transition-colors"
-                @click="saveDraftAndExit"
-              >
-                {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
-              </button>
-              <button
-                class="px-8 py-2.5 border border-black/20 bg-black text-white text-[10px] font-mono uppercase tracking-[0.2em] hover:bg-black/80 transition-colors"
-                @click="publishArticle"
-              >
-                {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
-              </button>
-            </div>
-          </div>
+          <ExForumTextEditor
+            v-model="textEditorContent"
+            v-model:title="newArticleForm.title"
+            :locale="locale"
+            class="w-full h-full"
+            @back="creationStep = 'mode'"
+            @save-draft="saveDraftAndExit"
+            @continue="publishArticle"
+          />
         </div>
 
         <!-- BOARD STEP -->
