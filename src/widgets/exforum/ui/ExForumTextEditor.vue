@@ -168,6 +168,50 @@
           >
             <span class="font-mono text-xs font-bold lowercase">li</span>
           </ExGenesisHudButton>
+
+          <div class="w-px h-5 bg-white/15 my-auto"></div>
+
+          <!-- Align Left -->
+          <ExGenesisHudButton
+            :active="activeFormats.alignLeft"
+            :tooltip="locale === 'ru' ? 'По левому краю' : 'Align Left'"
+            @click="applyFormat('alignLeft')"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="17" y1="10" x2="3" y2="10" />
+              <line x1="21" y1="6" x2="3" y2="6" />
+              <line x1="21" y1="14" x2="3" y2="14" />
+              <line x1="17" y1="18" x2="3" y2="18" />
+            </svg>
+          </ExGenesisHudButton>
+
+          <!-- Align Center -->
+          <ExGenesisHudButton
+            :active="activeFormats.alignCenter"
+            :tooltip="locale === 'ru' ? 'По центру' : 'Align Center'"
+            @click="applyFormat('alignCenter')"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="10" x2="6" y2="10" />
+              <line x1="21" y1="6" x2="3" y2="6" />
+              <line x1="21" y1="14" x2="3" y2="14" />
+              <line x1="18" y1="18" x2="6" y2="18" />
+            </svg>
+          </ExGenesisHudButton>
+
+          <!-- Align Right -->
+          <ExGenesisHudButton
+            :active="activeFormats.alignRight"
+            :tooltip="locale === 'ru' ? 'По правому краю' : 'Align Right'"
+            @click="applyFormat('alignRight')"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="21" y1="10" x2="7" y2="10" />
+              <line x1="21" y1="6" x2="3" y2="6" />
+              <line x1="21" y1="14" x2="3" y2="14" />
+              <line x1="21" y1="18" x2="7" y2="18" />
+            </svg>
+          </ExGenesisHudButton>
         </ExGenesisHudPanel>
       </div>
     </Transition>

@@ -47,7 +47,11 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
     h1: false,
     h2: false,
     blockquote: false,
-    unorderedList: false
+    unorderedList: false,
+    alignLeft: false,
+    alignCenter: false,
+    alignRight: false,
+    alignJustify: false
   })
 
   // Selected text snippet (for context menu information)
@@ -114,7 +118,11 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
           h1: false,
           h2: false,
           blockquote: false,
-          unorderedList: false
+          unorderedList: false,
+          alignLeft: false,
+          alignCenter: false,
+          alignRight: false,
+          alignJustify: false
         }
         return
       }
@@ -129,7 +137,11 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
       h1: document.queryCommandValue('formatBlock') === 'h1',
       h2: document.queryCommandValue('formatBlock') === 'h2',
       blockquote: document.queryCommandValue('formatBlock') === 'blockquote',
-      unorderedList: document.queryCommandState('insertUnorderedList')
+      unorderedList: document.queryCommandState('insertUnorderedList'),
+      alignLeft: document.queryCommandState('justifyLeft'),
+      alignCenter: document.queryCommandState('justifyCenter'),
+      alignRight: document.queryCommandState('justifyRight'),
+      alignJustify: document.queryCommandState('justifyFull')
     }
   }
 
@@ -252,6 +264,18 @@ export function useExForumTextEditor(options: UseExForumTextEditorOptions = {}) 
         break
       case 'unorderedList':
         document.execCommand('insertUnorderedList', false)
+        break
+      case 'alignLeft':
+        document.execCommand('justifyLeft', false)
+        break
+      case 'alignCenter':
+        document.execCommand('justifyCenter', false)
+        break
+      case 'alignRight':
+        document.execCommand('justifyRight', false)
+        break
+      case 'alignJustify':
+        document.execCommand('justifyFull', false)
         break
       case 'color':
         if (value) {
