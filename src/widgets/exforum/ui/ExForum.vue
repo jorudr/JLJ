@@ -1706,14 +1706,14 @@ const journalLabels = computed(() => locale.value === 'ru'
     })
 const journalFilters = computed(() => locale.value === 'ru'
   ? [
-      { label: 'СИГНАЛЫ', mode: 'SETUP' },
-      { label: 'ПУБЛИКАЦИЯ', mode: 'PUBLICATION' }
+      { label: 'ПОПУЛЯРНЫЕ', mode: 'POPULAR' },
+      { label: 'НОВЫЕ', mode: 'NEW' }
     ]
   : [
-      { label: 'SIGNALS', mode: 'SETUP' },
-      { label: 'PUBLICATION', mode: 'PUBLICATION' }
+      { label: 'POPULAR', mode: 'POPULAR' },
+      { label: 'NEW', mode: 'NEW' }
     ])
-const activeJournalFilter = ref<string | null>(null)
+const activeJournalFilter = ref<string | null>('NEW')
 const journalViewMode = ref<'journal' | 'mine'>('journal')
 const isForumLightTheme = computed(() => !themeStore.settings.isDark)
 const showForumEdgeShadows = computed(() => themeStore.settings.isDark)
@@ -1989,18 +1989,12 @@ const journalNodes = computed(() => journalThreads.value
 
 const filteredNodes = computed(() => {
   const q = searchQuery.value.toLowerCase()
-  return journalNodes.value.filter((n: ExNode) => {
+  const list = journalNodes.value.filter((n: ExNode) => {
     let matchesFilter = true
     if (activeJournalFilter.value === 'LIKED') {
       matchesFilter = forumStore.userLikedThreadIds.has(n.id)
     } else if (activeJournalFilter.value === 'BOOKMARKED') {
       matchesFilter = forumStore.userSavedThreadIds.has(n.id)
-    } else if (activeJournalFilter.value === 'SETUP') {
-      matchesFilter = n.mode === 'SETUP' || n.type === 'SETUP'
-    } else if (activeJournalFilter.value === 'PUBLICATION') {
-      matchesFilter = n.mode !== 'SETUP' && n.type !== 'SETUP'
-    } else if (activeJournalFilter.value) {
-      matchesFilter = n.mode === activeJournalFilter.value
     }
     const matchesSearch = !q
       || n.title.toLowerCase().includes(q)
@@ -2010,6 +2004,19 @@ const filteredNodes = computed(() => {
       || n.signal?.description.toLowerCase().includes(q)
     return matchesFilter && matchesSearch
   })
+
+  if (activeJournalFilter.value === 'POPULAR') {
+    const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000
+    const now = Date.now()
+    const recentNodes = list.filter((n) => {
+      const time = new Date(n.lastActivityAt).getTime()
+      return !isNaN(time) && (now - time <= sixtyDaysMs)
+    })
+    const targetList = recentNodes.length > 0 ? recentNodes : list
+    return [...targetList].sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
+  } else {
+    return [...list].sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
+  }
 })
 
 const pagedNodes = computed(() => {
@@ -2044,7 +2051,7 @@ const navigateToPage = (page: number) => {
 
 const setJournalFilter = (mode: string) => {
   journalViewMode.value = 'journal'
-  activeJournalFilter.value = activeJournalFilter.value === mode ? null : mode
+  activeJournalFilter.value = activeJournalFilter.value === mode ? 'NEW' : mode
   navigateToPage(1)
 }
 
