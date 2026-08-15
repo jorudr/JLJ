@@ -20,7 +20,7 @@
         <input
           :value="title"
           type="text"
-          class="w-full bg-transparent text-3xl sm:text-4xl md:text-5xl font-serif italic font-bold tracking-tight text-left text-black/90 outline-none placeholder:text-black/20"
+          class="w-full bg-transparent text-3xl sm:text-4xl md:text-5xl font-serif italic font-normal tracking-tight text-left text-black/90 outline-none placeholder:text-black/20"
           :placeholder="locale === 'ru' ? 'Заголовок статьи...' : 'Article Title...'"
           @input="emit('update:title', ($event.target as HTMLInputElement).value)"
         />
@@ -46,6 +46,35 @@
           {{ placeholder }}
         </div>
       </div>
+    </div>
+
+    <!-- Left Vertical Side Toolbar (Image & Deal buttons) -->
+    <div
+      class="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex items-center cursor-auto pointer-events-auto"
+    >
+      <ExGenesisHudPanel orientation="vertical">
+        <!-- Add Image Button -->
+        <ExGenesisHudButton
+          :tooltip="locale === 'ru' ? 'Изображение' : 'Image'"
+          tooltip-position="right"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="8.5" cy="8.5" r="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <polyline points="21 15 16 10 5 21" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </ExGenesisHudButton>
+
+        <!-- Add Deal Button -->
+        <ExGenesisHudButton
+          :tooltip="locale === 'ru' ? 'Сделка' : 'Trade'"
+          tooltip-position="right"
+        >
+          <span class="font-mono text-[10px] font-black uppercase tracking-wider text-current">
+            {{ locale === 'ru' ? 'СДЛ' : 'TRD' }}
+          </span>
+        </ExGenesisHudButton>
+      </ExGenesisHudPanel>
     </div>
 
     <!-- Bottom Left Actions (Back to Mode Select) -->
