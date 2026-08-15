@@ -121,7 +121,10 @@
         <div v-if="attachedTrades.length > 0" class="w-full shrink-0 pt-6 border-t border-black/10 relative z-20 mb-8">
           <div class="flex items-center justify-between mb-3">
             <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
-              <span class="font-mono text-[10px] font-black uppercase text-current">TRD</span>
+              <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M3 3v18h18" />
+                <path d="M18 9l-5 5-4-4-5 5" />
+              </svg>
               {{ locale === 'ru' ? 'Прикрепленные сделки' : 'Attached Trades' }}
             </span>
             <span class="text-[10px] font-mono font-bold text-black/40">
@@ -251,9 +254,9 @@
       <button
         type="button"
         class="px-6 py-3 border border-black/20 bg-white/90 shadow-sm text-[10px] font-mono uppercase tracking-widest hover:border-black/50 hover:bg-white transition-colors"
-        @click="emit('saveDraft')"
+        @click="isEditingArticle ? emit('cancelEdit') : emit('saveDraft')"
       >
-        {{ locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT' }}
+        {{ isEditingArticle ? (locale === 'ru' ? 'ВЫЙТИ' : 'EXIT') : (locale === 'ru' ? 'СОХРАНИТЬ ЧЕРНОВИК' : 'SAVE DRAFT') }}
       </button>
       <button
         type="button"
@@ -502,6 +505,7 @@ const props = withDefaults(
     images?: string[]
     trades?: any[]
     placeholder?: string
+    isEditingArticle?: boolean
     locale?: 'ru' | 'en'
   }>(),
   {
@@ -510,6 +514,7 @@ const props = withDefaults(
     images: () => [],
     trades: () => [],
     placeholder: 'Текст статьи...',
+    isEditingArticle: false,
     locale: 'ru'
   }
 )
@@ -521,6 +526,7 @@ const emit = defineEmits<{
   (e: 'update:trades', val: any[]): void
   (e: 'back'): void
   (e: 'saveDraft'): void
+  (e: 'cancelEdit'): void
   (e: 'continue'): void
 }>()
 

@@ -454,7 +454,10 @@
             <!-- ATTACHED TRADES IN READER -->
             <div v-if="(selectedArticle as any)?.attachedTrades?.length" class="w-full flex flex-col gap-3 pt-6 border-t border-black/10">
               <span class="text-[10px] font-mono tracking-[0.2em] uppercase text-black/50 font-bold select-none flex items-center gap-2">
-                <span class="font-mono text-[10px] font-black uppercase text-current">TRD</span>
+                <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M3 3v18h18" />
+                  <path d="M18 9l-5 5-4-4-5 5" />
+                </svg>
                 {{ locale === 'ru' ? 'Прикрепленные сделки' : 'Attached Trades' }}
               </span>
               <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin w-full">
@@ -1085,10 +1088,12 @@
             v-model:title="newArticleForm.title"
             v-model:images="attachedArticleImages"
             v-model:trades="attachedArticleTrades"
+            :is-editing-article="isEditingArticle"
             :locale="locale"
             class="w-full h-full"
             @back="creationStep = 'mode'"
             @save-draft="saveDraftAndExit"
+            @cancel-edit="cancelArticleEditing"
             @continue="publishArticle"
           />
         </div>
