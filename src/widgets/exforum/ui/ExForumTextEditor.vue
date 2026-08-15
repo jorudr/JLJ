@@ -1,5 +1,15 @@
 <template>
   <div class="relative flex flex-col w-full h-full bg-[#f8f8f7] text-[#2c2c2a] selection:bg-black selection:text-white overflow-hidden exforum-edge-shadows">
+    <!-- Hidden File Input for Image Selection -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/svg+xml, image/*"
+      multiple
+      class="hidden"
+      @change="handleImageFileSelect"
+    />
+
     <!-- Top & Bottom Edge Gradient Shadow Overlays (Matching ExForum Edge Shadows) -->
     <div class="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/15 via-black/[0.04] to-transparent z-20"></div>
     <div class="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/15 via-black/[0.04] to-transparent z-20"></div>
@@ -27,7 +37,7 @@
       </div>
 
       <!-- Main Contenteditable Text Area -->
-      <div class="relative flex-1 min-h-0 w-full overflow-hidden">
+      <div class="relative flex-1 min-h-0 w-full overflow-hidden flex flex-col">
         <div
           :ref="setEditorRef"
           data-text-editor
@@ -46,6 +56,66 @@
           {{ placeholder }}
         </div>
       </div>
+
+      <!-- Attached Images Horizontal Carousel (Max 5 images) -->
+      <div v-if="attachedImages.length > 0" class="w-full shrink-0 pt-6 mt-6 border-t border-black/10 relative z-20">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            {{ locale === 'ru' ? 'Прикрепленные изображения' : 'Attached Images' }}
+          </span>
+          <span class="text-[10px] font-mono font-bold text-black/40">
+            {{ attachedImages.length }} / 5
+          </span>
+        </div>
+
+        <!-- Horizontal Scrollable Carousel -->
+        <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin">
+          <div
+            v-for="(imgSrc, index) in attachedImages"
+            :key="index"
+            class="group relative shrink-0 w-36 h-28 sm:w-44 sm:h-32 bg-black/5 border border-black/15 rounded overflow-hidden shadow-sm hover:border-black/40 transition-all cursor-pointer"
+          >
+            <img :src="imgSrc" alt="Attached preview" class="w-full h-full object-cover" />
+            <!-- Delete Button Overlay -->
+            <button
+              type="button"
+              class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
+              :title="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
+              @click.stop="removeAttachedImage(index)"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            <!-- Index Badge -->
+            <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-black/70 text-white rounded">
+              {{ index + 1 }}
+            </span>
+          </div>
+
+          <!-- Add More Thumbnail Button if < 5 -->
+          <button
+            v-if="attachedImages.length < 5"
+            type="button"
+            class="shrink-0 w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-black/20 hover:border-black/50 rounded flex flex-col items-center justify-center gap-1.5 text-black/40 hover:text-black/80 transition-colors bg-white/50 hover:bg-white"
+            @click="triggerImageUpload"
+          >
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span class="text-[9px] font-mono uppercase tracking-widest font-bold">
+              {{ locale === 'ru' ? 'ЕЩЕ' : 'ADD' }}
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Left Vertical Side Toolbar (Image & Deal buttons) -->
@@ -57,6 +127,7 @@
         <ExGenesisHudButton
           :tooltip="locale === 'ru' ? 'Изображение' : 'Image'"
           tooltip-position="right"
+          @click="triggerImageUpload"
         >
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -248,7 +319,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRefs } from 'vue'
+import { ref, computed, toRefs } from 'vue'
 import { useExForumTextEditor } from '../model/useExForumTextEditor'
 import ExGenesisHudPanel from '~/widgets/genesis/ui/common/ExGenesisHudPanel.vue'
 import ExGenesisHudButton from '~/widgets/genesis/ui/common/ExGenesisHudButton.vue'
@@ -257,12 +328,14 @@ const props = withDefaults(
   defineProps<{
     modelValue?: string
     title?: string
+    images?: string[]
     placeholder?: string
     locale?: 'ru' | 'en'
   }>(),
   {
     modelValue: '',
     title: '',
+    images: () => [],
     placeholder: 'Текст статьи...',
     locale: 'ru'
   }
@@ -271,18 +344,70 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'update:title', val: string): void
+  (e: 'update:images', val: string[]): void
   (e: 'back'): void
   (e: 'saveDraft'): void
   (e: 'continue'): void
 }>()
 
-const { modelValue, title, placeholder, locale } = toRefs(props)
+const { modelValue, title, images, placeholder, locale } = toRefs(props)
 
 // Sync modelValue prop with v-model emit
 const contentModel = computed({
   get: () => modelValue.value || '',
   set: (val: string) => emit('update:modelValue', val)
 })
+
+// File Input & Image Attachments State
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const internalImages = ref<string[]>([])
+
+const attachedImages = computed({
+  get: () => (images.value && images.value.length > 0 ? images.value : internalImages.value),
+  set: (val: string[]) => {
+    internalImages.value = val
+    emit('update:images', val)
+  }
+})
+
+function triggerImageUpload() {
+  if (attachedImages.value.length >= 5) {
+    return
+  }
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+function handleImageFileSelect(event: Event) {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files || files.length === 0) return
+
+  const remainingSlots = 5 - attachedImages.value.length
+  if (remainingSlots <= 0) return
+
+  const filesToProcess = Array.from(files).slice(0, remainingSlots)
+
+  filesToProcess.forEach(file => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      if (result && attachedImages.value.length < 5) {
+        attachedImages.value = [...attachedImages.value, result]
+      }
+    }
+    reader.readAsDataURL(file)
+  })
+
+  target.value = ''
+}
+
+function removeAttachedImage(index: number) {
+  const updated = [...attachedImages.value]
+  updated.splice(index, 1)
+  attachedImages.value = updated
+}
 
 const {
   setEditorRef,
