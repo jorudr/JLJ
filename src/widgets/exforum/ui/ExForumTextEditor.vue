@@ -61,7 +61,7 @@
           </div>
         </div>
 
-        <!-- Attached Images Horizontal Carousel (Moves down below text as text grows) -->
+        <!-- Attached Images Horizontal Carousel (Max 5 images) -->
         <div v-if="attachedImages.length > 0" class="w-full shrink-0 pt-6 border-t border-black/10 relative z-20 mb-8">
           <div class="flex items-center justify-between mb-3">
             <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
@@ -88,7 +88,7 @@
               <!-- Delete Button Overlay -->
               <button
                 type="button"
-                class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
+                class="absolute top-2 right-2 w-6 h-6 rounded-none bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
                 :title="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
                 @click.stop="removeAttachedImage(index)"
               >
@@ -97,10 +97,6 @@
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-              <!-- Index Badge -->
-              <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-black/70 text-white rounded">
-                {{ index + 1 }}
-              </span>
             </div>
 
             <!-- Add More Thumbnail Button if < 5 -->
@@ -116,6 +112,87 @@
               </svg>
               <span class="text-[9px] font-mono uppercase tracking-widest font-bold">
                 {{ locale === 'ru' ? 'ЕЩЕ' : 'ADD' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Attached Trades Horizontal Carousel (Max 5 trades, placed below images carousel) -->
+        <div v-if="attachedTrades.length > 0" class="w-full shrink-0 pt-6 border-t border-black/10 relative z-20 mb-8">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
+              <span class="font-mono text-[10px] font-black uppercase text-current">TRD</span>
+              {{ locale === 'ru' ? 'Прикрепленные сделки' : 'Attached Trades' }}
+            </span>
+            <span class="text-[10px] font-mono font-bold text-black/40">
+              {{ attachedTrades.length }} / 5
+            </span>
+          </div>
+
+          <!-- Horizontal Scrollable Carousel -->
+          <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin">
+            <div
+              v-for="(trade, index) in attachedTrades"
+              :key="trade.id || index"
+              class="group relative shrink-0 w-44 h-28 sm:w-52 sm:h-32 bg-white border border-black/15 rounded p-3.5 shadow-sm hover:border-black/40 transition-all flex flex-col justify-between cursor-pointer select-none"
+            >
+              <!-- Header: Side badge & Delete button -->
+              <div class="flex items-center justify-between">
+                <span
+                  class="px-1.5 py-0.5 text-[9px] font-mono font-black rounded uppercase tracking-wider"
+                  :class="getTradeSideLabel(trade.side) === 'LONG' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'"
+                >
+                  {{ getTradeSideLabel(trade.side) }}
+                </span>
+
+                <!-- Delete Button -->
+                <button
+                  type="button"
+                  class="w-5 h-5 rounded-none bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
+                  :title="locale === 'ru' ? 'Удалить сделку' : 'Remove trade'"
+                  @click.stop="removeAttachedTrade(index)"
+                >
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Ticker Symbol -->
+              <div class="my-auto">
+                <span class="block font-mono text-lg sm:text-xl font-black uppercase tracking-widest text-black/90 truncate">
+                  {{ trade.asset || 'N/A' }}
+                </span>
+              </div>
+
+              <!-- Result in % -->
+              <div class="flex items-center justify-between border-t border-black/5 pt-2">
+                <span class="text-[9px] font-mono font-bold uppercase text-black/40 tracking-wider">
+                  {{ locale === 'ru' ? 'РЕЗУЛЬТАТ' : 'RESULT' }}
+                </span>
+                <span
+                  class="font-mono text-sm sm:text-base font-black tracking-wider"
+                  :class="getResultToneClass(getTradePercentProfit(trade, trade.strategyId))"
+                >
+                  {{ formatSignedPercent(getTradePercentProfit(trade, trade.strategyId)) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Add More Trade Button if < 5 -->
+            <button
+              v-if="attachedTrades.length < 5"
+              type="button"
+              class="shrink-0 w-32 h-28 sm:w-36 sm:h-32 border-2 border-dashed border-black/20 hover:border-black/50 rounded flex flex-col items-center justify-center gap-1.5 text-black/40 hover:text-black/80 transition-colors bg-white/50 hover:bg-white"
+              @click="triggerTradeUpload"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span class="text-[9px] font-mono uppercase tracking-widest font-bold">
+                {{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }}
               </span>
             </button>
           </div>
@@ -145,6 +222,7 @@
         <ExGenesisHudButton
           :tooltip="locale === 'ru' ? 'Сделка' : 'Trade'"
           tooltip-position="right"
+          @click="triggerTradeUpload"
         >
           <span class="font-mono text-[10px] font-black uppercase tracking-wider text-current">
             {{ locale === 'ru' ? 'СДЛ' : 'TRD' }}
@@ -184,6 +262,95 @@
       >
         {{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}
       </button>
+    </div>
+
+    <!-- Trade Picker Modal -->
+    <div
+      v-if="isTradePickerOpen"
+      class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm cursor-auto pointer-events-auto"
+      @click.self="isTradePickerOpen = false"
+    >
+      <div class="relative flex h-full max-h-[620px] w-[980px] max-w-full flex-col" @click.stop>
+        <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex h-full flex-col border-black/20 bg-white text-black shadow-2xl">
+          <div class="flex items-center justify-between border-b border-black/10 px-6 py-5">
+            <div class="flex flex-col gap-1">
+              <span class="font-mono text-[9px] font-black uppercase tracking-[0.35em] text-black/35">
+                EXGENESISLOG // {{ locale === 'ru' ? 'СПИСОК СДЕЛОК' : 'TRADE LIST' }}
+              </span>
+              <strong class="font-mono text-xl font-black uppercase tracking-widest">
+                {{ locale === 'ru' ? 'Выберите сделку' : 'Select trade' }}
+              </strong>
+            </div>
+            <button
+              type="button"
+              class="w-8 h-8 rounded border border-black/10 text-black/40 hover:text-black hover:border-black/30 flex items-center justify-center font-mono font-bold text-sm transition-colors"
+              @click="isTradePickerOpen = false"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto scroll-minimal py-2">
+            <div v-for="strategy in tradePickerStrategies" :key="strategy.id" class="border-b border-black/5 last:border-0">
+              <button
+                class="grid w-full grid-cols-[1fr_0.4fr_0.4fr_0.7fr_auto] items-center gap-3 px-6 py-4 text-left font-mono transition-colors hover:bg-black/5"
+                @click="toggleTradeStrategy(strategy.id)"
+              >
+                <span class="min-w-0">
+                  <span class="block truncate text-[13px] font-black uppercase tracking-widest text-black/80">{{ strategy.name }}</span>
+                  <span class="mt-1 block text-[8px] uppercase tracking-[0.2em] text-black/30">
+                    {{ getTradePickerStrategyTrades(strategy.id).length }} {{ locale === 'ru' ? 'сделок' : 'trades' }}
+                  </span>
+                </span>
+                <span class="text-[11px] font-black text-black/55">PF {{ formatProfitFactor(getStrategyMetrics(strategy).profitFactor) }}</span>
+                <span class="text-[11px] font-black text-black/55">WR {{ formatCompactNumber(getStrategyMetrics(strategy).winRate, 1) }}%</span>
+                <span class="text-right text-[11px] font-black" :class="getResultToneClass(getStrategyMetrics(strategy).resultCurrency)">
+                  {{ formatSignedCurrency(getStrategyMetrics(strategy).resultCurrency) }} ({{ formatSignedPercent(getStrategyMetrics(strategy).resultPercent) }})
+                </span>
+                <span
+                  class="flex h-6 w-6 items-center justify-center border border-black/10 text-[12px] font-black text-black/35 transition-colors"
+                  :class="expandedTradeStrategyId === strategy.id ? 'bg-black text-white' : ''"
+                >
+                  {{ expandedTradeStrategyId === strategy.id ? '−' : '+' }}
+                </span>
+              </button>
+
+              <div v-if="expandedTradeStrategyId === strategy.id" class="border-t border-black/10 bg-black/[0.025]">
+                <div class="grid grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] gap-2 border-b border-black/10 px-6 py-3 pl-10 font-mono text-[8px] font-black uppercase tracking-[0.25em] text-black/35">
+                  <span>{{ locale === 'ru' ? 'НАПРАВЛЕНИЕ' : 'DIRECTION' }}</span>
+                  <span>{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
+                  <span>{{ locale === 'ru' ? 'ДАТЫ' : 'DATES' }}</span>
+                  <span class="text-right">{{ locale === 'ru' ? 'ДЛИТЕЛЬНОСТЬ' : 'DURATION' }}</span>
+                  <span class="text-right">{{ locale === 'ru' ? 'РЕЗУЛЬТАТ' : 'RESULT' }}</span>
+                </div>
+                <button
+                  v-for="trade in getTradePickerStrategyTrades(strategy.id)"
+                  :key="trade.id"
+                  class="grid w-full grid-cols-[1fr_0.8fr_1.35fr_1fr_1fr] items-center gap-2 border-b border-black/5 px-6 py-3 pl-10 text-left font-mono transition-colors last:border-0 hover:bg-black/5"
+                  @click="selectTrade(trade)"
+                >
+                  <span class="flex min-w-0 items-center gap-3">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="getResultDotClass(getTradeCurrencyProfit(trade))"></span>
+                    <span class="truncate text-[12px] font-black uppercase tracking-widest">{{ getTradeSideLabel(trade.side) }}</span>
+                  </span>
+                  <span class="truncate text-[11px] uppercase tracking-wider text-black/60">{{ trade.asset || 'N/A' }}</span>
+                  <span class="flex min-w-0 flex-col">
+                    <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Вход' : 'Entry' }}: {{ formatTradeDate(trade.date) }}</span>
+                    <span class="truncate text-[9px] uppercase tracking-wider text-black/35">{{ locale === 'ru' ? 'Выход' : 'Exit' }}: {{ formatTradeDate(trade.dateExit) }}</span>
+                  </span>
+                  <span class="truncate text-right text-[11px] uppercase tracking-wider text-black/40">{{ formatTradeDuration(trade) }}</span>
+                  <span class="truncate text-right text-[11px] font-black" :class="getResultToneClass(getTradeCurrencyProfit(trade))">
+                    {{ formatSignedCurrency(getTradeCurrencyProfit(trade)) }} ({{ formatSignedPercent(getTradePercentProfit(trade, strategy.id)) }})
+                  </span>
+                </button>
+                <div v-if="getTradePickerStrategyTrades(strategy.id).length === 0" class="px-10 py-6 text-center font-mono text-xs text-black/40">
+                  {{ locale === 'ru' ? 'В этой стратегии нет сделок' : 'No trades in this strategy' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ExPanel>
+      </div>
     </div>
 
     <!-- Floating Context Formatting Panel (ExGenesis HUD style) -->
@@ -326,6 +493,9 @@
 <script setup lang="ts">
 import { ref, computed, toRefs } from 'vue'
 import { useExForumTextEditor } from '../model/useExForumTextEditor'
+import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import type { DiaryEntry } from '~/entities/diary/model/diary.types'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGenesisHudPanel from '~/widgets/genesis/ui/common/ExGenesisHudPanel.vue'
 import ExGenesisHudButton from '~/widgets/genesis/ui/common/ExGenesisHudButton.vue'
 
@@ -334,6 +504,7 @@ const props = withDefaults(
     modelValue?: string
     title?: string
     images?: string[]
+    trades?: any[]
     placeholder?: string
     locale?: 'ru' | 'en'
   }>(),
@@ -341,6 +512,7 @@ const props = withDefaults(
     modelValue: '',
     title: '',
     images: () => [],
+    trades: () => [],
     placeholder: 'Текст статьи...',
     locale: 'ru'
   }
@@ -350,12 +522,13 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'update:title', val: string): void
   (e: 'update:images', val: string[]): void
+  (e: 'update:trades', val: any[]): void
   (e: 'back'): void
   (e: 'saveDraft'): void
   (e: 'continue'): void
 }>()
 
-const { modelValue, title, images, placeholder, locale } = toRefs(props)
+const { modelValue, title, images, trades, placeholder, locale } = toRefs(props)
 
 // Sync modelValue prop with v-model emit
 const contentModel = computed({
@@ -412,6 +585,167 @@ function removeAttachedImage(index: number) {
   const updated = [...attachedImages.value]
   updated.splice(index, 1)
   attachedImages.value = updated
+}
+
+// Strategy & Trade Selection State
+const strategyTradesStore = useStrategyTradesStore()
+const internalTrades = ref<any[]>([])
+const isTradePickerOpen = ref(false)
+const expandedTradeStrategyId = ref<string | null>(null)
+
+const attachedTrades = computed({
+  get: () => (trades.value && trades.value.length > 0 ? trades.value : internalTrades.value),
+  set: (val: any[]) => {
+    internalTrades.value = val
+    emit('update:trades', val)
+  }
+})
+
+const tradePickerStrategies = computed(() => strategyTradesStore.strategies || [])
+
+const getStrategyTrades = (strategyId: string) => {
+  return (strategyTradesStore.getTradesForStrategy(strategyId) || []) as DiaryEntry[]
+}
+
+const getTradePickerStrategyTrades = (strategyId: string) => {
+  return getStrategyTrades(strategyId)
+    .slice()
+    .sort((left: any, right: any) => {
+      const leftTime = left.date ? new Date(left.date).getTime() : 0
+      const rightTime = right.date ? new Date(right.date).getTime() : 0
+      return rightTime - leftTime
+    })
+}
+
+const toggleTradeStrategy = (strategyId: string) => {
+  expandedTradeStrategyId.value = expandedTradeStrategyId.value === strategyId ? null : strategyId
+}
+
+const getTradeCurrencyProfit = (trade: any) => {
+  const value = trade?.profitInCurrency ?? trade?.pnl ?? trade?.result ?? 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const getTradePercentProfit = (trade: any, strategyId?: string) => {
+  const explicit = Number(trade?.profitValue ?? trade?.resultPercent)
+  if (Number.isFinite(explicit)) return explicit
+  const result = Number(trade?.result)
+  if (Number.isFinite(result) && Math.abs(result) <= 1000 && trade?.profitInCurrency === undefined) return result
+  const deposit = strategyId ? strategyTradesStore.getInitialDeposit(strategyId) : 1000
+  const base = deposit > 0 ? deposit : 1000
+  return (getTradeCurrencyProfit(trade) / base) * 100
+}
+
+const formatCompactNumber = (value: number, digits = 2) => {
+  if (!Number.isFinite(value)) return '0'
+  if (Math.abs(value) >= 1000) {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, notation: 'compact' }).format(value)
+  }
+  return value.toFixed(digits)
+}
+
+const formatSignedCurrency = (value: number) => {
+  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${sign}$${formatCompactNumber(Math.abs(value), 2)}`
+}
+
+const formatSignedPercent = (value: number) => {
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${formatCompactNumber(value, 2)}%`
+}
+
+const getResultToneClass = (value: number) => {
+  if (value > 0) return 'text-emerald-600'
+  if (value < 0) return 'text-red-600'
+  return 'text-black/55'
+}
+
+const getResultDotClass = (value: number) => {
+  if (value > 0) return 'bg-emerald-500'
+  if (value < 0) return 'bg-red-500'
+  return 'bg-black/40'
+}
+
+const getStrategyMetrics = (strategy: any) => {
+  const trades = getStrategyTrades(strategy.id)
+  const profits = trades.map(getTradeCurrencyProfit)
+  const grossProfit = profits.filter((v) => v > 0).reduce((sum, v) => sum + v, 0)
+  const grossLoss = Math.abs(profits.filter((v) => v < 0).reduce((sum, v) => sum + v, 0))
+  const wins = profits.filter((v) => v > 0).length
+  const total = profits.length
+  const resultCurrency = profits.reduce((sum, v) => sum + v, 0)
+  const initialDeposit = strategyTradesStore.getInitialDeposit(strategy.id)
+  const resultPercent = initialDeposit > 0 ? (resultCurrency / initialDeposit) * 100 : 0
+
+  return {
+    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0,
+    winRate: total > 0 ? (wins / total) * 100 : 0,
+    resultCurrency,
+    resultPercent,
+    initialCapital: initialDeposit,
+    finalCapital: initialDeposit + resultCurrency,
+    tradesCount: total
+  }
+}
+
+const formatProfitFactor = (value: number) => {
+  if (value === Infinity) return '∞'
+  return formatCompactNumber(value, 2)
+}
+
+const getTradeSideLabel = (side: any) => {
+  const str = String(side || '').toLowerCase()
+  if (str.includes('buy') || str.includes('long') || str === 'b' || str === 'l') return 'LONG'
+  if (str.includes('sell') || str.includes('short') || str === 's') return 'SHORT'
+  return String(side || 'LONG').toUpperCase()
+}
+
+const formatTradeDate = (d: any) => {
+  if (!d) return '—'
+  const date = new Date(d)
+  if (isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString(locale.value === 'ru' ? 'ru-RU' : 'en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+  })
+}
+
+const formatTradeDuration = (trade: any) => {
+  const start = trade?.date ? new Date(trade.date).getTime() : 0
+  const end = trade?.dateExit ? new Date(trade.dateExit).getTime() : start
+  if (!start || !end || end < start) return '—'
+  const diffMs = end - start
+  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24)
+    return `${days}${locale.value === 'ru' ? 'д' : 'd'}`
+  }
+  return `${hours}${locale.value === 'ru' ? 'ч' : 'h'}`
+}
+
+function triggerTradeUpload() {
+  if (attachedTrades.value.length >= 5) {
+    return
+  }
+  isTradePickerOpen.value = true
+  expandedTradeStrategyId.value = null
+}
+
+function selectTrade(trade: DiaryEntry) {
+  if (attachedTrades.value.length >= 5) return
+  const exists = attachedTrades.value.some(t => t.id === trade.id)
+  if (!exists) {
+    attachedTrades.value = [...attachedTrades.value, JSON.parse(JSON.stringify(trade))]
+  }
+  isTradePickerOpen.value = false
+}
+
+function removeAttachedTrade(index: number) {
+  const updated = [...attachedTrades.value]
+  updated.splice(index, 1)
+  attachedTrades.value = updated
 }
 
 const {
