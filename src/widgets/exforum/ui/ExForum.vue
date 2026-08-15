@@ -253,7 +253,8 @@
               </span>
               <div class="h-[1px] flex-1 bg-current/10"></div>
             </div>
-            <p class="text-current/90 leading-relaxed">{{ selectedArticle.description }}</p>
+            <span v-if="selectedArticle.description" class="text-[10px] font-mono tracking-widest uppercase text-current/40 mb-1 block">{{ locale === 'ru' ? 'Описание' : 'Description' }}</span>
+            <p v-if="selectedArticle.description" class="text-current/90 leading-relaxed !mt-1.5">{{ selectedArticle.description }}</p>
           </div>
 
           <div class="article-reader-metrics" :aria-label="articleLabels.metrics">
@@ -407,6 +408,9 @@
           <div class="w-full border-t border-black/15"></div>
 
           <div class="max-w-[800px] w-full flex flex-col gap-8 text-black text-left">
+            <span class="text-[10px] font-mono tracking-widest uppercase text-black/40 block -mb-4 font-bold select-none">
+              {{ locale === 'ru' ? 'СОДЕРЖАНИЕ' : 'CONTENT' }}
+            </span>
             <div
               v-for="(block, index) in selectedArticleTextBlocks"
               :key="block.id || index"
@@ -5300,7 +5304,7 @@ watch(() => [route.query.nodeId, route.query.page], () => {
 
 .article-reader-title-row p {
   max-width: 720px;
-  margin-top: 22px;
+  margin-top: 6px;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(1rem, 1.25vw, 1.25rem);
   font-style: italic;

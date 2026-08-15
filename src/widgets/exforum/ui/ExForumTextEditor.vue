@@ -23,15 +23,21 @@
     <!-- Static Header Row (Title is static at top, centered in max-w-4xl) -->
     <div class="relative z-20 w-full shrink-0 pt-10 sm:pt-14 px-6 sm:px-12 border-b border-black/10 pb-4">
       <div class="max-w-4xl mx-auto w-full">
-        <span class="block text-[10px] font-mono uppercase tracking-[0.2em] text-black/40 mb-2 font-bold select-none">
-          {{ locale === 'ru' ? 'Заголовок' : 'Title' }}
-        </span>
+        <div class="flex items-center justify-between mb-2 select-none">
+          <span class="block text-[10px] font-mono uppercase tracking-[0.2em] text-black/40 font-bold">
+            {{ locale === 'ru' ? 'Заголовок' : 'Title' }}
+          </span>
+          <span class="text-[10px] font-mono font-bold text-black/40">
+            {{ (title?.length || 0) }} / 60
+          </span>
+        </div>
         <input
           :value="title"
           type="text"
+          maxlength="60"
           class="w-full bg-transparent text-3xl sm:text-4xl md:text-5xl font-serif italic font-normal tracking-tight text-left text-black/90 outline-none placeholder:text-black/20"
           :placeholder="locale === 'ru' ? 'Заголовок статьи...' : 'Article Title...'"
-          @input="emit('update:title', ($event.target as HTMLInputElement).value)"
+          @input="handleTitleInput"
         />
       </div>
     </div>
@@ -537,6 +543,16 @@ const contentModel = computed({
   get: () => modelValue.value || '',
   set: (val: string) => emit('update:modelValue', val)
 })
+
+const handleTitleInput = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  let val = input.value || ''
+  if (val.length > 60) {
+    val = val.slice(0, 60)
+    input.value = val
+  }
+  emit('update:title', val)
+}
 
 // File Input & Image Attachments State
 const fileInputRef = ref<HTMLInputElement | null>(null)
