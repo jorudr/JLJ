@@ -27,6 +27,8 @@ export interface ExNode {
   id: string
   mode: ExNodeMode
   type?: string
+  editorMode?: 'text' | 'board'
+  textPreviewHtml?: string
   title: string
   author?: string
   authorStatus?: UserProfileStatus | null

@@ -1398,20 +1398,69 @@
             <!-- LEFT BLOCK: EVERYTHING THAT IS NOT A SIGNAL -->
             <section
               v-if="leadJournalSection"
-              class="journal-sector px-12 pb-12 pt-6"
+              class="journal-sector px-6 sm:px-12 pb-12 pt-6"
               :class="[pagedSignals.length > 0 ? 'col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20' : 'col-span-12']"
             >
-              <div class="flex flex-col space-y-12">
-                <div class="flex items-center justify-between pb-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ leadJournalSection.label }}</h2>
-                  </div>
-                  <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">{{ journalLabels.editionPrefix }}{{ currentPage }}</span>
-                </div>
-                <ExJournalSpotlight v-if="leadJournalSection.nodes[0]" :node="leadJournalSection.nodes[0]" @click="navigateToNode(leadJournalSection.nodes[0].id)" />
-                <div v-if="leadJournalSection.nodes.length > 1" class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
-                  <ExNodeCard v-for="node in leadJournalSection.nodes.slice(1)" :key="node.id" :node="node" />
+              <div class="flex flex-col">
+                <!-- Stacked Vertical Publications List -->
+                <div class="divide-y divide-current/15 flex flex-col">
+                  <article
+                    v-for="node in leadJournalSection.nodes"
+                    :key="node.id"
+                    class="group relative py-6 first:pt-0 last:pb-0 cursor-pointer transition-colors hover:bg-current/[0.015] rounded-xs px-2 -mx-2"
+                    @click="navigateToNode(node.id)"
+                  >
+                    <div class="flex flex-col space-y-3">
+                      <!-- Meta Bar: Author & Date -->
+                      <div class="flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.2em] text-current/50">
+                        <span v-if="node.author" class="inline-flex items-center gap-2 font-bold text-current/80">
+                          <span class="truncate">{{ node.author }}</span>
+                          <ExUserStatusBadge v-if="node.authorStatus" :status="node.authorStatus" />
+                        </span>
+                        <span>{{ formatArticleListDate(node.lastActivityAt) }}</span>
+                      </div>
+
+                      <!-- Title -->
+                      <h3 class="font-serif text-xl sm:text-2xl italic leading-snug text-current/90 transition-transform duration-300 origin-left group-hover:scale-[1.01]">
+                        {{ node.title }}
+                      </h3>
+
+                      <!-- Description / Brief (Only if NOT text mode or if no text preview) -->
+                      <p v-if="node.thesis_brief && (node.editorMode !== 'text' || !node.textPreviewHtml)" class="font-serif text-sm italic leading-relaxed text-current/60 line-clamp-2">
+                        "{{ node.thesis_brief }}"
+                      </p>
+
+                      <!-- Partial Text Content Preview (Only if text mode!) -->
+                      <p
+                        v-if="node.editorMode === 'text' && node.textPreviewHtml"
+                        class="font-serif text-sm italic leading-relaxed text-current/75 line-clamp-3 overflow-hidden opacity-90 pt-1"
+                      >
+                        "{{ node.textPreviewHtml }}..."
+                      </p>
+
+                      <!-- Read More Button (Immediately below text content, matching text-sm font-size) -->
+                      <div class="pt-0.5">
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-1.5 font-serif text-sm italic text-[#8b5cf6] hover:text-[#7c3aed] transition-colors group/readmore"
+                          @click.stop="navigateToNode(node.id)"
+                        >
+                          <span>{{ locale === 'ru' ? 'Читать дальше' : 'Read more' }}</span>
+                          <svg class="w-3.5 h-3.5 transition-transform group-hover/readmore:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5l7 7-7 7"></path>
+                          </svg>
+                        </button>
+                      </div>
+
+                      <!-- Footer Telemetry: Likes at start (left) -->
+                      <div class="flex items-center justify-start pt-2">
+                        <span class="font-mono text-xs font-bold text-current/70 tracking-widest uppercase">
+                          {{ node.likesCount || 0 }} {{ locale === 'ru' ? 'лайков' : 'likes' }}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
                 </div>
               </div>
             </section>
@@ -1852,10 +1901,17 @@ const getThreadSignal = (thread: Thread & Record<string, any>): ExNodeSignal | u
 const threadToJournalNode = (thread: Thread & Record<string, any>): ExNode => {
   const mode = getThreadMode(thread)
   const description = getThreadDescription(thread)
+  const editorMode = (thread.editorMode || thread.mode || thread.content?.editorMode || thread.content?.mode) === 'text' ? 'text' : 'board'
+  const textBlocks = getThreadTextBlocks(thread)
+  const firstTextBlock = textBlocks.find((b: any) => b.type === 'text' || b.text)
+  const rawPreview = firstTextBlock?.text || description || ''
+  const textPreviewHtml = rawPreview.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()
 
   return {
     id: thread.id,
     mode,
+    editorMode,
+    textPreviewHtml,
     title: thread.title || boardUiLabels.value.untitled,
     author: getThreadAuthorName(thread),
     authorStatus: getSelectedAuthorStatus(thread.authorId),
