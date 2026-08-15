@@ -1393,8 +1393,9 @@
 
         <!-- DYNAMIC MAGAZINE LAYOUT -->
         <div v-else-if="pagedNodes.length > 0" class="flex flex-col">
-          <!-- SECTION 1: Top Row (Lead Analysis + Signal Sidebar) -->
+          <!-- MAIN ROW (Publications Left + Signal Sidebar Right) -->
           <div class="grid grid-cols-12 border-b-[2px] border-solid border-current/20">
+            <!-- LEFT BLOCK: EVERYTHING THAT IS NOT A SIGNAL -->
             <section
               v-if="leadJournalSection"
               class="journal-sector px-12 pb-12 pt-6"
@@ -1409,12 +1410,13 @@
                   <span v-if="currentPage > 1" class="text-[9px] font-mono opacity-20 uppercase tracking-widest">{{ journalLabels.editionPrefix }}{{ currentPage }}</span>
                 </div>
                 <ExJournalSpotlight v-if="leadJournalSection.nodes[0]" :node="leadJournalSection.nodes[0]" @click="navigateToNode(leadJournalSection.nodes[0].id)" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
-                  <ExNodeCard v-for="node in leadJournalSection.nodes.slice(1, 3)" :key="node.id" :node="node" />
+                <div v-if="leadJournalSection.nodes.length > 1" class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
+                  <ExNodeCard v-for="node in leadJournalSection.nodes.slice(1)" :key="node.id" :node="node" />
                 </div>
               </div>
             </section>
             
+            <!-- RIGHT BLOCK: SIGNALS -->
             <section
               v-if="pagedSignals.length > 0"
               class="journal-sector px-8 pb-8 pt-6"
@@ -1427,7 +1429,7 @@
                 </div>
                 <div class="space-y-1">
                   <ExNodeCard
-                    v-for="node in pagedSignals.slice(0, 4)"
+                    v-for="node in pagedSignals"
                     :key="node.id"
                     :node="node"
                     class="journal-signal-card"
@@ -1436,38 +1438,6 @@
               </div>
             </section>
           </div>
-
-          <!-- SECTION 2: Middle Horizontal (Research) -->
-          <section v-if="pagedResearch.length > 0 && leadJournalSection?.key !== 'research'" class="journal-sector p-12 border-b-[2px] border-solid border-current/20">
-            <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between pb-4">
-                <div class="flex items-center space-x-3">
-                  <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                  <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.research }}</h2>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-                <ExNodeCard v-for="node in pagedResearch.slice(0, 3)" :key="node.id" :node="node" />
-              </div>
-            </div>
-          </section>
-
-          <!-- SECTION 3: Bottom Strip (Strategy) -->
-          <section v-if="pagedStrategies.length > 0 && leadJournalSection?.key !== 'strategy'" class="journal-sector p-12">
-            <div class="flex flex-col space-y-12">
-              <div class="flex items-center justify-between pb-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-1.5 h-1.5 bg-current opacity-30 transform rotate-45"></div>
-                    <h2 class="text-sm font-mono tracking-[0.4em] uppercase opacity-60">{{ journalLabels.strategy }}</h2>
-                  </div>
-              </div>
-              <div class="flex overflow-x-auto space-x-12 scroll-minimal pb-4">
-                <div v-for="node in pagedStrategies.slice(0, 3)" :key="node.id" class="min-w-[400px]">
-                  <ExNodeCard :node="node" class="!border-none" />
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
 
         <!-- NO CONTENT WARNING: The Reification Void -->
@@ -1684,15 +1654,11 @@ const journalLabels = computed(() => locale.value === 'ru'
 const journalFilters = computed(() => locale.value === 'ru'
   ? [
       { label: 'СИГНАЛЫ', mode: 'SETUP' },
-      { label: 'ИССЛЕДОВАНИЯ', mode: 'RESEARCH' },
-      { label: 'СТРАТЕГИИ', mode: 'LESSON' },
-      { label: 'ВОПРОСЫ', mode: 'QUESTION' }
+      { label: 'ПУБЛИКАЦИЯ', mode: 'PUBLICATION' }
     ]
   : [
       { label: 'SIGNALS', mode: 'SETUP' },
-      { label: 'RESEARCH', mode: 'RESEARCH' },
-      { label: 'STRATEGY', mode: 'LESSON' },
-      { label: 'QUESTIONS', mode: 'QUESTION' }
+      { label: 'PUBLICATION', mode: 'PUBLICATION' }
     ])
 const activeJournalFilter = ref<string | null>(null)
 const journalViewMode = ref<'journal' | 'mine'>('journal')
@@ -1758,7 +1724,7 @@ const getMetricLabel = (label: string) => {
   }[label] || label
 }
 
-const journalModeValues = new Set<ExNodeMode>(['SETUP', 'RESEARCH', 'LESSON', 'QUESTION'])
+const journalModeValues = new Set<ExNodeMode>(['SETUP', 'RESEARCH', 'LESSON', 'QUESTION', 'PUBLICATION'])
 
 const normalizeFirestoreDate = (value: any) => {
   if (!value) return new Date().toISOString()
@@ -1969,6 +1935,10 @@ const filteredNodes = computed(() => {
       matchesFilter = forumStore.userLikedThreadIds.has(n.id)
     } else if (activeJournalFilter.value === 'BOOKMARKED') {
       matchesFilter = forumStore.userSavedThreadIds.has(n.id)
+    } else if (activeJournalFilter.value === 'SETUP') {
+      matchesFilter = n.mode === 'SETUP' || n.type === 'SETUP'
+    } else if (activeJournalFilter.value === 'PUBLICATION') {
+      matchesFilter = n.mode !== 'SETUP' && n.type !== 'SETUP'
     } else if (activeJournalFilter.value) {
       matchesFilter = n.mode === activeJournalFilter.value
     }
@@ -1990,19 +1960,18 @@ const totalJournalPages = computed(() => Math.ceil(filteredNodes.value.length / 
 const hasNextJournalPage = computed(() => currentPage.value < totalJournalPages.value)
 const hasJournalPagination = computed(() => currentPage.value > 1 || hasNextJournalPage.value)
 
-const pagedSignals = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP'))
-const pagedResearch = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'RESEARCH'))
-const pagedStrategies = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'LESSON'))
-const pagedAnalysis = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'QUESTION'))
+const pagedSignals = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP' || n.type === 'SETUP'))
+const pagedPublications = computed(() => pagedNodes.value.filter((n: any) => n.mode !== 'SETUP' && n.type !== 'SETUP'))
+const pagedResearch = computed(() => pagedPublications.value)
+const pagedStrategies = computed(() => pagedPublications.value)
+const pagedAnalysis = computed(() => pagedPublications.value)
 const leadJournalSection = computed(() => {
-  if (pagedAnalysis.value.length) {
-    return { key: 'analysis', label: journalLabels.value.analysis, nodes: pagedAnalysis.value }
-  }
-  if (pagedResearch.value.length) {
-    return { key: 'research', label: journalLabels.value.research, nodes: pagedResearch.value }
-  }
-  if (pagedStrategies.value.length) {
-    return { key: 'strategy', label: journalLabels.value.strategy, nodes: pagedStrategies.value }
+  if (pagedPublications.value.length) {
+    return {
+      key: 'publication',
+      label: locale.value === 'ru' ? 'ПУБЛИКАЦИИ' : 'PUBLICATIONS',
+      nodes: pagedPublications.value
+    }
   }
   return null
 })
