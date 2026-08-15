@@ -265,30 +265,24 @@
     </div>
 
     <!-- Trade Picker Modal -->
-    <div
-      v-if="isTradePickerOpen"
-      class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm cursor-auto pointer-events-auto"
-      @click.self="isTradePickerOpen = false"
-    >
-      <div class="relative flex h-full max-h-[620px] w-[980px] max-w-full flex-col" @click.stop>
-        <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex h-full flex-col border-black/20 bg-white text-black shadow-2xl">
-          <div class="flex items-center justify-between border-b border-black/10 px-6 py-5">
-            <div class="flex flex-col gap-1">
-              <span class="font-mono text-[9px] font-black uppercase tracking-[0.35em] text-black/35">
-                EXGENESISLOG // {{ locale === 'ru' ? 'СПИСОК СДЕЛОК' : 'TRADE LIST' }}
-              </span>
-              <strong class="font-mono text-xl font-black uppercase tracking-widest">
-                {{ locale === 'ru' ? 'Выберите сделку' : 'Select trade' }}
-              </strong>
+    <Transition name="fade">
+      <div
+        v-if="isTradePickerOpen"
+        class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm cursor-auto pointer-events-auto"
+        @click.self="isTradePickerOpen = false"
+      >
+        <div class="relative flex h-full max-h-[620px] w-[980px] max-w-full flex-col" @click.stop>
+          <ExPanel variant="light" :no-padding="true" :show-corners="true" :no-shadow="true" class="flex h-full flex-col border-black/20 bg-white text-black shadow-2xl">
+            <div class="flex items-center justify-between border-b border-black/10 px-6 py-5">
+              <div class="flex flex-col gap-1">
+                <span class="font-mono text-[9px] font-black uppercase tracking-[0.35em] text-black/35">
+                  EXGENESISLOG // {{ locale === 'ru' ? 'СПИСОК СДЕЛОК' : 'TRADE LIST' }}
+                </span>
+                <strong class="font-mono text-xl font-black uppercase tracking-widest">
+                  {{ locale === 'ru' ? 'Выберите сделку' : 'Select trade' }}
+                </strong>
+              </div>
             </div>
-            <button
-              type="button"
-              class="w-8 h-8 rounded border border-black/10 text-black/40 hover:text-black hover:border-black/30 flex items-center justify-center font-mono font-bold text-sm transition-colors"
-              @click="isTradePickerOpen = false"
-            >
-              ✕
-            </button>
-          </div>
 
           <div class="flex-1 overflow-y-auto scroll-minimal py-2">
             <div v-for="strategy in tradePickerStrategies" :key="strategy.id" class="border-b border-black/5 last:border-0">
@@ -352,6 +346,7 @@
         </ExPanel>
       </div>
     </div>
+  </Transition>
 
     <!-- Floating Context Formatting Panel (ExGenesis HUD style) -->
     <Transition name="hud-pop">
@@ -791,6 +786,16 @@ const isContentEmpty = computed(() => {
 .hud-pop-leave-to {
   opacity: 0;
   transform: translate(-50%, 8px) scale(0.95);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 :deep(.editor-rich-content h1) {
