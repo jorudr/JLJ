@@ -20,10 +20,9 @@
       <div class="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-black/[0.05] blur-3xl"></div>
     </div>
 
-    <!-- Main Centered Text Editor Canvas Container -->
-    <div class="relative z-10 flex-1 min-h-0 w-full max-w-4xl mx-auto flex flex-col pt-16 sm:pt-20 pb-24 px-6 sm:px-12 overflow-hidden">
-      <!-- Article Title Above Textarea -->
-      <div class="w-full border-b border-black/10 pb-5 mb-6 text-left shrink-0 relative z-10 mt-4">
+    <!-- Static Header Row (Title is static at top, centered in max-w-4xl) -->
+    <div class="relative z-20 w-full shrink-0 pt-10 sm:pt-14 px-6 sm:px-12 border-b border-black/10 pb-4">
+      <div class="max-w-4xl mx-auto w-full">
         <span class="block text-[10px] font-mono uppercase tracking-[0.2em] text-black/40 mb-2 font-bold select-none">
           {{ locale === 'ru' ? 'Заголовок' : 'Title' }}
         </span>
@@ -35,85 +34,91 @@
           @input="emit('update:title', ($event.target as HTMLInputElement).value)"
         />
       </div>
+    </div>
 
-      <!-- Main Contenteditable Text Area -->
-      <div class="relative flex-1 min-h-0 w-full overflow-hidden flex flex-col">
-        <div
-          :ref="setEditorRef"
-          data-text-editor
-          contenteditable="true"
-          class="w-full h-full outline-none font-serif text-lg md:text-xl leading-relaxed text-black/85 break-words whitespace-pre-wrap cursor-text selection:bg-black selection:text-white editor-rich-content relative z-10 overflow-y-auto pr-2"
-          :data-placeholder="placeholder"
-          @contextmenu="handleContextMenu"
-          @input="syncContentFromDom"
-        ></div>
-
-        <!-- Placeholder Overlay -->
-        <div
-          v-if="isContentEmpty"
-          class="pointer-events-none absolute left-0 top-0 z-0 font-serif text-lg md:text-xl italic text-black/30 select-none"
-        >
-          {{ placeholder }}
-        </div>
-      </div>
-
-      <!-- Attached Images Horizontal Carousel (Max 5 images) -->
-      <div v-if="attachedImages.length > 0" class="w-full shrink-0 pt-6 mt-6 border-t border-black/10 relative z-20">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
-            <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            {{ locale === 'ru' ? 'Прикрепленные изображения' : 'Attached Images' }}
-          </span>
-          <span class="text-[10px] font-mono font-bold text-black/40">
-            {{ attachedImages.length }} / 5
-          </span>
-        </div>
-
-        <!-- Horizontal Scrollable Carousel -->
-        <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin">
+    <!-- Full-Width Scroll Viewport (Scrollbar is at the rightmost edge of screen!) -->
+    <div class="relative z-10 flex-1 min-h-0 w-full overflow-y-auto scrollbar-thin px-6 sm:px-12">
+      <!-- Centered Document Body (Content stays centered in max-w-4xl) -->
+      <div class="max-w-4xl mx-auto w-full flex flex-col pt-6 pb-28">
+        <!-- Main Contenteditable Text Area -->
+        <div class="relative w-full min-h-[300px] shrink-0 mb-6">
           <div
-            v-for="(imgSrc, index) in attachedImages"
-            :key="index"
-            class="group relative shrink-0 w-36 h-28 sm:w-44 sm:h-32 bg-black/5 border border-black/15 rounded overflow-hidden shadow-sm hover:border-black/40 transition-all cursor-pointer"
+            :ref="setEditorRef"
+            data-text-editor
+            contenteditable="true"
+            class="w-full h-full outline-none font-serif text-lg md:text-xl leading-relaxed text-black/85 break-words whitespace-pre-wrap cursor-text selection:bg-black selection:text-white editor-rich-content relative z-10"
+            :data-placeholder="placeholder"
+            @contextmenu="handleContextMenu"
+            @input="syncContentFromDom"
+          ></div>
+
+          <!-- Placeholder Overlay -->
+          <div
+            v-if="isContentEmpty"
+            class="pointer-events-none absolute left-0 top-0 z-0 font-serif text-lg md:text-xl italic text-black/30 select-none"
           >
-            <img :src="imgSrc" alt="Attached preview" class="w-full h-full object-cover" />
-            <!-- Delete Button Overlay -->
-            <button
-              type="button"
-              class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
-              :title="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
-              @click.stop="removeAttachedImage(index)"
-            >
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+            {{ placeholder }}
+          </div>
+        </div>
+
+        <!-- Attached Images Horizontal Carousel (Moves down below text as text grows) -->
+        <div v-if="attachedImages.length > 0" class="w-full shrink-0 pt-6 border-t border-black/10 relative z-20 mb-8">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50 font-bold select-none flex items-center gap-2">
+              <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
               </svg>
-            </button>
-            <!-- Index Badge -->
-            <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-black/70 text-white rounded">
-              {{ index + 1 }}
+              {{ locale === 'ru' ? 'Прикрепленные изображения' : 'Attached Images' }}
+            </span>
+            <span class="text-[10px] font-mono font-bold text-black/40">
+              {{ attachedImages.length }} / 5
             </span>
           </div>
 
-          <!-- Add More Thumbnail Button if < 5 -->
-          <button
-            v-if="attachedImages.length < 5"
-            type="button"
-            class="shrink-0 w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-black/20 hover:border-black/50 rounded flex flex-col items-center justify-center gap-1.5 text-black/40 hover:text-black/80 transition-colors bg-white/50 hover:bg-white"
-            @click="triggerImageUpload"
-          >
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span class="text-[9px] font-mono uppercase tracking-widest font-bold">
-              {{ locale === 'ru' ? 'ЕЩЕ' : 'ADD' }}
-            </span>
-          </button>
+          <!-- Horizontal Scrollable Carousel -->
+          <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin">
+            <div
+              v-for="(imgSrc, index) in attachedImages"
+              :key="index"
+              class="group relative shrink-0 w-36 h-28 sm:w-44 sm:h-32 bg-black/5 border border-black/15 rounded overflow-hidden shadow-sm hover:border-black/40 transition-all cursor-pointer"
+            >
+              <img :src="imgSrc" alt="Attached preview" class="w-full h-full object-cover" />
+              <!-- Delete Button Overlay -->
+              <button
+                type="button"
+                class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
+                :title="locale === 'ru' ? 'Удалить изображение' : 'Remove image'"
+                @click.stop="removeAttachedImage(index)"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <!-- Index Badge -->
+              <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-black/70 text-white rounded">
+                {{ index + 1 }}
+              </span>
+            </div>
+
+            <!-- Add More Thumbnail Button if < 5 -->
+            <button
+              v-if="attachedImages.length < 5"
+              type="button"
+              class="shrink-0 w-28 h-28 sm:w-32 sm:h-32 border-2 border-dashed border-black/20 hover:border-black/50 rounded flex flex-col items-center justify-center gap-1.5 text-black/40 hover:text-black/80 transition-colors bg-white/50 hover:bg-white"
+              @click="triggerImageUpload"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span class="text-[9px] font-mono uppercase tracking-widest font-bold">
+                {{ locale === 'ru' ? 'ЕЩЕ' : 'ADD' }}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
