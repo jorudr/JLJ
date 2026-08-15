@@ -402,7 +402,10 @@
         </section>
 
         <!-- TEXT SECTION -->
-        <section v-else class="flex-1 w-full overflow-y-auto scroll-minimal px-[clamp(20px,4vw,64px)] pb-12 flex flex-col items-start justify-start">
+        <section v-else class="flex-1 w-full overflow-y-auto scroll-minimal px-[clamp(20px,4vw,64px)] pb-12 flex flex-col items-start justify-start gap-8">
+          <!-- Top Divider -->
+          <div class="w-full border-t border-black/15"></div>
+
           <div class="max-w-[800px] w-full flex flex-col gap-8 text-black text-left">
             <div
               v-for="(block, index) in selectedArticleTextBlocks"
