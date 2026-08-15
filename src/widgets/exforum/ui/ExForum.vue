@@ -267,17 +267,7 @@
 
       <main class="relative z-10 box-border flex w-full max-w-full flex-col flex-none overflow-hidden py-6 gap-6">
         
-        <!-- MODE SWITCHER -->
-        <div class="flex justify-center w-full shrink-0">
-          <div class="flex items-center bg-current/5 border border-current/10 p-1 font-mono text-[10px] uppercase tracking-widest text-current/60">
-            <button class="px-6 py-2 transition-colors" :class="articleViewMode === 'board' ? 'bg-current/10 font-bold text-current' : 'hover:bg-current/5'" @click="articleViewMode = 'board'">
-              {{ locale === 'ru' ? 'ДОСКА' : 'BOARD' }}
-            </button>
-            <button class="px-6 py-2 transition-colors" :class="articleViewMode === 'text' ? 'bg-current/10 font-bold text-current' : 'hover:bg-current/5'" @click="articleViewMode = 'text'">
-              {{ locale === 'ru' ? 'ТЕКСТ' : 'TEXT' }}
-            </button>
-          </div>
-        </div>
+
 
         <section
           v-if="articleViewMode === 'board'"
@@ -412,140 +402,94 @@
         </section>
 
         <!-- TEXT SECTION -->
-        <section v-else class="flex-1 w-full overflow-y-auto scroll-minimal px-6 pb-12">
-          <div class="max-w-[800px] mx-auto flex flex-col items-center gap-12 text-black">
-            <template v-for="(node, index) in selectedArticleTextBlocks" :key="node.id || index">
-              
-              <div class="w-full flex flex-col items-center">
-                <!-- LEGACY BLOCKS -->
-                <div v-if="node.type === 'heading'" class="w-full flex flex-col gap-4 font-serif italic break-words">
-                  <h2 class="font-bold text-current" :class="node.level === 2 ? 'text-5xl leading-none text-center' : 'text-3xl'">
-                    {{ node.text }}
-                  </h2>
-                </div>
-                <div v-else-if="node.type === 'paragraph'" class="w-full flex flex-col gap-4 font-serif italic break-words">
-                  <div class="text-current/90 whitespace-pre-wrap text-base leading-relaxed" v-html="node.text"></div>
-                </div>
-                <div v-else-if="node.type === 'image'" class="w-full flex flex-col items-center">
-                  <img :src="(node as any).src" class="max-w-full h-auto rounded-sm border border-current/10 shadow-sm object-contain max-h-[600px]" />
-                  <p v-if="(node as any).caption" class="text-[10px] font-mono tracking-widest uppercase text-current/40 text-center mt-2">{{ (node as any).caption }}</p>
-                </div>
-
-                <div v-else-if="node.type === 'text'" class="w-full flex flex-col gap-4 font-serif italic break-words">
-                  <h2 v-if="(node as any).title" class="font-bold text-current"
-                      :class="(node as any).isQuestion ? 'text-5xl leading-none text-center' : 'text-3xl'">
-                    {{ (node as any).title }}
-                  </h2>
-                  <div v-if="(node as any).text" class="text-current/90 whitespace-pre-wrap"
-                       :class="(node as any).isQuestion ? 'text-3xl text-center' : 'text-base leading-relaxed'"
-                       v-html="(node as any).text">
-                  </div>
-                </div>
-
-                <!-- SIGNAL HEADER -->
-                <div v-else-if="(node as any).type === 'signal-header'" class="w-full flex justify-center py-6">
-                  <div class="flex flex-row items-center justify-between w-full max-w-[800px] border border-current/10 bg-white shadow-sm overflow-hidden text-black">
-                    <!-- Current Price -->
-                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="getSignalHeaderCurrentPrice(node) ? 'bg-blue-50/50' : ''">
-                      <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE' }}</span>
-                      <div class="flex items-center gap-2" v-if="getSignalHeaderCurrentPrice(node)">
-                        <span v-if="getPriceNodeArrow(getSignalHeaderCurrentPrice(node))" class="text-xl font-black" :class="getPriceNodeValueClass(getSignalHeaderCurrentPrice(node))">{{ getPriceNodeArrow(getSignalHeaderCurrentPrice(node)) }}</span>
-                        <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(getSignalHeaderCurrentPrice(node))">{{ getSignalHeaderCurrentPrice(node)?.value || '0.00' }}</span>
-                      </div>
-                      <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
-                    </div>
-                    <!-- Asset -->
-                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4 border-l border-r border-black/10 bg-white z-10 shadow-[0_0_20px_rgba(0,0,0,0.05)]">
-                       <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
-                       <span class="max-w-full truncate text-4xl font-black uppercase tracking-widest text-black/90" v-if="getSignalHeaderAsset(node)">{{ getSignalHeaderAsset(node)?.asset || '---' }}</span>
-                       <span v-else class="text-4xl font-mono font-black tracking-widest text-black/20">---</span>
-                    </div>
-                    <!-- Target Price -->
-                    <div class="flex flex-col items-center justify-center flex-1 py-8 px-4" :class="getSignalHeaderTargetPrice(node) ? 'bg-green-50/50' : ''">
-                      <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ locale === 'ru' ? 'ЦЕЛЬ' : 'TARGET' }}</span>
-                      <div class="flex items-center gap-2" v-if="getSignalHeaderTargetPrice(node)">
-                        <span v-if="getPriceNodeArrow(getSignalHeaderTargetPrice(node))" class="text-xl font-black" :class="getPriceNodeValueClass(getSignalHeaderTargetPrice(node))">{{ getPriceNodeArrow(getSignalHeaderTargetPrice(node)) }}</span>
-                        <span class="text-3xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(getSignalHeaderTargetPrice(node))">{{ getSignalHeaderTargetPrice(node)?.value || '0.00' }}</span>
-                      </div>
-                      <span v-else class="text-3xl font-mono font-black tracking-widest text-black/20">---</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-else-if="node.type === 'asset'" class="w-full p-8 border border-current/10 bg-current/5 flex flex-col items-center">
-                  <span class="text-[9px] uppercase tracking-[0.3em] font-black text-current/40 mb-2">{{ locale === 'ru' ? 'АКТИВ' : 'ASSET' }}</span>
-                  <span class="text-4xl font-mono font-black uppercase tracking-widest text-current/90">{{ (node as any).asset || '---' }}</span>
-                </div>
-
-                <div v-else-if="node.type === 'price'" class="w-full p-8 border border-current/10 flex flex-col items-center text-black" :class="(node as any).priceKind === 'current' ? 'bg-blue-50/50' : 'bg-green-50/50'">
-                  <span class="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 mb-2">{{ (node as any).priceKind === 'current' ? (locale === 'ru' ? 'ТЕКУЩАЯ ЦЕНА' : 'CURRENT PRICE') : (locale === 'ru' ? 'ПРЕДПОЛАГАЕМАЯ ЦЕНА' : 'TARGET PRICE') }}</span>
-                  <div class="flex items-center gap-2">
-                    <span v-if="getPriceNodeArrow(node)" class="text-xl font-black" :class="getPriceNodeValueClass(node)">{{ getPriceNodeArrow(node) }}</span>
-                    <span class="text-4xl font-mono font-black tracking-widest text-black/90" :class="getPriceNodeValueClass(node)">{{ (node as any).value || '0.00' }}</span>
-                  </div>
-                </div>
-
-                <div v-else-if="node.type === 'strategy'" class="w-full flex justify-center py-6">
-                  <div class="flex min-w-[300px] max-w-[450px] w-full flex-col items-center justify-center gap-4 text-center border border-current/10 bg-white p-6 shadow-sm text-black">
-                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40">{{ locale === 'ru' ? 'СТРАТЕГИЯ' : 'STRATEGY' }}</span>
-                    <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">{{ getStrategyNodeLabel(node) || '---' }}</span>
-                    <span v-if="getStrategyNodeMetrics(node)" class="grid w-full grid-cols-5 gap-2 text-center uppercase pt-4 border-t border-black/5 mt-2">
-                      <span class="flex min-w-0 flex-col px-1.5">
-                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.profitFactorShort }}</small>
-                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatProfitFactor(getStrategyNodeMetrics(node)!.profitFactor) }}</strong>
-                      </span>
-                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
-                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.winRateShort }}</small>
-                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatCompactNumber(getStrategyNodeMetrics(node)!.winRate, 1) }}%</strong>
-                      </span>
-                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
-                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.resultShort }}</small>
-                        <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.resultCurrency)">{{ formatSignedCurrency(getStrategyNodeMetrics(node)!.resultCurrency) }}</strong>
-                      </span>
-                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
-                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.startShort }}</small>
-                        <strong class="truncate text-[14px] font-black text-black/85">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.initialCapital) }}</strong>
-                      </span>
-                      <span class="flex min-w-0 flex-col px-1.5 border-l border-black/5">
-                        <small class="text-[8px] font-black tracking-[0.18em] text-black/40">{{ boardUiLabels.endShort }}</small>
-                        <strong class="truncate text-[14px] font-black" :class="getResultToneClass(getStrategyNodeMetrics(node)!.finalCapital - getStrategyNodeMetrics(node)!.initialCapital)">{{ formatCurrencyValue(getStrategyNodeMetrics(node)!.finalCapital) }}</strong>
-                      </span>
-                    </span>
-                  </div>
-                </div>
-
-                <div v-else-if="node.type === 'trade'" class="w-full flex justify-center py-6">
-                  <div class="flex min-w-[300px] max-w-[450px] w-full flex-col justify-center gap-4 text-left border border-current/10 bg-white p-6 shadow-sm text-black">
-                    <span class="text-[9px] font-black uppercase tracking-[0.3em] text-black/40 text-center">{{ locale === 'ru' ? 'СДЕЛКА' : 'TRADE' }}</span>
-                    <span class="flex w-full items-start justify-between gap-3 border-t border-black/5 pt-4">
-                      <span class="flex min-w-0 flex-col">
-                        <span class="max-w-full truncate text-2xl font-black uppercase tracking-widest text-black/80">{{ getTradeNodeAssetLabel(node) }}</span>
-                        <span class="max-w-full truncate text-[10px] font-black uppercase tracking-[0.24em]" :class="getTradeNodeVectorClass(node)">{{ getTradeNodeVector(node) }}</span>
-                      </span>
-                      <span class="max-w-[45%] truncate text-right text-xl font-black uppercase tracking-[0.16em]" :class="getTradeNodeResultClass(node)">{{ getTradeNodeResult(node) || '---' }}</span>
-                    </span>
-                    <span class="grid w-full grid-cols-2 gap-2 text-center uppercase pt-2">
-                      <span class="flex min-w-0 flex-col border-t border-black/5 px-1.5 py-2">
-                        <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.entryShort }}</small>
-                        <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeEntryDate(node) }}</strong>
-                      </span>
-                      <span class="flex min-w-0 flex-col border-t border-l border-black/5 px-1.5 py-2">
-                        <small class="text-[8px] font-black tracking-[0.16em] text-black/40">{{ boardUiLabels.exitShort }}</small>
-                        <strong class="truncate text-[14px] font-black text-black/80">{{ getTradeNodeExitDate(node) }}</strong>
-                      </span>
-                    </span>
-                  </div>
-                </div>
-
-                <div v-else-if="node.type === 'drawing'" class="w-full flex justify-center bg-white p-4 border border-current/10 shadow-sm relative" :style="{ minHeight: '100px' }">
-                  <img v-if="(node as any).params?.preview" :src="(node as any).params.preview" alt="Drawing" class="w-full h-auto max-h-[400px] object-contain pointer-events-none" />
-                  <svg v-else class="w-full h-auto max-h-[400px] pointer-events-none text-black" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-                    <polyline v-for="(stroke, i) in (node as any).params?.strokes || []" :key="i" :points="drawing.formatDrawingStroke(stroke)" fill="none" :stroke="stroke.color || 'currentColor'" :stroke-width="stroke.size || 2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" class="opacity-90" />
-                  </svg>
-                </div>
-
+        <section v-else class="flex-1 w-full overflow-y-auto scroll-minimal px-[clamp(20px,4vw,64px)] pb-12 flex flex-col items-start justify-start">
+          <div class="max-w-[800px] w-full flex flex-col gap-8 text-black text-left">
+            <div
+              v-for="(block, index) in selectedArticleTextBlocks"
+              :key="block.id || index"
+              class="w-full"
+            >
+              <div
+                v-if="block.type === 'text' || block.text"
+                class="w-full font-serif text-lg md:text-xl leading-relaxed text-black/85 break-words editor-rich-content"
+                v-html="block.text"
+              ></div>
+              <div
+                v-else-if="block.type === 'image'"
+                class="w-full flex flex-col items-center py-4"
+              >
+                <img :src="block.src" class="max-w-full h-auto rounded border border-black/15 shadow-sm max-h-[600px] object-contain" />
+                <p v-if="block.caption" class="text-[10px] font-mono tracking-widest uppercase text-black/40 text-center mt-2">{{ block.caption }}</p>
               </div>
-            </template>
+            </div>
+
+            <!-- Fallback if no textBlocks but description exists -->
+            <div
+              v-if="selectedArticleTextBlocks.length === 0 && selectedArticle?.description"
+              class="w-full font-serif text-lg md:text-xl leading-relaxed text-black/85 break-words editor-rich-content"
+              v-html="selectedArticle.description"
+            ></div>
+
+            <!-- ATTACHED IMAGES IN READER -->
+            <div v-if="(selectedArticle as any)?.attachedImages?.length" class="w-full flex flex-col gap-3 pt-6 border-t border-black/10">
+              <span class="text-[10px] font-mono tracking-[0.2em] uppercase text-black/50 font-bold select-none flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                {{ locale === 'ru' ? 'Прикрепленные изображения' : 'Attached Images' }}
+              </span>
+              <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin w-full">
+                <img
+                  v-for="(imgSrc, idx) in (selectedArticle as any).attachedImages"
+                  :key="idx"
+                  :src="imgSrc"
+                  alt="Attached image"
+                  class="h-36 sm:h-44 w-auto object-cover rounded border border-black/15 shadow-sm shrink-0"
+                />
+              </div>
+            </div>
+
+            <!-- ATTACHED TRADES IN READER -->
+            <div v-if="(selectedArticle as any)?.attachedTrades?.length" class="w-full flex flex-col gap-3 pt-6 border-t border-black/10">
+              <span class="text-[10px] font-mono tracking-[0.2em] uppercase text-black/50 font-bold select-none flex items-center gap-2">
+                <span class="font-mono text-[10px] font-black uppercase text-current">TRD</span>
+                {{ locale === 'ru' ? 'Прикрепленные сделки' : 'Attached Trades' }}
+              </span>
+              <div class="flex items-center gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin w-full">
+                <div
+                  v-for="(trd, idx) in (selectedArticle as any).attachedTrades"
+                  :key="trd.id || idx"
+                  class="shrink-0 w-44 h-28 sm:w-52 sm:h-32 bg-white border border-black/15 rounded p-3.5 shadow-sm flex flex-col justify-between select-none"
+                >
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-1.5 py-0.5 text-[9px] font-mono font-black rounded uppercase tracking-wider"
+                      :class="getTradeSideLabel(trd.side) === 'LONG' || getTradeSideLabel(trd.side) === 'ЛОНГ' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'"
+                    >
+                      {{ getTradeSideLabel(trd.side) }}
+                    </span>
+                  </div>
+                  <div class="my-auto">
+                    <span class="block font-mono text-lg sm:text-xl font-black uppercase tracking-widest text-black/90 truncate">
+                      {{ trd.asset || 'N/A' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between border-t border-black/5 pt-2">
+                    <span class="text-[9px] font-mono font-bold uppercase text-black/40 tracking-wider">
+                      {{ locale === 'ru' ? 'РЕЗУЛЬТАТ' : 'RESULT' }}
+                    </span>
+                    <span
+                      class="font-mono text-sm sm:text-base font-black tracking-wider"
+                      :class="getResultToneClass(getTradePercentProfit(trd, trd.strategyId))"
+                    >
+                      {{ formatSignedPercent(getTradePercentProfit(trd, trd.strategyId)) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -1139,6 +1083,8 @@
           <ExForumTextEditor
             v-model="textEditorContent"
             v-model:title="newArticleForm.title"
+            v-model:images="attachedArticleImages"
+            v-model:trades="attachedArticleTrades"
             :locale="locale"
             class="w-full h-full"
             @back="creationStep = 'mode'"
@@ -1952,11 +1898,14 @@ const threadToJournalNode = (thread: Thread & Record<string, any>): ExNode => {
   }
 }
 
-const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalArticle => {
+const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalArticle & Record<string, any> => {
   const createdAt = getThreadPublishedAt(thread)
   const commentsCount = Number(thread.repliesCount || 0)
   const likesCount = Number(thread.likesCount || 0)
   const textBlocks = getThreadTextBlocks(thread)
+  const editorMode = thread.editorMode || thread.mode || thread.content?.editorMode || thread.content?.mode || 'board'
+  const attachedImages = thread.attachedImages || thread.content?.attachedImages || []
+  const attachedTrades = thread.attachedTrades || thread.content?.attachedTrades || []
 
   return {
     id: thread.id,
@@ -1967,6 +1916,10 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
     category: thread.categoryLabel || thread.category || getThreadMode(thread),
     author: getThreadAuthorName(thread),
     publishedAt: createdAt,
+    editorMode,
+    mode: editorMode,
+    attachedImages,
+    attachedTrades,
     metrics: [
       { id: 'likes', label: 'Likes', value: likesCount },
       { id: 'comments', label: 'Comments', value: commentsCount }
@@ -2326,6 +2279,8 @@ const assetTypeLocales: Record<string, { en: string; ru: string }> = {
 const isCreatingArticle = ref(false)
 const creationStep = ref<'metadata' | 'contribution' | 'mode' | 'board' | 'text' | 'preview'>('metadata')
 const lastActiveEditorStep = ref<'text' | 'board'>('text')
+const attachedArticleImages = ref<string[]>([])
+const attachedArticleTrades = ref<any[]>([])
 const showPublishConfirmation = ref(false)
 const editingArticleId = ref<string | null>(null)
 const drawing = useForumDrawing()
@@ -2365,6 +2320,40 @@ const contributionArticleOptions = computed(() => journalThreads.value
   .filter(thread => thread.id !== editingArticleId.value)
   .sort((a, b) => new Date(getThreadPublishedAt(b)).getTime() - new Date(getThreadPublishedAt(a)).getTime()))
 
+const resetArticleEditorState = () => {
+  editingArticleId.value = null
+  newArticleForm.value = normalizeArticleForm()
+  boardNodes.value = []
+  boardConnections.value = []
+  boardStrokes.value = []
+  previewNodeOrder.value = []
+  attachedArticleImages.value = []
+  attachedArticleTrades.value = []
+  selectedContributionArticles.value = []
+  creationStep.value = 'metadata'
+  lastActiveEditorStep.value = 'text'
+}
+
+const restoreDraft = () => {
+  const saved = localStorage.getItem(DRAFT_STORAGE_KEY)
+  if (!saved) return
+  try {
+    const draft = JSON.parse(saved)
+    newArticleForm.value = normalizeArticleForm(draft.form)
+    boardNodes.value = draft.boardNodes || []
+    boardConnections.value = draft.boardConnections || []
+    boardStrokes.value = draft.boardStrokes || []
+    creationStep.value = draft.step || 'metadata'
+    lastActiveEditorStep.value = draft.editorMode || 'text'
+    attachedArticleImages.value = draft.attachedImages || []
+    attachedArticleTrades.value = draft.attachedTrades || []
+    selectedContributionArticles.value = draft.selectedContributions || []
+    isCreatingArticle.value = true
+  } catch (e) {
+    console.error('Failed to restore draft:', e)
+  }
+}
+
 const filteredContributionArticleOptions = computed(() => {
   const query = contributionSearchQuery.value.trim().toLowerCase()
   if (!query) return contributionArticleOptions.value
@@ -2375,9 +2364,7 @@ const filteredContributionArticleOptions = computed(() => {
   })
 })
 
-const selectedContributionArticles = computed(() => newArticleForm.value.contributionIds
-  .map(id => journalThreads.value.find(thread => thread.id === id))
-  .filter((thread): thread is Thread & Record<string, any> => Boolean(thread)))
+const selectedContributionArticles = ref<(Thread & Record<string, any>)[]>([])
 
 const isContributionSelected = (threadId: string) => newArticleForm.value.contributionIds.includes(threadId)
 
@@ -2387,14 +2374,18 @@ const toggleContributionArticle = (threadId: string) => {
   if (existingIndex !== -1) {
     current.splice(existingIndex, 1)
     newArticleForm.value.contributionIds = current
+    selectedContributionArticles.value = selectedContributionArticles.value.filter(t => t.id !== threadId)
     return
   }
   if (current.length >= 3) return
   newArticleForm.value.contributionIds = [...current, threadId]
+  const thread = journalThreads.value.find(t => t.id === threadId)
+  if (thread) selectedContributionArticles.value = [...selectedContributionArticles.value, thread]
 }
 
 const removeContributionArticle = (threadId: string) => {
   newArticleForm.value.contributionIds = newArticleForm.value.contributionIds.filter(id => id !== threadId)
+  selectedContributionArticles.value = selectedContributionArticles.value.filter(t => t.id !== threadId)
 }
 
 const openContributionPicker = () => {
@@ -2409,20 +2400,6 @@ const createContributionTargetSnapshot = (thread: Thread & Record<string, any>) 
   author: getThreadAuthorName(thread),
   publishedAt: getThreadPublishedAt(thread)
 })
-
-const resetArticleEditorState = () => {
-  stopBoardDrawingMode()
-  showPublishConfirmation.value = false
-  editingArticleId.value = null
-  isContributionPickerOpen.value = false
-  contributionSearchQuery.value = ''
-  newArticleForm.value = normalizeArticleForm()
-  boardNodes.value = []
-  boardConnections.value = []
-  boardStrokes.value = []
-  previewNodeOrder.value = []
-  creationStep.value = 'metadata'
-}
 
 const loadDraft = () => {
   const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY)
@@ -2619,13 +2596,18 @@ const startEditArticle = (thread: Thread & Record<string, any>) => {
     contributionIds: thread.contributionIds || thread.contributesToThreadIds || []
   })
 
+  attachedArticleImages.value = Array.isArray(thread.attachedImages) ? [...thread.attachedImages] : []
+  attachedArticleTrades.value = Array.isArray(thread.attachedTrades) ? [...thread.attachedTrades] : []
+  const savedMode = (thread.editorMode || thread.mode) === 'text' ? 'text' : 'board'
+  lastActiveEditorStep.value = savedMode
+
   const board = getThreadBoard(thread)
   boardNodes.value = cloneBoardNodes(board.nodes)
   boardConnections.value = board.connections ? JSON.parse(JSON.stringify(board.connections)) : []
   boardStrokes.value = board.strokes ? JSON.parse(JSON.stringify(board.strokes)) : []
   previewNodeOrder.value = getArticleTextBlockOrder(thread)
   isCreatingArticle.value = true
-  creationStep.value = 'board'
+  creationStep.value = savedMode
 
   nextTick(() => {
     centerBoardOnMainNode()
@@ -2866,6 +2848,8 @@ const createThreadPayloadFromArticle = () => {
     board
   } as Thread & Record<string, any>)
 
+  const selectedMode = lastActiveEditorStep.value || (creationStep.value === 'text' ? 'text' : 'board')
+
   return {
     title: newArticleForm.value.title.trim(),
     description: newArticleForm.value.description.trim(),
@@ -2874,6 +2858,10 @@ const createThreadPayloadFromArticle = () => {
     categoryLabel,
     journalMode: categoryMode,
     articleType: categoryMode,
+    editorMode: selectedMode,
+    mode: selectedMode,
+    attachedImages: attachedArticleImages.value || [],
+    attachedTrades: attachedArticleTrades.value || [],
     author: authorName,
     authorId: user.uid,
     authorData: sourceThread?.authorData || {
@@ -2904,7 +2892,11 @@ const createThreadPayloadFromArticle = () => {
     contributionTargets,
     contributesToThreadIds: contributionIds,
     content: {
-      type: 'exforum-article-board',
+      type: 'exforum-article',
+      editorMode: selectedMode,
+      mode: selectedMode,
+      attachedImages: attachedArticleImages.value || [],
+      attachedTrades: attachedArticleTrades.value || [],
       board,
       thesis,
       textBlocks,
@@ -3552,6 +3544,8 @@ watch([
   centerBoardOnMainNode()
 
   if (article) {
+    const modeKey = (article as any).editorMode || (article as any).mode || (article as any).content?.editorMode || (article as any).content?.mode
+    articleViewMode.value = modeKey === 'text' ? 'text' : 'board'
     forumStore.fetchReplies(article.id) // Fetch replies from Firestore
     void forumStore.fetchThreadLinks(article.id)
       .catch((error) => {
@@ -5873,5 +5867,48 @@ watch(() => [route.query.nodeId, route.query.page], () => {
     min-height: 116px;
     padding: 16px;
   }
+}
+
+:deep(.editor-rich-content h1) {
+  font-size: 2.25rem;
+  font-weight: 400;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+:deep(.editor-rich-content h2) {
+  font-size: 1.65rem;
+  font-weight: 400;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.25;
+}
+
+:deep(.editor-rich-content blockquote) {
+  border-left: 3px solid #000;
+  padding-left: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+:deep(.editor-rich-content pre) {
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 0.85rem 1.15rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+:deep(.editor-rich-content ul) {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 </style>

@@ -493,6 +493,7 @@ import type { DiaryEntry } from '~/entities/diary/model/diary.types'
 import ExPanel from '~/shared/ui/ExPanel.vue'
 import ExGenesisHudPanel from '~/widgets/genesis/ui/common/ExGenesisHudPanel.vue'
 import ExGenesisHudButton from '~/widgets/genesis/ui/common/ExGenesisHudButton.vue'
+import { uploadToCloudinary } from '~/shared/lib/cloudinary'
 
 const props = withDefaults(
   defineProps<{
@@ -552,7 +553,7 @@ function triggerImageUpload() {
   }
 }
 
-function handleImageFileSelect(event: Event) {
+async function handleImageFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   const files = target.files
   if (!files || files.length === 0) return
@@ -562,7 +563,18 @@ function handleImageFileSelect(event: Event) {
 
   const filesToProcess = Array.from(files).slice(0, remainingSlots)
 
-  filesToProcess.forEach(file => {
+  for (const file of filesToProcess) {
+    if (attachedImages.value.length >= 5) break
+    try {
+      const res = await uploadToCloudinary(file)
+      if (res?.secure_url && attachedImages.value.length < 5) {
+        attachedImages.value = [...attachedImages.value, res.secure_url]
+        continue
+      }
+    } catch (err) {
+      console.warn('[ExForumTextEditor] Cloudinary upload failed, falling back to local data URL:', err)
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       const result = e.target?.result as string
@@ -571,7 +583,7 @@ function handleImageFileSelect(event: Event) {
       }
     }
     reader.readAsDataURL(file)
-  })
+  }
 
   target.value = ''
 }
