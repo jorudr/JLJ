@@ -621,7 +621,7 @@ const calculatedStabilityIndex = computed(() => {
              @mouseenter="handleNodeHover($event, scenario)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
-          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
+          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2 bg-black"
                :class="isDark ? 'border-white/10 group-hover:border-white/35' : 'border-black/10 group-hover:border-black/35'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
@@ -629,22 +629,22 @@ const calculatedStabilityIndex = computed(() => {
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             
             <div class="mb-4 text-center w-full px-2">
-              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.name }}</div>
+              <div class="text-xl font-black uppercase tracking-widest truncate text-white">{{ scenario.name }}</div>
             </div>
 
             <div class="flex items-center justify-around w-full border-t nier-border-primary pt-4">
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1 text-white">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.freq }}</span>
+                  <span class="text-xs font-mono font-bold text-white">{{ scenario.freq }}</span>
                   <svg v-if="scenario.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1 text-white">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.pf }}</span>
+                  <span class="text-xs font-mono font-bold text-white">{{ scenario.pf }}</span>
                   <svg v-if="scenario.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
@@ -660,7 +660,7 @@ const calculatedStabilityIndex = computed(() => {
              @mouseenter="handleNodeHover($event, scenario)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
-          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2"
+          <div class="relative w-[320px] h-32 flex flex-col justify-center p-6 transition-all duration-700 border-2 bg-black"
                :class="isDark ? 'border-white/10 group-hover:border-white/35' : 'border-black/10 group-hover:border-black/35'">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
@@ -668,22 +668,22 @@ const calculatedStabilityIndex = computed(() => {
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 opacity-60" :class="isDark ? 'border-nier-text-dark' : 'border-black'"></div>
             
             <div class="mb-4 text-center w-full px-2">
-              <div class="text-xl font-black uppercase tracking-widest truncate" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.name }}</div>
+              <div class="text-xl font-black uppercase tracking-widest truncate text-white">{{ scenario.name }}</div>
             </div>
 
             <div class="flex items-center justify-around w-full border-t nier-border-primary pt-4">
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.frequency') }}</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1 text-white">{{ t('tacticalNodeMap.frequency') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.freq }}</span>
+                  <span class="text-xs font-mono font-bold text-white">{{ scenario.freq }}</span>
                   <svg v-if="scenario.freqTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
               <div class="flex flex-col items-center">
-                <span class="text-[8px] font-mono opacity-40 uppercase mb-1" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfRatio') }}</span>
+                <span class="text-[8px] font-mono opacity-40 uppercase mb-1 text-white">{{ t('tacticalNodeMap.pfRatio') }}</span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-xs font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ scenario.pf }}</span>
+                  <span class="text-xs font-mono font-bold text-white">{{ scenario.pf }}</span>
                   <svg v-if="scenario.pfTrend === 'up'" width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
@@ -694,29 +694,29 @@ const calculatedStabilityIndex = computed(() => {
 
         <!-- Distributed Condition Nodes: Entry -->
         <div v-for="cond in entryConditions" :key="cond.id"
-             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
+             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 bg-black"
              :class="isDark ? 'border-white/5 hover:border-white/25' : 'border-black/5 hover:border-black/25'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
              @mousemove="handleNodeMove"
              @mouseleave="handleNodeLeave">
           <div class="flex flex-col mr-8">
-            <span class="text-[11px] font-mono uppercase tracking-widest font-black" :class="isDark ? 'text-white' : 'text-black'">{{ cond.name }}</span>
+            <span class="text-[11px] font-mono uppercase tracking-widest font-black text-white">{{ cond.name }}</span>
           </div>
 
           <div class="flex flex-col space-y-1">
             <div class="flex items-center justify-end space-x-2">
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
+              <span class="text-[7px] font-mono opacity-30 text-white">{{ t('tacticalNodeMap.freqShort') }}</span>
               <div class="flex items-center space-x-0.5">
-                <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.freq }}</span>
+                <span class="text-[9px] font-mono font-bold text-white">{{ cond.freq }}</span>
                 <svg v-if="cond.freqTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
             </div>
             <div class="flex items-center justify-end space-x-2">
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
+              <span class="text-[7px] font-mono opacity-30 text-white">{{ t('tacticalNodeMap.pfShort') }}</span>
               <div class="flex items-center space-x-0.5">
-                <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.pf }}</span>
+                <span class="text-[9px] font-mono font-bold text-white">{{ cond.pf }}</span>
                 <svg v-if="cond.pfTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
@@ -726,7 +726,7 @@ const calculatedStabilityIndex = computed(() => {
 
         <!-- Distributed Condition Nodes: Exit -->
         <div v-for="cond in exitConditions" :key="cond.id"
-             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500"
+             class="absolute node-element min-w-[280px] border p-4 flex items-center justify-between group cursor-pointer transition-all duration-500 bg-black"
              :class="isDark ? 'border-white/5 hover:border-white/25' : 'border-black/5 hover:border-black/25'"
              :style="{ left: cond.x + 'px', top: cond.y + 'px' }"
              @mouseenter="handleNodeHover($event, cond)"
@@ -738,22 +738,22 @@ const calculatedStabilityIndex = computed(() => {
               <div class="flex items-center space-x-0.5">
                 <svg v-if="cond.freqTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.freq }}</span>
+                <span class="text-[9px] font-mono font-bold text-white">{{ cond.freq }}</span>
               </div>
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.freqShort') }}</span>
+              <span class="text-[7px] font-mono opacity-30 text-white">{{ t('tacticalNodeMap.freqShort') }}</span>
             </div>
             <div class="flex items-center justify-start space-x-2">
               <div class="flex items-center space-x-0.5">
                 <svg v-if="cond.pfTrend === 'up'" width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-green-500"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg v-else width="8" height="8" viewBox="0 0 24 24" fill="none" class="text-red-500"><path d="M7 7L17 17M17 17V7M17 17H7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="text-[9px] font-mono font-bold" :class="isDark ? 'text-white' : 'text-black'">{{ cond.pf }}</span>
+                <span class="text-[9px] font-mono font-bold text-white">{{ cond.pf }}</span>
               </div>
-              <span class="text-[7px] font-mono opacity-30" :class="isDark ? 'text-white' : 'text-black'">{{ t('tacticalNodeMap.pfShort') }}</span>
+              <span class="text-[7px] font-mono opacity-30 text-white">{{ t('tacticalNodeMap.pfShort') }}</span>
             </div>
           </div>
 
           <div class="flex flex-col items-end ml-8">
-            <span class="text-[11px] font-mono uppercase tracking-widest font-black" :class="isDark ? 'text-white' : 'text-black'">{{ cond.name }}</span>
+            <span class="text-[11px] font-mono uppercase tracking-widest font-black text-white">{{ cond.name }}</span>
           </div>
         </div>
 
