@@ -402,7 +402,6 @@ const correlationMetricConfigs = computed<CorrelationMetricConfig[]>(() => {
     { id: 'actual_vs_target_rr', label: getMetricLabel('actual_vs_target_rr'), group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
     { id: 'planned_vs_realized_risk', label: getMetricLabel('planned_vs_realized_risk'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
     { id: 'temporal_exposure', label: getMetricLabel('temporal_exposure'), group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
-    { id: 'asset_protocol', label: getMetricLabel('asset_protocol'), group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
     { id: 'stop_loss_distance', label: getMetricLabel('stop_loss_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
     { id: 'take_profit_distance', label: getMetricLabel('take_profit_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
     { id: 'sl_execution_drag', label: getMetricLabel('sl_execution_drag'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },

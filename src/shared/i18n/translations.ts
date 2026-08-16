@@ -1368,7 +1368,6 @@ export const translations = {
         "Actual vs Target RR": "Факт и целевой риск/прибыль",
         "Actual vs Max Risk": "Факт и макс. риск",
         "Temporal Exposure": "Временная Экспозиция",
-        "Asset Protocol": "Протокол Актива",
         "Stop Loss Distance": "Дистанция Стоп Лосса",
         "Take Profit Distance": "Дистанция Тейк Профита",
         "SL Execution Drag": "Сопротивление SL Исполнения",

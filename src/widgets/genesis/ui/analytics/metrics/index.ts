@@ -20,7 +20,6 @@ import { profitVelocityMetric } from './profitVelocity'
 import { actualVsTargetRrMetric } from './actualVsTargetRr'
 import { plannedVsRealizedRiskMetric } from './plannedVsRealizedRisk'
 import { temporalExposureMetric } from './temporalExposure'
-import { assetProtocolMetric } from './assetProtocol'
 import { stopLossDistanceMetric } from './stopLossDistance'
 import { takeProfitDistanceMetric } from './takeProfitDistance'
 
@@ -83,7 +82,6 @@ export const advancedTradeMetricsEngines: MetricEngine[] = [
   actualVsTargetRrMetric,
   plannedVsRealizedRiskMetric,
   temporalExposureMetric,
-  assetProtocolMetric,
   stopLossDistanceMetric,
   takeProfitDistanceMetric,
 
@@ -193,7 +191,6 @@ export * from './profitVelocity'
 export * from './actualVsTargetRr'
 export * from './plannedVsRealizedRisk'
 export * from './temporalExposure'
-export * from './assetProtocol'
 export * from './stopLossDistance'
 export * from './takeProfitDistance'
 export * from './slExecutionDrag'
