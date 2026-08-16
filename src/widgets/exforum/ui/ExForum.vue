@@ -1197,7 +1197,7 @@
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="relative isolate flex flex-col min-h-full overflow-visible px-4 md:px-6 xl:px-8">
+    <div v-else class="relative isolate flex flex-col flex-1 h-full min-h-full overflow-visible px-4 md:px-6 xl:px-8">
       <div class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
         <img
           src="/assets/ui/eves.svg"
@@ -1312,7 +1312,7 @@
       </header>
 
       <!-- Main Journal Body -->
-      <div class="flex-grow relative z-10 pb-0">
+      <div class="flex-1 h-full relative z-10 pb-0 flex flex-col">
         
         <!-- Loading State -->
         <div v-if="forumStore.loading" class="flex flex-col items-center justify-center py-32 opacity-50 space-y-4">
@@ -1393,12 +1393,12 @@
         </section>
 
         <!-- DYNAMIC MAGAZINE LAYOUT -->
-        <div v-else-if="pagedNodes.length > 0 || pagedSignals.length > 0" class="flex flex-col">
+        <div v-else-if="pagedNodes.length > 0 || pagedSignals.length > 0" class="flex flex-col flex-1 h-full">
           <!-- MAIN ROW (Publications Left + Signal Sidebar Right) -->
-          <div class="grid grid-cols-12 border-b-[2px] border-solid border-current/20">
+          <div class="grid grid-cols-12 auto-rows-fr flex-1 h-full border-solid border-current/20" :class="{ 'border-b-[2px]': hasPagination }">
             <!-- LEFT BLOCK: EVERYTHING THAT IS NOT A SIGNAL -->
             <section
-              class="journal-sector px-6 sm:px-12 pb-12 pt-6 col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20"
+              class="journal-sector px-6 sm:px-12 pb-12 pt-6 col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20 h-full"
             >
               <div class="flex flex-col" v-if="leadJournalSection">
                 <!-- Stacked Vertical Publications List -->
@@ -1469,19 +1469,15 @@
             
             <!-- RIGHT BLOCK: SIGNALS -->
             <section
-              class="journal-sector px-8 pb-8 pt-6 col-span-12 lg:col-span-4"
+              class="journal-sector px-8 pb-8 pt-2 col-span-12 lg:col-span-4"
             >
-              <div class="space-y-4">
-                 <div class="flex items-center justify-between pb-2 border-b border-current/10 mb-2">
-                   <div class="flex items-center space-x-3">
-                     <div class="w-1 h-1 bg-current opacity-20"></div>
-                     <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.signals }}</h2>
-                   </div>
+              <div class="flex flex-col gap-2">
+                 <div class="flex items-center">
                    <input
                      v-model="signalSearchQuery"
                      type="text"
-                     :placeholder="locale === 'ru' ? 'ТИКЕР' : 'TICKER'"
-                     class="bg-transparent border-none text-[9px] font-mono tracking-[0.2em] uppercase focus:outline-none w-20 text-right opacity-50 focus:opacity-100 transition-opacity"
+                     placeholder=""
+                     class="bg-transparent border-none text-[9px] font-mono tracking-[0.2em] uppercase focus:outline-none w-full opacity-50 focus:opacity-100 transition-opacity"
                    />
                 </div>
                 <div class="space-y-1">
@@ -1515,7 +1511,7 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div v-if="hasPagination" class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
+        <div v-if="hasPagination" class="py-4 flex flex-col items-center space-y-4">
            <div class="flex items-center space-x-12">
               <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
@@ -1530,14 +1526,7 @@
            <div class="text-[7px] font-mono opacity-20 uppercase tracking-[0.8em]">{{ journalLabels.endOfArchive }}</div>
         </div>
 
-        <!-- Journal Footer -->
-        <footer class="py-4 text-center opacity-10 hover:opacity-100 transition-opacity duration-700">
-          <div class="flex flex-col items-center space-y-4">
-            <div class="text-[10px] font-serif italic tracking-widest text-current">{{ journalLabels.footerQuote }}</div>
-            <div class="w-24 h-px bg-current/20 mx-auto text-current"></div>
-            <div class="text-[7px] font-mono tracking-[0.8em] uppercase text-current">{{ journalLabels.footerBrand }}</div>
-          </div>
-        </footer>
+
 
       </div>
     </div>
