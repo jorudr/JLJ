@@ -22,7 +22,7 @@ export const profitFactorMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const pf = Number(context?.profitFactor || trade?.profitFactor || (trade?.pnl > 0 ? 2.5 : 0.8))
+    const pf = Number(context?.profitFactor ?? trade?.profitFactor ?? (trade?.pnl > 0 ? 2.5 : 0.8))
 
     const isRu = locale === 'ru'
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'

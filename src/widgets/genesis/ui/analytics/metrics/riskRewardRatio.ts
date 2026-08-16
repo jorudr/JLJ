@@ -22,7 +22,7 @@ export const riskRewardRatioMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const rr = Number(context?.rr || trade?.rr || trade?.riskReward || 2.0)
+    const rr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? 2.0)
 
     const isRu = locale === 'ru'
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'

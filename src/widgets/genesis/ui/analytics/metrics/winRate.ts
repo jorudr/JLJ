@@ -22,7 +22,7 @@ export const winRateMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const winRateVal = Number(context?.winRate || (trade?.pnl > 0 ? 100 : 0))
+    const winRateVal = Number(context?.winRate ?? (trade?.pnl > 0 ? 100 : 0))
 
     const isRu = locale === 'ru'
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'

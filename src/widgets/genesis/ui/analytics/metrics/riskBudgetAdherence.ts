@@ -23,8 +23,11 @@ export const riskBudgetAdherenceMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const riskUsed = Number(trade?.riskDollars || 150)
-    const budget = Number(context?.riskBudget || 200)
+    const plannedRisk = Number(context?.plannedStopRiskDollars ?? trade?.riskDollars ?? 0)
+    const pnl = Number(trade?.pnl || 0)
+    const realizedLoss = Math.max(0, -pnl)
+    const riskUsed = Math.max(plannedRisk, realizedLoss)
+    const budget = Number(context?.riskBudget || riskUsed || 1)
     const ratio = (riskUsed / budget) * 100
 
     const isOk = ratio <= 100

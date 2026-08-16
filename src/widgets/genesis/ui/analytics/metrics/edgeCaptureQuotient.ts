@@ -23,7 +23,7 @@ export const edgeCaptureQuotientMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const realizedRr = Number(trade?.rr || 2.2)
+    const realizedRr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? 0)
     const baselineRr = Number(context?.baselineRr || 2.0)
     const quotient = realizedRr / baselineRr
 

@@ -45,16 +45,30 @@ const isMainDiaryTrade = computed(() => {
   return trade?.tradingStyle === 'Main Diary' || trade?.strategyId === 'MAIN_DIARY'
 })
 
+const analysisStrategyId = computed(() => String(
+  props.forecastStrategyId ||
+  props.trade?.strategyId ||
+  'MAIN_DIARY'
+))
+
+const analysisInitialCapital = computed(() => {
+  return props.forecastInitialCapital || tradeStore.getInitialDeposit(analysisStrategyId.value) || 1000
+})
+
+const analysisAllTrades = computed(() => {
+  if (Array.isArray(props.forecastTrades) && props.forecastTrades.length > 0) return props.forecastTrades
+  return tradeStore.getAllTradesForStrategy(analysisStrategyId.value)
+})
+
 const analysisTrade = computed(() => {
   const trade = props.trade || {}
-  const initialCapital = props.forecastInitialCapital || tradeStore.getInitialDeposit(trade.strategyId || 'MAIN_DIARY')
 
   return {
     ...trade,
     id: trade.id || 'time-tree-trade',
     entryTime: trade.entryTime || trade.date || '',
     exitTime: trade.exitTime || trade.dateExit || '',
-    pnl: getTradePnl(trade, initialCapital),
+    pnl: getTradePnl(trade, analysisInitialCapital.value),
     scenarios: Array.isArray(trade.scenarios) ? trade.scenarios : [],
     emotions: Array.isArray(trade.emotions) ? trade.emotions : []
   }
@@ -723,6 +737,8 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   v-else
                   class="w-full min-h-[620px]"
                   :trade="analysisTrade"
+                  :all-trades="analysisAllTrades"
+                  :initial-balance="analysisInitialCapital"
                   :initial-page="3"
                   embedded
                   :embedded-brief="true"
@@ -739,6 +755,8 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   v-if="!isMainDiaryTrade"
                   class="w-full min-h-[620px]"
                   :trade="analysisTrade"
+                  :all-trades="analysisAllTrades"
+                  :initial-balance="analysisInitialCapital"
                   :initial-page="3"
                   embedded
                   embedded-brief

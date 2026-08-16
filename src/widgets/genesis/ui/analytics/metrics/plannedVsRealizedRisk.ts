@@ -23,10 +23,10 @@ export const plannedVsRealizedRiskMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const plannedRisk = Number(trade?.riskDollars || 150)
+    const plannedRisk = Number(context?.plannedStopRiskDollars ?? trade?.riskDollars ?? 0)
     const pnl = Number(trade?.pnl || 0)
     const realizedLoss = Math.max(0, -pnl)
-    const budget = Number(context?.riskBudget || 200)
+    const budget = Number(context?.riskBudget || plannedRisk || realizedLoss || 1)
 
     const isCompliant = plannedRisk <= budget && realizedLoss <= budget
     const evalClass = isCompliant ? 'text-emerald-500' : 'text-rose-500'
@@ -42,7 +42,7 @@ export const plannedVsRealizedRiskMetric: MetricEngine = {
         { label: isRu ? '<= Риск-бюджет' : '<= Risk Budget', eval: isRu ? 'В лимите' : 'Compliant', class: 'text-emerald-500 font-bold' },
         { label: isRu ? '> Риск-бюджет' : '> Risk Budget', eval: isRu ? 'Превышение' : 'Breach Warning', class: 'text-rose-500 font-bold' }
       ],
-      progress: Math.min(100, (Math.max(plannedRisk, realizedLoss) / budget) * 100),
+      progress: Math.min(100, Math.max(0, (Math.max(plannedRisk, realizedLoss) / budget) * 100)),
       colorVal: isCompliant ? '#34d399' : '#f87171'
     }
   }

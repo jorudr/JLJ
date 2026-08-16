@@ -24,7 +24,7 @@ export const netResultVarianceMetric: MetricEngine = {
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
     const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const avgPnl = Number(context?.avgPnl || 100)
+    const avgPnl = Number(context?.avgPnl ?? 100)
 
     const isAbove = pnl >= avgPnl
     const evalClass = isAbove ? 'text-emerald-500' : 'text-amber-500'

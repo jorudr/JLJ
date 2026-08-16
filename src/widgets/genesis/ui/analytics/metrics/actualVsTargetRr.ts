@@ -23,7 +23,7 @@ export const actualVsTargetRrMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const actualRr = Number(trade?.rr || trade?.realizedRr || 2.2)
+    const actualRr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? trade?.realizedRr ?? 0)
     const targetRr = Number(context?.targetRr || 2.0)
 
     const isMet = actualRr >= targetRr
