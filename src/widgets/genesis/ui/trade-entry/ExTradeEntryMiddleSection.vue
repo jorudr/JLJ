@@ -36,6 +36,7 @@ const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, ge
 const tradeState = inject('tradeState');
 const { handlePnlInput } = tradeState;
 const { showTradeSummary, savedTradeSummary } = tradeState;
+const { tradeStudyMetrics } = tradeState;
 const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, currentCapital, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
 
 const formatRiskValue = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '--';
@@ -93,6 +94,31 @@ const activeProjectionMode = ref('core');
 const activeEntryFormTab = ref('main');
 const activeJournalImageIndex = ref(null);
 const isArchivePersisting = computed(() => tradeState.commitState?.value === 'loading');
+
+const isShortTrade = computed(() => String(side?.value || side || '').toLowerCase() === 'short');
+const additionalMoveToggleKey = computed(() => isShortTrade.value ? 'priceRoseAboveEntryShort' : 'priceDroppedBelowEntryLong');
+const additionalMovePercentKey = computed(() => isShortTrade.value ? 'priceAboveEntryShortMovePercent' : 'priceBelowEntryLongMovePercent');
+const additionalDurationPrefix = computed(() => isShortTrade.value ? 'priceAboveEntryShort' : 'priceBelowEntryLong');
+const additionalMoveLabel = computed(() => isShortTrade.value
+  ? tr('Цена выросла выше точки входа', 'Price rose above entry')
+  : tr('Цена упала ниже точки входа', 'Price fell below entry'));
+const additionalMovePercentLabel = computed(() => isShortTrade.value
+  ? tr('Как сильно цена выросла от входа, %', 'How much price rose from entry, %')
+  : tr('Как сильно цена упала от входа, %', 'How much price fell from entry, %'));
+const additionalDurationLabel = computed(() => isShortTrade.value
+  ? tr('Как долго цена была выше входа', 'How long price stayed above entry')
+  : tr('Как долго цена была ниже входа', 'How long price stayed below entry'));
+
+const sanitizeAdditionalMetricInput = (event, key) => {
+  const target = event?.target;
+  const sanitized = String(target?.value ?? '').replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+  if (target && target.value !== sanitized) target.value = sanitized;
+  tradeStudyMetrics.value[key] = sanitized;
+};
+
+const toggleAdditionalMetric = (key) => {
+  tradeStudyMetrics.value[key] = !tradeStudyMetrics.value[key];
+};
 
 const journalImages = computed(() => journalEntries.value
   .map((entry, index) => ({
@@ -737,6 +763,14 @@ const summarySelectedEmotions = computed(() => {
                       <button
                         type="button"
                         class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
+                        :class="activeEntryFormTab === 'additional' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
+                        @click="activeEntryFormTab = 'additional'"
+                      >
+                        {{ tr('ДОПОЛНИТЕЛЬНЫЕ', 'ADDITIONAL') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[0.24em] transition-colors"
                         :class="activeEntryFormTab === 'summary' ? 'border-white bg-white text-black' : 'border-white/15 text-white/45 hover:border-white/40 hover:text-white'"
                         @click="activeEntryFormTab = 'summary'"
                       >
@@ -884,8 +918,73 @@ const summarySelectedEmotions = computed(() => {
                       </div>
                     </section>
 
-                    <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
+                    <section v-if="activeEntryFormTab === 'additional'" class="flex flex-col items-start gap-5">
                       <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">VI.</div>
+                      <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Дополнительные данные сделки', 'Additional trade data') }}</h2>
+
+                      <div class="grid w-full max-w-5xl grid-cols-1 gap-8 lg:grid-cols-2">
+                        <div class="flex flex-col gap-5">
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between border border-white/20 px-5 py-4 text-left font-mono uppercase tracking-[0.18em] transition-colors hover:border-white/50"
+                            :class="tradeStudyMetrics[additionalMoveToggleKey] ? 'bg-white text-black' : 'text-white/70'"
+                            @click="toggleAdditionalMetric(additionalMoveToggleKey)"
+                          >
+                            <span class="text-[10px] font-black">{{ additionalMoveLabel }}</span>
+                            <span class="text-[10px] font-black">{{ tradeStudyMetrics[additionalMoveToggleKey] ? tr('ДА', 'YES') : tr('НЕТ', 'NO') }}</span>
+                          </button>
+
+                          <label class="flex flex-col items-start gap-2" :class="!tradeStudyMetrics[additionalMoveToggleKey] ? 'pointer-events-none opacity-35' : ''">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ additionalMovePercentLabel }}</span>
+                            <input
+                              :value="tradeStudyMetrics[additionalMovePercentKey]"
+                              type="text"
+                              inputmode="decimal"
+                              placeholder="0.00"
+                              class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80"
+                              @input="sanitizeAdditionalMetricInput($event, additionalMovePercentKey)"
+                            />
+                          </label>
+
+                          <div class="flex flex-col gap-3" :class="!tradeStudyMetrics[additionalMoveToggleKey] ? 'pointer-events-none opacity-35' : ''">
+                            <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ additionalDurationLabel }}</span>
+                            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                              <label v-for="item in [
+                                { key: `${additionalDurationPrefix}DurationDays`, label: tr('Дни', 'Days') },
+                                { key: `${additionalDurationPrefix}DurationHours`, label: tr('Часы', 'Hours') },
+                                { key: `${additionalDurationPrefix}DurationMinutes`, label: tr('Минуты', 'Minutes') },
+                                { key: `${additionalDurationPrefix}DurationSeconds`, label: tr('Секунды', 'Seconds') }
+                              ]" :key="item.key" class="flex flex-col gap-2">
+                                <span class="text-[8px] font-mono uppercase tracking-[0.24em] text-white/35">{{ item.label }}</span>
+                                <input
+                                  :value="tradeStudyMetrics[item.key]"
+                                  type="text"
+                                  inputmode="numeric"
+                                  placeholder="0"
+                                  class="w-full border-b border-white/20 bg-transparent px-0 py-2 font-mono text-sm tracking-[0.18em] text-white outline-none transition-colors placeholder:text-white/30 focus:border-white/80"
+                                  @input="sanitizeAdditionalMetricInput($event, item.key)"
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="flex flex-col gap-5">
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between border border-white/20 px-5 py-4 text-left font-mono uppercase tracking-[0.18em] transition-colors hover:border-white/50"
+                            :class="tradeStudyMetrics.hadNews ? 'bg-white text-black' : 'text-white/70'"
+                            @click="toggleAdditionalMetric('hadNews')"
+                          >
+                            <span class="text-[10px] font-black">{{ tr('Были новости во время сделки', 'News during trade') }}</span>
+                            <span class="text-[10px] font-black">{{ tradeStudyMetrics.hadNews ? tr('ДА', 'YES') : tr('НЕТ', 'NO') }}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section v-if="activeEntryFormTab === 'summary'" class="flex flex-col items-start gap-8">
+                      <div class="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/45">VII.</div>
                       <h2 class="text-2xl font-mono font-black uppercase tracking-[0.22em] text-white md:text-3xl">{{ tr('Резюме', 'Summary') }}</h2>
                       <div class="grid w-full max-w-none grid-cols-2 gap-y-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_max-content_minmax(0,1fr)]">
                         <div class="min-w-0 pr-6">
