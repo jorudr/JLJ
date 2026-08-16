@@ -1197,7 +1197,7 @@
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="relative isolate flex flex-col flex-1 h-full min-h-full overflow-visible px-4 md:px-6 xl:px-8">
+    <div v-else class="relative isolate flex flex-col flex-1 h-full min-h-full overflow-visible px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
       <div class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
         <img
           src="/assets/ui/eves.svg"
@@ -1510,21 +1510,7 @@
             </button>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="pt-8 pb-4 flex flex-col items-center space-y-4">
-           <div class="flex items-center space-x-12">
-              <button @click="navigateToPage(currentPage - 1)" 
-                      class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
-                {{ journalLabels.previousPage }}
-              </button>
-              <button @click="navigateToPage(currentPage + 1)"
-                      class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
-                {{ journalLabels.nextPage }}
-              </button>
-           </div>
-           
-           <div class="text-[7px] font-mono opacity-20 uppercase tracking-[0.8em]">{{ journalLabels.endOfArchive }}</div>
-        </div>
+
 
 
 
@@ -1966,11 +1952,8 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
 }
 
 // Pagination Logic
-const currentPage = ref(Number(route.query.page) || 1)
-watch([searchQuery, signalSearchQuery], () => {
-  currentPage.value = 1
-})
-const nodesPerPage = 10
+const currentPage = computed(() => Number(route.query.page) || 1)
+const nodesPerPage = 12
 
 const journalThreads = computed(() => {
   return (Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
@@ -2072,13 +2055,8 @@ const leadJournalSection = computed(() => {
 })
 const hasPagedNonSignalArticles = computed(() => Boolean(leadJournalSection.value))
 const navigateToPage = (page: number) => {
-  currentPage.value = page
-  nextTick(() => {
-    if (journalWrapperRef.value) {
-      journalWrapperRef.value.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  })
+  const query = { ...route.query, page: page === 1 ? undefined : page.toString() }
+  router.replace({ query })
 }
 
 const setJournalFilter = (mode: string) => {
