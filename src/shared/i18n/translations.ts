@@ -1354,7 +1354,6 @@ export const translations = {
         "Nominal": "Номинально",
         "Required Adherence": "Обязательное Соблюдение",
         "Additional Alpha": "Дополнительная Альфа",
-        "Protocol Strictness": "Строгость Протокола",
         "Conditional PnL Ratio": "Условный PnL Коэффициент",
         "Setup Complexity": "Сложность Сетапа",
         "Cognitive Stability": "Когнитивная Стабильность",

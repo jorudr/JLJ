@@ -3,7 +3,6 @@ import type { MetricConfig, MetricEngine } from '~/entities/metric'
 // Category 1: Matrix Adherence
 import { requiredAdherenceMetric } from './requiredAdherence'
 import { additionalAlphaMetric } from './additionalAlpha'
-import { protocolStrictnessMetric } from './protocolStrictness'
 import { conditionalPnlRatioMetric } from './conditionalPnlRatio'
 import { setupComplexityMetric } from './setupComplexity'
 
@@ -65,7 +64,6 @@ export const advancedTradeMetricsEngines: MetricEngine[] = [
   // Matrix Adherence
   requiredAdherenceMetric,
   additionalAlphaMetric,
-  protocolStrictnessMetric,
   conditionalPnlRatioMetric,
   setupComplexityMetric,
 
@@ -178,7 +176,6 @@ export function useTradeAnalysisMetrics(
 
 export * from './requiredAdherence'
 export * from './additionalAlpha'
-export * from './protocolStrictness'
 export * from './conditionalPnlRatio'
 export * from './setupComplexity'
 export * from './cognitiveStability'
