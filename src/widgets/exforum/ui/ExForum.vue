@@ -1507,13 +1507,13 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div v-if="hasJournalPagination" class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
+        <div v-if="hasPagination" class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
            <div class="flex items-center space-x-12">
               <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.previousPage }}
               </button>
-              <button v-if="hasNextJournalPage" @click="navigateToPage(currentPage + 1)"
+              <button v-if="hasNextPage" @click="navigateToPage(currentPage + 1)"
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.nextPage }}
               </button>
@@ -1982,6 +1982,10 @@ const myArticleThreads = computed(() => {
     .filter(thread => thread.authorId === userId)
     .sort((a, b) => new Date(getThreadPublishedAt(b)).getTime() - new Date(getThreadPublishedAt(a)).getTime())
 })
+const pagedMyArticleThreads = computed(() => {
+  const start = (currentPage.value - 1) * nodesPerPage
+  return myArticleThreads.value.slice(start, start + nodesPerPage)
+})
 const journalNodes = computed(() => journalThreads.value
   .map(threadToJournalNode)
   .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()))
@@ -2023,13 +2027,16 @@ const pagedNodes = computed(() => {
   const start = (currentPage.value - 1) * nodesPerPage
   return filteredNodes.value.slice(start, start + nodesPerPage)
 })
-const totalJournalPages = computed(() => {
+const totalPages = computed(() => {
+  if (journalViewMode.value === 'mine') {
+    return Math.ceil(myArticleThreads.value.length / nodesPerPage)
+  }
   const pubPages = Math.ceil(filteredNodes.value.length / nodesPerPage)
   const sigPages = Math.ceil(filteredSignals.value.length / nodesPerPage)
   return Math.max(pubPages, sigPages)
 })
-const hasNextJournalPage = computed(() => currentPage.value < totalJournalPages.value)
-const hasJournalPagination = computed(() => currentPage.value > 1 || hasNextJournalPage.value)
+const hasNextPage = computed(() => currentPage.value < totalPages.value)
+const hasPagination = computed(() => totalPages.value > 1)
 
 const filteredSignals = computed(() => {
   const q = searchQuery.value.toLowerCase()
@@ -2081,8 +2088,8 @@ const toggleMyArticles = () => {
   journalViewMode.value = journalViewMode.value === 'mine' ? 'journal' : 'mine'
   if (journalViewMode.value === 'mine') {
     activeJournalFilter.value = null
-    navigateToPage(1)
   }
+  navigateToPage(1)
 }
 
 // Reader Logic
