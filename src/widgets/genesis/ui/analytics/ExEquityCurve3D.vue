@@ -1062,6 +1062,41 @@ const tradeStore = useStrategyTradesStore()
 const appBootStore = useAppBootStore()
 const matrixState = useMatrixState()
 
+const GRADFLOW_CURVE_COLORS = [
+  { r: 2, g: 145, b: 135 },
+  { r: 165, g: 249, b: 193 },
+  { r: 153, g: 151, b: 231 }
+]
+
+const gradflowCurvePhase = () => {
+  if (typeof performance === 'undefined') return 0
+  return (performance.now() * 0.00008) % 1
+}
+
+const mixGradflowColor = (
+  from: { r: number; g: number; b: number },
+  to: { r: number; g: number; b: number },
+  amount: number
+) => ({
+  r: Math.round(from.r + (to.r - from.r) * amount),
+  g: Math.round(from.g + (to.g - from.g) * amount),
+  b: Math.round(from.b + (to.b - from.b) * amount)
+})
+
+const gradflowColorAt = (position: number, alpha = 1) => {
+  const normalized = ((position % 1) + 1) % 1
+  const scaled = normalized * GRADFLOW_CURVE_COLORS.length
+  const index = Math.floor(scaled) % GRADFLOW_CURVE_COLORS.length
+  const nextIndex = (index + 1) % GRADFLOW_CURVE_COLORS.length
+  const mixed = mixGradflowColor(
+    GRADFLOW_CURVE_COLORS[index]!,
+    GRADFLOW_CURVE_COLORS[nextIndex]!,
+    scaled - Math.floor(scaled)
+  )
+
+  return `rgba(${mixed.r}, ${mixed.g}, ${mixed.b}, ${alpha})`
+}
+
 const strategyVersionSuffix = computed(() => {
   const vId = matrixState.selectedStrategyVersionId.value
   const versionInfo = vId ? matrixState.strategyVersions.value.find((v: any) => v.id === vId) : null
@@ -3479,7 +3514,7 @@ const update = () => {
             const maxCount = Math.max(...pnlBins.map((b: any) => b.count), 1);
             const lowerVal = stats.mean - stats.std;
             const upperVal = stats.mean + stats.std;
-            const zoneIsPositive = stats.mean >= 0;
+            const activeHistogramColor = 'rgba(239, 68, 68, 1)';
 
             // Find scale bounds for X mapping based on bins
             const minXVal = firstBin.x0;
@@ -3489,12 +3524,12 @@ const update = () => {
             // Draw individual 3D columns for the bins
             const binWidth3D = 350 / pnlBins.length;
             const gap = 2; // gap between bars
-            const mutedStroke = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.16)';
-            const mutedFront = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.035)';
-            const mutedTop = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.055)';
-            const mutedSide = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.045)';
-            const mutedBack = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.025)' : 'rgba(0, 0, 0, 0.03)';
-            const mutedBottom = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.025)';
+            const mutedStroke = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.24)' : 'rgba(0, 0, 0, 0.18)';
+            const mutedFront = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.045)';
+            const mutedTop = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.065)';
+            const mutedSide = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.055)';
+            const mutedBack = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.035)';
+            const mutedBottom = themeStore.settings.isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(0, 0, 0, 0.03)';
 
             pnlBins.forEach((bin: any, idx: number) => {
               const centerVal = (bin.x0 + bin.x1) / 2;
@@ -3528,24 +3563,12 @@ const update = () => {
 
               if (pts.length >= 8 && pts[0] && pts[1] && pts[2] && pts[3] && pts[4] && pts[5] && pts[6] && pts[7]) {
                 ctx.save();
-                const activeStroke = isInsideCI 
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)')
-                  : mutedStroke;
-                const frontFill = isInsideCI 
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)')
-                  : mutedFront;
-                const topFill = isInsideCI 
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)')
-                  : mutedTop;
-                const sideFill = isInsideCI 
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)')
-                  : mutedSide;
-                const backFill = isInsideCI
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)')
-                  : mutedBack;
-                const bottomFill = isInsideCI
-                  ? (zoneIsPositive ? 'rgba(16, 185, 129, 0.07)' : 'rgba(239, 68, 68, 0.07)')
-                  : mutedBottom;
+                const activeStroke = isInsideCI ? activeHistogramColor : mutedStroke;
+                const frontFill = isInsideCI ? 'rgba(239, 68, 68, 0.32)' : mutedFront;
+                const topFill = isInsideCI ? 'rgba(239, 68, 68, 0.48)' : mutedTop;
+                const sideFill = isInsideCI ? 'rgba(239, 68, 68, 0.4)' : mutedSide;
+                const backFill = isInsideCI ? 'rgba(239, 68, 68, 0.16)' : mutedBack;
+                const bottomFill = isInsideCI ? 'rgba(239, 68, 68, 0.13)' : mutedBottom;
 
                 const avgDepth = (indexes: number[]) => indexes.reduce((sum, pointIndex) => sum + (pts[pointIndex]?.depth ?? 0), 0) / indexes.length;
                 const drawFace = (indexes: number[], fillStyle: string, strokeStyle: string) => {
@@ -3553,7 +3576,7 @@ const update = () => {
                   if (!first) return;
                   ctx.fillStyle = fillStyle;
                   ctx.strokeStyle = strokeStyle;
-                  ctx.lineWidth = 0.9;
+                  ctx.lineWidth = 1.15;
                   ctx.beginPath();
                   ctx.moveTo(first.x, first.y);
                   indexes.slice(1).forEach(pointIndex => {
@@ -3577,7 +3600,7 @@ const update = () => {
                   .forEach(face => drawFace(face.indexes, face.fill, activeStroke));
 
                 ctx.strokeStyle = activeStroke;
-                ctx.lineWidth = 0.85;
+                ctx.lineWidth = 1.05;
                 ctx.globalAlpha = 0.85;
                 const edges: Array<[number, number]> = [
                   [0, 1], [1, 2], [2, 3], [3, 0],
@@ -3709,13 +3732,9 @@ const update = () => {
             if (minY < maxY) {
               ctx.save()
               const grad = ctx.createLinearGradient(0, minY, 0, maxY)
-              if (themeStore.settings.isDark) {
-                grad.addColorStop(0, 'rgba(255, 255, 255, 0.55)')
-                grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)')
-              } else {
-                grad.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
-                grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)')
-              }
+              grad.addColorStop(0, gradflowColorAt(0.34 - gradflowCurvePhase(), 0.58))
+              grad.addColorStop(0.72, gradflowColorAt(0.52 - gradflowCurvePhase(), 0.22))
+              grad.addColorStop(1, gradflowColorAt(0.70 - gradflowCurvePhase(), 0.0))
               ctx.fillStyle = grad
               ctx.beginPath()
               ctx.moveTo(transformedT[0]!.x, transformedT[0]!.y)
@@ -3755,15 +3774,9 @@ const update = () => {
             if (minY < maxY) {
               ctx.save()
               const grad = ctx.createLinearGradient(0, minY, 0, maxY)
-              if (themeStore.settings.isDark) {
-                grad.addColorStop(0, 'rgba(249, 246, 240, 0.46)')
-                grad.addColorStop(0.72, 'rgba(249, 246, 240, 0.16)')
-                grad.addColorStop(1, 'rgba(249, 246, 240, 0.02)')
-              } else {
-                grad.addColorStop(0, 'rgba(44, 44, 42, 0.30)')
-                grad.addColorStop(0.72, 'rgba(44, 44, 42, 0.10)')
-                grad.addColorStop(1, 'rgba(44, 44, 42, 0.02)')
-              }
+              grad.addColorStop(0, gradflowColorAt(0.76 - gradflowCurvePhase(), 0.46))
+              grad.addColorStop(0.72, gradflowColorAt(0.94 - gradflowCurvePhase(), 0.18))
+              grad.addColorStop(1, gradflowColorAt(0.12 - gradflowCurvePhase(), 0.02))
               ctx.fillStyle = grad
               ctx.beginPath()
               ctx.moveTo(transformedNormal[0]!.x, transformedNormal[0]!.y)
