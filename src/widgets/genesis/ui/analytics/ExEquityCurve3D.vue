@@ -219,10 +219,10 @@
           <div v-if="showDistribution3D" class="flex flex-col space-y-4">
             <div class="flex flex-col">
               <span class="text-4xl font-mono nier-text-primary tracking-tighter font-bold drop-shadow-sm uppercase">
-                {{ showQQPlot ? 'QQ_PLOT' : (showRobustnessHistogram ? 'PNL_HIST' : 'NORMAL_FIT') }}
+                {{ showQQPlot ? 'QQ PLOT' : (showRobustnessHistogram ? 'PNL HIST' : 'NORMAL FIT') }}
               </span>
               <span class="text-[9px] font-mono tracking-[0.4em] uppercase opacity-30 mt-2 nier-text-primary">
-                {{ showQQPlot ? 'QQ_DISTRIBUTION' : 'ROBUSTNESS_FITTING_VERDICT' }}
+                {{ showQQPlot ? 'QQ DISTRIBUTION' : 'ROBUSTNESS FITTING VERDICT' }}
               </span>
               <button v-if="!showQQPlot && !showRobustnessExplanations"
                       @click="toggleRobustnessHistogram"
@@ -4286,7 +4286,7 @@ const handleMouseMove = (e: MouseEvent) => {
             closestCenterDistance = centerDistance
             hoveredBin = {
               kind: 'histogram',
-              label: 'PNL_HISTOGRAM',
+              label: 'PNL HISTOGRAM',
               x: (anchor.x / canvas.width) * rect.width,
               y: (anchor.y / canvas.height) * rect.height,
               x0: Number(bin.x0 ?? 0),
@@ -4313,7 +4313,7 @@ const handleMouseMove = (e: MouseEvent) => {
         const curveModels = []
         if (showRobustnessNormalDist.value) {
           curveModels.push({
-            label: 'NORMAL_FIT',
+            label: 'NORMAL FIT',
             model: 'Normal distribution',
             points: curves.normalCurve,
             aic: Number(stats.normalParams?.aic ?? 0),
@@ -4323,7 +4323,7 @@ const handleMouseMove = (e: MouseEvent) => {
         }
         if (showRobustnessTDist.value) {
           curveModels.push({
-            label: 'STUDENT_T_FIT',
+            label: 'STUDENT T FIT',
             model: "Student's t distribution",
             points: curves.tCurve,
             aic: Number(stats.tParams?.aic ?? 0),
