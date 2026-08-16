@@ -1510,12 +1510,12 @@
         <div v-if="hasJournalPagination" class="p-12 flex flex-col items-center space-y-8 border-t border-current/10 mt-12">
            <div class="flex items-center space-x-12">
               <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
-                      class="px-8 py-3 border border-current/10 text-[9px] font-mono tracking-[0.4em] uppercase opacity-40 hover:opacity-100 hover:bg-current/[0.02] transition-all">
+                      class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.previousPage }}
               </button>
               <button v-if="hasNextJournalPage" @click="navigateToPage(currentPage + 1)"
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
-                {{ journalLabels.nextPage }} // {{ journalLabels.archivePrefix }}0{{ currentPage + 1 }} ]
+                {{ journalLabels.nextPage }}
               </button>
            </div>
            
@@ -1675,8 +1675,8 @@ const journalLabels = computed(() => locale.value === 'ru'
       emptyTitle: 'Пустота архива',
       emptyDescription: 'Внимание: вы достигли края индексированного архива. Для этой позиции нет тактических данных или публикаций.',
       returnToOrigin: '[ Вернуться_к_началу ]',
-      previousPage: '[ ПРЕДЫДУЩАЯ_СТРАНИЦА ]',
-      nextPage: '[ СЛЕДУЮЩАЯ_СТРАНИЦА',
+      previousPage: 'ПРЕДЫДУЩАЯ СТРАНИЦА',
+      nextPage: 'СЛЕДУЮЩАЯ СТРАНИЦА',
       archivePrefix: 'АРХ_',
       endOfArchive: 'Конец индексированного архива',
       footerQuote: '"Знание реализовано. Ценность извлечена."',
@@ -1696,8 +1696,8 @@ const journalLabels = computed(() => locale.value === 'ru'
       emptyTitle: 'The Reification Void',
       emptyDescription: 'Caution: You have reached the edge of the indexed registry. No tactical intelligence or archival nodes have been reified at this temporal coordinate.',
       returnToOrigin: '[ Return_to_Origin ]',
-      previousPage: '[ PREV_PAGE ]',
-      nextPage: '[ NEXT_PAGE',
+      previousPage: 'PREV PAGE',
+      nextPage: 'NEXT PAGE',
       archivePrefix: 'ARV_',
       endOfArchive: 'End of Indexed Reification',
       footerQuote: '"Knowledge Reified. Value Extracted."',
