@@ -27,7 +27,7 @@
 
     <!-- ── LANGUAGE SWITCH (top-left) ── -->
     <div
-      class="fixed left-8 top-8 z-[100] flex items-center gap-4"
+      class="fixed left-8 top-14 z-[100] flex items-center gap-4"
       role="group"
       :aria-label="locale === 'ru' ? 'Смена языка' : 'Language switcher'"
     >
@@ -56,7 +56,7 @@
 	      <button
 	        v-if="isAuthenticated"
 	        @click="doSignOut"
-	        class="initialization-sign-out-button fixed top-8 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
+	        class="initialization-sign-out-button fixed top-14 right-8 z-[100] text-[8px] font-mono uppercase tracking-[0.4em] border border-black px-4 py-2 transition-all duration-300 text-black opacity-30 hover:opacity-100"
 	      >{{ locale === 'ru' ? 'Выйти' : 'Sign Out' }}</button>
     </Transition>
 
@@ -252,7 +252,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
-import tauriConfig from '../../../../src-tauri/tauri.conf.json'
+import tauriConfig from '../../../../../src-tauri/tauri.conf.json'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {
   getAuth,
