@@ -362,6 +362,9 @@ const getNodeZoneType = (targetId, currentNodes, currentZones) => {
   return null
 }
 
+const SYSTEM_EXIT_SCENARIO_ID = 'default-exit-system'
+const SYSTEM_EXIT_PROTOCOL_IDS = ['cond-exit-tp', 'cond-exit-sl', 'cond-exit-fl']
+
 // Sync strategies when matrix nodes change
 watch([matrixNodes, () => tradeStore.isLoading], ([nodes, loading]) => {
   if (loading) return
@@ -491,16 +494,19 @@ onMounted(() => {
       : (Array.isArray(t.notes) ? t.notes : (typeof t.notes === 'string' && t.notes.trim() ? [t.notes] : []))
     notesList.value = storedNotes.map((note, index) => normalizeTradeNote(note, index))
 
-    // Reconstruct active conditions
-    const reconstructConditions = (scenario) => {
-      const conds = scenario?.info?.conditions || scenario?.conditions
-      if (!conds) return
-      const scenarioId = scenario?.id || null
-      const activate = (conditionId) => {
+    // Reconstruct active conditions from stored scenario snapshots.
+    const reconstructConditions = (scenario, fallbackScenarioId = null) => {
+      const conds = scenario?.info?.conditions || scenario?.conditions || []
+      const storedScenarioId = scenario?.id || fallbackScenarioId || null
+      const scenarioId = SYSTEM_EXIT_PROTOCOL_IDS.includes(String(storedScenarioId))
+        ? SYSTEM_EXIT_SCENARIO_ID
+        : storedScenarioId
+      const activate = (conditionId, targetScenarioId = scenarioId) => {
+        if (!conditionId) return
         activeConditions.value.add(conditionId)
-        if (scenarioId) {
+        if (targetScenarioId) {
           const scenarioIds = activeConditionScenarioIds.value.get(conditionId) || new Set()
-          scenarioIds.add(scenarioId)
+          scenarioIds.add(targetScenarioId)
           activeConditionScenarioIds.value.set(conditionId, scenarioIds)
         }
       }
@@ -514,9 +520,12 @@ onMounted(() => {
           activate(cond.id)
         }
       })
+      if (SYSTEM_EXIT_PROTOCOL_IDS.includes(String(storedScenarioId))) {
+        activate(String(storedScenarioId), SYSTEM_EXIT_SCENARIO_ID)
+      }
     }
-    reconstructConditions(t.boardScenarioEntry)
-    reconstructConditions(t.boardScenarioExit)
+    reconstructConditions(t.boardScenarioEntry, t.boardScenarioEntryId)
+    reconstructConditions(t.boardScenarioExit, t.boardScenarioExitId)
   }
   isHydratingInitialTrade.value = false
 })
@@ -557,7 +566,7 @@ const DEFAULT_ENTRY_CONDITIONS = []
 const DEFAULT_ENTRY_SCENARIOS = []
 const DEFAULT_EXIT_CONDITIONS = []
 const DEFAULT_EXIT_SCENARIOS = [
-  { id: 'default-exit-system', label: 'SYSTEM_PROTOCOLS', params: { customName: 'SYSTEM_PROTOCOLS', phase: 'EXIT' }, isMini: true }
+  { id: SYSTEM_EXIT_SCENARIO_ID, label: 'SYSTEM_PROTOCOLS', params: { customName: 'SYSTEM_PROTOCOLS', phase: 'EXIT' }, isMini: true }
 ]
 
 const entryConditions = computed(() => {
@@ -698,7 +707,7 @@ const toggleCondition = (id, scenarioId = null) => {
     const getScenarioType = (scenId) => {
       if (!scenId) return 'ENTRY'
       const strId = String(scenId)
-      if (strId === 'default-exit-system') return 'SYSTEM_EXIT'
+      if (strId === SYSTEM_EXIT_SCENARIO_ID) return 'SYSTEM_EXIT'
       if (strId.includes('-entry-')) return 'ENTRY'
       if (strId.includes('-exit-')) return 'EXIT'
       const node = findNodeById(matrixNodes.value, scenId)
@@ -720,12 +729,11 @@ const toggleCondition = (id, scenarioId = null) => {
   }
 
   // 3. Normal Toggle Logic
-  const systemProtocolIds = ['cond-exit-tp', 'cond-exit-sl', 'cond-exit-fl']
-  if (systemProtocolIds.includes(id)) {
+  if (SYSTEM_EXIT_PROTOCOL_IDS.includes(id)) {
     if (isConditionActive(id, targetScenarioId)) {
       deactivateCondition(id)
     } else {
-      systemProtocolIds.forEach(rid => deactivateCondition(rid, null))
+      SYSTEM_EXIT_PROTOCOL_IDS.forEach(rid => deactivateCondition(rid, null))
       activateCondition(id)
     }
     return
@@ -864,7 +872,7 @@ const getScenarioConditions = (scenarioId) => {
   if (scenarioId.startsWith('default-')) {
     const isEntry = scenarioId.includes('-entry-')
     
-    if (scenarioId === 'default-exit-system') {
+    if (scenarioId === SYSTEM_EXIT_SCENARIO_ID) {
       return [
         { id: 'cond-exit-tp', name: 'TAKE-PROFIT', description: 'STRATEGIC_PROFIT_CAPTURE_TARGET' },
         { id: 'cond-exit-sl', name: 'STOP-LOSS', description: 'CAPITAL_PRESERVATION_THRESHOLD' },
@@ -2291,7 +2299,7 @@ const submit = async () => {
     const requiredConds = getScenarioRequiredConditionsSnapshot(s.id)
     
     // Virtual Scenario Handling for System Protocols
-    if (s.id === 'default-exit-system') {
+    if (s.id === SYSTEM_EXIT_SCENARIO_ID) {
       const activeConds = getScenarioActiveConditions(s.id)
       if (activeConds.length > 0) {
         const first = activeConds[0]
