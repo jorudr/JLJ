@@ -23,7 +23,14 @@ export const hadNewsMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const hadNews = Boolean(context?.hadNews ?? trade?.hadNews ?? false)
+    const hadNews = Boolean(
+      context?.hadNews ??
+      context?.tradeStudyMetrics?.hadNews ??
+      trade?.tradeStudyMetrics?.hadNews ??
+      trade?.studyMetrics?.hadNews ??
+      trade?.hadNews ??
+      false
+    )
 
     const formattedValue = hadNews ? (isRu ? 'Да' : 'Yes') : (isRu ? 'Нет' : 'No')
     const evalClass = hadNews ? 'text-amber-500' : 'text-emerald-500'

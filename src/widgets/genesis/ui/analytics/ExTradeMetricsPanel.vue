@@ -35,6 +35,61 @@ const parsePositiveNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
+const parseMetricNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const durationPartsToSeconds = (prefix: string, metrics: Record<string, any>): number | null => {
+  const days = parseMetricNumber(metrics?.[`${prefix}DurationDays`]) ?? 0
+  const hours = parseMetricNumber(metrics?.[`${prefix}DurationHours`]) ?? 0
+  const minutes = parseMetricNumber(metrics?.[`${prefix}DurationMinutes`]) ?? 0
+  const seconds = parseMetricNumber(metrics?.[`${prefix}DurationSeconds`]) ?? 0
+  const total = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds
+  return total > 0 ? total : null
+}
+
+const tradeStudyMetrics = computed<Record<string, any>>(() => {
+  const trade = props.trade || {}
+  return trade.tradeStudyMetrics || trade.studyMetrics || {}
+})
+
+const inTradeStudyContext = computed(() => {
+  const trade = props.trade || {}
+  const metrics = tradeStudyMetrics.value || {}
+  const generated = metrics.generatedInTradeAnalysis || trade.generatedInTradeAnalysis || {}
+  const generatedMarketData = metrics.generatedMarketData || trade.generatedMarketData || null
+  const direction = String(trade.side || trade.direction || generated.direction || '').toLowerCase()
+  const isShort = direction === 'short'
+  const adverseToggleKey = isShort ? 'priceRoseAboveEntryShort' : 'priceDroppedBelowEntryLong'
+  const adversePercentKey = isShort ? 'priceAboveEntryShortMovePercent' : 'priceBelowEntryLongMovePercent'
+  const adverseDurationPrefix = isShort ? 'priceAboveEntryShort' : 'priceBelowEntryLong'
+  const hasManualAdverseMove = Boolean(metrics[adverseToggleKey])
+  const manualAdversePct = parseMetricNumber(metrics[adversePercentKey])
+  const manualAdverseSeconds = durationPartsToSeconds(adverseDurationPrefix, metrics)
+
+  const manualContext: Record<string, any> = {}
+  if (hasManualAdverseMove) {
+    manualContext.adverseBeforeProfit = true
+    manualContext.firstImpulse = 'LOSS'
+    manualContext.pricePathShape = 'ADVERSE_FIRST'
+    if (manualAdversePct !== null) manualContext.maxMeaningfulDrawdownPct = -Math.abs(manualAdversePct)
+    if (manualAdverseSeconds !== null) manualContext.meaningfulLossSeconds = manualAdverseSeconds
+  }
+  if (typeof metrics.hadNews === 'boolean') manualContext.hadNews = metrics.hadNews
+
+  return {
+    tradeStudyMetrics: metrics,
+    generatedInTradeAnalysis: generated,
+    generatedMarketData,
+    ...generated,
+    firstImpulse: generated.firstImpulseDirection,
+    captureRatio: generated.profitCaptureRatio,
+    ...manualContext
+  }
+})
+
 const closedTrades = computed(() => {
   const list = Array.isArray(props.allTrades) ? [...props.allTrades] : []
   if (props.trade && isClosedTradeForMetrics(props.trade) && !list.some((trade) => trade?.id === props.trade?.id)) {
@@ -133,8 +188,9 @@ const metricsData = computed(() => {
   return useTradeAnalysisMetrics(
     props.trade,
     {
+      ...(props.strategyStatsContext || {}),
       ...derivedStatsContext.value,
-      ...(props.strategyStatsContext || {})
+      ...inTradeStudyContext.value
     },
     (locale.value as 'ru' | 'en') || 'ru',
     'advanced',

@@ -26,7 +26,7 @@ import ExTradeNoteEditor from './ExTradeNoteEditor.vue';
 import ExTradeNoteListItem from './ExTradeNoteListItem.vue';
 import ExTradeImageEntry from './ExTradeImageEntry.vue';
 import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis';
 
 const genesisTrades = useGenesisTrades();
@@ -36,7 +36,7 @@ const { themeStore, isDark, viewMode, archiveMode, journalEntries, notesList, ge
 const tradeState = inject('tradeState');
 const { handlePnlInput } = tradeState;
 const { showTradeSummary, savedTradeSummary } = tradeState;
-const { tradeStudyMetrics } = tradeState;
+const { tradeStudyMetrics, persistGeneratedTradeStudyMetrics } = tradeState;
 const { sanitizeTradeNumberInput, isClosed, tradeTimeZone, tradeTimeZoneOffset, riskInputViolationMessage, actualRiskDollars, currentCapital, violatesTradingStyleDuration, actualTradeDurationLabel, requiredTradingStyleDurationLabel } = tradeState;
 
 const formatRiskValue = (value) => Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '--';
@@ -109,16 +109,34 @@ const additionalDurationLabel = computed(() => isShortTrade.value
   ? tr('Как долго цена была выше входа', 'How long price stayed above entry')
   : tr('Как долго цена была ниже входа', 'How long price stayed below entry'));
 
+let additionalMetricsPersistTimer = null;
+const scheduleAdditionalMetricsPersist = () => {
+  if (typeof persistGeneratedTradeStudyMetrics !== 'function') return;
+  if (additionalMetricsPersistTimer) clearTimeout(additionalMetricsPersistTimer);
+  additionalMetricsPersistTimer = setTimeout(() => {
+    void persistGeneratedTradeStudyMetrics(tradeStudyMetrics.value);
+  }, 300);
+};
+
 const sanitizeAdditionalMetricInput = (event, key) => {
   const target = event?.target;
   const sanitized = String(target?.value ?? '').replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
   if (target && target.value !== sanitized) target.value = sanitized;
   tradeStudyMetrics.value[key] = sanitized;
+  scheduleAdditionalMetricsPersist();
 };
 
 const toggleAdditionalMetric = (key) => {
   tradeStudyMetrics.value[key] = !tradeStudyMetrics.value[key];
+  scheduleAdditionalMetricsPersist();
 };
+
+onBeforeUnmount(() => {
+  if (additionalMetricsPersistTimer) clearTimeout(additionalMetricsPersistTimer);
+  if (typeof persistGeneratedTradeStudyMetrics === 'function') {
+    void persistGeneratedTradeStudyMetrics(tradeStudyMetrics.value);
+  }
+});
 
 const journalImages = computed(() => journalEntries.value
   .map((entry, index) => ({
