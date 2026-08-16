@@ -2,60 +2,13 @@
   <div class="ex-equity-curve-2d w-full h-full relative p-8 group">
     <!-- CHART AREA -->
     <div ref="container" class="w-full h-full relative min-h-64">
-      <svg v-if="points.length > 0" class="w-full h-full overflow-visible">
-        <!-- Axes -->
-        <line x1="0" :y1="height" :x2="width" :y2="height" class="stroke-black/10 dark:stroke-white/10" stroke-width="1" />
-        <line x1="0" y1="0" x2="0" :y2="height" class="stroke-black/10 dark:stroke-white/10" stroke-width="1" />
-
-        <!-- Axis Labels -->
-        <text x="8" y="12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic">$</text>
-        <text :x="width - 8" :y="height - 12" class="fill-black/30 dark:fill-white/30 text-[8px] font-mono tracking-[0.2em] font-black uppercase pointer-events-none italic" text-anchor="end">{{ locale === 'ru' ? 'ВРЕМЯ' : 'TIME' }}</text>
-
-        <!-- Main Path -->
-        <path :d="linePath" 
-              fill="none" 
-              class="stroke-black dark:stroke-white transition-all duration-700" 
-              stroke-width="2" 
-              stroke-linecap="round" 
-              stroke-linejoin="round" />
-
-        <!-- Projection Segment (Dashed) -->
-        <path v-if="projectionPath" 
-              :d="projectionPath" 
-              fill="none" 
-              class="stroke-black dark:stroke-white opacity-40 transition-all duration-700" 
-              stroke-width="2" 
-              stroke-dasharray="6,4" 
-              stroke-linecap="round" />
-
-        <!-- Data Points -->
-        <g v-for="(p, i) in points" :key="i">
-          <circle :cx="p.x" :cy="p.y" 
-                  r="3" 
-                  class="fill-white dark:fill-black stroke-black dark:stroke-white transition-all duration-300" 
-                  :class="[p.isProjection ? 'opacity-100' : 'opacity-40 group-hover:opacity-100']"
-                  stroke-width="1.5"
-                  @mouseenter="handleMouseEnter($event, p)"
-                  @mouseleave="handleMouseLeave" />
-          
-        </g>
-
-        <!-- Hover Guide Lines -->
-        <g v-if="hoveredPoint" class="pointer-events-none">
-          <line :x1="hoveredPoint.x" :y1="hoveredPoint.y" 
-                :x2="hoveredPoint.x" :y2="height" 
-                class="stroke-black/20 dark:stroke-white/20 transition-all duration-300" 
-                stroke-width="1" 
-                stroke-dasharray="4,4" />
-          
-          <text v-if="hoveredPoint.date"
-                :x="hoveredPoint.x" :y="height + 24"
-                class="fill-black/60 dark:fill-white/60 text-[11.2px] font-mono tracking-widest uppercase"
-                text-anchor="middle">
-            {{ formatDate(hoveredPoint.date) }}
-          </text>
-        </g>
-      </svg>
+      <canvas
+        v-if="points.length > 0"
+        ref="canvasRef"
+        class="absolute inset-0 h-full w-full cursor-crosshair"
+        @mousemove="handleCanvasMouseMove"
+        @mouseleave="handleMouseLeave"
+      ></canvas>
 
       <!-- TOOLTIP OVERLAY (Teleported for global visibility) -->
       <Teleport to="body">
@@ -95,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
 import { getTradePnl } from '~/widgets/genesis/model/metrics'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -108,25 +61,46 @@ const props = defineProps<{
 }>()
 
 const container = ref<HTMLElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 const width = ref(800)
 const height = ref(400)
 const hoveredPoint = ref<any>(null)
 const tooltipPos = ref<{ x: number, y: number } | null>(null)
+let renderFrame = 0
 
-const handleMouseEnter = (e: MouseEvent, p: any) => {
-  hoveredPoint.value = p
-  tooltipPos.value = { x: e.clientX, y: e.clientY }
+const handleCanvasMouseMove = (e: MouseEvent) => {
+  const rect = canvasRef.value?.getBoundingClientRect()
+  if (!rect) return
+
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  let nearest: any = null
+  let nearestDistance = Infinity
+
+  points.value.forEach((point) => {
+    const distance = Math.hypot(point.x - x, point.y - y)
+    if (distance < nearestDistance) {
+      nearest = point
+      nearestDistance = distance
+    }
+  })
+
+  hoveredPoint.value = nearestDistance <= 18 ? nearest : null
+  tooltipPos.value = hoveredPoint.value ? { x: e.clientX, y: e.clientY } : null
+  scheduleRender()
 }
 
 const handleMouseLeave = () => {
   hoveredPoint.value = null
   tooltipPos.value = null
+  scheduleRender()
 }
 
 const updateDimensions = () => {
   if (container.value) {
-    width.value = container.value.clientWidth
-    height.value = container.value.clientHeight
+    width.value = Math.max(1, container.value.clientWidth)
+    height.value = Math.max(1, container.value.clientHeight)
+    scheduleRender()
   }
 }
 
@@ -143,6 +117,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (renderFrame) cancelAnimationFrame(renderFrame)
   if (resizeObserver) {
     resizeObserver.disconnect()
   }
@@ -207,25 +182,6 @@ const currentBalance = computed(() => {
   return points.value[points.value.length - 1]?.value ?? props.initialBalance ?? 1000
 })
 
-const linePath = computed(() => {
-  const realPoints = points.value.filter(p => !p.isProjection)
-  if (realPoints.length < 2) return ''
-  
-  return realPoints.reduce((path, p, i) => {
-    return i === 0 ? `M ${p.x} ${p.y}` : `${path} L ${p.x} ${p.y}`
-  }, '')
-})
-
-const projectionPath = computed(() => {
-  if (points.value.length < 2) return ''
-  const projectionPoint = points.value[points.value.length - 1]
-  const lastRealPoint = points.value[points.value.length - 2]
-  
-  if (!projectionPoint || !lastRealPoint || !projectionPoint.isProjection) return ''
-  
-  return `M ${lastRealPoint.x} ${lastRealPoint.y} L ${projectionPoint.x} ${projectionPoint.y}`
-})
-
 const formatDate = (date: any) => {
   if (!date) return ''
   const d = new Date(date)
@@ -247,6 +203,135 @@ const formatCurrency = (val: number) => {
     minimumFractionDigits: 0
   }).format(val)
 }
+
+const drawPolyline = (ctx: CanvasRenderingContext2D, sourcePoints: any[]) => {
+  if (sourcePoints.length < 2) return
+  const first = sourcePoints[0]
+  ctx.beginPath()
+  ctx.moveTo(first.x, first.y)
+  sourcePoints.slice(1).forEach((point) => {
+    ctx.lineTo(point.x, point.y)
+  })
+  ctx.stroke()
+}
+
+const renderCurve = () => {
+  const canvas = canvasRef.value
+  const ctx = canvas?.getContext('2d')
+  if (!canvas || !ctx) return
+
+  const cssWidth = width.value
+  const cssHeight = height.value
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const targetWidth = Math.floor(cssWidth * dpr)
+  const targetHeight = Math.floor(cssHeight * dpr)
+
+  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+    canvas.style.width = `${cssWidth}px`
+    canvas.style.height = `${cssHeight}px`
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, cssWidth, cssHeight)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  const isDark = document.documentElement.classList.contains('dark')
+  const themeText = isDark ? '#ffffff' : '#000000'
+  const themeAxis = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'
+  const themeMuted = isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)'
+  const themeGuide = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.20)'
+
+  ctx.strokeStyle = themeAxis
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(0, cssHeight)
+  ctx.lineTo(cssWidth, cssHeight)
+  ctx.moveTo(0, 0)
+  ctx.lineTo(0, cssHeight)
+  ctx.stroke()
+
+  ctx.fillStyle = themeMuted
+  ctx.font = '900 8px monospace'
+  ctx.textAlign = 'left'
+  ctx.fillText('$', 8, 12)
+  ctx.textAlign = 'right'
+  ctx.fillText(locale.value === 'ru' ? 'ВРЕМЯ' : 'TIME', cssWidth - 8, cssHeight - 12)
+  ctx.textAlign = 'left'
+
+  const allPoints = points.value
+  const realPoints = allPoints.filter(point => !point.isProjection)
+
+  if (realPoints.length >= 2) {
+    ctx.save()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = themeText
+    ctx.shadowBlur = 15
+    ctx.shadowColor = themeText
+    drawPolyline(ctx, realPoints)
+    ctx.restore()
+  }
+
+  const projectionPoint = allPoints[allPoints.length - 1]
+  const lastRealPoint = allPoints[allPoints.length - 2]
+  if (projectionPoint?.isProjection && lastRealPoint) {
+    ctx.save()
+    ctx.lineWidth = 2
+    ctx.strokeStyle = themeText
+    ctx.globalAlpha = 0.4
+    ctx.setLineDash([6, 4])
+    drawPolyline(ctx, [lastRealPoint, projectionPoint])
+    ctx.restore()
+  }
+
+  allPoints.forEach((point) => {
+    const isHovered = hoveredPoint.value === point
+    ctx.save()
+    ctx.fillStyle = isHovered ? themeText : (isDark ? '#000000' : '#ffffff')
+    ctx.strokeStyle = themeText
+    ctx.globalAlpha = point.isProjection || isHovered ? 1 : 0.45
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, isHovered ? 5 : 3, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+    ctx.restore()
+  })
+
+  if (hoveredPoint.value) {
+    ctx.save()
+    ctx.strokeStyle = themeGuide
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.moveTo(hoveredPoint.value.x, hoveredPoint.value.y)
+    ctx.lineTo(hoveredPoint.value.x, cssHeight)
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    if (hoveredPoint.value.date) {
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.60)'
+      ctx.font = '700 11px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText(formatDate(hoveredPoint.value.date).toUpperCase(), hoveredPoint.value.x, cssHeight - 2)
+    }
+    ctx.restore()
+  }
+}
+
+const scheduleRender = () => {
+  if (renderFrame) cancelAnimationFrame(renderFrame)
+  renderFrame = requestAnimationFrame(() => {
+    renderFrame = 0
+    renderCurve()
+  })
+}
+
+watch(points, () => {
+  void nextTick(scheduleRender)
+}, { deep: true, immediate: true })
 </script>
 
 <style scoped>
