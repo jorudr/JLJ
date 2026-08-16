@@ -247,8 +247,6 @@ const tradeRiskAudit = computed(() => {
 })
 
 const actualRR = computed(() => {
-  const direct = parseNumber(props.trade?.rr ?? props.trade?.riskReward)
-  if (Number.isFinite(direct) && direct > 0) return direct
   return getTradeRiskReward(props.trade)
 })
 
@@ -266,8 +264,7 @@ const formatCurrency = (value: number) => {
 const formatRiskPercent = (value: number) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A'
 
 const formatRatio = (value: number) => {
-  const safe = Number.isFinite(value) && value > 0 ? value : 0
-  return `1:${safe.toFixed(2)}`
+  return Number.isFinite(value) && value > 0 ? `1:${value.toFixed(2)}` : 'N/A'
 }
 
 const simpleMetricInsights = computed(() => {

@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const executionConfidenceIndexMetric: MetricEngine = {
   key: 'execution_confidence_index',
@@ -21,9 +22,12 @@ export const executionConfidenceIndexMetric: MetricEngine = {
       evaluation: 'Composite execution quality grade.'
     }
   },
-  calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
+  calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const grade = Number(trade?.confidenceGrade || 88.5)
+    const grade = Number(context?.executionConfidence ?? trade?.confidenceGrade)
+    if (!Number.isFinite(grade)) {
+      return createUnavailableMetricResult(locale, isRu ? 'Недостаточно данных для композитной оценки' : 'Insufficient composite inputs')
+    }
 
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'optimal'
     let evalText = isRu ? 'Хорошо' : 'Good'

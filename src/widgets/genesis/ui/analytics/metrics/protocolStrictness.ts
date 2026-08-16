@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getActiveConditionCount, getRequiredConditionStats } from './metricUtils'
 
 export const protocolStrictnessMetric: MetricEngine = {
   key: 'protocol_strictness',
@@ -23,10 +24,15 @@ export const protocolStrictnessMetric: MetricEngine = {
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const scenarios = Array.isArray(trade?.scenarios) ? trade.scenarios : []
-    const reqCount = scenarios.length || 3
-    const addCount = Array.isArray(trade?.conditions) ? trade.conditions.length : 1
-    const strictness = Math.min(10, (reqCount * 2.2) + (addCount * 0.8))
+    const requiredStats = getRequiredConditionStats(trade)
+    const activeCount = getActiveConditionCount(trade)
+    if (requiredStats.total <= 0 && activeCount <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нет правил протокола' : 'No protocol rules')
+    }
+
+    const requiredScore = requiredStats.total > 0 ? (requiredStats.used / requiredStats.total) * 7 : 0
+    const additionalCount = Math.max(0, activeCount - requiredStats.used)
+    const strictness = Math.min(10, requiredScore + Math.min(3, additionalCount * 0.75))
 
     const isGood = strictness >= 8.0
     const evalClass = isGood ? 'text-emerald-500' : 'text-amber-500'

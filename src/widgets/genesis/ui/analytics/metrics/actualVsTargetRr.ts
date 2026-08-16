@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getPositiveTradeLevels, getValidTradeRiskReward } from './metricUtils'
 
 export const actualVsTargetRrMetric: MetricEngine = {
   key: 'actual_vs_target_rr',
@@ -23,7 +24,15 @@ export const actualVsTargetRrMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const actualRr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? trade?.realizedRr ?? 0)
+    const levels = getPositiveTradeLevels(trade)
+    if (levels.entry === null || levels.stopLoss === null || levels.takeProfit === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Невозможно рассчитать RR без валидных SL/TP' : 'RR requires valid SL/TP')
+    }
+
+    const actualRr = getValidTradeRiskReward(trade) ?? (Number.isFinite(Number(context?.rr)) ? Number(context?.rr) : null)
+    if (actualRr === null || actualRr <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Невозможно рассчитать RR без валидных SL/TP' : 'RR requires valid SL/TP')
+    }
     const targetRr = Number(context?.targetRr || 2.0)
 
     const isMet = actualRr >= targetRr

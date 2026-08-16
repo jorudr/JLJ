@@ -1751,11 +1751,26 @@ const openTimeTreeTradeDetailsForTrade = (trade: any) => {
     String(candidate?.id || '') === String(trade.id)
   )) || trade
 
+  const positiveOrNull = (value: unknown) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+  const detailEntry = positiveOrNull(freshTrade.entry)
+  const detailStopLoss = positiveOrNull(freshTrade.stopLoss)
+  const detailTakeProfit = positiveOrNull(freshTrade.takeProfit)
+  const hasValidRiskRewardLevels = detailEntry !== null && detailStopLoss !== null && detailTakeProfit !== null
+
   closeNavigationOverlays()
   selectedTradeId.value = String(freshTrade.id)
   timeTreeSelectedTradeId.value = String(freshTrade.id)
   selectedTimeTreeTradeForDetails.value = {
     ...freshTrade,
+    entry: detailEntry ?? freshTrade.entry,
+    stopLoss: detailStopLoss,
+    takeProfit: detailTakeProfit,
+    rr: hasValidRiskRewardLevels ? freshTrade.rr : null,
+    riskReward: hasValidRiskRewardLevels ? freshTrade.riskReward : null,
+    realizedRr: hasValidRiskRewardLevels ? freshTrade.realizedRr : null,
     assetIcon: freshTrade.assetIcon || resolveTimeTreeAssetIcon(freshTrade)
   }
   timeTreeEntryMode.value = 'trade'

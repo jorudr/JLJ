@@ -67,13 +67,11 @@ export const getTradeBalanceBefore = (
 }
 
 export const getTradeRiskReward = (trade: TradeLike | null | undefined): number => {
-  const stored = toFiniteTradeNumber(trade?.rr ?? trade?.riskReward)
-  if (stored !== null && stored > 0) return stored
-
   const entry = toFiniteTradeNumber(trade?.entry)
   const stopLoss = toFiniteTradeNumber(trade?.stopLoss)
   const takeProfit = toFiniteTradeNumber(trade?.takeProfit)
   if (entry === null || stopLoss === null || takeProfit === null) return Number.NaN
+  if (entry <= 0 || stopLoss <= 0 || takeProfit <= 0) return Number.NaN
 
   const side = String(trade?.side || trade?.direction || '').toLowerCase()
   const isShort = side.includes('short') || side.includes('sell')
@@ -138,4 +136,3 @@ export const formatTradeDurationCompact = (trade: TradeLike | null | undefined, 
   const remainingMinutes = totalMinutes % 60
   return totalHours > 0 ? `${totalHours}H ${remainingMinutes}M` : `${remainingMinutes}M`
 }
-

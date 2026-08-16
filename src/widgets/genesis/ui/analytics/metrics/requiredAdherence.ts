@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getRequiredConditionStats } from './metricUtils'
 
 export const requiredAdherenceMetric: MetricEngine = {
   key: 'required_adherence',
@@ -23,18 +24,19 @@ export const requiredAdherenceMetric: MetricEngine = {
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const scenarios = Array.isArray(trade?.scenarios) ? trade.scenarios : []
-    const reqConditions = scenarios.flatMap((s: any) => s?.conditions || [])
-    const total = reqConditions.length || 1
-    const fulfilled = reqConditions.filter((c: any) => c?.profitability > 0 || c?.selected || c?.active).length || total
-    const reqRatio = Math.min(100, Math.max(0, (fulfilled / total) * 100))
+    const stats = getRequiredConditionStats(trade)
+    if (stats.ratio === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нет snapshot обязательных условий' : 'No required condition snapshot')
+    }
+
+    const reqRatio = Math.min(100, Math.max(0, stats.ratio))
 
     const isPerfect = reqRatio === 100
     const evalClass = isPerfect ? 'text-emerald-500' : 'text-amber-500'
 
     return {
       rawValue: reqRatio,
-      formattedValue: `${reqRatio.toFixed(2)}%`,
+      formattedValue: `${stats.used}/${stats.total} · ${reqRatio.toFixed(2)}%`,
       status: isPerfect ? 'optimal' : 'warning',
       evaluationText: isPerfect ? (isRu ? 'Идеально' : 'Perfect') : (isRu ? 'Субоптимально' : 'Sub-Optimal'),
       evalClass,

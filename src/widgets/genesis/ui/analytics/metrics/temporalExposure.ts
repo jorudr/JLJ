@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const temporalExposureMetric: MetricEngine = {
   key: 'temporal_exposure',
@@ -23,8 +24,11 @@ export const temporalExposureMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const durationMinutes = Number(context?.durationMinutes || trade?.durationMinutes || 125)
-    const avgDuration = Number(context?.avgDuration || 180)
+    const durationMinutes = Number(context?.durationMinutes ?? trade?.durationMinutes)
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужны время входа и выхода' : 'Entry and exit time required')
+    }
+    const avgDuration = Number(context?.avgDuration ?? durationMinutes)
 
     const isGood = durationMinutes <= avgDuration
     const evalClass = isGood ? 'text-emerald-500' : 'text-amber-500'

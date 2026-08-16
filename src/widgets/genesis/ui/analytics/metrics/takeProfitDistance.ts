@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getPositiveTradeLevels } from './metricUtils'
 
 export const takeProfitDistanceMetric: MetricEngine = {
   key: 'take_profit_distance',
@@ -22,14 +23,13 @@ export const takeProfitDistanceMetric: MetricEngine = {
     }
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
-    const entry = parseFloat(trade?.entry || 0)
-    const tp = parseFloat(trade?.takeProfit || trade?.tp || 0)
-    let distPct = 0
-    if (entry > 0 && tp > 0) {
-      distPct = (Math.abs(tp - entry) / entry) * 100
+    const isRu = locale === 'ru'
+    const { entry, takeProfit } = getPositiveTradeLevels(trade)
+    if (entry === null || takeProfit === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужны положительные Entry и Take Profit' : 'Positive Entry and Take Profit required')
     }
 
-    const isRu = locale === 'ru'
+    const distPct = (Math.abs(takeProfit - entry) / entry) * 100
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'
     let evalText = isRu ? 'Умеренная' : 'Moderate'
     let evalClass = 'text-amber-400'

@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const expectedValueMetric: MetricEngine = {
   key: 'expectedValue',
@@ -22,9 +23,12 @@ export const expectedValueMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const ev = Number(context?.expectedValue || (trade?.pnl > 0 ? trade.pnl * 0.6 : -Math.abs(trade?.pnl || 50) * 0.4))
-
     const isRu = locale === 'ru'
+    const ev = Number(context?.expectedValue)
+    if (!Number.isFinite(ev)) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужна историческая выборка сделок' : 'Trade history required')
+    }
+
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'
     let evalText = isRu ? 'Нейтральное' : 'Neutral'
     let evalClass = 'text-amber-400'

@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getRequiredConditionStats } from './metricUtils'
 
 export const conditionalAlphaDecayMetric: MetricEngine = {
   key: 'conditional_alpha_decay',
@@ -23,8 +24,12 @@ export const conditionalAlphaDecayMetric: MetricEngine = {
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const emotions = Array.isArray(trade?.emotions) ? trade.emotions : []
-    const missingCount = emotions.length > 2 ? 1 : 0
+    const stats = getRequiredConditionStats(trade)
+    if (stats.total <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нет snapshot обязательных условий' : 'No required condition snapshot')
+    }
+
+    const missingCount = Math.max(0, stats.total - stats.used)
 
     const isZero = missingCount === 0
     const evalClass = isZero ? 'text-emerald-500' : 'text-rose-500'

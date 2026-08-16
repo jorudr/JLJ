@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getPositiveTradeLevels, getValidTradeRiskReward } from './metricUtils'
 
 export const edgeCaptureQuotientMetric: MetricEngine = {
   key: 'edge_capture_quotient',
@@ -23,7 +24,15 @@ export const edgeCaptureQuotientMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const realizedRr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? 0)
+    const levels = getPositiveTradeLevels(trade)
+    if (levels.entry === null || levels.stopLoss === null || levels.takeProfit === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Невозможно рассчитать преимущество без валидного RR' : 'Valid RR required')
+    }
+
+    const realizedRr = getValidTradeRiskReward(trade) ?? (Number.isFinite(Number(context?.rr)) ? Number(context?.rr) : null)
+    if (realizedRr === null || realizedRr <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Невозможно рассчитать преимущество без валидного RR' : 'Valid RR required')
+    }
     const baselineRr = Number(context?.baselineRr || 2.0)
     const quotient = realizedRr / baselineRr
 

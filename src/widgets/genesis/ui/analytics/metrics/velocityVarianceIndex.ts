@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const velocityVarianceIndexMetric: MetricEngine = {
   key: 'velocity_variance_index',
@@ -23,8 +24,14 @@ export const velocityVarianceIndexMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const velocity = Number(trade?.velocity || 65)
-    const baseVelocity = Number(context?.avgVelocity || 50)
+    const durationHours = Number(context?.durationHours ?? trade?.durationHours)
+    const velocity = Number(context?.velocity ?? trade?.velocity ?? (
+      Number.isFinite(durationHours) && durationHours > 0 ? Number(trade?.pnl || trade?.profit || 0) / durationHours : Number.NaN
+    ))
+    const baseVelocity = Number(context?.avgVelocity)
+    if (!Number.isFinite(velocity) || !Number.isFinite(baseVelocity) || baseVelocity === 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужна скорость сделки и средняя скорость стратегии' : 'Trade and baseline velocity required')
+    }
     const indexVal = velocity / baseVelocity
 
     const isGood = indexVal >= 1.0

@@ -24,7 +24,7 @@ export const additionalAlphaMetric: MetricEngine = {
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
     const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const avgPnl = Number(context?.avgPnl ?? 100)
+    const avgPnl = Number(context?.avgPnl ?? 0)
     const alpha = avgPnl > 0 ? ((pnl - avgPnl) / avgPnl) * 100 : 0
 
     const isPositive = alpha >= 0

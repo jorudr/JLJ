@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const yieldEfficiencyMetric: MetricEngine = {
   key: 'yield_efficiency',
@@ -24,7 +25,10 @@ export const yieldEfficiencyMetric: MetricEngine = {
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
     const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const initialBalance = Number(context?.initialBalance || 10000)
+    const initialBalance = Number(context?.initialBalance)
+    if (!Number.isFinite(initialBalance) || initialBalance <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужен капитал до сделки' : 'Balance before trade required')
+    }
     const yieldPct = (pnl / initialBalance) * 100
 
     const isPositive = yieldPct >= 0

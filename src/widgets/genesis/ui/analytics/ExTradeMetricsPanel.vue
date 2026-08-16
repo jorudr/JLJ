@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import ExMetricCard from '~/entities/metric/ui/ExMetricCard.vue'
 import { useTradeAnalysisMetrics } from './metrics'
 import { useI18n } from '~/shared/i18n/useI18n'
+import { getPositiveTradeLevels, getRequiredConditionStats } from './metrics/metricUtils'
 import {
   getTradeBalanceBefore,
   getTradeDurationHours,
@@ -64,22 +65,65 @@ const derivedStatsContext = computed(() => {
   const grossLoss = Math.abs(losses.reduce((sum, pnl) => sum + pnl, 0))
   const avgPnl = pnls.length > 0 ? pnls.reduce((sum, pnl) => sum + pnl, 0) / pnls.length : 0
   const durationHours = getTradeDurationHours(props.trade)
+  const historicalDurations = closedTrades.value
+    .map((trade) => getTradeDurationHours(trade))
+    .filter((value) => Number.isFinite(value) && value > 0)
+  const avgDurationHours = historicalDurations.length > 0
+    ? historicalDurations.reduce((sum, value) => sum + value, 0) / historicalDurations.length
+    : (Number.isFinite(durationHours) && durationHours > 0 ? durationHours : undefined)
+  const historicalVelocities = closedTrades.value
+    .map((trade) => {
+      const hours = getTradeDurationHours(trade)
+      return Number.isFinite(hours) && hours > 0 ? getTradePnl(trade, props.initialBalance) / hours : Number.NaN
+    })
+    .filter(Number.isFinite)
+  const avgVelocity = historicalVelocities.length > 0
+    ? historicalVelocities.reduce((sum, value) => sum + value, 0) / historicalVelocities.length
+    : undefined
+  const slDistances = closedTrades.value
+    .map((trade) => {
+      const { entry, stopLoss } = getPositiveTradeLevels(trade)
+      return entry !== null && stopLoss !== null ? (Math.abs(entry - stopLoss) / entry) * 100 : Number.NaN
+    })
+    .filter(Number.isFinite)
+  const avgSlDistPct = slDistances.length > 0
+    ? slDistances.reduce((sum, value) => sum + value, 0) / slDistances.length
+    : undefined
   const plannedStopRisk = getTradePlannedStopRiskDollars(props.trade)
   const riskBudget = riskBudgetDollars.value ?? (Number.isFinite(plannedStopRisk) ? plannedStopRisk : 0)
   const rr = getTradeRiskReward(props.trade)
+  const requiredStats = getRequiredConditionStats(props.trade)
+  const requiredRatio = requiredStats.ratio ?? 0
+  const riskScore = riskBudget > 0 && Number.isFinite(plannedStopRisk)
+    ? Math.max(0, Math.min(100, 100 - ((plannedStopRisk / riskBudget) * 100 - 100)))
+    : 50
+  const executionConfidence = requiredStats.total > 0
+    ? Math.round((requiredRatio * 0.6) + (riskScore * 0.4))
+    : undefined
+  const avgWin = wins.length > 0 ? grossProfit / wins.length : 0
+  const avgLoss = losses.length > 0 ? grossLoss / losses.length : 0
+  const winRate = pnls.length > 0 ? (wins.length / pnls.length) * 100 : undefined
+  const expectedValue = winRate !== undefined
+    ? ((winRate / 100) * avgWin) - (((100 - winRate) / 100) * avgLoss)
+    : undefined
 
   return {
     initialBalance: balanceBeforeTrade.value,
     balanceBeforeTrade: balanceBeforeTrade.value,
     allTrades: closedTrades.value,
     avgPnl,
-    winRate: pnls.length > 0 ? (wins.length / pnls.length) * 100 : undefined,
+    winRate,
     profitFactor: grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? grossProfit : undefined),
+    expectedValue,
     riskBudget: riskBudget > 0 ? riskBudget : undefined,
     plannedStopRiskDollars: Number.isFinite(plannedStopRisk) ? plannedStopRisk : undefined,
-    rr: Number.isFinite(rr) ? rr : undefined,
+    rr: Number.isFinite(rr) && rr > 0 ? rr : undefined,
     targetRr: parsePositiveNumber(props.trade?.riskRewardRatio ?? props.trade?.plannedRiskReward ?? props.trade?.targetRR) ?? undefined,
     baselineRr: parsePositiveNumber(props.trade?.baselineRr ?? props.trade?.targetRR) ?? undefined,
+    avgDuration: avgDurationHours !== undefined ? avgDurationHours * 60 : undefined,
+    avgVelocity,
+    avgSlDistPct,
+    executionConfidence,
     durationHours: Number.isFinite(durationHours) ? durationHours : undefined,
     durationMinutes: Number.isFinite(durationHours) ? durationHours * 60 : undefined
   }

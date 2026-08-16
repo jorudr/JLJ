@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getActiveConditionCount } from './metricUtils'
 
 export const conditionalPnlRatioMetric: MetricEngine = {
   key: 'conditional_pnl_ratio',
@@ -22,11 +23,14 @@ export const conditionalPnlRatioMetric: MetricEngine = {
     }
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
-    const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const conditionsCount = Math.max(1, Array.isArray(trade?.conditions) ? trade.conditions.length : 1)
-    const ratio = pnl / conditionsCount
-
     const isRu = locale === 'ru'
+    const pnl = Number(trade?.pnl || trade?.profit || 0)
+    const conditionsCount = getActiveConditionCount(trade)
+    if (conditionsCount <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нет активных условий' : 'No active conditions')
+    }
+
+    const ratio = pnl / conditionsCount
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'
     let evalText = isRu ? 'Умеренный' : 'Moderate'
     let evalClass = 'text-amber-400'

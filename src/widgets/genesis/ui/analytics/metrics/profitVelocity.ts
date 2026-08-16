@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const profitVelocityMetric: MetricEngine = {
   key: 'profit_velocity',
@@ -22,11 +23,14 @@ export const profitVelocityMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
+    const isRu = locale === 'ru'
     const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const durationHours = Math.max(0.1, Number(context?.durationHours || trade?.durationHours || 1))
+    const durationHours = Number(context?.durationHours ?? trade?.durationHours)
+    if (!Number.isFinite(durationHours) || durationHours <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужна длительность сделки' : 'Trade duration required')
+    }
     const velocity = pnl / durationHours
 
-    const isRu = locale === 'ru'
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'
     let evalText = isRu ? 'Умеренная' : 'Moderate'
     let evalClass = 'text-amber-400'

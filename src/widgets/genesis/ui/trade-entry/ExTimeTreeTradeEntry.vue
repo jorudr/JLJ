@@ -60,8 +60,31 @@ const analysisAllTrades = computed(() => {
   return tradeStore.getAllTradesForStrategy(analysisStrategyId.value)
 })
 
-const analysisTrade = computed(() => {
+const positiveOrNull = (value: unknown) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+const displayTrade = computed(() => {
   const trade = props.trade || {}
+  const entryValue = positiveOrNull(trade.entry)
+  const stopLossValue = positiveOrNull(trade.stopLoss)
+  const takeProfitValue = positiveOrNull(trade.takeProfit)
+  const hasValidRiskRewardLevels = entryValue !== null && stopLossValue !== null && takeProfitValue !== null
+
+  return {
+    ...trade,
+    entry: entryValue ?? trade.entry,
+    stopLoss: stopLossValue,
+    takeProfit: takeProfitValue,
+    rr: hasValidRiskRewardLevels ? trade.rr : null,
+    riskReward: hasValidRiskRewardLevels ? trade.riskReward : null,
+    realizedRr: hasValidRiskRewardLevels ? trade.realizedRr : null
+  }
+})
+
+const analysisTrade = computed(() => {
+  const trade = displayTrade.value
 
   return {
     ...trade,
@@ -80,6 +103,12 @@ const formatPrice = (value: unknown) => {
   if (value === null || value === undefined || value === '') return '--'
   const number = Number(value)
   return Number.isFinite(number) ? number.toLocaleString(locale.value === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 8 }) : String(value)
+}
+
+const formatOptionalPrice = (value: unknown) => {
+  const number = Number(value)
+  if (!Number.isFinite(number) || number <= 0) return 'N/A'
+  return formatPrice(value)
 }
 
 const formatDateValue = (value: unknown) => {
@@ -108,11 +137,8 @@ const formatDuration = () => {
 }
 
 const formatRiskReward = () => {
-  if (props.trade?.riskReward !== undefined && props.trade?.riskReward !== null && props.trade?.riskReward !== '') {
-    return formatPrice(props.trade.riskReward)
-  }
-  const ratio = getTradeRiskReward(props.trade)
-  return Number.isFinite(ratio) ? ratio.toFixed(2) : '--'
+  const ratio = getTradeRiskReward(displayTrade.value)
+  return Number.isFinite(ratio) ? ratio.toFixed(2) : 'N/A'
 }
 
 const formatRiskPerTrade = () => {
@@ -686,19 +712,19 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВХОДА' : 'ENTRY PRICE' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.entry) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(displayTrade?.entry) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВЫХОДА' : 'EXIT PRICE' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.exit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(displayTrade?.exit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВХОДА' : 'ENTRY TIME' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.date) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(displayTrade?.date) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВЫХОДА' : 'EXIT TIME' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(props.trade?.dateExit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(displayTrade?.dateExit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ДЛИТЕЛЬНОСТЬ' : 'DURATION' }}</span>
@@ -706,11 +732,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'СТОП-ЛОСС' : 'STOP LOSS' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.stopLoss) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatOptionalPrice(displayTrade?.stopLoss) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТЕЙК-ПРОФИТ' : 'TAKE PROFIT' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(props.trade?.takeProfit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatOptionalPrice(displayTrade?.takeProfit) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК / НАГРАДА' : 'RISK / REWARD' }}</span>

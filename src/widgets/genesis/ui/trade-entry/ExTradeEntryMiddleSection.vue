@@ -277,6 +277,13 @@ const formatSummaryPercent = (value) => {
   return `${sign}${Math.abs(number).toFixed(2)}%`;
 };
 
+const hasPositiveSummaryRiskLevels = (trade) => {
+  const entryValue = Number(trade?.entry ?? entry?.value);
+  const stopValue = Number(trade?.stopLoss ?? stopLoss?.value);
+  const takeValue = Number(trade?.takeProfit ?? takeProfit?.value);
+  return [entryValue, stopValue, takeValue].every(value => Number.isFinite(value) && value > 0);
+};
+
 const summaryProfitPercent = (trade) => {
   if (!trade) return null;
   const profit = Number(trade.profitInCurrency);
@@ -294,6 +301,9 @@ const summaryDisplayTrade = computed(() => savedTradeSummary.value || {
   risk: actualRiskDollars.value,
   riskPercent: actualRiskPercent.value,
   riskReward: actualRR.value,
+  entry: entry.value,
+  stopLoss: stopLoss.value,
+  takeProfit: takeProfit.value,
   tradeDuration: actualTradeDurationLabel.value
 });
 
@@ -311,9 +321,10 @@ const summaryStrategyLabel = computed(() => {
   return strategy?.label || strategy?.name || fallback?.label || fallback?.name || strategyId || '--';
 });
 
-const formatSummaryRatio = (value) => {
-  const number = Number(value);
-  return Number.isFinite(number) ? `${number.toFixed(2)}R` : '--';
+const formatSummaryRatio = (trade) => {
+  if (!hasPositiveSummaryRiskLevels(trade)) return 'N/A';
+  const number = Number(trade?.riskReward);
+  return Number.isFinite(number) && number > 0 ? `${number.toFixed(2)}R` : 'N/A';
 };
 
 const summaryProtocolGroups = computed(() => {
@@ -913,7 +924,7 @@ const summarySelectedEmotions = computed(() => {
                         </div>
                         <div class="min-w-0 pr-6">
                           <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">RISK / REWARD</span>
-                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryRatio(summaryDisplayTrade.riskReward) }}</span>
+                          <span class="mt-2 block text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatSummaryRatio(summaryDisplayTrade) }}</span>
                         </div>
                       </div>
 

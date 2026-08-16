@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getActiveConditionCount } from './metricUtils'
 
 export const setupComplexityMetric: MetricEngine = {
   key: 'setup_complexity',
@@ -23,8 +24,12 @@ export const setupComplexityMetric: MetricEngine = {
   },
   calculate(trade: any, _context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const activeRules = Array.isArray(trade?.conditions) ? trade.conditions.length : 3
-    const medianRules = 3
+    const activeRules = getActiveConditionCount(trade)
+    if (activeRules <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нет условий сетапа' : 'No setup conditions')
+    }
+
+    const medianRules = Math.max(1, Number(trade?.scenarioMedianRules || 3))
     const ratio = activeRules / medianRules
 
     const isGood = ratio <= 1.5

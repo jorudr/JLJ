@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getPositiveTradeLevels } from './metricUtils'
 
 export const stopLossDistanceMetric: MetricEngine = {
   key: 'stop_loss_distance',
@@ -23,9 +24,11 @@ export const stopLossDistanceMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const entry = Number(trade?.entry || 100)
-    const sl = Number(trade?.stopLoss || trade?.sl || 98)
-    const slDistPct = entry > 0 ? (Math.abs(entry - sl) / entry) * 100 : 1.5
+    const { entry, stopLoss } = getPositiveTradeLevels(trade)
+    if (entry === null || stopLoss === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужны положительные Entry и Stop Loss' : 'Positive Entry and Stop Loss required')
+    }
+    const slDistPct = (Math.abs(entry - stopLoss) / entry) * 100
     const avgSlDistPct = Number(context?.avgSlDistPct || 2.0)
 
     const isTight = slDistPct <= avgSlDistPct

@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult, getPositiveTradeLevels, getValidTradeRiskReward } from './metricUtils'
 
 export const riskRewardRatioMetric: MetricEngine = {
   key: 'riskRewardRatio',
@@ -22,9 +23,17 @@ export const riskRewardRatioMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const rr = Number(context?.rr ?? trade?.rr ?? trade?.riskReward ?? 2.0)
-
     const isRu = locale === 'ru'
+    const levels = getPositiveTradeLevels(trade)
+    if (levels.entry === null || levels.stopLoss === null || levels.takeProfit === null) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужны положительные Entry, Stop Loss и Take Profit' : 'Positive Entry, Stop Loss, and Take Profit required')
+    }
+
+    const rr = getValidTradeRiskReward(trade) ?? (Number.isFinite(Number(context?.rr)) ? Number(context?.rr) : null)
+    if (rr === null || rr <= 0) {
+      return createUnavailableMetricResult(locale, isRu ? 'Нужны положительные Entry, Stop Loss и Take Profit' : 'Positive Entry, Stop Loss, and Take Profit required')
+    }
+
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'
     let evalText = isRu ? 'Допустимое' : 'Nominal R/R'
     let evalClass = 'text-amber-400'
