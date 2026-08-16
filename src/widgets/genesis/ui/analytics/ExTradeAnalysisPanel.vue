@@ -637,97 +637,10 @@ const percentileRank = computed(() => {
   return score?.score ?? 0;
 });
 
-const advancedMetricCopy = computed(() => {
-  const isRu = locale.value === 'ru';
-  const labels: Record<string, string> = {
-    required_adherence: isRu ? 'Соблюдение required' : 'Required Adherence',
-    additional_alpha: isRu ? 'Дополнительная alpha' : 'Additional Alpha',
-    protocol_strictness: isRu ? 'Строгость протокола' : 'Protocol Strictness',
-    conditional_pnl_ratio: isRu ? 'PnL на условие' : 'Conditional PnL Ratio',
-    setup_complexity: isRu ? 'Сложность setup' : 'Setup Complexity',
-    cognitive_stability: isRu ? 'Когнитивная стабильность' : 'Cognitive Stability',
-    dominant_bias: isRu ? 'Главный bias' : 'Dominant Bias',
-    emotional_pnl_drag: isRu ? 'Эмоциональный PnL drag' : 'Emotional PnL Drag',
-    friction_density: isRu ? 'Плотность friction' : 'Friction Density',
-    net_result_variance: isRu ? 'Отклонение результата' : 'Net Result Variance',
-    yield_efficiency: isRu ? 'Эффективность доходности' : 'Yield Efficiency',
-    profit_velocity: isRu ? 'Скорость прибыли' : 'Profit Velocity',
-    actual_vs_target_rr: isRu ? 'Факт против target R/R' : 'Actual vs Target R/R',
-    planned_vs_realized_risk: isRu ? 'Плановый и факт. риск' : 'Planned vs Realized Risk',
-    temporal_exposure: isRu ? 'Временная экспозиция' : 'Temporal Exposure',
-    asset_protocol: isRu ? 'Протокол актива' : 'Asset Protocol',
-    stop_loss_distance: isRu ? 'Дистанция stop loss' : 'Stop Loss Distance',
-    take_profit_distance: isRu ? 'Дистанция take profit' : 'Take Profit Distance',
-    sl_execution_drag: isRu ? 'Проскальзывание stop loss' : 'Stop Loss Execution Drag',
-    risk_budget_adherence: isRu ? 'Соблюдение risk budget' : 'Risk Budget Adherence',
-    tp_capture_ratio: isRu ? 'Захват take profit' : 'TP Capture Ratio',
-    edge_capture_quotient: isRu ? 'Коэффициент edge capture' : 'Edge Capture Quotient',
-    unrealized_alpha_left: isRu ? 'Незабранная alpha' : 'Unrealized Alpha Left',
-    horizon_sync_rating: isRu ? 'Синхронизация горизонта' : 'Horizon Sync Rating',
-    velocity_variance_index: isRu ? 'Индекс отклонения скорости' : 'Velocity Variance Index',
-    conditional_alpha_decay: isRu ? 'Угасание alpha условий' : 'Conditional Alpha Decay',
-    execution_confidence_index: isRu ? 'Индекс уверенности исполнения' : 'Execution Confidence Index'
-  };
-
-  const descriptions: Record<string, string> = {
-    net_result_variance: isRu ? 'Насколько результат сделки отличается от среднего результата стратегии.' : 'How far this trade result deviates from the strategy average result.',
-    yield_efficiency: isRu ? 'Доходность сделки относительно баланса перед входом.' : 'Trade return relative to balance before entry.',
-    profit_velocity: isRu ? 'Скорость получения PnL за час удержания.' : 'PnL earned per hour of holding time.',
-    actual_vs_target_rr: isRu ? 'Фактическое R/R относительно запланированной цели.' : 'Realized R/R compared with the target R/R.',
-    planned_vs_realized_risk: isRu ? 'Максимум между плановым stop-риск и фактическим убытком.' : 'The larger of planned stop risk and realized loss.',
-    temporal_exposure: isRu ? 'Длительность сделки от входа до выхода.' : 'Trade duration from entry to exit.',
-    asset_protocol: isRu ? 'Сторона сделки и инструмент.' : 'Trade side and traded instrument.',
-    stop_loss_distance: isRu ? 'Расстояние от entry до stop loss в процентах.' : 'Percent distance from entry to stop loss.',
-    take_profit_distance: isRu ? 'Расстояние от entry до take profit в процентах.' : 'Percent distance from entry to take profit.',
-    sl_execution_drag: isRu ? 'Показывает, насколько фактический выход в убыточной сделке оказался хуже расчетной зоны stop loss.' : 'Shows how much a losing exit exceeded the calculated stop-loss zone.',
-    risk_budget_adherence: isRu ? 'Насколько риск сделки укладывается в risk budget.' : 'How well trade risk fits inside the risk budget.',
-    tp_capture_ratio: isRu ? 'Какая часть планового target была забрана выходом.' : 'Share of the planned target captured by the exit.',
-    edge_capture_quotient: isRu ? 'Фактическое R/R относительно ожидаемого edge стратегии.' : 'Realized R/R relative to the strategy expected edge.',
-    unrealized_alpha_left: isRu ? 'Сколько потенциальной прибыли осталось незабранной до target.' : 'Potential profit left uncaptured before target.',
-    horizon_sync_rating: isRu ? 'Позиция длительности сделки внутри исторического диапазона сценария.' : 'Position of trade duration inside the historical scenario range.',
-    velocity_variance_index: isRu ? 'Скорость PnL сделки относительно средней скорости стратегии.' : 'Trade PnL velocity relative to the strategy average velocity.'
-  };
-
-  const formulas: Record<string, string> = {
-    net_result_variance: 'Trade PnL - Avg Strategy PnL',
-    yield_efficiency: '(Trade PnL / Balance Before Trade) * 100',
-    profit_velocity: 'Trade PnL / Duration Hours',
-    actual_vs_target_rr: 'Target Distance / Stop Distance',
-    planned_vs_realized_risk: 'max(Planned Stop Risk, Realized Loss)',
-    temporal_exposure: 'Exit Timestamp - Entry Timestamp',
-    asset_protocol: 'Side + Asset',
-    stop_loss_distance: 'abs(Entry - Stop Loss) / Entry * 100',
-    take_profit_distance: 'abs(Take Profit - Entry) / Entry * 100',
-    sl_execution_drag: 'Losing Exit - Stop Loss Zone',
-    risk_budget_adherence: 'Worst Risk / Risk Budget * 100',
-    tp_capture_ratio: 'Captured Target Distance / Planned Target Distance * 100',
-    edge_capture_quotient: 'Realized RR / Expected RR',
-    unrealized_alpha_left: 'Planned Target PnL - Realized PnL',
-    horizon_sync_rating: '(Duration - Scenario Min) / Scenario Range * 100',
-    velocity_variance_index: 'Trade Velocity / Avg Strategy Velocity'
-  };
-
-  const benchmarks: Record<string, string> = {
-    risk_budget_adherence: isRu ? '<= 100% значит риск в лимите.' : '<= 100% means risk is inside budget.',
-    tp_capture_ratio: isRu ? 'Выше значение значит лучше захват target.' : 'Higher value means better target capture.',
-    actual_vs_target_rr: isRu ? 'Сравнивается с target R/R стратегии.' : 'Compared against the strategy target R/R.',
-    temporal_exposure: isRu ? 'Сравнивается с историческим диапазоном длительности.' : 'Compared with the historical duration range.',
-    stop_loss_distance: isRu ? 'Показывает ширину stop относительно entry.' : 'Shows stop width relative to entry.',
-    take_profit_distance: isRu ? 'Показывает target distance относительно entry.' : 'Shows target distance relative to entry.'
-  };
-
-  return { labels, descriptions, formulas, benchmarks };
-});
-
-const getAdvancedMetricLabel = (id: string) => formatDisplayLabel(advancedMetricCopy.value.labels[id] || id);
-
-const getAdvancedMetricTooltip = (id: string) => ({
-  description: advancedMetricCopy.value.descriptions[id] || (locale.value === 'ru'
-    ? 'Advanced метрика из отчета сделки.'
-    : 'Advanced metric from the trade report.'),
-  formula: advancedMetricCopy.value.formulas[id] || '',
-  benchmark: advancedMetricCopy.value.benchmarks[id] || ''
-});
+const getMetricLabel = (key: string) => {
+  const metric = activeMetricList.value.find((m) => m.key === key);
+  return metric ? metric.label : formatDisplayLabel(key);
+};
 
 const SCORE_PATTERN_EXCLUDED_METRICS = new Set([
   'required_adherence',
@@ -857,18 +770,12 @@ const buildMajorityScorePatterns = (useProfitablePatterns: boolean) => {
 };
 
 const getScorePatternTooltip = (metricId: string) => {
-  if (metricId.startsWith('in_trade:')) {
-    const row = inTradeAnalysisRows.value.find((item: any) => `in_trade:${item.id}` === metricId);
-    return {
-      description: row?.hint || '',
-      formula: '',
-      benchmark: '',
-      details: row?.detail || []
-    };
-  }
-
+  const cleanKey = metricId.replace(/^in_trade:/, '');
+  const metric = activeMetricList.value.find((m) => m.key === cleanKey);
   return {
-    ...getAdvancedMetricTooltip(metricId),
+    description: metric?.desc || '',
+    formula: metric?.formula || '',
+    benchmark: metric?.benchmarkText || '',
     details: []
   };
 };
@@ -2160,180 +2067,7 @@ const getInTradeThresholds = () => {
   };
 };
 
-const metricDetailRow = (label: string, value: string) => ({ label, value });
 
-const getTimeMetricDetail = (kind: 'loss' | 'profit') => {
-  const text = studyMetricText.value.detail;
-  const bounds = getInTradeMetricPeriodBounds(kind);
-  return [
-    metricDetailRow(kind === 'loss' ? text.lossStart : text.profitStart, bounds.start),
-    metricDetailRow(kind === 'loss' ? text.lossEnd : text.profitEnd, bounds.end)
-  ];
-};
-
-const getDirectionalExtremePrice = (kind: 'drawdown' | 'favorable') => {
-  const direction = getTradeDirection(props.trade);
-  const extremes = inTradeExtremes.value;
-  if (kind === 'drawdown') {
-    return direction === 'LONG' ? extremes.minPrice : extremes.maxPrice;
-  }
-  return direction === 'LONG' ? extremes.maxPrice : extremes.minPrice;
-};
-
-const getMoveMetricDetail = (kind: 'drawdown' | 'favorable') => {
-  const text = studyMetricText.value.detail;
-  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
-  const target = getDirectionalExtremePrice(kind);
-  const pct = kind === 'drawdown' ? inTradeMoveMetrics.value.maePct : inTradeMoveMetrics.value.mfePct;
-  return [
-    metricDetailRow(text.from, formatStudyPrice(entry, true)),
-    metricDetailRow(text.to, formatStudyPrice(target)),
-    metricDetailRow(kind === 'drawdown' ? text.lossLevel : text.profitLevel, formatSignedStudyPercent(pct))
-  ];
-};
-
-const getCaptureMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  const direction = getTradeDirection(props.trade);
-  const entry = parsePositiveTradePrice((props.trade as any)?.entry);
-  const exit = parsePositiveTradePrice((props.trade as any)?.exit);
-  const favorablePrice = getDirectionalExtremePrice('favorable');
-  const realizedMove = Number.isFinite(exit) && Number.isFinite(entry)
-    ? (direction === 'LONG' ? exit - entry : entry - exit)
-    : Number.NaN;
-  const favorableMove = Number.isFinite(favorablePrice) && Number.isFinite(entry)
-    ? (direction === 'LONG' ? favorablePrice - entry : entry - favorablePrice)
-    : Number.NaN;
-  const capturedMove = Number.isFinite(realizedMove) ? Math.max(0, realizedMove) : Number.NaN;
-  const leftMove = Number.isFinite(favorableMove) && Number.isFinite(capturedMove)
-    ? Math.max(0, favorableMove - capturedMove)
-    : Number.NaN;
-  return [
-    metricDetailRow(text.favorable, formatStudyPrice(favorableMove)),
-    metricDetailRow(text.captured, formatCaptureRatio(inTradeMoveMetrics.value.captureRatio)),
-    metricDetailRow(text.left, formatStudyPrice(leftMove)),
-    metricDetailRow(text.exit, formatStudyPrice(exit, true))
-  ];
-};
-
-const formatPathSegmentLabel = (state: string, index: number) => {
-  const text = studyMetricText.value.detail;
-  return `${state === 'loss' ? text.drawdownPeriod : text.recoveryPeriod} ${index + 1}`;
-};
-
-const getPathSegmentRows = () => {
-  const text = studyMetricText.value.detail;
-  const segments = Array.isArray(generatedInTradeAnalysis.value.pathSegments)
-    ? generatedInTradeAnalysis.value.pathSegments
-    : [];
-  const counters: Record<string, number> = { loss: 0, profit: 0 };
-  const rows = segments
-    .filter((segment: any) => segment?.state === 'loss' || segment?.state === 'profit')
-    .map((segment: any) => {
-      const state = String(segment.state);
-      const index = counters[state] || 0;
-      counters[state] = index + 1;
-      const start = parseStudyNumber(segment.start);
-      const end = parseStudyNumber(segment.end);
-      return metricDetailRow(
-        formatPathSegmentLabel(state, index),
-        Number.isFinite(start) && Number.isFinite(end)
-          ? `${formatInTradeTimestamp(start)} -> ${formatInTradeTimestamp(end)}`
-          : studyMetricText.value.na
-      );
-    });
-
-  return rows.length ? rows : [metricDetailRow(text.period, studyMetricText.value.na)];
-};
-
-const getPathShapeMetricDetail = (shapeLabel: string) => {
-  const text = studyMetricText.value.detail;
-  return [
-    metricDetailRow(text.shape, shapeLabel),
-    metricDetailRow(text.timeframe, getInTradeTimeframeValue()),
-    ...getPathSegmentRows()
-  ];
-};
-
-const getFirstImpulseLabel = (value: any) => {
-  const impulse = String(value || '').toUpperCase();
-  const isRu = locale.value === 'ru';
-  if (impulse === 'PROFIT') return isRu ? 'В плюс' : 'Favorable';
-  if (impulse === 'LOSS') return isRu ? 'В минус' : 'Adverse';
-  return studyMetricText.value.na;
-};
-
-const getFirstImpulseTone = (value: any) => {
-  const impulse = String(value || '').toUpperCase();
-  if (impulse === 'PROFIT') return 'positive';
-  if (impulse === 'LOSS') return 'warning';
-  return 'muted';
-};
-
-const formatEntryHeat = (seconds: number) => {
-  if (Number.isFinite(seconds)) return formatElapsedDuration(seconds);
-  return locale.value === 'ru' ? 'Нет просадки' : 'No adverse move';
-};
-
-const getEntryHeatTone = (seconds: number) => {
-  if (!Number.isFinite(seconds)) return 'positive';
-  if (seconds <= 15 * 60) return 'danger';
-  if (seconds <= 60 * 60) return 'warning';
-  return 'neutral';
-};
-
-const formatAdverseBeforeProfit = (value: any) => {
-  if (value === true) return studyMetricText.value.yes;
-  if (value === false) return studyMetricText.value.no;
-  return studyMetricText.value.na;
-};
-
-const getFirstImpulseMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  const analysis = generatedInTradeAnalysis.value;
-  const impulse = String(analysis.firstImpulseDirection || '').toUpperCase();
-  const segments = Array.isArray(analysis.pathSegments) ? analysis.pathSegments : [];
-  const firstMeaningfulSegment = segments.find((segment: any) => segment?.state === 'loss' || segment?.state === 'profit');
-  const start = parseStudyNumber(firstMeaningfulSegment?.start);
-  const end = parseStudyNumber(firstMeaningfulSegment?.end);
-  return [
-    metricDetailRow(text.impulse, getFirstImpulseLabel(analysis.firstImpulseDirection)),
-    metricDetailRow(text.start, Number.isFinite(start) ? formatInTradeTimestamp(start) : studyMetricText.value.na),
-    metricDetailRow(text.end, Number.isFinite(end) ? formatInTradeTimestamp(end) : studyMetricText.value.na)
-  ];
-};
-
-const getEntryHeatMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  const analysis = generatedInTradeAnalysis.value;
-  const heatSeconds = parseStudyNumber(analysis.entryHeatSeconds);
-  const heatEnd = parseStudyNumber(analysis.entryHeatEndTime);
-  const range = getInTradeTimeRange();
-  return [
-    metricDetailRow(text.delay, Number.isFinite(heatSeconds) ? formatElapsedDuration(heatSeconds) : studyMetricText.value.na),
-    metricDetailRow(text.start, range ? formatInTradeTimestamp(range.start) : studyMetricText.value.na),
-    metricDetailRow(text.end, Number.isFinite(heatEnd) ? formatInTradeTimestamp(heatEnd) : studyMetricText.value.na)
-  ];
-};
-
-const getAdverseBeforeProfitMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  const analysis = generatedInTradeAnalysis.value;
-  const firstLoss = parseStudyNumber(analysis.meaningfulLossStartTime);
-  const firstProfit = parseStudyNumber(analysis.meaningfulProfitStartTime);
-  return [
-    metricDetailRow(text.firstLoss, Number.isFinite(firstLoss) ? formatInTradeTimestamp(firstLoss) : studyMetricText.value.na),
-    metricDetailRow(text.firstProfit, Number.isFinite(firstProfit) ? formatInTradeTimestamp(firstProfit) : studyMetricText.value.na)
-  ];
-};
-
-const getHadNewsMetricDetail = () => {
-  const text = studyMetricText.value.detail;
-  return [
-    metricDetailRow(text.news, currentTradeStudyMetrics.value?.hadNews ? studyMetricText.value.yes : studyMetricText.value.no),
-    metricDetailRow(text.data, studyMetricText.value.sources.manualInput)
-  ];
-};
 
 const clampStudyScore = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
@@ -2751,141 +2485,7 @@ const inTradeMoveMetrics = computed(() => {
   };
 });
 
-const getInTradeDataSourceLabel = () => {
-  const text = studyMetricText.value;
-  return text.sources[inTradeExtremes.value.source as keyof typeof text.sources] || text.sources.none;
-};
 
-const getDurationSourceLabel = (seconds: number, type: 'loss' | 'profit') => {
-  if (!Number.isFinite(seconds)) return studyMetricText.value.sources.none;
-  if (type === 'loss') {
-    const metrics = currentTradeStudyMetrics.value;
-    const direction = getTradeDirection(props.trade);
-    const hasManualLoss = direction === 'LONG'
-      ? metrics.priceDroppedBelowEntryLong && getStudyDurationSeconds('priceBelowEntryLongDuration') > 0
-      : metrics.priceRoseAboveEntryShort && getStudyDurationSeconds('priceAboveEntryShortDuration') > 0;
-    return hasManualLoss ? studyMetricText.value.sources.manual : studyMetricText.value.sources.generated;
-  }
-  return studyMetricText.value.sources.generated;
-};
-
-const formatCaptureRatio = (value: number) => {
-  return Number.isFinite(value) ? `${value.toFixed(1)}%` : studyMetricText.value.na;
-};
-
-const inTradeAnalysisRows = computed(() => {
-  const text = studyMetricText.value;
-  const moveMetrics = inTradeMoveMetrics.value;
-  const lossSeconds = inTradeLossSeconds.value;
-  const profitSeconds = inTradeProfitSeconds.value;
-  const sourceLabel = getInTradeDataSourceLabel();
-  const shapeKey = String(generatedInTradeAnalysis.value.pricePathShape || (inTradeExtremes.value.source !== 'none' ? 'MANUAL_RANGE_ONLY' : ''));
-  const shapeLabel = text.shapes[shapeKey as keyof typeof text.shapes] || text.na;
-  const hasGeneratedShape = Boolean(generatedInTradeAnalysis.value.pricePathShape);
-  const firstImpulseDirection = generatedInTradeAnalysis.value.firstImpulseDirection;
-  const entryHeatSeconds = parseStudyNumber(generatedInTradeAnalysis.value.entryHeatSeconds);
-  const hadNews = Boolean(currentTradeStudyMetrics.value?.hadNews);
-  const hasGeneratedPathMetrics = Boolean(generatedInTradeAnalysis.value.source === 'generated' || generatedInTradeAnalysis.value.pricePathShape);
-
-  return [
-    {
-      id: 'meaningfulLossTime',
-      label: text.labels.meaningfulLossTime,
-      value: formatStudyDuration(lossSeconds),
-      subvalue: getDurationSourceLabel(lossSeconds, 'loss'),
-      hint: text.hints.meaningfulLossTime,
-      detail: getTimeMetricDetail('loss'),
-      tone: Number.isFinite(lossSeconds) ? 'warning' : 'muted'
-    },
-    {
-      id: 'meaningfulProfitTime',
-      label: text.labels.meaningfulProfitTime,
-      value: formatStudyDuration(profitSeconds),
-      subvalue: getDurationSourceLabel(profitSeconds, 'profit'),
-      hint: text.hints.meaningfulProfitTime,
-      detail: getTimeMetricDetail('profit'),
-      tone: Number.isFinite(profitSeconds) ? 'positive' : 'muted'
-    },
-    {
-      id: 'maxMeaningfulDrawdown',
-      label: text.labels.maxMeaningfulDrawdown,
-      value: formatSignedStudyPercent(moveMetrics.maePct),
-      subvalue: sourceLabel,
-      hint: text.hints.maxMeaningfulDrawdown,
-      detail: getMoveMetricDetail('drawdown'),
-      tone: Number.isFinite(moveMetrics.maePct) && moveMetrics.maePct < 0 ? 'danger' : (Number.isFinite(moveMetrics.maePct) ? 'neutral' : 'muted')
-    },
-    {
-      id: 'maxFavorableExcursion',
-      label: text.labels.maxFavorableExcursion,
-      value: formatSignedStudyPercent(moveMetrics.mfePct),
-      subvalue: sourceLabel,
-      hint: text.hints.maxFavorableExcursion,
-      detail: getMoveMetricDetail('favorable'),
-      tone: Number.isFinite(moveMetrics.mfePct) && moveMetrics.mfePct > 0 ? 'positive' : (Number.isFinite(moveMetrics.mfePct) ? 'neutral' : 'muted')
-    },
-    {
-      id: 'profitCaptureRatio',
-      label: text.labels.profitCaptureRatio,
-      value: formatCaptureRatio(moveMetrics.captureRatio),
-      subvalue: sourceLabel,
-      hint: text.hints.profitCaptureRatio,
-      detail: getCaptureMetricDetail(),
-      tone: Number.isFinite(moveMetrics.captureRatio)
-        ? (moveMetrics.captureRatio >= 65 ? 'positive' : (moveMetrics.captureRatio >= 35 ? 'warning' : 'danger'))
-        : 'muted'
-    },
-    {
-      id: 'pricePathShape',
-      label: text.labels.pricePathShape,
-      value: shapeLabel,
-      subvalue: hasGeneratedShape ? text.sources.generated : sourceLabel,
-      hint: text.hints.pricePathShape,
-      detail: getPathShapeMetricDetail(shapeLabel),
-      tone: hasGeneratedShape ? 'neutral' : (shapeKey ? 'warning' : 'muted')
-    },
-    {
-      id: 'firstImpulseDirection',
-      label: text.labels.firstImpulseDirection,
-      value: getFirstImpulseLabel(firstImpulseDirection),
-      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
-      hint: text.hints.firstImpulseDirection,
-      detail: getFirstImpulseMetricDetail(),
-      tone: getFirstImpulseTone(firstImpulseDirection)
-    },
-    {
-      id: 'entryHeat',
-      label: text.labels.entryHeat,
-      value: formatEntryHeat(entryHeatSeconds),
-      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
-      hint: text.hints.entryHeat,
-      detail: getEntryHeatMetricDetail(),
-      tone: getEntryHeatTone(entryHeatSeconds)
-    },
-    {
-      id: 'adverseBeforeProfit',
-      label: text.labels.adverseBeforeProfit,
-      value: formatAdverseBeforeProfit(generatedInTradeAnalysis.value.adverseBeforeProfit),
-      subvalue: hasGeneratedPathMetrics ? text.sources.generated : text.sources.none,
-      hint: text.hints.adverseBeforeProfit,
-      detail: getAdverseBeforeProfitMetricDetail(),
-      tone: generatedInTradeAnalysis.value.adverseBeforeProfit === true ? 'warning' : (generatedInTradeAnalysis.value.adverseBeforeProfit === false ? 'positive' : 'muted')
-    },
-    {
-      id: 'hadNews',
-      label: text.labels.hadNews,
-      value: hadNews ? text.yes : text.no,
-      subvalue: text.sources.manualInput,
-      hint: text.hints.hadNews,
-      detail: getHadNewsMetricDetail(),
-      tone: hadNews ? 'warning' : 'neutral'
-    }
-  ];
-});
-
-const visibleInTradeAnalysisRows = computed(() => {
-  return ['all', 'in_trade'].includes(activeMetricTab.value) ? inTradeAnalysisRows.value : [];
-});
 
 const strategyStatsContext = computed(() => ({
   avgPnl: strategyStats.value?.avgPnl || 100,
@@ -3252,48 +2852,39 @@ const getInTradeMetricValueForCorrelation = (trade: any, id: string): number | s
 
 const correlationMetricConfigs = computed<CorrelationMetricConfig[]>(() => {
   const base: CorrelationMetricConfig[] = [
-    { id: 'required_adherence', label: getAdvancedMetricLabel('required_adherence'), group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
-    { id: 'additional_alpha', label: getAdvancedMetricLabel('additional_alpha'), group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
-    { id: 'protocol_strictness', label: getAdvancedMetricLabel('protocol_strictness'), group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
-    { id: 'conditional_pnl_ratio', label: getAdvancedMetricLabel('conditional_pnl_ratio'), group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
+    { id: 'required_adherence', label: getMetricLabel('required_adherence'), group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
+    { id: 'additional_alpha', label: getMetricLabel('additional_alpha'), group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
+    { id: 'protocol_strictness', label: getMetricLabel('protocol_strictness'), group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
+    { id: 'conditional_pnl_ratio', label: getMetricLabel('conditional_pnl_ratio'), group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
       const conditions = getRuleCountForMetric(trade);
       return conditions > 0 ? getTradePnlValue(trade) / conditions : getTradePnlValue(trade);
     } },
-    { id: 'setup_complexity', label: getAdvancedMetricLabel('setup_complexity'), group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
-    { id: 'cognitive_stability', label: getAdvancedMetricLabel('cognitive_stability'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
-    { id: 'dominant_bias', label: getAdvancedMetricLabel('dominant_bias'), group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
-    { id: 'emotional_pnl_drag', label: getAdvancedMetricLabel('emotional_pnl_drag'), group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - ((strategyStats.value.avgPnl || 0) * 1.15) : 0 },
-    { id: 'friction_density', label: getAdvancedMetricLabel('friction_density'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
-    { id: 'net_result_variance', label: getAdvancedMetricLabel('net_result_variance'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (strategyStats.value.avgPnl || 0) },
-    { id: 'yield_efficiency', label: getAdvancedMetricLabel('yield_efficiency'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
-    { id: 'profit_velocity', label: getAdvancedMetricLabel('profit_velocity'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
-    { id: 'actual_vs_target_rr', label: getAdvancedMetricLabel('actual_vs_target_rr'), group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
-    { id: 'planned_vs_realized_risk', label: getAdvancedMetricLabel('planned_vs_realized_risk'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
-    { id: 'temporal_exposure', label: getAdvancedMetricLabel('temporal_exposure'), group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
-    { id: 'asset_protocol', label: getAdvancedMetricLabel('asset_protocol'), group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
-    { id: 'stop_loss_distance', label: getAdvancedMetricLabel('stop_loss_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
-    { id: 'take_profit_distance', label: getAdvancedMetricLabel('take_profit_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
-    { id: 'sl_execution_drag', label: getAdvancedMetricLabel('sl_execution_drag'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
-    { id: 'risk_budget_adherence', label: getAdvancedMetricLabel('risk_budget_adherence'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
-    { id: 'tp_capture_ratio', label: getAdvancedMetricLabel('tp_capture_ratio'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
-    { id: 'edge_capture_quotient', label: getAdvancedMetricLabel('edge_capture_quotient'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
-    { id: 'unrealized_alpha_left', label: getAdvancedMetricLabel('unrealized_alpha_left'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
-    { id: 'horizon_sync_rating', label: getAdvancedMetricLabel('horizon_sync_rating'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
-    { id: 'velocity_variance_index', label: getAdvancedMetricLabel('velocity_variance_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
-    { id: 'conditional_alpha_decay', label: getAdvancedMetricLabel('conditional_alpha_decay'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
-    { id: 'execution_confidence_index', label: getAdvancedMetricLabel('execution_confidence_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
+    { id: 'setup_complexity', label: getMetricLabel('setup_complexity'), group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
+    { id: 'cognitive_stability', label: getMetricLabel('cognitive_stability'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
+    { id: 'dominant_bias', label: getMetricLabel('dominant_bias'), group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
+    { id: 'emotional_pnl_drag', label: getMetricLabel('emotional_pnl_drag'), group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - ((strategyStats.value.avgPnl || 0) * 1.15) : 0 },
+    { id: 'friction_density', label: getMetricLabel('friction_density'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
+    { id: 'net_result_variance', label: getMetricLabel('net_result_variance'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (strategyStats.value.avgPnl || 0) },
+    { id: 'yield_efficiency', label: getMetricLabel('yield_efficiency'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
+    { id: 'profit_velocity', label: getMetricLabel('profit_velocity'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
+    { id: 'actual_vs_target_rr', label: getMetricLabel('actual_vs_target_rr'), group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
+    { id: 'planned_vs_realized_risk', label: getMetricLabel('planned_vs_realized_risk'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
+    { id: 'temporal_exposure', label: getMetricLabel('temporal_exposure'), group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
+    { id: 'asset_protocol', label: getMetricLabel('asset_protocol'), group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
+    { id: 'stop_loss_distance', label: getMetricLabel('stop_loss_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
+    { id: 'take_profit_distance', label: getMetricLabel('take_profit_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
+    { id: 'sl_execution_drag', label: getMetricLabel('sl_execution_drag'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
+    { id: 'risk_budget_adherence', label: getMetricLabel('risk_budget_adherence'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
+    { id: 'tp_capture_ratio', label: getMetricLabel('tp_capture_ratio'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
+    { id: 'edge_capture_quotient', label: getMetricLabel('edge_capture_quotient'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
+    { id: 'unrealized_alpha_left', label: getMetricLabel('unrealized_alpha_left'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
+    { id: 'horizon_sync_rating', label: getMetricLabel('horizon_sync_rating'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
+    { id: 'velocity_variance_index', label: getMetricLabel('velocity_variance_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
+    { id: 'conditional_alpha_decay', label: getMetricLabel('conditional_alpha_decay'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
+    { id: 'execution_confidence_index', label: getMetricLabel('execution_confidence_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
   ];
 
-  const inTradeConfigs = inTradeAnalysisRows.value.map((metric: any): CorrelationMetricConfig => ({
-    id: `in_trade:${metric.id}`,
-    label: metric.label,
-    group: studyMetricText.value.sectionTitle,
-    kind: ['pricePathShape', 'firstImpulseDirection', 'adverseBeforeProfit', 'hadNews'].includes(metric.id) ? 'category' : 'numeric',
-    format: ['meaningfulLossTime', 'meaningfulProfitTime', 'entryHeat'].includes(metric.id)
-      ? 'duration'
-      : (['maxMeaningfulDrawdown', 'maxFavorableExcursion', 'profitCaptureRatio'].includes(metric.id) ? 'percent' : 'text'),
-    extract: (trade: any) => getInTradeMetricValueForCorrelation(trade, metric.id)
-  }));
+  const inTradeConfigs = scorePatternInTradeMetricConfigs();
 
   return [...base, ...inTradeConfigs];
 });
