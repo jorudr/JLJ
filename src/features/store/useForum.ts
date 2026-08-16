@@ -26,9 +26,65 @@ import { getCachedAvatarUrl } from '~/entities/user/model/user-avatar'
 
 import { threadConverter, replyConverter, threadLinkConverter, diaryConverter } from '~/composables/typeConverters'
 
+const generateMockPublications = (): [string, Thread][] => {
+  const mocks: [string, Thread][] = []
+  for (let i = 1; i <= 9; i++) {
+    const id = `mock-pub-${i}`
+    mocks.push([
+      id,
+      {
+        id,
+        title: `Mock Publication ${i}`,
+        description: `This is a mock publication #${i} generated locally for testing purposes. It contains some dummy text to fill the space.`,
+        category: 'PUBLICATION',
+        subcategory: 'Mock',
+        authorId: 'mock-author',
+        author: 'Mock Author',
+        createdAt: new Date().toISOString(),
+        lastActivityAt: new Date(Date.now() - i * 1000000).toISOString(),
+        lastMeaningfulAt: new Date().toISOString(),
+        repliesCount: 0,
+        status: 'active',
+        thesis: { blocks: [] },
+        likesCount: Math.floor(Math.random() * 100),
+      } as unknown as Thread
+    ])
+  }
+  
+  for (let i = 1; i <= 11; i++) {
+    const id = `mock-sig-${i}`
+    mocks.push([
+      id,
+      {
+        id,
+        title: `Mock Signal ${i}`,
+        description: `This is a mock signal #${i} generated locally for testing.`,
+        category: 'SETUP',
+        mode: 'SETUP',
+        type: 'SETUP',
+        authorId: 'mock-author',
+        author: 'Mock Author',
+        createdAt: new Date().toISOString(),
+        lastActivityAt: new Date(Date.now() - (i + 10) * 1000000).toISOString(),
+        lastMeaningfulAt: new Date().toISOString(),
+        repliesCount: 0,
+        status: 'active',
+        thesis: { blocks: [] },
+        likesCount: Math.floor(Math.random() * 100),
+        signal: {
+          asset: `MOCK${i}`,
+          description: `Long MOCK${i}`
+        }
+      } as unknown as Thread
+    ])
+  }
+  
+  return mocks
+}
+
 export const useForumStore = defineStore('forum', {
   state: () => ({
-    threads: new Map<string, Thread>(),
+    threads: new Map<string, Thread>(generateMockPublications()),
     replies: new Map<string, Reply[]>(),
     users: new Map<string, any>(),
     threadLinks: new Map<string, ThreadLink[]>(),

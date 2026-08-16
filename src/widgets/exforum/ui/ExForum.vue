@@ -1197,8 +1197,8 @@
     </div>
 
     <!-- JOURNAL VIEW: Front Page & Archive -->
-    <div v-else class="relative isolate flex flex-col min-h-full overflow-visible px-4 md:px-6 xl:px-8" :key="`page-${currentPage}`">
-      <div v-if="currentPage === 1" class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
+    <div v-else class="relative isolate flex flex-col min-h-full overflow-visible px-4 md:px-6 xl:px-8">
+      <div class="pointer-events-none absolute inset-x-0 -top-96 bottom-0 z-0 overflow-hidden">
         <img
           src="/assets/ui/eves.svg"
           alt=""
@@ -1209,22 +1209,19 @@
       
       <!-- Masthead -->
       <header
-        class="border-b-4 border-double border-current/20 flex flex-col items-center px-8 relative z-10"
-        :class="currentPage === 1 ? 'pt-8 pb-4 space-y-4' : 'pt-3 pb-4'"
+        class="border-b-4 border-double border-current/20 flex flex-col items-center px-8 relative z-10 pt-8 pb-4 space-y-4"
       >
-        <template v-if="currentPage === 1">
-          <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
-            <span class="justify-self-start text-left">{{ journalLabels.edition }}</span>
-            <span></span>
-            <span>{{ journalLabels.datePrefix }} {{ formatJournalDate() }}</span>
-          </div>
+        <div class="flex items-center justify-between w-full text-[8px] font-mono tracking-[0.6em] opacity-40 uppercase">
+          <span class="justify-self-start text-left">{{ journalLabels.edition }}</span>
+          <span></span>
+          <span>{{ journalLabels.datePrefix }} {{ formatJournalDate() }}</span>
+        </div>
 
-          <div class="relative flex w-full items-center justify-center overflow-visible px-14 py-6 md:px-20">
-            <h1 class="cursor-pointer px-4 text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center drop-shadow-sm" @click="navigateToPage(1)">
-              The Eve's Apple
-            </h1>
-          </div>
-        </template>
+        <div class="relative flex w-full items-center justify-center overflow-visible px-14 py-6 md:px-20">
+          <h1 class="cursor-pointer px-4 text-6xl font-serif italic tracking-tighter text-current opacity-90 text-center drop-shadow-sm" @click="navigateToPage(1)">
+            The Eve's Apple
+          </h1>
+        </div>
 
         <div class="journal-masthead-tools flex flex-wrap lg:flex-nowrap items-center justify-between w-full border-t border-current/10 pt-4 px-4 gap-4">
           <!-- Filters (Left) -->
@@ -1396,16 +1393,14 @@
         </section>
 
         <!-- DYNAMIC MAGAZINE LAYOUT -->
-        <div v-else-if="pagedNodes.length > 0" class="flex flex-col">
+        <div v-else-if="pagedNodes.length > 0 || pagedSignals.length > 0" class="flex flex-col">
           <!-- MAIN ROW (Publications Left + Signal Sidebar Right) -->
           <div class="grid grid-cols-12 border-b-[2px] border-solid border-current/20">
             <!-- LEFT BLOCK: EVERYTHING THAT IS NOT A SIGNAL -->
             <section
-              v-if="leadJournalSection"
-              class="journal-sector px-6 sm:px-12 pb-12 pt-6"
-              :class="[pagedSignals.length > 0 ? 'col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20' : 'col-span-12']"
+              class="journal-sector px-6 sm:px-12 pb-12 pt-6 col-span-12 lg:col-span-8 lg:border-r-[2px] border-solid border-current/20"
             >
-              <div class="flex flex-col">
+              <div class="flex flex-col" v-if="leadJournalSection">
                 <!-- Stacked Vertical Publications List -->
                 <div class="divide-y divide-current/15 flex flex-col">
                   <article
@@ -1467,13 +1462,14 @@
                   </article>
                 </div>
               </div>
+              <div v-else class="flex flex-col h-full items-center justify-center py-16 opacity-30 text-center">
+                <span class="font-mono text-[10px] uppercase tracking-[0.3em]">{{ locale === 'ru' ? 'Публикации на этой странице отсутствуют' : 'No publications on this page' }}</span>
+              </div>
             </section>
             
             <!-- RIGHT BLOCK: SIGNALS -->
             <section
-              v-if="pagedSignals.length > 0"
-              class="journal-sector px-8 pb-8 pt-6"
-              :class="[hasPagedNonSignalArticles ? 'col-span-12 lg:col-span-4' : 'col-span-12']"
+              class="journal-sector px-8 pb-8 pt-6 col-span-12 lg:col-span-4"
             >
               <div class="space-y-4">
                  <div class="flex items-center space-x-3 pb-2">
@@ -1487,6 +1483,9 @@
                     :node="node"
                     class="journal-signal-card"
                   />
+                  <div v-if="pagedSignals.length === 0" class="flex flex-col h-full items-center justify-center py-12 opacity-30 text-center">
+                    <span class="font-mono text-[10px] uppercase tracking-[0.3em]">{{ locale === 'ru' ? 'Сигналы на этой странице отсутствуют' : 'No signals on this page' }}</span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -1969,8 +1968,8 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
 }
 
 // Pagination Logic
-const currentPage = computed(() => Number(route.query.page) || 1)
-const nodesPerPage = 12
+const currentPage = ref(Number(route.query.page) || 1)
+const nodesPerPage = 10
 
 const journalThreads = computed(() => {
   return (Array.from(forumStore.threads.values()) as Array<Thread & Record<string, any>>)
@@ -1987,9 +1986,12 @@ const journalNodes = computed(() => journalThreads.value
   .map(threadToJournalNode)
   .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()))
 
+const allPublications = computed(() => journalNodes.value.filter((n: any) => n.mode !== 'SETUP' && n.type !== 'SETUP'))
+const allSignals = computed(() => journalNodes.value.filter((n: any) => n.mode === 'SETUP' || n.type === 'SETUP'))
+
 const filteredNodes = computed(() => {
   const q = searchQuery.value.toLowerCase()
-  const list = journalNodes.value.filter((n: ExNode) => {
+  const list = allPublications.value.filter((n: ExNode) => {
     let matchesFilter = true
     if (activeJournalFilter.value === 'LIKED') {
       matchesFilter = forumStore.userLikedThreadIds.has(n.id)
@@ -2000,8 +2002,6 @@ const filteredNodes = computed(() => {
       || n.title.toLowerCase().includes(q)
       || n.thesis_brief?.toLowerCase().includes(q)
       || n.category.toLowerCase().includes(q)
-      || n.signal?.asset.toLowerCase().includes(q)
-      || n.signal?.description.toLowerCase().includes(q)
     return matchesFilter && matchesSearch
   })
 
@@ -2023,12 +2023,30 @@ const pagedNodes = computed(() => {
   const start = (currentPage.value - 1) * nodesPerPage
   return filteredNodes.value.slice(start, start + nodesPerPage)
 })
-const totalJournalPages = computed(() => Math.ceil(filteredNodes.value.length / nodesPerPage))
+const totalJournalPages = computed(() => {
+  const pubPages = Math.ceil(filteredNodes.value.length / nodesPerPage)
+  const sigPages = Math.ceil(filteredSignals.value.length / nodesPerPage)
+  return Math.max(pubPages, sigPages)
+})
 const hasNextJournalPage = computed(() => currentPage.value < totalJournalPages.value)
 const hasJournalPagination = computed(() => currentPage.value > 1 || hasNextJournalPage.value)
 
-const pagedSignals = computed(() => pagedNodes.value.filter((n: any) => n.mode === 'SETUP' || n.type === 'SETUP'))
-const pagedPublications = computed(() => pagedNodes.value.filter((n: any) => n.mode !== 'SETUP' && n.type !== 'SETUP'))
+const filteredSignals = computed(() => {
+  const q = searchQuery.value.toLowerCase()
+  return allSignals.value.filter((n: ExNode) => {
+    const matchesSearch = !q
+      || n.title.toLowerCase().includes(q)
+      || n.signal?.asset.toLowerCase().includes(q)
+      || n.signal?.description.toLowerCase().includes(q)
+    return matchesSearch
+  })
+})
+
+const pagedSignals = computed(() => {
+  const start = (currentPage.value - 1) * nodesPerPage
+  return filteredSignals.value.slice(start, start + nodesPerPage)
+})
+const pagedPublications = computed(() => pagedNodes.value)
 const pagedResearch = computed(() => pagedPublications.value)
 const pagedStrategies = computed(() => pagedPublications.value)
 const pagedAnalysis = computed(() => pagedPublications.value)
@@ -2043,10 +2061,14 @@ const leadJournalSection = computed(() => {
   return null
 })
 const hasPagedNonSignalArticles = computed(() => Boolean(leadJournalSection.value))
-
 const navigateToPage = (page: number) => {
-  const query = { ...route.query, page: page === 1 ? undefined : page.toString() }
-  router.replace({ query })
+  currentPage.value = page
+  nextTick(() => {
+    if (journalWrapperRef.value) {
+      journalWrapperRef.value.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
 }
 
 const setJournalFilter = (mode: string) => {
