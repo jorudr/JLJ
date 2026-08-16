@@ -45,6 +45,7 @@
            @click="handleCheckIn" 
            :disabled="isSubmittingActivity || checkInUsedToday"
            :class="[
+             '!bg-[#050505] !text-white !border-black',
              checkInUsedToday && isDark ? '!bg-white !text-[#050505] !opacity-100' : '',
              checkInUsedToday && !isDark ? '!bg-[#050505] !text-white !opacity-100' : ''
            ]"
