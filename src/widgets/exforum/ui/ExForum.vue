@@ -1472,9 +1472,17 @@
               class="journal-sector px-8 pb-8 pt-6 col-span-12 lg:col-span-4"
             >
               <div class="space-y-4">
-                 <div class="flex items-center space-x-3 pb-2">
-                   <div class="w-1 h-1 bg-current opacity-20"></div>
-                   <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.signals }}</h2>
+                 <div class="flex items-center justify-between pb-2 border-b border-current/10 mb-2">
+                   <div class="flex items-center space-x-3">
+                     <div class="w-1 h-1 bg-current opacity-20"></div>
+                     <h2 class="text-xs font-mono tracking-[0.3em] uppercase opacity-50">{{ journalLabels.signals }}</h2>
+                   </div>
+                   <input
+                     v-model="signalSearchQuery"
+                     type="text"
+                     :placeholder="locale === 'ru' ? 'ТИКЕР' : 'TICKER'"
+                     class="bg-transparent border-none text-[9px] font-mono tracking-[0.2em] uppercase focus:outline-none w-20 text-right opacity-50 focus:opacity-100 transition-opacity"
+                   />
                 </div>
                 <div class="space-y-1">
                   <ExNodeCard
@@ -1660,6 +1668,7 @@ const strategyTradesStore = useStrategyTradesStore()
 
 // Archival State
 const searchQuery = ref('')
+const signalSearchQuery = ref('')
 const journalLabels = computed(() => locale.value === 'ru'
   ? {
       volume: 'Том XXIV // № 12',
@@ -1969,6 +1978,9 @@ const threadToJournalArticle = (thread: Thread & Record<string, any>): JournalAr
 
 // Pagination Logic
 const currentPage = ref(Number(route.query.page) || 1)
+watch([searchQuery, signalSearchQuery], () => {
+  currentPage.value = 1
+})
 const nodesPerPage = 10
 
 const journalThreads = computed(() => {
@@ -2039,13 +2051,15 @@ const hasNextPage = computed(() => currentPage.value < totalPages.value)
 const hasPagination = computed(() => totalPages.value > 1)
 
 const filteredSignals = computed(() => {
-  const q = searchQuery.value.toLowerCase()
+  const globalQ = searchQuery.value.toLowerCase()
+  const sigQ = signalSearchQuery.value.toLowerCase()
   return allSignals.value.filter((n: ExNode) => {
-    const matchesSearch = !q
-      || n.title.toLowerCase().includes(q)
-      || n.signal?.asset.toLowerCase().includes(q)
-      || n.signal?.description.toLowerCase().includes(q)
-    return matchesSearch
+    const matchesGlobal = !globalQ
+      || n.title.toLowerCase().includes(globalQ)
+      || n.signal?.asset?.toLowerCase().includes(globalQ)
+      || n.signal?.description?.toLowerCase().includes(globalQ)
+    const matchesSignal = !sigQ || n.signal?.asset?.toLowerCase().includes(sigQ)
+    return matchesGlobal && matchesSignal
   })
 })
 
