@@ -8,7 +8,7 @@ export const meaningfulLossTimeMetric: MetricEngine = {
       label: 'Время в значимом убытке',
       sub: 'Длительность просадки',
       desc: 'Время, проведенное позицией в зоне значимого убытка за пределами шума.',
-      formula: 'Sum(Drawdown Candle Durations)',
+      formula: 'Сумма длительностей свечей в просадке',
       benchmark: '< 30 мин (Быстрый выход/отскок)',
       evaluation: 'Продолжительность нахождения под давлением.'
     },
@@ -55,9 +55,9 @@ export const meaningfulLossTimeMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '< 30 мин — Контроль просадки' : '< 30 min — Controlled Drawdown',
       benchmarks: [
-        { label: '< 30 min', eval: isRu ? 'Отлично' : 'Optimal', class: 'text-emerald-400 font-bold' },
-        { label: '30 - 120 min', eval: isRu ? 'Умеренно' : 'Moderate', class: 'text-amber-400' },
-        { label: '> 120 min', eval: isRu ? 'Зависание' : 'Stuck in Loss', class: 'text-rose-500 font-bold' }
+        { label: isRu ? '< 30 мин' : '< 30 min', eval: isRu ? 'Отлично' : 'Optimal', class: 'text-emerald-400 font-bold' },
+        { label: isRu ? '30 - 120 мин' : '30 - 120 min', eval: isRu ? 'Умеренно' : 'Moderate', class: 'text-amber-400' },
+        { label: isRu ? '> 120 мин' : '> 120 min', eval: isRu ? 'Зависание' : 'Stuck in Loss', class: 'text-rose-500 font-bold' }
       ],
       progress: Math.min(100, Math.max(0, 100 - (minutes / 2))),
       colorVal

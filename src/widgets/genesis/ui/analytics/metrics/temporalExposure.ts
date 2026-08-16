@@ -8,7 +8,7 @@ export const temporalExposureMetric: MetricEngine = {
       label: 'Время в позиции',
       sub: 'Длительность удержания',
       desc: 'Полное время нахождения капитала под рыночным риском от входа до выхода.',
-      formula: 'Exit Timestamp - Entry Timestamp',
+      formula: 'Время выхода - Время входа',
       benchmark: '<= Средней длительности (Эффективно)',
       evaluation: 'Временной горизонт удержания позиции.'
     },
@@ -41,8 +41,8 @@ export const temporalExposureMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '<= Средняя длительность — Норма' : '<= Avg Duration — Efficient',
       benchmarks: [
-        { label: '<= Avg Duration', eval: isRu ? 'Эффективно' : 'Efficient', class: 'text-emerald-500 font-bold' },
-        { label: '> Avg Duration', eval: isRu ? 'Затяжное удержание' : 'Extended Hold', class: 'text-amber-500 font-bold' }
+        { label: isRu ? '<= Средней длительности' : '<= Avg Duration', eval: isRu ? 'Эффективно' : 'Efficient', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '> Средней длительности' : '> Avg Duration', eval: isRu ? 'Затяжное удержание' : 'Extended Hold', class: 'text-amber-500 font-bold' }
       ],
       progress: Math.min(100, (durationMinutes / (avgDuration * 1.5)) * 100),
       colorVal: isGood ? '#34d399' : '#fbbf24'

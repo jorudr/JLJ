@@ -8,7 +8,7 @@ export const additionalAlphaMetric: MetricEngine = {
       label: 'Дополнительная альфа',
       sub: 'Прибыль от доп. слоев',
       desc: 'Альфа PnL, полученная от дополнительных подтверждающих условий по сравнению с базой.',
-      formula: '((PnL - Average PnL) / Average PnL) * 100',
+      formula: '((PnL - Средний PnL) / Средний PnL) * 100',
       benchmark: '> 0% (Положительная альфа)',
       evaluation: 'Прирост профита от дополнительных фильтров.'
     },

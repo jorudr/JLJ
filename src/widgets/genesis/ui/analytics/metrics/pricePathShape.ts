@@ -8,8 +8,8 @@ export const pricePathShapeMetric: MetricEngine = {
       label: 'Форма движения',
       sub: 'Классификация траектории',
       desc: 'Классификация геометрической траектории движения цены от момента входа до момента закрытия.',
-      formula: 'Generated Candle Path Pattern',
-      benchmark: 'Clean Trend (Чистый тренд)',
+      formula: 'Паттерн сгенерированных свечей',
+      benchmark: 'Чистый тренд (Чистый тренд)',
       evaluation: 'Качественный паттерн движения внутри сделки.'
     },
     en: {
@@ -44,10 +44,10 @@ export const pricePathShapeMetric: MetricEngine = {
       status: isGood ? 'optimal' : 'warning',
       evaluationText: isGood ? (isRu ? 'Идеально' : 'Clean Trend') : (isRu ? 'Рваное движение' : 'Choppy'),
       evalClass,
-      benchmarkText: isRu ? 'Clean Trend — Гладкий забор' : 'Clean Trend — Smooth Capture',
+      benchmarkText: isRu ? 'Чистый тренд — плавный захват' : 'Clean Trend — Smooth Capture',
       benchmarks: [
-        { label: 'Clean Trend', eval: isRu ? 'Чистый тренд' : 'Clean Trend', class: 'text-emerald-500 font-bold' },
-        { label: 'Choppy Path', eval: isRu ? 'Шумовое движение' : 'Choppy Path', class: 'text-amber-500 font-bold' }
+        { label: isRu ? 'Чистый тренд' : 'Clean Trend', eval: isRu ? 'Чистый тренд' : 'Clean Trend', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? 'Рваная траектория' : 'Choppy Path', eval: isRu ? 'Шумовое движение' : 'Choppy Path', class: 'text-amber-500 font-bold' }
       ],
       progress: isGood ? 100 : 40,
       colorVal: isGood ? '#34d399' : '#fbbf24'

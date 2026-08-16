@@ -8,8 +8,8 @@ export const conditionalAlphaDecayMetric: MetricEngine = {
       label: 'Угасание условий',
       sub: 'Пропущенные правила',
       desc: 'Коррелирует негативные эмоциональные маркеры с отсутствующими обязательными правилами в наборе условий.',
-      formula: 'Missing Required Rules * Emotion Penalty',
-      benchmark: '0 Rules (Без распада альфы)',
+      formula: 'Пропущенные обязательные правила * Штраф эмоций',
+      benchmark: '0 правил (Без распада альфы)',
       evaluation: 'Потеря системного преимущества из-за отсутствия правил.'
     },
     en: {
@@ -37,8 +37,8 @@ export const conditionalAlphaDecayMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '0 Правил — Без потерь' : '0 Rules — Zero Decay',
       benchmarks: [
-        { label: '0 Rules', eval: isRu ? 'Без распада' : 'Zero Decay', class: 'text-emerald-500 font-bold' },
-        { label: '> 0 Rules', eval: isRu ? 'Распад альфы' : 'Alpha Decay', class: 'text-rose-500 font-bold' }
+        { label: isRu ? '0 правил' : '0 Rules', eval: isRu ? 'Без распада' : 'Zero Decay', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '> 0 правил' : '> 0 Rules', eval: isRu ? 'Распад альфы' : 'Alpha Decay', class: 'text-rose-500 font-bold' }
       ],
       progress: isZero ? 100 : 30,
       colorVal: isZero ? '#34d399' : '#f87171'

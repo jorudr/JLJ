@@ -5,10 +5,10 @@ export const tpCaptureRatioMetric: MetricEngine = {
   category: 'strategy_execution',
   i18n: {
     ru: {
-      label: 'Захват цели TP',
+      label: 'Захват цели тейк-профит',
       sub: 'Доля взятого тейка',
       desc: 'Измеряет, какая часть плановой прибыли до тейк-профита была реализована при закрытии сделки.',
-      formula: '(Reward Toward TP / Target Reward) * 100',
+      formula: '(Движение к тейк-профит / Целевая прибыль) * 100',
       benchmark: '100% (Полный захват цели)',
       evaluation: 'Полнота взятия тейк-профита.'
     },

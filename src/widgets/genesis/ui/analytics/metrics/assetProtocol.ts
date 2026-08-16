@@ -7,9 +7,9 @@ export const assetProtocolMetric: MetricEngine = {
     ru: {
       label: 'Протокол актива',
       sub: 'Инструмент и направление',
-      desc: 'Конкретный торговый инструмент и направление (Long/Short), используемые в операции.',
-      formula: 'Trade Side + Trade Asset',
-      benchmark: 'Valid Asset (Верифицирован)',
+      desc: 'Конкретный торговый инструмент и направление (Лонг/Шорт), используемые в операции.',
+      formula: 'Направление сделки + Актив сделки',
+      benchmark: 'Проверенный актив (Верифицирован)',
       evaluation: 'Соответствие разрешенному списку активов.'
     },
     en: {
@@ -33,9 +33,9 @@ export const assetProtocolMetric: MetricEngine = {
       status: 'optimal',
       evaluationText: isRu ? 'Идеально' : 'Perfect',
       evalClass: 'text-emerald-500',
-      benchmarkText: isRu ? 'Valid Asset — Разрешенный актив' : 'Valid Asset — Verified',
+      benchmarkText: isRu ? 'Проверенный актив — разрешенный актив' : 'Valid Asset — Verified',
       benchmarks: [
-        { label: 'Valid Asset', eval: isRu ? 'Верифицирован' : 'Verified', class: 'text-emerald-500 font-bold' }
+        { label: isRu ? 'Проверенный актив' : 'Valid Asset', eval: isRu ? 'Верифицирован' : 'Verified', class: 'text-emerald-500 font-bold' }
       ],
       progress: 100,
       colorVal: '#34d399'

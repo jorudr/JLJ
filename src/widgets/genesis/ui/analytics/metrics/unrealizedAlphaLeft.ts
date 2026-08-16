@@ -8,7 +8,7 @@ export const unrealizedAlphaLeftMetric: MetricEngine = {
       label: 'Незабранная альфа',
       sub: 'Потенциальная нереализованная прибыль',
       desc: 'Сколько потенциальной прибыли осталось незабранной до достижения максимума/цели.',
-      formula: 'Max Potential PnL - Realized PnL',
+      formula: 'Макс. потенциальный PnL - Реализованный PnL',
       benchmark: '< $100.00 (Минимальные потери)',
       evaluation: 'Качество и полнота закрытия прибыльных позиций.'
     },

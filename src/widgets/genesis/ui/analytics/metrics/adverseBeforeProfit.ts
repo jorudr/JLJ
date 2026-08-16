@@ -8,8 +8,8 @@ export const adverseBeforeProfitMetric: MetricEngine = {
       label: 'Просадка до плюса',
       sub: 'Просадка перед первым профитом',
       desc: 'Показывает, была ли значимая просадка до выхода сделки в первый значимый плюс.',
-      formula: 'Adverse Move Occurred Before Profit',
-      benchmark: 'No (Плюс без просадки)',
+      formula: 'Просадка появилась до прибыли',
+      benchmark: 'Нет (Плюс без просадки)',
       evaluation: 'Чистота движения позиции к первичному профиту.'
     },
     en: {
@@ -38,7 +38,7 @@ export const adverseBeforeProfitMetric: MetricEngine = {
       benchmarkText: isRu ? 'No — Прямой доход без просадки' : 'No — Direct Profit',
       benchmarks: [
         { label: 'No', eval: isRu ? 'Без просадки' : 'Direct Profit', class: 'text-emerald-500 font-bold' },
-        { label: 'Yes', eval: isRu ? 'Просадка до плюса' : 'Initial Drawdown', class: 'text-amber-500 font-bold' }
+        { label: isRu ? 'Да' : 'Yes', eval: isRu ? 'Просадка до плюса' : 'Initial Drawdown', class: 'text-amber-500 font-bold' }
       ],
       progress: isClear ? 100 : 30,
       colorVal: isClear ? '#34d399' : '#fbbf24'

@@ -6,9 +6,9 @@ export const maxFavorableExcursionMetric: MetricEngine = {
   i18n: {
     ru: {
       label: 'Макс. движение в плюс',
-      sub: 'Пиковый импульс в пользу позиции (MFE)',
+      sub: 'Пиковый импульс в пользу позиции (макс. движение в плюс)',
       desc: 'Максимально достигнутое благоприятное движение цены от точки входа.',
-      formula: 'Max Favorable Excursion past Noise Zone',
+      formula: 'Макс. благоприятное движение за пределами шума',
       benchmark: '> 3.0% (Сильный импульс)',
       evaluation: 'Пиковый потенциал движения позиции.'
     },

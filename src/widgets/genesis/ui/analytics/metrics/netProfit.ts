@@ -8,7 +8,7 @@ export const netProfitMetric: MetricEngine = {
       label: 'Чистая прибыль',
       sub: 'Итоговый PnL сделки',
       desc: 'Фактически зафиксированный чистый финансовый результат после полного закрытия сделки.',
-      formula: 'Gross Profit - Gross Loss',
+      formula: 'Валовая прибыль - Валовой убыток',
       benchmark: '> $0.00 (Прибыльный исход)',
       evaluation: 'Финансовый доход позиции.'
     },

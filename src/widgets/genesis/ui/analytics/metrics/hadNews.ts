@@ -8,8 +8,8 @@ export const hadNewsMetric: MetricEngine = {
       label: 'Новости во время сделки',
       sub: 'Новостной фон',
       desc: 'Отметка пользователя о наличии выходящих экономических новостей во время удержания сделки.',
-      formula: 'User Manual News Tag',
-      benchmark: 'No (Спокойный рынок)',
+      formula: 'Ручная отметка новостей',
+      benchmark: 'Нет (Спокойный рынок)',
       evaluation: 'Учет внешнего новостного фактора.'
     },
     en: {
@@ -37,7 +37,7 @@ export const hadNewsMetric: MetricEngine = {
       benchmarkText: isRu ? 'No — Без новостного риска' : 'No — Technical Market',
       benchmarks: [
         { label: 'No', eval: isRu ? 'Спокойно' : 'Technical Market', class: 'text-emerald-500 font-bold' },
-        { label: 'Yes', eval: isRu ? 'Новостной фон' : 'News Active', class: 'text-amber-500 font-bold' }
+        { label: isRu ? 'Да' : 'Yes', eval: isRu ? 'Новостной фон' : 'News Active', class: 'text-amber-500 font-bold' }
       ],
       progress: hadNews ? 40 : 100,
       colorVal: hadNews ? '#fbbf24' : '#34d399'

@@ -8,8 +8,8 @@ export const dominantBiasMetric: MetricEngine = {
       label: 'Доминирующее смещение',
       sub: 'Приоритетный эмоциональный маркер',
       desc: 'Определяет главный психологический маркер трения и сопоставляет его с профилем риска.',
-      formula: 'Highest Priority Friction Tag',
-      benchmark: 'None (Чистое исполнение)',
+      formula: 'Приоритетный тег трения',
+      benchmark: 'Нет (Чистое исполнение)',
       evaluation: 'Качественная классификация эмоциональной ошибки.'
     },
     en: {
@@ -36,10 +36,10 @@ export const dominantBiasMetric: MetricEngine = {
       status: isClear ? 'optimal' : 'warning',
       evaluationText: isClear ? (isRu ? 'Чисто' : 'Clear') : (isRu ? 'Когнитивный риск' : 'Cognitive Risk'),
       evalClass,
-      benchmarkText: isRu ? 'None — Отсутствие когнитивных помех' : 'None — Clear Execution',
+      benchmarkText: isRu ? 'Нет — отсутствие когнитивных помех' : 'None — Clear Execution',
       benchmarks: [
-        { label: 'None', eval: isRu ? 'Чистое исполнение' : 'Clear Execution', class: 'text-emerald-500 font-bold' },
-        { label: 'Active Bias', eval: isRu ? 'Когнитивный риск' : 'Cognitive Risk', class: 'text-amber-500 font-bold' }
+        { label: isRu ? 'Нет' : 'None', eval: isRu ? 'Чистое исполнение' : 'Clear Execution', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? 'Активное смещение' : 'Active Bias', eval: isRu ? 'Когнитивный риск' : 'Cognitive Risk', class: 'text-amber-500 font-bold' }
       ],
       progress: isClear ? 100 : 40,
       colorVal: isClear ? '#34d399' : '#fbbf24'

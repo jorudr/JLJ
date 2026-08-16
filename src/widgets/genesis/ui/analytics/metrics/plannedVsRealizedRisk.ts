@@ -5,11 +5,11 @@ export const plannedVsRealizedRiskMetric: MetricEngine = {
   category: 'execution',
   i18n: {
     ru: {
-      label: 'Плановый vs Реализованный риск',
+      label: 'Плановый и Реализованный риск',
       sub: 'Аудит стоп-риска',
       desc: 'Аудирует плановый риск стоп-лосса и фактический убыток относительно риск-бюджета.',
-      formula: 'Stop Risk = |Entry - Stop| * Size · Realized Loss = max(0, -PnL)',
-      benchmark: '<= Risk Budget (В пределах лимита)',
+      formula: 'Риск стопа = |Вход - Стоп| * Размер · Фактический убыток = макс(0, -PnL)',
+      benchmark: '<= Риск-бюджет (В пределах лимита)',
       evaluation: 'Соблюдение лимита риска на сделку.'
     },
     en: {
@@ -39,8 +39,8 @@ export const plannedVsRealizedRiskMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '<= Лимит риска — Без нарушений' : '<= Risk Budget — Compliant',
       benchmarks: [
-        { label: '<= Risk Budget', eval: isRu ? 'В лимите' : 'Compliant', class: 'text-emerald-500 font-bold' },
-        { label: '> Risk Budget', eval: isRu ? 'Превышение' : 'Breach Warning', class: 'text-rose-500 font-bold' }
+        { label: isRu ? '<= Риск-бюджет' : '<= Risk Budget', eval: isRu ? 'В лимите' : 'Compliant', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '> Риск-бюджет' : '> Risk Budget', eval: isRu ? 'Превышение' : 'Breach Warning', class: 'text-rose-500 font-bold' }
       ],
       progress: Math.min(100, (Math.max(plannedRisk, realizedLoss) / budget) * 100),
       colorVal: isCompliant ? '#34d399' : '#f87171'

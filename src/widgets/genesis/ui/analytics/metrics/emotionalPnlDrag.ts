@@ -8,7 +8,7 @@ export const emotionalPnlDragMetric: MetricEngine = {
       label: 'Эмоциональный износ',
       sub: 'Потери из-за психологии',
       desc: 'Потенциальная прибыль, потерянная из-за эмоциональных отклонений и спешки.',
-      formula: 'Sum(Friction Marker Penalties)',
+      formula: 'Сумма штрафов маркеров трения',
       benchmark: '$0.00 (Дисциплинированное исполнение)',
       evaluation: 'Уровень психологических помех при исполнении.'
     },

@@ -8,7 +8,7 @@ export const conditionalPnlRatioMetric: MetricEngine = {
       label: 'PnL на условие',
       sub: 'Соотношение прибыли к условиям сетапа',
       desc: 'Соотношение зафиксированной прибыли на одно активное торговое условие в сетапе.',
-      formula: 'Realized PnL / Active Conditions Count',
+      formula: 'Реализованный PnL / Количество активных условий',
       benchmark: '> $100.00 / условие (Высокая эффективность)',
       evaluation: 'Эффективность каждого подтверждающего фактора сетапа.'
     },

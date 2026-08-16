@@ -8,7 +8,7 @@ export const profitVelocityMetric: MetricEngine = {
       label: 'Скорость прибыли',
       sub: 'PnL за час удержания',
       desc: 'Скорость получения PnL за каждый час удержания открытой позиции.',
-      formula: 'Trade PnL / Duration Hours',
+      formula: 'PnL сделки / Часы удержания',
       benchmark: '> $50.00/ч (Высокая динамика)',
       evaluation: 'Эффективность использования времени позиции.'
     },

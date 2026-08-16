@@ -8,8 +8,8 @@ export const velocityVarianceIndexMetric: MetricEngine = {
       label: 'Вариация скорости PnL',
       sub: 'Скорость к базом PnL/h',
       desc: 'Сравнивает фактически реализованную скорость прибыли со средней базовой скоростью стратегии в долларах в час.',
-      formula: 'Realized Velocity / Baseline Velocity',
-      benchmark: '>= 1.0x (Оптимальный темп)',
+      formula: 'Фактическая скорость / Базовая скорость',
+      benchmark: '>= 1.0 раза (Оптимальный темп)',
       evaluation: 'Темп роста профита за час удержания.'
     },
     en: {

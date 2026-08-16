@@ -8,7 +8,7 @@ export const netResultVarianceMetric: MetricEngine = {
       label: 'Отклонение PnL',
       sub: 'Сравнение со средним PnL',
       desc: 'Вычисляет разницу между прибылью/убытком текущей сделки и средним значением по стратегии.',
-      formula: 'Trade PnL - Strategy Avg PnL',
+      formula: 'PnL сделки - Средний PnL стратегии',
       benchmark: '>= Среднего PnL (Выше среднего)',
       evaluation: 'Соотношение результата с исторической нормой.'
     },
@@ -37,8 +37,8 @@ export const netResultVarianceMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '>= Средний PnL — Выше среднего' : '>= Avg PnL — Above Average',
       benchmarks: [
-        { label: '>= Avg', eval: isRu ? 'Выше среднего' : 'Above Average', class: 'text-emerald-500 font-bold' },
-        { label: '< Avg', eval: isRu ? 'Ниже среднего' : 'Below Average', class: 'text-amber-500 font-bold' }
+        { label: isRu ? '>= Среднего' : '>= Avg', eval: isRu ? 'Выше среднего' : 'Above Average', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '< Среднего' : '< Avg', eval: isRu ? 'Ниже среднего' : 'Below Average', class: 'text-amber-500 font-bold' }
       ],
       progress: Math.min(100, Math.max(0, 50 + ((pnl - avgPnl) / 5))),
       colorVal: isAbove ? '#34d399' : '#fbbf24'

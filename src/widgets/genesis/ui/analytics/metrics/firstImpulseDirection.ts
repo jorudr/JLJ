@@ -8,8 +8,8 @@ export const firstImpulseDirectionMetric: MetricEngine = {
       label: 'Первый импульс',
       sub: 'Направление после входа',
       desc: 'Первое значимое движение цены сразу после открытия позиции: в плюс или в минус.',
-      formula: 'First Significant Post-Entry Move',
-      benchmark: 'Favorable (Импульс в плюс)',
+      formula: 'Первое значимое движение после входа',
+      benchmark: 'В плюс (Импульс в плюс)',
       evaluation: 'Точность момента входа в позицию.'
     },
     en: {
@@ -35,10 +35,10 @@ export const firstImpulseDirectionMetric: MetricEngine = {
       status: isFavorable ? 'optimal' : 'critical',
       evaluationText: isFavorable ? (isRu ? 'Точный вход' : 'Timely Entry') : (isRu ? 'Вход против движения' : 'Adverse Impulse'),
       evalClass,
-      benchmarkText: isRu ? 'Favorable — Сразу в плюс' : 'Favorable — Immediate Profit',
+      benchmarkText: isRu ? 'В плюс — сразу в прибыль' : 'Favorable — Immediate Profit',
       benchmarks: [
-        { label: 'Favorable', eval: isRu ? 'Сразу в плюс' : 'Favorable', class: 'text-emerald-500 font-bold' },
-        { label: 'Adverse', eval: isRu ? 'Первичная просадка' : 'Adverse', class: 'text-rose-500 font-bold' }
+        { label: isRu ? 'В плюс' : 'Favorable', eval: isRu ? 'Сразу в плюс' : 'Favorable', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? 'Против позиции' : 'Adverse', eval: isRu ? 'Первичная просадка' : 'Adverse', class: 'text-rose-500 font-bold' }
       ],
       progress: isFavorable ? 100 : 20,
       colorVal: isFavorable ? '#34d399' : '#f87171'

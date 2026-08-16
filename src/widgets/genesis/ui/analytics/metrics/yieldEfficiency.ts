@@ -8,7 +8,7 @@ export const yieldEfficiencyMetric: MetricEngine = {
       label: 'Эффективность доходности',
       sub: 'К балансу до сделки',
       desc: 'Измеряет чистый прирост депозита от сделки относительно баланса счёта перед входом.',
-      formula: '(PnL / Balance Before Trade) * 100',
+      formula: '(PnL / Баланс до сделки) * 100',
       benchmark: '> 0% (Положительный прирост)',
       evaluation: 'Процентное изменение депозита от сделки.'
     },

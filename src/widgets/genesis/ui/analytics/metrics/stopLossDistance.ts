@@ -8,8 +8,8 @@ export const stopLossDistanceMetric: MetricEngine = {
       label: 'Дистанция стоп-лосса',
       sub: 'Дистанция от входа в %',
       desc: 'Процентное расстояние от цены входа до установленного уровня стоп-лосса.',
-      formula: '(|Entry Price - Stop Loss| / Entry Price) * 100',
-      benchmark: '<= Средней дистанции SL (Короткий стоп)',
+      formula: '(|Цена входа - Стоп-лосс| / Цена входа) * 100',
+      benchmark: '<= Средней дистанции стоп-лосс (Короткий стоп)',
       evaluation: 'Компактность стоп-приказа относительно средней нормы.'
     },
     en: {
@@ -39,8 +39,8 @@ export const stopLossDistanceMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '<= Среднего SL — Короткий стоп' : '<= Avg SL Dist — Tight Stop',
       benchmarks: [
-        { label: '<= Avg SL', eval: isRu ? 'Короткий стоп' : 'Tight Stop', class: 'text-emerald-500 font-bold' },
-        { label: '> Avg SL', eval: isRu ? 'Широкий стоп' : 'Wide Stop', class: 'text-amber-500 font-bold' }
+        { label: isRu ? '<= Среднего SL' : '<= Avg SL', eval: isRu ? 'Короткий стоп' : 'Tight Stop', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '> Среднего SL' : '> Avg SL', eval: isRu ? 'Широкий стоп' : 'Wide Stop', class: 'text-amber-500 font-bold' }
       ],
       progress: Math.min(100, (slDistPct / (avgSlDistPct * 2)) * 100),
       colorVal: isTight ? '#34d399' : '#fbbf24'

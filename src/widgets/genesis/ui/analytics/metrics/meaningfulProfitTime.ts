@@ -8,7 +8,7 @@ export const meaningfulProfitTimeMetric: MetricEngine = {
       label: 'Время в значимом плюсе',
       sub: 'Длительность в прибыли',
       desc: 'Время, проведенное позицией в зоне значимой прибыли за пределами шума.',
-      formula: 'Sum(Profit Candle Durations)',
+      formula: 'Сумма длительностей прибыльных свечей',
       benchmark: '> 45 мин (Уверенное удержание)',
       evaluation: 'Продолжительность нахождения в прибыльной фазе.'
     },
@@ -55,9 +55,9 @@ export const meaningfulProfitTimeMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '> 45 мин — Полноценное движение' : '> 45 min — Full Expansion',
       benchmarks: [
-        { label: '>= 45 min', eval: isRu ? 'Отлично' : 'Optimal', class: 'text-emerald-400 font-bold' },
-        { label: '15 - 45 min', eval: isRu ? 'Норма' : 'Moderate', class: 'text-amber-400' },
-        { label: '< 15 min', eval: isRu ? 'Слишком коротко' : 'Brief', class: 'text-rose-400' }
+        { label: isRu ? '>= 45 мин' : '>= 45 min', eval: isRu ? 'Отлично' : 'Optimal', class: 'text-emerald-400 font-bold' },
+        { label: isRu ? '15 - 45 мин' : '15 - 45 min', eval: isRu ? 'Норма' : 'Moderate', class: 'text-amber-400' },
+        { label: isRu ? '< 15 мин' : '< 15 min', eval: isRu ? 'Слишком коротко' : 'Brief', class: 'text-rose-400' }
       ],
       progress: Math.min(100, Math.max(0, (minutes / 60) * 100)),
       colorVal

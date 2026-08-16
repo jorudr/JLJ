@@ -8,7 +8,7 @@ export const entryHeatMetric: MetricEngine = {
       label: 'Задержка входа',
       sub: 'Время до перв. импульса',
       desc: 'Время от входа до начала первого импульса, если первый импульс был против позиции.',
-      formula: 'Time to Adverse Impulse Start',
+      formula: 'Время до старта неблагоприятного импульса',
       benchmark: '< 10 мин (Быстрый запуск)',
       evaluation: 'Задержка развития сделки при неблагоприятном старте.'
     },
@@ -37,8 +37,8 @@ export const entryHeatMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '< 10 мин — Быстрый запуск' : '< 10 min — Minimal Heat',
       benchmarks: [
-        { label: '< 10 min', eval: isRu ? 'Низкий нагрев' : 'Low Heat', class: 'text-emerald-500 font-bold' },
-        { label: '>= 10 min', eval: isRu ? 'Задержка входа' : 'Elevated Heat', class: 'text-amber-500 font-bold' }
+        { label: isRu ? '< 10 мин' : '< 10 min', eval: isRu ? 'Низкий нагрев' : 'Low Heat', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '>= 10 мин' : '>= 10 min', eval: isRu ? 'Задержка входа' : 'Elevated Heat', class: 'text-amber-500 font-bold' }
       ],
       progress: Math.min(100, Math.max(0, 100 - (minutes * 5))),
       colorVal: isLow ? '#34d399' : '#fbbf24'

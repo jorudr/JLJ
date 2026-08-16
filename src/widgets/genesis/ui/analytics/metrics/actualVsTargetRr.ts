@@ -5,12 +5,12 @@ export const actualVsTargetRrMetric: MetricEngine = {
   category: 'execution',
   i18n: {
     ru: {
-      label: 'Фактический vs Целевой R/R',
+      label: 'Фактический и Целевой риск/прибыль',
       sub: 'Соотношение риска и награды',
-      desc: 'Сравнивает фактически реализованный Risk/Reward с целевым показателем матрицы.',
-      formula: 'Realized Reward / Realized Risk',
-      benchmark: '>= Целевого RR (Цель достигнута)',
-      evaluation: 'Соответствие реального R/R плановому ориентиру.'
+      desc: 'Сравнивает фактически реализованный Риск/Прибыль с целевым показателем матрицы.',
+      formula: 'Реализованная прибыль / Реализованный риск',
+      benchmark: '>= Целевого риск/прибыль (Цель достигнута)',
+      evaluation: 'Соответствие реального риск/прибыль плановому ориентиру.'
     },
     en: {
       label: 'Actual vs Target R/R',
@@ -37,8 +37,8 @@ export const actualVsTargetRrMetric: MetricEngine = {
       evalClass,
       benchmarkText: isRu ? '>= Целевой RR — Цель выполнена' : '>= Target RR — Target Met',
       benchmarks: [
-        { label: '>= Target RR', eval: isRu ? 'Цель выполнена' : 'Target Met', class: 'text-emerald-500 font-bold' },
-        { label: '< Target RR', eval: isRu ? 'Субоптимально' : 'Sub-Optimal', class: 'text-amber-500 font-bold' }
+        { label: isRu ? '>= Целевой RR' : '>= Target RR', eval: isRu ? 'Цель выполнена' : 'Target Met', class: 'text-emerald-500 font-bold' },
+        { label: isRu ? '< Целевой RR' : '< Target RR', eval: isRu ? 'Субоптимально' : 'Sub-Optimal', class: 'text-amber-500 font-bold' }
       ],
       progress: Math.min(100, (actualRr / 4) * 100),
       colorVal: isMet ? '#34d399' : '#fbbf24'
