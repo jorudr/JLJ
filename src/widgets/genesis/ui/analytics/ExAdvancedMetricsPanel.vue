@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ExMetricCard from '~/entities/metric/ui/ExMetricCard.vue'
-import { useTradeAnalysisMetrics } from './metrics'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {
   getTradeBalanceBefore,
-  getTradeDurationHours,
   getTradePnl,
   getTradeRiskReward
 } from '~/widgets/genesis/model/metrics'
@@ -14,72 +11,112 @@ import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
 
 interface AdvancedMetricsPanelProps {
   trade?: any
-  strategyStatsContext?: any
   allTrades?: any[]
   initialBalance?: number
-  resolvedRiskManagement?: any
-  isDark?: boolean
 }
 
 const props = withDefaults(defineProps<AdvancedMetricsPanelProps>(), {
   allTrades: () => [],
-  initialBalance: 10000,
-  isDark: false
+  initialBalance: 10000
 })
 
 const { locale } = useI18n()
-const activeMetricTab = ref('all')
-const activeCorrelationMetricId = ref<string | null>(null)
-
-const metricsData = computed(() => {
-  return useTradeAnalysisMetrics(
-    props.trade,
-    props.strategyStatsContext,
-    (locale.value as 'ru' | 'en') || 'ru',
-    'advanced',
-    activeMetricTab.value
-  )
-})
-
-const activeMetricList = computed(() => metricsData.value.metrics)
-
-const advancedMetricTabs = computed(() => {
-  const c = metricsData.value.counts || {}
-  const isRu = locale.value === 'ru'
-  return [
-    { id: 'all', label: isRu ? 'Все' : 'All', count: c.all || 0 },
-    { id: 'adherence', label: isRu ? 'Соблюдение матрицы' : 'Matrix Adherence', count: c.adherence || 0 },
-    { id: 'behavioural', label: isRu ? 'Психология' : 'Behavioural', count: c.behavioural || 0 },
-    { id: 'execution', label: isRu ? 'Исполнение и риск' : 'Execution & Risk', count: c.execution || 0 },
-    { id: 'strategy_execution', label: isRu ? 'Стратегия vs Исполнение' : 'Strategy vs Execution', count: c.strategy_execution || 0 },
-    { id: 'in_trade', label: isRu ? 'Анализ в сделке' : 'In-Trade Analysis', count: c.in_trade || 0 }
-  ]
-})
-
-const handleMetricSelect = (metricKey: string) => {
-  activeCorrelationMetricId.value = metricKey
-}
+const isTradeScoreExpanded = ref(false)
+const isRequiredConditionsExpanded = ref(false)
 
 const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g, ' ')
 
-// --- CORRELATION ANALYSIS LOGIC ---
-const getMetricLabel = (key: string) => {
-  const metric = activeMetricList.value.find((m) => m.key === key)
-  return metric ? metric.label : formatDisplayLabel(key)
+const parseNumber = (value: any): number => {
+  if (value === undefined || value === null || value === '') return Number.NaN
+  const parsed = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''))
+  return Number.isFinite(parsed) ? parsed : Number.NaN
 }
+
+const getNormalizedPnl = (trade: any) => getTradePnl(trade, props.initialBalance)
+
+const closedTrades = computed(() => {
+  const list = Array.isArray(props.allTrades) ? [...props.allTrades] : []
+  if (props.trade && isClosedTradeForMetrics(props.trade) && !list.some((trade) => trade?.id === props.trade?.id)) {
+    list.push(props.trade)
+  }
+  return list.filter(isClosedTradeForMetrics)
+})
+
+const balanceBeforeTrade = computed(() => {
+  if (!props.trade) return props.initialBalance
+  return getTradeBalanceBefore(closedTrades.value, props.trade, props.initialBalance)
+})
+
+const tradeScoreBreakdown = computed(() => {
+  const trade = props.trade
+  if (!trade) {
+    return { percentile: 0, rawScore: 0, patterns: [] as Array<{ label: string; value: string; metricId: string }> }
+  }
+
+  const currentPnl = getNormalizedPnl(trade)
+  const values = closedTrades.value
+    .map((item) => getNormalizedPnl(item))
+    .filter(Number.isFinite)
+
+  const lowerTrades = values.filter((value) => value < currentPnl).length
+  const percentile = values.length > 0
+    ? Math.round((lowerTrades / values.length) * 100)
+    : Math.max(0, Math.min(100, Number(trade.percentileRank) || (currentPnl > 0 ? 70 : 30)))
+
+  return {
+    percentile,
+    rawScore: currentPnl,
+    patterns: [
+      {
+        label: locale.value === 'ru' ? 'Результат' : 'Result',
+        value: formatCurrency(currentPnl),
+        metricId: 'pnl'
+      },
+      {
+        label: 'Risk/Reward',
+        value: formatRatio(actualRR.value),
+        metricId: 'rr'
+      },
+      {
+        label: locale.value === 'ru' ? 'Обязательные условия' : 'Required Conditions',
+        value: requiredConditionStats.value.total > 0
+          ? `${requiredConditionStats.value.used}/${requiredConditionStats.value.total}`
+          : 'N/A',
+        metricId: 'required'
+      }
+    ]
+  }
+})
 
 const conditionIdentity = (condition: any) => {
   if (typeof condition === 'string') return condition.toLowerCase()
   return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '').toLowerCase()
 }
 
+const conditionProtocolId = (condition: any) => {
+  if (typeof condition === 'string') return condition
+  return String(condition?.id ?? condition?.info?.id ?? condition?.name ?? condition?.label ?? condition?.info?.name ?? '')
+}
+
+const conditionDisplayName = (condition: any) => {
+  if (typeof condition === 'string') return condition
+  return String(condition?.info?.customName ?? condition?.info?.name ?? condition?.name ?? condition?.label ?? condition?.id ?? 'REQUIRED')
+}
+
+const conditionDescription = (condition: any) => {
+  if (typeof condition === 'string') return ''
+  return String(condition?.info?.description ?? condition?.description ?? condition?.info?.logic ?? '')
+}
+
 const getEntryRequiredConditionSnapshot = (trade: any) => {
   const directSnapshot = trade?.boardRequiredConditionsEntry
   if (Array.isArray(directSnapshot) && directSnapshot.length > 0) return directSnapshot
+
   const scenarioSnapshot = trade?.boardScenarioEntry?.info?.requiredConditions
   if (Array.isArray(scenarioSnapshot) && scenarioSnapshot.length > 0) return scenarioSnapshot
+
   const legacyConditions = trade?.boardScenarioEntry?.info?.conditions || []
-  return legacyConditions.filter((c: any) => c?.info?.priority === 'REQUIRED' || c?.priority === 'REQUIRED')
+  return legacyConditions.filter((condition: any) => condition?.info?.priority === 'REQUIRED' || condition?.priority === 'REQUIRED')
 }
 
 const getEntryExecutedConditions = (trade: any) => {
@@ -89,560 +126,398 @@ const getEntryExecutedConditions = (trade: any) => {
     : (Array.isArray(scenarioExecuted) ? scenarioExecuted : [])
 }
 
-const getRuleCountForMetric = (trade: any) => {
-  const scenarioRules = trade?.boardScenarioEntry?.info?.conditions
-  if (Array.isArray(scenarioRules)) return scenarioRules.length
-  if (Array.isArray(trade?.boardConditions)) return trade.boardConditions.length
-  return 0
-}
+const requiredConditionRows = computed(() => {
+  const required = getEntryRequiredConditionSnapshot(props.trade)
+  const executedKeys = new Set(getEntryExecutedConditions(props.trade).map(conditionIdentity).filter(Boolean))
 
-const getAdditionalConditionCountForMetric = (trade: any) => {
-  const conditions = trade?.boardScenarioEntry?.info?.conditions || []
-  return conditions.filter((c: any) => c?.info?.priority === 'ADDITIONAL').length
-}
+  return required
+    .map((condition: any, index: number) => {
+      const id = conditionProtocolId(condition)
+      const identity = conditionIdentity(condition)
+      if (!id && !identity) return null
 
-const getTradePnlValue = (trade: any) => getTradePnl(trade, props.initialBalance)
-const getTradeDurationHoursForMetric = (trade: any) => getTradeDurationHours(trade)
-
-const getBalanceBeforeTradeForMetric = (trade: any) => {
-  const startBalance = 1000
-  return getTradeBalanceBefore(props.allTrades, trade, startBalance)
-}
-
-const getTradeRrForMetric = (trade: any) => getTradeRiskReward(trade)
-const getPlannedStopRiskDollarsForMetric = (trade: any) => getTradePlannedStopRiskDollars(trade)
-
-const getRealizedRiskDollarsForMetric = (trade: any) => {
-  const pnl = getTradePnlValue(trade)
-  return pnl < 0 ? Math.abs(pnl) : 0
-}
-
-const getRiskBudgetDollarsForMetric = (trade: any) => {
-  const risk = props.resolvedRiskManagement || {}
-  const value = risk.riskPerTradeValue
-  if (value === null || value === undefined) return Number.NaN
-  if (risk.riskPerTradeUnit === '%') {
-    return (Number(value) / 100) * getBalanceBeforeTradeForMetric(trade)
-  }
-  return Number(value)
-}
-
-const getRiskBudgetRatioForMetric = (trade: any) => {
-  const budget = getRiskBudgetDollarsForMetric(trade)
-  if (!Number.isFinite(budget) || budget <= 0) return Number.NaN
-  const planned = getPlannedStopRiskDollarsForMetric(trade)
-  const realized = getRealizedRiskDollarsForMetric(trade)
-  const worst = Math.max(Number.isFinite(planned) ? planned : 0, realized)
-  return (worst / budget) * 100
-}
-
-const getRequiredAdherenceForMetric = (trade: any) => {
-  const required = getEntryRequiredConditionSnapshot(trade)
-  if (!required.length) return Number.NaN
-  const executedKeys = new Set(getEntryExecutedConditions(trade).map(conditionIdentity).filter(Boolean))
-  const used = required.filter((condition: any) => executedKeys.has(conditionIdentity(condition))).length
-  return (used / required.length) * 100
-}
-
-const getSetupComplexityForMetric = (trade: any) => {
-  const currentRuleCount = getRuleCountForMetric(trade)
-  const scenarioId = trade?.boardScenarioEntry?.id
-  const historicalRuleCounts = props.allTrades
-    .filter((t: any) => !scenarioId || t?.boardScenarioEntry?.id === scenarioId)
-    .map(getRuleCountForMetric)
-    .filter((count: number) => count > 0)
-  const sortedRuleCounts = [...historicalRuleCounts].sort((a, b) => a - b)
-  const medianRules = sortedRuleCounts.length > 0
-    ? (sortedRuleCounts.length % 2 === 1
-      ? sortedRuleCounts[(sortedRuleCounts.length - 1) / 2]
-      : (sortedRuleCounts[(sortedRuleCounts.length / 2) - 1] + sortedRuleCounts[sortedRuleCounts.length / 2]) / 2)
-    : 0
-  return medianRules > 0 ? (currentRuleCount / medianRules) : 1.0
-}
-
-const getEmotionName = (e: any): string => {
-  if (!e) return ''
-  if (typeof e === 'string') return e
-  if (typeof e === 'object' && e.name) return String(e.name)
-  if (typeof e === 'object' && e.id) return String(e.id)
-  return String(e)
-}
-
-const getNegativeEmotionsForMetric = (trade: any) => {
-  const emotions = trade?.emotions || []
-  const negativeSet = new Set([
-    'FOMO', 'fomo', 'Revenge', 'revenge', 'Greed', 'greed', 'Fear', 'fear', 
-    'Tilt', 'tilt', 'Anxiety', 'anxiety', 'Boredom', 'boredom', 'Fatigue', 'fatigue', 
-    'Anger', 'anger', 'Impatience', 'impatience', 'Frustration', 'frustration'
-  ])
-  return emotions.map(getEmotionName).filter((e: string) => negativeSet.has(e))
-}
-
-const getCognitiveStabilityForMetric = (trade: any) => {
-  const frictionCount = getNegativeEmotionsForMetric(trade).length
-  return Math.max(10, 100 - (frictionCount * 15))
-}
-
-const getDominantBiasForMetric = (trade: any) => {
-  const negativeEmotions = getNegativeEmotionsForMetric(trade)
-  const hasEmo = (name: string) => negativeEmotions.some((e: string) => e.toLowerCase() === name.toLowerCase())
-  if (hasEmo('fomo')) return 'FOMO'
-  if (hasEmo('revenge')) return 'Revenge'
-  if (hasEmo('greed')) return 'Greed'
-  if (hasEmo('fear')) return 'Fear'
-  if (hasEmo('tilt')) return 'Tilt'
-  if (hasEmo('fatigue')) return 'Fatigue'
-  if (hasEmo('boredom')) return 'Boredom'
-  if (hasEmo('frustration')) return 'Frustration'
-  if (negativeEmotions.length > 0) return negativeEmotions[0].toUpperCase()
-  return 'Clear Execution'
-}
-
-const getFrictionDensityForMetric = (trade: any) => {
-  const emotions = trade?.emotions || []
-  const frictionCount = getNegativeEmotionsForMetric(trade).length
-  return emotions.length > 0 ? (frictionCount / emotions.length) * 100 : 0
-}
-
-const getYieldPctForMetric = (trade: any) => {
-  const pnl = getTradePnlValue(trade)
-  const balance = getBalanceBeforeTradeForMetric(trade)
-  return balance > 0 ? (pnl / balance) * 100 : Number.NaN
-}
-
-const getProfitVelocityForMetric = (trade: any) => {
-  const pnl = getTradePnlValue(trade)
-  const durationHours = getTradeDurationHoursForMetric(trade)
-  return durationHours > 0 ? (pnl / durationHours) : Number.NaN
-}
-
-const parsePositiveTradePrice = (val: any): number => {
-  if (val === undefined || val === null || val === '') return Number.NaN
-  const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''))
-  return Number.isFinite(num) && num > 0 ? num : Number.NaN
-}
-
-const getSlDistPct = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry)
-  const sl = parsePositiveTradePrice(trade?.stopLoss)
-  return (Number.isFinite(entry) && Number.isFinite(sl)) ? (Math.abs(entry - sl) / entry) * 100 : Number.NaN
-}
-
-const getTpDistPct = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry)
-  const tp = parsePositiveTradePrice(trade?.takeProfit)
-  return (Number.isFinite(entry) && Number.isFinite(tp)) ? (Math.abs(tp - entry) / entry) * 100 : Number.NaN
-}
-
-const getSlExecutionDragForMetric = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry)
-  const exit = parsePositiveTradePrice(trade?.exit)
-  const sl = parsePositiveTradePrice(trade?.stopLoss)
-  const pnl = getTradePnlValue(trade)
-  const isLong = (trade?.side || 'LONG').toUpperCase() !== 'SHORT'
-  if (Number.isFinite(entry) && Number.isFinite(sl) && Number.isFinite(exit) && pnl < 0) {
-    const diff = isLong ? (exit - sl) : (sl - exit)
-    return diff * (parseFloat(trade?.size) || 1)
-  }
-  return 0
-}
-
-const getTpCaptureForMetric = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry)
-  const exit = parsePositiveTradePrice(trade?.exit)
-  const tp = parsePositiveTradePrice(trade?.takeProfit)
-  const isLong = (trade?.side || 'LONG').toUpperCase() !== 'SHORT'
-  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
-    const plannedDist = Math.abs(tp - entry)
-    const actualDist = isLong ? Math.max(0, exit - entry) : Math.max(0, entry - exit)
-    if (plannedDist > 0) return Math.min(100, (actualDist / plannedDist) * 100)
-  }
-  return Number.NaN
-}
-
-const getEdgeQuotientForMetric = (trade: any) => {
-  const realizedRR = getTradeRrForMetric(trade)
-  const expectedRR = props.strategyStatsContext?.avgRR || 2.0
-  return expectedRR > 0 ? (realizedRR / expectedRR) : Number.NaN
-}
-
-const getUnrealizedAlphaLeftForMetric = (trade: any) => {
-  const entry = parsePositiveTradePrice(trade?.entry)
-  const exit = parsePositiveTradePrice(trade?.exit)
-  const tp = parsePositiveTradePrice(trade?.takeProfit)
-  const pnl = getTradePnlValue(trade)
-  const isLong = (trade?.side || 'LONG').toUpperCase() !== 'SHORT'
-  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
-    const targetDistance = Math.abs(tp - entry)
-    const exitDistance = Math.abs(exit - entry)
-    const plannedPnL = targetDistance * (parseFloat(trade?.size) || (exitDistance > 0 ? Math.abs(pnl) / exitDistance : 0))
-    if (plannedPnL > pnl) return plannedPnL - pnl
-  }
-  return 0
-}
-
-const getHorizonSyncForMetric = (trade: any) => {
-  const durationHours = getTradeDurationHoursForMetric(trade)
-  const avgDurationHours = (props.strategyStatsContext?.avgDuration || 180) / 60
-  if (avgDurationHours <= 0) return 50
-  return Math.min(100, Math.max(0, (durationHours / (avgDurationHours * 2)) * 100))
-}
-
-const getVelocityVarianceForMetric = (trade: any) => {
-  const durationHours = getTradeDurationHoursForMetric(trade)
-  const pnl = getTradePnlValue(trade)
-  const currentVelocity = durationHours > 0 ? pnl / durationHours : 0
-  const avgVelocity = props.strategyStatsContext?.avgVelocity || 50
-  return avgVelocity > 0 ? (currentVelocity / avgVelocity) : 1.0
-}
-
-const getAlphaDecayForMetric = (trade: any) => {
-  const hasNegative = getNegativeEmotionsForMetric(trade).length > 0
-  const reqConditions = getEntryRequiredConditionSnapshot(trade)
-  const executedConditions = getEntryExecutedConditions(trade)
-  const missing = reqConditions.filter((req: any) =>
-    !executedConditions.some((exec: any) => conditionIdentity(exec) === conditionIdentity(req))
-  ).length
-  return hasNegative ? missing : 0
-}
-
-const getExecutionConfidenceForMetric = (trade: any) => {
-  const adherence = getRequiredAdherenceForMetric(trade)
-  const tpCapture = getTpCaptureForMetric(trade)
-  const stability = getCognitiveStabilityForMetric(trade)
-  const a = Number.isFinite(adherence) ? adherence : 100
-  const t = Number.isFinite(tpCapture) ? tpCapture : 100
-  const s = Number.isFinite(stability) ? stability : 100
-  return Math.round((a * 0.4) + (t * 0.3) + (s * 0.3)) / 10
-}
-
-const parseStudyNumber = (value: any): number => {
-  if (value === undefined || value === null || value === '') return Number.NaN
-  const num = typeof value === 'number' ? value : parseFloat(String(value).replace(/,/g, ''))
-  return Number.isFinite(num) ? num : Number.NaN
-}
-
-const getGeneratedStudyForMetric = (trade: any) => trade?.generatedInTradeAnalysis || trade?.studyAnalysis || {}
-const getTradeStudyMetricsForMetric = (trade: any) => trade?.studyMetrics || {}
-
-const getInTradeMetricValueForCorrelation = (trade: any, id: string): number | string | null => {
-  const generated = getGeneratedStudyForMetric(trade)
-  const metrics = getTradeStudyMetricsForMetric(trade)
-  if (id === 'meaningfulLossTime') return parseStudyNumber(generated.meaningfulLossSeconds) / 3600
-  if (id === 'meaningfulProfitTime') return parseStudyNumber(generated.meaningfulProfitSeconds) / 3600
-  if (id === 'maxMeaningfulDrawdown') return Math.abs(parseStudyNumber(generated.maxMeaningfulDrawdownPct ?? metrics.maxMeaningfulDrawdownPct))
-  if (id === 'maxFavorableExcursion') return parseStudyNumber(generated.maxFavorableExcursionPct ?? metrics.maxFavorableExcursionPct)
-  if (id === 'profitCaptureRatio') return parseStudyNumber(generated.profitCaptureRatio)
-  if (id === 'pricePathShape') return String(generated.pricePathShape || 'N/A')
-  if (id === 'firstImpulseDirection') return String(generated.firstImpulseDirection || 'N/A')
-  if (id === 'entryHeat') return parseStudyNumber(generated.entryHeatSeconds) / 3600
-  if (id === 'adverseBeforeProfit') {
-    if (generated.adverseBeforeProfit === true) return locale.value === 'ru' ? 'Да' : 'Yes'
-    if (generated.adverseBeforeProfit === false) return locale.value === 'ru' ? 'Нет' : 'No'
-    return 'N/A'
-  }
-  if (id === 'hadNews') return metrics?.hadNews ? (locale.value === 'ru' ? 'Да' : 'Yes') : (locale.value === 'ru' ? 'Нет' : 'No')
-  return null
-}
-
-type CorrelationMetricKind = 'numeric' | 'category'
-type CorrelationMetricFormat = 'currency' | 'percent' | 'ratio' | 'duration' | 'score' | 'count' | 'text'
-
-interface CorrelationMetricConfig {
-  id: string
-  label: string
-  group: string
-  kind: CorrelationMetricKind
-  format: CorrelationMetricFormat
-  extract: (trade: any) => number | string | null
-}
-
-const scorePatternInTradeMetricConfigs = (): CorrelationMetricConfig[] => {
-  const isRu = locale.value === 'ru'
-  const specs: Array<{ id: string; kind: CorrelationMetricKind; format: CorrelationMetricFormat }> = [
-    { id: 'meaningfulLossTime', kind: 'numeric', format: 'duration' },
-    { id: 'meaningfulProfitTime', kind: 'numeric', format: 'duration' },
-    { id: 'maxMeaningfulDrawdown', kind: 'numeric', format: 'percent' },
-    { id: 'maxFavorableExcursion', kind: 'numeric', format: 'percent' },
-    { id: 'profitCaptureRatio', kind: 'numeric', format: 'percent' },
-    { id: 'pricePathShape', kind: 'category', format: 'text' },
-    { id: 'firstImpulseDirection', kind: 'category', format: 'text' },
-    { id: 'entryHeat', kind: 'numeric', format: 'duration' },
-    { id: 'adverseBeforeProfit', kind: 'category', format: 'text' },
-    { id: 'hadNews', kind: 'category', format: 'text' }
-  ]
-
-  return specs.map((spec) => ({
-    id: `in_trade:${spec.id}`,
-    label: getMetricLabel(spec.id),
-    group: isRu ? 'Анализ в сделке' : 'In-Trade Analysis',
-    kind: spec.kind,
-    format: spec.format,
-    extract: (trade: any) => getInTradeMetricValueForCorrelation(trade, spec.id)
-  }))
-}
-
-const correlationMetricConfigs = computed<CorrelationMetricConfig[]>(() => {
-  const base: CorrelationMetricConfig[] = [
-    { id: 'required_adherence', label: getMetricLabel('required_adherence'), group: 'Matrix Adherence', kind: 'numeric', format: 'percent', extract: getRequiredAdherenceForMetric },
-    { id: 'additional_alpha', label: getMetricLabel('additional_alpha'), group: 'Matrix Adherence', kind: 'numeric', format: 'count', extract: getAdditionalConditionCountForMetric },
-    { id: 'protocol_strictness', label: getMetricLabel('protocol_strictness'), group: 'Matrix Adherence', kind: 'numeric', format: 'score', extract: (trade) => Math.min(10, (getEntryRequiredConditionSnapshot(trade).length * 2.5) + (getAdditionalConditionCountForMetric(trade) * 1.5) || 8.5) },
-    { id: 'conditional_pnl_ratio', label: getMetricLabel('conditional_pnl_ratio'), group: 'Matrix Adherence', kind: 'numeric', format: 'currency', extract: (trade) => {
-      const conditions = getRuleCountForMetric(trade)
-      return conditions > 0 ? getTradePnlValue(trade) / conditions : getTradePnlValue(trade)
-    } },
-    { id: 'setup_complexity', label: getMetricLabel('setup_complexity'), group: 'Matrix Adherence', kind: 'numeric', format: 'ratio', extract: getSetupComplexityForMetric },
-    { id: 'cognitive_stability', label: getMetricLabel('cognitive_stability'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getCognitiveStabilityForMetric },
-    { id: 'dominant_bias', label: getMetricLabel('dominant_bias'), group: 'Behavioural', kind: 'category', format: 'text', extract: getDominantBiasForMetric },
-    { id: 'emotional_pnl_drag', label: getMetricLabel('emotional_pnl_drag'), group: 'Behavioural', kind: 'numeric', format: 'currency', extract: (trade) => getNegativeEmotionsForMetric(trade).length ? getTradePnlValue(trade) - (((props.strategyStatsContext?.avgPnl || 0)) * 1.15) : 0 },
-    { id: 'friction_density', label: getMetricLabel('friction_density'), group: 'Behavioural', kind: 'numeric', format: 'percent', extract: getFrictionDensityForMetric },
-    { id: 'net_result_variance', label: getMetricLabel('net_result_variance'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => getTradePnlValue(trade) - (props.strategyStatsContext?.avgPnl || 0) },
-    { id: 'yield_efficiency', label: getMetricLabel('yield_efficiency'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getYieldPctForMetric },
-    { id: 'profit_velocity', label: getMetricLabel('profit_velocity'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: getProfitVelocityForMetric },
-    { id: 'actual_vs_target_rr', label: getMetricLabel('actual_vs_target_rr'), group: 'Execution & Risk', kind: 'numeric', format: 'ratio', extract: getTradeRrForMetric },
-    { id: 'planned_vs_realized_risk', label: getMetricLabel('planned_vs_realized_risk'), group: 'Execution & Risk', kind: 'numeric', format: 'currency', extract: (trade) => Math.max(Number.isFinite(getPlannedStopRiskDollarsForMetric(trade)) ? getPlannedStopRiskDollarsForMetric(trade) : 0, getRealizedRiskDollarsForMetric(trade)) },
-    { id: 'temporal_exposure', label: getMetricLabel('temporal_exposure'), group: 'Execution & Risk', kind: 'numeric', format: 'duration', extract: getTradeDurationHoursForMetric },
-    { id: 'asset_protocol', label: getMetricLabel('asset_protocol'), group: 'Execution & Risk', kind: 'category', format: 'text', extract: (trade) => `${trade?.side || 'N/A'} ${trade?.asset || 'N/A'}` },
-    { id: 'stop_loss_distance', label: getMetricLabel('stop_loss_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getSlDistPct },
-    { id: 'take_profit_distance', label: getMetricLabel('take_profit_distance'), group: 'Execution & Risk', kind: 'numeric', format: 'percent', extract: getTpDistPct },
-    { id: 'sl_execution_drag', label: getMetricLabel('sl_execution_drag'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getSlExecutionDragForMetric },
-    { id: 'risk_budget_adherence', label: getMetricLabel('risk_budget_adherence'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getRiskBudgetRatioForMetric },
-    { id: 'tp_capture_ratio', label: getMetricLabel('tp_capture_ratio'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getTpCaptureForMetric },
-    { id: 'edge_capture_quotient', label: getMetricLabel('edge_capture_quotient'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getEdgeQuotientForMetric },
-    { id: 'unrealized_alpha_left', label: getMetricLabel('unrealized_alpha_left'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'currency', extract: getUnrealizedAlphaLeftForMetric },
-    { id: 'horizon_sync_rating', label: getMetricLabel('horizon_sync_rating'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'percent', extract: getHorizonSyncForMetric },
-    { id: 'velocity_variance_index', label: getMetricLabel('velocity_variance_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'ratio', extract: getVelocityVarianceForMetric },
-    { id: 'conditional_alpha_decay', label: getMetricLabel('conditional_alpha_decay'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'count', extract: getAlphaDecayForMetric },
-    { id: 'execution_confidence_index', label: getMetricLabel('execution_confidence_index'), group: 'Strategy vs. Execution', kind: 'numeric', format: 'score', extract: getExecutionConfidenceForMetric }
-  ]
-
-  const inTradeConfigs = scorePatternInTradeMetricConfigs()
-  return [...base, ...inTradeConfigs]
-})
-
-const correlationMetricById = computed(() => new Map(correlationMetricConfigs.value.map((metric) => [metric.id, metric])))
-const activeCorrelationMetric = computed(() => activeCorrelationMetricId.value ? correlationMetricById.value.get(activeCorrelationMetricId.value) || null : null)
-
-const closedAllTrades = computed(() => props.allTrades.filter(isClosedTradeForMetrics))
-
-const selectedCorrelationAnalysis = computed(() => {
-  const metric = activeCorrelationMetric.value
-  if (!metric) return null
-
-  const validTrades = closedAllTrades.value
-    .map((trade: any) => {
-      const raw = metric.extract(trade)
+      const selected = executedKeys.has(identity)
       return {
-        trade,
-        raw,
-        pnl: getTradePnlValue(trade)
+        id: id || identity || `required-${index}`,
+        name: conditionDisplayName(condition),
+        description: conditionDescription(condition),
+        selected,
+        statusLabel: selected
+          ? (locale.value === 'ru' ? 'выбрано' : 'selected')
+          : (locale.value === 'ru' ? 'пропущено' : 'missing')
       }
     })
-    .filter((item) => item.raw !== null && item.raw !== undefined && item.raw !== 'N/A' && Number.isFinite(item.pnl))
+    .filter(Boolean)
+})
+
+const requiredConditionStats = computed(() => {
+  const required = getEntryRequiredConditionSnapshot(props.trade)
+  const executed = getEntryExecutedConditions(props.trade)
+
+  if (required.length === 0) return { used: 0, total: 0 }
+
+  const executedKeys = new Set(executed.map(conditionIdentity).filter(Boolean))
+  const used = required.filter((condition: any) => executedKeys.has(conditionIdentity(condition))).length
+  return { used, total: required.length }
+})
+
+const plannedStopRiskDollars = computed(() => getTradePlannedStopRiskDollars(props.trade))
+
+const realizedRiskDollars = computed(() => {
+  if (!props.trade) return 0
+  const pnl = getNormalizedPnl(props.trade)
+  return pnl < 0 ? Math.abs(pnl) : 0
+})
+
+const riskLimit = computed(() => {
+  const trade = props.trade || {}
+  const raw = trade.riskPerTrade ?? trade.riskPerTradeValue ?? trade.riskPercent
+  const value = parseNumber(raw)
+  if (!Number.isFinite(value)) return null
 
   return {
-    metric,
-    sampleSize: validTrades.length,
-    validTrades
+    value,
+    unit: trade.riskPerTradeUnit === '%' || trade.riskPercent !== undefined ? '%' : '$'
   }
 })
 
-const formatCurrency = (val: number) => {
-  if (!Number.isFinite(val)) return '$0.00'
-  const sign = val >= 0 ? '+' : '-'
-  return `${sign}$${Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const riskBudgetDollars = computed(() => {
+  if (!riskLimit.value) return null
+  if (riskLimit.value.unit === '%') return (riskLimit.value.value / 100) * balanceBeforeTrade.value
+  return riskLimit.value.value
+})
+
+const plannedStopRiskPct = computed(() => {
+  if (!Number.isFinite(plannedStopRiskDollars.value) || balanceBeforeTrade.value <= 0) return Number.NaN
+  return (plannedStopRiskDollars.value / balanceBeforeTrade.value) * 100
+})
+
+const realizedRiskPct = computed(() => {
+  if (balanceBeforeTrade.value <= 0) return 0
+  return (realizedRiskDollars.value / balanceBeforeTrade.value) * 100
+})
+
+const tradeRiskAudit = computed(() => {
+  const budget = riskBudgetDollars.value
+  const planned = plannedStopRiskDollars.value
+  const realized = realizedRiskDollars.value
+  const hasPlannedRisk = Number.isFinite(planned)
+  const plannedOk = hasPlannedRisk && (budget === null || planned <= budget)
+  const realizedOk = budget === null || realized <= budget
+  const isRu = locale.value === 'ru'
+
+  let hint = isRu
+    ? 'Риск по stop loss и фактический убыток находятся в пределах Risk Per Trade.'
+    : 'Stop-loss risk and realized loss are within the Risk Per Trade budget.'
+
+  if (!hasPlannedRisk && !realizedOk) {
+    hint = isRu
+      ? 'Stop loss не установлен, а фактический убыток превысил Risk Per Trade.'
+      : 'Stop loss is not set and realized loss exceeded Risk Per Trade.'
+  } else if (!hasPlannedRisk) {
+    hint = isRu
+      ? 'Planned risk невозможно посчитать без установленного stop loss.'
+      : 'Planned risk cannot be calculated without a stop loss.'
+  } else if (!plannedOk && !realizedOk) {
+    hint = isRu
+      ? 'И стоп был выставлен за пределами лимита, и фактический убыток превысил Risk Per Trade.'
+      : 'Both stop placement and realized loss exceeded the Risk Per Trade budget.'
+  } else if (!plannedOk) {
+    hint = isRu
+      ? 'Расстояние от entry до stop loss с учетом размера позиции превышает Risk Per Trade.'
+      : 'The entry-to-stop distance, adjusted by position size, exceeds Risk Per Trade.'
+  } else if (!realizedOk) {
+    hint = isRu
+      ? 'Стоп был в лимите, но реализованный убыток превысил Risk Per Trade.'
+      : 'Stop risk was within budget, but realized loss exceeded Risk Per Trade.'
+  } else if (hasPlannedRisk && realized > planned && planned > 0) {
+    hint = isRu
+      ? 'Фактический убыток больше риска по stop loss, даже если общий лимит не превышен.'
+      : 'Realized loss is larger than the stop-loss risk, even though the total budget was not breached.'
+  }
+
+  return {
+    planned,
+    realized,
+    plannedOk,
+    realizedOk,
+    ok: plannedOk && realizedOk && !(hasPlannedRisk && realized > planned && planned > 0),
+    hint
+  }
+})
+
+const actualRR = computed(() => {
+  const direct = parseNumber(props.trade?.rr ?? props.trade?.riskReward)
+  if (Number.isFinite(direct) && direct > 0) return direct
+  return getTradeRiskReward(props.trade)
+})
+
+const targetRR = computed(() => {
+  const direct = parseNumber(props.trade?.riskRewardRatio ?? props.trade?.plannedRiskReward)
+  return Number.isFinite(direct) && direct > 0 ? direct : 0
+})
+
+const formatCurrency = (value: number) => {
+  if (!Number.isFinite(value)) return 'N/A'
+  const safe = Number.isFinite(value) ? value : 0
+  return `${safe < 0 ? '-' : ''}$${Math.abs(safe).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-const selectedMetricEquityCurve = computed(() => {
-  const analysis = selectedCorrelationAnalysis.value
-  if (!analysis || analysis.sampleSize < 2) return null
+const formatRiskPercent = (value: number) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A'
 
-  const tradesSorted = analysis.validTrades.slice().sort((a, b) => {
-    const timeA = new Date(a.trade.dateExit || a.trade.date || a.trade.exitTime || a.trade.entryTime || 0).getTime()
-    const timeB = new Date(b.trade.dateExit || b.trade.date || b.trade.exitTime || b.trade.entryTime || 0).getTime()
-    return timeA - timeB
-  })
+const formatRatio = (value: number) => {
+  const safe = Number.isFinite(value) && value > 0 ? value : 0
+  return `1:${safe.toFixed(2)}`
+}
 
-  const numericPoints = tradesSorted
-    .map((item) => ({ item, num: Number(item.raw) }))
-    .filter((entry) => Number.isFinite(entry.num))
+const simpleMetricInsights = computed(() => {
+  const trade = props.trade
+  const isRu = locale.value === 'ru'
+  if (!trade) return []
 
-  if (numericPoints.length < 2) return null
+  const currentPnl = getNormalizedPnl(trade)
+  const baselineTrades = closedTrades.value.filter((item) => item?.id !== trade.id)
+  const normalizedPnls = baselineTrades
+    .map((item) => getNormalizedPnl(item))
+    .filter(Number.isFinite)
+  const winningPnls = normalizedPnls.filter((value) => value > 0)
+  const losingPnls = normalizedPnls.filter((value) => value < 0)
+  const avgWin = winningPnls.length ? winningPnls.reduce((sum, value) => sum + value, 0) / winningPnls.length : 0
+  const avgLoss = losingPnls.length ? losingPnls.reduce((sum, value) => sum + value, 0) / losingPnls.length : 0
+  const requiredStats = requiredConditionStats.value
+  const riskAudit = tradeRiskAudit.value
 
-  let runningEquity = 0
-  const series = numericPoints.map((entry, idx) => {
-    runningEquity += entry.item.pnl
-    return {
-      id: String(entry.item.trade.id || idx),
-      idx,
-      metricVal: entry.num,
-      equity: runningEquity,
-      asset: String(entry.item.trade.asset || 'TRADE'),
-      date: String(entry.item.trade.dateExit || entry.item.trade.date || '')
-    }
-  })
+  let riskValue = formatCurrency(riskAudit.planned)
+  let riskSuffix = isRu ? 'риск по stop loss от entry' : 'stop-loss risk from entry'
+  let riskBenchmarkValue = formatCurrency(riskAudit.realized)
 
-  const minMetric = Math.min(...series.map((s) => s.metricVal))
-  const maxMetric = Math.max(...series.map((s) => s.metricVal))
-  const minEquity = Math.min(...series.map((s) => s.equity))
-  const maxEquity = Math.max(...series.map((s) => s.equity))
-
-  const metricSpan = Math.max(maxMetric - minMetric, 0.00001)
-  const equitySpan = Math.max(maxEquity - minEquity, 0.00001)
-
-  const points = series.map((s, idx) => {
-    const x = (idx / (series.length - 1)) * 100
-    const metricY = 100 - (((s.metricVal - minMetric) / metricSpan) * 100)
-    const equityY = 100 - (((s.equity - minEquity) / equitySpan) * 100)
-    return {
-      id: s.id,
-      x,
-      metricY,
-      equityY,
-      metricValue: s.metricVal,
-      metricLabel: `${s.metricVal.toFixed(2)}`,
-      equity: s.equity,
-      equityLabel: formatCurrency(s.equity),
-      asset: s.asset,
-      date: s.date
-    }
-  })
-
-  const equityPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.equityY.toFixed(2)}`).join(' ')
-  const metricPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.metricY.toFixed(2)}`).join(' ')
-
-  return {
-    points,
-    equityPath,
-    metricPath,
-    relationshipMode: analysis.metric.kind === 'category' ? 'Category Grouping' : 'Linear Correlation',
-    relationshipScore: 85
+  if (riskLimit.value?.unit === '%') {
+    riskValue = formatRiskPercent(plannedStopRiskPct.value)
+    riskSuffix = isRu ? 'по stop loss от капитала' : 'stop risk of capital'
+    riskBenchmarkValue = `${realizedRiskPct.value.toFixed(2)}% / ${riskLimit.value.value.toFixed(2)}%`
+  } else if (riskLimit.value) {
+    riskValue = formatCurrency(riskAudit.planned)
+    riskSuffix = isRu ? 'по stop loss на сделку' : 'stop risk on this trade'
+    riskBenchmarkValue = `${formatCurrency(riskAudit.realized)} / ${formatCurrency(riskLimit.value.value)}`
   }
+
+  const rrHint = targetRR.value > 0 && actualRR.value > 0 && actualRR.value < targetRR.value
+    ? (isRu
+      ? 'Увеличьте R/R через более точное смещение stop loss и take profit.'
+      : 'Improve R/R by adjusting stop loss and take profit placement.')
+    : ''
+  const scoreBreakdown = tradeScoreBreakdown.value
+
+  return [
+    {
+      id: 'score',
+      label: isRu ? 'Общий score сделки' : 'Trade Score',
+      prefix: isRu ? 'Лучше чем' : 'Better than',
+      value: `${scoreBreakdown.percentile}%`,
+      suffix: isRu ? 'сделок' : 'of trades',
+      benchmarkLabel: 'raw score',
+      benchmarkValue: formatCurrency(scoreBreakdown.rawScore),
+      hint: '',
+      tone: scoreBreakdown.percentile >= 70 ? 'positive' : (scoreBreakdown.percentile >= 40 ? 'warning' : 'negative')
+    },
+    {
+      id: 'pnl',
+      label: isRu ? 'Результат сделки' : 'Trade Result',
+      prefix: currentPnl >= 0 ? (isRu ? 'Прибыль' : 'Profit') : (isRu ? 'Убыток' : 'Loss'),
+      value: formatCurrency(currentPnl),
+      suffix: isRu ? 'по текущей сделке' : 'on the current trade',
+      benchmarkLabel: currentPnl >= 0 ? (isRu ? 'средняя прибыльная' : 'avg win') : (isRu ? 'средняя убыточная' : 'avg loss'),
+      benchmarkValue: currentPnl >= 0 ? formatCurrency(avgWin) : formatCurrency(avgLoss),
+      hint: '',
+      tone: currentPnl >= 0 ? 'positive' : 'negative'
+    },
+    {
+      id: 'required',
+      label: isRu ? 'Обязательные условия' : 'Required Conditions',
+      prefix: requiredStats.total > 0 ? (isRu ? 'Использовано' : 'Used') : (isRu ? 'Список' : 'List'),
+      value: requiredStats.total > 0 ? `${requiredStats.used}/${requiredStats.total}` : 'N/A',
+      suffix: requiredStats.total > 0 ? (isRu ? 'required условий' : 'required conditions') : (isRu ? 'required условий не найден' : 'required conditions not found'),
+      benchmarkLabel: isRu ? 'статус' : 'status',
+      benchmarkValue: requiredStats.total > 0 && requiredStats.used < requiredStats.total
+        ? (isRu ? 'пропуск' : 'missing')
+        : (isRu ? 'полно' : 'complete'),
+      hint: requiredStats.total > 0 && requiredStats.used < requiredStats.total
+        ? (isRu ? 'Проверьте, какие required условия были пропущены перед следующим входом.' : 'Review which required conditions were skipped before next entry.')
+        : '',
+      tone: requiredStats.total > 0 && requiredStats.used < requiredStats.total ? 'warning' : 'positive'
+    },
+    {
+      id: 'risk',
+      label: isRu ? 'Риск сделки' : 'Trade Risk',
+      prefix: isRu ? 'Риск' : 'Risk',
+      value: riskValue,
+      suffix: riskSuffix,
+      benchmarkLabel: isRu ? 'факт' : 'realized',
+      benchmarkValue: riskBenchmarkValue,
+      hint: riskAudit.hint,
+      benchmarkTone: riskAudit.realizedOk ? 'positive' : 'negative',
+      tone: riskAudit.ok ? 'positive' : 'negative'
+    },
+    {
+      id: 'rr',
+      label: 'Risk/Reward',
+      prefix: 'Risk/Reward',
+      value: formatRatio(actualRR.value),
+      suffix: isRu ? 'фактическое соотношение' : 'realized ratio',
+      benchmarkLabel: isRu ? 'цель' : 'target',
+      benchmarkValue: targetRR.value > 0 ? formatRatio(targetRR.value) : 'N/A',
+      hint: rrHint,
+      tone: targetRR.value > 0 && actualRR.value < targetRR.value ? 'warning' : 'positive'
+    }
+  ]
 })
 
-const closeCorrelationMetric = () => {
-  activeCorrelationMetricId.value = null
+const scorePatternDescription = (metricId: string) => {
+  const isRu = locale.value === 'ru'
+  if (metricId === 'pnl') return isRu ? 'Фактический финансовый результат сделки.' : 'Actual financial result of the trade.'
+  if (metricId === 'rr') return isRu ? 'Фактическое соотношение риска к прибыли.' : 'Realized risk/reward ratio.'
+  return isRu ? 'Покрытие обязательных условий входа.' : 'Coverage of required entry conditions.'
 }
 </script>
 
 <template>
-  <div class="flex flex-col space-y-4">
-    <!-- CORRELATION OVERLAY / DETAIL -->
+  <div class="pb-6">
     <div
-      v-if="activeCorrelationMetric && selectedCorrelationAnalysis"
-      class="relative z-30 flex h-[500px] min-h-0 flex-col overflow-hidden rounded-sm border nier-border-primary bg-[#f7f5ef]/95 p-4 text-black backdrop-blur-xl dark:bg-[#080806]/95 dark:text-white md:p-5 mb-4"
+      v-for="(item, index) in simpleMetricInsights"
+      :key="item.id"
+      class="group relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 border-b nier-border-primary px-4 py-4 transition-all duration-300 first:border-t hover:bg-black/[0.025] dark:hover:bg-white/[0.025] md:grid-cols-[42px_minmax(0,1fr)_minmax(148px,auto)] md:px-5"
     >
-      <div class="mb-4 flex shrink-0 items-center gap-4">
-        <button
-          type="button"
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-black/15 transition-all duration-300 hover:bg-black hover:text-white dark:border-white/15 dark:hover:bg-white dark:hover:text-black"
-          @click="closeCorrelationMetric"
-        >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 18l-6-6 6-6"></path>
-          </svg>
-        </button>
+      <div
+        class="absolute left-0 top-1/2 h-6 w-px -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        :class="item.tone === 'positive' ? 'bg-emerald-500' : (item.tone === 'negative' ? 'bg-rose-500' : 'bg-amber-500')"
+      ></div>
 
-        <div class="min-w-0">
-          <h2 class="truncate font-serif text-2xl italic leading-tight tracking-normal md:text-3xl">
-            {{ formatDisplayLabel(selectedCorrelationAnalysis.metric.label) }}
-          </h2>
+      <div class="flex items-center justify-center">
+        <div class="relative flex h-7 w-7 items-center justify-center text-[9px] font-mono font-black opacity-45 transition-all duration-300 group-hover:opacity-100">
+          <span class="relative">{{ index + 1 }}</span>
+        </div>
+      </div>
+
+      <div class="min-w-0">
+        <div class="mb-2 flex items-center gap-3">
+          <span class="text-[8px] font-mono font-black uppercase tracking-[0.32em] opacity-35 transition-opacity group-hover:opacity-60">
+            {{ formatDisplayLabel(item.label) }}
+          </span>
+          <span class="h-px min-w-8 flex-1 bg-current opacity-10"></span>
+        </div>
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="text-[11px] font-mono uppercase tracking-[0.2em] opacity-45">{{ item.prefix }}</span>
+          <span
+            class="text-2xl font-mono font-black tracking-normal md:text-3xl"
+            :class="item.tone === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : (item.tone === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')"
+          >
+            {{ item.value }}
+          </span>
+          <span class="text-[12px] font-mono uppercase tracking-[0.12em] opacity-70">{{ item.suffix }}</span>
+        </div>
+        <p v-if="item.hint" class="mt-2 max-w-3xl text-[10px] font-mono uppercase leading-relaxed tracking-[0.16em] opacity-50">
+          {{ item.hint }}
+        </p>
+
+        <div v-if="item.id === 'score'" class="mt-4">
+          <button
+            type="button"
+            class="inline-flex items-center gap-3 border nier-border-primary px-3 py-2 text-[8px] font-mono font-black uppercase tracking-[0.24em] opacity-70 transition-all duration-300 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+            @click.stop="isTradeScoreExpanded = !isTradeScoreExpanded"
+          >
+            <span class="relative h-3 w-3">
+              <span class="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-current"></span>
+              <span
+                class="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-300"
+                :class="isTradeScoreExpanded ? 'scale-y-0' : 'scale-y-100'"
+              ></span>
+            </span>
+            <span>
+              {{ isTradeScoreExpanded ? (locale === 'ru' ? 'Скрыть состав' : 'Hide score') : (locale === 'ru' ? 'Показать состав' : 'Show score') }}
+            </span>
+          </button>
+
+          <div v-if="isTradeScoreExpanded" class="mt-3 flex max-h-[360px] flex-col overflow-y-auto border-t nier-border-primary pr-1">
+            <div
+              v-for="pattern in tradeScoreBreakdown.patterns"
+              :key="`${pattern.label}-${pattern.value}`"
+              class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]"
+              :title="scorePatternDescription(pattern.metricId)"
+            >
+              <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
+              <span class="max-w-[220px] truncate text-right text-[10px] font-mono font-black nier-text-primary">
+                {{ pattern.value }}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div
-          v-if="selectedMetricEquityCurve"
-          class="ml-auto shrink-0 font-mono text-[10px] font-black uppercase tracking-[0.22em] opacity-65"
-        >
-          {{ formatDisplayLabel(selectedMetricEquityCurve.relationshipMode) }}
-          <span v-if="Number.isFinite(selectedMetricEquityCurve.relationshipScore)">
-            {{ selectedMetricEquityCurve.relationshipScore }}%
+        <div v-if="item.id === 'required' && requiredConditionRows.length > 0" class="mt-4">
+          <button
+            type="button"
+            class="inline-flex items-center gap-3 border nier-border-primary px-3 py-2 text-[8px] font-mono font-black uppercase tracking-[0.24em] opacity-70 transition-all duration-300 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
+            @click.stop="isRequiredConditionsExpanded = !isRequiredConditionsExpanded"
+          >
+            <span class="relative h-3 w-3">
+              <span class="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-current"></span>
+              <span
+                class="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-300"
+                :class="isRequiredConditionsExpanded ? 'scale-y-0' : 'scale-y-100'"
+              ></span>
+            </span>
+            <span>
+              {{ isRequiredConditionsExpanded ? (locale === 'ru' ? 'Скрыть условия' : 'Hide conditions') : (locale === 'ru' ? 'Показать условия' : 'Show conditions') }}
+            </span>
+          </button>
+
+          <div v-if="isRequiredConditionsExpanded" class="mt-3 flex flex-col border-t nier-border-primary">
+            <div
+              v-for="condition in requiredConditionRows"
+              :key="condition.id"
+              class="relative grid grid-cols-[18px_minmax(0,1fr)_auto] items-start gap-3 border-b nier-border-primary px-2 py-3 transition-all duration-300"
+              :class="condition.selected
+                ? 'bg-black/[0.06] text-black dark:bg-white/[0.08] dark:text-white'
+                : 'text-black/35 dark:text-white/35'"
+            >
+              <span
+                class="mt-1 h-2.5 w-2.5 rotate-45 border transition-all duration-300"
+                :class="condition.selected
+                  ? 'border-black bg-black shadow-[0_0_14px_rgba(0,0,0,0.25)] dark:border-white dark:bg-white dark:shadow-[0_0_16px_rgba(255,255,255,0.35)]'
+                  : 'border-current bg-transparent opacity-45'"
+              ></span>
+              <span class="min-w-0">
+                <span class="block truncate text-[10px] font-mono font-black uppercase tracking-[0.22em]">
+                  {{ formatDisplayLabel(condition.name) }}
+                </span>
+                <span
+                  v-if="condition.description"
+                  class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.16em] opacity-45"
+                >
+                  {{ condition.description }}
+                </span>
+              </span>
+              <span
+                class="shrink-0 text-[8px] font-mono font-black uppercase tracking-[0.2em]"
+                :class="condition.selected ? 'opacity-90' : 'opacity-40'"
+              >
+                {{ condition.statusLabel }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-start-2 flex items-center md:col-start-auto md:justify-end">
+        <div class="inline-flex items-center gap-2 border nier-border-primary px-3 py-2 text-[9px] font-mono uppercase tracking-[0.18em] opacity-70 transition-all duration-300 group-hover:opacity-100">
+          <span class="opacity-45">{{ item.benchmarkLabel }}</span>
+          <span
+            class="font-black"
+            :class="(item.benchmarkTone || item.tone) === 'positive' ? 'text-emerald-500 dark:text-emerald-400' : ((item.benchmarkTone || item.tone) === 'negative' ? 'text-rose-500 dark:text-rose-400' : 'text-amber-500 dark:text-amber-400')"
+          >
+            {{ item.benchmarkValue }}
           </span>
         </div>
       </div>
-
-      <div class="relative min-h-0 flex-1 overflow-hidden border border-black/10 bg-white/35 p-3 dark:border-white/10 dark:bg-black/20 md:p-4">
-        <svg v-if="selectedMetricEquityCurve" class="block h-full w-full overflow-hidden" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <line v-for="tick in [20, 40, 60, 80]" :key="`x-${tick}`" :x1="tick" :x2="tick" y1="0" y2="100" stroke="currentColor" stroke-width="0.08" opacity="0.1"></line>
-          <line v-for="tick in [20, 40, 60, 80]" :key="`y-${tick}`" x1="0" x2="100" :y1="tick" :y2="tick" stroke="currentColor" stroke-width="0.08" opacity="0.1"></line>
-          <line x1="0" x2="100" y1="100" y2="100" stroke="currentColor" stroke-width="0.16" opacity="0.24"></line>
-          <line x1="0" x2="0" y1="0" y2="100" stroke="currentColor" stroke-width="0.16" opacity="0.24"></line>
-          <path
-            :d="selectedMetricEquityCurve.equityPath"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.35"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.92"
-            vector-effect="non-scaling-stroke"
-          ></path>
-          <path
-            :d="selectedMetricEquityCurve.metricPath"
-            fill="none"
-            class="stroke-emerald-500 dark:stroke-emerald-400"
-            stroke-width="1.15"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-dasharray="4 3"
-            opacity="0.88"
-            vector-effect="non-scaling-stroke"
-          ></path>
-          <g v-for="point in selectedMetricEquityCurve.points" :key="point.id">
-            <circle
-              :cx="point.x"
-              :cy="point.equityY"
-              r="1.15"
-              class="fill-white stroke-black dark:fill-black dark:stroke-white"
-              stroke-width="0.7"
-              opacity="0.7"
-              vector-effect="non-scaling-stroke"
-            >
-              <title>{{ point.asset }} // capital {{ point.equityLabel }} // {{ point.date }}</title>
-            </circle>
-            <circle
-              :cx="point.x"
-              :cy="point.metricY"
-              r="0.95"
-              class="fill-emerald-500 dark:fill-emerald-400"
-              opacity="0.74"
-              vector-effect="non-scaling-stroke"
-            >
-              <title>{{ point.asset }} // metric {{ point.metricLabel }} // {{ point.date }}</title>
-            </circle>
-          </g>
-        </svg>
-        <div v-else class="flex h-full items-center justify-center font-mono text-[10px] font-black uppercase tracking-[0.24em] opacity-35">
-          Not enough data
-        </div>
-      </div>
-    </div>
-
-    <!-- METRICS FILTER TABS -->
-    <div class="flex flex-wrap items-center gap-2 border-b nier-border-primary pb-3 mb-4">
-      <button
-        v-for="tab in advancedMetricTabs"
-        :key="tab.id"
-        @click="activeMetricTab = tab.id"
-        class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer"
-        :class="activeMetricTab === tab.id
-          ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 nier-text-primary font-bold shadow-sm'
-          : 'nier-border-primary text-black/50 dark:text-white/50 hover:border-black/30 dark:hover:border-white/30'"
-      >
-        <div v-if="activeMetricTab === tab.id" class="w-1.5 h-1.5 nier-bg-inverted rotate-45 animate-pulse"></div>
-        <span class="text-[10px] font-mono tracking-wider uppercase">{{ tab.label }}</span>
-        <span class="text-[8px] font-mono px-1.5 py-0.5 bg-black/10 dark:bg-white/10 rounded-full opacity-60">{{ tab.count }}</span>
-      </button>
-    </div>
-
-    <!-- METRIC CARDS GRID -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
-      <ExMetricCard
-        v-for="metric in activeMetricList"
-        :key="metric.key"
-        :metric="metric"
-        :is-dark="isDark"
-        @select="handleMetricSelect"
-      />
     </div>
   </div>
 </template>
