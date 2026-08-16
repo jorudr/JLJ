@@ -1511,13 +1511,13 @@
         </div>
 
         <!-- Pagination Controls -->
-        <div v-if="hasPagination" class="py-4 flex flex-col items-center space-y-4">
+        <div class="pt-8 pb-4 flex flex-col items-center space-y-4">
            <div class="flex items-center space-x-12">
-              <button v-if="currentPage > 1" @click="navigateToPage(currentPage - 1)" 
+              <button @click="navigateToPage(currentPage - 1)" 
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.previousPage }}
               </button>
-              <button v-if="hasNextPage" @click="navigateToPage(currentPage + 1)"
+              <button @click="navigateToPage(currentPage + 1)"
                       class="px-8 py-3 bg-zinc-800 text-white text-[9px] font-mono tracking-[0.4em] uppercase hover:shadow-[0_0_30px_rgba(var(--text-primary-rgb),0.1)] transition-all">
                 {{ journalLabels.nextPage }}
               </button>
@@ -2037,7 +2037,7 @@ const totalPages = computed(() => {
   return Math.max(pubPages, sigPages)
 })
 const hasNextPage = computed(() => currentPage.value < totalPages.value)
-const hasPagination = computed(() => totalPages.value > 1)
+const hasPagination = computed(() => true)
 
 const filteredSignals = computed(() => {
   const globalQ = searchQuery.value.toLowerCase()
