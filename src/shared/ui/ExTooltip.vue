@@ -1,6 +1,7 @@
 <template>
   <div 
     class="relative inline-block"
+    v-bind="$attrs"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
     ref="triggerRef"

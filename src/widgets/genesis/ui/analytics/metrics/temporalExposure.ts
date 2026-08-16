@@ -1,0 +1,51 @@
+import type { MetricEngine } from '~/entities/metric'
+
+export const temporalExposureMetric: MetricEngine = {
+  key: 'temporal_exposure',
+  category: 'execution',
+  i18n: {
+    ru: {
+      label: 'Время в позиции',
+      sub: 'Длительность удержания',
+      desc: 'Полное время нахождения капитала под рыночным риском от входа до выхода.',
+      formula: 'Exit Timestamp - Entry Timestamp',
+      benchmark: '<= Средней длительности (Эффективно)',
+      evaluation: 'Временной горизонт удержания позиции.'
+    },
+    en: {
+      label: 'Temporal Exposure',
+      sub: 'Holding Duration',
+      desc: 'Total duration of trade from entry to exit protocol completion.',
+      formula: 'Exit Timestamp - Entry Timestamp',
+      benchmark: '<= Avg Duration (Efficient)',
+      evaluation: 'Market exposure duration.'
+    }
+  },
+  calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
+    const isRu = locale === 'ru'
+    const durationMinutes = Number(context?.durationMinutes || trade?.durationMinutes || 125)
+    const avgDuration = Number(context?.avgDuration || 180)
+
+    const isGood = durationMinutes <= avgDuration
+    const evalClass = isGood ? 'text-emerald-500' : 'text-amber-500'
+
+    const hours = Math.floor(durationMinutes / 60)
+    const mins = durationMinutes % 60
+    const formattedValue = `${hours > 0 ? `${hours}${isRu ? 'ч ' : 'h '}` : ''}${mins}${isRu ? 'мин' : 'm'}`
+
+    return {
+      rawValue: durationMinutes,
+      formattedValue,
+      status: isGood ? 'optimal' : 'warning',
+      evaluationText: isGood ? (isRu ? 'Хорошо' : 'Good') : (isRu ? 'Субоптимально' : 'Sub-Optimal'),
+      evalClass,
+      benchmarkText: isRu ? '<= Средняя длительность — Норма' : '<= Avg Duration — Efficient',
+      benchmarks: [
+        { label: '<= Avg Duration', eval: isRu ? 'Эффективно' : 'Efficient', class: 'text-emerald-500 font-bold' },
+        { label: '> Avg Duration', eval: isRu ? 'Затяжное удержание' : 'Extended Hold', class: 'text-amber-500 font-bold' }
+      ],
+      progress: Math.min(100, (durationMinutes / (avgDuration * 1.5)) * 100),
+      colorVal: isGood ? '#34d399' : '#fbbf24'
+    }
+  }
+}

@@ -1,0 +1,47 @@
+import type { MetricEngine } from '~/entities/metric'
+
+export const firstImpulseDirectionMetric: MetricEngine = {
+  key: 'firstImpulseDirection',
+  category: 'in_trade',
+  i18n: {
+    ru: {
+      label: 'Первый импульс',
+      sub: 'Направление после входа',
+      desc: 'Первое значимое движение цены сразу после открытия позиции: в плюс или в минус.',
+      formula: 'First Significant Post-Entry Move',
+      benchmark: 'Favorable (Импульс в плюс)',
+      evaluation: 'Точность момента входа в позицию.'
+    },
+    en: {
+      label: 'First Impulse Direction',
+      sub: 'Post-Entry Momentum',
+      desc: 'First meaningful price move after entry: favorable or adverse.',
+      formula: 'First Significant Post-Entry Move',
+      benchmark: 'Favorable (Immediate Profit)',
+      evaluation: 'Timing precision of position entry.'
+    }
+  },
+  calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
+    const isRu = locale === 'ru'
+    const impulse = String(context?.firstImpulse || trade?.firstImpulse || 'PROFIT').toUpperCase()
+
+    const isFavorable = impulse === 'PROFIT' || impulse === 'FAVORABLE'
+    const evalClass = isFavorable ? 'text-emerald-500' : 'text-rose-500'
+    const formattedValue = isFavorable ? (isRu ? 'В плюс' : 'Favorable') : (isRu ? 'В минус' : 'Adverse')
+
+    return {
+      rawValue: isFavorable ? 1 : -1,
+      formattedValue,
+      status: isFavorable ? 'optimal' : 'critical',
+      evaluationText: isFavorable ? (isRu ? 'Точный вход' : 'Timely Entry') : (isRu ? 'Вход против движения' : 'Adverse Impulse'),
+      evalClass,
+      benchmarkText: isRu ? 'Favorable — Сразу в плюс' : 'Favorable — Immediate Profit',
+      benchmarks: [
+        { label: 'Favorable', eval: isRu ? 'Сразу в плюс' : 'Favorable', class: 'text-emerald-500 font-bold' },
+        { label: 'Adverse', eval: isRu ? 'Первичная просадка' : 'Adverse', class: 'text-rose-500 font-bold' }
+      ],
+      progress: isFavorable ? 100 : 20,
+      colorVal: isFavorable ? '#34d399' : '#f87171'
+    }
+  }
+}

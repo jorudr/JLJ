@@ -1,0 +1,49 @@
+import type { MetricEngine } from '~/entities/metric'
+
+export const plannedVsRealizedRiskMetric: MetricEngine = {
+  key: 'planned_vs_realized_risk',
+  category: 'execution',
+  i18n: {
+    ru: {
+      label: 'Плановый vs Реализованный риск',
+      sub: 'Аудит стоп-риска',
+      desc: 'Аудирует плановый риск стоп-лосса и фактический убыток относительно риск-бюджета.',
+      formula: 'Stop Risk = |Entry - Stop| * Size · Realized Loss = max(0, -PnL)',
+      benchmark: '<= Risk Budget (В пределах лимита)',
+      evaluation: 'Соблюдение лимита риска на сделку.'
+    },
+    en: {
+      label: 'Planned vs Realized Risk',
+      sub: 'Risk Audit',
+      desc: 'Audits planned stop-loss risk and realized loss against Risk Per Trade budget.',
+      formula: 'Stop Risk = |Entry - Stop| * Size · Realized Loss = max(0, -PnL)',
+      benchmark: '<= Risk Budget (Compliant)',
+      evaluation: 'Risk budget compliance.'
+    }
+  },
+  calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
+    const isRu = locale === 'ru'
+    const plannedRisk = Number(trade?.riskDollars || 150)
+    const pnl = Number(trade?.pnl || 0)
+    const realizedLoss = Math.max(0, -pnl)
+    const budget = Number(context?.riskBudget || 200)
+
+    const isCompliant = plannedRisk <= budget && realizedLoss <= budget
+    const evalClass = isCompliant ? 'text-emerald-500' : 'text-rose-500'
+
+    return {
+      rawValue: Math.max(plannedRisk, realizedLoss),
+      formattedValue: `S: $${plannedRisk.toFixed(0)} | R: $${realizedLoss.toFixed(0)}`,
+      status: isCompliant ? 'optimal' : 'critical',
+      evaluationText: isCompliant ? (isRu ? 'В лимите' : 'Compliant') : (isRu ? 'Превышение риска' : 'Breach Warning'),
+      evalClass,
+      benchmarkText: isRu ? '<= Лимит риска — Без нарушений' : '<= Risk Budget — Compliant',
+      benchmarks: [
+        { label: '<= Risk Budget', eval: isRu ? 'В лимите' : 'Compliant', class: 'text-emerald-500 font-bold' },
+        { label: '> Risk Budget', eval: isRu ? 'Превышение' : 'Breach Warning', class: 'text-rose-500 font-bold' }
+      ],
+      progress: Math.min(100, (Math.max(plannedRisk, realizedLoss) / budget) * 100),
+      colorVal: isCompliant ? '#34d399' : '#f87171'
+    }
+  }
+}
