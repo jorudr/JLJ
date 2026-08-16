@@ -7,11 +7,11 @@ import ExPanel from "~/shared/ui/ExPanel.vue"
 import ExHeading from "~/shared/ui/ExHeading.vue"
 import ExText from "~/shared/ui/ExText.vue"
 import ExButton from "~/shared/ui/ExButton.vue"
-import DrawingModal from '@/widgets/diary/ui/thoughts/DrawingModal.vue'
 import ExImageArchiveSlot from '../common/ExImageArchiveSlot.vue'
 import ExImageEditor from '../common/ExImageEditor.vue'
 import ExEfficiencyLattice from "~/shared/ui/ExEfficiencyLattice.vue"
 import ExMetricCard from '~/entities/metric/ui/ExMetricCard.vue'
+import ExAdvancedMetricsPanel from './ExAdvancedMetricsPanel.vue'
 import { useTradeAnalysisMetrics } from './metrics'
 import { useDomI18n } from '~/shared/i18n/useDomI18n'
 import { useI18n } from '~/shared/i18n/useI18n'
@@ -1774,7 +1774,6 @@ const reportMetricModes = computed<Array<{ id: 'simple' | 'advanced'; label: str
   { id: 'simple', label: locale.value === 'ru' ? 'Базовые' : 'Simple' },
   { id: 'advanced', label: locale.value === 'ru' ? 'Продвинутые' : 'Advanced' }
 ]);
-const activeMetricTab = ref('all'); // 'all', 'adherence', 'behavioural', 'execution'
 const isTradeScoreExpanded = ref(false);
 
 const formatCurrency = (value: number) => {
@@ -2512,24 +2511,11 @@ const metricsData = computed(() => {
     strategyStatsContext.value,
     (locale.value as 'ru' | 'en') || 'ru',
     activeReportMetricMode.value,
-    activeMetricTab.value
+    'all'
   );
 });
 
 const activeMetricList = computed(() => metricsData.value.metrics);
-
-const advancedMetricTabs = computed(() => {
-  const c = metricsData.value.counts || {};
-  const isRu = locale.value === 'ru';
-  return [
-    { id: 'all', label: isRu ? 'Все' : 'All', count: c.all || 0 },
-    { id: 'adherence', label: isRu ? 'Соблюдение матрицы' : 'Matrix Adherence', count: c.adherence || 0 },
-    { id: 'behavioural', label: isRu ? 'Психология' : 'Behavioural', count: c.behavioural || 0 },
-    { id: 'execution', label: isRu ? 'Исполнение и риск' : 'Execution & Risk', count: c.execution || 0 },
-    { id: 'strategy_execution', label: isRu ? 'Стратегия vs Исполнение' : 'Strategy vs Execution', count: c.strategy_execution || 0 },
-    { id: 'in_trade', label: isRu ? 'Анализ в сделке' : 'In-Trade Analysis', count: c.in_trade || 0 }
-  ];
-});
 
 const handleMetricSelect = (metricKey: string) => {
   activeCorrelationMetricId.value = metricKey;
@@ -3372,252 +3358,7 @@ const requiredConditionStats = computed(() => {
   return { used, total: required.length };
 });
 
-// Tab A: Matrix Adherence Metrics
-const matrixAdherenceMetrics = computed(() => {
-  const tr = props.trade as any;
-  if (!tr) return { reqRatio: 0, reqText: '0/0', addCount: 0, addAlpha: 0, strictness: 0, condPnl: 0, complexity: 1.0 };
 
-  const conditions = tr.boardScenarioEntry?.info?.conditions || [];
-  const reqConditions = getEntryRequiredConditionSnapshot(tr);
-  const addConditions = conditions.filter((c: any) => c?.info?.priority === 'ADDITIONAL');
-  const scenarioId = tr.boardScenarioEntry?.id;
-  const getRuleCount = (trade: any) => {
-    const scenarioRules = trade?.boardScenarioEntry?.info?.conditions;
-    if (Array.isArray(scenarioRules)) return scenarioRules.length;
-    if (Array.isArray(trade?.boardConditions)) return trade.boardConditions.length;
-    return 0;
-  };
-
-  const requiredStats = requiredConditionStats.value;
-  const reqRatio = requiredStats.total > 0 ? (requiredStats.used / requiredStats.total) * 100 : (conditions.length > 0 ? 0 : 100);
-  const reqText = requiredStats.total > 0 ? `${requiredStats.used}/${requiredStats.total} Fulfilled` : '0/0';
-
-  const avgPnl = strategyStats.value.avgPnl || 0;
-  const pnl = getNormalizedPnl(tr);
-  const pnlDiff = pnl - avgPnl;
-  const addAlpha = addConditions.length > 0 ? (pnlDiff / (Math.abs(avgPnl) || 100)) * 100 : 0;
-
-  const strictness = Math.min(10, (reqConditions.length * 2.5) + (addConditions.length * 1.5) || 8.5);
-  const condPnl = conditions.length > 0 ? pnl / conditions.length : pnl;
-  const historicalRuleCounts = allTrades.value
-    .filter((trade: any) => !scenarioId || trade?.boardScenarioEntry?.id === scenarioId)
-    .map(getRuleCount)
-    .filter((count: number) => count > 0);
-  const sortedRuleCounts = [...historicalRuleCounts].sort((a, b) => a - b);
-  const medianRules = sortedRuleCounts.length > 0
-    ? (sortedRuleCounts.length % 2 === 1
-      ? sortedRuleCounts[(sortedRuleCounts.length - 1) / 2]
-      : (sortedRuleCounts[(sortedRuleCounts.length / 2) - 1] + sortedRuleCounts[sortedRuleCounts.length / 2]) / 2)
-    : 0;
-  const currentRuleCount = getRuleCount(tr);
-  const complexity = medianRules > 0 ? (currentRuleCount / medianRules) : 1.0;
-
-  return {
-    reqRatio,
-    reqText,
-    addCount: addConditions.length,
-    addAlpha,
-    strictness,
-    condPnl,
-    complexity
-  };
-});
-
-// Tab B: Behavioural Metrics
-const behaviouralMetrics = computed(() => {
-  const tr = props.trade as any;
-  if (!tr) return { stability: 100, bias: 'None', pnlDrag: 0, frictionCount: 0, frictionDensity: 0, hesitation: 'Nominal (<0.2s)' };
-
-  const emotions = tr.emotions || [];
-  const negativeSet = new Set([
-    'FOMO', 'fomo', 'Revenge', 'revenge', 'Greed', 'greed', 'Fear', 'fear', 
-    'Tilt', 'tilt', 'Anxiety', 'anxiety', 'Boredom', 'boredom', 'Fatigue', 'fatigue', 
-    'Anger', 'anger', 'Impatience', 'impatience', 'Frustration', 'frustration'
-  ]);
-  
-  const negativeEmotions = emotions.map(getEmotionName).filter((e: string) => negativeSet.has(e));
-  const frictionCount = negativeEmotions.length;
-  const frictionDensity = emotions.length > 0 ? (frictionCount / emotions.length) * 100 : 0;
-  
-  const stability = Math.max(10, 100 - (frictionCount * 15));
-
-  const hasEmo = (name: string) => negativeEmotions.some((e: string) => e.toLowerCase() === name.toLowerCase());
-
-  let bias = 'None (Clear Execution)';
-  if (hasEmo('fomo')) bias = 'FOMO (Premature Entry Risk)';
-  else if (hasEmo('revenge')) bias = 'Revenge (Over-Leverage Risk)';
-  else if (hasEmo('greed')) bias = 'Greed (Target Overshoot Risk)';
-  else if (hasEmo('fear')) bias = 'Fear (Premature Exit Risk)';
-  else if (hasEmo('tilt')) bias = 'Tilt (Protocol Violation)';
-  else if (hasEmo('fatigue')) bias = 'Fatigue (Cognitive Lethargy)';
-  else if (hasEmo('boredom')) bias = 'Boredom (Low-Quality Setup)';
-  else if (hasEmo('frustration')) bias = 'Frustration (Emotional Friction)';
-  else if (negativeEmotions.length > 0) bias = `${negativeEmotions[0].toUpperCase()} (Cognitive Friction)`;
-
-  const avgPnl = strategyStats.value.avgPnl || 0;
-  const estCleanPnl = avgPnl * 1.15;
-  const pnlDrag = frictionCount > 0 ? getNormalizedPnl(tr) - estCleanPnl : 0;
-
-  return {
-    stability,
-    bias,
-    pnlDrag,
-    frictionCount,
-    frictionDensity
-  };
-});
-
-// Tab D: Strategy vs. Execution Metrics
-const strategyExecutionMetrics = computed(() => {
-  const tr = props.trade as any;
-  if (!tr) return {
-    slDrag: 0, slDragText: 'No SL Data',
-    riskBudgetRatio: 100, riskBudgetText: 'Within Budget', actualRisk: 0, maxRisk: 250,
-    tpCapture: 100, tpCaptureText: 'Target Achieved',
-    edgeQuotient: 1.0, edgeQuotientText: 'Nominal Edge',
-    unrealizedLeft: 0, unrealizedLeftText: 'Full Target Captured',
-    horizonSync: 100, horizonSyncText: 'Optimal Sync',
-    velocityDelta: 1.0, velocityDeltaText: 'Nominal Velocity',
-    alphaDecay: 0, alphaDecayText: 'Zero Degradation',
-    executionGrade: 100, executionGradeText: 'Flawless Execution'
-  };
-
-  const entry = parsePositiveTradePrice(tr.entry);
-  const exit = parsePositiveTradePrice(tr.exit);
-  const sl = parsePositiveTradePrice(tr.stopLoss);
-  const tp = parsePositiveTradePrice(tr.takeProfit);
-  const pnl = getNormalizedPnl(tr);
-  const direction = getTradeDirection(tr);
-  const isLong = direction !== 'SHORT';
-
-  let slDrag = 0;
-  let slDragText = 'No SL Breached';
-  if (Number.isFinite(entry) && Number.isFinite(sl) && Number.isFinite(exit)) {
-    if (pnl < 0) {
-      const diff = isLong ? (exit - sl) : (sl - exit);
-      slDrag = diff * (parseFloat(tr.size) || 1);
-      slDragText = slDrag < 0 ? 'Slippage Drag (Worse than planned)' : 'Early Cut (Avoided full SL)';
-    }
-  }
-
-  const actualRisk = tradeRiskAudit.value.worst;
-  const isRu = locale.value === 'ru';
-  const resolvedBudgetDollars = riskBudgetDollars.value;
-  const maxRisk = resolvedBudgetDollars ?? 250;
-  const riskBudgetRatio = maxRisk > 0 ? (actualRisk / maxRisk) * 100 : 0;
-  const riskBudgetBudgetStr = resolvedBudgetDollars !== null
-    ? (maxRiskTrade.value!.unit === '%'
-      ? (isRu
-        ? `${maxRiskTrade.value!.value}% от баланса до сделки = $${maxRisk.toFixed(2)}`
-        : `${maxRiskTrade.value!.value}% of pre-trade balance = $${maxRisk.toFixed(2)}`)
-      : `$${maxRisk.toFixed(2)}`)
-    : 'No budget set';
-  const riskBudgetText = resolvedBudgetDollars === null
-    ? (isRu ? 'Бюджет матрицы не задан' : 'No matrix budget set')
-    : `${tradeRiskAudit.value.status} · ${isRu ? 'стоп' : 'stop'} ${formatRiskCurrency(tradeRiskAudit.value.planned)} · ${isRu ? 'факт' : 'realized'} ${formatRiskCurrency(tradeRiskAudit.value.realized)} · ${isRu ? 'бюджет' : 'budget'} ${riskBudgetBudgetStr}`;
-
-  let tpCapture = Number.NaN;
-  let tpCaptureText = 'Full Target Achieved';
-  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
-    const plannedDist = getDirectionalTargetDistance(entry, tp, direction);
-    const actualDist = isLong
-      ? Math.max(0, exit - entry)
-      : Math.max(0, entry - exit);
-    if (Number.isFinite(plannedDist) && plannedDist > 0) {
-      tpCapture = Math.min(100, (actualDist / plannedDist) * 100);
-      tpCaptureText = tpCapture < 100 ? 'Premature Exit' : 'Full Target Achieved';
-    }
-  } else {
-    tpCaptureText = 'No TP Data';
-  }
-
-  const realizedRR = actualRR.value || 1;
-  const expectedRR = targetRR.value || strategyStats.value.avgRR || 1;
-  const edgeQuotient = expectedRR > 0 ? (realizedRR / expectedRR) : 1.0;
-  const edgeQuotientText = edgeQuotient >= 1 ? 'Alpha Generation' : 'Edge Dilution';
-
-  let unrealizedLeft = 0;
-  let unrealizedLeftText = 'Full Target Captured';
-  if (Number.isFinite(entry) && Number.isFinite(tp) && Number.isFinite(exit)) {
-    const targetDistance = getDirectionalTargetDistance(entry, tp, direction);
-    const exitDistance = Math.abs(exit - entry);
-    const plannedPnL = Number.isFinite(targetDistance) ? targetDistance * (parseFloat(tr.size) || (exitDistance > 0 ? Math.abs(pnl) / exitDistance : 0)) : Number.NaN;
-    if (plannedPnL > pnl) {
-      unrealizedLeft = plannedPnL - pnl;
-      unrealizedLeftText = 'Target Unreached';
-    }
-  } else {
-    unrealizedLeft = Number.NaN;
-    unrealizedLeftText = 'No TP Data';
-  }
-
-  const days = duration.value / 24;
-  const scenarioMinDays = scenarioDurationStats.value.minDays;
-  const scenarioMaxDays = scenarioDurationStats.value.maxDays;
-  let horizonSync = 50;
-  let horizonSyncText = isRu ? 'Позиция в коридоре' : 'Position in Range';
-  if (scenarioDurationStats.value.count > 0) {
-    const span = Math.max(scenarioMaxDays - scenarioMinDays, 0.0001);
-    const normalizedPosition = ((days - scenarioMinDays) / span) * 100;
-    horizonSync = Math.min(100, Math.max(0, normalizedPosition));
-
-    if (days < scenarioMinDays) {
-      horizonSyncText = isRu
-        ? `Ниже диапазона сценария (${scenarioMinDays.toFixed(2)}д - ${scenarioMaxDays.toFixed(2)}д)`
-        : `Below scenario range (${scenarioMinDays.toFixed(2)}d - ${scenarioMaxDays.toFixed(2)}d)`;
-    } else if (days > scenarioMaxDays) {
-      horizonSyncText = isRu
-        ? `Выше диапазона сценария (${scenarioMinDays.toFixed(2)}д - ${scenarioMaxDays.toFixed(2)}д)`
-        : `Above scenario range (${scenarioMinDays.toFixed(2)}d - ${scenarioMaxDays.toFixed(2)}d)`;
-    } else {
-      horizonSyncText = isRu ? 'Позиция в коридоре' : 'Position in Range';
-    }
-  }
-
-  const currentVelocity = tradeDetailStats.value.velocity || 0;
-  const avgVelocity = strategyStats.value.avgVelocity || 1;
-  const velocityDelta = avgVelocity > 0 ? (currentVelocity / avgVelocity) : 1.0;
-  const velocityDeltaText = velocityDelta >= 1 ? 'High Momentum' : 'Grinding Tie-up';
-
-  const emotions = tr.emotions || [];
-  const negativeSet = new Set([
-    'FOMO', 'fomo', 'Revenge', 'revenge', 'Greed', 'greed', 'Fear', 'fear', 
-    'Tilt', 'tilt', 'Anxiety', 'anxiety', 'Boredom', 'boredom', 'Fatigue', 'fatigue', 
-    'Anger', 'anger', 'Impatience', 'impatience', 'Frustration', 'frustration'
-  ]);
-  const hasNegative = emotions.map(getEmotionName).some((e: string) => negativeSet.has(e));
-  const conditions = tr.boardScenarioEntry?.info?.conditions || [];
-  const reqConditions = getEntryRequiredConditionSnapshot(tr);
-  const executedConditions = Array.isArray(tr.boardConditions) && tr.boardConditions.length > 0
-    ? tr.boardConditions
-    : conditions;
-  const missingRequiredRules = reqConditions.filter((req: any) =>
-    !executedConditions.some((exec: any) => conditionIdentity(exec) === conditionIdentity(req))
-  ).length;
-  const alphaDecay = hasNegative ? missingRequiredRules : 0;
-  const alphaDecayText = alphaDecay > 0 ? `Bypassed ${alphaDecay} Required Rules` : 'Zero Degradation';
-
-  const adherenceScore = matrixAdherenceMetrics.value.reqRatio;
-  const tpScore = Number.isFinite(tpCapture) ? tpCapture : 100;
-  const riskScore = actualRisk <= maxRisk ? 100 : Math.max(0, 100 - ((actualRisk - maxRisk) / maxRisk) * 100);
-  const stabilityScore = behaviouralMetrics.value.stability;
-  const executionGrade = Math.round((adherenceScore * 0.3) + (tpScore * 0.3) + (riskScore * 0.2) + (stabilityScore * 0.2));
-  let executionGradeText = 'Flawless Execution';
-  if (executionGrade < 60) executionGradeText = 'Compromised Execution';
-  else if (executionGrade < 80) executionGradeText = 'Sub-Optimal Execution';
-
-  return {
-    slDrag, slDragText,
-    riskBudgetRatio, riskBudgetText, actualRisk, maxRisk,
-    tpCapture, tpCaptureText,
-    edgeQuotient, edgeQuotientText,
-    unrealizedLeft, unrealizedLeftText,
-    horizonSync, horizonSyncText,
-    velocityDelta, velocityDeltaText,
-    alphaDecay, alphaDecayText,
-    executionGrade, executionGradeText
-  };
-});
 
 const simpleMetricInsights = computed(() => {
   const tr = props.trade as any;
@@ -4171,27 +3912,14 @@ const simpleMetricInsights = computed(() => {
                 </div>
 
                 <div v-else class="flex flex-col space-y-4">
-                  <!-- METRICS FILTER TABS -->
-                  <div class="flex flex-wrap items-center gap-2 border-b nier-border-primary pb-3 mb-4">
-                    <button v-for="tab in advancedMetricTabs" :key="tab.id"
-                    @click="activeMetricTab = tab.id"
-                    class="relative flex items-center space-x-2 px-4 py-2 border transition-all duration-300 cursor-pointer"
-                    :class="activeMetricTab === tab.id ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 nier-text-primary font-bold shadow-sm' : 'nier-border-primary text-black/50 dark:text-white/50 hover:border-black/30 dark:hover:border-white/30'">
-                      <div v-if="activeMetricTab === tab.id" class="w-1.5 h-1.5 nier-bg-inverted rotate-45 animate-pulse"></div>
-                      <span class="text-[10px] font-mono tracking-wider uppercase">{{ tab.label }}</span>
-                      <span class="text-[8px] font-mono px-1.5 py-0.5 bg-black/10 dark:bg-white/10 rounded-full opacity-60">{{ tab.count }}</span>
-                    </button>
-                  </div>
-
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4">
-                    <ExMetricCard
-                      v-for="metric in activeMetricList"
-                      :key="metric.key"
-                      :metric="metric"
-                      :is-dark="isDark"
-                      @select="handleMetricSelect"
-                    />
-                  </div>
+                  <ExAdvancedMetricsPanel
+                    :trade="props.trade"
+                    :strategy-stats-context="strategyStatsContext"
+                    :all-trades="allTrades"
+                    :initial-balance="initialBalance"
+                    :resolved-risk-management="resolvedRiskManagement"
+                    :is-dark="isDark"
+                  />
                 </div>
 
                </div>
