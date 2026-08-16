@@ -177,6 +177,10 @@ const contentTransform = computed(() => ({
 }))
 
 const systemScenarioNames = ['TAKE_PROFIT', 'STOP_LOSS', 'FULL_LIQUIDATION']
+const normalizeSystemScenarioName = (value: unknown) => String(value || '')
+  .toUpperCase()
+  .replace(/[^A-Z0-9]+/g, '_')
+  .replace(/^_+|_+$/g, '')
 
 const toMetricNumber = (value: unknown, fallback: number) => {
   const number = Number(value)
@@ -253,8 +257,8 @@ const buildScenarioNodes = (type: 'entry' | 'exit', initialOffset: number = 0) =
   return scenarios.map((scenario: any, scenarioIndex: number) => {
     const filteredConditions = (Array.isArray(scenario.conditions) ? scenario.conditions : [])
       .filter((condition: any) => {
-        const scenarioName = String(getNodeName(scenario, '')).toUpperCase()
-        const conditionName = String(getNodeName(condition, '')).toUpperCase()
+        const scenarioName = normalizeSystemScenarioName(getNodeName(scenario, ''))
+        const conditionName = normalizeSystemScenarioName(getNodeName(condition, ''))
         return !(systemScenarioNames.includes(scenarioName) && conditionName === scenarioName)
       })
 
