@@ -53,9 +53,12 @@ NUXT_PUBLIC_PAYLOAD_MANIFEST_URL=https://example.com/releases/stable/payload-man
   npm run build
 ```
 
-The Nuxt client plugin calls `payload_update_install_from_feed` on app startup.
-If files were downloaded and activated, it relaunches the app so the next start
-loads the updated payload.
+`ExInitialization` calls `payload_update_install_from_feed` before the login or
+registration form is shown. If files were downloaded and activated, it relaunches
+the app so the next start loads the updated payload. If no manifest URL is
+configured, the app is not running inside Tauri, no update is available, or the
+check fails, the initialization screen shows a synthetic 3-4 second update
+progress bar before continuing.
 
 ## Current scope
 

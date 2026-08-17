@@ -80,8 +80,36 @@
 
       <!-- ── PHASE SWITCHER ── -->
       <Transition name="step-fade" mode="out-in">
+        <!-- ── UPDATE CHECK: runs before login / register is shown ── -->
+        <div v-if="phase === 'update'" key="update-check" class="w-full flex flex-col items-center space-y-6">
+          <div class="w-full flex flex-col space-y-3">
+            <div class="flex justify-between items-end">
+              <span class="text-[9px] font-mono uppercase tracking-widest text-black" style="opacity: 0.4;">
+                {{ updateTitle }}
+              </span>
+              <span class="text-[9px] font-mono font-black text-black">{{ Math.floor(updateProgress) }}%</span>
+            </div>
+            <div class="h-px w-full relative overflow-hidden" style="background: #000; opacity: 0.1;">
+              <div
+                class="absolute top-0 left-0 h-full transition-all duration-200"
+                style="background: #000; opacity: 1;"
+                :style="{ width: `${updateProgress}%` }"
+              ></div>
+              <div class="absolute inset-y-0 left-0 w-8 blur-sm animate-scan" style="background: #000; opacity: 0.4;"></div>
+            </div>
+          </div>
+
+          <div class="h-8 overflow-hidden relative w-full">
+            <Transition name="log-slide" mode="out-in">
+              <p :key="updateLog" class="text-center lowercase italic text-[10px] font-mono text-black" style="opacity: 0.2;">
+                {{ updateLog }}
+              </p>
+            </Transition>
+          </div>
+        </div>
+
         <!-- ── AUTH CHECK: keep forms hidden until Firebase resolves persisted session ── -->
-        <div v-if="isAuthResolving" key="auth-check" class="w-full flex min-h-20 items-center justify-center">
+        <div v-else-if="isAuthResolving" key="auth-check" class="w-full flex min-h-20 items-center justify-center">
           <div class="relative h-5 w-5">
             <div class="absolute inset-0 rounded-full border border-theme-text/20"></div>
             <div class="absolute inset-0 animate-spin rounded-full border border-transparent border-t-theme-text"></div>
@@ -269,6 +297,15 @@ import { auth as firebaseAuth, db } from '~/shared/firebase.client'
 import { useThemeStore } from '~/features/store/useTheme'
 import DesignVignette from '~/widgets/style/ui/DesignVignette.vue'
 
+type PayloadInstallResult = {
+  downloadedFiles: number
+  reusedFiles: number
+  state: {
+    version?: string | null
+    active: boolean
+  }
+}
+
 const appVersion = String(tauriConfig.version || '0.0.0')
 
 const initializationGradflowConfig = {
@@ -333,7 +370,7 @@ const authError = ref<string | null>(null)
 const authLoading = ref(false)
 
 // ── Phase ──
-const phase = ref<'auth' | 'boot' | 'ready'>('auth')
+const phase = ref<'update' | 'auth' | 'boot' | 'ready'>('update')
 
 import { useAppBootStore } from '~/features/store/useAppBoot'
 import { getCachedAvatarUrl } from '~/entities/user/model/user-avatar'
@@ -343,6 +380,102 @@ const appBootStore = useAppBootStore()
 // ── Boot progress ──
 const progress = computed(() => appBootStore.bootProgress)
 const currentLog = computed(() => appBootStore.currentLog)
+
+// ── Startup update check ──
+const updateProgress = ref(0)
+const updateTitle = ref('Update_Check')
+const updateLog = ref(locale.value === 'ru' ? 'проверка доступных обновлений' : 'checking available updates')
+let updateProgressTimer: ReturnType<typeof setInterval> | null = null
+
+const clearUpdateProgressTimer = () => {
+  if (!updateProgressTimer) return
+  clearInterval(updateProgressTimer)
+  updateProgressTimer = null
+}
+
+const setUpdateCopy = (title: string, ru: string, en: string) => {
+  updateTitle.value = title
+  updateLog.value = locale.value === 'ru' ? ru : en
+}
+
+const finishUpdatePhase = () => {
+  clearUpdateProgressTimer()
+  updateProgress.value = 100
+  setTimeout(() => {
+    if (isAuthenticated.value) {
+      startBoot()
+      return
+    }
+    phase.value = 'auth'
+  }, 260)
+}
+
+const runArtificialUpdateProgress = async () => {
+  clearUpdateProgressTimer()
+  setUpdateCopy('Update_Synchronization', 'синхронизация локального пакета', 'synchronizing local package')
+  updateProgress.value = 0
+
+  await new Promise<void>((resolve) => {
+    const startedAt = Date.now()
+    const duration = 3600
+    updateProgressTimer = setInterval(() => {
+      const elapsed = Date.now() - startedAt
+      const ratio = Math.min(1, elapsed / duration)
+      updateProgress.value = Math.min(99, Math.round((1 - Math.pow(1 - ratio, 2.4)) * 100))
+      if (ratio >= 1) {
+        clearUpdateProgressTimer()
+        resolve()
+      }
+    }, 80)
+  })
+
+  finishUpdatePhase()
+}
+
+const startUpdateCheck = async () => {
+  phase.value = 'update'
+  const config = useRuntimeConfig()
+  const manifestUrl = String(config.public.payloadManifestUrl || '').trim()
+  const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__
+
+  if (!isTauri || !manifestUrl) {
+    await runArtificialUpdateProgress()
+    return
+  }
+
+  try {
+    setUpdateCopy('Update_Check', 'проверка доступных обновлений', 'checking available updates')
+    updateProgress.value = 8
+
+    updateProgressTimer = setInterval(() => {
+      updateProgress.value = Math.min(82, updateProgress.value + Math.max(1, Math.round((82 - updateProgress.value) * 0.08)))
+      if (updateProgress.value >= 38) {
+        setUpdateCopy('Payload_Verification', 'сверка файлов с манифестом релиза', 'comparing files with release manifest')
+      }
+    }, 260)
+
+    const { invoke } = await import('@tauri-apps/api/core')
+    const result = await invoke<PayloadInstallResult>('payload_update_install_from_feed', {
+      manifestUrl,
+    })
+
+    clearUpdateProgressTimer()
+    if (result.downloadedFiles > 0 && result.state.active) {
+      updateProgress.value = 100
+      setUpdateCopy('Update_Ready', 'обновление установлено. перезапуск', 'update installed. restarting')
+      const { relaunch } = await import('@tauri-apps/plugin-process')
+      setTimeout(() => {
+        void relaunch()
+      }, 450)
+      return
+    }
+
+    await runArtificialUpdateProgress()
+  } catch (error) {
+    console.warn('[payload-updater] initialization update check failed', error)
+    await runArtificialUpdateProgress()
+  }
+}
 
 const startBoot = async () => {
   phase.value = 'boot'
@@ -599,10 +732,11 @@ onMounted(() => {
     startupIntroTimer = null
   }, 2200)
 
-  if (isAuthenticated.value) startBoot()
+  startUpdateCheck()
 })
 
 onBeforeUnmount(() => {
+  clearUpdateProgressTimer()
   if (!startupIntroTimer) return
   clearTimeout(startupIntroTimer)
   startupIntroTimer = null
