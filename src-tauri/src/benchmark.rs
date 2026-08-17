@@ -108,10 +108,7 @@ fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
     let year_of_era = adjusted_year - era * 400;
     let month_prime = month + if month > 2 { -3 } else { 9 };
     let day_of_year = (153 * month_prime + 2) / 5 + day - 1;
-    let day_of_era = year_of_era * 365
-        + year_of_era / 4
-        - year_of_era / 100
-        + day_of_year;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
     era * 146097 + day_of_era - 719468
 }
 
@@ -123,11 +120,8 @@ fn civil_year_from_days(days_since_epoch: i64) -> i64 {
         (adjusted_days - 146096) / 146097
     };
     let day_of_era = adjusted_days - era * 146097;
-    let year_of_era = (day_of_era
-        - day_of_era / 1460
-        + day_of_era / 36524
-        - day_of_era / 146096)
-        / 365;
+    let year_of_era =
+        (day_of_era - day_of_era / 1460 + day_of_era / 36524 - day_of_era / 146096) / 365;
     let year = year_of_era + era * 400;
     let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
     let month_prime = (5 * day_of_year + 2) / 153;
@@ -204,44 +198,50 @@ pub async fn get_benchmark_and_beta(
         None
     };
 
-    let save_strategy_cache =
-        |path: &std::path::PathBuf, strategy: &str, period: (i64, i64), rate: f64, beta: f64, risk_free: f64| {
-            let mut cache = load_strategy_cache(path).unwrap_or(StrategyCacheData {
-                benchmark_rate: rate,
-                risk_free_rate: risk_free,
-                strategies: HashMap::new(),
-                period_start_ts: Some(period.0),
-                period_end_ts: Some(period.1),
-            });
-            cache.benchmark_rate = rate;
-            cache.risk_free_rate = risk_free;
-            cache.period_start_ts = Some(period.0);
-            cache.period_end_ts = Some(period.1);
-            cache
-                .strategies
-                .insert(strategy.to_string(), StrategyBenchmarkCache { beta });
+    let save_strategy_cache = |path: &std::path::PathBuf,
+                               strategy: &str,
+                               period: (i64, i64),
+                               rate: f64,
+                               beta: f64,
+                               risk_free: f64| {
+        let mut cache = load_strategy_cache(path).unwrap_or(StrategyCacheData {
+            benchmark_rate: rate,
+            risk_free_rate: risk_free,
+            strategies: HashMap::new(),
+            period_start_ts: Some(period.0),
+            period_end_ts: Some(period.1),
+        });
+        cache.benchmark_rate = rate;
+        cache.risk_free_rate = risk_free;
+        cache.period_start_ts = Some(period.0);
+        cache.period_end_ts = Some(period.1);
+        cache
+            .strategies
+            .insert(strategy.to_string(), StrategyBenchmarkCache { beta });
 
-            if let Ok(json_str) = serde_json::to_string_pretty(&cache) {
-                let _ = std::fs::write(path, json_str);
-            }
-        };
+        if let Ok(json_str) = serde_json::to_string_pretty(&cache) {
+            let _ = std::fs::write(path, json_str);
+        }
+    };
 
-    let load_cached_strategy =
-        |path: &std::path::PathBuf, strategy: &str, period: (i64, i64)| -> Option<BenchmarkResponse> {
-            let cache = load_strategy_cache(path)?;
-            if cache.period_start_ts != Some(period.0) || cache.period_end_ts != Some(period.1) {
-                return None;
-            }
-            cache
-                .strategies
-                .get(strategy)
-                .map(|entry| BenchmarkResponse {
-                    benchmark_rate: cache.benchmark_rate,
-                    beta: entry.beta,
-                    risk_free_rate: cache.risk_free_rate,
-                    is_fallback: true,
-                })
-        };
+    let load_cached_strategy = |path: &std::path::PathBuf,
+                                strategy: &str,
+                                period: (i64, i64)|
+     -> Option<BenchmarkResponse> {
+        let cache = load_strategy_cache(path)?;
+        if cache.period_start_ts != Some(period.0) || cache.period_end_ts != Some(period.1) {
+            return None;
+        }
+        cache
+            .strategies
+            .get(strategy)
+            .map(|entry| BenchmarkResponse {
+                benchmark_rate: cache.benchmark_rate,
+                beta: entry.beta,
+                risk_free_rate: cache.risk_free_rate,
+                is_fallback: true,
+            })
+    };
 
     let cache_response_in_memory = |response: &BenchmarkResponse, strategy: &str| {
         let mut lock = state.0.lock().unwrap();
@@ -265,7 +265,9 @@ pub async fn get_benchmark_and_beta(
     // their previous beta with the baseline default.
     if strategy_returns.len() < 2 {
         if let Ok(cache_path) = get_cache_path() {
-            if let Some(response) = load_cached_strategy(&cache_path, &strategy_key, benchmark_period) {
+            if let Some(response) =
+                load_cached_strategy(&cache_path, &strategy_key, benchmark_period)
+            {
                 cache_response_in_memory(&response, &strategy_key);
                 return Ok(response);
             }
@@ -279,11 +281,8 @@ pub async fn get_benchmark_and_beta(
         Some(benchmark_period.1),
     )
     .await;
-    let risk_free_res = fetch_live_risk_free_rate(
-        Some(benchmark_period.0),
-        Some(benchmark_period.1),
-    )
-    .await;
+    let risk_free_res =
+        fetch_live_risk_free_rate(Some(benchmark_period.0), Some(benchmark_period.1)).await;
 
     match bench_beta_res {
         Ok((rate, beta)) => {
@@ -312,7 +311,9 @@ pub async fn get_benchmark_and_beta(
             log::warn!("[benchmark] Live fetch failed for strategy {}: {}, attempting to load from local JSON cache...", strategy_key, e);
 
             if let Ok(cache_path) = get_cache_path() {
-                if let Some(response) = load_cached_strategy(&cache_path, &strategy_key, benchmark_period) {
+                if let Some(response) =
+                    load_cached_strategy(&cache_path, &strategy_key, benchmark_period)
+                {
                     cache_response_in_memory(&response, &strategy_key);
                     return Ok(response);
                 }
@@ -331,7 +332,11 @@ pub async fn get_benchmark_and_beta(
     }
 }
 
-async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Option<i64>, end_ts: Option<i64>) -> Result<(f64, f64), String> {
+async fn fetch_live_benchmark_and_beta(
+    strategy_returns: &[f64],
+    start_ts: Option<i64>,
+    end_ts: Option<i64>,
+) -> Result<(f64, f64), String> {
     let url = if let (Some(start), Some(end)) = (start_ts, end_ts) {
         format!("https://query2.finance.yahoo.com/v8/finance/chart/^GSPC?interval=1d&period1={}&period2={}", start - (10 * 86400), end + (2 * 86400))
     } else {
@@ -466,7 +471,10 @@ async fn fetch_live_benchmark_and_beta(strategy_returns: &[f64], start_ts: Optio
     Ok((benchmark_rate, beta))
 }
 
-async fn fetch_live_risk_free_rate(start_ts: Option<i64>, end_ts: Option<i64>) -> Result<f64, String> {
+async fn fetch_live_risk_free_rate(
+    start_ts: Option<i64>,
+    end_ts: Option<i64>,
+) -> Result<f64, String> {
     let url = if let (Some(start), Some(end)) = (start_ts, end_ts) {
         format!("https://query2.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&period1={}&period2={}", start, end)
     } else {

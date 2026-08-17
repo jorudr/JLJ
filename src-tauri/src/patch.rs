@@ -535,8 +535,9 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                     fs::create_dir_all(parent)
                         .map_err(|err| format!("create delete tombstone dir: {err}"))?;
                 }
-                fs::write(&tombstone, b"deleted")
-                    .map_err(|err| format!("write delete tombstone {}: {err}", tombstone.display()))?;
+                fs::write(&tombstone, b"deleted").map_err(|err| {
+                    format!("write delete tombstone {}: {err}", tombstone.display())
+                })?;
             }
             PatchOpKind::Replace => {
                 let payload = read_payload(archive, operation)?;
@@ -559,8 +560,9 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                         .map_err(|err| format!("create target dir: {err}"))?;
                 }
                 if tombstone.exists() {
-                    fs::remove_file(&tombstone)
-                        .map_err(|err| format!("remove delete tombstone {}: {err}", tombstone.display()))?;
+                    fs::remove_file(&tombstone).map_err(|err| {
+                        format!("remove delete tombstone {}: {err}", tombstone.display())
+                    })?;
                 }
                 fs::write(&target, payload)
                     .map_err(|err| format!("write {}: {err}", target.display()))?;
@@ -588,8 +590,9 @@ fn apply_resource_operations<R: Read + std::io::Seek>(
                 bsdiff::patch(&old, &mut patch.as_slice(), &mut new)
                     .map_err(|err| format!("apply bsdiff to {}: {err}", target.display()))?;
                 if tombstone.exists() {
-                    fs::remove_file(&tombstone)
-                        .map_err(|err| format!("remove delete tombstone {}: {err}", tombstone.display()))?;
+                    fs::remove_file(&tombstone).map_err(|err| {
+                        format!("remove delete tombstone {}: {err}", tombstone.display())
+                    })?;
                 }
                 fs::write(&target, new)
                     .map_err(|err| format!("write {}: {err}", target.display()))?;

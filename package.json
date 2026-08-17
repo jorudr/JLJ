@@ -9,6 +9,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "hotfix:package": "node scripts/create-hotfix-patch.mjs",
+    "payload:manifest": "node scripts/create-payload-manifest.mjs",
     "postinstall": "nuxt prepare",
     "tauri": "tauri"
   },

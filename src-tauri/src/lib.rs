@@ -7,6 +7,7 @@ mod bybit;
 mod ibkr;
 mod kraken;
 pub mod patch;
+pub mod payload_update;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,7 +32,10 @@ pub fn run() {
             patch::patch_get_state,
             patch::patch_verify_active,
             patch::patch_clear_active,
-            patch::patch_install_from_upload
+            patch::patch_install_from_upload,
+            payload_update::payload_update_get_state,
+            payload_update::payload_update_clear,
+            payload_update::payload_update_install_from_feed
         ])
         .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
             let _ = app.emit("single-instance", (args, cwd));
@@ -52,6 +56,7 @@ pub fn run() {
             app.handle().plugin(tauri_plugin_process::init())?;
             app.handle().plugin(tauri_plugin_fs::init())?;
             patch::navigate_to_active_resource_patch(app);
+            payload_update::navigate_to_active_payload(app);
 
             Ok(())
         })
