@@ -2037,7 +2037,16 @@ const filteredSignals = computed(() => {
 
 const pagedSignals = computed(() => {
   const start = (currentPage.value - 1) * nodesPerPage
-  return filteredSignals.value.slice(start, start + nodesPerPage)
+  return filteredSignals.value.slice(start, start + nodesPerPage).map((node: any) => {
+    let authorName = node.author || ''
+    if (authorName.length > 15) {
+      authorName = authorName.substring(0, 12) + '...'
+    }
+    return {
+      ...node,
+      author: authorName
+    }
+  })
 })
 const pagedPublications = computed(() => pagedNodes.value)
 const pagedResearch = computed(() => pagedPublications.value)
