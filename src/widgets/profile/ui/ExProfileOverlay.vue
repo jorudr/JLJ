@@ -64,7 +64,7 @@
                 </div>
               </div>
 
-              <div class="mt-6 pt-6 border-t nier-border-primary space-y-2">
+              <div v-if="SHOW_ACCOUNT_TYPE" class="mt-6 pt-6 border-t nier-border-primary space-y-2">
                 <div class="text-[8px] font-mono uppercase tracking-[0.35em] opacity-30">{{ locale === 'ru' ? 'Тип аккаунта' : 'Account type' }}</div>
                 <div class="text-[10px] font-mono uppercase tracking-[0.25em] text-black/85 dark:text-white/85">
                   {{ profileAccountType }}
@@ -334,6 +334,8 @@ import ExUserStatusBadge from '~/entities/user/ui/ExUserStatusBadge.vue'
 
 const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.settings.isDark)
+const SHOW_ACCOUNT_TYPE = false
+const SHOW_PATCH_TAB = false
 
 const props = defineProps<{
   open: boolean
@@ -436,11 +438,18 @@ const activeTabMeta = computed(() => {
   }
 })
 
-const profileTabs = computed(() => [
-  { key: 'profile' as const, label: locale.value === 'ru' ? 'Профиль' : 'Profile', note: locale.value === 'ru' ? 'Основа' : 'Core' },
-  { key: 'appearance' as const, label: locale.value === 'ru' ? 'Внешний вид' : 'Appearance', note: locale.value === 'ru' ? 'Тема' : 'Theme' },
-  { key: 'patch' as const, label: locale.value === 'ru' ? 'Патч' : 'Patch', note: locale.value === 'ru' ? 'Hotfix' : 'Hotfix' }
-])
+const profileTabs = computed(() => {
+  const tabs = [
+    { key: 'profile' as const, label: locale.value === 'ru' ? 'Профиль' : 'Profile', note: locale.value === 'ru' ? 'Основа' : 'Core' },
+    { key: 'appearance' as const, label: locale.value === 'ru' ? 'Внешний вид' : 'Appearance', note: locale.value === 'ru' ? 'Тема' : 'Theme' }
+  ]
+
+  if (SHOW_PATCH_TAB) {
+    tabs.push({ key: 'patch' as const, label: locale.value === 'ru' ? 'Патч' : 'Patch', note: locale.value === 'ru' ? 'Hotfix' : 'Hotfix' })
+  }
+
+  return tabs
+})
 
 const appearanceModes = computed(() => {
   const currentMode = themeStore.settings.themeMode || (themeStore.settings.isDark ? 'dark' : 'light')
