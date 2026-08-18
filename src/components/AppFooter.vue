@@ -44,8 +44,8 @@
           <a href="mailto:plasticcwc@gmail.com">{{ t('landing.footer.contact') }}</a>
         </nav>
 
-        <section class="app-footer__column app-footer__language" aria-label="Language">
-          <h3>Language</h3>
+        <section class="app-footer__column app-footer__language" :aria-label="t('landing.footer.languageTitle')">
+          <h3>{{ t('landing.footer.languageTitle') }}</h3>
           <div class="app-footer__language-menu" :class="{ 'is-open': isLanguageMenuOpen }">
             <button
               type="button"
@@ -140,8 +140,10 @@ const selectFooterLocale = (code) => {
 
 .app-footer__column h3,
 .app-footer__bottom {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  text-transform: uppercase;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .app-footer__hero h2 {
@@ -270,9 +272,6 @@ const selectFooterLocale = (code) => {
 .app-footer__column h3 {
   margin-bottom: 16px;
   color: rgba(245, 245, 240, 0.42);
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
 }
 
 .app-footer__column a {
@@ -298,8 +297,6 @@ const selectFooterLocale = (code) => {
   padding-top: 22px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(245, 245, 240, 0.38);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
 }
 
 .app-footer__language-menu {

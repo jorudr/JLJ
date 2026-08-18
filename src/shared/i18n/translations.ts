@@ -140,6 +140,7 @@ export const translations = {
         telegramCta: "Telegram updates",
         platformTitle: "Platform",
         accessTitle: "Contact",
+        languageTitle: "Language",
         contact: "Email",
         rights: "All rights reserved"
       },
@@ -450,6 +451,7 @@ export const translations = {
         telegramCta: "Обновления в Telegram",
         platformTitle: "Платформа",
         accessTitle: "Связь",
+        languageTitle: "Язык",
         contact: "Email",
         rights: "Все права защищены"
       },
