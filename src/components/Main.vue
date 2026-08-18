@@ -30,7 +30,7 @@
         :class="isDark ? 'grid-dark' : 'grid-light'"
       ></div>
 
-      <!-- Dot Grid (app1.1 style) -->
+      <!-- Dot Grid -->
       <div class="absolute inset-0 pointer-events-none transition-opacity duration-1000" 
            :style="{ backgroundImage: 'radial-gradient(#2c2c2a 0.5px, transparent 0.5px)', backgroundSize: '30px 30px', opacity: !isDark ? 0.05 : 0 }"></div>
 
@@ -417,17 +417,10 @@
 
     </div>
 
-    <!-- Video Preview Section -->
-    <section class="home-video relative z-10 w-full max-w-7xl mx-auto py-16 px-6 sm:px-10 flex justify-center items-center pointer-events-none">
-      <div ref="videoContainer" class="w-full max-w-6xl rounded-2xl overflow-hidden border" :class="isDark ? 'border-white/10' : 'border-black/5'" :style="{ transform: `scale(${videoScale})`, transition: 'transform 0.1s ease-out' }">
-        <video 
-          src="/assets/preview.mov" 
-          autoplay 
-          loop 
-          muted 
-          playsinline 
-          class="w-full h-auto object-cover opacity-90"
-        ></video>
+    <!-- Interactive application demonstration -->
+    <section class="home-equity-demo relative z-10 w-full px-6 py-16 sm:px-10 lg:py-24">
+      <div class="mx-auto w-full max-w-[1240px]">
+        <ExEquityCurve3D :trades="demoTrades" :initial-balance="10000" />
       </div>
     </section>
 
@@ -483,6 +476,7 @@ import { useI18n } from '../shared/i18n/useI18n'
 import GradflowBackground from './GradflowBackground.vue'
 import ExDivider from '../shared/ui/ExDivider.vue'
 import AppFooter from './AppFooter.vue'
+import ExEquityCurve3D from './ExEquityCurve3D.vue'
 
 const { t, locale, setLocale } = useI18n()
 
@@ -548,9 +542,36 @@ const hideMegaMenu = () => {
 const isDark = ref(true)
 const isNavScrolled = ref(false)
 const featuresSection = ref(null)
-const videoContainer = ref(null)
 
-const videoScale = ref(0.6)
+const demoTrades = Array.from({ length: 30 }, (_, index) => {
+  let seed = 173 + index * 97
+  const random = () => {
+    seed = (seed * 9301 + 49297) % 233280
+    return seed / 233280
+  }
+  const side = index % 3 === 0 ? 'Short' : 'Long'
+  const asset = ['EURUSD', 'BTCUSD', 'XAUUSD', 'NAS100', 'GBPUSD'][index % 5]
+  const entryPrice = asset === 'BTCUSD' ? 58000 + random() * 8000 : asset === 'XAUUSD' ? 2280 + random() * 180 : 1 + random() * 180
+  const pnl = Math.round((random() - 0.4) * 720)
+  const date = new Date('2026-01-08T09:00:00Z')
+  date.setDate(date.getDate() + index * 3)
+  return {
+    id: `demo-trade-${String(index + 1).padStart(2, '0')}`,
+    strategyId: 'DEMO-001',
+    asset,
+    assetType: asset === 'BTCUSD' ? 'Crypto' : asset === 'XAUUSD' ? 'Metals' : asset === 'NAS100' ? 'Stocks' : 'Forex',
+    side,
+    status: 'closed',
+    isClosed: true,
+    entryPrice: Number(entryPrice.toFixed(4)),
+    exitPrice: Number((entryPrice * (1 + (pnl >= 0 ? 1 : -1) * (0.002 + random() * 0.012))).toFixed(4)),
+    date: date.toISOString(),
+    result: Number((pnl / 100).toFixed(2)),
+    resultUnit: '%',
+    profitInCurrency: pnl,
+    profitInPercent: Number((pnl / 100).toFixed(2)),
+  }
+})
 
 // Animation logic
 const heroAnimationState = ref(2)
@@ -599,18 +620,6 @@ const handleScroll = () => {
     document.body.classList.remove('is-scrolling')
   }, 800) // hide after 800ms
 
-  if (videoContainer.value) {
-    const rect = videoContainer.value.getBoundingClientRect()
-    const windowHeight = window.innerHeight
-    
-    // Calculate progress from 0 to 1 based on how far the video has scrolled into view
-    // Start scaling when top of the video enters the screen (rect.top <= windowHeight)
-    // Finish scaling when the top of the video is 1/3 of the screen from the top
-    let progress = (windowHeight - rect.top) / (windowHeight / 1.5)
-    progress = Math.max(0, Math.min(1, progress))
-    const maxScale = window.innerWidth < 768 ? 0.92 : 1.2
-    videoScale.value = 0.6 + ((maxScale - 0.6) * progress)
-  }
 }
 
 onMounted(() => {
@@ -1156,24 +1165,9 @@ const scrollToFeatures = () => {
 }
 
 @media (max-width: 767px) {
-  .home-video,
   .home-features {
     padding-right: 24px;
     padding-left: 24px;
-  }
-
-  .home-video {
-    padding-right: 12px;
-    padding-left: 12px;
-    padding-top: 12px;
-    padding-bottom: 48px;
-  }
-
-  .home-video > div {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 12px;
-    transform-origin: center center;
   }
 
   .home-features {
