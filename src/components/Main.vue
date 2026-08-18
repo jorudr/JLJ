@@ -285,20 +285,6 @@
       <main class="flex-1 flex flex-col items-center justify-center py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500"
             :class="isMegaMenuVisible ? 'opacity-0 blur-sm scale-95 pointer-events-none' : 'opacity-100 blur-0 scale-100'">
         
-        <!-- INTRO TYPING -->
-        <div 
-          v-if="heroAnimationState < 2"
-          class="absolute inset-0 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
-          :class="[
-            heroAnimationState === 1 ? 'opacity-0' : 'opacity-100',
-            isDark ? 'text-white' : 'text-[#2c2c2a]'
-          ]"
-        >
-          <span class="text-[20px] sm:text-[28px] tracking-[0.5em] font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">
-            {{ typedIntro }}<span class="animate-pulse">|</span>
-          </span>
-        </div>
-
         <!-- MAIN CONTENT -->
         <div 
           v-show="heroAnimationState >= 2"
@@ -638,8 +624,7 @@ const videoContainer = ref(null)
 const videoScale = ref(0.6)
 
 // Animation logic
-const heroAnimationState = ref(0)
-const typedIntro = ref('')
+const heroAnimationState = ref(2)
 const typedLine1 = ref('')
 const typedLine2 = ref('')
 
@@ -652,20 +637,10 @@ const typeText = async (text, refVar, speed = 50) => {
 }
 
 const runHeroAnimation = async () => {
-  heroAnimationState.value = 0
-  typedIntro.value = ''
+  heroAnimationState.value = 2
   typedLine1.value = ''
   typedLine2.value = ''
-  
-  // State 0: Type Intro
-  await typeText('J.L.JÖRMUNGANDR', typedIntro, 60)
-  await new Promise(r => setTimeout(r, 800))
-  
-  // State 1: Fade out Intro
-  heroAnimationState.value = 1
-  await new Promise(r => setTimeout(r, 600)) // wait for fade out
-  
-  // State 2: Type Taglines
+
   heroAnimationState.value = 2
   await typeText(t('landing.heroTitleLine1'), typedLine1, 30)
   await new Promise(r => setTimeout(r, 200))

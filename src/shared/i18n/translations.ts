@@ -33,7 +33,7 @@ export const translations = {
         downloadWindows: "DOWNLOAD FOR WINDOWS",
         downloadMacos: "DOWNLOAD FOR MACOS"
       },
-      heroTitleLine1: "A trading journal - market depth and refined aesthetic.",
+      heroTitleLine1: "A trading journal for professional traders.",
       heroTitleLine2: "",
       scrollToExplore: "SCROLL_TO_EXPLORE",
       nav: {
@@ -334,7 +334,7 @@ export const translations = {
         downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
         downloadMacos: "СКАЧАТЬ ДЛЯ MACOS"
       },
-      heroTitleLine1: "Торговый журнал — глубина рынка и утончённая эстетика.",
+      heroTitleLine1: "Торговый журнал для профессиональных трейдеров.",
       heroTitleLine2: "",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
