@@ -33,8 +33,8 @@
     >
       <button
         type="button"
-        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
-        :class="locale === 'ru' ? 'text-theme-text font-bold opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
+        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] text-black transition-all duration-300"
+        :class="locale === 'ru' ? 'font-bold opacity-100' : 'opacity-35 hover:opacity-100'"
         :aria-pressed="locale === 'ru'"
         @click="setLocale('ru')"
       >
@@ -42,8 +42,8 @@
       </button>
       <button
         type="button"
-        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] transition-all duration-300"
-        :class="locale === 'en' ? 'text-theme-text font-bold opacity-100' : 'text-theme-text opacity-35 hover:opacity-100'"
+        class="px-1 py-2 text-[8px] font-mono uppercase tracking-[0.35em] text-black transition-all duration-300"
+        :class="locale === 'en' ? 'font-bold opacity-100' : 'opacity-35 hover:opacity-100'"
         :aria-pressed="locale === 'en'"
         @click="setLocale('en')"
       >
@@ -271,7 +271,6 @@
     <!-- Bottom Telemetry -->
     <div class="fixed bottom-10 left-0 right-0 px-12 flex justify-between items-center pointer-events-none">
       <span class="text-[8px] font-mono uppercase tracking-widest text-black">ID: {{ appVersion }} // VOSHE COMPANY D.O.O</span>
-      <span class="text-[8px] font-mono uppercase tracking-widest text-black">ALPHA VERSION</span>
     </div>
   </div>
 </template>
@@ -383,8 +382,8 @@ const currentLog = computed(() => appBootStore.currentLog)
 
 // ── Startup update check ──
 const updateProgress = ref(0)
-const updateTitle = ref('Update_Check')
-const updateLog = ref(locale.value === 'ru' ? 'проверка доступных обновлений' : 'checking available updates')
+const updateTitle = ref('ПРОВЕРКА_ОБНОВЛЕНИЙ')
+const updateLog = ref('проверка доступных обновлений')
 let updateProgressTimer: ReturnType<typeof setInterval> | null = null
 
 const clearUpdateProgressTimer = () => {
@@ -393,9 +392,9 @@ const clearUpdateProgressTimer = () => {
   updateProgressTimer = null
 }
 
-const setUpdateCopy = (title: string, ru: string, en: string) => {
+const setUpdateCopy = (title: string, message: string) => {
   updateTitle.value = title
-  updateLog.value = locale.value === 'ru' ? ru : en
+  updateLog.value = message
 }
 
 const finishUpdatePhase = () => {
@@ -412,7 +411,7 @@ const finishUpdatePhase = () => {
 
 const runArtificialUpdateProgress = async () => {
   clearUpdateProgressTimer()
-  setUpdateCopy('Update_Synchronization', 'синхронизация локального пакета', 'synchronizing local package')
+  setUpdateCopy('СИНХРОНИЗАЦИЯ_ПАКЕТА', 'синхронизация локального пакета')
   updateProgress.value = 0
 
   await new Promise<void>((resolve) => {
@@ -444,13 +443,13 @@ const startUpdateCheck = async () => {
   }
 
   try {
-    setUpdateCopy('Update_Check', 'проверка доступных обновлений', 'checking available updates')
+    setUpdateCopy('ПРОВЕРКА_ОБНОВЛЕНИЙ', 'проверка доступных обновлений')
     updateProgress.value = 8
 
     updateProgressTimer = setInterval(() => {
       updateProgress.value = Math.min(82, updateProgress.value + Math.max(1, Math.round((82 - updateProgress.value) * 0.08)))
       if (updateProgress.value >= 38) {
-        setUpdateCopy('Payload_Verification', 'сверка файлов с манифестом релиза', 'comparing files with release manifest')
+        setUpdateCopy('ПРОВЕРКА_ФАЙЛОВ', 'сверка файлов с манифестом релиза')
       }
     }, 260)
 
@@ -462,7 +461,7 @@ const startUpdateCheck = async () => {
     clearUpdateProgressTimer()
     if (result.downloadedFiles > 0 && result.state.active) {
       updateProgress.value = 100
-      setUpdateCopy('Update_Ready', 'обновление установлено. перезапуск', 'update installed. restarting')
+      setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
       const { relaunch } = await import('@tauri-apps/plugin-process')
       setTimeout(() => {
         void relaunch()
