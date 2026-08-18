@@ -772,7 +772,7 @@ const scrollToFeatures = () => {
   right: 0;
   bottom: auto;
   left: 0;
-  height: 135%;
+  height: 150%;
 }
 
 .hero-header {
@@ -782,10 +782,10 @@ const scrollToFeatures = () => {
 .hero-gradient-fade {
   position: absolute;
   right: 0;
-  bottom: -35vh;
+  bottom: -55vh;
   left: 0;
   z-index: 1;
-  height: 70vh;
+  height: 100vh;
   pointer-events: none;
   background: linear-gradient(
     to top,
