@@ -1293,7 +1293,7 @@
               @click="loadDraft"
             >
               <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              <span>{{ locale === 'ru' ? 'ПРОДОЛЖИТЬ ЧЕРНОВИК' : 'CONTINUE DRAFT' }}</span>
+              <span>{{ locale === 'ru' ? 'ПРОДОЛЖИТЬ' : 'CONTINUE' }}</span>
             </button>
             <button
               class="flex items-center space-x-2 px-4 py-2 border border-current/20 hover:border-current/40 hover:bg-current/5 transition-all text-[9px] font-mono tracking-widest uppercase rounded-sm text-current/70 hover:text-current/90"
@@ -2362,10 +2362,16 @@ const newArticleForm = ref({
   contributionIds: [] as string[]
 })
 
+const normalizeArticleType = (value: any) => {
+  const type = String(value || '').toUpperCase()
+  if (type === 'POPULAR' || type === 'NEW') return 'PUBLICATION'
+  return type
+}
+
 const normalizeArticleForm = (form: any = {}) => ({
   title: String(form.title || ''),
   description: String(form.description || ''),
-  type: String(form.type || ''),
+  type: normalizeArticleType(form.type),
   contributionIds: Array.isArray(form.contributionIds)
     ? form.contributionIds.filter((id: any): id is string => typeof id === 'string').slice(0, 3)
     : []
@@ -2609,16 +2615,21 @@ const isSubmittingArticle = ref(false)
 const isPublishingArticle = ref(false)
 const pendingDeleteArticleId = ref<string | null>(null)
 
-const articleTypes = computed(() => journalFilters.value.map(filter => ({
-  value: filter.mode,
-  label: filter.label
-})))
+const articleTypes = computed(() => locale.value === 'ru'
+  ? [
+      { value: 'PUBLICATION', label: 'ПУБЛИКАЦИЯ' },
+      { value: 'SETUP', label: 'СИГНАЛЫ' }
+    ]
+  : [
+      { value: 'PUBLICATION', label: 'PUBLICATION' },
+      { value: 'SETUP', label: 'SIGNALS' }
+    ])
 const isSignalArticle = computed(() => newArticleForm.value.type === 'SETUP')
 const isQuestionArticle = computed(() => newArticleForm.value.type === 'QUESTION')
 
 const selectedTypeLabel = computed(() => {
   const t = articleTypes.value.find(t => t.value === newArticleForm.value.type)
-  return t ? t.label : ''
+  return t ? t.label : newArticleForm.value.type
 })
 
 const selectArticleType = (type: string) => {
