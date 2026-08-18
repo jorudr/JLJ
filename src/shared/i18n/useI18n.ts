@@ -4,11 +4,24 @@ import { translations, type Locale } from './translations'
 // Global state for persistence
 const currentLocale = ref<Locale>('en')
 
+const detectBrowserLocale = (): Locale => {
+  if (typeof navigator === 'undefined') return 'en'
+
+  const browserLanguages = [
+    ...(navigator.languages || []),
+    navigator.language
+  ].filter(Boolean)
+
+  return browserLanguages.some(language => language.toLowerCase().startsWith('ru')) ? 'ru' : 'en'
+}
+
 // Load initial locale from localStorage if available (for Tauri/Web persistence)
 if (typeof window !== 'undefined') {
   const saved = localStorage.getItem('app_locale') as Locale
   if (saved && translations[saved]) {
     currentLocale.value = saved
+  } else {
+    currentLocale.value = detectBrowserLocale()
   }
 }
 

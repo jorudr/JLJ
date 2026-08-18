@@ -57,19 +57,7 @@
         </section>
       </main>
 
-      <footer class="w-full border-t border-white/[0.08] py-8 text-center text-[9px] uppercase tracking-[0.2em] text-white/90" style="font-family: 'Cormorant Garamond', serif;">
-        <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row sm:text-left">
-          <div class="order-2 flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
-            <span class="footer-nav-font text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
-          </div>
-          <nav class="footer-nav-font order-1 flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] text-white/90 sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" aria-label="Footer navigation">
-            <router-link to="/" class="transition-colors hover:text-white">{{ t('landing.nav.products') }}</router-link>
-            <router-link to="/use-cases" class="transition-colors hover:text-white">{{ t('landing.nav.useCases') }}</router-link>
-            <router-link to="/pricing" class="transition-colors hover:text-white">{{ t('landing.nav.pricing') }}</router-link>
-            <router-link to="/philosophy" class="transition-colors hover:text-white">{{ t('landing.nav.philosophy') }}</router-link>
-          </nav>
-        </div>
-      </footer>
+      <AppFooter hide-hero />
     </div>
   </div>
 </template>
@@ -77,6 +65,7 @@
 <script setup>
 import { computed } from 'vue'
 import SiteNav from './SiteNav.vue'
+import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, tm, locale, setLocale } = useI18n()
@@ -93,12 +82,13 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 .pricing-main {
   --pricing-top-space: clamp(52px, 8vh, 96px);
   --pricing-list-offset: clamp(32px, 5vh, 56px);
+  --pricing-bottom-space: clamp(28px, 4vh, 44px);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: var(--pricing-top-space) clamp(0px, 1.4vw, 18px) calc(var(--pricing-top-space) + var(--pricing-list-offset));
+  padding: var(--pricing-top-space) clamp(0px, 1.4vw, 18px) var(--pricing-bottom-space);
 }
 
 .pricing-list {
@@ -112,8 +102,8 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 .pricing-plan {
   flex: 1 1 0;
   display: grid;
-  grid-template-columns: minmax(190px, 1.1fr) minmax(120px, 0.7fr) minmax(250px, 1.55fr) clamp(120px, 12vw, 150px);
-  gap: clamp(18px, 2.7vw, 34px);
+  grid-template-columns: minmax(190px, 1fr) minmax(120px, 0.62fr) minmax(340px, 2.05fr) clamp(120px, 12vw, 150px);
+  gap: clamp(20px, 2.8vw, 38px);
   align-items: start;
   padding: clamp(38px, 5vh, 72px) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
@@ -180,7 +170,7 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 .pricing-plan__features {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 24px;
+  gap: 18px 34px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -188,7 +178,7 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 
 .pricing-plan__features li {
   min-width: 0;
-  padding-left: 13px;
+  padding-left: 18px;
   border-left: 1px solid rgba(255, 255, 255, 0.25);
 }
 
@@ -200,16 +190,16 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 
 .pricing-plan__features span {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 11px;
+  font-size: clamp(13px, 1.1vw, 15px);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.28;
 }
 
 .pricing-plan__features small {
-  margin-top: 3px;
+  margin-top: 7px;
   color: rgba(255, 255, 255, 0.43);
-  font-size: 9px;
-  line-height: 1.35;
+  font-size: clamp(11px, 0.95vw, 13px);
+  line-height: 1.48;
 }
 
 .pricing-plan__action {
@@ -257,7 +247,7 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
   .pricing-plan__features {
     grid-column: 1 / -1;
     grid-row: 2;
-    max-width: 680px;
+    max-width: 820px;
   }
 
   .pricing-plan__action {
@@ -270,8 +260,9 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
   .pricing-main {
     --pricing-top-space: 48px;
     --pricing-list-offset: 32px;
+    --pricing-bottom-space: 28px;
     padding-top: var(--pricing-top-space);
-    padding-bottom: calc(var(--pricing-top-space) + var(--pricing-list-offset));
+    padding-bottom: var(--pricing-bottom-space);
   }
 
   .pricing-list {

@@ -49,19 +49,7 @@
         </div>
       </main>
 
-      <footer class="w-full border-t border-white/[0.08] py-8 text-center text-[9px] uppercase tracking-[0.2em] text-white/90" style="font-family: 'Cormorant Garamond', serif;">
-        <div class="mx-auto flex w-full max-w-[1280px] flex-col items-center justify-between gap-8 sm:flex-row sm:text-left">
-          <div class="order-2 flex self-start items-center gap-0 whitespace-nowrap text-left sm:self-auto sm:items-start sm:text-left">
-            <span class="footer-nav-font text-[12px] tracking-[0.14em]">{{ t('landing.footer.company') }}</span>
-          </div>
-          <nav class="footer-nav-font order-1 flex w-full flex-col items-start justify-start gap-4 text-[11px] font-medium tracking-[0.14em] text-white/90 sm:w-auto sm:flex-row sm:items-center sm:gap-x-10 sm:gap-y-3 sm:justify-end" aria-label="Footer navigation">
-            <router-link to="/" class="transition-colors hover:text-white">{{ t('landing.nav.products') }}</router-link>
-            <router-link to="/use-cases" class="transition-colors hover:text-white">{{ t('landing.nav.useCases') }}</router-link>
-            <router-link to="/pricing" class="transition-colors hover:text-white">{{ t('landing.nav.pricing') }}</router-link>
-            <router-link to="/philosophy" class="transition-colors hover:text-white">{{ t('landing.nav.philosophy') }}</router-link>
-          </nav>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   </div>
 </template>
@@ -70,6 +58,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import SiteNav from './SiteNav.vue'
+import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, tm, locale, setLocale } = useI18n()

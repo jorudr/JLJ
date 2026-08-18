@@ -132,7 +132,16 @@ export const translations = {
       footer: {
         experience: "Experience the future of trading analysis",
         with: "with",
-        company: "Voshe Company D.O.O"
+        company: "Voshe Company D.O.O",
+        title: "Built for disciplined market work.",
+        description: "J.L.JÖRMUNGANDR connects journaling, strategy design, performance review and community context in one focused workspace for professional traders.",
+        productLine: "A trading journal and analytical workspace for professional traders.",
+        contactCta: "Get access",
+        telegramCta: "Telegram updates",
+        platformTitle: "Platform",
+        accessTitle: "Contact",
+        contact: "Email",
+        rights: "All rights reserved"
       },
       pricing: {
         eyebrow: "ACCESS PROTOCOL // 02",
@@ -433,7 +442,16 @@ export const translations = {
       footer: {
         experience: "Откройте для себя будущее торгового анализа",
         with: "с",
-        company: "Voshe Company D.O.O"
+        company: "Voshe Company D.O.O",
+        title: "Создано для дисциплинированной работы с рынком.",
+        description: "J.L.JÖRMUNGANDR объединяет журнал сделок, проектирование стратегий, анализ результатов и контекст сообщества в одном рабочем пространстве для профессиональных трейдеров.",
+        productLine: "Торговый журнал и аналитическое рабочее пространство для профессиональных трейдеров.",
+        contactCta: "Получить доступ",
+        telegramCta: "Обновления в Telegram",
+        platformTitle: "Платформа",
+        accessTitle: "Связь",
+        contact: "Email",
+        rights: "Все права защищены"
       },
       pricing: {
         eyebrow: "ПРОТОКОЛ ДОСТУПА // 02",
