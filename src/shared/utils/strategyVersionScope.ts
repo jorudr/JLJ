@@ -56,16 +56,15 @@ export function filterTradesBySelectedStrategyVersion<T>(
   const effectiveSelectedVersionId = selectedVersionIndex === -1
     ? null
     : versions[selectedVersionIndex]?.id
-  const { startTime, endTime } = getSelectedStrategyVersionWindow(versions, selectedVersionId)
 
   return trades.filter(trade => {
     const explicitVersionId = (trade as any)?.strategyVersionId
-    if (explicitVersionId && effectiveSelectedVersionId) {
-      return explicitVersionId === effectiveSelectedVersionId
-    }
-
-    const timestamp = getTradeVersionTimestamp(trade)
-    return timestamp > 0 && timestamp >= startTime && timestamp < endTime
+    // Version-less records are strategy-level trades. Their JSON has no
+    // version assignment, so inferring one from a date hides valid records
+    // differently across screens. Filter only trades that explicitly name a
+    // strategy version.
+    if (!explicitVersionId || !effectiveSelectedVersionId) return true
+    return explicitVersionId === effectiveSelectedVersionId
   })
 }
 
