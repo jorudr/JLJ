@@ -52,6 +52,7 @@ const balanceBeforeTrade = computed(() => {
 type ScorePattern = {
   label: string
   value: string
+  unit: string
   frequency: number
   description: string
   benchmark: string
@@ -64,13 +65,25 @@ const scorePatternQuantile = (values: number[], ratio: number) => {
   return sorted[index] ?? Number.NaN
 }
 
-const formatScorePatternValue = (value: number, sample: any) => {
+const getScorePatternUnit = (sample: any) => {
   const formatted = String(sample?.formattedValue ?? '')
-  if (formatted.includes('%')) return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}%`
-  if (/\b(мин|min|ч|h|д|d)\b/i.test(formatted)) {
-    return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}${formatted.match(/мин|min|ч|h|д|d/i)?.[0] || ''}`
+  if (formatted.includes('%')) return '%'
+  if (formatted.includes('$')) return '$'
+  if (/(мин|min|mins)/i.test(formatted) || /\bm\b/i.test(formatted)) return 'min'
+  if (/(ч|\bh\b|hr|hrs)/i.test(formatted)) return 'hours'
+  if (/(д|\bd\b|days?)/i.test(formatted)) return 'days'
+  if (/\bR\b/i.test(formatted)) return 'R'
+  if (/lots?/i.test(formatted)) return 'lots'
+  return ''
+}
+
+const formatScorePatternValue = (value: number, sample: any) => {
+  const unit = getScorePatternUnit(sample)
+  if (unit === '$') return `${value < 0 ? '-' : ''}${Math.abs(value).toFixed(2)}`
+  if (unit === '%') return value.toFixed(Math.abs(value) >= 10 ? 0 : 1)
+  if (unit === 'min' || unit === 'hours' || unit === 'days' || unit === 'lots') {
+    return value.toFixed(Math.abs(value) >= 10 ? 0 : 1)
   }
-  if (formatted.includes('$')) return `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`
   return value.toFixed(Math.abs(value) >= 10 ? 0 : 2)
 }
 
@@ -81,10 +94,20 @@ const getTradeDurationHours = (trade: any) => {
   return (end - start) / (1000 * 60 * 60)
 }
 
-const scorePatternMetricRows = (trade: any, context: any) => {
-  const result = useTradeAnalysisMetrics(trade, context, locale.value, 'advanced', 'all')
+// This is deliberately a score-cohort source. It does not read the cards in
+// Advanced Metrics: every row below is extracted from one of the trades in
+// the selected high-score or low-score group.
+const scoreCohortMetricRows = (trade: any) => {
   const durationHours = getTradeDurationHours(trade)
-  const metricRows = result.metrics
+  const durationMinutes = Number.isFinite(durationHours) ? durationHours * 60 : Number.NaN
+  const metricResult = useTradeAnalysisMetrics(
+    trade,
+    { durationHours, durationMinutes },
+    locale.value,
+    'advanced',
+    'all'
+  )
+  const legacyMetricRows = metricResult.metrics
     .filter((metric) => !['adherence', 'behavioural'].includes(String(metric.category || '').toLowerCase()))
     .map((metric) => ({
       id: metric.key,
@@ -97,12 +120,9 @@ const scorePatternMetricRows = (trade: any, context: any) => {
       benchmark: metric.benchmarkText || ''
     }))
 
-  // Keep the score analysis useful for legacy/manual trades as well. Those
-  // records often do not contain the generated in-trade fields consumed by
-  // the advanced metric engines, while PnL, R/R and duration are available.
   return [
     {
-      id: 'score:pnl',
+      id: 'cohort:pnl',
       label: locale.value === 'ru' ? 'Результат сделки' : 'Trade Result',
       rawValue: getNormalizedPnl(trade),
       formattedValue: formatCurrency(getNormalizedPnl(trade)),
@@ -110,31 +130,41 @@ const scorePatternMetricRows = (trade: any, context: any) => {
       benchmark: locale.value === 'ru' ? 'Сравнение с группой score.' : 'Compared with the score group.'
     },
     {
-      id: 'score:rr',
+      id: 'cohort:rr',
       label: 'Risk/Reward',
       rawValue: getTradeRiskReward(trade),
-      formattedValue: formatRatio(getTradeRiskReward(trade)),
+      formattedValue: `${getTradeRiskReward(trade).toFixed(2)} R`,
       description: locale.value === 'ru' ? 'Фактическое соотношение риска к прибыли.' : 'Realized risk/reward ratio.',
       benchmark: 'Risk/Reward'
     },
     {
-      id: 'score:duration',
-      label: locale.value === 'ru' ? 'Длительность сделки' : 'Trade Duration',
-      rawValue: durationHours,
-      formattedValue: Number.isFinite(durationHours) ? `${durationHours.toFixed(1)}h` : 'N/A',
-      description: locale.value === 'ru' ? 'Время от входа до выхода.' : 'Time from entry to exit.',
-      benchmark: locale.value === 'ru' ? 'Исторический диапазон группы.' : 'Historical group range.'
+      id: 'cohort:duration',
+      label: locale.value === 'ru' ? 'Время удержания' : 'Holding Time',
+      rawValue: Number.isFinite(durationHours) ? durationHours * 60 : Number.NaN,
+      formattedValue: Number.isFinite(durationHours) ? `${(durationHours * 60).toFixed(0)} min` : 'N/A',
+      description: locale.value === 'ru' ? 'Диапазон времени удержания сделок этой score-группы.' : 'Holding-time range for this score cohort.',
+      benchmark: locale.value === 'ru' ? 'Диапазон score-группы.' : 'Score cohort range.'
     },
-    ...metricRows
+    {
+      id: 'cohort:size',
+      label: locale.value === 'ru' ? 'Размер позиции' : 'Position Size',
+      rawValue: Number(trade?.size),
+      formattedValue: `${Number(trade?.size).toFixed(2)} lots`,
+      description: locale.value === 'ru' ? 'Диапазон размера позиции в score-группе.' : 'Position-size range for this score cohort.',
+      benchmark: locale.value === 'ru' ? 'Диапазон score-группы.' : 'Score cohort range.'
+    },
+    // Preserve the existing advanced pattern rows; they are also calculated
+    // per trade in the selected score cohort and are not Advanced cards.
+    ...legacyMetricRows
   ]
 }
 
-const buildScorePatterns = (pool: any[], context: any): ScorePattern[] => {
+const buildScorePatterns = (pool: any[]): ScorePattern[] => {
   if (!pool.length) return []
 
   const rowsByMetric = new Map<string, any[]>()
   pool.forEach((trade) => {
-    scorePatternMetricRows(trade, context).forEach((row) => {
+    scoreCohortMetricRows(trade).forEach((row) => {
       const rows = rowsByMetric.get(row.id) || []
       rows.push(row)
       rowsByMetric.set(row.id, rows)
@@ -142,27 +172,55 @@ const buildScorePatterns = (pool: any[], context: any): ScorePattern[] => {
   })
 
   const patterns: ScorePattern[] = []
+  const seenRangeSignatures = new Set<string>()
+  const excludedMetricIds = new Set([
+    // These duplicate the cohort rows or are a single normalized score,
+    // rather than a useful range across the high/low score trades.
+    'net_result_variance',
+    'riskRewardRatio',
+    'temporal_exposure',
+    'horizon_sync_rating'
+  ])
   rowsByMetric.forEach((rows) => {
+    if (excludedMetricIds.has(String(rows[0]?.id))) return
     const numericRows = rows.filter((row) => Number.isFinite(row.rawValue))
     const numericValues = numericRows.map((row) => row.rawValue)
     const hasVariation = numericValues.some((value) => value !== numericValues[0])
     if (numericRows.length >= 2) {
-      // A constant zero is the default returned by several metric engines
-      // when a legacy trade has no generated in-trade data. It is not a
-      // pattern and must never be rendered as one.
+      // A constant value is not a range/pattern for this score cohort.
       if (!hasVariation) return
       const low = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.2)
       const high = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.8)
       if (!Number.isFinite(low) || !Number.isFinite(high)) return
+      if (low === high) return
       const inRange = numericRows.filter((row) => row.rawValue >= low && row.rawValue <= high).length
       const frequency = Math.round((inRange / numericRows.length) * 100)
       if (frequency <= 50) return
-      const sample = numericRows[0]
+      let displayLow = low
+      let displayHigh = high
+      let sample = numericRows[0]
+      let unit = getScorePatternUnit(sample)
+
+      // Holding time is stored in minutes. Keep short ranges in minutes, but
+      // convert the whole displayed range to hours once it exceeds one hour.
+      if (sample.id === 'cohort:duration') {
+        if (high > 60) {
+          displayLow = low / 60
+          displayHigh = high / 60
+          unit = 'hours'
+          sample = { ...sample, formattedValue: '0h' }
+        } else {
+          unit = 'min'
+        }
+      }
+
+      const signature = `${unit}:${displayLow.toFixed(4)}:${displayHigh.toFixed(4)}`
+      if (seenRangeSignatures.has(signature)) return
+      seenRangeSignatures.add(signature)
       patterns.push({
         label: sample.label,
-        value: low === high
-          ? formatScorePatternValue(low, sample)
-          : `${formatScorePatternValue(low, sample)} – ${formatScorePatternValue(high, sample)}`,
+        unit,
+        value: `${formatScorePatternValue(displayLow, sample)} – ${formatScorePatternValue(displayHigh, sample)}`,
         frequency,
         description: sample.description,
         benchmark: sample.benchmark
@@ -170,26 +228,8 @@ const buildScorePatterns = (pool: any[], context: any): ScorePattern[] => {
       return
     }
 
-    // A single numeric value cannot produce a meaningful historical range.
+    // A single numeric value cannot produce a meaningful score-cohort range.
     if (numericRows.length > 0) return
-
-    const categories = rows
-      .map((row) => String(row.formattedValue || '').trim())
-      .filter((value) => value && value !== 'N/A' && !/^\+?0(?:\.0+)?\s*(?:min|mins|h|hr|hrs|ч|д|%|r)?$/i.test(value))
-    if (!categories.length) return
-    const counts = new Map<string, number>()
-    categories.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1))
-    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]
-    if (!top) return
-    const frequency = Math.round((top[1] / categories.length) * 100)
-    if (frequency <= 50) return
-    patterns.push({
-      label: rows[0].label,
-      value: top[0],
-      frequency,
-      description: rows[0].description,
-      benchmark: rows[0].benchmark
-    })
   })
 
   return patterns
@@ -206,11 +246,6 @@ const tradeScoreBreakdown = computed(() => {
   const scoreIndex = buildTradeProfitabilityScoreIndex(closedTrades.value, props.initialBalance)
   const score = scoreIndex.get(String(trade.id || '')) || scoreIndex.get(trade)
   const percentile = score?.score ?? Math.max(0, Math.min(100, Number(trade.percentileRank) || 50))
-  const context = {
-    avgPnl: closedTrades.value.length
-      ? closedTrades.value.reduce((sum, item) => sum + getNormalizedPnl(item), 0) / closedTrades.value.length
-      : 0
-  }
   const highScore = percentile > 50
   const scoredPool = closedTrades.value.filter((item) => {
     const itemScore = scoreIndex.get(String(item?.id || '')) || scoreIndex.get(item)
@@ -221,7 +256,7 @@ const tradeScoreBreakdown = computed(() => {
     percentile,
     rawScore: score?.rawScore ?? getNormalizedPnl(trade),
     patternMode: highScore ? 'high' : 'low',
-    patterns: buildScorePatterns(scoredPool, context)
+    patterns: buildScorePatterns(scoredPool)
   }
 })
 
@@ -587,7 +622,10 @@ const simpleMetricInsights = computed(() => {
                 <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
               </span>
               <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
-                <span class="block">{{ pattern.value }}</span>
+                <span class="block">
+                  {{ pattern.value }}
+                  <span v-if="pattern.unit" class="ml-1 text-[8px] uppercase tracking-[0.14em] opacity-60">{{ pattern.unit }}</span>
+                </span>
                 <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
               </span>
             </div>
