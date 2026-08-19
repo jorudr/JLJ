@@ -19,6 +19,8 @@ export interface StrategyTradesData {
 const LIVERMORE_BTC_SEED_PREFIX = 'livermore-btc-seed-'
 const LIVERMORE_NFLXX_SCENARIO_PREFIX = 'livermore-nflxx-scenario-'
 const LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT = 15
+const LIVERMORE_RANDOM_TRADE_PREFIX = 'livermore-random-'
+const LIVERMORE_RANDOM_TRADE_COUNT = 30
 
 function isLivermoreStrategyName(name?: string) {
   return String(name || '').toLowerCase().includes('livermore')
@@ -46,6 +48,90 @@ function shiftDate(value: unknown, days: number) {
   const date = new Date(value as string | number | Date)
   if (Number.isNaN(date.getTime())) return value
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+}
+
+function createLivermoreRandomTrades(strategyId: string): DiaryEntry[] {
+  const assets = [
+    ['AAPL', 215], ['MSFT', 480], ['NVDA', 182], ['AMZN', 228], ['META', 780],
+    ['TSLA', 420], ['JPM', 330], ['XOM', 118], ['CAT', 450], ['GE', 315]
+  ] as const
+  const scenarios = ['PIVOTAL POINT', 'SECONDARY REACTION', 'LINE OF LEAST RESISTANCE', 'BREAKOUT CONFIRMATION']
+  const conditions = ['HIGHER VOLUME', 'TREND ALIGNMENT', 'PRICE HOLDS LEVEL', 'FAILED RETEST']
+  const emotions = ['Patience', 'Discipline', 'Confidence', 'Focus']
+  const random = (min: number, max: number) => min + Math.random() * (max - min)
+  const round = (value: number, digits = 2) => Number(value.toFixed(digits))
+
+  return Array.from({ length: LIVERMORE_RANDOM_TRADE_COUNT }, (_, index) => {
+    const [asset, basePrice] = assets[Math.floor(Math.random() * assets.length)]
+    const side: 'Long' | 'Short' = Math.random() < 0.58 ? 'Long' : 'Short'
+    const entry = round(basePrice * random(0.88, 1.12))
+    const isWinner = Math.random() < 0.6
+    const change = random(isWinner ? 0.012 : -0.075, isWinner ? 0.095 : -0.012)
+    const exit = round(entry * (side === 'Long' ? 1 + change : 1 - change))
+    const stopDistance = random(0.018, 0.052)
+    const targetDistance = random(0.045, 0.13)
+    const stopLoss = round(entry * (side === 'Long' ? 1 - stopDistance : 1 + stopDistance))
+    const takeProfit = round(entry * (side === 'Long' ? 1 + targetDistance : 1 - targetDistance))
+    const size = Math.floor(random(4, 26))
+    const profitInCurrency = round((side === 'Long' ? exit - entry : entry - exit) * size)
+    const openDate = new Date(Date.UTC(2026, 5, 1 + index * 2, 13 + (index % 5), (index * 11) % 60))
+    const exitDate = new Date(openDate.getTime() + Math.floor(random(4, 60)) * 60 * 60 * 1000)
+    const id = `${LIVERMORE_RANDOM_TRADE_PREFIX}${String(index + 1).padStart(2, '0')}`
+    const scenario = scenarios[index % scenarios.length]
+    const condition = conditions[index % conditions.length]
+    const conditionEntry = {
+      id: `livermore-condition-${index % conditions.length}`,
+      info: {
+        name: condition,
+        description: 'Randomly generated market condition',
+        priority: 'REQUIRED'
+      }
+    }
+
+    return {
+      id,
+      asset,
+      side,
+      entry,
+      exit,
+      size,
+      executions: [
+        { id: `${id}-entry`, type: 'entry', side, price: entry, size, date: openDate, label: 'SINGLE' },
+        { id: `${id}-exit`, type: 'exit', side: 'Close', price: exit, size, date: exitDate, label: 'SINGLE' }
+      ],
+      stopLoss,
+      takeProfit,
+      isClosed: true,
+      status: 'closed',
+      timeZone: 'UTC',
+      date: openDate,
+      dateExit: exitDate,
+      profitInCurrency,
+      assetType: 'Stocks',
+      strategyId,
+      entryMethodType: 'SINGLE',
+      exitMethodType: 'SINGLE',
+      riskReward: round(targetDistance / stopDistance),
+      entryFee: 0,
+      exitFee: 0,
+      feeType: '$',
+      emotions: [emotions[index % emotions.length]],
+      boardScenarioEntry: {
+        id: `livermore-scenario-${index % scenarios.length}`,
+        info: {
+          name: scenario,
+          description: 'Randomly generated Livermore-style historical trade',
+          conditions: [conditionEntry]
+        }
+      },
+      boardScenarioExit: null,
+      boardRequiredConditionsEntry: [conditionEntry],
+      boardRequiredConditionsExit: [],
+      images: [],
+      notes: 'Randomly generated trade for LIVERMORE’S.',
+      notesList: []
+    }
+  })
 }
 
 function createLivermoreBtcSeedTrades(strategyId: string): DiaryEntry[] {
@@ -211,7 +297,8 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
 
       const removedSyntheticTrades = removeSyntheticSeedTrades()
       const addedLivermoreTrades = ensureLivermoreNflxxScenarioTrades()
-      if (removedSyntheticTrades || addedLivermoreTrades) await save()
+      const addedRandomLivermoreTrades = ensureLivermoreRandomTrades()
+      if (removedSyntheticTrades || addedLivermoreTrades || addedRandomLivermoreTrades) await save()
 
       // Main diary trades are loaded exclusively from disk storage
     } finally {
@@ -282,6 +369,27 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
       sourceTrade.boardScenarioExitId ||
       'unknown'
     console.info(`[StrategyTrades] Added ${newTrades.length} NFLXX trades to ${livermoreStrategy.name} with scenario ${scenarioName}.`)
+    return true
+  }
+
+  function ensureLivermoreRandomTrades() {
+    const livermoreStrategy = strategies.value.find(strategy => isLivermoreStrategyName(strategy.name))
+    if (!livermoreStrategy) return false
+
+    const trades = tradesByStrategy.value[livermoreStrategy.id] || []
+    const existingRandomTrades = trades.filter(trade => String(trade.id || '').startsWith(LIVERMORE_RANDOM_TRADE_PREFIX))
+    if (existingRandomTrades.length >= LIVERMORE_RANDOM_TRADE_COUNT) return false
+
+    const missingTrades = createLivermoreRandomTrades(livermoreStrategy.id)
+      .filter(trade => !existingRandomTrades.some(existingTrade => existingTrade.id === trade.id))
+    if (!missingTrades.length) return false
+
+    tradesByStrategy.value[livermoreStrategy.id] = [...trades, ...missingTrades]
+    if (!hiddenTradeIdsByStrategy.value[livermoreStrategy.id]) {
+      hiddenTradeIdsByStrategy.value[livermoreStrategy.id] = []
+    }
+
+    console.info(`[StrategyTrades] Added ${missingTrades.length} random trades to ${livermoreStrategy.name}.`)
     return true
   }
 
@@ -371,6 +479,10 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
     }
 
     if (ensureLivermoreNflxxScenarioTrades()) {
+      changed = true
+    }
+
+    if (ensureLivermoreRandomTrades()) {
       changed = true
     }
 
