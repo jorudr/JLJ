@@ -8,6 +8,8 @@ import {
 } from '~/widgets/genesis/model/metrics'
 import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { buildTradeProfitabilityScoreIndex } from '~/widgets/genesis/model/tradeProfitabilityScore'
+import { useTradeAnalysisMetrics } from './metrics'
 
 interface AdvancedMetricsPanelProps {
   trade?: any
@@ -47,44 +49,179 @@ const balanceBeforeTrade = computed(() => {
   return getTradeBalanceBefore(closedTrades.value, props.trade, props.initialBalance)
 })
 
+type ScorePattern = {
+  label: string
+  value: string
+  frequency: number
+  description: string
+  benchmark: string
+}
+
+const scorePatternQuantile = (values: number[], ratio: number) => {
+  const sorted = values.slice().sort((a, b) => a - b)
+  if (!sorted.length) return Number.NaN
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)))
+  return sorted[index] ?? Number.NaN
+}
+
+const formatScorePatternValue = (value: number, sample: any) => {
+  const formatted = String(sample?.formattedValue ?? '')
+  if (formatted.includes('%')) return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}%`
+  if (/\b(мин|min|ч|h|д|d)\b/i.test(formatted)) {
+    return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}${formatted.match(/мин|min|ч|h|д|d/i)?.[0] || ''}`
+  }
+  if (formatted.includes('$')) return `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`
+  return value.toFixed(Math.abs(value) >= 10 ? 0 : 2)
+}
+
+const getTradeDurationHours = (trade: any) => {
+  const start = new Date(trade?.entryTime ?? trade?.date).getTime()
+  const end = new Date(trade?.exitTime ?? trade?.dateExit ?? trade?.date).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return Number.NaN
+  return (end - start) / (1000 * 60 * 60)
+}
+
+const scorePatternMetricRows = (trade: any, context: any) => {
+  const result = useTradeAnalysisMetrics(trade, context, locale.value, 'advanced', 'all')
+  const durationHours = getTradeDurationHours(trade)
+  const metricRows = result.metrics
+    .filter((metric) => !['adherence', 'behavioural'].includes(String(metric.category || '').toLowerCase()))
+    .map((metric) => ({
+      id: metric.key,
+      label: metric.label,
+      rawValue: metric.rawValue === null || metric.rawValue === undefined || metric.rawValue === ''
+        ? Number.NaN
+        : Number(metric.rawValue),
+      formattedValue: metric.formattedValue,
+      description: metric.desc || '',
+      benchmark: metric.benchmarkText || ''
+    }))
+
+  // Keep the score analysis useful for legacy/manual trades as well. Those
+  // records often do not contain the generated in-trade fields consumed by
+  // the advanced metric engines, while PnL, R/R and duration are available.
+  return [
+    {
+      id: 'score:pnl',
+      label: locale.value === 'ru' ? 'Результат сделки' : 'Trade Result',
+      rawValue: getNormalizedPnl(trade),
+      formattedValue: formatCurrency(getNormalizedPnl(trade)),
+      description: locale.value === 'ru' ? 'Финансовый результат сделки.' : 'Financial result of the trade.',
+      benchmark: locale.value === 'ru' ? 'Сравнение с группой score.' : 'Compared with the score group.'
+    },
+    {
+      id: 'score:rr',
+      label: 'Risk/Reward',
+      rawValue: getTradeRiskReward(trade),
+      formattedValue: formatRatio(getTradeRiskReward(trade)),
+      description: locale.value === 'ru' ? 'Фактическое соотношение риска к прибыли.' : 'Realized risk/reward ratio.',
+      benchmark: 'Risk/Reward'
+    },
+    {
+      id: 'score:duration',
+      label: locale.value === 'ru' ? 'Длительность сделки' : 'Trade Duration',
+      rawValue: durationHours,
+      formattedValue: Number.isFinite(durationHours) ? `${durationHours.toFixed(1)}h` : 'N/A',
+      description: locale.value === 'ru' ? 'Время от входа до выхода.' : 'Time from entry to exit.',
+      benchmark: locale.value === 'ru' ? 'Исторический диапазон группы.' : 'Historical group range.'
+    },
+    ...metricRows
+  ]
+}
+
+const buildScorePatterns = (pool: any[], context: any): ScorePattern[] => {
+  if (!pool.length) return []
+
+  const rowsByMetric = new Map<string, any[]>()
+  pool.forEach((trade) => {
+    scorePatternMetricRows(trade, context).forEach((row) => {
+      const rows = rowsByMetric.get(row.id) || []
+      rows.push(row)
+      rowsByMetric.set(row.id, rows)
+    })
+  })
+
+  const patterns: ScorePattern[] = []
+  rowsByMetric.forEach((rows) => {
+    const numericRows = rows.filter((row) => Number.isFinite(row.rawValue))
+    const numericValues = numericRows.map((row) => row.rawValue)
+    const hasVariation = numericValues.some((value) => value !== numericValues[0])
+    if (numericRows.length >= 2) {
+      // A constant zero is the default returned by several metric engines
+      // when a legacy trade has no generated in-trade data. It is not a
+      // pattern and must never be rendered as one.
+      if (!hasVariation) return
+      const low = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.2)
+      const high = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.8)
+      if (!Number.isFinite(low) || !Number.isFinite(high)) return
+      const inRange = numericRows.filter((row) => row.rawValue >= low && row.rawValue <= high).length
+      const frequency = Math.round((inRange / numericRows.length) * 100)
+      if (frequency <= 50) return
+      const sample = numericRows[0]
+      patterns.push({
+        label: sample.label,
+        value: low === high
+          ? formatScorePatternValue(low, sample)
+          : `${formatScorePatternValue(low, sample)} – ${formatScorePatternValue(high, sample)}`,
+        frequency,
+        description: sample.description,
+        benchmark: sample.benchmark
+      })
+      return
+    }
+
+    // A single numeric value cannot produce a meaningful historical range.
+    if (numericRows.length > 0) return
+
+    const categories = rows
+      .map((row) => String(row.formattedValue || '').trim())
+      .filter((value) => value && value !== 'N/A' && !/^\+?0(?:\.0+)?\s*(?:min|mins|h|hr|hrs|ч|д|%|r)?$/i.test(value))
+    if (!categories.length) return
+    const counts = new Map<string, number>()
+    categories.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1))
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]
+    if (!top) return
+    const frequency = Math.round((top[1] / categories.length) * 100)
+    if (frequency <= 50) return
+    patterns.push({
+      label: rows[0].label,
+      value: top[0],
+      frequency,
+      description: rows[0].description,
+      benchmark: rows[0].benchmark
+    })
+  })
+
+  return patterns
+    .sort((a, b) => b.frequency - a.frequency || a.label.localeCompare(b.label))
+    .slice(0, 18)
+}
+
 const tradeScoreBreakdown = computed(() => {
   const trade = props.trade
   if (!trade) {
-    return { percentile: 0, rawScore: 0, patterns: [] as Array<{ label: string; value: string; metricId: string }> }
+    return { percentile: 0, rawScore: 0, patternMode: 'high', patterns: [] as ScorePattern[] }
   }
 
-  const currentPnl = getNormalizedPnl(trade)
-  const values = closedTrades.value
-    .map((item) => getNormalizedPnl(item))
-    .filter(Number.isFinite)
-
-  const lowerTrades = values.filter((value) => value < currentPnl).length
-  const percentile = values.length > 0
-    ? Math.round((lowerTrades / values.length) * 100)
-    : Math.max(0, Math.min(100, Number(trade.percentileRank) || (currentPnl > 0 ? 70 : 30)))
+  const scoreIndex = buildTradeProfitabilityScoreIndex(closedTrades.value, props.initialBalance)
+  const score = scoreIndex.get(String(trade.id || '')) || scoreIndex.get(trade)
+  const percentile = score?.score ?? Math.max(0, Math.min(100, Number(trade.percentileRank) || 50))
+  const context = {
+    avgPnl: closedTrades.value.length
+      ? closedTrades.value.reduce((sum, item) => sum + getNormalizedPnl(item), 0) / closedTrades.value.length
+      : 0
+  }
+  const highScore = percentile > 50
+  const scoredPool = closedTrades.value.filter((item) => {
+    const itemScore = scoreIndex.get(String(item?.id || '')) || scoreIndex.get(item)
+    return itemScore && (highScore ? itemScore.score > 50 : itemScore.score <= 50)
+  })
 
   return {
     percentile,
-    rawScore: currentPnl,
-    patterns: [
-      {
-        label: locale.value === 'ru' ? 'Результат' : 'Result',
-        value: formatCurrency(currentPnl),
-        metricId: 'pnl'
-      },
-      {
-        label: 'Risk/Reward',
-        value: formatRatio(actualRR.value),
-        metricId: 'rr'
-      },
-      {
-        label: locale.value === 'ru' ? 'Обязательные условия' : 'Required Conditions',
-        value: requiredConditionStats.value.total > 0
-          ? `${requiredConditionStats.value.used}/${requiredConditionStats.value.total}`
-          : 'N/A',
-        metricId: 'required'
-      }
-    ]
+    rawScore: score?.rawScore ?? getNormalizedPnl(trade),
+    patternMode: highScore ? 'high' : 'low',
+    patterns: buildScorePatterns(scoredPool, context)
   }
 })
 
@@ -369,12 +506,6 @@ const simpleMetricInsights = computed(() => {
   ]
 })
 
-const scorePatternDescription = (metricId: string) => {
-  const isRu = locale.value === 'ru'
-  if (metricId === 'pnl') return isRu ? 'Фактический финансовый результат сделки.' : 'Actual financial result of the trade.'
-  if (metricId === 'rr') return isRu ? 'Фактическое соотношение риска к прибыли.' : 'Realized risk/reward ratio.'
-  return isRu ? 'Покрытие обязательных условий входа.' : 'Coverage of required entry conditions.'
-}
 </script>
 
 <template>
@@ -435,16 +566,36 @@ const scorePatternDescription = (metricId: string) => {
           </button>
 
           <div v-if="isTradeScoreExpanded" class="mt-3 flex max-h-[360px] flex-col overflow-y-auto border-t nier-border-primary pr-1">
+            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3">
+              <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
+                {{ locale === 'ru'
+                  ? (tradeScoreBreakdown.patternMode === 'high' ? 'Закономерности high score' : 'Закономерности low score')
+                  : (tradeScoreBreakdown.patternMode === 'high' ? 'High score patterns' : 'Low score patterns') }}
+              </span>
+              <span class="text-right text-[9px] font-mono uppercase tracking-[0.16em] opacity-45">
+                {{ locale === 'ru' ? 'диапазон / частота' : 'range / frequency' }}
+              </span>
+            </div>
             <div
               v-for="pattern in tradeScoreBreakdown.patterns"
               :key="`${pattern.label}-${pattern.value}`"
               class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]"
-              :title="scorePatternDescription(pattern.metricId)"
+              :title="[pattern.description, pattern.benchmark].filter(Boolean).join(' — ')"
             >
-              <span class="truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
-              <span class="max-w-[220px] truncate text-right text-[10px] font-mono font-black nier-text-primary">
-                {{ pattern.value }}
+              <span class="min-w-0">
+                <span class="block truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
+                <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
               </span>
+              <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
+                <span class="block">{{ pattern.value }}</span>
+                <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
+              </span>
+            </div>
+            <div v-if="tradeScoreBreakdown.patterns.length === 0" class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
+              <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
+                {{ locale === 'ru' ? 'Недостаточно повторяющихся закономерностей' : 'Not enough repeating patterns' }}
+              </span>
+              <span class="text-[10px] font-mono font-black opacity-35">N/A</span>
             </div>
           </div>
         </div>
