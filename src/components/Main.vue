@@ -420,7 +420,7 @@
     <!-- Interactive application demonstration -->
     <section class="home-equity-demo relative z-10 w-full px-6 py-16 sm:px-10 lg:py-24">
       <div class="mx-auto w-full max-w-[1240px]">
-        <ExEquityCurve3D :trades="demoTrades" :initial-balance="10000" />
+        <VideoShowcase />
       </div>
     </section>
 
@@ -476,7 +476,7 @@ import { useI18n } from '../shared/i18n/useI18n'
 import GradflowBackground from './GradflowBackground.vue'
 import ExDivider from '../shared/ui/ExDivider.vue'
 import AppFooter from './AppFooter.vue'
-import ExEquityCurve3D from './ExEquityCurve3D.vue'
+import VideoShowcase from './VideoShowcase.vue'
 
 const { t, locale, setLocale } = useI18n()
 
