@@ -66,8 +66,8 @@ const positiveOrNull = (value: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
-const displayTrade = computed(() => {
-  const trade = props.trade || {}
+const displayTrade = computed<Record<string, any>>(() => {
+  const trade = (props.trade || {}) as Record<string, any>
   const entryValue = positiveOrNull(trade.entry)
   const stopLossValue = positiveOrNull(trade.stopLoss)
   const takeProfitValue = positiveOrNull(trade.takeProfit)
@@ -84,7 +84,7 @@ const displayTrade = computed(() => {
   }
 })
 
-const analysisTrade = computed(() => {
+const analysisTrade = computed<Record<string, any>>(() => {
   const trade = displayTrade.value
 
   return {
@@ -219,6 +219,12 @@ const formatRiskPerTrade = () => {
   const value = props.trade?.riskPerTrade ?? props.trade?.riskPerTradeValue ?? props.trade?.riskPercent
   if (value === undefined || value === null || value === '') return '--'
   return `${formatPrice(value)}${props.trade?.riskPerTradeUnit === '%' || props.trade?.riskPercent !== undefined ? '%' : ''}`
+}
+
+const formatTradeSize = () => {
+  const sizeValue = props.trade?.size ?? displayTrade.value?.size
+  if (sizeValue === undefined || sizeValue === null || sizeValue === '') return '--'
+  return formatPrice(sizeValue)
 }
 
 const escapeTradeNoteHtml = (value: unknown) => String(value)
@@ -791,6 +797,10 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(summaryExitPrice) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
+                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РАЗМЕР ПОЗИЦИИ' : 'SIZE' }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatTradeSize() }}</span>
+                  </div>
+                  <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВХОДА' : 'ENTRY TIME' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatDateValue(displayTrade?.date) }}</span>
                   </div>
@@ -813,10 +823,6 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК / НАГРАДА' : 'RISK / REWARD' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskReward() }}</span>
-                  </div>
-                  <div class="min-w-0 pr-6">
-                    <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК НА СДЕЛКУ' : 'RISK PER TRADE' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskPerTrade() }}</span>
                   </div>
                 </div>
 
