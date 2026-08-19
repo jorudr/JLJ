@@ -295,12 +295,8 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
         }
       }
 
-      const removedSyntheticTrades = removeSyntheticSeedTrades()
-      const addedLivermoreTrades = ensureLivermoreNflxxScenarioTrades()
-      const addedRandomLivermoreTrades = ensureLivermoreRandomTrades()
-      if (removedSyntheticTrades || addedLivermoreTrades || addedRandomLivermoreTrades) await save()
-
-      // Main diary trades are loaded exclusively from disk storage
+      // Trades are read exactly as they exist in strategy_trades_v1.json.
+      // This store never creates, removes, or rewrites records during startup.
     } finally {
       isInitialized.value = true
       isLoading.value = false
@@ -322,86 +318,18 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
       initialDepositsByStrategy: initialDepositsByStrategy.value,
       hiddenTradeIdsByStrategy: hiddenTradeIdsByStrategy.value
     }
-    // Save to both Main and Backup for safety
+    // saveToDisk writes this file and its backup atomically.
     await saveToDisk('strategy_trades_v1', data)
-    await saveToDisk('strategy_trades_v1_backup', data)
-  }
-
-  function ensureLivermoreNflxxScenarioTrades() {
-    const livermoreStrategy = strategies.value.find(strategy => isLivermoreStrategyName(strategy.name))
-    if (!livermoreStrategy) return false
-
-    const trades = tradesByStrategy.value[livermoreStrategy.id] || []
-    const sourceTrade = trades.find(trade => isNflxxTrade(trade) && hasScenario(trade))
-    if (!sourceTrade) return false
-
-    const generatedTrades = trades.filter(trade => String(trade.id || '').startsWith(LIVERMORE_NFLXX_SCENARIO_PREFIX))
-    const missingCount = Math.max(0, LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT - generatedTrades.length)
-    if (missingCount === 0) return false
-
-    const existingIds = new Set(generatedTrades.map(trade => trade.id))
-    const newTrades: DiaryEntry[] = []
-
-    for (let index = 1; index <= LIVERMORE_NFLXX_SCENARIO_TRADE_COUNT && newTrades.length < missingCount; index += 1) {
-      const id = `${LIVERMORE_NFLXX_SCENARIO_PREFIX}${String(index).padStart(2, '0')}`
-      if (existingIds.has(id)) continue
-
-      const copiedTrade = cloneTrade(sourceTrade)
-      copiedTrade.id = id
-      copiedTrade.strategyId = livermoreStrategy.id
-      copiedTrade.date = shiftDate(sourceTrade.date, index) as DiaryEntry['date']
-      if (sourceTrade.dateExit) {
-        copiedTrade.dateExit = shiftDate(sourceTrade.dateExit, index) as DiaryEntry['dateExit']
-      }
-      newTrades.push(copiedTrade)
-    }
-
-    if (!newTrades.length) return false
-
-    tradesByStrategy.value[livermoreStrategy.id] = [...trades, ...newTrades]
-    if (!hiddenTradeIdsByStrategy.value[livermoreStrategy.id]) {
-      hiddenTradeIdsByStrategy.value[livermoreStrategy.id] = []
-    }
-
-    const scenarioName = sourceTrade.boardScenarioEntry?.info?.name ||
-      sourceTrade.boardScenarioExit?.info?.name ||
-      sourceTrade.boardScenarioEntryId ||
-      sourceTrade.boardScenarioExitId ||
-      'unknown'
-    console.info(`[StrategyTrades] Added ${newTrades.length} NFLXX trades to ${livermoreStrategy.name} with scenario ${scenarioName}.`)
-    return true
-  }
-
-  function ensureLivermoreRandomTrades() {
-    const livermoreStrategy = strategies.value.find(strategy => isLivermoreStrategyName(strategy.name))
-    if (!livermoreStrategy) return false
-
-    const trades = tradesByStrategy.value[livermoreStrategy.id] || []
-    const existingRandomTrades = trades.filter(trade => String(trade.id || '').startsWith(LIVERMORE_RANDOM_TRADE_PREFIX))
-    if (existingRandomTrades.length >= LIVERMORE_RANDOM_TRADE_COUNT) return false
-
-    const missingTrades = createLivermoreRandomTrades(livermoreStrategy.id)
-      .filter(trade => !existingRandomTrades.some(existingTrade => existingTrade.id === trade.id))
-    if (!missingTrades.length) return false
-
-    tradesByStrategy.value[livermoreStrategy.id] = [...trades, ...missingTrades]
-    if (!hiddenTradeIdsByStrategy.value[livermoreStrategy.id]) {
-      hiddenTradeIdsByStrategy.value[livermoreStrategy.id] = []
-    }
-
-    console.info(`[StrategyTrades] Added ${missingTrades.length} random trades to ${livermoreStrategy.name}.`)
-    return true
   }
 
   function getTradesForStrategy(strategyId: string) {
     const trades = tradesByStrategy.value[strategyId] || []
     const hiddenIds = new Set(hiddenTradeIdsByStrategy.value[strategyId] || [])
-    return trades.filter(trade => !hiddenIds.has(trade.id!) && !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
+    return trades.filter(trade => !hiddenIds.has(trade.id!))
   }
 
   function getAllTradesForStrategy(strategyId: string) {
-    return (tradesByStrategy.value[strategyId] || [])
-      .filter(trade => !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
+    return tradesByStrategy.value[strategyId] || []
   }
 
   function isTradeHidden(strategyId: string, tradeId: string) {
@@ -474,32 +402,7 @@ export const useStrategyTradesStore = defineStore('strategyTrades', () => {
       changed = true
     }
 
-    if (removeSyntheticSeedTrades()) {
-      changed = true
-    }
-
-    if (ensureLivermoreNflxxScenarioTrades()) {
-      changed = true
-    }
-
-    if (ensureLivermoreRandomTrades()) {
-      changed = true
-    }
-
     if (changed) await save()
-  }
-
-  function removeSyntheticSeedTrades() {
-    let changed = false
-    Object.entries(tradesByStrategy.value).forEach(([strategyId, trades]) => {
-      const filteredTrades = (trades || []).filter(trade => !String(trade?.id || '').startsWith(LIVERMORE_BTC_SEED_PREFIX))
-      if (filteredTrades.length !== (trades || []).length) {
-        tradesByStrategy.value[strategyId] = filteredTrades
-        changed = true
-      }
-    })
-
-    return changed
   }
 
   async function removeTrade(strategyId: string, tradeId: string) {
