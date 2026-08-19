@@ -190,7 +190,11 @@ const metricsData = computed(() => {
     {
       ...(props.strategyStatsContext || {}),
       ...derivedStatsContext.value,
-      ...inTradeStudyContext.value
+      ...inTradeStudyContext.value,
+      // Keep the account balance context authoritative. Generated study data
+      // may contain an empty `initialBalance` and overwrite this value.
+      initialBalance: balanceBeforeTrade.value,
+      balanceBeforeTrade: balanceBeforeTrade.value
     },
     (locale.value as 'ru' | 'en') || 'ru',
     'advanced',

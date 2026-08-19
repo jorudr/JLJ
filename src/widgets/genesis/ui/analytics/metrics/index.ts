@@ -4,7 +4,6 @@ import type { MetricConfig, MetricEngine } from '~/entities/metric'
 import { requiredAdherenceMetric } from './requiredAdherence'
 import { additionalAlphaMetric } from './additionalAlpha'
 import { conditionalPnlRatioMetric } from './conditionalPnlRatio'
-import { setupComplexityMetric } from './setupComplexity'
 
 // Category 2: Behavioural
 import { cognitiveStabilityMetric } from './cognitiveStability'
@@ -30,8 +29,6 @@ import { edgeCaptureQuotientMetric } from './edgeCaptureQuotient'
 import { unrealizedAlphaLeftMetric } from './unrealizedAlphaLeft'
 import { horizonSyncRatingMetric } from './horizonSyncRating'
 import { velocityVarianceIndexMetric } from './velocityVarianceIndex'
-import { conditionalAlphaDecayMetric } from './conditionalAlphaDecay'
-import { executionConfidenceIndexMetric } from './executionConfidenceIndex'
 
 // Category 5: In-Trade Analysis
 import { meaningfulLossTimeMetric } from './meaningfulLossTime'
@@ -65,7 +62,6 @@ export const advancedTradeMetricsEngines: MetricEngine[] = [
   requiredAdherenceMetric,
   additionalAlphaMetric,
   conditionalPnlRatioMetric,
-  setupComplexityMetric,
 
   // Behavioural
   cognitiveStabilityMetric,
@@ -91,8 +87,6 @@ export const advancedTradeMetricsEngines: MetricEngine[] = [
   unrealizedAlphaLeftMetric,
   horizonSyncRatingMetric,
   velocityVarianceIndexMetric,
-  conditionalAlphaDecayMetric,
-  executionConfidenceIndexMetric,
 
   // In-Trade Analysis
   meaningfulLossTimeMetric,

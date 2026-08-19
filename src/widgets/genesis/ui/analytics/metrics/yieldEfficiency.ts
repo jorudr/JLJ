@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { getTradePnl } from '~/widgets/genesis/model/metrics'
 import { createUnavailableMetricResult } from './metricUtils'
 
 export const yieldEfficiencyMetric: MetricEngine = {
@@ -24,11 +25,16 @@ export const yieldEfficiencyMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const pnl = Number(trade?.pnl || trade?.profit || 0)
-    const initialBalance = Number(context?.initialBalance)
-    if (!Number.isFinite(initialBalance) || initialBalance <= 0) {
-      return createUnavailableMetricResult(locale, isRu ? 'Нужен капитал до сделки' : 'Balance before trade required')
-    }
+    const resolvedBalance = Number(
+      context?.balanceBeforeTrade ??
+      context?.initialBalance ??
+      trade?.capitalBeforeTrade ??
+      trade?.initialBalance
+    )
+    const initialBalance = Number.isFinite(resolvedBalance) && resolvedBalance > 0
+      ? resolvedBalance
+      : 1000
+    const pnl = getTradePnl(trade, initialBalance)
     const yieldPct = (pnl / initialBalance) * 100
 
     const isPositive = yieldPct >= 0

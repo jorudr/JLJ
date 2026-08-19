@@ -243,7 +243,12 @@ const scoreCohortMetricRows = (trade: any) => {
   const durationMinutes = Number.isFinite(durationHours) ? durationHours * 60 : Number.NaN
   const metricResult = useTradeAnalysisMetrics(
     trade,
-    { durationHours, durationMinutes },
+    {
+      durationHours,
+      durationMinutes,
+      initialBalance: props.initialBalance,
+      balanceBeforeTrade: getTradeBalanceBefore(closedTrades.value, trade, props.initialBalance)
+    },
     locale.value,
     'advanced',
     'all'
@@ -320,6 +325,7 @@ const buildScorePatterns = (pool: any[]): ScorePattern[] => {
     'net_result_variance',
     'riskRewardRatio',
     'actual_vs_target_rr',
+    'edge_capture_quotient',
     'temporal_exposure',
     'horizon_sync_rating'
   ])
