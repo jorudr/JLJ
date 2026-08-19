@@ -33,9 +33,9 @@ export const temporalExposureMetric: MetricEngine = {
     const isGood = durationMinutes <= avgDuration
     const evalClass = isGood ? 'text-emerald-500' : 'text-amber-500'
 
-    const hours = Math.floor(durationMinutes / 60)
-    const mins = durationMinutes % 60
-    const formattedValue = `${hours > 0 ? `${hours}${isRu ? 'ч ' : 'h '}` : ''}${mins}${isRu ? 'мин' : 'm'}`
+    const formattedValue = durationMinutes > 60
+      ? `${(durationMinutes / 60).toFixed(2)}${isRu ? 'ч' : 'h'}`
+      : `${durationMinutes.toFixed(2)}${isRu ? 'мин' : 'm'}`
 
     return {
       rawValue: durationMinutes,

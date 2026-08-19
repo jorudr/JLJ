@@ -28,6 +28,147 @@ const isRequiredConditionsExpanded = ref(false)
 
 const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g, ' ')
 
+const getScorePatternTooltip = (pattern: ScorePattern, mode: 'high' | 'low') => {
+  const isRu = locale.value === 'ru'
+  const label = pattern.label.toLowerCase()
+  let meaning = isRu
+    ? `«${pattern.label}» — это показатель, который нужно оценивать по его смыслу, а не только по близости к диапазону.`
+    : `“${pattern.label}” is a value with a concrete meaning, not just a number to match.`
+  let simple = isRu
+    ? 'Сначала переведите значение в понятный вопрос о сделке: что именно оно измеряет и хорошо ли это для риска.'
+    : 'Translate the number into a practical question about the trade: what does it measure, and is it good for the risk taken?'
+  let lowAction = isRu ? 'Что делать для low score' : 'What to do for low score'
+  let highAction = isRu ? 'Что делать для high score' : 'What to do for high score'
+
+  if (label.includes('actual') && label.includes('target') && (label.includes('rr') || label.includes('risk'))) {
+    meaning = isRu
+      ? 'Показывает фактический R/R, рассчитанный по входу, стопу и цели, и позволяет сравнить его с целевым R/R. Это не «оценка от 0 до 1». Например, 0.96–2.64 означает фактический диапазон: от 0.96R до 2.64R. При цели 2R нижняя граница ниже плана, верхняя — выше плана.'
+      : 'Shows the trade’s actual R/R calculated from entry, stop, and target, so it can be compared with the target R/R. It is not a 0-to-1 score. For example, 0.96–2.64 means actual R/R from 0.96R to 2.64R. With a 2R target, the lower end is below plan and the upper end is above plan.'
+    simple = isRu
+      ? '1R означает прибыль, равную риску; 2R — прибыль в два раза больше риска. Значение ниже целевого R/R означает недобор по отношению к плану, значение выше цели — план превышен.'
+      : '1R means reward equal to the risk; 2R means reward twice the risk. A value below the target R/R means the plan was not reached; a value above target means it was exceeded.'
+    lowAction = isRu
+      ? 'Избегайте входов, где actual R/R ниже target R/R: улучшите точку входа, уменьшите неоправданный стоп или заранее определите достижимую цель. Не принимайте сделку, если прибыль не оправдывает риск.'
+      : 'Avoid entries where actual R/R is below target R/R: improve the entry, remove an unnecessarily wide stop, or set a realistic target. Do not take a trade when the reward does not justify the risk.'
+    highAction = isRu
+      ? 'Сохраняйте actual R/R не ниже target R/R: не ухудшайте вход и стоп, а прибыльную цель не уменьшайте без причины.'
+      : 'Keep actual R/R at or above target R/R: do not worsen the entry or stop, and do not reduce the profitable target without a reason.'
+  } else if (label.includes('risk/reward') || label.includes('risk reward')) {
+    meaning = isRu
+      ? 'R/R — это расстояние от входа до цели, делённое на расстояние от входа до стопа. Он отвечает на вопрос: сколько можно получить, рискуя одной единицей.'
+      : 'R/R is the distance from entry to target divided by the distance from entry to stop. It answers: how much can be gained for one unit of risk?'
+    simple = isRu
+      ? 'R/R 0.8 означает возможные $0.80 на каждый $1 риска; R/R 2 означает возможные $2 на каждый $1 риска.'
+      : 'R/R 0.8 means a possible $0.80 for every $1 at risk; R/R 2 means a possible $2 for every $1 at risk.'
+    lowAction = isRu
+      ? 'Избегайте низкого R/R: ищите более близкий стоп, более достижимую цель или пропускайте сделку, если соотношение не оправдывает риск.'
+      : 'Avoid low R/R: look for a tighter stop, a realistic target, or skip the trade when the ratio does not justify the risk.'
+    highAction = isRu
+      ? 'Сохраняйте высокий R/R, но не расширяйте стоп искусственно ради красивого числа: риск должен оставаться контролируемым.'
+      : 'Preserve high R/R, but do not widen the stop just to make the number look better: risk must remain controlled.'
+  } else if (label.includes('stop loss') || label.includes('stop distance')) {
+    meaning = isRu
+      ? 'Показывает расстояние от цены входа до стоп-лосса в процентах. Это размер движения против позиции, после которого сделка закрывается с убытком.'
+      : 'Shows the percentage distance from entry to the stop-loss. It is the adverse move that closes the trade at a loss.'
+    simple = isRu
+      ? 'Стоп 2% означает: если цена пойдёт против вас примерно на 2%, позиция будет закрыта. Чем шире стоп, тем больше денег рискуется при том же объёме.'
+      : 'A 2% stop means the position closes if price moves about 2% against you. A wider stop puts more money at risk with the same position size.'
+    lowAction = isRu
+      ? 'Избегайте неоправданно широкого стопа: уменьшите размер позиции или пропустите сделку, если разумный стоп делает риск слишком большим.'
+      : 'Avoid an unjustifiably wide stop: reduce position size or skip the trade if a sensible stop still makes the risk too large.'
+    highAction = isRu
+      ? 'Сохраняйте такой же технически обоснованный стоп и не двигайте его дальше, чтобы не признавать ошибку.'
+      : 'Keep the same technically justified stop and do not move it farther away to avoid accepting a loss.'
+  } else if (label.includes('take profit') || label.includes('take profit distance')) {
+    meaning = isRu
+      ? 'Показывает расстояние от входа до цели в процентах. Это движение цены в вашу сторону, на котором планируется зафиксировать прибыль.'
+      : 'Shows the percentage distance from entry to the take-profit. It is the favorable price move at which profit is planned to be taken.'
+    simple = isRu
+      ? 'Цель 3% означает: сделка рассчитана на движение цены примерно на 3% в вашу сторону. Сама по себе дальняя цель не гарантирует, что цена до неё дойдёт.'
+      : 'A 3% target means the trade expects price to move about 3% in your favor. A farther target does not guarantee that price will reach it.'
+    lowAction = isRu
+      ? 'Избегайте слишком далёких целей без подтверждения движения: цель должна быть достижимой относительно стопа и рыночной волатильности.'
+      : 'Avoid targets that are too far away without evidence of momentum: the target must be realistic for the stop and market volatility.'
+    highAction = isRu
+      ? 'Сохраняйте достижимую цель, которая даёт достаточную прибыль относительно риска; не ставьте её дальше только ради большого R/R.'
+      : 'Keep a realistic target that pays enough for the risk; do not move it farther only to create a larger R/R.'
+  } else if (label.includes('profit factor')) {
+    meaning = isRu
+      ? 'Profit Factor — это сумма всех прибылей, делённая на сумму всех убытков. Он показывает, сколько долларов прибыли приходится на каждый потерянный доллар.'
+      : 'Profit Factor is total winning dollars divided by total losing dollars. It shows how many dollars are earned for each dollar lost.'
+    simple = isRu
+      ? '1.0 означает, что прибыли и убытки равны; 1.5 означает $1.50 прибыли на каждый $1 убытка; меньше 1 — система теряет деньги.'
+      : '1.0 means wins and losses are equal; 1.5 means $1.50 won for every $1 lost; below 1 means the system loses money.'
+    lowAction = isRu
+      ? 'Избегайте условий, при которых сумма убытков съедает прибыль: уменьшайте потери и не повторяйте слабые сетапы.'
+      : 'Avoid conditions where losses consume the wins: reduce losses and stop repeating weak setups.'
+    highAction = isRu
+      ? 'Сохраняйте сделки, которые дают прибыль больше суммарного риска, и не увеличивайте потери ради редких больших выигрышей.'
+      : 'Keep trades that produce more winning dollars than losing dollars, without increasing losses for occasional large wins.'
+  } else if (label.includes('win rate') || label.includes('win percentage')) {
+    meaning = isRu
+      ? 'Win Rate — доля закрытых прибыльных сделок. 60% означает, что прибыльными были примерно 6 из 10 сделок.'
+      : 'Win Rate is the share of closed trades that were profitable. 60% means roughly 6 of every 10 trades won.'
+    simple = isRu
+      ? 'Высокий Win Rate не гарантирует прибыль: десять маленьких выигрышей могут быть хуже одного большого убытка.'
+      : 'A high Win Rate does not guarantee profit: ten small wins can be worse than one large loss.'
+    lowAction = isRu
+      ? 'Избегайте входов без подтверждения и не пытайтесь повышать Win Rate за счёт слишком раннего закрытия прибыльных сделок.'
+      : 'Avoid unconfirmed entries, and do not raise Win Rate by cutting profitable trades too early.'
+    highAction = isRu
+      ? 'Сохраняйте условия, при которых сделки чаще закрываются в плюс, но проверяйте их вместе с размером выигрышей и убытков.'
+      : 'Preserve conditions that win more often, but always check them together with the size of wins and losses.'
+  } else if (label.includes('position size') || label.includes('size')) {
+    meaning = isRu
+      ? 'Показывает объём позиции в лотах. Это не качество сигнала, а размер сделки и, вместе со стопом, сумма денег под риском.'
+      : 'Shows the position size in lots. It is not signal quality; together with the stop, it determines the money at risk.'
+    simple = isRu
+      ? '2 лота — это позиция в два лота. При одинаковом стопе 2 лота рискуют примерно вдвое больше, чем 1 лот.'
+      : '2 lots means a two-lot position. With the same stop, 2 lots risk roughly twice as much as 1 lot.'
+    lowAction = isRu
+      ? 'Избегайте объёма, который делает один убыток слишком большим для счёта; размер должен вытекать из допустимого риска.'
+      : 'Avoid a size that makes one loss too large for the account; size the trade from the allowed risk.'
+    highAction = isRu
+      ? 'Сохраняйте дисциплинированный объём и не увеличивайте его только потому, что предыдущие сделки были успешными.'
+      : 'Keep position size disciplined and do not increase it just because recent trades were successful.'
+  } else if (label.includes('holding') || label.includes('duration') || label.includes('время')) {
+    meaning = isRu
+      ? 'Показывает, сколько времени сделки этой score-группы обычно находятся открытыми.'
+      : 'Shows how long trades in this score cohort usually stay open.'
+    simple = isRu
+      ? 'Например, 2 часа означает, что позиция обычно оставалась открытой около двух часов. Долгое удержание — это не автоматически хорошо: важно, двигалась ли цена в вашу сторону.'
+      : 'For example, 2 hours means the position usually stayed open for about two hours. Holding longer is not automatically better: what matters is whether price moved in your favor.'
+    lowAction = isRu
+      ? 'Избегайте слишком долгого удержания, если цена не движется в вашу сторону.'
+      : 'Avoid holding too long when price is not moving in your favor.'
+    highAction = isRu
+      ? 'Старайтесь удерживать сделки столько, сколько нужно для развития движения.'
+      : 'Try to hold trades long enough for the move to develop.'
+  } else if (label.includes('result') || label.includes('pnl') || label.includes('результат')) {
+    meaning = isRu
+      ? 'Показывает диапазон фактической прибыли или убытка сделок этой score-группы.'
+      : 'Shows the realized profit or loss range for this score cohort.'
+    simple = isRu
+      ? 'Положительное число означает прибыль, отрицательное — убыток. Например, −$30 означает, что сделка потеряла $30.'
+      : 'A positive number means profit; a negative number means loss. For example, −$30 means the trade lost $30.'
+    lowAction = isRu
+      ? 'Избегайте повторения условий, при которых сделки из этой группы чаще дают убыток.'
+      : 'Avoid repeating the conditions under which this group more often loses.'
+    highAction = isRu
+      ? 'Старайтесь повторять условия и поведение, которые чаще приводят к прибыли.'
+      : 'Try to repeat the conditions and behavior that more often produce profit.'
+  }
+
+  return {
+    title: isRu
+      ? `${mode === 'high' ? 'High score' : 'Low score'} · ${pattern.label}`
+      : `${mode === 'high' ? 'High score' : 'Low score'} · ${pattern.label}`,
+    meaning,
+    simple,
+    action: mode === 'low' ? lowAction : highAction
+  }
+}
+
 const parseNumber = (value: any): number => {
   if (value === undefined || value === null || value === '') return Number.NaN
   const parsed = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''))
@@ -178,6 +319,7 @@ const buildScorePatterns = (pool: any[]): ScorePattern[] => {
     // rather than a useful range across the high/low score trades.
     'net_result_variance',
     'riskRewardRatio',
+    'actual_vs_target_rr',
     'temporal_exposure',
     'horizon_sync_rating'
   ])
@@ -548,7 +690,8 @@ const simpleMetricInsights = computed(() => {
     <div
       v-for="(item, index) in simpleMetricInsights"
       :key="item.id"
-      class="group relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 border-b nier-border-primary px-4 py-4 transition-all duration-300 first:border-t hover:bg-black/[0.025] dark:hover:bg-white/[0.025] md:grid-cols-[42px_minmax(0,1fr)_minmax(148px,auto)] md:px-5"
+      class="group relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 border-b nier-border-primary px-4 py-4 transition-all duration-300 first:border-t hover:bg-black/[0.025] dark:hover:bg-white/[0.025] md:px-5"
+      :class="item.id === 'score' ? 'md:grid-cols-[42px_minmax(0,1fr)]' : 'md:grid-cols-[42px_minmax(0,1fr)_minmax(148px,auto)]'"
     >
       <div
         class="absolute left-0 top-1/2 h-6 w-px -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -614,20 +757,21 @@ const simpleMetricInsights = computed(() => {
             <div
               v-for="pattern in tradeScoreBreakdown.patterns"
               :key="`${pattern.label}-${pattern.value}`"
-              class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]"
-              :title="[pattern.description, pattern.benchmark].filter(Boolean).join(' — ')"
+              class="block w-full"
             >
-              <span class="min-w-0">
-                <span class="block truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
-                <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
-              </span>
-              <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
-                <span class="block">
-                  {{ pattern.value }}
-                  <span v-if="pattern.unit" class="ml-1 text-[8px] uppercase tracking-[0.14em] opacity-60">{{ pattern.unit }}</span>
+              <div class="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
+                <span class="min-w-0">
+                  <span class="block truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
+                  <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
                 </span>
-                <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
-              </span>
+                <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
+                  <span class="block">
+                    {{ pattern.value }}
+                    <span v-if="pattern.unit" class="ml-1 text-[8px] uppercase tracking-[0.14em] opacity-60">{{ pattern.unit }}</span>
+                  </span>
+                  <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
+                </span>
+              </div>
             </div>
             <div v-if="tradeScoreBreakdown.patterns.length === 0" class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
               <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
@@ -693,7 +837,7 @@ const simpleMetricInsights = computed(() => {
         </div>
       </div>
 
-      <div class="col-start-2 flex items-center md:col-start-auto md:justify-end">
+      <div v-if="item.id !== 'score'" class="col-start-2 flex items-center md:col-start-auto md:justify-end">
         <div class="inline-flex items-center gap-2 border nier-border-primary px-3 py-2 text-[9px] font-mono uppercase tracking-[0.18em] opacity-70 transition-all duration-300 group-hover:opacity-100">
           <span class="opacity-45">{{ item.benchmarkLabel }}</span>
           <span
