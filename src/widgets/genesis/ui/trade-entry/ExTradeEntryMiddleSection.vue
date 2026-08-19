@@ -28,6 +28,7 @@ import ExTradeImageEntry from './ExTradeImageEntry.vue';
 import ExAssetPickerMenu from '~/shared/ui/ExAssetPickerMenu.vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useGenesisTrades, useGenesisMatrixData } from '~/entities/genesis';
+import { getTradeResultPercent, resolveTradeBalanceBefore } from '~/widgets/genesis/model/metrics';
 
 const genesisTrades = useGenesisTrades();
 const genesisMatrix = useGenesisMatrixData();
@@ -356,10 +357,10 @@ const hasPositiveSummaryRiskLevels = (trade) => {
 
 const summaryProfitPercent = (trade) => {
   if (!trade) return null;
-  const profit = Number(trade.profitInCurrency);
-  const capital = Number(trade.capitalBeforeTrade) > 0 ? Number(trade.capitalBeforeTrade) : Number(currentCapital.value);
-  if (!Number.isFinite(profit) || !Number.isFinite(capital) || capital <= 0) return null;
-  return (profit / capital) * 100;
+  const deposit = Number(tradeStore?.getInitialDeposit?.(selectedStrategyId?.value)) || Number(currentCapital.value) || 1000;
+  const balanceBefore = resolveTradeBalanceBefore(trade, Array.isArray(journalEntries?.value) ? journalEntries.value : [], deposit);
+  const resultPct = getTradeResultPercent(trade, balanceBefore, deposit);
+  return Number.isFinite(resultPct) ? resultPct : null;
 };
 
 const summaryDisplayTrade = computed(() => savedTradeSummary.value || {

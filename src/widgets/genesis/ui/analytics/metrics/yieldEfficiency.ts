@@ -1,5 +1,6 @@
 import type { MetricEngine } from '~/entities/metric'
-import { getTradePnl } from '~/widgets/genesis/model/metrics'
+import { getTradeResultPercent, resolveTradeBalanceBefore } from '~/widgets/genesis/model/metrics'
+import { toFiniteTradeNumber } from '~/widgets/genesis/model/tradePnl'
 import { createUnavailableMetricResult } from './metricUtils'
 
 export const yieldEfficiencyMetric: MetricEngine = {
@@ -25,17 +26,17 @@ export const yieldEfficiencyMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const resolvedBalance = Number(
-      context?.balanceBeforeTrade ??
+    const initialDeposit = Number(
       context?.initialBalance ??
-      trade?.capitalBeforeTrade ??
-      trade?.initialBalance
+      trade?.initialBalance ??
+      1000
     )
-    const initialBalance = Number.isFinite(resolvedBalance) && resolvedBalance > 0
-      ? resolvedBalance
-      : 1000
-    const pnl = getTradePnl(trade, initialBalance)
-    const yieldPct = (pnl / initialBalance) * 100
+    const validInitialDeposit = Number.isFinite(initialDeposit) && initialDeposit > 0 ? initialDeposit : 1000
+
+    const rawBalanceBefore = context?.balanceBeforeTrade ?? context?.initialBalance ?? trade?.capitalBeforeTrade ?? trade?.initialBalance
+    const balanceBefore = toFiniteTradeNumber(rawBalanceBefore) ?? resolveTradeBalanceBefore(trade, context?.allTrades, validInitialDeposit)
+
+    const yieldPct = getTradeResultPercent(trade, balanceBefore, validInitialDeposit)
 
     const isPositive = yieldPct >= 0
     const evalClass = isPositive ? 'text-emerald-500' : 'text-rose-500'

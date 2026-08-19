@@ -503,18 +503,22 @@ const riskLimit = computed(() => {
 
 const riskBudgetDollars = computed(() => {
   if (!riskLimit.value) return null
-  if (riskLimit.value.unit === '%') return (riskLimit.value.value / 100) * balanceBeforeTrade.value
+  const baseBalance = balanceBeforeTrade.value > 0 ? balanceBeforeTrade.value : props.initialBalance
+  if (riskLimit.value.unit === '%') return (riskLimit.value.value / 100) * baseBalance
   return riskLimit.value.value
 })
 
 const plannedStopRiskPct = computed(() => {
-  if (!Number.isFinite(plannedStopRiskDollars.value) || balanceBeforeTrade.value <= 0) return Number.NaN
-  return (plannedStopRiskDollars.value / balanceBeforeTrade.value) * 100
+  if (!Number.isFinite(plannedStopRiskDollars.value)) return Number.NaN
+  const baseBalance = balanceBeforeTrade.value > 0 ? balanceBeforeTrade.value : props.initialBalance
+  if (baseBalance <= 0) return Number.NaN
+  return (plannedStopRiskDollars.value / baseBalance) * 100
 })
 
 const realizedRiskPct = computed(() => {
-  if (balanceBeforeTrade.value <= 0) return 0
-  return (realizedRiskDollars.value / balanceBeforeTrade.value) * 100
+  const baseBalance = balanceBeforeTrade.value > 0 ? balanceBeforeTrade.value : props.initialBalance
+  if (baseBalance <= 0) return 0
+  return (realizedRiskDollars.value / baseBalance) * 100
 })
 
 const tradeRiskAudit = computed(() => {
