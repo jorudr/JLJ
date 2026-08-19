@@ -47,15 +47,18 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from '../shared/i18n/useI18n'
+
+const { t } = useI18n()
 
 const videos = [
-  { id: 'equity', label: 'EQUITY', description: 'Performance, reified', caption: 'Track the full performance of your strategy, from the first trade to the final result.', src: '/assets/videos/equity.mov' },
-  { id: 'matrix', label: 'MATRIX', description: 'Strategy architecture', caption: 'Build, connect, and explore the logic behind every trading strategy in one visual system.', src: '/assets/videos/matrix.mov' },
-  { id: 'log', label: 'LOG', description: 'Every decision recorded', caption: 'Review every trade and decision in context so patterns become impossible to miss.', src: '/assets/videos/log.mov' },
+  { id: 'equity', label: 'EQUITY', description: 'Performance, reified', captionKey: 'landing.videoShowcase.equity', src: '/assets/videos/equity.mov' },
+  { id: 'matrix', label: 'MATRIX', description: 'Strategy architecture', captionKey: 'landing.videoShowcase.matrix', src: '/assets/videos/matrix.mov' },
+  { id: 'log', label: 'LOG', description: 'Every decision recorded', captionKey: 'landing.videoShowcase.log', src: '/assets/videos/log.mov' },
 ]
 
 const activeVideo = ref(0)
-const selectedVideo = computed(() => videos[activeVideo.value])
+const selectedVideo = computed(() => ({ ...videos[activeVideo.value], caption: t(videos[activeVideo.value].captionKey) }))
 
 function selectVideo(index) {
   activeVideo.value = index
