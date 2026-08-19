@@ -39,8 +39,7 @@
         />
       </Transition>
       <div class="video-showcase__meta">
-        <span>{{ selectedVideo.label }}</span>
-        <span>{{ selectedVideo.description }}</span>
+        <span class="video-showcase__caption">{{ selectedVideo.caption }}</span>
       </div>
     </div>
   </section>
@@ -50,9 +49,9 @@
 import { computed, ref } from 'vue'
 
 const videos = [
-  { id: 'equity', label: 'EQUITY', description: 'Performance, reified', src: '/assets/videos/equity.mov' },
-  { id: 'matrix', label: 'MATRIX', description: 'Strategy architecture', src: '/assets/videos/matrix.mov' },
-  { id: 'log', label: 'LOG', description: 'Every decision recorded', src: '/assets/videos/log.mov' },
+  { id: 'equity', label: 'EQUITY', description: 'Performance, reified', caption: 'Track the full performance of your strategy, from the first trade to the final result.', src: '/assets/videos/equity.mov' },
+  { id: 'matrix', label: 'MATRIX', description: 'Strategy architecture', caption: 'Build, connect, and explore the logic behind every trading strategy in one visual system.', src: '/assets/videos/matrix.mov' },
+  { id: 'log', label: 'LOG', description: 'Every decision recorded', caption: 'Review every trade and decision in context so patterns become impossible to miss.', src: '/assets/videos/log.mov' },
 ]
 
 const activeVideo = ref(0)
@@ -72,14 +71,14 @@ function selectVideo(index) {
 .video-showcase__selector svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.3; }
 .video-showcase__frame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 28px 70px rgba(0,0,0,.18); }
 .video-showcase__video { display: block; width: 100%; height: 100%; object-fit: cover; }
-.video-showcase__meta { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; gap: 20px; padding: 16px 20px; color: rgba(255,255,255,.72); background: linear-gradient(transparent, rgba(0,0,0,.9)); font: 9px monospace; letter-spacing: .14em; text-transform: uppercase; }
-.video-showcase__meta span:last-child { color: rgba(255,255,255,.43); text-align: right; }
+.video-showcase__meta { position: absolute; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; padding: 84px 20px 22px; color: #fff; background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.62) 34%, transparent 100%); }
+.video-showcase__caption { max-width: 660px; color: #fff; font: 400 clamp(16px, 2vw, 24px)/1.15 'Cormorant Garamond', serif; letter-spacing: .01em; }
 .video-fade-enter-active, .video-fade-leave-active { transition: opacity .25s ease; }
 .video-fade-enter-from, .video-fade-leave-to { opacity: 0; }
 @media (max-width: 640px) {
   .video-showcase__selector { grid-template-columns: repeat(3, 40px); }
   .video-showcase__selector button { width: 40px; height: 40px; }
-  .video-showcase__meta { flex-direction: column; gap: 6px; padding: 13px 14px; }
-  .video-showcase__meta span:last-child { text-align: left; }
+  .video-showcase__meta { padding: 58px 14px 14px; }
+  .video-showcase__caption { font-size: 16px; }
 }
 </style>
