@@ -111,6 +111,79 @@ const formatOptionalPrice = (value: unknown) => {
   return formatPrice(value)
 }
 
+const normalizedExecutions = computed(() => (
+  Array.isArray(props.trade?.executions)
+    ? props.trade.executions.filter((execution: any) => execution && typeof execution === 'object')
+    : []
+))
+
+const positionList = (type: 'entry' | 'exit') => normalizedExecutions.value
+  .filter((execution: any) => String(execution.type || '').toLowerCase() === type)
+  .map((execution: any, index: number) => ({
+    ...execution,
+    positionNumber: index + 1,
+    price: Number(execution.price),
+    size: Number(execution.size)
+  }))
+  .filter((execution: any) => Number.isFinite(execution.price) && execution.price > 0)
+
+const entryPositions = computed(() => {
+  const positions = positionList('entry')
+  if (positions.length) return positions
+  const fallbackPrice = Number(props.trade?.entry)
+  return Number.isFinite(fallbackPrice) && fallbackPrice > 0
+    ? [{ positionNumber: 1, price: fallbackPrice, size: Number(props.trade?.size) }]
+    : []
+})
+
+const exitPositions = computed(() => {
+  const positions = positionList('exit')
+  if (positions.length) return positions
+  const fallbackPrice = Number(props.trade?.exit)
+  return Number.isFinite(fallbackPrice) && fallbackPrice > 0
+    ? [{ positionNumber: 1, price: fallbackPrice, size: Number(props.trade?.size) }]
+    : []
+})
+
+const hasEntryMethod = computed(() => entryPositions.value.length > 1 || String(props.trade?.entryMethodType || '').toUpperCase() !== 'SINGLE')
+const hasExitMethod = computed(() => exitPositions.value.length > 1 || String(props.trade?.exitMethodType || '').toUpperCase() !== 'SINGLE')
+
+const weightedAveragePrice = (positions: any[]) => {
+  const weightedTotal = positions.reduce((total, position) => {
+    const size = Number(position.size)
+    return total + (position.price * (Number.isFinite(size) && size > 0 ? size : 1))
+  }, 0)
+  const totalSize = positions.reduce((total, position) => {
+    const size = Number(position.size)
+    return total + (Number.isFinite(size) && size > 0 ? size : 1)
+  }, 0)
+  return totalSize > 0 ? weightedTotal / totalSize : positions[0]?.price
+}
+
+const summaryEntryPrice = computed(() => hasEntryMethod.value
+  ? weightedAveragePrice(entryPositions.value)
+  : displayTrade.value.entry)
+
+const summaryExitPrice = computed(() => hasExitMethod.value
+  ? weightedAveragePrice(exitPositions.value)
+  : displayTrade.value.exit)
+
+const positionMethodLabel = (position: any, type: 'entry' | 'exit') => {
+  const label = String(position.label || '').toUpperCase()
+  if (label && label !== 'SINGLE') return label.replace(/_/g, ' ')
+  if (type === 'entry' && hasEntryMethod.value) {
+    return String(props.trade?.entryMethodType || 'ENTRY METHOD').replace(/_/g, ' ')
+  }
+  return type === 'exit' && hasExitMethod.value ? 'EXIT SCALE' : 'SINGLE'
+}
+
+const entryMethodDisplayLabel = (position: any) => {
+  const rawMethod = String(position.label || props.trade?.entryMethodType || '').toUpperCase().replace(/\s+/g, '_')
+  if (rawMethod === 'AVERAGING' || rawMethod === 'AVERAGING_DOWN') return locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING'
+  if (rawMethod === 'PYRAMIDING') return locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING'
+  return positionMethodLabel(position, 'entry')
+}
+
 const formatDateValue = (value: unknown) => {
   if (!value) return '--'
   const date = new Date(String(value))
@@ -712,11 +785,11 @@ const tradeEntryThemeStyle = computed(() => props.isDark
 
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВХОДА' : 'ENTRY PRICE' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(displayTrade?.entry) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(summaryEntryPrice) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ТОЧКА ВЫХОДА' : 'EXIT PRICE' }}</span>
-                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(displayTrade?.exit) }}</span>
+                    <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatPrice(summaryExitPrice) }}</span>
                   </div>
                   <div class="min-w-0 pr-6">
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'ВРЕМЯ ВХОДА' : 'ENTRY TIME' }}</span>
@@ -746,6 +819,44 @@ const tradeEntryThemeStyle = computed(() => props.isDark
                     <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/45">{{ locale === 'ru' ? 'РИСК НА СДЕЛКУ' : 'RISK PER TRADE' }}</span>
                     <span class="mt-2 block break-words whitespace-normal text-xl font-mono font-black tracking-[0.12em] text-white">{{ formatRiskPerTrade() }}</span>
                   </div>
+                </div>
+
+                <div v-if="hasEntryMethod || hasExitMethod" class="grid w-full grid-cols-1 gap-6 border-t border-white/10 pt-8 lg:grid-cols-2">
+                  <section v-if="hasEntryMethod" class="min-w-0 border border-white/10 p-5">
+                    <div class="mb-5 flex items-start justify-between gap-4">
+                      <div>
+                        <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/60">{{ locale === 'ru' ? 'ПОЗИЦИИ ВХОДА' : 'ENTRY POSITIONS' }}</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-col divide-y divide-white/10">
+                      <div v-for="position in entryPositions" :key="`entry-position-${position.positionNumber}-${position.id || position.date || position.price}`" class="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 first:pt-0 last:pb-0">
+                        <span class="font-mono text-[9px] text-white/35">{{ String(position.positionNumber).padStart(2, '0') }}</span>
+                        <div class="min-w-0">
+                          <div class="truncate font-mono text-[9px] uppercase tracking-[0.16em] text-white/45">{{ entryMethodDisplayLabel(position) }}</div>
+                          <div class="mt-1 font-mono text-sm font-black tracking-[0.12em] text-white">${{ formatPrice(position.price) }}</div>
+                        </div>
+                        <span class="font-mono text-sm font-black tracking-[0.12em] text-white">{{ Number.isFinite(position.size) && position.size > 0 ? position.size : '--' }}</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section v-if="hasExitMethod" class="min-w-0 border border-white/10 p-5">
+                    <div class="mb-5 flex items-start justify-between gap-4">
+                      <div>
+                        <span class="text-[9px] font-mono uppercase tracking-[0.35em] text-white/60">{{ locale === 'ru' ? 'ПОЗИЦИИ ВЫХОДА' : 'EXIT POSITIONS' }}</span>
+                      </div>
+                    </div>
+                    <div v-if="exitPositions.length" class="flex flex-col divide-y divide-white/10">
+                      <div v-for="position in exitPositions" :key="`exit-position-${position.positionNumber}-${position.id || position.date || position.price}`" class="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3 first:pt-0 last:pb-0">
+                        <span class="font-mono text-[9px] text-white/35">{{ String(position.positionNumber).padStart(2, '0') }}</span>
+                        <div class="min-w-0">
+                          <div class="truncate font-mono text-[9px] uppercase tracking-[0.16em] text-white/45">{{ positionMethodLabel(position, 'exit') }}</div>
+                          <div class="mt-1 font-mono text-sm font-black tracking-[0.12em] text-white">${{ formatPrice(position.price) }}</div>
+                        </div>
+                        <span class="font-mono text-sm font-black tracking-[0.12em] text-white">{{ Number.isFinite(position.size) && position.size > 0 ? position.size : '--' }}</span>
+                      </div>
+                    </div>
+                  </section>
                 </div>
               </section>
 
