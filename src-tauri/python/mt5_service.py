@@ -282,24 +282,35 @@ def find_mac_wine_trade_files():
     return found_files
 
 
+def get_advisor_source_files() -> list[tuple[str, str]]:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    search_dirs = [
+        os.getcwd(),
+        script_dir,
+        os.path.abspath(os.path.join(script_dir, "..")),
+        os.path.abspath(os.path.join(script_dir, "..", "..")),
+        os.path.abspath(os.path.join(script_dir, "..", "..", "..")),
+        os.path.abspath(os.path.join(script_dir, "..", "..", "..", "..")),
+        "/Users/evanvosh/Documents/app1.1"
+    ]
+    
+    local_files = ["ExportTrades.mq5", "ExportTrades.ex5"]
+    source_files = []
+    for fname in local_files:
+        for d in search_dirs:
+            candidate = os.path.join(d, fname)
+            if os.path.exists(candidate):
+                source_files.append((fname, candidate))
+                break
+    return source_files
+
+
 def install_advisor(target_os: str = "mac") -> dict[str, Any]:
     import shutil
     import glob
     home = os.path.expanduser("~")
-    local_files = ["ExportTrades.mq5", "ExportTrades.ex5"]
     
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    
-    source_files = []
-    for fname in local_files:
-        p1 = os.path.join(project_root, fname)
-        p2 = os.path.join(os.getcwd(), fname)
-        if os.path.exists(p1):
-            source_files.append((fname, p1))
-        elif os.path.exists(p2):
-            source_files.append((fname, p2))
-
+    source_files = get_advisor_source_files()
     if not source_files:
         raise Mt5ServiceError("Исходные файлы советника ExportTrades не найдены.")
 
@@ -356,24 +367,20 @@ def download_desktop() -> dict[str, Any]:
     if not os.path.exists(desktop_dir):
         desktop_dir = home
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-
-    local_files = ["ExportTrades.mq5", "ExportTrades.ex5"]
+    source_files = get_advisor_source_files()
     copied = []
-    for fname in local_files:
-        p1 = os.path.join(project_root, fname)
-        p2 = os.path.join(os.getcwd(), fname)
-        src = p1 if os.path.exists(p1) else (p2 if os.path.exists(p2) else None)
-        if src:
-            dst = os.path.join(desktop_dir, fname)
-            shutil.copy2(src, dst)
+    for fname, src_path in source_files:
+        dst = os.path.join(desktop_dir, fname)
+        try:
+            shutil.copy2(src_path, dst)
             copied.append(dst)
+        except Exception:
+            pass
 
     if not copied:
         raise Mt5ServiceError("Не удалось скопировать файлы советника на Рабочий Стол.")
 
-    return {"downloaded": True, "copied": copied, "message": f"Файлы советника ExportTrades успешно скопированы на ваш Рабочий Стол (Desktop)!"}
+    return {"downloaded": True, "copied": copied, "message": "Файлы советника ExportTrades успешно скопированы на ваш Рабочий Стол (Desktop)!"}
 
 
 def mac_wine_query(action: str, connection: dict[str, Any], params: dict[str, Any]) -> Any:
