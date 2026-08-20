@@ -51,7 +51,7 @@
                   </div>
                 </div>
 
-                <div class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
+                <div v-if="selectedBroker.id !== 'metatrader5'" class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
                   <p class="font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.12em] opacity-60">
                     {{ selectedBroker.description }}
                   </p>
@@ -63,16 +63,19 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 mb-8">
-                  <label v-for="field in selectedBroker.fields"
-                         :key="field.key"
-                         class="flex flex-col gap-3">
-                    <span class="font-mono text-[9px] font-black uppercase tracking-[0.22em] opacity-50">{{ field.label }}</span>
-                    <input v-model="formState[field.key]"
-                           :type="field.secret ? 'password' : 'text'"
-                           :placeholder="field.placeholder"
-                           class="h-14 border border-black/10 bg-white px-4 font-mono text-[12px] font-bold tracking-[0.1em] text-black outline-none transition-colors placeholder:text-black/20 focus:border-black/50 focus:bg-black/[0.02] dark:border-white/10 dark:bg-[#050505] dark:text-white dark:placeholder:text-white/20 dark:focus:border-white/50 dark:focus:bg-white/[0.02]" />
-                  </label>
+                <div v-if="selectedBroker.id !== 'metatrader5'" class="grid grid-cols-1 gap-6 mb-8">
+                  <template v-for="field in selectedBroker.fields" :key="field.key">
+                    <label class="flex flex-col gap-3">
+                      <span class="font-mono text-[9px] font-black uppercase tracking-[0.22em] opacity-50">
+                        {{ field.label }}
+                        <span v-if="field.required === false" class="ml-2 opacity-50">[OPTIONAL]</span>
+                      </span>
+                      <input v-model="formState[field.key]"
+                             :type="field.secret ? 'password' : 'text'"
+                             :placeholder="field.placeholder"
+                             class="h-14 border border-black/10 bg-white px-4 font-mono text-[12px] font-bold tracking-[0.1em] text-black outline-none transition-colors placeholder:text-black/20 focus:border-black/50 focus:bg-black/[0.02] dark:border-white/10 dark:bg-[#050505] dark:text-white dark:placeholder:text-white/20 dark:focus:border-white/50 dark:focus:bg-white/[0.02]" />
+                    </label>
+                  </template>
                 </div>
 
                 <div v-if="showStrategyBinding"
@@ -102,7 +105,7 @@
                   </div>
                 </div>
 
-                <div class="border border-black/10 p-5 dark:border-white/10 mb-8 bg-white/40 dark:bg-black/40">
+                <div v-if="selectedBroker.id !== 'metatrader5'" class="border border-black/10 p-5 dark:border-white/10 mb-8 bg-white/40 dark:bg-black/40">
                   <p class="font-mono text-[9px] font-black uppercase tracking-[0.28em] opacity-40 mb-5">{{ isRu ? 'Статус Подключения' : 'Connection Status' }}</p>
                   <div class="grid grid-cols-3 gap-4">
                     <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
@@ -137,7 +140,17 @@
                   {{ statusMessage }}
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div v-if="selectedBroker.id === 'metatrader5'" class="w-full">
+                  <button class="w-full border-2 border-emerald-500 bg-emerald-500 text-white font-mono text-[13px] font-black uppercase tracking-[0.2em] py-5 px-6 transition-all hover:bg-emerald-600 dark:hover:bg-emerald-400 dark:hover:text-black shadow-lg flex items-center justify-center gap-3 cursor-pointer"
+                          :disabled="activationState === 'loading'"
+                          @click="handleMetaTrader5Import">
+                    <span v-if="activationState === 'loading'" class="animate-spin text-lg">⏳</span>
+                    {{ activationState === 'loading'
+                      ? (isRu ? 'ЗАГРУЗКА СДЕЛОК ИЗ METATRADER 5...' : 'IMPORTING TRADES FROM METATRADER 5...')
+                      : (isRu ? '⚡ СИНХРОНИЗИРОВАТЬ СДЕЛКИ METATRADER 5' : '⚡ SYNC METATRADER 5 TRADES') }}
+                  </button>
+                </div>
+                <div v-else class="grid grid-cols-2 gap-4">
                   <button class="border border-black/10 bg-white dark:bg-[#050505] px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all hover:border-black hover:bg-black hover:text-white dark:border-white/10 dark:hover:border-white dark:hover:bg-white dark:hover:text-black shadow-sm"
                           @click="saveCurrentConnection">
                     {{ isRu ? 'Сохранить Ключи Локально' : 'Save Local Keys' }}
@@ -191,16 +204,20 @@ import {
 } from '~/utils/kraken'
 import { resolveImportedAsset } from '~/utils/assetResolver'
 import { useStrategyTradesStore } from '~/features/store/useStrategyTrades'
+import { syncBrokerConnectionTrades, type StoredBrokerConnection } from '~/utils/brokerTradeSync'
+import { testMt5Connection } from '~/utils/metatrader5'
 
-type BrokerId = 'binance' | 'bybit' | 'kraken' | 'interactive-brokers'
+type BrokerId = 'metatrader5' | 'binance' | 'bybit' | 'kraken' | 'interactive-brokers'
 type KrakenMarketMode = 'spot' | 'futures'
 type BrokerEnvironment = 'real' | 'demo'
+type Mt5ConnectionMode = 'local'
 
 interface BrokerField {
   key: string
   label: string
   placeholder: string
   secret?: boolean
+  required?: boolean
 }
 
 interface BrokerDefinition {
@@ -236,6 +253,22 @@ const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru')
 
 const brokers = computed<BrokerDefinition[]>(() => [
+  {
+    id: 'metatrader5',
+    label: 'MetaTrader 5',
+    assetClass: isRu.value ? 'Forex / CFD / Фьючерсы' : 'Forex / CFD / Futures',
+    description: isRu.value
+      ? 'Прямое подключение к терминалу MetaTrader 5 на Windows через Python. История сделок импортируется из торгового счёта.'
+      : 'Direct connection to MetaTrader 5 terminal on Windows through Python and import account trade history.',
+    mode: isRu.value ? 'Windows / Локальный' : 'Windows / Local',
+    canActivate: true,
+    fields: [
+      { key: 'path', label: isRu.value ? 'Путь к terminal64.exe' : 'Path to terminal64.exe', placeholder: 'C:\\Program Files\\MetaTrader 5\\terminal64.exe', required: false },
+      { key: 'login', label: isRu.value ? 'Номер счёта' : 'Account Login', placeholder: '12345678', required: false },
+      { key: 'password', label: isRu.value ? 'Пароль счёта' : 'Account Password', placeholder: 'MetaTrader account password', secret: true, required: false },
+      { key: 'server', label: isRu.value ? 'Торговый сервер' : 'Trading Server', placeholder: 'Broker-Server', required: false }
+    ]
+  },
   {
     id: 'binance',
     label: 'Binance',
@@ -295,6 +328,8 @@ const statusTone = ref<'neutral' | 'success' | 'error'>('neutral')
 const importTargetStrategyId = ref('MAIN_DIARY')
 const krakenMarketMode = ref<KrakenMarketMode>('futures')
 const brokerEnvironment = ref<BrokerEnvironment>('real')
+
+const mt5ConnectionMode = ref<Mt5ConnectionMode>('local')
 
 const getStorageKeyForBrokerSelection = (brokerId: BrokerId) => {
   if (brokerId === 'kraken') {
@@ -364,6 +399,9 @@ const isKrakenSpotDemoSelected = computed(() => {
 })
 
 const connectionModeLabel = computed(() => {
+  if (selectedBroker.value.id === 'metatrader5') {
+    return isRu.value ? 'Авто-Экспорт (macOS/Win)' : 'Auto Export (macOS/Win)'
+  }
   if (!selectedBrokerSupportsEnvironment.value) return selectedBroker.value.mode
 
   const environmentLabel = brokerEnvironment.value === 'demo' ? 'Demo' : 'Real'
@@ -397,13 +435,24 @@ const isSelectedBrokerActive = computed(() => {
 })
 
 const showStrategyBinding = computed(() => {
-  return isSelectedBrokerActive.value
+  return selectedBroker.value.id === 'metatrader5' || isSelectedBrokerActive.value
 })
 
 const canActivateSelected = computed(() => {
-  return selectedBroker.value.canActivate
-    && !isKrakenSpotDemoSelected.value
-    && selectedBroker.value.fields.every(field => String(formState[field.key] || '').trim())
+  if (!selectedBroker.value.canActivate || isKrakenSpotDemoSelected.value) return false
+
+  if (selectedBroker.value.id === 'metatrader5') {
+    if (mt5ConnectionMode.value !== 'local') {
+      return Boolean(String(formState.bridgeHost || '').trim() && String(formState.bridgePort || '').trim())
+    }
+    const accountFields = ['login', 'password', 'server']
+    const hasAccountInput = accountFields.some(key => String(formState[key] || '').trim())
+    return !hasAccountInput || accountFields.every(key => String(formState[key] || '').trim())
+  }
+
+  return selectedBroker.value.fields
+    .filter(field => field.required !== false)
+    .every(field => String(formState[field.key] || '').trim())
 })
 
 const primaryActionEnabled = computed(() => {
@@ -428,6 +477,11 @@ const getSavedCredentialsForCurrentSelection = () => {
     ...getFormCredentials(),
     environment: brokerEnvironment.value,
     ...(selectedBroker.value.id === 'kraken' ? { market: krakenMarketMode.value } : {}),
+    ...(selectedBroker.value.id === 'metatrader5'
+      ? {
+          mode: 'local'
+        }
+      : {}),
     targetStrategyId: importTargetStrategyId.value
   } as Record<string, string>
 
@@ -479,6 +533,10 @@ const applySavedCredentialsToForm = () => {
   selectedBroker.value.fields.forEach((field) => {
     formState[field.key] = shouldUseSaved ? saved?.credentials?.[field.key] || '' : ''
   })
+
+  if (selectedBroker.value.id === 'metatrader5') {
+    mt5ConnectionMode.value = 'local'
+  }
 
   importTargetStrategyId.value = shouldUseSaved
     ? saved?.credentials?.targetStrategyId || props.strategyId || tradeStore.selectedStrategyId || 'MAIN_DIARY'
@@ -596,6 +654,45 @@ const handleManualSync = async () => {
   }
 }
 
+const handleMetaTrader5Import = async () => {
+  let saved = connectionMap.value.metatrader5
+  if (!saved || !saved.active) {
+    saved = {
+      brokerId: 'metatrader5',
+      credentials: {
+        targetStrategyId: importTargetStrategyId.value,
+        mode: 'local'
+      },
+      active: true,
+      updatedAt: new Date().toISOString(),
+      activatedAt: new Date().toISOString()
+    }
+    connectionMap.value.metatrader5 = saved
+    await persistConnections()
+  }
+
+  activationState.value = 'loading'
+  statusTone.value = 'neutral'
+  statusMessage.value = isRu.value ? 'Загрузка истории сделок из MetaTrader 5...' : 'Loading trade history from MetaTrader 5...'
+
+  try {
+    const result = await syncBrokerConnectionTrades(
+      saved as StoredBrokerConnection,
+      importTargetStrategyId.value,
+      tradeStore
+    )
+    statusTone.value = result.importedCount > 0 ? 'success' : 'neutral'
+    statusMessage.value = isRu.value
+      ? `${result.sourceLabel}: добавлено ${result.importedCount}, дубликатов пропущено ${result.duplicateCount}. Проверено сделок: ${result.checkedCount}.`
+      : `${result.sourceLabel}: ${result.importedCount} imported, ${result.duplicateCount} duplicates skipped. Deals checked: ${result.checkedCount}.`
+  } catch (error: any) {
+    statusTone.value = 'error'
+    statusMessage.value = error?.message || (isRu.value ? 'Не удалось загрузить сделки MT5.' : 'MetaTrader 5 trade import failed.')
+  } finally {
+    activationState.value = 'idle'
+  }
+}
+
 const setImportTargetStrategy = async (strategyId: string) => {
   importTargetStrategyId.value = strategyId
 
@@ -613,6 +710,12 @@ const setImportTargetStrategy = async (strategyId: string) => {
   await persistConnections()
   statusTone.value = 'success'
   statusMessage.value = `${selectedBroker.value.label} import target set to ${selectedImportStrategyName.value}.`
+}
+
+const setMt5ConnectionMode = (mode: Mt5ConnectionMode) => {
+  mt5ConnectionMode.value = mode
+  statusMessage.value = ''
+  statusTone.value = 'neutral'
 }
 
 const setKrakenMarketMode = (mode: KrakenMarketMode) => {
@@ -637,7 +740,17 @@ const activateCurrentConnection = async () => {
   statusMessage.value = 'Activating connector...'
 
   try {
-    if (selectedBroker.value.id === 'binance') {
+    if (selectedBroker.value.id === 'metatrader5') {
+      const login = Number(formState.login)
+      await testMt5Connection({
+        mode: 'local',
+        path: formState.path || undefined,
+        login: Number.isFinite(login) ? login : undefined,
+        password: formState.password || undefined,
+        server: formState.server || undefined,
+        timeout: 60_000
+      })
+    } else if (selectedBroker.value.id === 'binance') {
       const credentials: BinanceCredentials = withBinanceEnvironment({
         apiKey: formState.apiKey || '',
         apiSecret: formState.apiSecret || ''

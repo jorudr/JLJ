@@ -190,7 +190,7 @@
             <div class="flex items-center space-x-3 mb-2 cursor-pointer group/strat pointer-events-auto" @click="showStrategyMenu = !showStrategyMenu">
               <div class="w-1.5 h-1.5 nier-bg-inverted rotate-45 transition-all duration-500" :class="showStrategyMenu ? 'scale-150 rotate-[225deg]' : 'animate-pulse'"></div>
               <span class="text-[10px] font-mono tracking-[0.5em] uppercase font-black nier-text-primary transition-opacity group-hover/strat:opacity-100" :class="showStrategyMenu ? 'opacity-100' : 'opacity-40'">
-                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }}{{ selectedStrategy?.id !== 'MAIN_DIARY' ? ' // ' + strategyVersionSuffix : '' }}
+                {{ selectedStrategy?.name || 'SYSTEM_EQUITY_PROJECTION' }}{{ selectedStrategy?.id !== 'MAIN_DIARY' && strategyVersionSuffix ? ' // ' + strategyVersionSuffix : '' }}
               </span>
               <div class="w-2 h-2 border-b border-r border-black/40 dark:border-white/40 rotate-45 transition-transform duration-500 ml-2" :class="showStrategyMenu ? '-rotate-[135deg] translate-y-0.5' : ''"></div>
             </div>
@@ -1097,10 +1097,8 @@ const gradflowColorAt = (position: number, alpha = 1) => {
 }
 
 const strategyVersionSuffix = computed(() => {
-  const vId = matrixState.selectedStrategyVersionId.value
-  const versionInfo = vId ? matrixState.strategyVersions.value.find((v: any) => v.id === vId) : null
-  const versionMatch = versionInfo?.label?.match(/(v\d+)/i)
-  return versionMatch ? versionMatch[1] : 'v1.0'
+  const versionMatch = matrixState.selectedStrategyVersion.value?.label?.match(/(v\d+)/i)
+  return versionMatch?.[1] || ''
 })
 
 const renderContainer = ref<HTMLElement | null>(null)
@@ -4451,6 +4449,7 @@ onMounted(() => {
   }, 50)
 
   const revealInitialFrame = () => {
+    if (!isInitializing.value) return
     initData()
     updateColors()
     update()
@@ -4460,14 +4459,15 @@ onMounted(() => {
     clearInterval(bootInterval)
   }
 
-  requestAnimationFrame(revealInitialFrame)
-
   const hydrateData = async () => {
+    // The selected strategy version lives in genesis_matrix_v2.json. Hydrate
+    // the shared matrix state before revealing EquityCurve so the first
+    // visible frame already uses pages[].selectedStrategyVersionId.
+    await loadMatrixData()
+    await tradeStore.init()
+    requestAnimationFrame(revealInitialFrame)
+
     await loadBenchmarkMetricsCache()
-    await Promise.all([
-      tradeStore.init(),
-      loadMatrixData()
-    ])
 
     await metricsPanel.loadMetricsLayout()
 
@@ -4477,6 +4477,7 @@ onMounted(() => {
 
   void hydrateData().catch(err => {
     console.error('[ExEquityCurve3D] Failed to hydrate deferred data:', err)
+    requestAnimationFrame(revealInitialFrame)
   })
 })
 

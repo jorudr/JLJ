@@ -6,6 +6,7 @@ mod binance;
 mod bybit;
 mod ibkr;
 mod kraken;
+mod metatrader5;
 pub mod patch;
 pub mod payload_update;
 
@@ -29,6 +30,7 @@ pub fn run() {
             ibkr::ibkr_fetch_xml,
             kraken::kraken_signed_request,
             kraken::kraken_futures_signed_request,
+            metatrader5::mt5_request,
             patch::patch_get_state,
             patch::patch_verify_active,
             patch::patch_clear_active,

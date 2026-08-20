@@ -33,6 +33,8 @@ dist/
 .output/
 .DS_Store
 .env
+__pycache__/
+*.pyc
 
 # Signing keys and hotfix build scratch
 *.key
