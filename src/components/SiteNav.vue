@@ -31,7 +31,7 @@
         </svg>
       </router-link>
 
-      <MobileMenu class="site-nav__mobile" />
+      <MobileMenu class="site-nav__mobile md:hidden" />
     </div>
   </header>
 </template>
@@ -138,6 +138,12 @@ onUnmounted(() => {
 
 .site-nav__mobile {
   margin-left: auto;
+}
+
+@media (min-width: 768px) {
+  .site-nav__mobile {
+    display: none !important;
+  }
 }
 
 .site-nav :deep(.mobile-menu__desktop-locale) {
