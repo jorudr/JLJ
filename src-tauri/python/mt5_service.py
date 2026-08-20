@@ -305,42 +305,72 @@ def get_advisor_source_files() -> list[tuple[str, str]]:
     return source_files
 
 
-def install_advisor(target_os: str = "mac") -> dict[str, Any]:
-    import shutil
+def find_all_mql5_dirs(target_os: str = "mac") -> list[str]:
     import glob
     home = os.path.expanduser("~")
+    mql5_dirs = []
+    
+    wine_bases = [
+        os.path.join(home, "Library/Application Support/net.metaquotes.wine.metatrader5/drive_c/Program Files/MetaTrader 5/MQL5"),
+        os.path.join(home, "Library/Application Support/net.metaquotes.wine.metatrader5/drive_c/Program Files/*/MQL5"),
+        os.path.join(home, "Library/Application Support/com.metaquotes.metatrader5/netdrive/MQL5"),
+        os.path.join(home, ".wine/drive_c/Program Files/MetaTrader 5/MQL5"),
+        os.path.join(home, ".wine/drive_c/Program Files/*/MQL5"),
+    ]
+    for pattern in wine_bases:
+        for m in glob.glob(pattern):
+            if os.path.exists(m):
+                mql5_dirs.append(m)
+
+    wine_appdata_patterns = [
+        os.path.join(home, "Library/Application Support/net.metaquotes.wine.metatrader5/drive_c/users/*/AppData/Roaming/MetaQuotes/Terminal/*/MQL5"),
+        os.path.join(home, ".wine/drive_c/users/*/AppData/Roaming/MetaQuotes/Terminal/*/MQL5"),
+        os.path.join(home, "Library/Application Support/com.metaquotes.metatrader5/netdrive/users/*/AppData/Roaming/MetaQuotes/Terminal/*/MQL5"),
+    ]
+    for pattern in wine_appdata_patterns:
+        for m in glob.glob(pattern):
+            if os.path.exists(m):
+                mql5_dirs.append(m)
+
+    if target_os == "win" or sys.platform == "win32":
+        appdata_roaming = os.environ.get("APPDATA", os.path.expanduser("~\\AppData\\Roaming"))
+        appdata_local = os.environ.get("LOCALAPPDATA", os.path.expanduser("~\\AppData\\Local"))
+        prog_files = os.environ.get("ProgramFiles", "C:\\Program Files")
+        prog_files_x86 = os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)")
+
+        win_patterns = [
+            os.path.join(appdata_roaming, "MetaQuotes", "Terminal", "*", "MQL5"),
+            os.path.join(prog_files, "MetaTrader 5", "MQL5"),
+            os.path.join(prog_files, "*MetaTrader*", "MQL5"),
+            os.path.join(prog_files_x86, "MetaTrader 5", "MQL5"),
+            os.path.join(prog_files_x86, "*MetaTrader*", "MQL5"),
+            os.path.join(appdata_local, "Programs", "*MetaTrader*", "MQL5"),
+            os.path.join(appdata_local, "Programs", "MetaTrader 5", "MQL5"),
+        ]
+        for pattern in win_patterns:
+            for m in glob.glob(pattern):
+                if os.path.exists(m):
+                    mql5_dirs.append(m)
+
+    target_subdirs = []
+    for mql5_base in set(mql5_dirs):
+        target_subdirs.extend([
+            os.path.join(mql5_base, "Experts"),
+            os.path.join(mql5_base, "Experts", "Advisors"),
+            os.path.join(mql5_base, "Indicators")
+        ])
+
+    return list(set(target_subdirs))
+
+
+def install_advisor(target_os: str = "mac") -> dict[str, Any]:
+    import shutil
     
     source_files = get_advisor_source_files()
     if not source_files:
         raise Mt5ServiceError("Исходные файлы советника ExportTrades не найдены.")
 
-    mql5_dirs = []
-    if target_os == "win" or sys.platform == "win32":
-        pf_list = [
-            os.environ.get("ProgramFiles", "C:\\Program Files"),
-            os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
-            os.path.expanduser("~\\AppData\\Local\\Programs"),
-            os.path.expanduser("~\\AppData\\Roaming\\MetaQuotes\\Terminal")
-        ]
-        for pf in pf_list:
-            if os.path.exists(pf):
-                matches = glob.glob(os.path.join(pf, "**", "MQL5"), recursive=True)
-                for m in matches:
-                    mql5_dirs.extend([os.path.join(m, "Experts"), os.path.join(m, "Experts", "Advisors"), os.path.join(m, "Indicators")])
-
-    base_dirs = [
-        os.path.join(home, "Library/Application Support/net.metaquotes.wine.metatrader5/drive_c/Program Files/MetaTrader 5/MQL5"),
-        os.path.join(home, "Library/Application Support/com.metaquotes.metatrader5/netdrive/MQL5"),
-        os.path.join(home, ".wine/drive_c/Program Files/MetaTrader 5/MQL5")
-    ]
-    appdata_glob = os.path.join(home, "Library/Application Support/net.metaquotes.wine.metatrader5/drive_c/users/*/AppData/Roaming/MetaQuotes/Terminal/*/MQL5")
-    base_dirs.extend(glob.glob(appdata_glob))
-
-    for b in base_dirs:
-        if os.path.exists(b):
-            mql5_dirs.extend([os.path.join(b, "Experts"), os.path.join(b, "Experts/Advisors"), os.path.join(b, "Indicators")])
-
-    mql5_dirs = list(set([p for p in mql5_dirs if os.path.exists(os.path.dirname(p))]))
+    mql5_dirs = find_all_mql5_dirs(target_os)
     if not mql5_dirs:
         raise Mt5ServiceError("Не удалось автоматически найти папку MetaTrader 5 на этом ПК.")
 
