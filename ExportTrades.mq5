@@ -93,11 +93,38 @@ void ExportDataToJson()
             long position_id = HistoryDealGetInteger(deal_ticket, DEAL_POSITION_ID);
             datetime time_deal = (datetime)HistoryDealGetInteger(deal_ticket, DEAL_TIME);
             long time_msc = HistoryDealGetInteger(deal_ticket, DEAL_TIME_MSC);
+            ulong order_ticket = HistoryDealGetInteger(deal_ticket, DEAL_ORDER);
+            double sl = 0;
+            double tp = 0;
+
+            if(order_ticket > 0 && HistoryOrderSelect(order_ticket))
+            {
+               sl = HistoryOrderGetDouble(order_ticket, ORDER_SL);
+               tp = HistoryOrderGetDouble(order_ticket, ORDER_TP);
+            }
+
+            if((sl == 0 || tp == 0) && position_id > 0)
+            {
+               int total_orders = HistoryOrdersTotal();
+               for(int o = 0; o < total_orders; o++)
+               {
+                  ulong oticket = HistoryOrderGetTicket(o);
+                  if(oticket > 0 && HistoryOrderSelect(oticket))
+                  {
+                     if(HistoryOrderGetInteger(oticket, ORDER_POSITION_ID) == position_id)
+                     {
+                        if(sl == 0) sl = HistoryOrderGetDouble(oticket, ORDER_SL);
+                        if(tp == 0) tp = HistoryOrderGetDouble(oticket, ORDER_TP);
+                        if(sl > 0 && tp > 0) break;
+                     }
+                  }
+               }
+            }
 
             processed++;
             string item = StringFormat(
-               "    {\"ticket\": %I64u, \"position_id\": %lld, \"symbol\": \"%s\", \"type\": %lld, \"entry\": %lld, \"volume\": %.2f, \"price\": %.5f, \"profit\": %.2f, \"swap\": %.2f, \"commission\": %.2f, \"time\": %lld, \"time_msc\": %lld}%s\n",
-               deal_ticket, position_id, symbol, type, entry, volume, price, profit, swap, commission, (long)time_deal, time_msc, (processed < valid_deal_count ? "," : "")
+               "    {\"ticket\": %I64u, \"position_id\": %lld, \"symbol\": \"%s\", \"type\": %lld, \"entry\": %lld, \"volume\": %.2f, \"price\": %.5f, \"sl\": %.5f, \"tp\": %.5f, \"profit\": %.2f, \"swap\": %.2f, \"commission\": %.2f, \"time\": %lld, \"time_msc\": %lld}%s\n",
+               deal_ticket, position_id, symbol, type, entry, volume, price, sl, tp, profit, swap, commission, (long)time_deal, time_msc, (processed < valid_deal_count ? "," : "")
             );
             json += item;
          }

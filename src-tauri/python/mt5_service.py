@@ -234,7 +234,54 @@ def query(mt5: Any, action: str, params: dict[str, Any]) -> Any:
                 date_from=parse_datetime(parameter(params, "dateFrom", "date_from")),
                 date_to=parse_datetime(parameter(params, "dateTo", "date_to")),
             )
-        return serialize(require_result(mt5, result, action))
+        serialized_res = serialize(require_result(mt5, result, action))
+
+        if action == "history_deals_get" and isinstance(serialized_res, list):
+            try:
+                date_from = parse_datetime(parameter(params, "dateFrom", "date_from")) if parameter(params, "dateFrom", "date_from") else None
+                date_to = parse_datetime(parameter(params, "dateTo", "date_to")) if parameter(params, "dateTo", "date_to") else None
+                orders = mt5.history_orders_get(date_from=date_from, date_to=date_to) if date_from and date_to else mt5.history_orders_get()
+                if orders:
+                    orders_by_ticket = {}
+                    orders_by_position = {}
+                    for o in orders:
+                        o_dict = serialize(o) if not isinstance(o, dict) else o
+                        t = o_dict.get('ticket')
+                        if t:
+                            orders_by_ticket[t] = o_dict
+                        p = o_dict.get('position_id') or o_dict.get('position')
+                        if p:
+                            if p not in orders_by_position:
+                                orders_by_position[p] = []
+                            orders_by_position[p].append(o_dict)
+
+                    for d in serialized_res:
+                        if isinstance(d, dict):
+                            d_order = d.get('order', 0)
+                            d_pos = d.get('position_id', 0)
+                            sl = 0.0
+                            tp = 0.0
+
+                            if d_order in orders_by_ticket:
+                                o = orders_by_ticket[d_order]
+                                sl = float(o.get('sl', 0.0) or 0.0)
+                                tp = float(o.get('tp', 0.0) or 0.0)
+
+                            if (sl <= 0 or tp <= 0) and d_pos in orders_by_position:
+                                for o in orders_by_position[d_pos]:
+                                    if sl <= 0:
+                                        sl = float(o.get('sl', 0.0) or 0.0)
+                                    if tp <= 0:
+                                        tp = float(o.get('tp', 0.0) or 0.0)
+                                    if sl > 0 and tp > 0:
+                                        break
+
+                            d['sl'] = sl
+                            d['tp'] = tp
+            except Exception:
+                pass
+
+        return serialized_res
     if action == "order_calc_margin":
         result = mt5.order_calc_margin(
             int(parameter(params, "orderType", "order_type")),

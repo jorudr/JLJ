@@ -904,11 +904,13 @@ const handleMetaTrader5Import = async () => {
   statusMessage.value = isRu.value ? 'Загрузка истории сделок из MetaTrader 5...' : 'Loading trade history from MetaTrader 5...'
 
   try {
+    console.log('[MT5 Import] Requesting trade sync for strategy:', importTargetStrategyId.value)
     const result = await syncBrokerConnectionTrades(
       saved as StoredBrokerConnection,
       importTargetStrategyId.value,
       tradeStore
     )
+    console.log('[MT5 Import] Sync completed with result:', result)
     statusTone.value = result.importedCount > 0 ? 'success' : 'neutral'
     statusMessage.value = isRu.value
       ? `${result.sourceLabel}: добавлено ${result.importedCount}, дубликатов пропущено ${result.duplicateCount}. Проверено сделок: ${result.checkedCount}.`

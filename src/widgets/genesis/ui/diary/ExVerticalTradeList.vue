@@ -499,11 +499,11 @@
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Стоп Лосс' : 'Stop Loss' }}</span>
-                  <span class="font-bold mt-0.5">{{ Number(trade.stopLoss) > 0 ? formatExecutionMetric(trade.stopLoss) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ (Number(trade.stopLoss) > 0 || Number(trade.sl) > 0) ? formatExecutionMetric(trade.stopLoss || trade.sl) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Тейк Профит' : 'Take Profit' }}</span>
-                  <span class="font-bold mt-0.5">{{ Number(trade.takeProfit) > 0 ? formatExecutionMetric(trade.takeProfit) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ (Number(trade.takeProfit) > 0 || Number(trade.tp) > 0) ? formatExecutionMetric(trade.takeProfit || trade.tp) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Входа' : 'Date Entry' }}</span>

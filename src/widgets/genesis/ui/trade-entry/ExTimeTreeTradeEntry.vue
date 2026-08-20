@@ -69,8 +69,8 @@ const positiveOrNull = (value: unknown) => {
 const displayTrade = computed<Record<string, any>>(() => {
   const trade = (props.trade || {}) as Record<string, any>
   const entryValue = positiveOrNull(trade.entry)
-  const stopLossValue = positiveOrNull(trade.stopLoss)
-  const takeProfitValue = positiveOrNull(trade.takeProfit)
+  const stopLossValue = positiveOrNull(trade.stopLoss ?? trade.sl ?? trade.stop_loss)
+  const takeProfitValue = positiveOrNull(trade.takeProfit ?? trade.tp ?? trade.take_profit)
   const hasValidRiskRewardLevels = entryValue !== null && stopLossValue !== null && takeProfitValue !== null
 
   return {

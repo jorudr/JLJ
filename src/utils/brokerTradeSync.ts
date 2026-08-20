@@ -134,6 +134,22 @@ const mt5Fees = (deals: Record<string, any>[]) => deals.reduce((sum, deal) => {
   return sum + commission + fee
 }, 0)
 
+const mt5StopLoss = (deals: Record<string, any>[]): number | undefined => {
+  for (const deal of deals) {
+    const sl = Number(deal.sl ?? deal.stopLoss ?? deal.stop_loss ?? deal.order_sl ?? 0)
+    if (Number.isFinite(sl) && sl > 0) return sl
+  }
+  return undefined
+}
+
+const mt5TakeProfit = (deals: Record<string, any>[]): number | undefined => {
+  for (const deal of deals) {
+    const tp = Number(deal.tp ?? deal.takeProfit ?? deal.take_profit ?? deal.order_tp ?? 0)
+    if (Number.isFinite(tp) && tp > 0) return tp
+  }
+  return undefined
+}
+
 const buildMetaTrader5RoundTrips = (deals: Record<string, any>[]) => {
   const byPosition = new Map<string, Record<string, any>[]>()
 
@@ -171,6 +187,11 @@ const buildMetaTrader5RoundTrips = (deals: Record<string, any>[]) => {
     const resolvedAsset = resolveImportedAsset(symbol, 'forex-broker')
     const sourceExternalId = `position:${positionId}`
 
+    const rawStopLoss = mt5StopLoss(ordered)
+    const rawTakeProfit = mt5TakeProfit(ordered)
+    const stopLossVal = rawStopLoss && rawStopLoss > 0 ? rawStopLoss : undefined
+    const takeProfitVal = rawTakeProfit && rawTakeProfit > 0 ? rawTakeProfit : undefined
+
     roundTrips.push({
       id: `mt5-${positionId}`,
       date: mt5DealTime(entryDeals[0]!),
@@ -179,6 +200,10 @@ const buildMetaTrader5RoundTrips = (deals: Record<string, any>[]) => {
       side,
       entry: mt5WeightedPrice(entryDeals),
       exit: mt5WeightedPrice(exitDeals),
+      stopLoss: stopLossVal,
+      takeProfit: takeProfitVal,
+      sl: stopLossVal,
+      tp: takeProfitVal,
       size: exitVolume,
       currency: 'USD',
       assetType: resolvedAsset.assetType,
@@ -205,6 +230,9 @@ const syncMetaTrader5 = async (
   strategyId: string,
   tradeStore: BrokerTradeStorePort
 ): Promise<BrokerSyncResult> => {
+  console.log('==================================================')
+  console.log('[MT5 SYNC STARTED] Target Strategy:', strategyId)
+
   const deals = await mt5Request<Record<string, any>[]>({
     action: 'history_deals_get',
     connection: mt5ConnectionFromStored(connection),
@@ -213,7 +241,16 @@ const syncMetaTrader5 = async (
       dateTo: new Date().toISOString()
     }
   })
+
+  console.log('[MT5 RAW DEALS FROM SERVICE]:', deals)
+  console.log('[MT5 RAW DEALS FORMATTED]:', JSON.stringify(deals, null, 2))
+
   const roundTrips = buildMetaTrader5RoundTrips(Array.isArray(deals) ? deals : [])
+
+  console.log('[MT5 CONVERTED ROUNDTRIPS (DiaryEntry[])]:', roundTrips)
+  console.log('[MT5 CONVERTED ROUNDTRIPS FORMATTED]:', JSON.stringify(roundTrips, null, 2))
+  console.log('==================================================')
+
   const result = await importDedupedTrades(roundTrips, strategyId, tradeStore)
 
   return {
