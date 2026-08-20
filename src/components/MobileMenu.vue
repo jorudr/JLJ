@@ -2,8 +2,8 @@
   <div class="mobile-menu-root">
     <button
       type="button"
-      class="mobile-menu__trigger z-50 cursor-pointer md:hidden"
-      :class="isLight ? 'text-[#2c2c2a]' : 'text-white'"
+      class="mobile-menu__trigger z-[2147483647] cursor-pointer md:hidden"
+      :class="{ 'is-open': isOpen }"
       aria-label="Open navigation"
       :aria-expanded="isOpen"
       @click="toggleMenu"
@@ -12,7 +12,7 @@
       <span></span>
     </button>
 
-    <div v-if="isOpen" class="mobile-menu md:hidden" :class="isLight ? 'mobile-menu--light' : ''" @click.self="closeMenu">
+    <div v-if="isOpen" class="mobile-menu md:hidden" :class="isLight ? 'mobile-menu--light' : ''" @click.self="closeMenu" @touchmove.self.prevent>
       <div class="mobile-menu__panel">
         <div class="mobile-menu__topline">
           <span>J.L.JÖRMUNGANDR</span>
@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 defineProps({
@@ -131,6 +131,25 @@ const closeMenu = () => {
 const toggleSection = (name) => {
   section.value = section.value === name ? null : name
 }
+
+watch(isOpen, (val) => {
+  if (typeof document !== 'undefined') {
+    if (val) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = ''
+    document.body.style.touchAction = ''
+  }
+})
 </script>
 
 <style scoped>
@@ -152,16 +171,22 @@ const toggleSection = (name) => {
   display: block;
   width: 100%;
   height: 1px;
-  background: currentColor;
+  background-color: #050505;
+  transition: background-color 200ms ease;
+}
+
+.mobile-menu__trigger.is-open span {
+  background-color: #ffffff !important;
 }
 
 .mobile-menu {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 2147483647;
   overflow-y: auto;
-  background: #070708;
-  color: white;
+  overscroll-behavior: contain;
+  background: #000000 !important;
+  color: #ffffff;
 }
 
 .mobile-menu--light {

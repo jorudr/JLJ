@@ -670,9 +670,9 @@ const scrollToFeatures = () => {
   filter: invert(1);
 }
 
-.hero-header > header:hover .mobile-menu-trigger span,
-.hero-header > header.nav-open .mobile-menu-trigger span,
-.hero-header > header.nav-scrolled .mobile-menu-trigger span {
+.hero-header > header:hover :deep(.mobile-menu__trigger span),
+.hero-header > header.nav-open :deep(.mobile-menu__trigger span),
+.hero-header > header.nav-scrolled :deep(.mobile-menu__trigger span) {
   background-color: #f5f5f0 !important;
 }
 
