@@ -53,6 +53,25 @@
 
                 <!-- METATRADER 5 SETUP VIEW -->
                 <template v-if="selectedBroker.id === 'metatrader5'">
+                  <!-- MT5 GUIDE VIDEO: AUTOPLAY ONLY, WITHOUT CONTROLS -->
+                  <video
+                    ref="mt5VideoRef"
+                    class="mb-8 block h-[420px] min-h-[320px] w-full select-none object-contain pointer-events-none"
+                    src="/previews/metatrader-guilde.mp4"
+                    width="640"
+                    height="360"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="auto"
+                    tabindex="-1"
+                    aria-hidden="true"
+                    @contextmenu.prevent
+                  >
+                    <source src="/previews/metatrader-guilde.mp4" type="video/mp4" />
+                  </video>
+
                   <!-- 1. AUTO-CONNECT ADVISOR SECTION WITH OS SELECTOR -->
                   <div class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
                     <div class="flex items-center justify-between gap-4 mb-4">
@@ -512,6 +531,14 @@ const mt5OsSelection = ref<'mac' | 'win'>('mac')
 const installState = ref<'idle' | 'loading'>('idle')
 const installStatusMessage = ref('')
 const installStatusTone = ref<'success' | 'error'>('success')
+const mt5VideoRef = ref<HTMLVideoElement | null>(null)
+
+onMounted(() => {
+  if (mt5VideoRef.value) {
+    mt5VideoRef.value.muted = true
+    mt5VideoRef.value.play().catch(() => {})
+  }
+})
 
 const selectStrategyFromDropdown = async (strategyId: string) => {
   await setImportTargetStrategy(strategyId)
