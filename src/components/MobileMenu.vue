@@ -132,22 +132,40 @@ const toggleSection = (name) => {
   section.value = section.value === name ? null : name
 }
 
+const preventTouch = (e) => {
+  if (!e.target.closest('.mobile-menu')) {
+    e.preventDefault()
+  }
+}
+
 watch(isOpen, (val) => {
   if (typeof document !== 'undefined') {
     if (val) {
+      document.documentElement.classList.add('is-menu-open')
+      document.body.classList.add('is-menu-open')
       document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.addEventListener('touchmove', preventTouch, { passive: false })
     } else {
+      document.documentElement.classList.remove('is-menu-open')
+      document.body.classList.remove('is-menu-open')
       document.body.style.overflow = ''
-      document.body.style.touchAction = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.removeEventListener('touchmove', preventTouch)
     }
   }
 }, { immediate: true })
 
 onUnmounted(() => {
   if (typeof document !== 'undefined') {
+    document.documentElement.classList.remove('is-menu-open')
+    document.body.classList.remove('is-menu-open')
     document.body.style.overflow = ''
-    document.body.style.touchAction = ''
+    document.body.style.position = ''
+    document.body.style.width = ''
+    document.removeEventListener('touchmove', preventTouch)
   }
 })
 </script>
@@ -185,6 +203,7 @@ onUnmounted(() => {
   z-index: 2147483647;
   overflow-y: auto;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   background: #000000 !important;
   color: #ffffff;
 }
