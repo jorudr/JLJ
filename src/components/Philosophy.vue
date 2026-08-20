@@ -1,7 +1,7 @@
 <template>
-  <div class="philosophy-page min-h-screen bg-black text-white/80">
+  <div class="philosophy-page min-h-screen bg-white text-[#2c2c2a]">
     <div class="philosophy-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
-      <SiteNav :always-dark="true" />
+      <SiteNav />
 
       <main class="philosophy-main flex-1" aria-labelledby="philosophy-title">
         <section class="philosophy-content">
@@ -63,8 +63,8 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 <style scoped>
 .philosophy-page {
   font-family: 'Cormorant Garamond', serif;
-  background: #000000;
-  color: rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  color: #2c2c2a;
 }
 
 .philosophy-main {

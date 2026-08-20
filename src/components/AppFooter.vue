@@ -117,7 +117,7 @@ const selectFooterLocale = (code) => {
   margin-right: calc(50% - 50vw);
   margin-left: calc(50% - 50vw);
   overflow: hidden;
-  background: transparent;
+  background: #000000;
   color: rgba(245, 245, 240, 0.76);
   font-family: "Cormorant Garamond", serif;
 }
