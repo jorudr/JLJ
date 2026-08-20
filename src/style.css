@@ -30,6 +30,11 @@
   text-transform: none !important;
 }
 
+html, body, #app {
+  background-color: #000000 !important;
+  color: #f5f5f0;
+}
+
 /* Keep the layout width identical between routes with and without page scroll. */
 html {
   overflow-y: scroll;
