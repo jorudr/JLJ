@@ -110,6 +110,54 @@
                     </div>
                   </div>
 
+                  <!-- CLICKABLE TEXT: HOW TO INSTALL MANUALLY -->
+                  <div class="mb-4 flex items-center justify-start">
+                    <button @click="showManualGuide = !showManualGuide"
+                            class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline underline-offset-4 cursor-pointer transition-colors">
+                      {{ showManualGuide
+                        ? (isRu ? 'Скрыть инструкцию по ручной установке' : 'Hide manual setup guide')
+                        : (isRu ? 'Как установить вручную?' : 'How to install manually?') }}
+                    </button>
+                  </div>
+
+                  <!-- MANUAL INSTALLATION INSTRUCTION GUIDE -->
+                  <div v-if="showManualGuide"
+                       class="mb-8 border border-black/15 bg-black/[0.03] p-5 dark:border-white/15 dark:bg-white/[0.03] font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em]">
+                    <h4 class="font-black text-[11px] tracking-[0.18em] mb-4 pb-2 border-b border-black/10 dark:border-white/10 text-emerald-600 dark:text-emerald-400">
+                      {{ isRu ? 'Инструкция по ручной установке советника' : 'Manual Advisor Setup Guide' }}
+                    </h4>
+
+                    <!-- MACOS GUIDE -->
+                    <div class="mb-5">
+                      <p class="font-black text-black dark:text-white mb-2 tracking-[0.14em]">
+                        [ macOS (Wine / CrossOver) ]
+                      </p>
+                      <ol class="list-decimal list-inside space-y-1.5 opacity-80 pl-1">
+                        <li>{{ isRu ? 'Скачайте советник на Рабочий стол по кнопке выше.' : 'Download advisor to Desktop using the button above.' }}</li>
+                        <li>{{ isRu ? 'В MetaTrader 5 откройте: Файл → Открыть каталог данных.' : 'In MetaTrader 5 open: File → Open Data Folder.' }}</li>
+                        <li>{{ isRu ? 'Перейдите в папку MQL5 → Experts.' : 'Navigate to MQL5 → Experts folder.' }}</li>
+                        <li>{{ isRu ? 'Перетащите файл ExportTrades.ex5 в папку Experts.' : 'Copy ExportTrades.ex5 into the Experts folder.' }}</li>
+                        <li>{{ isRu ? 'В панели «Навигатор» нажмите ПКМ на «Советники» → Обновить.' : 'Right-click "Experts" in MT5 Navigator panel → Refresh.' }}</li>
+                        <li>{{ isRu ? 'Перетащите ExportTrades на график и включите «Алготрейдинг».' : 'Drag ExportTrades onto a chart and enable "Algo Trading".' }}</li>
+                      </ol>
+                    </div>
+
+                    <!-- WINDOWS GUIDE -->
+                    <div>
+                      <p class="font-black text-black dark:text-white mb-2 tracking-[0.14em]">
+                        [ Windows ]
+                      </p>
+                      <ol class="list-decimal list-inside space-y-1.5 opacity-80 pl-1">
+                        <li>{{ isRu ? 'Скачайте советник на Рабочий стол по кнопке выше.' : 'Download advisor to Desktop using the button above.' }}</li>
+                        <li>{{ isRu ? 'В MetaTrader 5 откройте: Файл → Открыть каталог данных.' : 'In MetaTrader 5 open: File → Open Data Folder.' }}</li>
+                        <li>{{ isRu ? 'Перейдите в папку MQL5 → Experts.' : 'Navigate to MQL5 → Experts folder.' }}</li>
+                        <li>{{ isRu ? 'Вставьте файл ExportTrades.ex5 в эту папку.' : 'Paste ExportTrades.ex5 into this folder.' }}</li>
+                        <li>{{ isRu ? 'В панели Навигаторе нажмите ПКМ по «Советники» → Обновить.' : 'In Navigator right-click "Expert Advisors" → Refresh.' }}</li>
+                        <li>{{ isRu ? 'Перетащите ExportTrades на график и включите «Разрешить алготрейдинг».' : 'Drag ExportTrades onto chart and check "Allow Algo Trading".' }}</li>
+                      </ol>
+                    </div>
+                  </div>
+
                   <!-- 2. CUSTOM DROPDOWN STRATEGY SELECTOR -->
                   <div class="mb-8 border border-black/10 bg-black/[0.02] p-5 dark:border-white/10 dark:bg-white/[0.02]">
                     <div class="flex items-center justify-between gap-4 mb-4">
@@ -459,6 +507,7 @@ const brokerEnvironment = ref<BrokerEnvironment>('real')
 
 const mt5ConnectionMode = ref<Mt5ConnectionMode>('local')
 const isStrategyDropdownOpen = ref(false)
+const showManualGuide = ref(false)
 const mt5OsSelection = ref<'mac' | 'win'>('mac')
 const installState = ref<'idle' | 'loading'>('idle')
 const installStatusMessage = ref('')
