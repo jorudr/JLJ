@@ -25,9 +25,12 @@
               </li>
             </ul>
 
-            <router-link to="/announcement" class="pricing-plan__action pricing-plan__action--quiet">
+            <router-link to="/announcement" class="pricing-plan__action pricing-plan__action--quiet hidden sm:inline-flex">
               {{ t('landing.pricing.demo.cta') }} <span aria-hidden="true">↗</span>
             </router-link>
+            <div class="pricing-plan__action pricing-plan__action--quiet sm:hidden pointer-events-none opacity-70 text-center justify-center">
+              {{ t('landing.openOnComputer') }}
+            </div>
           </article>
 
           <article class="pricing-plan pricing-plan--featured">

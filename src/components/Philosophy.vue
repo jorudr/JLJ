@@ -63,8 +63,8 @@ const principles = computed(() => tm('landing.philosophy.principles'))
 <style scoped>
 .philosophy-page {
   font-family: 'Cormorant Garamond', serif;
-  background: #ffffff;
-  color: #2c2c2a;
+  background: #000000;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .philosophy-main {

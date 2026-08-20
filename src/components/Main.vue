@@ -1,71 +1,19 @@
 <template>
   <div
-    class="relative w-full min-h-screen overflow-x-hidden flex flex-col select-none transition-all duration-1000"
-    :class="isDark ? 'theme-dark bg-black text-white/80' : 'theme-light bg-[#FFFFFF] text-[#2c2c2a]'"
+    class="relative w-full min-h-screen overflow-x-hidden flex flex-col select-none transition-all duration-1000 bg-black text-white/80"
     style="font-family: 'Cormorant Garamond', serif;"
   >
     <!-- Background Ambience -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      <!-- Ethereal Background (Light Theme) -->
-      <div class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000" 
-           :style="{ 
-             backgroundImage: 'url(\'/assets/white_ethereal_bg.png\')',
-             filter: 'blur(20px) brightness(1.1) contrast(0.9)',
-             opacity: !isDark ? 0.2 : 0
-           }"></div>
-
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-black">
       <!-- Glow Gradients -->
       <div 
         class="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] opacity-25 mix-blend-screen transition-all duration-1000"
-        :style="{ background: isDark ? 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%)' }"
+        style="background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);"
       ></div>
       <div 
         class="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[140px] opacity-20 mix-blend-screen transition-all duration-1000"
-        :style="{ background: isDark ? 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%)' }"
+        style="background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);"
       ></div>
-      
-      <!-- Digital Grid -->
-      <div 
-        class="absolute inset-0 opacity-10 transition-opacity duration-1000"
-        :class="isDark ? 'grid-dark' : 'grid-light'"
-      ></div>
-
-      <!-- Dot Grid -->
-      <div class="absolute inset-0 pointer-events-none transition-opacity duration-1000" 
-           :style="{ backgroundImage: 'radial-gradient(#2c2c2a 0.5px, transparent 0.5px)', backgroundSize: '30px 30px', opacity: !isDark ? 0.05 : 0 }"></div>
-
-      <!-- Light Sweep (only in light mode) -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden transition-opacity duration-1000" :style="{ opacity: !isDark ? 1 : 0 }">
-        <div class="absolute top-[-100%] left-[-50%] w-[20%] h-[300%] origin-center animate-sweep"
-             style="background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);"></div>
-      </div>
-
-      <!-- Cinematic Vignette -->
-      <div class="absolute inset-0 pointer-events-none transition-opacity duration-1000"
-           :style="{ background: 'radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%)', opacity: !isDark ? 1 : 0 }"></div>
-    </div>
-
-
-
-    <!-- Geometric Background Elements -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 transition-opacity duration-1000" :class="isDark ? 'opacity-40' : 'opacity-60'">
-        <!-- Tesseract / 3D Wireframe -->
-        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border" :class="isDark ? 'border-white/10' : 'border-black/20'">
-           <div class="absolute inset-12 rotate-45 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
-           <div class="absolute inset-24 -rotate-12 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
-           <div class="absolute inset-36 rotate-12 border" :class="isDark ? 'border-white/5' : 'border-black/15'"></div>
-        </div>
-
-        <!-- Floating Squares / Tesseracts -->
-        <div class="absolute top-[5%] left-1/4 -translate-x-1/2 w-32 h-32 rotate-12 border" :class="isDark ? 'border-white/20' : 'border-black/30'"></div>
-        <div class="absolute top-[25%] right-1/4 translate-x-1/2 w-48 h-48 -rotate-45 border" :class="isDark ? 'border-white/10' : 'border-black/20'"></div>
-
-        <!-- Geometric Pulse Circles -->
-        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] rounded-full border" :class="isDark ? 'border-white/[0.03]' : 'border-black/10'"></div>
-        <div class="absolute top-[15%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] rounded-full border" :class="isDark ? 'border-white/[0.02]' : 'border-black/5'"></div>
-        
-        <!-- Tactical Grid Accents -->
-        <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,transparent_0%,currentColor_1px,transparent_1px)] bg-[length:64px_64px]"></div>
     </div>
 
     <!-- Hero Section (First Viewport) -->
@@ -75,7 +23,7 @@
 
       <!-- Header / Top Bar -->
         <header
-          class="fixed left-0 right-0 top-0 z-[2147483647] flex w-full items-center justify-start px-0 pt-2 pb-2 text-[10px] tracking-[0.3em] sm:pt-4 sm:pb-4 xl:px-8"
+          class="fixed left-0 right-0 top-0 z-[2147483647] flex w-full items-center justify-start px-6 pt-4 pb-4 text-[10px] tracking-[0.3em] sm:px-10 sm:pt-4 sm:pb-4 xl:px-8"
           :class="{ 'nav-open': isMegaMenuVisible, 'nav-scrolled': isNavScrolled }"
         >
         <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
@@ -112,7 +60,7 @@
 
           <router-link
             to="/announcement"
-            class="nav-download-button ml-auto flex items-center justify-center rounded-[25px] bg-black px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-900"
+            class="nav-download-button ml-auto hidden md:flex items-center justify-center rounded-[25px] bg-black px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-900"
           >
             <span class="nav-openai-font">Попробовать</span>
             <svg class="ml-2 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -139,67 +87,9 @@
           </button>
           </div>
 
-          <button
-            type="button"
-            class="mobile-menu-trigger z-50 ml-auto cursor-pointer md:hidden"
-            aria-label="Open navigation"
-            :aria-expanded="isMobileMenuOpen"
-            @click="toggleMobileMenu"
-          >
-            <span></span>
-            <span></span>
-          </button>
+          <MobileMenu class="ml-auto md:hidden" />
         </div>
       </header>
-
-      <div v-if="isMobileMenuOpen" class="mobile-menu md:hidden" @click.self="closeMobileMenu">
-        <div class="mobile-menu__panel">
-          <div class="mobile-menu__topline">
-            <span>J.L.JÖRMUNGANDR</span>
-            <button type="button" class="mobile-menu__close cursor-pointer" aria-label="Close navigation" @click="closeMobileMenu">×</button>
-          </div>
-
-          <nav class="mobile-menu__nav" aria-label="Mobile navigation">
-            <div class="mobile-menu__group">
-              <button type="button" class="mobile-menu__parent nav-openai-font cursor-pointer" @click="toggleMobileSection('products')">
-                <span>{{ t('landing.nav.products') }}</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
-              </button>
-              <div v-if="mobileMenuSection === 'products'" class="mobile-menu__children">
-                <router-link to="/announcement" @click="closeMobileMenu">
-                  <span>J.L.JÖRMUNGANDR</span>
-                  <small>{{ t('landing.productsMenu.fullVersion') }}</small>
-                </router-link>
-                <a href="/announcement" @click="closeMobileMenu">
-                  <span>J.L.JÖRMUNGANDR DEMO</span>
-                  <small>{{ t('landing.productsMenu.freeDemo') }}</small>
-                </a>
-              </div>
-            </div>
-
-            <div class="mobile-menu__group">
-              <button type="button" class="mobile-menu__parent nav-openai-font cursor-pointer" @click="toggleMobileSection('useCases')">
-                <span>{{ t('landing.nav.useCases') }}</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': mobileMenuSection === 'useCases' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
-              </button>
-              <div v-if="mobileMenuSection === 'useCases'" class="mobile-menu__children">
-                <router-link to="/use-cases?case=improve-trading-results" @click="closeMobileMenu">{{ t('landing.useCasesMenu.improveTradingResults') }}</router-link>
-                <router-link to="/use-cases?case=create-trading-system" @click="closeMobileMenu">{{ t('landing.useCasesMenu.createTradingSystem') }}</router-link>
-                <router-link to="/use-cases?case=content-creator" @click="closeMobileMenu">{{ t('landing.useCasesMenu.contentCreator') }}</router-link>
-              </div>
-            </div>
-
-            <router-link to="/pricing" class="mobile-menu__link nav-openai-font" @click="closeMobileMenu">{{ t('landing.nav.pricing') }}</router-link>
-            <router-link to="/philosophy" class="mobile-menu__link nav-openai-font" @click="closeMobileMenu">{{ t('landing.nav.philosophy') }}</router-link>
-          </nav>
-
-          <div class="mobile-menu__locale">
-            <button type="button" class="nav-openai-font nav-language-button cursor-pointer" @click="setLocale('ru')" :class="locale === 'ru' ? 'is-active' : ''">ru</button>
-            <span>/</span>
-            <button type="button" class="nav-openai-font nav-language-button cursor-pointer" @click="setLocale('en')" :class="locale === 'en' ? 'is-active' : ''">en</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Mega Menu Panel -->
       <div 
@@ -321,10 +211,10 @@
             </template>
           </div>
 
-          <!-- OS Specific Download Button -->
+          <!-- OS Specific Download Button (Desktop) -->
           <router-link
             to="/announcement"
-            class="download-button flex cursor-pointer items-center justify-center rounded-[25px] px-8 py-2 text-center transition-colors duration-200 group bg-black text-white shadow-md border border-white/10 hover:bg-neutral-950"
+            class="download-button hidden md:flex cursor-pointer items-center justify-center rounded-[25px] px-8 py-2 text-center transition-colors duration-200 group bg-black text-white shadow-md border border-white/10 hover:bg-neutral-950"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'"
           >
             <template v-if="os === 'mac'">
@@ -334,6 +224,16 @@
               <span class="nav-openai-font">{{ t('landing.downloadWindows') }}</span>
             </template>
           </router-link>
+
+          <!-- Mobile Hint Button (Open on Computer) -->
+          <div
+            class="mobile-open-computer flex md:hidden items-center justify-center rounded-[25px] px-6 py-2.5 text-center transition-all duration-300 pointer-events-none select-none bg-black/10 border border-black/10 backdrop-blur-md dark:bg-white/10 dark:border-white/15"
+            :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+          >
+            <span class="nav-openai-font text-[13px] sm:text-[14px] font-normal tracking-tight opacity-70">
+              {{ t('landing.openOnComputer') }}
+            </span>
+          </div>
         </div>
       </main>
 
@@ -477,6 +377,7 @@ import GradflowBackground from './GradflowBackground.vue'
 import ExDivider from '../shared/ui/ExDivider.vue'
 import AppFooter from './AppFooter.vue'
 import VideoShowcase from './VideoShowcase.vue'
+import MobileMenu from './MobileMenu.vue'
 
 const { t, locale, setLocale } = useI18n()
 
@@ -647,7 +548,7 @@ const scrollToFeatures = () => {
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 /* Keep the foreground readable over the light Gradflow hero. */
-.hero-header > header *,
+.hero-header > header *:not(.mobile-menu-root):not(.mobile-menu-root *):not(.mobile-menu):not(.mobile-menu *),
 .hero-header > main *,
 .hero-header > .absolute:not(.gradflow-background):not(.mobile-menu) * {
   color: #050505;
@@ -767,6 +668,12 @@ const scrollToFeatures = () => {
 
 .hero-header > header.nav-scrolled .nav-logo {
   filter: invert(1);
+}
+
+.hero-header > header:hover .mobile-menu-trigger span,
+.hero-header > header.nav-open .mobile-menu-trigger span,
+.hero-header > header.nav-scrolled .mobile-menu-trigger span {
+  background-color: #f5f5f0 !important;
 }
 
 .hero-header > header:hover .nav-download-button .nav-openai-font,

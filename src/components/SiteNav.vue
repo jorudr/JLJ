@@ -73,7 +73,7 @@ onUnmounted(() => {
   left: 0;
   z-index: 2147483647;
   width: 100%;
-  padding: 8px 0;
+  padding: 16px 24px;
   background: transparent;
   color: #050505;
   transition: background-color 200ms ease;
@@ -122,7 +122,7 @@ onUnmounted(() => {
 }
 
 .site-nav__action {
-  display: flex;
+  display: none;
   margin-left: auto;
   align-items: center;
   justify-content: center;
@@ -134,6 +134,10 @@ onUnmounted(() => {
 
 .site-nav__action:hover {
   background: #171717;
+}
+
+.site-nav__mobile {
+  margin-left: auto;
 }
 
 .site-nav :deep(.mobile-menu__desktop-locale) {
@@ -188,8 +192,15 @@ onUnmounted(() => {
   transition: none;
 }
 
+.site-nav:hover :deep(.mobile-menu__trigger span),
+.site-nav--scrolled :deep(.mobile-menu__trigger span),
+.site-nav--always-dark :deep(.mobile-menu__trigger span) {
+  background-color: #f5f5f0 !important;
+}
+
 @media (min-width: 768px) {
-  .site-nav__links {
+  .site-nav__links,
+  .site-nav__action {
     display: flex;
   }
 }

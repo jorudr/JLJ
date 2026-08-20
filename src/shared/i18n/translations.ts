@@ -20,6 +20,7 @@ export const translations = {
       tryDemo: "TRY DEMO",
       downloadMac: "Download for macOS",
       downloadWindows: "Download for Windows",
+      openOnComputer: "Open on a computer to download",
       downloadPage: {
         demoEyebrow: "DEMO DOWNLOAD",
         demoTitle: "Download Demo",
@@ -336,6 +337,7 @@ export const translations = {
       tryDemo: "ПОПРОБОВАТЬ ДЕМО",
       downloadMac: "Скачать для macOS",
       downloadWindows: "Скачать для Windows",
+      openOnComputer: "Откройте на компьютере, чтобы скачать",
       downloadPage: {
         demoEyebrow: "СКАЧИВАНИЕ ДЕМО",
         demoTitle: "Скачать демо",

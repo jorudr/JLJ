@@ -117,7 +117,7 @@ const selectFooterLocale = (code) => {
   margin-right: calc(50% - 50vw);
   margin-left: calc(50% - 50vw);
   overflow: hidden;
-  background: #000;
+  background: transparent;
   color: rgba(245, 245, 240, 0.76);
   font-family: "Cormorant Garamond", serif;
 }
@@ -153,6 +153,7 @@ const selectFooterLocale = (code) => {
   font-weight: 300;
   letter-spacing: 0;
   line-height: 0.88;
+  overflow-wrap: break-word;
 }
 
 .app-footer__hero p {
@@ -381,7 +382,16 @@ const selectFooterLocale = (code) => {
   }
 
   .app-footer__hero h2 {
-    font-size: clamp(2.4rem, 15vw, 4.8rem);
+    font-size: clamp(1.75rem, 8.5vw, 2.6rem);
+    line-height: 1.08;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .app-footer__hero p {
+    margin-top: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
   .app-footer__brand {

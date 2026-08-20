@@ -1,11 +1,5 @@
 <template>
   <div class="mobile-menu-root">
-    <div class="mobile-menu__desktop-locale hidden items-center space-x-4 md:flex" :class="isLight ? 'text-[#2c2c2a]' : 'text-white'">
-      <button type="button" class="cursor-pointer transition-colors" :class="locale === 'en' ? 'font-bold opacity-100' : 'opacity-50'" @click="setLocale('en')">EN</button>
-      <span class="opacity-30">/</span>
-      <button type="button" class="cursor-pointer transition-colors" :class="locale === 'ru' ? 'font-bold opacity-100' : 'opacity-50'" @click="setLocale('ru')">RU</button>
-    </div>
-
     <button
       type="button"
       class="mobile-menu__trigger z-50 cursor-pointer md:hidden"
@@ -59,10 +53,33 @@
           <router-link to="/philosophy" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
 
-        <div class="mobile-menu__locale">
-          <button type="button" class="cursor-pointer" :class="locale === 'en' ? 'is-active' : ''" @click="setLocale('en')">EN</button>
-          <span>/</span>
-          <button type="button" class="cursor-pointer" :class="locale === 'ru' ? 'is-active' : ''" @click="setLocale('ru')">RU</button>
+        <div class="mobile-menu__language">
+          <div class="app-footer__language-menu" :class="{ 'is-open': isLanguageMenuOpen }">
+            <button
+              type="button"
+              class="app-footer__language-trigger"
+              :aria-expanded="isLanguageMenuOpen"
+              aria-haspopup="listbox"
+              @click="isLanguageMenuOpen = !isLanguageMenuOpen"
+            >
+              <span>{{ activeFooterLocale.label }}</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
+
+            <div v-if="isLanguageMenuOpen" class="app-footer__language-options" role="listbox">
+              <button
+                v-for="item in footerLocales"
+                :key="item.code"
+                type="button"
+                role="option"
+                :aria-selected="locale === item.code"
+                :class="{ 'is-active': locale === item.code }"
+                @click="selectFooterLocale(item.code)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -70,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 defineProps({
@@ -80,18 +97,35 @@ defineProps({
   }
 })
 
+const footerLocales = [
+  { code: 'en', label: 'English' },
+  { code: 'ru', label: 'Русский' },
+]
+
 const { t, locale, setLocale } = useI18n()
 const isOpen = ref(false)
 const section = ref(null)
+const isLanguageMenuOpen = ref(false)
+
+const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
+
+const selectFooterLocale = (code) => {
+  setLocale(code)
+  isLanguageMenuOpen.value = false
+}
 
 const toggleMenu = () => {
   isOpen.value = !isOpen.value
-  if (!isOpen.value) section.value = null
+  if (!isOpen.value) {
+    section.value = null
+    isLanguageMenuOpen.value = false
+  }
 }
 
 const closeMenu = () => {
   isOpen.value = false
   section.value = null
+  isLanguageMenuOpen.value = false
 }
 
 const toggleSection = (name) => {
@@ -100,10 +134,6 @@ const toggleSection = (name) => {
 </script>
 
 <style scoped>
-.mobile-menu__desktop-locale {
-  z-index: 50;
-}
-
 .mobile-menu__trigger {
   display: flex;
   width: 28px;
@@ -162,11 +192,15 @@ const toggleSection = (name) => {
 }
 
 .mobile-menu__close {
-  color: currentColor;
+  color: #ffffff;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 2rem;
   font-weight: 200;
   line-height: 1;
+}
+
+.mobile-menu--light .mobile-menu__close {
+  color: #2c2c2a;
 }
 
 .mobile-menu__nav {
@@ -192,12 +226,17 @@ const toggleSection = (name) => {
   min-height: 64px;
   align-items: center;
   justify-content: space-between;
-  color: currentColor;
+  color: #ffffff;
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.55rem;
   font-weight: 300;
   letter-spacing: 0.03em;
   text-align: left;
+}
+
+.mobile-menu--light .mobile-menu__parent,
+.mobile-menu--light .mobile-menu__link {
+  color: #2c2c2a;
 }
 
 .mobile-menu__parent svg {
@@ -222,12 +261,16 @@ const toggleSection = (name) => {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  color: currentColor;
+  color: rgba(255, 255, 255, 0.85);
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   line-height: 1.35;
-  opacity: 0.72;
+  opacity: 0.85;
+}
+
+.mobile-menu--light .mobile-menu__children a {
+  color: #2c2c2a;
 }
 
 .mobile-menu__children small {
@@ -238,20 +281,72 @@ const toggleSection = (name) => {
   text-transform: uppercase;
 }
 
-.mobile-menu__locale {
-  display: flex;
+.mobile-menu__language {
   margin-top: auto;
   padding-top: 48px;
-  align-items: center;
-  gap: 14px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  opacity: 0.45;
 }
 
-.mobile-menu__locale button.is-active {
-  font-weight: 700;
-  opacity: 1;
+.app-footer__language-menu {
+  position: relative;
+  width: min(100%, 180px);
+}
+
+.app-footer__language-trigger,
+.app-footer__language-options button {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+}
+
+.app-footer__language-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(245, 245, 240, 0.18);
+  border-radius: 25px;
+  padding: 8px 13px 8px 15px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(245, 245, 240, 0.82);
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.app-footer__language-trigger:hover,
+.app-footer__language-menu.is-open .app-footer__language-trigger {
+  border-color: rgba(245, 245, 240, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-footer__language-options {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(245, 245, 240, 0.18);
+  border-radius: 14px;
+  background: #050505;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+.app-footer__language-options button {
+  cursor: pointer;
+  border: 0;
+  padding: 10px 13px;
+  background: transparent;
+  color: rgba(245, 245, 240, 0.68);
+  text-align: left;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.app-footer__language-options button:hover,
+.app-footer__language-options button.is-active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f0;
 }
 </style>
