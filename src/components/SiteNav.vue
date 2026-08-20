@@ -207,8 +207,7 @@ onUnmounted(() => {
 
 @media (min-width: 640px) {
   .site-nav {
-    padding-top: 16px;
-    padding-bottom: 16px;
+    padding: 16px 40px;
   }
 }
 
