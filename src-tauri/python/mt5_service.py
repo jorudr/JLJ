@@ -331,24 +331,21 @@ def find_mac_wine_trade_files():
 
 def get_advisor_source_files() -> list[tuple[str, str]]:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    search_dirs = [
-        os.getcwd(),
-        script_dir,
-        os.path.abspath(os.path.join(script_dir, "..")),
-        os.path.abspath(os.path.join(script_dir, "..", "..")),
-        os.path.abspath(os.path.join(script_dir, "..", "..", "..")),
-        os.path.abspath(os.path.join(script_dir, "..", "..", "..", "..")),
-        "/Users/evanvosh/Documents/app1.1"
-    ]
+    project_root = "/Users/evanvosh/Documents/app1.1"
     
     local_files = ["ExportTrades.mq5", "ExportTrades.ex5"]
     source_files = []
+    
     for fname in local_files:
-        for d in search_dirs:
+        candidates = []
+        for d in [project_root, script_dir, os.getcwd()]:
             candidate = os.path.join(d, fname)
-            if os.path.exists(candidate):
-                source_files.append((fname, candidate))
-                break
+            if os.path.isfile(candidate):
+                candidates.append(candidate)
+        if candidates:
+            newest = max(candidates, key=os.path.getmtime)
+            source_files.append((fname, newest))
+            
     return source_files
 
 
