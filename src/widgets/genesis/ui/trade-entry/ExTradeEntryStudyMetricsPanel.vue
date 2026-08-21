@@ -1431,12 +1431,12 @@ const loadYahooMarketData = async (preferredSymbol = '') => {
   let lastError = null
 
   for (const symbol of candidates) {
-    try {
-      const marketData = {}
-      let hourlyPayload = null
-      let hourly = null
-      let hourlyTimeZone = 'UTC'
-      for (const timeframe of availableTimeframeOptions.value) {
+    const marketData = {}
+    let hourlyPayload = null
+    let hourly = null
+    let hourlyTimeZone = 'UTC'
+    for (const timeframe of availableTimeframeOptions.value) {
+      try {
         if (timeframe.id === '4h' || timeframe.id === '1h') {
           if (!hourly) {
             hourlyPayload = await fetchYahooChart(symbol, '60m', { includePrePost: !useRegularSession })
@@ -1453,21 +1453,40 @@ const loadYahooMarketData = async (preferredSymbol = '') => {
         }
         const candles = parseYahooChartCandles(await fetchYahooChart(symbol, timeframe.yahooInterval, { includePrePost: !useRegularSession }))
         marketData[timeframe.id] = adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
+      } catch (error) {
+        // Intraday history has provider-specific retention limits. A missing
+        // fine timeframe must not discard usable 1H/4H/D data for the trade.
+        lastError = error
+        console.warn(`[TradeStudyMetrics] ${symbol} ${timeframe.id} unavailable:`, error)
       }
+    }
 
-      if (Object.values(marketData).some(candles => candles?.length)) {
-        return {
-          provider: 'YAHOO',
-          symbol,
-          candlesByTimeframe: marketData
-        }
+    if (Object.values(marketData).some(candles => candles?.length)) {
+      return {
+        provider: 'YAHOO',
+        symbol,
+        candlesByTimeframe: marketData
       }
-    } catch (error) {
-      lastError = error
     }
   }
 
   throw lastError || new Error('No Yahoo market data candidates matched')
+}
+
+const loadAvailableTimeframes = async (loadTimeframe) => {
+  const results = await Promise.allSettled(
+    availableTimeframeOptions.value.map(async timeframe => [timeframe.id, await loadTimeframe(timeframe)])
+  )
+  const candlesByTimeframe = Object.fromEntries(
+    results
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value)
+  )
+  const lastError = [...results]
+    .reverse()
+    .find(result => result.status === 'rejected')?.reason
+
+  return { candlesByTimeframe, lastError }
 }
 
 const loadBinanceMarketData = async (preferredSymbol = '') => {
@@ -1476,7 +1495,7 @@ const loadBinanceMarketData = async (preferredSymbol = '') => {
   const requestRange = getMarketRequestRange()
   if (!requestRange) throw new Error('Invalid trade time range')
 
-  const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
+  const { candlesByTimeframe, lastError } = await loadAvailableTimeframes(async timeframe => {
     const params = new URLSearchParams({
       symbol,
       interval: timeframe.binanceInterval,
@@ -1485,13 +1504,16 @@ const loadBinanceMarketData = async (preferredSymbol = '') => {
       limit: String(getTimeframeLimit(timeframe))
     })
     const rows = await fetchJsonWithFallback(`/api/v3/klines?${params.toString()}`)
-    return [timeframe.id, adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(parseKlineCandles(rows), timeframe))]
-  }))
+    return adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(parseKlineCandles(rows), timeframe))
+  })
+  if (!Object.values(candlesByTimeframe).some(candles => candles?.length)) {
+    throw lastError || new Error(`No Binance candles for ${symbol}`)
+  }
 
   return {
     provider: 'BINANCE',
     symbol,
-    candlesByTimeframe: Object.fromEntries(timeframeEntries)
+    candlesByTimeframe
   }
 }
 
@@ -1519,22 +1541,18 @@ const loadBybitMarketData = async (preferredAsset = null) => {
   let lastError = null
 
   for (const { category, symbol } of candidateMarkets) {
-    try {
-      const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
-        const candles = await fetchBybitKlines({ category, symbol, timeframe })
-        return [timeframe.id, adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))]
-      }))
-      const candlesByTimeframe = Object.fromEntries(timeframeEntries)
-      if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
-        return {
-          provider: `BYBIT_${String(category).toUpperCase()}`,
-          symbol,
-          candlesByTimeframe
-        }
+    const { candlesByTimeframe, lastError: timeframeError } = await loadAvailableTimeframes(async timeframe => {
+      const candles = await fetchBybitKlines({ category, symbol, timeframe })
+      return adjustCandlesToStudyMetrics(filterCandlesToTradeWindow(candles, timeframe))
+    })
+    if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
+      return {
+        provider: `BYBIT_${String(category).toUpperCase()}`,
+        symbol,
+        candlesByTimeframe
       }
-    } catch (error) {
-      lastError = error
     }
+    lastError = timeframeError || lastError
   }
 
   throw lastError || new Error('No Bybit market data candidates matched')
@@ -1557,22 +1575,18 @@ const loadKrakenMarketData = async (preferredSymbol = '') => {
   let lastError = null
 
   for (const pair of candidates) {
-    try {
-      const timeframeEntries = await Promise.all(availableTimeframeOptions.value.map(async timeframe => {
-        const candles = await fetchKrakenOhlc({ pair, timeframe })
-        return [timeframe.id, adjustCandlesToStudyMetrics(candles)]
-      }))
-      const candlesByTimeframe = Object.fromEntries(timeframeEntries)
-      if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
-        return {
-          provider: 'KRAKEN',
-          symbol: pair,
-          candlesByTimeframe
-        }
+    const { candlesByTimeframe, lastError: timeframeError } = await loadAvailableTimeframes(async timeframe => {
+      const candles = await fetchKrakenOhlc({ pair, timeframe })
+      return adjustCandlesToStudyMetrics(candles)
+    })
+    if (Object.values(candlesByTimeframe).some(candles => candles?.length)) {
+      return {
+        provider: 'KRAKEN',
+        symbol: pair,
+        candlesByTimeframe
       }
-    } catch (error) {
-      lastError = error
     }
+    lastError = timeframeError || lastError
   }
 
   throw lastError || new Error('No Kraken market data candidates matched')
