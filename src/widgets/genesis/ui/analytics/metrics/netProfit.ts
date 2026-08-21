@@ -42,7 +42,7 @@ export const netProfitMetric: MetricEngine = {
       colorVal = '#f43f5e'
     }
 
-    const formattedValue = `${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    const formattedValue = `${pnl > 0 ? '+' : pnl < 0 ? '-' : ''}$${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
     return {
       rawValue: pnl,

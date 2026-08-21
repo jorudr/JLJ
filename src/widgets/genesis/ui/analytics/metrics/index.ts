@@ -50,8 +50,7 @@ import { expectedValueMetric } from './expectedValue'
 export const primarySummaryMetricsEngines: MetricEngine[] = [
   netProfitMetric,
   profitFactorMetric,
-  riskRewardRatioMetric,
-  expectedValueMetric
+  riskRewardRatioMetric
 ]
 
 export const advancedTradeMetricsEngines: MetricEngine[] = [
