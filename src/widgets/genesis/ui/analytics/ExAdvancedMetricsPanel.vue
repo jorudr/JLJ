@@ -9,6 +9,7 @@ import {
 import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
 import { buildTradeProfitabilityScoreIndex } from '~/widgets/genesis/model/tradeProfitabilityScore'
+import { buildTradeGeneratedInTradeAnalysis } from '~/widgets/genesis/model/generatedInTradeAnalysis'
 import { useTradeAnalysisMetrics } from './metrics'
 import ExScorePatternsPanel from './ExScorePatternsPanel.vue'
 
@@ -274,9 +275,13 @@ const getTradeDurationHours = (trade: any) => {
 const scoreCohortMetricRows = (trade: any) => {
   const durationHours = getTradeDurationHours(trade)
   const durationMinutes = Number.isFinite(durationHours) ? durationHours * 60 : Number.NaN
+  const generated: Record<string, any> = buildTradeGeneratedInTradeAnalysis(trade) || {}
   const metricResult = useTradeAnalysisMetrics(
     trade,
     {
+      ...generated,
+      firstImpulse: generated.firstImpulseDirection,
+      captureRatio: generated.profitCaptureRatio,
       durationHours,
       durationMinutes,
       initialBalance: props.initialBalance,

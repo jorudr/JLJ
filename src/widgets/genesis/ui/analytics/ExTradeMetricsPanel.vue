@@ -12,6 +12,7 @@ import {
 } from '~/widgets/genesis/model/metrics'
 import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRisk'
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
+import { buildTradeGeneratedInTradeAnalysis } from '~/widgets/genesis/model/generatedInTradeAnalysis'
 
 interface TradeMetricsPanelProps {
   trade?: any
@@ -58,8 +59,8 @@ const tradeStudyMetrics = computed<Record<string, any>>(() => {
 const inTradeStudyContext = computed(() => {
   const trade = props.trade || {}
   const metrics = tradeStudyMetrics.value || {}
-  const generated = metrics.generatedInTradeAnalysis || trade.generatedInTradeAnalysis || {}
   const generatedMarketData = metrics.generatedMarketData || trade.generatedMarketData || null
+  const generated: Record<string, any> = buildTradeGeneratedInTradeAnalysis(trade) || {}
   const direction = String(trade.side || trade.direction || generated.direction || '').toLowerCase()
   const isShort = direction === 'short'
   const adverseToggleKey = isShort ? 'priceRoseAboveEntryShort' : 'priceDroppedBelowEntryLong'

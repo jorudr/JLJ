@@ -23,7 +23,33 @@ export const adverseBeforeProfitMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const hadAdverse = Boolean(context?.adverseBeforeProfit ?? trade?.adverseBeforeProfit ?? false)
+    const rawValue = context && Object.prototype.hasOwnProperty.call(context, 'adverseBeforeProfit')
+      ? context.adverseBeforeProfit
+      : trade?.adverseBeforeProfit
+
+    if (typeof rawValue !== 'boolean') {
+      const isAmbiguous = Boolean(context?.intrabarSequenceAmbiguous)
+      return {
+        rawValue: null,
+        formattedValue: isAmbiguous
+          ? (isRu ? 'Неоднозначно' : 'Ambiguous')
+          : (isRu ? 'Недостаточно данных' : 'Insufficient Data'),
+        status: 'neutral',
+        evaluationText: isAmbiguous
+          ? (isRu ? 'Порядок high/low внутри свечи неизвестен' : 'Intrabar High/Low Order Unknown')
+          : (isRu ? 'Первый значимый плюс не зафиксирован' : 'No First Meaningful Profit Detected'),
+        evalClass: 'text-slate-400',
+        benchmarkText: isRu ? 'Нет — прямой доход без просадки' : 'No — Direct Profit',
+        benchmarks: [
+          { label: isRu ? 'Нет' : 'No', eval: isRu ? 'Без просадки' : 'Direct Profit', class: 'text-emerald-500 font-bold' },
+          { label: isRu ? 'Да' : 'Yes', eval: isRu ? 'Просадка до плюса' : 'Initial Drawdown', class: 'text-amber-500 font-bold' }
+        ],
+        progress: 0,
+        colorVal: '#94a3b8'
+      }
+    }
+
+    const hadAdverse = rawValue
 
     const isClear = !hadAdverse
     const evalClass = isClear ? 'text-emerald-500' : 'text-amber-500'

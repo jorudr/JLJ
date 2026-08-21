@@ -23,7 +23,29 @@ export const firstImpulseDirectionMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const impulse = String(context?.firstImpulse || trade?.firstImpulse || 'PROFIT').toUpperCase()
+    const impulse = String(context?.firstImpulse || trade?.firstImpulse || '').toUpperCase()
+
+    if (!impulse || impulse === 'AMBIGUOUS') {
+      const isAmbiguous = impulse === 'AMBIGUOUS'
+      return {
+        rawValue: 0,
+        formattedValue: isAmbiguous
+          ? (isRu ? 'Неоднозначно' : 'Ambiguous')
+          : (isRu ? 'Недостаточно данных' : 'Insufficient Data'),
+        status: 'neutral',
+        evaluationText: isAmbiguous
+          ? (isRu ? 'Порядок движения внутри свечи неизвестен' : 'Intrabar Move Order Unknown')
+          : (isRu ? 'Нет значимого импульса' : 'No Meaningful Impulse'),
+        evalClass: 'text-slate-400',
+        benchmarkText: isRu ? 'В плюс — сразу в прибыль' : 'Favorable — Immediate Profit',
+        benchmarks: [
+          { label: isRu ? 'В плюс' : 'Favorable', eval: isRu ? 'Сразу в плюс' : 'Favorable', class: 'text-emerald-500 font-bold' },
+          { label: isRu ? 'Против позиции' : 'Adverse', eval: isRu ? 'Первичная просадка' : 'Adverse', class: 'text-rose-500 font-bold' }
+        ],
+        progress: 0,
+        colorVal: '#94a3b8'
+      }
+    }
 
     const isFavorable = impulse === 'PROFIT' || impulse === 'FAVORABLE'
     const evalClass = isFavorable ? 'text-emerald-500' : 'text-rose-500'

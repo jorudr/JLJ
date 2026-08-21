@@ -23,34 +23,79 @@ export const pricePathShapeMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const shape = String(context?.pricePathShape || trade?.pathShape || 'CLEAN_TREND_CAPTURE')
+    const shape = String(context?.pricePathShape || trade?.pathShape || '').toUpperCase()
 
-    let labelText = isRu ? 'Чистый тренд' : 'Clean Trend'
-    let isGood = true
+    let labelText = isRu ? 'Недостаточно данных' : 'Insufficient Data'
+    let evaluationText = labelText
+    let status: 'optimal' | 'neutral' | 'warning' = 'neutral'
+    let evalClass = 'text-slate-400'
+    let progress = 0
+    let colorVal = '#94a3b8'
 
-    if (shape.includes('CHOPPY') || shape.includes('NOISE')) {
-      labelText = isRu ? 'Рваное движение' : 'Choppy Path'
-      isGood = false
+    if (shape.includes('CLEAN_TREND') || shape.includes('TREND_CONTINUATION') || shape === 'FAVORABLE_FIRST') {
+      labelText = isRu ? 'Чистый тренд' : 'Clean Trend'
+      evaluationText = isRu ? 'Плавное движение' : 'Smooth Move'
+      status = 'optimal'
+      evalClass = 'text-emerald-500'
+      progress = 100
+      colorVal = '#34d399'
+    } else if (shape.includes('FAVORABLE_THEN_PULLBACK')) {
+      labelText = isRu ? 'В плюс, затем откат' : 'Favorable then Pullback'
+      evaluationText = isRu ? 'Была просадка после роста' : 'Drawdown after Favorable Move'
+      status = 'warning'
+      evalClass = 'text-amber-500'
+      progress = 55
+      colorVal = '#fbbf24'
     } else if (shape.includes('ADVERSE')) {
-      labelText = isRu ? 'Просадка затем отскок' : 'Adverse then Recovery'
-      isGood = false
+      labelText = isRu ? 'Просадка, затем восстановление' : 'Adverse then Recovery'
+      evaluationText = isRu ? 'Вход против движения' : 'Adverse Entry'
+      status = 'warning'
+      evalClass = 'text-amber-500'
+      progress = 35
+      colorVal = '#fbbf24'
+    } else if (shape.includes('LATE_EXIT')) {
+      labelText = isRu ? 'Поздний выход после максимума' : 'Late Exit after MFE'
+      evaluationText = isRu ? 'Значимая прибыль была отдана' : 'Favorable Move Was Given Back'
+      status = 'warning'
+      evalClass = 'text-amber-500'
+      progress = 40
+      colorVal = '#fbbf24'
+    } else if (shape.includes('TWO_SIDED')) {
+      labelText = isRu ? 'Двустороннее движение' : 'Two-Sided Move'
+      evaluationText = isRu ? 'Порядок high/low внутри свечи неизвестен' : 'Intrabar High/Low Order Unknown'
+      status = 'warning'
+      evalClass = 'text-amber-500'
+      progress = 30
+      colorVal = '#fbbf24'
+    } else if (shape.includes('CHOPPY')) {
+      labelText = isRu ? 'Рваное движение' : 'Choppy Path'
+      evaluationText = isRu ? 'Частая смена направления' : 'Frequent Direction Changes'
+      status = 'warning'
+      evalClass = 'text-amber-500'
+      progress = 30
+      colorVal = '#fbbf24'
+    } else if (shape.includes('NOISE')) {
+      labelText = isRu ? 'Шумовой диапазон' : 'Noise Range'
+      evaluationText = isRu ? 'Нет значимого импульса' : 'No Meaningful Impulse'
+      status = 'neutral'
+      evalClass = 'text-slate-400'
+      progress = 20
+      colorVal = '#94a3b8'
     }
 
-    const evalClass = isGood ? 'text-emerald-500' : 'text-amber-500'
-
     return {
-      rawValue: isGood ? 1 : 0,
+      rawValue: status === 'optimal' ? 1 : 0,
       formattedValue: labelText,
-      status: isGood ? 'optimal' : 'warning',
-      evaluationText: isGood ? (isRu ? 'Идеально' : 'Clean Trend') : (isRu ? 'Рваное движение' : 'Choppy'),
+      status,
+      evaluationText,
       evalClass,
       benchmarkText: isRu ? 'Чистый тренд — плавный захват' : 'Clean Trend — Smooth Capture',
       benchmarks: [
         { label: isRu ? 'Чистый тренд' : 'Clean Trend', eval: isRu ? 'Чистый тренд' : 'Clean Trend', class: 'text-emerald-500 font-bold' },
         { label: isRu ? 'Рваная траектория' : 'Choppy Path', eval: isRu ? 'Шумовое движение' : 'Choppy Path', class: 'text-amber-500 font-bold' }
       ],
-      progress: isGood ? 100 : 40,
-      colorVal: isGood ? '#34d399' : '#fbbf24'
+      progress,
+      colorVal
     }
   }
 }
