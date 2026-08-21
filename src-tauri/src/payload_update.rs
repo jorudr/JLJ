@@ -144,8 +144,12 @@ async fn install_payload_manifest<R: Runtime>(
     fs::create_dir_all(&payload_root).map_err(|err| format!("create payload root: {err}"))?;
     fs::create_dir_all(&patches).map_err(|err| format!("create patches root: {err}"))?;
 
+    let manifest_sha256 = sha256_bytes_hex(&manifest_bytes);
     if let Some(existing) = read_payload_state_from_root(&payload_root)? {
-        if existing.active && existing.version.as_deref() == Some(manifest.version.as_str()) {
+        if existing.active
+            && existing.version.as_deref() == Some(manifest.version.as_str())
+            && existing.manifest_sha256.as_deref() == Some(&manifest_sha256)
+        {
             return Ok(PayloadInstallResult {
                 state: existing,
                 downloaded_files: 0,

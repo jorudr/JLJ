@@ -432,37 +432,42 @@ const runArtificialUpdateProgress = async () => {
 }
 
 const installNativeUpdateIfAvailable = async () => {
-  const { check } = await import('@tauri-apps/plugin-updater')
-  const update = await check()
-  if (!update) return false
+  try {
+    const { check } = await import('@tauri-apps/plugin-updater')
+    const update = await check()
+    if (!update) return false
 
-  setUpdateCopy('ЗАГРУЗКА_ОБНОВЛЕНИЯ', `загрузка версии ${update.version}`)
-  updateProgress.value = 18
-  let downloadedBytes = 0
-  let totalBytes: number | undefined
+    setUpdateCopy('ЗАГРУЗКА_ОБНОВЛЕНИЯ', `загрузка версии ${update.version}`)
+    updateProgress.value = 18
+    let downloadedBytes = 0
+    let totalBytes: number | undefined
 
-  await update.downloadAndInstall((event) => {
-    if (event.event === 'Started') {
-      totalBytes = event.data.contentLength
-      return
-    }
-    if (event.event === 'Progress') {
-      downloadedBytes += event.data.chunkLength
-      if (totalBytes) {
-        updateProgress.value = Math.min(94, Math.max(18, Math.round((downloadedBytes / totalBytes) * 94)))
+    await update.downloadAndInstall((event) => {
+      if (event.event === 'Started') {
+        totalBytes = event.data.contentLength
+        return
       }
-    }
-  })
-  await update.close()
+      if (event.event === 'Progress') {
+        downloadedBytes += event.data.chunkLength
+        if (totalBytes) {
+          updateProgress.value = Math.min(94, Math.max(18, Math.round((downloadedBytes / totalBytes) * 94)))
+        }
+      }
+    })
+    await update.close()
 
-  clearUpdateProgressTimer()
-  updateProgress.value = 100
-  setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
-  const { relaunch } = await import('@tauri-apps/plugin-process')
-  setTimeout(() => {
-    void relaunch()
-  }, 450)
-  return true
+    clearUpdateProgressTimer()
+    updateProgress.value = 100
+    setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
+    const { relaunch } = await import('@tauri-apps/plugin-process')
+    setTimeout(() => {
+      void relaunch()
+    }, 450)
+    return true
+  } catch (err) {
+    console.warn('[NativeUpdater] No native update available or endpoint returned non-200:', err)
+    return false
+  }
 }
 
 const startUpdateCheck = async () => {
