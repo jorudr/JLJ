@@ -10,6 +10,7 @@ import { getTradePlannedStopRiskDollars } from '~/widgets/genesis/model/tradeRis
 import { isClosedTradeForMetrics } from '~/widgets/genesis/model/tradePnl'
 import { buildTradeProfitabilityScoreIndex } from '~/widgets/genesis/model/tradeProfitabilityScore'
 import { useTradeAnalysisMetrics } from './metrics'
+import ExScorePatternsPanel from './ExScorePatternsPanel.vue'
 
 interface AdvancedMetricsPanelProps {
   trade?: any
@@ -23,7 +24,7 @@ const props = withDefaults(defineProps<AdvancedMetricsPanelProps>(), {
 })
 
 const { locale } = useI18n()
-const isTradeScoreExpanded = ref(false)
+const activeAdvancedTab = ref<'general' | 'patterns'>('general')
 const isRequiredConditionsExpanded = ref(false)
 
 const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g, ' ')
@@ -194,7 +195,8 @@ type ScorePattern = {
   label: string
   value: string
   unit: string
-  frequency: number
+  frequency: number | null
+  insufficientData: boolean
   description: string
   benchmark: string
 }
@@ -210,21 +212,52 @@ const getScorePatternUnit = (sample: any) => {
   const formatted = String(sample?.formattedValue ?? '')
   if (formatted.includes('%')) return '%'
   if (formatted.includes('$')) return '$'
-  if (/(мин|min|mins)/i.test(formatted) || /\bm\b/i.test(formatted)) return 'min'
-  if (/(ч|\bh\b|hr|hrs)/i.test(formatted)) return 'hours'
+  if (/(лет|year|years|yrs?)/i.test(formatted)) return 'years'
+  if (/(мес|month|months)/i.test(formatted)) return 'months'
   if (/(д|\bd\b|days?)/i.test(formatted)) return 'days'
+  if (/(ч|\bh\b|hr|hrs)/i.test(formatted)) return 'hours'
+  if (/(мин|min|mins)/i.test(formatted) || /\bm\b/i.test(formatted)) return 'min'
   if (/\bR\b/i.test(formatted)) return 'R'
   if (/lots?/i.test(formatted)) return 'lots'
   return ''
 }
 
-const formatScorePatternValue = (value: number, sample: any) => {
-  const unit = getScorePatternUnit(sample)
-  if (unit === '$') return `${value < 0 ? '-' : ''}${Math.abs(value).toFixed(2)}`
-  if (unit === '%') return value.toFixed(Math.abs(value) >= 10 ? 0 : 1)
-  if (unit === 'min' || unit === 'hours' || unit === 'days' || unit === 'lots') {
-    return value.toFixed(Math.abs(value) >= 10 ? 0 : 1)
-  }
+const durationUnitMinutes: Record<string, number> = {
+  min: 1,
+  hours: 60,
+  days: 60 * 24,
+  months: 60 * 24 * 30,
+  years: 60 * 24 * 360
+}
+
+const formatDurationValue = (value: number, sourceUnit: string) => {
+  const sourceMultiplier = durationUnitMinutes[sourceUnit] || 1
+  let totalMinutes = Math.max(0, Math.round(value * sourceMultiplier))
+  const parts: string[] = []
+  const units = [
+    ['y', durationUnitMinutes.years],
+    ['mo', durationUnitMinutes.months],
+    ['d', durationUnitMinutes.days],
+    ['h', durationUnitMinutes.hours],
+    ['min', durationUnitMinutes.min]
+  ] as const
+
+  units.forEach(([label, multiplier]) => {
+    if (totalMinutes < multiplier) return
+    const amount = Math.floor(totalMinutes / multiplier)
+    totalMinutes -= amount * multiplier
+    parts.push(`${amount}${label}`)
+  })
+
+  return parts.join(' ') || '0min'
+}
+
+const formatScorePatternEndpoint = (value: number, unit: string) => {
+  if (unit in durationUnitMinutes) return formatDurationValue(value, unit)
+  if (unit === '$') return `${value < 0 ? '-$' : '$'}${Math.abs(value).toFixed(2)}`
+  if (unit === '%') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}%`
+  if (unit === 'R') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 2)}R`
+  if (unit === 'lots') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)} lots`
   return value.toFixed(Math.abs(value) >= 10 ? 0 : 2)
 }
 
@@ -254,7 +287,6 @@ const scoreCohortMetricRows = (trade: any) => {
     'all'
   )
   const legacyMetricRows = metricResult.metrics
-    .filter((metric) => !['adherence', 'behavioural'].includes(String(metric.category || '').toLowerCase()))
     .map((metric) => ({
       id: metric.key,
       label: metric.label,
@@ -318,71 +350,60 @@ const buildScorePatterns = (pool: any[]): ScorePattern[] => {
   })
 
   const patterns: ScorePattern[] = []
-  const seenRangeSignatures = new Set<string>()
-  const excludedMetricIds = new Set([
-    // These duplicate the cohort rows or are a single normalized score,
-    // rather than a useful range across the high/low score trades.
-    'net_result_variance',
-    'riskRewardRatio',
-    'actual_vs_target_rr',
-    'edge_capture_quotient',
-    'temporal_exposure',
-    'horizon_sync_rating'
-  ])
   rowsByMetric.forEach((rows) => {
-    if (excludedMetricIds.has(String(rows[0]?.id))) return
+    const sample = rows[0] || {}
+    const insufficientPattern: ScorePattern = {
+      label: String(sample.label || sample.id || 'Pattern'),
+      unit: getScorePatternUnit(sample),
+      value: '',
+      frequency: null,
+      insufficientData: true,
+      description: String(sample.description || ''),
+      benchmark: String(sample.benchmark || '')
+    }
     const numericRows = rows.filter((row) => Number.isFinite(row.rawValue))
     const numericValues = numericRows.map((row) => row.rawValue)
-    const hasVariation = numericValues.some((value) => value !== numericValues[0])
-    if (numericRows.length >= 2) {
-      // A constant value is not a range/pattern for this score cohort.
-      if (!hasVariation) return
-      const low = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.2)
-      const high = scorePatternQuantile(numericRows.map((row) => row.rawValue), 0.8)
-      if (!Number.isFinite(low) || !Number.isFinite(high)) return
-      if (low === high) return
-      const inRange = numericRows.filter((row) => row.rawValue >= low && row.rawValue <= high).length
-      const frequency = Math.round((inRange / numericRows.length) * 100)
-      if (frequency <= 50) return
-      let displayLow = low
-      let displayHigh = high
-      let sample = numericRows[0]
-      let unit = getScorePatternUnit(sample)
-
-      // Holding time is stored in minutes. Keep short ranges in minutes, but
-      // convert the whole displayed range to hours once it exceeds one hour.
-      if (sample.id === 'cohort:duration') {
-        if (high > 60) {
-          displayLow = low / 60
-          displayHigh = high / 60
-          unit = 'hours'
-          sample = { ...sample, formattedValue: '0h' }
-        } else {
-          unit = 'min'
-        }
-      }
-
-      const signature = `${unit}:${displayLow.toFixed(4)}:${displayHigh.toFixed(4)}`
-      if (seenRangeSignatures.has(signature)) return
-      seenRangeSignatures.add(signature)
-      patterns.push({
-        label: sample.label,
-        unit,
-        value: `${formatScorePatternValue(displayLow, sample)} – ${formatScorePatternValue(displayHigh, sample)}`,
-        frequency,
-        description: sample.description,
-        benchmark: sample.benchmark
-      })
+    if (numericRows.length < 2) {
+      patterns.push(insufficientPattern)
       return
     }
 
-    // A single numeric value cannot produce a meaningful score-cohort range.
-    if (numericRows.length > 0) return
+    const hasVariation = numericValues.some((value) => value !== numericValues[0])
+    if (!hasVariation) {
+      patterns.push(insufficientPattern)
+      return
+    }
+
+    const low = scorePatternQuantile(numericValues, 0.2)
+    const high = scorePatternQuantile(numericValues, 0.8)
+    if (!Number.isFinite(low) || !Number.isFinite(high) || low === high) {
+      patterns.push(insufficientPattern)
+      return
+    }
+
+    const inRange = numericRows.filter((row) => row.rawValue >= low && row.rawValue <= high).length
+    const frequency = Math.round((inRange / numericRows.length) * 100)
+    let unit = getScorePatternUnit(sample)
+
+    // Holding time is stored in minutes. The endpoint formatter converts it
+    // to a compact min/hour/day/month/year representation for display.
+    if (sample.id === 'cohort:duration') {
+      unit = 'min'
+    }
+
+    patterns.push({
+      label: sample.label,
+      unit,
+      value: `${formatScorePatternEndpoint(low, unit)} - ${formatScorePatternEndpoint(high, unit)}`,
+      frequency,
+      insufficientData: false,
+      description: sample.description,
+      benchmark: sample.benchmark
+    })
   })
 
   return patterns
-    .sort((a, b) => b.frequency - a.frequency || a.label.localeCompare(b.label))
-    .slice(0, 18)
+    .sort((a, b) => (b.frequency ?? -1) - (a.frequency ?? -1) || a.label.localeCompare(b.label))
 }
 
 const tradeScoreBreakdown = computed(() => {
@@ -693,11 +714,46 @@ const simpleMetricInsights = computed(() => {
   ]
 })
 
+const advancedTabs = computed(() => {
+  const isRu = locale.value === 'ru'
+
+  return [
+    {
+      id: 'general' as const,
+      label: isRu ? 'Общие' : 'General',
+      count: simpleMetricInsights.value.length
+    },
+    {
+      id: 'patterns' as const,
+      label: isRu ? 'Паттерны' : 'Patterns',
+      count: tradeScoreBreakdown.value.patterns.length
+    }
+  ]
+})
+
 </script>
 
 <template>
-  <div class="pb-6">
+  <div class="flex flex-col space-y-4 pb-6">
+    <div class="flex flex-wrap items-center gap-2 border-b nier-border-primary pb-3">
+      <button
+        v-for="tab in advancedTabs"
+        :key="tab.id"
+        type="button"
+        class="relative flex items-center space-x-2 border px-4 py-2 transition-all duration-300"
+        :class="activeAdvancedTab === tab.id
+          ? 'border-black bg-black/5 font-bold shadow-sm dark:border-white dark:bg-white/5'
+          : 'nier-border-primary text-black/50 hover:border-black/30 dark:text-white/50 dark:hover:border-white/30'"
+        @click="activeAdvancedTab = tab.id"
+      >
+        <div v-if="activeAdvancedTab === tab.id" class="h-1.5 w-1.5 rotate-45 nier-bg-inverted animate-pulse"></div>
+        <span class="text-[10px] font-mono uppercase tracking-wider">{{ tab.label }}</span>
+        <span class="rounded-full bg-black/10 px-1.5 py-0.5 text-[8px] font-mono opacity-60 dark:bg-white/10">{{ tab.count }}</span>
+      </button>
+    </div>
+
     <div
+      v-if="activeAdvancedTab === 'general'"
       v-for="(item, index) in simpleMetricInsights"
       :key="item.id"
       class="group relative grid grid-cols-[34px_minmax(0,1fr)] gap-4 border-b nier-border-primary px-4 py-4 transition-all duration-300 first:border-t hover:bg-black/[0.025] dark:hover:bg-white/[0.025] md:px-5"
@@ -734,63 +790,6 @@ const simpleMetricInsights = computed(() => {
         <p v-if="item.hint" class="mt-2 max-w-3xl text-[10px] font-mono uppercase leading-relaxed tracking-[0.16em] opacity-50">
           {{ item.hint }}
         </p>
-
-        <div v-if="item.id === 'score'" class="mt-4">
-          <button
-            type="button"
-            class="inline-flex items-center gap-3 border nier-border-primary px-3 py-2 text-[8px] font-mono font-black uppercase tracking-[0.24em] opacity-70 transition-all duration-300 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5"
-            @click.stop="isTradeScoreExpanded = !isTradeScoreExpanded"
-          >
-            <span class="relative h-3 w-3">
-              <span class="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-current"></span>
-              <span
-                class="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-300"
-                :class="isTradeScoreExpanded ? 'scale-y-0' : 'scale-y-100'"
-              ></span>
-            </span>
-            <span>
-              {{ isTradeScoreExpanded ? (locale === 'ru' ? 'Скрыть состав' : 'Hide score') : (locale === 'ru' ? 'Показать состав' : 'Show score') }}
-            </span>
-          </button>
-
-          <div v-if="isTradeScoreExpanded" class="mt-3 flex max-h-[360px] flex-col overflow-y-auto border-t nier-border-primary pr-1">
-            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3">
-              <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
-                {{ locale === 'ru'
-                  ? (tradeScoreBreakdown.patternMode === 'high' ? 'Закономерности high score' : 'Закономерности low score')
-                  : (tradeScoreBreakdown.patternMode === 'high' ? 'High score patterns' : 'Low score patterns') }}
-              </span>
-              <span class="text-right text-[9px] font-mono uppercase tracking-[0.16em] opacity-45">
-                {{ locale === 'ru' ? 'диапазон / частота' : 'range / frequency' }}
-              </span>
-            </div>
-            <div
-              v-for="pattern in tradeScoreBreakdown.patterns"
-              :key="`${pattern.label}-${pattern.value}`"
-              class="block w-full"
-            >
-              <div class="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
-                <span class="min-w-0">
-                  <span class="block truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
-                  <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
-                </span>
-                <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
-                  <span class="block">
-                    {{ pattern.value }}
-                    <span v-if="pattern.unit" class="ml-1 text-[8px] uppercase tracking-[0.14em] opacity-60">{{ pattern.unit }}</span>
-                  </span>
-                  <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
-                </span>
-              </div>
-            </div>
-            <div v-if="tradeScoreBreakdown.patterns.length === 0" class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b nier-border-primary px-2 py-3">
-              <span class="text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">
-                {{ locale === 'ru' ? 'Недостаточно повторяющихся закономерностей' : 'Not enough repeating patterns' }}
-              </span>
-              <span class="text-[10px] font-mono font-black opacity-35">N/A</span>
-            </div>
-          </div>
-        </div>
 
         <div v-if="item.id === 'required' && requiredConditionRows.length > 0" class="mt-4">
           <button
@@ -859,5 +858,11 @@ const simpleMetricInsights = computed(() => {
         </div>
       </div>
     </div>
+
+    <ExScorePatternsPanel
+      v-else
+      :patterns="tradeScoreBreakdown.patterns"
+      :pattern-mode="tradeScoreBreakdown.patternMode"
+    />
   </div>
 </template>
