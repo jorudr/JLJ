@@ -207,6 +207,7 @@ const excludedScorePatternMetricIds = new Set([
   // Aggregate metrics that do not describe a per-trade pattern.
   'velocity_variance_index',
   'winRate',
+  'expectedValue',
   // Matrix condition metrics.
   'required_adherence',
   'additional_alpha',

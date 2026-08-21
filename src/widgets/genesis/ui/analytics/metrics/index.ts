@@ -43,7 +43,6 @@ import { hadNewsMetric } from './hadNews'
 
 // Category 6: Primary Summary Metrics
 import { netProfitMetric } from './netProfit'
-import { winRateMetric } from './winRate'
 import { profitFactorMetric } from './profitFactor'
 import { riskRewardRatioMetric } from './riskRewardRatio'
 import { expectedValueMetric } from './expectedValue'
@@ -51,7 +50,6 @@ import { expectedValueMetric } from './expectedValue'
 export const primarySummaryMetricsEngines: MetricEngine[] = [
   netProfitMetric,
   profitFactorMetric,
-  winRateMetric,
   riskRewardRatioMetric,
   expectedValueMetric
 ]
