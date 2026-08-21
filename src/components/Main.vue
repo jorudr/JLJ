@@ -686,9 +686,33 @@ const scrollToFeatures = () => {
   position: absolute;
   top: 0;
   right: 0;
-  bottom: auto;
   left: 0;
-  height: 150%;
+  height: 140vh;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 0.92) 42%,
+    rgba(0, 0, 0, 0.78) 54%,
+    rgba(0, 0, 0, 0.58) 66%,
+    rgba(0, 0, 0, 0.36) 78%,
+    rgba(0, 0, 0, 0.16) 88%,
+    rgba(0, 0, 0, 0.03) 96%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 0.92) 42%,
+    rgba(0, 0, 0, 0.78) 54%,
+    rgba(0, 0, 0, 0.58) 66%,
+    rgba(0, 0, 0, 0.36) 78%,
+    rgba(0, 0, 0, 0.16) 88%,
+    rgba(0, 0, 0, 0.03) 96%,
+    transparent 100%
+  );
 }
 
 .hero-header {
@@ -697,20 +721,26 @@ const scrollToFeatures = () => {
 
 .hero-gradient-fade {
   position: absolute;
+  top: 25vh;
   right: 0;
-  bottom: -55vh;
   left: 0;
+  height: 115vh;
   z-index: 1;
-  height: 100vh;
   pointer-events: none;
   background: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.98) 12%,
-    rgba(0, 0, 0, 0.86) 30%,
-    rgba(0, 0, 0, 0.56) 52%,
-    rgba(0, 0, 0, 0.22) 74%,
-    transparent 100%
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.02) 8%,
+    rgba(0, 0, 0, 0.06) 16%,
+    rgba(0, 0, 0, 0.13) 24%,
+    rgba(0, 0, 0, 0.23) 32%,
+    rgba(0, 0, 0, 0.36) 41%,
+    rgba(0, 0, 0, 0.51) 50%,
+    rgba(0, 0, 0, 0.67) 60%,
+    rgba(0, 0, 0, 0.81) 71%,
+    rgba(0, 0, 0, 0.92) 82%,
+    rgba(0, 0, 0, 0.98) 92%,
+    #000000 100%
   );
 }
 
