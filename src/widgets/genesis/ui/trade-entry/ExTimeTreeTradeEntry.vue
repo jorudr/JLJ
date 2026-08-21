@@ -176,18 +176,47 @@ const summaryExitPrice = computed(() => hasExitMethod.value
 
 const positionMethodLabel = (position: any, type: 'entry' | 'exit') => {
   const label = String(position.label || '').toUpperCase()
-  if (label && label !== 'SINGLE') return label.replace(/_/g, ' ')
+  if (label && label !== 'SINGLE' && label !== 'NONE' && label !== 'ENTRY_METHOD') return label.replace(/_/g, ' ')
   if (type === 'entry' && hasEntryMethod.value) {
-    return String(props.trade?.entryMethodType || 'ENTRY METHOD').replace(/_/g, ' ')
+    return entryMethodDisplayLabel(position)
   }
-  return type === 'exit' && hasExitMethod.value ? 'EXIT SCALE' : 'SINGLE'
+  return type === 'exit' && hasExitMethod.value ? (locale.value === 'ru' ? 'ВЫХОД' : 'EXIT') : 'SINGLE'
 }
 
 const entryMethodDisplayLabel = (position: any) => {
-  const rawMethod = String(position.label || props.trade?.entryMethodType || '').toUpperCase().replace(/\s+/g, '_')
-  if (rawMethod === 'AVERAGING' || rawMethod === 'AVERAGING_DOWN') return locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING'
-  if (rawMethod === 'PYRAMIDING') return locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING'
-  return positionMethodLabel(position, 'entry')
+  const explicitLabel = String(position?.label || '').toUpperCase().replace(/\s+/g, '_')
+  if (explicitLabel && explicitLabel !== 'SINGLE' && explicitLabel !== 'NONE' && explicitLabel !== 'ENTRY_METHOD' && explicitLabel !== 'ENTRY_METHOD_TYPE') {
+    if (explicitLabel === 'AVERAGING' || explicitLabel === 'AVERAGING_DOWN') return locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING'
+    if (explicitLabel === 'PYRAMIDING') return locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING'
+    return explicitLabel.replace(/_/g, ' ')
+  }
+
+  if (position?.positionNumber === 1 || entryPositions.value[0] === position) {
+    return locale.value === 'ru' ? 'ВХОД' : 'ENTRY'
+  }
+
+  const firstPrice = Number(entryPositions.value[0]?.price || 0)
+  const currentPrice = Number(position?.price || 0)
+  if (!Number.isFinite(firstPrice) || firstPrice <= 0 || !Number.isFinite(currentPrice) || currentPrice <= 0) {
+    return locale.value === 'ru' ? 'ВХОД' : 'ENTRY'
+  }
+
+  let sideStr = String(props.trade?.side || props.trade?.direction || '').toUpperCase()
+  if (!sideStr && entryPositions.value.length > 0) {
+    sideStr = String(entryPositions.value[0]?.side || '').toUpperCase()
+  }
+
+  const isLong = sideStr === 'LONG' || sideStr === 'BUY' || sideStr === ''
+
+  if (isLong) {
+    return currentPrice > firstPrice
+      ? (locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING')
+      : (locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING')
+  } else {
+    return currentPrice < firstPrice
+      ? (locale.value === 'ru' ? 'ПИРАМИДИНГ' : 'PYRAMIDING')
+      : (locale.value === 'ru' ? 'УСРЕДНЕНИЕ' : 'AVERAGING')
+  }
 }
 
 const formatDateValue = (value: unknown) => {

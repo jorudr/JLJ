@@ -499,11 +499,11 @@
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Стоп Лосс' : 'Stop Loss' }}</span>
-                  <span class="font-bold mt-0.5">{{ (Number(trade.stopLoss) > 0 || Number(trade.sl) > 0) ? formatExecutionMetric(trade.stopLoss || trade.sl) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ Number(trade.stopLoss) > 0 ? formatExecutionMetric(trade.stopLoss) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Тейк Профит' : 'Take Profit' }}</span>
-                  <span class="font-bold mt-0.5">{{ (Number(trade.takeProfit) > 0 || Number(trade.tp) > 0) ? formatExecutionMetric(trade.takeProfit || trade.tp) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
+                  <span class="font-bold mt-0.5">{{ Number(trade.takeProfit) > 0 ? formatExecutionMetric(trade.takeProfit) : (locale === 'ru' ? 'НЕТ' : 'NONE') }}</span>
                 </div>
                 <div class="flex flex-col sm:col-span-1">
                   <span class="opacity-40 text-[9px] uppercase tracking-wider">{{ locale === 'ru' ? 'Дата Входа' : 'Date Entry' }}</span>
@@ -784,7 +784,7 @@ const getEntryMethodType = (trade: any, exec: any, index: number | string) => {
   const firstPrice = Number(entries[0]?.price || 0)
   const currentPrice = Number(exec?.price || 0)
   
-  let sideStr = String(trade?.side || '').toUpperCase()
+  let sideStr = String(trade?.side || trade?.direction || '').toUpperCase()
   if (!sideStr && entries.length > 0) {
     sideStr = String(entries[0]?.side || '').toUpperCase()
   }
@@ -1871,8 +1871,10 @@ const activeTrades = computed(() => {
         entryPrice: t.entry !== undefined ? t.entry : (t.entryPrice || 0),
         exitPrice: isClosed ? (t.exit !== undefined ? t.exit : (t.exitPrice || 0)) : '—',
         size: t.size !== undefined ? t.size : (t.positionSize || 1),
-        stopLoss: t.stopLoss !== undefined ? t.stopLoss : 0,
-        takeProfit: t.takeProfit !== undefined ? t.takeProfit : 0,
+        stopLoss: t.stopLoss !== undefined ? t.stopLoss : (t.sl !== undefined ? t.sl : 0),
+        takeProfit: t.takeProfit !== undefined ? t.takeProfit : (t.tp !== undefined ? t.tp : 0),
+        sl: t.stopLoss !== undefined ? t.stopLoss : (t.sl !== undefined ? t.sl : 0),
+        tp: t.takeProfit !== undefined ? t.takeProfit : (t.tp !== undefined ? t.tp : 0),
         profitInCurrency: currencyProfit,
         isClosed,
         executions: Array.isArray(t.executions) ? t.executions : [],
