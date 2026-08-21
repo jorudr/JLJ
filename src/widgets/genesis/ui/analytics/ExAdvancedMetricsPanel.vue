@@ -286,7 +286,9 @@ const scoreCohortMetricRows = (trade: any) => {
     'advanced',
     'all'
   )
+  const duplicatedMetricIds = new Set(['riskRewardRatio', 'temporal_exposure'])
   const legacyMetricRows = metricResult.metrics
+    .filter((metric) => !duplicatedMetricIds.has(String(metric.key)))
     .map((metric) => ({
       id: metric.key,
       label: metric.label,

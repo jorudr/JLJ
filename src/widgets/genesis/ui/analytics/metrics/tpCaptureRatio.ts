@@ -1,5 +1,6 @@
 import type { MetricEngine } from '~/entities/metric'
-import { createUnavailableMetricResult, getPositiveTradeLevels, parsePositiveMetricNumber } from './metricUtils'
+import { getTradeCashPnl } from '~/widgets/genesis/model/tradePnl'
+import { createUnavailableMetricResult, getPositiveTradeLevels, parseFiniteMetricNumber, parsePositiveMetricNumber } from './metricUtils'
 
 export const tpCaptureRatioMetric: MetricEngine = {
   key: 'tp_capture_ratio',
@@ -30,15 +31,43 @@ export const tpCaptureRatioMetric: MetricEngine = {
     const side = String(trade?.side || trade?.direction || '').toLowerCase()
     const isShort = side.includes('short') || side.includes('sell')
 
+    const targetMove = entry !== null && takeProfit !== null
+      ? (isShort ? entry - takeProfit : takeProfit - entry)
+      : Number.NaN
+    const realizedMove = entry !== null && exit !== null
+      ? (isShort ? entry - exit : exit - entry)
+      : Number.NaN
+    const hasStoredPnl = [
+      trade?.profitInCurrency,
+      trade?.pnlNum,
+      trade?.pnl,
+      trade?.profit,
+      trade?.netProfit,
+      trade?.result
+    ].some((value) => parseFiniteMetricNumber(value) !== null)
+    const isProfitable = hasStoredPnl
+      ? getTradeCashPnl(trade) > 0
+      : Number.isFinite(realizedMove) && realizedMove > 0
+
+    // TP capture is meaningful only for profitable trades that had a valid
+    // target installed in the correct direction. Losses and unmanaged trades
+    // must remain unavailable instead of being reported as 0% capture.
+    if (entry === null || takeProfit === null || !Number.isFinite(targetMove) || targetMove <= 0 || !isProfitable) {
+      return createUnavailableMetricResult(
+        locale,
+        isRu
+          ? 'Нужны валидный Take Profit и прибыльная сделка'
+          : 'A valid Take Profit and a profitable trade are required'
+      )
+    }
+
     let capture: number | null = directCapture
-    if (capture === null && entry !== null && takeProfit !== null && exit !== null) {
-      const targetMove = isShort ? entry - takeProfit : takeProfit - entry
-      const realizedMove = isShort ? entry - exit : exit - entry
-      capture = targetMove > 0 ? Math.min(100, Math.max(0, (realizedMove / targetMove) * 100)) : null
+    if (capture === null && exit !== null && Number.isFinite(realizedMove)) {
+      capture = Math.min(100, Math.max(0, (realizedMove / targetMove) * 100))
     }
 
     if (capture === null) {
-      return createUnavailableMetricResult(locale, isRu ? 'Нужны валидные TP и цена выхода' : 'Valid TP and exit price required')
+      return createUnavailableMetricResult(locale, isRu ? 'Нужен валидный TP и цена выхода' : 'Valid TP and exit price required')
     }
 
     const isFull = capture === 100

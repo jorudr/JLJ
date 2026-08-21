@@ -66,8 +66,8 @@ const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g,
       >
         <div class="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-3 border-b nier-border-primary px-2 py-3 transition-colors hover:bg-black/[0.025] dark:hover:bg-white/[0.035]">
           <span class="min-w-0">
-            <span class="block truncate text-[9px] font-mono uppercase tracking-[0.2em] opacity-45">{{ formatDisplayLabel(pattern.label) }}</span>
-            <span v-if="pattern.description" class="mt-1 block truncate text-[8px] font-mono uppercase tracking-[0.12em] opacity-35">{{ pattern.description }}</span>
+            <span class="block truncate text-[11px] font-mono font-black uppercase tracking-[0.16em] opacity-75">{{ formatDisplayLabel(pattern.label) }}</span>
+            <span v-if="pattern.description" class="mt-1 block truncate text-[9px] font-mono uppercase tracking-[0.1em] opacity-55">{{ pattern.description }}</span>
           </span>
           <span class="max-w-[220px] text-right text-[10px] font-mono font-black nier-text-primary">
             <span v-if="pattern.insufficientData" class="block text-[8px] uppercase tracking-[0.14em] opacity-55">
