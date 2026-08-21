@@ -25,8 +25,9 @@ export const velocityVarianceIndexMetric: MetricEngine = {
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
     const durationHours = Number(context?.durationHours ?? trade?.durationHours)
+    const tradePnl = Number(trade?.profitInCurrency ?? trade?.pnl ?? trade?.profit ?? 0)
     const velocity = Number(context?.velocity ?? trade?.velocity ?? (
-      Number.isFinite(durationHours) && durationHours > 0 ? Number(trade?.pnl || trade?.profit || 0) / durationHours : Number.NaN
+      Number.isFinite(durationHours) && durationHours > 0 ? tradePnl / durationHours : Number.NaN
     ))
     const baseVelocity = Number(context?.avgVelocity)
     if (!Number.isFinite(velocity) || !Number.isFinite(baseVelocity) || baseVelocity === 0) {

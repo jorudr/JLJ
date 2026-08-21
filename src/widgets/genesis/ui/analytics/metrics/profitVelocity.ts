@@ -24,7 +24,7 @@ export const profitVelocityMetric: MetricEngine = {
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
     const isRu = locale === 'ru'
-    const pnl = Number(trade?.pnl || trade?.profit || 0)
+    const pnl = Number(trade?.profitInCurrency ?? trade?.pnl ?? trade?.profit ?? 0)
     const durationHours = Number(context?.durationHours ?? trade?.durationHours)
     if (!Number.isFinite(durationHours) || durationHours <= 0) {
       return createUnavailableMetricResult(locale, isRu ? 'Нужна длительность сделки' : 'Trade duration required')

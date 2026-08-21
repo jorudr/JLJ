@@ -202,6 +202,18 @@ type ScorePattern = {
   benchmark: string
 }
 
+const excludedScorePatternMetricIds = new Set([
+  // Matrix condition metrics.
+  'required_adherence',
+  'additional_alpha',
+  'conditional_pnl_ratio',
+  // Emotion and behavioural-tag metrics.
+  'cognitive_stability',
+  'dominant_bias',
+  'emotional_pnl_drag',
+  'friction_density'
+])
+
 const scorePatternQuantile = (values: number[], ratio: number) => {
   const sorted = values.slice().sort((a, b) => a - b)
   if (!sorted.length) return Number.NaN
@@ -212,7 +224,9 @@ const scorePatternQuantile = (values: number[], ratio: number) => {
 const getScorePatternUnit = (sample: any) => {
   const formatted = String(sample?.formattedValue ?? '')
   if (formatted.includes('%')) return '%'
+  if (/\$.*\/(?:ч|h\b|hour)/i.test(formatted)) return '$/h'
   if (formatted.includes('$')) return '$'
+  if (/x\s*$/i.test(formatted)) return 'x'
   if (/(лет|year|years|yrs?)/i.test(formatted)) return 'years'
   if (/(мес|month|months)/i.test(formatted)) return 'months'
   if (/(д|\bd\b|days?)/i.test(formatted)) return 'days'
@@ -255,8 +269,10 @@ const formatDurationValue = (value: number, sourceUnit: string) => {
 
 const formatScorePatternEndpoint = (value: number, unit: string) => {
   if (unit in durationUnitMinutes) return formatDurationValue(value, unit)
+  if (unit === '$/h') return `${value < 0 ? '-$' : '$'}${Math.abs(value).toFixed(2)}/h`
   if (unit === '$') return `${value < 0 ? '-$' : '$'}${Math.abs(value).toFixed(2)}`
   if (unit === '%') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)}%`
+  if (unit === 'x') return `${value.toFixed(2)}x`
   if (unit === 'R') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 2)}R`
   if (unit === 'lots') return `${value.toFixed(Math.abs(value) >= 10 ? 0 : 1)} lots`
   return value.toFixed(Math.abs(value) >= 10 ? 0 : 2)
@@ -269,12 +285,30 @@ const getTradeDurationHours = (trade: any) => {
   return (end - start) / (1000 * 60 * 60)
 }
 
+const getAverageTradeVelocity = (trades: any[]) => {
+  const velocities = trades
+    .map((trade) => {
+      const durationHours = getTradeDurationHours(trade)
+      return Number.isFinite(durationHours) && durationHours > 0
+        ? getNormalizedPnl(trade) / durationHours
+        : Number.NaN
+    })
+    .filter(Number.isFinite)
+
+  return velocities.length
+    ? velocities.reduce((sum, velocity) => sum + velocity, 0) / velocities.length
+    : undefined
+}
+
 // This is deliberately a score-cohort source. It does not read the cards in
 // Advanced Metrics: every row below is extracted from one of the trades in
 // the selected high-score or low-score group.
 const scoreCohortMetricRows = (trade: any) => {
   const durationHours = getTradeDurationHours(trade)
   const durationMinutes = Number.isFinite(durationHours) ? durationHours * 60 : Number.NaN
+  const velocity = Number.isFinite(durationHours) && durationHours > 0
+    ? getNormalizedPnl(trade) / durationHours
+    : undefined
   const generated: Record<string, any> = buildTradeGeneratedInTradeAnalysis(trade) || {}
   const metricResult = useTradeAnalysisMetrics(
     trade,
@@ -284,6 +318,8 @@ const scoreCohortMetricRows = (trade: any) => {
       captureRatio: generated.profitCaptureRatio,
       durationHours,
       durationMinutes,
+      velocity,
+      avgVelocity: getAverageTradeVelocity(closedTrades.value),
       initialBalance: props.initialBalance,
       balanceBeforeTrade: getTradeBalanceBefore(closedTrades.value, trade, props.initialBalance)
     },
@@ -293,7 +329,10 @@ const scoreCohortMetricRows = (trade: any) => {
   )
   const duplicatedMetricIds = new Set(['riskRewardRatio', 'temporal_exposure'])
   const legacyMetricRows = metricResult.metrics
-    .filter((metric) => !duplicatedMetricIds.has(String(metric.key)))
+    .filter((metric) => {
+      const metricId = String(metric.key)
+      return !duplicatedMetricIds.has(metricId) && !excludedScorePatternMetricIds.has(metricId)
+    })
     .map((metric) => ({
       id: metric.key,
       label: metric.label,
