@@ -1105,9 +1105,6 @@ const scrollToFeatures = () => {
   .home-features {
     padding-right: 24px;
     padding-left: 24px;
-  }
-
-  .home-features {
     padding-top: 88px;
     padding-bottom: 88px;
     row-gap: 96px;
@@ -1127,13 +1124,13 @@ const scrollToFeatures = () => {
   .feature-grid-card {
     min-height: 0;
     display: grid;
-    padding: 30px 0 34px;
+    padding: 30px 32px 34px 0;
     border-right: 0;
   }
 
   .feature-grid-card:nth-child(odd),
   .feature-grid-card:nth-child(even) {
-    padding-right: 0;
+    padding-right: 36px;
     padding-left: 0;
   }
 
