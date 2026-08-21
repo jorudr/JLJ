@@ -230,6 +230,10 @@ const syncMetaTrader5 = async (
   strategyId: string,
   tradeStore: BrokerTradeStorePort
 ): Promise<BrokerSyncResult> => {
+  if (!connection.active) {
+    throw new Error('MetaTrader 5 connection is deactivated.')
+  }
+
   console.log('==================================================')
   console.log('[MT5 SYNC STARTED] Target Strategy:', strategyId)
 

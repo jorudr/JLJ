@@ -230,7 +230,33 @@
                     </div>
                   </div>
 
-                  <!-- 3. STATUS MESSAGE BANNER IF ANY -->
+                  <!-- 3. CONNECTION STATUS BLOCK FOR MT5 -->
+                  <div class="border border-black/10 p-5 dark:border-white/10 mb-8 bg-white/40 dark:bg-black/40">
+                    <p class="font-mono text-[9px] font-black uppercase tracking-[0.28em] opacity-40 mb-5">{{ isRu ? 'Статус Подключения' : 'Connection Status' }}</p>
+                    <div class="grid grid-cols-3 gap-4">
+                      <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
+                        <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">{{ isRu ? 'Сохранено Локально' : 'Saved Local' }}</p>
+                        <p class="mt-3 font-mono text-[14px] font-black uppercase"
+                           :class="savedCurrentConnection ? 'text-emerald-500' : 'opacity-30'">
+                          {{ savedCurrentConnection ? (isRu ? 'Да' : 'Yes') : (isRu ? 'Нет' : 'No') }}
+                        </p>
+                      </div>
+                      <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10 relative overflow-hidden">
+                        <div v-if="isSelectedBrokerActive" class="absolute inset-0 bg-emerald-500/5"></div>
+                        <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40 relative z-10">{{ isRu ? 'Статус' : 'Status' }}</p>
+                        <p class="mt-3 font-mono text-[14px] font-black uppercase relative z-10"
+                           :class="isSelectedBrokerActive ? 'text-emerald-500' : 'opacity-30'">
+                          {{ isSelectedBrokerActive ? (isRu ? 'Активен' : 'Active') : (isRu ? 'Оффлайн' : 'Offline') }}
+                        </p>
+                      </div>
+                      <div class="border border-black/10 bg-white dark:bg-[#050505] p-4 dark:border-white/10">
+                        <p class="font-mono text-[8px] font-black uppercase tracking-[0.2em] opacity-40">{{ isRu ? 'Режим' : 'Mode' }}</p>
+                        <p class="mt-3 font-mono text-[11px] font-black uppercase opacity-70">{{ connectionModeLabel }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 4. STATUS MESSAGE BANNER IF ANY -->
                   <div v-if="statusMessage"
                        class="mb-8 border px-5 py-4 font-mono text-[10px] font-bold uppercase leading-relaxed tracking-[0.14em]"
                        :class="statusTone === 'success'
@@ -241,14 +267,25 @@
                     {{ statusMessage }}
                   </div>
 
-                  <!-- 4. SYNC BUTTON MATCHING ACTIVATE BUTTON 1-IN-1 DESIGN -->
-                  <div class="w-full">
-                    <button class="w-full border px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all shadow-md border-black bg-black text-white hover:bg-black/90 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90 cursor-pointer"
-                            :disabled="activationState === 'loading'"
+                  <!-- 5. SYNC AND ACTIVATE/DEACTIVATE BUTTONS GRID -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <button class="border px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all shadow-md"
+                            :class="isSelectedBrokerActive
+                              ? 'border-black bg-black text-white hover:bg-black/90 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90 cursor-pointer'
+                              : 'cursor-not-allowed border-black/10 bg-black/5 text-black/30 dark:border-white/10 dark:bg-white/5 dark:text-white/30 shadow-none'"
+                            :disabled="!isSelectedBrokerActive || activationState === 'loading'"
                             @click="handleMetaTrader5Import">
                       {{ activationState === 'loading'
                         ? (isRu ? 'СИНХРОНИЗИРОВАТЬ...' : 'SYNCING...')
                         : (isRu ? 'СИНХРОНИЗИРОВАТЬ' : 'SYNC TRADES') }}
+                    </button>
+                    <button class="border px-4 py-4 font-mono text-[10px] font-black uppercase tracking-[0.22em] transition-all shadow-md cursor-pointer"
+                            :class="primaryActionEnabled
+                              ? 'border-black bg-black text-white hover:bg-black/90 dark:border-white dark:bg-white dark:text-black dark:hover:bg-white/90'
+                              : 'cursor-not-allowed border-black/10 text-black/25 dark:border-white/10 dark:text-white/25 shadow-none'"
+                            :disabled="!primaryActionEnabled || activationState === 'loading'"
+                            @click="handlePrimaryAction">
+                      {{ primaryActionLabel }}
                     </button>
                   </div>
                 </template>
@@ -690,6 +727,7 @@ const isSelectedBrokerActive = computed(() => {
 })
 
 const showStrategyBinding = computed(() => {
+  if (selectedBroker.value.id === 'interactive-brokers') return false
   return selectedBroker.value.id === 'metatrader5' || isSelectedBrokerActive.value
 })
 
@@ -717,10 +755,12 @@ const primaryActionEnabled = computed(() => {
 
 const primaryActionLabel = computed(() => {
   if (activationState.value === 'loading') {
-    return isSelectedBrokerActive.value ? 'Deactivating...' : 'Activating...'
+    return isSelectedBrokerActive.value
+      ? (isRu.value ? 'Деактивация...' : 'Deactivating...')
+      : (isRu.value ? 'Активация...' : 'Activating...')
   }
-  if (isSelectedBrokerActive.value) return 'Deactivate'
-  return 'Activate'
+  if (isSelectedBrokerActive.value) return isRu.value ? 'Деактивировать' : 'Deactivate'
+  return isRu.value ? 'Активировать' : 'Activate'
 })
 
 const getFormCredentials = () => {
@@ -910,20 +950,13 @@ const handleManualSync = async () => {
 }
 
 const handleMetaTrader5Import = async () => {
-  let saved = connectionMap.value.metatrader5
+  const saved = connectionMap.value.metatrader5
   if (!saved || !saved.active) {
-    saved = {
-      brokerId: 'metatrader5',
-      credentials: {
-        targetStrategyId: importTargetStrategyId.value,
-        mode: 'local'
-      },
-      active: true,
-      updatedAt: new Date().toISOString(),
-      activatedAt: new Date().toISOString()
-    }
-    connectionMap.value.metatrader5 = saved
-    await persistConnections()
+    statusTone.value = 'error'
+    statusMessage.value = isRu.value
+      ? 'Подключение MetaTrader 5 не активировано. Нажмите «АКТИВИРОВАТЬ» перед синхронизацией.'
+      : 'MetaTrader 5 connection is not active. Click "ACTIVATE" before syncing.'
+    return
   }
 
   activationState.value = 'loading'
