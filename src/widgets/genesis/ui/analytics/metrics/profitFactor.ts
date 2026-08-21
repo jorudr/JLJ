@@ -1,4 +1,5 @@
 import type { MetricEngine } from '~/entities/metric'
+import { createUnavailableMetricResult } from './metricUtils'
 
 export const profitFactorMetric: MetricEngine = {
   key: 'profitFactor',
@@ -22,7 +23,15 @@ export const profitFactorMetric: MetricEngine = {
     }
   },
   calculate(trade: any, context?: any, locale: 'ru' | 'en' = 'ru') {
-    const pf = Number(context?.profitFactor ?? trade?.profitFactor ?? (trade?.pnl > 0 ? 2.5 : 0.8))
+    const pf = Number(context?.profitFactor ?? trade?.profitFactor)
+    if (!Number.isFinite(pf) || pf < 0) {
+      return createUnavailableMetricResult(
+        locale,
+        locale === 'ru'
+          ? 'Нужны хотя бы одна прибыльная и одна убыточная закрытая сделка'
+          : 'At least one winning and one losing closed trade are required'
+      )
+    }
 
     const isRu = locale === 'ru'
     let status: 'optimal' | 'stable' | 'neutral' | 'warning' | 'critical' = 'neutral'

@@ -1374,7 +1374,6 @@ export const translations = {
         "TP Capture Ratio": "Коэффициент Захвата TP",
         "Edge Capture Quotient": "Коэффициент Захвата Преимущества",
         "Unrealized Alpha Left": "Оставленная Нереализованная Альфа",
-        "Horizon Sync Rating": "Рейтинг Синхронизации Горизонта",
         "Velocity Variance Index": "Индекс Отклонения Скорости",
         "Conditional Alpha Decay": "Условный Распад Альфы",
         "Execution Confidence Index": "Индекс Уверенности Исполнения",

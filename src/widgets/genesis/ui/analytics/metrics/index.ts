@@ -27,7 +27,6 @@ import { riskBudgetAdherenceMetric } from './riskBudgetAdherence'
 import { tpCaptureRatioMetric } from './tpCaptureRatio'
 import { edgeCaptureQuotientMetric } from './edgeCaptureQuotient'
 import { unrealizedAlphaLeftMetric } from './unrealizedAlphaLeft'
-import { horizonSyncRatingMetric } from './horizonSyncRating'
 import { velocityVarianceIndexMetric } from './velocityVarianceIndex'
 
 // Category 5: In-Trade Analysis
@@ -85,7 +84,6 @@ export const advancedTradeMetricsEngines: MetricEngine[] = [
   tpCaptureRatioMetric,
   edgeCaptureQuotientMetric,
   unrealizedAlphaLeftMetric,
-  horizonSyncRatingMetric,
   velocityVarianceIndexMetric,
 
   // In-Trade Analysis
@@ -189,7 +187,6 @@ export * from './riskBudgetAdherence'
 export * from './tpCaptureRatio'
 export * from './edgeCaptureQuotient'
 export * from './unrealizedAlphaLeft'
-export * from './horizonSyncRating'
 export * from './velocityVarianceIndex'
 export * from './conditionalAlphaDecay'
 export * from './executionConfidenceIndex'

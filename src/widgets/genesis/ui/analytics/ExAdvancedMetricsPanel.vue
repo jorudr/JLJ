@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {
   getTradeBalanceBefore,
+  getTradeExitTimestamp,
   getTradePnl,
   getTradeRiskReward
 } from '~/widgets/genesis/model/metrics'
@@ -203,6 +204,9 @@ type ScorePattern = {
 }
 
 const excludedScorePatternMetricIds = new Set([
+  // Aggregate metrics that do not describe a per-trade pattern.
+  'velocity_variance_index',
+  'winRate',
   // Matrix condition metrics.
   'required_adherence',
   'additional_alpha',
@@ -300,6 +304,31 @@ const getAverageTradeVelocity = (trades: any[]) => {
     : undefined
 }
 
+// Profit Factor is a historical aggregate, so its pattern is the value that
+// was available when each trade closed. This produces a meaningful range
+// across the score cohort instead of repeating one current strategy value.
+const getProfitFactorAtTradeClose = (trade: any, trades: any[]) => {
+  const targetId = String(trade?.id || '')
+  const orderedTrades = trades
+    .filter(isClosedTradeForMetrics)
+    .slice()
+    .sort((left, right) => getTradeExitTimestamp(left) - getTradeExitTimestamp(right))
+
+  let grossProfit = 0
+  let grossLoss = 0
+  for (const historicalTrade of orderedTrades) {
+    const pnl = getNormalizedPnl(historicalTrade)
+    if (pnl > 0) grossProfit += pnl
+    if (pnl < 0) grossLoss += Math.abs(pnl)
+
+    if (String(historicalTrade?.id || '') === targetId) {
+      return grossLoss > 0 ? grossProfit / grossLoss : undefined
+    }
+  }
+
+  return undefined
+}
+
 // This is deliberately a score-cohort source. It does not read the cards in
 // Advanced Metrics: every row below is extracted from one of the trades in
 // the selected high-score or low-score group.
@@ -320,6 +349,7 @@ const scoreCohortMetricRows = (trade: any) => {
       durationMinutes,
       velocity,
       avgVelocity: getAverageTradeVelocity(closedTrades.value),
+      profitFactor: getProfitFactorAtTradeClose(trade, closedTrades.value),
       initialBalance: props.initialBalance,
       balanceBeforeTrade: getTradeBalanceBefore(closedTrades.value, trade, props.initialBalance)
     },

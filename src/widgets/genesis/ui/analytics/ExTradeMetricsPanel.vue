@@ -169,7 +169,7 @@ const derivedStatsContext = computed(() => {
     allTrades: closedTrades.value,
     avgPnl,
     winRate,
-    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? grossProfit : undefined),
+    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : undefined,
     expectedValue,
     riskBudget: riskBudget > 0 ? riskBudget : undefined,
     plannedStopRiskDollars: Number.isFinite(plannedStopRisk) ? plannedStopRisk : undefined,
