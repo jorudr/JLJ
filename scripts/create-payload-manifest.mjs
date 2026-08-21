@@ -84,7 +84,11 @@ async function listFiles(root) {
       if (entry.isDirectory()) {
         await walk(full)
       } else if (entry.isFile()) {
-        files.push(relative(root, full).replaceAll('\\', '/'))
+        try {
+          if (existsSync(full)) {
+            files.push(relative(root, full).replaceAll('\\', '/'))
+          }
+        } catch {}
       }
     }
   }

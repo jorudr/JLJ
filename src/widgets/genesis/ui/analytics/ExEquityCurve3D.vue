@@ -362,10 +362,10 @@
 
                       <div class="flex justify-end space-x-4 pt-4 border-t nier-border-primary nier-text-primary">
                          <ExButton @click="showClearConfirmation = false" variant="ghost" size="md">
-                            CANCEL
+                            {{ isRu ? 'ОТМЕНА' : 'CANCEL' }}
                          </ExButton>
                          <ExButton @click="handleClearTrades" variant="solid" size="md" class="!bg-red-500 !border-red-500 !text-white hover:!bg-red-600 transition-colors">
-                            EXECUTE_PURGE
+                            {{ isRu ? 'ВЫПОЛНИТЬ_ОЧИСТКУ' : 'EXECUTE_PURGE' }}
                          </ExButton>
                       </div>
                    </div>
