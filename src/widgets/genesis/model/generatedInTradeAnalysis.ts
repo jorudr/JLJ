@@ -349,7 +349,7 @@ export const buildGeneratedInTradeAnalysis = (
   const realizedMove = Number.isFinite(exitPrice)
     ? direction === 'LONG' ? exitPrice - entryPrice : entryPrice - exitPrice
     : Number.NaN
-  const captureRatio = maxFavorableMove > 0 && Number.isFinite(realizedMove)
+  const captureRatio = maxFavorableMove > 0 && rawMfePct >= IN_TRADE_NOISE_PCT && Number.isFinite(realizedMove) && realizedMove > 0
     ? (realizedMove / maxFavorableMove) * 100
     : Number.NaN
   const pathCleanliness = summarizePathCleanliness(states)
