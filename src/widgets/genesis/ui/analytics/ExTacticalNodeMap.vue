@@ -312,6 +312,10 @@ const exitHubData = computed(() => {
 const entryConditions = computed(() => entryHubData.value.flatMap((scenario: any) => scenario.conditions))
 const exitConditions = computed(() => exitHubData.value.flatMap((scenario: any) => scenario.conditions))
 
+const hasScenariosOrConditions = computed(() => {
+  return entryHubData.value.length > 0 || exitHubData.value.length > 0
+})
+
 const scenarioLinks = computed(() => {
   const count = Math.min(entryHubData.value.length, exitHubData.value.length)
   return Array.from({ length: count }, (_, index) => ({
@@ -544,6 +548,20 @@ const calculatedStabilityIndex = computed(() => {
        class="ethereal-void bg-theme-bg overflow-hidden flex flex-col select-none"
        :class="embedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-[10000]'"
        @mousedown="startPan">
+
+    <!-- Empty State Overlay (when no conditions/scenarios added) -->
+    <div
+      v-if="!hasScenariosOrConditions"
+      class="pointer-events-none absolute inset-0 z-[150] flex h-full w-full items-center justify-center px-8 text-center"
+    >
+      <p
+        class="max-w-xl text-[9px] font-mono font-bold uppercase leading-loose tracking-[0.22em]"
+        :class="isDark ? 'text-white/40' : 'text-black/40'"
+      >
+        {{ locale === 'ru' ? 'Условия не были добавлены.' : 'No conditions were added.' }}
+      </p>
+    </div>
+
     <!-- HUD Overlay (Fixed) -->
     <div class="absolute inset-0 pointer-events-none z-[100]">
       <!-- Off-Screen Indicators -->
