@@ -326,27 +326,59 @@ async fn download_payload_file(
     file: &PayloadFile,
     base_url: &reqwest::Url,
 ) -> Result<Vec<u8>, String> {
-    let url = match file.url.as_deref() {
+    let primary_url = match file.url.as_deref() {
         Some(value) => reqwest::Url::parse(value).or_else(|_| base_url.join(value)),
         None => base_url.join(&file.path),
     }
     .map_err(|err| format!("resolve URL for {}: {err}", file.path))?;
 
-    let response = reqwest::get(url)
-        .await
-        .map_err(|err| format!("download {}: {err}", file.path))?
-        .error_for_status()
-        .map_err(|err| format!("download {}: {err}", file.path))?;
-    if let Some(length) = response.content_length() {
-        if length > MAX_PAYLOAD_FILE_BYTES {
-            return Err(format!("Payload file is too large: {}", file.path));
+    let client = reqwest::Client::builder()
+        .user_agent("JLJ-App/1.0.5")
+        .build()
+        .map_err(|err| format!("build reqwest client: {err}"))?;
+
+    let mut urls_to_try = vec![primary_url.clone()];
+
+    // Add fallback URLs for GitHub release downloads where subpath assets return 404
+    if primary_url.as_str().contains("github.com") && primary_url.as_str().contains("/releases/download/") {
+        let clean_path = file.path.trim_start_matches('/');
+        if let Ok(raw_dist) = reqwest::Url::parse(&format!("https://raw.githubusercontent.com/jorudr/JLJ/release/dist/{}", clean_path)) {
+            urls_to_try.push(raw_dist);
+        }
+        if let Ok(raw_public) = reqwest::Url::parse(&format!("https://raw.githubusercontent.com/jorudr/JLJ/release/.output/public/{}", clean_path)) {
+            urls_to_try.push(raw_public);
+        }
+        if let Ok(gh_pages) = reqwest::Url::parse(&format!("https://jorudr.github.io/JLJ/{}", clean_path)) {
+            urls_to_try.push(gh_pages);
         }
     }
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|err| format!("read {}: {err}", file.path))?;
-    Ok(bytes.to_vec())
+
+    let mut last_error = String::new();
+    for url in urls_to_try {
+        match client.get(url.clone()).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                if let Some(length) = resp.content_length() {
+                    if length > MAX_PAYLOAD_FILE_BYTES {
+                        return Err(format!("Payload file is too large: {}", file.path));
+                    }
+                }
+                match resp.bytes().await {
+                    Ok(bytes) => return Ok(bytes.to_vec()),
+                    Err(err) => {
+                        last_error = format!("read {}: {err}", file.path);
+                    }
+                }
+            }
+            Ok(resp) => {
+                last_error = format!("download {} from {}: HTTP {}", file.path, url, resp.status());
+            }
+            Err(err) => {
+                last_error = format!("download {} from {}: {err}", file.path, url);
+            }
+        }
+    }
+
+    Err(last_error)
 }
 
 async fn download_manifest_signature(manifest_url: &reqwest::Url) -> Result<String, String> {
@@ -354,11 +386,19 @@ async fn download_manifest_signature(manifest_url: &reqwest::Url) -> Result<Stri
     signature_url.set_path(&format!("{}.minisig", manifest_url.path()));
     signature_url.set_query(None);
 
-    reqwest::get(signature_url)
+    let client = reqwest::Client::builder()
+        .user_agent("JLJ-App/1.0.5")
+        .build()
+        .map_err(|err| format!("build reqwest client: {err}"))?;
+
+    let response = client.get(signature_url)
+        .send()
         .await
         .map_err(|err| format!("download payload manifest signature: {err}"))?
         .error_for_status()
-        .map_err(|err| format!("download payload manifest signature: {err}"))?
+        .map_err(|err| format!("download payload manifest signature: {err}"))?;
+
+    response
         .text()
         .await
         .map_err(|err| format!("read payload manifest signature: {err}"))

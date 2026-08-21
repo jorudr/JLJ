@@ -80,8 +80,89 @@
 
       <!-- ── PHASE SWITCHER ── -->
       <Transition name="step-fade" mode="out-in">
-        <!-- ── UPDATE CHECK: runs before login / register is shown ── -->
-        <div v-if="phase === 'update'" key="update-check" class="w-full flex flex-col items-center space-y-6">
+        <!-- ── UPDATE CONFIRMATION CARD (when update is found) ── -->
+        <div v-if="phase === 'update' && pendingUpdate" key="update-confirmation" class="w-full flex flex-col items-center">
+          <ExPanel
+            variant="light"
+            :show-corners="true"
+            :title="pendingUpdate.isSuitable === false ? (locale === 'ru' ? 'ОБНОВЛЕНИЕ НЕ ПОДХОДИТ' : 'INCOMPATIBLE UPDATE') : (locale === 'ru' ? 'ОБНОВЛЕНИЕ СИСТЕМЫ' : 'SYSTEM UPDATE')"
+            :telemetry="`v${appVersion} → v${pendingUpdate.version}`"
+            class="w-full max-w-sm !border-black/20 dark:!border-white/20 my-2 shadow-2xl"
+          >
+            <div class="flex flex-col items-center text-center space-y-4 p-5">
+              <!-- Icon -->
+              <div class="relative w-10 h-10 flex items-center justify-center shrink-0">
+                <div v-if="pendingUpdate.isSuitable === false" class="absolute inset-0 border border-amber-500/60 animate-pulse"></div>
+                <div v-else class="absolute inset-0 border border-black/30 dark:border-white/30 animate-pulse"></div>
+                
+                <div v-if="pendingUpdate.isSuitable === false" class="w-2 h-2 rotate-45 bg-amber-600 dark:bg-amber-400"></div>
+                <div v-else class="w-2 h-2 rotate-45 bg-black dark:bg-white"></div>
+                
+                <div class="absolute -top-1 -left-1 w-2.5 h-2.5 border-t border-l" :class="pendingUpdate.isSuitable === false ? 'border-amber-600 dark:border-amber-400' : 'border-black dark:border-white'"></div>
+                <div class="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b border-r" :class="pendingUpdate.isSuitable === false ? 'border-amber-600 dark:border-amber-400' : 'border-black dark:border-white'"></div>
+              </div>
+
+              <div class="flex flex-col space-y-1.5">
+                <h3 class="text-[11px] font-mono font-black uppercase tracking-[0.25em]" :class="pendingUpdate.isSuitable === false ? 'text-amber-700 dark:text-amber-400' : 'text-black'">
+                  {{ pendingUpdate.isSuitable === false
+                      ? (locale === 'ru' ? 'Обновление не подходит' : 'Update Incompatible')
+                      : (locale === 'ru' ? 'Обнаружено обновление' : 'Update Available')
+                  }}
+                </h3>
+
+                <p v-if="pendingUpdate.isSuitable === false" class="text-[10px] font-mono text-black/80 leading-relaxed">
+                  {{ locale === 'ru'
+                      ? `Обнаружена версия ${pendingUpdate.version}, но она не подходит для установки (${pendingUpdate.reason || 'несовместимая конфигурация'}).`
+                      : `Version ${pendingUpdate.version} was found, but it is not suitable for installation (${pendingUpdate.reason || 'incompatible configuration'}).`
+                  }}
+                </p>
+                <p v-else class="text-[10px] font-mono opacity-60 text-black leading-relaxed">
+                  {{ locale === 'ru'
+                      ? `Доступна новая версия ${pendingUpdate.version}. Хотите установить её сейчас?`
+                      : `A new version ${pendingUpdate.version} is available. Would you like to install it now?`
+                  }}
+                </p>
+
+                <p v-if="pendingUpdate.notes" class="text-[9px] font-mono italic opacity-40 text-black mt-0.5">
+                  "{{ pendingUpdate.notes }}"
+                </p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="w-full flex flex-col space-y-2 pt-1">
+                <template v-if="pendingUpdate.isSuitable !== false">
+                  <button
+                    @click="confirmAndInstallUpdate"
+                    class="w-full py-2.5 font-mono text-[9px] tracking-[0.4em] uppercase font-black transition-all hover:opacity-90 flex items-center justify-center space-x-2"
+                    :style="primaryButtonStyle"
+                  >
+                    <span>{{ locale === 'ru' ? 'Установите обновление' : 'Install Update' }}</span>
+                  </button>
+
+                  <button
+                    @click="skipUpdate"
+                    class="w-full py-2 font-mono text-[8px] tracking-[0.3em] uppercase transition-all opacity-40 hover:opacity-100 text-black border border-black/20"
+                  >
+                    {{ locale === 'ru' ? 'Пропустить' : 'Skip' }}
+                  </button>
+                </template>
+
+                <template v-else>
+                  <button
+                    @click="skipUpdate"
+                    class="w-full py-2.5 font-mono text-[9px] tracking-[0.4em] uppercase font-black transition-all hover:opacity-90 flex items-center justify-center space-x-2"
+                    :style="primaryButtonStyle"
+                  >
+                    <span>{{ locale === 'ru' ? 'Продолжить' : 'Continue' }}</span>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </ExPanel>
+        </div>
+
+        <!-- ── UPDATE CHECK / INSTALLING PROGRESS ── -->
+        <div v-else-if="phase === 'update'" key="update-check" class="w-full flex flex-col items-center space-y-6">
           <div class="w-full flex flex-col space-y-3">
             <div class="flex justify-between items-end">
               <span class="text-[9px] font-mono uppercase tracking-widest text-black" style="opacity: 0.4;">
@@ -279,6 +360,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import EtherealBackground from '~/widgets/style/ui/EtherealBackground.vue'
 import GradflowBackground from '~/widgets/style/ui/GradflowBackground.vue'
+import ExPanel from '~/shared/ui/ExPanel.vue'
 import tauriConfig from '../../../../../src-tauri/tauri.conf.json'
 import { useI18n } from '~/shared/i18n/useI18n'
 import {
@@ -303,6 +385,16 @@ type PayloadInstallResult = {
     version?: string | null
     active: boolean
   }
+}
+
+interface AvailableUpdate {
+  type: 'native' | 'payload'
+  version: string
+  notes?: string
+  nativeUpdateObj?: any
+  manifestUrl?: string
+  isSuitable?: boolean
+  reason?: string
 }
 
 const appVersion = String(tauriConfig.version || '0.0.0')
@@ -386,6 +478,8 @@ const updateTitle = ref('ПРОВЕРКА_ОБНОВЛЕНИЙ')
 const updateLog = ref('проверка доступных обновлений')
 let updateProgressTimer: ReturnType<typeof setInterval> | null = null
 
+const pendingUpdate = ref<AvailableUpdate | null>(null)
+
 const clearUpdateProgressTimer = () => {
   if (!updateProgressTimer) return
   clearInterval(updateProgressTimer)
@@ -431,47 +525,155 @@ const runArtificialUpdateProgress = async () => {
   finishUpdatePhase()
 }
 
-const installNativeUpdateIfAvailable = async () => {
+const checkNativeUpdate = async (): Promise<AvailableUpdate | null> => {
   try {
     const { check } = await import('@tauri-apps/plugin-updater')
     const update = await check()
-    if (!update) return false
+    if (!update || !update.version) return null
+    return {
+      type: 'native',
+      version: update.version,
+      notes: update.body,
+      nativeUpdateObj: update,
+      isSuitable: true
+    }
+  } catch (err: any) {
+    console.info('[NativeUpdater] No compatible native update binary found:', err)
+    return null
+  }
+}
 
-    setUpdateCopy('ЗАГРУЗКА_ОБНОВЛЕНИЯ', `загрузка версии ${update.version}`)
-    updateProgress.value = 18
-    let downloadedBytes = 0
-    let totalBytes: number | undefined
+const checkPayloadUpdate = async (manifestUrl: string): Promise<AvailableUpdate | null> => {
+  try {
+    const res = await fetch(manifestUrl)
+    if (!res.ok) return null
+    const manifest = await res.json()
+    if (!manifest || !manifest.version) return null
 
-    await update.downloadAndInstall((event) => {
-      if (event.event === 'Started') {
-        totalBytes = event.data.contentLength
-        return
+    // Fetch local payload state to see if this version is already active
+    const { invoke } = await import('@tauri-apps/api/core')
+    const localState = await invoke<{ version?: string | null; active: boolean }>('payload_update_get_state').catch(() => null)
+
+    const activeVersion = localState?.active ? (localState.version || appVersion) : appVersion
+
+    let isSuitable = true
+    let reason = ''
+
+    if (manifest.appIdentifier && manifest.appIdentifier !== tauriConfig.identifier) {
+      isSuitable = false
+      reason = locale.value === 'ru'
+        ? `Идентификатор приложения (${manifest.appIdentifier}) не совпадает с установленным (${tauriConfig.identifier})`
+        : `App identifier (${manifest.appIdentifier}) does not match installed (${tauriConfig.identifier})`
+    } else if (manifest.platform && manifest.platform !== 'any' && !manifest.platform.includes('mac') && typeof navigator !== 'undefined' && (navigator.platform?.toLowerCase().includes('mac') || navigator.userAgent?.toLowerCase().includes('mac'))) {
+      isSuitable = false
+      reason = locale.value === 'ru'
+        ? `Версия релиза предназначена для платформы ${manifest.platform}`
+        : `Release version is built for platform ${manifest.platform}`
+    }
+
+    if (manifest.version !== activeVersion || !isSuitable) {
+      return {
+        type: 'payload',
+        version: manifest.version,
+        notes: locale.value === 'ru' ? 'Обновление веб-интерфейса и аналитики' : 'UI payload & analytics update',
+        manifestUrl,
+        isSuitable,
+        reason
       }
-      if (event.event === 'Progress') {
-        downloadedBytes += event.data.chunkLength
-        if (totalBytes) {
-          updateProgress.value = Math.min(94, Math.max(18, Math.round((downloadedBytes / totalBytes) * 94)))
-        }
-      }
-    })
-    await update.close()
+    }
+    return null
+  } catch (err) {
+    console.warn('[PayloadUpdater] Check failed:', err)
+    return null
+  }
+}
 
-    clearUpdateProgressTimer()
+const performNativeInstall = async (update: any) => {
+  setUpdateCopy('ЗАГРУЗКА_ОБНОВЛЕНИЯ', `загрузка версии ${update.version}`)
+  updateProgress.value = 18
+  let downloadedBytes = 0
+  let totalBytes: number | undefined
+
+  await update.downloadAndInstall((event: any) => {
+    if (event.event === 'Started') {
+      totalBytes = event.data.contentLength
+      return
+    }
+    if (event.event === 'Progress') {
+      downloadedBytes += event.data.chunkLength
+      if (totalBytes) {
+        updateProgress.value = Math.min(94, Math.max(18, Math.round((downloadedBytes / totalBytes) * 94)))
+      }
+    }
+  })
+  await update.close()
+
+  clearUpdateProgressTimer()
+  updateProgress.value = 100
+  setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
+  const { relaunch } = await import('@tauri-apps/plugin-process')
+  setTimeout(() => {
+    void relaunch()
+  }, 450)
+}
+
+const performPayloadInstall = async (manifestUrl: string) => {
+  updateProgressTimer = setInterval(() => {
+    updateProgress.value = Math.min(82, updateProgress.value + Math.max(1, Math.round((82 - updateProgress.value) * 0.08)))
+    if (updateProgress.value >= 38) {
+      setUpdateCopy('ПРОВЕРКА_ФАЙЛОВ', 'сверка файлов с манифестом релиза')
+    }
+  }, 260)
+
+  const { invoke } = await import('@tauri-apps/api/core')
+  const result = await invoke<PayloadInstallResult>('payload_update_install_from_feed', {
+    manifestUrl,
+  })
+
+  clearUpdateProgressTimer()
+  if (result.downloadedFiles > 0 && result.state.active) {
     updateProgress.value = 100
     setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
     const { relaunch } = await import('@tauri-apps/plugin-process')
     setTimeout(() => {
       void relaunch()
     }, 450)
-    return true
-  } catch (err) {
-    console.warn('[NativeUpdater] No native update available or endpoint returned non-200:', err)
-    return false
+    return
   }
+
+  await runArtificialUpdateProgress()
+}
+
+const confirmAndInstallUpdate = async () => {
+  if (!pendingUpdate.value) return
+  const updateToInstall = { ...pendingUpdate.value }
+  pendingUpdate.value = null
+
+  try {
+    setUpdateCopy('ПОДГОТОВКА_К_ОБНОВЛЕНИЮ', 'инициализация процесса установки')
+    updateProgress.value = 10
+
+    if (updateToInstall.type === 'native' && updateToInstall.nativeUpdateObj) {
+      await performNativeInstall(updateToInstall.nativeUpdateObj)
+    } else if (updateToInstall.type === 'payload' && updateToInstall.manifestUrl) {
+      await performPayloadInstall(updateToInstall.manifestUrl)
+    } else {
+      await runArtificialUpdateProgress()
+    }
+  } catch (err) {
+    console.warn('[Updater] Installation failed:', err)
+    await runArtificialUpdateProgress()
+  }
+}
+
+const skipUpdate = () => {
+  pendingUpdate.value = null
+  finishUpdatePhase()
 }
 
 const startUpdateCheck = async () => {
   phase.value = 'update'
+  pendingUpdate.value = null
   const config = useRuntimeConfig()
   const manifestUrl = String(config.public.payloadManifestUrl || '').trim()
   const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__
@@ -485,39 +687,26 @@ const startUpdateCheck = async () => {
     setUpdateCopy('ПРОВЕРКА_ОБНОВЛЕНИЙ', 'проверка доступных обновлений')
     updateProgress.value = 8
 
-    if (await installNativeUpdateIfAvailable()) return
-
-    if (!manifestUrl) {
-      await runArtificialUpdateProgress()
+    // 1. Check Native Update
+    const nativeUpdate = await checkNativeUpdate()
+    if (nativeUpdate) {
+      pendingUpdate.value = nativeUpdate
       return
     }
 
-    updateProgressTimer = setInterval(() => {
-      updateProgress.value = Math.min(82, updateProgress.value + Math.max(1, Math.round((82 - updateProgress.value) * 0.08)))
-      if (updateProgress.value >= 38) {
-        setUpdateCopy('ПРОВЕРКА_ФАЙЛОВ', 'сверка файлов с манифестом релиза')
+    // 2. Check Payload Update
+    if (manifestUrl) {
+      const payloadUpdate = await checkPayloadUpdate(manifestUrl)
+      if (payloadUpdate) {
+        pendingUpdate.value = payloadUpdate
+        return
       }
-    }, 260)
-
-    const { invoke } = await import('@tauri-apps/api/core')
-    const result = await invoke<PayloadInstallResult>('payload_update_install_from_feed', {
-      manifestUrl,
-    })
-
-    clearUpdateProgressTimer()
-    if (result.downloadedFiles > 0 && result.state.active) {
-      updateProgress.value = 100
-      setUpdateCopy('ОБНОВЛЕНИЕ_ГОТОВО', 'обновление установлено. перезапуск')
-      const { relaunch } = await import('@tauri-apps/plugin-process')
-      setTimeout(() => {
-        void relaunch()
-      }, 450)
-      return
     }
 
+    // 3. No update found -> proceed with progress animation
     await runArtificialUpdateProgress()
   } catch (error) {
-    console.warn('[payload-updater] initialization update check failed', error)
+    console.warn('[updater] initialization update check failed', error)
     await runArtificialUpdateProgress()
   }
 }
