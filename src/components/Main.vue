@@ -318,8 +318,13 @@
     </div>
 
     <!-- Interactive application demonstration -->
-    <section class="home-equity-demo relative z-10 w-full px-6 py-16 sm:px-10 lg:py-24">
-      <div class="mx-auto w-full max-w-[1240px]">
+    <section class="home-equity-demo relative z-10 w-full px-6 pt-10 pb-16 sm:px-10 sm:pt-14 lg:pt-16 lg:pb-24">
+      <div class="mx-auto w-full max-w-[1240px] text-center">
+        <div class="mb-10 sm:mb-14">
+          <h2 class="text-sm sm:text-base lg:text-lg font-light tracking-[0.3em] uppercase text-white/80" style="font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;">
+            {{ t('landing.videoShowcase.mt5Integration') }}
+          </h2>
+        </div>
         <VideoShowcase />
       </div>
     </section>
