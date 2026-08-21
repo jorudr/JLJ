@@ -7,6 +7,7 @@ interface ScorePattern {
   value: string
   unit: string
   frequency: number | null
+  frequencySummary?: boolean
   insufficientData: boolean
   description: string
   benchmark: string
@@ -75,7 +76,7 @@ const formatDisplayLabel = (value: unknown) => String(value ?? '').replace(/_/g,
             </span>
             <template v-else>
               <span class="block">{{ pattern.value }}</span>
-              <span class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
+              <span v-if="!pattern.frequencySummary" class="mt-1 block text-[8px] font-mono uppercase tracking-[0.12em] opacity-45">{{ pattern.frequency }}%</span>
             </template>
           </span>
         </div>

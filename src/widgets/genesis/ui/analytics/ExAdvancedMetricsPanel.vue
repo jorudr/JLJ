@@ -198,6 +198,7 @@ type ScorePattern = {
   value: string
   unit: string
   frequency: number | null
+  frequencySummary?: boolean
   insufficientData: boolean
   description: string
   benchmark: string
@@ -208,6 +209,9 @@ const excludedScorePatternMetricIds = new Set([
   'velocity_variance_index',
   'winRate',
   'expectedValue',
+  'planned_vs_realized_risk',
+  'risk_budget_adherence',
+  'netProfit',
   // Matrix condition metrics.
   'required_adherence',
   'additional_alpha',
@@ -225,6 +229,13 @@ const scorePatternQuantile = (values: number[], ratio: number) => {
   const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)))
   return sorted[index] ?? Number.NaN
 }
+
+const categoricalScorePatternMetricIds = new Set([
+  'hadNews',
+  'adverseBeforeProfit',
+  'firstImpulseDirection',
+  'pricePathShape'
+])
 
 const getScorePatternUnit = (sample: any) => {
   const formatted = String(sample?.formattedValue ?? '')
@@ -438,6 +449,74 @@ const buildScorePatterns = (pool: any[]): ScorePattern[] => {
       description: String(sample.description || ''),
       benchmark: String(sample.benchmark || '')
     }
+
+    if (categoricalScorePatternMetricIds.has(String(sample.id))) {
+      const validRows = rows.filter((row) => {
+        if (sample.id === 'hadNews' || sample.id === 'adverseBeforeProfit') {
+          return Number.isFinite(row.rawValue)
+        }
+        const value = String(row.formattedValue || '').toLowerCase()
+        return Boolean(value) && !value.includes('недостаточно') && !value.includes('insufficient') && !value.includes('неоднозначно') && !value.includes('ambiguous')
+      })
+
+      if (validRows.length < 2) {
+        patterns.push(insufficientPattern)
+        return
+      }
+
+      let frequency: number
+      let majorityLabel = ''
+      if (sample.id === 'hadNews' || sample.id === 'adverseBeforeProfit') {
+        const positiveCount = validRows.filter((row) => Number(row.rawValue) === 1).length
+        frequency = Math.round((positiveCount / validRows.length) * 100)
+      } else {
+        const counts = new Map<string, number>()
+        validRows.forEach((row) => {
+          const label = String(row.formattedValue)
+          counts.set(label, (counts.get(label) || 0) + 1)
+        })
+        const majority = [...counts.entries()].sort((left, right) => right[1] - left[1])[0]
+        if (!majority) {
+          patterns.push(insufficientPattern)
+          return
+        }
+        majorityLabel = majority[0]
+        frequency = Math.round((majority[1] / validRows.length) * 100)
+      }
+
+      const label = String(sample.label)
+      let value = ''
+      if (sample.id === 'hadNews') {
+        value = locale.value === 'ru'
+          ? `Новости во время сделки в ${frequency}% сделок.`
+          : `News during trade in ${frequency}% of trades.`
+      } else if (sample.id === 'adverseBeforeProfit') {
+        value = locale.value === 'ru'
+          ? `Просадка до плюса в ${frequency}% сделок.`
+          : `Drawdown before profit in ${frequency}% of trades.`
+      } else if (sample.id === 'firstImpulseDirection') {
+        value = locale.value === 'ru'
+          ? `Первый импульс — «${majorityLabel}» в ${frequency}% сделок.`
+          : `First impulse — “${majorityLabel}” in ${frequency}% of trades.`
+      } else {
+        value = locale.value === 'ru'
+          ? `Форма движения — «${majorityLabel}» в ${frequency}% сделок.`
+          : `Price path shape — “${majorityLabel}” in ${frequency}% of trades.`
+      }
+
+      patterns.push({
+        label,
+        unit: '',
+        value,
+        frequency,
+        frequencySummary: true,
+        insufficientData: false,
+        description: sample.description,
+        benchmark: sample.benchmark
+      })
+      return
+    }
+
     const numericRows = rows.filter((row) => Number.isFinite(row.rawValue))
     const numericValues = numericRows.map((row) => row.rawValue)
     if (numericRows.length < 2) {
