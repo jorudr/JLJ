@@ -112,6 +112,10 @@
                         : (isRu ? 'ПОДКЛЮЧИТЬ СОВЕТНИК АВТОМАТИЧЕСКИ' : 'AUTO-CONNECT ADVISOR') }}</span>
                     </button>
 
+                    <p class="mt-3 font-mono text-[9px] font-bold uppercase tracking-[0.12em] opacity-60 text-center">
+                      {{ isRu ? 'После успешного подключения следуйте инструкции из видео выше.' : 'After successful connection follow the instructions in the video above.' }}
+                    </p>
+
                     <!-- INSTALL STATUS MESSAGE & DOWNLOAD LINK -->
                     <div v-if="installStatusMessage"
                          class="mt-4 border px-4 py-3 font-mono text-[9px] font-bold uppercase leading-relaxed tracking-[0.12em] flex flex-col gap-2"
@@ -129,13 +133,17 @@
                     </div>
                   </div>
 
-                  <!-- CLICKABLE TEXT: HOW TO INSTALL MANUALLY -->
-                  <div class="mb-4 flex items-center justify-start">
+                  <!-- CLICKABLE TEXT: HOW TO INSTALL MANUALLY & DOWNLOAD BUTTON -->
+                  <div class="mb-4 flex items-center justify-between">
                     <button @click="showManualGuide = !showManualGuide"
                             class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline underline-offset-4 cursor-pointer transition-colors">
                       {{ showManualGuide
                         ? (isRu ? 'Скрыть инструкцию по ручной установке' : 'Hide manual setup guide')
                         : (isRu ? 'Как установить вручную?' : 'How to install manually?') }}
+                    </button>
+                    <button @click="handleDownloadAdvisorToDesktop"
+                            class="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline underline-offset-4 cursor-pointer transition-colors">
+                      {{ isRu ? 'Скачать на рабочий стол' : 'Download to desktop' }}
                     </button>
                   </div>
 
