@@ -749,6 +749,22 @@ const scrollToFeatures = () => {
   );
 }
 
+/*
+ * GradFlow renders to the dimensions of its direct container. On a portrait
+ * viewport that made the shader use a very tall canvas, visibly stretching the
+ * gradient vertically. Keep a landscape render surface on mobile and crop its
+ * sides in the existing hero container instead.
+ */
+@media (max-width: 767px) {
+  .hero-gradflow :deep(.gradflow-canvas) {
+    right: auto;
+    left: 50%;
+    width: max(100%, 248.8889vh);
+    width: max(100%, 248.8889dvh);
+    transform: translateX(-50%);
+  }
+}
+
 .hero-header > main .download-button,
 .hero-header > main .download-button * {
   color: #fff !important;
