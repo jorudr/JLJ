@@ -14,7 +14,7 @@
       <nav class="site-nav__links" aria-label="Primary navigation">
         <router-link to="/download" class="site-nav__link">{{ t('landing.nav.download') }}</router-link>
         <router-link to="/pricing" class="site-nav__link">{{ t('landing.nav.pricing') }}</router-link>
-        <router-link to="/philosophy" class="site-nav__link">{{ t('landing.nav.philosophy') }}</router-link>
+        <router-link to="/about" class="site-nav__link">{{ t('landing.nav.about') }}</router-link>
       </nav>
 
       <router-link to="/download" class="site-nav__action">

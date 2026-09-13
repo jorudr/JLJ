@@ -3,29 +3,13 @@
     <div class="philosophy-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav />
 
-      <main class="philosophy-main flex-1" aria-labelledby="philosophy-title">
+      <main class="philosophy-main flex-1" aria-labelledby="about-title">
         <section class="philosophy-content">
           <div class="philosophy-intro">
-            <span class="philosophy-eyebrow">{{ t('landing.philosophy.eyebrow') }}</span>
-            <h1 id="philosophy-title">{{ t('landing.philosophy.title') }}</h1>
-            <p>{{ t('landing.philosophy.intro') }}</p>
+            <span class="philosophy-eyebrow">{{ t('landing.about.eyebrow') }}</span>
+            <h1 id="about-title">{{ t('landing.about.title') }}</h1>
+            <p>{{ t('landing.about.intro') }}</p>
           </div>
-
-          <div class="philosophy-principles">
-            <article v-for="principle in principles" :key="principle.index" class="philosophy-principle">
-              <span class="philosophy-principle__index">{{ principle.index }}</span>
-              <div>
-                <h2>{{ principle.title }}</h2>
-                <div class="philosophy-principle__labels">
-                  <span class="philosophy-principle__archetype">{{ principle.archetype }}</span>
-                  <span class="philosophy-principle__module">{{ principle.module }}</span>
-                </div>
-              </div>
-              <p>{{ principle.description }}</p>
-            </article>
-          </div>
-
-          <h2 class="philosophy-principles-label">{{ t('landing.philosophy.principlesLabel') }}</h2>
 
           <div class="philosophy-closing">
             <div class="philosophy-closing__visual">
@@ -35,7 +19,7 @@
                 <small>// plastic moth</small>
               </div>
               <a class="philosophy-closing__contact" href="mailto:plasticcwc@gmail.com">
-                <span class="philosophy-closing__contact-label">{{ t('landing.philosophy.contactLabel') }}</span>
+                <span class="philosophy-closing__contact-label">{{ t('landing.about.contactLabel') }}</span>
                 <strong class="philosophy-closing__contact-email">PLASTICCWC@GMAIL.COM</strong>
                 <span class="philosophy-closing__contact-arrow" aria-hidden="true">↗</span>
               </a>
@@ -51,13 +35,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
-const { t, tm, locale, setLocale } = useI18n()
-const principles = computed(() => tm('landing.philosophy.principles'))
+const { t } = useI18n()
 </script>
 
 <style scoped>
@@ -82,8 +64,7 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   max-width: 820px;
 }
 
-.philosophy-eyebrow,
-.philosophy-principle__index {
+.philosophy-eyebrow {
   color: rgba(44, 44, 42, 0.5);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.7rem;
@@ -107,71 +88,6 @@ const principles = computed(() => tm('landing.philosophy.principles'))
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(0.95rem, 1.35vw, 1.18rem);
   line-height: 1.48;
-}
-
-.philosophy-principles {
-  margin-top: clamp(44px, 6vh, 72px);
-  border-top: 1px solid rgba(44, 44, 42, 0.2);
-}
-
-.philosophy-principles-label {
-  margin-top: clamp(96px, 14vh, 170px);
-  color: rgba(44, 44, 42, 0.82);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(0.9rem, 1.35vw, 1.15rem);
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  line-height: 1.2;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.philosophy-principle {
-  display: grid;
-  grid-template-columns: 96px minmax(220px, 0.8fr) minmax(280px, 1.2fr);
-  gap: clamp(24px, 5vw, 80px);
-  padding: 28px 0 34px;
-  border-bottom: 1px solid rgba(44, 44, 42, 0.16);
-}
-
-.philosophy-principle h2 {
-  color: #2c2c2a;
-  font-size: clamp(1.65rem, 3vw, 2.8rem);
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.philosophy-principle__module {
-  color: rgba(44, 44, 42, 0.48);
-}
-
-.philosophy-principle__labels {
-  display: flex;
-  margin-top: 12px;
-  align-items: baseline;
-  gap: 18px;
-  color: rgba(44, 44, 42, 0.48);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  line-height: 1.3;
-}
-
-.philosophy-principle__archetype {
-  color: rgba(44, 44, 42, 0.72);
-}
-
-.philosophy-principle__module {
-  color: rgba(44, 44, 42, 0.48);
-}
-
-.philosophy-principle p {
-  max-width: 540px;
-  color: rgba(44, 44, 42, 0.68);
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(0.95rem, 1.25vw, 1.1rem);
-  line-height: 1.65;
 }
 
 .philosophy-closing {
@@ -286,40 +202,6 @@ const principles = computed(() => tm('landing.philosophy.principles'))
     margin-top: 24px;
     font-size: 0.92rem;
     line-height: 1.55;
-  }
-
-  .philosophy-principles {
-    margin-top: 48px;
-  }
-
-  .philosophy-principle {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 20px 0 24px;
-  }
-
-  .philosophy-principle h2 {
-    font-size: clamp(1.6rem, 8vw, 2.2rem);
-    line-height: 1.05;
-  }
-
-  .philosophy-principle__labels {
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    font-size: 0.58rem;
-  }
-
-  .philosophy-principle p {
-    max-width: none;
-    font-size: 0.92rem;
-    line-height: 1.55;
-  }
-
-  .philosophy-principles-label {
-    margin-top: 72px;
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
   }
 
   .philosophy-closing {

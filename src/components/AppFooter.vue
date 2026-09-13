@@ -34,7 +34,7 @@
           <h3>{{ t('landing.footer.platformTitle') }}</h3>
           <router-link to="/download">{{ t('landing.nav.download') }}</router-link>
           <router-link to="/pricing">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/philosophy">{{ t('landing.nav.philosophy') }}</router-link>
+          <router-link to="/about">{{ t('landing.nav.about') }}</router-link>
         </nav>
 
         <nav class="app-footer__column" :aria-label="t('landing.footer.accessTitle')">

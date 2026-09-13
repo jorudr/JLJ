@@ -22,7 +22,7 @@
         <nav class="mobile-menu__nav" aria-label="Mobile navigation">
           <router-link to="/download" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.download') }}</router-link>
           <router-link to="/pricing" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/philosophy" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.philosophy') }}</router-link>
+          <router-link to="/about" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.about') }}</router-link>
         </nav>
 
         <div class="mobile-menu__language">

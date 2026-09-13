@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Main from '../components/Main.vue'
 import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
-import Philosophy from '../components/Philosophy.vue'
+import About from '../components/About.vue'
 import Download from '../components/Download.vue'
 
 const router = createRouter({
@@ -24,9 +24,13 @@ const router = createRouter({
       component: Pricing
     },
     {
+      path: '/about',
+      name: 'about',
+      component: About
+    },
+    {
       path: '/philosophy',
-      name: 'philosophy',
-      component: Philosophy
+      redirect: '/about'
     },
     {
       path: '/announcement',

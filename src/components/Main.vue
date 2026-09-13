@@ -44,7 +44,7 @@
           <nav class="ml-10 hidden items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" style="font-family: 'Cormorant Garamond', serif;">
           <router-link to="/download" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.download') }}</router-link>
           <router-link to="/pricing" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
-          <router-link to="/philosophy" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
+          <router-link to="/about" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.about') }}</router-link>
           </nav>
 
           <router-link
