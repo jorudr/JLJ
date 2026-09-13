@@ -48,10 +48,10 @@
           </nav>
 
           <router-link
-            to="/announcement"
+            to="/download"
             class="nav-download-button ml-auto hidden md:flex items-center justify-center rounded-[25px] bg-black px-5 py-1.5 text-center transition-colors duration-200 hover:bg-neutral-900"
           >
-            <span class="nav-openai-font">Попробовать</span>
+            <span class="nav-openai-font">{{ t('landing.pricing.free.cta') }}</span>
             <svg class="ml-2 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 19L19 5M8 5h11v11" />
             </svg>
@@ -121,7 +121,7 @@
 
           <!-- OS Specific Download Button (Desktop) -->
           <router-link
-            to="/announcement"
+            to="/download"
             class="download-button hidden md:flex cursor-pointer items-center justify-center rounded-[25px] px-8 py-2 text-center transition-colors duration-200 group bg-black text-white shadow-md border border-white/10 hover:bg-neutral-950"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'"
           >
@@ -134,14 +134,15 @@
           </router-link>
 
           <!-- Mobile Hint Button (Open on Computer) -->
-          <div
-            class="mobile-open-computer flex md:hidden items-center justify-center rounded-[25px] px-6 py-2.5 text-center transition-all duration-300 pointer-events-none select-none bg-black/10 border border-black/10 backdrop-blur-md dark:bg-white/10 dark:border-white/15"
+          <router-link
+            to="/download"
+            class="mobile-open-computer flex md:hidden items-center justify-center rounded-[25px] px-6 py-2.5 text-center transition-all duration-300 bg-black/10 border border-black/10 backdrop-blur-md dark:bg-white/10 dark:border-white/15"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
           >
             <span class="nav-openai-font text-[13px] sm:text-[14px] font-normal tracking-tight opacity-70">
-              {{ t('landing.openOnComputer') }}
+              {{ t('landing.pricing.free.cta') }}
             </span>
-          </div>
+          </router-link>
         </div>
       </main>
 

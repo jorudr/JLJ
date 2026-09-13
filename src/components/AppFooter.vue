@@ -8,7 +8,7 @@
         </div>
 
         <div class="app-footer__actions" aria-label="Footer actions">
-          <router-link to="/" class="app-footer__button app-footer__button--primary">
+          <router-link to="/download" class="app-footer__button app-footer__button--primary">
             <span>{{ t('landing.footer.contactCta') }}</span>
             <span aria-hidden="true">↗</span>
           </router-link>

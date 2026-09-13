@@ -3,7 +3,7 @@ import Main from '../components/Main.vue'
 import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
 import Philosophy from '../components/Philosophy.vue'
-import Announcement from '../components/Announcement.vue'
+import Download from '../components/Download.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,12 +31,12 @@ const router = createRouter({
     {
       path: '/announcement',
       name: 'announcement',
-      component: Announcement
+      redirect: '/download'
     },
     {
       path: '/download',
       name: 'download',
-      component: Announcement
+      component: Download
     },
     {
       path: '/:pathMatch(.*)*',

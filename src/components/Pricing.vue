@@ -20,9 +20,9 @@
               <strong>{{ t('landing.pricing.free.price') }}</strong>
               <span>{{ t('landing.pricing.free.period') }}</span>
             </div>
-            <a href="https://www.patreon.com/checkout/jlgandr?rid=28845623" target="_blank" rel="noreferrer" class="pricing-card__action">
+            <router-link to="/download" class="pricing-card__action">
               {{ t('landing.pricing.free.cta') }} <span aria-hidden="true">↗</span>
-            </a>
+            </router-link>
             <div class="pricing-card__divider"></div>
             <p class="pricing-card__includes">{{ t('landing.pricing.free.includes') }}</p>
             <ul class="pricing-card__features">
@@ -49,6 +49,7 @@
             <a href="https://www.patreon.com/checkout/jlgandr?rid=28845652" target="_blank" rel="noreferrer" class="pricing-card__action">
               {{ t('landing.pricing.full.cta') }} <span aria-hidden="true">↗</span>
             </a>
+            <router-link to="/download" class="pricing-existing">{{ t('landing.downloadPage.alreadySubscribed') }}</router-link>
             <div class="pricing-card__divider"></div>
             <p class="pricing-card__includes">{{ t('landing.pricing.full.includes') }}</p>
             <ul class="pricing-card__features">
@@ -83,6 +84,13 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 </script>
 
 <style scoped>
+.pricing-existing {
+  margin-top: 16px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: .8rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .pricing-page {
   font-family: 'Cormorant Garamond', serif;
 }

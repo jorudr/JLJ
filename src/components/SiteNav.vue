@@ -17,8 +17,8 @@
         <router-link to="/philosophy" class="site-nav__link">{{ t('landing.nav.philosophy') }}</router-link>
       </nav>
 
-      <router-link to="/announcement" class="site-nav__action">
-        <span>Попробовать</span>
+      <router-link to="/download" class="site-nav__action">
+        <span>{{ t('landing.pricing.free.cta') }}</span>
         <svg class="ml-2 h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 19L19 5M8 5h11v11" />
         </svg>
