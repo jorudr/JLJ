@@ -21,12 +21,14 @@ const router = createRouter({
     {
       path: '/pricing',
       name: 'pricing',
-      component: Pricing
+      component: Pricing,
+      meta: { titleKey: 'landing.nav.pricing' }
     },
     {
       path: '/about',
       name: 'about',
-      component: About
+      component: About,
+      meta: { titleKey: 'landing.nav.about' }
     },
     {
       path: '/philosophy',
@@ -40,12 +42,14 @@ const router = createRouter({
     {
       path: '/download',
       name: 'download',
-      component: Download
+      component: Download,
+      meta: { titleKey: 'landing.nav.download' }
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: NotFound
+      component: NotFound,
+      meta: { titleKey: 'landing.notFound.title' }
     }
   ]
 })
