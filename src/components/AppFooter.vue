@@ -3,7 +3,7 @@
     <div class="app-footer__inner">
       <section v-if="!hideHero" class="app-footer__hero">
         <div>
-          <h2 id="app-footer-title">{{ t('landing.footer.title') }}</h2>
+          <h2 id="app-footer-title" :lang="locale">{{ t('landing.footer.title') }}</h2>
           <p>{{ t('landing.footer.description') }}</p>
         </div>
 
@@ -153,7 +153,9 @@ const selectFooterLocale = (code) => {
   font-weight: 300;
   letter-spacing: 0;
   line-height: 0.88;
-  overflow-wrap: break-word;
+  hyphens: auto;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .app-footer__hero p {
@@ -384,8 +386,6 @@ const selectFooterLocale = (code) => {
   .app-footer__hero h2 {
     font-size: clamp(1.75rem, 8.5vw, 2.6rem);
     line-height: 1.08;
-    overflow-wrap: break-word;
-    word-break: break-word;
   }
 
   .app-footer__hero p {
