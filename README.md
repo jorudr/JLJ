@@ -2,122 +2,79 @@
   <img src="public/assets/github-readme.png" alt="J. L. JÖRMUNGANDR" width="720">
 </p>
 
-<h1 align="center">J. L. JÖRMUNGANDR — Landing</h1>
+<h1 align="center">J. L. JÖRMUNGANDR</h1>
 
 <p align="center">
-  Публичный сайт приложения J. L. JÖRMUNGANDR: знакомство с продуктом, тарифами и загрузка актуальных версий для Windows и macOS.
+  A trading journal and analytical workspace for disciplined market work.
 </p>
 
 <p align="center">
-  <a href="https://www.gandr.site">Открыть сайт</a>
+  <a href="https://www.gandr.site">Website</a>
+  ·
+  <a href="https://github.com/jorudr/JLJ/releases">Download</a>
   ·
   <a href="https://t.me/gandr_trade">Telegram</a>
-  ·
-  <a href="https://github.com/jorudr/JLJ/releases">Релизы приложения</a>
 </p>
 
-## О проекте
+## What is J. L. JÖRMUNGANDR?
 
-J. L. JÖRMUNGANDR — рабочее пространство для трейдеров, объединяющее журнал сделок, проектирование и сравнение стратегий, анализ результатов и контекст сообщества. Этот репозиторий содержит именно сайт-витрину приложения, а не исходный код его desktop-клиента.
+J. L. JÖRMUNGANDR is a desktop workspace for traders who want to turn market experience into a repeatable process. It brings trade journaling, strategy design, performance review and analytical tools into one environment.
 
-Сайт доступен по адресу [www.gandr.site](https://www.gandr.site). Он развёртывается как статический SPA и поддерживает русскую и английскую локализации.
+Instead of relying on memory, isolated screenshots or a spreadsheet that never quite captures the full context, traders can record decisions, inspect results and refine the rules behind their work.
 
-## Возможности сайта
+## Who is it for?
 
-- главная страница с описанием продукта и его ключевых сценариев;
-- отдельные страницы загрузки, тарифов и философии проекта;
-- загрузка установщиков для Windows и macOS;
-- ссылки на актуальные релизы приложения на GitHub;
-- адаптивный интерфейс для компьютеров и мобильных устройств;
-- корректная обработка прямых переходов в SPA через `404.html`.
+J. L. JÖRMUNGANDR is built for traders who want a more deliberate way to improve:
 
-## Технологии
+- discretionary traders looking to review decisions and recurring patterns;
+- systematic traders developing, testing and comparing rule-based strategies;
+- active traders who need a clear view of performance, risk and drawdowns;
+- traders ready to identify execution errors instead of repeating them;
+- educators and community contributors who want to support ideas with real trade data.
 
-| Область | Используется |
+## Why use it?
+
+Good trading decisions are difficult to improve when their context is lost. J. L. JÖRMUNGANDR makes that context visible: the setup, the rules, the risk, the execution and the result.
+
+Use it to answer practical questions:
+
+- Which strategies, markets and timeframes actually work for me?
+- Am I following my entry and exit rules?
+- Where do I give back profit or take unnecessary risk?
+- Are my results improving, or is it only a short-term fluctuation?
+- What changes make a trading system more robust?
+
+## Key capabilities
+
+| Area | What it helps you do |
 | --- | --- |
-| Фреймворк | Vue 3 + Vue Router |
-| Сборка | Vite |
-| Стили | Tailwind CSS 4 + компонентные CSS-стили |
-| Анимации фона | Gradflow |
-| Пакетный менеджер | npm |
+| **Trading Journal** | Record trades, screenshots, tags and decision context; find recurring mistakes and winning setups. |
+| **Strategy Manager** | Build rule-based trading systems from scenarios, conditions and clear entry and exit logic. |
+| **Strategy Versions** | Save variations of a strategy and compare their win rate, profit factor, average result, risk and execution quality. |
+| **Equity & Metrics** | Follow performance, account growth and drawdowns over time. |
+| **Deep Trade Analytics** | Examine execution quality, risk use, adverse movement and missed opportunity at a meaningful level of detail. |
+| **Genesis Matrix** | Architect and simulate the logic behind a trading system in a visual environment. |
+| **Forecast Manager** | Model possible market paths before committing capital. |
+| **Robustness Analytics** | Stress-test assumptions with simulations and diagnostics. |
+| **Broker API** | Connect supported execution sources to the analytical workspace. |
+| **Forum** | Share ideas, discuss strategies and learn from the trading community. |
 
-## Быстрый старт
+## From trade history to better decisions
 
-Требуется Node.js 20 LTS или новее и npm.
-
-```bash
-git clone https://github.com/jorudr/JLJ.git
-cd JLJ
-npm install
-npm run dev
-```
-
-После запуска Vite выведет локальный адрес сайта, обычно `http://localhost:5173`.
-
-## Команды
-
-| Команда | Назначение |
-| --- | --- |
-| `npm run dev` | Запускает сервер разработки с HMR. |
-| `npm run build` | Создаёт production-сборку в `dist/` и копирует `index.html` в `dist/404.html`. |
-| `npm run preview` | Локально показывает готовую production-сборку. |
-
-## Сборка и публикация
-
-```bash
-npm run build
-npm run preview
-```
-
-Результат сборки находится в каталоге `dist/`. Для статического хостинга нужно публиковать его содержимое. Файл [`public/CNAME`](public/CNAME) задаёт домен `www.gandr.site`; при публикации на GitHub Pages он будет включён в сборку автоматически.
-
-> Перед публикацией проверьте, что хостинг возвращает `404.html` для неизвестных путей. Это позволяет Vue Router обработать прямые ссылки, например `/download`.
-
-## Релизы и установщики
-
-Страница загрузки берёт ссылки из [`src/shared/downloads.js`](src/shared/downloads.js). Сейчас они ведут на GitHub Releases, поэтому при выходе новой версии достаточно обновить URL-адреса в этом файле.
-
-```js
-export const downloads = [
-  { id: 'windows', url: 'https://github.com/.../setup.exe' },
-  { id: 'macos', url: 'https://github.com/.../installer.dmg' },
-]
-```
-
-Альтернативный вариант — разместить установщики в `public/downloads/` и указать локальные URL. Требования к именам файлов и краткие пояснения приведены в [`public/downloads/README.md`](public/downloads/README.md).
-
-Предыдущие версии приложения следует сохранять в [GitHub Releases](https://github.com/jorudr/JLJ/releases): так они остаются доступны пользователям, а страница загрузки может всегда указывать на последний стабильный выпуск.
-
-## Структура проекта
+J. L. JÖRMUNGANDR supports a continuous improvement loop:
 
 ```text
-.
-├── public/                 # Статические файлы: домен, медиа, скриншоты, установщики
-│   ├── assets/             # Логотипы, видео и графика
-│   ├── downloads/          # Локальные установщики (если используются)
-│   └── screenshots/        # Скриншоты приложения
-├── scripts/                # Вспомогательные скрипты сборки
-├── src/
-│   ├── components/         # Страницы и UI-компоненты Vue
-│   ├── router/             # Маршруты сайта
-│   └── shared/             # Локализация, UI и конфигурация загрузок
-├── index.html              # HTML-шаблон Vite
-└── vite.config.js          # Конфигурация Vite
+Record the trade → Review the decision → Find patterns → Refine the rules → Compare results
 ```
 
-## Внесение изменений
+Over time, this creates a record of what works, where discipline breaks down and how a trading system changes as it matures.
 
-1. Создайте отдельную ветку от актуальной версии `main`.
-2. Внесите изменения и проверьте сайт через `npm run dev`.
-3. Перед pull request выполните `npm run build`.
-4. В PR кратко опишите изменения и приложите скриншоты, если менялся интерфейс.
+## Availability
 
-Для изменения ссылок на установщики редактируйте только [`src/shared/downloads.js`](src/shared/downloads.js), чтобы все кнопки загрузки оставались синхронизированы.
+J. L. JÖRMUNGANDR is available for Windows and macOS. The latest release and previous versions are available on the [Releases page](https://github.com/jorudr/JLJ/releases).
 
-## Поддержка
+For product updates, installation help and community news, follow [@gandr_trade on Telegram](https://t.me/gandr_trade).
 
-По вопросам установки, доступа и обновлений: [Telegram-канал J. L. JÖRMUNGANDR](https://t.me/gandr_trade).
+## License
 
-## Лицензия
-
-Лицензия для исходного кода сайта в репозитории пока не указана. До её добавления не считайте использование, копирование или распространение кода автоматически разрешённым.
+No license for the source code in this repository has been specified yet. Until one is added, do not assume that use, copying or redistribution is permitted.
