@@ -3,61 +3,67 @@
     <div class="pricing-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav :always-dark="true" />
 
-      <main class="pricing-main flex-1">
-        <section class="pricing-list" aria-label="Pricing plans">
-          <article class="pricing-plan">
-            <div class="pricing-plan__identity">
-              <span class="pricing-plan__index">01</span>
-              <div>
-                <h2>{{ t('landing.pricing.demo.name') }}</h2>
-                <p>{{ t('landing.pricing.demo.description') }}</p>
-              </div>
-            </div>
+      <main class="pricing-main flex-1" aria-labelledby="pricing-title">
+        <header class="pricing-intro">
+          <h1 id="pricing-title">{{ t('landing.pricing.title') }}</h1>
+          <p>{{ t('landing.pricing.subtitle') }}</p>
+        </header>
 
-            <div class="pricing-plan__price">
-              <span>{{ t('landing.pricing.demo.cadence') }}</span>
+        <section class="pricing-grid" :aria-label="t('landing.pricing.title')">
+          <article class="pricing-card">
+            <div class="pricing-card__topline">
+              <span>{{ t('landing.pricing.free.eyebrow') }}</span>
             </div>
-
-            <ul class="pricing-plan__features">
-              <li v-for="feature in demoFeatures" :key="feature.title">
-                <span>{{ feature.title }}</span>
-                <small>{{ feature.desc }}</small>
+            <h2>{{ t('landing.pricing.free.name') }}</h2>
+            <p class="pricing-card__description">{{ t('landing.pricing.free.description') }}</p>
+            <div class="pricing-card__price">
+              <strong>{{ t('landing.pricing.free.price') }}</strong>
+              <span>{{ t('landing.pricing.free.period') }}</span>
+            </div>
+            <a href="https://www.patreon.com/checkout/jlgandr?rid=28845623" target="_blank" rel="noreferrer" class="pricing-card__action">
+              {{ t('landing.pricing.free.cta') }} <span aria-hidden="true">↗</span>
+            </a>
+            <div class="pricing-card__divider"></div>
+            <p class="pricing-card__includes">{{ t('landing.pricing.free.includes') }}</p>
+            <ul class="pricing-card__features">
+              <li v-for="feature in freeFeatures" :key="feature.title">
+                <span class="pricing-card__check" aria-hidden="true">✓</span>
+                <div>
+                  <strong>{{ feature.title }}</strong>
+                  <small>{{ feature.desc }}</small>
+                </div>
               </li>
             </ul>
-
-            <router-link to="/announcement" class="pricing-plan__action pricing-plan__action--quiet hidden sm:inline-flex">
-              {{ t('landing.pricing.demo.cta') }} <span aria-hidden="true">↗</span>
-            </router-link>
-            <div class="pricing-plan__action pricing-plan__action--quiet sm:hidden pointer-events-none opacity-70 text-center justify-center">
-              {{ t('landing.openOnComputer') }}
-            </div>
           </article>
 
-          <article class="pricing-plan pricing-plan--featured">
-            <div class="pricing-plan__identity">
-              <span class="pricing-plan__index">02</span>
-              <div>
-                <h2>{{ t('landing.pricing.full.name') }}</h2>
-                <p>{{ t('landing.pricing.full.description') }}</p>
-              </div>
+          <article class="pricing-card pricing-card--featured">
+            <div class="pricing-card__topline">
+              <span>{{ t('landing.pricing.full.eyebrow') }}</span>
             </div>
-
-            <div class="pricing-plan__price">
-              <span>{{ t('landing.pricing.full.cadence') }}</span>
+            <h2>{{ t('landing.pricing.full.name') }}</h2>
+            <p class="pricing-card__description">{{ t('landing.pricing.full.description') }}</p>
+            <div class="pricing-card__price">
+              <strong>{{ t('landing.pricing.full.price') }}</strong>
+              <span>{{ t('landing.pricing.full.period') }}</span>
             </div>
-
-            <ul class="pricing-plan__features">
-              <li v-for="feature in fullFeatures" :key="feature.title">
-                <span>{{ feature.title }}</span>
-                <small>{{ feature.desc }}</small>
-              </li>
-            </ul>
-
-            <a href="https://patreon.com/jlgandr" target="_blank" rel="noreferrer" class="pricing-plan__action pricing-plan__action--bright">
+            <a href="https://www.patreon.com/checkout/jlgandr?rid=28845652" target="_blank" rel="noreferrer" class="pricing-card__action">
               {{ t('landing.pricing.full.cta') }} <span aria-hidden="true">↗</span>
             </a>
+            <div class="pricing-card__divider"></div>
+            <p class="pricing-card__includes">{{ t('landing.pricing.full.includes') }}</p>
+            <ul class="pricing-card__features">
+              <li v-for="feature in fullFeatures" :key="feature.title">
+                <span class="pricing-card__check" aria-hidden="true">✓</span>
+                <div>
+                  <strong>{{ feature.title }}</strong>
+                  <small>{{ feature.desc }}</small>
+                </div>
+              </li>
+            </ul>
           </article>
         </section>
+
+        <p class="pricing-note">{{ t('landing.pricing.note') }}</p>
       </main>
 
       <AppFooter hide-hero />
@@ -71,9 +77,8 @@ import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
-const { t, tm, locale, setLocale } = useI18n()
-
-const demoFeatures = computed(() => tm('landing.pricing.demo.features'))
+const { t, tm } = useI18n()
+const freeFeatures = computed(() => tm('landing.pricing.free.features'))
 const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 </script>
 
@@ -83,216 +88,256 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 }
 
 .pricing-main {
-  --pricing-top-space: clamp(52px, 8vh, 96px);
-  --pricing-list-offset: clamp(32px, 5vh, 56px);
-  --pricing-bottom-space: clamp(28px, 4vh, 44px);
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: var(--pricing-top-space) clamp(0px, 1.4vw, 18px) var(--pricing-bottom-space);
+  padding: clamp(72px, 9vw, 112px) clamp(0px, 1.4vw, 18px) clamp(72px, 9vw, 112px);
 }
 
-.pricing-list {
+.pricing-intro {
   display: flex;
-  flex: 1 1 auto;
+  min-height: 240px;
   flex-direction: column;
-  margin-top: var(--pricing-list-offset);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-.pricing-plan {
-  flex: 1 1 0;
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(120px, 0.62fr) minmax(340px, 2.05fr) clamp(120px, 12vw, 150px);
-  gap: clamp(20px, 2.8vw, 38px);
-  align-items: start;
-  padding: clamp(38px, 5vh, 72px) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+.pricing-intro::before {
+  content: none;
 }
 
-.pricing-plan--featured {
-  border-bottom-color: rgba(255, 255, 255, 0.32);
-}
-
-.pricing-plan__identity {
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 13px;
-}
-
-.pricing-plan__index {
-  padding-top: 7px;
-  color: rgba(255, 255, 255, 0.3);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-
-.pricing-plan h2 {
-  color: white;
-  font-size: clamp(2rem, 3.2vw, 3.25rem);
+.pricing-intro h1 {
+  max-width: 740px;
+  color: #f5f5f0;
+  font-size: clamp(3rem, 5.6vw, 5.4rem);
   font-weight: 300;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  line-height: 0.92;
+}
+
+.pricing-intro p {
+  max-width: 590px;
+  margin-top: 22px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.94rem, 1.2vw, 1.08rem);
+  line-height: 1.55;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 1060px);
+  gap: 18px;
+  margin: clamp(52px, 7vw, 82px) auto 0;
+}
+
+.pricing-card {
+  display: flex;
+  padding: clamp(30px, 3.2vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  flex-direction: column;
+  background: #000000;
+  color: #f5f5f0;
+}
+
+.pricing-card--featured {
+  border-color: #f5f5f0;
+  background: #f5f5f0;
+  color: #000000;
+}
+
+.pricing-card__topline {
+  display: block;
+  width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.61rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  opacity: 0.42;
+  text-transform: uppercase;
+}
+
+.pricing-card h2 {
+  margin-top: 27px;
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 300;
+  letter-spacing: 0.01em;
   line-height: 0.95;
 }
 
-.pricing-plan__identity p {
-  max-width: 260px;
-  margin-top: 10px;
-  color: rgba(255, 255, 255, 0.5);
+.pricing-card__description {
+  max-width: 450px;
+  min-height: 72px;
+  margin-top: 15px;
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 11px;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0.62;
 }
 
-.pricing-plan__price {
+.pricing-card__price {
   display: flex;
-  flex-direction: column;
+  min-height: 48px;
+  margin-top: 22px;
+  align-items: baseline;
   gap: 7px;
 }
 
-.pricing-plan__price strong {
-  color: white;
-  font-size: clamp(1.8rem, 2.8vw, 2.8rem);
-  font-weight: 500;
+.pricing-card__price strong {
+  font-size: clamp(2.35rem, 3.4vw, 3.2rem);
+  font-weight: 400;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
-.pricing-plan__price span {
-  max-width: 180px;
-  color: rgba(255, 255, 255, 0.42);
+.pricing-card__price span {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  opacity: 0.52;
 }
 
-.pricing-plan__features {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 34px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pricing-plan__features li {
-  min-width: 0;
-  padding-left: 18px;
-  border-left: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.pricing-plan__features span,
-.pricing-plan__features small {
-  display: block;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-}
-
-.pricing-plan__features span {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: clamp(13px, 1.1vw, 15px);
-  font-weight: 500;
-  line-height: 1.28;
-}
-
-.pricing-plan__features small {
-  margin-top: 7px;
-  color: rgba(255, 255, 255, 0.43);
-  font-size: clamp(11px, 0.95vw, 13px);
-  line-height: 1.48;
-}
-
-.pricing-plan__action {
-  display: inline-flex;
+.pricing-card__action {
+  display: flex;
+  width: max-content;
+  min-height: 42px;
+  margin-top: 24px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 11px 13px;
+  gap: 16px;
+  background: transparent;
+  color: #f5f5f0;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  letter-spacing: 0.13em;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   transition: background 180ms ease, color 180ms ease;
 }
 
-.pricing-plan__action span {
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 17px;
-  line-height: 0.7;
-}
-
-.pricing-plan__action--quiet {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: white;
-}
-
-.pricing-plan__action--quiet:hover {
+.pricing-card__action:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.pricing-plan__action--bright {
-  background: white;
-  color: #000;
+.pricing-card--featured .pricing-card__action {
+  border-color: #000000;
+  background: #000000;
+  color: #f5f5f0;
 }
 
-.pricing-plan__action--bright:hover {
-  background: #d8d8d8;
+.pricing-card--featured .pricing-card__action:hover {
+  background: #242424;
 }
 
-@media (max-width: 980px) {
-  .pricing-plan {
-    grid-template-columns: minmax(210px, 1fr) minmax(140px, 0.65fr) 145px;
+.pricing-card__action span {
+  font-size: 0.95rem;
+}
+
+.pricing-card__divider {
+  margin: 31px 0 24px;
+  border-top: 1px solid currentColor;
+  opacity: 0.18;
+}
+
+.pricing-card__includes {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  opacity: 0.44;
+  text-transform: uppercase;
+}
+
+.pricing-card__features {
+  display: grid;
+  gap: 17px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pricing-card__features li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.pricing-card__check {
+  padding-top: 2px;
+  font-size: 0.75rem;
+  opacity: 0.48;
+}
+
+.pricing-card__features strong,
+.pricing-card__features small {
+  display: block;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.pricing-card__features strong {
+  font-size: 0.88rem;
+  font-weight: 550;
+  line-height: 1.3;
+}
+
+.pricing-card__features small {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  opacity: 0.5;
+}
+
+.pricing-note {
+  margin: 20px auto 0;
+  color: rgba(255, 255, 255, 0.36);
+  width: min(100%, 1060px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 800px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
   }
 
-  .pricing-plan__features {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    max-width: 820px;
-  }
-
-  .pricing-plan__action {
-    grid-column: 3;
-    grid-row: 1;
+  .pricing-card {
+    min-height: auto;
   }
 }
 
 @media (max-width: 640px) {
   .pricing-main {
-    --pricing-top-space: 48px;
-    --pricing-list-offset: 32px;
-    --pricing-bottom-space: 28px;
-    padding-top: var(--pricing-top-space);
-    padding-bottom: var(--pricing-bottom-space);
+    padding-top: 56px;
+    padding-bottom: 72px;
   }
 
-  .pricing-list {
-    margin-top: var(--pricing-list-offset);
+  .pricing-intro {
+    min-height: 250px;
   }
 
-  .pricing-plan {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    padding: 30px 0 34px;
+  .pricing-intro h1 {
+    font-size: clamp(2.7rem, 12vw, 4.2rem);
+    line-height: 0.98;
   }
 
-  .pricing-plan__price {
-    margin-left: 37px;
+  .pricing-grid {
+    margin-top: 42px;
   }
 
-  .pricing-plan__features {
-    width: 100%;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding-left: 37px;
+  .pricing-card {
+    padding: 28px 24px 34px;
   }
 
-  .pricing-plan__action {
-    width: calc(100% - 37px);
-    margin-left: 37px;
+  .pricing-card__description {
+    min-height: auto;
   }
 }
 </style>
