@@ -62,8 +62,7 @@ export const translations = {
       },
       productsMenu: {
         description: "Explore our current products and await for the newest solutions.",
-        fullVersion: "Full Version",
-        freeDemo: "Free Demo"
+        fullVersion: "Full Version"
       },
       useCasesMenu: {
         description: "Discover the most effective ways to leverage our platform for your goals.",
@@ -381,8 +380,7 @@ export const translations = {
       },
       productsMenu: {
         description: "Изучите наши продукты и ожидайте появления новых решений.",
-        fullVersion: "Полная версия",
-        freeDemo: "Бесплатная демо-версия"
+        fullVersion: "Полная версия"
       },
       useCasesMenu: {
         description: "Откройте наиболее эффективные способы использовать нашу платформу для достижения своих целей.",

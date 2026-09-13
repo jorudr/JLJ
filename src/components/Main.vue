@@ -123,7 +123,7 @@
           <div class="flex-1 md:pl-12 flex flex-col justify-center min-h-[128px]">
             <transition name="fade-slide" mode="out-in">
               <!-- Products Content -->
-              <div v-if="megaMenuType === 'products'" key="products-list" class="flex flex-col space-y-8">
+              <div v-if="megaMenuType === 'products'" key="products-list" class="flex flex-col">
                 <a href="/announcement" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
                   <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
                     <div class="w-3 h-3 rotate-45 border transition-colors duration-300" :class="isDark ? 'border-white' : 'border-black'"></div>
@@ -131,16 +131,6 @@
                   <div>
                     <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR</div>
                     <div class="text-[10px] font-mono tracking-widest opacity-50 uppercase">{{ t('landing.productsMenu.fullVersion') }}</div>
-                  </div>
-                </a>
-                
-                <a href="/announcement" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
-                  <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
-                    <div class="w-3 h-3 rotate-45 opacity-50 transition-colors duration-300" :class="isDark ? 'bg-white group-hover:bg-white' : 'bg-black group-hover:bg-black'"></div>
-                  </div>
-                  <div>
-                    <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase opacity-70 group-hover:opacity-100 transition-opacity duration-300" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR DEMO</div>
-                    <div class="text-[10px] font-mono tracking-widest opacity-40 uppercase">{{ t('landing.productsMenu.freeDemo') }}</div>
                   </div>
                 </a>
               </div>

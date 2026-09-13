@@ -30,10 +30,6 @@
                 <span>J.L.JÖRMUNGANDR</span>
                 <small>{{ t('landing.productsMenu.fullVersion') }}</small>
               </router-link>
-              <a href="/announcement" @click="closeMenu">
-                <span>J.L.JÖRMUNGANDR DEMO</span>
-                <small>{{ t('landing.productsMenu.freeDemo') }}</small>
-              </a>
             </div>
           </div>
 
