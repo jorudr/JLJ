@@ -226,61 +226,8 @@
 
     </div>
 
-    <!-- Interactive application demonstration -->
-    <section class="home-equity-demo relative z-10 w-full px-6 pt-10 pb-16 sm:px-10 sm:pt-14 lg:pt-16 lg:pb-24">
-      <div class="mx-auto w-full max-w-[1240px] text-center">
-        <div class="mb-10 sm:mb-14">
-          <h2 class="text-sm sm:text-base lg:text-lg font-light tracking-[0.3em] uppercase text-white/80" style="font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;">
-            {{ t('landing.videoShowcase.mt5Integration') }}
-          </h2>
-        </div>
-        <VideoShowcase />
-      </div>
-    </section>
-
-    <!-- Features Section -->
-    <section 
-      ref="featuresSection" 
-      class="home-features relative z-10 w-full max-w-7xl mx-auto py-32 px-6 sm:px-10"
-    >
-      <!-- Section Header -->
-      <div class="text-start space-y-6 max-w-4xl pb-16 lg:pb-24">
-        <h2 
-          class="text-2xl sm:text-3xl lg:text-4xl font-light leading-snug tracking-wide"
-          :class="isDark ? 'text-white' : 'text-[#2c2c2a]'"
-        >
-          {{ t('landing.features.title') }}
-        </h2>
-      </div>
-
-      <div class="features-grid" aria-label="Application features">
-        <article class="feature-grid-card">
-          <span class="feature-grid-card__index">01</span>
-          <h3>{{ t('landing.features.genesis.title') }}</h3>
-          <p>{{ t('landing.features.genesis.desc') }}</p>
-        </article>
-
-        <article class="feature-grid-card">
-          <span class="feature-grid-card__index">02</span>
-          <h3>{{ t('landing.features.tradesTree.title') }}</h3>
-          <p>{{ t('landing.features.tradesTree.desc') }}</p>
-        </article>
-
-        <article class="feature-grid-card">
-          <span class="feature-grid-card__index">03</span>
-          <h3>{{ t('landing.features.equity.title') }}</h3>
-          <p>{{ t('landing.features.equity.desc') }}</p>
-        </article>
-
-        <article class="feature-grid-card">
-          <span class="feature-grid-card__index">04</span>
-          <h3>{{ t('landing.features.forum.title') }}</h3>
-          <p>{{ t('landing.features.forum.desc') }}</p>
-        </article>
-      </div>
-    </section>
-
-    <AppFooter />
+    <HomeDetails />
+    <AppFooter hide-hero />
   </div>
 </template>
 
@@ -290,7 +237,7 @@ import { useI18n } from '../shared/i18n/useI18n'
 import GradflowBackground from './GradflowBackground.vue'
 import ExDivider from '../shared/ui/ExDivider.vue'
 import AppFooter from './AppFooter.vue'
-import VideoShowcase from './VideoShowcase.vue'
+import HomeDetails from './HomeDetails.vue'
 import MobileMenu from './MobileMenu.vue'
 
 const { t, locale, setLocale } = useI18n()

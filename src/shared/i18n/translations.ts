@@ -138,6 +138,7 @@ export const translations = {
         }
       },
       videoShowcase: {
+        selector: "Choose a demonstration",
         equity: "Track the full performance of your strategy, from the first trade to the final result.",
         matrix: "Build, connect, and explore the logic behind every trading strategy in one visual system.",
         log: "Review every trade and decision in context so patterns become impossible to miss.",
@@ -464,6 +465,7 @@ export const translations = {
         }
       },
       videoShowcase: {
+        selector: "Выберите демонстрацию",
         equity: "Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.",
         matrix: "Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.",
         log: "Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.",

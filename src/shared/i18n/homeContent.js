@@ -1,0 +1,48 @@
+export const homeContent = {
+  ru: {
+    videoTitle: 'Посмотрите, что стоит за результатом каждой сделки',
+    videoIntro: 'От истории сделок к анализу капитала и правилам стратегии. Посмотрите, как устроена работа в приложении.',
+    integrations: 'Поддерживаемые платформы',
+    communityTitle: 'Соревнуйтесь и обменивайтесь опытом',
+    communityIntro: 'В приложении торговая практика продолжается в событиях и обсуждениях сообщества.',
+    community: [
+      { eyebrow: 'Events', title: 'Участвуйте в торговых событиях', text: 'Проверяйте свои прогнозы и стратегии в соревнованиях. Зарабатывайте очки и выигрывайте лицензионные ключи и статусы.' },
+      { eyebrow: 'Forum', title: 'Обсуждайте рынок с трейдерами', text: 'Публикуйте торговые идеи, делитесь наблюдениями и разбирайте стратегии вместе с другими участниками.' },
+    ],
+    scenariosTitle: 'Превратите историю торговли в материал для решений',
+    scenarios: [
+      { title: 'Разбирайте ошибки', text: 'Возвращайтесь к сделкам, их условиям и заметкам. Сопоставляйте решения с результатами и ищите повторяющиеся ситуации.', alt: 'История сделок с фильтрами по условиям и результатам' },
+      { title: 'Оценивайте результаты', text: 'Следите за движением капитала и просадками. Рассматривайте отдельную сделку в контексте всей торговой истории.', alt: 'Кривая капитала с ростом и просадками' },
+      { title: 'Формализуйте свои правила', text: 'Связывайте условия, сценарии и действия в визуальную схему. Держите логику торговой системы перед глазами.', alt: 'Визуальная схема торговой стратегии с условиями и связями' },
+    ],
+    plansTitle: 'Начните бесплатно',
+    plansIntro: 'Подключите Full, когда понадобятся расширенные инструменты. Для обоих тарифов используется одно приложение.',
+    compare: 'Полное сравнение тарифов',
+    download: 'Скачать бесплатно',
+    finalTitle: 'Начните с разбора своих сделок',
+    finalText: 'Скачайте приложение для Windows или macOS и выберите подходящий тариф.',
+  },
+  en: {
+    videoTitle: 'See what is behind every trade’s result',
+    videoIntro: 'From trade history to equity analysis and strategy rules. See how the application works.',
+    integrations: 'Supported platforms',
+    communityTitle: 'Compete and exchange experience',
+    communityIntro: 'Trading practice continues through events and community discussions inside the application.',
+    community: [
+      { eyebrow: 'Events', title: 'Take part in trading events', text: 'Test your forecasts and strategies in competitions. Earn points and win license keys and statuses.' },
+      { eyebrow: 'Forum', title: 'Discuss the market with traders', text: 'Publish trading ideas, share observations and review strategies with other participants.' },
+    ],
+    scenariosTitle: 'Turn your trading history into a basis for decisions',
+    scenarios: [
+      { title: 'Review your mistakes', text: 'Revisit trades, their conditions and your notes. Compare decisions with outcomes and look for recurring situations.', alt: 'Trade history with filters for conditions and results' },
+      { title: 'Evaluate your results', text: 'Follow changes in equity and drawdowns. Consider each trade in the context of your entire trading history.', alt: 'Equity curve showing growth and drawdowns' },
+      { title: 'Define your rules', text: 'Connect conditions, scenarios and actions in a visual diagram. Keep the logic of your trading system in view.', alt: 'Visual trading strategy with connected conditions and rules' },
+    ],
+    plansTitle: 'Start for free',
+    plansIntro: 'Subscribe to Full when you need advanced tools. Both plans use the same application.',
+    compare: 'Compare all plan features',
+    download: 'Download for free',
+    finalTitle: 'Start by reviewing your trades',
+    finalText: 'Download the application for Windows or macOS and choose the plan that fits.',
+  },
+}
