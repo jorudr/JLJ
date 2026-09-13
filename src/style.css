@@ -70,3 +70,8 @@ body.is-scrolling ::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb:active {
   background: #2c2c2a;
 }
+
+/* Prevent the browser from drawing a visible square where scrollbars meet. */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
