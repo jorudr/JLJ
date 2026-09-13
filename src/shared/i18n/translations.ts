@@ -167,6 +167,7 @@ export const translations = {
           cta: "Get Free",
           includes: "Free version includes",
           features: [
+            { title: "Core Trading Journal", desc: "Record trades, screenshots, tags and entry context." },
             { title: "Forum", desc: "Exchange ideas, setups and hard-won market context." },
             { title: "Activity Monitor", desc: "Keep an operational view of your trading and analytical activity." },
             { title: "Equity & Metrics", desc: "Read the essential performance and drawdown signals." }
@@ -488,6 +489,7 @@ export const translations = {
           cta: "Получить Free",
           includes: "В бесплатную версию входят",
           features: [
+            { title: "Базовый функционал торгового дневника", desc: "Фиксируйте сделки, скриншоты, теги и контекст входа." },
             { title: "Форум", desc: "Обменивайтесь идеями, сетапами и рыночным контекстом." },
             { title: "Мониторинг активности", desc: "Следите за торговой и аналитической активностью." },
             { title: "Капитал и метрики", desc: "Читайте основные сигналы эффективности и просадки." }
