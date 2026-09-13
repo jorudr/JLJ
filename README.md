@@ -1,5 +1,123 @@
-# Vue 3 + Vite
+<p align="center">
+  <img src="public/assets/github-readme.png" alt="J. L. JÖRMUNGANDR" width="720">
+</p>
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+<h1 align="center">J. L. JÖRMUNGANDR — Landing</h1>
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+<p align="center">
+  Публичный сайт приложения J. L. JÖRMUNGANDR: знакомство с продуктом, тарифами и загрузка актуальных версий для Windows и macOS.
+</p>
+
+<p align="center">
+  <a href="https://www.gandr.site">Открыть сайт</a>
+  ·
+  <a href="https://t.me/gandr_trade">Telegram</a>
+  ·
+  <a href="https://github.com/jorudr/JLJ/releases">Релизы приложения</a>
+</p>
+
+## О проекте
+
+J. L. JÖRMUNGANDR — рабочее пространство для трейдеров, объединяющее журнал сделок, проектирование и сравнение стратегий, анализ результатов и контекст сообщества. Этот репозиторий содержит именно сайт-витрину приложения, а не исходный код его desktop-клиента.
+
+Сайт доступен по адресу [www.gandr.site](https://www.gandr.site). Он развёртывается как статический SPA и поддерживает русскую и английскую локализации.
+
+## Возможности сайта
+
+- главная страница с описанием продукта и его ключевых сценариев;
+- отдельные страницы загрузки, тарифов и философии проекта;
+- загрузка установщиков для Windows и macOS;
+- ссылки на актуальные релизы приложения на GitHub;
+- адаптивный интерфейс для компьютеров и мобильных устройств;
+- корректная обработка прямых переходов в SPA через `404.html`.
+
+## Технологии
+
+| Область | Используется |
+| --- | --- |
+| Фреймворк | Vue 3 + Vue Router |
+| Сборка | Vite |
+| Стили | Tailwind CSS 4 + компонентные CSS-стили |
+| Анимации фона | Gradflow |
+| Пакетный менеджер | npm |
+
+## Быстрый старт
+
+Требуется Node.js 20 LTS или новее и npm.
+
+```bash
+git clone https://github.com/jorudr/JLJ.git
+cd JLJ
+npm install
+npm run dev
+```
+
+После запуска Vite выведет локальный адрес сайта, обычно `http://localhost:5173`.
+
+## Команды
+
+| Команда | Назначение |
+| --- | --- |
+| `npm run dev` | Запускает сервер разработки с HMR. |
+| `npm run build` | Создаёт production-сборку в `dist/` и копирует `index.html` в `dist/404.html`. |
+| `npm run preview` | Локально показывает готовую production-сборку. |
+
+## Сборка и публикация
+
+```bash
+npm run build
+npm run preview
+```
+
+Результат сборки находится в каталоге `dist/`. Для статического хостинга нужно публиковать его содержимое. Файл [`public/CNAME`](public/CNAME) задаёт домен `www.gandr.site`; при публикации на GitHub Pages он будет включён в сборку автоматически.
+
+> Перед публикацией проверьте, что хостинг возвращает `404.html` для неизвестных путей. Это позволяет Vue Router обработать прямые ссылки, например `/download`.
+
+## Релизы и установщики
+
+Страница загрузки берёт ссылки из [`src/shared/downloads.js`](src/shared/downloads.js). Сейчас они ведут на GitHub Releases, поэтому при выходе новой версии достаточно обновить URL-адреса в этом файле.
+
+```js
+export const downloads = [
+  { id: 'windows', url: 'https://github.com/.../setup.exe' },
+  { id: 'macos', url: 'https://github.com/.../installer.dmg' },
+]
+```
+
+Альтернативный вариант — разместить установщики в `public/downloads/` и указать локальные URL. Требования к именам файлов и краткие пояснения приведены в [`public/downloads/README.md`](public/downloads/README.md).
+
+Предыдущие версии приложения следует сохранять в [GitHub Releases](https://github.com/jorudr/JLJ/releases): так они остаются доступны пользователям, а страница загрузки может всегда указывать на последний стабильный выпуск.
+
+## Структура проекта
+
+```text
+.
+├── public/                 # Статические файлы: домен, медиа, скриншоты, установщики
+│   ├── assets/             # Логотипы, видео и графика
+│   ├── downloads/          # Локальные установщики (если используются)
+│   └── screenshots/        # Скриншоты приложения
+├── scripts/                # Вспомогательные скрипты сборки
+├── src/
+│   ├── components/         # Страницы и UI-компоненты Vue
+│   ├── router/             # Маршруты сайта
+│   └── shared/             # Локализация, UI и конфигурация загрузок
+├── index.html              # HTML-шаблон Vite
+└── vite.config.js          # Конфигурация Vite
+```
+
+## Внесение изменений
+
+1. Создайте отдельную ветку от актуальной версии `main`.
+2. Внесите изменения и проверьте сайт через `npm run dev`.
+3. Перед pull request выполните `npm run build`.
+4. В PR кратко опишите изменения и приложите скриншоты, если менялся интерфейс.
+
+Для изменения ссылок на установщики редактируйте только [`src/shared/downloads.js`](src/shared/downloads.js), чтобы все кнопки загрузки оставались синхронизированы.
+
+## Поддержка
+
+По вопросам установки, доступа и обновлений: [Telegram-канал J. L. JÖRMUNGANDR](https://t.me/gandr_trade).
+
+## Лицензия
+
+Лицензия для исходного кода сайта в репозитории пока не указана. До её добавления не считайте использование, копирование или распространение кода автоматически разрешённым.
