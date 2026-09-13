@@ -20,31 +20,7 @@
         </div>
 
         <nav class="mobile-menu__nav" aria-label="Mobile navigation">
-          <div class="mobile-menu__group">
-            <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleSection('products')">
-              <span>{{ t('landing.nav.products') }}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': section === 'products' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
-            </button>
-            <div v-if="section === 'products'" class="mobile-menu__children">
-              <router-link to="/announcement" @click="closeMenu">
-                <span>J.L.JÖRMUNGANDR</span>
-                <small>{{ t('landing.productsMenu.fullVersion') }}</small>
-              </router-link>
-            </div>
-          </div>
-
-          <div class="mobile-menu__group">
-            <button type="button" class="mobile-menu__parent cursor-pointer" @click="toggleSection('useCases')">
-              <span>{{ t('landing.nav.useCases') }}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" :class="{ 'is-expanded': section === 'useCases' }" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
-            </button>
-            <div v-if="section === 'useCases'" class="mobile-menu__children">
-              <router-link to="/use-cases?case=improve-trading-results" @click="closeMenu">{{ t('landing.useCasesMenu.improveTradingResults') }}</router-link>
-              <router-link to="/use-cases?case=create-trading-system" @click="closeMenu">{{ t('landing.useCasesMenu.createTradingSystem') }}</router-link>
-              <router-link to="/use-cases?case=content-creator" @click="closeMenu">{{ t('landing.useCasesMenu.contentCreator') }}</router-link>
-            </div>
-          </div>
-
+          <router-link to="/download" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.download') }}</router-link>
           <router-link to="/pricing" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.pricing') }}</router-link>
           <router-link to="/philosophy" class="mobile-menu__link" @click="closeMenu">{{ t('landing.nav.philosophy') }}</router-link>
         </nav>
@@ -100,7 +76,6 @@ const footerLocales = [
 
 const { t, locale, setLocale } = useI18n()
 const isOpen = ref(false)
-const section = ref(null)
 const isLanguageMenuOpen = ref(false)
 
 const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
@@ -113,19 +88,13 @@ const selectFooterLocale = (code) => {
 const toggleMenu = () => {
   isOpen.value = !isOpen.value
   if (!isOpen.value) {
-    section.value = null
     isLanguageMenuOpen.value = false
   }
 }
 
 const closeMenu = () => {
   isOpen.value = false
-  section.value = null
   isLanguageMenuOpen.value = false
-}
-
-const toggleSection = (name) => {
-  section.value = section.value === name ? null : name
 }
 
 const preventTouch = (e) => {

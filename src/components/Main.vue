@@ -24,7 +24,7 @@
       <!-- Header / Top Bar -->
         <header
           class="fixed left-0 right-0 top-0 z-[2147483647] flex w-full items-center justify-start px-6 pt-4 pb-4 text-[10px] tracking-[0.3em] sm:px-10 sm:pt-4 sm:pb-4 xl:px-8"
-          :class="{ 'nav-open': isMegaMenuVisible, 'nav-scrolled': isNavScrolled }"
+          :class="{ 'nav-scrolled': isNavScrolled }"
         >
         <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
           <!-- Left Section: App Name -->
@@ -42,18 +42,7 @@
 
           <!-- Primary Navigation -->
           <nav class="ml-10 hidden items-center space-x-8 whitespace-nowrap font-serif text-[16px] tracking-[0.15rem] md:flex" style="font-family: 'Cormorant Garamond', serif;">
-          <a href="#"
-             @mouseenter="showMegaMenu('products')" @mouseleave="hideMegaMenu"
-             class="nav-openai-font flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
-            {{ t('landing.nav.products') }}
-            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'products'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </a>
-          <a href="#"
-             @mouseenter="showMegaMenu('useCases')" @mouseleave="hideMegaMenu"
-             class="nav-openai-font flex items-center transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">
-            {{ t('landing.nav.useCases') }}
-            <svg class="ml-1.5 h-3.5 w-3.5 opacity-50 transition-transform duration-300" :class="{'rotate-180': isMegaMenuVisible && megaMenuType === 'useCases'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </a>
+          <router-link to="/download" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.download') }}</router-link>
           <router-link to="/pricing" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.pricing') }}</router-link>
           <router-link to="/philosophy" class="nav-openai-font transition-colors hover:opacity-50" :class="isDark ? 'text-white/80' : 'text-[#2c2c2a]/80'">{{ t('landing.nav.philosophy') }}</router-link>
           </nav>
@@ -91,79 +80,8 @@
         </div>
       </header>
 
-      <!-- Mega Menu Panel -->
-      <div 
-        @mouseenter="showMegaMenu"
-        @mouseleave="hideMegaMenu"
-        class="mega-menu-panel fixed top-14 left-0 z-40 w-full overflow-hidden transition-[opacity,transform] duration-500 sm:top-[56px]"
-        :class="[
-          isMegaMenuVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none',
-          isMegaMenuVisible ? 'mega-menu-panel--open bg-black' : 'bg-transparent',
-          isDark ? 'text-white' : 'text-[#2c2c2a]'
-        ]"
-      >
-        <div class="max-w-7xl mx-auto px-6 sm:px-10 py-12 flex flex-col md:flex-row items-stretch gap-12">
-          <!-- Left Side: Message -->
-          <div class="flex-1 flex items-center md:pr-12">
-            <transition name="fade-slide" mode="out-in">
-              <h3 v-if="megaMenuType === 'products'" key="products-title" class="text-3xl lg:text-4xl font-light tracking-wide leading-snug" style="font-family: 'Cormorant Garamond', serif;">
-                {{ t('landing.productsMenu.description') }}
-              </h3>
-              <h3 v-else key="usecases-title" class="text-3xl lg:text-4xl font-light tracking-wide leading-snug" style="font-family: 'Cormorant Garamond', serif;">
-                {{ t('landing.useCasesMenu.description') }}
-              </h3>
-            </transition>
-          </div>
-          
-          <!-- Divider -->
-          <div class="hidden md:block w-[1px] opacity-20" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-          <div class="md:hidden h-[1px] w-full opacity-20" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-          
-          <!-- Right Side: Content -->
-          <div class="flex-1 md:pl-12 flex flex-col justify-center min-h-[128px]">
-            <transition name="fade-slide" mode="out-in">
-              <!-- Products Content -->
-              <div v-if="megaMenuType === 'products'" key="products-list" class="flex flex-col">
-                <a href="/announcement" class="group flex items-center space-x-6 transition-all duration-300 hover:translate-x-2">
-                  <div class="w-12 h-12 border flex items-center justify-center rounded-sm transition-colors duration-300 shrink-0" :class="isDark ? 'border-white/20 group-hover:border-white' : 'border-black/20 group-hover:border-black'">
-                    <div class="w-3 h-3 rotate-45 border transition-colors duration-300" :class="isDark ? 'border-white' : 'border-black'"></div>
-                  </div>
-                  <div>
-                    <div class="text-[16px] sm:text-[18px] tracking-[0.3em] mb-1 font-light uppercase" style="font-family: 'Cormorant Garamond', serif;">J.L.JÖRMUNGANDR</div>
-                    <div class="text-[10px] font-mono tracking-widest opacity-50 uppercase">{{ t('landing.productsMenu.fullVersion') }}</div>
-                  </div>
-                </a>
-              </div>
-
-              <!-- Use Cases Content -->
-              <div v-else key="usecases-list" class="flex flex-col justify-center space-y-5">
-                <router-link to="/use-cases?case=improve-trading-results" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
-                  <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-                  <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    {{ t('landing.useCasesMenu.improveTradingResults') }}
-                  </div>
-                </router-link>
-                <router-link to="/use-cases?case=create-trading-system" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
-                  <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-                  <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    {{ t('landing.useCasesMenu.createTradingSystem') }}
-                  </div>
-                </router-link>
-                <router-link to="/use-cases?case=content-creator" class="group flex items-center space-x-4 transition-all duration-300 hover:translate-x-2">
-                  <div class="w-1.5 h-1.5 rotate-45 transition-colors duration-300 opacity-50 group-hover:opacity-100" :class="isDark ? 'bg-white' : 'bg-black'"></div>
-                  <div class="text-[16px] sm:text-[18px] tracking-[0.1em] font-light opacity-80 group-hover:opacity-100 transition-opacity" style="font-family: 'Cormorant Garamond', serif;">
-                    {{ t('landing.useCasesMenu.contentCreator') }}
-                  </div>
-                </router-link>
-              </div>
-            </transition>
-          </div>
-        </div>
-      </div>
-
       <!-- Animated Tagline Section -->
-      <main class="flex-1 flex flex-col items-center justify-center py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500"
-            :class="isMegaMenuVisible ? 'opacity-0 blur-sm scale-95 pointer-events-none' : 'opacity-100 blur-0 scale-100'">
+      <main class="flex-1 flex flex-col items-center justify-center py-10 my-auto z-50 relative min-h-[300px] transition-all duration-500">
         
         <!-- MAIN CONTENT -->
         <div 
@@ -401,9 +319,6 @@ onMounted(() => {
   runHeroAnimation()
 })
 
-const isMegaMenuVisible = ref(false)
-let megaMenuTimeout = null
-const megaMenuType = ref('products')
 const isMobileMenuOpen = ref(false)
 const mobileMenuSection = ref(null)
 
@@ -419,20 +334,6 @@ const closeMobileMenu = () => {
 
 const toggleMobileSection = (section) => {
   mobileMenuSection.value = mobileMenuSection.value === section ? null : section
-}
-
-const showMegaMenu = (type) => {
-  if (megaMenuTimeout) clearTimeout(megaMenuTimeout)
-  if (typeof type === 'string') {
-    megaMenuType.value = type
-  }
-  isMegaMenuVisible.value = true
-}
-
-const hideMegaMenu = () => {
-  megaMenuTimeout = setTimeout(() => {
-    isMegaMenuVisible.value = false
-  }, 150)
 }
 
 const isDark = ref(true)
@@ -806,29 +707,11 @@ const scrollToFeatures = () => {
   align-items: center;
 }
 
-.mega-menu-panel--open,
-.mega-menu-panel--open * {
-  color: #f5f5f0 !important;
-}
-
 @media (min-width: 768px) {
   .hero-header {
     padding-top: 72px;
   }
 
-  .hero-header > header.nav-open {
-    background-color: #000;
-  }
-
-  .hero-header > header.nav-open .nav-openai-font {
-    color: #f5f5f0 !important;
-    opacity: 1 !important;
-    transition: none !important;
-  }
-
-  .hero-header > header.nav-open .nav-logo {
-    filter: invert(1);
-  }
 }
 
 /* Digital Grid Backgrounds */

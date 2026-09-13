@@ -39,6 +39,7 @@ export const translations = {
       scrollToExplore: "SCROLL_TO_EXPLORE",
       nav: {
         products: "Products",
+        download: "Download",
         useCases: "Use Cases",
         pricing: "Pricing",
         philosophy: "Philosophy"
@@ -357,6 +358,7 @@ export const translations = {
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
         products: "Продукты",
+        download: "Скачать",
         useCases: "Применение",
         pricing: "Цены",
         philosophy: "Философия"

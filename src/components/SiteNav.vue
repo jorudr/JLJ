@@ -12,14 +12,7 @@
       </router-link>
 
       <nav class="site-nav__links" aria-label="Primary navigation">
-        <router-link to="/" class="site-nav__link">
-          {{ t('landing.nav.products') }}
-          <svg class="ml-1.5 h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </router-link>
-        <router-link to="/use-cases" class="site-nav__link">
-          {{ t('landing.nav.useCases') }}
-          <svg class="ml-1.5 h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </router-link>
+        <router-link to="/download" class="site-nav__link">{{ t('landing.nav.download') }}</router-link>
         <router-link to="/pricing" class="site-nav__link">{{ t('landing.nav.pricing') }}</router-link>
         <router-link to="/philosophy" class="site-nav__link">{{ t('landing.nav.philosophy') }}</router-link>
       </nav>
