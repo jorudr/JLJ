@@ -176,16 +176,16 @@ export const translations = {
         full: {
           eyebrow: "FOR PROFESSIONAL TRADERS",
           name: "Full",
-          price: "$12.99",
+          price: "$9.99",
           period: "/ month",
           description: "Use the complete workspace to design, test and refine your trading system every month.",
           cta: "Subscribe monthly",
           includes: "Everything in Free, plus",
           features: [
             { title: "Forecast Manager", desc: "Model possible paths before capital meets the market." },
-            { title: "Genesis Matrix", desc: "Architect and simulate the rules behind your trading system." },
+            { title: "Strategy Builder", desc: "Create trading strategies by defining scenarios and position entry and exit conditions." },
             { title: "Broker API", desc: "Connect your execution layer directly to the analytical core." },
-            { title: "Robustness Analytics", desc: "Stress-test assumptions with deep simulations and diagnostics." },
+            { title: "Trading Report", desc: "Generate clear reports on your trading activity and performance." },
             { title: "Deep Trade Analytics", desc: "Trace execution quality down to the smallest meaningful detail." }
           ]
         }
@@ -498,16 +498,16 @@ export const translations = {
         full: {
           eyebrow: "ДЛЯ ПРОФЕССИОНАЛЬНЫХ ТРЕЙДЕРОВ",
           name: "Full",
-          price: "$12.99",
+          price: "$9.99",
           period: "/ месяц",
           description: "Используйте полное рабочее пространство для проектирования, тестирования и улучшения торговой системы.",
           cta: "Оформить подписку",
           includes: "Всё из Free, плюс",
           features: [
             { title: "Менеджер прогнозов", desc: "Моделируйте возможные сценарии до встречи капитала с рынком." },
-            { title: "Матрица Генезиса", desc: "Проектируйте и симулируйте правила своей торговой системы." },
+            { title: "Создатель стратегии", desc: "Создавайте торговые стратегии, задавая сценарии и условия входа и выхода из позиций." },
             { title: "Broker API", desc: "Подключайте исполнение напрямую к аналитическому ядру." },
-            { title: "Аналитика надёжности", desc: "Проверяйте допущения глубокими симуляциями и диагностикой." },
+            { title: "Торговый отчёт", desc: "Формируйте понятные отчёты по торговой активности и результатам." },
             { title: "Глубокая аналитика сделок", desc: "Отслеживайте качество исполнения до мельчайших деталей." }
           ]
         }
