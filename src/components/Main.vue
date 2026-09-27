@@ -89,35 +89,27 @@
           class="flex flex-col items-center justify-center w-full space-y-6"
         >
           <div
-            class="hero-signature mb-2 h-8 w-36 overflow-hidden opacity-0 transition-all duration-1000 ease-out sm:h-9 sm:w-44"
-            :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-80' : 'translate-y-4'"
-            aria-hidden="true"
-          >
-            <img src="/assets/signature.svg" alt="" class="h-full w-full object-cover object-center" />
-          </div>
-
-          <div
-            class="mb-0 text-center text-2xl sm:text-4xl lg:text-5xl font-light uppercase tracking-[0.4em] transition-all duration-1000 ease-out"
-            :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+            class="mb-2 text-center text-sm sm:text-lg lg:text-xl font-light uppercase tracking-[0.35em] transition-all duration-1000 ease-out"
+            :class="heroAnimationState >= 3 ? 'opacity-80 translate-y-0' : 'opacity-0 translate-y-4'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
             J.L.JÖRMUNGANDR
           </div>
 
-          <div
-            class="!mt-8 w-4/5 max-w-[720px] transition-all duration-1000 ease-out"
-            :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'"
-          >
-            <ExDivider variant="tactical" spacing="none" />
-          </div>
-
-          <h1 class="hero-tagline openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <h1 class="hero-tagline text-center mb-4 max-w-5xl px-4" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 || t('landing.heroTitleLine1') }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse" aria-hidden="true">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
               {{ typedLine2 }}<span v-if="heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1')" class="animate-pulse">|</span>
             </template>
           </h1>
+
+          <div
+            class="!mt-4 mb-8 w-4/5 max-w-[720px] transition-all duration-1000 ease-out"
+            :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'"
+          >
+            <ExDivider variant="tactical" spacing="none" />
+          </div>
 
           <!-- OS Specific Download Button (Desktop) -->
           <router-link
@@ -628,7 +620,11 @@ const scrollToFeatures = () => {
 }
 
 .hero-tagline {
-  font-size: 1.2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: clamp(2.25rem, 5.2vw, 4rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
 }
 
 .nav-language-button {
