@@ -111,13 +111,13 @@
             <ExDivider variant="tactical" spacing="none" />
           </div>
 
-          <div class="hero-tagline openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
-            {{ typedLine1 }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse">|</span>
+          <h1 class="hero-tagline openai-typeface text-center leading-snug mb-12" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+            {{ typedLine1 || t('landing.heroTitleLine1') }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse" aria-hidden="true">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
               {{ typedLine2 }}<span v-if="heroAnimationState === 2 && typedLine1 === t('landing.heroTitleLine1')" class="animate-pulse">|</span>
             </template>
-          </div>
+          </h1>
 
           <!-- OS Specific Download Button (Desktop) -->
           <router-link

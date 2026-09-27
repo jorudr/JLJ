@@ -1,5 +1,9 @@
 <template>
   <div class="home-details" :lang="locale">
+    <section class="home-block seo-intro" aria-labelledby="product-title">
+      <h2 id="product-title">{{ copy.seoTitle }}</h2>
+      <p>{{ copy.seoText }}</p>
+    </section>
     <section id="demo" class="home-block" aria-labelledby="demo-title">
       <header class="section-intro">
         <h2 id="demo-title">{{ copy.videoTitle }}</h2>
@@ -27,6 +31,15 @@
         </article>
       </div>
     </section>
+    <section class="home-block faq" aria-labelledby="faq-title">
+      <header class="section-intro"><h2 id="faq-title">{{ copy.faqTitle }}</h2></header>
+      <dl>
+        <div v-for="item in copy.faq" :key="item.question" class="faq-item">
+          <dt>{{ item.question }}</dt>
+          <dd>{{ item.answer }}</dd>
+        </div>
+      </dl>
+    </section>
     <section class="home-block final-cta" aria-labelledby="start-title">
       <h2 id="start-title">{{ copy.finalTitle }}</h2>
       <p>{{ copy.finalText }}</p>
@@ -46,6 +59,27 @@ import { homeContent } from '../shared/i18n/homeContent'
 
 const { locale } = useI18n()
 const copy = computed(() => homeContent[locale.value] || homeContent.en)
+const faqStructuredData = computed(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: copy.value.faq.map(({ question, answer }) => ({
+    '@type': 'Question', name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+}))
+import { watch, onMounted, onUnmounted } from 'vue'
+let faqScript
+const updateFaqStructuredData = () => {
+  if (!faqScript) {
+    faqScript = document.createElement('script')
+    faqScript.type = 'application/ld+json'
+    faqScript.dataset.faq = 'home'
+    document.head.appendChild(faqScript)
+  }
+  faqScript.textContent = JSON.stringify(faqStructuredData.value)
+}
+onMounted(() => { updateFaqStructuredData(); watch(faqStructuredData, updateFaqStructuredData) })
+onUnmounted(() => faqScript?.remove())
 const platforms = ['MetaTrader 5', 'Bybit', 'Binance', 'Kraken', 'Interactive Brokers']
 const communityImages = ['/screenshots/event.png', '/screenshots/forum.png']
 </script>
@@ -58,6 +92,13 @@ h2 { font-size: clamp(2.1rem, 4vw, 3.6rem); font-weight: 300; line-height: 1.1; 
 h3 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 300; line-height: 1.15; }
 p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .98rem; line-height: 1.65; color: rgba(245,245,240,.65); }
 .section-intro p, .final-cta p { margin-top: 20px; max-width: 650px; }
+.seo-intro { padding-top: 30px; }
+.seo-intro p { margin-top: 18px; max-width: 850px; }
+.faq { border-top: 1px solid #ffffff24; }
+.faq dl { max-width: 900px; margin: 0; }
+.faq-item { padding: 22px 0; border-top: 1px solid #ffffff1f; }
+.faq-item dt { font-size: clamp(1.25rem, 2vw, 1.65rem); }
+.faq-item dd { max-width: 740px; margin: 10px 0 0; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .95rem; line-height: 1.65; color: rgba(245,245,240,.65); }
 .integrations { padding: 22px 0; margin-top: 28px; border-top: 1px solid #ffffff1f; border-bottom: 1px solid #ffffff1f; }
 .integrations h3 { color: rgba(245,245,240,.42); font: .66rem/1.4 ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; }
 .integrations ul { display: flex; flex-wrap: wrap; gap: 8px 0; margin: 14px 0 10px; padding: 0; list-style: none; color: rgba(245,245,240,.72); font: .8rem/1.4 ui-sans-serif, system-ui, sans-serif; }

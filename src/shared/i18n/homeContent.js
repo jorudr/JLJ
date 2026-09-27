@@ -22,6 +22,15 @@ export const homeContent = {
     download: 'Скачать бесплатно',
     finalTitle: 'Начните с разбора своих сделок',
     finalText: 'Скачайте приложение для Windows или macOS и выберите подходящий тариф.',
+    seoTitle: 'Журнал сделок и аналитика для системной торговли',
+    seoText: 'J.L.JÖRMUNGANDR — торговый журнал для трейдеров, которым важно понимать причины результата. Записывайте и анализируйте сделки, отслеживайте капитал и просадки, сравнивайте торговые сценарии и формализуйте правила стратегии в одном приложении для Windows и macOS.',
+    faqTitle: 'Частые вопросы о торговом журнале',
+    faq: [
+      { question: 'Что такое J.L.JÖRMUNGANDR?', answer: 'Это приложение для ведения журнала сделок, анализа торговых результатов и разработки правил стратегии. Оно помогает изучать историю торговли и принимать решения на основе собственных данных.' },
+      { question: 'Для кого подходит этот торговый журнал?', answer: 'Для трейдеров, которые хотят системно разбирать сделки, сравнивать сценарии и отслеживать метрики торговли — от начинающих до профессиональных участников рынка.' },
+      { question: 'Какие инструменты анализа доступны?', answer: 'В приложении можно изучать историю сделок и заметки, анализировать кривую капитала и просадки, а также визуально описывать условия и правила торговой системы.' },
+      { question: 'На каких устройствах работает приложение?', answer: 'Приложение можно скачать для компьютеров с Windows и macOS. Доступные возможности и условия тарифов описаны на странице тарифов.' },
+    ],
   },
   en: {
     videoTitle: 'See what is behind every trade’s result',
@@ -46,5 +55,14 @@ export const homeContent = {
     download: 'Download for free',
     finalTitle: 'Start by reviewing your trades',
     finalText: 'Download the application for Windows or macOS and choose the plan that fits.',
+    seoTitle: 'Trade journal and analytics for systematic trading',
+    seoText: 'J.L.JÖRMUNGANDR is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
+    faqTitle: 'Trading journal FAQ',
+    faq: [
+      { question: 'What is J.L.JÖRMUNGANDR?', answer: 'It is an application for keeping a trading journal, reviewing performance, and developing strategy rules. Use your trade history to make decisions based on your own data.' },
+      { question: 'Who is this trading journal for?', answer: 'It is for traders who want to review trades systematically, compare scenarios, and track performance metrics, from developing traders to experienced market participants.' },
+      { question: 'What trading analysis tools does it include?', answer: 'Review trade history and notes, analyze equity and drawdowns, and map the conditions and rules of your trading system.' },
+      { question: 'Which computers support the application?', answer: 'The application is available for Windows and macOS computers. See the pricing page for plan details and available features.' },
+    ],
   },
 }
