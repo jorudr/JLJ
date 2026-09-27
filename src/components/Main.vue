@@ -96,7 +96,7 @@
             J.L.JÖRMUNGANDR
           </div>
 
-          <h1 class="hero-tagline text-center mb-4 max-w-5xl px-4" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <h1 class="hero-tagline text-center mb-4 max-w-full px-4 whitespace-nowrap" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 || t('landing.heroTitleLine1') }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse" aria-hidden="true">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
@@ -620,11 +620,12 @@ const scrollToFeatures = () => {
 }
 
 .hero-tagline {
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  font-size: clamp(2.25rem, 5.2vw, 4rem);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.5rem, 4.6vw, 4.75rem);
   font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 .nav-language-button {
