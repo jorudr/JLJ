@@ -1,9 +1,5 @@
 <template>
   <div class="home-details" :lang="locale">
-    <section class="home-block seo-intro" aria-labelledby="product-title">
-      <h2 id="product-title">{{ copy.seoTitle }}</h2>
-      <p>{{ copy.seoText }}</p>
-    </section>
     <section id="demo" class="home-block" aria-labelledby="demo-title">
       <header class="section-intro">
         <h2 id="demo-title">{{ copy.videoTitle }}</h2>
@@ -92,8 +88,6 @@ h2 { font-size: clamp(2.1rem, 4vw, 3.6rem); font-weight: 300; line-height: 1.1; 
 h3 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 300; line-height: 1.15; }
 p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .98rem; line-height: 1.65; color: rgba(245,245,240,.65); }
 .section-intro p, .final-cta p { margin-top: 20px; max-width: 650px; }
-.seo-intro { padding-top: 30px; }
-.seo-intro p { margin-top: 18px; max-width: 850px; }
 .faq { border-top: 1px solid #ffffff24; }
 .faq dl { max-width: 900px; margin: 0; }
 .faq-item { padding: 22px 0; border-top: 1px solid #ffffff1f; }
