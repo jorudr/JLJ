@@ -2,13 +2,7 @@
   <header class="site-nav" :class="{ 'site-nav--scrolled': isScrolled, 'site-nav--always-dark': alwaysDark }">
     <div class="site-nav__inner">
       <router-link to="/" class="site-nav__logo" aria-label="J.L.JÖRMUNGANDR home">
-        <div class="relative flex h-5 w-5 shrink-0 items-center justify-center sm:h-6 sm:w-6">
-          <div class="absolute inset-0 border border-black/40 animate-[spin_10s_linear_infinite]"></div>
-          <div class="absolute inset-1 border border-black/60 animate-[spin_6s_linear_infinite_reverse]"></div>
-          <div class="h-1 w-1 rotate-45 bg-black animate-pulse"></div>
-          <div class="absolute -left-0.5 -top-0.5 h-1.5 w-1.5 border-l border-t border-black"></div>
-          <div class="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 border-b border-r border-black"></div>
-        </div>
+        <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
       </router-link>
 
       <nav class="site-nav__links" aria-label="Primary navigation">

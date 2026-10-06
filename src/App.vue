@@ -7,7 +7,7 @@ import { homeContent } from './shared/i18n/homeContent'
 const route = useRoute()
 const { t, locale } = useI18n()
 
-const baseTitle = 'J. L. JÖRMUNGANDR'
+const baseTitle = 'JÖRMUNGANDR'
 const setMeta = (selector, content) => {
   const element = document.querySelector(selector)
   if (element) element.setAttribute('content', content)
@@ -18,8 +18,8 @@ const updateTitle = () => {
   if (route.path === '/') {
     const copy = homeContent[locale.value] || homeContent.en
     document.title = locale.value === 'ru'
-      ? 'J.L.JÖRMUNGANDR — торговый журнал для трейдеров'
-      : 'J.L.JÖRMUNGANDR — Trading Journal for Traders'
+      ? 'JÖRMUNGANDR — торговый журнал для трейдеров'
+      : 'JÖRMUNGANDR — Trading Journal for Traders'
     setMeta('meta[name="description"]', copy.seoText)
     setMeta('meta[property="og:title"]', document.title)
     setMeta('meta[property="og:description"]', copy.seoText)
