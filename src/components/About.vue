@@ -11,21 +11,28 @@
             <p>{{ t('landing.about.intro') }}</p>
           </div>
 
-          <div class="philosophy-closing">
-            <div class="philosophy-closing__visual">
-              <img src="/assets/eves.svg" alt="J.L.JORMUNGANDR Concept" />
-              <div class="philosophy-closing__caption">
-                <span>J.L.JÖRMUNGANDR</span>
-                <small>// plastic moth</small>
-              </div>
-              <a class="philosophy-closing__contact" href="mailto:plasticcwc@gmail.com">
-                <span class="philosophy-closing__contact-label">{{ t('landing.about.contactLabel') }}</span>
-                <strong class="philosophy-closing__contact-email">PLASTICCWC@GMAIL.COM</strong>
-                <span class="philosophy-closing__contact-arrow" aria-hidden="true">↗</span>
-              </a>
+          <section class="name-diagram" aria-labelledby="brand-name">
+            <h2 id="brand-name" class="name-diagram__title" aria-label="J.L.JÖRMUNGANDR">
+              <span>J.</span><span>L.</span><span>JÖRMUNGANDR</span>
+            </h2>
+            <div class="name-diagram__connectors" aria-hidden="true">
+              <svg viewBox="0 0 1000 180" preserveAspectRatio="none">
+                <defs>
+                  <marker id="about-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 1 1 L 8 5 L 1 9" fill="none" stroke="currentColor" />
+                  </marker>
+                </defs>
+                <path d="M 80 0 V 110 H 250 V 172" />
+                <path d="M 580 0 V 75 H 750 V 172" />
+              </svg>
+              <span class="name-diagram__number" title="" style="--position: 8%">1</span>
+              <span class="name-diagram__number" title="" style="--position: 58%">2</span>
             </div>
-            <p class="philosophy-statement">“{{ t('landing.aboutStatement') }}”</p>
-          </div>
+            <ol class="name-diagram__descriptions">
+              <li><span class="sr-only">J.L. — </span>A quiet moment brings a new idea into focus.</li>
+              <li><span class="sr-only">JÖRMUNGANDR — </span>The next chapter begins with a single deliberate step.</li>
+            </ol>
+          </section>
         </section>
       </main>
 
@@ -90,97 +97,101 @@ const { t } = useI18n()
   line-height: 1.48;
 }
 
-.philosophy-closing {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
-  gap: clamp(48px, 9vw, 140px);
+.name-diagram {
+  container-type: inline-size;
   margin-top: clamp(100px, 15vh, 180px);
-  align-items: center;
 }
 
-.philosophy-closing__visual {
-  opacity: 0.78;
+.name-diagram__title {
+  display: grid;
+  grid-template-columns: 8% 8% 84%;
+  margin: 0;
+  color: #171715;
+  font-size: 10cqw;
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.name-diagram__connectors {
+  position: relative;
+  height: clamp(120px, 18vw, 180px);
+}
+
+.name-diagram__connectors svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: #2c2c2a;
+}
+
+.name-diagram__connectors > svg > path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  marker-end: url(#about-arrow);
+}
+
+.name-diagram__number {
+  position: absolute;
+  top: 0;
+  left: var(--position);
+  display: grid;
+  width: clamp(22px, 3.4vw, 38px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -65%);
+  place-items: center;
+  border: 1px solid #222;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(11px, 1.3vw, 15px);
+}
+
+.name-diagram__descriptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 4vw, 48px);
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+  color: rgba(44, 44, 42, 0.72);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.75rem, 1.3vw, 1rem);
+  line-height: 1.6;
+}
+
+.name-diagram__number {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.name-diagram__number:hover {
+  background-color: #000;
+  color: #fff;
+}
+
+.name-diagram__descriptions li {
   transition: opacity 180ms ease;
 }
 
-.philosophy-closing__visual:hover {
-  opacity: 1;
+.name-diagram:has(.name-diagram__number:nth-of-type(1):hover) .name-diagram__descriptions li:not(:nth-child(1)),
+.name-diagram:has(.name-diagram__number:nth-of-type(2):hover) .name-diagram__descriptions li:not(:nth-child(2)) {
+  opacity: 0.25;
 }
 
-.philosophy-closing__visual img {
-  display: block;
-  width: min(100%, 430px);
-  height: auto;
-  margin: 0 auto;
-}
-
-.philosophy-closing__caption {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 28px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(44, 44, 42, 0.2);
-  color: rgba(44, 44, 42, 0.85);
-  align-items: center;
-  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.philosophy-closing__caption small {
-  color: rgba(44, 44, 42, 0.45);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(0.72rem, 0.9vw, 0.85rem);
-  letter-spacing: 0.12em;
-}
-
-.philosophy-closing__contact {
-  display: flex;
-  margin-top: 18px;
-  padding: 14px 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-top: 1px solid rgba(44, 44, 42, 0.14);
-  border-bottom: 1px solid rgba(44, 44, 42, 0.14);
-  color: rgba(44, 44, 42, 0.58);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  transition: color 180ms ease;
-}
-
-.philosophy-closing__contact:hover {
-  color: #2c2c2a;
-}
-
-.philosophy-closing__contact-label {
-  color: rgba(44, 44, 42, 0.45);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-}
-
-.philosophy-closing__contact-email {
-  color: #2c2c2a;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-
-.philosophy-closing__contact-arrow {
-  color: rgba(44, 44, 42, 0.45);
-  font-size: 1rem;
-}
-
-.philosophy-statement {
-  max-width: 680px;
-  color: rgba(44, 44, 42, 0.78);
-  font-size: clamp(1.8rem, 3.6vw, 3.5rem);
-  font-style: italic;
-  font-weight: 300;
-  letter-spacing: 0.01em;
-  line-height: 1.25;
+@media (prefers-reduced-motion: reduce) {
+  .name-diagram__number,
+  .name-diagram__descriptions li {
+    transition: none;
+  }
 }
 
 @media (max-width: 700px) {
@@ -204,49 +215,8 @@ const { t } = useI18n()
     line-height: 1.55;
   }
 
-  .philosophy-closing {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    margin-top: 64px;
-    align-items: stretch;
-  }
-
-  .philosophy-closing__visual img {
-    width: min(100%, 360px);
-  }
-
-  .philosophy-closing__caption {
-    gap: 8px;
-    margin-top: 20px;
-    padding-top: 14px;
-    font-size: 0.82rem;
-    letter-spacing: 0.1em;
-  }
-
-  .philosophy-closing__caption small {
-    font-size: 0.62rem;
-  }
-
-  .philosophy-closing__contact {
-    flex-wrap: wrap;
-    width: 100%;
-    gap: 8px 12px;
-  }
-
-  .philosophy-closing__contact-label {
-    width: 100%;
-  }
-
-  .philosophy-closing__contact-email {
-    font-size: 0.64rem;
-    letter-spacing: 0.06em;
-  }
-
-  .philosophy-statement {
-    max-width: none;
-    font-size: clamp(1.7rem, 8.5vw, 2.7rem);
-    line-height: 1.2;
+  .name-diagram {
+    margin-top: 80px;
   }
 }
 </style>
