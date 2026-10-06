@@ -29,8 +29,8 @@
               <span class="name-diagram__number" title="" style="--position: 58%">2</span>
             </div>
             <ol class="name-diagram__descriptions">
-              <li><span class="sr-only">J.L. — </span>A quiet moment brings a new idea into focus.</li>
-              <li><span class="sr-only">JÖRMUNGANDR — </span>The next chapter begins with a single deliberate step.</li>
+              <li><span class="sr-only">J.L. — </span>{{ t('landing.about.livermoreDescription') }}</li>
+              <li>{{ t('landing.about.jormungandrDescription') }}</li>
             </ol>
           </section>
 

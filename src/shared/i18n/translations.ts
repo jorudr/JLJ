@@ -52,6 +52,8 @@ export const translations = {
         about: "About"
       },
       about: {
+        livermoreDescription: "Jesse Lauriston Livermore (July 26, 1877 – November 28, 1940) was an American stock trader who became famous as “The Bear of Wall Street” after making an estimated $100 million (billions in today’s money) by shorting the stock market during the 1929 crash.",
+        jormungandrDescription: "JÖRMUNGANDR, also known as the Midgard Serpent or World Serpent, dwells in the world sea, encircling the Earth (Midgard) and biting his own tail. Here, he embodies the market: spanning the globe and driving itself into crises, symbolically devouring itself.",
         eyebrow: "01 / ABOUT",
         title: "ABOUT",
         intro: "Trading is a journey that cannot be calculated in advance. Stability in trading is an illusion for fools who want to taste fast and easy money. Yet this instability hides the most fascinating part of the financial world: overnight, the rich can become poor, and the poor can become rich.",
@@ -374,6 +376,8 @@ export const translations = {
         about: "О нас"
       },
       about: {
+        livermoreDescription: "Джесси Лористон Ливермор (26 июля 1877 — 28 ноября 1940) — американский биржевой трейдер, прославившийся как «Медведь Уолл-стрит» после того, как заработал, по оценкам, 100 миллионов долларов (миллиарды в пересчёте на сегодняшние деньги), играя на понижение во время биржевого краха 1929 года.",
+        jormungandrDescription: "Ёрмунганд, также известный как Змей Мидгарда или Мировой змей, обитает в мировом океане, опоясывает Землю (Мидгард) и кусает собственный хвост. Здесь он олицетворяет рынок: охватывающий весь мир и сам приводящий себя к кризисам, символически пожирая себя.",
         eyebrow: "01 / О НАС",
         title: "О НАС",
         intro: "Торговля — это путешествие, которое невозможно просчитать заранее. Стабильность в торговле — иллюзия глупцов, желающих вкусить быстрых и лёгких денег. Однако именно в этой нестабильности скрывается самая увлекательная часть финансового мира: за одну ночь богач может превратиться в бедняка, а бедняк — в богача.",
