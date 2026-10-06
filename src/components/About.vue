@@ -33,6 +33,42 @@
               <li><span class="sr-only">JÖRMUNGANDR — </span>The next chapter begins with a single deliberate step.</li>
             </ol>
           </section>
+
+          <hr class="herb-divider" />
+
+          <section ref="herbDiagram" class="herb-diagram" aria-label="J.L.JÖRMUNGANDR emblem">
+            <svg class="herb-diagram__arrows" aria-hidden="true">
+              <path v-for="(path, index) in herbArrowPaths" :key="index" :d="path" />
+            </svg>
+            <div class="herb-diagram__visual">
+              <img src="/assets/herb-blue.svg" alt="J.L.JÖRMUNGANDR coat of arms" @load="updateHerbArrows" />
+              <button
+                v-for="(detail, index) in herbDetails"
+                :key="detail.name"
+                type="button"
+                class="name-diagram__number herb-diagram__number"
+                title=""
+                :style="{ '--position': detail.x, '--top': detail.y }"
+                :aria-label="detail.name"
+                :aria-describedby="`herb-detail-${index}`"
+                @mouseenter="activeHerbDetail = index"
+                @mouseleave="activeHerbDetail = null"
+                @focus="activeHerbDetail = index"
+                @blur="activeHerbDetail = null"
+              >{{ index + 1 }}</button>
+            </div>
+            <ol class="name-diagram__descriptions herb-diagram__descriptions">
+              <li
+                v-for="(detail, index) in herbDetails"
+                :id="`herb-detail-${index}`"
+                :key="detail.name"
+                :class="{ 'is-muted': activeHerbDetail !== null && activeHerbDetail !== index }"
+              >
+                <span class="herb-diagram__label">{{ index + 1 }} / {{ detail.name }}</span>
+                {{ detail.description }}
+              </li>
+            </ol>
+          </section>
         </section>
       </main>
 
@@ -42,11 +78,50 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t } = useI18n()
+const activeHerbDetail = ref(null)
+const herbDiagram = ref(null)
+const herbArrowPaths = ref([])
+let herbResizeObserver
+
+function updateHerbArrows() {
+  const diagram = herbDiagram.value
+  if (!diagram) return
+  const bounds = diagram.getBoundingClientRect()
+  const circles = diagram.querySelectorAll('.herb-diagram__number')
+  const descriptions = diagram.querySelectorAll('.herb-diagram__descriptions li')
+  herbArrowPaths.value = Array.from(circles, (circle, index) => {
+    const start = circle.getBoundingClientRect()
+    const end = descriptions[index].getBoundingClientRect()
+    const x = start.left + start.width / 2 - bounds.left
+    const y = start.top + start.height / 2 - bounds.top
+    const targetX = end.left + end.width / 2 - bounds.left
+    const targetY = end.top - bounds.top - 12
+    // Outer lanes keep the long vertical runs clear of the descriptions.
+    const laneX = index < 2 ? 4 + index * 12 : bounds.width - 4 - (index - 2) * 12
+    return `M ${x} ${y} V ${y + 28} H ${laneX} V ${targetY - 18} H ${targetX} V ${targetY}`
+  })
+}
+
+onMounted(() => {
+  herbResizeObserver = new ResizeObserver(updateHerbArrows)
+  herbResizeObserver.observe(herbDiagram.value)
+  herbDiagram.value.querySelectorAll('img, li').forEach(element => herbResizeObserver.observe(element))
+  updateHerbArrows()
+})
+
+onBeforeUnmount(() => herbResizeObserver?.disconnect())
+const herbDetails = [
+  { name: 'Tree', x: '50%', y: '32%', description: 'Every new idea grows from a patient foundation.' },
+  { name: 'Key', x: '48%', y: '63%', description: 'Curiosity opens the door to a different perspective.' },
+  { name: 'Papers', x: '43%', y: '75%', description: 'Small observations become the pages of a larger story.' },
+  { name: 'Serpent', x: '50%', y: '8%', description: 'Each ending carries the possibility of a new beginning.' },
+]
 </script>
 
 <style scoped>
@@ -128,7 +203,8 @@ const { t } = useI18n()
   color: #2c2c2a;
 }
 
-.name-diagram__connectors > svg > path {
+.name-diagram__connectors > svg > path,
+.herb-diagram__arrows > path {
   fill: none;
   stroke: currentColor;
   stroke-width: 1;
@@ -173,7 +249,8 @@ const { t } = useI18n()
   transition: background-color 180ms ease, color 180ms ease;
 }
 
-.name-diagram__number:hover {
+.name-diagram__number:hover,
+.name-diagram__number:focus-visible {
   background-color: #000;
   color: #fff;
 }
@@ -187,6 +264,70 @@ const { t } = useI18n()
   opacity: 0.25;
 }
 
+.herb-divider {
+  margin: clamp(32px, 5vw, 60px) 0 24px;
+  border: 0;
+  border-top: 1px solid rgba(44, 44, 42, 0.2);
+}
+
+.herb-diagram {
+  position: relative;
+}
+
+.herb-diagram__arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+  color: #2c2c2a;
+}
+
+.herb-diagram__visual {
+  position: relative;
+  width: min(75%, 510px);
+  margin: 0 auto;
+}
+
+.herb-diagram__visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.herb-diagram__number {
+  z-index: 2;
+  top: var(--top);
+  transform: translate(-50%, -50%);
+  padding: 0;
+}
+
+.herb-diagram__number:focus-visible {
+  outline: 2px solid #222;
+  outline-offset: 4px;
+}
+
+.herb-diagram__descriptions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 72px;
+  padding: 0 32px;
+}
+
+.herb-diagram__label {
+  display: block;
+  margin-bottom: 12px;
+  color: #171715;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.herb-diagram__descriptions .is-muted {
+  opacity: 0.25;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .name-diagram__number,
   .name-diagram__descriptions li {
@@ -195,6 +336,12 @@ const { t } = useI18n()
 }
 
 @media (max-width: 700px) {
+  .herb-diagram__descriptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 64px 20px;
+    margin-top: 56px;
+  }
+
   .philosophy-content {
     padding-top: 64px;
     padding-bottom: 72px;
