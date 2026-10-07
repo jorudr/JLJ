@@ -56,6 +56,27 @@ export function useImperialReveal(rootRef) {
   const states = new Map()
   let observer
   let revealStartsAt = 0
+  let idleTimer
+  let isIdle = false
+  const activityEvents = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'touchmove']
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer)
+    idleTimer = setTimeout(() => {
+      isIdle = true
+      const startsAt = performance.now()
+      for (const state of states.values()) animate(state, state.source, startsAt)
+    }, 15000)
+  }
+
+  function onActivity() {
+    if (isIdle) {
+      isIdle = false
+      const startsAt = performance.now()
+      for (const state of states.values()) animate(state, state.target, startsAt)
+    }
+    resetIdleTimer()
+  }
 
   const excluded = (element) => element?.closest(
     '.hero-tagline, .app-footer__language, .mobile-menu__language, [data-no-imperial], [aria-hidden="true"], script, style, svg, noscript, textarea, select, option'
@@ -69,14 +90,17 @@ export function useImperialReveal(rootRef) {
     state.done = true
   }
 
-  function animate(state) {
-    if (state.frame || state.done) return
+  function animate(state, destination = state.target, startsAt = revealStartsAt) {
+    if (state.frame) cancelAnimationFrame(state.frame)
+    state.frame = 0
+    if (state.current === destination) return
+    state.done = false
     // Every fragment shares the page's two-second introductory pause.
-    state.startedAt = revealStartsAt
-    const length = Math.max(Array.from(state.source).length, Array.from(state.target).length)
+    state.startedAt = startsAt
+    const source = Array.from(state.current)
+    const target = Array.from(destination)
+    const length = Math.max(source.length, target.length)
     const duration = Math.min(2600, Math.max(420, length * 24))
-    const source = Array.from(state.source)
-    const target = Array.from(state.target)
 
     function tick(now) {
       if (!states.has(state.node)) return
@@ -106,11 +130,7 @@ export function useImperialReveal(rootRef) {
     }
     const source = imperialCopy(target, locale.value)
     if (!source || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (existing) {
-        existing.target = target
-        existing.current = target
-        existing.done = true
-      }
+      states.delete(node)
       return
     }
     const state = existing || { node, element, frame: 0, done: false }
@@ -119,7 +139,7 @@ export function useImperialReveal(rootRef) {
     state.current = source
     states.set(node, state)
     node.nodeValue = source
-    animate(state)
+    if (!isIdle) animate(state)
   }
 
   function scan(node) {
@@ -156,17 +176,23 @@ export function useImperialReveal(rootRef) {
     })
     observer.observe(root, { childList: true, subtree: true, characterData: true })
     scan(root)
+    for (const event of activityEvents) window.addEventListener(event, onActivity, { passive: true })
+    resetIdleTimer()
   })
 
   watch(locale, () => {
     // Vue updates the translated text after this watcher; MutationObserver
     // catches those new values. Finish the old language's active animations.
     for (const state of states.values()) finish(state)
+    isIdle = false
     revealStartsAt = performance.now() + 2000
+    resetIdleTimer()
   })
 
   onBeforeUnmount(() => {
     observer?.disconnect()
+    clearTimeout(idleTimer)
+    for (const event of activityEvents) window.removeEventListener(event, onActivity)
     for (const state of states.values()) finish(state)
     states.clear()
   })
