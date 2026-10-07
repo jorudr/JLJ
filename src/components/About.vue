@@ -49,7 +49,7 @@
                 class="name-diagram__number herb-diagram__number"
                 title=""
                 :style="{ '--position': detail.x, '--top': detail.y }"
-                :aria-label="detail.name"
+                :aria-label="detail.labelKey ? t(detail.labelKey) : detail.name"
                 :aria-describedby="`herb-detail-${index}`"
                 @mouseenter="activeHerbDetail = index"
                 @mouseleave="activeHerbDetail = null"
@@ -64,8 +64,8 @@
                 :key="detail.name"
                 :class="{ 'is-muted': activeHerbDetail !== null && activeHerbDetail !== index }"
               >
-                <span class="herb-diagram__label">{{ index + 1 }} / {{ detail.name }}</span>
-                {{ detail.description }}
+                <span class="herb-diagram__label">{{ index + 1 }} / {{ detail.labelKey ? t(detail.labelKey) : detail.name }}</span>
+                {{ detail.descriptionKey ? t(detail.descriptionKey) : detail.description }}
               </li>
             </ol>
           </section>
@@ -117,10 +117,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => herbResizeObserver?.disconnect())
 const herbDetails = [
-  { name: 'Tree', x: '50%', y: '32%', description: 'Every new idea grows from a patient foundation.' },
-  { name: 'Key', x: '48%', y: '63%', description: 'Curiosity opens the door to a different perspective.' },
-  { name: 'Papers', x: '43%', y: '75%', description: 'Small observations become the pages of a larger story.' },
-  { name: 'Serpent', x: '50%', y: '8%', description: 'Each ending carries the possibility of a new beginning.' },
+  { name: 'Tree', x: '50%', y: '32%', labelKey: 'landing.about.treeLabel', descriptionKey: 'landing.about.treeDescription' },
+  { name: 'Key', x: '48%', y: '63%', labelKey: 'landing.about.keyLabel', descriptionKey: 'landing.about.keyDescription' },
+  { name: 'Papers', x: '43%', y: '75%', labelKey: 'landing.about.papersLabel', descriptionKey: 'landing.about.papersDescription' },
+  { name: 'Serpent', x: '50%', y: '11%', labelKey: 'landing.about.serpentLabel', descriptionKey: 'landing.about.serpentDescription' },
 ]
 </script>
 
