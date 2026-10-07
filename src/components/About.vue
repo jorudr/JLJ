@@ -1,5 +1,5 @@
 <template>
-  <div class="philosophy-page min-h-screen bg-white text-[#2c2c2a]">
+  <div ref="aboutRoot" class="philosophy-page min-h-screen bg-white text-[#2c2c2a]">
     <div class="philosophy-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav />
 
@@ -82,8 +82,11 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { useImperialReveal } from '../shared/imperialReveal'
 
 const { t } = useI18n()
+const aboutRoot = ref(null)
+useImperialReveal(aboutRoot)
 const activeHerbDetail = ref(null)
 const herbDiagram = ref(null)
 const herbArrowPaths = ref([])
