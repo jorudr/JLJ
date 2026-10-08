@@ -22,7 +22,7 @@
       <div class="app-footer__grid">
         <section class="app-footer__brand" aria-label="Company">
           <router-link to="/" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
-            <span></span>
+            <img src="/assets/herb.svg" alt="" width="36" height="32" />
           </router-link>
           <div>
             <strong>J.L.JÖRMUNGANDR</strong>
@@ -219,32 +219,18 @@ const selectFooterLocale = (code) => {
 }
 
 .app-footer__mark {
-  position: relative;
-  display: grid;
+  display: block;
   width: 36px;
-  height: 36px;
   flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(245, 245, 240, 0.34);
-  color: #f5f5f0;
 }
 
-.app-footer__mark::before,
-.app-footer__mark::after {
-  position: absolute;
-  content: "";
-  border: 1px solid rgba(245, 245, 240, 0.18);
-}
-
-.app-footer__mark::before {
-  inset: 6px;
-  transform: rotate(45deg);
-}
-
-.app-footer__mark::after {
-  inset: 13px;
-  background: #f5f5f0;
-  transform: rotate(45deg);
+.app-footer__mark img {
+  display: block;
+  width: 36px;
+  height: 32px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
 }
 
 .app-footer__brand strong {

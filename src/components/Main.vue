@@ -91,7 +91,7 @@
             J.L.JÖRMUNGANDR
           </div>
 
-          <h1 class="hero-tagline text-center mb-4 max-w-full px-4 whitespace-nowrap" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
+          <h1 class="hero-tagline text-center mb-4 max-w-full px-4" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">
             {{ typedLine1 || t('landing.heroTitleLine1') }}<span v-if="heroAnimationState === 2 && !typedLine2.length && typedLine1 !== t('landing.heroTitleLine1')" class="animate-pulse" aria-hidden="true">|</span>
             <template v-if="t('landing.heroTitleLine2') && (typedLine2.length > 0 || heroAnimationState === 2)">
               <br>
@@ -621,6 +621,17 @@ const scrollToFeatures = () => {
   letter-spacing: -0.01em;
   line-height: 1.15;
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .hero-tagline {
+    width: 100%;
+    padding: 0;
+    font-size: clamp(2.25rem, 10.5vw, 3.25rem);
+    line-height: 1.05;
+    white-space: normal;
+    text-wrap: balance;
+  }
 }
 
 .nav-language-button {
