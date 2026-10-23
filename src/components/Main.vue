@@ -230,13 +230,13 @@ import MobileMenu from './MobileMenu.vue'
 const { t, locale, setLocale } = useI18n()
 
 const gradflowConfig = {
-  color1: { r: 0, g: 0, b: 0 },
-  color2: { r: 220, g: 219, b: 255 },
-  color3: { r: 195, g: 173, b: 255 },
+  color1: { r: 64, g: 6, b: 21 },
+  color2: { r: 9, g: 0, b: 1 },
+  color3: { r: 160, g: 1, b: 59 },
   speed: 0.4,
-  scale: 1.2,
-  type: 'aurora',
-  noise: 0.08,
+  scale: 1,
+  type: 'smoke',
+  noise: 0.3,
 }
 
 const os = ref('unknown')
