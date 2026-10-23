@@ -45,33 +45,11 @@ body.is-menu-open {
   -webkit-overflow-scrolling: auto !important;
 }
 
-/* Keep the layout width identical between routes with and without page scroll. */
+/* Use the native scrollbar without custom ::-webkit-scrollbar styles: those force a
+   permanent classic scrollbar strip, while the native one overlays the page on macOS
+   and only appears while scrolling or on hover. color-scheme keeps it dark elsewhere. */
 html {
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
-}
-
-/* Minimalist Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background-color: #000;
-}
-::-webkit-scrollbar-track {
-  background: #000;
-}
-::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 10px;
-}
-body.is-scrolling::-webkit-scrollbar-thumb,
-body.is-scrolling ::-webkit-scrollbar-thumb,
-::-webkit-scrollbar-thumb:hover,
-::-webkit-scrollbar-thumb:active {
-  background: #2c2c2a;
-}
-
-/* Prevent the browser from drawing a visible square where scrollbars meet. */
-::-webkit-scrollbar-corner {
-  background: transparent;
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 245, 240, 0.35) transparent;
 }

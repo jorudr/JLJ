@@ -343,15 +343,8 @@ watch(() => locale.value, () => {
 
 // Removed dynamic body background sync to keep the scrollbar container background permanently dark
 
-let scrollTimeout = null
 const handleScroll = () => {
   isNavScrolled.value = window.scrollY > 8
-  document.body.classList.add('is-scrolling')
-  if (scrollTimeout) clearTimeout(scrollTimeout)
-  scrollTimeout = setTimeout(() => {
-    document.body.classList.remove('is-scrolling')
-  }, 800) // hide after 800ms
-
 }
 
 onMounted(() => {
@@ -361,7 +354,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  if (scrollTimeout) clearTimeout(scrollTimeout)
 })
 
 // Animation logic removed
