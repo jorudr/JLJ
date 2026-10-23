@@ -83,11 +83,11 @@
           class="flex flex-col items-center justify-center w-full space-y-6"
         >
           <div
-            class="mb-2 text-center text-sm sm:text-lg lg:text-xl font-light uppercase tracking-[0.35em] transition-all duration-1000 ease-out"
+            class="hero-brand mb-2 text-center text-sm sm:text-lg lg:text-xl font-light uppercase tracking-[0.35em] transition-all duration-1000 ease-out"
             :class="heroAnimationState >= 3 ? 'opacity-80 translate-y-0' : 'opacity-0 translate-y-4'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
-            <img src="/assets/herb.svg" alt="" width="64" height="56" class="mx-auto mb-4 h-14 w-16 object-contain brightness-0" />
+            <img src="/assets/herb.svg" alt="" width="64" height="56" class="mx-auto mb-4 h-14 w-16 object-contain brightness-0 invert" />
             J.L.JÖRMUNGANDR
           </div>
 
@@ -100,7 +100,7 @@
           </h1>
 
           <div
-            class="!mt-4 mb-8 w-4/5 max-w-[720px] transition-all duration-1000 ease-out"
+            class="hero-divider !mt-4 mb-8 w-4/5 max-w-[720px] transition-all duration-1000 ease-out"
             :class="heroAnimationState >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'"
           >
             <ExDivider variant="tactical" spacing="none" />
@@ -383,6 +383,16 @@ const scrollToFeatures = () => {
 .hero-header > main *,
 .hero-header > .absolute:not(.gradflow-background):not(.mobile-menu) * {
   color: #050505;
+}
+
+.hero-header > main .hero-brand,
+.hero-header > main .hero-tagline,
+.hero-header > main .hero-tagline * {
+  color: #fff;
+}
+
+.hero-divider :deep(.bg-black) {
+  background-color: #fff;
 }
 
 .hero-header > header {
