@@ -1,6 +1,7 @@
 <template>
-  <div class="download-page min-h-screen bg-black text-white/80">
-    <div class="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
+  <div class="download-page relative min-h-screen bg-black text-white/80">
+    <PageGradflowBackground />
+    <div class="relative z-[1] mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav :always-dark="true" />
       <main class="download-main" aria-labelledby="download-title" :lang="locale">
         <header class="download-intro">
@@ -39,6 +40,7 @@
 <script setup>
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
+import PageGradflowBackground from './PageGradflowBackground.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 import { downloads } from '../shared/downloads'
 

@@ -222,6 +222,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
 import GradflowBackground from './GradflowBackground.vue'
+import { gradflowConfig } from '../shared/gradflowConfig'
 import ExDivider from '../shared/ui/ExDivider.vue'
 import AppFooter from './AppFooter.vue'
 import HomeDetails from './HomeDetails.vue'
@@ -229,15 +230,6 @@ import MobileMenu from './MobileMenu.vue'
 
 const { t, locale, setLocale } = useI18n()
 
-const gradflowConfig = {
-  color1: { r: 64, g: 6, b: 21 },
-  color2: { r: 9, g: 0, b: 1 },
-  color3: { r: 160, g: 1, b: 59 },
-  speed: 0.4,
-  scale: 1,
-  type: 'smoke',
-  noise: 0.3,
-}
 
 const os = ref('unknown')
 

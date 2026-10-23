@@ -1,6 +1,7 @@
 <template>
-  <div class="pricing-page min-h-screen bg-black text-white/80">
-    <div class="pricing-shell mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
+  <div class="pricing-page relative min-h-screen bg-black text-white/80">
+    <PageGradflowBackground />
+    <div class="pricing-shell relative z-[1] mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav :always-dark="true" />
 
       <main class="pricing-main flex-1" aria-labelledby="pricing-title">
@@ -76,6 +77,7 @@
 import { computed } from 'vue'
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
+import PageGradflowBackground from './PageGradflowBackground.vue'
 import { useI18n } from '../shared/i18n/useI18n'
 
 const { t, tm } = useI18n()
@@ -302,10 +304,10 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
 
 .pricing-note {
   margin: 20px auto 0;
-  color: rgba(255, 255, 255, 0.36);
+  color: #ffffff;
   width: min(100%, 1060px);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.58rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
