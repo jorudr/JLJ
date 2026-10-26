@@ -72,6 +72,11 @@ export const translations = {
         subtitle: "The route you requested does not exist or has moved somewhere else.",
         backHome: "Return home"
       },
+      legal: {
+        eyebrow: "LEGAL",
+        privacyTitle: "Privacy Policy",
+        termsTitle: "Terms of Use"
+      },
       productsMenu: {
         description: "Explore our current products and await for the newest solutions.",
         fullVersion: "Full Version"
@@ -161,6 +166,8 @@ export const translations = {
         accessTitle: "Contact",
         languageTitle: "Language",
         contact: "Email",
+        privacy: "Privacy Policy",
+        terms: "Terms of Use",
         rights: "All rights reserved"
       },
       pricing: {
@@ -168,6 +175,13 @@ export const translations = {
         title: "Choose the right plan for your trading",
         subtitle: "Start with the essential trading journal for free, or unlock the complete analytical environment with a monthly subscription.",
         note: "SUBSCRIPTIONS ARE MANAGED SECURELY THROUGH PATREON",
+        legal: {
+          prefix: "By subscribing, you accept the",
+          terms: "Terms of Use",
+          and: "and the",
+          privacy: "Privacy Policy",
+          suffix: "."
+        },
         free: {
           eyebrow: "FOR INDIVIDUALS",
           name: "Free",
@@ -404,6 +418,11 @@ export const translations = {
         subtitle: "Запрошенный адрес не существует или был перемещён.",
         backHome: "Вернуться на главную"
       },
+      legal: {
+        eyebrow: "ПРАВОВАЯ ИНФОРМАЦИЯ",
+        privacyTitle: "Политика конфиденциальности",
+        termsTitle: "Условия использования"
+      },
       productsMenu: {
         description: "Изучите наши продукты и ожидайте появления новых решений.",
         fullVersion: "Полная версия"
@@ -493,6 +512,8 @@ export const translations = {
         accessTitle: "Связь",
         languageTitle: "Язык",
         contact: "Email",
+        privacy: "Политика конфиденциальности",
+        terms: "Условия использования",
         rights: "Все права защищены"
       },
       pricing: {
@@ -500,6 +521,13 @@ export const translations = {
         title: "Выберите версию для своей торговли",
         subtitle: "Начните бесплатно с основного торгового журнала или откройте полную аналитическую среду по ежемесячной подписке.",
         note: "ПОДПИСКА БЕЗОПАСНО ОФОРМЛЯЕТСЯ И УПРАВЛЯЕТСЯ ЧЕРЕЗ PATREON",
+        legal: {
+          prefix: "Оформляя подписку, вы принимаете",
+          terms: "Условия использования",
+          and: "и",
+          privacy: "Политику конфиденциальности",
+          suffix: "."
+        },
         free: {
           eyebrow: "ДЛЯ ИНДИВИДУАЛЬНОЙ РАБОТЫ",
           name: "Free",

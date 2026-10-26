@@ -4,6 +4,7 @@ import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
 import About from '../components/About.vue'
 import Download from '../components/Download.vue'
+import LegalPage from '../components/LegalPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,20 @@ const router = createRouter({
       name: 'download',
       component: Download,
       meta: { titleKey: 'landing.nav.download' }
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: LegalPage,
+      props: { doc: 'privacy' },
+      meta: { titleKey: 'landing.legal.privacyTitle' }
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: LegalPage,
+      props: { doc: 'terms' },
+      meta: { titleKey: 'landing.legal.termsTitle' }
     },
     {
       path: '/:pathMatch(.*)*',

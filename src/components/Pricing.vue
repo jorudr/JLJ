@@ -66,6 +66,12 @@
         </section>
 
         <p class="pricing-note">{{ t('landing.pricing.note') }}</p>
+        <p class="pricing-legal">
+          {{ t('landing.pricing.legal.prefix') }}
+          <router-link to="/terms">{{ t('landing.pricing.legal.terms') }}</router-link>
+          {{ t('landing.pricing.legal.and') }}
+          <router-link to="/privacy">{{ t('landing.pricing.legal.privacy') }}</router-link>{{ t('landing.pricing.legal.suffix') }}
+        </p>
       </main>
 
       <AppFooter hide-hero />
@@ -311,6 +317,22 @@ const fullFeatures = computed(() => tm('landing.pricing.full.features'))
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
+}
+
+.pricing-legal {
+  margin: 12px auto 0;
+  width: min(100%, 1060px);
+  color: rgba(255, 255, 255, 0.5);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pricing-legal a {
+  color: #f5f5f0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 @media (max-width: 800px) {

@@ -76,6 +76,10 @@
 
       <div class="app-footer__bottom">
         <span>{{ t('landing.footer.company') }}</span>
+        <nav class="app-footer__legal" aria-label="Legal">
+          <router-link to="/terms">{{ t('landing.footer.terms') }}</router-link>
+          <router-link to="/privacy">{{ t('landing.footer.privacy') }}</router-link>
+        </nav>
         <span>{{ t('landing.footer.rights') }}</span>
       </div>
     </div>
@@ -285,6 +289,23 @@ const selectFooterLocale = (code) => {
   padding-top: 22px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(245, 245, 240, 0.38);
+}
+
+.app-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+}
+
+.app-footer__legal a {
+  color: rgba(245, 245, 240, 0.56);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.app-footer__legal a:hover {
+  color: #f5f5f0;
 }
 
 .app-footer__language-menu {
