@@ -2,6 +2,6 @@
 const base = import.meta.env.BASE_URL
 
 export const downloads = [
-  { id: 'windows', name: 'Windows', url: 'https://github.com/jorudr/JLJ/releases/download/1.1.7/JLJ_2.0.2_windows-x86_64-setup.exe', label: 'landing.downloadWindows' },
+  { id: 'windows', name: 'Windows', url: 'https://github.com/jorudr/JLJ/releases/download/1.1.7/JLJ_2.0.4_windows-x86_64-setup.exe', label: 'landing.downloadWindows' },
   { id: 'macos', name: 'macOS', url: 'https://github.com/jorudr/JLJ/releases/download/1.1.7/JORU_Installer.dmg', label: 'landing.downloadMac' },
 ]
