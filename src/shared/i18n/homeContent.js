@@ -24,6 +24,9 @@ export const homeContent = {
     finalText: 'Скачайте приложение для Windows или macOS и выберите подходящий тариф.',
     seoTitle: 'Журнал сделок и аналитика для системной торговли',
     seoText: 'J.L.JÖRMUNGANDR — торговый журнал для трейдеров, которым важно понимать причины результата. Записывайте и анализируйте сделки, отслеживайте капитал и просадки, сравнивайте торговые сценарии и формализуйте правила стратегии в одном приложении для Windows и macOS.',
+    dataTitle: 'Вход через Google и ваши данные',
+    dataText: 'J.L.JÖRMUNGANDR использует вход через Google только для создания и идентификации вашего аккаунта. При входе через Google мы получаем ваше имя, адрес электронной почты и фото профиля. Эти данные нужны, чтобы вы могли войти, и для работы аккаунта: профиля, лицензии, форума и событий. Журнал сделок и API-ключи бирж остаются на вашем устройстве. Мы не продаём ваши данные и не передаём их рекламодателям.',
+    dataLink: 'Политика конфиденциальности',
     faqTitle: 'Частые вопросы о торговом журнале',
     faq: [
       { question: 'Что такое J.L.JÖRMUNGANDR?', answer: 'Это приложение для ведения журнала сделок, анализа торговых результатов и разработки правил стратегии. Оно помогает изучать историю торговли и принимать решения на основе собственных данных.' },
@@ -57,6 +60,9 @@ export const homeContent = {
     finalText: 'Download the application for Windows or macOS and choose the plan that fits.',
     seoTitle: 'Trade journal and analytics for systematic trading',
     seoText: 'J.L.JÖRMUNGANDR is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
+    dataTitle: 'Google Sign-In and your data',
+    dataText: 'J.L.JÖRMUNGANDR uses Google Sign-In only to create and identify your account. When you sign in with Google, we receive your name, email address and profile picture. We use this data to sign you in and to run your account: your profile, license, forum and events. Your trade journal and exchange API keys stay on your device. Your data is never sold or shared with advertisers.',
+    dataLink: 'Privacy Policy',
     faqTitle: 'Trading journal FAQ',
     faq: [
       { question: 'What is J.L.JÖRMUNGANDR?', answer: 'It is an application for keeping a trading journal, reviewing performance, and developing strategy rules. Use your trade history to make decisions based on your own data.' },

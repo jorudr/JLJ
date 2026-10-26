@@ -27,6 +27,13 @@
         </article>
       </div>
     </section>
+    <section id="google-sign-in" class="home-block account-data" aria-labelledby="data-title">
+      <header class="section-intro">
+        <h2 id="data-title">{{ copy.dataTitle }}</h2>
+        <p>{{ copy.dataText }}</p>
+        <router-link to="/privacy" class="text-link">{{ copy.dataLink }} ↗</router-link>
+      </header>
+    </section>
     <section class="home-block faq" aria-labelledby="faq-title">
       <header class="section-intro"><h2 id="faq-title">{{ copy.faqTitle }}</h2></header>
       <dl>
@@ -88,7 +95,8 @@ h2 { font-size: clamp(2.1rem, 4vw, 3.6rem); font-weight: 300; line-height: 1.1; 
 h3 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 300; line-height: 1.15; }
 p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .98rem; line-height: 1.65; color: rgba(245,245,240,.65); }
 .section-intro p, .final-cta p { margin-top: 20px; max-width: 650px; }
-.faq { border-top: 1px solid #ffffff24; }
+.account-data, .faq { border-top: 1px solid #ffffff24; }
+.account-data .section-intro { margin-bottom: 0; }
 .faq dl { max-width: 900px; margin: 0; }
 .faq-item { padding: 22px 0; border-top: 1px solid #ffffff1f; }
 .faq-item dt { font-size: clamp(1.25rem, 2vw, 1.65rem); }
