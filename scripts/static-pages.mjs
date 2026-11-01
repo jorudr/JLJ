@@ -1,14 +1,13 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { homeContent } from '../src/shared/i18n/homeContent.js'
 import { renderMarkdown } from '../src/shared/legal/renderMarkdown.js'
+import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE } from '../src/shared/seo.js'
 
 // The site is a client-rendered SPA, but crawlers that do not run JavaScript
 // (including Google's OAuth brand verification) must still see the app name,
 // its description and the Privacy Policy link. Each page is published with a
 // static copy of its content inside #app; Vue replaces it on mount.
 
-const SITE = 'https://www.gandr.site'
-const BRAND = 'J.L.JÖRMUNGANDR'
 const APP_ROOT = '<div id="app" class="bg-black text-white"></div>'
 
 const template = readFileSync('dist/index.html', 'utf8')
@@ -81,20 +80,28 @@ const legalBody = (title, doc) => `<h1>${title}</h1>
     <p>${BRAND} — <a href="/terms">Terms of Use</a> · <a href="/privacy">Privacy Policy</a></p>
     <article>${legalHtml(doc)}</article>`
 
-const pageBody = (title) => `<h1>${BRAND} — ${title}</h1>
-    ${intro}`
+const downloadBody = `<h1>Download ${BRAND} for Windows and macOS</h1>
+    <p>Download the desktop trading journal for Windows or macOS. Start with the free plan to record trades, screenshots and decision notes. Compare available features on the <a href="/pricing">pricing page</a>.</p>
+    <p>For installation help and updates, visit the <a href="https://t.me/gandr_trade">Telegram community</a>.</p>`
 
-const homeTitle = `${BRAND} — Trading Journal for Traders`
+const pricingBody = `<h1>Trading journal plans and pricing</h1>
+    <p>Start with the free trading journal to record trades, screenshots and notes. The Full plan adds advanced trade analysis and tools for developing trading strategies.</p>
+    <p>Review the plans in the application and <a href="/download">download ${BRAND}</a> for Windows or macOS.</p>`
+
+const aboutBody = `<h1>About ${BRAND}</h1>
+    <p>${BRAND} is a desktop trading journal and analytical workspace for reviewing decisions, tracking results and developing trading rules.</p>
+    <p>Its name and visual identity reflect the project’s approach to disciplined market work. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
+
 const pages = [
-  { file: 'index.html', path: '/', title: homeTitle, description: en.seoText, body: homeBody },
-  { file: 'privacy.html', path: '/privacy', title: `Privacy Policy — ${BRAND}`, description: `How ${BRAND} collects, uses and protects your data, including data received through Google Sign-In.`, body: legalBody('Privacy Policy', 'privacy') },
-  { file: 'terms.html', path: '/terms', title: `Terms of Use — ${BRAND}`, description: `Terms governing the use of the ${BRAND} application and related services.`, body: legalBody('Terms of Use', 'terms') },
-  { file: 'download.html', path: '/download', title: `Download — ${BRAND}`, description: en.finalText, body: pageBody('Download') },
-  { file: 'pricing.html', path: '/pricing', title: `Pricing — ${BRAND}`, description: en.plansIntro, body: pageBody('Pricing') },
-  { file: 'about.html', path: '/about', title: `About — ${BRAND}`, description: en.seoText, body: pageBody('About') },
-  { file: 'philosophy.html', path: '/about', title: `About — ${BRAND}`, description: en.seoText, body: pageBody('About') },
-  { file: 'announcement.html', path: '/download', title: `Download — ${BRAND}`, description: en.finalText, body: pageBody('Download') },
-  { file: '404.html', path: null, title: `Page not found — ${BRAND}`, description: en.seoText, body: pageBody('Page not found') },
+  { file: 'index.html', path: '/', body: homeBody },
+  { file: 'privacy.html', path: '/privacy', body: legalBody('Privacy Policy', 'privacy') },
+  { file: 'terms.html', path: '/terms', body: legalBody('Terms of Use', 'terms') },
+  { file: 'download.html', path: '/download', body: downloadBody },
+  { file: 'pricing.html', path: '/pricing', body: pricingBody },
+  { file: 'about.html', path: '/about', body: aboutBody },
+  { file: 'philosophy.html', path: '/about', body: aboutBody },
+  { file: 'announcement.html', path: '/download', body: downloadBody },
+  { file: '404.html', path: null, body: `<h1>Page not found</h1><p>Return to the <a href="/">trading journal home page</a>.</p>` },
 ]
 
 const setMeta = (html, pattern, content) => {
@@ -102,12 +109,14 @@ const setMeta = (html, pattern, content) => {
   return html.replace(pattern, (_, before, after) => `${before}${escapeHtml(content)}${after}`)
 }
 
-const render = ({ path, title, description, body }) => {
+const render = ({ path, body }) => {
+  const { title, description } = pageSeo(path || '', 'en')
   let html = template
   html = setMeta(html, /(<title>)[^<]*(<\/title>)/, title)
   html = setMeta(html, /(<meta name="description" content=")[^"]*(")/, description)
   html = setMeta(html, /(<meta property="og:title" content=")[^"]*(")/, title)
   html = setMeta(html, /(<meta property="og:description" content=")[^"]*(")/, description)
+  html = setMeta(html, /(<meta property="og:image" content=")[^"]*(")/, SOCIAL_IMAGE)
   if (path) {
     html = setMeta(html, /(<link rel="canonical" href=")[^"]*(")/, `${SITE}${path}`)
     html = setMeta(html, /(<meta property="og:url" content=")[^"]*(")/, `${SITE}${path}`)
@@ -118,6 +127,19 @@ const render = ({ path, title, description, body }) => {
       .replace(/(<meta name="robots" content=")[^"]*(")/, '$1noindex$2')
   }
   if (!html.includes(APP_ROOT)) throw new Error('static-pages: #app root not found in dist/index.html')
+  if (path === '/') {
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: BRAND,
+      url: SITE,
+      description: en.seoText,
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Windows, macOS',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', url: `${SITE}/pricing` },
+    }
+    html = html.replace('</head>', `  <script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>\n</head>`)
+  }
   return html
     .replace('</head>', `  ${staticStyles}\n</head>`)
     .replace(APP_ROOT, `<div id="app" class="bg-black text-white">
@@ -137,3 +159,6 @@ const render = ({ path, title, description, body }) => {
 for (const page of pages) {
   writeFileSync(`dist/${page.file}`, render(page))
 }
+
+writeFileSync('dist/robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`)
+writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexedPaths.map(path => `  <url><loc>${SITE}${path}</loc></url>`).join('\n')}\n</urlset>\n`)

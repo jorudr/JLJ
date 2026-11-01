@@ -170,12 +170,12 @@
 
           <!- Identity and Platform Description ->
           <div class="space-y-4 px-4">
-            <h1 
+            <p
               class="text-4xl sm:text-6xl tracking-[0.4em] uppercase font-light animate-glitch"
               :class="isDark ? 'text-white' : 'text-black/90'"
             >
               J.L.Jörmungandr
-            </h1>
+            </p>
             <p 
               class="text-[9px] sm:text-[10px] font-mono tracking-[0.6em] uppercase opacity-40 transition-opacity hover:opacity-75"
               :class="isDark ? 'text-white' : 'text-black/90'"

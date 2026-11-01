@@ -2,36 +2,34 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from './shared/i18n/useI18n'
-import { homeContent } from './shared/i18n/homeContent'
+import { pageSeo, SOCIAL_IMAGE } from './shared/seo'
 
 const route = useRoute()
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 
-const tabTitle = 'JÖRU'
 const setMeta = (selector, content) => {
   const element = document.querySelector(selector)
   if (element) element.setAttribute('content', content)
 }
 
 const updateTitle = () => {
-  const titleKey = route.meta?.titleKey
-  const pageTitle = titleKey ? t(titleKey) : route.meta?.title
-  document.title = route.path !== '/' && pageTitle && pageTitle !== titleKey
-    ? `${tabTitle} — ${pageTitle}`
-    : tabTitle
-  if (route.path === '/') {
-    const copy = homeContent[locale.value] || homeContent.en
-    const seoTitle = locale.value === 'ru'
-      ? 'JÖRMUNGANDR — торговый журнал для трейдеров'
-      : 'JÖRMUNGANDR — Trading Journal for Traders'
-    setMeta('meta[name="description"]', copy.seoText)
-    setMeta('meta[property="og:title"]', seoTitle)
-    setMeta('meta[property="og:description"]', copy.seoText)
+  const seo = pageSeo(route.path, locale.value)
+  document.title = seo.title
+  setMeta('meta[name="description"]', seo.description)
+  setMeta('meta[name="robots"]', seo.index ? 'index, follow, max-image-preview:large' : 'noindex, follow')
+  setMeta('meta[property="og:title"]', seo.title)
+  setMeta('meta[property="og:description"]', seo.description)
+  setMeta('meta[property="og:url"]', seo.canonical || '')
+  setMeta('meta[property="og:image"]', SOCIAL_IMAGE)
+  const canonical = document.querySelector('link[rel="canonical"]')
+  if (canonical) {
+    if (seo.canonical) canonical.setAttribute('href', seo.canonical)
+    else canonical.removeAttribute('href')
   }
   document.documentElement.lang = locale.value
 }
 
-watch([() => route.path, () => route.meta, locale], updateTitle, { immediate: true })
+watch([() => route.path, locale], updateTitle, { immediate: true })
 </script>
 
 <template>
