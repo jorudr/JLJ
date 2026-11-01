@@ -123,10 +123,10 @@
           <!-- Mobile Hint Button (Open on Computer) -->
           <router-link
             to="/download"
-            class="mobile-open-computer flex md:hidden items-center justify-center rounded-[25px] px-6 py-2.5 text-center transition-all duration-300 bg-black/10 border border-black/10 backdrop-blur-md dark:bg-white/10 dark:border-white/15"
+            class="mobile-open-computer flex md:hidden items-center justify-center rounded-[25px] px-6 py-2.5 text-center transition-all duration-300 bg-white border border-white/20 shadow-sm"
             :class="heroAnimationState >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
           >
-            <span class="nav-openai-font text-[13px] sm:text-[14px] font-normal tracking-tight opacity-70">
+            <span class="nav-openai-font text-[13px] sm:text-[14px] font-normal tracking-tight text-black">
               {{ t('landing.pricing.free.cta') }}
             </span>
           </router-link>
