@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homeContent } from '../src/shared/i18n/homeContent.js'
 import { renderMarkdown } from '../src/shared/legal/renderMarkdown.js'
-import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE } from '../src/shared/seo.js'
+import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE, contentPages } from '../src/shared/seo.js'
 
 // The site is a client-rendered SPA, but crawlers that do not run JavaScript
 // (including Google's OAuth brand verification) must still see the app name,
@@ -18,6 +18,7 @@ const escapeHtml = (value) => value
   .replace(/"/g, '&quot;')
 
 const legalHtml = (doc) => renderMarkdown(readFileSync(`src/shared/legal/${doc}.en.md`, 'utf8'))
+const contentHtml = (doc) => renderMarkdown(readFileSync(`src/shared/content/${doc}.en.md`, 'utf8'))
 
 // Shown only when JavaScript is unavailable; otherwise hidden until Vue mounts,
 // with a delayed reveal in case the bundle fails to load.
@@ -97,6 +98,10 @@ const aboutBody = `<h1>About ${BRAND}</h1>
     <p>${BRAND} is a desktop trading journal and analytical workspace for reviewing decisions, tracking results and developing trading rules.</p>
     <p>Its name and visual identity reflect the project’s approach to disciplined market work. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
 
+const contentBody = (page) => `<h1>${escapeHtml(page.title)}</h1>
+    <p>${escapeHtml(page.subtitle)}</p>
+    <article>${contentHtml(page.doc)}</article>`
+
 const pages = [
   { file: 'index.html', path: '/', body: homeBody('en'), locale: 'en' },
   { file: 'ru/index.html', path: '/ru/', body: homeBody('ru'), locale: 'ru' },
@@ -107,6 +112,7 @@ const pages = [
   { file: 'about.html', path: '/about', body: aboutBody },
   { file: 'philosophy.html', path: '/about', body: aboutBody },
   { file: 'announcement.html', path: '/download', body: downloadBody },
+  ...contentPages.map(page => ({ file: `${page.path.slice(1)}.html`, path: page.path, body: contentBody(page) })),
   { file: '404.html', path: null, body: `<h1>Page not found</h1><p>Return to the <a href="/">trading journal home page</a>.</p>` },
 ]
 

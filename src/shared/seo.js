@@ -41,11 +41,55 @@ const titles = {
   },
 }
 
-export const indexedPaths = [...Object.keys(titles.en), '/ru/']
+export const contentPages = [
+  {
+    path: '/trading-journal-software',
+    doc: 'trading-journal-software',
+    title: 'Trading journal software built for serious traders',
+    subtitle: 'What to look for in trading journal software, and how journaling, strategy design and analytics fit together.',
+    seoTitle: `Trading Journal Software — ${BRAND}`,
+    seoDescription: 'What trading journal software needs to do beyond logging trades: strategy versioning, execution analytics and broker integration.',
+  },
+  {
+    path: '/trading-journal-for-day-traders',
+    doc: 'trading-journal-for-day-traders',
+    title: 'The trading journal day traders actually need',
+    subtitle: 'High trade volume and fast decisions need a journal that surfaces patterns, not just logs trades.',
+    seoTitle: `Trading Journal for Day Traders — ${BRAND}`,
+    seoDescription: 'What a trading journal for day traders should track: session breakdowns, execution quality and rule discipline.',
+  },
+  {
+    path: '/free-trading-journal',
+    doc: 'free-trading-journal',
+    title: 'What a free trading journal should cover',
+    subtitle: 'The fundamentals that matter most — trade logging, screenshots and context — before you pay for anything.',
+    seoTitle: `Free Trading Journal — ${BRAND}`,
+    seoDescription: 'What to expect from a free trading journal, and why consistent logging matters more than the feature tier.',
+  },
+  {
+    path: '/how-to-keep-a-trading-journal',
+    doc: 'how-to-keep-a-trading-journal',
+    title: 'How to keep a trading journal',
+    subtitle: 'A practical, step-by-step approach to journaling trades so patterns become visible instead of forgotten.',
+    seoTitle: `How to Keep a Trading Journal — ${BRAND}`,
+    seoDescription: 'A step-by-step guide to keeping a trading journal: what to record, how to tag trades and how to review them.',
+  },
+]
+
+export const indexedPaths = [...Object.keys(titles.en), '/ru/', ...contentPages.map(page => page.path)]
 
 export function pageSeo(path, locale = 'en') {
   const language = path === '/ru/' ? 'ru' : path === '/' ? 'en' : locale === 'ru' ? 'ru' : 'en'
   const known = indexedPaths.includes(path)
+  const contentPage = contentPages.find(page => page.path === path)
+  if (contentPage) {
+    return {
+      title: contentPage.seoTitle,
+      description: contentPage.seoDescription,
+      canonical: `${SITE}${path}`,
+      index: true,
+    }
+  }
   return {
     title: known ? titles[language][path] : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
     description: path === '/' || path === '/ru/' ? homeContent[language].seoText : descriptions[language][path] || '',

@@ -37,6 +37,14 @@
           <router-link to="/about">{{ t('landing.nav.about') }}</router-link>
         </nav>
 
+        <nav class="app-footer__column" aria-label="Guides">
+          <h3>Guides</h3>
+          <router-link to="/trading-journal-software">Trading Journal Software</router-link>
+          <router-link to="/trading-journal-for-day-traders">For Day Traders</router-link>
+          <router-link to="/free-trading-journal">Free Trading Journal</router-link>
+          <router-link to="/how-to-keep-a-trading-journal">How to Keep a Journal</router-link>
+        </nav>
+
         <nav class="app-footer__column" :aria-label="t('landing.footer.accessTitle')">
           <h3>{{ t('landing.footer.accessTitle') }}</h3>
           <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer">{{ t('landing.footer.telegramCta') }}</a>
@@ -215,8 +223,8 @@ const selectFooterLocale = (code) => {
 
 .app-footer__grid {
   display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) minmax(150px, 0.7fr) minmax(190px, 0.8fr) minmax(160px, 0.7fr);
-  gap: clamp(28px, 5vw, 72px);
+  grid-template-columns: minmax(220px, 1.3fr) minmax(140px, 0.65fr) minmax(170px, 0.75fr) minmax(140px, 0.65fr) minmax(160px, 0.7fr);
+  gap: clamp(24px, 4vw, 56px);
   padding: clamp(36px, 6vw, 64px) 0;
 }
 
