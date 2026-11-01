@@ -21,7 +21,7 @@
 
       <div class="app-footer__grid">
         <section class="app-footer__brand" aria-label="Company">
-          <router-link to="/" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
+          <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
             <img src="/assets/herb.svg" alt="" width="36" height="32" />
           </router-link>
           <div>
@@ -88,6 +88,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '../shared/i18n/useI18n'
 
 defineProps({
@@ -103,11 +104,14 @@ const footerLocales = [
 ]
 
 const { t, locale, setLocale } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const isLanguageMenuOpen = ref(false)
 const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
 
 const selectFooterLocale = (code) => {
-  setLocale(code)
+  if (route.path === '/' || route.path === '/ru/') router.push(code === 'ru' ? '/ru/' : '/')
+  else setLocale(code)
   isLanguageMenuOpen.value = false
 }
 </script>

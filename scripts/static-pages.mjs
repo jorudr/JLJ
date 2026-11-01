@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homeContent } from '../src/shared/i18n/homeContent.js'
 import { renderMarkdown } from '../src/shared/legal/renderMarkdown.js'
 import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE } from '../src/shared/seo.js'
@@ -11,8 +11,6 @@ import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE } from '../src/shared/
 const APP_ROOT = '<div id="app" class="bg-black text-white"></div>'
 
 const template = readFileSync('dist/index.html', 'utf8')
-const en = homeContent.en
-
 const escapeHtml = (value) => value
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -36,45 +34,52 @@ const staticStyles = `<script>document.documentElement.classList.add('js')</scri
     @keyframes static-reveal { to { visibility: visible; } }
   </style>`
 
-const header = `<header>
-      <a href="/"><strong>${BRAND}</strong></a>
+const header = (locale) => `<header>
+      <a href="${locale === 'ru' ? '/ru/' : '/'}"><strong>${BRAND}</strong></a>
       <nav aria-label="Primary">
-        <a href="/download">Download</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/about">About</a>
+        <a href="/download">${locale === 'ru' ? 'Скачать' : 'Download'}</a>
+        <a href="/pricing">${locale === 'ru' ? 'Тарифы' : 'Pricing'}</a>
+        <a href="/about">${locale === 'ru' ? 'О нас' : 'About'}</a>
+        <a href="${locale === 'ru' ? '/' : '/ru/'}" hreflang="${locale === 'ru' ? 'en' : 'ru'}">${locale === 'ru' ? 'English' : 'Русский'}</a>
       </nav>
     </header>`
 
-const footer = `<footer>
-      <p><strong>${BRAND}</strong> — ${escapeHtml(en.seoTitle)}.</p>
+const footer = (locale) => `<footer>
+      <p><strong>${BRAND}</strong> — ${escapeHtml(homeContent[locale].seoTitle)}.</p>
       <nav aria-label="Legal">
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/terms">Terms of Use</a>
+        <a href="/privacy">${locale === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</a>
+        <a href="/terms">${locale === 'ru' ? 'Условия использования' : 'Terms of Use'}</a>
         <a href="mailto:gandr.trade@gmail.com">gandr.trade@gmail.com</a>
       </nav>
     </footer>`
 
-const intro = `<p>${escapeHtml(en.seoText)}</p>`
-
-const homeBody = `<h1>${BRAND} — ${escapeHtml(en.seoTitle)}</h1>
-    ${intro}
+const homeBody = (locale) => {
+  const copy = homeContent[locale]
+  return `<h1>${escapeHtml(copy.seoTitle)} — ${BRAND}</h1>
+    <p>${escapeHtml(copy.seoText)}</p>
     <section>
-      <h2>${escapeHtml(en.scenariosTitle)}</h2>
-      <ul>${en.scenarios.map(item => `<li><strong>${escapeHtml(item.title)}.</strong> ${escapeHtml(item.text)}</li>`).join('')}</ul>
+      <h2>${escapeHtml(copy.guideTitle)}</h2>
+      <p>${escapeHtml(copy.guideIntro)}</p>
+      <ol>${copy.guideSteps.map(step => `<li><h3>${escapeHtml(step.title)}</h3><p>${escapeHtml(step.text)}</p></li>`).join('')}</ol>
+      <p>${escapeHtml(copy.guideClosing)} <a href="/pricing">${escapeHtml(copy.pricingDetails)}</a>.</p>
     </section>
     <section>
-      <h2>${escapeHtml(en.communityTitle)}</h2>
-      <ul>${en.community.map(item => `<li><strong>${escapeHtml(item.title)}.</strong> ${escapeHtml(item.text)}</li>`).join('')}</ul>
+      <h2>${escapeHtml(copy.scenariosTitle)}</h2>
+      <ul>${copy.scenarios.map(item => `<li><strong>${escapeHtml(item.title)}.</strong> ${escapeHtml(item.text)}</li>`).join('')}</ul>
+    </section>
+    <section>
+      <h2>${escapeHtml(copy.communityTitle)}</h2>
+      <ul>${copy.community.map(item => `<li><strong>${escapeHtml(item.title)}.</strong> ${escapeHtml(item.text)}</li>`).join('')}</ul>
     </section>
     <section id="google-sign-in">
-      <h2>${escapeHtml(en.dataTitle)}</h2>
-      <p>${escapeHtml(en.dataText)} See our <a href="/privacy">Privacy Policy</a>.</p>
-      <p lang="ru">${escapeHtml(homeContent.ru.dataText)} Подробнее — в <a href="/privacy">Политике конфиденциальности</a>.</p>
+      <h2>${escapeHtml(copy.dataTitle)}</h2>
+      <p>${escapeHtml(copy.dataText)} <a href="/privacy">${escapeHtml(copy.dataLink)}</a>.</p>
     </section>
     <section>
-      <h2>${escapeHtml(en.faqTitle)}</h2>
-      <dl>${en.faq.map(item => `<dt>${escapeHtml(item.question)}</dt><dd>${escapeHtml(item.answer)}</dd>`).join('')}</dl>
+      <h2>${escapeHtml(copy.faqTitle)}</h2>
+      <dl>${copy.faq.map(item => `<dt>${escapeHtml(item.question)}</dt><dd>${escapeHtml(item.answer)}</dd>`).join('')}</dl>
     </section>`
+}
 
 const legalBody = (title, doc) => `<h1>${title}</h1>
     <p>${BRAND} — <a href="/terms">Terms of Use</a> · <a href="/privacy">Privacy Policy</a></p>
@@ -93,7 +98,8 @@ const aboutBody = `<h1>About ${BRAND}</h1>
     <p>Its name and visual identity reflect the project’s approach to disciplined market work. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
 
 const pages = [
-  { file: 'index.html', path: '/', body: homeBody },
+  { file: 'index.html', path: '/', body: homeBody('en'), locale: 'en' },
+  { file: 'ru/index.html', path: '/ru/', body: homeBody('ru'), locale: 'ru' },
   { file: 'privacy.html', path: '/privacy', body: legalBody('Privacy Policy', 'privacy') },
   { file: 'terms.html', path: '/terms', body: legalBody('Terms of Use', 'terms') },
   { file: 'download.html', path: '/download', body: downloadBody },
@@ -109,14 +115,18 @@ const setMeta = (html, pattern, content) => {
   return html.replace(pattern, (_, before, after) => `${before}${escapeHtml(content)}${after}`)
 }
 
-const render = ({ path, body }) => {
-  const { title, description } = pageSeo(path || '', 'en')
+const render = ({ path, body, locale = 'en' }) => {
+  const { title, description } = pageSeo(path || '', locale)
   let html = template
+  html = html.replace('<html lang="en"', `<html lang="${locale}"`)
   html = setMeta(html, /(<title>)[^<]*(<\/title>)/, title)
   html = setMeta(html, /(<meta name="description" content=")[^"]*(")/, description)
   html = setMeta(html, /(<meta property="og:title" content=")[^"]*(")/, title)
   html = setMeta(html, /(<meta property="og:description" content=")[^"]*(")/, description)
   html = setMeta(html, /(<meta property="og:image" content=")[^"]*(")/, SOCIAL_IMAGE)
+  if (path !== '/' && path !== '/ru/') {
+    html = html.replace(/\s*<link rel="alternate" hreflang="(?:en|ru)"[^>]*>/g, '')
+  }
   if (path) {
     html = setMeta(html, /(<link rel="canonical" href=")[^"]*(")/, `${SITE}${path}`)
     html = setMeta(html, /(<meta property="og:url" content=")[^"]*(")/, `${SITE}${path}`)
@@ -127,13 +137,13 @@ const render = ({ path, body }) => {
       .replace(/(<meta name="robots" content=")[^"]*(")/, '$1noindex$2')
   }
   if (!html.includes(APP_ROOT)) throw new Error('static-pages: #app root not found in dist/index.html')
-  if (path === '/') {
+  if (path === '/' || path === '/ru/') {
     const schema = {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
       name: BRAND,
-      url: SITE,
-      description: en.seoText,
+      url: `${SITE}${path}`,
+      description: homeContent[locale].seoText,
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Windows, macOS',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', url: `${SITE}/pricing` },
@@ -144,19 +154,19 @@ const render = ({ path, body }) => {
     .replace('</head>', `  ${staticStyles}\n</head>`)
     .replace(APP_ROOT, `<div id="app" class="bg-black text-white">
   <div class="static-page">
-    ${header}
+    ${header(locale)}
     <main>
     ${body}
     </main>
-    ${footer}
+    ${footer(locale)}
   </div>
 </div>`)
 }
 
-// GitHub Pages serves /privacy from privacy.html directly, while a privacy/
-// folder would answer with a 301 to /privacy/. Flat files keep every route
-// on its canonical URL with a 200 status.
+// Keep existing English routes as flat files. The Russian homepage uses its own
+// directory so GitHub Pages serves /ru/ on its canonical URL.
 for (const page of pages) {
+  if (page.file.includes('/')) mkdirSync(`dist/${page.file.slice(0, page.file.lastIndexOf('/'))}`, { recursive: true })
   writeFileSync(`dist/${page.file}`, render(page))
 }
 

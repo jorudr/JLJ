@@ -1,5 +1,19 @@
 <template>
   <div class="home-details" :lang="locale">
+    <section class="home-block journal-guide" aria-labelledby="journal-guide-title">
+      <header class="section-intro">
+        <h2 id="journal-guide-title">{{ copy.guideTitle }}</h2>
+        <p>{{ copy.guideIntro }}</p>
+      </header>
+      <div class="journal-guide__grid">
+        <article v-for="(step, index) in copy.guideSteps" :key="step.title">
+          <span>0{{ index + 1 }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </article>
+      </div>
+      <p class="journal-guide__closing">{{ copy.guideClosing }} <router-link to="/pricing" class="text-link">{{ copy.pricingDetails }} ↗</router-link></p>
+    </section>
     <section id="demo" class="home-block" aria-labelledby="demo-title">
       <header class="section-intro">
         <h2 id="demo-title">{{ copy.videoTitle }}</h2>
@@ -90,6 +104,13 @@ const communityImages = ['/screenshots/event.png', '/screenshots/forum.png']
 <style scoped>
 .home-details { position: relative; z-index: 10; color: #f5f5f0; font-family: 'Cormorant Garamond', serif; }
 .home-block { width: min(100%, 1280px); padding: clamp(40px, 6vw, 80px) 40px; margin: 0 auto; scroll-margin-top: 80px; }
+.journal-guide { border-bottom: 1px solid #ffffff24; }
+.journal-guide__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.journal-guide__grid article { padding: 26px; border: 1px solid #ffffff30; }
+.journal-guide__grid span { color: rgba(245,245,240,.44); font: .7rem ui-monospace, monospace; }
+.journal-guide__grid h3 { margin: 16px 0 10px; font-size: clamp(1.4rem, 2.5vw, 2rem); }
+.journal-guide__closing { margin-top: 24px; }
+.journal-guide__closing a { color: #f5f5f0; text-decoration: underline; text-underline-offset: 4px; }
 .section-intro { max-width: 800px; margin-bottom: 40px; }
 h2 { font-size: clamp(2.1rem, 4vw, 3.6rem); font-weight: 300; line-height: 1.1; }
 h3 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 300; line-height: 1.15; }
@@ -123,6 +144,7 @@ p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .98rem; line-h
 a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
 @media (max-width: 700px) {
   .home-block { padding: 36px 24px; }
+  .journal-guide__grid { grid-template-columns: 1fr; }
   .community-grid { grid-template-columns: 1fr; }
 }
 </style>

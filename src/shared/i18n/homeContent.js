@@ -1,5 +1,13 @@
 export const homeContent = {
   ru: {
+    guideTitle: 'Дневник трейдера: от записи сделки к разбору решения',
+    guideIntro: 'Торговый дневник помогает сохранить не только результат, но и контекст: почему вы вошли в позицию, как управляли риском и соблюдали ли свои правила. J.L.JÖRMUNGANDR объединяет журнал сделок, аналитику и работу со стратегией в приложении для компьютера.',
+    guideSteps: [
+      { title: 'Сохраните контекст сделки', text: 'Запишите условия входа и выхода, добавьте заметки, теги и скриншоты. Так к сделке можно вернуться после завершения торговой сессии.' },
+      { title: 'Разберите результаты', text: 'Сравнивайте сделки по сценариям и стратегиям, изучайте кривую капитала и просадки. Ищите повторяющиеся ошибки и сильные решения.' },
+      { title: 'Уточните правила', text: 'Переносите выводы из журнала в условия торговой системы. Сравнивайте версии стратегии, чтобы видеть, какие изменения действительно помогают.' },
+    ],
+    guideClosing: 'Начать можно с бесплатного журнала сделок. Расширенные инструменты анализа и стратегии доступны в тарифе Full.',
     videoTitle: 'Посмотрите, что стоит за результатом каждой сделки',
     videoIntro: 'От истории сделок к анализу капитала и правилам стратегии. Посмотрите, как устроена работа в приложении.',
     integrations: 'Поддерживаемые платформы',
@@ -22,8 +30,8 @@ export const homeContent = {
     download: 'Скачать бесплатно',
     finalTitle: 'Начните с разбора своих сделок',
     finalText: 'Скачайте приложение для Windows или macOS и выберите подходящий тариф.',
-    seoTitle: 'Журнал сделок и аналитика для системной торговли',
-    seoText: 'J.L.JÖRMUNGANDR — торговый журнал для трейдеров, которым важно понимать причины результата. Записывайте и анализируйте сделки, отслеживайте капитал и просадки, сравнивайте торговые сценарии и формализуйте правила стратегии в одном приложении для Windows и macOS.',
+    seoTitle: 'Дневник трейдера и аналитика сделок',
+    seoText: 'J.L.JÖRMUNGANDR — дневник трейдера и торговый журнал для анализа сделок. Записывайте решения, заметки и скриншоты, отслеживайте капитал и просадки, сравнивайте торговые сценарии и уточняйте правила стратегии в приложении для Windows и macOS.',
     dataTitle: 'Вход через Google и ваши данные',
     dataText: 'J.L.JÖRMUNGANDR использует вход через Google только для создания и идентификации вашего аккаунта. При входе через Google мы получаем ваше имя, адрес электронной почты и фото профиля. Эти данные нужны, чтобы вы могли войти, и для работы аккаунта: профиля, лицензии, форума и событий. Журнал сделок и API-ключи бирж остаются на вашем устройстве. Мы не продаём ваши данные и не передаём их рекламодателям.',
     dataLink: 'Политика конфиденциальности',
@@ -36,6 +44,14 @@ export const homeContent = {
     ],
   },
   en: {
+    guideTitle: 'A trading journal built around the decisions behind each trade',
+    guideIntro: 'A useful trade journal keeps more than profit and loss. It records why you entered, how you managed risk, and whether you followed your rules. J.L.JÖRMUNGANDR brings trade records, performance review, and strategy work into one desktop application.',
+    guideSteps: [
+      { title: 'Record the trade context', text: 'Keep entry and exit conditions, notes, tags, and screenshots with each trade so you can revisit the decision after the session.' },
+      { title: 'Review performance', text: 'Compare trades by scenario and strategy, inspect the equity curve and drawdowns, and identify recurring mistakes and strong decisions.' },
+      { title: 'Refine your rules', text: 'Turn findings from your journal into clearer strategy conditions. Compare strategy versions to see how changes affect your results.' },
+    ],
+    guideClosing: 'Start with the free trading journal. Advanced analytics and strategy tools are available in the Full plan.',
     videoTitle: 'See what is behind every trade’s result',
     videoIntro: 'From trade history to equity analysis and strategy rules. See how the application works.',
     integrations: 'Supported platforms',

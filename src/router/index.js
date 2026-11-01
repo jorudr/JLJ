@@ -5,6 +5,7 @@ import NotFound from '../components/NotFound.vue'
 import About from '../components/About.vue'
 import Download from '../components/Download.vue'
 import LegalPage from '../components/LegalPage.vue'
+import { useI18n } from '../shared/i18n/useI18n'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +18,11 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      component: Main
+    },
+    {
+      path: '/ru/',
+      name: 'home-ru',
       component: Main
     },
     {
@@ -67,6 +73,12 @@ const router = createRouter({
       meta: { titleKey: 'landing.notFound.title' }
     }
   ]
+})
+
+router.beforeEach((to) => {
+  if (to.path === '/' || to.path === '/ru/') {
+    useI18n().setLocale(to.path === '/ru/' ? 'ru' : 'en')
+  }
 })
 
 export default router

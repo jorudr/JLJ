@@ -3,6 +3,7 @@ import { homeContent } from './i18n/homeContent.js'
 export const SITE = 'https://www.gandr.site'
 export const BRAND = 'J.L.JÖRMUNGANDR'
 export const SOCIAL_IMAGE = `${SITE}/screenshots/deep-data.png`
+export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
 const descriptions = {
   en: {
@@ -31,7 +32,7 @@ const titles = {
     '/terms': `Terms of Use — ${BRAND}`,
   },
   ru: {
-    '/': `Торговый журнал и аналитика сделок — ${BRAND}`,
+    '/ru/': `Дневник трейдера и аналитика сделок — ${BRAND}`,
     '/download': `Скачать торговый журнал для Windows и macOS — ${BRAND}`,
     '/pricing': `Тарифы торгового журнала — ${BRAND}`,
     '/about': `О проекте ${BRAND} — торговый журнал для трейдеров`,
@@ -40,14 +41,14 @@ const titles = {
   },
 }
 
-export const indexedPaths = Object.keys(titles.en)
+export const indexedPaths = [...Object.keys(titles.en), '/ru/']
 
 export function pageSeo(path, locale = 'en') {
-  const language = locale === 'ru' ? 'ru' : 'en'
+  const language = path === '/ru/' ? 'ru' : path === '/' ? 'en' : locale === 'ru' ? 'ru' : 'en'
   const known = indexedPaths.includes(path)
   return {
     title: known ? titles[language][path] : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
-    description: path === '/' ? homeContent[language].seoText : descriptions[language][path] || '',
+    description: path === '/' || path === '/ru/' ? homeContent[language].seoText : descriptions[language][path] || '',
     canonical: known ? `${SITE}${path}` : null,
     index: known,
   }

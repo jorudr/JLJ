@@ -1,7 +1,7 @@
 <template>
   <header class="site-nav" :class="{ 'site-nav--scrolled': isScrolled, 'site-nav--always-dark': alwaysDark }">
     <div class="site-nav__inner">
-      <router-link to="/" class="site-nav__logo" aria-label="J.L.JÖRMUNGANDR home">
+      <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="site-nav__logo" aria-label="J.L.JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
       </router-link>
 
@@ -35,7 +35,7 @@ defineProps({
   }
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const isScrolled = ref(false)
 
 const handleScroll = () => {

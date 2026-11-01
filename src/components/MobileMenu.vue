@@ -61,6 +61,7 @@
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { useRoute, useRouter } from 'vue-router'
 
 defineProps({
   isLight: {
@@ -75,14 +76,17 @@ const footerLocales = [
 ]
 
 const { t, locale, setLocale } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const isOpen = ref(false)
 const isLanguageMenuOpen = ref(false)
 
 const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
 
 const selectFooterLocale = (code) => {
-  setLocale(code)
-  isLanguageMenuOpen.value = false
+  if (route.path === '/' || route.path === '/ru/') router.push(code === 'ru' ? '/ru/' : '/')
+  else setLocale(code)
+  closeMenu()
 }
 
 const toggleMenu = () => {

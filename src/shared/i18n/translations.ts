@@ -41,7 +41,7 @@ export const translations = {
         downloadWindows: "DOWNLOAD FOR WINDOWS",
         downloadMacos: "DOWNLOAD FOR MACOS"
       },
-      heroTitleLine1: "A trading journal for professional traders.",
+      heroTitleLine1: "A trading journal for clearer decisions.",
       heroTitleLine2: "",
       scrollToExplore: "SCROLL_TO_EXPLORE",
       nav: {
@@ -387,7 +387,7 @@ export const translations = {
         downloadWindows: "СКАЧАТЬ ДЛЯ WINDOWS",
         downloadMacos: "СКАЧАТЬ ДЛЯ MACOS"
       },
-      heroTitleLine1: "Торговый журнал для профессиональных трейдеров.",
+      heroTitleLine1: "Дневник трейдера для анализа сделок.",
       heroTitleLine2: "",
       scrollToExplore: "ПРОКРУТИТЕ_ДЛЯ_ИССЛЕДОВАНИЯ",
       nav: {
