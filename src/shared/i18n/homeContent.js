@@ -75,7 +75,7 @@ export const homeContent = {
     finalTitle: 'Start by reviewing your trades',
     finalText: 'Download the application for Windows or macOS and choose the plan that fits.',
     seoTitle: 'Trade journal and analytics for systematic trading',
-    seoText: 'J.L.JÖRMUNGANDR is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
+    seoText: 'JÖRMUNGANDR is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
     dataTitle: 'Google Sign-In and your data',
     dataText: 'J.L.JÖRMUNGANDR uses Google Sign-In only to create and identify your account. When you sign in with Google, we receive your name, email address and profile picture. We use this data to sign you in and to run your account: your profile, license, forum and events. Your trade journal and exchange API keys stay on your device. Your data is never sold or shared with advertisers.',
     dataLink: 'Privacy Policy',
