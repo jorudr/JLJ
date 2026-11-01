@@ -22,11 +22,11 @@ A tag like "revenge trade" is only useful if it is recorded consistently. The mo
 
 Most traders suspect one or two habits are hurting them, and they are usually only half right. A manual review tends to confirm whatever you already believe. A statistical approach is more honest: it tests every condition and every pair of conditions in your history against the rest of your trades, and only flags the ones where the difference is unlikely to be chance — not just "trades after 2pm look worse" but a confidence estimate attached to that claim.
 
-J.L.JÖRMUNGANDR's Black Wall does exactly this. It ranks the conditions actually costing you money — by total impact, by how often they show up in your worst 10% of trades, and by a confidence score — instead of leaving you to eyeball a spreadsheet.
+J.L.JÖRMUNGANDR's Blackweb does exactly this. It ranks the conditions actually costing you money — by total impact, by how often they show up in your worst 10% of trades, and by a confidence score — instead of leaving you to eyeball a spreadsheet.
 
 ## 6. Turn the worst pattern into a rule, then track whether you actually follow it
 
-Finding a costly pattern is only half the work. The harder part is changing behavior. Black Wall's rehabilitation loop lets you commit to a rule that targets your costliest condition, then tracks a live window of trades afterward to see whether the rule holds: kept, almost kept, or failed, based on how many new violations show up. An integrity score reflects this over time, and a pattern you thought you fixed is flagged again if it comes back.
+Finding a costly pattern is only half the work. The harder part is changing behavior. Blackweb's rehabilitation loop lets you commit to a rule that targets your costliest condition, then tracks a live window of trades afterward to see whether the rule holds: kept, almost kept, or failed, based on how many new violations show up. An integrity score reflects this over time, and a pattern you thought you fixed is flagged again if it comes back.
 
 ## 7. Review performance at the strategy level, not just the trade level
 
@@ -34,6 +34,6 @@ Individual trade review catches habits. Reviewing by strategy catches whether th
 
 ## Doing this with dedicated software
 
-All of the above can be done by hand, but finding real patterns in your own trade history without statistical tooling is genuinely hard — most of what looks like a pattern in a spreadsheet is noise. [J.L.JÖRMUNGANDR](https://www.gandr.site/) is a desktop trading journal built around this exact process: trade logging with screenshots and tags, the Genesis Matrix for building and testing strategy rules visually, Black Wall for finding and fixing costly patterns, and Robustness Analytics for testing whether results hold up under simulation.
+All of the above can be done by hand, but finding real patterns in your own trade history without statistical tooling is genuinely hard — most of what looks like a pattern in a spreadsheet is noise. [J.L.JÖRMUNGANDR](https://www.gandr.site/) is a desktop trading journal built around this exact process: trade logging with screenshots and tags, the Genesis Matrix for building and testing strategy rules visually, Blackweb for finding and fixing costly patterns, and Robustness Analytics for testing whether results hold up under simulation.
 
 It is free to start, available for Windows and macOS. [Download it here](https://www.gandr.site/download) or see the [pricing page](https://www.gandr.site/pricing) for the full comparison.
