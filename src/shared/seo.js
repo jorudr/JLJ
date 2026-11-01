@@ -24,7 +24,7 @@ const descriptions = {
 
 const titles = {
   en: {
-    '/': `Trading Journal and Trade Analytics — ${BRAND}`,
+    '/': 'JORU',
     '/download': `Download Trading Journal for Windows and macOS — ${BRAND}`,
     '/pricing': `Trading Journal Plans and Pricing — ${BRAND}`,
     '/about': `About ${BRAND} — Trading Journal for Traders`,
