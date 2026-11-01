@@ -2,6 +2,7 @@ import { homeContent } from './i18n/homeContent.js'
 
 export const SITE = 'https://www.gandr.site'
 export const BRAND = 'J.L.JÖRMUNGANDR'
+export const SEO_BRAND = 'JORU'
 export const SOCIAL_IMAGE = `${SITE}/screenshots/deep-data.png`
 export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
@@ -24,20 +25,20 @@ const descriptions = {
 
 const titles = {
   en: {
-    '/': 'JORU',
-    '/download': `Download Trading Journal for Windows and macOS — ${BRAND}`,
-    '/pricing': `Trading Journal Plans and Pricing — ${BRAND}`,
-    '/about': `About ${BRAND} — Trading Journal for Traders`,
-    '/privacy': `Privacy Policy — ${BRAND}`,
-    '/terms': `Terms of Use — ${BRAND}`,
+    '/': `Trading Journal — ${SEO_BRAND}`,
+    '/download': `Download Trading Journal for Windows and macOS — ${SEO_BRAND}`,
+    '/pricing': `Trading Journal Plans and Pricing — ${SEO_BRAND}`,
+    '/about': `About ${SEO_BRAND} — Trading Journal for Traders`,
+    '/privacy': `Privacy Policy — ${SEO_BRAND}`,
+    '/terms': `Terms of Use — ${SEO_BRAND}`,
   },
   ru: {
-    '/ru/': `Дневник трейдера и аналитика сделок — ${BRAND}`,
-    '/download': `Скачать торговый журнал для Windows и macOS — ${BRAND}`,
-    '/pricing': `Тарифы торгового журнала — ${BRAND}`,
-    '/about': `О проекте ${BRAND} — торговый журнал для трейдеров`,
-    '/privacy': `Политика конфиденциальности — ${BRAND}`,
-    '/terms': `Условия использования — ${BRAND}`,
+    '/ru/': `Дневник трейдера и аналитика сделок — ${SEO_BRAND}`,
+    '/download': `Скачать торговый журнал для Windows и macOS — ${SEO_BRAND}`,
+    '/pricing': `Тарифы торгового журнала — ${SEO_BRAND}`,
+    '/about': `О проекте ${SEO_BRAND} — торговый журнал для трейдеров`,
+    '/privacy': `Политика конфиденциальности — ${SEO_BRAND}`,
+    '/terms': `Условия использования — ${SEO_BRAND}`,
   },
 }
 
@@ -47,7 +48,7 @@ export const contentPages = [
     doc: 'trading-journal-software',
     title: 'Trading journal software built for serious traders',
     subtitle: 'What to look for in trading journal software, and how journaling, strategy design and analytics fit together.',
-    seoTitle: `Trading Journal Software — ${BRAND}`,
+    seoTitle: `Trading Journal Software — ${SEO_BRAND}`,
     seoDescription: 'What trading journal software needs to do beyond logging trades: strategy versioning, execution analytics and broker integration.',
   },
   {
@@ -55,7 +56,7 @@ export const contentPages = [
     doc: 'trading-journal-for-day-traders',
     title: 'The trading journal day traders actually need',
     subtitle: 'High trade volume and fast decisions need a journal that surfaces patterns, not just logs trades.',
-    seoTitle: `Trading Journal for Day Traders — ${BRAND}`,
+    seoTitle: `Trading Journal for Day Traders — ${SEO_BRAND}`,
     seoDescription: 'What a trading journal for day traders should track: session breakdowns, execution quality and rule discipline.',
   },
   {
@@ -63,7 +64,7 @@ export const contentPages = [
     doc: 'free-trading-journal',
     title: 'What a free trading journal should cover',
     subtitle: 'The fundamentals that matter most — trade logging, screenshots and context — before you pay for anything.',
-    seoTitle: `Free Trading Journal — ${BRAND}`,
+    seoTitle: `Free Trading Journal — ${SEO_BRAND}`,
     seoDescription: 'What to expect from a free trading journal, and why consistent logging matters more than the feature tier.',
   },
   {
@@ -71,7 +72,7 @@ export const contentPages = [
     doc: 'how-to-keep-a-trading-journal',
     title: 'How to keep a trading journal',
     subtitle: 'A practical, step-by-step approach to journaling trades so patterns become visible instead of forgotten.',
-    seoTitle: `How to Keep a Trading Journal — ${BRAND}`,
+    seoTitle: `How to Keep a Trading Journal — ${SEO_BRAND}`,
     seoDescription: 'A step-by-step guide to keeping a trading journal: what to record, how to tag trades and how to review them.',
   },
 ]
