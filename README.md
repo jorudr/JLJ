@@ -59,6 +59,37 @@ Use it to answer practical questions:
 | **Broker API** | Connect supported execution sources to the analytical workspace. |
 | **Forum** | Share ideas, discuss strategies and learn from the trading community. |
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/01-trade-journal.png" alt="Trade journal overview" width="800"><br>
+  <sub>Trade journal — every recorded trade with win rate and total P&amp;L at a glance.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/03-equity-curve.png" alt="Equity curve" width="800"><br>
+  <sub>Equity curve tracking account growth over time.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/02-metrics.png" alt="Strategy vs execution metrics" width="800"><br>
+  <sub>Deep Trade Analytics — strategy vs. execution metrics.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/04-asset-heatmap.png" alt="Heatmap of most frequent assets" width="800"><br>
+  <sub>Report: heatmap of the most frequently traded assets.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/05-session-results.png" alt="Results by trading session" width="800"><br>
+  <sub>Report: results broken down by trading session.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/06-genesis-matrix.png" alt="Genesis Matrix strategy builder" width="800"><br>
+  <sub>Genesis Matrix — building a strategy as a visual graph of conditions.</sub>
+</p>
+<p align="center">
+  <img src="docs/screenshots/07-black-wall.png" alt="Black Wall pattern detection" width="800"><br>
+  <sub>Black Wall — detecting the trading patterns costing you the most.</sub>
+</p>
+
 ## From trade history to better decisions
 
 J. L. JÖRMUNGANDR supports a continuous improvement loop:
