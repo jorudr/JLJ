@@ -1,0 +1,4 @@
+Contact: mailto:info@gandr.site
+Preferred-Languages: en, ru
+Canonical: https://www.gandr.site/.well-known/security.txt
+Expires: 2027-11-02T00:00:00.000Z

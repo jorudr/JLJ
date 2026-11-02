@@ -1,0 +1,20 @@
+# JORU
+
+> JORU is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.
+
+JORU is a desktop trading journal for Windows and macOS. Also known as J.L.JÖRMUNGANDR, JLJ.
+
+## Pages
+
+- [Home](https://www.gandr.site/): Trade journal and analytics for systematic trading
+- [Pricing](https://www.gandr.site/pricing): Free and Full plan pricing and features
+- [Download](https://www.gandr.site/download): Download for Windows and macOS
+- [About](https://www.gandr.site/about): About JORU
+- [Trading journal software built for serious traders](https://www.gandr.site/trading-journal-software): What trading journal software needs to do beyond logging trades: strategy versioning, execution analytics and broker integration.
+- [The trading journal day traders actually need](https://www.gandr.site/trading-journal-for-day-traders): What a trading journal for day traders should track: session breakdowns, execution quality and rule discipline.
+- [What a free trading journal should cover](https://www.gandr.site/free-trading-journal): What to expect from a free trading journal, and why consistent logging matters more than the feature tier.
+- [How to keep a trading journal](https://www.gandr.site/how-to-keep-a-trading-journal): A step-by-step guide to keeping a trading journal: what to record, how to tag trades and how to review them.
+
+## Contact
+
+info@gandr.site
