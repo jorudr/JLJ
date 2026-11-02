@@ -22,19 +22,20 @@ export const translations = {
       downloadWindows: "Download for Windows",
       openOnComputer: "Open on a computer to download",
       downloadPage: {
-        title: "Download J.L.JÖRMUNGANDR",
+        title: "Download JORU",
         subtitle: "Choose your operating system and download the app.",
         appDescription: "One application for Free and Full. Choose the plan that suits you.",
+        mobileNote: "JORU is a desktop app for Windows and macOS, with no mobile version. On a phone? Email yourself this page to download later.",
         compare: "Compare Free and Full",
         alreadySubscribed: "Already subscribed? Download the app",
         helpTitle: "Installation and support",
         helpText: "Download the installer on your Windows or macOS computer, open it and follow the installation instructions. Contact us on Telegram if you need help.",
         demoEyebrow: "DEMO DOWNLOAD",
         demoTitle: "Download Demo",
-        demoSubtitle: "Choose your operating system and download the latest demo version of J.L.JÖRMUNGANDR.",
+        demoSubtitle: "Choose your operating system and download the latest demo version of JORU.",
         fullEyebrow: "FULL DOWNLOAD",
         fullTitle: "Download Full",
-        fullSubtitle: "Choose your operating system and download the licensed version of J.L.JÖRMUNGANDR.",
+        fullSubtitle: "Choose your operating system and download the licensed version of JORU.",
         windows: "Windows",
         macos: "macOS",
         latestVersion: "Latest available version",
@@ -126,7 +127,7 @@ export const translations = {
         }
       },
       features: {
-        title: "J.L.JÖRMUNGANDR helps turn trading into a systematic process: from developing and testing a strategy to analyzing trades and controlling results.",
+        title: "JORU helps turn trading into a systematic process: from developing and testing a strategy to analyzing trades and controlling results.",
         genesis: {
           title: "Strategy Manager",
           desc: "Build rule-based systems from scenarios and conditions for consistent decisions."
@@ -158,7 +159,7 @@ export const translations = {
         with: "with",
         company: "Ivan Vorobei",
         title: "Built for disciplined market work.",
-        description: "J.L.JÖRMUNGANDR connects journaling, strategy design, performance review and community context in one focused workspace for professional traders.",
+        description: "JORU connects journaling, strategy design, performance review and community context in one focused workspace for professional traders.",
         productLine: "A trading journal and analytical workspace for professional traders.",
         contactCta: "Get access",
         telegramCta: "Telegram updates",
@@ -368,19 +369,20 @@ export const translations = {
       downloadWindows: "Скачать для Windows",
       openOnComputer: "Откройте на компьютере, чтобы скачать",
       downloadPage: {
-        title: "Скачать J.L.JÖRMUNGANDR",
+        title: "Скачать JORU",
         subtitle: "Выберите операционную систему и скачайте приложение.",
         appDescription: "Одно приложение для Free и Full. Выберите подходящий тариф доступа.",
+        mobileNote: "JORU — приложение для компьютера (Windows и macOS), мобильной версии нет. Открыли с телефона? Отправьте эту страницу себе на почту, чтобы скачать позже.",
         compare: "Сравнить Free и Full",
         alreadySubscribed: "Уже есть подписка? Скачать приложение",
         helpTitle: "Установка и поддержка",
         helpText: "Скачайте установщик на компьютер с Windows или macOS, откройте его и следуйте инструкциям установки. Если понадобится помощь, напишите нам в Telegram.",
         demoEyebrow: "СКАЧИВАНИЕ ДЕМО",
         demoTitle: "Скачать демо",
-        demoSubtitle: "Выберите операционную систему и скачайте последнюю демо-версию J.L.JÖRMUNGANDR.",
+        demoSubtitle: "Выберите операционную систему и скачайте последнюю демо-версию JORU.",
         fullEyebrow: "СКАЧИВАНИЕ ПОЛНОЙ ВЕРСИИ",
         fullTitle: "Скачать полную версию",
-        fullSubtitle: "Выберите операционную систему и скачайте лицензированную версию J.L.JÖRMUNGANDR.",
+        fullSubtitle: "Выберите операционную систему и скачайте лицензированную версию JORU.",
         windows: "Windows",
         macos: "macOS",
         latestVersion: "Последняя доступная версия",
@@ -472,7 +474,7 @@ export const translations = {
         }
       },
       features: {
-        title: "J.L.JÖRMUNGANDR помогает превратить торговлю в системный процесс: от идеи и проверки стратегии до анализа сделок и контроля результата.",
+        title: "JORU помогает превратить торговлю в системный процесс: от идеи и проверки стратегии до анализа сделок и контроля результата.",
         genesis: {
           title: "Менеджер Стратегий",
           desc: "Собирайте системы из правил, сценариев и условий для последовательных решений."
@@ -504,7 +506,7 @@ export const translations = {
         with: "с",
         company: "Ivan Vorobei",
         title: "Создано для дисциплинированной работы с рынком.",
-        description: "J.L.JÖRMUNGANDR объединяет журнал сделок, проектирование стратегий, анализ результатов и контекст сообщества в одном рабочем пространстве для профессиональных трейдеров.",
+        description: "JORU объединяет журнал сделок, проектирование стратегий, анализ результатов и контекст сообщества в одном рабочем пространстве для профессиональных трейдеров.",
         productLine: "Торговый журнал и аналитическое рабочее пространство для профессиональных трейдеров.",
         contactCta: "Получить доступ",
         telegramCta: "Обновления в Telegram",

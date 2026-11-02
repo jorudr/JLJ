@@ -17,6 +17,7 @@ function collectTranslations(english, russian, result) {
 
 const russianCopy = new Map()
 collectTranslations(translations.en, translations.ru, russianCopy)
+russianCopy.set('JORU', 'ДЖОРУ')
 russianCopy.set('J.L.JÖRMUNGANDR', 'Дж. Л. Ёрмунганд')
 russianCopy.set('J.L.Jörmungandr', 'Дж. Л. Ёрмунганд')
 russianCopy.set('Telegram', 'Телеграм')

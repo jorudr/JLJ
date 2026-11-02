@@ -21,11 +21,11 @@
 
       <div class="app-footer__grid">
         <section class="app-footer__brand" aria-label="Company">
-          <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
+          <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="JORU home">
             <img src="/assets/herb.svg" alt="" width="36" height="32" />
           </router-link>
           <div>
-            <strong>J.L.JÖRMUNGANDR</strong>
+            <strong>JORU</strong>
             <p>{{ t('landing.footer.productLine') }}</p>
           </div>
         </section>
@@ -48,7 +48,7 @@
         <nav class="app-footer__column" :aria-label="t('landing.footer.accessTitle')">
           <h3>{{ t('landing.footer.accessTitle') }}</h3>
           <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer">{{ t('landing.footer.telegramCta') }}</a>
-          <a href="mailto:plasticcwc@gmail.com">{{ t('landing.footer.contact') }}</a>
+          <a href="mailto:info@gandr.site">{{ t('landing.footer.contact') }}</a>
         </nav>
 
         <section class="app-footer__column app-footer__language" :aria-label="t('landing.footer.languageTitle')">

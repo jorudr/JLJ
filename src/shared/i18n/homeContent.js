@@ -1,7 +1,7 @@
 export const homeContent = {
   ru: {
     guideTitle: 'Дневник трейдера: от записи сделки к разбору решения',
-    guideIntro: 'Торговый дневник помогает сохранить не только результат, но и контекст: почему вы вошли в позицию, как управляли риском и соблюдали ли свои правила. J.L.JÖRMUNGANDR объединяет журнал сделок, аналитику и работу со стратегией в приложении для компьютера.',
+    guideIntro: 'Торговый дневник помогает сохранить не только результат, но и контекст: почему вы вошли в позицию, как управляли риском и соблюдали ли свои правила. JORU объединяет журнал сделок, аналитику и работу со стратегией в приложении для компьютера.',
     guideSteps: [
       { title: 'Сохраните контекст сделки', text: 'Запишите условия входа и выхода, добавьте заметки, теги и скриншоты. Так к сделке можно вернуться после завершения торговой сессии.' },
       { title: 'Разберите результаты', text: 'Сравнивайте сделки по сценариям и стратегиям, изучайте кривую капитала и просадки. Ищите повторяющиеся ошибки и сильные решения.' },
@@ -31,13 +31,13 @@ export const homeContent = {
     finalTitle: 'Начните с разбора своих сделок',
     finalText: 'Скачайте приложение для Windows или macOS и выберите подходящий тариф.',
     seoTitle: 'Дневник трейдера и аналитика сделок',
-    seoText: 'J.L.JÖRMUNGANDR — дневник трейдера и торговый журнал для анализа сделок. Записывайте решения, заметки и скриншоты, отслеживайте капитал и просадки, сравнивайте торговые сценарии и уточняйте правила стратегии в приложении для Windows и macOS.',
+    seoText: 'JORU — дневник трейдера и торговый журнал для анализа сделок. Записывайте решения, заметки и скриншоты, отслеживайте капитал и просадки, сравнивайте торговые сценарии и уточняйте правила стратегии в приложении для Windows и macOS.',
     dataTitle: 'Вход через Google и ваши данные',
-    dataText: 'J.L.JÖRMUNGANDR использует вход через Google только для создания и идентификации вашего аккаунта. При входе через Google мы получаем ваше имя, адрес электронной почты и фото профиля. Эти данные нужны, чтобы вы могли войти, и для работы аккаунта: профиля, лицензии, форума и событий. Журнал сделок и API-ключи бирж остаются на вашем устройстве. Мы не продаём ваши данные и не передаём их рекламодателям.',
+    dataText: 'JORU использует вход через Google только для создания и идентификации вашего аккаунта. При входе через Google мы получаем ваше имя, адрес электронной почты и фото профиля. Эти данные нужны, чтобы вы могли войти, и для работы аккаунта: профиля, лицензии, форума и событий. Журнал сделок и API-ключи бирж остаются на вашем устройстве. Мы не продаём ваши данные и не передаём их рекламодателям.',
     dataLink: 'Политика конфиденциальности',
     faqTitle: 'Частые вопросы о торговом журнале',
     faq: [
-      { question: 'Что такое J.L.JÖRMUNGANDR?', answer: 'Это приложение для ведения журнала сделок, анализа торговых результатов и разработки правил стратегии. Оно помогает изучать историю торговли и принимать решения на основе собственных данных.' },
+      { question: 'Что такое JORU?', answer: 'Это приложение для ведения журнала сделок, анализа торговых результатов и разработки правил стратегии. Оно помогает изучать историю торговли и принимать решения на основе собственных данных.' },
       { question: 'Для кого подходит этот торговый журнал?', answer: 'Для трейдеров, которые хотят системно разбирать сделки, сравнивать сценарии и отслеживать метрики торговли — от начинающих до профессиональных участников рынка.' },
       { question: 'Какие инструменты анализа доступны?', answer: 'В приложении можно изучать историю сделок и заметки, анализировать кривую капитала и просадки, а также визуально описывать условия и правила торговой системы.' },
       { question: 'На каких устройствах работает приложение?', answer: 'Приложение можно скачать для компьютеров с Windows и macOS. Доступные возможности и условия тарифов описаны на странице тарифов.' },
@@ -45,7 +45,7 @@ export const homeContent = {
   },
   en: {
     guideTitle: 'A trading journal built around the decisions behind each trade',
-    guideIntro: 'A useful trade journal keeps more than profit and loss. It records why you entered, how you managed risk, and whether you followed your rules. J.L.JÖRMUNGANDR brings trade records, performance review, and strategy work into one desktop application.',
+    guideIntro: 'A useful trade journal keeps more than profit and loss. It records why you entered, how you managed risk, and whether you followed your rules. JORU brings trade records, performance review, and strategy work into one desktop application.',
     guideSteps: [
       { title: 'Record the trade context', text: 'Keep entry and exit conditions, notes, tags, and screenshots with each trade so you can revisit the decision after the session.' },
       { title: 'Review performance', text: 'Compare trades by scenario and strategy, inspect the equity curve and drawdowns, and identify recurring mistakes and strong decisions.' },
@@ -75,13 +75,13 @@ export const homeContent = {
     finalTitle: 'Start by reviewing your trades',
     finalText: 'Download the application for Windows or macOS and choose the plan that fits.',
     seoTitle: 'Trade journal and analytics for systematic trading',
-    seoText: 'JÖRMUNGANDR is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
+    seoText: 'JORU is a trading journal for traders who want to understand what drives their results. Record and review trades, track equity and drawdowns, compare trading scenarios, and define strategy rules in one application for Windows and macOS.',
     dataTitle: 'Google Sign-In and your data',
-    dataText: 'J.L.JÖRMUNGANDR uses Google Sign-In only to create and identify your account. When you sign in with Google, we receive your name, email address and profile picture. We use this data to sign you in and to run your account: your profile, license, forum and events. Your trade journal and exchange API keys stay on your device. Your data is never sold or shared with advertisers.',
+    dataText: 'JORU uses Google Sign-In only to create and identify your account. When you sign in with Google, we receive your name, email address and profile picture. We use this data to sign you in and to run your account: your profile, license, forum and events. Your trade journal and exchange API keys stay on your device. Your data is never sold or shared with advertisers.',
     dataLink: 'Privacy Policy',
     faqTitle: 'Trading journal FAQ',
     faq: [
-      { question: 'What is J.L.JÖRMUNGANDR?', answer: 'It is an application for keeping a trading journal, reviewing performance, and developing strategy rules. Use your trade history to make decisions based on your own data.' },
+      { question: 'What is JORU?', answer: 'It is an application for keeping a trading journal, reviewing performance, and developing strategy rules. Use your trade history to make decisions based on your own data.' },
       { question: 'Who is this trading journal for?', answer: 'It is for traders who want to review trades systematically, compare scenarios, and track performance metrics, from developing traders to experienced market participants.' },
       { question: 'What trading analysis tools does it include?', answer: 'Review trade history and notes, analyze equity and drawdowns, and map the conditions and rules of your trading system.' },
       { question: 'Which computers support the application?', answer: 'The application is available for Windows and macOS computers. See the pricing page for plan details and available features.' },

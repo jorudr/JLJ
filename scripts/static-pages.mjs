@@ -1,7 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homeContent } from '../src/shared/i18n/homeContent.js'
 import { renderMarkdown } from '../src/shared/legal/renderMarkdown.js'
-import { SITE, BRAND, indexedPaths, pageSeo, SOCIAL_IMAGE, contentPages } from '../src/shared/seo.js'
+import { SITE, BRAND, BRAND_ALTERNATES, CONTACT_EMAIL, indexedPaths, pageSeo, SOCIAL_IMAGE, contentPages } from '../src/shared/seo.js'
+
+const BUILD_DATE = new Date().toISOString().slice(0, 10)
 
 // The site is a client-rendered SPA, but crawlers that do not run JavaScript
 // (including Google's OAuth brand verification) must still see the app name,
@@ -20,10 +22,10 @@ const escapeHtml = (value) => value
 const legalHtml = (doc) => renderMarkdown(readFileSync(`src/shared/legal/${doc}.en.md`, 'utf8'))
 const contentHtml = (doc) => renderMarkdown(readFileSync(`src/shared/content/${doc}.en.md`, 'utf8'))
 
-// Shown only when JavaScript is unavailable; otherwise hidden until Vue mounts,
-// with a delayed reveal in case the bundle fails to load.
-const staticStyles = `<script>document.documentElement.classList.add('js')</script>
-  <style>
+// Shown immediately for crawlers and no-JS clients. Once Vue mounts it replaces
+// this content directly (no hidden/holding state, so there is no CLS or
+// blank-screen risk if the bundle is slow or fails to load).
+const staticStyles = `<style>
     .static-page { max-width: 880px; margin: 0 auto; padding: 32px 16px 48px; color: rgba(245,245,240,.78); font: 16px/1.65 ui-sans-serif, system-ui, sans-serif; }
     .static-page h1, .static-page h2 { color: #f5f5f0; font-family: 'Cormorant Garamond', serif; font-weight: 400; line-height: 1.15; }
     .static-page a { color: #f5f5f0; }
@@ -31,8 +33,7 @@ const staticStyles = `<script>document.documentElement.classList.add('js')</scri
     .static-page table { width: 100%; border-collapse: collapse; font-size: .9em; }
     .static-page th, .static-page td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.14); text-align: left; vertical-align: top; }
     .static-page .legal-table { overflow-x: auto; }
-    .js .static-page { visibility: hidden; animation: static-reveal 0s 4s forwards; }
-    @keyframes static-reveal { to { visibility: visible; } }
+    .static-page img { max-width: 100%; }
   </style>`
 
 const header = (locale) => `<header>
@@ -47,10 +48,13 @@ const header = (locale) => `<header>
 
 const footer = (locale) => `<footer>
       <p><strong>${BRAND}</strong> — ${escapeHtml(homeContent[locale].seoTitle)}.</p>
+      <nav aria-label="Guides">
+        ${contentPages.map(page => `<a href="${page.path}">${escapeHtml(page.title)}</a>`).join('\n        ')}
+      </nav>
       <nav aria-label="Legal">
         <a href="/privacy">${locale === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</a>
         <a href="/terms">${locale === 'ru' ? 'Условия использования' : 'Terms of Use'}</a>
-        <a href="mailto:gandr.trade@gmail.com">gandr.trade@gmail.com</a>
+        <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>
       </nav>
     </footer>`
 
@@ -58,6 +62,7 @@ const homeBody = (locale) => {
   const copy = homeContent[locale]
   return `<h1>${escapeHtml(copy.seoTitle)} — ${BRAND}</h1>
     <p>${escapeHtml(copy.seoText)}</p>
+    <img src="/screenshots/deep-data.png" width="1280" height="800" alt="${locale === 'ru' ? 'Аналитика сделок в приложении ' + BRAND : 'Trade analytics screen in ' + BRAND}" loading="lazy" />
     <section>
       <h2>${escapeHtml(copy.guideTitle)}</h2>
       <p>${escapeHtml(copy.guideIntro)}</p>
@@ -88,15 +93,34 @@ const legalBody = (title, doc) => `<h1>${title}</h1>
 
 const downloadBody = `<h1>Download ${BRAND} for Windows and macOS</h1>
     <p>Download the desktop trading journal for Windows or macOS. Start with the free plan to record trades, screenshots and decision notes. Compare available features on the <a href="/pricing">pricing page</a>.</p>
-    <p>For installation help and updates, visit the <a href="https://t.me/gandr_trade">Telegram community</a>.</p>`
+    <p>${BRAND} has no mobile app. If you're on a phone, email yourself this page or write to <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a> to get the download link on your computer.</p>
+    <p>For installation help and updates, visit the <a href="https://t.me/gandr_trade">Telegram community</a> or email <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>`
 
 const pricingBody = `<h1>Trading journal plans and pricing</h1>
-    <p>Start with the free trading journal to record trades, screenshots and notes. The Full plan adds advanced trade analysis and tools for developing trading strategies.</p>
-    <p>Review the plans in the application and <a href="/download">download ${BRAND}</a> for Windows or macOS.</p>`
+    <table class="legal-table">
+      <thead><tr><th>Plan</th><th>Price</th><th>Includes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Free</td>
+          <td>$0 / month</td>
+          <td>Core trading journal, screenshots and tags, forum access, activity monitor, equity and drawdown metrics.</td>
+        </tr>
+        <tr>
+          <td>Full</td>
+          <td>$9.99 / month, billed via Patreon</td>
+          <td>Everything in Free, plus Forecast Manager, Strategy Builder, broker API connections, trading reports and deep trade analytics.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Subscriptions are managed securely through Patreon. By subscribing you accept the <a href="/terms">Terms of Use</a> and the <a href="/privacy">Privacy Policy</a>.</p>
+    <p><a href="/download">Download ${BRAND}</a> for Windows or macOS to get started.</p>`
 
 const aboutBody = `<h1>About ${BRAND}</h1>
-    <p>${BRAND} is a desktop trading journal and analytical workspace for reviewing decisions, tracking results and developing trading rules.</p>
-    <p>Its name and visual identity reflect the project’s approach to disciplined market work. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
+    <p>${BRAND} is a desktop trading journal and analytical workspace for reviewing decisions, tracking results and developing trading rules. It is built for traders who want to understand what drives their results rather than just log trades.</p>
+    <p>${BRAND} is developed by Ivan Vorobei, an individual developer based in Podgorica, Montenegro. See the <a href="/terms">Terms of Use</a> for the full legal details.</p>
+    <p>Trade data, journal entries and exchange API keys stay on your device — they are never uploaded or sold. Google Sign-In is used only to identify your account; see the <a href="/privacy">Privacy Policy</a> for details.</p>
+    <p>${BRAND} is also known as ${BRAND_ALTERNATES.join(' and ')}, reflecting the project's name and visual identity.</p>
+    <p>Questions or feedback: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a> or the <a href="https://t.me/gandr_trade">Telegram community</a>. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
 
 const contentBody = (page) => `<h1>${escapeHtml(page.title)}</h1>
     <p>${escapeHtml(page.subtitle)}</p>
@@ -131,7 +155,7 @@ const render = ({ path, body, locale = 'en' }) => {
   html = setMeta(html, /(<meta property="og:description" content=")[^"]*(")/, description)
   html = setMeta(html, /(<meta property="og:image" content=")[^"]*(")/, SOCIAL_IMAGE)
   if (path !== '/' && path !== '/ru/') {
-    html = html.replace(/\s*<link rel="alternate" hreflang="(?:en|ru)"[^>]*>/g, '')
+    html = html.replace(/\s*<link rel="alternate" hreflang="(?:en|ru|x-default)"[^>]*>/g, '')
   }
   if (path) {
     html = setMeta(html, /(<link rel="canonical" href=")[^"]*(")/, `${SITE}${path}`)
@@ -143,19 +167,55 @@ const render = ({ path, body, locale = 'en' }) => {
       .replace(/(<meta name="robots" content=")[^"]*(")/, '$1noindex$2')
   }
   if (!html.includes(APP_ROOT)) throw new Error('static-pages: #app root not found in dist/index.html')
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: BRAND,
+    alternateName: BRAND_ALTERNATES,
+    url: `${SITE}/`,
+    logo: `${SITE}/herb-white.svg`,
+    email: CONTACT_EMAIL,
+    founder: { '@type': 'Person', name: 'Ivan Vorobei' },
+    sameAs: ['https://t.me/gandr_trade'],
+  }
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: BRAND,
+    url: `${SITE}/`,
+    inLanguage: ['en', 'ru'],
+  }
+  const schemas = [organizationSchema, websiteSchema]
+
   if (path === '/' || path === '/ru/') {
-    const schema = {
+    schemas.push({
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
       name: BRAND,
+      alternateName: BRAND_ALTERNATES,
       url: `${SITE}${path}`,
       description: homeContent[locale].seoText,
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Windows, macOS',
+      screenshot: SOCIAL_IMAGE,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', url: `${SITE}/pricing` },
-    }
-    html = html.replace('</head>', `  <script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>\n</head>`)
+    })
+    // Not adding FAQPage schema: Google retired FAQ rich results for all sites
+    // (May 2026), and this FAQ is marketing copy, not genuine user Q&A, so
+    // QAPage would not fit either.
   }
+  if (path) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+        ...(path !== '/' && path !== '/ru/' ? [{ '@type': 'ListItem', position: 2, name: title, item: `${SITE}${path}` }] : []),
+      ],
+    })
+  }
+  html = html.replace('</head>', `  ${schemas.map(schema => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>`).join('\n  ')}\n</head>`)
   return html
     .replace('</head>', `  ${staticStyles}\n</head>`)
     .replace(APP_ROOT, `<div id="app" class="bg-black text-white">
@@ -177,4 +237,23 @@ for (const page of pages) {
 }
 
 writeFileSync('dist/robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`)
-writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexedPaths.map(path => `  <url><loc>${SITE}${path}</loc></url>`).join('\n')}\n</urlset>\n`)
+writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexedPaths.map(path => `  <url><loc>${SITE}${path}</loc><lastmod>${BUILD_DATE}</lastmod></url>`).join('\n')}\n</urlset>\n`)
+
+writeFileSync('dist/llms.txt', `# ${BRAND}
+
+> ${homeContent.en.seoText}
+
+${BRAND} is a desktop trading journal for Windows and macOS. Also known as ${BRAND_ALTERNATES.join(', ')}.
+
+## Pages
+
+- [Home](${SITE}/): ${homeContent.en.seoTitle}
+- [Pricing](${SITE}/pricing): Free and Full plan pricing and features
+- [Download](${SITE}/download): Download for Windows and macOS
+- [About](${SITE}/about): About ${BRAND}
+${contentPages.map(page => `- [${page.title}](${SITE}${page.path}): ${page.seoDescription}`).join('\n')}
+
+## Contact
+
+${CONTACT_EMAIL}
+`)

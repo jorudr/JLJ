@@ -1,6 +1,6 @@
 ## 1. About these terms
 
-These terms govern your use of the J.L.JÖRMUNGANDR desktop application, its web version and related services (the "App"). The App is provided by Ivan Vorobei, an individual developer based in Podgorica, Montenegro ("we", "us").
+These terms govern your use of the JORU desktop application, its web version and related services (the "App"). The App is provided by Ivan Vorobei, an individual developer based in Podgorica, Montenegro ("we", "us").
 
 By creating an account or using the App, you accept these terms and the Privacy Policy. If you do not agree, do not use the App.
 
@@ -38,8 +38,8 @@ We grant you a personal, non-exclusive, non-transferable right to use the App wi
 - A key is bound to your account when activated; it may not be shared or resold.
 - Subscription payments are processed by Patreon under its own terms; cancel the subscription in Patreon.
 - Crypto payments are processed by NOWPayments under its own terms. The price is set in US dollars and converted into the chosen coin when the invoice is created. Pay the exact amount shown, in the coin and network shown, before the invoice expires; network fees are paid by you. The license is granted to the account that created the invoice once the payment is confirmed on the network, usually within a few minutes.
-- If you pay less than the invoice amount, pay in another coin or network, or send funds to an expired invoice, access is not granted automatically: write to gandr.trade@gmail.com with the order ID (shown in your profile under License → Payment history). Funds sent to a wrong address or network may be impossible to recover.
-- Refunds: within 14 days of purchase if the key has not been activated; to request one, write to gandr.trade@gmail.com. An activated key is not refundable. A crypto payment unlocks access at once and, like an activated key, is not refundable; if a payment did not unlock access, we either grant the license or return the amount received to a wallet you name, in the same coin, minus network fees.
+- If you pay less than the invoice amount, pay in another coin or network, or send funds to an expired invoice, access is not granted automatically: write to info@gandr.site with the order ID (shown in your profile under License → Payment history). Funds sent to a wrong address or network may be impossible to recover.
+- Refunds: within 14 days of purchase if the key has not been activated; to request one, write to info@gandr.site. An activated key is not refundable. A crypto payment unlocks access at once and, like an activated key, is not refundable; if a payment did not unlock access, we either grant the license or return the amount received to a wallet you name, in the same coin, minus network fees.
 - We may add, change or remove features and plans; full-version time you have already paid for is kept.
 
 ## 5. Events and points
@@ -63,7 +63,7 @@ On the forum you must not:
 - impersonate another person or us;
 - post unlawful content.
 
-We may hide or remove posts that break these rules and restrict the author's account. Report violations to gandr.trade@gmail.com.
+We may hide or remove posts that break these rules and restrict the author's account. Report violations to info@gandr.site.
 
 ## 7. Exchanges, third-party services and local data
 
@@ -78,4 +78,4 @@ We may hide or remove posts that break these rules and restrict the author's acc
 - These terms are governed by the laws of Montenegro. This does not take away the protection given to you by the consumer laws of the country where you live.
 - We will announce material changes to these terms in the App at least 14 days in advance. By continuing to use the App, you accept the new version.
 
-Contact: Ivan Vorobei, Podgorica, Montenegro · <gandr.trade@gmail.com>
+Contact: Ivan Vorobei, Podgorica, Montenegro · <info@gandr.site>

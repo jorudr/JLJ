@@ -1,8 +1,8 @@
 ## 1. Who is responsible for your data
 
-The data controller for the J.L.JÖRMUNGANDR application (the "App") is Ivan Vorobei, an individual developer based in Podgorica, Montenegro. For any question about your data, write to <gandr.trade@gmail.com>.
+The data controller for the JORU application (the "App") is Ivan Vorobei, an individual developer based in Podgorica, Montenegro. For any question about your data, write to <info@gandr.site>.
 
-This policy covers the J.L.JÖRMUNGANDR desktop application, its web version and the related servers on the gandr.site domain.
+This policy covers the JORU desktop application, its web version and the related servers on the gandr.site domain.
 
 The App is a tool for keeping a trading journal and analysing your own data. It does not give financial or investment advice, does not manage your funds and does not place trades on your behalf.
 
@@ -94,7 +94,7 @@ Account data is kept while the account exists and is deleted immediately when yo
 | Event day history | all days of participation, while the account exists |
 | License, key activation history and crypto payments | while the account exists (needed to prove paid access) |
 | Forum posts | until you delete them; when you delete your account they stay without the author's name |
-| Feedback | until you ask us to delete it (text and images) at gandr.trade@gmail.com; the text is also deleted with your account |
+| Feedback | until you ask us to delete it (text and images) at info@gandr.site; the text is also deleted with your account |
 | Server logs (Cloudflare) | for Cloudflare's log retention period, no longer than 7 days; logs contain only server service messages, without IP addresses or request headers |
 | Local data (JLJData) | on your device, until you delete it |
 
@@ -102,7 +102,7 @@ After an account is deleted we may keep the minimum records required by law (for
 
 ## 8. Your rights and deleting your account
 
-To exercise any of the rights below, write to <gandr.trade@gmail.com> from the address linked to your account. We reply within 30 days.
+To exercise any of the rights below, write to <info@gandr.site> from the address linked to your account. We reply within 30 days.
 
 - **Access:** find out what data we hold about you and get a copy.
 - **Correction:** correct inaccurate data; you can change your name and avatar in your profile.
@@ -119,4 +119,4 @@ The App is intended for people aged 18 and over. If we learn that an account bel
 
 We will announce material changes to this policy in the App or by email at least 14 days before they take effect. The date of the latest version is shown at the top of the document.
 
-Contact: Ivan Vorobei, Podgorica, Montenegro · <gandr.trade@gmail.com>
+Contact: Ivan Vorobei, Podgorica, Montenegro · <info@gandr.site>

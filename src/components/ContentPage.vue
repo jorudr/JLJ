@@ -14,7 +14,7 @@
         <article class="content-body" v-html="html"></article>
 
         <nav class="content-cta" aria-label="Next steps">
-          <router-link to="/download" class="content-cta__link">Download J.L.JÖRMUNGANDR ↗</router-link>
+          <router-link to="/download" class="content-cta__link">Download JORU ↗</router-link>
           <router-link to="/pricing" class="content-cta__link">Compare plans ↗</router-link>
         </nav>
       </main>

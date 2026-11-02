@@ -15,7 +15,7 @@
     <div v-if="isOpen" class="mobile-menu md:hidden" :class="isLight ? 'mobile-menu--light' : ''" @click.self="closeMenu" @touchmove.self.prevent>
       <div class="mobile-menu__panel">
         <div class="mobile-menu__topline">
-          <span>J.L.JÖRMUNGANDR</span>
+          <span>JORU</span>
           <button type="button" class="mobile-menu__close cursor-pointer" aria-label="Close navigation" @click="closeMenu">×</button>
         </div>
 

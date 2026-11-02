@@ -10,6 +10,7 @@
         </header>
         <section class="download-card" :aria-label="t('landing.downloadPage.title')">
           <p class="download-description">{{ t('landing.downloadPage.appDescription') }}</p>
+          <p class="download-mobile-note">{{ t('landing.downloadPage.mobileNote') }}</p>
           <div class="download-actions">
             <a v-for="platform in downloads" :key="platform.id" :href="platform.url" download class="download-button">
               <div class="download-button__label">
@@ -56,6 +57,11 @@ const { t, locale } = useI18n()
 .download-intro p, .download-description, .download-help p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .95rem; line-height: 1.6; }
 .download-card { width: 100%; margin: 0; padding: clamp(28px, 4vw, 48px); border: 1px solid #f5f5f0; background: #f5f5f0; color: #000; display: flex; flex-direction: column; min-width: 0; }
 .download-description { margin: 0 0 28px; font-size: 1.05rem; opacity: .75; max-width: 720px; }
+.download-mobile-note { display: none; margin: -12px 0 24px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .85rem; line-height: 1.5; opacity: .6; max-width: 560px; }
+
+@media (max-width: 640px) {
+  .download-mobile-note { display: block; }
+}
 .download-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .download-button { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 22px; border: 1px solid #000; background: #000; color: #f5f5f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .84rem; letter-spacing: .04em; transition: background 180ms ease, color 180ms ease; }
 .download-button__label { display: flex; align-items: center; gap: 12px; }
