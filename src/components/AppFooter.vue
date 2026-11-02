@@ -37,12 +37,12 @@
           <router-link to="/about">{{ t('landing.nav.about') }}</router-link>
         </nav>
 
-        <nav class="app-footer__column" aria-label="Guides">
-          <h3>Guides</h3>
-          <router-link to="/trading-journal-software">Trading Journal Software</router-link>
-          <router-link to="/trading-journal-for-day-traders">For Day Traders</router-link>
-          <router-link to="/free-trading-journal">Free Trading Journal</router-link>
-          <router-link to="/how-to-keep-a-trading-journal">How to Keep a Journal</router-link>
+        <nav class="app-footer__column" :aria-label="locale === 'ru' ? 'Руководства' : 'Guides'">
+          <h3>{{ locale === 'ru' ? 'Руководства' : 'Guides' }}</h3>
+          <router-link :to="guidePath('/trading-journal-software')">{{ locale === 'ru' ? 'Программа для торгового журнала' : 'Trading Journal Software' }}</router-link>
+          <router-link :to="guidePath('/trading-journal-for-day-traders')">{{ locale === 'ru' ? 'Для дейтрейдеров' : 'For Day Traders' }}</router-link>
+          <router-link :to="guidePath('/free-trading-journal')">{{ locale === 'ru' ? 'Бесплатный торговый журнал' : 'Free Trading Journal' }}</router-link>
+          <router-link :to="guidePath('/how-to-keep-a-trading-journal')">{{ locale === 'ru' ? 'Как вести торговый журнал' : 'How to Keep a Journal' }}</router-link>
         </nav>
 
         <nav class="app-footer__column" :aria-label="t('landing.footer.accessTitle')">
@@ -98,6 +98,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '../shared/i18n/useI18n'
+import { navigateLocale } from '../shared/i18n/navigateLocale'
 
 defineProps({
   hideHero: {
@@ -116,10 +117,10 @@ const route = useRoute()
 const router = useRouter()
 const isLanguageMenuOpen = ref(false)
 const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
+const guidePath = (path) => locale.value === 'ru' ? `/ru${path}` : path
 
 const selectFooterLocale = (code) => {
-  if (route.path === '/' || route.path === '/ru/') router.push(code === 'ru' ? '/ru/' : '/')
-  else setLocale(code)
+  navigateLocale(code, route.path, router, setLocale)
   isLanguageMenuOpen.value = false
 }
 </script>

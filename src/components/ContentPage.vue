@@ -4,18 +4,19 @@
     <div class="content-shell relative z-[1] mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
       <SiteNav :always-dark="true" />
 
-      <main class="content-main flex-1" aria-labelledby="content-title">
+      <main class="content-main flex-1" aria-labelledby="content-title" :lang="locale">
         <header class="content-intro">
-          <span class="content-eyebrow">Guide</span>
+          <span class="content-eyebrow">{{ locale === 'ru' ? 'Руководство' : 'Guide' }}</span>
+          <router-link class="content-language" :to="counterpart" :hreflang="locale === 'ru' ? 'en' : 'ru'">{{ locale === 'ru' ? 'English' : 'Русский' }}</router-link>
           <h1 id="content-title">{{ title }}</h1>
           <p v-if="subtitle">{{ subtitle }}</p>
         </header>
 
         <article class="content-body" v-html="html"></article>
 
-        <nav class="content-cta" aria-label="Next steps">
-          <router-link to="/download" class="content-cta__link">Download JORU ↗</router-link>
-          <router-link to="/pricing" class="content-cta__link">Compare plans ↗</router-link>
+        <nav class="content-cta" :aria-label="locale === 'ru' ? 'Дальнейшие шаги' : 'Next steps'">
+          <router-link to="/download" class="content-cta__link">{{ locale === 'ru' ? 'Скачать JORU' : 'Download JORU' }} ↗</router-link>
+          <router-link to="/pricing" class="content-cta__link">{{ locale === 'ru' ? 'Сравнить тарифы' : 'Compare plans' }} ↗</router-link>
         </nav>
       </main>
 
@@ -26,19 +27,27 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from '../shared/i18n/useI18n'
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import PageGradflowBackground from './PageGradflowBackground.vue'
 import { renderMarkdown } from '../shared/legal/renderMarkdown'
 
 const props = defineProps({
+  path: { type: String, required: true },
   doc: { type: String, required: true },
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },
+  titleRu: { type: String, required: true },
+  subtitleRu: { type: String, default: '' },
 })
+const { locale } = useI18n()
+const counterpart = computed(() => locale.value === 'ru' ? props.path : `/ru${props.path}`)
+const title = computed(() => locale.value === 'ru' ? props.titleRu : props.title)
+const subtitle = computed(() => locale.value === 'ru' ? props.subtitleRu : props.subtitle)
 
 const sources = import.meta.glob('../shared/content/*.md', { query: '?raw', import: 'default', eager: true })
-const html = computed(() => renderMarkdown(sources[`../shared/content/${props.doc}.en.md`] || ''))
+const html = computed(() => renderMarkdown(sources[`../shared/content/${props.doc}.${locale.value}.md`] || sources[`../shared/content/${props.doc}.en.md`] || ''))
 </script>
 
 <style scoped>
@@ -66,6 +75,8 @@ const html = computed(() => renderMarkdown(sources[`../shared/content/${props.do
   text-transform: uppercase;
   opacity: 0.42;
 }
+
+.content-language { margin-top: 14px; color: rgba(245,245,240,.55); font: 12px ui-sans-serif, system-ui, sans-serif; text-decoration: underline; text-underline-offset: 3px; }
 
 .content-intro h1 {
   margin-top: 20px;

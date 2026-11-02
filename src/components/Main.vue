@@ -54,7 +54,7 @@
           <!-- Right Section: Language Switcher -->
           <div class="hidden">
           <button 
-            @click="setLocale('ru')"
+            @click="changeLanguage('ru')"
             class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
             :class="locale === 'ru' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
@@ -62,7 +62,7 @@
           </button>
           <span class="nav-openai-font nav-language-divider">/</span>
           <button 
-            @click="setLocale('en')"
+            @click="changeLanguage('en')"
             class="nav-openai-font nav-language-button transition-colors hover:text-white/50 cursor-pointer"
             :class="locale === 'en' ? (isDark ? 'text-white font-bold' : 'text-[#2c2c2a] font-bold') : (isDark ? 'text-white/50' : 'text-[#2c2c2a]/50')"
           >
@@ -220,7 +220,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '../shared/i18n/useI18n'
+import { navigateLocale } from '../shared/i18n/navigateLocale'
 import GradflowBackground from './GradflowBackground.vue'
 import { gradflowConfig } from '../shared/gradflowConfig'
 import ExDivider from '../shared/ui/ExDivider.vue'
@@ -229,6 +231,9 @@ import HomeDetails from './HomeDetails.vue'
 import MobileMenu from './MobileMenu.vue'
 
 const { t, locale, setLocale } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const changeLanguage = (code) => navigateLocale(code, route.path, router, setLocale)
 
 
 const os = ref('unknown')

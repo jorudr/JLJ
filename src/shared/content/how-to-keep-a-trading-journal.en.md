@@ -1,76 +1,118 @@
-## Why keep a trading journal at all
+# How to Keep a Trading Journal: A Step-by-Step Guide
 
-Memory is unreliable, and it is especially unreliable about your own losing trades. A trading journal replaces guesswork with a record: what setup you took, why you took it, what you planned to do, and what you actually did. Over weeks and months, that record is what turns a string of isolated trades into a pattern you can act on — but only if the review process goes further than just re-reading old entries.
+A trading journal is a working record of decisions, evidence, execution, and outcomes. It should help answer practical questions: Which setups are worth repeating? Where does risk drift? What did you know while the trade was open, and what did you learn only after it closed? A useful journal combines written context with structured trade data and review tools. This guide uses the workflow suggested by the project’s Genesis Log, Genesis Matrix, BlackWeb, and equity curve views: record the trade, capture what happened during it, classify it against a plan, then review both individual decisions and repeated patterns.
 
-## 1. Record every trade, not just the interesting ones
+The purpose is not to prove that every trade was justified. It is to create a reliable sample from which you can improve. Keep observations factual, distinguish what you knew at the time from hindsight, and treat metrics as clues that need interpretation rather than verdicts.
 
-Skipping the boring or embarrassing trades defeats the purpose. The small mistakes and the trades that barely worked out are usually where the real patterns live.
+## Step 1: Define the journal’s scope
 
-## 2. Capture the setup and the reasoning, not just the numbers
+Choose what belongs in the journal before logging trades. Decide whether you will record every executed trade, only trades in a particular strategy, or a separate practice account. Do not quietly mix unrelated systems. A discretionary swing trade and a rules-based intraday setup can have different holding periods, risk limits, and success criteria. If you combine them, label each one clearly so that later comparisons remain meaningful.
 
-Entry price, exit price and P&L tell you what happened. They do not tell you why you took the trade or whether it matched your plan. Add the setup, the market context and the reasoning behind the entry and exit.
+Set a review cadence as well. A short entry should be made at the decision point, with updates while a trade is live and a post-trade review after the position closes. Then schedule a weekly or monthly review for aggregate patterns. The point is to keep the original record contemporaneous: memory after a winning or losing outcome is too selective to reconstruct what actually influenced the decision.
 
-## 3. Attach a screenshot
+Establish a consistent unit for performance. Record account currency and initial capital for the strategy or journal segment. Preserve both cash P&L and percentage return where available. A gain of $100 has a different meaning in a $2,000 account than in a $100,000 account. When comparing trades, risk units such as R can help: define 1R as the amount planned to lose if the initial stop is reached, and express the outcome in multiples of that planned risk.
 
-A chart screenshot at the moment of entry captures information that is easy to misremember later — where support and resistance actually were, what the broader trend looked like, how clean or messy the setup really was.
+## Step 2: Record the pre-trade thesis
 
-## A template for each entry
+Before entering, write a brief thesis in plain language. Include the instrument, direction, timeframe, relevant market context, and the specific event or price behavior that would make the setup valid. Avoid vague notes such as “looks bullish.” Prefer something observable: “Price reclaimed yesterday’s range high after a higher low on the 15-minute chart; I will enter only if the retest holds.”
 
-You don't need a complex format, just a consistent one. A workable entry covers:
+Record the planned entry, invalidation level, stop, target or exit logic, and position size. Note the planned account risk and expected reward-to-risk ratio. If you are scaling in or out, state how and under what conditions. This preserves the plan against later rewriting. If the trade is not part of a named strategy, say so; “no defined setup” is useful data, not a reason to omit the trade.
 
-- **Instrument and side** — what you traded, long or short.
-- **Entry and exit price, size, and timestamp.**
-- **Setup** — the specific pattern or condition you were trading (e.g. "pullback to 20EMA", "breakout retest").
-- **Plan before entry** — your intended stop, target, and invalidation point, written down before you were in the trade, not reconstructed after.
-- **What you actually did** — did you move the stop, exit early, add to the position? Note any deviation from the plan.
-- **Context** — time of day, session, any news or event nearby, your state (rested, tired, after a loss).
-- **Screenshot** at entry, and ideally one at exit.
-- **Tags** — see below.
+Capture the conditions that may affect execution: session, volatility, liquidity, news proximity, and whether the market is trending, ranging, or transitioning. Add a screenshot or chart reference if the platform supports it. Annotate only the evidence that mattered to the decision. Too many decorative marks make a screenshot hard to review.
 
-A filled-in example, for illustration:
+## Step 3: Label the setup with a controlled vocabulary
 
-> *EURUSD, short, 1.0862 → 1.0831, 1 lot, 09:40 London.*
-> *Setup: rejection at prior day's high, bearish engulfing on the 15m.*
-> *Plan: stop at 1.0880 (18 pips), target 1.0820 (42 pips), invalidation if price closes back above the high.*
-> *What happened: held to target, no deviation.*
-> *Context: London session, no major news, first trade of the day.*
-> *Tags: short, rejection, 15m, london-session, plan-followed.*
+Use repeatable labels for strategy, entry scenario, exit scenario, and conditions. This is the role of a strategy matrix such as Genesis Matrix: it gives each trade a place in a structured map rather than leaving every decision in free-form prose. Keep names stable. If “breakout retest” becomes “BO pullback” one week and “range reclaim” the next, the journal fragments one concept into several groups.
 
-The value isn't in this specific trade — it's in having fifty or a hundred entries in the same shape, so a review can actually compare like with like.
+A strategy can contain entry and exit scenarios, each with conditions. Examples of conditions might include higher-timeframe alignment, a volatility regime, a session window, a retest, a momentum confirmation, or a specific invalidation signal. Use only labels you can apply consistently. Record the version of the plan when it changes. A version history makes it possible to distinguish the performance of the old rules from the new rules instead of retroactively assigning new logic to old trades.
 
-## 4. Tag trades by condition, not just by feeling
+Do not make a label sound more precise than the rule really is. If “strong volume” has no definition, it is not yet a dependable condition. Add a measurable threshold or mark it as a subjective observation. The purpose of a matrix is to make comparison possible, not to create an impressive taxonomy.
 
-A tag like "revenge trade" is only useful if it is recorded consistently. The more reliably you tag trades by condition — side, time of day, setup, what happened right before the trade — the more a review can actually separate what costs you money from what you just remember as costing you money.
+## Step 4: Capture the state of mind and the process
 
-A starting tag taxonomy that covers most of what matters:
+Before or immediately after entry, note your emotional state using a small, consistent set of terms: calm, impatient, fearful, overconfident, frustrated, distracted, or another short vocabulary that fits your practice. Add a sentence of context when helpful. For example: “Frustrated after two losses; entered the next valid signal at half size.” Avoid using emotion labels as explanations that excuse the decision. They are variables to compare against behavior and results.
 
-- **Side**: long, short.
-- **Session**: london, new-york, asia, overlap.
-- **Setup**: breakout, pullback, reversal, range, news-driven.
-- **Trade management**: plan-followed, stop-moved, exited-early, added-to-position.
-- **State**: after-loss, after-win, first-trade, last-trade, tired.
-- **Outcome driver**: as-planned, stopped-out, target-hit, discretionary-exit.
+Also record process compliance. Did you follow the entry rule? Was size within the risk limit? Did you place the planned stop? Did you move it, and if so, why? Did you take an unplanned add-on or exit early? A yes/no or small status field is easier to analyze than a long narrative. Keep the explanation for deviations specific and time-stamped.
 
-Keep the list short enough that you'll actually apply it consistently. A taxonomy with forty tags that nobody fills in correctly is worse than one with ten that you use every time.
+A useful record separates three things: the market condition, your interpretation, and your action. “Price stalled below resistance” is an observation. “Breakout likely to fail” is an interpretation. “Sold half at the planned level” is an action. Keeping these distinct makes it easier to see whether the issue was reading the market, choosing a rule, or executing it.
 
-## 5. Let the data find the pattern instead of guessing
+## Step 5: Update the record during the trade
 
-Most traders suspect one or two habits are hurting them, and they are usually only half right. A manual review tends to confirm whatever you already believe. A statistical approach is more honest: it tests every condition and every pair of conditions in your history against the rest of your trades, and only flags the ones where the difference is unlikely to be chance — not just "trades after 2pm look worse" but a confidence estimate attached to that claim.
+A journal should capture the live trade, not just its final result. When a meaningful event occurs, note the time, price, unrealized P&L if available, and what you did. Useful events include a stop adjustment, partial exit, target change, thesis invalidation, spread or liquidity issue, or an emotional urge to interfere. Keep the update short enough that recording it does not distract from risk management.
 
-JORU's Blackweb does exactly this. It ranks the conditions actually costing you money — by total impact, by how often they show up in your worst 10% of trades, and by a confidence score — instead of leaving you to eyeball a spreadsheet.
+Use a simple “during the trade” format:
 
-**A hypothetical walkthrough, to show the shape of this review:** say your journal has 30 entries tagged consistently as above. A manual skim might leave you with a vague sense that "Fridays feel worse." A condition-by-condition pass instead checks every tag combination against the rest: side, session, setup, state, and their pairs. It might turn up that trades tagged both `after-loss` and `exited-early` have a noticeably lower win rate than the rest of the sample — not because Fridays are unlucky, but because a specific behavior (cutting winners short right after a loss) shows up disproportionately in the worst trades. That's a concrete, testable claim, not a feeling, and it's the kind of finding a manual re-read of 30 entries is unlikely to surface on its own.
+- **Time / price:** when the update happened and the approximate market level.
+- **What changed:** observable price action, news, volatility, or order execution.
+- **What I thought:** the interpretation at that moment, not the later explanation.
+- **What I did:** held, reduced, added, moved a stop, or exited.
+- **Plan status:** followed, modified for a defined reason, or violated.
 
-## 6. Turn the worst pattern into a rule, then track whether you actually follow it
+If your journal generates a chart or trade study, preserve the generated market evidence alongside the trade. Depending on the available view, this may include a price path, execution markers, market snapshots, or other study data captured around the trade. Treat generated data as a record of context, not a substitute for your own notes. A chart can show where price went; your contemporaneous note explains what you saw and why you acted.
 
-Finding a costly pattern is only half the work. The harder part is changing behavior. Blackweb's rehabilitation loop lets you commit to a rule that targets your costliest condition, then tracks a live window of trades afterward to see whether the rule holds: kept, almost kept, or failed, based on how many new violations show up. An integrity score reflects this over time, and a pattern you thought you fixed is flagged again if it comes back.
+Do not fill in “during the trade” notes from memory days later. If you missed an update, mark it as retrospective. That small distinction protects the integrity of the dataset and stops hindsight from masquerading as real-time judgment.
 
-## 7. Review performance at the strategy level, not just the trade level
+## Step 6: Close the trade with facts first
 
-Individual trade review catches habits. Reviewing by strategy catches whether the strategy itself is working. JORU's Equity & Metrics and Robustness Analytics tools add a rotatable 3D equity curve, a Trade X-ray view of every individual trade's result, a calendar heatmap, and Monte Carlo simulation of your equity curve to estimate risk of ruin and the real distribution of drawdowns — so "is this strategy actually working" gets an answer built on simulated paths, not just the one path you happened to live through.
+When the position closes, record the exit price, time, realized P&L, fees if known, and result in both currency and percentage or R. State whether the exit followed the original plan. If it did not, describe the actual reason without judging yourself. Separate a bad outcome from a bad decision: a valid setup can lose, and a poorly executed trade can happen to win.
 
-## Doing this with dedicated software
+Then answer a few consistent questions: What was the best decision? What was the largest avoidable error? Was the initial risk appropriate? Did the market invalidate the thesis, or did I leave because of discomfort? What evidence would I want before taking this setup again? These prompts prevent the postmortem from collapsing into “I should have held” or “I knew it would reverse.”
 
-All of the above can be done by hand, but finding real patterns in your own trade history without statistical tooling is genuinely hard — most of what looks like a pattern in a spreadsheet is noise. [JORU](https://www.gandr.site/) is a desktop trading journal built around this exact process: trade logging with screenshots and tags, the Genesis Matrix for building and testing strategy rules visually, Blackweb for finding and fixing costly patterns, and Robustness Analytics for testing whether results hold up under simulation.
+Include a screenshot of the entry and exit if useful. Mark the planned levels and actual actions with different colors or symbols. Avoid editing the original screenshot in a way that hides the initial plan. Keep the raw version and any annotated version together.
 
-It is free to start, available for Windows and macOS. [Download it here](https://www.gandr.site/download) or see the [pricing page](https://www.gandr.site/pricing) for the full comparison.
+## Step 7: Review the equity curve and its metrics
+
+The equity curve view in ExGenesisLog is useful for seeing performance as a sequence rather than a pile of isolated outcomes. Review the curve for slope, plateaus, sharp drops, recovery time, and clusters of outcomes. A smooth rise can still hide excessive risk; a drawdown can result from normal variance or from a change in execution. Use the underlying trade list to investigate each visible segment.
+
+Review core metrics together: trade count, win rate, gross profit, gross loss, net P&L, profit factor, average win, average loss, and drawdown where available. No single metric describes a strategy. Win rate can look attractive while average losses are too large. Profit factor can be distorted by a small sample or one outsized winner. A rising equity curve can hide a concentration in one instrument or market regime.
+
+Check the sample size before drawing conclusions. A handful of trades is a prompt for more observation, not a stable estimate. Compare like with like: same strategy version, similar holding period, and similar risk definition. If deposits or withdrawals affect the curve, account for them before interpreting performance. Treat a metrics panel as a way to ask better questions, not as an automatic signal to increase size.
+
+## Step 8: Use BlackWeb to investigate repeated problems
+
+BlackWeb’s pattern-wall approach is valuable after you have a meaningful group of trades. Instead of judging one loss, compare groups and look for conditions that appear disproportionately often in losing or weak trades. The wall can surface problem clusters, win-rate differences between a group and the rest, and drawdown impact. Use those findings to form a hypothesis, then inspect the individual journal entries that created the pattern.
+
+For example, a cluster might point to trades taken outside your intended session, trades entered without a retest, or trades taken while emotionally frustrated. Check the definitions and trade count behind the cluster. A striking pattern based on two observations is fragile. A pattern that recurs across enough examples is worth testing against a future sample.
+
+Avoid turning correlation into causation. If a condition appears in losing trades, it may be a proxy for another factor, or simply be common across all trades. Compare the problem group with the rest of the sample and check whether the difference persists across strategy versions and market regimes. BlackWeb is an investigative lens; the journal provides the evidence needed to decide what to change.
+
+## Step 9: Compare strategies and conditions in Genesis Matrix
+
+Use Genesis Matrix to inspect performance by strategy, scenario, and condition. Ask narrow questions: Does the retest entry perform differently from the immediate breakout? Does one exit rule reduce average loss? Is the setup more reliable in a particular volatility state? Are some conditions associated with better frequency or profit factor? The matrix makes these comparisons visible and supports a disciplined review of the plan.
+
+Check both outcomes and exposure. A condition may show a favorable win rate but occur rarely. Another may contribute much more to total losses because it appears often or has large average losses. Look at trade count, frequency, profit factor, and net results together. Where the interface shows historical changes, distinguish recent behavior from the full history. A condition’s performance can degrade as the market changes.
+
+Use the matrix to propose one rule change at a time. For instance, if a well-defined setup performs poorly when a certain filter is absent, write a testable rule and apply it forward. Do not selectively relabel old trades after discovering the result. Preserve the prior version and evaluate the new version on new data or a clearly separated replay sample.
+
+## Step 10: Audit risk and compliance
+
+At a weekly or monthly review, check whether actual risk matched planned risk. Look for oversizing, repeated stop widening, risk accumulation across correlated positions, and session-level losses that exceeded your limit. Review compliance by trade and by session. A profitable month with frequent rule violations is not evidence that the process is sound; it may be masking risk that has not yet produced a large loss.
+
+Track the frequency and impact of deviations. A journal can compare planned risk per trade and per session, trading style, and risk-reward expectations with actual behavior. If a limit was exceeded, record how often and how much. The purpose is to make a concrete correction: lower size, stop trading after a defined threshold, or remove a situation in which you repeatedly break the rules.
+
+## Step 11: Run a weekly review
+
+Set aside a fixed time, ideally when you are not in the middle of a trade. First scan for missing records and complete factual fields. Then review the equity curve and the largest drawdown or most unusual outcomes. Open the related trades and compare their original theses, live updates, and exits. Next inspect the BlackWeb patterns and Genesis Matrix comparisons. End by writing a short summary with three parts: what to continue, what to stop, and what to test.
+
+Keep the test list small. If you change entry criteria, position sizing, stop placement, and session filters all at once, you will not know which change mattered. Choose one testable adjustment, define how you will measure it, and decide when you will review it. Preserve the baseline rules so that the comparison remains meaningful.
+
+## Step 12: Keep the system usable
+
+A journal that takes twenty minutes per trade will usually be abandoned. Make the required fields brief and structured; leave optional fields for unusual situations. Use controlled labels, templates, and generated charts to reduce repetitive work. Review the journal often enough that the fields stay relevant. Remove labels you never use and clarify labels that different entries interpret differently.
+
+Protect the quality of the record. Do not delete losing trades, alter entry plans after the outcome, or silently overwrite a strategy version. Correct genuine data errors with a note where possible. Record uncertainty honestly. The journal is valuable only if it represents the trading process accurately, including its mistakes and gaps.
+
+## A compact journal template
+
+For each trade, capture:
+
+1. Date, instrument, direction, strategy, and strategy version.
+2. Entry scenario, exit scenario, and relevant matrix conditions.
+3. Market context, thesis, entry, stop, target, position size, and planned risk.
+4. Emotional state and intended risk-reward profile.
+5. During-trade updates with time, observation, interpretation, action, and plan status.
+6. Generated chart or study data and screenshots, if available.
+7. Exit time and price, fees, realized P&L, percentage return, and R result.
+8. Compliance status, deviations, and brief lessons.
+
+A journal works when it closes the loop between intention and evidence. Record the plan before acting, capture meaningful decisions while the trade is open, and use the equity curve, BlackWeb patterns, and Genesis Matrix comparisons to review a sufficiently large sample. Then change one rule at a time and keep recording. Over time, this turns trading memory into a body of evidence you can actually use.

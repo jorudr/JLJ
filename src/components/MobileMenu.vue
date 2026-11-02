@@ -61,6 +61,7 @@
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { navigateLocale } from '../shared/i18n/navigateLocale'
 import { useRoute, useRouter } from 'vue-router'
 
 defineProps({
@@ -84,8 +85,7 @@ const isLanguageMenuOpen = ref(false)
 const activeFooterLocale = computed(() => footerLocales.find(item => item.code === locale.value) || footerLocales[0])
 
 const selectFooterLocale = (code) => {
-  if (route.path === '/' || route.path === '/ru/') router.push(code === 'ru' ? '/ru/' : '/')
-  else setLocale(code)
+  navigateLocale(code, route.path, router, setLocale)
   closeMenu()
 }
 

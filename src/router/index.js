@@ -68,12 +68,17 @@ const router = createRouter({
       props: { doc: 'terms' },
       meta: { titleKey: 'landing.legal.termsTitle' }
     },
-    ...contentPages.map(({ path, doc, title, subtitle }) => ({
+    ...contentPages.flatMap(({ path, doc, title, subtitle, titleRu, subtitleRu }) => [{
       path,
       name: `content-${doc}`,
       component: ContentPage,
-      props: { doc, title, subtitle },
-    })),
+      props: { path, doc, title, subtitle, titleRu, subtitleRu },
+    }, {
+      path: `/ru${path}`,
+      name: `content-${doc}-ru`,
+      component: ContentPage,
+      props: { path, doc, title, subtitle, titleRu, subtitleRu },
+    }]),
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -86,6 +91,10 @@ const router = createRouter({
 router.beforeEach((to) => {
   if (to.path === '/' || to.path === '/ru/') {
     useI18n().setLocale(to.path === '/ru/' ? 'ru' : 'en')
+  } else if (to.path.startsWith('/ru/')) {
+    useI18n().setLocale('ru')
+  } else if (contentPages.some(({ path }) => path === to.path)) {
+    useI18n().setLocale('en')
   }
 })
 

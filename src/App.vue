@@ -2,7 +2,7 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from './shared/i18n/useI18n'
-import { homeAlternates, pageSeo, SOCIAL_IMAGE } from './shared/seo'
+import { contentPages, homeAlternates, pageSeo, SITE, SOCIAL_IMAGE } from './shared/seo'
 
 const route = useRoute()
 const { locale } = useI18n()
@@ -26,9 +26,14 @@ const updateTitle = () => {
     if (seo.canonical) canonical.setAttribute('href', seo.canonical)
     else canonical.removeAttribute('href')
   }
-  for (const [language, href] of Object.entries(homeAlternates)) {
+  const contentPage = contentPages.find(page => [page.path, `/ru${page.path}`].includes(route.path))
+  const alternates = contentPage
+    ? { en: `${SITE}${contentPage.path}`, ru: `${SITE}/ru${contentPage.path}`, 'x-default': `${SITE}${contentPage.path}` }
+    : (route.path === '/' || route.path === '/ru/') ? { ...homeAlternates, 'x-default': homeAlternates.en } : {}
+  for (const language of ['en', 'ru', 'x-default']) {
     let alternate = document.querySelector(`link[rel="alternate"][hreflang="${language}"]`)
-    if (route.path === '/' || route.path === '/ru/') {
+    const href = alternates[language]
+    if (href) {
       if (!alternate) {
         alternate = document.createElement('link')
         alternate.rel = 'alternate'
