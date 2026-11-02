@@ -10,6 +10,7 @@ export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
 const descriptions = {
   en: {
+    '/': `${BRAND} is a trading journal for Windows and macOS. Log trades, track equity and drawdowns, and find the patterns costing you money.`,
     '/download': `Download ${BRAND} for Windows or macOS. Start recording trades and reviewing your trading performance with the free plan.`,
     '/pricing': 'Compare the free trading journal with the Full plan for advanced trade analytics, strategy tools and performance review.',
     '/about': `Learn about the name, ideas and visual identity behind ${BRAND}, a desktop trading journal and analytical workspace.`,
@@ -17,6 +18,7 @@ const descriptions = {
     '/terms': `Read the terms governing use of the ${BRAND} trading journal and related services.`,
   },
   ru: {
+    '/ru/': `${BRAND} — торговый журнал для Windows и macOS. Записывайте сделки, отслеживайте капитал и находите закономерности, которые стоят вам денег.`,
     '/download': `Скачайте торговый журнал ${BRAND} для Windows или macOS. Начните записывать сделки и анализировать результаты бесплатно.`,
     '/pricing': 'Сравните бесплатный торговый журнал с тарифом Full: расширенная аналитика сделок, инструменты стратегий и анализ результатов.',
     '/about': `Узнайте о названии, идеях и визуальном стиле ${BRAND} — торгового журнала и аналитического пространства для трейдеров.`,
@@ -112,7 +114,7 @@ export function pageSeo(path, locale = 'en') {
   }
   return {
     title: known ? titles[language][path] : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
-    description: path === '/' || path === '/ru/' ? homeContent[language].seoText : descriptions[language][path] || '',
+    description: descriptions[language][path] || homeContent[language]?.seoText || '',
     canonical: known ? `${SITE}${path}` : null,
     index: known,
   }
