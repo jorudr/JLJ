@@ -29,9 +29,8 @@
         <div class="mx-auto flex w-full max-w-none items-center justify-start 2xl:max-w-[1280px]">
           <!-- Left Section: App Name -->
           <div class="flex items-center z-50">
-            <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="nav-logo flex items-center gap-2" aria-label="J.L.JÖRMUNGANDR home">
+            <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="nav-logo" aria-label="J.L.JÖRMUNGANDR home">
               <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
-              <span class="text-[0.85rem] font-semibold tracking-wide whitespace-nowrap" :class="isDark ? 'text-white' : 'text-[#2c2c2a]'">J.L.JÖRMUNGANDR</span>
             </router-link>
           </div>
 
