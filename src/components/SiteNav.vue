@@ -1,8 +1,9 @@
 <template>
   <header class="site-nav" :class="{ 'site-nav--scrolled': isScrolled, 'site-nav--always-dark': alwaysDark }">
     <div class="site-nav__inner">
-      <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="site-nav__logo" aria-label="JORU home">
+      <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="site-nav__logo" aria-label="J.L.JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
+        <span>J.L.JÖRMUNGANDR</span>
       </router-link>
 
       <nav class="site-nav__links" aria-label="Primary navigation">
@@ -78,7 +79,17 @@ onUnmounted(() => {
 .site-nav__logo {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   filter: none;
+}
+
+.site-nav__logo span {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #000;
+  white-space: nowrap;
 }
 
 .site-nav__links {

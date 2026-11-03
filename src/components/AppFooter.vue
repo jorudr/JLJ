@@ -21,11 +21,11 @@
 
       <div class="app-footer__grid">
         <section class="app-footer__brand" aria-label="Company">
-          <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="JORU home">
+          <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
             <img src="/assets/herb.svg" alt="" width="36" height="32" />
           </router-link>
           <div>
-            <strong>JORU</strong>
+            <strong>J.L.JÖRMUNGANDR</strong>
             <p>{{ t('landing.footer.productLine') }}</p>
           </div>
         </section>
