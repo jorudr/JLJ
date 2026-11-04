@@ -42,10 +42,13 @@
 import SiteNav from './SiteNav.vue'
 import AppFooter from './AppFooter.vue'
 import PageGradflowBackground from './PageGradflowBackground.vue'
+import { onMounted } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
-import { downloads } from '../shared/downloads'
+import { downloads, refreshDownloads } from '../shared/downloads'
 
 const { t, locale } = useI18n()
+
+onMounted(refreshDownloads)
 </script>
 
 <style scoped>
