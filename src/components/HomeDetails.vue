@@ -1,19 +1,5 @@
 <template>
   <div class="home-details" :lang="locale">
-    <section class="home-block journal-guide" aria-labelledby="journal-guide-title">
-      <header class="section-intro">
-        <h2 id="journal-guide-title">{{ copy.guideTitle }}</h2>
-        <p>{{ copy.guideIntro }}</p>
-      </header>
-      <div class="journal-guide__grid">
-        <article v-for="(step, index) in copy.guideSteps" :key="step.title">
-          <span>0{{ index + 1 }}</span>
-          <h3>{{ step.title }}</h3>
-          <p>{{ step.text }}</p>
-        </article>
-      </div>
-      <p class="journal-guide__closing">{{ copy.guideClosing }} <router-link to="/pricing" class="text-link">{{ copy.pricingDetails }} ↗</router-link></p>
-    </section>
     <section id="demo" class="home-block" aria-labelledby="demo-title">
       <header class="section-intro">
         <h2 id="demo-title">{{ copy.videoTitle }}</h2>
@@ -40,6 +26,20 @@
           </div>
         </article>
       </div>
+    </section>
+    <section class="home-block journal-guide" aria-labelledby="journal-guide-title">
+      <header class="section-intro">
+        <h2 id="journal-guide-title">{{ copy.guideTitle }}</h2>
+        <p>{{ copy.guideIntro }}</p>
+      </header>
+      <div class="journal-guide__grid">
+        <article v-for="(step, index) in copy.guideSteps" :key="step.title">
+          <span>0{{ index + 1 }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </article>
+      </div>
+      <p class="journal-guide__closing">{{ copy.guideClosing }} <router-link to="/pricing" class="text-link">{{ copy.pricingDetails }} ↗</router-link></p>
     </section>
     <section id="google-sign-in" class="home-block account-data" aria-labelledby="data-title">
       <header class="section-intro">

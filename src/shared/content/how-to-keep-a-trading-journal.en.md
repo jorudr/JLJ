@@ -1,6 +1,6 @@
 # How to Keep a Trading Journal: A Step-by-Step Guide
 
-A trading journal is a working record of decisions, evidence, execution, and outcomes. It should help answer practical questions: Which setups are worth repeating? Where does risk drift? What did you know while the trade was open, and what did you learn only after it closed? A useful journal combines written context with structured trade data and review tools. This guide uses the workflow suggested by the project’s Genesis Log, Genesis Matrix, BlackWeb, and equity curve views: record the trade, capture what happened during it, classify it against a plan, then review both individual decisions and repeated patterns.
+A trading journal is a working record of decisions, evidence, execution, and outcomes. It should help answer practical questions: Which setups are worth repeating? Where does risk drift? What did you know while the trade was open, and what did you learn only after it closed? A useful journal combines written context with structured trade data and review tools. This guide uses the workflow suggested by the project’s Genesis Log, Genesis Matrix, Karl-Nikolai I, and equity curve views: record the trade, capture what happened during it, classify it against a plan, then review both individual decisions and repeated patterns.
 
 The purpose is not to prove that every trade was justified. It is to create a reliable sample from which you can improve. Keep observations factual, distinguish what you knew at the time from hindsight, and treat metrics as clues that need interpretation rather than verdicts.
 
@@ -68,13 +68,13 @@ Review core metrics together: trade count, win rate, gross profit, gross loss, n
 
 Check the sample size before drawing conclusions. A handful of trades is a prompt for more observation, not a stable estimate. Compare like with like: same strategy version, similar holding period, and similar risk definition. If deposits or withdrawals affect the curve, account for them before interpreting performance. Treat a metrics panel as a way to ask better questions, not as an automatic signal to increase size.
 
-## Step 8: Use BlackWeb to investigate repeated problems
+## Step 8: Use Karl-Nikolai I to investigate repeated problems
 
-BlackWeb’s pattern-wall approach is valuable after you have a meaningful group of trades. Instead of judging one loss, compare groups and look for conditions that appear disproportionately often in losing or weak trades. The wall can surface problem clusters, win-rate differences between a group and the rest, and drawdown impact. Use those findings to form a hypothesis, then inspect the individual journal entries that created the pattern.
+Karl-Nikolai I’s pattern-wall approach is valuable after you have a meaningful group of trades. Instead of judging one loss, compare groups and look for conditions that appear disproportionately often in losing or weak trades. The wall can surface problem clusters, win-rate differences between a group and the rest, and drawdown impact. Use those findings to form a hypothesis, then inspect the individual journal entries that created the pattern.
 
 For example, a cluster might point to trades taken outside your intended session, trades entered without a retest, or trades taken while emotionally frustrated. Check the definitions and trade count behind the cluster. A striking pattern based on two observations is fragile. A pattern that recurs across enough examples is worth testing against a future sample.
 
-Avoid turning correlation into causation. If a condition appears in losing trades, it may be a proxy for another factor, or simply be common across all trades. Compare the problem group with the rest of the sample and check whether the difference persists across strategy versions and market regimes. BlackWeb is an investigative lens; the journal provides the evidence needed to decide what to change.
+Avoid turning correlation into causation. If a condition appears in losing trades, it may be a proxy for another factor, or simply be common across all trades. Compare the problem group with the rest of the sample and check whether the difference persists across strategy versions and market regimes. Karl-Nikolai I is an investigative lens; the journal provides the evidence needed to decide what to change.
 
 ## Step 9: Compare strategies and conditions in Genesis Matrix
 
@@ -92,7 +92,7 @@ Track the frequency and impact of deviations. A journal can compare planned risk
 
 ## Step 11: Run a weekly review
 
-Set aside a fixed time, ideally when you are not in the middle of a trade. First scan for missing records and complete factual fields. Then review the equity curve and the largest drawdown or most unusual outcomes. Open the related trades and compare their original theses, live updates, and exits. Next inspect the BlackWeb patterns and Genesis Matrix comparisons. End by writing a short summary with three parts: what to continue, what to stop, and what to test.
+Set aside a fixed time, ideally when you are not in the middle of a trade. First scan for missing records and complete factual fields. Then review the equity curve and the largest drawdown or most unusual outcomes. Open the related trades and compare their original theses, live updates, and exits. Next inspect the Karl-Nikolai I patterns and Genesis Matrix comparisons. End by writing a short summary with three parts: what to continue, what to stop, and what to test.
 
 Keep the test list small. If you change entry criteria, position sizing, stop placement, and session filters all at once, you will not know which change mattered. Choose one testable adjustment, define how you will measure it, and decide when you will review it. Preserve the baseline rules so that the comparison remains meaningful.
 
@@ -115,4 +115,4 @@ For each trade, capture:
 7. Exit time and price, fees, realized P&L, percentage return, and R result.
 8. Compliance status, deviations, and brief lessons.
 
-A journal works when it closes the loop between intention and evidence. Record the plan before acting, capture meaningful decisions while the trade is open, and use the equity curve, BlackWeb patterns, and Genesis Matrix comparisons to review a sufficiently large sample. Then change one rule at a time and keep recording. Over time, this turns trading memory into a body of evidence you can actually use.
+A journal works when it closes the loop between intention and evidence. Record the plan before acting, capture meaningful decisions while the trade is open, and use the equity curve, Karl-Nikolai I patterns, and Genesis Matrix comparisons to review a sufficiently large sample. Then change one rule at a time and keep recording. Over time, this turns trading memory into a body of evidence you can actually use.

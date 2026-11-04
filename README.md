@@ -86,8 +86,8 @@ Use it to answer practical questions:
   <sub>Genesis Matrix — building a strategy as a visual graph of conditions.</sub>
 </p>
 <p align="center">
-  <img src="docs/screenshots/07-blackweb.png" alt="Blackweb pattern detection" width="800"><br>
-  <sub>Blackweb — detecting the trading patterns costing you the most.</sub>
+  <img src="docs/screenshots/07-karl-nikolai-i.png" alt="Karl-Nikolai I pattern detection" width="800"><br>
+  <sub>Karl-Nikolai I — detecting the trading patterns costing you the most.</sub>
 </p>
 
 ## From trade history to better decisions
