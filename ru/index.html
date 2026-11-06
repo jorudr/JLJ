@@ -25,11 +25,20 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-CqvZ4uSb.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DD5oILWY.css">
+  <style>
+    #app-loader { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #000; }
+    #app-loader img { width: 48px; height: 48px; animation: app-loader-spin 1.1s linear infinite; }
+    #app-loader.app-loader-done { opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+    @keyframes app-loader-spin { to { transform: rotate(360deg); } }
+  </style>
+  <script type="module" crossorigin src="/assets/index-BEU4LqQW.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DzzaqGP6.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/","logo":"https://www.gandr.site/herb-white.svg","email":"info@gandr.site","founder":{"@type":"Person","name":"Ivan Vorobei"},"sameAs":["https://t.me/gandr_trade"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"JORU","url":"https://www.gandr.site/","inLanguage":["en","ru"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/ru/","description":"JORU — дневник трейдера и торговый журнал для анализа сделок. Записывайте решения, заметки и скриншоты, отслеживайте капитал и просадки, сравнивайте торговые сценарии и уточняйте правила стратегии в приложении для Windows и macOS.","applicationCategory":"FinanceApplication","operatingSystem":"Windows, macOS","screenshot":"https://www.gandr.site/screenshots/deep-data.png","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","url":"https://www.gandr.site/pricing"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"LOG — торговый журнал J. L. JÖRMUNGANDR","description":"Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.","thumbnailUrl":"https://www.gandr.site/assets/videos/log-poster.jpg","contentUrl":"https://www.gandr.site/assets/videos/log.mov","uploadDate":"2026-08-19","duration":"PT14S"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"EQUITY — торговый журнал J. L. JÖRMUNGANDR","description":"Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.","thumbnailUrl":"https://www.gandr.site/assets/videos/equity-poster.jpg","contentUrl":"https://www.gandr.site/assets/videos/equity.mov","uploadDate":"2026-08-19","duration":"PT18S"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"MATRIX — торговый журнал J. L. JÖRMUNGANDR","description":"Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.","thumbnailUrl":"https://www.gandr.site/assets/videos/matrix-poster.jpg","contentUrl":"https://www.gandr.site/assets/videos/matrix.mov","uploadDate":"2026-08-19","duration":"PT60S"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.gandr.site/"}]}</script>
   <style>
     .static-page { max-width: 880px; margin: 0 auto; padding: 32px 16px 48px; color: rgba(245,245,240,.78); font: 16px/1.65 ui-sans-serif, system-ui, sans-serif; }
@@ -44,6 +53,7 @@
 </head>
 
 <body class="bg-black text-white" style="background-color: #000000; color: #ffffff;">
+  <div id="app-loader" aria-hidden="true"><img src="/herb-white.svg" alt="" width="48" height="48"></div>
   <div id="app" class="bg-black text-white">
   <div class="static-page">
     <header>
@@ -59,6 +69,26 @@
     <h1>Дневник трейдера и аналитика сделок — JORU</h1>
     <p>JORU — дневник трейдера и торговый журнал для анализа сделок. Записывайте решения, заметки и скриншоты, отслеживайте капитал и просадки, сравнивайте торговые сценарии и уточняйте правила стратегии в приложении для Windows и macOS.</p>
     <img src="/screenshots/deep-data.png" width="1280" height="800" alt="Аналитика сделок в приложении JORU" loading="lazy" />
+    <section>
+      <h2>Посмотрите, что стоит за результатом каждой сделки</h2>
+      <p>От истории сделок к анализу капитала и правилам стратегии. Посмотрите, как устроена работа в приложении.</p>
+      <figure>
+        <video poster="/assets/videos/log-poster.jpg" controls preload="none" width="1280" height="720" aria-label="LOG — торговый журнал J. L. JÖRMUNGANDR">
+          <source src="/assets/videos/log.mov" type="video/quicktime">
+        </video>
+        <figcaption>Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.</figcaption>
+      </figure><figure>
+        <video poster="/assets/videos/equity-poster.jpg" controls preload="none" width="1280" height="720" aria-label="EQUITY — торговый журнал J. L. JÖRMUNGANDR">
+          <source src="/assets/videos/equity.mov" type="video/quicktime">
+        </video>
+        <figcaption>Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.</figcaption>
+      </figure><figure>
+        <video poster="/assets/videos/matrix-poster.jpg" controls preload="none" width="1280" height="720" aria-label="MATRIX — торговый журнал J. L. JÖRMUNGANDR">
+          <source src="/assets/videos/matrix.mov" type="video/quicktime">
+        </video>
+        <figcaption>Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.</figcaption>
+      </figure>
+    </section>
     <section>
       <h2>Дневник трейдера: от записи сделки к разбору решения</h2>
       <p>Торговый дневник помогает сохранить не только результат, но и контекст: почему вы вошли в позицию, как управляли риском и соблюдали ли свои правила. JORU объединяет журнал сделок, аналитику и работу со стратегией в приложении для компьютера.</p>
