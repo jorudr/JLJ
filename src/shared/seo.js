@@ -8,6 +8,26 @@ export const CONTACT_EMAIL = 'info@gandr.site'
 export const SOCIAL_IMAGE = `${SITE}/screenshots/deep-data.png`
 export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
+export const homeVideos = [
+  { id: 'log', src: '/assets/videos/log.mov', poster: '/assets/videos/log-poster.jpg', duration: 'PT14S', name: { en: 'LOG — J. L. JÖRMUNGANDR trading journal', ru: 'LOG — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Review every trade and decision in context so patterns become impossible to miss.', ru: 'Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.' } },
+  { id: 'equity', src: '/assets/videos/equity.mov', poster: '/assets/videos/equity-poster.jpg', duration: 'PT18S', name: { en: 'EQUITY — J. L. JÖRMUNGANDR trading journal', ru: 'EQUITY — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Track the full performance of your strategy, from the first trade to the final result.', ru: 'Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.' } },
+  { id: 'matrix', src: '/assets/videos/matrix.mov', poster: '/assets/videos/matrix-poster.jpg', duration: 'PT60S', name: { en: 'MATRIX — J. L. JÖRMUNGANDR trading journal', ru: 'MATRIX — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Build, connect, and explore the logic behind every trading strategy in one visual system.', ru: 'Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.' } },
+]
+export const HOME_VIDEOS_UPLOAD_DATE = '2026-08-19'
+
+export function videoStructuredData(locale = 'en') {
+  return homeVideos.map(video => ({
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.name[locale] || video.name.en,
+    description: video.description[locale] || video.description.en,
+    thumbnailUrl: `${SITE}${video.poster}`,
+    contentUrl: `${SITE}${video.src}`,
+    uploadDate: HOME_VIDEOS_UPLOAD_DATE,
+    duration: video.duration,
+  }))
+}
+
 const descriptions = {
   en: {
     '/': `${BRAND} is a trading journal for Windows and macOS. Log trades, track equity and drawdowns, and find the patterns costing you money.`,

@@ -29,6 +29,7 @@
           :key="selectedVideo.src"
           class="video-showcase__video"
           :src="selectedVideo.src"
+          :poster="selectedVideo.poster"
           autoplay
           muted
           loop
@@ -50,14 +51,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { homeVideos } from '../shared/seo'
 
 const { t } = useI18n()
 
-const videos = [
-  { id: 'log', label: 'LOG', labelKey: 'landing.features.tradesTree.title', captionKey: 'landing.videoShowcase.log', src: '/assets/videos/log.mov' },
-  { id: 'equity', label: 'EQUITY', labelKey: 'landing.features.equity.title', captionKey: 'landing.videoShowcase.equity', src: '/assets/videos/equity.mov' },
-  { id: 'matrix', label: 'MATRIX', labelKey: 'landing.features.genesis.title', captionKey: 'landing.videoShowcase.matrix', src: '/assets/videos/matrix.mov' },
-]
+const labelKeys = { log: 'landing.features.tradesTree.title', equity: 'landing.features.equity.title', matrix: 'landing.features.genesis.title' }
+const videos = homeVideos.map(video => ({
+  id: video.id,
+  label: video.id.toUpperCase(),
+  labelKey: labelKeys[video.id],
+  captionKey: `landing.videoShowcase.${video.id}`,
+  src: video.src,
+  poster: video.poster,
+}))
 
 const activeVideo = ref(0)
 const selectedVideo = computed(() => ({ ...videos[activeVideo.value], caption: t(videos[activeVideo.value].captionKey) }))

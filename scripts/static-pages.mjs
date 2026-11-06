@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homeContent } from '../src/shared/i18n/homeContent.js'
 import { renderMarkdown } from '../src/shared/legal/renderMarkdown.js'
-import { SITE, BRAND, BRAND_ALTERNATES, CONTACT_EMAIL, indexedPaths, pageSeo, SOCIAL_IMAGE, contentPages } from '../src/shared/seo.js'
+import { SITE, BRAND, BRAND_ALTERNATES, CONTACT_EMAIL, indexedPaths, pageSeo, SOCIAL_IMAGE, contentPages, homeVideos, videoStructuredData, HOME_VIDEOS_UPLOAD_DATE } from '../src/shared/seo.js'
 
 const BUILD_DATE = new Date().toISOString().slice(0, 10)
 
@@ -63,6 +63,16 @@ const homeBody = (locale) => {
   return `<h1>${escapeHtml(copy.seoTitle)} — ${BRAND}</h1>
     <p>${escapeHtml(copy.seoText)}</p>
     <img src="/screenshots/deep-data.png" width="1280" height="800" alt="${locale === 'ru' ? 'Аналитика сделок в приложении ' + BRAND : 'Trade analytics screen in ' + BRAND}" loading="lazy" />
+    <section>
+      <h2>${escapeHtml(copy.videoTitle)}</h2>
+      <p>${escapeHtml(copy.videoIntro)}</p>
+      ${homeVideos.map(video => `<figure>
+        <video poster="${video.poster}" controls preload="none" width="1280" height="720" aria-label="${escapeHtml(video.name[locale] || video.name.en)}">
+          <source src="${video.src}" type="video/quicktime">
+        </video>
+        <figcaption>${escapeHtml(video.description[locale] || video.description.en)}</figcaption>
+      </figure>`).join('')}
+    </section>
     <section>
       <h2>${escapeHtml(copy.guideTitle)}</h2>
       <p>${escapeHtml(copy.guideIntro)}</p>
@@ -213,6 +223,7 @@ const render = ({ path, body, locale = 'en' }) => {
     // Not adding FAQPage schema: Google retired FAQ rich results for all sites
     // (May 2026), and this FAQ is marketing copy, not genuine user Q&A, so
     // QAPage would not fit either.
+    schemas.push(...videoStructuredData(locale))
   }
   if (path) {
     schemas.push({
@@ -246,7 +257,22 @@ for (const page of pages) {
 }
 
 writeFileSync('dist/robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`)
-writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexedPaths.map(path => `  <url><loc>${SITE}${path}</loc><lastmod>${BUILD_DATE}</lastmod></url>`).join('\n')}\n</urlset>\n`)
+const escapeXml = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const videoSitemapEntry = (locale) => homeVideos.map(video => `    <video:video>
+      <video:thumbnail_loc>${SITE}${video.poster}</video:thumbnail_loc>
+      <video:title>${escapeXml(video.name[locale] || video.name.en)}</video:title>
+      <video:description>${escapeXml(video.description[locale] || video.description.en)}</video:description>
+      <video:content_loc>${SITE}${video.src}</video:content_loc>
+      <video:publication_date>${HOME_VIDEOS_UPLOAD_DATE}T00:00:00+00:00</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>`).join('\n')
+
+writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n${indexedPaths.map(path => {
+  const locale = path.startsWith('/ru') ? 'ru' : 'en'
+  const isHome = path === '/' || path === '/ru/'
+  return `  <url>\n    <loc>${SITE}${path}</loc>\n    <lastmod>${BUILD_DATE}</lastmod>${isHome ? `\n${videoSitemapEntry(locale)}` : ''}\n  </url>`
+}).join('\n')}\n</urlset>\n`)
 
 writeFileSync('dist/llms.txt', `# ${BRAND}
 
