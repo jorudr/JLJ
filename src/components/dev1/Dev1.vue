@@ -9,7 +9,7 @@
         <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
         <div class="hero__balance">
           <span class="hero__balance-label">{{ isRu ? 'Баланс счёта' : 'Account balance' }}</span>
-          <span ref="equityValueEl" class="hero__balance-value">$0.00</span>
+          <span ref="equityValueEl" class="hero__balance-value">$10,000.00</span>
         </div>
       </div>
       <div class="spec">
@@ -455,9 +455,9 @@ function initEquityCurve() {
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
 
-  // Settings from 1.html
-  const START = 2.5
-  const POINTS = 90
+  // Realistic trading account growth with multi-phase drawdowns
+  const START = 10000
+  const POINTS = 150
   const DURATION = 4500
   const COLOR = '#000000'
 
@@ -467,15 +467,68 @@ function initEquityCurve() {
   let timer = null
 
   function makeSeries() {
-    const target = 20000 + Math.random() * 70000
+    const target = 42000 + Math.random() * 24000
+
+    // 3 distinct realistic drawdown episodes
+    const d1Start = 0.14 + (Math.random() - 0.5) * 0.03
+    const d1End = 0.32 + (Math.random() - 0.5) * 0.03
+    const d1Depth = 0.22 + Math.random() * 0.06
+
+    const d2Start = 0.46 + (Math.random() - 0.5) * 0.04
+    const d2End = 0.70 + (Math.random() - 0.5) * 0.04
+    const d2Depth = 0.28 + Math.random() * 0.07
+
+    const d3Start = 0.79 + (Math.random() - 0.5) * 0.03
+    const d3End = 0.90 + (Math.random() - 0.5) * 0.03
+    const d3Depth = 0.16 + Math.random() * 0.05
+
     const out = []
+    let prevTradeNoise = 0
+
     for (let i = 0; i < POINTS; i++) {
       const t = i / (POINTS - 1)
-      const base = START * Math.pow(target / START, Math.pow(t, 1.6))
-      const dip = t > 0.35 && t < 0.55 ? 1 - Math.sin((t - 0.35) / 0.2 * Math.PI) * 0.45 : 1
-      const noise = i === 0 || i === POINTS - 1 ? 1 : 1 + (Math.random() - 0.5) * 0.18
-      out.push(base * dip * noise)
+      const macro = START * Math.pow(target / START, Math.pow(t, 1.22))
+
+      let dip = 1.0
+
+      // Episode 1: Initial pullback after first winning streak
+      if (t >= d1Start && t <= d1End) {
+        const p = (t - d1Start) / (d1End - d1Start)
+        const curve = Math.sin(p * Math.PI) * (1.0 + 0.2 * Math.cos(p * Math.PI * 2))
+        dip *= (1.0 - Math.max(0.0, curve) * d1Depth)
+      }
+
+      // Episode 2: Protracted major drawdown with double-bottom test & choppy consolidation
+      if (t >= d2Start && t <= d2End) {
+        const p = (t - d2Start) / (d2End - d2Start)
+        const doubleBottom = Math.sin(p * Math.PI) * (1.0 + 0.38 * Math.sin(p * Math.PI * 3))
+        dip *= (1.0 - Math.max(0.0, doubleBottom) * d2Depth)
+      }
+
+      // Episode 3: Late consolidation pullback before final high push
+      if (t >= d3Start && t <= d3End) {
+        const p = (t - d3Start) / (d3End - d3Start)
+        dip *= (1.0 - Math.sin(p * Math.PI) * d3Depth)
+      }
+
+      // Realistic trade-level sawtooth noise with momentum clustering
+      let regimeBias = 0.0
+      if ((t >= d1Start && t <= (d1Start + d1End) * 0.5) || (t >= d2Start && t <= (d2Start + d2End) * 0.5)) {
+        regimeBias = -0.015
+      } else if ((t >= d1End * 0.9 && t <= d2Start * 0.8) || (t >= d2End * 0.9 && t <= d3Start * 0.8)) {
+        regimeBias = 0.018
+      }
+
+      const trade = (Math.random() - 0.49 + regimeBias) * 0.045
+      prevTradeNoise = prevTradeNoise * 0.65 + trade
+      if (i === 0 || i === POINTS - 1) {
+        prevTradeNoise = 0
+      }
+
+      const val = macro * dip * (1.0 + prevTradeNoise)
+      out.push(Math.max(START * 0.88, val))
     }
+
     out[0] = START
     out[POINTS - 1] = target
     return out
@@ -495,13 +548,15 @@ function initEquityCurve() {
   function draw(progress) {
     const w = canvas.clientWidth
     const h = canvas.clientHeight
-    if (!w || !h) return
+    if (!w || !h || !series.length) return
     ctx.clearRect(0, 0, w, h)
-    const padX = w * 0.08
+    const padX = Math.min(w * 0.08, 64)
     const top = h * 0.38
-    const bottom = h * 0.9
-    const logMin = Math.log(Math.min(...series))
-    const logMax = Math.log(Math.max(...series))
+    const bottom = h * 0.90
+    const minVal = Math.min(...series) * 0.97
+    const maxVal = Math.max(...series) * 1.03
+    const logMin = Math.log(minVal)
+    const logMax = Math.log(maxVal)
     const pt = i => ({
       x: padX + (i / (series.length - 1)) * (w - padX * 2),
       y: bottom - (Math.log(series[i]) - logMin) / (logMax - logMin || 1) * (bottom - top),
@@ -514,12 +569,12 @@ function initEquityCurve() {
     const b = pt(next)
     const edge = { x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac }
 
-    ctx.lineWidth = 3
+    ctx.lineWidth = 2.5
     ctx.strokeStyle = COLOR
     ctx.lineJoin = 'round'
     ctx.lineCap = 'round'
-    ctx.shadowBlur = 12
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)'
+    ctx.shadowBlur = 10
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.18)'
     ctx.beginPath()
     const p0 = pt(0)
     ctx.moveTo(p0.x, p0.y)
@@ -531,7 +586,7 @@ function initEquityCurve() {
     ctx.stroke()
 
     ctx.fillStyle = COLOR
-    ctx.shadowBlur = 18
+    ctx.shadowBlur = 16
     ctx.beginPath()
     ctx.arc(edge.x, edge.y, 4, 0, Math.PI * 2)
     ctx.fill()
