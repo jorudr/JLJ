@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strategy nodes</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+
+  .gm {
+    --card: #080808; --text: #ffffff;
+    --muted: rgba(255,255,255,.5); --faint: rgba(255,255,255,.24);
+    --line: rgba(255,255,255,.10); --line-hi: rgba(255,255,255,.45);
+    --node-corner: #777777; --entry: #22c55e; --exit: #ef4444;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+    -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .gm *, .gm *::before, .gm *::after { box-sizing: border-box; }
+  .gm-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .gm-world.animate { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+
+  /* Curves between nodes */
+  .gm-edges { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+  .gm-edges path { fill: none; stroke: var(--line-hi); stroke-opacity: .45; stroke-width: 1.5; }
+  /* Condition combinations (scan): muted red lanes right of the conditions */
+  .gm-edges .gm-combo-edge { stroke: var(--exit); stroke-opacity: .4; }
+
+  /* Node: dark card with corner brackets */
+  .gm-node { position: absolute; background: var(--card); }
+  .gm-node::after {
+    content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; --c: var(--node-corner);
+    background:
+      linear-gradient(var(--c), var(--c)) left top / 9px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) left 0 top 2px / 2px 7px no-repeat,
+      linear-gradient(var(--c), var(--c)) right top / 9px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) right 0 top 2px / 2px 7px no-repeat,
+      linear-gradient(var(--c), var(--c)) left bottom / 9px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) left 0 bottom 2px / 2px 7px no-repeat,
+      linear-gradient(var(--c), var(--c)) right bottom / 9px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) right 0 bottom 2px / 2px 7px no-repeat;
+  }
+  /* Required condition: short red bar centered on the bottom edge */
+  .gm-condition.gm-required::before {
+    content: ""; position: absolute; left: 50%; bottom: 0; width: 28px; height: 2px;
+    transform: translateX(-50%); background: var(--exit);
+  }
+
+  .gm-head { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 0 16px; }
+  .gm-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gm-strategy .gm-title { font-size: 16px; font-weight: 900; letter-spacing: .04em; }
+  .gm-scenario .gm-title { font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+  .gm-condition .gm-title { font-size: 12px; }
+  .gm-meta { margin-bottom: 5px; font-size: 8px; text-transform: uppercase; letter-spacing: .24em; font-weight: 900; }
+  .gm-meta.exit { color: var(--exit); }
+
+  /* Session flags, right side of the node */
+  .gm-sess { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; gap: 3px; }
+  .gm-flag { display: block; width: 14px; height: 14px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+  .gm-flag svg { display: block; width: 100%; height: 100%; }
+
+  /* ---------- Scan mode ---------- */
+  .gm-scan-metrics { display: flex; align-items: center; gap: 18px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .gm-head > .gm-scan-metrics { position: absolute; inset: 0; justify-content: center; display: none; }
+  .gm.scan .gm-head > .gm-scan-metrics { display: flex; }
+  .gm.scan .gm-meta, .gm.scan .gm-title, .gm.scan .gm-sess { display: none; }
+  .gm-scan-metric { display: flex; align-items: center; gap: 6px; }
+  .gm-scan-label { color: var(--muted); font-size: 8px; letter-spacing: .24em; font-weight: 900; }
+  .gm-scan-value { min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+  .gm-scan-arrow { width: 11px; height: 11px; flex: none; }
+  .gm-scan-arrow.up { color: var(--entry); }
+  .gm-scan-arrow.down { color: var(--exit); }
+  .gm-combo-label { position: absolute; transform: translateY(-50%); pointer-events: none; display: none; }
+  .gm-combo-edge { display: none; }
+  .gm.scan .gm-combo-label { display: block; }
+  .gm.scan .gm-combo-edge { display: inline; }
+
+  /* Scan tooltip: node name over the hovered node */
+  .gm-tip { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; -webkit-font-smoothing: antialiased; position: fixed; z-index: 100; pointer-events: none; display: none; flex-direction: column-reverse; min-width: 200px; max-width: 320px; }
+  .gm-tip.on { display: flex; }
+  .gm-tip-stem-row { display: flex; }
+  .gm-tip-stem { width: 12px; height: 12px; margin-top: -6px; transform: rotate(45deg);
+    background: #0a0a0a; border-right: 1px solid rgba(249,246,240,.18); border-bottom: 1px solid rgba(249,246,240,.18); }
+  .gm-tip-panel { background: #0a0a0a; color: #F9F6F0; border: 1px solid rgba(249,246,240,.18); padding: 20px;
+    display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 0 rgba(0,0,0,.5); }
+  .gm-tip-head { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-bottom: 1px solid rgba(249,246,240,.18); padding-bottom: 8px; }
+  .gm-tip-title { font-size: 11px; letter-spacing: .3em; font-weight: 900; }
+  .gm-tip-type { font-size: 11px; font-weight: 900; text-transform: lowercase; letter-spacing: .3em; }
+  .gm-tip-type.exit { color: #ef4444; }
+  .gm-tip-name { margin: 0; font-size: 13px; line-height: 1.6; }
+
+  /* ---------- Scan button, bottom left ---------- */
+  .gm-hud {
+    position: absolute; left: 16px; bottom: 16px; z-index: 10; display: flex; gap: 6px; padding: 6px;
+    border: 1px solid rgba(255,255,255,.2); border-radius: 2px; background: rgba(10,10,10,.9);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  }
+  .gm-hud-btn {
+    position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    padding: 0; margin: 0; font: inherit; cursor: pointer; background: transparent;
+    border: 1px solid transparent; color: rgba(255,255,255,.7); transition: all .15s;
+  }
+  .gm-hud-btn:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.05); color: #fff; }
+  .gm-hud-btn.on { border-color: #fff; background: #fff; color: #000; }
+  .gm-hud-btn.on:hover { background: rgba(255,255,255,.8); }
+  .gm-hud-btn svg { width: 20px; height: 20px; }
+  .gm-hud-tip {
+    position: absolute; bottom: 100%; left: 0; margin-bottom: 8px; pointer-events: none; white-space: nowrap;
+    background: #fff; color: #000; border: 1px solid rgba(255,255,255,.2); padding: 6px 12px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    opacity: 0; transition: opacity .15s; box-shadow: 0 20px 25px -5px rgba(0,0,0,.1);
+  }
+  .gm-hud-btn:hover .gm-hud-tip, .gm-hud-btn:focus-visible .gm-hud-tip { opacity: 1; }
+  @media (min-width: 640px) { .gm-hud { left: 24px; bottom: 24px; } }
+  @media (min-width: 1536px) {
+    .gm-hud { left: 32px; bottom: 32px; gap: 8px; padding: 8px; }
+    .gm-hud-btn { width: 48px; height: 48px; }
+    .gm-hud-btn svg { width: 24px; height: 24px; }
+    .gm-hud-tip { font-size: 11px; padding: 8px 16px; margin-bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="gm" id="board">
+  <div class="gm-world" id="world">
+    <svg class="gm-edges" id="edges"></svg>
+  </div>
+
+  <div class="gm-hud">
+    <button type="button" class="gm-hud-btn" id="scan-btn" aria-label="Scan" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" stroke-linecap="square" /><path d="M4 12h16" />
+      </svg>
+      <span class="gm-hud-tip">[ Scan ]</span>
+    </button>
+  </div>
+</div>
+
+<div class="gm-tip" id="tip">
+  <div class="gm-tip-stem-row" id="tip-stem-row"><div class="gm-tip-stem"></div></div>
+  <div class="gm-tip-panel">
+    <div class="gm-tip-head"><span class="gm-tip-title" id="tip-title"></span><span class="gm-tip-type" id="tip-type"></span></div>
+    <p class="gm-tip-name" id="tip-name"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Data ----------
+  // sessions: 'sydney' | 'asia' | 'frankfurt' | 'london' | 'ny'
+  // m (scan metrics): wr = win rate 0..1, pf = profit factor, prevWr / prevPf = before the latest trade
+  //   (arrow up / down when changed, none when equal or null). m: null -> "—".
+  var STRATEGY = {
+    name: 'Trend pullback',
+    m: { wr: 0.54, pf: 1.86, prevWr: 0.53, prevPf: 1.79 },
+    scenarios: [
+      { id: 's1', type: 'entry', name: 'Pullback to EMA 21', sessions: ['london', 'ny'],
+        m: { wr: 0.61, pf: 2.34, prevWr: 0.59, prevPf: 2.21 }, conditions: [
+        { id: 'c1', text: 'Higher-timeframe trend up', required: true, sessions: [], m: { wr: 0.63, pf: 2.48, prevWr: 0.62, prevPf: 2.40 } },
+        { id: 'c2', text: 'Price touches EMA 21', required: false, sessions: [], m: { wr: 0.58, pf: 2.05, prevWr: 0.60, prevPf: 2.12 } },
+      ] },
+      { id: 's2', type: 'exit', name: 'Take profit', sessions: [],
+        m: { wr: 0.68, pf: 2.90, prevWr: 0.67, prevPf: 2.84 }, conditions: [
+        { id: 'c3', text: 'Price reaches 2R', required: true, sessions: [], m: { wr: 0.74, pf: 3.40, prevWr: 0.73, prevPf: 3.31 } },
+        { id: 'c4', text: 'Opposite liquidity swept', required: false, sessions: [], m: { wr: 0.55, pf: 1.72, prevWr: 0.55, prevPf: 1.72 } },
+      ] },
+    ],
+  }
+  // Top condition combinations (scan): up to three, each with its own metrics.
+  var COMBOS = [
+    { conditions: ['c1', 'c2'], m: { wr: 0.72, pf: 3.15, prevWr: 0.70, prevPf: 3.02 } },
+    { conditions: ['c3', 'c4'], m: { wr: 0.66, pf: 2.48, prevWr: 0.68, prevPf: 2.60 } },
+  ]
+
+  // ---------- Layout (same sizes as the app's strategy board) ----------
+  var SIZE = { strategy: [280, 60], scenario: [250, 62], condition: [300, 42] }
+  var COL = { strategy: 0, scenario: 360, condition: 690 }
+  var GAP = 14, GROUP_GAP = 36
+  var COMBO_GAP = 48, COMBO_LANE_W = 170, COMBO_LABEL_W = 150
+  var SCAN_ZOOM_OUT = 0.88
+
+  var nodes = [], edges = [], y = 0
+  ;['entry', 'exit'].forEach(function (type, gi) {
+    var list = STRATEGY.scenarios.filter(function (s) { return s.type === type })
+    if (!list.length) return
+    if (gi > 0 && nodes.length) y += GROUP_GAP - GAP * 2
+    list.forEach(function (sc) {
+      nodes.push({ kind: 'scenario', id: sc.id, item: sc, x: COL.scenario, y: y, w: SIZE.scenario[0], h: SIZE.scenario[1] })
+      edges.push(['strategy', sc.id])
+      var cy = y
+      sc.conditions.forEach(function (c) {
+        nodes.push({ kind: 'condition', id: c.id, item: c, x: COL.condition, y: cy, w: SIZE.condition[0], h: SIZE.condition[1] })
+        edges.push([sc.id, c.id])
+        cy += SIZE.condition[1] + GAP
+      })
+      y = Math.max(cy - GAP, y + SIZE.scenario[1]) + GAP * 2
+    })
+  })
+  var total = Math.max(y - GAP * 2, SIZE.strategy[1])
+  nodes.push({ kind: 'strategy', id: 'strategy', item: STRATEGY, x: COL.strategy, y: Math.round(total / 2 - SIZE.strategy[1] / 2), w: SIZE.strategy[0], h: SIZE.strategy[1] })
+
+  // ---------- Helpers ----------
+  var FLAGS = {
+    asia: '<rect width="30" height="30" fill="#fff"/><circle cx="15" cy="15" r="7.5" fill="#bc002d"/>',
+    frankfurt: '<rect width="30" height="10" fill="#000"/><rect y="10" width="30" height="10" fill="#dd0000"/><rect y="20" width="30" height="10" fill="#ffce00"/>',
+    london: '<rect width="30" height="30" fill="#012169"/><path d="M0,0L30,30M30,0L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0L30,30M30,0L0,30" stroke="#c8102e" stroke-width="2"/><path d="M15,0V30M0,15H30" stroke="#fff" stroke-width="10"/><path d="M15,0V30M0,15H30" stroke="#c8102e" stroke-width="6"/>',
+    sydney: '<rect width="30" height="30" fill="#012169"/><path d="M0,0L15,15M15,0L0,15" stroke="#fff" stroke-width="3"/><path d="M0,0L15,15M15,0L0,15" stroke="#c8102e" stroke-width="1"/><path d="M7.5,0V15M0,7.5H15" stroke="#fff" stroke-width="5"/><path d="M7.5,0V15M0,7.5H15" stroke="#c8102e" stroke-width="3"/>' +
+      [[7.5, 23, 2.6], [22.5, 8, 1.3], [26, 14, 1.3], [22.5, 25, 1.4], [19, 15.5, 1.2]].map(function (s) { return '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="' + s[2] + '" fill="#fff"/>' }).join(''),
+    ny: '<rect width="30" height="30" fill="#fff"/>' +
+      [0, 2, 4, 6, 8, 10, 12].map(function (i) { return '<rect y="' + (i * 30 / 13) + '" width="30" height="' + (30 / 13) + '" fill="#b22234"/>' }).join('') +
+      '<rect width="15" height="16.2" fill="#3c3b6e"/>' +
+      [[3.5, 4], [7.5, 4], [11.5, 4], [5.5, 8], [9.5, 8], [3.5, 12], [7.5, 12], [11.5, 12]].map(function (s) { return '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="1" fill="#fff"/>' }).join(''),
+  }
+  var ORDER = ['sydney', 'asia', 'frankfurt', 'london', 'ny']
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] }) }
+
+  // WR / PF with the direction the latest trade moved each of them.
+  function scanMetrics(m) {
+    var trend = function (v, prev) { return prev == null || v === prev ? null : v > prev ? 'up' : 'down' }
+    var items = !m
+      ? [{ label: 'WR', value: '—', trend: null }, { label: 'PF', value: '—', trend: null }]
+      : [
+        { label: 'WR', value: Math.round(m.wr * 100) + '%', trend: trend(m.wr, m.prevWr) },
+        { label: 'PF', value: isFinite(m.pf) ? m.pf.toFixed(2) : '∞', trend: trend(m.pf, m.prevPf) },
+      ]
+    return '<div class="gm-scan-metrics">' + items.map(function (it) {
+      var arrow = it.trend
+        ? '<svg class="gm-scan-arrow ' + it.trend + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="' +
+          (it.trend === 'up' ? 'M12 19V5M6 11l6-6 6 6' : 'M12 5v14m-6-6 6 6 6-6') + '"/></svg>'
+        : '<span class="gm-scan-arrow"></span>'
+      return '<span class="gm-scan-metric"><span class="gm-scan-label">' + it.label + '</span><span class="gm-scan-value">' + it.value + '</span>' + arrow + '</span>'
+    }).join('') + '</div>'
+  }
+
+  // ---------- Render nodes ----------
+  var board = document.getElementById('board')
+  var world = document.getElementById('world')
+  var byId = {}
+  nodes.forEach(function (n) {
+    byId[n.id] = n
+    var el = document.createElement('div')
+    el.className = 'gm-node gm-' + n.kind + (n.kind === 'condition' && n.item.required ? ' gm-required' : '')
+    el.style.cssText = 'left:' + n.x + 'px;top:' + n.y + 'px;width:' + n.w + 'px;height:' + n.h + 'px'
+    el.dataset.id = n.id
+    var sessions = ORDER.filter(function (s) { return (n.item.sessions || []).indexOf(s) !== -1 })
+    var padRight = sessions.length ? 24 + sessions.length * 17 : 16
+    el.innerHTML = '<div class="gm-head" style="padding-right:' + padRight + 'px">' +
+      (n.kind === 'scenario' ? '<div class="gm-meta ' + n.item.type + '">' + (n.item.type === 'entry' ? 'Entry' : 'Exit') + '</div>' : '') +
+      '<div class="gm-title">' + esc(nameOf(n)) + '</div>' +
+      (sessions.length ? '<div class="gm-sess">' + sessions.map(function (s) {
+        return '<span class="gm-flag"><svg viewBox="0 0 30 30" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + FLAGS[s] + '</svg></span>'
+      }).join('') + '</div>' : '') +
+      scanMetrics(n.item.m) +
+      '</div>'
+    world.appendChild(el)
+  })
+  function nameOf(n) { return n.kind === 'condition' ? n.item.text : n.item.name }
+
+  // ---------- Curves + combination lanes ----------
+  var anchorY = function (n) { return n.y + SIZE[n.kind][1] / 2 }
+  var conditionNodes = nodes.filter(function (n) { return n.kind === 'condition' })
+  var right = Math.max.apply(null, conditionNodes.map(function (n) { return n.x + n.w }))
+  var lanes = COMBOS.slice(0, 3).map(function (combo, i) {
+    var ns = combo.conditions.map(function (id) { return byId[id] }).filter(Boolean)
+    if (ns.length !== combo.conditions.length || !ns.length) return null
+    var x = right + COMBO_GAP + i * COMBO_LANE_W
+    var ys = ns.map(anchorY)
+    var top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys)
+    var d = ['M' + x + ',' + top + ' V' + bottom].concat(ns.map(function (n, k) { return 'M' + (n.x + n.w) + ',' + ys[k] + ' H' + x })).join(' ')
+    return { x: x, y: (top + bottom) / 2, d: d, m: combo.m }
+  }).filter(Boolean)
+
+  document.getElementById('edges').innerHTML = edges.map(function (e) {
+    var p = byId[e[0]], q = byId[e[1]]
+    var x1 = p.x + p.w, y1 = anchorY(p), x2 = q.x, y2 = anchorY(q), mx = (x1 + x2) / 2
+    return '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2 + '"/>'
+  }).join('') + lanes.map(function (l) { return '<path class="gm-combo-edge" d="' + l.d + '"/>' }).join('')
+
+  lanes.forEach(function (l) {
+    var el = document.createElement('div')
+    el.className = 'gm-combo-label'
+    el.style.cssText = 'left:' + (l.x + 10) + 'px;top:' + l.y + 'px'
+    el.innerHTML = scanMetrics(l.m)
+    world.appendChild(el)
+  })
+
+  // ---------- Camera: fit the tree, a bit further out in scan mode ----------
+  var scan = false
+  var bounds = function (withLanes) {
+    var b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+    nodes.forEach(function (n) {
+      b.minX = Math.min(b.minX, n.x); b.minY = Math.min(b.minY, n.y)
+      b.maxX = Math.max(b.maxX, n.x + n.w); b.maxY = Math.max(b.maxY, n.y + n.h)
+    })
+    if (withLanes && lanes.length) b.maxX = Math.max(b.maxX, lanes[lanes.length - 1].x + 10 + COMBO_LABEL_W)
+    return b
+  }
+  var cam = { x: 0, y: 0, s: 1 }
+  function fit() {
+    var b = bounds(scan), pad = 32
+    var w = b.maxX - b.minX, h = b.maxY - b.minY
+    var s = Math.min(1.4, (board.clientWidth - pad * 2) / w, (board.clientHeight - pad * 2) / h)
+    if (scan) s *= SCAN_ZOOM_OUT
+    cam = { s: s, x: (board.clientWidth - w * s) / 2 - b.minX * s, y: (board.clientHeight - h * s) / 2 - b.minY * s }
+    world.style.transform = 'translate(' + cam.x + 'px,' + cam.y + 'px) scale(' + cam.s + ')'
+  }
+
+  // ---------- Scan button ----------
+  var btn = document.getElementById('scan-btn')
+  btn.addEventListener('click', function () {
+    scan = !scan
+    board.classList.toggle('scan', scan)
+    btn.classList.toggle('on', scan)
+    btn.setAttribute('aria-pressed', String(scan))
+    if (!scan) hideTip()
+    world.classList.add('animate')
+    fit()
+  })
+  world.addEventListener('transitionend', function () { world.classList.remove('animate') })
+  window.addEventListener('resize', function () { hideTip(); fit() })
+
+  // ---------- Scan tooltip: kind, scenario type and name of the hovered node ----------
+  var tip = document.getElementById('tip')
+  var stemRow = document.getElementById('tip-stem-row')
+  var current = null
+  function hideTip() { tip.classList.remove('on'); current = null }
+  world.addEventListener('mouseover', function (e) {
+    if (!scan) return
+    var el = e.target.closest('.gm-node')
+    if (!el || el.dataset.id === current) return
+    current = el.dataset.id
+    var n = byId[current]
+    document.getElementById('tip-title').textContent = n.kind === 'strategy' ? 'Strategy' : n.kind === 'scenario' ? 'Scenario' : 'Condition'
+    var type = document.getElementById('tip-type')
+    type.textContent = n.kind === 'scenario' ? n.item.type : ''
+    type.className = 'gm-tip-type' + (n.kind === 'scenario' ? ' ' + n.item.type : '')
+    document.getElementById('tip-name').textContent = nameOf(n) || '—'
+    tip.classList.add('on')
+    var r = el.getBoundingClientRect(), margin = 16, gap = 20
+    var w = tip.offsetWidth, h = tip.offsetHeight
+    var left = Math.max(margin, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - margin))
+    tip.style.left = left + 'px'
+    tip.style.top = Math.max(margin, r.top - h - gap + 6) + 'px'
+    stemRow.style.paddingLeft = (r.left + r.width / 2 - left - 6) + 'px'
+  })
+  world.addEventListener('mouseout', function (e) {
+    var to = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.gm-node')
+    if (!to) hideTip()
+  })
+
+  fit()
+})()
+</script>
+</body>
+</html>

@@ -80,6 +80,18 @@ const router = createRouter({
       props: { path, doc, title, subtitle, titleRu, subtitleRu },
     }]),
     {
+      // Work-in-progress redesign. Not indexed (see pageSeo in shared/seo.js).
+      path: '/dev',
+      name: 'dev',
+      component: () => import('../components/dev/DevHome.vue')
+    },
+    {
+      // Brutalist editorial redesign. Not indexed (see pageSeo in shared/seo.js).
+      path: '/dev1',
+      name: 'dev1',
+      component: () => import('../components/dev1/Dev1.vue')
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: NotFound,

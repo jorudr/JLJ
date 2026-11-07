@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profitability Patterns</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: #000; color: #fff; }
+body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; -webkit-font-smoothing: antialiased; }
+main { width: min(100% - 48px, 1200px); margin: 0 auto; padding: clamp(32px, 12vh, 120px) 0 100px; }
+.heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid #ffffff1a; padding: 16px 8px; }
+.eyebrow { font-size: 9px; font-weight: 900; letter-spacing: .32em; opacity: .45; text-transform: uppercase; }
+h1 { margin: 8px 0 0; font-size: 14px; line-height: 20px; font-weight: 900; letter-spacing: .24em; text-transform: uppercase; }
+.description { max-width: 672px; margin: 8px 0 0; font-size: 9px; line-height: 1.625; letter-spacing: .16em; text-transform: uppercase; opacity: .45; }
+.count { border: 1px solid #ffffff26; padding: 8px 12px; font-size: 9px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; opacity: .6; }
+.list { max-height: 420px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #ffffff26 transparent; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 12px; border-bottom: 1px solid #ffffff1a; padding: 12px 8px; }
+.row:not(.columns):hover { background: #ffffff09; }
+.columns { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #ffffff73; }
+.columns span:last-child { text-align: right; letter-spacing: .16em; }
+.name { min-width: 0; }
+.label, .detail { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
+.label { font-size: 11px; line-height: 1.5; font-weight: 900; letter-spacing: .16em; opacity: .75; }
+.detail { margin-top: 4px; font-size: 9px; line-height: 1.5; letter-spacing: .1em; opacity: .55; }
+.value { max-width: 220px; text-align: right; font-size: 10px; line-height: 1.5; font-weight: 900; }
+.frequency { display: block; margin-top: 4px; font-size: 8px; letter-spacing: .12em; opacity: .45; }
+@media (min-width: 1536px) {
+  main { max-width: 1500px; }
+  .heading { padding-block: 20px; }
+  .eyebrow, .description, .count, .columns, .label, .value { font-size: 12px; }
+  h1 { font-size: 16px; line-height: 24px; }
+  .count { padding: 10px 16px; }
+  .list { max-height: 520px; }
+  .row { padding-block: 16px; }
+  .detail, .frequency { font-size: 10px; }
+  .value { max-width: 280px; }
+}
+@media (min-width: 1920px) {
+  .eyebrow, .description, .count, .columns, .label, .value { font-size: 14px; }
+  h1 { font-size: 18px; line-height: 28px; }
+  .detail, .frequency { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<!-- Standalone ExScorePatternsPanel + ExProfitabilityPatternList.
+     Labels and descriptions from the application; values are demo data. -->
+<main>
+  <section aria-label="Profitability Patterns">
+    <header class="heading">
+      <div>
+        <div class="eyebrow">Profitable trades</div>
+        <h1>Profitability Patterns</h1>
+        <p class="description">Recurring metrics separated into profitable and losing trades.</p>
+      </div>
+      <span class="count">6 patterns</span>
+    </header>
+    <div class="list">
+      <div class="row columns"><span>Profitable trade patterns</span><span>range / frequency</span></div>
+      <div class="row"><div class="name"><span class="label">Realized R from SL to Exit</span><span class="detail">Actual entry-to-exit profit measured in stop-loss risk units.</span></div><div class="value">1.80–2.60 R<span class="frequency">72%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Position Size</span><span class="detail">Position-size range for this profitability cohort.</span></div><div class="value">0.50–1.20 lots<span class="frequency">68%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Temporal Exposure</span><span class="detail">Total duration of trade from entry to exit protocol completion.</span></div><div class="value">2.50–6.00 h<span class="frequency">64%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Stop Loss Distance</span><span class="detail">Percentage distance between entry price and planned stop loss threshold.</span></div><div class="value">0.40–0.85%<span class="frequency">76%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Take Profit Distance</span><span class="detail">Percent distance from entry level to target take-profit level.</span></div><div class="value">1.20–2.40%<span class="frequency">70%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Profit Capture Ratio</span><span class="detail">Share of available favorable price movement captured by the actual exit.</span></div><div class="value">58.0–82.0%<span class="frequency">74%</span></div></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

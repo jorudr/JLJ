@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+main { position: absolute; inset: 4% 3% 80px; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  .condition { display: flex; align-items: center; justify-content: space-between; width: var(--condition-width); height: var(--condition-height); padding: 0 var(--condition-padding); border: 1px solid rgb(255 255 255 / 5%); }
+  .condition:hover { border-color: rgb(255 255 255 / 25%); }
+  .condition-name { margin-right: var(--condition-name-gap); padding: 2px 0 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--condition-name-size); font-weight: 900; line-height: 1.4; letter-spacing: .1em; text-transform: uppercase; }
+  .condition-metrics { display: flex; flex-direction: column; gap: var(--condition-row-gap); flex-shrink: 0; }
+  .condition-row { display: flex; align-items: center; justify-content: flex-end; gap: var(--condition-metric-gap); white-space: nowrap; font-size: var(--condition-value-size); font-weight: 700; line-height: 1.3; }
+  .condition-label { color: rgb(255 255 255 / 30%); font-size: var(--condition-label-size); font-weight: 400; }
+  .condition.exit { flex-direction: row-reverse; }
+  .condition.exit .condition-name { margin: 0 0 0 var(--condition-name-gap); text-align: right; }
+  .condition.exit .condition-row { flex-direction: row-reverse; justify-content: flex-end; }
+  .arrow { display: block; flex-shrink: 0; width: var(--arrow-size); height: var(--arrow-size); }
+  .arrow.up { color: #22c55e; }
+  .arrow.down { color: #ef4444; }
+  :root { --hub-width: 320px; --hub-height: 128px; --hub-padding: 24px; --corner-size: 16px; --hub-gap: 4px; --hub-metric-pad: 8px; --hub-name-size: 20px; --hub-label-size: 8px; --hub-value-size: 12px; --condition-width: 280px; --condition-height: 60px; --condition-padding: 16px; --condition-name-gap: 32px; --condition-name-size: 11px; --condition-label-size: 7px; --condition-value-size: 9px; --condition-row-gap: 4px; --condition-metric-gap: 8px; --arrow-size: 8px; }
+  @media (min-width: 1536px) { :root { --hub-width: 420px; --hub-height: 176px; --hub-padding: 32px; --corner-size: 24px; --hub-gap: 8px; --hub-metric-pad: 12px; --hub-name-size: 24px; --hub-label-size: 12px; --hub-value-size: 16px; --condition-width: 380px; --condition-height: 80px; --condition-padding: 24px; --condition-name-gap: 40px; --condition-name-size: 14px; --condition-label-size: 10px; --condition-value-size: 12px; --condition-row-gap: 8px; --condition-metric-gap: 12px; --arrow-size: 14px; } }
+  @media (min-width: 1920px) { :root { --hub-width: 480px; --hub-height: 208px; --hub-padding: 40px; --corner-size: 32px; --hub-name-size: 30px; --hub-label-size: 14px; --hub-value-size: 18px; --condition-width: 440px; --condition-height: 96px; --condition-padding: 28px; --condition-name-size: 16px; --condition-label-size: 12px; --condition-value-size: 14px; --arrow-size: 16px; } }
+  @media (min-width: 2560px) { :root { --hub-width: 540px; --hub-height: 240px; --hub-name-size: 36px; --hub-label-size: 16px; --hub-value-size: 20px; --condition-width: 500px; --condition-height: 110px; --condition-name-size: 18px; --condition-label-size: 14px; --condition-value-size: 16px; } }
+.condition-layer { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.condition-layer .node { position:absolute; background:#000; color:#fff; pointer-events:auto; transition:transform .4s cubic-bezier(.4,0,.2,1),border-color .4s; }
+.condition-layer .node:hover { transform:translateY(-2px); }
+.condition { font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+</style>
+</head>
+<body>
+<main><canvas aria-label="Candlestick price chart"></canvas><div class="condition-layer"></div></main>
+<script>
+// Standalone dark candle rendering from ExTradeEntryStudyMetricsPanel,
+// used by ExTradeGeneratedChart in ExTimeTreeTradeEntry. Demo OHLC only.
+(function () {
+  const canvas = document.querySelector('canvas')
+  const ctx = canvas.getContext('2d')
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+  let seed = 57, price = 2340
+  const random = () => { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646 }
+  const candles = Array.from({ length: 240 }, (_, i) => {
+    const open = price
+    const close = open + (random() - .47) * 8 + Math.sin(i / 18) * .7
+    price = close
+    return { time: Date.UTC(2026, 3, 7, 0, i * 15), open, close,
+      high: Math.max(open, close) + .4 + random() * 3,
+      low: Math.min(open, close) - .4 - random() * 3 }
+  })
+  const entryIndex = 125, exitIndex = 180
+  const entryPrice = candles[entryIndex].close
+  const orders = [
+    { label: 'ENTRY', value: entryPrice, color: 'rgba(255,255,255,0.72)' },
+    { label: 'STOP LOSS', value: entryPrice - 12, color: 'rgba(251,113,133,0.82)' },
+    { label: 'TAKE PROFIT', value: entryPrice + 40, color: 'rgba(255,255,255,0.82)' },
+    { label: 'EXIT', value: candles[exitIndex].close, color: 'rgba(251,191,36,0.82)' }
+  ]
+  // Conditions are derived from OHLC evidence, not arbitrary candle labels.
+  const breakoutIndex = candles.findIndex((c, i) => i >= 112 && i < 150 &&
+    c.close > Math.max(...candles.slice(i - 8, i).map(bar => bar.high)))
+  const resistance = Math.max(...candles.slice(breakoutIndex - 8, breakoutIndex).map(c => c.high))
+  const retestIndex = candles.findIndex((c, i) => i > breakoutIndex && i <= breakoutIndex + 12 &&
+    c.low <= resistance && c.close > resistance)
+  const confirmationIndex = candles.findIndex((c, i) => i > retestIndex && i <= retestIndex + 20 &&
+    c.close > c.open && c.close > candles[retestIndex].high)
+  const invalidationIndex = candles.findIndex((c, i) => i >= 150 && i < 196 &&
+    c.close < Math.min(...candles.slice(i - 6, i).map(bar => bar.low)))
+  const support = Math.min(...candles.slice(invalidationIndex - 6, invalidationIndex).map(c => c.low))
+  const conditions = [
+    { index: retestIndex, label: 'SUPPORT RETEST', type: 'ENTRY CONDITION', freq: '38.0%', pf: '1.74', freqTrend: 'down',
+      evidence: 'Retest holds ' + resistance.toFixed(2), above: false, slot: .24, level: resistance },
+    { index: confirmationIndex, label: 'BULLISH CONFIRMATION', type: 'ENTRY CONDITION', freq: '64.0%', pf: '1.98',
+      evidence: 'Close above retest high', above: true, slot: .40 },
+    { index: invalidationIndex, label: 'STRUCTURE INVALIDATED', type: 'EXIT CONDITION', freq: '56.2%', pf: '2.42',
+      evidence: 'Close below ' + support.toFixed(2), above: true, slot: .82, level: support }
+  ].filter(condition => condition.index >= 0)
+  // Use the exact HTML/CSS condition cards from UI 5, over the canvas.
+  function trendArrow(trend) {
+    const down = trend === 'down'
+    return '<svg class="arrow ' + (down ? 'down' : 'up') + '" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="' + (down ? 'M7 7L17 17M17 17V7M17 17H7' : 'M7 17L17 7M17 7H7M17 7V17') + '" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  }
+  conditions.forEach(condition => {
+    const el = document.createElement('div')
+    el.className = 'node condition' + (condition.type === 'EXIT CONDITION' ? ' exit' : '')
+    el.innerHTML = '<span class="condition-name">' + condition.label + '</span><span class="condition-metrics">' +
+      '<span class="condition-row"><span class="condition-label">FREQ</span><span>' + condition.freq + '</span>' + trendArrow(condition.freqTrend) + '</span>' +
+      '<span class="condition-row"><span class="condition-label">P/F</span><span>' + condition.pf + '</span>' + trendArrow('up') + '</span></span>'
+    document.querySelector('.condition-layer').appendChild(el)
+    condition.element = el
+  })
+  let start = 100, span = 100, crosshair = null, drag = null
+  function geometry() {
+    const rect = canvas.getBoundingClientRect()
+    const large = innerWidth >= 1536, huge = innerWidth >= 2100
+    return { width: rect.width, height: rect.height, left: 0,
+      right: Math.max(1, rect.width - (huge ? 74 : large ? 68 : 58)),
+      top: conditions[0].element.offsetHeight + 52, bottom: Math.max(145, rect.height - conditions[0].element.offsetHeight - 70), large, huge }
+  }
+  function drawConditions(g, yForPrice, barWidth) {
+    ctx.save()
+    conditions.forEach(condition => {
+      const x = (condition.index - start + .5) * barWidth
+      condition.element.style.visibility = x < 0 || x > g.right ? 'hidden' : 'visible'
+      if (x < 0 || x > g.right) return
+      const candle = candles[condition.index]
+      const width = condition.element.offsetWidth, height = condition.element.offsetHeight
+      const left = clamp(g.right * condition.slot - width / 2, 1, g.right - width - 1)
+      const top = condition.above ? 8 : g.bottom + 53
+      condition.element.style.left = left + 'px'
+      condition.element.style.top = top + 'px'
+      const fromX = left + width / 2, fromY = condition.above ? top + height : top
+      const tipY = yForPrice(condition.above ? candle.high : candle.low) + (condition.above ? -6 : 6)
+      const direction = condition.above ? 1 : -1
+      const midY = (fromY + tipY) / 2
+      ctx.strokeStyle = 'rgba(255,255,255,.48)'; ctx.lineWidth = 1
+      ctx.setLineDash([])
+      ctx.beginPath(); ctx.moveTo(fromX, fromY)
+      ctx.bezierCurveTo(fromX, midY, x, midY, x, tipY); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x - 4, tipY - direction * 7)
+      ctx.lineTo(x, tipY); ctx.lineTo(x + 4, tipY - direction * 7); ctx.stroke()
+      // A short reference level makes the retest / breakdown visible.
+      if (condition.level !== undefined) {
+        const levelY = yForPrice(condition.level)
+        ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(255,255,255,.35)'
+        ctx.beginPath(); ctx.moveTo(Math.max(0, x - barWidth * 5), levelY)
+        ctx.lineTo(Math.min(g.right, x + barWidth * 2), levelY); ctx.stroke(); ctx.setLineDash([])
+      }
+
+    })
+    ctx.restore()
+  }
+  function draw() {
+    const g = geometry(), dpr = devicePixelRatio || 1
+    canvas.width = Math.round(g.width * dpr); canvas.height = Math.round(g.height * dpr)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, g.width, g.height)
+    const visible = candles.slice(Math.floor(start), Math.min(candles.length, Math.ceil(start + span)))
+    if (!visible.length) return
+    let min = Math.min(...visible.map(c => c.low), ...orders.map(o => o.value))
+    let max = Math.max(...visible.map(c => c.high), ...orders.map(o => o.value))
+    const pad = Math.max(1, (max - min) * .12); min -= pad; max += pad
+    const yForPrice = p => g.top + (max - p) / (max - min) * (g.bottom - g.top)
+    const barWidth = g.right / span
+    const bodyWidth = clamp(barWidth * .9, 4, Math.max(4, barWidth - 1))
+    ctx.font = `${g.huge ? 13 : g.large ? 12 : 10}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineWidth = 1
+    for (let i = 0; i <= 4; i++) {
+      const y = g.top + (g.bottom - g.top) * i / 4
+      ctx.strokeStyle = 'rgba(255,255,255,0.075)'
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(g.right, y); ctx.stroke()
+      ctx.fillStyle = 'rgba(255,255,255,0.58)'
+      ctx.fillText((max - (max - min) * i / 4).toFixed(2), g.right + 10, y)
+    }
+    // Same dashed trade levels as the original market chart.
+    ctx.save()
+    ctx.font = '9px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'
+    orders.forEach(order => {
+      const y = yForPrice(order.value)
+      ctx.setLineDash([6, 6]); ctx.lineWidth = 1; ctx.strokeStyle = order.color
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(g.right, y); ctx.stroke()
+      ctx.setLineDash([]); ctx.fillStyle = order.color
+      ctx.fillText(order.label + ' ' + order.value.toFixed(2), g.right - 8, y - 4)
+    })
+    ctx.restore()
+    ctx.save(); ctx.beginPath(); ctx.rect(0, g.top, g.right, g.bottom - g.top); ctx.clip()
+    visible.forEach((c, i) => {
+      const x = (Math.floor(start) + i - start + .5) * barWidth
+      const openY = yForPrice(c.open), closeY = yForPrice(c.close)
+      ctx.strokeStyle = '#fff'; ctx.fillStyle = c.close >= c.open ? '#fff' : '#2a2a2a'
+      ctx.beginPath(); ctx.moveTo(x, yForPrice(c.high)); ctx.lineTo(x, yForPrice(c.low)); ctx.stroke()
+      const top = Math.min(openY, closeY), height = Math.max(Math.abs(closeY - openY), 1.2)
+      ctx.fillRect(x - bodyWidth / 2, top, bodyWidth, height)
+      ctx.strokeRect(x - bodyWidth / 2 + .5, top + .5, Math.max(1, bodyWidth - 1), Math.max(1, height - 1))
+    })
+    // Mark the actual entry/exit candles; anchors follow pan and zoom.
+    ;[
+      { index: entryIndex, below: true, color: '#ffffff' },
+      { index: exitIndex, below: false, color: '#fbbf24' }
+    ].forEach(marker => {
+      const x = (marker.index - start + .5) * barWidth
+      if (x < 0 || x > g.right) return
+      const candle = candles[marker.index]
+      const direction = marker.below ? 1 : -1
+      const tip = yForPrice(marker.below ? candle.low : candle.high) + direction * 8
+      ctx.save()
+      ctx.strokeStyle = marker.color; ctx.lineWidth = 2
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+      ctx.beginPath()
+      ctx.moveTo(x, tip + direction * 20); ctx.lineTo(x, tip)
+      ctx.moveTo(x - 5, tip + direction * 7); ctx.lineTo(x, tip)
+      ctx.lineTo(x + 5, tip + direction * 7)
+      ctx.stroke(); ctx.restore()
+    })
+    ctx.restore()
+    const spacing = g.huge ? 130 : g.large ? 112 : 96
+    const step = Math.max(1, Math.ceil(span / Math.max(1, Math.floor(g.right / spacing))))
+    ctx.fillStyle = 'rgba(255,255,255,0.58)'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'
+    for (let i = Math.ceil(start / step) * step; i < Math.min(candles.length, start + span); i += step) {
+      const x = (i - start + .5) * barWidth
+      if (x < 24 || x > g.right - 24) continue
+      const time = new Date(candles[i].time)
+      ctx.fillText(time.toISOString().slice(11, 16), x, g.bottom + (g.large ? 14 : 12))
+    }
+    if (crosshair && crosshair.x < g.right && crosshair.y >= g.top && crosshair.y <= g.bottom) {
+      ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,255,255,0.42)'
+      ctx.beginPath(); ctx.moveTo(crosshair.x, g.top); ctx.lineTo(crosshair.x, g.bottom)
+      ctx.moveTo(0, crosshair.y); ctx.lineTo(g.right, crosshair.y); ctx.stroke(); ctx.restore()
+    }
+    drawConditions(g, yForPrice, barWidth)
+  }
+  canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, start }; canvas.setPointerCapture(e.pointerId) })
+  canvas.addEventListener('pointermove', e => {
+    const r = canvas.getBoundingClientRect()
+    crosshair = { x: e.clientX - r.left, y: e.clientY - r.top }
+    if (drag) start = clamp(drag.start - (e.clientX - drag.x) / geometry().right * span, 0, candles.length - span)
+    draw()
+  })
+  function stopDrag() { drag = null }
+  canvas.addEventListener('pointerup', stopDrag)
+  canvas.addEventListener('pointercancel', stopDrag)
+  canvas.addEventListener('pointerleave', () => { crosshair = null; draw() })
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault()
+    const r = canvas.getBoundingClientRect(), fraction = clamp((e.clientX - r.left) / geometry().right, 0, 1)
+    const anchor = start + fraction * span
+    span = clamp(span * (e.deltaY > 0 ? 1.1 : .9), 20, candles.length)
+    start = clamp(anchor - fraction * span, 0, candles.length - span)
+    draw()
+  }, { passive: false })
+  new ResizeObserver(draw).observe(canvas)
+  draw()
+})()
+</script>
+</body>
+</html>

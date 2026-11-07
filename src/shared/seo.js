@@ -120,6 +120,9 @@ export const contentPages = [
 export const indexedPaths = [...Object.keys(titles.en), '/ru/', ...contentPages.flatMap(page => [page.path, `/ru${page.path}`])]
 
 export function pageSeo(path, locale = 'en') {
+  if (['/dev', '/dev/', '/dev1', '/dev1/'].includes(path)) {
+    return { title: `Redesign preview — ${BRAND}`, description: '', canonical: null, index: false }
+  }
   const language = path === '/ru/' ? 'ru' : path === '/' ? 'en' : locale === 'ru' ? 'ru' : 'en'
   const known = indexedPaths.includes(path)
   const normalizedPath = path.startsWith('/ru/') ? path.slice(3) : path
