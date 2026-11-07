@@ -49,6 +49,9 @@
           <ul>
             <li v-for="item in plans.full" :key="item">{{ item }}</li>
           </ul>
+          <router-link to="/download" class="plan__existing">
+            Already subscribed? Download desktop app →
+          </router-link>
           <a
             href="https://www.patreon.com/checkout/jlgandr?rid=28845652"
             target="_blank"
@@ -58,9 +61,6 @@
             <span>Subscribe via Patreon</span>
             <span aria-hidden="true">↗</span>
           </a>
-          <router-link to="/download" class="plan__existing">
-            Already subscribed? Download desktop app →
-          </router-link>
         </article>
       </div>
     </section>
@@ -295,7 +295,8 @@ onBeforeUnmount(() => {
 .plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
 .plan li { padding: 8px 0; border-top: 1px solid currentColor; }
 .plan .btn { margin-top: auto; }
-.plan__existing { margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
+.plan--full .btn { margin-top: 0; }
+.plan__existing { margin-top: auto; margin-bottom: 2px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
 .plan__existing:hover { opacity: 1; }
 .plan--full { background: #000; color: #fff; }
 .d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
