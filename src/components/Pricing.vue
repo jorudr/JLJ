@@ -1,375 +1,292 @@
 <template>
-  <div class="pricing-page relative min-h-screen bg-black text-white/80">
-    <PageGradflowBackground />
-    <div class="pricing-shell relative z-[1] mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
-      <SiteNav :always-dark="true" />
+  <div class="d">
+    <!-- BAR -->
+    <header class="bar">
+      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+        <img src="/assets/herb.svg" alt="" width="18" height="16" />
+        <span>JÖRMUNGANDR</span>
+      </router-link>
+      <nav class="bar__nav" aria-label="Main">
+        <router-link to="/#karl-nikolai">What it does</router-link>
+        <router-link to="/pricing">Pricing</router-link>
+        <router-link to="/download">Download</router-link>
+      </nav>
+    </header>
 
-      <main class="pricing-main flex-1" aria-labelledby="pricing-title">
-        <header class="pricing-intro">
-          <h1 id="pricing-title">{{ t('landing.pricing.title') }}</h1>
-          <p>{{ t('landing.pricing.subtitle') }}</p>
-        </header>
-
-        <section class="pricing-grid" :aria-label="t('landing.pricing.title')">
-          <article class="pricing-card">
-            <div class="pricing-card__topline">
-              <span>{{ t('landing.pricing.free.eyebrow') }}</span>
-            </div>
-            <h2>{{ t('landing.pricing.free.name') }}</h2>
-            <p class="pricing-card__description">{{ t('landing.pricing.free.description') }}</p>
-            <div class="pricing-card__price">
-              <strong>{{ t('landing.pricing.free.price') }}</strong>
-              <span>{{ t('landing.pricing.free.period') }}</span>
-            </div>
-            <router-link to="/download" class="pricing-card__action">
-              {{ t('landing.pricing.free.cta') }} <span aria-hidden="true">↗</span>
-            </router-link>
-            <div class="pricing-card__divider"></div>
-            <p class="pricing-card__includes">{{ t('landing.pricing.free.includes') }}</p>
-            <ul class="pricing-card__features">
-              <li v-for="feature in freeFeatures" :key="feature.title">
-                <span class="pricing-card__check" aria-hidden="true">✓</span>
-                <div>
-                  <strong>{{ feature.title }}</strong>
-                  <small>{{ feature.desc }}</small>
-                </div>
-              </li>
-            </ul>
-          </article>
-
-          <article class="pricing-card pricing-card--featured">
-            <div class="pricing-card__topline">
-              <span>{{ t('landing.pricing.full.eyebrow') }}</span>
-            </div>
-            <h2>{{ t('landing.pricing.full.name') }}</h2>
-            <p class="pricing-card__description">{{ t('landing.pricing.full.description') }}</p>
-            <div class="pricing-card__price">
-              <strong>{{ t('landing.pricing.full.price') }}</strong>
-              <span>{{ t('landing.pricing.full.period') }}</span>
-            </div>
-            <a href="https://www.patreon.com/checkout/jlgandr?rid=28845652" target="_blank" rel="noreferrer" class="pricing-card__action">
-              {{ t('landing.pricing.full.cta') }} <span aria-hidden="true">↗</span>
-            </a>
-            <router-link to="/download" class="pricing-existing">{{ t('landing.downloadPage.alreadySubscribed') }}</router-link>
-            <div class="pricing-card__divider"></div>
-            <p class="pricing-card__includes">{{ t('landing.pricing.full.includes') }}</p>
-            <ul class="pricing-card__features">
-              <li v-for="feature in fullFeatures" :key="feature.title">
-                <span class="pricing-card__check" aria-hidden="true">✓</span>
-                <div>
-                  <strong>{{ feature.title }}</strong>
-                  <small>{{ feature.desc }}</small>
-                </div>
-              </li>
-            </ul>
-          </article>
-        </section>
-
-        <p class="pricing-note">{{ t('landing.pricing.note') }}</p>
-        <p class="pricing-legal">
-          {{ t('landing.pricing.legal.prefix') }}
-          <router-link to="/terms">{{ t('landing.pricing.legal.terms') }}</router-link>
-          {{ t('landing.pricing.legal.and') }}
-          <router-link to="/privacy">{{ t('landing.pricing.legal.privacy') }}</router-link>{{ t('landing.pricing.legal.suffix') }}
+    <!-- HERO -->
+    <section class="pricing-hero" aria-labelledby="pricing-title">
+      <div class="pricing-hero__body">
+        <h1 id="pricing-title" class="pricing-hero__title">
+          Two plans. No surprises.
+        </h1>
+        <p class="pricing-hero__sub">
+          Start free to log trades and build the review habit. Upgrade when you need deep pattern detection, condition analytics and exchange charts.
         </p>
-      </main>
+      </div>
+    </section>
 
-      <AppFooter hide-hero />
-    </div>
+    <!-- PLANS -->
+    <section class="pricing-plans" aria-label="Pricing plans">
+      <div class="plans">
+        <article class="plan">
+          <header>
+            <span class="mono">Free</span>
+            <strong>$0</strong>
+          </header>
+          <p>Build the review habit.</p>
+          <ul>
+            <li v-for="item in plans.free" :key="item">{{ item }}</li>
+          </ul>
+          <router-link to="/download" class="btn btn--line">Download free <span aria-hidden="true">↓</span></router-link>
+        </article>
+
+        <article class="plan plan--full">
+          <header>
+            <span class="mono">Full</span>
+            <strong>$9.99<small>/ month</small></strong>
+          </header>
+          <p>Find, fix and prove. Less than the cost of one bad trade.</p>
+          <ul>
+            <li v-for="item in plans.full" :key="item">{{ item }}</li>
+          </ul>
+          <a
+            href="https://www.patreon.com/checkout/jlgandr?rid=28845652"
+            target="_blank"
+            rel="noreferrer"
+            class="btn"
+          >
+            <span>Subscribe via Patreon</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <router-link to="/download" class="plan__existing">
+            Already subscribed? Download desktop app →
+          </router-link>
+        </article>
+      </div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="compare" aria-labelledby="compare-title">
+      <div class="label mono"><span>Comparison</span><span>Spreadsheet vs JORU</span></div>
+      <h2 id="compare-title" class="compare__title">A spreadsheet can log trades. It cannot tell you which ones to stop taking.</h2>
+      <table class="compare__table">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Spreadsheet</th>
+            <th scope="col">JORU</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in comparison" :key="row[0]">
+            <th scope="row">{{ row[0] }}</th>
+            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? 'Yes' : 'No' }}</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" aria-labelledby="faq-title">
+      <div class="label mono"><span>Frequently Asked Questions</span><span>Billing & Data</span></div>
+      <div class="faq__grid">
+        <article class="faq__item">
+          <h2 class="faq__q">How does the subscription work?</h2>
+          <p class="faq__a">Subscriptions are billed monthly through Patreon. You can cancel anytime directly on Patreon without contacting support.</p>
+        </article>
+        <article class="faq__item">
+          <h2 class="faq__q">Where is my trading data stored?</h2>
+          <p class="faq__a">100% locally on your computer. Your journal data, notes, screenshots and broker API keys never leave your device.</p>
+        </article>
+        <article class="faq__item">
+          <h2 class="faq__q">Can I use the Free plan forever?</h2>
+          <p class="faq__a">Yes. The Free plan has no expiration date or trial limits. You can log trades, track your equity curve, and use core metrics indefinitely.</p>
+        </article>
+        <article class="faq__item">
+          <h2 class="faq__q">How do I activate Full on my computer?</h2>
+          <p class="faq__a">After subscribing on Patreon, install the desktop app and sign in with the Google account associated with your Patreon subscription.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- DATA PRIVACY -->
+    <section class="privacy" aria-labelledby="privacy-title">
+      <div class="label mono"><span>Data</span><span>Privacy</span></div>
+      <div class="privacy__body">
+        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys never leave your computer.</h2>
+        <p>Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers. <router-link to="/privacy">Privacy Policy ↗</router-link></p>
+      </div>
+    </section>
+
+    <!-- BACK COVER / FOOTER -->
+    <footer class="end">
+      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <div class="end__actions">
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="end__foot mono">
+        <span>Jörmungandr © {{ year }}</span>
+        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import SiteNav from './SiteNav.vue'
-import AppFooter from './AppFooter.vue'
-import PageGradflowBackground from './PageGradflowBackground.vue'
-import { useI18n } from '../shared/i18n/useI18n'
+import { onBeforeUnmount, onMounted } from 'vue'
+import { downloads, refreshDownloads } from '../shared/downloads.js'
 
-const { t, tm } = useI18n()
-const freeFeatures = computed(() => tm('landing.pricing.free.features'))
-const fullFeatures = computed(() => tm('landing.pricing.full.features'))
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
+const year = new Date().getFullYear()
+
+const plans = {
+  free: [
+    'Trading journal with screenshots, tags and context',
+    'Equity curve and core metrics',
+    'Karl-Nikolai I (without rehabilitation function)',
+    'Detailed reports (without scenario and condition analysis)',
+    'MetaTrader 5 trade import',
+    'Activity monitor',
+    'Forum and trading events',
+  ],
+  full: [
+    'Everything in Free without restrictions',
+    'Unlimited strategy creation',
+    'Exchange chart for every trade',
+    'Score Patterns',
+    'Broker API import',
+    'Forecast Manager',
+  ],
+}
+
+const comparison = [
+  ['Log trades, notes and screenshots', true],
+  ['Equity curve and drawdowns', true],
+  ['Strategy builder, per-condition analytics and condition recommendations', false],
+  ['Exchange chart replay and in-trade behavior analysis', false],
+  ['Loss-making pattern detection in trades', false],
+  ['Strategy rule adherence verification', false],
+]
+
+let fontLink = null
+onMounted(() => {
+  if (!document.querySelector(`link[href="${FONT_HREF}"]`)) {
+    fontLink = document.createElement('link')
+    fontLink.rel = 'stylesheet'
+    fontLink.href = FONT_HREF
+    document.head.appendChild(fontLink)
+  }
+  refreshDownloads()
+})
+
+onBeforeUnmount(() => {
+  fontLink?.remove()
+})
 </script>
 
 <style scoped>
-.pricing-existing {
-  margin-top: 16px;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: .8rem;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+.d {
+  --edge: clamp(14px, 1.6vw, 24px);
+  --gut: clamp(14px, 1.5vw, 22px);
+  --sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  background: #fff;
+  color: #000;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.15;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: clip;
 }
-.pricing-page {
-  font-family: 'Cormorant Garamond', serif;
-}
+.d *, .d *::before, .d *::after { box-sizing: border-box; }
+.d a { color: inherit; text-decoration: none; }
+.d :focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.mono { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.2; margin: 0; }
 
-.pricing-main {
-  width: min(100%, 1280px);
-  margin: 0 auto;
-  padding: clamp(72px, 9vw, 112px) clamp(0px, 1.4vw, 18px) clamp(72px, 9vw, 112px);
-}
+/* buttons */
+.d a.btn { display: inline-flex; justify-content: space-between; gap: 12px; align-items: center; padding: 16px 18px 15px; background: #000; color: #fff; border: 2px solid #000; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 16px; transition: background 0.1s, color 0.1s; }
+.d a.btn:hover { background: #fff; color: #000; }
+.d a.btn--line { background: transparent; color: #000; }
+.d a.btn--line:hover { background: #000; color: #fff; }
+.d a.btn--paper { background: #fff; color: #000; border-color: #fff; }
+.d a.btn--paper:hover { background: #000; color: #fff; }
 
-.pricing-intro {
-  display: flex;
-  min-height: 240px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
+/* ── Bar ───────────────────────────────────────────── */
+.bar { position: sticky; top: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; gap: 16px; height: 46px; padding: 0 var(--edge); background: #fff; border-bottom: 2px solid #000; }
+.bar__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; letter-spacing: -0.01em; white-space: nowrap; }
+.bar__brand img { filter: brightness(0); display: block; }
+.bar__nav { display: flex; gap: clamp(14px, 2.4vw, 36px); font-weight: 600; }
+.bar__nav a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
 
-.pricing-intro::before {
-  content: none;
-}
+/* ── Labels ────────────────────────────────────────── */
+.label { display: flex; justify-content: space-between; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; }
 
-.pricing-intro h1 {
-  max-width: 740px;
-  color: #f5f5f0;
-  font-size: clamp(3rem, 5.6vw, 5.4rem);
-  font-weight: 300;
-  letter-spacing: 0;
-  line-height: 0.92;
-}
+/* ── Hero ──────────────────────────────────────────── */
+.pricing-hero { border-bottom: 2px solid #000; }
+.pricing-hero__body { padding: clamp(36px, 6vw, 84px) var(--edge) clamp(28px, 4vw, 56px); }
+.pricing-hero__title { margin: 0; font-weight: 800; letter-spacing: -0.04em; line-height: 0.94; font-size: clamp(38px, 6.4vw, 108px); max-width: 22ch; }
+.pricing-hero__sub { margin: clamp(16px, 2.2vw, 28px) 0 0; font-size: clamp(16px, 1.35vw, 22px); line-height: 1.25; letter-spacing: -0.015em; max-width: 54ch; opacity: 0.85; }
 
-.pricing-intro p {
-  max-width: 590px;
-  margin-top: 22px;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(0.94rem, 1.2vw, 1.08rem);
-  line-height: 1.55;
-}
+/* ── Plans Grid ────────────────────────────────────── */
+.pricing-plans { border-bottom: 2px solid #000; }
+.plans { display: grid; grid-template-columns: 1fr 1fr; }
+.plan { display: flex; flex-direction: column; gap: 14px; padding: var(--edge); min-height: 520px; }
+.plan + .plan { border-left: 2px solid #000; }
+.plan header { display: flex; justify-content: space-between; align-items: baseline; }
+.plan strong { font-weight: 800; letter-spacing: -0.06em; line-height: 0.84; font-size: clamp(64px, 10vw, 170px); }
+.plan small { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; margin-left: 10px; }
+.plan > p { margin: 0; font-size: clamp(16px, 1.4vw, 22px); font-weight: 500; letter-spacing: -0.02em; }
+.plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
+.plan li { padding: 8px 0; border-top: 1px solid currentColor; }
+.plan .btn { margin-top: auto; }
+.plan__existing { margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
+.plan__existing:hover { opacity: 1; }
+.plan--full { background: #000; color: #fff; }
+.d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
+.d .plan--full a.btn:hover { background: #000; color: #fff; }
 
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(100%, 1060px);
-  gap: 18px;
-  margin: clamp(52px, 7vw, 82px) auto 0;
-}
+/* ── Comparison ────────────────────────────────────── */
+.compare { border-bottom: 2px solid #000; }
+.compare__title { margin: 0; padding: clamp(28px, 4.5vw, 64px) var(--edge) clamp(24px, 3.5vw, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1; font-size: clamp(28px, 4.2vw, 64px); max-width: 28ch; }
+.compare__table { width: calc(100% - 2 * var(--edge)); margin: 0 var(--edge) clamp(36px, 5vw, 64px); border-collapse: collapse; font-size: clamp(14px, 1.2vw, 18px); }
+.compare__table th, .compare__table td { border-top: 1px solid rgba(0, 0, 0, 0.15); padding: clamp(12px, 1.3vw, 16px) 0; text-align: left; font-weight: 500; }
+.compare__table tbody tr:last-child > * { border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
+.compare__table thead th { font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 14px 0; }
+.compare__table td { width: 18%; font-family: var(--mono); font-size: 0.9em; }
+.compare__table td.is-no { color: #be123c; font-weight: 600; }
 
-.pricing-card {
-  display: flex;
-  padding: clamp(30px, 3.2vw, 42px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  flex-direction: column;
-  background: #000000;
-  color: #f5f5f0;
-}
+/* ── FAQ ───────────────────────────────────────────── */
+.faq { border-bottom: 2px solid #000; }
+.faq__grid { display: grid; grid-template-columns: 1fr 1fr; }
+.faq__item { padding: var(--edge); border-bottom: 2px solid #000; border-right: 2px solid #000; display: flex; flex-direction: column; gap: 12px; }
+.faq__item:nth-child(2n) { border-right: 0; }
+.faq__item:nth-last-child(-n+2) { border-bottom: 0; }
+.faq__q { margin: 0; font-weight: 800; font-size: clamp(18px, 1.8vw, 26px); letter-spacing: -0.025em; line-height: 1.15; }
+.faq__a { margin: 0; font-size: clamp(14px, 1.15vw, 17px); line-height: 1.35; opacity: 0.85; max-width: 48ch; }
 
-.pricing-card--featured {
-  border-color: #f5f5f0;
-  background: #f5f5f0;
-  color: #000000;
-}
+/* ── Privacy ───────────────────────────────────────── */
+.privacy { border-bottom: 2px solid #000; }
+.privacy__body { display: grid; grid-template-columns: 1fr minmax(320px, 52ch); gap: var(--gut); align-items: end; padding: clamp(28px, 5vw, 80px) var(--edge); }
+.privacy__title { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.9; font-size: clamp(34px, 6vw, 108px); max-width: 16ch; }
+.privacy__body p { margin: 0; font-size: clamp(15px, 1.2vw, 19px); line-height: 1.2; letter-spacing: -0.015em; }
+.privacy__body p a { text-decoration: underline; text-underline-offset: 3px; }
 
-.pricing-card__topline {
-  display: block;
-  width: max-content;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.61rem;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  opacity: 0.42;
-  text-transform: uppercase;
-}
+/* ── Back cover ────────────────────────────────────── */
+.end { background: #000; color: #fff; padding: var(--edge); display: flex; flex-direction: column; gap: clamp(20px, 3vw, 44px); min-height: 70vh; }
+.end__title { margin: clamp(20px, 5vw, 80px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
+.end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
+.end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-.pricing-card h2 {
-  margin-top: 27px;
-  font-size: clamp(2.5rem, 4vw, 4rem);
-  font-weight: 300;
-  letter-spacing: 0.01em;
-  line-height: 0.95;
-}
-
-.pricing-card__description {
-  max-width: 450px;
-  min-height: 72px;
-  margin-top: 15px;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  opacity: 0.62;
-}
-
-.pricing-card__price {
-  display: flex;
-  min-height: 48px;
-  margin-top: 22px;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.pricing-card__price strong {
-  font-size: clamp(2.35rem, 3.4vw, 3.2rem);
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.pricing-card__price span {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.84rem;
-  opacity: 0.52;
-}
-
-.pricing-card__action {
-  display: flex;
-  width: max-content;
-  min-height: 42px;
-  margin-top: 24px;
-  padding: 0 18px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  align-items: center;
-  gap: 16px;
-  background: transparent;
-  color: #f5f5f0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: background 180ms ease, color 180ms ease;
-}
-
-.pricing-card__action:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.pricing-card--featured .pricing-card__action {
-  border-color: #000000;
-  background: #000000;
-  color: #f5f5f0;
-}
-
-.pricing-card--featured .pricing-card__action:hover {
-  background: #242424;
-}
-
-.pricing-card__action span {
-  font-size: 0.95rem;
-}
-
-.pricing-card__divider {
-  margin: 31px 0 24px;
-  border-top: 1px solid currentColor;
-  opacity: 0.18;
-}
-
-.pricing-card__includes {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78rem;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  opacity: 0.44;
-  text-transform: uppercase;
-}
-
-.pricing-card__features {
-  display: grid;
-  gap: 17px;
-  margin: 22px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pricing-card__features li {
-  display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.pricing-card__check {
-  padding-top: 2px;
-  font-size: 0.75rem;
-  opacity: 0.48;
-}
-
-.pricing-card__features strong,
-.pricing-card__features small {
-  display: block;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-}
-
-.pricing-card__features strong {
-  font-size: 0.88rem;
-  font-weight: 550;
-  line-height: 1.3;
-}
-
-.pricing-card__features small {
-  margin-top: 4px;
-  font-size: 0.76rem;
-  line-height: 1.45;
-  opacity: 0.5;
-}
-
-.pricing-note {
-  margin: 20px auto 0;
-  color: #ffffff;
-  width: min(100%, 1060px);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.pricing-legal {
-  margin: 12px auto 0;
-  width: min(100%, 1060px);
-  color: rgba(255, 255, 255, 0.5);
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  text-align: center;
-}
-
-.pricing-legal a {
-  color: #f5f5f0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-@media (max-width: 800px) {
-  .pricing-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pricing-card {
-    min-height: auto;
-  }
-}
-
-@media (max-width: 640px) {
-  .pricing-main {
-    padding-top: 56px;
-    padding-bottom: 72px;
-  }
-
-  .pricing-intro {
-    min-height: 250px;
-  }
-
-  .pricing-intro h1 {
-    font-size: clamp(2.7rem, 12vw, 4.2rem);
-    line-height: 0.98;
-  }
-
-  .pricing-grid {
-    margin-top: 42px;
-  }
-
-  .pricing-card {
-    padding: 28px 24px 34px;
-  }
-
-  .pricing-card__description {
-    min-height: auto;
-  }
+@media (max-width: 900px) {
+  .bar__nav a:not(:last-child) { display: none; }
+  .plans { grid-template-columns: 1fr; }
+  .plan + .plan { border-left: 0; border-top: 2px solid #000; }
+  .faq__grid { grid-template-columns: 1fr; }
+  .faq__item { border-right: 0; }
+  .faq__item:nth-last-child(2) { border-bottom: 2px solid #000; }
+  .privacy__body { grid-template-columns: 1fr; }
 }
 </style>
