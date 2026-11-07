@@ -31,21 +31,6 @@
       </div>
     </section>
 
-    <!-- THE CHART: left half is the bare price chart, right half the same trade with everything the journal adds -->
-    <section class="chart" aria-labelledby="chart-title">
-      <div class="label"><h2 id="chart-title" class="mono">{{ copy.dev1.chart.title }}</h2><span class="mono">{{ copy.dev1.chart.drag }}</span></div>
-      <div ref="cmp" class="cmp" :style="{ '--x': `${split}%` }">
-        <div class="cmp__layer"><UiFrame src="/ui/6.html" title="Price chart, candles only" :design="[1440, 560]" ink :patch="cleanPatch" css="main{inset:2% 3% 24px!important}.condition-layer{visibility:hidden}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
-        <div class="cmp__layer cmp__layer--top" aria-hidden="true"><UiFrame src="/ui/6.html" title="" :design="[1440, 560]" ink css="main{inset:2% 3% 24px!important}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
-        <div
-          class="cmp__handle" role="slider" tabindex="0" aria-label="Compare the bare chart with the annotated trade"
-          aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.round(split)"
-          @pointerdown="dragStart" @pointermove="dragMove" @pointerup="dragEnd" @pointercancel="dragEnd" @keydown="slideKey"
-        ><span class="cmp__grip" aria-hidden="true">◀ ▶</span></div>
-      </div>
-      <p class="chart__text">{{ copy.dev1.chart.text }}</p>
-    </section>
-
     <!-- FACTS -->
     <section class="facts" aria-label="Key facts">
       <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
@@ -113,7 +98,7 @@
         </div>
         <h3 v-if="row.intro" class="sec__intro">{{ row.intro }}</h3>
         <figure class="sec__visual">
-          <UiFrame v-if="row.src" :src="row.src" :title="row.title" :design="row.design" :css="row.css || ''" :ink="row.ink !== false" :bare="!!row.bare" :auto="!!row.auto" :build="row.build || null" :patch="row.patch || []" />
+          <UiFrame v-if="row.src" :src="row.src" :title="row.title" :design="getRowDesign(row)" :css="row.css || ''" :ink="row.ink !== false" :bare="!!row.bare" :auto="!!row.auto" :build="row.build || null" :patch="row.patch || []" />
           <div v-else-if="row.grid" class="metrics">
             <div v-for="m in metricList" :key="m[0]" class="metric">
               <span class="mono">{{ m[0] }}</span>
@@ -251,14 +236,6 @@ const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400
 const year = new Date().getFullYear()
 const pad = n => String(n).padStart(2, '0')
 
-/* Chart compare. The same page is rendered twice: bare candles underneath, the full trade on top, clipped at the slider. */
-const cleanPatch = [
-  ['orders.forEach(order => {', ';[].forEach(order => {'],
-  ["{ index: entryIndex, below: true, color: '#ffffff' },", ''],
-  ["{ index: exitIndex, below: false, color: '#fbbf24' }", ''],
-  ['function drawConditions(g, yForPrice, barWidth) {\n    ctx.save()', 'function drawConditions(g, yForPrice, barWidth) {\n    return\n    ctx.save()'],
-]
-
 /* Report: pull every chart panel (with the small label that sits above it) out of the report page into one grid. */
 function buildReportGrid({ shadow }) {
   const area = shadow.querySelector('.report-scroll-area')
@@ -370,22 +347,11 @@ const metricListRu = [["Чистая прибыль", "Фактический Pn
 
 const metricList = computed(() => isRu.value ? metricListRu : metricListEn)
 
-const cmp = ref(null)
-const split = ref(25)
-let dragging = false
-const setFrom = (event) => {
-  const rect = cmp.value.getBoundingClientRect()
-  split.value = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100))
-}
-const dragStart = (event) => { dragging = true; event.currentTarget.setPointerCapture(event.pointerId); setFrom(event) }
-const dragMove = (event) => { if (dragging) setFrom(event) }
-const dragEnd = () => { dragging = false }
-const slideKey = (event) => {
-  const step = event.shiftKey ? 10 : 2
-  if (event.key === 'ArrowLeft') split.value = Math.max(0, split.value - step)
-  else if (event.key === 'ArrowRight') split.value = Math.min(100, split.value + step)
-  else return
-  event.preventDefault()
+const isMobile = ref(typeof window !== 'undefined' ? window.innerWidth <= 768 : false)
+const onWindowResize = () => { isMobile.value = window.innerWidth <= 768 }
+const getRowDesign = (row) => {
+  if (row.id === 'patterns' && isMobile.value) return [500, 360]
+  return row.design
 }
 
 /* Illustrative Monte Carlo: reshuffle one fixed sequence of trades. Deterministic. */
@@ -656,6 +622,8 @@ onMounted(() => {
   }
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
+  window.addEventListener('resize', onWindowResize)
+  onWindowResize()
   onScroll()
 })
 onBeforeUnmount(() => {
@@ -663,6 +631,7 @@ onBeforeUnmount(() => {
   importObserver?.disconnect()
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
+  window.removeEventListener('resize', onWindowResize)
   fontLink?.remove()
 })
 </script>
@@ -720,40 +689,6 @@ onBeforeUnmount(() => {
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15cqw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
 
-/* ── Chart compare ─────────────────────────────────── */
-.chart { border-bottom: 2px solid #000; }
-.cmp { position: relative; user-select: none; touch-action: pan-y; }
-.cmp__layer { display: block; pointer-events: none; }
-.cmp__layer--top { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--x)); }
-.cmp__handle { position: absolute; top: 0; bottom: 0; left: var(--x); width: 44px; margin-left: -22px; cursor: ew-resize; display: flex; align-items: center; justify-content: center; touch-action: none; }
-.cmp__handle::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: #000; }
-.cmp__grip { position: relative; background: #000; color: #fff; font-size: 12px; letter-spacing: 2px; padding: 12px 10px; white-space: nowrap; }
-.cmp__handle:focus-visible { outline: none; }
-.cmp__handle:focus-visible .cmp__grip { outline: 3px solid #000; outline-offset: 3px; }
-@media (max-width: 768px) {
-  .cmp {
-    height: 350px;
-    overflow: hidden;
-  }
-  .cmp :deep(.frame) {
-    height: 100% !important;
-    aspect-ratio: auto !important;
-  }
-  .cmp :deep(.frame__stage) {
-    left: 56% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) scale(0.625) !important;
-  }
-  .cmp__handle {
-    width: 56px;
-    margin-left: -28px;
-  }
-  .cmp__grip {
-    padding: 16px 12px;
-    font-size: 13px;
-  }
-}
-.chart__text { margin: 0; padding: var(--edge); border-top: 2px solid #000; max-width: 70ch; font-size: clamp(15px, 1.25cqw, 20px); line-height: 1.2; letter-spacing: -0.015em; }
 
 /* ── Facts ─────────────────────────────────────────── */
 .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2px solid #000; }
