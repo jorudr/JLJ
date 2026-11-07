@@ -31,8 +31,8 @@
 }
 
 html, body, #app {
-  background-color: #000000 !important;
-  color: #f5f5f0;
+  background-color: #ffffff !important;
+  color: #000000;
 }
 
 html.is-menu-open,
@@ -47,11 +47,11 @@ body.is-menu-open {
 
 /* Use the native scrollbar without custom ::-webkit-scrollbar styles: those force a
    permanent classic scrollbar strip, while the native one overlays the page on macOS
-   and only appears while scrolling or on hover. color-scheme keeps it dark elsewhere. */
+   and only appears while scrolling or on hover. color-scheme keeps it light elsewhere. */
 html {
-  color-scheme: dark;
+  color-scheme: light;
   scrollbar-width: thin;
-  scrollbar-color: rgba(245, 245, 240, 0.35) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
 }
 
 .d {

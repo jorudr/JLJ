@@ -10,7 +10,7 @@ const BUILD_DATE = new Date().toISOString().slice(0, 10)
 // its description and the Privacy Policy link. Each page is published with a
 // static copy of its content inside #app; Vue replaces it on mount.
 
-const APP_ROOT = '<div id="app" class="bg-black text-white"></div>'
+const APP_ROOT = '<div id="app" class="bg-white text-black"></div>'
 
 const template = readFileSync('dist/index.html', 'utf8')
 const escapeHtml = (value) => value
@@ -25,12 +25,12 @@ const legalHtml = (doc) => renderMarkdown(readFileSync(`src/shared/legal/${doc}.
 // this content directly (no hidden/holding state, so there is no CLS or
 // blank-screen risk if the bundle is slow or fails to load).
 const staticStyles = `<style>
-    .static-page { max-width: 880px; margin: 0 auto; padding: 32px 16px 48px; color: rgba(245,245,240,.78); font: 16px/1.65 ui-sans-serif, system-ui, sans-serif; }
-    .static-page h1, .static-page h2 { color: #f5f5f0; font-family: 'Cormorant Garamond', serif; font-weight: 400; line-height: 1.15; }
-    .static-page a { color: #f5f5f0; }
+    .static-page { max-width: 880px; margin: 0 auto; padding: 32px 16px 48px; color: rgba(0,0,0,.78); font: 16px/1.65 ui-sans-serif, system-ui, sans-serif; }
+    .static-page h1, .static-page h2 { color: #000; font-family: 'Cormorant Garamond', serif; font-weight: 400; line-height: 1.15; }
+    .static-page a { color: #000; }
     .static-page nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
     .static-page table { width: 100%; border-collapse: collapse; font-size: .9em; }
-    .static-page th, .static-page td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.14); text-align: left; vertical-align: top; }
+    .static-page th, .static-page td { padding: 6px 8px; border-bottom: 1px solid rgba(0,0,0,.14); text-align: left; vertical-align: top; }
     .static-page .legal-table { overflow-x: auto; }
     .static-page img { max-width: 100%; }
   </style>`
@@ -227,7 +227,7 @@ const render = ({ path, body, locale = 'en' }) => {
   html = html.replace('</head>', `  ${schemas.map(schema => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>`).join('\n  ')}\n</head>`)
   return html
     .replace('</head>', `  ${staticStyles}\n</head>`)
-    .replace(APP_ROOT, `<div id="app" class="bg-black text-white">
+    .replace(APP_ROOT, `<div id="app" class="bg-white text-black">
   <div class="static-page">
     ${header(locale)}
     <main>

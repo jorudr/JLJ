@@ -47,7 +47,7 @@ watch([() => route.path, locale], updateTitle, { immediate: true })
 </script>
 
 <template>
-  <div class="w-full min-h-screen bg-black">
+  <div class="w-full min-h-screen bg-white">
     <router-view />
   </div>
 </template>
