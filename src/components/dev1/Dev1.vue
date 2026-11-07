@@ -431,14 +431,14 @@ const ledgerRows = (() => {
   const rand = rng(7)
   const rows = []
   for (let i = 0; i < 132; i++) {
-    // Every ~6th trade is an early short, so the pattern is visible on any screen size.
-    const forced = rand() < 0.16
+    // Ensure early rows (index 1 and 4) guarantee visible pattern loss rows on mobile
+    const forced = i === 1 || i === 4 || rand() < 0.16
     const hour = forced ? 8 + Math.floor(rand() * 2) : 7 + Math.floor(rand() * 11)
     const minute = Math.floor(rand() * 60)
     const side = forced || rand() < 0.45 ? 'SHORT' : 'LONG'
     const pattern = side === 'SHORT' && hour < 10
-    const win = rand() < (pattern ? 0.31 : 0.56)
-    const r = win ? 0.4 + rand() * 2.1 : -(0.3 + rand() * (pattern ? 1.2 : 0.8))
+    const win = (i === 1 || i === 4) ? false : rand() < (pattern ? 0.31 : 0.56)
+    const r = win ? 0.4 + rand() * 2.1 : -(0.6 + rand() * (pattern ? 1.4 : 0.8))
     const day = 1 + (i % 28)
     const month = ['SEP', 'OCT', 'NOV'][Math.floor(i / 44)]
     rows.push({
@@ -730,6 +730,29 @@ onBeforeUnmount(() => {
 .cmp__grip { position: relative; background: #000; color: #fff; font-size: 12px; letter-spacing: 2px; padding: 12px 10px; white-space: nowrap; }
 .cmp__handle:focus-visible { outline: none; }
 .cmp__handle:focus-visible .cmp__grip { outline: 3px solid #000; outline-offset: 3px; }
+@media (max-width: 768px) {
+  .cmp {
+    height: 350px;
+    overflow: hidden;
+  }
+  .cmp :deep(.frame) {
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+  .cmp :deep(.frame__stage) {
+    left: 56% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(0.625) !important;
+  }
+  .cmp__handle {
+    width: 56px;
+    margin-left: -28px;
+  }
+  .cmp__grip {
+    padding: 16px 12px;
+    font-size: 13px;
+  }
+}
 .chart__text { margin: 0; padding: var(--edge); border-top: 2px solid #000; max-width: 70ch; font-size: clamp(15px, 1.25cqw, 20px); line-height: 1.2; letter-spacing: -0.015em; }
 
 /* ── Facts ─────────────────────────────────────────── */
@@ -896,15 +919,50 @@ onBeforeUnmount(() => {
 .kn-progress { position: absolute; left: var(--edge); right: var(--edge); bottom: 18px; height: 2px; background: rgba(0, 0, 0, 0.15); }
 .kn-progress i { display: block; height: 100%; background: #000; transform-origin: left; }
 @media (max-width: 900px) {
-  .kn-running { grid-template-columns: 1fr auto; }
+  .kn-scroll { height: 260vh; }
+  .kn-sticky { padding: 0 0 22px; }
+  .kn-running { grid-template-columns: 1fr auto; padding: 8px var(--edge); font-size: 11px; }
   .kn-running span:nth-child(2) { display: none; }
-  .kn-ledger-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 16px; padding-top: 14px; }
-  .kn-ledger-copy { gap: 12px; }
-  .kn-body { font-size: 13px; }
-  .kn-headline { font-size: clamp(26px, 8cqw, 42px); }
-  .kn-ledger__rows { columns: 1; }
+  .kn-ledger-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px var(--edge) 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .kn-ledger-copy { gap: 8px; flex-shrink: 0; }
+  .kn-counter { font-size: 11px; gap: 8px; }
+  .kn-counter .kn-mono { font-size: 11px; padding: 2px 6px; }
+  .kn-headline { font-size: clamp(20px, 5.5cqw, 28px); line-height: 1.05; }
+  .kn-body { display: none; }
+  .kn-finding, .kn-rule { padding: 8px 10px; max-width: none; margin: 0; }
+  .kn-finding__head { padding-bottom: 6px; font-size: 10px; }
+  .kn-finding dl { margin: 6px 0; }
+  .kn-finding dt { font-size: 10px; }
+  .kn-finding dd { font-size: 22px; margin: 2px 0 0; }
+  .kn-finding p { font-size: 12px; line-height: 1.25; }
+  .kn-rule__grid { margin-top: 6px; gap: 3px; }
+  .kn-rule__grid i { border-width: 1px; }
+  .kn-ledger {
+    flex: 1;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-top: 2px solid #000;
+  }
+  .kn-ledger__head { padding: 4px 0; font-size: 10px; opacity: 0.6; }
+  .kn-ledger__rows {
+    columns: 1;
+    flex: 1;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, #000 75%, transparent);
+  }
+  .kn-ledger__row { padding: 3px 0; font-size: 11px; line-height: 1.2; }
+  .kn-progress { bottom: 6px; }
 }
-@media (max-width: 900px) and (max-height: 760px) { .kn-body { display: none; } }
 
 
 /* ── Phone ─────────────────────────────────────────── */
