@@ -909,7 +909,8 @@ onBeforeUnmount(() => {
     width: 100%;
     text-align: left;
     text-decoration: none;
-    font-size: clamp(84px, 24cqw, 130px);
+    text-transform: uppercase;
+    font-size: clamp(66px, 21.5cqw, 120px);
     line-height: 0.92;
     letter-spacing: -0.05em;
     margin-bottom: 0.22em;
@@ -925,7 +926,7 @@ onBeforeUnmount(() => {
     text-underline-offset: 0.08em;
   }
   .spec__cell h1 .ul--ru {
-    font-size: clamp(72px, 20.5cqw, 110px);
+    font-size: clamp(56px, 17.5cqw, 105px);
     letter-spacing: -0.045em;
   }
   .spec__tail {
