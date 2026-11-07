@@ -17,7 +17,7 @@
     <section class="hero">
       <div class="hero__stage">
         <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
-        <p class="hero__word" aria-label="JÖRU">J<span class="hero__umlaut">O<span class="hero__dots" aria-hidden="true"><i></i><i></i></span></span>RU</p>
+        <p class="hero__word" aria-label="JÖRU">J<span class="hero__oe">Ö</span>RU</p>
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
@@ -707,10 +707,8 @@ onBeforeUnmount(() => {
 .hero { border-bottom: 2px solid #000; }
 .hero__stage { position: relative; overflow: hidden; }
 .hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-.hero__word { position: relative; z-index: 1; margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39vw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.08em; padding-bottom: 0.04em; user-select: none; }
-.hero__umlaut { position: relative; display: inline-block; }
-.hero__dots { position: absolute; top: -0.05em; left: 50%; transform: translateX(-50%); display: flex; gap: 0.075em; pointer-events: none; }
-.hero__dots i { display: block; width: 0.065em; height: 0.065em; background: currentColor; border-radius: 1px; }
+.hero__word { position: relative; z-index: 1; margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39vw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.06em; padding-bottom: 0.04em; user-select: none; }
+.hero__oe { display: inline-block; transform: scale(0.775); transform-origin: 50% 88%; margin: 0 -0.05em; }
 .spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
