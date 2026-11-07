@@ -148,7 +148,9 @@ const pages = [
   { file: 'pricing.html', path: '/pricing', body: pricingBody },
   { file: 'ru/pricing.html', path: '/ru/pricing', body: pricingBody, locale: 'ru' },
   { file: 'about.html', path: '/about', body: aboutBody },
+  { file: 'ru/about.html', path: '/ru/about', body: aboutBody, locale: 'ru' },
   { file: 'philosophy.html', path: '/about', body: aboutBody },
+  { file: 'ru/philosophy.html', path: '/ru/about', body: aboutBody, locale: 'ru' },
   { file: 'announcement.html', path: '/download', body: downloadBody },
   ...contentPages.flatMap(page => [
     { file: `${page.path.slice(1)}.html`, path: page.path, body: contentBody(page), locale: 'en' },

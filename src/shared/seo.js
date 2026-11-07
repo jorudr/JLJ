@@ -117,15 +117,15 @@ export const contentPages = [
   },
 ]
 
-export const indexedPaths = [...Object.keys(titles.en), '/ru/', ...contentPages.flatMap(page => [page.path, `/ru${page.path}`])]
+export const indexedPaths = [...Object.keys(titles.en), ...Object.keys(titles.en).map(p => p === '/' ? '/ru/' : `/ru${p}`), ...contentPages.flatMap(page => [page.path, `/ru${page.path}`])]
 
 export function pageSeo(path, locale = 'en') {
   if (['/dev', '/dev/', '/dev1', '/dev1/'].includes(path)) {
     return { title: `Redesign preview — ${BRAND}`, description: '', canonical: null, index: false }
   }
-  const language = path === '/ru/' ? 'ru' : path === '/' ? 'en' : locale === 'ru' ? 'ru' : 'en'
-  const known = indexedPaths.includes(path)
-  const normalizedPath = path.startsWith('/ru/') ? path.slice(3) : path
+  const language = path === '/ru/' || path.startsWith('/ru/') ? 'ru' : locale === 'ru' ? 'ru' : 'en'
+  const normalizedPath = path.startsWith('/ru/') ? (path === '/ru/' ? '/' : path.slice(3)) : path
+  const known = indexedPaths.includes(path) || indexedPaths.includes(normalizedPath)
   const contentPage = contentPages.find(page => page.path === normalizedPath)
   if (contentPage) {
     return {
@@ -136,8 +136,8 @@ export function pageSeo(path, locale = 'en') {
     }
   }
   return {
-    title: known ? titles[language][path] : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
-    description: descriptions[language][path] || homeContent[language]?.seoText || '',
+    title: known ? (titles[language][path] || titles[language][normalizedPath]) : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
+    description: descriptions[language][path] || descriptions[language][normalizedPath] || homeContent[language]?.seoText || '',
     canonical: known ? `${SITE}${path}` : null,
     index: known,
   }

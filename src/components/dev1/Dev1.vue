@@ -8,6 +8,7 @@
       </router-link>
       <nav class="bar__nav" aria-label="Main">
         <a :href="isRu ? '/ru/#karl-nikolai' : '#karl-nikolai'">{{ copy.nav.whatItDoes }}</a>
+        <router-link :to="isRu ? '/ru/about' : '/about'">{{ copy.nav.about }}</router-link>
         <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
         <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
       </nav>

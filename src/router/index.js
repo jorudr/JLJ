@@ -51,8 +51,18 @@ const router = createRouter({
       meta: { titleKey: 'landing.nav.about' }
     },
     {
+      path: '/ru/about',
+      name: 'about-ru',
+      component: About,
+      meta: { titleKey: 'landing.nav.about' }
+    },
+    {
       path: '/philosophy',
       redirect: '/about'
+    },
+    {
+      path: '/ru/philosophy',
+      redirect: '/ru/about'
     },
     {
       path: '/announcement',

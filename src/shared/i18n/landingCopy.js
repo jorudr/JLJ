@@ -2,6 +2,7 @@ export const landingCopy = {
   en: {
     nav: {
       whatItDoes: 'What it does',
+      about: 'About',
       pricing: 'Pricing',
       download: 'Download',
     },
@@ -219,6 +220,7 @@ export const landingCopy = {
   ru: {
     nav: {
       whatItDoes: 'Возможности',
+      about: 'О нас',
       pricing: 'Тарифы',
       download: 'Скачать',
     },
