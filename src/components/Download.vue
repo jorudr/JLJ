@@ -53,18 +53,13 @@
       <div><strong>2</strong><span>Windows and macOS native applications.</span></div>
     </section>
 
-    <!-- MOBILE & HELP -->
+    <!-- HELP & COMMUNITY -->
     <section class="dl-note" aria-labelledby="dl-note-title">
-      <div class="label mono"><span>Notice</span><span>Desktop only</span></div>
+      <div class="label mono"><span>Community</span><span>Installation help</span></div>
       <div class="dl-note__body">
         <div class="dl-note__col">
-          <h2 id="dl-note-title" class="dl-note__heading">Looking for mobile?</h2>
-          <p>JORU is designed as a deep desktop analytical workspace. Reviewing complex condition trees, price candles and metrics requires screen real estate and local offline storage.</p>
-          <p>If you are on a phone, open this page on your desktop computer to download.</p>
-        </div>
-        <div class="dl-note__col">
-          <h2 class="dl-note__heading">Installation help</h2>
-          <p>Have questions about installing, importing broker data or configuring your account? Connect with the community or read our setup guides.</p>
+          <h2 id="dl-note-title" class="dl-note__heading">Installation help & community</h2>
+          <p>Have questions about installing, importing broker data or configuring your account? Connect with the community or explore plan features.</p>
           <div class="dl-note__links">
             <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer" class="btn btn--line">Telegram community ↗</a>
             <router-link to="/#pricing" class="btn btn--line">Compare plans ↗</router-link>
@@ -172,13 +167,12 @@ onBeforeUnmount(() => {
 .facts strong { font-weight: 800; letter-spacing: -0.06em; line-height: 0.85; font-size: clamp(56px, 7.4vw, 128px); }
 .facts span { font-size: clamp(13px, 1.05vw, 16px); line-height: 1.2; max-width: 28ch; }
 
-/* ── Mobile & Help ─────────────────────────────────── */
+/* ── Help & Community ──────────────────────────────── */
 .dl-note { border-bottom: 2px solid #000; }
-.dl-note__body { display: grid; grid-template-columns: 1fr 1fr; }
-.dl-note__col { padding: clamp(28px, 4vw, 56px) var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 14px; }
-.dl-note__col:last-child { border-right: 0; }
+.dl-note__body { display: grid; grid-template-columns: 1fr; }
+.dl-note__col { padding: clamp(28px, 4vw, 56px) var(--edge); display: flex; flex-direction: column; gap: 14px; }
 .dl-note__heading { margin: 0; font-weight: 800; font-size: clamp(24px, 2.6vw, 42px); letter-spacing: -0.03em; line-height: 1.05; }
-.dl-note__col p { margin: 0; font-size: clamp(14px, 1.15vw, 17px); line-height: 1.35; opacity: 0.85; max-width: 48ch; }
+.dl-note__col p { margin: 0; font-size: clamp(14px, 1.15vw, 17px); line-height: 1.35; opacity: 0.85; max-width: 58ch; }
 .dl-note__links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 
 /* ── Back cover ────────────────────────────────────── */
@@ -197,8 +191,5 @@ onBeforeUnmount(() => {
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
   .facts > div:nth-child(2n) { border-right: 0; }
   .facts > div:nth-last-child(-n+2) { border-bottom: 0; }
-  .dl-note__body { grid-template-columns: 1fr; }
-  .dl-note__col { border-right: 0; border-bottom: 2px solid #000; }
-  .dl-note__col:last-child { border-bottom: 0; }
 }
 </style>
