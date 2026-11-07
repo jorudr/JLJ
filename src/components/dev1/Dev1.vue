@@ -937,13 +937,11 @@ onBeforeUnmount(() => {
   .spec__tail {
     display: block;
     width: 100%;
-    text-align: justify;
-    text-wrap: balance;
-    -webkit-hyphens: auto;
-    hyphens: auto;
-    font-size: clamp(24px, 6.8cqw, 34px);
-    line-height: 1.15;
-    letter-spacing: -0.025em;
+    text-align: left;
+    word-spacing: normal;
+    font-size: clamp(28px, 7.8cqw, 38px);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
     font-weight: 800;
   }
   .facts { grid-template-columns: 1fr 1fr; }
