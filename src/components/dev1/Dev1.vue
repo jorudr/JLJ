@@ -8,7 +8,7 @@
       </router-link>
       <nav class="bar__nav" aria-label="Main">
         <a href="#karl-nikolai">What it does</a>
-        <a href="#pricing">Pricing</a>
+        <router-link to="/pricing">Pricing</router-link>
         <router-link to="/download">Download</router-link>
       </nav>
     </header>
