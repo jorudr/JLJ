@@ -533,6 +533,7 @@ function initEquityCurve() {
   function draw(progress) {
     const w = canvas.clientWidth
     const h = canvas.clientHeight
+    if (!w || !h) return
     ctx.clearRect(0, 0, w, h)
     const padX = w * 0.06
     const top = h * 0.24
@@ -908,8 +909,9 @@ onBeforeUnmount(() => {
 
 /* ── Phone ─────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .hero__stage { display: none; }
   .bar__nav a:not(:last-child) { display: none; }
-  .spec { grid-template-columns: 1fr; }
+  .spec { grid-template-columns: 1fr; border-top: 0; }
   .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
   .spec__cell:last-child { border-bottom: 0; }
   .facts { grid-template-columns: 1fr 1fr; }
