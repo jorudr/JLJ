@@ -98,7 +98,7 @@
         </div>
         <h3 v-if="row.intro" class="sec__intro">{{ row.intro }}</h3>
         <figure class="sec__visual">
-          <UiFrame v-if="row.src" :src="row.src" :title="row.title" :design="getRowDesign(row)" :css="row.css || ''" :ink="row.ink !== false" :bare="!!row.bare" :auto="!!row.auto" :build="row.build || null" :patch="row.patch || []" />
+          <UiFrame v-if="row.src" :src="row.src" :title="row.title" :design="getRowDesign(row)" :css="getRowCss(row)" :ink="row.ink !== false" :bare="!!row.bare" :auto="!!row.auto" :build="row.build || null" :patch="row.patch || []" />
           <div v-else-if="row.grid" class="metrics">
             <div v-for="m in metricList" :key="m[0]" class="metric">
               <span class="mono">{{ m[0] }}</span>
@@ -350,8 +350,14 @@ const metricList = computed(() => isRu.value ? metricListRu : metricListEn)
 const isMobile = ref(typeof window !== 'undefined' ? window.innerWidth <= 768 : false)
 const onWindowResize = () => { isMobile.value = window.innerWidth <= 768 }
 const getRowDesign = (row) => {
-  if (row.id === 'patterns' && isMobile.value) return [500, 360]
+  if (row.id === 'patterns' && isMobile.value) return [500, 390]
   return row.design
+}
+const getRowCss = (row) => {
+  if (row.id === 'patterns' && isMobile.value) {
+    return 'main{width:100%!important;padding:12px 18px 44px!important}.list{padding-bottom:12px!important}'
+  }
+  return row.css || ''
 }
 
 /* Illustrative Monte Carlo: reshuffle one fixed sequence of trades. Deterministic. */

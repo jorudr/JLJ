@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   src: { type: String, required: true },
@@ -89,8 +89,19 @@ onMounted(async () => {
     // Printed in ink the page turns light, but the condition and strategy nodes stay black with white text.
     + (props.ink ? '\n.node, .gm-node { filter: invert(1) hue-rotate(180deg); }' : '')
     + (props.auto ? '\n.ui-root { height: auto !important; overflow: visible !important; }' : '')
-    + '\n' + props.css
   shadow.appendChild(style)
+
+  const customStyle = document.createElement('style')
+  customStyle.textContent = props.css || ''
+  shadow.appendChild(customStyle)
+  cleanups.push(watch(() => props.css, (newCss) => {
+    customStyle.textContent = newCss || ''
+  }))
+
+  cleanups.push(watch(() => props.design, (d) => {
+    if (!props.auto && d?.[1]) height.value = d[1]
+    if (box.value && d?.[0]) scale.value = box.value.clientWidth / d[0]
+  }, { deep: true }))
 
   const root = document.createElement('div')
   root.className = 'ui-root'

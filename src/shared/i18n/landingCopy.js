@@ -52,7 +52,7 @@ export const landingCopy = {
         {
           id: 'patterns', title: 'Patterns', tag: 'Best trades', plan: 'Full plan',
           text: ['The patterns in your trades that rank among the best: the conditions that keep showing up in your most profitable trades, ordered by rating.'],
-          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:16px 20px 0!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
+          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:16px 20px 24px!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
         },
         {
           id: 'strategy', title: 'Strategy', tag: 'Genesis Matrix', plan: 'Free plan',
@@ -270,7 +270,7 @@ export const landingCopy = {
         {
           id: 'patterns', title: 'Паттерны', tag: 'Лучшие сделки', plan: 'Тариф Full',
           text: ['Паттерны ваших сделок среди лучших: условия, которые стабильно повторяются в наиболее прибыльных сделках, отсортированные по рейтингу.'],
-          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:16px 20px 0!important}', cap: 'Рис. 3 — Топ паттернов прибыльных сделок. Демо-данные.',
+          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:16px 20px 24px!important}', cap: 'Рис. 3 — Топ паттернов прибыльных сделок. Демо-данные.',
         },
         {
           id: 'strategy', title: 'Стратегия', tag: 'Матрица Genesis', plan: 'Бесплатный тариф',
