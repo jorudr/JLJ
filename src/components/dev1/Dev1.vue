@@ -3,24 +3,34 @@
     <!-- BAR -->
     <BarHeader />
 
-    <!-- HERO: equity curve and dynamic balance transition to JORU -->
-    <section class="hero">
-      <div class="hero__stage">
-        <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
-        <p class="hero__word" :class="{ 'is-visible': isBalanceFinished }" aria-hidden="true">JORU</p>
-        <div class="hero__balance" :class="{ 'is-hidden': isBalanceFinished }">
-          <span class="hero__balance-label">{{ isRu ? 'Баланс счёта' : 'Account balance' }}</span>
-          <span ref="equityValueEl" class="hero__balance-value">$10,000.00</span>
+    <!-- HERO from /dev -->
+    <section ref="coverEl" class="bx-hero" aria-labelledby="hero-title">
+      <p class="bx-hero__eyebrow">
+        <span>{{ isRu ? 'Для ручной и системной торговли' : 'For discretionary and systematic traders' }}</span>
+        <span>{{ isRu ? 'Приложение для Windows и macOS' : 'Desktop app for Windows & macOS' }}</span>
+      </p>
+      <h1 id="hero-title" class="bx-hero__title">
+        <span class="bx-wide">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>
+        <span class="bx-hero__sub">{{ isRu ? 'который находит привычки, отнимающие ваши деньги.' : 'that finds the habits costing you money.' }}</span>
+      </h1>
+      <div class="bx-hero__grid">
+        <div class="bx-hero__copy">
+          <p class="bx-hero__lead">
+            {{ isRu ? 'Фиксируйте каждую сделку в контексте рынка. JORU анализирует историю, показывает, какие условия отнимают деньги, и следит, чтобы вы перестали их повторять.' : 'Record every trade with its context. JORU analyses your history, shows which conditions lose you money, and checks that you stop repeating them.' }}
+          </p>
+          <div class="bx-hero__actions">
+            <router-link :to="isRu ? '/ru/download' : '/download'" class="btn">{{ isRu ? 'Скачать бесплатно ↓' : 'Download free ↓' }}</router-link>
+            <a href="#karl-nikolai" class="btn btn--line">{{ isRu ? 'Как это работает ↓' : 'See how it works ↓' }}</a>
+          </div>
+          <ul class="bx-hero__facts">
+            <li><strong>$0</strong> <span>{{ isRu ? 'Бесплатный дневник без ограничения по времени' : 'Free journal, no time limit' }}</span></li>
+            <li><strong>100%</strong> <span>{{ isRu ? 'Сделки и API-ключи остаются только на вашем компьютере' : 'Trades and API keys stay on your computer' }}</span></li>
+          </ul>
         </div>
-      </div>
-      <div class="spec">
-        <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul" :class="{ 'ul--ru': isRu }"><span class="ul__w1">{{ isRu ? 'Дневник' : 'Trading' }}</span> <span class="ul__w2">{{ isRu ? 'трейдера' : 'journal' }}</span><span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
-        </div>
-        <div class="spec__cell spec__cell--dl">
-          <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
-          <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn">{{ isRu ? `Скачать для ${item.name}` : item.name }} <span aria-hidden="true">↓</span></a>
-        </div>
+        <figure class="bx-hero__shot" :style="{ '--tilt': coverProgress }">
+          <img src="/dev/journal.jpg" alt="JORU trading journal: trades, P/L, win rate and the list of trades" width="1024" height="638" fetchpriority="high" />
+          <figcaption>{{ isRu ? 'Рис. 0 — Журнал: сделки, P/L и винрейт с первого взгляда.' : 'Fig. 0 — The journal: trades, P/L and win rate at a glance.' }}</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -226,7 +236,7 @@ const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
 const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
 
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap'
 const year = new Date().getFullYear()
 const pad = n => String(n).padStart(2, '0')
 
@@ -439,220 +449,20 @@ const sectionProgress = (el) => {
   const travel = rect.height - window.innerHeight + 46
   return travel > 0 ? clamp(-(rect.top - 46) / travel) : 0
 }
+const coverEl = ref(null)
+const coverProgress = ref(0)
+
 let frame = 0
 const onScroll = () => {
   if (frame || reducedMotion) return
-  frame = requestAnimationFrame(() => { frame = 0; ledgerProgress.value = sectionProgress(ledgerEl.value) })
-}
-
-const equityCanvas = ref(null)
-const equityValueEl = ref(null)
-const isBalanceFinished = ref(false)
-let cleanupEquity = null
-
-function initEquityCurve() {
-  const canvas = equityCanvas.value
-  const valueEl = equityValueEl.value
-  if (!canvas) return null
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return null
-
-  // Realistic trading account growth with multi-phase drawdowns
-  const START = 10000
-  const POINTS = 150
-  const DURATION = 2200
-  const COLOR = '#000000'
-
-  let series = []
-  let startTime = 0
-  let frame = null
-  let timer = null
-
-  function makeSeries() {
-    const target = 42000 + Math.random() * 24000
-
-    // 3 distinct realistic drawdown episodes
-    const d1Start = 0.14 + (Math.random() - 0.5) * 0.03
-    const d1End = 0.32 + (Math.random() - 0.5) * 0.03
-    const d1Depth = 0.22 + Math.random() * 0.06
-
-    const d2Start = 0.46 + (Math.random() - 0.5) * 0.04
-    const d2End = 0.70 + (Math.random() - 0.5) * 0.04
-    const d2Depth = 0.28 + Math.random() * 0.07
-
-    const d3Start = 0.79 + (Math.random() - 0.5) * 0.03
-    const d3End = 0.90 + (Math.random() - 0.5) * 0.03
-    const d3Depth = 0.16 + Math.random() * 0.05
-
-    const out = []
-    let prevTradeNoise = 0
-
-    for (let i = 0; i < POINTS; i++) {
-      const t = i / (POINTS - 1)
-      const macro = START * Math.pow(target / START, Math.pow(t, 1.22))
-
-      let dip = 1.0
-
-      // Episode 1: Initial pullback after first winning streak
-      if (t >= d1Start && t <= d1End) {
-        const p = (t - d1Start) / (d1End - d1Start)
-        const curve = Math.sin(p * Math.PI) * (1.0 + 0.2 * Math.cos(p * Math.PI * 2))
-        dip *= (1.0 - Math.max(0.0, curve) * d1Depth)
-      }
-
-      // Episode 2: Protracted major drawdown with double-bottom test & choppy consolidation
-      if (t >= d2Start && t <= d2End) {
-        const p = (t - d2Start) / (d2End - d2Start)
-        const doubleBottom = Math.sin(p * Math.PI) * (1.0 + 0.38 * Math.sin(p * Math.PI * 3))
-        dip *= (1.0 - Math.max(0.0, doubleBottom) * d2Depth)
-      }
-
-      // Episode 3: Late consolidation pullback before final high push
-      if (t >= d3Start && t <= d3End) {
-        const p = (t - d3Start) / (d3End - d3Start)
-        dip *= (1.0 - Math.sin(p * Math.PI) * d3Depth)
-      }
-
-      // Realistic trade-level sawtooth noise with momentum clustering
-      let regimeBias = 0.0
-      if ((t >= d1Start && t <= (d1Start + d1End) * 0.5) || (t >= d2Start && t <= (d2Start + d2End) * 0.5)) {
-        regimeBias = -0.015
-      } else if ((t >= d1End * 0.9 && t <= d2Start * 0.8) || (t >= d2End * 0.9 && t <= d3Start * 0.8)) {
-        regimeBias = 0.018
-      }
-
-      const trade = (Math.random() - 0.49 + regimeBias) * 0.045
-      prevTradeNoise = prevTradeNoise * 0.65 + trade
-      if (i === 0 || i === POINTS - 1) {
-        prevTradeNoise = 0
-      }
-
-      const val = macro * dip * (1.0 + prevTradeNoise)
-      out.push(Math.max(START * 0.88, val))
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    ledgerProgress.value = sectionProgress(ledgerEl.value)
+    if (coverEl.value) {
+      const rect = coverEl.value.getBoundingClientRect()
+      coverProgress.value = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)))
     }
-
-    out[0] = START
-    out[POINTS - 1] = target
-    return out
-  }
-
-  function fmt(v) {
-    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-
-  function resize() {
-    const dpr = window.devicePixelRatio || 1
-    canvas.width = canvas.clientWidth * dpr
-    canvas.height = canvas.clientHeight * dpr
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  }
-
-  function draw(progress) {
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
-    if (!w || !h || !series.length) return
-    ctx.clearRect(0, 0, w, h)
-    const padX = Math.min(w * 0.08, 64)
-    const top = h * 0.38
-    const bottom = h * 0.90
-    const minVal = Math.min(...series) * 0.97
-    const maxVal = Math.max(...series) * 1.03
-    const logMin = Math.log(minVal)
-    const logMax = Math.log(maxVal)
-    const pt = i => ({
-      x: padX + (i / (series.length - 1)) * (w - padX * 2),
-      y: bottom - (Math.log(series[i]) - logMin) / (logMax - logMin || 1) * (bottom - top),
-    })
-    const pos = (series.length - 1) * progress
-    const idx = Math.floor(pos)
-    const frac = pos - idx
-    const next = Math.min(series.length - 1, idx + 1)
-    const a = pt(idx)
-    const b = pt(next)
-    const edge = { x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac }
-
-    ctx.lineWidth = 2.5
-    ctx.strokeStyle = COLOR
-    ctx.lineJoin = 'round'
-    ctx.lineCap = 'round'
-    ctx.shadowBlur = 10
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.18)'
-    ctx.beginPath()
-    const p0 = pt(0)
-    ctx.moveTo(p0.x, p0.y)
-    for (let i = 1; i <= idx; i++) {
-      const p = pt(i)
-      ctx.lineTo(p.x, p.y)
-    }
-    ctx.lineTo(edge.x, edge.y)
-    ctx.stroke()
-
-    ctx.fillStyle = COLOR
-    ctx.shadowBlur = 16
-    ctx.beginPath()
-    ctx.arc(edge.x, edge.y, 4, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.shadowBlur = 0
-
-    const v = series[idx] + (series[next] - series[idx]) * frac
-    if (valueEl) valueEl.textContent = fmt(v)
-  }
-
-  function step() {
-    const progress = Math.min(1, (performance.now() - startTime) / DURATION)
-    draw(1 - Math.pow(1 - progress, 2))
-    if (progress < 1) {
-      frame = requestAnimationFrame(step)
-    } else {
-      frame = null
-      setTimeout(() => {
-        isBalanceFinished.value = true
-      }, 100)
-    }
-  }
-
-  function play() {
-    if (frame) cancelAnimationFrame(frame)
-    if (timer) clearTimeout(timer)
-    isBalanceFinished.value = false
-    series = makeSeries()
-    startTime = performance.now()
-    frame = requestAnimationFrame(step)
-  }
-
-  const onResize = () => {
-    resize()
-    if (!frame && series.length) draw(1)
-  }
-
-  window.addEventListener('resize', onResize)
-  resize()
-
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    series = makeSeries()
-    draw(1)
-    isBalanceFinished.value = true
-    return () => {
-      window.removeEventListener('resize', onResize)
-    }
-  }
-
-  const loaderEl = document.getElementById('app-loader')
-  const initialDelay = loaderEl ? Math.max(0, 1750 - (performance.now() - (window.__loaderStartTime || 0))) : 0
-
-  if (initialDelay > 0) {
-    series = makeSeries()
-    draw(0)
-    timer = setTimeout(play, initialDelay)
-  } else {
-    play()
-  }
-
-  return () => {
-    if (timer) clearTimeout(timer)
-    if (frame) cancelAnimationFrame(frame)
-    window.removeEventListener('resize', onResize)
-  }
+  })
 }
 
 let fontLink = null
@@ -664,7 +474,6 @@ onMounted(() => {
     document.head.appendChild(fontLink)
   }
   refreshDownloads()
-  cleanupEquity = initEquityCurve()
   if (importEl.value) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       importRevealed.value = true
@@ -685,7 +494,6 @@ onMounted(() => {
   onScroll()
 })
 onBeforeUnmount(() => {
-  cleanupEquity?.()
   importObserver?.disconnect()
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
@@ -699,6 +507,7 @@ onBeforeUnmount(() => {
   --edge: clamp(14px, 1.6cqw, 24px);
   --gut: clamp(14px, 1.5cqw, 22px);
   --sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  --wide: 'Archivo', 'Arial Black', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   background: #fff;
   color: #000;
@@ -727,78 +536,126 @@ onBeforeUnmount(() => {
 .d a.btn--paper { background: #fff; color: #000; border-color: #fff; }
 .d a.btn--paper:hover { background: #000; color: #fff; }
 
-/* ── Hero ──────────────────────────────────────────── */
-.hero { border-bottom: 2px solid #000; }
-.hero__stage { position: relative; overflow: hidden; }
-.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-.hero__word {
+/* ── Hero from /dev (light theme for /) ── */
+.bx-hero {
   position: relative;
-  z-index: 1;
-  margin: 0;
-  padding: 0 var(--edge);
-  font-weight: 800;
-  font-size: clamp(110px, 39cqw, 800px);
-  line-height: 0.74;
-  letter-spacing: -0.06em;
-  margin-left: -0.02em;
-  padding-top: 0.06em;
-  padding-bottom: 0.04em;
-  user-select: none;
-  opacity: 0;
-  transform: translate3d(-100px, 0, 0);
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-.hero__word.is-visible {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-.hero__balance {
-  position: absolute;
-  top: 12%;
-  left: 0;
-  right: 0;
-  z-index: 2;
+  min-height: calc(100svh - 60px);
+  padding: clamp(32px, 5vh, 56px) var(--edge) clamp(40px, 6vh, 64px);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  pointer-events: none;
-  user-select: none;
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 0.28s ease-out, transform 0.35s ease-out;
-}
-.hero__balance.is-hidden {
-  opacity: 0;
-  transform: translate3d(35px, 0, 0);
-  pointer-events: none;
-}
-.hero__balance-label {
-  font-size: 12px;
-  letter-spacing: 0.5em;
-  padding-left: 0.5em;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.45);
-  margin-bottom: 14px;
-}
-.hero__balance-value {
-  font-size: clamp(40px, 9vw, 140px);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  border-bottom: 2px solid #000;
+  background: #fff;
   color: #000;
 }
-.spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
-.spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
-.spec__cell:last-child { border-right: 0; }
-.spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
-.spec__comma { text-decoration: none; display: inline-block; }
-.spec__tail { display: inline; }
-.spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5cqw, 88px); }
-.spec__cell p { margin: 0; font-size: clamp(14px, 1.15cqw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
-.spec__cell--dl .btn { width: 100%; }
+.bx-hero__eyebrow {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 clamp(16px, 2.4vh, 24px);
+  font-size: 13px;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  padding-bottom: 12px;
+}
+.bx-hero__eyebrow span:first-child {
+  color: #000;
+  font-weight: 600;
+}
+.bx-hero__title {
+  margin: 0;
+}
+.bx-hero__title .bx-wide {
+  display: block;
+  font-family: var(--wide, var(--sans));
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(48px, 7.6vw, 114px);
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+  margin-left: -0.04em;
+  color: #000;
+}
+.bx-hero__sub {
+  display: block;
+  margin-top: 0.32em;
+  font-weight: 400;
+  font-size: clamp(24px, 3.4vw, 54px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: rgba(0, 0, 0, 0.72);
+}
+.bx-hero__grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.85fr) 1.5fr;
+  gap: clamp(24px, 3.6vw, 56px);
+  margin-top: clamp(28px, 4vh, 48px);
+  align-items: start;
+}
+.bx-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.bx-hero__lead {
+  margin: 0;
+  font-size: clamp(16px, 1.25vw, 20px);
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.78);
+  max-width: 36ch;
+}
+.bx-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.bx-hero__facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+.bx-hero__facts li {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.35;
+}
+.bx-hero__facts strong {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 17px;
+  color: #000;
+}
+.bx-hero__shot {
+  margin: 0;
+  perspective: 1600px;
+}
+.bx-hero__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #000;
+  transform-origin: 50% 0;
+  transform: rotateX(max(0deg, calc(14deg - var(--tilt) * 50deg)));
+  box-shadow: 0 35px 70px -25px rgba(0, 0, 0, 0.22), 0 10px 20px -10px rgba(0, 0, 0, 0.1);
+  background: #000;
+}
+.bx-hero__shot figcaption {
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+}
 
 
 /* ── Facts ─────────────────────────────────────────── */
@@ -1015,48 +872,45 @@ onBeforeUnmount(() => {
 
 /* ── Phone ─────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .hero__stage { display: none; }
-  .spec { grid-template-columns: 1fr; border-top: 0; }
-  .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
-  .spec__cell:last-child { border-bottom: 0; }
-  .spec__cell h1 {
-    width: 100%;
-    margin: 0;
+  .bx-hero {
+    padding-top: 24px;
+    padding-bottom: 32px;
+    min-height: auto;
   }
-  .spec__cell h1 .ul {
-    display: block;
-    width: 100%;
-    text-align: left;
-    text-decoration: none;
-    text-transform: uppercase;
-    font-size: clamp(66px, 21.5cqw, 120px);
+  .bx-hero__eyebrow {
+    font-size: 11px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+  }
+  .bx-hero__eyebrow span:last-child {
+    display: none;
+  }
+  .bx-hero__title .bx-wide {
+    font-size: clamp(36px, 12vw, 64px);
+    white-space: normal;
     line-height: 0.92;
-    letter-spacing: -0.05em;
-    margin-bottom: 0.22em;
   }
-  .spec__cell h1 .ul__w1 {
-    display: block;
-    text-decoration: none;
+  .bx-hero__sub {
+    font-size: clamp(20px, 5.8vw, 28px);
+    line-height: 1.15;
+    margin-top: 0.3em;
   }
-  .spec__cell h1 .ul__w2 {
-    display: inline-block;
-    text-decoration: underline;
-    text-decoration-thickness: 0.05em;
-    text-underline-offset: 0.08em;
+  .bx-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 24px;
   }
-  .spec__cell h1 .ul--ru {
-    font-size: clamp(56px, 17.5cqw, 105px);
-    letter-spacing: -0.045em;
+  .bx-hero__shot {
+    order: -1;
   }
-  .spec__tail {
-    display: block;
+  .bx-hero__shot img {
+    transform: none !important;
+  }
+  .bx-hero__actions {
+    flex-direction: column;
+  }
+  .bx-hero__actions .btn {
     width: 100%;
-    text-align: left;
-    word-spacing: normal;
-    font-size: clamp(34px, 9.4cqw, 46px);
-    line-height: 1.06;
-    letter-spacing: -0.035em;
-    font-weight: 800;
   }
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
