@@ -4,7 +4,7 @@
     <header class="bar">
       <router-link to="/dev1" class="bar__brand" aria-label="J.L.JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
-        <span>J.L.JÖRMUNGANDR</span>
+        <span>JÖRMUNGANDR</span>
       </router-link>
       <nav class="bar__nav" aria-label="Main">
         <a href="#karl-nikolai">What it does</a>
@@ -15,13 +15,13 @@
 
     <!-- HERO: the wordmark is the picture -->
     <section class="hero">
-      <p class="hero__word" aria-hidden="true">JORU</p>
+      <div class="hero__stage">
+        <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
+        <p class="hero__word" aria-hidden="true">JORU</p>
+      </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1>Trading journal that finds the habits costing you money.</h1>
-        </div>
-        <div class="spec__cell">
-          <p>Record every trade with its context — screenshots, tags, notes and the reason you took it. JORU analyses your history, shows which conditions lose you money, and checks that you stop repeating them.</p>
+          <h1><span class="ul">Trading journal</span> that finds the habits costing you money.</h1>
         </div>
         <div class="spec__cell spec__cell--dl">
           <span class="mono">Download free</span>
@@ -32,7 +32,7 @@
 
     <!-- THE CHART: left half is the bare price chart, right half the same trade with everything the journal adds -->
     <section class="chart" aria-labelledby="chart-title">
-      <div class="label"><h2 id="chart-title" class="mono">Every trade on its chart</h2><span class="mono">Drag the slider</span></div>
+      <div class="label"><h2 id="chart-title" class="mono">Never forget why you opened and closed</h2><span class="mono">Drag the slider</span></div>
       <div ref="cmp" class="cmp" :style="{ '--x': `${split}%` }">
         <div class="cmp__layer"><UiFrame src="/ui/6.html" title="Price chart, candles only" :design="[1440, 560]" ink :patch="cleanPatch" css="main{inset:2% 3% 24px!important}.condition-layer{visibility:hidden}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
         <div class="cmp__layer cmp__layer--top" aria-hidden="true"><UiFrame src="/ui/6.html" title="" :design="[1440, 560]" ink css="main{inset:2% 3% 24px!important}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
@@ -149,6 +149,28 @@
       </div>
     </section>
 
+    <!-- COMPARISON -->
+    <section class="compare" aria-labelledby="compare-title">
+      <div class="label mono"><span>Comparison</span><span>Spreadsheet vs JORU</span></div>
+      <h2 id="compare-title" class="compare__title">A spreadsheet can log trades. It cannot tell you which ones to stop taking.</h2>
+      <table class="compare__table">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Spreadsheet</th>
+            <th scope="col">JORU</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in comparison" :key="row[0]">
+            <th scope="row">{{ row[0] }}</th>
+            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? 'Yes' : 'No' }}</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <!-- PRICING -->
     <section id="pricing" class="pricing" aria-labelledby="pricing-title">
       <div class="label"><h2 id="pricing-title" class="mono">Pricing</h2><span class="mono">Two plans</span></div>
@@ -165,6 +187,15 @@
           <ul><li v-for="item in plans.full" :key="item">{{ item }}</li></ul>
           <router-link to="/pricing" class="btn">Subscribe</router-link>
         </article>
+      </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section class="privacy" aria-labelledby="privacy-title">
+      <div class="label mono"><span>Data</span><span>Privacy</span></div>
+      <div class="privacy__body">
+        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys never leave your computer.</h2>
+        <p>Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers. <router-link to="/privacy">Privacy Policy ↗</router-link></p>
       </div>
     </section>
 
@@ -198,7 +229,7 @@ const rows = [
     src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:24px 36px 0!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
   },
   {
-    id: 'strategy', title: 'Strategy', tag: 'Genesis Matrix', plan: 'Full plan',
+    id: 'strategy', title: 'Strategy', tag: 'Genesis Matrix', plan: 'Free plan',
     text: ['Write your strategy down as it really works: scenarios, entry and exit conditions. Every condition is a node with its frequency and profit factor, so you see which ones carry the result.', 'Every change is saved as a new version. Compare versions by win rate, profit factor, average result and execution quality.'],
     wide: true, dark: true, ink: false, bare: true, src: '/ui/5.html', design: [1400, 900],
     // Only the Bullish pullback scenario and its four conditions, shown up to three times larger than the page would fit them.
@@ -221,7 +252,7 @@ const rows = [
     wide: true, grid: true, cap: 'Fig. 6 — Metrics of one trade. Demo data.',
   },
   {
-    id: 'report', title: 'Report', tag: 'Trading report', plan: 'Full plan',
+    id: 'report', title: 'Report', tag: 'Trading report', plan: 'Free plan',
     text: ['Profit and loss, distribution, risk and execution, drawdowns, results by session and asset — one report instead of five spreadsheets. Every scenario and condition, broken down the way you\'d actually read it.'],
     wide: true, flow: true, tight: true, auto: true, bare: true, src: '/ui/9.html', design: [1500, 900], build: buildReportGrid,
     // Every section of the report is rendered, then only its charts and diagrams are pulled out into one grid.
@@ -238,9 +269,33 @@ const rows = [
 const metricList = [["Net Profit", "Realized trade PnL", "+$240.00", "g"], ["Risk/Reward Ratio", "Setup R/R ratio", "2.40 R", "g"], ["Required Adherence", "Fulfilled Required Rules", "100%", "g"], ["Additional PnL", "Additional Conditions effect", "+$42.00", "g"], ["Conditional PnL Ratio", "Profit ratio per setup condition", "1.32", "g"], ["Cognitive Stability", "Neural Telemetry", "86%", "g"], ["Dominant Bias", "Primary Friction Marker", "DISCIPLINE", "w"], ["Emotional PnL Drag", "Psychological friction drag", "-$8.00", "w"], ["Friction Density", "Friction Markers Ratio", "0.12", "w"], ["Net Result Variance", "vs Strategy Average PnL", "+$18.00", "g"], ["Yield Efficiency", "Balance Before Trade", "2.40%", "g"], ["Profit Velocity", "PnL per holding hour", "$60.00/h", "g"], ["Planned vs Realized Risk", "Risk Audit", "0.96", "g"], ["Temporal Exposure", "Holding Duration", "4.00h", "n"], ["Stop Loss Distance", "Entry to Stop Loss in %", "0.50%", "n"], ["Take Profit Distance", "Entry to TP distance in %", "1.50%", "n"], ["SL Execution Drag", "Loss-trade slippage only", "0.08 R", "n"], ["Risk Budget Adherence", "Max Risk vs Budget", "96%", "g"], ["TP Capture Ratio", "Target Reward Captured", "80%", "w"], ["Planned RR / Baseline RR", "Planned Trade RR vs Baseline RR", "0.84", "b"], ["Unrealized Alpha Left", "Maximum profit − captured profit in $", "20%", "g"], ["Confirmed Loss Time", "Time in drawdown zone", "18m", "b"], ["Confirmed Profit Time", "Time in profit zone", "3h 42m", "g"], ["Max Meaningful Drawdown", "Peak adverse move (MAE)", "-0.28%", "b"], ["Max Favorable Excursion", "Peak favorable move (MFE)", "1.48%", "g"], ["Profit Capture Ratio", "Share of MFE captured", "81%", "g"], ["Price Path Shape", "Movement sequence relative to entry", "FAVORABLE FIRST", "g"], ["Initial Movement", "First classified candle", "PROFIT", "g"], ["Entry Heat", "Adverse Delay", "0.12%", "w"], ["Adverse Before Profit", "Drawdown before Profit", "YES", "b"], ["News During Trade", "Macro News Backdrop", "NO", "n"]]
 
 const plans = {
-  free: ['Trading journal with screenshots, tags and context', 'Equity curve and core metrics', 'Activity monitor', 'Forum and trading events'],
-  full: ['Everything in Free', 'Karl-Nikolai I — pattern detection and rule tracking', 'Robustness Analytics — Monte Carlo, risk of ruin', 'Genesis Matrix and strategy versions', 'Deep trade analytics and trading report', 'Broker API import', 'Forecast Manager'],
+  free: [
+    'Trading journal with screenshots, tags and context',
+    'Equity curve and core metrics',
+    'Karl-Nikolai I (without rehabilitation function)',
+    'Detailed reports (without scenario and condition analysis)',
+    'MetaTrader 5 trade import',
+    'Activity monitor',
+    'Forum and trading events',
+  ],
+  full: [
+    'Everything in Free without restrictions',
+    'Unlimited strategy creation',
+    'Exchange chart for every trade',
+    'Score Patterns',
+    'Broker API import',
+    'Forecast Manager',
+  ],
 }
+
+const comparison = [
+  ['Log trades, notes and screenshots', true],
+  ['Equity curve and drawdowns', true],
+  ['Strategy builder, per-condition analytics and condition recommendations', false],
+  ['Exchange chart replay and in-trade behavior analysis', false],
+  ['Loss-making pattern detection in trades', false],
+  ['Strategy rule adherence verification', false],
+]
 
 /* Chart compare. The same page is rendered twice: bare candles underneath, the full trade on top, clipped at the slider. */
 const cleanPatch = [
@@ -317,7 +372,7 @@ function buildReportGrid({ shadow }) {
 }
 
 const cmp = ref(null)
-const split = ref(50)
+const split = ref(25)
 let dragging = false
 const setFrom = (event) => {
   const rect = cmp.value.getBoundingClientRect()
@@ -425,6 +480,158 @@ const onScroll = () => {
   frame = requestAnimationFrame(() => { frame = 0; ledgerProgress.value = sectionProgress(ledgerEl.value) })
 }
 
+const equityCanvas = ref(null)
+let cleanupEquity = null
+
+function initEquityCurve() {
+  const canvas = equityCanvas.value
+  if (!canvas) return null
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  const START = 10000
+  const POINTS = 140
+  const DURATION = 4500
+  const COLOR = '#000000'
+
+  let series = []
+  let startTime = 0
+  let frame = null
+
+  function makeSeries() {
+    const target = 38000 + Math.random() * 26000
+    const out = []
+
+    // 3 distinct realistic drawdown & recovery cycles
+    const d1Start = 0.13 + (Math.random() - 0.5) * 0.03
+    const d1End = 0.28 + (Math.random() - 0.5) * 0.03
+    const d1Depth = 0.19 + Math.random() * 0.07
+
+    const d2Start = 0.43 + (Math.random() - 0.5) * 0.04
+    const d2End = 0.64 + (Math.random() - 0.5) * 0.04
+    const d2Depth = 0.23 + Math.random() * 0.08
+
+    const d3Start = 0.75 + (Math.random() - 0.5) * 0.03
+    const d3End = 0.88 + (Math.random() - 0.5) * 0.03
+    const d3Depth = 0.15 + Math.random() * 0.06
+
+    let prevNoise = 0
+
+    for (let i = 0; i < POINTS; i++) {
+      const t = i / (POINTS - 1)
+      let macro = START * Math.pow(target / START, Math.pow(t, 1.26))
+
+      // First pullback after initial run-up
+      if (t >= d1Start && t <= d1End) {
+        const p = (t - d1Start) / (d1End - d1Start)
+        macro *= (1 - Math.sin(p * Math.PI) * d1Depth)
+      }
+
+      // Second protracted drawdown with a choppy double-dip consolidation before breakout
+      if (t >= d2Start && t <= d2End) {
+        const p = (t - d2Start) / (d2End - d2Start)
+        const doubleDip = Math.sin(p * Math.PI) * (1 + 0.28 * Math.sin(p * Math.PI * 3))
+        macro *= (1 - Math.max(0, doubleDip) * d2Depth)
+      }
+
+      // Third late drawdown test before the final high-water push
+      if (t >= d3Start && t <= d3End) {
+        const p = (t - d3Start) / (d3End - d3Start)
+        macro *= (1 - Math.sin(p * Math.PI) * d3Depth)
+      }
+
+      // Realistic trade-level sawtooth noise with clustering
+      const trade = (Math.random() - 0.48) * 0.045
+      prevNoise = prevNoise * 0.6 + trade
+      if (i === 0 || i === POINTS - 1) prevNoise = 0
+
+      out.push(Math.max(START * 0.8, macro * (1 + prevNoise)))
+    }
+
+    out[0] = START
+    return out
+  }
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = canvas.clientWidth * dpr
+    canvas.height = canvas.clientHeight * dpr
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
+  function draw(progress) {
+    const w = canvas.clientWidth
+    const h = canvas.clientHeight
+    ctx.clearRect(0, 0, w, h)
+    const padX = w * 0.06
+    const top = h * 0.24
+    const bottom = h * 0.88
+    const logMin = Math.log(Math.min(...series))
+    const logMax = Math.log(Math.max(...series))
+    const pt = i => ({
+      x: padX + (i / (series.length - 1)) * (w - padX * 2),
+      y: bottom - (Math.log(series[i]) - logMin) / (logMax - logMin || 1) * (bottom - top),
+    })
+    const pos = (series.length - 1) * progress
+    const idx = Math.floor(pos)
+    const frac = pos - idx
+    const next = Math.min(series.length - 1, idx + 1)
+    const a = pt(idx)
+    const b = pt(next)
+    const edge = { x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac }
+
+    ctx.lineWidth = 3
+    ctx.strokeStyle = COLOR
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.shadowBlur = 12
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
+    ctx.beginPath()
+    const p0 = pt(0)
+    ctx.moveTo(p0.x, p0.y)
+    for (let i = 1; i <= idx; i++) {
+      const p = pt(i)
+      ctx.lineTo(p.x, p.y)
+    }
+    ctx.lineTo(edge.x, edge.y)
+    ctx.stroke()
+
+    ctx.fillStyle = COLOR
+    ctx.shadowBlur = 18
+    ctx.beginPath()
+    ctx.arc(edge.x, edge.y, 4, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.shadowBlur = 0
+  }
+
+  function step() {
+    const progress = Math.min(1, (performance.now() - startTime) / DURATION)
+    draw(1 - Math.pow(1 - progress, 2))
+    frame = progress < 1 ? requestAnimationFrame(step) : null
+  }
+
+  function play() {
+    if (frame) cancelAnimationFrame(frame)
+    series = makeSeries()
+    startTime = performance.now()
+    frame = requestAnimationFrame(step)
+  }
+
+  const onResize = () => {
+    resize()
+    if (!frame) draw(1)
+  }
+
+  window.addEventListener('resize', onResize)
+  resize()
+  play()
+
+  return () => {
+    if (frame) cancelAnimationFrame(frame)
+    window.removeEventListener('resize', onResize)
+  }
+}
+
 let fontLink = null
 onMounted(() => {
   if (!document.querySelector(`link[href="${FONT_HREF}"]`)) {
@@ -434,11 +641,13 @@ onMounted(() => {
     document.head.appendChild(fontLink)
   }
   refreshDownloads()
+  cleanupEquity = initEquityCurve()
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
   onScroll()
 })
 onBeforeUnmount(() => {
+  cleanupEquity?.()
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
   fontLink?.remove()
@@ -481,11 +690,14 @@ onBeforeUnmount(() => {
 
 /* ── Hero ──────────────────────────────────────────── */
 .hero { border-bottom: 2px solid #000; }
-.hero__word { margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39vw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.06em; padding-bottom: 0.04em; user-select: none; }
-.spec { display: grid; grid-template-columns: 1.35fr 1fr 1fr; border-top: 2px solid #000; }
+.hero__stage { position: relative; overflow: hidden; }
+.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.hero__word { position: relative; z-index: 1; margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39vw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.06em; padding-bottom: 0.04em; user-select: none; }
+.spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
-.spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(24px, 2.7vw, 46px); }
+.spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
+.spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5vw, 88px); }
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
 
@@ -557,6 +769,16 @@ onBeforeUnmount(() => {
 .mc__path.is-ruin { stroke: rgba(0, 0, 0, 0.6); }
 .mc__main { fill: none; stroke: #000; stroke-width: 3; }
 
+/* ── Comparison ────────────────────────────────────── */
+.compare { border-bottom: 2px solid #000; }
+.compare__title { margin: 0; padding: clamp(28px, 4.5vw, 64px) var(--edge) clamp(24px, 3.5vw, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1; font-size: clamp(28px, 4.2vw, 64px); max-width: 28ch; }
+.compare__table { width: calc(100% - 2 * var(--edge)); margin: 0 var(--edge) clamp(36px, 5vw, 64px); border-collapse: collapse; font-size: clamp(14px, 1.2vw, 18px); }
+.compare__table th, .compare__table td { border-top: 1px solid rgba(0, 0, 0, 0.15); padding: clamp(12px, 1.3vw, 16px) 0; text-align: left; font-weight: 500; }
+.compare__table tbody tr:last-child > * { border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
+.compare__table thead th { font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 14px 0; }
+.compare__table td { width: 18%; font-family: var(--mono); font-size: 0.9em; }
+.compare__table td.is-no { color: #be123c; font-weight: 600; }
+
 /* ── Pricing ───────────────────────────────────────── */
 .pricing { border-bottom: 2px solid #000; }
 .plans { display: grid; grid-template-columns: 1fr 1fr; }
@@ -572,6 +794,14 @@ onBeforeUnmount(() => {
 .plan--full { background: #000; color: #fff; }
 .d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
 .d .plan--full a.btn:hover { background: #000; color: #fff; }
+
+/* ── Privacy ───────────────────────────────────────── */
+.privacy { border-bottom: 2px solid #000; }
+.privacy__body { display: grid; grid-template-columns: 1fr minmax(320px, 52ch); gap: var(--gut); align-items: end; padding: clamp(28px, 5vw, 80px) var(--edge); }
+.privacy__title { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.9; font-size: clamp(34px, 6vw, 108px); max-width: 16ch; }
+.privacy__body p { margin: 0; font-size: clamp(15px, 1.2vw, 19px); line-height: 1.2; letter-spacing: -0.015em; }
+.privacy__body p a { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 900px) { .privacy__body { grid-template-columns: 1fr; } }
 
 /* ── Back cover ────────────────────────────────────── */
 .end { background: #000; color: #fff; padding: var(--edge); display: flex; flex-direction: column; gap: clamp(20px, 3vw, 44px); min-height: 80vh; }
