@@ -96,7 +96,7 @@
           <div class="kn-ledger" :class="`kn-ledger--stage-${ledgerStage}`" aria-hidden="true">
             <div class="kn-ledger__head"><span>Date</span><span>Time</span><span>Asset</span><span>Side</span><span>R</span></div>
             <div class="kn-ledger__rows">
-              <div v-for="row in ledgerRows.slice(0, 40)" :key="row.id" class="kn-ledger__row" :class="{ 'is-pattern': row.pattern, 'is-loss': row.r < 0 }">
+              <div v-for="row in ledgerRows.slice(0, 90)" :key="row.id" class="kn-ledger__row" :class="{ 'is-pattern': row.pattern, 'is-loss': row.r < 0 }">
                 <span>{{ row.date }}</span><span>{{ row.time }}</span><span>{{ row.asset }}</span><span>{{ row.side }}</span><span>{{ row.r > 0 ? '+' : '' }}{{ row.r.toFixed(2) }}</span>
               </div>
             </div>
@@ -193,7 +193,7 @@ const pad = n => String(n).padStart(2, '0')
 
 const rows = [
   {
-    id: 'patterns', title: 'Patterns', tag: 'Karl-Nikolai I', plan: 'Full plan',
+    id: 'patterns', title: 'Patterns', tag: 'Best trades', plan: 'Full plan',
     text: ['The patterns in your trades that rank among the best: the conditions that keep showing up in your most profitable trades, ordered by rating.'],
     src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:24px 36px 0!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
   },
@@ -412,20 +412,18 @@ const ruleCellClass = (n) => {
   return n === 8 || n === 19 ? 'is-broken' : 'is-kept'
 }
 
-// Loop the investigation while the section is on screen (no scroll pinning).
-const LOOP_MS = 6500
-const HOLD_MS = 900
-let raf = 0
-let startAt = 0
-const tick = (now) => {
-  if (!startAt) startAt = now
-  const t = (now - startAt) % (LOOP_MS + HOLD_MS)
-  ledgerProgress.value = Math.min(1, t / LOOP_MS)
-  raf = requestAnimationFrame(tick)
+// Scroll-driven, like /dev: the section is pinned and the scroll position plays the animation.
+const sectionProgress = (el) => {
+  if (!el) return 0
+  const rect = el.getBoundingClientRect()
+  const travel = rect.height - window.innerHeight + 46
+  return travel > 0 ? clamp(-(rect.top - 46) / travel) : 0
 }
-const startLoop = () => { if (!raf && !reducedMotion) { startAt = 0; raf = requestAnimationFrame(tick) } }
-const stopLoop = () => { cancelAnimationFrame(raf); raf = 0 }
-let io = null
+let frame = 0
+const onScroll = () => {
+  if (frame || reducedMotion) return
+  frame = requestAnimationFrame(() => { frame = 0; ledgerProgress.value = sectionProgress(ledgerEl.value) })
+}
 
 let fontLink = null
 onMounted(() => {
@@ -436,12 +434,13 @@ onMounted(() => {
     document.head.appendChild(fontLink)
   }
   refreshDownloads()
-  io = new IntersectionObserver(([e]) => (e.isIntersecting ? startLoop() : stopLoop()), { threshold: 0.25 })
-  if (ledgerEl.value) io.observe(ledgerEl.value)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
+  onScroll()
 })
 onBeforeUnmount(() => {
-  io?.disconnect()
-  stopLoop()
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onScroll)
   fontLink?.remove()
 })
 </script>
@@ -583,8 +582,8 @@ onBeforeUnmount(() => {
 
 
 /* ── Karl-Nikolai I: scroll scene (same behaviour as /dev, light palette) ── */
-.kn-scroll { position: relative; border-bottom: 2px solid #000; }
-.kn-sticky { position: relative; min-height: 0; display: flex; flex-direction: column; padding: 0 0 44px; overflow: hidden; background: #fff; }
+.kn-scroll { position: relative; height: 220vh; border-bottom: 2px solid #000; }
+.kn-sticky { position: sticky; top: 46px; height: calc(100svh - 46px); display: flex; flex-direction: column; padding: 0 0 44px; overflow: hidden; background: #fff; }
 .kn-running { display: grid; grid-template-columns: 1fr 1fr auto; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
 .kn-muted { opacity: 0.6; }
 .kn-mono { font-family: var(--mono); }
@@ -606,7 +605,7 @@ onBeforeUnmount(() => {
 .kn-rule__grid i { transition: background 0.2s ease, border-color 0.2s ease; aspect-ratio: 1; border: 1px solid rgba(0, 0, 0, 0.25); }
 .kn-rule__grid i.is-kept { background: #000; border-color: #000; }
 .kn-rule__grid i.is-broken { background: #be123c; border-color: #be123c; }
-.kn-ledger { min-height: 0; max-height: 400px; display: flex; flex-direction: column; font-family: var(--mono); font-size: 12px; border-top: 2px solid #000; }
+.kn-ledger { min-height: 0; display: flex; flex-direction: column; font-family: var(--mono); font-size: 12px; border-top: 2px solid #000; }
 .kn-ledger__head, .kn-ledger__row { display: grid; grid-template-columns: 1fr 0.8fr 1fr 0.9fr 0.8fr; padding: 3px 0; }
 .kn-ledger__head { opacity: 0.65; text-transform: uppercase; border-bottom: 1px solid rgba(0, 0, 0, 0.3); padding: 6px 0; font-size: 11px; }
 .kn-ledger__row span:last-child, .kn-ledger__head span:last-child { text-align: right; }
