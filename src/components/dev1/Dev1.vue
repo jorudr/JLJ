@@ -759,9 +759,15 @@ onBeforeUnmount(() => {
 .compare { border-bottom: 2px solid #000; }
 .compare__title { margin: 0; padding: clamp(28px, 4.5cqw, 64px) var(--edge) clamp(24px, 3.5cqw, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1; font-size: clamp(28px, 4.2cqw, 64px); max-width: 28ch; }
 .compare__table { width: calc(100% - 2 * var(--edge)); margin: 0 var(--edge) clamp(36px, 5cqw, 64px); border-collapse: collapse; font-size: clamp(14px, 1.2cqw, 18px); }
-.compare__table th, .compare__table td { border-top: 1px solid rgba(0, 0, 0, 0.15); padding: clamp(12px, 1.3cqw, 16px) 0; text-align: left; font-weight: 500; }
+.compare__table th, .compare__table td { border-top: 1px solid rgba(0, 0, 0, 0.15); padding: clamp(12px, 1.3cqw, 16px) 14px; text-align: left; font-weight: 500; }
 .compare__table tbody tr:last-child > * { border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
-.compare__table thead th { font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 14px 0; }
+.compare__table thead th { font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 14px; }
+.compare__table thead th:nth-child(1),
+.compare__table tbody th { padding-left: 0; padding-right: 18px; }
+.compare__table thead th:nth-child(2),
+.compare__table td:nth-child(2) { text-align: center; }
+.compare__table thead th:nth-child(3),
+.compare__table td:nth-child(3) { text-align: center; padding-right: 0; }
 .compare__table td { width: 18%; font-family: var(--mono); font-size: 0.9em; }
 .compare__table td.is-no { color: #be123c; font-weight: 600; }
 
@@ -971,6 +977,79 @@ onBeforeUnmount(() => {
   .plans { grid-template-columns: 1fr; }
   .plan { min-height: 0; }
   .plan + .plan { border-left: 0; border-top: 2px solid #000; }
+  .compare__title {
+    padding: clamp(20px, 4cqw, 36px) var(--edge) clamp(16px, 3cqw, 24px);
+    font-size: clamp(22px, 5.5cqw, 38px);
+    line-height: 1.05;
+    max-width: none;
+  }
+  .compare__table {
+    table-layout: fixed;
+    margin-bottom: clamp(28px, 4.5cqw, 48px);
+  }
+  .compare__table thead th {
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .compare__table thead th:nth-child(1),
+  .compare__table tbody th {
+    width: auto;
+    padding-right: 14px;
+    padding-left: 0;
+  }
+  .compare__table thead th:nth-child(2),
+  .compare__table td:nth-child(2) {
+    width: 90px;
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+  }
+  .compare__table thead th:nth-child(3),
+  .compare__table td:nth-child(3) {
+    width: 58px;
+    padding-left: 4px;
+    padding-right: 0;
+    text-align: center;
+  }
+  .compare__table tbody th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-size: clamp(12.5px, 3.2cqw, 14px);
+    line-height: 1.3;
+    font-weight: 500;
+    word-break: break-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+  }
+  .compare__table td {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-size: 12px;
+  }
+  @media (max-width: 380px) {
+    .compare__table thead th {
+      font-size: 10px;
+      letter-spacing: 0.02em;
+    }
+    .compare__table thead th:nth-child(2),
+    .compare__table td:nth-child(2) {
+      width: 78px;
+    }
+    .compare__table thead th:nth-child(3),
+    .compare__table td:nth-child(3) {
+      width: 50px;
+    }
+    .compare__table thead th:nth-child(1),
+    .compare__table tbody th {
+      padding-right: 10px;
+      font-size: 12px;
+    }
+    .compare__table td {
+      font-size: 11px;
+    }
+  }
   #strategy .sec__body {
     padding-top: clamp(24px, 5.5cqw, 40px);
   }
