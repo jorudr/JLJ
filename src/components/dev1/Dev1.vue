@@ -17,7 +17,7 @@
     <section class="hero">
       <div class="hero__stage">
         <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
-        <p class="hero__word" aria-label="JÖRU">J<span class="hero__oe">Ö</span>RU</p>
+        <p class="hero__word" aria-hidden="true">JORU</p>
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
@@ -181,11 +181,6 @@
 
     <!-- §06 IMPORT -->
     <section id="import" ref="importEl" class="import-sec" aria-labelledby="import-title">
-      <div class="import-sec__running mono">
-        <span>{{ copy.dev1.importSec.label[0] }}</span>
-        <span>{{ copy.dev1.importSec.label[1] }}</span>
-        <span>{{ copy.dev1.importSec.label[2] }}</span>
-      </div>
       <h2 id="import-title" class="import-sec__sr">{{ copy.dev1.importSec.title }}</h2>
       <ul class="import-sec__list">
         <li
@@ -708,7 +703,6 @@ onBeforeUnmount(() => {
 .hero__stage { position: relative; overflow: hidden; }
 .hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .hero__word { position: relative; z-index: 1; margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39vw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.06em; padding-bottom: 0.04em; user-select: none; }
-.hero__oe { display: inline-block; transform: scale(0.775); transform-origin: 50% 88%; margin: 0 -0.05em; }
 .spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
@@ -813,7 +807,6 @@ onBeforeUnmount(() => {
 
 /* ── §06 Import ─────────────────────────────────────── */
 .import-sec { border-bottom: 2px solid #000; background: #fff; color: #000; }
-.import-sec__running { display: grid; grid-template-columns: 1fr 1fr auto; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
 .import-sec__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .import-sec__list { list-style: none; margin: 0; padding: 0; }
 .import-sec__item { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding: clamp(10px, 1.4vw, 18px) var(--edge) clamp(8px, 1vw, 14px); border-bottom: 2px solid #000; transform: translateX(-8%); opacity: 0; transition: transform 0.6s cubic-bezier(0.7, 0, 0.2, 1) calc(var(--i) * 70ms), opacity 0.3s calc(var(--i) * 70ms), color 0.15s ease; user-select: none; }
@@ -827,8 +820,6 @@ onBeforeUnmount(() => {
   .import-sec__item { transform: none !important; opacity: 1 !important; transition: none !important; }
 }
 @media (max-width: 900px) {
-  .import-sec__running { grid-template-columns: 1fr auto; }
-  .import-sec__running span:nth-child(2) { display: none; }
   .import-sec__arrow { display: none; }
 }
 
