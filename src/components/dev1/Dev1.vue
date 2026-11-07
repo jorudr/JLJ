@@ -186,7 +186,6 @@
           <p>Find, fix and prove. Less than the cost of one bad trade.</p>
           <ul><li v-for="item in plans.full" :key="item">{{ item }}</li></ul>
           <router-link to="/pricing" class="btn">Subscribe</router-link>
-          <span class="plan__crypto mono">Patreon · In-app crypto via NOWPayments</span>
         </article>
       </div>
     </section>
@@ -792,7 +791,6 @@ onBeforeUnmount(() => {
 .plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
 .plan li { padding: 7px 0 8px; border-top: 1px solid currentColor; }
 .plan .btn { margin-top: auto; }
-.plan__crypto { margin-top: 8px; font-size: 11px; letter-spacing: 0.05em; opacity: 0.65; }
 .plan--full { background: #000; color: #fff; }
 .d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
 .d .plan--full a.btn:hover { background: #000; color: #fff; }

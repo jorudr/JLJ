@@ -58,14 +58,56 @@
             <span>Subscribe via Patreon</span>
             <span aria-hidden="true">↗</span>
           </a>
-          <div class="plan__crypto-hint">
-            <span class="mono">Crypto via NOWPayments</span>
-            <small>Available directly inside the desktop app</small>
-          </div>
           <router-link to="/download" class="plan__existing">
             Already subscribed? Download desktop app →
           </router-link>
         </article>
+      </div>
+    </section>
+
+    <!-- CRYPTO PAYMENT -->
+    <section class="crypto-sec" aria-labelledby="crypto-title">
+      <div class="label mono">
+        <span>Payment method</span>
+        <span>Cryptocurrency · NOWPayments</span>
+      </div>
+      <div class="crypto-sec__body">
+        <div class="crypto-sec__lead">
+          <h2 id="crypto-title" class="crypto-sec__title">
+            Pay with crypto inside the application.
+          </h2>
+          <p class="crypto-sec__desc">
+            If you prefer cryptocurrency over card subscriptions, you can pay directly inside the JORU desktop app via <strong>NOWPayments</strong>. Each payment grants <strong>30 days of Full access</strong> as a one-time purchase with no auto-renewal or recurring charges.
+          </p>
+          <div class="crypto-sec__actions">
+            <router-link to="/download" class="btn">
+              <span>Download app to pay with crypto</span>
+              <span aria-hidden="true">↓</span>
+            </router-link>
+          </div>
+        </div>
+        <div class="crypto-sec__steps">
+          <div class="crypto-step">
+            <span class="mono">Step 01</span>
+            <h3>Open License in JORU</h3>
+            <p>Launch the desktop application and go to your profile or License settings.</p>
+          </div>
+          <div class="crypto-step">
+            <span class="mono">Step 02</span>
+            <h3>Create NOWPayments invoice</h3>
+            <p>Select crypto payment. An invoice is generated in USD and converted to your coin.</p>
+          </div>
+          <div class="crypto-step">
+            <span class="mono">Step 03</span>
+            <h3>Send payment</h3>
+            <p>Pay with Bitcoin, Ethereum, USDT, Solana, Litecoin or 100+ supported coins.</p>
+          </div>
+          <div class="crypto-step">
+            <span class="mono">Step 04</span>
+            <h3>Instant activation</h3>
+            <p>Your license unlocks automatically once confirmed on the network (usually a few minutes).</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -253,14 +295,26 @@ onBeforeUnmount(() => {
 .plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
 .plan li { padding: 8px 0; border-top: 1px solid currentColor; }
 .plan .btn { margin-top: auto; }
-.plan__crypto-hint { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.plan__crypto-hint .mono { font-size: 11px; letter-spacing: 0.05em; opacity: 0.75; }
-.plan__crypto-hint small { font-size: 12px; opacity: 0.65; }
 .plan__existing { margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
 .plan__existing:hover { opacity: 1; }
 .plan--full { background: #000; color: #fff; }
 .d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
 .d .plan--full a.btn:hover { background: #000; color: #fff; }
+
+/* ── Crypto Section ────────────────────────────────── */
+.crypto-sec { border-bottom: 2px solid #000; }
+.crypto-sec__body { display: grid; grid-template-columns: 1fr 1fr; }
+.crypto-sec__lead { padding: clamp(28px, 4.5vw, 64px) var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 20px; }
+.crypto-sec__title { margin: 0; font-weight: 800; font-size: clamp(32px, 4.2vw, 68px); letter-spacing: -0.04em; line-height: 0.95; }
+.crypto-sec__desc { margin: 0; font-size: clamp(15px, 1.2vw, 18px); line-height: 1.35; opacity: 0.85; max-width: 44ch; }
+.crypto-sec__actions { margin-top: auto; padding-top: 16px; }
+.crypto-sec__steps { display: grid; grid-template-columns: 1fr 1fr; }
+.crypto-step { padding: clamp(20px, 2.5vw, 36px) var(--edge); border-bottom: 1px solid rgba(0, 0, 0, 0.15); border-right: 1px solid rgba(0, 0, 0, 0.15); display: flex; flex-direction: column; gap: 8px; }
+.crypto-step:nth-child(2n) { border-right: 0; }
+.crypto-step:nth-last-child(-n+2) { border-bottom: 0; }
+.crypto-step .mono { opacity: 0.6; }
+.crypto-step h3 { margin: 4px 0 0; font-size: clamp(16px, 1.3vw, 20px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.crypto-step p { margin: 0; font-size: 13px; line-height: 1.35; opacity: 0.75; }
 
 /* ── Comparison ────────────────────────────────────── */
 .compare { border-bottom: 2px solid #000; }
@@ -299,6 +353,11 @@ onBeforeUnmount(() => {
   .bar__nav a:not(:last-child) { display: none; }
   .plans { grid-template-columns: 1fr; }
   .plan + .plan { border-left: 0; border-top: 2px solid #000; }
+  .crypto-sec__body { grid-template-columns: 1fr; }
+  .crypto-sec__lead { border-right: 0; border-bottom: 2px solid #000; }
+  .crypto-sec__steps { grid-template-columns: 1fr; }
+  .crypto-step { border-right: 0; border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
+  .crypto-step:last-child { border-bottom: 0; }
   .faq__grid { grid-template-columns: 1fr; }
   .faq__item { border-right: 0; }
   .faq__item:nth-last-child(2) { border-bottom: 2px solid #000; }
