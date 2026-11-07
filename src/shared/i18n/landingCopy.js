@@ -1,0 +1,426 @@
+export const landingCopy = {
+  en: {
+    nav: {
+      whatItDoes: 'What it does',
+      pricing: 'Pricing',
+      download: 'Download',
+    },
+    footer: {
+      title: 'Find the leak.<br />Fix the rule.',
+      downloadFor: 'Download for',
+      terms: 'Terms',
+      privacy: 'Privacy',
+    },
+    dev1: {
+      hero: {
+        lead: '<span class="ul">Trading journal</span> that finds the habits costing you money.',
+        downloadFree: 'Download free',
+      },
+      chart: {
+        title: 'Never forget why you opened and closed',
+        drag: 'Drag the slider',
+        text: 'Reopen any trade on its price chart. The journal draws what you planned and what happened: entry, stop loss, take profit, exit, and the exact conditions of your strategy on the candles that triggered them. Demo data.',
+      },
+      facts: [
+        ['$0', 'Free journal, no time limit.'],
+        ['2', 'Windows and macOS.'],
+        ['5', 'Broker imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.'],
+        ['100%', 'Your trades and exchange API keys stay on your computer.'],
+      ],
+      kn: {
+        running: ['Karl-Nikolai I — Investigation', 'Pattern detection', 'Illustrative data'],
+        counters: ['trades in your journal', 'costly condition found', 'rule accepted'],
+        headlines: [
+          'Somewhere in here is a habit costing you money.',
+          'Shorts opened before 10:00.',
+          'Commit to a rule. JORU checks that it holds.',
+        ],
+        bodies: [
+          'You remember the big losses. The expensive ones are quiet: a time of day, a side, a setup you take after a losing trade. Nobody finds them by scrolling a spreadsheet.',
+          'Karl-Nikolai I tests every condition and every pair of conditions in your history, then ranks the ones that reduce your result by impact and confidence.',
+          'Accept the finding as a rule and Karl-Nikolai I follows your next trades. If the pattern comes back, it is flagged again.',
+        ],
+        findingHead: ['Finding 01 / 03', 'Confidence — high'],
+        findingStats: ['Win rate inside', 'Win rate outside', 'In worst 10 trades'],
+        findingEffect: 'Effect on the total — without this pattern the result would be 18% higher.',
+        ruleHead: 'Rule — no shorts before 10:00',
+        ruleKept: 'kept',
+        ledgerHead: ['Date', 'Time', 'Asset', 'Side', 'R'],
+      },
+      rows: [
+        {
+          id: 'patterns', title: 'Patterns', tag: 'Best trades', plan: 'Full plan',
+          text: ['The patterns in your trades that rank among the best: the conditions that keep showing up in your most profitable trades, ordered by rating.'],
+          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:24px 36px 0!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
+        },
+        {
+          id: 'strategy', title: 'Strategy', tag: 'Genesis Matrix', plan: 'Free plan',
+          text: ['Write your strategy down as it really works: scenarios, entry and exit conditions. Every condition is a node with its frequency and profit factor, so you see which ones carry the result.', 'Every change is saved as a new version. Compare versions by win rate, profit factor, average result and execution quality.'],
+          wide: true, dark: true, ink: false, bare: true, src: '/ui/5.html', design: [1400, 900],
+          patch: [
+            ['var exit = addHub(trade.exit, lm.exitHubX, lm.exitHubY, lm)', 'var exit = { centerX: 0, centerY: 0 }'],
+            [',\n      { x: lm.exitHubX, y: lm.exitHubY, w: lm.hubWidth, h: lm.hubHeight }', ''],
+            [", ['exit', trade.exit, exit, EXIT_SLOTS]", ''],
+            ['addLine(entry.centerX, entry.centerY, exit.centerX, exit.centerY, true)', ''],
+            ['(window.innerHeight - 100) / (bottom - top), 1)', '(window.innerHeight - 100) / (bottom - top), 3)'],
+          ],
+          css: '.viewport{background:transparent!important}.links path{stroke:#000!important;stroke-opacity:.4!important}', cap: 'Fig. 4 — Node mapping: how often each condition occurs and its profit factor. Demo data.',
+        },
+        {
+          id: 'risk', title: 'Risk', tag: 'Monte Carlo', wide: true,
+          intro: 'Monte Carlo simulation',
+          cap: 'Fig. 5 — The black line is one real history; the grey lines are 300 reshuffled alternatives. Illustrative simulation.',
+          stats: [
+            ['Worst drawdown in 95% of paths', '−18.4%'],
+            ['Paths ending below the start', '4.2%'],
+            ['Median result', '+64.8%'],
+          ],
+        },
+        {
+          id: 'metrics', title: 'Metrics', tag: '31 metrics',
+          text: ['Thirty-one metrics in five groups: matrix adherence, behaviour, execution and risk, strategy against execution, and in-trade analysis. Filter by group and read the one that matters.'],
+          wide: true, grid: true, cap: 'Fig. 6 — Metrics of one trade. Demo data.',
+        },
+        {
+          id: 'report', title: 'Report', tag: 'Trading report', plan: 'Free plan',
+          text: ['Profit and loss, distribution, risk and execution, drawdowns, results by session and asset — one report instead of five spreadsheets. Every scenario and condition, broken down the way you\'d actually read it.'],
+          wide: true, flow: true, tight: true, auto: true, bare: true, src: '/ui/9.html', design: [1500, 900],
+          patch: [
+            ['r=De(null),p=De(null),m=De(!1)', "r=De('profits-losses'),p=De(null),m=De(!1)"],
+            ...['profits-losses', 'trade-distribution', 'risk-execution', 'drawdowns', 'robustness'].map(id => [`r.value==="${id}"?`, '!0?']),
+            ['r.value==="scenarios-conditions"&&E("scenarios-conditions")', 'E("scenarios-conditions")'],
+          ],
+          css: '#app{position:static!important;inset:auto!important}#app>div,#app>div>div{height:auto!important;min-height:0!important;overflow:visible!important;max-width:none!important;padding:0!important}.genesis-report-surface{height:auto!important;margin:0!important;background:transparent!important}.genesis-report-surface>aside{display:none!important}.report-scroll-area{overflow:visible!important;height:auto!important;padding:0!important}.chart-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px 24px}.chart-cell{margin:0;min-width:0;align-self:start}.chart-cell>[class*=bg-white]{margin-top:0!important;background:transparent!important;padding:0!important}.chart-cell>[class*=bg-white]>:not(svg){display:none!important}.chart-cell svg{width:100%!important;height:auto!important;display:block}.chart-cap{font:500 11px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:8px}',
+        },
+      ],
+      comparison: {
+        label: ['Comparison', 'Spreadsheet vs JORU'],
+        title: 'A spreadsheet can log trades. It cannot tell you which ones to stop taking.',
+        spreadsheet: 'Spreadsheet',
+        yes: 'Yes',
+        no: 'No',
+        rows: [
+          ['Log trades, notes and screenshots', true],
+          ['Equity curve and drawdowns', true],
+          ['Strategy builder, per-condition analytics and condition recommendations', false],
+          ['Exchange chart replay and in-trade behavior analysis', false],
+          ['Loss-making pattern detection in trades', false],
+          ['Strategy rule adherence verification', false],
+        ],
+      },
+      pricing: {
+        label: ['Pricing', 'Two plans'],
+        freeTitle: 'Free',
+        freePrice: '$0',
+        freeDesc: 'Build the review habit.',
+        freeFeatures: [
+          'Trading journal with screenshots, tags and context',
+          'Equity curve and core metrics',
+          'Karl-Nikolai I (without rehabilitation function)',
+          'Detailed reports (without scenario and condition analysis)',
+          'MetaTrader 5 trade import',
+          'Activity monitor',
+          'Forum and trading events',
+        ],
+        freeCta: 'Download free',
+        fullTitle: 'Full',
+        fullPrice: '$9.99',
+        fullPeriod: '/ month',
+        fullDesc: 'Find, fix and prove. Less than the cost of one bad trade.',
+        fullFeatures: [
+          'Everything in Free without restrictions',
+          'Unlimited strategy creation',
+          'Exchange chart for every trade',
+          'Score Patterns',
+          'Broker API import',
+          'Forecast Manager',
+        ],
+        fullCta: 'Subscribe',
+      },
+      privacy: {
+        label: ['Data', 'Privacy'],
+        title: 'Your journal and exchange API keys never leave your computer.',
+        text: 'Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers.',
+        link: 'Privacy Policy ↗',
+      },
+    },
+    pricingPage: {
+      hero: {
+        title: 'Two plans. No surprises.',
+        sub: 'Start free to log trades and build the review habit. Upgrade when you need deep pattern detection, condition analytics and exchange charts.',
+      },
+      alreadySubscribed: 'Already subscribed? Download desktop app →',
+      subscribeViaPatreon: 'Subscribe via Patreon',
+      crypto: {
+        label: ['Payment method', 'Cryptocurrency · NOWPayments'],
+        title: 'Pay with crypto inside the application.',
+        desc: 'If you prefer cryptocurrency over card subscriptions, you can pay directly inside the JORU desktop app via <strong>NOWPayments</strong>. Each payment grants <strong>30 days of Full access</strong> as a one-time purchase with no auto-renewal or recurring charges.',
+      },
+      faq: {
+        label: ['Frequently Asked Questions', 'Billing & Data'],
+        items: [
+          {
+            q: 'How does the subscription work?',
+            a: 'Subscriptions are billed monthly through Patreon. You can cancel anytime directly on Patreon without contacting support.',
+          },
+          {
+            q: 'Can I pay with cryptocurrency?',
+            a: 'Yes. Crypto payments via NOWPayments are available directly inside the desktop application. You can pay in BTC, ETH, USDT, USDC, Solana and other coins for 30 days of Full access without auto-renewal.',
+          },
+          {
+            q: 'Where is my trading data stored?',
+            a: '100% locally on your computer. Your journal data, notes, screenshots and broker API keys never leave your device.',
+          },
+          {
+            q: 'Can I use the Free plan forever?',
+            a: 'Yes. The Free plan has no expiration date or trial limits. You can log trades, track your equity curve, and use core metrics indefinitely.',
+          },
+          {
+            q: 'How do I activate Full on my computer?',
+            a: 'After paying on Patreon or via crypto, sign in with your Google account inside the desktop app. Your Full license activates immediately.',
+          },
+          {
+            q: 'What happens when a paid period ends?',
+            a: 'Your account returns to the Free plan. All your trades, notes, strategies and historical records remain fully preserved on your machine.',
+          },
+        ],
+      },
+    },
+    downloadPage: {
+      hero: {
+        title: 'Download JORU for macOS and Windows.',
+        sub: 'Free trading journal, no time limit. Keep every trade, note, tag and screenshot on your computer.',
+      },
+      macCard: {
+        arch: 'Apple Silicon & Intel',
+        tag: 'Free plan included',
+        req: 'Universal DMG installer. Requires macOS 12 Monterey or newer.',
+      },
+      winCard: {
+        arch: '64-bit x86_64',
+        tag: 'Free plan included',
+        req: 'Native setup executable. Requires Windows 10 or 11 (64-bit).',
+      },
+      downloadFor: 'Download for',
+      community: {
+        label: ['Community', 'Installation help'],
+        heading: 'Installation help & community',
+        text: 'Need help installing or have questions about the application? Join the official Telegram community for live support, updates and discussion with fellow traders.',
+        tgBtn: 'Telegram Community ↗',
+        contactText: 'Questions or feedback: gandr.trade@gmail.com',
+      },
+    },
+  },
+  ru: {
+    nav: {
+      whatItDoes: 'Возможности',
+      pricing: 'Тарифы',
+      download: 'Скачать',
+    },
+    footer: {
+      title: 'Найдите брешь.<br />Исправьте правило.',
+      downloadFor: 'Скачать для',
+      terms: 'Условия',
+      privacy: 'Конфиденциальность',
+    },
+    dev1: {
+      hero: {
+        lead: '<span class="ul">Дневник трейдера</span>, который находит привычки, отнимающие ваши деньги.',
+        downloadFree: 'Скачать бесплатно',
+      },
+      chart: {
+        title: 'Помните, почему вы открыли и закрыли сделку',
+        drag: 'Потяните слайдер',
+        text: 'Откройте любую сделку на графике цены. Дневник покажет, что планировалось и что произошло: вход, стоп-лосс, тейк-профит, выход и точные условия вашей стратегии на свечах, где они сработали. Демо-данные.',
+      },
+      facts: [
+        ['$0', 'Бесплатный дневник без ограничения по времени.'],
+        ['2', 'Windows и macOS.'],
+        ['5', 'Импорт брокеров: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.'],
+        ['100%', 'Сделки и API-ключи остаются только на вашем компьютере.'],
+      ],
+      kn: {
+        running: ['Karl-Nikolai I — Расследование', 'Поиск паттернов', 'Иллюстративные данные'],
+        counters: ['сделок в вашем дневнике', 'убыточное условие найдено', 'правило принято'],
+        headlines: [
+          'Где-то здесь кроется привычка, отнимающая у вас деньги.',
+          'Шорты, открытые до 10:00.',
+          'Зафиксируйте правило. JORU проверит его соблюдение.',
+        ],
+        bodies: [
+          'Вы помните крупные убытки. Но самые дорогие ошибки незаметны: время суток, направление, сетап после минуса. Прокручивая таблицу, их не найти.',
+          'Karl-Nikolai I проверяет каждое условие и каждую пару условий в истории сделок, ранжируя убыточные ситуации по влиянию и достоверности.',
+          'Примите вывод как правило, и Karl-Nikolai I будет отслеживать следующие сделки. Если паттерн вернётся, система снова предупредит.',
+        ],
+        findingHead: ['Находка 01 / 03', 'Достоверность — высокая'],
+        findingStats: ['Винрейт внутри', 'Винрейт снаружи', 'В 10 худших сделках'],
+        findingEffect: 'Влияние на общий итог — без этого паттерна результат был бы на 18% выше.',
+        ruleHead: 'Правило — без шортов до 10:00',
+        ruleKept: 'соблюдено',
+        ledgerHead: ['Дата', 'Время', 'Актив', 'Направление', 'R'],
+      },
+      rows: [
+        {
+          id: 'patterns', title: 'Паттерны', tag: 'Лучшие сделки', plan: 'Тариф Full',
+          text: ['Паттерны ваших сделок среди лучших: условия, которые стабильно повторяются в наиболее прибыльных сделках, отсортированные по рейтингу.'],
+          src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:24px 36px 0!important}', cap: 'Рис. 3 — Топ паттернов прибыльных сделок. Демо-данные.',
+        },
+        {
+          id: 'strategy', title: 'Стратегия', tag: 'Матрица Genesis', plan: 'Бесплатный тариф',
+          text: ['Опишите стратегию так, как она работает на самом деле: сценарии, условия входа и выхода. Каждое условие — это узел с частотой и профит-фактором, чтобы видеть, какие условия приносят результат.', 'Каждое изменение сохраняется как новая версия. Сравнивайте версии по винрейту, профит-фактору, среднему результату и качеству исполнения.'],
+          wide: true, dark: true, ink: false, bare: true, src: '/ui/5.html', design: [1400, 900],
+          patch: [
+            ['var exit = addHub(trade.exit, lm.exitHubX, lm.exitHubY, lm)', 'var exit = { centerX: 0, centerY: 0 }'],
+            [',\n      { x: lm.exitHubX, y: lm.exitHubY, w: lm.hubWidth, h: lm.hubHeight }', ''],
+            [", ['exit', trade.exit, exit, EXIT_SLOTS]", ''],
+            ['addLine(entry.centerX, entry.centerY, exit.centerX, exit.centerY, true)', ''],
+            ['(window.innerHeight - 100) / (bottom - top), 1)', '(window.innerHeight - 100) / (bottom - top), 3)'],
+          ],
+          css: '.viewport{background:transparent!important}.links path{stroke:#000!important;stroke-opacity:.4!important}', cap: 'Рис. 4 — Карта узлов: частота условий и их профит-фактор. Демо-данные.',
+        },
+        {
+          id: 'risk', title: 'Риск', tag: 'Монте-Карло', wide: true,
+          intro: 'Симуляция Монте-Карло',
+          cap: 'Рис. 5 — Чёрная линия — одна реальная история; серые — 300 альтернативных перемешиваний. Иллюстративная симуляция.',
+          stats: [
+            ['Худшая просадка в 95% траекторий', '−18.4%'],
+            ['Траектории ниже начального баланса', '4.2%'],
+            ['Медианный результат', '+64.8%'],
+          ],
+        },
+        {
+          id: 'metrics', title: 'Метрики', tag: '31 метрика',
+          text: ['Тридцать одна метрика в пяти группах: соблюдение матрицы, поведение, исполнение и риск, стратегия против исполнения и внутрисделочный анализ. Фильтруйте по группам и читайте ключевые показатели.'],
+          wide: true, grid: true, cap: 'Рис. 6 — Метрики одной сделки. Демо-данные.',
+        },
+        {
+          id: 'report', title: 'Отчёт', tag: 'Торговый отчёт', plan: 'Бесплатный тариф',
+          text: ['Прибыли и убытки, распределение, риск и исполнение, просадки, результаты по сессиям и активам — один отчёт вместо пяти таблиц. Каждый сценарий и условие разложены именно так, как вы привыкли их анализировать.'],
+          wide: true, flow: true, tight: true, auto: true, bare: true, src: '/ui/9.html', design: [1500, 900],
+          patch: [
+            ['r=De(null),p=De(null),m=De(!1)', "r=De('profits-losses'),p=De(null),m=De(!1)"],
+            ...['profits-losses', 'trade-distribution', 'risk-execution', 'drawdowns', 'robustness'].map(id => [`r.value==="${id}"?`, '!0?']),
+            ['r.value==="scenarios-conditions"&&E("scenarios-conditions")', 'E("scenarios-conditions")'],
+          ],
+          css: '#app{position:static!important;inset:auto!important}#app>div,#app>div>div{height:auto!important;min-height:0!important;overflow:visible!important;max-width:none!important;padding:0!important}.genesis-report-surface{height:auto!important;margin:0!important;background:transparent!important}.genesis-report-surface>aside{display:none!important}.report-scroll-area{overflow:visible!important;height:auto!important;padding:0!important}.chart-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px 24px}.chart-cell{margin:0;min-width:0;align-self:start}.chart-cell>[class*=bg-white]{margin-top:0!important;background:transparent!important;padding:0!important}.chart-cell>[class*=bg-white]>:not(svg){display:none!important}.chart-cell svg{width:100%!important;height:auto!important;display:block}.chart-cap{font:500 11px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:8px}',
+        },
+      ],
+      comparison: {
+        label: ['Сравнение', 'Таблица vs JORU'],
+        title: 'Таблица может записывать сделки. Но не подскажет, какие из них пора перестать совершать.',
+        spreadsheet: 'Таблица',
+        yes: 'Да',
+        no: 'Нет',
+        rows: [
+          ['Запись сделок, заметок и скриншотов', true],
+          ['Кривая капитала и просадки', true],
+          ['Конструктор стратегий, аналитика условий и рекомендации', false],
+          ['Воспроизведение биржевого графика и поведение внутри сделки', false],
+          ['Поиск убыточных паттернов в сделках', false],
+          ['Проверка соблюдения правил стратегии', false],
+        ],
+      },
+      pricing: {
+        label: ['Тарифы', 'Два тарифа'],
+        freeTitle: 'Free',
+        freePrice: '$0',
+        freeDesc: 'Выработайте привычку анализировать торговлю.',
+        freeFeatures: [
+          'Журнал сделок со скриншотами, тегами и контекстом',
+          'Кривая капитала и базовые метрики',
+          'Karl-Nikolai I (без функции реабилитации)',
+          'Подробные отчёты (без анализа сценариев и условий)',
+          'Импорт сделок из MetaTrader 5',
+          'Монитор торговой активности',
+          'Форум и торговые события',
+        ],
+        freeCta: 'Скачать бесплатно',
+        fullTitle: 'Full',
+        fullPrice: '$9.99',
+        fullPeriod: '/ месяц',
+        fullDesc: 'Находите, исправляйте и доказывайте. Меньше стоимости одной неудачной сделки.',
+        fullFeatures: [
+          'Всё из тарифа Free без ограничений',
+          'Неограниченное создание стратегий',
+          'Биржевой график для каждой сделки',
+          'Аналитика паттернов (Score Patterns)',
+          'Импорт через API брокеров',
+          'Менеджер прогнозов',
+        ],
+        fullCta: 'Оформить подписку',
+      },
+      privacy: {
+        label: ['Данные', 'Конфиденциальность'],
+        title: 'Ваш журнал сделок и API-ключи бирж никогда не покидают ваш компьютер.',
+        text: 'Вход через Google используется только для идентификации аккаунта: профиля, лицензии, форума и событий. Ваши данные никогда не продаются и не передаются рекламодателям.',
+        link: 'Политика конфиденциальности ↗',
+      },
+    },
+    pricingPage: {
+      hero: {
+        title: 'Два тарифа. Без сюрпризов.',
+        sub: 'Начните бесплатно, чтобы вести журнал и выработать привычку разбора. Переходите на Full, когда понадобятся глубокий анализ паттернов, статистика условий и графики.',
+      },
+      alreadySubscribed: 'Уже есть подписка? Скачать приложение →',
+      subscribeViaPatreon: 'Подписаться через Patreon',
+      crypto: {
+        label: ['Способ оплаты', 'Криптовалюта · NOWPayments'],
+        title: 'Оплата криптовалютой внутри приложения.',
+        desc: 'Если вы предпочитаете криптовалюту вместо подписки по карте, оплатить можно прямо в приложении JORU через сервис <strong>NOWPayments</strong>. Каждый платёж открывает <strong>30 дней доступа к тарифу Full</strong> как разовая покупка без автопродлений и регулярных списаний.',
+      },
+      faq: {
+        label: ['Частые вопросы', 'Оплата и данные'],
+        items: [
+          {
+            q: 'Как устроена подписка?',
+            a: 'Подписка оплачивается помесячно через Patreon. Вы можете отменить её в любой момент в один клик в аккаунте Patreon без обращения в поддержку.',
+          },
+          {
+            q: 'Можно ли оплатить криптовалютой?',
+            a: 'Да. Оплата криптовалютой через сервис NOWPayments доступна непосредственно внутри десктопного приложения. Вы можете оплатить в BTC, ETH, USDT, USDC, Solana и других монетах на 30 дней доступа к Full без автопродления.',
+          },
+          {
+            q: 'Где хранятся мои торговые данные?',
+            a: 'На 100% локально на вашем компьютере. Журнал сделок, заметки, скриншоты и API-ключи бирж никогда не передаются на наши серверы.',
+          },
+          {
+            q: 'Можно ли пользоваться тарифом Free бессрочно?',
+            a: 'Да. В тарифе Free нет срока действия и пробных периодов. Вы можете вести журнал, отслеживать кривую капитала и использовать базовые метрики постоянно.',
+          },
+          {
+            q: 'Как активировать Full на компьютере?',
+            a: 'После оплаты на Patreon или криптовалютой войдите в приложение через тот же Google-аккаунт. Лицензия активируется автоматически.',
+          },
+          {
+            q: 'Что происходит после окончания оплаченного периода?',
+            a: 'Аккаунт возвращается на тариф Free. Все ваши сделки, заметки, стратегии и история сохраняются на компьютере в полной сохранности.',
+          },
+        ],
+      },
+    },
+    downloadPage: {
+      hero: {
+        title: 'Скачать JORU для macOS и Windows.',
+        sub: 'Бесплатный дневник трейдера без ограничений по времени. Храните каждую сделку, заметку, тег и скриншот на своём компьютере.',
+      },
+      macCard: {
+        arch: 'Apple Silicon и Intel',
+        tag: 'Тариф Free включён',
+        req: 'Универсальный установщик DMG. Требуется macOS 12 Monterey или новее.',
+      },
+      winCard: {
+        arch: '64-бит x86_64',
+        tag: 'Тариф Free включён',
+        req: 'Нативный установщик exe. Требуется Windows 10 или 11 (64-бит).',
+      },
+      downloadFor: 'Скачать для',
+      community: {
+        label: ['Сообщество', 'Помощь в установке'],
+        heading: 'Помощь в установке и сообщество',
+        text: 'Нужна помощь в установке или есть вопросы по работе приложения? Присоединяйтесь к официальному Telegram-сообществу для оперативной поддержки, обновлений и обсуждений.',
+        tgBtn: 'Telegram-сообщество ↗',
+        contactText: 'Вопросы и поддержка: gandr.trade@gmail.com',
+      },
+    },
+  },
+}

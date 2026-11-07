@@ -2,14 +2,14 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+      <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>
       <nav class="bar__nav" aria-label="Main">
-        <router-link to="/#karl-nikolai">What it does</router-link>
-        <router-link to="/pricing">Pricing</router-link>
-        <router-link to="/download">Download</router-link>
+        <router-link :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'">{{ copy.nav.whatItDoes }}</router-link>
+        <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
+        <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
       </nav>
     </header>
 
@@ -17,29 +17,38 @@
     <section class="legal-hero" aria-labelledby="legal-title">
       <div class="legal-hero__body">
         <h1 id="legal-title" class="legal-hero__title">
-          {{ doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use' }}
+          {{ doc === 'privacy' ? copy.footer.privacy : copy.footer.terms }}
         </h1>
         <div class="legal-tabs" role="tablist" aria-label="Legal documents">
-          <router-link to="/privacy" class="btn" :class="{ 'btn--line': doc !== 'privacy' }">Privacy Policy</router-link>
-          <router-link to="/terms" class="btn" :class="{ 'btn--line': doc !== 'terms' }">Terms of Use</router-link>
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'" class="btn" :class="{ 'btn--line': doc !== 'privacy' }">{{ copy.footer.privacy }}</router-link>
+          <router-link :to="isRu ? '/ru/terms' : '/terms'" class="btn" :class="{ 'btn--line': doc !== 'terms' }">{{ copy.footer.terms }}</router-link>
         </div>
       </div>
     </section>
 
     <!-- ARTICLE BODY -->
     <main class="legal-wrap">
-      <article class="legal-article" :lang="locale" v-html="html"></article>
+      <article class="legal-article" :lang="isRu ? 'ru' : 'en'" v-html="html"></article>
     </main>
 
     <!-- BACK COVER / FOOTER -->
     <footer class="end">
-      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <h2 class="end__title" v-html="copy.footer.title"></h2>
       <div class="end__actions">
-        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
       <div class="end__foot mono">
         <span>Jörmungandr © {{ year }}</span>
-        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+        <div class="end__lang" role="group" aria-label="Language">
+          <router-link :to="enPath" :class="{ 'is-active': !isRu }">EN</router-link>
+          <span>/</span>
+          <router-link :to="ruPath" :class="{ 'is-active': isRu }">RU</router-link>
+        </div>
+        <span>
+          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link> ·
+          <a href="https://t.me/gandr_trade">Telegram</a>
+        </span>
       </div>
     </footer>
   </div>
@@ -47,7 +56,9 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from '../shared/i18n/useI18n'
+import { landingCopy } from '../shared/i18n/landingCopy.js'
 import { renderMarkdown } from '../shared/legal/renderMarkdown'
 import { downloads, refreshDownloads } from '../shared/downloads'
 
@@ -59,15 +70,33 @@ const props = defineProps({
   },
 })
 
+const route = useRoute()
+const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
+const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
+
+const enPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/'
+  if (p.startsWith('/ru/')) return p.slice(3)
+  return p
+})
+
+const ruPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/ru/'
+  if (p.startsWith('/ru/')) return p
+  return p === '/' ? '/ru/' : `/ru${p}`
+})
+
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
 const year = new Date().getFullYear()
 
 const sources = import.meta.glob('../shared/legal/*.md', { query: '?raw', import: 'default', eager: true })
 
-const { locale } = useI18n()
-
 const html = computed(() => {
-  const source = sources[`../shared/legal/${props.doc}.${locale.value}.md`]
+  const lang = isRu.value ? 'ru' : 'en'
+  const source = sources[`../shared/legal/${props.doc}.${lang}.md`]
     || sources[`../shared/legal/${props.doc}.en.md`]
   return renderMarkdown(source || '')
 })
@@ -178,25 +207,16 @@ onBeforeUnmount(() => {
 .legal-article :deep(a) {
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-thickness: 1.5px;
-}
-.legal-article :deep(a:hover) {
-  background: #000;
-  color: #fff;
-}
-.legal-article :deep(.legal-table) {
-  overflow-x: auto;
-  margin: 28px 0;
 }
 .legal-article :deep(table) {
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(13px, 1vw, 15px);
-  line-height: 1.45;
+  font-size: 0.9em;
+  margin: 24px 0;
 }
 .legal-article :deep(th),
 .legal-article :deep(td) {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   text-align: left;
   vertical-align: top;
@@ -221,6 +241,11 @@ onBeforeUnmount(() => {
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.end__lang { display: inline-flex; align-items: center; gap: 6px; }
+.end__lang a { opacity: 0.5; transition: opacity 0.1s; }
+.end__lang a:hover { opacity: 0.85; }
+.end__lang a.is-active { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.end__lang span { opacity: 0.35; }
 
 @media (max-width: 900px) {
   .bar__nav a:not(:last-child) { display: none; }

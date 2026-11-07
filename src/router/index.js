@@ -25,13 +25,23 @@ const router = createRouter({
       alias: '/dev1'
     },
     {
+      path: '/ru',
+      redirect: '/ru/'
+    },
+    {
       path: '/ru/',
       name: 'home-ru',
-      component: Main
+      component: Dev1
     },
     {
       path: '/pricing',
       name: 'pricing',
+      component: Pricing,
+      meta: { titleKey: 'landing.nav.pricing' }
+    },
+    {
+      path: '/ru/pricing',
+      name: 'pricing-ru',
       component: Pricing,
       meta: { titleKey: 'landing.nav.pricing' }
     },
@@ -57,6 +67,12 @@ const router = createRouter({
       meta: { titleKey: 'landing.nav.download' }
     },
     {
+      path: '/ru/download',
+      name: 'download-ru',
+      component: Download,
+      meta: { titleKey: 'landing.nav.download' }
+    },
+    {
       path: '/privacy',
       name: 'privacy',
       component: LegalPage,
@@ -64,8 +80,22 @@ const router = createRouter({
       meta: { titleKey: 'landing.legal.privacyTitle' }
     },
     {
+      path: '/ru/privacy',
+      name: 'privacy-ru',
+      component: LegalPage,
+      props: { doc: 'privacy' },
+      meta: { titleKey: 'landing.legal.privacyTitle' }
+    },
+    {
       path: '/terms',
       name: 'terms',
+      component: LegalPage,
+      props: { doc: 'terms' },
+      meta: { titleKey: 'landing.legal.termsTitle' }
+    },
+    {
+      path: '/ru/terms',
+      name: 'terms-ru',
       component: LegalPage,
       props: { doc: 'terms' },
       meta: { titleKey: 'landing.legal.termsTitle' }
@@ -97,11 +127,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.path === '/' || to.path === '/ru/') {
-    useI18n().setLocale(to.path === '/ru/' ? 'ru' : 'en')
-  } else if (to.path.startsWith('/ru/')) {
+  if (to.path === '/ru' || to.path === '/ru/' || to.path.startsWith('/ru/')) {
     useI18n().setLocale('ru')
-  } else if (contentPages.some(({ path }) => path === to.path)) {
+  } else {
     useI18n().setLocale('en')
   }
 })

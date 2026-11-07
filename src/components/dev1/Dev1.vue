@@ -2,14 +2,14 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+      <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>
       <nav class="bar__nav" aria-label="Main">
-        <a href="#karl-nikolai">What it does</a>
-        <router-link to="/pricing">Pricing</router-link>
-        <router-link to="/download">Download</router-link>
+        <a :href="isRu ? '/ru/#karl-nikolai' : '#karl-nikolai'">{{ copy.nav.whatItDoes }}</a>
+        <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
+        <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
       </nav>
     </header>
 
@@ -21,18 +21,18 @@
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul">Trading journal</span> that finds the habits costing you money.</h1>
+          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>{{ isRu ? ', который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</h1>
         </div>
         <div class="spec__cell spec__cell--dl">
-          <span class="mono">Download free</span>
-          <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn">{{ item.name }} <span aria-hidden="true">↓</span></a>
+          <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
+          <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn">{{ isRu ? `Скачать для ${item.name}` : item.name }} <span aria-hidden="true">↓</span></a>
         </div>
       </div>
     </section>
 
     <!-- THE CHART: left half is the bare price chart, right half the same trade with everything the journal adds -->
     <section class="chart" aria-labelledby="chart-title">
-      <div class="label"><h2 id="chart-title" class="mono">Never forget why you opened and closed</h2><span class="mono">Drag the slider</span></div>
+      <div class="label"><h2 id="chart-title" class="mono">{{ copy.dev1.chart.title }}</h2><span class="mono">{{ copy.dev1.chart.drag }}</span></div>
       <div ref="cmp" class="cmp" :style="{ '--x': `${split}%` }">
         <div class="cmp__layer"><UiFrame src="/ui/6.html" title="Price chart, candles only" :design="[1440, 560]" ink :patch="cleanPatch" css="main{inset:2% 3% 24px!important}.condition-layer{visibility:hidden}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
         <div class="cmp__layer cmp__layer--top" aria-hidden="true"><UiFrame src="/ui/6.html" title="" :design="[1440, 560]" ink css="main{inset:2% 3% 24px!important}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
@@ -42,51 +42,40 @@
           @pointerdown="dragStart" @pointermove="dragMove" @pointerup="dragEnd" @pointercancel="dragEnd" @keydown="slideKey"
         ><span class="cmp__grip" aria-hidden="true">◀ ▶</span></div>
       </div>
-      <p class="chart__text">Reopen any trade on its price chart. The journal draws what you planned and what happened: entry, stop loss, take profit, exit, and the exact conditions of your strategy on the candles that triggered them. Demo data.</p>
+      <p class="chart__text">{{ copy.dev1.chart.text }}</p>
     </section>
 
     <!-- FACTS -->
     <section class="facts" aria-label="Key facts">
-      <div><strong>$0</strong><span>Free journal, no time limit.</span></div>
-      <div><strong>2</strong><span>Windows and macOS.</span></div>
-      <div><strong>5</strong><span>Broker imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.</span></div>
-      <div><strong>100%</strong><span>Your trades and exchange API keys stay on your computer.</span></div>
+      <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
     </section>
 
     <!-- KARL-NIKOLAI I: scroll-driven investigation (problem → pattern → rule) -->
     <section id="karl-nikolai" ref="ledgerEl" class="kn-scroll kn-scroll--ledger" aria-labelledby="ledger-title">
       <div class="kn-sticky">
         <div class="kn-running kn-running--wide">
-          <span>Karl-Nikolai I — Investigation</span>
-          <span>Pattern detection</span>
-          <span class="kn-muted">Illustrative data</span>
+          <span>{{ copy.dev1.kn.running[0] }}</span>
+          <span>{{ copy.dev1.kn.running[1] }}</span>
+          <span class="kn-muted">{{ copy.dev1.kn.running[2] }}</span>
         </div>
         <div class="kn-ledger-layout">
           <div class="kn-ledger-copy">
-            <p class="kn-counter"><span class="kn-mono">{{ ['512', '01', '01'][ledgerStage] }}</span> {{ ['trades in your journal', 'costly condition found', 'rule accepted'][ledgerStage] }}</p>
-            <h2 id="ledger-title" class="kn-headline">
-              <template v-if="ledgerStage === 0">Somewhere in here is a habit costing you money.</template>
-              <template v-else-if="ledgerStage === 1">Shorts opened before 10:00.</template>
-              <template v-else>Commit to a rule. JORU checks that it holds.</template>
-            </h2>
-            <p class="kn-body">
-              <template v-if="ledgerStage === 0">You remember the big losses. The expensive ones are quiet: a time of day, a side, a setup you take after a losing trade. Nobody finds them by scrolling a spreadsheet.</template>
-              <template v-else-if="ledgerStage === 1">Karl-Nikolai I tests every condition and every pair of conditions in your history, then ranks the ones that reduce your result by impact and confidence.</template>
-              <template v-else>Accept the finding as a rule and Karl-Nikolai I follows your next trades. If the pattern comes back, it is flagged again.</template>
-            </p>
+            <p class="kn-counter"><span class="kn-mono">{{ ['512', '01', '01'][ledgerStage] }}</span> {{ copy.dev1.kn.counters[ledgerStage] }}</p>
+            <h2 id="ledger-title" class="kn-headline">{{ copy.dev1.kn.headlines[ledgerStage] }}</h2>
+            <p class="kn-body">{{ copy.dev1.kn.bodies[ledgerStage] }}</p>
 
             <div v-if="ledgerStage === 1" class="kn-finding">
-              <div class="kn-finding__head"><span>Finding 01 / 03</span><span>Confidence — high</span></div>
+              <div class="kn-finding__head"><span>{{ copy.dev1.kn.findingHead[0] }}</span><span>{{ copy.dev1.kn.findingHead[1] }}</span></div>
               <dl>
-                <div><dt>Win rate inside</dt><dd class="is-red">31%</dd></div>
-                <div><dt>Win rate outside</dt><dd>54%</dd></div>
-                <div><dt>In worst 10 trades</dt><dd class="is-red">6</dd></div>
+                <div><dt>{{ copy.dev1.kn.findingStats[0] }}</dt><dd class="is-red">31%</dd></div>
+                <div><dt>{{ copy.dev1.kn.findingStats[1] }}</dt><dd>54%</dd></div>
+                <div><dt>{{ copy.dev1.kn.findingStats[2] }}</dt><dd class="is-red">6</dd></div>
               </dl>
-              <p>Effect on the total — without this pattern the result would be 18% higher.</p>
+              <p>{{ copy.dev1.kn.findingEffect }}</p>
             </div>
 
             <div v-if="ledgerStage === 2" class="kn-rule">
-              <div class="kn-finding__head"><span>Rule — no shorts before 10:00</span><span>{{ ruleKept }} / 30 kept</span></div>
+              <div class="kn-finding__head"><span>{{ copy.dev1.kn.ruleHead }}</span><span>{{ ruleKept }} / 30 {{ copy.dev1.kn.ruleKept }}</span></div>
               <div class="kn-rule__grid">
                 <i v-for="n in 30" :key="n" :class="ruleCellClass(n)"></i>
               </div>
@@ -94,7 +83,7 @@
           </div>
 
           <div class="kn-ledger" :class="`kn-ledger--stage-${ledgerStage}`" aria-hidden="true">
-            <div class="kn-ledger__head"><span>Date</span><span>Time</span><span>Asset</span><span>Side</span><span>R</span></div>
+            <div class="kn-ledger__head"><span v-for="col in copy.dev1.kn.ledgerHead" :key="col">{{ col }}</span></div>
             <div class="kn-ledger__rows">
               <div v-for="row in ledgerRows.slice(0, 90)" :key="row.id" class="kn-ledger__row" :class="{ 'is-pattern': row.pattern, 'is-loss': row.r < 0 }">
                 <span>{{ row.date }}</span><span>{{ row.time }}</span><span>{{ row.asset }}</span><span>{{ row.side }}</span><span>{{ row.r > 0 ? '+' : '' }}{{ row.r.toFixed(2) }}</span>
@@ -139,9 +128,9 @@
               <polyline :points="mc.main" class="mc__main" vector-effect="non-scaling-stroke" />
             </svg>
             <dl v-if="!row.chartOnly" class="stats stats--row">
-              <div><dt>Worst drawdown in 95% of paths</dt><dd>−{{ mc.stats.dd95 }}%</dd></div>
-              <div><dt>Paths ending below the start</dt><dd>{{ mc.stats.below }}%</dd></div>
-              <div><dt>Median result</dt><dd>+{{ mc.stats.median }}%</dd></div>
+              <div><dt>{{ isRu ? 'Худшая просадка в 95% траекторий' : 'Worst drawdown in 95% of paths' }}</dt><dd>−{{ mc.stats.dd95 }}%</dd></div>
+              <div><dt>{{ isRu ? 'Траектории ниже старта' : 'Paths ending below the start' }}</dt><dd>{{ mc.stats.below }}%</dd></div>
+              <div><dt>{{ isRu ? 'Медианный результат' : 'Median result' }}</dt><dd>+{{ mc.stats.median }}%</dd></div>
             </dl>
           </div>
           <figcaption v-if="row.cap" class="mono">{{ row.cap }}</figcaption>
@@ -151,21 +140,21 @@
 
     <!-- COMPARISON -->
     <section class="compare" aria-labelledby="compare-title">
-      <div class="label mono"><span>Comparison</span><span>Spreadsheet vs JORU</span></div>
-      <h2 id="compare-title" class="compare__title">A spreadsheet can log trades. It cannot tell you which ones to stop taking.</h2>
+      <div class="label mono"><span>{{ copy.dev1.comparison.label[0] }}</span><span>{{ copy.dev1.comparison.label[1] }}</span></div>
+      <h2 id="compare-title" class="compare__title">{{ copy.dev1.comparison.title }}</h2>
       <table class="compare__table">
         <thead>
           <tr>
             <th scope="col"></th>
-            <th scope="col">Spreadsheet</th>
+            <th scope="col">{{ copy.dev1.comparison.spreadsheet }}</th>
             <th scope="col">JORU</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in comparison" :key="row[0]">
             <th scope="row">{{ row[0] }}</th>
-            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? 'Yes' : 'No' }}</td>
-            <td>Yes</td>
+            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? copy.dev1.comparison.yes : copy.dev1.comparison.no }}</td>
+            <td>{{ copy.dev1.comparison.yes }}</td>
           </tr>
         </tbody>
       </table>
@@ -173,41 +162,50 @@
 
     <!-- PRICING -->
     <section id="pricing" class="pricing" aria-labelledby="pricing-title">
-      <div class="label"><h2 id="pricing-title" class="mono">Pricing</h2><span class="mono">Two plans</span></div>
+      <div class="label"><h2 id="pricing-title" class="mono">{{ copy.dev1.pricing.label[0] }}</h2><span class="mono">{{ copy.dev1.pricing.label[1] }}</span></div>
       <div class="plans">
         <article class="plan">
-          <header><span class="mono">Free</span><strong>$0</strong></header>
-          <p>Build the review habit.</p>
-          <ul><li v-for="item in plans.free" :key="item">{{ item }}</li></ul>
-          <router-link to="/download" class="btn btn--line">Download free</router-link>
+          <header><span class="mono">{{ copy.dev1.pricing.freeTitle }}</span><strong>{{ copy.dev1.pricing.freePrice }}</strong></header>
+          <p>{{ copy.dev1.pricing.freeDesc }}</p>
+          <ul><li v-for="item in copy.dev1.pricing.freeFeatures" :key="item">{{ item }}</li></ul>
+          <router-link :to="isRu ? '/ru/download' : '/download'" class="btn btn--line">{{ copy.dev1.pricing.freeCta }}</router-link>
         </article>
         <article class="plan plan--full">
-          <header><span class="mono">Full</span><strong>$9.99<small>/ month</small></strong></header>
-          <p>Find, fix and prove. Less than the cost of one bad trade.</p>
-          <ul><li v-for="item in plans.full" :key="item">{{ item }}</li></ul>
-          <router-link to="/pricing" class="btn">Subscribe</router-link>
+          <header><span class="mono">{{ copy.dev1.pricing.fullTitle }}</span><strong>{{ copy.dev1.pricing.fullPrice }}<small>{{ copy.dev1.pricing.fullPeriod }}</small></strong></header>
+          <p>{{ copy.dev1.pricing.fullDesc }}</p>
+          <ul><li v-for="item in copy.dev1.pricing.fullFeatures" :key="item">{{ item }}</li></ul>
+          <router-link :to="isRu ? '/ru/pricing' : '/pricing'" class="btn">{{ copy.dev1.pricing.fullCta }}</router-link>
         </article>
       </div>
     </section>
 
     <!-- PRIVACY -->
     <section class="privacy" aria-labelledby="privacy-title">
-      <div class="label mono"><span>Data</span><span>Privacy</span></div>
+      <div class="label mono"><span>{{ copy.dev1.privacy.label[0] }}</span><span>{{ copy.dev1.privacy.label[1] }}</span></div>
       <div class="privacy__body">
-        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys never leave your computer.</h2>
-        <p>Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers. <router-link to="/privacy">Privacy Policy ↗</router-link></p>
+        <h2 id="privacy-title" class="privacy__title">{{ copy.dev1.privacy.title }}</h2>
+        <p>{{ copy.dev1.privacy.text }} <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.dev1.privacy.link }}</router-link></p>
       </div>
     </section>
 
     <!-- BACK COVER -->
     <footer class="end">
-      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <h2 class="end__title" v-html="copy.footer.title"></h2>
       <div class="end__actions">
-        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
       <div class="end__foot mono">
         <span>Jörmungandr © {{ year }}</span>
-        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+        <div class="end__lang" role="group" aria-label="Language">
+          <router-link :to="enPath" :class="{ 'is-active': !isRu }">EN</router-link>
+          <span>/</span>
+          <router-link :to="ruPath" :class="{ 'is-active': isRu }">RU</router-link>
+        </div>
+        <span>
+          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link> ·
+          <a href="https://t.me/gandr_trade">Telegram</a>
+        </span>
       </div>
     </footer>
   </div>
@@ -215,87 +213,34 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from '../../shared/i18n/useI18n'
+import { landingCopy } from '../../shared/i18n/landingCopy.js'
 import { downloads, refreshDownloads } from '../../shared/downloads.js'
 import UiFrame from './UiFrame.vue'
+
+const route = useRoute()
+const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
+const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
+
+const enPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/'
+  if (p.startsWith('/ru/')) return p.slice(3)
+  return p
+})
+
+const ruPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/ru/'
+  if (p.startsWith('/ru/')) return p
+  return p === '/' ? '/ru/' : `/ru${p}`
+})
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
 const year = new Date().getFullYear()
 const pad = n => String(n).padStart(2, '0')
-
-const rows = [
-  {
-    id: 'patterns', title: 'Patterns', tag: 'Best trades', plan: 'Full plan',
-    text: ['The patterns in your trades that rank among the best: the conditions that keep showing up in your most profitable trades, ordered by rating.'],
-    src: '/ui/7.html', design: [900, 560], css: 'main{width:100%!important;padding:24px 36px 0!important}', cap: 'Fig. 3 — Top patterns of profitable trades. Demo data.',
-  },
-  {
-    id: 'strategy', title: 'Strategy', tag: 'Genesis Matrix', plan: 'Free plan',
-    text: ['Write your strategy down as it really works: scenarios, entry and exit conditions. Every condition is a node with its frequency and profit factor, so you see which ones carry the result.', 'Every change is saved as a new version. Compare versions by win rate, profit factor, average result and execution quality.'],
-    wide: true, dark: true, ink: false, bare: true, src: '/ui/5.html', design: [1400, 900],
-    // Only the Bullish pullback scenario and its four conditions, shown up to three times larger than the page would fit them.
-    patch: [
-      ['var exit = addHub(trade.exit, lm.exitHubX, lm.exitHubY, lm)', 'var exit = { centerX: 0, centerY: 0 }'],
-      [',\n      { x: lm.exitHubX, y: lm.exitHubY, w: lm.hubWidth, h: lm.hubHeight }', ''],
-      [", ['exit', trade.exit, exit, EXIT_SLOTS]", ''],
-      ['addLine(entry.centerX, entry.centerY, exit.centerX, exit.centerY, true)', ''],
-      ['(window.innerHeight - 100) / (bottom - top), 1)', '(window.innerHeight - 100) / (bottom - top), 3)'],
-    ], css: '.viewport{background:transparent!important}.links path{stroke:#000!important;stroke-opacity:.4!important}', cap: 'Fig. 4 — Node mapping: how often each condition occurs and its profit factor. Demo data.',
-  },
-  {
-    id: 'risk', title: 'Risk', tag: 'Monte Carlo', wide: true,
-    intro: 'Monte Carlo simulation',
-    cap: 'Fig. 5 — The black line is one real history; the grey lines are 300 reshuffled alternatives. Illustrative simulation.',
-  },
-  {
-    id: 'metrics', title: 'Metrics', tag: '31 metrics',
-    text: ['Thirty-one metrics in five groups: matrix adherence, behaviour, execution and risk, strategy against execution, and in-trade analysis. Filter by group and read the one that matters.'],
-    wide: true, grid: true, cap: 'Fig. 6 — Metrics of one trade. Demo data.',
-  },
-  {
-    id: 'report', title: 'Report', tag: 'Trading report', plan: 'Free plan',
-    text: ['Profit and loss, distribution, risk and execution, drawdowns, results by session and asset — one report instead of five spreadsheets. Every scenario and condition, broken down the way you\'d actually read it.'],
-    wide: true, flow: true, tight: true, auto: true, bare: true, src: '/ui/9.html', design: [1500, 900], build: buildReportGrid,
-    // Every section of the report is rendered, then only its charts and diagrams are pulled out into one grid.
-    patch: [
-      ['r=De(null),p=De(null),m=De(!1)', "r=De('profits-losses'),p=De(null),m=De(!1)"],
-      ...['profits-losses', 'trade-distribution', 'risk-execution', 'drawdowns', 'robustness'].map(id => [`r.value==="${id}"?`, '!0?']),
-      ['r.value==="scenarios-conditions"&&E("scenarios-conditions")', 'E("scenarios-conditions")'],
-    ],
-    css: '#app{position:static!important;inset:auto!important}#app>div,#app>div>div{height:auto!important;min-height:0!important;overflow:visible!important;max-width:none!important;padding:0!important}.genesis-report-surface{height:auto!important;margin:0!important;background:transparent!important}.genesis-report-surface>aside{display:none!important}.report-scroll-area{overflow:visible!important;height:auto!important;padding:0!important}.chart-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px 24px}.chart-cell{margin:0;min-width:0;align-self:start}.chart-cell>[class*=bg-white]{margin-top:0!important;background:transparent!important;padding:0!important}.chart-cell>[class*=bg-white]>:not(svg){display:none!important}.chart-cell svg{width:100%!important;height:auto!important;display:block}.chart-cap{font:500 11px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:8px}',
-  },
-]
-
-/* The metrics of one trade, taken from the app's metric catalog (label, description, value, tone). */
-const metricList = [["Net Profit", "Realized trade PnL", "+$240.00", "g"], ["Risk/Reward Ratio", "Setup R/R ratio", "2.40 R", "g"], ["Required Adherence", "Fulfilled Required Rules", "100%", "g"], ["Additional PnL", "Additional Conditions effect", "+$42.00", "g"], ["Conditional PnL Ratio", "Profit ratio per setup condition", "1.32", "g"], ["Cognitive Stability", "Neural Telemetry", "86%", "g"], ["Dominant Bias", "Primary Friction Marker", "DISCIPLINE", "w"], ["Emotional PnL Drag", "Psychological friction drag", "-$8.00", "w"], ["Friction Density", "Friction Markers Ratio", "0.12", "w"], ["Net Result Variance", "vs Strategy Average PnL", "+$18.00", "g"], ["Yield Efficiency", "Balance Before Trade", "2.40%", "g"], ["Profit Velocity", "PnL per holding hour", "$60.00/h", "g"], ["Planned vs Realized Risk", "Risk Audit", "0.96", "g"], ["Temporal Exposure", "Holding Duration", "4.00h", "n"], ["Stop Loss Distance", "Entry to Stop Loss in %", "0.50%", "n"], ["Take Profit Distance", "Entry to TP distance in %", "1.50%", "n"], ["SL Execution Drag", "Loss-trade slippage only", "0.08 R", "n"], ["Risk Budget Adherence", "Max Risk vs Budget", "96%", "g"], ["TP Capture Ratio", "Target Reward Captured", "80%", "w"], ["Planned RR / Baseline RR", "Planned Trade RR vs Baseline RR", "0.84", "b"], ["Unrealized Alpha Left", "Maximum profit − captured profit in $", "20%", "g"], ["Confirmed Loss Time", "Time in drawdown zone", "18m", "b"], ["Confirmed Profit Time", "Time in profit zone", "3h 42m", "g"], ["Max Meaningful Drawdown", "Peak adverse move (MAE)", "-0.28%", "b"], ["Max Favorable Excursion", "Peak favorable move (MFE)", "1.48%", "g"], ["Profit Capture Ratio", "Share of MFE captured", "81%", "g"], ["Price Path Shape", "Movement sequence relative to entry", "FAVORABLE FIRST", "g"], ["Initial Movement", "First classified candle", "PROFIT", "g"], ["Entry Heat", "Adverse Delay", "0.12%", "w"], ["Adverse Before Profit", "Drawdown before Profit", "YES", "b"], ["News During Trade", "Macro News Backdrop", "NO", "n"]]
-
-const plans = {
-  free: [
-    'Trading journal with screenshots, tags and context',
-    'Equity curve and core metrics',
-    'Karl-Nikolai I (without rehabilitation function)',
-    'Detailed reports (without scenario and condition analysis)',
-    'MetaTrader 5 trade import',
-    'Activity monitor',
-    'Forum and trading events',
-  ],
-  full: [
-    'Everything in Free without restrictions',
-    'Unlimited strategy creation',
-    'Exchange chart for every trade',
-    'Score Patterns',
-    'Broker API import',
-    'Forecast Manager',
-  ],
-}
-
-const comparison = [
-  ['Log trades, notes and screenshots', true],
-  ['Equity curve and drawdowns', true],
-  ['Strategy builder, per-condition analytics and condition recommendations', false],
-  ['Exchange chart replay and in-trade behavior analysis', false],
-  ['Loss-making pattern detection in trades', false],
-  ['Strategy rule adherence verification', false],
-]
 
 /* Chart compare. The same page is rendered twice: bare candles underneath, the full trade on top, clipped at the slider. */
 const cleanPatch = [
@@ -304,6 +249,7 @@ const cleanPatch = [
   ["{ index: exitIndex, below: false, color: '#fbbf24' }", ''],
   ['function drawConditions(g, yForPrice, barWidth) {\n    ctx.save()', 'function drawConditions(g, yForPrice, barWidth) {\n    return\n    ctx.save()'],
 ]
+
 /* Report: pull every chart panel (with the small label that sits above it) out of the report page into one grid. */
 function buildReportGrid({ shadow }) {
   const area = shadow.querySelector('.report-scroll-area')
@@ -370,6 +316,45 @@ function buildReportGrid({ shadow }) {
   grid.style.display = 'grid'
   return true
 }
+
+const rows = computed(() => {
+  const r = copy.value.dev1.rows
+  return [
+    { ...r[0] },
+    {
+      ...r[1],
+      wide: true, dark: true, ink: false, bare: true, src: '/ui/5.html', design: [1400, 900],
+      patch: [
+        ['var exit = addHub(trade.exit, lm.exitHubX, lm.exitHubY, lm)', 'var exit = { centerX: 0, centerY: 0 }'],
+        [',\n      { x: lm.exitHubX, y: lm.exitHubY, w: lm.hubWidth, h: lm.hubHeight }', ''],
+        [", ['exit', trade.exit, exit, EXIT_SLOTS]", ''],
+        ['addLine(entry.centerX, entry.centerY, exit.centerX, exit.centerY, true)', ''],
+        ['(window.innerHeight - 100) / (bottom - top), 1)', '(window.innerHeight - 100) / (bottom - top), 3)'],
+      ],
+      css: '.viewport{background:transparent!important}.links path{stroke:#000!important;stroke-opacity:.4!important}',
+    },
+    { ...r[2] },
+    { ...r[3] },
+    {
+      ...r[4],
+      wide: true, flow: true, tight: true, auto: true, bare: true, src: '/ui/9.html', design: [1500, 900], build: buildReportGrid,
+      patch: [
+        ['r=De(null),p=De(null),m=De(!1)', "r=De('profits-losses'),p=De(null),m=De(!1)"],
+        ...['profits-losses', 'trade-distribution', 'risk-execution', 'drawdowns', 'robustness'].map(id => [`r.value==="${id}"?`, '!0?']),
+        ['r.value==="scenarios-conditions"&&E("scenarios-conditions")', 'E("scenarios-conditions")'],
+      ],
+      css: '#app{position:static!important;inset:auto!important}#app>div,#app>div>div{height:auto!important;min-height:0!important;overflow:visible!important;max-width:none!important;padding:0!important}.genesis-report-surface{height:auto!important;margin:0!important;background:transparent!important}.genesis-report-surface>aside{display:none!important}.report-scroll-area{overflow:visible!important;height:auto!important;padding:0!important}.chart-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:30px 24px}.chart-cell{margin:0;min-width:0;align-self:start}.chart-cell>[class*=bg-white]{margin-top:0!important;background:transparent!important;padding:0!important}.chart-cell>[class*=bg-white]>:not(svg){display:none!important}.chart-cell svg{width:100%!important;height:auto!important;display:block}.chart-cap{font:500 11px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:8px}',
+    },
+  ]
+})
+
+const comparison = computed(() => copy.value.dev1.comparison.rows)
+
+const metricListEn = [["Net Profit", "Realized trade PnL", "+$240.00", "g"], ["Risk/Reward Ratio", "Setup R/R ratio", "2.40 R", "g"], ["Required Adherence", "Fulfilled Required Rules", "100%", "g"], ["Additional PnL", "Additional Conditions effect", "+$42.00", "g"], ["Conditional PnL Ratio", "Profit ratio per setup condition", "1.32", "g"], ["Cognitive Stability", "Neural Telemetry", "86%", "g"], ["Dominant Bias", "Primary Friction Marker", "DISCIPLINE", "w"], ["Emotional PnL Drag", "Psychological friction drag", "-$8.00", "w"], ["Friction Density", "Friction Markers Ratio", "0.12", "w"], ["Net Result Variance", "vs Strategy Average PnL", "+$18.00", "g"], ["Yield Efficiency", "Balance Before Trade", "2.40%", "g"], ["Profit Velocity", "PnL per holding hour", "$60.00/h", "g"], ["Planned vs Realized Risk", "Risk Audit", "0.96", "g"], ["Temporal Exposure", "Holding Duration", "4.00h", "n"], ["Stop Loss Distance", "Entry to Stop Loss in %", "0.50%", "n"], ["Take Profit Distance", "Entry to TP distance in %", "1.50%", "n"], ["SL Execution Drag", "Loss-trade slippage only", "0.08 R", "n"], ["Risk Budget Adherence", "Max Risk vs Budget", "96%", "g"], ["TP Capture Ratio", "Target Reward Captured", "80%", "w"], ["Planned RR / Baseline RR", "Planned Trade RR vs Baseline RR", "0.84", "b"], ["Unrealized Alpha Left", "Maximum profit − captured profit in $", "20%", "g"], ["Confirmed Loss Time", "Time in drawdown zone", "18m", "b"], ["Confirmed Profit Time", "Time in profit zone", "3h 42m", "g"], ["Max Meaningful Drawdown", "Peak adverse move (MAE)", "-0.28%", "b"], ["Max Favorable Excursion", "Peak favorable move (MFE)", "1.48%", "g"], ["Profit Capture Ratio", "Share of MFE captured", "81%", "g"], ["Price Path Shape", "Movement sequence relative to entry", "FAVORABLE FIRST", "g"], ["Initial Movement", "First classified candle", "PROFIT", "g"], ["Entry Heat", "Adverse Delay", "0.12%", "w"], ["Adverse Before Profit", "Drawdown before Profit", "YES", "b"], ["News During Trade", "Macro News Backdrop", "NO", "n"]]
+
+const metricListRu = [["Чистая прибыль", "Фактический PnL сделки", "+$240.00", "g"], ["Risk/Reward", "Коэффициент R/R сетапа", "2.40 R", "g"], ["Соблюдение правил", "Выполненные обязательные правила", "100%", "g"], ["Дополнительный PnL", "Эффект дополнительных условий", "+$42.00", "g"], ["Коэф. условий PnL", "Отношение прибыли по условиям", "1.32", "g"], ["Стабильность мышления", "Телеметрия эмоционального фона", "86%", "g"], ["Преобладающее смещение", "Основной маркер трения", "DISCIPLINE", "w"], ["Эмоциональный убыток", "Убыток из-за психологического трения", "-$8.00", "w"], ["Плотность трения", "Доля маркеров трения", "0.12", "w"], ["Дисперсия результата", "Отклонение от среднего PnL", "+$18.00", "g"], ["Эффективность доходности", "Баланс до начала сделки", "2.40%", "g"], ["Скорость прибыли", "PnL за каждый час удержания", "$60.00/ч", "g"], ["План vs Факт Риск", "Аудит соблюдения риска", "0.96", "g"], ["Время в позиции", "Длительность удержания", "4.00ч", "n"], ["Дистанция Stop Loss", "От входа до Stop Loss в %", "0.50%", "n"], ["Дистанция Take Profit", "От входа до Take Profit в %", "1.50%", "n"], ["Проскальзывание SL", "Проскальзывание в убытках", "0.08 R", "n"], ["Лимит риска бюджета", "Макс. риск относительно бюджета", "96%", "g"], ["Захват Take Profit", "Доля взятой цели движения", "80%", "w"], ["План RR / База RR", "Плановый RR к базовому RR", "0.84", "b"], ["Оставленная альфа", "Макс. прибыль минус взятая", "20%", "g"], ["Время в просадке", "Время в зоне просадки", "18м", "b"], ["Время в прибыли", "Время в зоне профита", "3ч 42м", "g"], ["Макс. просадка MAE", "Пиковое неблагоприятное движение", "-0.28%", "b"], ["Макс. движение MFE", "Пиковое благоприятное движение", "1.48%", "g"], ["Захват движения", "Доля взятого движения MFE", "81%", "g"], ["Форма движения", "Последовательность от входа", "СНАЧАЛА ПРИБЫЛЬ", "g"], ["Первая свеча", "Классификация первой свечи", "ПРИБЫЛЬ", "g"], ["Нагрев входа", "Задержка до движения", "0.12%", "w"], ["Просадка до прибыли", "Просадка перед профитом", "ДА", "b"], ["Новости в сделке", "Макроэкономический фон", "НЕТ", "n"]]
+
+const metricList = computed(() => isRu.value ? metricListRu : metricListEn)
 
 const cmp = ref(null)
 const split = ref(25)
@@ -809,6 +794,11 @@ onBeforeUnmount(() => {
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.end__lang { display: inline-flex; align-items: center; gap: 6px; }
+.end__lang a { opacity: 0.5; transition: opacity 0.1s; }
+.end__lang a:hover { opacity: 0.85; }
+.end__lang a.is-active { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.end__lang span { opacity: 0.35; }
 
 
 /* ── Karl-Nikolai I: scroll scene (same behaviour as /dev, light palette) ── */

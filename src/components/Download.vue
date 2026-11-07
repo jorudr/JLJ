@@ -2,22 +2,22 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+      <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>
       <nav class="bar__nav" aria-label="Main">
-        <router-link to="/#karl-nikolai">What it does</router-link>
-        <router-link to="/pricing">Pricing</router-link>
-        <router-link to="/download">Download</router-link>
+        <router-link :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'">{{ copy.nav.whatItDoes }}</router-link>
+        <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
+        <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
       </nav>
     </header>
 
     <!-- HERO -->
     <section class="dl-hero" aria-labelledby="dl-title">
       <div class="dl-hero__body">
-        <h1 id="dl-title" class="dl-hero__title">Download JORU for macOS and Windows.</h1>
-        <p class="dl-hero__sub">Free trading journal, no time limit. Keep every trade, note, tag and screenshot on your computer.</p>
+        <h1 id="dl-title" class="dl-hero__title">{{ copy.downloadPage.hero.title }}</h1>
+        <p class="dl-hero__sub">{{ copy.downloadPage.hero.sub }}</p>
       </div>
     </section>
 
@@ -25,19 +25,19 @@
     <section class="dl-grid" aria-label="Download platforms">
       <article v-for="platform in downloads" :key="platform.id" class="dl-card">
         <div class="dl-card__top">
-          <span class="mono">{{ platform.id === 'macos' ? 'Apple Silicon & Intel' : '64-bit x86_64' }}</span>
-          <span class="mono">Free plan included</span>
+          <span class="mono">{{ platform.id === 'macos' ? copy.downloadPage.macCard.arch : copy.downloadPage.winCard.arch }}</span>
+          <span class="mono">{{ copy.downloadPage.macCard.tag }}</span>
         </div>
         <div class="dl-card__main">
           <div class="dl-card__head">
             <h2 class="dl-card__name">{{ platform.name }}</h2>
             <p class="dl-card__req">
-              <template v-if="platform.id === 'macos'">Universal DMG installer. Requires macOS 12 Monterey or newer.</template>
-              <template v-else>Native setup executable. Requires Windows 10 or 11 (64-bit).</template>
+              <template v-if="platform.id === 'macos'">{{ copy.downloadPage.macCard.req }}</template>
+              <template v-else>{{ copy.downloadPage.winCard.req }}</template>
             </p>
           </div>
           <a :href="platform.url" download class="btn dl-card__btn">
-            <span>Download for {{ platform.name }}</span>
+            <span>{{ copy.downloadPage.downloadFor }} {{ platform.name }}</span>
             <span aria-hidden="true">↓</span>
           </a>
         </div>
@@ -46,22 +46,19 @@
 
     <!-- FACTS -->
     <section class="facts" aria-label="Key facts">
-      <div><strong>$0</strong><span>Free journal, no time limit.</span></div>
-      <div><strong>100%</strong><span>Your trades and exchange API keys stay on your computer.</span></div>
-      <div><strong>5</strong><span>Broker imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.</span></div>
-      <div><strong>2</strong><span>Windows and macOS native applications.</span></div>
+      <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
     </section>
 
     <!-- HELP & COMMUNITY -->
     <section class="dl-note" aria-labelledby="dl-note-title">
-      <div class="label mono"><span>Community</span><span>Installation help</span></div>
+      <div class="label mono"><span>{{ copy.downloadPage.community.label[0] }}</span><span>{{ copy.downloadPage.community.label[1] }}</span></div>
       <div class="dl-note__body">
         <div class="dl-note__col">
-          <h2 id="dl-note-title" class="dl-note__heading">Installation help & community</h2>
-          <p>Have questions about installing, importing broker data or configuring your account? Connect with the community or explore plan features.</p>
+          <h2 id="dl-note-title" class="dl-note__heading">{{ copy.downloadPage.community.heading }}</h2>
+          <p>{{ copy.downloadPage.community.text }}</p>
           <div class="dl-note__links">
-            <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer" class="btn btn--line">Telegram community ↗</a>
-            <router-link to="/#pricing" class="btn btn--line">Compare plans ↗</router-link>
+            <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer" class="btn btn--line">{{ copy.downloadPage.community.tgBtn }}</a>
+            <router-link :to="isRu ? '/ru/pricing' : '/pricing'" class="btn btn--line">{{ copy.nav.pricing }} ↗</router-link>
           </div>
         </div>
       </div>
@@ -69,21 +66,52 @@
 
     <!-- BACK COVER / FOOTER -->
     <footer class="end">
-      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <h2 class="end__title" v-html="copy.footer.title"></h2>
       <div class="end__actions">
-        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
       <div class="end__foot mono">
         <span>Jörmungandr © {{ year }}</span>
-        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+        <div class="end__lang" role="group" aria-label="Language">
+          <router-link :to="enPath" :class="{ 'is-active': !isRu }">EN</router-link>
+          <span>/</span>
+          <router-link :to="ruPath" :class="{ 'is-active': isRu }">RU</router-link>
+        </div>
+        <span>
+          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link> ·
+          <a href="https://t.me/gandr_trade">Telegram</a>
+        </span>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from '../shared/i18n/useI18n'
+import { landingCopy } from '../shared/i18n/landingCopy.js'
 import { downloads, refreshDownloads } from '../shared/downloads'
+
+const route = useRoute()
+const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
+const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
+
+const enPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/'
+  if (p.startsWith('/ru/')) return p.slice(3)
+  return p
+})
+
+const ruPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/ru/'
+  if (p.startsWith('/ru/')) return p
+  return p === '/' ? '/ru/' : `/ru${p}`
+})
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
 const year = new Date().getFullYear()
@@ -180,6 +208,11 @@ onBeforeUnmount(() => {
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.end__lang { display: inline-flex; align-items: center; gap: 6px; }
+.end__lang a { opacity: 0.5; transition: opacity 0.1s; }
+.end__lang a:hover { opacity: 0.85; }
+.end__lang a.is-active { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.end__lang span { opacity: 0.35; }
 
 @media (max-width: 900px) {
   .bar__nav a:not(:last-child) { display: none; }

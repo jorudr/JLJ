@@ -2,14 +2,14 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+      <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>
       <nav class="bar__nav" aria-label="Main">
-        <router-link to="/#karl-nikolai">What it does</router-link>
-        <router-link to="/pricing">Pricing</router-link>
-        <router-link to="/download">Download</router-link>
+        <router-link :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'">{{ copy.nav.whatItDoes }}</router-link>
+        <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
+        <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
       </nav>
     </header>
 
@@ -17,10 +17,10 @@
     <section class="pricing-hero" aria-labelledby="pricing-title">
       <div class="pricing-hero__body">
         <h1 id="pricing-title" class="pricing-hero__title">
-          Two plans. No surprises.
+          {{ copy.pricingPage.hero.title }}
         </h1>
         <p class="pricing-hero__sub">
-          Start free to log trades and build the review habit. Upgrade when you need deep pattern detection, condition analytics and exchange charts.
+          {{ copy.pricingPage.hero.sub }}
         </p>
       </div>
     </section>
@@ -30,27 +30,29 @@
       <div class="plans">
         <article class="plan">
           <header>
-            <span class="mono">Free</span>
-            <strong>$0</strong>
+            <span class="mono">{{ copy.dev1.pricing.freeTitle }}</span>
+            <strong>{{ copy.dev1.pricing.freePrice }}</strong>
           </header>
-          <p>Build the review habit.</p>
+          <p>{{ copy.dev1.pricing.freeDesc }}</p>
           <ul>
-            <li v-for="item in plans.free" :key="item">{{ item }}</li>
+            <li v-for="item in copy.dev1.pricing.freeFeatures" :key="item">{{ item }}</li>
           </ul>
-          <router-link to="/download" class="btn btn--line">Download free <span aria-hidden="true">↓</span></router-link>
+          <router-link :to="isRu ? '/ru/download' : '/download'" class="btn btn--line">
+            {{ copy.dev1.pricing.freeCta }} <span aria-hidden="true">↓</span>
+          </router-link>
         </article>
 
         <article class="plan plan--full">
           <header>
-            <span class="mono">Full</span>
-            <strong>$9.99<small>/ month</small></strong>
+            <span class="mono">{{ copy.dev1.pricing.fullTitle }}</span>
+            <strong>{{ copy.dev1.pricing.fullPrice }}<small>{{ copy.dev1.pricing.fullPeriod }}</small></strong>
           </header>
-          <p>Find, fix and prove. Less than the cost of one bad trade.</p>
+          <p>{{ copy.dev1.pricing.fullDesc }}</p>
           <ul>
-            <li v-for="item in plans.full" :key="item">{{ item }}</li>
+            <li v-for="item in copy.dev1.pricing.fullFeatures" :key="item">{{ item }}</li>
           </ul>
-          <router-link to="/download" class="plan__existing">
-            Already subscribed? Download desktop app →
+          <router-link :to="isRu ? '/ru/download' : '/download'" class="plan__existing">
+            {{ copy.pricingPage.alreadySubscribed }}
           </router-link>
           <a
             href="https://www.patreon.com/checkout/jlgandr?rid=28845652"
@@ -58,7 +60,7 @@
             rel="noreferrer"
             class="btn"
           >
-            <span>Subscribe via Patreon</span>
+            <span>{{ copy.pricingPage.subscribeViaPatreon }}</span>
             <span aria-hidden="true">↗</span>
           </a>
         </article>
@@ -68,36 +70,37 @@
     <!-- CRYPTO PAYMENT -->
     <section class="crypto-sec" aria-labelledby="crypto-title">
       <div class="label mono">
-        <span>Payment method</span>
-        <span>Cryptocurrency · NOWPayments</span>
+        <span>{{ copy.pricingPage.crypto.label[0] }}</span>
+        <span>{{ copy.pricingPage.crypto.label[1] }}</span>
       </div>
       <div class="crypto-sec__body">
         <h2 id="crypto-title" class="crypto-sec__title">
-          Pay with crypto inside the application.
+          {{ copy.pricingPage.crypto.title }}
         </h2>
-        <p class="crypto-sec__desc">
-          If you prefer cryptocurrency over card subscriptions, you can pay directly inside the JORU desktop app via <strong>NOWPayments</strong>. Each payment grants <strong>30 days of Full access</strong> as a one-time purchase with no auto-renewal or recurring charges.
-        </p>
+        <p class="crypto-sec__desc" v-html="copy.pricingPage.crypto.desc"></p>
       </div>
     </section>
 
     <!-- COMPARISON -->
     <section class="compare" aria-labelledby="compare-title">
-      <div class="label mono"><span>Comparison</span><span>Spreadsheet vs JORU</span></div>
-      <h2 id="compare-title" class="compare__title">A spreadsheet can log trades. It cannot tell you which ones to stop taking.</h2>
+      <div class="label mono">
+        <span>{{ copy.dev1.comparison.label[0] }}</span>
+        <span>{{ copy.dev1.comparison.label[1] }}</span>
+      </div>
+      <h2 id="compare-title" class="compare__title">{{ copy.dev1.comparison.title }}</h2>
       <table class="compare__table">
         <thead>
           <tr>
             <th scope="col"></th>
-            <th scope="col">Spreadsheet</th>
+            <th scope="col">{{ copy.dev1.comparison.spreadsheet }}</th>
             <th scope="col">JORU</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in comparison" :key="row[0]">
             <th scope="row">{{ row[0] }}</th>
-            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? 'Yes' : 'No' }}</td>
-            <td>Yes</td>
+            <td :class="{ 'is-no': !row[1] }">{{ row[1] ? copy.dev1.comparison.yes : copy.dev1.comparison.no }}</td>
+            <td>{{ copy.dev1.comparison.yes }}</td>
           </tr>
         </tbody>
       </table>
@@ -105,93 +108,83 @@
 
     <!-- FAQ -->
     <section class="faq" aria-labelledby="faq-title">
-      <div class="label mono"><span>Frequently Asked Questions</span><span>Billing & Data</span></div>
+      <div class="label mono">
+        <span>{{ copy.pricingPage.faq.label[0] }}</span>
+        <span>{{ copy.pricingPage.faq.label[1] }}</span>
+      </div>
       <div class="faq__grid">
-        <article class="faq__item">
-          <h2 class="faq__q">How does the subscription work?</h2>
-          <p class="faq__a">Subscriptions are billed monthly through Patreon. You can cancel anytime directly on Patreon without contacting support.</p>
-        </article>
-        <article class="faq__item">
-          <h2 class="faq__q">Can I pay with cryptocurrency?</h2>
-          <p class="faq__a">Yes. Crypto payments via NOWPayments are available directly inside the desktop application. You can pay in BTC, ETH, USDT, USDC, Solana and other coins for 30 days of Full access without auto-renewal.</p>
-        </article>
-        <article class="faq__item">
-          <h2 class="faq__q">Where is my trading data stored?</h2>
-          <p class="faq__a">100% locally on your computer. Your journal data, notes, screenshots and broker API keys never leave your device.</p>
-        </article>
-        <article class="faq__item">
-          <h2 class="faq__q">Can I use the Free plan forever?</h2>
-          <p class="faq__a">Yes. The Free plan has no expiration date or trial limits. You can log trades, track your equity curve, and use core metrics indefinitely.</p>
-        </article>
-        <article class="faq__item">
-          <h2 class="faq__q">How do I activate Full on my computer?</h2>
-          <p class="faq__a">After paying on Patreon or via crypto, sign in with your Google account inside the desktop app. Your Full license activates immediately.</p>
-        </article>
-        <article class="faq__item">
-          <h2 class="faq__q">What happens when a paid period ends?</h2>
-          <p class="faq__a">Your account returns to the Free plan. All your trades, notes, strategies and historical records remain fully preserved on your machine.</p>
+        <article v-for="item in copy.pricingPage.faq.items" :key="item.q" class="faq__item">
+          <h2 class="faq__q">{{ item.q }}</h2>
+          <p class="faq__a">{{ item.a }}</p>
         </article>
       </div>
     </section>
 
     <!-- DATA PRIVACY -->
     <section class="privacy" aria-labelledby="privacy-title">
-      <div class="label mono"><span>Data</span><span>Privacy</span></div>
+      <div class="label mono">
+        <span>{{ copy.dev1.privacy.label[0] }}</span>
+        <span>{{ copy.dev1.privacy.label[1] }}</span>
+      </div>
       <div class="privacy__body">
-        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys never leave your computer.</h2>
-        <p>Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers. <router-link to="/privacy">Privacy Policy ↗</router-link></p>
+        <h2 id="privacy-title" class="privacy__title">{{ copy.dev1.privacy.title }}</h2>
+        <p>{{ copy.dev1.privacy.text }} <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.dev1.privacy.link }}</router-link></p>
       </div>
     </section>
 
     <!-- BACK COVER / FOOTER -->
     <footer class="end">
-      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <h2 class="end__title" v-html="copy.footer.title"></h2>
       <div class="end__actions">
-        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
       <div class="end__foot mono">
         <span>Jörmungandr © {{ year }}</span>
-        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+        <div class="end__lang" role="group" aria-label="Language">
+          <router-link :to="enPath" :class="{ 'is-active': !isRu }">EN</router-link>
+          <span>/</span>
+          <router-link :to="ruPath" :class="{ 'is-active': isRu }">RU</router-link>
+        </div>
+        <span>
+          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link> ·
+          <a href="https://t.me/gandr_trade">Telegram</a>
+        </span>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from '../shared/i18n/useI18n'
+import { landingCopy } from '../shared/i18n/landingCopy.js'
 import { downloads, refreshDownloads } from '../shared/downloads.js'
+
+const route = useRoute()
+const { locale } = useI18n()
+const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
+const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
+
+const enPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/'
+  if (p.startsWith('/ru/')) return p.slice(3)
+  return p
+})
+
+const ruPath = computed(() => {
+  const p = route.path
+  if (p === '/ru' || p === '/ru/') return '/ru/'
+  if (p.startsWith('/ru/')) return p
+  return p === '/' ? '/ru/' : `/ru${p}`
+})
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
 const year = new Date().getFullYear()
 
-const plans = {
-  free: [
-    'Trading journal with screenshots, tags and context',
-    'Equity curve and core metrics',
-    'Karl-Nikolai I (without rehabilitation function)',
-    'Detailed reports (without scenario and condition analysis)',
-    'MetaTrader 5 trade import',
-    'Activity monitor',
-    'Forum and trading events',
-  ],
-  full: [
-    'Everything in Free without restrictions',
-    'Unlimited strategy creation',
-    'Exchange chart for every trade',
-    'Score Patterns',
-    'Broker API import',
-    'Forecast Manager',
-  ],
-}
-
-const comparison = [
-  ['Log trades, notes and screenshots', true],
-  ['Equity curve and drawdowns', true],
-  ['Strategy builder, per-condition analytics and condition recommendations', false],
-  ['Exchange chart replay and in-trade behavior analysis', false],
-  ['Loss-making pattern detection in trades', false],
-  ['Strategy rule adherence verification', false],
-]
+const comparison = computed(() => copy.value.dev1.comparison.rows)
 
 let fontLink = null
 onMounted(() => {
@@ -310,6 +303,11 @@ onBeforeUnmount(() => {
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.end__lang { display: inline-flex; align-items: center; gap: 6px; }
+.end__lang a { opacity: 0.5; transition: opacity 0.1s; }
+.end__lang a:hover { opacity: 0.85; }
+.end__lang a.is-active { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.end__lang span { opacity: 0.35; }
 
 @media (max-width: 900px) {
   .bar__nav a:not(:last-child) { display: none; }
