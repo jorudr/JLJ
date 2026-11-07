@@ -15,10 +15,6 @@
 
     <!-- HEADER -->
     <section class="legal-hero" aria-labelledby="legal-title">
-      <div class="label mono">
-        <span>Legal</span>
-        <span>{{ doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use' }}</span>
-      </div>
       <div class="legal-hero__body">
         <h1 id="legal-title" class="legal-hero__title">
           {{ doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use' }}
