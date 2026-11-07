@@ -24,7 +24,6 @@ export const landingCopy = {
       },
       facts: [
         ['$0', 'Free journal, no time limit.'],
-        ['2', 'Windows and macOS.'],
         ['5', 'Broker imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.'],
         ['100%', 'Your trades and exchange API keys stay on your computer.'],
       ],
@@ -242,7 +241,6 @@ export const landingCopy = {
       },
       facts: [
         ['$0', 'Бесплатный дневник без ограничения по времени.'],
-        ['2', 'Windows и macOS.'],
         ['5', 'Импорт брокеров: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.'],
         ['100%', 'Сделки и API-ключи остаются только на вашем компьютере.'],
       ],

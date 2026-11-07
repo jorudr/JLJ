@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
 .dl-card__btn { width: 100%; margin-top: auto; }
 
 /* ── Facts ─────────────────────────────────────────── */
-.facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2px solid #000; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 2px solid #000; }
 .facts > div { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 14px; min-height: 200px; justify-content: space-between; }
 .facts > div:last-child { border-right: 0; }
 .facts strong { font-weight: 800; letter-spacing: -0.06em; line-height: 0.85; font-size: clamp(56px, 7.4cqw, 128px); }
@@ -204,8 +204,8 @@ onBeforeUnmount(() => {
   .dl-card:last-child { border-bottom: 0; }
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
-  .facts > div:nth-child(2n) { border-right: 0; }
-  .facts > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .facts > div:nth-child(2) { border-right: 0; }
+  .facts > div:last-child { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
   .d.end,
   .end {
     min-height: auto;

@@ -35,7 +35,6 @@
           </div>
           <ul class="bx-hero__facts">
             <li><strong>$0</strong> Free journal, no time limit</li>
-            <li><strong>2</strong> Windows and macOS</li>
             <li><strong>100%</strong> Trades and API keys stay on your computer</li>
           </ul>
         </div>
