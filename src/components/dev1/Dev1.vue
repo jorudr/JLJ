@@ -460,7 +460,7 @@ function initEquityCurve() {
   // Realistic trading account growth with multi-phase drawdowns
   const START = 10000
   const POINTS = 150
-  const DURATION = 4500
+  const DURATION = 2200
   const COLOR = '#000000'
 
   let series = []
@@ -607,7 +607,7 @@ function initEquityCurve() {
       frame = null
       setTimeout(() => {
         isBalanceFinished.value = true
-      }, 250)
+      }, 100)
     }
   }
 
@@ -745,10 +745,13 @@ onBeforeUnmount(() => {
   padding-bottom: 0.04em;
   user-select: none;
   opacity: 0;
-  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(-100px, 0, 0);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 .hero__word.is-visible {
   opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 .hero__balance {
   position: absolute;
@@ -763,10 +766,12 @@ onBeforeUnmount(() => {
   pointer-events: none;
   user-select: none;
   opacity: 1;
-  transition: opacity 0.4s ease;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.28s ease-out, transform 0.35s ease-out;
 }
 .hero__balance.is-hidden {
   opacity: 0;
+  transform: translate3d(35px, 0, 0);
   pointer-events: none;
 }
 .hero__balance-label {
