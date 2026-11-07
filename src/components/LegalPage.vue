@@ -33,7 +33,9 @@
     </main>
 
     <!-- BACK COVER / FOOTER -->
-    <footer class="end">
+  </div>
+  <footer class="end-wrap">
+    <div class="d end">
       <h2 class="end__title" v-html="copy.footer.title"></h2>
       <div class="end__actions">
         <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
@@ -53,8 +55,8 @@
           </div>
         </div>
       </div>
-    </footer>
-  </div>
+    </div>
+  </footer>
 </template>
 
 <script setup>
@@ -231,6 +233,7 @@ onBeforeUnmount(() => {
 }
 
 /* ── Back cover ────────────────────────────────────── */
+.d.end,
 .end { background: #000; color: #fff; padding: clamp(32px, 4cqw, 56px) var(--edge) clamp(20px, 2.5cqw, 36px); display: flex; flex-direction: column; gap: clamp(24px, 4cqw, 56px); min-height: 85vh; box-sizing: border-box; }
 .end__title { margin: clamp(32px, 6cqw, 100px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13cqw, 240px); margin-left: -0.02em; }
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
