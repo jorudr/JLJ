@@ -2,7 +2,7 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/dev1" class="bar__brand" aria-label="J.L.JÖRMUNGANDR home">
+      <router-link to="/dev1" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>
@@ -206,7 +206,7 @@
         <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
       <div class="end__foot mono">
-        <span>J.L. Jörmungandr © {{ year }}</span>
+        <span>Jörmungandr © {{ year }}</span>
         <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
       </div>
     </footer>
