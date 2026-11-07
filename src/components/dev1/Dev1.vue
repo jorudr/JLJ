@@ -938,12 +938,13 @@ onBeforeUnmount(() => {
     display: block;
     width: 100%;
     text-align: justify;
+    text-wrap: balance;
     -webkit-hyphens: auto;
     hyphens: auto;
-    font-size: clamp(17px, 4.4cqw, 22px);
-    line-height: 1.25;
-    letter-spacing: -0.015em;
-    font-weight: 700;
+    font-size: clamp(24px, 6.8cqw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-weight: 800;
   }
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
