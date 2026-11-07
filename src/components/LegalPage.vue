@@ -225,7 +225,7 @@ onBeforeUnmount(() => {
 }
 
 /* ── Back cover ────────────────────────────────────── */
-.end { background: #000; color: #fff; padding: clamp(36px, 5vw, 64px) var(--edge) clamp(56px, 8vw, 120px); display: flex; flex-direction: column; gap: clamp(24px, 4vw, 56px); min-height: 95vh; box-sizing: border-box; }
+.end { background: #000; color: #fff; padding: clamp(32px, 4vw, 56px) var(--edge) clamp(20px, 2.5vw, 36px); display: flex; flex-direction: column; gap: clamp(24px, 4vw, 56px); min-height: 85vh; box-sizing: border-box; }
 .end__title { margin: clamp(32px, 6vw, 100px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; padding-top: 28px; border-top: 2px solid #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
