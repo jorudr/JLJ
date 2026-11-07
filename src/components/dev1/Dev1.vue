@@ -2,7 +2,7 @@
   <div class="d">
     <!-- BAR -->
     <header class="bar">
-      <router-link to="/dev1" class="bar__brand" aria-label="JÖRMUNGANDR home">
+      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
         <img src="/assets/herb.svg" alt="" width="18" height="16" />
         <span>JÖRMUNGANDR</span>
       </router-link>

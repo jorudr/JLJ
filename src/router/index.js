@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Main from '../components/Main.vue'
+import Dev1 from '../components/dev1/Dev1.vue'
 import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
 import About from '../components/About.vue'
@@ -20,7 +21,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: Main
+      component: Dev1,
+      alias: '/dev1'
     },
     {
       path: '/ru/',
@@ -84,12 +86,6 @@ const router = createRouter({
       path: '/dev',
       name: 'dev',
       component: () => import('../components/dev/DevHome.vue')
-    },
-    {
-      // Brutalist editorial redesign. Not indexed (see pageSeo in shared/seo.js).
-      path: '/dev1',
-      name: 'dev1',
-      component: () => import('../components/dev1/Dev1.vue')
     },
     {
       path: '/:pathMatch(.*)*',
