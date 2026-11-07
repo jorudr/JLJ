@@ -50,7 +50,7 @@ function triggerLoaderExit() {
       loader.classList.add('loader-fade-out')
       setTimeout(() => {
         loader.remove()
-      }, 400)
+      }, 750)
     }, delayUntilReveal)
   }
 
