@@ -58,6 +58,10 @@
             <span>Subscribe via Patreon</span>
             <span aria-hidden="true">↗</span>
           </a>
+          <div class="plan__crypto">
+            <span class="mono">Crypto payment</span>
+            <p>You can also pay with cryptocurrency via <strong>NOWPayments</strong> (BTC, ETH, USDT, SOL and more). 30 days of full access as a one-time payment with no auto-renewal.</p>
+          </div>
           <router-link to="/download" class="plan__existing">
             Already subscribed? Download desktop app →
           </router-link>
@@ -96,6 +100,10 @@
           <p class="faq__a">Subscriptions are billed monthly through Patreon. You can cancel anytime directly on Patreon without contacting support.</p>
         </article>
         <article class="faq__item">
+          <h2 class="faq__q">Can I pay with cryptocurrency?</h2>
+          <p class="faq__a">Yes. We accept crypto payments via NOWPayments (Bitcoin, Ethereum, USDT, USDC, Solana and more). Each payment provides 30 days of Full access as a one-time purchase with no auto-renewal.</p>
+        </article>
+        <article class="faq__item">
           <h2 class="faq__q">Where is my trading data stored?</h2>
           <p class="faq__a">100% locally on your computer. Your journal data, notes, screenshots and broker API keys never leave your device.</p>
         </article>
@@ -105,7 +113,11 @@
         </article>
         <article class="faq__item">
           <h2 class="faq__q">How do I activate Full on my computer?</h2>
-          <p class="faq__a">After subscribing on Patreon, install the desktop app and sign in with the Google account associated with your Patreon subscription.</p>
+          <p class="faq__a">After paying on Patreon or via crypto, sign in with your Google account inside the desktop app. Your Full license activates immediately.</p>
+        </article>
+        <article class="faq__item">
+          <h2 class="faq__q">What happens when a paid period ends?</h2>
+          <p class="faq__a">Your account returns to the Free plan. All your trades, notes, strategies and historical records remain fully preserved on your machine.</p>
         </article>
       </div>
     </section>
@@ -241,6 +253,9 @@ onBeforeUnmount(() => {
 .plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
 .plan li { padding: 8px 0; border-top: 1px solid currentColor; }
 .plan .btn { margin-top: auto; }
+.plan__crypto { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; flex-direction: column; gap: 6px; }
+.plan__crypto .mono { font-size: 11px; letter-spacing: 0.08em; opacity: 0.65; }
+.plan__crypto p { margin: 0; font-size: 13px; line-height: 1.35; opacity: 0.9; }
 .plan__existing { margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
 .plan__existing:hover { opacity: 1; }
 .plan--full { background: #000; color: #fff; }
