@@ -15,7 +15,6 @@
 
     <!-- HERO -->
     <section class="dl-hero" aria-labelledby="dl-title">
-      <div class="label mono"><span>Download</span><span>Desktop workspace</span></div>
       <div class="dl-hero__body">
         <h1 id="dl-title" class="dl-hero__title">Download JORU for macOS and Windows.</h1>
         <p class="dl-hero__sub">Free trading journal, no time limit. Keep every trade, note, tag and screenshot on your computer.</p>
