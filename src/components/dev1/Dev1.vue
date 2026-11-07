@@ -924,6 +924,7 @@ onBeforeUnmount(() => {
     display: block;
     width: 100%;
     text-align: left;
+    text-decoration: none;
     font-size: clamp(84px, 24cqw, 130px);
     line-height: 0.88;
     letter-spacing: -0.05em;
