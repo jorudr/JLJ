@@ -22,7 +22,7 @@
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span>{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</h1>
+          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
         </div>
         <div class="spec__cell spec__cell--dl">
           <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
@@ -693,6 +693,7 @@ onBeforeUnmount(() => {
 .spec__cell:last-child { border-right: 0; }
 .spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
 .spec__comma { text-decoration: none; display: inline-block; }
+.spec__tail { display: inline; }
 .spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5cqw, 88px); }
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15cqw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
@@ -915,14 +916,41 @@ onBeforeUnmount(() => {
   .spec { grid-template-columns: 1fr; border-top: 0; }
   .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
   .spec__cell:last-child { border-bottom: 0; }
-  .spec__cell h1 { line-height: 1.15; }
+  .spec__cell h1 {
+    width: 100%;
+    margin: 0;
+  }
   .spec__cell h1 .ul {
     display: block;
-    font-size: 2em;
-    line-height: 0.92;
-    letter-spacing: -0.04em;
-    margin-bottom: 0.25em;
+    width: 100%;
+    text-align: justify;
+    text-align-last: justify;
+    font-size: clamp(34px, 9.4cqw, 46px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    margin-bottom: 0.35em;
   }
+  .spec__tail {
+    display: block;
+    width: 100%;
+    text-align: justify;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    font-size: clamp(17px, 4.7cqw, 23px);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    font-weight: 700;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .spec__cell h1 .ul {
+    text-align-last: left;
+    font-size: clamp(44px, 6.5cqw, 60px);
+  }
+}
+
+@media (max-width: 900px) {
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
   .facts > div:nth-child(2n) { border-right: 0; }
