@@ -22,7 +22,7 @@
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
+          <h1><span class="ul" :class="{ 'ul--ru': isRu }">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
         </div>
         <div class="spec__cell spec__cell--dl">
           <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
@@ -923,12 +923,16 @@ onBeforeUnmount(() => {
   .spec__cell h1 .ul {
     display: block;
     width: 100%;
-    text-align: justify;
-    text-align-last: justify;
-    font-size: clamp(34px, 9.4cqw, 46px);
-    line-height: 0.95;
+    white-space: nowrap;
+    text-align: left;
+    font-size: clamp(44px, 14.2cqw, 62px);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.25em;
+  }
+  .spec__cell h1 .ul--ru {
+    font-size: clamp(38px, 11.2cqw, 50px);
     letter-spacing: -0.035em;
-    margin-bottom: 0.35em;
   }
   .spec__tail {
     display: block;
@@ -936,21 +940,11 @@ onBeforeUnmount(() => {
     text-align: justify;
     -webkit-hyphens: auto;
     hyphens: auto;
-    font-size: clamp(17px, 4.7cqw, 23px);
+    font-size: clamp(17px, 4.4cqw, 22px);
     line-height: 1.25;
     letter-spacing: -0.015em;
     font-weight: 700;
   }
-}
-
-@media (min-width: 601px) and (max-width: 900px) {
-  .spec__cell h1 .ul {
-    text-align-last: left;
-    font-size: clamp(44px, 6.5cqw, 60px);
-  }
-}
-
-@media (max-width: 900px) {
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
   .facts > div:nth-child(2n) { border-right: 0; }
