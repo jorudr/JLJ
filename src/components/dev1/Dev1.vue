@@ -194,16 +194,15 @@
       <div class="end__actions">
         <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">{{ copy.footer.downloadFor }} {{ item.name }} <span aria-hidden="true">↓</span></a>
       </div>
-      <div class="end__foot mono">
-        <span>Jörmungandr © {{ year }}</span>
-        <div class="end__lang" role="group" aria-label="Language">
-          <router-link :to="enPath" class="end__lang-btn" :class="{ 'is-active': !isRu }">EN</router-link>
-          <router-link :to="ruPath" class="end__lang-btn" :class="{ 'is-active': isRu }">RU</router-link>
-        </div>
-        <span>
-          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
-          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link> ·
-          <a href="https://t.me/gandr_trade">Telegram</a>
+      <div class="end__foot">
+        <span class="end__foot-copy">Jörmungandr © {{ year }}</span>
+        <LangDropdown />
+        <span class="end__foot-links">
+          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link>
+          <span class="end__foot-sep" aria-hidden="true">·</span>
+          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link>
+          <span class="end__foot-sep" aria-hidden="true">·</span>
+          <a href="https://t.me/gandr_trade" target="_blank" rel="noopener">Telegram</a>
         </span>
       </div>
     </footer>
@@ -217,25 +216,12 @@ import { useI18n } from '../../shared/i18n/useI18n'
 import { landingCopy } from '../../shared/i18n/landingCopy.js'
 import { downloads, refreshDownloads } from '../../shared/downloads.js'
 import UiFrame from './UiFrame.vue'
+import LangDropdown from '../LangDropdown.vue'
 
 const route = useRoute()
 const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
 const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
-
-const enPath = computed(() => {
-  const p = route.path
-  if (p === '/ru' || p === '/ru/') return '/'
-  if (p.startsWith('/ru/')) return p.slice(3)
-  return p
-})
-
-const ruPath = computed(() => {
-  const p = route.path
-  if (p === '/ru' || p === '/ru/') return '/ru/'
-  if (p.startsWith('/ru/')) return p
-  return p === '/' ? '/ru/' : `/ru${p}`
-})
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
 const year = new Date().getFullYear()
@@ -791,12 +777,12 @@ onBeforeUnmount(() => {
 .end { background: #000; color: #fff; padding: clamp(36px, 5vw, 64px) var(--edge) clamp(56px, 8vw, 120px); display: flex; flex-direction: column; gap: clamp(24px, 4vw, 56px); min-height: 95vh; box-sizing: border-box; }
 .end__title { margin: clamp(32px, 6vw, 100px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 24px; border-top: 2px solid #fff; }
-.end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.end__lang { display: inline-flex; align-items: center; border: 1px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.06); padding: 2px; gap: 2px; }
-.end__lang-btn { display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11px; line-height: 1.2; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); text-decoration: none !important; transition: background 0.12s ease, color 0.12s ease; }
-.end__lang-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
-.end__lang-btn.is-active { background: #fff; color: #000; }
+.end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 28px; border-top: 2px solid #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.end__foot a { text-decoration: none; transition: opacity 0.1s; }
+.end__foot a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.end__foot-copy { font-weight: 700; letter-spacing: -0.01em; }
+.end__foot-links { display: inline-flex; align-items: center; gap: 12px; }
+.end__foot-sep { opacity: 0.35; }
 
 
 /* ── Karl-Nikolai I: scroll scene (same behaviour as /dev, light palette) ── */
