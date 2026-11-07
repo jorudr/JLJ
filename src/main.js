@@ -15,10 +15,35 @@ if (typeof window !== 'undefined') {
 
 const app = createApp(App)
 app.use(router)
-app.mount('#app')
 
-const loader = document.getElementById('app-loader')
-if (loader) {
-  loader.classList.add('app-loader-done')
-  loader.addEventListener('transitionend', () => loader.remove())
+router.isReady().then(() => {
+  app.mount('#app')
+  triggerLoaderExit()
+})
+
+function triggerLoaderExit() {
+  const loader = document.getElementById('app-loader')
+
+  if (!loader) return
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    loader.remove()
+    return
+  }
+
+  const startTime = window.__loaderStartTime || performance.now()
+  const elapsed = performance.now() - startTime
+  const minBlackDuration = 700
+  const remaining = Math.max(0, minBlackDuration - elapsed)
+
+  setTimeout(() => {
+    loader.classList.add('loader-filling-white')
+
+    setTimeout(() => {
+      loader.classList.add('loader-fade-out')
+      setTimeout(() => {
+        loader.remove()
+      }, 400)
+    }, 700)
+  }, remaining)
 }
