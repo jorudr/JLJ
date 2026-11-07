@@ -22,7 +22,7 @@
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul" :class="{ 'ul--ru': isRu }">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
+          <h1><span class="ul" :class="{ 'ul--ru': isRu }"><span class="ul__w1">{{ isRu ? 'Дневник' : 'Trading' }}</span> <span class="ul__w2">{{ isRu ? 'трейдера' : 'journal' }}</span><span v-if="isRu" class="spec__comma">,</span></span><span class="spec__tail">{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</span></h1>
         </div>
         <div class="spec__cell spec__cell--dl">
           <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
@@ -929,6 +929,16 @@ onBeforeUnmount(() => {
     line-height: 0.88;
     letter-spacing: -0.05em;
     margin-bottom: 0.18em;
+  }
+  .spec__cell h1 .ul__w1 {
+    display: block;
+    text-decoration: none;
+  }
+  .spec__cell h1 .ul__w2 {
+    display: inline-block;
+    text-decoration: underline;
+    text-decoration-thickness: 0.05em;
+    text-underline-offset: 0.08em;
   }
   .spec__cell h1 .ul--ru {
     font-size: clamp(72px, 20.5cqw, 110px);
