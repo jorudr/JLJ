@@ -16,14 +16,14 @@ if (typeof window !== 'undefined') {
 const app = createApp(App)
 app.use(router)
 
+let isAppReady = false
 router.isReady().then(() => {
   app.mount('#app')
-  triggerLoaderExit()
+  isAppReady = true
 })
 
 function triggerLoaderExit() {
   const loader = document.getElementById('app-loader')
-
   if (!loader) return
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -32,18 +32,31 @@ function triggerLoaderExit() {
   }
 
   const startTime = window.__loaderStartTime || performance.now()
-  const elapsed = performance.now() - startTime
-  const minBlackDuration = 700
-  const remaining = Math.max(0, minBlackDuration - elapsed)
+  const WHITE_START_TIME = 900
+  const REVEAL_TIME = 1750
 
-  setTimeout(() => {
+  const runWhitePhase = () => {
+    if (!isAppReady) {
+      setTimeout(runWhitePhase, 40)
+      return
+    }
+
     loader.classList.add('loader-filling-white')
+
+    const elapsedSoFar = performance.now() - startTime
+    const delayUntilReveal = Math.max(0, REVEAL_TIME - elapsedSoFar)
 
     setTimeout(() => {
       loader.classList.add('loader-fade-out')
       setTimeout(() => {
         loader.remove()
       }, 400)
-    }, 700)
-  }, remaining)
+    }, delayUntilReveal)
+  }
+
+  const elapsed = performance.now() - startTime
+  const delayUntilWhite = Math.max(0, WHITE_START_TIME - elapsed)
+  setTimeout(runWhitePhase, delayUntilWhite)
 }
+
+triggerLoaderExit()
