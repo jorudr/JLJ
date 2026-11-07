@@ -971,5 +971,27 @@ onBeforeUnmount(() => {
   .plans { grid-template-columns: 1fr; }
   .plan { min-height: 0; }
   .plan + .plan { border-left: 0; border-top: 2px solid #000; }
+  #strategy .sec__body {
+    padding-top: clamp(24px, 5.5cqw, 40px);
+  }
+  #strategy .sec__text {
+    margin-top: 6px;
+  }
+  .d.end,
+  .end {
+    min-height: auto;
+    padding-top: clamp(24px, 5cqw, 36px);
+    padding-bottom: clamp(16px, 3cqw, 24px);
+    gap: clamp(18px, 4cqw, 28px);
+  }
+  .end__title {
+    margin-top: clamp(8px, 2cqw, 16px);
+    font-size: clamp(38px, 11cqw, 64px);
+    line-height: 0.88;
+  }
+  .end__foot {
+    margin-top: 24px;
+    padding-top: 20px;
+  }
 }
 </style>
