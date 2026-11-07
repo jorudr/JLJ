@@ -128,12 +128,6 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   overflow-x: clip;
 }
-@media (min-width: 1441px) {
-  .d {
-    border-left: 2px solid #000;
-    border-right: 2px solid #000;
-  }
-}
 .d *, .d *::before, .d *::after { box-sizing: border-box; }
 .d a { color: inherit; text-decoration: none; }
 .d :focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
