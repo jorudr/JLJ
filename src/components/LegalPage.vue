@@ -1,18 +1,7 @@
 <template>
   <div class="d">
     <!-- BAR -->
-    <header class="bar">
-      <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home">
-        <img src="/assets/herb.svg" alt="" width="18" height="16" />
-        <span>JÖRMUNGANDR</span>
-      </router-link>
-      <nav class="bar__nav" aria-label="Main">
-        <router-link :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'">{{ copy.nav.whatItDoes }}</router-link>
-        <router-link :to="isRu ? '/ru/about' : '/about'">{{ copy.nav.about }}</router-link>
-        <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
-        <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
-      </nav>
-    </header>
+    <BarHeader />
 
     <!-- HEADER -->
     <section class="legal-hero" aria-labelledby="legal-title">
@@ -67,6 +56,7 @@ import { landingCopy } from '../shared/i18n/landingCopy.js'
 import { renderMarkdown } from '../shared/legal/renderMarkdown'
 import { downloads, refreshDownloads } from '../shared/downloads'
 import LangDropdown from './LangDropdown.vue'
+import BarHeader from './BarHeader.vue'
 
 const props = defineProps({
   doc: {
@@ -144,11 +134,6 @@ onBeforeUnmount(() => {
 .d a.btn--paper:hover { background: #000; color: #fff; }
 
 /* ── Bar ───────────────────────────────────────────── */
-.bar { position: sticky; top: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; gap: 16px; height: 46px; padding: 0 var(--edge); background: #fff; border-bottom: 2px solid #000; }
-.bar__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; letter-spacing: -0.01em; white-space: nowrap; }
-.bar__brand img { filter: brightness(0); display: block; }
-.bar__nav { display: flex; gap: clamp(14px, 2.4cqw, 36px); font-weight: 600; }
-.bar__nav a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
 
 /* ── Labels ────────────────────────────────────────── */
 .label { display: flex; justify-content: space-between; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; }
@@ -247,7 +232,6 @@ onBeforeUnmount(() => {
 .end__foot-lang { display: flex; justify-content: flex-end; }
 
 @media (max-width: 900px) {
-  .bar__nav a:not(:last-child) { display: none; }
   .d.end,
   .end {
     min-height: auto;
