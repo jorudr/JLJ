@@ -14,66 +14,108 @@
       </nav>
     </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="about-main" aria-labelledby="about-title">
-      <div class="about-content">
-        <!-- INTRO -->
-        <section class="about-intro">
-          <span class="mono about-eyebrow">{{ t('landing.about.eyebrow') }}</span>
-          <h1 id="about-title">{{ t('landing.about.title') }}</h1>
-          <p>{{ t('landing.about.intro') }}</p>
-        </section>
-
-        <!-- NAME DIAGRAM -->
-        <section class="name-diagram" aria-labelledby="brand-name">
-          <h2 id="brand-name" class="name-diagram__title" aria-label="J.L.JÖRMUNGANDR">
-            <span>J.</span><span>L.</span><span>JÖRMUNGANDR</span>
-          </h2>
-          <div class="name-diagram__connectors" aria-hidden="true">
-            <svg viewBox="0 0 1000 180" preserveAspectRatio="none">
-              <defs>
-                <marker id="about-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 1 1 L 8 5 L 1 9" fill="none" stroke="currentColor" />
-                </marker>
-              </defs>
-              <path d="M 80 0 V 110 H 250 V 172" />
-              <path d="M 580 0 V 75 H 750 V 172" />
-            </svg>
-            <button
-              type="button"
-              class="name-diagram__number"
-              style="--position: 8%"
-              aria-label="1: Jesse Livermore"
-              @mouseenter="activeNameDetail = 0"
-              @mouseleave="activeNameDetail = null"
-              @focus="activeNameDetail = 0"
-              @blur="activeNameDetail = null"
-            >1</button>
-            <button
-              type="button"
-              class="name-diagram__number"
-              style="--position: 58%"
-              aria-label="2: Jörmungandr"
-              @mouseenter="activeNameDetail = 1"
-              @mouseleave="activeNameDetail = null"
-              @focus="activeNameDetail = 1"
-              @blur="activeNameDetail = null"
-            >2</button>
+    <main id="about-main">
+      <!-- 01 — PHILOSOPHY / ABOUT -->
+      <section class="sec" aria-labelledby="about-title">
+        <div class="sec__head">
+          <span class="mono sec__n">01</span>
+          <h1 id="about-title" class="sec__title">{{ t('landing.about.title') }}</h1>
+          <span class="mono sec__tag">{{ isRu ? 'ФИЛОСОФИЯ' : 'PHILOSOPHY' }}</span>
+        </div>
+        <div class="spec">
+          <div class="spec__cell spec__cell--lead">
+            <p class="about-lead">{{ t('landing.about.intro') }}</p>
           </div>
-          <ol class="name-diagram__descriptions">
-            <li :class="{ 'is-muted': activeNameDetail !== null && activeNameDetail !== 0 }">
-              <span class="sr-only">J.L. — </span>{{ t('landing.about.livermoreDescription') }}
-            </li>
-            <li :class="{ 'is-muted': activeNameDetail !== null && activeNameDetail !== 1 }">
-              {{ t('landing.about.jormungandrDescription') }}
-            </li>
-          </ol>
-        </section>
+          <div class="spec__cell spec__cell--side">
+            <span class="mono">{{ t('landing.about.eyebrow') }}</span>
+            <span class="mono">{{ isRu ? 'ДНЕВНИК ТРЕЙДЕРА' : 'TRADING JOURNAL' }}</span>
+            <span class="mono">JORU</span>
+          </div>
+        </div>
+      </section>
 
-        <hr class="herb-divider" />
+      <!-- 02 — NAME DIAGRAM -->
+      <section class="sec" aria-labelledby="brand-name">
+        <div class="sec__head">
+          <span class="mono sec__n">02</span>
+          <h2 class="sec__title">{{ isRu ? 'ИМЯ' : 'NAME' }}</h2>
+          <span class="mono sec__tag">J. L. JÖRMUNGANDR</span>
+        </div>
+        <div class="name-stage">
+          <div class="name-diagram">
+            <h2 id="brand-name" class="name-diagram__title" aria-label="J.L.JÖRMUNGANDR">
+              <span>J.</span><span>L.</span><span>JÖRMUNGANDR</span>
+            </h2>
+            <div class="name-diagram__connectors" aria-hidden="true">
+              <svg viewBox="0 0 1000 180" preserveAspectRatio="none">
+                <defs>
+                  <marker id="about-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 1 1 L 8 5 L 1 9" fill="none" stroke="currentColor" stroke-width="2" />
+                  </marker>
+                </defs>
+                <path d="M 80 0 V 110 H 250 V 172" />
+                <path d="M 580 0 V 75 H 750 V 172" />
+              </svg>
+              <button
+                type="button"
+                class="name-diagram__number"
+                style="--position: 8%"
+                aria-label="1: Jesse Livermore"
+                @mouseenter="activeNameDetail = 0"
+                @mouseleave="activeNameDetail = null"
+                @focus="activeNameDetail = 0"
+                @blur="activeNameDetail = null"
+              >1</button>
+              <button
+                type="button"
+                class="name-diagram__number"
+                style="--position: 58%"
+                aria-label="2: Jörmungandr"
+                @mouseenter="activeNameDetail = 1"
+                @mouseleave="activeNameDetail = null"
+                @focus="activeNameDetail = 1"
+                @blur="activeNameDetail = null"
+              >2</button>
+            </div>
+          </div>
+        </div>
+        <div class="name-grid">
+          <article
+            class="name-card"
+            :class="{ 'is-muted': activeNameDetail !== null && activeNameDetail !== 0 }"
+            @mouseenter="activeNameDetail = 0"
+            @mouseleave="activeNameDetail = null"
+          >
+            <header class="name-card__head">
+              <span class="mono">01</span>
+              <span class="mono">JESSE LAURISTON LIVERMORE</span>
+            </header>
+            <p><span class="sr-only">J.L. — </span>{{ t('landing.about.livermoreDescription') }}</p>
+          </article>
+          <article
+            class="name-card"
+            :class="{ 'is-muted': activeNameDetail !== null && activeNameDetail !== 1 }"
+            @mouseenter="activeNameDetail = 1"
+            @mouseleave="activeNameDetail = null"
+          >
+            <header class="name-card__head">
+              <span class="mono">02</span>
+              <span class="mono">JÖRMUNGANDR</span>
+            </header>
+            <p>{{ t('landing.about.jormungandrDescription') }}</p>
+          </article>
+        </div>
+      </section>
 
-        <!-- HERB / COAT OF ARMS DIAGRAM -->
-        <section ref="herbDiagram" class="herb-diagram" aria-label="J.L.JÖRMUNGANDR emblem">
+      <!-- 03 — EMBLEM DIAGRAM -->
+      <section ref="herbDiagram" class="sec sec--herb" aria-label="J.L.JÖRMUNGANDR emblem">
+        <div class="sec__head">
+          <span class="mono sec__n">03</span>
+          <h2 class="sec__title">{{ isRu ? 'ГЕРБ' : 'EMBLEM' }}</h2>
+          <span class="mono sec__tag">{{ isRu ? 'СИМВОЛИКА' : 'HERALDRY' }}</span>
+        </div>
+
+        <div class="herb-stage">
           <svg class="herb-diagram__arrows" aria-hidden="true">
             <path v-for="(path, index) in herbArrowPaths" :key="index" :d="path" />
           </svg>
@@ -94,19 +136,26 @@
               @blur="activeHerbDetail = null"
             >{{ index + 1 }}</button>
           </div>
-          <ol class="name-diagram__descriptions herb-diagram__descriptions">
-            <li
-              v-for="(detail, index) in herbDetails"
-              :id="`herb-detail-${index}`"
-              :key="detail.name"
-              :class="{ 'is-muted': activeHerbDetail !== null && activeHerbDetail !== index }"
-            >
-              <span class="herb-diagram__label">{{ index + 1 }} / {{ detail.labelKey ? t(detail.labelKey) : detail.name }}</span>
-              {{ detail.descriptionKey ? t(detail.descriptionKey) : detail.description }}
-            </li>
-          </ol>
-        </section>
-      </div>
+        </div>
+
+        <div class="herb-grid">
+          <article
+            v-for="(detail, index) in herbDetails"
+            :id="`herb-detail-${index}`"
+            :key="detail.name"
+            class="herb-card"
+            :class="{ 'is-muted': activeHerbDetail !== null && activeHerbDetail !== index }"
+            @mouseenter="activeHerbDetail = index"
+            @mouseleave="activeHerbDetail = null"
+          >
+            <header class="herb-card__head">
+              <span class="mono">0{{ index + 1 }}</span>
+              <span class="mono">{{ detail.labelKey ? t(detail.labelKey) : detail.name }}</span>
+            </header>
+            <p>{{ detail.descriptionKey ? t(detail.descriptionKey) : detail.description }}</p>
+          </article>
+        </div>
+      </section>
     </main>
 
     <!-- BACK COVER / FOOTER -->
@@ -162,19 +211,18 @@ function updateHerbArrows() {
   if (!diagram) return
   const bounds = diagram.getBoundingClientRect()
   const circles = diagram.querySelectorAll('.herb-diagram__number')
-  const descriptions = diagram.querySelectorAll('.herb-diagram__descriptions li')
-  if (!circles.length || !descriptions.length) return
+  const cards = diagram.querySelectorAll('.herb-grid .herb-card')
+  if (!circles.length || !cards.length) return
   herbArrowPaths.value = Array.from(circles, (circle, index) => {
-    if (!descriptions[index]) return ''
+    if (!cards[index]) return ''
     const start = circle.getBoundingClientRect()
-    const end = descriptions[index].getBoundingClientRect()
+    const end = cards[index].getBoundingClientRect()
     const x = start.left + start.width / 2 - bounds.left
     const y = start.top + start.height / 2 - bounds.top
     const targetX = end.left + end.width / 2 - bounds.left
-    const targetY = end.top - bounds.top - 12
-    // Outer lanes keep the long vertical runs clear of the descriptions.
-    const laneX = index < 2 ? 4 + index * 12 : bounds.width - 4 - (index - 2) * 12
-    return `M ${x} ${y} V ${y + 28} H ${laneX} V ${targetY - 18} H ${targetX} V ${targetY}`
+    const targetY = end.top - bounds.top
+    const laneX = index < 2 ? 24 + index * 24 : bounds.width - 24 - (index - 2) * 24
+    return `M ${x} ${y} V ${y + 24} H ${laneX} V ${targetY - 14} H ${targetX} V ${targetY}`
   })
 }
 
@@ -190,14 +238,16 @@ onMounted(() => {
   herbResizeObserver = new ResizeObserver(updateHerbArrows)
   if (herbDiagram.value) {
     herbResizeObserver.observe(herbDiagram.value)
-    herbDiagram.value.querySelectorAll('img, li').forEach(element => herbResizeObserver.observe(element))
+    herbDiagram.value.querySelectorAll('img, article').forEach(element => herbResizeObserver.observe(element))
     updateHerbArrows()
   }
+  window.addEventListener('resize', updateHerbArrows)
 })
 
 onBeforeUnmount(() => {
   fontLink?.remove()
   herbResizeObserver?.disconnect()
+  window.removeEventListener('resize', updateHerbArrows)
 })
 
 const herbDetails = [
@@ -255,52 +305,35 @@ const herbDetails = [
 .bar__nav { display: flex; gap: clamp(14px, 2.4vw, 36px); font-weight: 600; }
 .bar__nav a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
 
-/* ── About Main & Content ──────────────────────────── */
-.about-main {
-  flex: 1;
-  width: 100%;
-  border-bottom: 2px solid #000;
-}
+/* ── Section Headings & Specs (Identical to '/') ───── */
+.sec { border-bottom: 2px solid #000; }
+.sec__head { display: grid; grid-template-columns: clamp(40px, 5vw, 80px) 1fr auto; align-items: baseline; padding: clamp(10px, 1.2vw, 18px) var(--edge) clamp(12px, 1.4vw, 20px); border-bottom: 2px solid #000; }
+.sec__title { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.88; font-size: clamp(44px, 9vw, 160px); }
 
-.about-content {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: clamp(56px, 8vh, 120px) var(--edge) clamp(72px, 10vh, 140px);
-}
+.spec { display: grid; grid-template-columns: 2.4fr 1fr; }
+.spec__cell { padding: clamp(24px, 4vw, 56px) var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 14px; }
+.spec__cell:last-child { border-right: 0; }
+.spec__cell--side { justify-content: space-between; background: #fafafa; }
 
-.about-intro {
-  max-width: 820px;
-}
-
-.about-eyebrow {
-  display: inline-block;
-  color: rgba(0, 0, 0, 0.55);
-}
-
-.about-intro h1 {
-  margin: 20px 0 0;
-  color: #000;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(3.8rem, 9.5vw, 8.5rem);
-  font-weight: 300;
-  letter-spacing: 0.01em;
-  line-height: 0.86;
-}
-
-.about-intro p {
-  max-width: 980px;
-  margin: 30px 0 0;
-  color: rgba(0, 0, 0, 0.78);
-  font-family: var(--sans);
-  font-size: clamp(1rem, 1.35vw, 1.2rem);
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+.about-lead {
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(20px, 2.4vw, 38px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  max-width: 44ch;
 }
 
 /* ── Name Diagram ──────────────────────────────────── */
-.name-diagram {
+.name-stage {
+  padding: clamp(48px, 8vw, 100px) var(--edge) clamp(24px, 4vw, 48px);
+  overflow: hidden;
   container-type: inline-size;
-  margin-top: clamp(80px, 12vh, 150px);
+}
+
+.name-diagram {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .name-diagram__title {
@@ -308,11 +341,12 @@ const herbDetails = [
   grid-template-columns: 8% 8% 84%;
   margin: 0;
   color: #000;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--sans);
   font-size: 10cqw;
-  font-weight: 400;
-  letter-spacing: -0.055em;
-  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  line-height: 0.95;
   white-space: nowrap;
   text-align: center;
 }
@@ -334,7 +368,7 @@ const herbDetails = [
 .herb-diagram__arrows > path {
   fill: none;
   stroke: #000;
-  stroke-width: 1.5;
+  stroke-width: 2;
   vector-effect: non-scaling-stroke;
   marker-end: url(#about-arrow);
 }
@@ -344,20 +378,20 @@ const herbDetails = [
   top: 0;
   left: var(--position);
   display: grid;
-  width: clamp(24px, 3.4vw, 38px);
+  width: clamp(26px, 3.2vw, 38px);
   aspect-ratio: 1;
   transform: translate(-50%, -65%);
   place-items: center;
-  border: 1.5px solid #000;
+  border: 2px solid #000;
   border-radius: 50%;
   background: #fff;
   color: #000;
   font-family: var(--mono);
-  font-size: clamp(11px, 1.3vw, 15px);
-  font-weight: 600;
+  font-size: clamp(12px, 1.2vw, 15px);
+  font-weight: 700;
   cursor: pointer;
   pointer-events: auto;
-  transition: background-color 180ms ease, color 180ms ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   padding: 0;
 }
 
@@ -367,37 +401,54 @@ const herbDetails = [
   color: #fff;
 }
 
-.name-diagram__descriptions {
+.name-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(16px, 4vw, 48px);
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-  text-align: center;
-  color: rgba(0, 0, 0, 0.78);
-  font-family: var(--sans);
-  font-size: clamp(0.85rem, 1.15vw, 1rem);
-  line-height: 1.55;
+  grid-template-columns: 1fr 1fr;
+  border-top: 2px solid #000;
 }
 
-.name-diagram__descriptions li {
-  transition: opacity 180ms ease;
+.name-card {
+  padding: clamp(24px, 3.5vw, 48px) var(--edge);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 2px solid #000;
+  transition: opacity 0.15s ease;
 }
 
-.name-diagram__descriptions .is-muted {
+.name-card:last-child {
+  border-right: 0;
+}
+
+.name-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid #000;
+  padding-bottom: 12px;
+}
+
+.name-card p {
+  margin: 0;
+  font-size: clamp(15px, 1.25vw, 19px);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  opacity: 0.9;
+}
+
+.name-card.is-muted,
+.herb-card.is-muted {
   opacity: 0.25;
 }
 
 /* ── Herb Diagram ──────────────────────────────────── */
-.herb-divider {
-  margin: clamp(48px, 8vw, 84px) 0 clamp(32px, 5vw, 60px);
-  border: 0;
-  border-top: 2px solid #000;
+.sec--herb {
+  position: relative;
 }
 
-.herb-diagram {
+.herb-stage {
   position: relative;
+  padding: clamp(48px, 7vw, 96px) var(--edge) clamp(36px, 5vw, 64px);
 }
 
 .herb-diagram__arrows {
@@ -413,7 +464,7 @@ const herbDetails = [
 
 .herb-diagram__visual {
   position: relative;
-  width: min(75%, 510px);
+  width: min(75%, 440px);
   margin: 0 auto;
 }
 
@@ -435,25 +486,39 @@ const herbDetails = [
   outline-offset: 3px;
 }
 
-.herb-diagram__descriptions {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 72px;
-  padding: 0 16px;
+.herb-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 2px solid #000;
 }
 
-.herb-diagram__label {
-  display: block;
-  margin-bottom: 10px;
-  color: #000;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 500;
+.herb-card {
+  padding: clamp(20px, 2.5vw, 36px) var(--edge);
+  border-right: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: opacity 0.15s ease;
 }
 
-.herb-diagram__descriptions .is-muted {
-  opacity: 0.25;
+.herb-card:last-child {
+  border-right: 0;
+}
+
+.herb-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid #000;
+  padding-bottom: 10px;
+}
+
+.herb-card p {
+  margin: 0;
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  opacity: 0.88;
 }
 
 /* ── Footer ────────────────────────────────────────── */
@@ -476,40 +541,61 @@ const herbDetails = [
 
 @media (prefers-reduced-motion: reduce) {
   .name-diagram__number,
-  .name-diagram__descriptions li {
+  .name-card,
+  .herb-card {
     transition: none;
   }
 }
 
+@media (max-width: 900px) {
+  .spec {
+    grid-template-columns: 1fr;
+  }
+  .spec__cell {
+    border-right: 0;
+    border-bottom: 2px solid #000;
+  }
+  .spec__cell:last-child {
+    border-bottom: 0;
+  }
+  .herb-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .herb-card:nth-child(2) {
+    border-right: 0;
+  }
+  .herb-card:nth-child(1),
+  .herb-card:nth-child(2) {
+    border-bottom: 2px solid #000;
+  }
+}
+
 @media (max-width: 768px) {
-  .herb-diagram__descriptions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 48px 20px;
-    margin-top: 48px;
-    padding: 0;
-  }
-
-  .about-content {
-    padding-top: 48px;
-    padding-bottom: 64px;
-  }
-
-  .about-intro h1 {
-    font-size: clamp(2.6rem, 12vw, 4.4rem);
-    line-height: 0.92;
-  }
-
-  .about-intro p {
-    margin-top: 20px;
-    font-size: 0.95rem;
-  }
-
-  .name-diagram {
-    margin-top: 60px;
-  }
-
   .bar__nav a:not(:last-child) {
     display: none;
+  }
+  .herb-diagram__arrows {
+    display: none;
+  }
+  .name-grid {
+    grid-template-columns: 1fr;
+  }
+  .name-card {
+    border-right: 0;
+    border-bottom: 2px solid #000;
+  }
+  .name-card:last-child {
+    border-bottom: 0;
+  }
+  .herb-grid {
+    grid-template-columns: 1fr;
+  }
+  .herb-card {
+    border-right: 0;
+    border-bottom: 2px solid #000;
+  }
+  .herb-card:last-child {
+    border-bottom: 0;
   }
 }
 </style>
