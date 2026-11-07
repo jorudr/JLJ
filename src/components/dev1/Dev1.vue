@@ -179,6 +179,28 @@
       </div>
     </section>
 
+    <!-- §06 IMPORT -->
+    <section id="import" ref="importEl" class="import-sec" aria-labelledby="import-title">
+      <div class="import-sec__running mono">
+        <span>{{ copy.dev1.importSec.label[0] }}</span>
+        <span>{{ copy.dev1.importSec.label[1] }}</span>
+        <span>{{ copy.dev1.importSec.label[2] }}</span>
+      </div>
+      <h2 id="import-title" class="import-sec__sr">{{ copy.dev1.importSec.title }}</h2>
+      <ul class="import-sec__list">
+        <li
+          v-for="(name, index) in platforms"
+          :key="name"
+          class="import-sec__item"
+          :class="{ 'is-in': importRevealed }"
+          :style="{ '--i': index }"
+        >
+          <span class="import-sec__name">{{ name }}</span>
+          <span class="import-sec__arrow">→ {{ copy.dev1.importSec.journal }}</span>
+        </li>
+      </ul>
+    </section>
+
     <!-- PRIVACY -->
     <section class="privacy" aria-labelledby="privacy-title">
       <div class="label mono"><span>{{ copy.dev1.privacy.label[0] }}</span><span>{{ copy.dev1.privacy.label[1] }}</span></div>
@@ -338,6 +360,11 @@ const rows = computed(() => {
 })
 
 const comparison = computed(() => copy.value.dev1.comparison.rows)
+
+const platforms = ['MetaTrader 5', 'Bybit', 'Binance', 'Kraken', 'Interactive Brokers']
+const importEl = ref(null)
+const importRevealed = ref(false)
+let importObserver = null
 
 const metricListEn = [["Net Profit", "Realized trade PnL", "+$240.00", "g"], ["Risk/Reward Ratio", "Setup R/R ratio", "2.40", "g"], ["Required Adherence", "Fulfilled Required Rules", "100%", "g"], ["Additional PnL", "Additional Conditions effect", "+$42.00", "g"], ["Conditional PnL Ratio", "Profit ratio per setup condition", "1.32", "g"], ["Cognitive Stability", "Neural Telemetry", "86%", "g"], ["Dominant Bias", "Primary Friction Marker", "DISCIPLINE", "w"], ["Emotional PnL Drag", "Psychological friction drag", "-$8.00", "w"], ["Friction Density", "Friction Markers Ratio", "0.12", "w"], ["Net Result Variance", "vs Strategy Average PnL", "+$18.00", "g"], ["Yield Efficiency", "Balance Before Trade", "2.40%", "g"], ["Profit Velocity", "PnL per holding hour", "$60.00/h", "g"], ["Planned vs Realized Risk", "Risk Audit", "0.96", "g"], ["Temporal Exposure", "Holding Duration", "4.00h", "n"], ["Stop Loss Distance", "Entry to Stop Loss in %", "0.50%", "n"], ["Take Profit Distance", "Entry to TP distance in %", "1.50%", "n"], ["SL Execution Drag", "Loss-trade slippage only", "0.08 R", "n"], ["Risk Budget Adherence", "Max Risk vs Budget", "96%", "g"], ["TP Capture Ratio", "Target Reward Captured", "80%", "w"], ["Planned RR / Baseline RR", "Planned Trade RR vs Baseline RR", "0.84", "b"], ["Unrealized Alpha Left", "Maximum profit − captured profit in $", "20%", "g"], ["Confirmed Loss Time", "Time in drawdown zone", "18m", "b"], ["Confirmed Profit Time", "Time in profit zone", "3h 42m", "g"], ["Max Meaningful Drawdown", "Peak adverse move (MAE)", "-0.28%", "b"], ["Max Favorable Excursion", "Peak favorable move (MFE)", "1.48%", "g"], ["Profit Capture Ratio", "Share of MFE captured", "81%", "g"], ["Price Path Shape", "Movement sequence relative to entry", "FAVORABLE FIRST", "g"], ["Initial Movement", "First classified candle", "PROFIT", "g"], ["Entry Heat", "Adverse Delay", "0.12%", "w"], ["Adverse Before Profit", "Drawdown before Profit", "YES", "b"], ["News During Trade", "Macro News Backdrop", "NO", "n"]]
 
@@ -616,12 +643,26 @@ onMounted(() => {
   }
   refreshDownloads()
   cleanupEquity = initEquityCurve()
+  if (importEl.value) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      importRevealed.value = true
+    } else {
+      importObserver = new IntersectionObserver((entries) => {
+        if (entries.some(e => e.isIntersecting)) {
+          importRevealed.value = true
+          importObserver?.disconnect()
+        }
+      }, { threshold: 0.15 })
+      importObserver.observe(importEl.value)
+    }
+  }
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
   onScroll()
 })
 onBeforeUnmount(() => {
   cleanupEquity?.()
+  importObserver?.disconnect()
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
   fontLink?.remove()
@@ -768,6 +809,27 @@ onBeforeUnmount(() => {
 .plan--full { background: #000; color: #fff; }
 .d .plan--full a.btn { background: #fff; color: #000; border-color: #fff; }
 .d .plan--full a.btn:hover { background: #000; color: #fff; }
+
+/* ── §06 Import ─────────────────────────────────────── */
+.import-sec { border-bottom: 2px solid #000; background: #fff; color: #000; }
+.import-sec__running { display: grid; grid-template-columns: 1fr 1fr auto; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.import-sec__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.import-sec__list { list-style: none; margin: 0; padding: 0; }
+.import-sec__item { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding: clamp(10px, 1.4vw, 18px) var(--edge) clamp(8px, 1vw, 14px); border-bottom: 2px solid #000; transform: translateX(-8%); opacity: 0; transition: transform 0.6s cubic-bezier(0.7, 0, 0.2, 1) calc(var(--i) * 70ms), opacity 0.3s calc(var(--i) * 70ms), color 0.15s ease; user-select: none; }
+.import-sec__item:last-child { border-bottom: 0; }
+.import-sec__item.is-in { transform: none; opacity: 1; }
+.import-sec__name { font-weight: 800; text-transform: uppercase; letter-spacing: -0.05em; line-height: 0.86; font-size: clamp(34px, 7.4vw, 140px); transition: color 0.15s ease; }
+.import-sec__arrow { font-family: var(--mono); font-size: clamp(13px, 1.05vw, 15px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; padding-bottom: 0.5em; transition: color 0.15s ease; }
+.import-sec__item:hover .import-sec__name { color: #be123c; }
+.import-sec__item:hover .import-sec__arrow { color: #be123c; }
+@media (prefers-reduced-motion: reduce) {
+  .import-sec__item { transform: none !important; opacity: 1 !important; transition: none !important; }
+}
+@media (max-width: 900px) {
+  .import-sec__running { grid-template-columns: 1fr auto; }
+  .import-sec__running span:nth-child(2) { display: none; }
+  .import-sec__arrow { display: none; }
+}
 
 /* ── Privacy ───────────────────────────────────────── */
 .privacy { border-bottom: 2px solid #000; }

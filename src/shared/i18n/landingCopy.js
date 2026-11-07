@@ -137,6 +137,11 @@ export const landingCopy = {
         ],
         fullCta: 'Subscribe',
       },
+      importSec: {
+        label: ['§06 — Import', 'Broker API', 'Stop typing trades by hand'],
+        title: 'Supported platforms',
+        journal: 'Journal',
+      },
       privacy: {
         label: ['Data', 'Privacy'],
         title: 'Your journal and exchange API keys never leave your computer.',
@@ -348,6 +353,11 @@ export const landingCopy = {
           'Менеджер прогнозов',
         ],
         fullCta: 'Оформить подписку',
+      },
+      importSec: {
+        label: ['§06 — Импорт', 'Broker API', 'Хватит вносить сделки вручную'],
+        title: 'Поддерживаемые платформы',
+        journal: 'Дневник',
       },
       privacy: {
         label: ['Данные', 'Конфиденциальность'],
