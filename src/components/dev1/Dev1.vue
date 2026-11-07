@@ -3,11 +3,12 @@
     <!-- BAR -->
     <BarHeader />
 
-    <!-- HERO: equity curve and dynamic balance from 1.html -->
+    <!-- HERO: equity curve and dynamic balance transition to JORU -->
     <section class="hero">
-      <div class="hero__stage" title="Click to replay">
+      <div class="hero__stage">
         <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
-        <div class="hero__balance">
+        <p class="hero__word" :class="{ 'is-visible': isBalanceFinished }" aria-hidden="true">JORU</p>
+        <div class="hero__balance" :class="{ 'is-hidden': isBalanceFinished }">
           <span class="hero__balance-label">{{ isRu ? 'Баланс счёта' : 'Account balance' }}</span>
           <span ref="equityValueEl" class="hero__balance-value">$10,000.00</span>
         </div>
@@ -446,6 +447,7 @@ const onScroll = () => {
 
 const equityCanvas = ref(null)
 const equityValueEl = ref(null)
+const isBalanceFinished = ref(false)
 let cleanupEquity = null
 
 function initEquityCurve() {
@@ -599,12 +601,20 @@ function initEquityCurve() {
   function step() {
     const progress = Math.min(1, (performance.now() - startTime) / DURATION)
     draw(1 - Math.pow(1 - progress, 2))
-    frame = progress < 1 ? requestAnimationFrame(step) : null
+    if (progress < 1) {
+      frame = requestAnimationFrame(step)
+    } else {
+      frame = null
+      setTimeout(() => {
+        isBalanceFinished.value = true
+      }, 250)
+    }
   }
 
   function play() {
     if (frame) cancelAnimationFrame(frame)
     if (timer) clearTimeout(timer)
+    isBalanceFinished.value = false
     series = makeSeries()
     startTime = performance.now()
     frame = requestAnimationFrame(step)
@@ -616,8 +626,16 @@ function initEquityCurve() {
   }
 
   window.addEventListener('resize', onResize)
-  canvas.addEventListener('click', play)
   resize()
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    series = makeSeries()
+    draw(1)
+    isBalanceFinished.value = true
+    return () => {
+      window.removeEventListener('resize', onResize)
+    }
+  }
 
   const loaderEl = document.getElementById('app-loader')
   const initialDelay = loaderEl ? Math.max(0, 1750 - (performance.now() - (window.__loaderStartTime || 0))) : 0
@@ -634,7 +652,6 @@ function initEquityCurve() {
     if (timer) clearTimeout(timer)
     if (frame) cancelAnimationFrame(frame)
     window.removeEventListener('resize', onResize)
-    canvas.removeEventListener('click', play)
   }
 }
 
@@ -712,25 +729,45 @@ onBeforeUnmount(() => {
 
 /* ── Hero ──────────────────────────────────────────── */
 .hero { border-bottom: 2px solid #000; }
-.hero__stage {
+.hero__stage { position: relative; overflow: hidden; }
+.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.hero__word {
   position: relative;
-  overflow: hidden;
-  height: clamp(320px, 46vh, 520px);
-  cursor: pointer;
+  z-index: 1;
+  margin: 0;
+  padding: 0 var(--edge);
+  font-weight: 800;
+  font-size: clamp(110px, 39cqw, 800px);
+  line-height: 0.74;
+  letter-spacing: -0.06em;
+  margin-left: -0.02em;
+  padding-top: 0.06em;
+  padding-bottom: 0.04em;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero__word.is-visible {
+  opacity: 1;
+}
 .hero__balance {
   position: absolute;
   top: 12%;
   left: 0;
   right: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   pointer-events: none;
   user-select: none;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+.hero__balance.is-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 .hero__balance-label {
   font-size: 12px;
@@ -973,23 +1010,7 @@ onBeforeUnmount(() => {
 
 /* ── Phone ─────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .hero__stage {
-    display: block;
-    height: clamp(220px, 32vh, 260px);
-    border-bottom: 2px solid #000;
-  }
-  .hero__balance {
-    top: 12%;
-  }
-  .hero__balance-label {
-    font-size: 11px;
-    letter-spacing: 0.35em;
-    padding-left: 0.35em;
-    margin-bottom: 8px;
-  }
-  .hero__balance-value {
-    font-size: clamp(32px, 8.5vw, 46px);
-  }
+  .hero__stage { display: none; }
   .spec { grid-template-columns: 1fr; border-top: 0; }
   .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
   .spec__cell:last-child { border-bottom: 0; }
