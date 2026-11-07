@@ -53,3 +53,17 @@ html {
   scrollbar-width: thin;
   scrollbar-color: rgba(245, 245, 240, 0.35) transparent;
 }
+
+.d {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+@media (min-width: 1441px) {
+  .d {
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
+  }
+}
