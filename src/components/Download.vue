@@ -73,9 +73,8 @@
       <div class="end__foot mono">
         <span>Jörmungandr © {{ year }}</span>
         <div class="end__lang" role="group" aria-label="Language">
-          <router-link :to="enPath" :class="{ 'is-active': !isRu }">EN</router-link>
-          <span>/</span>
-          <router-link :to="ruPath" :class="{ 'is-active': isRu }">RU</router-link>
+          <router-link :to="enPath" class="end__lang-btn" :class="{ 'is-active': !isRu }">EN</router-link>
+          <router-link :to="ruPath" class="end__lang-btn" :class="{ 'is-active': isRu }">RU</router-link>
         </div>
         <span>
           <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link> ·
@@ -203,16 +202,15 @@ onBeforeUnmount(() => {
 .dl-note__links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 
 /* ── Back cover ────────────────────────────────────── */
-.end { background: #000; color: #fff; padding: var(--edge); display: flex; flex-direction: column; gap: clamp(20px, 3vw, 44px); min-height: 70vh; }
-.end__title { margin: clamp(20px, 5vw, 80px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
+.end { background: #000; color: #fff; padding: clamp(36px, 5vw, 64px) var(--edge) clamp(56px, 8vw, 120px); display: flex; flex-direction: column; gap: clamp(24px, 4vw, 56px); min-height: 95vh; box-sizing: border-box; }
+.end__title { margin: clamp(32px, 6vw, 100px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
+.end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 24px; border-top: 2px solid #fff; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.end__lang { display: inline-flex; align-items: center; gap: 6px; }
-.end__lang a { opacity: 0.5; transition: opacity 0.1s; }
-.end__lang a:hover { opacity: 0.85; }
-.end__lang a.is-active { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-.end__lang span { opacity: 0.35; }
+.end__lang { display: inline-flex; align-items: center; border: 1px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.06); padding: 2px; gap: 2px; }
+.end__lang-btn { display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11px; line-height: 1.2; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); text-decoration: none !important; transition: background 0.12s ease, color 0.12s ease; }
+.end__lang-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
+.end__lang-btn.is-active { background: #fff; color: #000; }
 
 @media (max-width: 900px) {
   .bar__nav a:not(:last-child) { display: none; }
