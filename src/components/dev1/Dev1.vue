@@ -925,13 +925,13 @@ onBeforeUnmount(() => {
     width: 100%;
     white-space: nowrap;
     text-align: left;
-    font-size: clamp(44px, 14.2cqw, 62px);
-    line-height: 1.02;
+    font-size: clamp(48px, 13.5cqw, 66px);
+    line-height: 1.0;
     letter-spacing: -0.04em;
     margin-bottom: 0.25em;
   }
   .spec__cell h1 .ul--ru {
-    font-size: clamp(38px, 11.2cqw, 50px);
+    font-size: clamp(42px, 11.8cqw, 56px);
     letter-spacing: -0.035em;
   }
   .spec__tail {
@@ -939,9 +939,9 @@ onBeforeUnmount(() => {
     width: 100%;
     text-align: left;
     word-spacing: normal;
-    font-size: clamp(28px, 7.8cqw, 38px);
-    line-height: 1.1;
-    letter-spacing: -0.03em;
+    font-size: clamp(34px, 9.4cqw, 46px);
+    line-height: 1.06;
+    letter-spacing: -0.035em;
     font-weight: 800;
   }
   .facts { grid-template-columns: 1fr 1fr; }
