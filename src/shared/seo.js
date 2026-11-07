@@ -66,58 +66,9 @@ const titles = {
   },
 }
 
-export const contentPages = [
-  {
-    path: '/trading-journal-software',
-    doc: 'trading-journal-software',
-    title: 'Trading journal software built for serious traders',
-    subtitle: 'What to look for in trading journal software, and how journaling, strategy design and analytics fit together.',
-    seoTitle: `Trading Journal Software — ${SEO_BRAND}`,
-    seoDescription: 'What trading journal software needs to do beyond logging trades: strategy versioning, execution analytics and broker integration.',
-    titleRu: 'Программа для торгового журнала: аналитика и стратегии',
-    subtitleRu: 'Как выбрать ПО для торгового журнала и объединить записи, разработку стратегий и аналитику.',
-    seoTitleRu: `Программа для торгового журнала — ${SEO_BRAND}`,
-    seoDescriptionRu: 'Какие функции нужны программе для торгового журнала помимо записи сделок: аналитика исполнения, проверка стратегий и интеграция с брокером.',
-  },
-  {
-    path: '/trading-journal-for-day-traders',
-    doc: 'trading-journal-for-day-traders',
-    title: 'The trading journal day traders actually need',
-    subtitle: 'High trade volume and fast decisions need a journal that surfaces patterns, not just logs trades.',
-    seoTitle: `Trading Journal for Day Traders — ${SEO_BRAND}`,
-    seoDescription: 'What a trading journal for day traders should track: session breakdowns, execution quality and rule discipline.',
-    titleRu: 'Торговый журнал для дейтрейдеров',
-    subtitleRu: 'Высокая частота сделок требует журнала, который находит закономерности, а не просто хранит записи.',
-    seoTitleRu: `Торговый журнал для дейтрейдеров — ${SEO_BRAND}`,
-    seoDescriptionRu: 'Что должен отслеживать журнал дейтрейдера: торговые сессии, качество исполнения и соблюдение правил.',
-  },
-  {
-    path: '/free-trading-journal',
-    doc: 'free-trading-journal',
-    title: 'What a free trading journal should cover',
-    subtitle: 'The fundamentals that matter most — trade logging, screenshots and context — before you pay for anything.',
-    seoTitle: `Free Trading Journal — ${SEO_BRAND}`,
-    seoDescription: 'What to expect from a free trading journal, and why consistent logging matters more than the feature tier.',
-    titleRu: 'Что должен включать бесплатный торговый журнал',
-    subtitleRu: 'Главное — записи сделок, скриншоты и контекст до перехода на платные инструменты.',
-    seoTitleRu: `Бесплатный торговый журнал — ${SEO_BRAND}`,
-    seoDescriptionRu: 'Что ожидать от бесплатного торгового журнала и почему регулярные записи важнее набора функций.',
-  },
-  {
-    path: '/how-to-keep-a-trading-journal',
-    doc: 'how-to-keep-a-trading-journal',
-    title: 'How to keep a trading journal',
-    subtitle: 'A practical, step-by-step approach to journaling trades so patterns become visible instead of forgotten.',
-    seoTitle: `How to Keep a Trading Journal — ${SEO_BRAND}`,
-    seoDescription: 'A step-by-step guide to keeping a trading journal: what to record, how to tag trades and how to review them.',
-    titleRu: 'Как вести торговый журнал',
-    subtitleRu: 'Практическое руководство: как записывать сделки и находить закономерности в своей торговле.',
-    seoTitleRu: `Как вести торговый журнал — ${SEO_BRAND}`,
-    seoDescriptionRu: 'Пошаговое руководство по торговому журналу: что записывать, как размечать сделки и анализировать результаты.',
-  },
-]
+export const contentPages = []
 
-export const indexedPaths = [...Object.keys(titles.en), ...Object.keys(titles.en).map(p => p === '/' ? '/ru/' : `/ru${p}`), ...contentPages.flatMap(page => [page.path, `/ru${page.path}`])]
+export const indexedPaths = [...Object.keys(titles.en), ...Object.keys(titles.en).map(p => p === '/' ? '/ru/' : `/ru${p}`)]
 
 export function pageSeo(path, locale = 'en') {
   if (['/dev', '/dev/', '/dev1', '/dev1/'].includes(path)) {

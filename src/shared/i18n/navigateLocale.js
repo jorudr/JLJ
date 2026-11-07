@@ -1,6 +1,4 @@
-import { contentPages } from '../seo'
-
-const localizedPaths = new Set(['/', ...contentPages.map(page => page.path)])
+const localizedPaths = new Set(['/', '/pricing', '/about', '/download', '/privacy', '/terms'])
 
 export function navigateLocale(code, path, router, setLocale) {
   const isRussianPath = path === '/ru/' || path.startsWith('/ru/')

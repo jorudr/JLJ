@@ -20,7 +20,6 @@ const escapeHtml = (value) => value
   .replace(/"/g, '&quot;')
 
 const legalHtml = (doc) => renderMarkdown(readFileSync(`src/shared/legal/${doc}.en.md`, 'utf8'))
-const contentHtml = (doc, locale = 'en') => renderMarkdown(readFileSync(`src/shared/content/${doc}.${locale}.md`, 'utf8'))
 
 // Shown immediately for crawlers and no-JS clients. Once Vue mounts it replaces
 // this content directly (no hidden/holding state, so there is no CLS or
@@ -48,9 +47,6 @@ const header = (locale) => `<header>
 
 const footer = (locale) => `<footer>
       <p><strong>${BRAND}</strong> — ${escapeHtml(homeContent[locale].seoTitle)}.</p>
-      <nav aria-label="${locale === 'ru' ? 'Руководства' : 'Guides'}">
-        ${contentPages.map(page => `<a href="${locale === 'ru' ? `/ru${page.path}` : page.path}">${escapeHtml(locale === 'ru' ? page.titleRu : page.title)}</a>`).join('\n        ')}
-      </nav>
       <nav aria-label="Legal">
         <a href="/privacy">${locale === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</a>
         <a href="/terms">${locale === 'ru' ? 'Условия использования' : 'Terms of Use'}</a>
@@ -132,9 +128,6 @@ const aboutBody = `<h1>About ${BRAND}</h1>
     <p>${BRAND} is also known as ${BRAND_ALTERNATES.join(' and ')}, reflecting the project's name and visual identity.</p>
     <p>Questions or feedback: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a> or the <a href="https://t.me/gandr_trade">Telegram community</a>. Explore the <a href="/">trading journal</a> or <a href="/download">download the application</a>.</p>`
 
-const contentBody = (page, locale = 'en') => `<h1>${escapeHtml(locale === 'ru' ? page.titleRu : page.title)}</h1>
-    <p>${escapeHtml(locale === 'ru' ? page.subtitleRu : page.subtitle)}</p>
-    <article>${contentHtml(page.doc, locale)}</article>`
 
 const pages = [
   { file: 'index.html', path: '/', body: homeBody('en'), locale: 'en' },
@@ -152,10 +145,6 @@ const pages = [
   { file: 'philosophy.html', path: '/about', body: aboutBody },
   { file: 'ru/philosophy.html', path: '/ru/about', body: aboutBody, locale: 'ru' },
   { file: 'announcement.html', path: '/download', body: downloadBody },
-  ...contentPages.flatMap(page => [
-    { file: `${page.path.slice(1)}.html`, path: page.path, body: contentBody(page), locale: 'en' },
-    { file: `ru${page.path}.html`, path: `/ru${page.path}`, body: contentBody(page, 'ru'), locale: 'ru' },
-  ]),
   { file: '404.html', path: null, body: `<h1>Page not found</h1><p>Return to the <a href="/">trading journal home page</a>.</p>` },
 ]
 
@@ -173,14 +162,8 @@ const render = ({ path, body, locale = 'en' }) => {
   html = setMeta(html, /(<meta property="og:title" content=")[^"]*(")/, title)
   html = setMeta(html, /(<meta property="og:description" content=")[^"]*(")/, description)
   html = setMeta(html, /(<meta property="og:image" content=")[^"]*(")/, SOCIAL_IMAGE)
-  if (path !== '/' && path !== '/ru/' && !contentPages.some(page => [page.path, `/ru${page.path}`].includes(path))) {
+  if (path !== '/' && path !== '/ru/') {
     html = html.replace(/\s*<link rel="alternate" hreflang="(?:en|ru|x-default)"[^>]*>/g, '')
-  }
-  const pairedPage = contentPages.find(page => [page.path, `/ru${page.path}`].includes(path))
-  if (pairedPage) {
-    const en = `${SITE}${pairedPage.path}`
-    const ru = `${SITE}/ru${pairedPage.path}`
-    html = html.replace('</head>', `<link rel="alternate" hreflang="en" href="${en}"><link rel="alternate" hreflang="ru" href="${ru}"><link rel="alternate" hreflang="x-default" href="${en}"></head>`)
   }
   if (path) {
     html = setMeta(html, /(<link rel="canonical" href=")[^"]*(")/, `${SITE}${path}`)
@@ -292,7 +275,6 @@ ${BRAND} is a desktop trading journal for Windows and macOS. Also known as ${BRA
 - [Pricing](${SITE}/pricing): Free and Full plan pricing and features
 - [Download](${SITE}/download): Download for Windows and macOS
 - [About](${SITE}/about): About ${BRAND}
-${contentPages.map(page => `- [${page.title}](${SITE}${page.path}): ${page.seoDescription}`).join('\n')}
 
 ## Contact
 

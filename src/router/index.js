@@ -6,9 +6,7 @@ import NotFound from '../components/NotFound.vue'
 import About from '../components/About.vue'
 import Download from '../components/Download.vue'
 import LegalPage from '../components/LegalPage.vue'
-import ContentPage from '../components/ContentPage.vue'
 import { useI18n } from '../shared/i18n/useI18n'
-import { contentPages } from '../shared/seo'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -109,17 +107,6 @@ const router = createRouter({
       props: { doc: 'terms' },
       meta: { titleKey: 'landing.legal.termsTitle' }
     },
-    ...contentPages.flatMap(({ path, doc, title, subtitle, titleRu, subtitleRu }) => [{
-      path,
-      name: `content-${doc}`,
-      component: ContentPage,
-      props: { path, doc, title, subtitle, titleRu, subtitleRu },
-    }, {
-      path: `/ru${path}`,
-      name: `content-${doc}-ru`,
-      component: ContentPage,
-      props: { path, doc, title, subtitle, titleRu, subtitleRu },
-    }]),
     {
       // Work-in-progress redesign. Not indexed (see pageSeo in shared/seo.js).
       path: '/dev',
