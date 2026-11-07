@@ -706,7 +706,7 @@ onBeforeUnmount(() => {
 .spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
-.spec__cell h1 .ul { color: #be123c; text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
+.spec__cell h1 .ul { color: #e10600; text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
 .spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5vw, 88px); }
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
@@ -814,8 +814,8 @@ onBeforeUnmount(() => {
 .import-sec__item.is-in { transform: none; opacity: 1; }
 .import-sec__name { font-weight: 800; text-transform: uppercase; letter-spacing: -0.05em; line-height: 0.86; font-size: clamp(34px, 7.4vw, 140px); transition: color 0.15s ease; }
 .import-sec__arrow { font-family: var(--mono); font-size: clamp(13px, 1.05vw, 15px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; padding-bottom: 0.5em; transition: color 0.15s ease; }
-.import-sec__item:hover .import-sec__name { color: #be123c; }
-.import-sec__item:hover .import-sec__arrow { color: #be123c; }
+.import-sec__item:hover .import-sec__name { color: #e10600; }
+.import-sec__item:hover .import-sec__arrow { color: #e10600; }
 @media (prefers-reduced-motion: reduce) {
   .import-sec__item { transform: none !important; opacity: 1 !important; transition: none !important; }
 }
