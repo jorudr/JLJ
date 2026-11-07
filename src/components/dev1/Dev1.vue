@@ -194,7 +194,7 @@
     <section class="privacy" aria-labelledby="privacy-title">
       <div class="label mono"><span>Data</span><span>Privacy</span></div>
       <div class="privacy__body">
-        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys <span class="ul">never leave</span> your computer.</h2>
+        <h2 id="privacy-title" class="privacy__title">Your journal and exchange API keys never leave your computer.</h2>
         <p>Google Sign-In is used only for your account: profile, license, forum and events. Your data is never sold or shared with advertisers. <router-link to="/privacy">Privacy Policy ↗</router-link></p>
       </div>
     </section>
@@ -696,7 +696,7 @@ onBeforeUnmount(() => {
 .spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
-.ul, .spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
+.spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
 .spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5vw, 88px); }
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
