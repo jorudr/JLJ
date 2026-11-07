@@ -923,16 +923,15 @@ onBeforeUnmount(() => {
   .spec__cell h1 .ul {
     display: block;
     width: 100%;
-    white-space: nowrap;
     text-align: left;
-    font-size: clamp(48px, 13.5cqw, 66px);
-    line-height: 1.0;
-    letter-spacing: -0.04em;
-    margin-bottom: 0.25em;
+    font-size: clamp(84px, 24cqw, 130px);
+    line-height: 0.88;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.18em;
   }
   .spec__cell h1 .ul--ru {
-    font-size: clamp(42px, 11.8cqw, 56px);
-    letter-spacing: -0.035em;
+    font-size: clamp(72px, 20.5cqw, 110px);
+    letter-spacing: -0.045em;
   }
   .spec__tail {
     display: block;
