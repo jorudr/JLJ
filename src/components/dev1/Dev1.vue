@@ -186,7 +186,7 @@
           <p>Find, fix and prove. Less than the cost of one bad trade.</p>
           <ul><li v-for="item in plans.full" :key="item">{{ item }}</li></ul>
           <router-link to="/pricing" class="btn">Subscribe</router-link>
-          <span class="plan__crypto mono">Patreon · Crypto via NOWPayments</span>
+          <span class="plan__crypto mono">Patreon · In-app crypto via NOWPayments</span>
         </article>
       </div>
     </section>

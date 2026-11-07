@@ -58,9 +58,9 @@
             <span>Subscribe via Patreon</span>
             <span aria-hidden="true">↗</span>
           </a>
-          <div class="plan__crypto">
-            <span class="mono">Crypto payment</span>
-            <p>You can also pay with cryptocurrency via <strong>NOWPayments</strong> (BTC, ETH, USDT, SOL and more). 30 days of full access as a one-time payment with no auto-renewal.</p>
+          <div class="plan__crypto-hint">
+            <span class="mono">Crypto via NOWPayments</span>
+            <small>Available directly inside the desktop app</small>
           </div>
           <router-link to="/download" class="plan__existing">
             Already subscribed? Download desktop app →
@@ -101,7 +101,7 @@
         </article>
         <article class="faq__item">
           <h2 class="faq__q">Can I pay with cryptocurrency?</h2>
-          <p class="faq__a">Yes. We accept crypto payments via NOWPayments (Bitcoin, Ethereum, USDT, USDC, Solana and more). Each payment provides 30 days of Full access as a one-time purchase with no auto-renewal.</p>
+          <p class="faq__a">Yes. Crypto payments via NOWPayments are available directly inside the desktop application. You can pay in BTC, ETH, USDT, USDC, Solana and other coins for 30 days of Full access without auto-renewal.</p>
         </article>
         <article class="faq__item">
           <h2 class="faq__q">Where is my trading data stored?</h2>
@@ -253,9 +253,9 @@ onBeforeUnmount(() => {
 .plan ul { list-style: none; margin: 4px 0 18px; padding: 0; font-size: clamp(14px, 1.1vw, 17px); }
 .plan li { padding: 8px 0; border-top: 1px solid currentColor; }
 .plan .btn { margin-top: auto; }
-.plan__crypto { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; flex-direction: column; gap: 6px; }
-.plan__crypto .mono { font-size: 11px; letter-spacing: 0.08em; opacity: 0.65; }
-.plan__crypto p { margin: 0; font-size: 13px; line-height: 1.35; opacity: 0.9; }
+.plan__crypto-hint { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.plan__crypto-hint .mono { font-size: 11px; letter-spacing: 0.05em; opacity: 0.75; }
+.plan__crypto-hint small { font-size: 12px; opacity: 0.65; }
 .plan__existing { margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
 .plan__existing:hover { opacity: 1; }
 .plan--full { background: #000; color: #fff; }
