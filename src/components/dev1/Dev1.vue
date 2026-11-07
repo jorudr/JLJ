@@ -926,13 +926,14 @@ onBeforeUnmount(() => {
     text-align: left;
     text-decoration: none;
     font-size: clamp(84px, 24cqw, 130px);
-    line-height: 0.88;
+    line-height: 1.04;
     letter-spacing: -0.05em;
-    margin-bottom: 0.18em;
+    margin-bottom: 0.22em;
   }
   .spec__cell h1 .ul__w1 {
     display: block;
     text-decoration: none;
+    margin-bottom: 0.1em;
   }
   .spec__cell h1 .ul__w2 {
     display: inline-block;
