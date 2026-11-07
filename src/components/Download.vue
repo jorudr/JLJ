@@ -72,14 +72,18 @@
       </div>
       <div class="end__foot">
         <span class="end__foot-copy">Jörmungandr © {{ year }}</span>
-        <LangDropdown />
-        <span class="end__foot-links">
-          <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link>
-          <span class="end__foot-sep" aria-hidden="true">·</span>
-          <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link>
-          <span class="end__foot-sep" aria-hidden="true">·</span>
-          <a href="https://t.me/gandr_trade" target="_blank" rel="noopener">Telegram</a>
-        </span>
+        <div class="end__foot-aside">
+          <div class="end__foot-links">
+            <router-link :to="isRu ? '/ru/terms' : '/terms'">{{ copy.footer.terms }}</router-link>
+            <span class="end__foot-sep" aria-hidden="true">·</span>
+            <router-link :to="isRu ? '/ru/privacy' : '/privacy'">{{ copy.footer.privacy }}</router-link>
+            <span class="end__foot-sep" aria-hidden="true">·</span>
+            <a href="https://t.me/gandr_trade" target="_blank" rel="noopener">Telegram</a>
+          </div>
+          <div class="end__foot-lang">
+            <LangDropdown />
+          </div>
+        </div>
       </div>
     </footer>
   </div>
@@ -191,12 +195,18 @@ onBeforeUnmount(() => {
 .end { background: #000; color: #fff; padding: clamp(36px, 5vw, 64px) var(--edge) clamp(56px, 8vw, 120px); display: flex; flex-direction: column; gap: clamp(24px, 4vw, 56px); min-height: 95vh; box-sizing: border-box; }
 .end__title { margin: clamp(32px, 6vw, 100px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
 .end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 28px; border-top: 2px solid #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.end__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; padding-top: 28px; border-top: 2px solid #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 .end__foot a { text-decoration: none; transition: opacity 0.1s; }
 .end__foot a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
-.end__foot-copy { font-weight: 700; letter-spacing: -0.01em; }
+.end__foot-copy { font-weight: 700; letter-spacing: -0.01em; padding-top: 2px; }
+.end__foot-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
 .end__foot-links { display: inline-flex; align-items: center; gap: 12px; }
 .end__foot-sep { opacity: 0.35; }
+.end__foot-lang { display: flex; justify-content: flex-end; }
+@media (max-width: 600px) {
+  .end__foot-aside { align-items: flex-start; }
+  .end__foot-lang { justify-content: flex-start; }
+}
 
 @media (max-width: 900px) {
   .bar__nav a:not(:last-child) { display: none; }

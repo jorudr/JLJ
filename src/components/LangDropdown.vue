@@ -206,8 +206,7 @@ onBeforeUnmount(() => {
 .lang-dropdown__panel {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
   min-width: 230px;
   background: #000;
   border: 2px solid #fff;
@@ -289,17 +288,13 @@ onBeforeUnmount(() => {
 .lang-fade-enter-from,
 .lang-fade-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateY(4px);
 }
 
 @media (max-width: 600px) {
   .lang-dropdown__panel {
+    right: auto;
     left: 0;
-    transform: none;
-  }
-  .lang-fade-enter-from,
-  .lang-fade-leave-to {
-    transform: translateY(4px);
   }
 }
 </style>
