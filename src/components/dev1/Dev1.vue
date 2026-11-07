@@ -3,11 +3,14 @@
     <!-- BAR -->
     <BarHeader />
 
-    <!-- HERO: the wordmark is the picture -->
+    <!-- HERO: equity curve and dynamic balance from 1.html -->
     <section class="hero">
-      <div class="hero__stage">
+      <div class="hero__stage" title="Click to replay">
         <canvas ref="equityCanvas" class="hero__canvas" aria-hidden="true"></canvas>
-        <p class="hero__word" aria-hidden="true">JORU</p>
+        <div class="hero__balance">
+          <span class="hero__balance-label">{{ isRu ? 'Баланс счёта' : 'Account balance' }}</span>
+          <span ref="equityValueEl" class="hero__balance-value">$0.00</span>
+        </div>
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
@@ -442,75 +445,44 @@ const onScroll = () => {
 }
 
 const equityCanvas = ref(null)
+const equityValueEl = ref(null)
 let cleanupEquity = null
 
 function initEquityCurve() {
   const canvas = equityCanvas.value
+  const valueEl = equityValueEl.value
   if (!canvas) return null
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
 
-  const START = 10000
-  const POINTS = 140
+  // Settings from 1.html
+  const START = 2.5
+  const POINTS = 90
   const DURATION = 4500
   const COLOR = '#000000'
 
   let series = []
   let startTime = 0
   let frame = null
+  let timer = null
 
   function makeSeries() {
-    const target = 38000 + Math.random() * 26000
+    const target = 20000 + Math.random() * 70000
     const out = []
-
-    // 3 distinct realistic drawdown & recovery cycles
-    const d1Start = 0.13 + (Math.random() - 0.5) * 0.03
-    const d1End = 0.28 + (Math.random() - 0.5) * 0.03
-    const d1Depth = 0.19 + Math.random() * 0.07
-
-    const d2Start = 0.43 + (Math.random() - 0.5) * 0.04
-    const d2End = 0.64 + (Math.random() - 0.5) * 0.04
-    const d2Depth = 0.23 + Math.random() * 0.08
-
-    const d3Start = 0.75 + (Math.random() - 0.5) * 0.03
-    const d3End = 0.88 + (Math.random() - 0.5) * 0.03
-    const d3Depth = 0.15 + Math.random() * 0.06
-
-    let prevNoise = 0
-
     for (let i = 0; i < POINTS; i++) {
       const t = i / (POINTS - 1)
-      let macro = START * Math.pow(target / START, Math.pow(t, 1.26))
-
-      // First pullback after initial run-up
-      if (t >= d1Start && t <= d1End) {
-        const p = (t - d1Start) / (d1End - d1Start)
-        macro *= (1 - Math.sin(p * Math.PI) * d1Depth)
-      }
-
-      // Second protracted drawdown with a choppy double-dip consolidation before breakout
-      if (t >= d2Start && t <= d2End) {
-        const p = (t - d2Start) / (d2End - d2Start)
-        const doubleDip = Math.sin(p * Math.PI) * (1 + 0.28 * Math.sin(p * Math.PI * 3))
-        macro *= (1 - Math.max(0, doubleDip) * d2Depth)
-      }
-
-      // Third late drawdown test before the final high-water push
-      if (t >= d3Start && t <= d3End) {
-        const p = (t - d3Start) / (d3End - d3Start)
-        macro *= (1 - Math.sin(p * Math.PI) * d3Depth)
-      }
-
-      // Realistic trade-level sawtooth noise with clustering
-      const trade = (Math.random() - 0.48) * 0.045
-      prevNoise = prevNoise * 0.6 + trade
-      if (i === 0 || i === POINTS - 1) prevNoise = 0
-
-      out.push(Math.max(START * 0.8, macro * (1 + prevNoise)))
+      const base = START * Math.pow(target / START, Math.pow(t, 1.6))
+      const dip = t > 0.35 && t < 0.55 ? 1 - Math.sin((t - 0.35) / 0.2 * Math.PI) * 0.45 : 1
+      const noise = i === 0 || i === POINTS - 1 ? 1 : 1 + (Math.random() - 0.5) * 0.18
+      out.push(base * dip * noise)
     }
-
     out[0] = START
+    out[POINTS - 1] = target
     return out
+  }
+
+  function fmt(v) {
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   function resize() {
@@ -525,9 +497,9 @@ function initEquityCurve() {
     const h = canvas.clientHeight
     if (!w || !h) return
     ctx.clearRect(0, 0, w, h)
-    const padX = w * 0.06
-    const top = h * 0.24
-    const bottom = h * 0.88
+    const padX = w * 0.08
+    const top = h * 0.38
+    const bottom = h * 0.9
     const logMin = Math.log(Math.min(...series))
     const logMax = Math.log(Math.max(...series))
     const pt = i => ({
@@ -547,7 +519,7 @@ function initEquityCurve() {
     ctx.lineJoin = 'round'
     ctx.lineCap = 'round'
     ctx.shadowBlur = 12
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)'
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)'
     ctx.beginPath()
     const p0 = pt(0)
     ctx.moveTo(p0.x, p0.y)
@@ -564,6 +536,9 @@ function initEquityCurve() {
     ctx.arc(edge.x, edge.y, 4, 0, Math.PI * 2)
     ctx.fill()
     ctx.shadowBlur = 0
+
+    const v = series[idx] + (series[next] - series[idx]) * frac
+    if (valueEl) valueEl.textContent = fmt(v)
   }
 
   function step() {
@@ -574,6 +549,7 @@ function initEquityCurve() {
 
   function play() {
     if (frame) cancelAnimationFrame(frame)
+    if (timer) clearTimeout(timer)
     series = makeSeries()
     startTime = performance.now()
     frame = requestAnimationFrame(step)
@@ -581,16 +557,29 @@ function initEquityCurve() {
 
   const onResize = () => {
     resize()
-    if (!frame) draw(1)
+    if (!frame && series.length) draw(1)
   }
 
   window.addEventListener('resize', onResize)
+  canvas.addEventListener('click', play)
   resize()
-  play()
+
+  const loaderEl = document.getElementById('app-loader')
+  const initialDelay = loaderEl ? Math.max(0, 1750 - (performance.now() - (window.__loaderStartTime || 0))) : 0
+
+  if (initialDelay > 0) {
+    series = makeSeries()
+    draw(0)
+    timer = setTimeout(play, initialDelay)
+  } else {
+    play()
+  }
 
   return () => {
+    if (timer) clearTimeout(timer)
     if (frame) cancelAnimationFrame(frame)
     window.removeEventListener('resize', onResize)
+    canvas.removeEventListener('click', play)
   }
 }
 
@@ -668,9 +657,42 @@ onBeforeUnmount(() => {
 
 /* ── Hero ──────────────────────────────────────────── */
 .hero { border-bottom: 2px solid #000; }
-.hero__stage { position: relative; overflow: hidden; }
-.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-.hero__word { position: relative; z-index: 1; margin: 0; padding: 0 var(--edge); font-weight: 800; font-size: clamp(110px, 39cqw, 800px); line-height: 0.74; letter-spacing: -0.06em; margin-left: -0.02em; padding-top: 0.06em; padding-bottom: 0.04em; user-select: none; }
+.hero__stage {
+  position: relative;
+  overflow: hidden;
+  height: clamp(320px, 46vh, 520px);
+  cursor: pointer;
+}
+.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero__balance {
+  position: absolute;
+  top: 12%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  pointer-events: none;
+  user-select: none;
+}
+.hero__balance-label {
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.45);
+  margin-bottom: 14px;
+}
+.hero__balance-value {
+  font-size: clamp(40px, 9vw, 140px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #000;
+}
 .spec { display: grid; grid-template-columns: 2.4fr 1fr; border-top: 2px solid #000; }
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
@@ -896,7 +918,23 @@ onBeforeUnmount(() => {
 
 /* ── Phone ─────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .hero__stage { display: none; }
+  .hero__stage {
+    display: block;
+    height: clamp(220px, 32vh, 260px);
+    border-bottom: 2px solid #000;
+  }
+  .hero__balance {
+    top: 12%;
+  }
+  .hero__balance-label {
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    padding-left: 0.35em;
+    margin-bottom: 8px;
+  }
+  .hero__balance-value {
+    font-size: clamp(32px, 8.5vw, 46px);
+  }
   .spec { grid-template-columns: 1fr; border-top: 0; }
   .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
   .spec__cell:last-child { border-bottom: 0; }
