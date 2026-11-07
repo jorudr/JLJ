@@ -1,87 +1,204 @@
 <template>
-  <div class="download-page relative min-h-screen bg-black text-white/80">
-    <PageGradflowBackground />
-    <div class="relative z-[1] mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-6 pt-4 sm:px-10 sm:pt-6">
-      <SiteNav :always-dark="true" />
-      <main class="download-main" aria-labelledby="download-title" :lang="locale">
-        <header class="download-intro">
-          <h1 id="download-title">{{ t('landing.downloadPage.title') }}</h1>
-          <p>{{ t('landing.downloadPage.subtitle') }}</p>
-        </header>
-        <section class="download-card" :aria-label="t('landing.downloadPage.title')">
-          <p class="download-description">{{ t('landing.downloadPage.appDescription') }}</p>
-          <p class="download-mobile-note">{{ t('landing.downloadPage.mobileNote') }}</p>
-          <div class="download-actions">
-            <a v-for="platform in downloads" :key="platform.id" :href="platform.url" download class="download-button">
-              <div class="download-button__label">
-                <svg v-if="platform.id === 'windows'" class="platform-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                  <path d="M0 0h11v11H0zM13 0h11v11H13zM0 13h11v11H0zM13 13h11v11H13z"/>
-                </svg>
-                <svg v-else-if="platform.id === 'macos'" class="platform-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.84.94-2.91-.91.04-2.03.61-2.68 1.38-.58.67-1.09 1.76-.95 2.81 1.02.08 2.06-.51 2.69-1.28z"/>
-                </svg>
-                <span>{{ t(platform.label) }}</span>
-              </div>
-              <span class="download-arrow" aria-hidden="true">↓</span>
-            </a>
+  <div class="d">
+    <!-- BAR -->
+    <header class="bar">
+      <router-link to="/" class="bar__brand" aria-label="JÖRMUNGANDR home">
+        <img src="/assets/herb.svg" alt="" width="18" height="16" />
+        <span>JÖRMUNGANDR</span>
+      </router-link>
+      <nav class="bar__nav" aria-label="Main">
+        <router-link to="/#karl-nikolai">What it does</router-link>
+        <router-link to="/#pricing">Pricing</router-link>
+        <router-link to="/download">Download</router-link>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="dl-hero" aria-labelledby="dl-title">
+      <div class="label mono"><span>Download</span><span>Desktop workspace</span></div>
+      <div class="dl-hero__body">
+        <h1 id="dl-title" class="dl-hero__title">Download JORU for macOS and Windows.</h1>
+        <p class="dl-hero__sub">Free trading journal, no time limit. Keep every trade, note, tag and screenshot on your computer.</p>
+      </div>
+    </section>
+
+    <!-- PLATFORMS GRID -->
+    <section class="dl-grid" aria-label="Download platforms">
+      <article v-for="platform in downloads" :key="platform.id" class="dl-card">
+        <div class="dl-card__top">
+          <span class="mono">{{ platform.id === 'macos' ? 'Apple Silicon & Intel' : '64-bit x86_64' }}</span>
+          <span class="mono">Free plan included</span>
+        </div>
+        <div class="dl-card__main">
+          <div class="dl-card__head">
+            <h2 class="dl-card__name">{{ platform.name }}</h2>
+            <p class="dl-card__req">
+              <template v-if="platform.id === 'macos'">Universal DMG installer. Requires macOS 12 Monterey or newer.</template>
+              <template v-else>Native setup executable. Requires Windows 10 or 11 (64-bit).</template>
+            </p>
           </div>
-          <router-link to="/pricing" class="download-link">{{ t('landing.downloadPage.compare') }} ↗</router-link>
-        </section>
-        <section class="download-help" aria-labelledby="download-help-title">
-          <h2 id="download-help-title">{{ t('landing.downloadPage.helpTitle') }}</h2>
-          <p>{{ t('landing.downloadPage.helpText') }}</p>
-          <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer">Telegram ↗</a>
-        </section>
-      </main>
-      <AppFooter hide-hero />
-    </div>
+          <a :href="platform.url" download class="btn dl-card__btn">
+            <span>Download for {{ platform.name }}</span>
+            <span aria-hidden="true">↓</span>
+          </a>
+        </div>
+      </article>
+    </section>
+
+    <!-- FACTS -->
+    <section class="facts" aria-label="Key facts">
+      <div><strong>$0</strong><span>Free journal, no time limit.</span></div>
+      <div><strong>100%</strong><span>Your trades and exchange API keys stay on your computer.</span></div>
+      <div><strong>5</strong><span>Broker imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers.</span></div>
+      <div><strong>2</strong><span>Windows and macOS native applications.</span></div>
+    </section>
+
+    <!-- MOBILE & HELP -->
+    <section class="dl-note" aria-labelledby="dl-note-title">
+      <div class="label mono"><span>Notice</span><span>Desktop only</span></div>
+      <div class="dl-note__body">
+        <div class="dl-note__col">
+          <h2 id="dl-note-title" class="dl-note__heading">Looking for mobile?</h2>
+          <p>JORU is designed as a deep desktop analytical workspace. Reviewing complex condition trees, price candles and metrics requires screen real estate and local offline storage.</p>
+          <p>If you are on a phone, open this page on your desktop computer to download.</p>
+        </div>
+        <div class="dl-note__col">
+          <h2 class="dl-note__heading">Installation help</h2>
+          <p>Have questions about installing, importing broker data or configuring your account? Connect with the community or read our setup guides.</p>
+          <div class="dl-note__links">
+            <a href="https://t.me/gandr_trade" target="_blank" rel="noreferrer" class="btn btn--line">Telegram community ↗</a>
+            <router-link to="/#pricing" class="btn btn--line">Compare plans ↗</router-link>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BACK COVER / FOOTER -->
+    <footer class="end">
+      <h2 class="end__title">Find the leak.<br />Fix the rule.</h2>
+      <div class="end__actions">
+        <a v-for="item in downloads" :key="item.id" :href="item.url" class="btn btn--paper">Download for {{ item.name }} <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="end__foot mono">
+        <span>Jörmungandr © {{ year }}</span>
+        <span><router-link to="/terms">Terms</router-link> · <router-link to="/privacy">Privacy</router-link> · <a href="https://t.me/gandr_trade">Telegram</a></span>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import SiteNav from './SiteNav.vue'
-import AppFooter from './AppFooter.vue'
-import PageGradflowBackground from './PageGradflowBackground.vue'
-import { onMounted } from 'vue'
-import { useI18n } from '../shared/i18n/useI18n'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { downloads, refreshDownloads } from '../shared/downloads'
 
-const { t, locale } = useI18n()
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap'
+const year = new Date().getFullYear()
 
-onMounted(refreshDownloads)
+let fontLink = null
+
+onMounted(() => {
+  if (!document.querySelector(`link[href="${FONT_HREF}"]`)) {
+    fontLink = document.createElement('link')
+    fontLink.rel = 'stylesheet'
+    fontLink.href = FONT_HREF
+    document.head.appendChild(fontLink)
+  }
+  refreshDownloads()
+})
+
+onBeforeUnmount(() => {
+  fontLink?.remove()
+})
 </script>
 
 <style scoped>
-.download-page { font-family: 'Cormorant Garamond', serif; }
-.download-main { width: min(100%, 1060px); margin: 0 auto; padding: clamp(88px, 10vw, 140px) 0 72px; flex: 1; }
-.download-intro { text-align: start; margin-bottom: clamp(40px, 6vw, 64px); }
-.download-intro h1 { font-size: clamp(2.7rem, 6vw, 5.4rem); font-weight: 300; line-height: 1; }
-.download-intro p { max-width: 620px; margin: 24px 0 0; color: rgba(255,255,255,.6); }
-.download-intro p, .download-description, .download-help p { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .95rem; line-height: 1.6; }
-.download-card { width: 100%; margin: 0; padding: clamp(28px, 4vw, 48px); border: 1px solid #f5f5f0; background: #f5f5f0; color: #000; display: flex; flex-direction: column; min-width: 0; }
-.download-description { margin: 0 0 28px; font-size: 1.05rem; opacity: .75; max-width: 720px; }
-.download-mobile-note { display: none; margin: -12px 0 24px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .85rem; line-height: 1.5; opacity: .6; max-width: 560px; }
-
-@media (max-width: 640px) {
-  .download-mobile-note { display: block; }
+.d {
+  --edge: clamp(14px, 1.6vw, 24px);
+  --gut: clamp(14px, 1.5vw, 22px);
+  --sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  background: #fff;
+  color: #000;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.15;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: clip;
 }
-.download-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.download-button { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 22px; border: 1px solid #000; background: #000; color: #f5f5f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .84rem; letter-spacing: .04em; transition: background 180ms ease, color 180ms ease; }
-.download-button__label { display: flex; align-items: center; gap: 12px; }
-.platform-icon { flex-shrink: 0; opacity: .9; }
-.download-arrow { font-size: .95rem; opacity: .7; }
-.download-button:hover { background: #242424; }
-.download-button:focus-visible { outline-color: #000; }
-.download-link { display: inline-block; margin-top: 28px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .88rem; text-decoration: underline; text-underline-offset: 4px; }
-a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
-.download-help { width: 100%; margin: 56px 0 0; padding-top: 36px; border-top: 1px solid rgba(255,255,255,.18); }
-.download-help h2 { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 300; }
-.download-help p { color: rgba(255,255,255,.6); margin: 12px 0 20px; max-width: 680px; }
-.download-help a { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; text-decoration: underline; text-underline-offset: 4px; }
-.download-help a:hover { opacity: .8; }
+.d *, .d *::before, .d *::after { box-sizing: border-box; }
+.d a { color: inherit; text-decoration: none; }
+.d :focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.mono { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.2; margin: 0; }
 
-@media (max-width: 640px) {
-  .download-actions { grid-template-columns: 1fr; }
-  .download-card { padding: 24px 20px; }
+/* buttons */
+.d a.btn { display: inline-flex; justify-content: space-between; gap: 12px; align-items: center; padding: 16px 18px 15px; background: #000; color: #fff; border: 2px solid #000; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 16px; transition: background 0.1s, color 0.1s; }
+.d a.btn:hover { background: #fff; color: #000; }
+.d a.btn--line { background: transparent; color: #000; }
+.d a.btn--line:hover { background: #000; color: #fff; }
+.d a.btn--paper { background: #fff; color: #000; border-color: #fff; }
+.d a.btn--paper:hover { background: #000; color: #fff; }
+
+/* ── Bar ───────────────────────────────────────────── */
+.bar { position: sticky; top: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; gap: 16px; height: 46px; padding: 0 var(--edge); background: #fff; border-bottom: 2px solid #000; }
+.bar__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; letter-spacing: -0.01em; white-space: nowrap; }
+.bar__brand img { filter: brightness(0); display: block; }
+.bar__nav { display: flex; gap: clamp(14px, 2.4vw, 36px); font-weight: 600; }
+.bar__nav a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+
+/* ── Labels ────────────────────────────────────────── */
+.label { display: flex; justify-content: space-between; padding: 12px var(--edge) 11px; border-bottom: 2px solid #000; }
+
+/* ── Hero ──────────────────────────────────────────── */
+.dl-hero { border-bottom: 2px solid #000; }
+.dl-hero__body { padding: clamp(36px, 6vw, 84px) var(--edge) clamp(28px, 4vw, 56px); }
+.dl-hero__title { margin: 0; font-weight: 800; letter-spacing: -0.04em; line-height: 0.94; font-size: clamp(38px, 6.4vw, 108px); max-width: 22ch; }
+.dl-hero__sub { margin: clamp(16px, 2.2vw, 28px) 0 0; font-size: clamp(16px, 1.35vw, 22px); line-height: 1.25; letter-spacing: -0.015em; max-width: 54ch; opacity: 0.85; }
+
+/* ── Platforms Grid ────────────────────────────────── */
+.dl-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid #000; }
+.dl-card { display: flex; flex-direction: column; justify-content: space-between; border-right: 2px solid #000; min-height: 380px; }
+.dl-card:last-child { border-right: 0; }
+.dl-card__top { display: flex; justify-content: space-between; padding: 12px var(--edge); border-bottom: 2px solid #000; opacity: 0.75; }
+.dl-card__main { padding: var(--edge); display: flex; flex-direction: column; justify-content: space-between; flex: 1; gap: 32px; }
+.dl-card__name { margin: 0; font-weight: 800; font-size: clamp(48px, 7vw, 110px); letter-spacing: -0.05em; line-height: 0.9; }
+.dl-card__req { margin: 12px 0 0; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.25; opacity: 0.75; max-width: 36ch; }
+.dl-card__btn { width: 100%; margin-top: auto; }
+
+/* ── Facts ─────────────────────────────────────────── */
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2px solid #000; }
+.facts > div { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 14px; min-height: 200px; justify-content: space-between; }
+.facts > div:last-child { border-right: 0; }
+.facts strong { font-weight: 800; letter-spacing: -0.06em; line-height: 0.85; font-size: clamp(56px, 7.4vw, 128px); }
+.facts span { font-size: clamp(13px, 1.05vw, 16px); line-height: 1.2; max-width: 28ch; }
+
+/* ── Mobile & Help ─────────────────────────────────── */
+.dl-note { border-bottom: 2px solid #000; }
+.dl-note__body { display: grid; grid-template-columns: 1fr 1fr; }
+.dl-note__col { padding: clamp(28px, 4vw, 56px) var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 14px; }
+.dl-note__col:last-child { border-right: 0; }
+.dl-note__heading { margin: 0; font-weight: 800; font-size: clamp(24px, 2.6vw, 42px); letter-spacing: -0.03em; line-height: 1.05; }
+.dl-note__col p { margin: 0; font-size: clamp(14px, 1.15vw, 17px); line-height: 1.35; opacity: 0.85; max-width: 48ch; }
+.dl-note__links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+
+/* ── Back cover ────────────────────────────────────── */
+.end { background: #000; color: #fff; padding: var(--edge); display: flex; flex-direction: column; gap: clamp(20px, 3vw, 44px); min-height: 70vh; }
+.end__title { margin: clamp(20px, 5vw, 80px) 0 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.82; font-size: clamp(54px, 13vw, 240px); margin-left: -0.02em; }
+.end__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.end__foot { margin-top: auto; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 2px solid #fff; }
+.end__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 900px) {
+  .bar__nav a:not(:last-child) { display: none; }
+  .dl-grid { grid-template-columns: 1fr; }
+  .dl-card { border-right: 0; border-bottom: 2px solid #000; }
+  .dl-card:last-child { border-bottom: 0; }
+  .facts { grid-template-columns: 1fr 1fr; }
+  .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
+  .facts > div:nth-child(2n) { border-right: 0; }
+  .facts > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .dl-note__body { grid-template-columns: 1fr; }
+  .dl-note__col { border-right: 0; border-bottom: 2px solid #000; }
+  .dl-note__col:last-child { border-bottom: 0; }
 }
 </style>
