@@ -22,7 +22,7 @@
       </div>
       <div class="spec">
         <div class="spec__cell spec__cell--lead">
-          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>{{ isRu ? ', который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</h1>
+          <h1><span class="ul">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}<span v-if="isRu" class="spec__comma">,</span></span>{{ isRu ? ' который находит привычки, отнимающие ваши деньги.' : ' that finds the habits costing you money.' }}</h1>
         </div>
         <div class="spec__cell spec__cell--dl">
           <span class="mono">{{ copy.dev1.hero.downloadFree }}</span>
@@ -692,6 +692,7 @@ onBeforeUnmount(() => {
 .spec__cell { padding: var(--edge); border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
 .spec__cell:last-child { border-right: 0; }
 .spec__cell h1 .ul { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.1em; }
+.spec__comma { text-decoration: none; display: inline-block; }
 .spec__cell h1 { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; font-size: clamp(34px, 5cqw, 88px); }
 .spec__cell p { margin: 0; font-size: clamp(14px, 1.15cqw, 18px); line-height: 1.2; letter-spacing: -0.01em; }
 .spec__cell--dl .btn { width: 100%; }
@@ -914,6 +915,14 @@ onBeforeUnmount(() => {
   .spec { grid-template-columns: 1fr; border-top: 0; }
   .spec__cell { border-right: 0; border-bottom: 2px solid #000; }
   .spec__cell:last-child { border-bottom: 0; }
+  .spec__cell h1 { line-height: 1.15; }
+  .spec__cell h1 .ul {
+    display: block;
+    font-size: 2em;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.25em;
+  }
   .facts { grid-template-columns: 1fr 1fr; }
   .facts > div { min-height: 150px; border-bottom: 2px solid #000; }
   .facts > div:nth-child(2n) { border-right: 0; }
