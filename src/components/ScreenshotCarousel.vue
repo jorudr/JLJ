@@ -191,10 +191,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .carousel-strip {
+  --edge: clamp(20px, 3cqw, 48px);
+  --gut: clamp(20px, 2.5cqw, 36px);
   border-bottom: 2px solid #000;
   background: #fff;
   color: #000;
-  padding-top: clamp(16px, 2.5cqw, 32px);
+  padding-top: clamp(20px, 3cqw, 40px);
   position: relative;
   overflow: hidden;
 }
@@ -203,7 +205,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 var(--edge, clamp(14px, 1.6cqw, 24px)) clamp(14px, 1.8cqw, 20px);
+  padding: 0 var(--edge) clamp(16px, 2cqw, 24px);
 }
 
 .carousel-strip__nav {
@@ -240,10 +242,13 @@ onBeforeUnmount(() => {
 /* ── Horizontal Track showing multiple screenshots ── */
 .carousel-track {
   display: flex;
-  gap: clamp(16px, 2cqw, 28px);
+  gap: var(--gut);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 0 var(--edge, clamp(14px, 1.6cqw, 24px)) clamp(28px, 4cqw, 48px);
+  scroll-padding-inline: var(--edge);
+  scroll-padding-left: var(--edge);
+  scroll-padding-right: var(--edge);
+  padding: 16px var(--edge) clamp(32px, 4.5cqw, 56px);
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -253,11 +258,18 @@ onBeforeUnmount(() => {
   display: none;
 }
 
+.carousel-track::after {
+  content: '';
+  flex: 0 0 1px;
+  margin-right: calc(var(--edge) - var(--gut));
+}
+
 /* ── Screenshot Card with 3D Tilt and Curtain Wipe Reveal ── */
 .shot-card {
   margin: 0;
-  flex: 0 0 clamp(280px, 42cqw, 540px);
+  flex: 0 0 clamp(300px, 40cqw, 520px);
   scroll-snap-align: start;
+  scroll-margin-left: var(--edge);
   perspective: 1600px;
   position: relative;
   display: flex;
