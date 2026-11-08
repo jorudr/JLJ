@@ -25,9 +25,6 @@
               </a>
             </div>
           </div>
-          <p class="bx-hero__desc">
-            {{ isRu ? 'ФИКСИРУЙТЕ КАЖДУЮ СДЕЛКУ В КОНТЕКСТЕ РЫНКА. JORU АНАЛИЗИРУЕТ ИСТОРИЮ, ПОКАЗЫВАЕТ, КАКИЕ УСЛОВИЯ ОТНИМАЮТ ДЕНЬГИ, И СЛЕДИТ, ЧТОБЫ ВЫ ПЕРЕСТАЛИ ИХ ПОВТОРЯТЬ.' : 'RECORD EVERY TRADE WITH ITS CONTEXT. JORU ANALYSES YOUR HISTORY, SHOWS WHICH CONDITIONS LOSE YOU MONEY, AND CHECKS THAT YOU STOP REPEATING THEM.' }}
-          </p>
         </div>
 
         <!-- Right: Single window with topbar and /dev/log.png -->
@@ -49,6 +46,11 @@
           </figure>
         </div>
       </div>
+
+      <!-- Bottom description below both columns (under screenshot) -->
+      <p class="bx-hero__desc">
+        {{ isRu ? 'ФИКСИРУЙТЕ КАЖДУЮ СДЕЛКУ В КОНТЕКСТЕ РЫНКА. JORU АНАЛИЗИРУЕТ ИСТОРИЮ, ПОКАЗЫВАЕТ, КАКИЕ УСЛОВИЯ ОТНИМАЮТ ДЕНЬГИ, И СЛЕДИТ, ЧТОБЫ ВЫ ПЕРЕСТАЛИ ИХ ПОВТОРЯТЬ.' : 'RECORD EVERY TRADE WITH ITS CONTEXT. JORU ANALYSES YOUR HISTORY, SHOWS WHICH CONDITIONS LOSE YOU MONEY, AND CHECKS THAT YOU STOP REPEATING THEM.' }}
+      </p>
     </section>
 
     <!-- FACTS -->
@@ -734,6 +736,10 @@ onBeforeUnmount(() => {
   line-height: 0.86;
 }
 
+.bx-hero__title--ru {
+  row-gap: 2px;
+}
+
 .bx-hero__word {
   display: block;
   font-family: 'Inter Tight', var(--wide, var(--sans));
@@ -818,15 +824,15 @@ onBeforeUnmount(() => {
 }
 
 .bx-hero__desc {
-  margin: clamp(20px, 2.4vw, 32px) 0 0;
+  margin: clamp(24px, 3.2vw, 44px) 0 0;
   font-family: 'Inter Tight', var(--sans);
-  font-size: clamp(12px, 1.05cqw, 14.5px);
+  font-size: clamp(12.5px, 1.05cqw, 15px);
   font-weight: 700;
   text-transform: uppercase;
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: rgba(0, 0, 0, 0.88);
-  max-width: 44ch;
+  max-width: 60ch;
 }
 
 /* Right column - Single screenshot window with topbar */
