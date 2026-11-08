@@ -9,7 +9,7 @@
         <!-- Left: Typography, actions, and bottom description -->
         <div class="bx-hero__left">
           <div class="bx-hero__primary">
-            <h1 id="hero-title" class="bx-hero__title" :class="{ 'bx-hero__title--ru': isRu, 'bx-hero__title--en': !isRu }">
+            <h1 id="hero-title" class="bx-hero__title" :class="{ 'bx-hero__title--ru': isRu }">
               <span class="bx-hero__word">{{ isRu ? 'ДНЕВНИК' : 'TRADING' }}</span>
               <span class="bx-hero__word">{{ isRu ? 'ТРЕЙДЕРА' : 'JOURNAL' }}</span>
             </h1>
@@ -736,10 +736,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   line-height: 0.86;
-}
-
-.bx-hero__title--en {
-  row-gap: clamp(4px, 0.45cqw, 7px);
 }
 
 .bx-hero__title--ru {
