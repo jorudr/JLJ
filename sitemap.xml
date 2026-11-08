@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://www.gandr.site/</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/log-poster.jpg</video:thumbnail_loc>
-      <video:title>LOG — J. L. JÖRMUNGANDR trading journal</video:title>
+      <video:title>LOG — JORU trading journal</video:title>
       <video:description>Review every trade and decision in context so patterns become impossible to miss.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/log.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -13,7 +20,7 @@
     </video:video>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/equity-poster.jpg</video:thumbnail_loc>
-      <video:title>EQUITY — J. L. JÖRMUNGANDR trading journal</video:title>
+      <video:title>EQUITY — JORU trading journal</video:title>
       <video:description>Track the full performance of your strategy, from the first trade to the final result.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/equity.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -21,7 +28,7 @@
     </video:video>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/matrix-poster.jpg</video:thumbnail_loc>
-      <video:title>MATRIX — J. L. JÖRMUNGANDR trading journal</video:title>
+      <video:title>MATRIX — JORU trading journal</video:title>
       <video:description>Build, connect, and explore the logic behind every trading strategy in one visual system.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/matrix.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -30,30 +37,60 @@
   </url>
   <url>
     <loc>https://www.gandr.site/download</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/download" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/download" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/download" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.gandr.site/pricing</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/pricing" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/pricing" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/pricing" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.gandr.site/about</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/about" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/about" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gandr.site/privacy</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/privacy" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gandr.site/terms</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/terms" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.gandr.site/ru/</loc>
-    <lastmod>2026-11-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/log-poster.jpg</video:thumbnail_loc>
-      <video:title>LOG — торговый журнал J. L. JÖRMUNGANDR</video:title>
+      <video:title>LOG — торговый журнал JORU</video:title>
       <video:description>Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/log.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -61,7 +98,7 @@
     </video:video>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/equity-poster.jpg</video:thumbnail_loc>
-      <video:title>EQUITY — торговый журнал J. L. JÖRMUNGANDR</video:title>
+      <video:title>EQUITY — торговый журнал JORU</video:title>
       <video:description>Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/equity.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -69,7 +106,7 @@
     </video:video>
     <video:video>
       <video:thumbnail_loc>https://www.gandr.site/assets/videos/matrix-poster.jpg</video:thumbnail_loc>
-      <video:title>MATRIX — торговый журнал J. L. JÖRMUNGANDR</video:title>
+      <video:title>MATRIX — торговый журнал JORU</video:title>
       <video:description>Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.</video:description>
       <video:content_loc>https://www.gandr.site/assets/videos/matrix.mov</video:content_loc>
       <video:publication_date>2026-08-19T00:00:00+00:00</video:publication_date>
@@ -77,35 +114,48 @@
     </video:video>
   </url>
   <url>
-    <loc>https://www.gandr.site/trading-journal-software</loc>
-    <lastmod>2026-11-06</lastmod>
+    <loc>https://www.gandr.site/ru/download</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/download" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/download" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/download" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.gandr.site/ru/trading-journal-software</loc>
-    <lastmod>2026-11-06</lastmod>
+    <loc>https://www.gandr.site/ru/pricing</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/pricing" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/pricing" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/pricing" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.gandr.site/trading-journal-for-day-traders</loc>
-    <lastmod>2026-11-06</lastmod>
+    <loc>https://www.gandr.site/ru/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/about" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/about" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.gandr.site/ru/trading-journal-for-day-traders</loc>
-    <lastmod>2026-11-06</lastmod>
+    <loc>https://www.gandr.site/ru/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/privacy" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/privacy" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.gandr.site/free-trading-journal</loc>
-    <lastmod>2026-11-06</lastmod>
-  </url>
-  <url>
-    <loc>https://www.gandr.site/ru/free-trading-journal</loc>
-    <lastmod>2026-11-06</lastmod>
-  </url>
-  <url>
-    <loc>https://www.gandr.site/how-to-keep-a-trading-journal</loc>
-    <lastmod>2026-11-06</lastmod>
-  </url>
-  <url>
-    <loc>https://www.gandr.site/ru/how-to-keep-a-trading-journal</loc>
-    <lastmod>2026-11-06</lastmod>
+    <loc>https://www.gandr.site/ru/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.gandr.site/terms" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.gandr.site/terms" />
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

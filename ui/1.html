@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equity curve</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden; }
+  .equity { position: relative; width: 100%; height: 100%; }
+  .equity__balance {
+    position: absolute; top: 12%; left: 0; right: 0; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; pointer-events: none;
+  }
+  .equity__label { font-size: 12px; letter-spacing: 0.5em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+  .equity__value { font-size: clamp(40px, 9vw, 140px); font-weight: 900; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .equity__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="equity">
+  <div class="equity__balance">
+    <span class="equity__label">Account balance</span>
+    <span class="equity__value" id="equity-value">$0.00</span>
+  </div>
+  <canvas class="equity__canvas" id="equity-canvas"></canvas>
+</div>
+<script>
+(function () {
+  // Settings
+  var START = 2.5          // starting balance
+  var POINTS = 90          // curve points
+  var DURATION = 4500      // draw-in, ms
+  var COLOR = '#ffffff'
+
+  var canvas = document.getElementById('equity-canvas')
+  var valueEl = document.getElementById('equity-value')
+  var ctx = canvas.getContext('2d')
+  var series = []
+  var startTime = 0
+  var frame = null
+
+  // Random walk that ends far above the start, with an early dip.
+  function makeSeries() {
+    var target = 20000 + Math.random() * 70000
+    var out = []
+    for (var i = 0; i < POINTS; i++) {
+      var t = i / (POINTS - 1)
+      var base = START * Math.pow(target / START, Math.pow(t, 1.6))
+      var dip = t > 0.35 && t < 0.55 ? 1 - Math.sin((t - 0.35) / 0.2 * Math.PI) * 0.45 : 1
+      var noise = i === 0 || i === POINTS - 1 ? 1 : 1 + (Math.random() - 0.5) * 0.18
+      out.push(base * dip * noise)
+    }
+    out[0] = START
+    out[POINTS - 1] = target
+    return out
+  }
+
+  function fmt(v) {
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1
+    canvas.width = canvas.clientWidth * dpr
+    canvas.height = canvas.clientHeight * dpr
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
+  function draw(progress) {
+    var w = canvas.clientWidth, h = canvas.clientHeight
+    ctx.clearRect(0, 0, w, h)
+    var padX = w * 0.08, top = h * 0.38, bottom = h * 0.9
+    var logMin = Math.log(Math.min.apply(null, series)), logMax = Math.log(Math.max.apply(null, series))
+    var pt = function (i) {
+      return {
+        x: padX + (i / (series.length - 1)) * (w - padX * 2),
+        y: bottom - (Math.log(series[i]) - logMin) / (logMax - logMin || 1) * (bottom - top),
+      }
+    }
+    var pos = (series.length - 1) * progress
+    var idx = Math.floor(pos), frac = pos - idx
+    var next = Math.min(series.length - 1, idx + 1)
+    var a = pt(idx), b = pt(next)
+    var edge = { x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac }
+
+    ctx.lineWidth = 3
+    ctx.strokeStyle = COLOR
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.shadowBlur = 15
+    ctx.shadowColor = COLOR
+    ctx.beginPath()
+    var p0 = pt(0)
+    ctx.moveTo(p0.x, p0.y)
+    for (var i = 1; i <= idx; i++) { var p = pt(i); ctx.lineTo(p.x, p.y) }
+    ctx.lineTo(edge.x, edge.y)
+    ctx.stroke()
+
+    ctx.fillStyle = COLOR
+    ctx.shadowBlur = 20
+    ctx.beginPath(); ctx.arc(edge.x, edge.y, 4, 0, Math.PI * 2); ctx.fill()
+    ctx.shadowBlur = 0
+
+    var v = series[idx] + (series[next] - series[idx]) * frac
+    valueEl.textContent = fmt(v)
+  }
+
+  function step() {
+    var progress = Math.min(1, (performance.now() - startTime) / DURATION)
+    draw(1 - Math.pow(1 - progress, 2))
+    frame = progress < 1 ? requestAnimationFrame(step) : null
+  }
+
+  function play() {
+    if (frame) cancelAnimationFrame(frame)
+    series = makeSeries()
+    startTime = performance.now()
+    frame = requestAnimationFrame(step)
+  }
+
+  window.addEventListener('resize', function () { resize(); if (!frame) draw(1) })
+  canvas.addEventListener('click', play)
+  resize()
+  play()
+})()
+</script>
+</body>
+</html>

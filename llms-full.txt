@@ -1,0 +1,58 @@
+# JORU Trading Journal — Full System Reference & Documentation
+
+## Product Overview
+
+JORU (also known as J. L. JÖRMUNGANDR) is a high-performance desktop trading journal application engineered for professional and systematic traders.
+
+### Key Competitive Differentiators
+
+Unlike cloud SaaS trade trackers (such as TradesViz, TraderSync, Tradervue, and Edgewonk Web):
+1. **Complete Data Sovereignty**: All trade logs, screenshots, strategy notes, and API keys reside solely on the user's local disk in an embedded SQLite database. No financial data is ever transmitted, aggregated, or exposed to third-party data breaches.
+2. **Zero Latency Performance**: Written as a native desktop application, filtering tens of thousands of trades and generating instant candlestick charts happens locally with zero web loading lag.
+3. **Transparent Pricing**: A robust Free tier with zero time limits or artificial constraints, and a Full tier for $9.99/mo without hidden tiers.
+
+## Feature Breakdown
+
+### 1. Candlestick Trade Replay
+- Displays the precise candles surrounding trade execution.
+- Overlays planned setup parameters (Order Entry, Initial Stop Loss, Target Take Profit) against actual executions.
+- Flags slippage, late fills, and execution discrepancies.
+
+### 2. Karl-Nikolai I Habit & Pattern Detector
+- Multi-variable anomaly detection algorithm that examines correlation across execution conditions.
+- Examples of detected patterns:
+  - "Short positions opened before 10:00 AM NY time decrease total expectancy by 18%."
+  - "Trades taken within 15 minutes of a max-loss trade suffer a 72% loss rate."
+- Allows traders to transform detected leaks into enforced rules with real-time compliance tracking.
+
+### 3. Genesis Matrix Strategy Modeling
+- Visual graph representation of trading setups.
+- Nodes represent entry triggers, market contexts, and exit conditions.
+- Real-time computation of condition frequency and profit factor per node.
+- Version control for strategies: compare v1 vs v2 by Sharpe ratio, profit factor, and average R-multiple.
+
+### 4. Monte Carlo Risk Simulator
+- Generates 300 randomized path sequences from historical trade outcomes.
+- Models worst-case drawdown probabilities at 95% and 99% confidence intervals.
+- Calculates probability of account ruin and median expected outcome over subsequent trade sequences.
+
+### 5. 31 Granular Performance Metrics
+- **Matrix Adherence**: Rule adherence score, discretionary deviation rate.
+- **Behavioral**: Revenge trade ratio, early exit penalty, overtrading coefficient.
+- **Execution & Risk**: Profit Factor, Sharpe Ratio, Sortino Ratio, Calmar Ratio, Expectancy, Average R-multiple, Max Drawdown duration.
+- **In-Trade Analysis**: Maximum Favorable Excursion (MFE), Maximum Adverse Excursion (MAE), Time in Trade.
+
+### 6. Automated Broker Imports
+- MetaTrader 5 (MT5): Direct statement import.
+- Bybit: Futures & Spot automated API / CSV sync.
+- Binance: USD-M, Coin-M, and Spot trade synchronization.
+- Kraken: Exchange history integration.
+- Interactive Brokers (IBKR): Flex query import.
+
+## Supported Platforms
+- **macOS**: macOS 12 (Monterey) or higher. Native Universal binary for Apple Silicon (M1, M2, M3, M4) and Intel x86_64.
+- **Windows**: Windows 10 and Windows 11 (64-bit).
+
+## Licensing & Pricing
+- **Free Plan**: Free forever. Core journal, candlestick replay, screenshot attachments, tagging, equity and drawdown charts.
+- **Full Plan**: $9.99/month. Unlocks Karl-Nikolai I pattern detector, Genesis Matrix strategy builder, Monte Carlo risk engine, and automated broker sync.

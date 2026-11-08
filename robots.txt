@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /dev/
+Disallow: /dev1/
+
+Host: https://www.gandr.site
 Sitemap: https://www.gandr.site/sitemap.xml

@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Genesis log</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden; }
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+  /* ---------- Page ---------- */
+  .log { position: relative; width: 100%; height: 100%; }
+  .archive {
+    position: relative; width: 100%; height: 100%; min-height: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px 24px;
+  }
+  .archive__inner {
+    position: relative; z-index: 10; width: 100%; max-width: 1280px; margin: 0 auto;
+    min-height: 0; flex: 1; display: flex; flex-direction: column;
+  }
+
+  /* ---------- Strategy title ---------- */
+  .archive__strategy {
+    width: max-content; margin-bottom: 16px; flex-shrink: 0;
+    font-size: 9px; font-weight: 900; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.35;
+  }
+
+  /* ---------- Summary ---------- */
+  .summary {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 0 8px 16px 0; margin-bottom: 16px; flex-shrink: 0;
+  }
+  .summary__count-wrap { display: flex; flex-direction: column; }
+  .summary__count {
+    font-size: 30px; font-weight: 700; letter-spacing: -0.05em; line-height: 1;
+    background-image: linear-gradient(110deg, #000 0%, #fff 32%, #c8c8c8 58%, #fff 78%, #000 100%);
+    background-size: 260% 100%; background-position: 0% 50%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: #fff;
+    animation: count-gradflow 5s ease-in-out infinite;
+  }
+  @keyframes count-gradflow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @media (prefers-reduced-motion: reduce) { .summary__count { animation: none; background-position: 50% 50%; } }
+  .summary__count-label, .figure__label {
+    font-size: 7px; letter-spacing: 0.2em; opacity: 0.4; text-transform: uppercase;
+  }
+  .summary__count-label { margin-top: 8px; }
+  .summary__figures { display: flex; flex-wrap: wrap; gap: 24px; padding-bottom: 4px; }
+  .figure { display: flex; flex-direction: column; gap: 4px; }
+  .figure__value { font-size: 11px; font-weight: 700; }
+  .is-neg { color: rgba(255,255,255,0.6); }
+
+  /* ---------- Scroll list ---------- */
+  .list {
+    position: relative; min-height: 0; flex: 1; width: 100%;
+    overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 48px 0;
+  }
+  .list::-webkit-scrollbar { display: block; width: 8px; height: 8px; }
+  .list::-webkit-scrollbar-track { background: transparent; }
+  .list::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 0; }
+  .list.is-scrolling::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.2); }
+  .list::-webkit-scrollbar-thumb:hover { background-color: rgba(255,255,255,0.9) !important; }
+  .groups { display: flex; flex-direction: column; gap: 32px; padding-bottom: 128px; }
+
+  .group { display: flex; flex-direction: column; }
+  .group__head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 12px;
+    font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; font-weight: 700;
+  }
+  .group__meta { display: flex; gap: 16px; }
+  .group__rows { display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+
+  .row {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 1fr; min-width: 540px; align-items: center;
+    font-size: 9px; letter-spacing: 0.1em; padding: 8px;
+    border: 1px solid transparent; border-radius: 2px; transition: background-color .15s, border-color .15s;
+  }
+  .row:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
+  .row__when { display: flex; align-items: center; gap: 8px; padding-right: 12px; }
+  .dim { opacity: 0.7; }
+  .nowrap { white-space: nowrap; }
+  .bold { font-weight: 700; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .right { text-align: right; }
+  .icon { display: inline-flex; flex-shrink: 0; }
+  .flag { display: block; width: 16px; height: 16px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.25); }
+  .flag svg { display: block; width: 100%; height: 100%; }
+  .empty-dot { display: block; width: 16px; height: 16px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.4); }
+  .spark { display: flex; align-items: center; height: 16px; width: 80px; }
+  .spark svg { width: 100%; height: 100%; opacity: 0.5; }
+
+  .tip {
+    position: fixed; z-index: 2147483647; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+    background: #fff; color: #000; padding: 4px 8px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.18em; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  }
+
+  /* ---------- Breakpoints: sm 640, md 768, lg 1024, 2xl 1536, 3xl 1920, 4xl 2560 ---------- */
+  @media (min-width: 640px) {
+    .archive { padding: 56px 32px 48px; }
+    .archive__strategy { font-size: 10px; letter-spacing: 0.5em; margin-bottom: 32px; }
+    .summary { gap: 32px; padding: 0 16px 32px 0; margin-bottom: 32px; }
+    .summary__count { font-size: 48px; }
+    .summary__count-label, .figure__label { font-size: 8px; }
+    .summary__count-label { letter-spacing: 0.3em; margin-top: 16px; }
+    .summary__figures { gap: 48px; }
+    .figure { gap: 8px; }
+    .figure__value { font-size: 13px; }
+    .list { padding-right: 16px; }
+    .groups { gap: 48px; }
+    .group__head { padding-bottom: 12px; margin-bottom: 16px; font-size: 9px; letter-spacing: 0.3em; }
+    .group__meta { gap: 32px; }
+    .row { font-size: 10px; padding: 12px 8px; }
+    .row__when { gap: 12px; }
+    .spark { height: 20px; width: 96px; }
+  }
+  @media (min-width: 768px) {
+    .archive { padding-top: 80px; padding-left: 40px; padding-right: 40px; }
+    .archive__strategy { margin-bottom: 40px; }
+    .summary { gap: 64px; }
+    .summary__count { font-size: 60px; }
+  }
+  @media (min-width: 1024px) {
+    .archive { padding-top: 96px; padding-left: 48px; padding-right: 48px; }
+  }
+  @media (min-width: 1536px) {
+    .archive { padding-left: 32px; padding-right: 32px; }
+    .archive__inner { max-width: 1300px; }
+    .archive__strategy { font-size: 12px; letter-spacing: 0.6em; margin-bottom: 48px; }
+    .summary { gap: 80px; padding-bottom: 40px; margin-bottom: 40px; }
+    .summary__count { font-size: 72px; }
+    .summary__count-label, .figure__label { font-size: 10px; }
+    .summary__count-label { letter-spacing: 0.35em; margin-top: 20px; }
+    .summary__figures { gap: 64px; }
+    .figure { gap: 12px; }
+    .figure__value { font-size: 18px; }
+    .list { padding-right: 24px; }
+    .groups { gap: 64px; }
+    .group__head { padding-bottom: 16px; margin-bottom: 24px; font-size: 12px; letter-spacing: 0.35em; }
+    .group__meta { gap: 48px; }
+    .group__rows { gap: 6px; }
+    .row { min-width: 0; font-size: 12px; padding: 14px 16px; }
+    .row__when { gap: 16px; }
+    .spark { height: 24px; width: 128px; }
+    .tip { font-size: 11px; }
+  }
+  @media (min-width: 1920px) {
+    .archive { padding-top: 112px; padding-left: 40px; padding-right: 40px; }
+    .archive__inner { max-width: 1450px; }
+    .archive__strategy { font-size: 14px; }
+    .summary { gap: 96px; }
+    .summary__count { font-size: 96px; }
+    .summary__count-label, .figure__label { font-size: 12px; }
+    .summary__figures { gap: 80px; }
+    .figure__value { font-size: 20px; }
+    .group__head { font-size: 14px; }
+    .row { font-size: 14px; padding: 16px; }
+    .spark { height: 28px; width: 144px; }
+  }
+  @media (min-width: 2560px) {
+    .archive { padding-top: 128px; padding-left: 48px; padding-right: 48px; }
+    .archive__inner { max-width: 1600px; }
+    .archive__strategy { font-size: 16px; }
+    .summary__count { font-size: 128px; }
+    .summary__count-label, .figure__label { font-size: 14px; }
+    .figure__value { font-size: 24px; }
+    .group__head { font-size: 16px; }
+    .row { font-size: 16px; }
+    .spark { width: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="log">
+  <div class="archive">
+    <div class="archive__inner">
+      <div class="archive__strategy" id="strategy-name">Main diary</div>
+
+      <div class="summary">
+        <div class="summary__count-wrap">
+          <span class="summary__count" id="count">0</span>
+          <span class="summary__count-label">Trades recorded</span>
+        </div>
+        <div class="summary__figures">
+          <div class="figure">
+            <span class="figure__label">Total P/L</span>
+            <span class="figure__value" id="total-pnl"></span>
+          </div>
+          <div class="figure">
+            <span class="figure__label">Win rate</span>
+            <span class="figure__value" id="win-rate"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="list" id="list">
+        <div class="groups" id="groups"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // ---------- Data ----------
+  // Replace TRADES with real data: { id, asset, side: 'long'|'short', exitTime (ms), exit (price), pnl, session }.
+  // session: 'SYDNEY' | 'TOKYO' | 'FRANKFURT' | 'LONDON' | 'NEW_YORK' | null
+  var TRADES = makeDemoTrades(60)
+
+  function makeDemoTrades(n) {
+    var assets = [
+      { asset: 'AAPL', price: 215 }, { asset: 'BTC/USD', price: 65000 }, { asset: 'XAU/USD', price: 2450 },
+      { asset: 'EUR/USD', price: 1.07 }, { asset: 'NVDA', price: 120 }, { asset: 'ETH/USD', price: 3400 },
+    ]
+    var sessions = ['SYDNEY', 'TOKYO', 'FRANKFURT', 'LONDON', 'NEW_YORK', 'NEW_YORK']
+    var end = new Date(2026, 6, 16, 5, 8).getTime()
+    var out = []
+    var t = end
+    for (var i = 0; i < n; i++) {
+      var a = assets[Math.floor(Math.random() * assets.length)]
+      var win = Math.random() < 0.47
+      var pnl = win ? 60 + Math.random() * 340 : -(20 + Math.random() * 90)
+      out.push({
+        id: 't' + i,
+        asset: a.asset,
+        side: Math.random() < 0.7 ? 'long' : 'short',
+        exitTime: t,
+        exit: a.price * (0.92 + Math.random() * 0.16),
+        pnl: Math.round(pnl * 100) / 100,
+        session: sessions[Math.floor(Math.random() * sessions.length)],
+      })
+      t -= (1 + Math.random() * 2.5) * 24 * 3600 * 1000
+    }
+    return out
+  }
+
+  // ---------- Formatting ----------
+  var num = function (v) { return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+  var signed = function (v) { return (v >= 0 ? '+' : '') + num(v) }
+  var money = function (v) { return (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toFixed(2) }
+  var formatDate = function (ts) {
+    var d = new Date(ts)
+    var month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase()
+    return d.getDate() + ' ' + month + ' ' + d.getFullYear() + '  ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+  }
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] }) }
+
+  // ---------- Session flags ----------
+  var SESSION_NAMES = { SYDNEY: 'Sydney', TOKYO: 'Tokyo', FRANKFURT: 'Frankfurt', LONDON: 'London', NEW_YORK: 'New York' }
+  function flagSvg(session) {
+    var body
+    if (session === 'TOKYO') {
+      body = '<rect width="30" height="30" fill="#fff"/><circle cx="15" cy="15" r="7.5" fill="#bc002d"/>'
+    } else if (session === 'FRANKFURT') {
+      body = '<rect width="30" height="10" fill="#000"/><rect y="10" width="30" height="10" fill="#dd0000"/><rect y="20" width="30" height="10" fill="#ffce00"/>'
+    } else if (session === 'LONDON') {
+      body = '<rect width="30" height="30" fill="#012169"/><path d="M0,0L30,30M30,0L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0L30,30M30,0L0,30" stroke="#c8102e" stroke-width="2"/><path d="M15,0V30M0,15H30" stroke="#fff" stroke-width="10"/><path d="M15,0V30M0,15H30" stroke="#c8102e" stroke-width="6"/>'
+    } else if (session === 'SYDNEY') {
+      body = '<rect width="30" height="30" fill="#012169"/><path d="M0,0L15,15M15,0L0,15" stroke="#fff" stroke-width="3"/><path d="M0,0L15,15M15,0L0,15" stroke="#c8102e" stroke-width="1"/><path d="M7.5,0V15M0,7.5H15" stroke="#fff" stroke-width="5"/><path d="M7.5,0V15M0,7.5H15" stroke="#c8102e" stroke-width="3"/>' +
+        [[7.5, 23, 2.6], [22.5, 8, 1.3], [26, 14, 1.3], [22.5, 25, 1.4], [19, 15.5, 1.2]].map(function (s) { return '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="' + s[2] + '" fill="#fff"/>' }).join('')
+    } else {
+      body = '<rect width="30" height="30" fill="#fff"/>' +
+        [0, 2, 4, 6, 8, 10, 12].map(function (i) { return '<rect y="' + (i * 30 / 13) + '" width="30" height="' + (30 / 13) + '" fill="#b22234"/>' }).join('') +
+        '<rect width="15" height="16.2" fill="#3c3b6e"/>' +
+        [[3.5, 4], [7.5, 4], [11.5, 4], [5.5, 8], [9.5, 8], [3.5, 12], [7.5, 12], [11.5, 12]].map(function (s) { return '<circle cx="' + s[0] + '" cy="' + s[1] + '" r="1" fill="#fff"/>' }).join('')
+    }
+    return '<span class="flag"><svg viewBox="0 0 30 30" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + body + '</svg></span>'
+  }
+
+  // ---------- Sparkline: balance path from 0 up to this trade, by close date ----------
+  var chronological = TRADES.slice().sort(function (a, b) { return a.exitTime - b.exitTime })
+  var balanceById = {}
+  var running = 0
+  var balances = chronological.map(function (t) { running += t.pnl; balanceById[t.id] = running; return running })
+  function balancePath(trade) {
+    var idx = chronological.findIndex(function (t) { return t.id === trade.id })
+    return [0].concat(balances.slice(0, idx + 1))
+  }
+  function sparkline(trade) {
+    var b = balancePath(trade)
+    var min = Math.min.apply(null, b), max = Math.max.apply(null, b), range = max - min || 1
+    var stepX = 100 / Math.max(1, b.length - 1)
+    var yOf = function (v) { return 18 - ((v - min) / range) * 16 }
+    var d = b.map(function (v, i) { return (i === 0 ? 'M' : 'L') + ' ' + (i * stepX).toFixed(1) + ',' + yOf(v).toFixed(1) }).join(' ')
+    return '<svg viewBox="0 0 100 20" preserveAspectRatio="none"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1"/>' +
+      '<circle cx="100" cy="' + yOf(b[b.length - 1]) + '" r="1.5" fill="currentColor"/></svg>'
+  }
+
+  // ---------- Render ----------
+  var total = TRADES.reduce(function (s, t) { return s + t.pnl }, 0)
+  var wins = TRADES.filter(function (t) { return t.pnl > 0 }).length
+  document.getElementById('count').textContent = TRADES.length
+  var totalEl = document.getElementById('total-pnl')
+  totalEl.textContent = signed(total)
+  totalEl.classList.toggle('is-neg', total < 0)
+  document.getElementById('win-rate').textContent = (TRADES.length ? wins / TRADES.length * 100 : 0).toFixed(1) + '%'
+
+  var groups = {}
+  TRADES.slice().sort(function (a, b) { return b.exitTime - a.exitTime }).forEach(function (t) {
+    var key = new Date(t.exitTime).toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
+    groups[key] = groups[key] || { month: key, ts: t.exitTime, trades: [], total: 0 }
+    groups[key].trades.push(t)
+    groups[key].total += t.pnl
+  })
+
+  document.getElementById('groups').innerHTML = Object.keys(groups)
+    .map(function (k) { return groups[k] })
+    .sort(function (a, b) { return b.ts - a.ts })
+    .map(function (g) {
+      var rows = g.trades.map(function (t) {
+        var session = t.session && SESSION_NAMES[t.session]
+        return '<div class="row">' +
+          '<div class="row__when">' +
+            '<span class="nowrap dim">' + formatDate(t.exitTime) + '</span>' +
+            '<span class="icon" data-tip="' + esc(session || 'No session') + '">' + (session ? flagSvg(t.session) : '<span class="empty-dot"></span>') + '</span>' +
+            '<span class="icon" data-tip="Manual"><span class="empty-dot"></span></span>' +
+          '</div>' +
+          '<span class="bold">' + esc(t.asset) + '</span>' +
+          '<span class="dim">' + (t.side === 'long' ? 'LONG' : 'SHORT') + '</span>' +
+          '<span class="truncate dim" title="Close price">$' + num(t.exit) + '</span>' +
+          '<div class="spark">' + sparkline(t) + '</div>' +
+          '<span class="right bold' + (t.pnl < 0 ? ' is-neg' : '') + '">' + money(t.pnl) + '</span>' +
+        '</div>'
+      }).join('')
+      return '<div class="group">' +
+        '<div class="group__head"><span>' + g.month + '</span>' +
+          '<div class="group__meta"><span>' + g.trades.length + ' TRADES</span><span' + (g.total >= 0 ? ' style="color:#fff"' : '') + '>' + signed(g.total) + '</span></div>' +
+        '</div>' +
+        '<div class="group__rows">' + rows + '</div>' +
+      '</div>'
+    }).join('')
+
+  // ---------- Session / broker tooltip ----------
+  var tip = null
+  var hideTip = function () { if (tip) { tip.remove(); tip = null } }
+  document.getElementById('groups').addEventListener('mouseover', function (e) {
+    var el = e.target.closest('[data-tip]')
+    if (!el) return
+    hideTip()
+    var r = el.getBoundingClientRect()
+    tip = document.createElement('div')
+    tip.className = 'tip'
+    tip.textContent = el.getAttribute('data-tip')
+    tip.style.left = (r.left + r.width / 2) + 'px'
+    tip.style.top = (r.top - 6) + 'px'
+    document.body.appendChild(tip)
+  })
+  document.getElementById('groups').addEventListener('mouseout', function (e) {
+    if (e.target.closest('[data-tip]')) hideTip()
+  })
+
+  // ---------- Scrollbar shows only while scrolling ----------
+  var list = document.getElementById('list')
+  var scrollTimer = null
+  list.addEventListener('scroll', function () {
+    hideTip()
+    list.classList.add('is-scrolling')
+    clearTimeout(scrollTimer)
+    scrollTimer = setTimeout(function () { list.classList.remove('is-scrolling') }, 1000)
+  })
+})()
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profitability Patterns</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: #000; color: #fff; }
+body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; -webkit-font-smoothing: antialiased; }
+main { width: min(100% - 48px, 1200px); margin: 0 auto; padding: 20px 0 28px; }
+.heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 2px solid #ffffff26; padding: 14px 8px; }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .32em; opacity: .55; text-transform: uppercase; }
+h1 { margin: 8px 0 0; font-size: 20px; line-height: 1.25; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
+.description { max-width: 672px; margin: 8px 0 0; font-size: 11px; line-height: 1.6; letter-spacing: .14em; text-transform: uppercase; opacity: .55; }
+.count { border: 1px solid #ffffff40; padding: 8px 14px; font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; opacity: .8; }
+.list { max-height: none; overflow-y: visible; padding-right: 0; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 16px; border-bottom: 1px solid #ffffff1a; padding: 14px 8px; }
+.row:not(.columns):hover { background: #ffffff09; }
+.columns { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #ffffff8c; font-weight: 700; border-bottom: 2px solid #ffffff26; }
+.columns span:last-child { text-align: right; letter-spacing: .16em; }
+.name { min-width: 0; }
+.label, .detail { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
+.label { font-size: 14px; line-height: 1.4; font-weight: 900; letter-spacing: .14em; opacity: .9; }
+.detail { margin-top: 5px; font-size: 11px; line-height: 1.4; letter-spacing: .08em; opacity: .6; }
+.value { max-width: 260px; text-align: right; font-size: 14px; line-height: 1.4; font-weight: 900; }
+.frequency { display: block; margin-top: 5px; font-size: 11px; letter-spacing: .12em; opacity: .6; }
+
+@container (max-width: 650px) {
+  main {
+    padding: 12px 0 44px;
+    width: min(100% - 24px, 1200px);
+  }
+  .heading {
+    padding: 10px 4px;
+    gap: 10px;
+  }
+  .description {
+    display: none;
+  }
+  .list {
+    overflow-y: visible;
+    padding-bottom: 12px;
+  }
+  .list .row:nth-child(n+5) {
+    display: none !important;
+  }
+  .count-num {
+    display: none;
+  }
+  .count::before {
+    content: "3 patterns";
+  }
+  h1 {
+    font-size: 24px !important;
+    letter-spacing: .12em !important;
+  }
+  .label {
+    font-size: 16px !important;
+  }
+  .detail {
+    font-size: 12px !important;
+    opacity: .7 !important;
+  }
+  .value {
+    font-size: 16px !important;
+  }
+  .frequency {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 650px) {
+  main {
+    padding: 12px 0 44px;
+    width: min(100% - 24px, 1200px);
+  }
+  .heading {
+    padding: 10px 4px;
+    gap: 10px;
+  }
+  .description {
+    display: none;
+  }
+  .list {
+    overflow-y: visible;
+    padding-bottom: 12px;
+  }
+  .list .row:nth-child(n+5) {
+    display: none !important;
+  }
+  .count-num {
+    display: none;
+  }
+  .count::before {
+    content: "3 patterns";
+  }
+  h1 {
+    font-size: 24px !important;
+    letter-spacing: .12em !important;
+  }
+  .label {
+    font-size: 16px !important;
+  }
+  .detail {
+    font-size: 12px !important;
+    opacity: .7 !important;
+  }
+  .value {
+    font-size: 16px !important;
+  }
+  .frequency {
+    font-size: 13px !important;
+  }
+}
+
+@media (min-width: 1536px) {
+  main { max-width: 1500px; }
+  .heading { padding-block: 16px; }
+  .eyebrow, .description, .count, .columns { font-size: 12px; }
+  h1 { font-size: 22px; line-height: 26px; }
+  .label, .value { font-size: 15px; }
+  .count { padding: 8px 14px; }
+  .list { max-height: none !important; overflow: visible !important; }
+  .row { padding-block: 14px; }
+  .detail, .frequency { font-size: 11px; }
+  .value { max-width: 280px; }
+}
+</style>
+</head>
+<body>
+<!-- Standalone ExScorePatternsPanel + ExProfitabilityPatternList.
+     Labels and descriptions from the application; values are demo data. -->
+<main>
+  <section aria-label="Profitability Patterns">
+    <header class="heading">
+      <div>
+        <div class="eyebrow">Profitable trades</div>
+        <h1>Profitability Patterns</h1>
+        <p class="description">Recurring metrics separated into profitable and losing trades.</p>
+      </div>
+      <span class="count"><span class="count-num">6 patterns</span></span>
+    </header>
+    <div class="list">
+      <div class="row columns"><span>Profitable trade patterns</span><span>range / frequency</span></div>
+      <div class="row"><div class="name"><span class="label">Realized R from SL to Exit</span><span class="detail">Actual entry-to-exit profit measured in stop-loss risk units.</span></div><div class="value">1.80–2.60 R<span class="frequency">72%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Temporal Exposure</span><span class="detail">Total duration of trade from entry to exit protocol completion.</span></div><div class="value">2.50–6.00 h<span class="frequency">64%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Stop Loss Distance</span><span class="detail">Percentage distance between entry price and planned stop loss threshold.</span></div><div class="value">0.40–0.85%<span class="frequency">76%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Take Profit Distance</span><span class="detail">Percent distance from entry level to target take-profit level.</span></div><div class="value">1.20–2.40%<span class="frequency">70%</span></div></div>
+      <div class="row"><div class="name"><span class="label">Profit Capture Ratio</span><span class="detail">Share of available favorable price movement captured by the actual exit.</span></div><div class="value">58.0–82.0%<span class="frequency">74%</span></div></div>
+      <div class="row"><div class="name"><span class="label">And more</span><span class="detail">Every other metric in your journal is tested the same way.</span></div><div class="value">+ 20 metrics<span class="frequency">—</span></div></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

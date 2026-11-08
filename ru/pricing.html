@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ru" class="bg-white text-black" style="background-color: #ffffff; color: #000000;">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="description" content="Тарифы дневника трейдера JORU: бесплатный тариф $0 навсегда без ограничений и план Full с поиском убыточных паттернов Karl-Nikolai I и API брокеров.">
+  <meta name="keywords" content="дневник трейдера, торговый журнал, журнал сделок, скачать дневник трейдера, бесплатный дневник трейдера, журнал сделок крипта, дневник трейдера для windows и mac, анализ сделок, статистика трейдинга, софт для трейдинга, JORU">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://www.gandr.site/ru/pricing">
+  <link rel="alternate" hreflang="en" href="https://www.gandr.site/pricing">
+  <link rel="alternate" hreflang="ru" href="https://www.gandr.site/ru/pricing">
+  <link rel="alternate" hreflang="x-default" href="https://www.gandr.site/pricing">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="JORU">
+  <meta property="og:title" content="Тарифы дневника трейдера: бесплатно навсегда и Full — JORU">
+  <meta property="og:description" content="Тарифы дневника трейдера JORU: бесплатный тариф $0 навсегда без ограничений и план Full с поиском убыточных паттернов Karl-Nikolai I и API брокеров.">
+  <meta property="og:url" content="https://www.gandr.site/ru/pricing">
+  <meta property="og:image" content="https://www.gandr.site/screenshots/deep-data.png">
+  <meta property="og:image:width" content="1440">
+  <meta property="og:image:height" content="900">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="JORU desktop trading journal and analytics interface">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@gandr_trade">
+  <meta name="twitter:creator" content="@gandr_trade">
+  <meta name="twitter:title" content="Тарифы дневника трейдера: бесплатно навсегда и Full — JORU">
+  <meta name="twitter:description" content="Тарифы дневника трейдера JORU: бесплатный тариф $0 навсегда без ограничений и план Full с поиском убыточных паттернов Karl-Nikolai I и API брокеров.">
+  <meta name="twitter:image" content="https://www.gandr.site/screenshots/deep-data.png">
+  <meta name="twitter:image:alt" content="JORU desktop trading journal interface">
+  <title>Тарифы дневника трейдера: бесплатно навсегда и Full — JORU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter+Tight:wght@700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    #app-loader,
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      overflow: hidden;
+      pointer-events: auto;
+    }
+    #app-loader.loader-fade-out,
+    #page-loader.loader-fade-out {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .loader-stripe {
+      position: relative;
+      flex: 1 1 0%;
+      width: 100%;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .loader-stripe .bar-black,
+    .loader-stripe .bar-white {
+      position: absolute;
+      top: -0.5px;
+      bottom: -0.5px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      transform: scaleX(0);
+      transform-origin: left center;
+      will-change: transform;
+    }
+    .loader-stripe .bar-black {
+      background: #000000;
+      z-index: 1;
+    }
+    .loader-stripe .bar-white {
+      background: #ffffff;
+      z-index: 2;
+    }
+
+    /* Phase 1: Black Fill (runs first across 5 stripes) */
+    #app-loader .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
+    #app-loader .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
+    #app-loader .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
+    #app-loader .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
+    #app-loader .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
+
+    /* Phase 2: White Fill (starts strictly after all black stripes have arrived at 0.81s + pause) */
+    #app-loader .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
+    #app-loader .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
+    #app-loader .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
+    #app-loader .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
+    #app-loader .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
+
+    @keyframes stripe-fill {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    /* Phase 3: Content Fade In */
+    #app-loader:not(.loader-fade-out) ~ #app {
+      opacity: 0;
+    }
+    #app {
+      opacity: 1;
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .loader-stripe .bar-black,
+      .loader-stripe .bar-white {
+        display: none !important;
+      }
+      #app-loader,
+      #page-loader {
+        display: none !important;
+      }
+      #app-loader:not(.loader-fade-out) ~ #app {
+        opacity: 1 !important;
+      }
+    }
+  </style>
+  <script>
+    window.__loaderStartTime = performance.now();
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  </script>
+  <script type="module" crossorigin src="/assets/index-BFJAykX5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Iq1heNyh.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/","logo":"https://www.gandr.site/icon.svg","email":"info@gandr.site","founder":{"@type":"Person","name":"Ivan Vorobei"},"sameAs":["https://t.me/gandr_trade"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"JORU","alternateName":"JORU Trading Journal","url":"https://www.gandr.site/","inLanguage":["en","ru"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://www.gandr.site/ru/"},{"@type":"ListItem","position":2,"name":"Тарифы дневника трейдера: бесплатно навсегда и Full — JORU","item":"https://www.gandr.site/ru/pricing"}]}</script>
+  <style>
+    .static-page { max-width: 960px; margin: 0 auto; padding: 40px 20px 60px; color: rgba(0,0,0,.82); font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .static-page h1, .static-page h2, .static-page h3 { color: #000; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; line-height: 1.18; }
+    .static-page h1 { font-size: 2.4rem; margin-bottom: 16px; }
+    .static-page h2 { font-size: 1.75rem; margin-top: 40px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,.08); padding-bottom: 8px; }
+    .static-page h3 { font-size: 1.25rem; margin-top: 24px; margin-bottom: 8px; }
+    .static-page p { margin-bottom: 16px; }
+    .static-page a { color: #000; text-decoration: underline; text-underline-offset: 3px; }
+    .static-page nav { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-bottom: 32px; font-size: 0.95rem; }
+    .static-page footer nav { margin-top: 24px; border-top: 1px solid rgba(0,0,0,.08); padding-top: 20px; }
+    .static-page table { width: 100%; border-collapse: collapse; font-size: .95rem; margin: 20px 0; }
+    .static-page th, .static-page td { padding: 10px 12px; border: 1px solid rgba(0,0,0,.12); text-align: left; vertical-align: top; }
+    .static-page th { background: rgba(0,0,0,.04); font-weight: 600; }
+    .static-page .legal-table { overflow-x: auto; display: block; }
+    .static-page img { max-width: 100%; height: auto; border: 1px solid rgba(0,0,0,.08); margin: 20px 0; }
+    .static-page .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 24px 0; }
+    .static-page .feature-card { border: 1px solid rgba(0,0,0,.12); padding: 18px 20px; background: #fafafa; }
+    .static-page .feature-card h3 { margin-top: 0; }
+    .static-page dl dt { font-weight: 600; margin-top: 16px; font-size: 1.05rem; }
+    .static-page dl dd { margin-left: 0; margin-bottom: 12px; color: rgba(0,0,0,.75); }
+    .static-page .btn { display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; font-weight: 500; margin-top: 12px; }
+  </style>
+</head>
+
+<body class="bg-white text-black" style="background-color: #ffffff; color: #000000;">
+  <div id="app-loader" aria-hidden="true">
+    <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
+    <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
+    <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
+    <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
+    <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
+  </div>
+  <div id="app" class="bg-white text-black">
+  <div class="static-page">
+    <header>
+      <a href="/ru/"><strong>JORU</strong></a>
+      <nav aria-label="Primary">
+        <a href="/ru/download">Скачать</a>
+        <a href="/ru/pricing">Тарифы</a>
+        <a href="/ru/about">О нас</a>
+        <a href="/" hreflang="en">English</a>
+      </nav>
+    </header>
+    <main>
+    <h1>Тарифы дневника трейдера JORU: Free навсегда и Full</h1>
+    <p>Начните с бесплатного тарифа Free без ограничений по времени. Переходите на Full, когда понадобятся углублённый детектив привычек Karl-Nikolai I, визуальная матрица Genesis и симуляции Монте-Карло.</p>
+    <div class="legal-table">
+      <table>
+        <thead><tr><th>Возможность</th><th>Тариф Free ($0)</th><th>Тариф Full ($9.99 / мес)</th></tr></thead>
+        <tbody>
+          <tr><td>Стоимость</td><td><strong>Бесплатно навсегда</strong></td><td>$9.99 / месяц (через Patreon)</td></tr>
+          <tr><td>Журнал сделок и реплей на свечах</td><td>Включено</td><td>Включено</td></tr>
+          <tr><td>Скриншоты, теги и торговые заметки</td><td>Включено</td><td>Включено</td></tr>
+          <tr><td>Метрики капитала, просадки и винрейт</td><td>Включено</td><td>Включено</td></tr>
+          <tr><td>Форум сообщества и торговые события</td><td>Включено</td><td>Включено</td></tr>
+          <tr><td>Автоматический импорт брокеров (MT5, Bybit, Binance, IBKR)</td><td>Базовый</td><td><strong>Полный автоматический</strong></td></tr>
+          <tr><td>Детектив скрытых привычек Karl-Nikolai I</td><td>—</td><td><strong>Включено</strong></td></tr>
+          <tr><td>Матрица торговой стратегии Genesis Matrix</td><td>—</td><td><strong>Включено</strong></td></tr>
+          <tr><td>Симуляция риска методом Монте-Карло</td><td>—</td><td><strong>Включено</strong></td></tr>
+          <tr><td>31 углублённая метрика и торговые отчёты</td><td>—</td><td><strong>Включено</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><a href="/ru/download" class="btn">Скачать бесплатно</a></p>
+    <p>Подписка оформляется безопасно через Patreon и может быть отменена в любой момент. Ознакомьтесь с <a href="/ru/terms">Условиями использования</a> и <a href="/ru/privacy">Политикой конфиденциальности</a>.</p>
+    </main>
+    <footer>
+      <p><strong>JORU</strong> — Бесплатный дневник трейдера и журнал сделок для Windows и macOS.</p>
+      <nav aria-label="Legal">
+        <a href="/ru/privacy">Политика конфиденциальности</a>
+        <a href="/ru/terms">Условия использования</a>
+        <a href="mailto:info@gandr.site">info@gandr.site</a>
+        <a href="https://t.me/gandr_trade" target="_blank" rel="noopener">Telegram</a>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node Mapping</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; }
+  body { overflow: hidden; background: #000; color: #fff; -webkit-font-smoothing: antialiased; }
+  .viewport { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+  .map { position: absolute; left: 0; top: 0; width: 8000px; height: 8000px; transform-origin: 0 0; }
+  .links { position: absolute; inset: 0; width: 8000px; height: 8000px; overflow: visible; pointer-events: none; }
+  .links path { fill: none; stroke: #fff; stroke-opacity: .1; stroke-width: 1; }
+  .links .scenario-link { stroke-width: .8; }
+  .node { position: absolute; background: #000; transition: transform .4s cubic-bezier(.4,0,.2,1), border-color .4s; }
+  .node:hover { transform: translateY(-2px); }
+  .hub { width: var(--hub-width); height: var(--hub-height); display: flex; flex-direction: column; justify-content: center; padding: var(--hub-padding); border: 2px solid rgb(255 255 255 / 10%); }
+  .hub:hover { border-color: rgb(255 255 255 / 35%); }
+  .corner { position: absolute; width: var(--corner-size); height: var(--corner-size); border-color: #fff; opacity: .6; }
+  .corner.tl { top: -4px; left: -4px; border-top: 2px solid; border-left: 2px solid; }
+  .corner.tr { top: -4px; right: -4px; border-top: 2px solid; border-right: 2px solid; }
+  .corner.bl { bottom: -4px; left: -4px; border-bottom: 2px solid; border-left: 2px solid; }
+  .corner.br { bottom: -4px; right: -4px; border-bottom: 2px solid; border-right: 2px solid; }
+  .hub-name { flex-shrink: 0; margin-bottom: var(--hub-gap); padding: 2px 8px 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: var(--hub-name-size); font-weight: 900; line-height: 1.25; letter-spacing: .1em; text-transform: uppercase; }
+  .hub-metrics { display: flex; flex-shrink: 0; align-items: center; justify-content: space-around; width: 100%; padding-top: var(--hub-metric-pad); border-top: 1px solid rgb(255 255 255 / 10%); }
+  .hub-metric { display: flex; flex-direction: column; align-items: center; }
+  .hub-metric-label, .hub-metric-value, .condition { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+  .hub-metric-label { margin-bottom: 4px; color: rgb(255 255 255 / 40%); font-size: var(--hub-label-size); line-height: 1.2; text-transform: uppercase; }
+  .hub-metric-value { display: flex; align-items: center; gap: 4px; font-size: var(--hub-value-size); font-weight: 700; line-height: 1.2; }
+  .condition { display: flex; align-items: center; justify-content: space-between; width: var(--condition-width); height: var(--condition-height); padding: 0 var(--condition-padding); border: 1px solid rgb(255 255 255 / 5%); }
+  .condition:hover { border-color: rgb(255 255 255 / 25%); }
+  .condition-name { margin-right: var(--condition-name-gap); padding: 2px 0 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--condition-name-size); font-weight: 900; line-height: 1.4; letter-spacing: .1em; text-transform: uppercase; }
+  .condition-metrics { display: flex; flex-direction: column; gap: var(--condition-row-gap); flex-shrink: 0; }
+  .condition-row { display: flex; align-items: center; justify-content: flex-end; gap: var(--condition-metric-gap); white-space: nowrap; font-size: var(--condition-value-size); font-weight: 700; line-height: 1.3; }
+  .condition-label { color: rgb(255 255 255 / 30%); font-size: var(--condition-label-size); font-weight: 400; }
+  .condition.exit { flex-direction: row-reverse; }
+  .condition.exit .condition-name { margin: 0 0 0 var(--condition-name-gap); text-align: right; }
+  .condition.exit .condition-row { flex-direction: row-reverse; justify-content: flex-end; }
+  .arrow { display: block; flex-shrink: 0; width: var(--arrow-size); height: var(--arrow-size); }
+  .arrow.up { color: #22c55e; }
+  .arrow.down { color: #ef4444; }
+  :root { --hub-width: 320px; --hub-height: 128px; --hub-padding: 24px; --corner-size: 16px; --hub-gap: 4px; --hub-metric-pad: 8px; --hub-name-size: 20px; --hub-label-size: 8px; --hub-value-size: 12px; --condition-width: 280px; --condition-height: 60px; --condition-padding: 16px; --condition-name-gap: 32px; --condition-name-size: 11px; --condition-label-size: 7px; --condition-value-size: 9px; --condition-row-gap: 4px; --condition-metric-gap: 8px; --arrow-size: 8px; }
+  @media (min-width: 1536px) { :root { --hub-width: 420px; --hub-height: 176px; --hub-padding: 32px; --corner-size: 24px; --hub-gap: 8px; --hub-metric-pad: 12px; --hub-name-size: 24px; --hub-label-size: 12px; --hub-value-size: 16px; --condition-width: 380px; --condition-height: 80px; --condition-padding: 24px; --condition-name-gap: 40px; --condition-name-size: 14px; --condition-label-size: 10px; --condition-value-size: 12px; --condition-row-gap: 8px; --condition-metric-gap: 12px; --arrow-size: 14px; } }
+  @media (min-width: 1920px) { :root { --hub-width: 480px; --hub-height: 208px; --hub-padding: 40px; --corner-size: 32px; --hub-name-size: 30px; --hub-label-size: 14px; --hub-value-size: 18px; --condition-width: 440px; --condition-height: 96px; --condition-padding: 28px; --condition-name-size: 16px; --condition-label-size: 12px; --condition-value-size: 14px; --arrow-size: 16px; } }
+  @media (min-width: 2560px) { :root { --hub-width: 540px; --hub-height: 240px; --hub-name-size: 36px; --hub-label-size: 16px; --hub-value-size: 20px; --condition-width: 500px; --condition-height: 110px; --condition-name-size: 18px; --condition-label-size: 14px; --condition-value-size: 16px; } }
+  @media (prefers-reduced-motion: reduce) { .node { transition: none; } }
+</style>
+</head>
+<body>
+<main class="viewport" aria-label="Node Mapping">
+  <div class="map" id="map"><svg class="links" id="links" aria-hidden="true"></svg></div>
+</main>
+<script>
+(function () {
+  // The same geometry and slot order as ExTacticalNodeMap.vue.
+  var ENTRY_SLOTS = [
+    { dx: 380, dy: -180 }, { dx: 420, dy: -40 }, { dx: 380, dy: 120 },
+    { dx: 80, dy: 240 }, { dx: -340, dy: 140 }, { dx: -360, dy: -100 },
+    { dx: -60, dy: -240 }, { dx: 500, dy: -320 }, { dx: 640, dy: -140 },
+    { dx: 680, dy: 60 }, { dx: 580, dy: 240 }, { dx: 320, dy: 340 },
+    { dx: 0, dy: 380 }, { dx: -380, dy: 280 }, { dx: -540, dy: 60 },
+    { dx: -480, dy: -200 }, { dx: -120, dy: -420 }, { dx: 220, dy: -480 },
+    { dx: 840, dy: -360 }, { dx: 940, dy: -120 }
+  ]
+  var EXIT_SLOTS = ENTRY_SLOTS.map(function (slot) { return { dx: -slot.dx, dy: slot.dy } })
+  var trade = {
+    entry: { name: 'BULLISH PULLBACK CONTINUATION', freq: '48.6%', pf: '2.14', conditions: [
+      { name: 'VALID UPTREND', freq: '71.0%', pf: '2.31' },
+      { name: 'SUPPORT RETEST', freq: '38.0%', pf: '1.74', freqTrend: 'down' },
+      { name: 'BULLISH CONFIRMATION', freq: '64.0%', pf: '1.98' },
+      { name: 'VOLUME EXPANSION', freq: '52.0%', pf: '2.08' }
+    ] },
+    exit: { name: 'STRUCTURE-BASED EXIT', freq: '56.2%', pf: '2.42', conditions: [
+      { name: 'TARGET HIT', freq: '67.0%', pf: '2.64' }
+    ] }
+  }
+  var map = document.getElementById('map')
+  var links = document.getElementById('links')
+  var NS = 'http://www.w3.org/2000/svg'
+  function metrics() {
+    var width = window.innerWidth
+    if (width >= 2560) return { scaleFactor: 1.6, hubWidth: 540, hubHeight: 240, condWidth: 500, condHeight: 110, entryHubX: 550, entryHubY: 480, exitHubX: 2800, exitHubY: 1200 }
+    if (width >= 1920) return { scaleFactor: 1.35, hubWidth: 480, hubHeight: 208, condWidth: 440, condHeight: 96, entryHubX: 450, entryHubY: 400, exitHubX: 2300, exitHubY: 1000 }
+    if (width >= 1536) return { scaleFactor: 1.18, hubWidth: 420, hubHeight: 176, condWidth: 380, condHeight: 80, entryHubX: 380, entryHubY: 340, exitHubX: 1950, exitHubY: 850 }
+    return { scaleFactor: 1, hubWidth: 320, hubHeight: 128, condWidth: 280, condHeight: 60, entryHubX: 300, entryHubY: 280, exitHubX: 1550, exitHubY: 700 }
+  }
+  function arrow(trend) {
+    var down = trend === 'down'
+    return '<svg class="arrow ' + (down ? 'down' : 'up') + '" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="' + (down ? 'M7 7L17 17M17 17V7M17 17H7' : 'M7 17L17 7M17 7H7M17 7V17') + '" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  }
+  function addHub(data, x, y, lm) {
+    var el = document.createElement('div')
+    el.className = 'node hub'
+    el.style.left = x + 'px'
+    el.style.top = y + 'px'
+    el.innerHTML = '<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>' +
+      '<div class="hub-name">' + data.name + '</div><div class="hub-metrics">' +
+      '<div class="hub-metric"><span class="hub-metric-label">Frequency</span><span class="hub-metric-value">' + data.freq + arrow(data.freqTrend) + '</span></div>' +
+      '<div class="hub-metric"><span class="hub-metric-label">PF Ratio</span><span class="hub-metric-value">' + data.pf + arrow(data.pfTrend) + '</span></div></div>'
+    map.appendChild(el)
+    return { centerX: x + lm.hubWidth / 2, centerY: y + lm.hubHeight / 2 }
+  }
+  function addCondition(data, x, y, type) {
+    var el = document.createElement('div')
+    el.className = 'node condition' + (type === 'exit' ? ' exit' : '')
+    el.style.left = x + 'px'
+    el.style.top = y + 'px'
+    el.innerHTML = '<span class="condition-name">' + data.name + '</span><span class="condition-metrics">' +
+      '<span class="condition-row"><span class="condition-label">FREQ</span><span>' + data.freq + '</span>' + arrow(data.freqTrend) + '</span>' +
+      '<span class="condition-row"><span class="condition-label">P/F</span><span>' + data.pf + '</span>' + arrow(data.pfTrend) + '</span></span>'
+    map.appendChild(el)
+  }
+  function addLine(x1, y1, x2, y2, scenario) {
+    var midX = x1 + (x2 - x1) / 2
+    var path = document.createElementNS(NS, 'path')
+    path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + midX + ' ' + y1 + ', ' + midX + ' ' + y2 + ', ' + x2 + ' ' + y2)
+    if (scenario) path.setAttribute('class', 'scenario-link')
+    links.appendChild(path)
+  }
+  function render() {
+    var lm = metrics()
+    map.querySelectorAll('.node').forEach(function (node) { node.remove() })
+    links.replaceChildren()
+    var entry = addHub(trade.entry, lm.entryHubX, lm.entryHubY, lm)
+    var exit = addHub(trade.exit, lm.exitHubX, lm.exitHubY, lm)
+    var bounds = [
+      { x: lm.entryHubX, y: lm.entryHubY, w: lm.hubWidth, h: lm.hubHeight },
+      { x: lm.exitHubX, y: lm.exitHubY, w: lm.hubWidth, h: lm.hubHeight }
+    ]
+    ;[['entry', trade.entry, entry, ENTRY_SLOTS], ['exit', trade.exit, exit, EXIT_SLOTS]].forEach(function (group) {
+      var type = group[0], data = group[1], hub = group[2], slots = group[3]
+      data.conditions.forEach(function (condition, index) {
+        var slot = slots[index % slots.length]
+        var ring = 1 + Math.floor(index / slots.length) * .35
+        var x = hub.centerX + slot.dx * lm.scaleFactor * ring - (slot.dx < 0 ? lm.condWidth : 0)
+        var y = hub.centerY + slot.dy * lm.scaleFactor * ring - lm.condHeight / 2
+        addCondition(condition, x, y, type)
+        addLine(hub.centerX, hub.centerY, x >= hub.centerX ? x : x + lm.condWidth, y + lm.condHeight / 2)
+        bounds.push({ x: x, y: y, w: lm.condWidth, h: lm.condHeight })
+      })
+    })
+    addLine(entry.centerX, entry.centerY, exit.centerX, exit.centerY, true)
+    var left = Math.min.apply(null, bounds.map(function (b) { return b.x }))
+    var top = Math.min.apply(null, bounds.map(function (b) { return b.y }))
+    var right = Math.max.apply(null, bounds.map(function (b) { return b.x + b.w }))
+    var bottom = Math.max.apply(null, bounds.map(function (b) { return b.y + b.h }))
+    var scale = Math.min((window.innerWidth - 60) / (right - left), (window.innerHeight - 100) / (bottom - top), 1)
+    var x = (window.innerWidth - (left + right) * scale) / 2
+    var y = (window.innerHeight - (top + bottom) * scale) / 2
+    map.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + scale + ')'
+  }
+  window.addEventListener('resize', render)
+  render()
+})()
+</script>
+</body>
+</html>
