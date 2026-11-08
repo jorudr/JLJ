@@ -530,7 +530,7 @@ const pages = [
   { file: 'philosophy.html', path: '/about', body: aboutBody('en'), locale: 'en' },
   { file: 'ru/philosophy.html', path: '/ru/about', body: aboutBody('ru'), locale: 'ru' },
   { file: 'announcement.html', path: '/download', body: downloadBody('en'), locale: 'en' },
-  { file: '404.html', path: null, body: `<h1>Page not found</h1><p>Return to the <a href="/">trading journal home page</a>.</p>` },
+  { file: '404.html', path: null, body: `<div style="padding: 40px 0;"><span style="font-family: 'Inter Tight', sans-serif; font-size: 72px; font-weight: 900; line-height: 1; display: block;">404</span><h1 style="margin-top: 16px; font-size: 32px; font-weight: 800; text-transform: uppercase;">Page not found</h1><p style="margin-top: 12px; font-size: 16px; color: #4a4a4a;">The route you requested does not exist or has been moved.</p><p style="margin-top: 24px;"><a href="/" class="btn" style="display: inline-block; padding: 14px 22px; background: #000; color: #fff; text-decoration: none; font-weight: 800; text-transform: uppercase;">Return home &rarr;</a></p></div>` },
 ]
 
 const setMeta = (html, pattern, content) => {
