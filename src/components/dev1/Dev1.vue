@@ -646,9 +646,9 @@ onBeforeUnmount(() => {
   font-family: var(--wide, var(--sans));
   font-weight: 900;
   text-transform: uppercase;
-  font-size: clamp(48px, 7.6vw, 114px);
-  line-height: 0.88;
-  letter-spacing: -0.035em;
+  font-size: clamp(54px, 9.4cqw, 138px);
+  line-height: 0.86;
+  letter-spacing: -0.04em;
   white-space: nowrap;
   margin-left: -0.04em;
   color: #000;
@@ -997,9 +997,9 @@ onBeforeUnmount(() => {
     padding-bottom: 8px;
   }
   .bx-hero__title .bx-wide {
-    font-size: clamp(36px, 12vw, 64px);
+    font-size: clamp(42px, 14vw, 76px);
     white-space: normal;
-    line-height: 0.92;
+    line-height: 0.9;
   }
   .bx-hero__sub {
     font-size: clamp(20px, 5.8vw, 28px);
