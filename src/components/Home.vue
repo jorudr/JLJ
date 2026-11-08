@@ -484,8 +484,11 @@ const getRowDesign = (row) => {
   return row.design
 }
 const getRowCss = (row) => {
-  if (row.id === 'patterns' && isMobile.value) {
-    return 'main{width:100%!important;padding:12px 18px 44px!important}.list{padding-bottom:12px!important}'
+  if (row.id === 'patterns') {
+    if (isMobile.value) {
+      return 'main{width:100%!important;padding:12px 18px 52px!important}.list{padding-bottom:28px!important}'
+    }
+    return 'main{width:100%!important;padding:16px 20px 52px!important}.list{padding-bottom:28px!important}'
   }
   return row.css || ''
 }
