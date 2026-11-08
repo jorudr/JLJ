@@ -584,7 +584,7 @@ const render = ({ path, body, locale = 'en' }) => {
     name: BRAND,
     alternateName: BRAND_ALTERNATES,
     url: `${SITE}/`,
-    logo: `${SITE}/herb-white.svg`,
+    logo: `${SITE}/icon.svg`,
     email: CONTACT_EMAIL,
     founder: { '@type': 'Person', name: 'Ivan Vorobei' },
     sameAs: ['https://t.me/gandr_trade'],
