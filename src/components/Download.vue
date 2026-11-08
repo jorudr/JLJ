@@ -34,6 +34,9 @@
       </article>
     </section>
 
+    <!-- CAROUSEL -->
+    <ScreenshotCarousel :is-ru="isRu" />
+
     <!-- FACTS -->
     <section class="facts" aria-label="Key facts">
       <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
@@ -89,6 +92,7 @@ import { landingCopy } from '../shared/i18n/landingCopy.js'
 import { downloads, refreshDownloads } from '../shared/downloads'
 import LangDropdown from './LangDropdown.vue'
 import BarHeader from './BarHeader.vue'
+import ScreenshotCarousel from './ScreenshotCarousel.vue'
 
 const route = useRoute()
 const { locale } = useI18n()

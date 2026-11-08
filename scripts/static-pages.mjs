@@ -387,6 +387,16 @@ const downloadBody = (locale) => {
       </div>
     </div>
     <section>
+      <h2>Интерфейс приложения JORU</h2>
+      <p>Скриншоты ключевых модулей приложения: журналом сделок, реплеем на графике, поиском паттернов Karl-Nikolai, матрицей стратегии Genesis и отчётами.</p>
+      <div class="feature-grid">
+        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="Журнал сделок JORU: список ордеров и сводка результатов" loading="lazy" /><figcaption>Журнал сделок и разбор исполнений</figcaption></figure>
+        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Свечной график цен с точками входа и выхода в JORU" loading="lazy" /><figcaption>Реплей сделки на свечном графике</figcaption></figure>
+        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Экран расследования убыточных паттернов Karl-Nikolai I" loading="lazy" /><figcaption>Детектив привычек Karl-Nikolai I</figcaption></figure>
+        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Карта стратегии Genesis Matrix с узлами условий в JORU" loading="lazy" /><figcaption>Матрица стратегии Genesis</figcaption></figure>
+      </div>
+    </section>
+    <section>
       <h2>Локальное хранение и безопасность</h2>
       <p>JORU — это нативное приложение для компьютера. Все ваши сделки, заметки, графики и API-ключи брокеров хранятся исключительно на вашем локальном компьютере в базе данных SQLite. Данные никогда не передаются на сторонние серверы.</p>
       <p>Нужна помощь с установкой или есть вопросы? Присоединяйтесь к нашему <a href="https://t.me/gandr_trade" target="_blank" rel="noopener">Telegram-сообществу</a> или напишите нам на <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
@@ -409,6 +419,16 @@ const downloadBody = (locale) => {
         <p><a href="https://github.com/evanvosh/jlj-releases/releases/latest" class="btn">Download for Windows</a></p>
       </div>
     </div>
+    <section>
+      <h2>Inside the Application Interface</h2>
+      <p>Explore preview screenshots of JORU's core workspaces: trade log, candlestick replay, Karl-Nikolai pattern detection, Genesis Matrix, and risk metrics.</p>
+      <div class="feature-grid">
+        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="JORU trade journal list view with performance overview" loading="lazy" /><figcaption>Trade Log &amp; Execution Review</figcaption></figure>
+        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Candlestick chart replay with execution annotations in JORU" loading="lazy" /><figcaption>Candlestick Chart Replay</figcaption></figure>
+        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Karl-Nikolai I pattern investigation screen in JORU" loading="lazy" /><figcaption>Karl-Nikolai I Pattern Detector</figcaption></figure>
+        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Genesis Matrix visual strategy node graph in JORU" loading="lazy" /><figcaption>Genesis Matrix Strategy Modeling</figcaption></figure>
+      </div>
+    </section>
     <section>
       <h2>Offline Architecture &amp; Data Privacy</h2>
       <p>JORU is built as an offline-first desktop tool. Your trade history, notes, balance records, and broker API credentials remain stored on your machine in an embedded SQLite database. No third-party tracking, no cloud data leaks.</p>
