@@ -480,15 +480,15 @@ const metricList = computed(() => isRu.value ? metricListRu : metricListEn)
 const isMobile = ref(typeof window !== 'undefined' ? window.innerWidth <= 768 : false)
 const onWindowResize = () => { isMobile.value = window.innerWidth <= 768 }
 const getRowDesign = (row) => {
-  if (row.id === 'patterns' && isMobile.value) return [500, 390]
+  if (row.id === 'patterns' && isMobile.value) return [500, 440]
   return row.design
 }
 const getRowCss = (row) => {
   if (row.id === 'patterns') {
     if (isMobile.value) {
-      return 'main{width:100%!important;padding:12px 18px 52px!important}.list{padding-bottom:28px!important}'
+      return 'main{width:100%!important;padding:12px 18px 24px!important}.list{overflow:visible!important;max-height:none!important}'
     }
-    return 'main{width:100%!important;padding:16px 20px 52px!important}.list{padding-bottom:28px!important}'
+    return 'main{width:100%!important;padding:16px 20px 24px!important}.list{overflow:visible!important;max-height:none!important}'
   }
   return row.css || ''
 }
