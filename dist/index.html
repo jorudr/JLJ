@@ -72,19 +72,19 @@
       z-index: 2;
     }
 
-    /* Phase 1: Black Fill */
-    .loader-filling-black .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
-    .loader-filling-black .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.12s forwards; }
-    .loader-filling-black .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.19s forwards; }
-    .loader-filling-black .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.26s forwards; }
-    .loader-filling-black .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.33s forwards; }
+    /* Phase 1: Black Fill (runs first across 5 stripes) */
+    .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
+    .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
+    .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
+    .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
+    .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
 
-    /* Phase 2: White Fill */
-    .loader-filling-white .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
-    .loader-filling-white .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.12s forwards; }
-    .loader-filling-white .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.19s forwards; }
-    .loader-filling-white .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.26s forwards; }
-    .loader-filling-white .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.42s cubic-bezier(0.77, 0, 0.175, 1) 0.33s forwards; }
+    /* Phase 2: White Fill (starts strictly after all black stripes have arrived at 0.81s + pause) */
+    .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
+    .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
+    .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
+    .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
+    .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
 
     @keyframes stripe-fill {
       from { transform: scaleX(0); }
@@ -120,7 +120,7 @@
     }
     window.scrollTo(0, 0);
   </script>
-  <script type="module" crossorigin src="/assets/index-DkEb05T_.js"></script>
+  <script type="module" crossorigin src="/assets/index-DD7u0ism.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-C-roQhs2.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/","logo":"https://www.gandr.site/herb-white.svg","email":"info@gandr.site","founder":{"@type":"Person","name":"Ivan Vorobei"},"sameAs":["https://t.me/gandr_trade"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"JORU","url":"https://www.gandr.site/","inLanguage":["en","ru"]}</script>
@@ -142,7 +142,7 @@
 </head>
 
 <body class="bg-white text-black" style="background-color: #ffffff; color: #000000;">
-  <div id="app-loader" class="loader-filling-black" aria-hidden="true">
+  <div id="app-loader" aria-hidden="true">
     <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
     <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
     <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>

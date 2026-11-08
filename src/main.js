@@ -32,19 +32,16 @@ function triggerLoaderExit() {
   }
 
   const startTime = window.__loaderStartTime || performance.now()
-  const WHITE_START_TIME = 900
-  const REVEAL_TIME = 1750
+  const TOTAL_ANIMATION_TIME = 1850
 
-  const runWhitePhase = () => {
+  const finishLoader = () => {
     if (!isAppReady) {
-      setTimeout(runWhitePhase, 40)
+      setTimeout(finishLoader, 40)
       return
     }
 
-    loader.classList.add('loader-filling-white')
-
-    const elapsedSoFar = performance.now() - startTime
-    const delayUntilReveal = Math.max(0, REVEAL_TIME - elapsedSoFar)
+    const elapsed = performance.now() - startTime
+    const delayUntilReveal = Math.max(0, TOTAL_ANIMATION_TIME - elapsed)
 
     setTimeout(() => {
       loader.classList.add('loader-fade-out')
@@ -54,9 +51,7 @@ function triggerLoaderExit() {
     }, delayUntilReveal)
   }
 
-  const elapsed = performance.now() - startTime
-  const delayUntilWhite = Math.max(0, WHITE_START_TIME - elapsed)
-  setTimeout(runWhitePhase, delayUntilWhite)
+  finishLoader()
 }
 
 triggerLoaderExit()
