@@ -36,6 +36,7 @@ export function videoStructuredData(locale = 'en') {
 const descriptions = {
   en: {
     '/': 'Free desktop trading journal for Windows and macOS. Record trades, analyze equity and drawdowns, and identify the habits costing you money. 100% private with automated broker API imports.',
+    '/ru/': 'Free desktop trading journal for Windows and macOS. Record trades, analyze equity and drawdowns, and identify the habits costing you money. 100% private with automated broker API imports.',
     '/download': 'Download JORU free desktop trading journal for Windows and macOS. Log trades, review execution and analyze performance with local-first privacy and zero time limits.',
     '/pricing': 'Compare JORU free trading journal ($0 forever, no time limit) with the Full plan. Advanced pattern detection, Genesis Matrix and automated broker APIs.',
     '/about': 'Learn about JORU: the desktop trading journal designed to turn trading history into rule-based discipline. 100% private local storage.',
@@ -43,6 +44,7 @@ const descriptions = {
     '/terms': 'Terms of Use governing the JORU desktop trading journal application and analytical workspace.',
   },
   ru: {
+    '/': 'Бесплатный дневник трейдера для Windows и macOS. Записывайте сделки, отслеживайте кривую капитала и находите привычки, отнимающие деньги. 100% приватность и импорт брокеров.',
     '/ru/': 'Бесплатный дневник трейдера для Windows и macOS. Записывайте сделки, отслеживайте кривую капитала и находите привычки, отнимающие деньги. 100% приватность и импорт брокеров.',
     '/download': 'Скачайте бесплатный дневник трейдера JORU для Windows и macOS. Журнал сделок без ограничения по времени, локальное хранение данных и аналитика винрейта.',
     '/pricing': 'Тарифы дневника трейдера JORU: бесплатный тариф $0 навсегда без ограничений и план Full с поиском убыточных паттернов Karl-Nikolai I и API брокеров.',
@@ -55,6 +57,7 @@ const descriptions = {
 const titles = {
   en: {
     '/': 'JORU — Free Desktop Trading Journal for Windows & macOS',
+    '/ru/': 'JORU — Free Desktop Trading Journal for Windows & macOS',
     '/download': 'Download Free Trading Journal for Windows & macOS — JORU',
     '/pricing': 'Trading Journal Plans & Pricing: Free Forever & Full — JORU',
     '/about': 'About JORU — Private Desktop Trading Journal & Analytics',
@@ -62,6 +65,7 @@ const titles = {
     '/terms': 'Terms of Use — JORU Trading Journal',
   },
   ru: {
+    '/': 'JORU — Бесплатный дневник трейдера и журнал сделок для Windows и macOS',
     '/ru/': 'JORU — Бесплатный дневник трейдера и журнал сделок для Windows и macOS',
     '/download': 'Скачать бесплатный дневник трейдера для Windows и macOS — JORU',
     '/pricing': 'Тарифы дневника трейдера: бесплатно навсегда и Full — JORU',
@@ -109,9 +113,19 @@ export function pageSeo(path, locale = 'en') {
       alternates: getAlternates(path),
     }
   }
+
+  const resolvedTitle = (titles[language] && (titles[language][path] || titles[language][normalizedPath]))
+    || (language === 'ru' ? titles.ru['/ru/'] : titles.en['/'])
+    || `${BRAND} — Trading Journal`
+
+  const resolvedDescription = (descriptions[language] && (descriptions[language][path] || descriptions[language][normalizedPath]))
+    || (language === 'ru' ? descriptions.ru['/ru/'] : descriptions.en['/'])
+    || homeContent[language]?.seoText
+    || ''
+
   return {
-    title: known ? (titles[language][path] || titles[language][normalizedPath]) : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
-    description: descriptions[language][path] || descriptions[language][normalizedPath] || homeContent[language]?.seoText || '',
+    title: known ? resolvedTitle : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
+    description: resolvedDescription,
     keywords: keywords[language],
     canonical: known ? `${SITE}${path}` : null,
     index: known,

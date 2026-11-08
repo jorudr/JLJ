@@ -134,21 +134,26 @@ const router = createRouter({
 const normalizePath = (p) => (p === '/ru' ? '/ru/' : p)
 
 router.beforeEach((to, from, next) => {
-  if (to.path === '/ru' || to.path === '/ru/' || to.path.startsWith('/ru/')) {
-    useI18n().setLocale('ru')
-  } else {
-    useI18n().setLocale('en')
+  const updateLocale = () => {
+    if (to.path === '/ru' || to.path === '/ru/' || to.path.startsWith('/ru/')) {
+      useI18n().setLocale('ru')
+    } else {
+      useI18n().setLocale('en')
+    }
   }
 
   if (isNavigating()) {
+    updateLocale()
     return next()
   }
 
   if (!isReadyForTransitions() || normalizePath(to.path) === normalizePath(from.path)) {
+    updateLocale()
     return next()
   }
 
   runPageTransition(() => {
+    updateLocale()
     next()
   })
 })

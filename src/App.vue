@@ -26,7 +26,9 @@ const setMeta = (nameOrProperty, attrKey, content) => {
 
 const updateTitle = () => {
   const seo = pageSeo(route.path, locale.value)
-  document.title = seo.title
+  if (seo?.title) {
+    document.title = seo.title
+  }
 
   setMeta('description', 'name', seo.description)
   setMeta('keywords', 'name', seo.keywords || '')
