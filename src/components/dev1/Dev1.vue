@@ -270,6 +270,7 @@ const isHinting = ref(false)
 let dragging = false
 let hasInteracted = false
 let hintTimeouts = []
+let chartObserver = null
 
 const stopBounceHint = () => {
   hasInteracted = true
