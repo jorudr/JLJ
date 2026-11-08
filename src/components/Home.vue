@@ -698,11 +698,9 @@ onBeforeUnmount(() => {
 /* ── Hero section (aligned to new mockup) ── */
 .bx-hero {
   position: relative;
-  min-height: calc(100svh - 48px);
-  padding: clamp(28px, 4.5vh, 48px) var(--edge) clamp(32px, 5.5vh, 56px);
+  padding: clamp(18px, 2.2vw, 32px) var(--edge) clamp(22px, 2.6vw, 36px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
   border-bottom: 2px solid #000000;
   background: #ffffff;
   color: #000000;
@@ -712,8 +710,8 @@ onBeforeUnmount(() => {
 .bx-hero__grid {
   display: grid;
   grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.22fr);
-  gap: clamp(32px, 4.5cqw, 72px);
-  align-items: stretch;
+  gap: clamp(28px, 3.5cqw, 56px);
+  align-items: start;
   width: 100%;
 }
 
@@ -721,8 +719,7 @@ onBeforeUnmount(() => {
 .bx-hero__left {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 4px 0;
+  padding: 0;
 }
 
 .bx-hero__primary {
@@ -755,14 +752,14 @@ onBeforeUnmount(() => {
 }
 
 .bx-hero__sub {
-  margin: clamp(14px, 2vh, 22px) 0 0;
+  margin: clamp(10px, 1.2vw, 16px) 0 0;
   font-family: 'Inter Tight', var(--sans);
   font-weight: 800;
   text-transform: uppercase;
-  font-size: clamp(15px, 1.6cqw, 24px);
+  font-size: clamp(15px, 1.5cqw, 22px);
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: #000000;
+  color: #4a4a4a;
   max-width: 32ch;
 }
 
@@ -770,7 +767,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: clamp(20px, 2.8vh, 32px);
+  margin-top: clamp(16px, 1.8vw, 24px);
 }
 
 .d a.hero-btn,
@@ -778,7 +775,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 24px;
+  padding: 13px 22px;
   font-family: 'Inter Tight', var(--sans);
   font-size: 15px;
   font-weight: 800;
@@ -821,7 +818,7 @@ onBeforeUnmount(() => {
 }
 
 .bx-hero__desc {
-  margin: clamp(32px, 4.5vh, 48px) 0 0;
+  margin: clamp(20px, 2.4vw, 32px) 0 0;
   font-family: 'Inter Tight', var(--sans);
   font-size: clamp(12px, 1.05cqw, 14.5px);
   font-weight: 700;
