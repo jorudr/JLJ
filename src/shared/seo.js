@@ -5,7 +5,7 @@ export const BRAND = 'JORU'
 export const BRAND_ALTERNATES = ['J.L.JÖRMUNGANDR', 'JLJ']
 export const SEO_BRAND = 'JORU'
 export const CONTACT_EMAIL = 'info@gandr.site'
-export const SOCIAL_IMAGE = `${SITE}/screenshots/deep-data.png`
+export const SOCIAL_IMAGE = `${SITE}/og-image.png`
 export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
 export const keywords = {
