@@ -40,7 +40,8 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <style>
-    #app-loader {
+    #app-loader,
+    #page-loader {
       position: fixed;
       inset: 0;
       width: 100vw;
@@ -53,7 +54,8 @@
       overflow: hidden;
       pointer-events: auto;
     }
-    #app-loader.loader-fade-out {
+    #app-loader.loader-fade-out,
+    #page-loader.loader-fade-out {
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
@@ -119,7 +121,8 @@
       .loader-stripe .bar-white {
         display: none !important;
       }
-      #app-loader {
+      #app-loader,
+      #page-loader {
         display: none !important;
       }
       #app-loader:not(.loader-fade-out) ~ #app {

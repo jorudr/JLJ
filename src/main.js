@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 import router from './router'
+import { markInitialLoadDone } from './shared/pageTransition'
 
 if (typeof window !== 'undefined') {
   if ('scrollRestoration' in window.history) {
@@ -24,10 +25,14 @@ router.isReady().then(() => {
 
 function triggerLoaderExit() {
   const loader = document.getElementById('app-loader')
-  if (!loader) return
+  if (!loader) {
+    markInitialLoadDone()
+    return
+  }
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     loader.remove()
+    markInitialLoadDone()
     return
   }
 
@@ -47,6 +52,7 @@ function triggerLoaderExit() {
       loader.classList.add('loader-fade-out')
       setTimeout(() => {
         loader.remove()
+        markInitialLoadDone()
       }, 750)
     }, delayUntilReveal)
   }

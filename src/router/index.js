@@ -6,6 +6,7 @@ import About from '../components/About.vue'
 import Download from '../components/Download.vue'
 import LegalPage from '../components/LegalPage.vue'
 import { useI18n } from '../shared/i18n/useI18n'
+import { isReadyForTransitions, isNavigating, runPageTransition } from '../shared/pageTransition'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -130,12 +131,26 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to) => {
+const normalizePath = (p) => (p === '/ru' ? '/ru/' : p)
+
+router.beforeEach((to, from, next) => {
   if (to.path === '/ru' || to.path === '/ru/' || to.path.startsWith('/ru/')) {
     useI18n().setLocale('ru')
   } else {
     useI18n().setLocale('en')
   }
+
+  if (isNavigating()) {
+    return next()
+  }
+
+  if (!isReadyForTransitions() || normalizePath(to.path) === normalizePath(from.path)) {
+    return next()
+  }
+
+  runPageTransition(() => {
+    next()
+  })
 })
 
 export default router

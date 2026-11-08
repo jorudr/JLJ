@@ -75,3 +75,86 @@ html {
   background: #000;
   color: #fff;
 }
+
+#app-loader,
+#page-loader {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+#app-loader.loader-fade-out,
+#page-loader.loader-fade-out {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loader-stripe {
+  position: relative;
+  flex: 1 1 0%;
+  width: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.loader-stripe .bar-black,
+.loader-stripe .bar-white {
+  position: absolute;
+  top: -0.5px;
+  bottom: -0.5px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.loader-stripe .bar-black {
+  background: #000000;
+  z-index: 1;
+}
+
+.loader-stripe .bar-white {
+  background: #ffffff;
+  z-index: 2;
+}
+
+/* Phase 1: Black Fill */
+.loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
+.loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
+.loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
+.loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
+.loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
+
+/* Phase 2: White Fill */
+.loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
+.loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
+.loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
+.loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
+.loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
+
+@keyframes stripe-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-stripe .bar-black,
+  .loader-stripe .bar-white {
+    display: none !important;
+  }
+  #app-loader,
+  #page-loader {
+    display: none !important;
+  }
+}
