@@ -739,11 +739,11 @@ onBeforeUnmount(() => {
 }
 
 .bx-hero__title--en {
-  row-gap: clamp(3px, 0.35cqw, 5px);
+  row-gap: clamp(4px, 0.45cqw, 7px);
 }
 
 .bx-hero__title--ru {
-  row-gap: 2px;
+  row-gap: clamp(6px, 0.65cqw, 10px);
 }
 
 .bx-hero__word {
