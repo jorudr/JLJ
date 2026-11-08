@@ -19,7 +19,7 @@
           </p>
           <div class="bx-hero__actions">
             <router-link :to="isRu ? '/ru/download' : '/download'" class="btn">{{ isRu ? 'Скачать бесплатно ↓' : 'Download free ↓' }}</router-link>
-            <a href="#karl-nikolai" class="btn btn--line">{{ isRu ? 'Как это работает ↓' : 'See how it works ↓' }}</a>
+            <a href="#chart" class="btn btn--line" @click="handleSeeHowItWorks">{{ isRu ? 'Как это работает ↓' : 'See how it works ↓' }}</a>
           </div>
           <ul class="bx-hero__facts">
             <li><strong>$0</strong> <span>{{ isRu ? 'Бесплатный дневник без ограничения по времени' : 'Free journal, no time limit' }}</span></li>
@@ -39,7 +39,7 @@
     </section>
 
     <!-- THE CHART: left half is the bare price chart, right half the same trade with everything the journal adds -->
-    <section class="chart" aria-labelledby="chart-title">
+    <section id="chart" class="chart" aria-labelledby="chart-title">
       <div class="chart__head">
         <h2 id="chart-title" class="chart__title">{{ copy.dev1.chart.title }}</h2>
       </div>
@@ -281,6 +281,16 @@ const slideKey = (event) => {
   else if (event.key === 'ArrowRight') split.value = Math.min(100, split.value + step)
   else return
   event.preventDefault()
+}
+
+const handleSeeHowItWorks = (e) => {
+  const chartEl = document.getElementById('chart')
+  if (chartEl && getComputedStyle(chartEl).display !== 'none') {
+    return
+  }
+  e.preventDefault()
+  const fallback = document.getElementById('karl-nikolai')
+  fallback?.scrollIntoView({ behavior: 'smooth' })
 }
 
 /* Report: pull every chart panel (with the small label that sits above it) out of the report page into one grid. */
@@ -733,7 +743,7 @@ onBeforeUnmount(() => {
 }
 
 /* ── Chart compare ─────────────────────────────────── */
-.chart { border-bottom: 2px solid #000; }
+.chart { scroll-margin-top: 50px; border-bottom: 2px solid #000; }
 .chart__head {
   padding: clamp(24px, 3.6cqw, 48px) var(--edge) clamp(20px, 2.8cqw, 36px);
   border-bottom: 2px solid #000;

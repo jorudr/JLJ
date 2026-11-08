@@ -7,7 +7,7 @@
     </router-link>
 
     <nav class="bar__nav" aria-label="Main">
-      <router-link :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'">{{ copy.nav.whatItDoes }}</router-link>
+      <router-link :to="isRu ? '/ru/#chart' : '/#chart'">{{ copy.nav.whatItDoes }}</router-link>
       <router-link :to="isRu ? '/ru/about' : '/about'">{{ copy.nav.about }}</router-link>
       <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
       <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
@@ -38,7 +38,7 @@
       <div class="mobile-drawer__panel">
         <nav class="mobile-drawer__nav" aria-label="Mobile Navigation">
           <router-link
-            :to="isRu ? '/ru/#karl-nikolai' : '/#karl-nikolai'"
+            :to="isRu ? '/ru/#chart' : '/#chart'"
             class="mobile-drawer__link"
             @click="closeMobileMenu"
           >

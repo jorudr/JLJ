@@ -11,7 +11,16 @@ import { useI18n } from '../shared/i18n/useI18n'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to) {
-    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    if (to.hash) {
+      const target = typeof document !== 'undefined' ? document.querySelector(to.hash) : null
+      if (target && getComputedStyle(target).display !== 'none') {
+        return { el: to.hash, top: 46, behavior: 'smooth' }
+      }
+      if (to.hash === '#chart') {
+        return { el: '#karl-nikolai', top: 46, behavior: 'smooth' }
+      }
+      return { el: to.hash, top: 46, behavior: 'smooth' }
+    }
     return { top: 0, left: 0 }
   },
   routes: [
