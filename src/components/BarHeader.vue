@@ -2,7 +2,7 @@
   <!-- BAR -->
   <header class="bar">
     <router-link :to="isRu ? '/ru/' : '/'" class="bar__brand" aria-label="JÖRMUNGANDR home" @click="closeMobileMenu">
-      <img src="/assets/herb.svg" alt="" width="18" height="16" />
+      <img src="/assets/herb.svg" :alt="isRu ? 'Герб JÖRMUNGANDR' : 'JÖRMUNGANDR herb logo'" width="18" height="16" />
       <span>JÖRMUNGANDR</span>
     </router-link>
 

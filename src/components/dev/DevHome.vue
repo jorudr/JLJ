@@ -5,7 +5,7 @@
     <!-- NAV -->
     <header class="bx-nav">
       <router-link to="/dev" class="bx-nav__brand" aria-label="JORU home">
-        <img src="/assets/herb.svg" alt="" width="22" height="20" />
+        <img src="/assets/herb.svg" alt="JORU herb logo" width="22" height="20" />
         <span><strong>JORU</strong><em>Trading journal</em></span>
       </router-link>
       <nav class="bx-nav__links" :class="{ 'is-open': menuOpen }" aria-label="Main">

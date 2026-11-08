@@ -22,7 +22,7 @@
       <div class="app-footer__grid">
         <section class="app-footer__brand" aria-label="Company">
           <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="app-footer__mark" aria-label="J.L.JÖRMUNGANDR home">
-            <img src="/assets/herb.svg" alt="" width="36" height="32" />
+            <img src="/assets/herb.svg" :alt="locale === 'ru' ? 'Герб J.L.JÖRMUNGANDR' : 'J.L.JÖRMUNGANDR herb logo'" width="36" height="32" />
           </router-link>
           <div>
             <strong>J.L.JÖRMUNGANDR</strong>

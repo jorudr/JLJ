@@ -30,7 +30,7 @@
           <!-- Left Section: App Name -->
           <div class="flex items-center z-50">
             <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="nav-logo" aria-label="J.L.JÖRMUNGANDR home">
-              <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
+              <img src="/assets/herb.svg" alt="J.L.JÖRMUNGANDR logo" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
             </router-link>
           </div>
 
@@ -87,7 +87,7 @@
             :class="heroAnimationState >= 3 ? 'opacity-80 translate-y-0' : 'opacity-0 translate-y-4'"
             style="font-family: 'Cormorant Garamond', serif;"
           >
-            <img src="/assets/herb.svg" alt="" width="64" height="56" class="mx-auto mb-4 h-14 w-16 object-contain brightness-0 invert" />
+            <img src="/assets/herb.svg" alt="J.L.JÖRMUNGANDR logo" width="64" height="56" class="mx-auto mb-4 h-14 w-16 object-contain brightness-0 invert" />
             J.L.JÖRMUNGANDR
           </div>
 

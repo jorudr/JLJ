@@ -2,7 +2,7 @@
   <header class="site-nav" :class="{ 'site-nav--scrolled': isScrolled, 'site-nav--always-dark': alwaysDark }">
     <div class="site-nav__inner">
       <router-link :to="locale === 'ru' ? '/ru/' : '/'" class="site-nav__logo" aria-label="J.L.JÖRMUNGANDR home">
-        <img src="/assets/herb.svg" alt="" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
+        <img src="/assets/herb.svg" :alt="locale === 'ru' ? 'Герб J.L.JÖRMUNGANDR' : 'J.L.JÖRMUNGANDR herb logo'" width="32" height="28" class="h-7 w-8 shrink-0 object-contain brightness-0" />
       </router-link>
 
       <nav class="site-nav__links" aria-label="Primary navigation">
