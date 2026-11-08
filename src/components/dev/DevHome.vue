@@ -39,7 +39,7 @@
           </ul>
         </div>
         <figure class="bx-hero__shot" :style="{ '--tilt': coverProgress }">
-          <img src="/dev/journal.jpg" alt="JORU trading journal: 26 trades recorded with total P/L, win rate and the list of trades" width="1024" height="638" fetchpriority="high" />
+          <img src="/dev/log.png" alt="JORU trading journal: 26 trades recorded with total P/L, win rate and the list of trades" width="1440" height="900" fetchpriority="high" />
           <figcaption>Fig. 0 — The journal: trades, P/L and win rate at a glance.</figcaption>
         </figure>
       </div>

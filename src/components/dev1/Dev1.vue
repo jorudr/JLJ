@@ -27,7 +27,7 @@
           </ul>
         </div>
         <figure class="bx-hero__shot" :class="{ 'is-in': isHeroRevealed }" :style="{ '--tilt': coverProgress, '--rot': `${Math.max(0, 14 - coverProgress * 50)}deg` }">
-          <img src="/dev/journal.jpg" alt="JORU trading journal: trades, P/L, win rate and the list of trades" width="1024" height="638" fetchpriority="high" />
+          <img src="/dev/log.png" alt="JORU trading journal: trades, P/L, win rate and the list of trades" width="1440" height="900" fetchpriority="high" />
           <figcaption>{{ isRu ? 'Рис. 0 — Журнал: сделки, P/L и винрейт с первого взгляда.' : 'Fig. 0 — The journal: trades, P/L and win rate at a glance.' }}</figcaption>
         </figure>
       </div>
