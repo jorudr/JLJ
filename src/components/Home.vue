@@ -481,6 +481,7 @@ const isMobile = ref(typeof window !== 'undefined' ? window.innerWidth <= 768 : 
 const onWindowResize = () => { isMobile.value = window.innerWidth <= 768 }
 const getRowDesign = (row) => {
   if (row.id === 'patterns' && isMobile.value) return [500, 440]
+  if (row.id === 'patterns') return [900, 700]
   return row.design
 }
 const getRowCss = (row) => {
@@ -488,7 +489,7 @@ const getRowCss = (row) => {
     if (isMobile.value) {
       return 'main{width:100%!important;padding:12px 18px 24px!important}.list{overflow:visible!important;max-height:none!important}'
     }
-    return 'main{width:100%!important;padding:16px 20px 24px!important}.list{overflow:visible!important;max-height:none!important}'
+    return 'main{width:100%!important;padding:16px 20px 24px!important}.list{overflow:visible!important;max-height:none!important}@media (min-width: 1536px){.list{overflow:visible!important;max-height:none!important}}'
   }
   return row.css || ''
 }
