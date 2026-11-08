@@ -27,7 +27,7 @@
             <li><strong>100%</strong> <span>{{ isRu ? 'Сделки и API-ключи остаются только на вашем компьютере' : 'Trades and API keys stay on your computer' }}</span></li>
           </ul>
         </div>
-        <figure class="bx-hero__shot" :style="{ '--tilt': coverProgress }">
+        <figure class="bx-hero__shot" :class="{ 'is-in': isHeroRevealed }" :style="{ '--tilt': coverProgress, '--rot': `${Math.max(0, 14 - coverProgress * 50)}deg` }">
           <img src="/dev/journal.jpg" alt="JORU trading journal: trades, P/L, win rate and the list of trades" width="1024" height="638" fetchpriority="high" />
           <figcaption>{{ isRu ? 'Рис. 0 — Журнал: сделки, P/L и винрейт с первого взгляда.' : 'Fig. 0 — The journal: trades, P/L and win rate at a glance.' }}</figcaption>
         </figure>
@@ -451,6 +451,7 @@ const sectionProgress = (el) => {
 }
 const coverEl = ref(null)
 const coverProgress = ref(0)
+const isHeroRevealed = ref(false)
 
 let frame = 0
 const onScroll = () => {
@@ -460,7 +461,9 @@ const onScroll = () => {
     ledgerProgress.value = sectionProgress(ledgerEl.value)
     if (coverEl.value) {
       const rect = coverEl.value.getBoundingClientRect()
-      coverProgress.value = Math.min(1, Math.max(0, -rect.top / (rect.height || 1)))
+      const offset = 46
+      const scrolled = -(rect.top - offset)
+      coverProgress.value = Math.min(1, Math.max(0, scrolled / (rect.height || 1)))
     }
   })
 }
@@ -474,6 +477,24 @@ onMounted(() => {
     document.head.appendChild(fontLink)
   }
   refreshDownloads()
+  const triggerHeroReveal = () => {
+    isHeroRevealed.value = true
+  }
+
+  const loader = typeof document !== 'undefined' ? document.getElementById('app-loader') : null
+  if (loader && !reducedMotion) {
+    const checkLoader = () => {
+      if (!document.getElementById('app-loader') || loader.classList.contains('loader-fade-out')) {
+        setTimeout(triggerHeroReveal, 120)
+      } else {
+        requestAnimationFrame(checkLoader)
+      }
+    }
+    requestAnimationFrame(checkLoader)
+  } else {
+    setTimeout(triggerHeroReveal, 80)
+  }
+
   if (importEl.value) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       importRevealed.value = true
@@ -639,6 +660,7 @@ onBeforeUnmount(() => {
 .bx-hero__shot {
   margin: 0;
   perspective: 1600px;
+  position: relative;
 }
 .bx-hero__shot img {
   display: block;
@@ -646,9 +668,19 @@ onBeforeUnmount(() => {
   height: auto;
   border: 2px solid #000;
   transform-origin: 50% 0;
-  transform: rotateX(max(0deg, calc(14deg - var(--tilt) * 50deg)));
+  transform: rotateX(var(--rot, max(0deg, calc(14deg - var(--tilt) * 50deg))));
   box-shadow: 0 35px 70px -25px rgba(0, 0, 0, 0.22), 0 10px 20px -10px rgba(0, 0, 0, 0.1);
   background: #000;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  clip-path: inset(0 100% 0 0);
+  filter: grayscale(1) contrast(1.15);
+  transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1), filter 1.2s 0.5s;
+  will-change: transform, clip-path, filter;
+}
+.bx-hero__shot.is-in img {
+  clip-path: inset(0 0 0 0);
+  filter: grayscale(0) contrast(1.05);
 }
 .bx-hero__shot figcaption {
   margin-top: 12px;
@@ -759,6 +791,7 @@ onBeforeUnmount(() => {
 .import-sec__item:hover .import-sec__arrow { color: #e10600; }
 @media (prefers-reduced-motion: reduce) {
   .import-sec__item { transform: none !important; opacity: 1 !important; transition: none !important; }
+  .bx-hero__shot img { transform: none !important; clip-path: none !important; filter: none !important; transition: none !important; }
 }
 @media (max-width: 900px) {
   .import-sec__arrow { display: none; }
@@ -902,9 +935,7 @@ onBeforeUnmount(() => {
   }
   .bx-hero__shot {
     order: -1;
-  }
-  .bx-hero__shot img {
-    transform: none !important;
+    perspective: 1200px;
   }
   .bx-hero__actions {
     flex-direction: column;
