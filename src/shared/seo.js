@@ -8,10 +8,15 @@ export const CONTACT_EMAIL = 'info@gandr.site'
 export const SOCIAL_IMAGE = `${SITE}/screenshots/deep-data.png`
 export const homeAlternates = { en: `${SITE}/`, ru: `${SITE}/ru/` }
 
+export const keywords = {
+  en: 'trading journal, trade tracker, free trading journal, best trading journal software, crypto trading journal, forex trading log, desktop trading journal, stock trade journal, automated broker import, trade review, trading psychology, win rate calculator, risk reward ratio, JORU',
+  ru: 'дневник трейдера, торговый журнал, журнал сделок, скачать дневник трейдера, бесплатный дневник трейдера, журнал сделок крипта, дневник трейдера для windows и mac, анализ сделок, статистика трейдинга, софт для трейдинга, JORU',
+}
+
 export const homeVideos = [
-  { id: 'log', src: '/assets/videos/log.mov', poster: '/assets/videos/log-poster.jpg', duration: 'PT14S', name: { en: 'LOG — J. L. JÖRMUNGANDR trading journal', ru: 'LOG — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Review every trade and decision in context so patterns become impossible to miss.', ru: 'Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.' } },
-  { id: 'equity', src: '/assets/videos/equity.mov', poster: '/assets/videos/equity-poster.jpg', duration: 'PT18S', name: { en: 'EQUITY — J. L. JÖRMUNGANDR trading journal', ru: 'EQUITY — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Track the full performance of your strategy, from the first trade to the final result.', ru: 'Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.' } },
-  { id: 'matrix', src: '/assets/videos/matrix.mov', poster: '/assets/videos/matrix-poster.jpg', duration: 'PT60S', name: { en: 'MATRIX — J. L. JÖRMUNGANDR trading journal', ru: 'MATRIX — торговый журнал J. L. JÖRMUNGANDR' }, description: { en: 'Build, connect, and explore the logic behind every trading strategy in one visual system.', ru: 'Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.' } },
+  { id: 'log', src: '/assets/videos/log.mov', poster: '/assets/videos/log-poster.jpg', duration: 'PT14S', name: { en: 'LOG — JORU trading journal', ru: 'LOG — торговый журнал JORU' }, description: { en: 'Review every trade and decision in context so patterns become impossible to miss.', ru: 'Просматривайте каждую сделку и решение в контексте, чтобы закономерности становились очевидными.' } },
+  { id: 'equity', src: '/assets/videos/equity.mov', poster: '/assets/videos/equity-poster.jpg', duration: 'PT18S', name: { en: 'EQUITY — JORU trading journal', ru: 'EQUITY — торговый журнал JORU' }, description: { en: 'Track the full performance of your strategy, from the first trade to the final result.', ru: 'Отслеживайте полную эффективность стратегии — от первой сделки до итогового результата.' } },
+  { id: 'matrix', src: '/assets/videos/matrix.mov', poster: '/assets/videos/matrix-poster.jpg', duration: 'PT60S', name: { en: 'MATRIX — JORU trading journal', ru: 'MATRIX — торговый журнал JORU' }, description: { en: 'Build, connect, and explore the logic behind every trading strategy in one visual system.', ru: 'Создавайте, связывайте и исследуйте логику каждой торговой стратегии в единой визуальной системе.' } },
 ]
 export const HOME_VIDEOS_UPLOAD_DATE = '2026-08-19'
 
@@ -30,39 +35,39 @@ export function videoStructuredData(locale = 'en') {
 
 const descriptions = {
   en: {
-    '/': `${BRAND} is a trading journal for Windows and macOS. Log trades, track equity and drawdowns, and find the patterns costing you money.`,
-    '/download': `Download ${BRAND} for Windows or macOS. Start recording trades and reviewing your trading performance with the free plan.`,
-    '/pricing': 'Compare the free trading journal with the Full plan for advanced trade analytics, strategy tools and performance review.',
-    '/about': `Learn about the name, ideas and visual identity behind ${BRAND}, a desktop trading journal and analytical workspace.`,
-    '/privacy': `Read how ${BRAND} uses Google Sign-In data and handles your account information, trading journal and exchange API keys.`,
-    '/terms': `Read the terms governing use of the ${BRAND} trading journal and related services.`,
+    '/': 'Free desktop trading journal for Windows and macOS. Record trades, analyze equity and drawdowns, and identify the habits costing you money. 100% private with automated broker API imports.',
+    '/download': 'Download JORU free desktop trading journal for Windows and macOS. Log trades, review execution and analyze performance with local-first privacy and zero time limits.',
+    '/pricing': 'Compare JORU free trading journal ($0 forever, no time limit) with the Full plan. Advanced pattern detection, Genesis Matrix and automated broker APIs.',
+    '/about': 'Learn about JORU: the desktop trading journal designed to turn trading history into rule-based discipline. 100% private local storage.',
+    '/privacy': 'Read JORU privacy commitments: your trades, journal notes and broker exchange API keys stay 100% on your local computer.',
+    '/terms': 'Terms of Use governing the JORU desktop trading journal application and analytical workspace.',
   },
   ru: {
-    '/ru/': `${BRAND} — торговый журнал для Windows и macOS. Записывайте сделки, отслеживайте капитал и находите закономерности, которые стоят вам денег.`,
-    '/download': `Скачайте торговый журнал ${BRAND} для Windows или macOS. Начните записывать сделки и анализировать результаты бесплатно.`,
-    '/pricing': 'Сравните бесплатный торговый журнал с тарифом Full: расширенная аналитика сделок, инструменты стратегий и анализ результатов.',
-    '/about': `Узнайте о названии, идеях и визуальном стиле ${BRAND} — торгового журнала и аналитического пространства для трейдеров.`,
-    '/privacy': `Узнайте, как ${BRAND} обрабатывает данные входа через Google, сведения об аккаунте, журнал сделок и API-ключи бирж.`,
-    '/terms': `Ознакомьтесь с условиями использования торгового журнала ${BRAND} и связанных сервисов.`,
+    '/ru/': 'Бесплатный дневник трейдера для Windows и macOS. Записывайте сделки, отслеживайте кривую капитала и находите привычки, отнимающие деньги. 100% приватность и импорт брокеров.',
+    '/download': 'Скачайте бесплатный дневник трейдера JORU для Windows и macOS. Журнал сделок без ограничения по времени, локальное хранение данных и аналитика винрейта.',
+    '/pricing': 'Тарифы дневника трейдера JORU: бесплатный тариф $0 навсегда без ограничений и план Full с поиском убыточных паттернов Karl-Nikolai I и API брокеров.',
+    '/about': 'О проекте JORU: десктопный дневник трейдера для системного анализа решений и соблюдения торговых правил. 100% локальное хранение данных.',
+    '/privacy': 'Политика конфиденциальности JORU: ваши сделки, заметки и API-ключи бирж хранятся исключительно на вашем локальном компьютере.',
+    '/terms': 'Условия использования приложения торгового дневника JORU и сопутствующих сервисов.',
   },
 }
 
 const titles = {
   en: {
-    '/': `Trading Journal — ${SEO_BRAND}`,
-    '/download': `Download Trading Journal for Windows and macOS — ${SEO_BRAND}`,
-    '/pricing': `Trading Journal Plans and Pricing — ${SEO_BRAND}`,
-    '/about': `About ${SEO_BRAND} — Trading Journal for Traders`,
-    '/privacy': `Privacy Policy — ${SEO_BRAND}`,
-    '/terms': `Terms of Use — ${SEO_BRAND}`,
+    '/': 'JORU — Free Desktop Trading Journal for Windows & macOS',
+    '/download': 'Download Free Trading Journal for Windows & macOS — JORU',
+    '/pricing': 'Trading Journal Plans & Pricing: Free Forever & Full — JORU',
+    '/about': 'About JORU — Private Desktop Trading Journal & Analytics',
+    '/privacy': 'Privacy Policy & Local Data Guarantees — JORU',
+    '/terms': 'Terms of Use — JORU Trading Journal',
   },
   ru: {
-    '/ru/': `Дневник трейдера и аналитика сделок — ${SEO_BRAND}`,
-    '/download': `Скачать торговый журнал для Windows и macOS — ${SEO_BRAND}`,
-    '/pricing': `Тарифы торгового журнала — ${SEO_BRAND}`,
-    '/about': `О проекте ${SEO_BRAND} — торговый журнал для трейдеров`,
-    '/privacy': `Политика конфиденциальности — ${SEO_BRAND}`,
-    '/terms': `Условия использования — ${SEO_BRAND}`,
+    '/ru/': 'JORU — Бесплатный дневник трейдера и журнал сделок для Windows и macOS',
+    '/download': 'Скачать бесплатный дневник трейдера для Windows и macOS — JORU',
+    '/pricing': 'Тарифы дневника трейдера: бесплатно навсегда и Full — JORU',
+    '/about': 'О проекте JORU — Аналитическое пространство и дневник трейдера',
+    '/privacy': 'Политика конфиденциальности и локального хранения — JORU',
+    '/terms': 'Условия использования — Торговый журнал JORU',
   },
 }
 
@@ -70,9 +75,25 @@ export const contentPages = []
 
 export const indexedPaths = [...Object.keys(titles.en), ...Object.keys(titles.en).map(p => p === '/' ? '/ru/' : `/ru${p}`)]
 
+export function getAlternates(path) {
+  const normalized = path.startsWith('/ru/')
+    ? (path === '/ru/' ? '/' : path.slice(3))
+    : (path.startsWith('/ru') ? (path === '/ru' ? '/' : path.slice(3)) : path)
+  if (!['/', '/download', '/pricing', '/about', '/privacy', '/terms'].includes(normalized)) {
+    return null
+  }
+  const enPath = normalized === '/' ? '/' : normalized
+  const ruPath = normalized === '/' ? '/ru/' : `/ru${normalized}`
+  return {
+    en: `${SITE}${enPath}`,
+    ru: `${SITE}${ruPath}`,
+    'x-default': `${SITE}${enPath}`,
+  }
+}
+
 export function pageSeo(path, locale = 'en') {
   if (['/dev', '/dev/', '/dev1', '/dev1/'].includes(path)) {
-    return { title: `Redesign preview — ${BRAND}`, description: '', canonical: null, index: false }
+    return { title: `Redesign preview — ${BRAND}`, description: '', keywords: '', canonical: null, index: false, alternates: null }
   }
   const language = path === '/ru/' || path.startsWith('/ru/') ? 'ru' : locale === 'ru' ? 'ru' : 'en'
   const normalizedPath = path.startsWith('/ru/') ? (path === '/ru/' ? '/' : path.slice(3)) : path
@@ -82,14 +103,18 @@ export function pageSeo(path, locale = 'en') {
     return {
       title: language === 'ru' ? contentPage.seoTitleRu : contentPage.seoTitle,
       description: language === 'ru' ? contentPage.seoDescriptionRu : contentPage.seoDescription,
+      keywords: keywords[language],
       canonical: `${SITE}${path}`,
       index: true,
+      alternates: getAlternates(path),
     }
   }
   return {
     title: known ? (titles[language][path] || titles[language][normalizedPath]) : `${language === 'ru' ? 'Страница не найдена' : 'Page not found'} — ${BRAND}`,
     description: descriptions[language][path] || descriptions[language][normalizedPath] || homeContent[language]?.seoText || '',
+    keywords: keywords[language],
     canonical: known ? `${SITE}${path}` : null,
     index: known,
+    alternates: known ? getAlternates(path) : null,
   }
 }
