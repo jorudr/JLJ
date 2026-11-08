@@ -50,9 +50,9 @@ function triggerLoaderExit() {
 
     setTimeout(() => {
       loader.classList.add('loader-fade-out')
+      markInitialLoadDone()
       setTimeout(() => {
         loader.remove()
-        markInitialLoadDone()
       }, 750)
     }, delayUntilReveal)
   }

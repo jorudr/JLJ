@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, START_LOCATION } from 'vue-router'
 import Home from '../components/Home.vue'
 import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
@@ -142,12 +142,25 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  if (isNavigating()) {
-    updateLocale()
-    return next()
+  // Canonical redirects - resolve immediately before running transitions
+  if (to.path === '/ru') {
+    return next({ path: '/ru/', replace: true })
+  }
+  if (to.path === '/philosophy') {
+    return next({ path: '/about', replace: true })
+  }
+  if (to.path === '/ru/philosophy') {
+    return next({ path: '/ru/about', replace: true })
+  }
+  if (to.path === '/announcement') {
+    return next({ path: '/download', replace: true })
   }
 
-  if (!isReadyForTransitions() || normalizePath(to.path) === normalizePath(from.path)) {
+  // Skip transition for:
+  // 1. Initial page boot (handled by static #app-loader in index.html)
+  // 2. Midpoint re-entrant navigation
+  // 3. Same path navigation (e.g. hash links like #chart or clicking current nav item)
+  if (from === START_LOCATION || isNavigating() || normalizePath(to.path) === normalizePath(from.path)) {
     updateLocale()
     return next()
   }

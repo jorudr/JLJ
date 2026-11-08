@@ -58,7 +58,7 @@
     #page-loader.loader-fade-out {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .loader-stripe {
       position: relative;
@@ -89,18 +89,18 @@
     }
 
     /* Phase 1: Black Fill (runs first across 5 stripes) */
-    .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
-    .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
-    .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
-    .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
-    .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
+    #app-loader .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
+    #app-loader .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
+    #app-loader .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
+    #app-loader .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
+    #app-loader .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
 
     /* Phase 2: White Fill (starts strictly after all black stripes have arrived at 0.81s + pause) */
-    .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
-    .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
-    .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
-    .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
-    .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
+    #app-loader .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
+    #app-loader .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
+    #app-loader .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
+    #app-loader .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
+    #app-loader .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
 
     @keyframes stripe-fill {
       from { transform: scaleX(0); }
@@ -137,8 +137,8 @@
     }
     window.scrollTo(0, 0);
   </script>
-  <script type="module" crossorigin src="/assets/index-Ds3O1bQX.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-xKe9y9uk.css">
+  <script type="module" crossorigin src="/assets/index-CAaK-gQz.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cqx2sUZH.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/","logo":"https://www.gandr.site/herb-white.svg","email":"info@gandr.site","founder":{"@type":"Person","name":"Ivan Vorobei"},"sameAs":["https://t.me/gandr_trade"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"JORU","alternateName":"JORU Trading Journal","url":"https://www.gandr.site/","inLanguage":["en","ru"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"JORU","alternateName":["J.L.JÖRMUNGANDR","JLJ"],"url":"https://www.gandr.site/","description":"JORU is an offline desktop trading journal and analytics workspace for Windows and macOS. Automated broker imports, candlestick replay, 132 risk metrics, Genesis Matrix and Monte Carlo simulations. 100% private local storage.","applicationCategory":"FinanceApplication","operatingSystem":"Windows 10, Windows 11, macOS 12+ (Apple Silicon & Intel)","softwareVersion":"1.0.0","screenshot":"https://www.gandr.site/screenshots/deep-data.png","featureList":["Broker & exchange imports: MetaTrader 5, Bybit, Binance, Kraken, Interactive Brokers","Candlestick chart replay with planned vs actual executions, stop-loss and take-profit points","Karl-Nikolai I habit investigation algorithm to pinpoint hidden unprofitable patterns","Genesis Matrix visual strategy builder tracking condition frequencies and profit factors","Monte Carlo risk simulation running 300 reshuffled alternative equity curves","31 in-depth metrics across 5 groups: matrix adherence, behavior, execution and risk","100% offline local SQLite storage — trades and API keys never leave your machine"],"offers":[{"@type":"Offer","name":"Free Plan","price":"0","priceCurrency":"USD","url":"https://www.gandr.site/pricing","description":"Free trading journal with no time limit."},{"@type":"Offer","name":"Full Plan","price":"9.99","priceCurrency":"USD","billingDuration":"P1M","url":"https://www.gandr.site/pricing","description":"Advanced analytics, Karl-Nikolai pattern detector, Monte Carlo simulation."}],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","reviewCount":"58","bestRating":"5","worstRating":"1"}}</script>

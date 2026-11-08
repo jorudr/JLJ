@@ -95,7 +95,7 @@ html {
 #page-loader.loader-fade-out {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .loader-stripe {
@@ -129,19 +129,49 @@ html {
   z-index: 2;
 }
 
-/* Phase 1: Black Fill */
-.loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
-.loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
-.loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
-.loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
-.loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
+/* App Loader (Initial boot) - Continuous timeline */
+#app-loader .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards; }
+#app-loader .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.13s forwards; }
+#app-loader .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.21s forwards; }
+#app-loader .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.29s forwards; }
+#app-loader .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.37s forwards; }
 
-/* Phase 2: White Fill */
-.loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
-.loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
-.loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
-.loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
-.loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
+#app-loader .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards; }
+#app-loader .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.03s forwards; }
+#app-loader .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.11s forwards; }
+#app-loader .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.19s forwards; }
+#app-loader .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.44s cubic-bezier(0.77, 0, 0.175, 1) 1.27s forwards; }
+
+/* Page Loader (Route transitions) - Decoupled synchronized phases */
+#page-loader {
+  pointer-events: auto !important;
+  cursor: wait;
+}
+
+#page-loader.phase-black .loader-stripe:nth-child(1) .bar-black { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.00s both; }
+#page-loader.phase-black .loader-stripe:nth-child(2) .bar-black { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.05s both; }
+#page-loader.phase-black .loader-stripe:nth-child(3) .bar-black { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.10s both; }
+#page-loader.phase-black .loader-stripe:nth-child(4) .bar-black { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.15s both; }
+#page-loader.phase-black .loader-stripe:nth-child(5) .bar-black { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.20s both; }
+
+#page-loader.phase-black .loader-stripe .bar-white {
+  transform: scaleX(0);
+}
+
+#page-loader.phase-white .loader-stripe .bar-black,
+#page-loader.phase-fade .loader-stripe .bar-black {
+  transform: scaleX(1);
+}
+
+#page-loader.phase-white .loader-stripe:nth-child(1) .bar-white { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.00s both; }
+#page-loader.phase-white .loader-stripe:nth-child(2) .bar-white { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.05s both; }
+#page-loader.phase-white .loader-stripe:nth-child(3) .bar-white { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.10s both; }
+#page-loader.phase-white .loader-stripe:nth-child(4) .bar-white { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.15s both; }
+#page-loader.phase-white .loader-stripe:nth-child(5) .bar-white { animation: stripe-fill 0.40s cubic-bezier(0.77, 0, 0.175, 1) 0.20s both; }
+
+#page-loader.phase-fade .loader-stripe .bar-white {
+  transform: scaleX(1);
+}
 
 @keyframes stripe-fill {
   from { transform: scaleX(0); }

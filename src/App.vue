@@ -3,7 +3,7 @@ import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from './shared/i18n/useI18n'
 import { pageSeo, SITE, SOCIAL_IMAGE } from './shared/seo'
-import { isTransitioning, isFadingOut } from './shared/pageTransition'
+import { isTransitioning, transitionPhase, transitionKey } from './shared/pageTransition'
 
 const route = useRoute()
 const { locale } = useI18n()
@@ -83,7 +83,8 @@ watch([() => route.path, locale], updateTitle, { immediate: true })
     <div
       v-if="isTransitioning"
       id="page-loader"
-      :class="{ 'loader-fade-out': isFadingOut }"
+      :key="transitionKey"
+      :class="['phase-' + transitionPhase, { 'loader-fade-out': transitionPhase === 'fade' }]"
       aria-hidden="true"
     >
       <div class="loader-stripe"><div class="bar-black"></div><div class="bar-white"></div></div>
