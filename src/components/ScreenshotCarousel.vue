@@ -1,107 +1,72 @@
 <template>
-  <section class="carousel-sec" aria-labelledby="carousel-title" tabindex="0" @keydown="handleKeydown">
-    <div class="label mono">
-      <span>{{ isRu ? 'Интерфейс приложения' : 'Inside the application' }}</span>
-      <span class="carousel-counter">{{ pad(current + 1) }} / {{ pad(slides.length) }}</span>
-    </div>
-
-    <div class="carousel-body">
-      <!-- Main view: screen and caption -->
-      <div 
-        class="carousel-viewport" 
-        @touchstart="handleTouchStart" 
-        @touchmove="handleTouchMove" 
-        @touchend="handleTouchEnd"
-      >
-        <div class="carousel-frame">
-          <transition name="carousel-fade" mode="out-in">
-            <img
-              :key="currentSlide.src"
-              :src="currentSlide.src"
-              :alt="isRu ? currentSlide.alt.ru : currentSlide.alt.en"
-              width="1440"
-              height="900"
-              class="carousel-img"
-              loading="lazy"
-              decoding="async"
-            />
-          </transition>
-        </div>
-
-        <!-- Floating navigation arrows -->
+  <section ref="carouselEl" class="carousel-strip" aria-label="Application screenshots">
+    <div class="carousel-strip__header">
+      <div class="carousel-strip__nav">
         <button
           type="button"
-          class="carousel-nav carousel-nav--prev"
+          class="btn-arrow"
           :aria-label="isRu ? 'Предыдущий скриншот' : 'Previous screenshot'"
-          @click="prev"
+          @click="scrollPrev"
         >
           <span aria-hidden="true">←</span>
         </button>
         <button
           type="button"
-          class="carousel-nav carousel-nav--next"
+          class="btn-arrow"
           :aria-label="isRu ? 'Следующий скриншот' : 'Next screenshot'"
-          @click="next"
+          @click="scrollNext"
         >
           <span aria-hidden="true">→</span>
         </button>
       </div>
+    </div>
 
-      <!-- Slide description & tabs -->
-      <div class="carousel-meta">
-        <div class="carousel-info">
-          <h2 id="carousel-title" class="carousel-title">
-            {{ isRu ? currentSlide.title.ru : currentSlide.title.en }}
-          </h2>
-          <p class="carousel-desc">
-            {{ isRu ? currentSlide.desc.ru : currentSlide.desc.en }}
-          </p>
+    <!-- Multi-screenshot horizontal track -->
+    <div ref="trackEl" class="carousel-track">
+      <figure
+        v-for="(slide, index) in slides"
+        :key="slide.src"
+        class="shot-card"
+        :class="{ 'is-in': isRevealed }"
+        :style="{ '--i': index }"
+      >
+        <div class="shot-card__frame">
+          <img
+            :src="slide.src"
+            :alt="isRu ? slide.alt.ru : slide.alt.en"
+            width="1440"
+            height="900"
+            class="shot-card__img"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
-
-        <!-- Thumbnails / Selector buttons -->
-        <div class="carousel-tabs" role="tablist" :aria-label="isRu ? 'Выбор скриншота' : 'Select screenshot'">
-          <button
-            v-for="(slide, index) in slides"
-            :key="slide.src"
-            type="button"
-            role="tab"
-            :aria-selected="current === index"
-            :class="{ 'is-active': current === index }"
-            class="carousel-tab"
-            @click="goTo(index)"
-          >
-            <span class="carousel-tab__num">{{ pad(index + 1) }}</span>
-            <span class="carousel-tab__label">{{ isRu ? slide.short.ru : slide.short.en }}</span>
-          </button>
-        </div>
-      </div>
+        <figcaption class="shot-card__cap">
+          <span class="shot-card__num">{{ isRu ? 'Рис.' : 'Fig.' }} {{ index + 1 }}</span>
+          <span class="shot-card__sep">—</span>
+          <span class="shot-card__title">{{ isRu ? slide.title.ru : slide.title.en }}</span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   isRu: {
     type: Boolean,
     default: false,
   },
 })
 
-const pad = n => String(n).padStart(2, '0')
-
 const slides = [
   {
     src: '/dev/demo/1.png',
-    short: { en: 'Journal', ru: 'Журнал' },
     title: {
       en: 'Trade Log & Execution Review',
       ru: 'Журнал сделок и разбор исполнений',
-    },
-    desc: {
-      en: 'Complete trade list with P/L, win rate, assets, session tags and execution notes in one unified view.',
-      ru: 'Полный журнал сделок с P/L, винрейтом, активами, тегами сессий и заметками в едином интерфейсе.',
     },
     alt: {
       en: 'JORU trade journal list view with performance overview',
@@ -110,14 +75,9 @@ const slides = [
   },
   {
     src: '/dev/demo/2.png',
-    short: { en: 'Replay', ru: 'Реплей' },
     title: {
       en: 'Candlestick Chart Replay',
       ru: 'Реплей сделки на свечном графике',
-    },
-    desc: {
-      en: 'Inspect planned setups, entry executions, stop-loss, take-profit and actual exit points directly on price candles.',
-      ru: 'Воспроизведение точек входа, стоп-лосса, тейк-профита и фактического выхода прямо на японских свечах.',
     },
     alt: {
       en: 'Candlestick chart replay with execution annotations in JORU',
@@ -126,14 +86,9 @@ const slides = [
   },
   {
     src: '/dev/demo/3.png',
-    short: { en: 'Karl-Nikolai', ru: 'Karl-Nikolai' },
     title: {
       en: 'Karl-Nikolai I Pattern Detector',
       ru: 'Детектив привычек Karl-Nikolai I',
-    },
-    desc: {
-      en: 'Pinpoint quiet, costly habits across your trading history and calculate their exact dollar impact on results.',
-      ru: 'Поиск скрытых убыточных привычек в истории сделок с расчётом их точного влияния на общий капитал.',
     },
     alt: {
       en: 'Karl-Nikolai I pattern investigation screen in JORU',
@@ -142,14 +97,9 @@ const slides = [
   },
   {
     src: '/dev/demo/4.png',
-    short: { en: 'Matrix', ru: 'Матрица' },
     title: {
       en: 'Genesis Matrix Strategy Modeling',
       ru: 'Матрица стратегии Genesis',
-    },
-    desc: {
-      en: 'Map your trading strategy as a visual graph of condition nodes, each tracking its occurrence rate and profit factor.',
-      ru: 'Описание правил стратегии в виде графа условий, где каждый узел отражает частоту и профит-фактор.',
     },
     alt: {
       en: 'Genesis Matrix visual strategy node graph in JORU',
@@ -158,14 +108,9 @@ const slides = [
   },
   {
     src: '/dev/demo/5.png',
-    short: { en: 'Monte Carlo', ru: 'Монте-Карло' },
     title: {
       en: 'Monte Carlo Risk Simulation',
       ru: 'Симуляция риска методом Монте-Карло',
-    },
-    desc: {
-      en: 'Stress-test your edge with 300 randomized order paths to evaluate worst-case drawdowns and survival probability.',
-      ru: 'Стресс-тест торгового преимущества: 300 случайных перестановок сделок для оценки риска просадки.',
     },
     alt: {
       en: 'Monte Carlo simulation equity curves in JORU',
@@ -174,14 +119,9 @@ const slides = [
   },
   {
     src: '/dev/demo/6.png',
-    short: { en: 'Metrics', ru: 'Метрики' },
     title: {
       en: '31 Performance & Behavior Metrics',
       ru: '31 глубокая метрика торговли',
-    },
-    desc: {
-      en: 'Comprehensive metrics across 5 groups: matrix adherence, behavior, execution and risk, strategy and in-trade stats.',
-      ru: 'Метрики в пяти ключевых группах: соблюдение правил, психология, исполнение, риск и внутрисделочный анализ.',
     },
     alt: {
       en: 'Detailed performance metrics grid in JORU',
@@ -190,14 +130,9 @@ const slides = [
   },
   {
     src: '/dev/demo/7.png',
-    short: { en: 'Reports', ru: 'Отчёты' },
     title: {
       en: 'Comprehensive Trading Reports',
-      ru: 'Торговые отчёты и распределение',
-    },
-    desc: {
-      en: 'Inspect profit/loss distributions, drawdowns, results by trading session and asset performance in one place.',
-      ru: 'Анализ распределения прибылей и убытков, просадок, результатов по торговым сессиям и активам.',
+      ru: 'Комплексные торговые отчёты',
     },
     alt: {
       en: 'Comprehensive trading report analytics in JORU',
@@ -206,216 +141,206 @@ const slides = [
   },
 ]
 
-const current = ref(0)
-const currentSlide = computed(() => slides[current.value])
+const carouselEl = ref(null)
+const trackEl = ref(null)
+const isRevealed = ref(false)
+let observer = null
 
-const prev = () => {
-  current.value = (current.value - 1 + slides.length) % slides.length
+const scrollPrev = () => {
+  if (!trackEl.value) return
+  const firstCard = trackEl.value.querySelector('.shot-card')
+  const step = (firstCard ? firstCard.offsetWidth : 420) + 20
+  trackEl.value.scrollBy({ left: -step, behavior: 'smooth' })
 }
 
-const next = () => {
-  current.value = (current.value + 1) % slides.length
+const scrollNext = () => {
+  if (!trackEl.value) return
+  const firstCard = trackEl.value.querySelector('.shot-card')
+  const step = (firstCard ? firstCard.offsetWidth : 420) + 20
+  trackEl.value.scrollBy({ left: step, behavior: 'smooth' })
 }
 
-const goTo = index => {
-  current.value = index
-}
+onMounted(() => {
+  if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isRevealed.value = true
+          observer?.disconnect()
+        }
+      })
+    }, { threshold: 0.15 })
 
-const handleKeydown = e => {
-  if (e.key === 'ArrowLeft') {
-    prev()
-  } else if (e.key === 'ArrowRight') {
-    next()
+    if (carouselEl.value) {
+      observer.observe(carouselEl.value)
+    }
+  } else {
+    isRevealed.value = true
   }
-}
 
-let touchStartX = 0
-let touchEndX = 0
+  // Fallback timer ensures reveal triggers even if scroll is missed
+  setTimeout(() => {
+    isRevealed.value = true
+  }, 400)
+})
 
-const handleTouchStart = e => {
-  touchStartX = e.changedTouches[0].clientX
-}
-
-const handleTouchMove = e => {
-  touchEndX = e.changedTouches[0].clientX
-}
-
-const handleTouchEnd = () => {
-  const diff = touchEndX - touchStartX
-  if (Math.abs(diff) > 40) {
-    if (diff > 0) prev()
-    else next()
-  }
-  touchStartX = 0
-  touchEndX = 0
-}
+onBeforeUnmount(() => {
+  observer?.disconnect()
+})
 </script>
 
 <style scoped>
-.carousel-sec {
+.carousel-strip {
   border-bottom: 2px solid #000;
   background: #fff;
   color: #000;
-  outline: none;
-}
-.carousel-counter {
-  font-family: var(--mono, monospace);
-  font-size: 12px;
-  letter-spacing: 0.05em;
-}
-.carousel-body {
-  padding: clamp(20px, 3cqw, 40px) var(--edge, clamp(14px, 1.6cqw, 24px));
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-.carousel-viewport {
+  padding-top: clamp(16px, 2.5cqw, 32px);
   position: relative;
-  width: 100%;
-}
-.carousel-frame {
-  width: 100%;
-  aspect-ratio: 1440 / 900;
-  border: 2px solid #000;
-  background: #000;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-.carousel-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
 }
 
-/* Slide Transition */
-.carousel-fade-enter-active,
-.carousel-fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-.carousel-fade-enter-from,
-.carousel-fade-leave-to {
-  opacity: 0;
+.carousel-strip__header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 var(--edge, clamp(14px, 1.6cqw, 24px)) clamp(14px, 1.8cqw, 20px);
 }
 
-/* Nav buttons */
-.carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 48px;
-  height: 48px;
+.carousel-strip__nav {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.btn-arrow {
+  width: 44px;
+  height: 44px;
   background: #fff;
   color: #000;
   border: 2px solid #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono, monospace);
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s, transform 0.12s;
-  z-index: 2;
-  user-select: none;
-}
-.carousel-nav:hover {
-  background: #000;
-  color: #fff;
-}
-.carousel-nav--prev {
-  left: 12px;
-}
-.carousel-nav--next {
-  right: 12px;
-}
-.carousel-nav:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-/* Meta below image */
-.carousel-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.carousel-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.carousel-title {
-  margin: 0;
-  font-weight: 800;
-  font-size: clamp(20px, 2.2cqw, 32px);
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-.carousel-desc {
-  margin: 0;
-  font-size: clamp(14px, 1.15cqw, 17px);
-  line-height: 1.35;
-  opacity: 0.82;
-  max-width: 65ch;
-}
-
-/* Tab bar */
-.carousel-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-}
-.carousel-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 2px solid #000;
-  background: transparent;
-  color: #000;
-  font-family: var(--mono, monospace);
-  font-size: 12px;
-  font-weight: 500;
+  justify-content: center;
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 19px;
+  font-weight: 700;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
+  user-select: none;
 }
-.carousel-tab:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-.carousel-tab.is-active {
+
+.btn-arrow:hover {
   background: #000;
   color: #fff;
 }
-.carousel-tab__num {
-  font-weight: 700;
-  opacity: 0.6;
+
+.btn-arrow:active {
+  transform: scale(0.93);
 }
-.carousel-tab.is-active .carousel-tab__num {
-  opacity: 0.9;
+
+/* ── Horizontal Track showing multiple screenshots ── */
+.carousel-track {
+  display: flex;
+  gap: clamp(16px, 2cqw, 28px);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0 var(--edge, clamp(14px, 1.6cqw, 24px)) clamp(28px, 4cqw, 48px);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Screenshot Card with 3D Tilt and Curtain Wipe Reveal ── */
+.shot-card {
+  margin: 0;
+  flex: 0 0 clamp(280px, 42cqw, 540px);
+  scroll-snap-align: start;
+  perspective: 1600px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.shot-card__frame {
+  width: 100%;
+  position: relative;
+}
+
+.shot-card__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #000;
+  background: #000;
+  transform-origin: 50% 0;
+  transform: rotateX(12deg);
+  box-shadow: 0 28px 56px -18px rgba(0, 0, 0, 0.22), 0 10px 20px -10px rgba(0, 0, 0, 0.1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  clip-path: inset(0 100% 0 0);
+  transition: 
+    clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1) calc(var(--i) * 110ms),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, clip-path;
+}
+
+.shot-card.is-in .shot-card__img {
+  clip-path: inset(0 0 0 0);
+}
+
+.shot-card:hover .shot-card__img {
+  transform: rotateX(0deg) translateY(-4px);
+  box-shadow: 0 38px 70px -18px rgba(0, 0, 0, 0.32), 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+.shot-card__cap {
+  margin-top: 14px;
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  font-size: 13px;
+  line-height: 1.3;
+  color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shot-card__num {
+  font-weight: 700;
+  color: #000;
+}
+
+.shot-card__sep {
+  opacity: 0.35;
+}
+
+.shot-card__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-card__img {
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
+  }
 }
 
 @media (max-width: 768px) {
-  .carousel-nav {
+  .shot-card {
+    flex: 0 0 82vw;
+  }
+  .btn-arrow {
     width: 38px;
     height: 38px;
     font-size: 16px;
-  }
-  .carousel-nav--prev {
-    left: 8px;
-  }
-  .carousel-nav--next {
-    right: 8px;
-  }
-  .carousel-tabs {
-    gap: 6px;
-  }
-  .carousel-tab {
-    padding: 6px 10px;
-    font-size: 11px;
   }
 }
 </style>
