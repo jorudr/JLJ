@@ -1,5 +1,5 @@
 <template>
-  <div class="d">
+  <div class="d" :lang="isRu ? 'ru' : 'en'">
     <!-- BAR -->
     <BarHeader />
 
@@ -8,8 +8,8 @@
       <p class="bx-hero__eyebrow">
         <span>{{ isRu ? 'Для ручной и системной торговли' : 'For discretionary and systematic traders' }}</span>
       </p>
-      <h1 id="hero-title" class="bx-hero__title">
-        <span class="bx-wide">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>
+      <h1 id="hero-title" class="bx-hero__title" :class="{ 'bx-hero__title--ru': isRu }">
+        <span class="bx-wide" :class="{ 'bx-wide--ru': isRu }">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>
         <span class="bx-hero__sub">{{ isRu ? 'который находит привычки, отнимающие ваши деньги.' : 'that finds the habits costing you money.' }}</span>
       </h1>
       <div class="bx-hero__grid">
@@ -252,7 +252,7 @@ const { locale } = useI18n()
 const isRu = computed(() => locale.value === 'ru' || route.path.startsWith('/ru'))
 const copy = computed(() => landingCopy[isRu.value ? 'ru' : 'en'])
 
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Inter+Tight:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap'
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Inter+Tight:wght@400;500;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 const year = new Date().getFullYear()
 const pad = n => String(n).padStart(2, '0')
 
@@ -648,7 +648,7 @@ onBeforeUnmount(() => {
   --edge: clamp(14px, 1.6cqw, 24px);
   --gut: clamp(14px, 1.5cqw, 22px);
   --sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
-  --wide: 'Archivo', 'Arial Black', sans-serif;
+  --wide: 'Archivo', 'Inter Tight', 'Arial Black', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   background: #fff;
   color: #000;
@@ -719,6 +719,14 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   margin-left: -0.04em;
   color: #000;
+}
+.bx-hero__title .bx-wide.bx-wide--ru,
+:lang(ru) .bx-hero__title .bx-wide {
+  font-family: 'Inter Tight', var(--wide, var(--sans));
+  font-size: clamp(38px, 6.9cqw, 104px);
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+  margin-left: 0;
 }
 .bx-hero__sub {
   display: block;
@@ -1069,6 +1077,14 @@ onBeforeUnmount(() => {
     font-size: clamp(42px, 14vw, 76px);
     white-space: normal;
     line-height: 0.9;
+  }
+  .bx-hero__title .bx-wide.bx-wide--ru,
+  :lang(ru) .bx-hero__title .bx-wide {
+    font-size: clamp(32px, 11vw, 62px);
+    white-space: normal;
+    line-height: 0.94;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
   .bx-hero__sub {
     font-size: clamp(20px, 5.8vw, 28px);
