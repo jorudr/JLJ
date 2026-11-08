@@ -57,7 +57,6 @@ const descriptions = {
 const titles = {
   en: {
     '/': 'JORU — Free Desktop Trading Journal for Windows & macOS',
-    '/ru/': 'JORU — Free Desktop Trading Journal for Windows & macOS',
     '/download': 'Download Free Trading Journal for Windows & macOS — JORU',
     '/pricing': 'Trading Journal Plans & Pricing: Free Forever & Full — JORU',
     '/about': 'About JORU — Private Desktop Trading Journal & Analytics',
