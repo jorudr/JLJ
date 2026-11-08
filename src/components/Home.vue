@@ -684,7 +684,7 @@ onBeforeUnmount(() => {
   padding: clamp(32px, 5vh, 56px) var(--edge) clamp(40px, 6vh, 64px);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   border-bottom: 2px solid #000;
   background: #fff;
   color: #000;
@@ -789,6 +789,8 @@ onBeforeUnmount(() => {
   margin: 0;
   perspective: 1600px;
   position: relative;
+  padding-right: clamp(32px, 4.5cqw, 64px);
+  padding-bottom: clamp(16px, 2cqw, 32px);
 }
 .bx-hero__shot img {
   display: block;
@@ -1099,6 +1101,8 @@ onBeforeUnmount(() => {
   .bx-hero__shot {
     order: -1;
     perspective: 1200px;
+    padding-right: 0;
+    padding-bottom: 12px;
   }
   .bx-hero__actions {
     flex-direction: column;
