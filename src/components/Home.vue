@@ -240,12 +240,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from '../../shared/i18n/useI18n'
-import { landingCopy } from '../../shared/i18n/landingCopy.js'
-import { downloads, refreshDownloads } from '../../shared/downloads.js'
+import { useI18n } from '../shared/i18n/useI18n'
+import { landingCopy } from '../shared/i18n/landingCopy.js'
+import { downloads, refreshDownloads } from '../shared/downloads.js'
 import UiFrame from './UiFrame.vue'
-import LangDropdown from '../LangDropdown.vue'
-import BarHeader from '../BarHeader.vue'
+import LangDropdown from './LangDropdown.vue'
+import BarHeader from './BarHeader.vue'
 
 const route = useRoute()
 const { locale } = useI18n()

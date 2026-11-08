@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Main from '../components/Main.vue'
-import Dev1 from '../components/dev1/Dev1.vue'
+import Home from '../components/Home.vue'
 import Pricing from '../components/Pricing.vue'
 import NotFound from '../components/NotFound.vue'
 import About from '../components/About.vue'
@@ -27,7 +26,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: Dev1,
+      component: Home,
       alias: '/dev1'
     },
     {
@@ -37,7 +36,7 @@ const router = createRouter({
     {
       path: '/ru/',
       name: 'home-ru',
-      component: Dev1
+      component: Home
     },
     {
       path: '/pricing',
