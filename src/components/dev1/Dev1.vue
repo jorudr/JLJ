@@ -7,7 +7,6 @@
     <section ref="coverEl" class="bx-hero" aria-labelledby="hero-title">
       <p class="bx-hero__eyebrow">
         <span>{{ isRu ? 'Для ручной и системной торговли' : 'For discretionary and systematic traders' }}</span>
-        <span>{{ isRu ? 'Приложение для Windows и macOS' : 'Desktop app for Windows & macOS' }}</span>
       </p>
       <h1 id="hero-title" class="bx-hero__title">
         <span class="bx-wide">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>
@@ -986,9 +985,6 @@ onBeforeUnmount(() => {
     font-size: 11px;
     margin-bottom: 14px;
     padding-bottom: 8px;
-  }
-  .bx-hero__eyebrow span:last-child {
-    display: none;
   }
   .bx-hero__title .bx-wide {
     font-size: clamp(36px, 12vw, 64px);
