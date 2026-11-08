@@ -388,12 +388,15 @@ const downloadBody = (locale) => {
     </div>
     <section>
       <h2>Интерфейс приложения JORU</h2>
-      <p>Скриншоты ключевых модулей приложения: журналом сделок, реплеем на графике, поиском паттернов Karl-Nikolai, матрицей стратегии Genesis и отчётами.</p>
+      <p>Снимки ключевых аналитических экранов приложения: кривой капитала, отчётов по исполнению и P&amp;L, сценариев, внутрисделочных метрик и рентген-анализа.</p>
       <div class="feature-grid">
-        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="Журнал сделок JORU: список ордеров и сводка результатов" loading="lazy" /><figcaption>Журнал сделок и разбор исполнений</figcaption></figure>
-        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Свечной график цен с точками входа и выхода в JORU" loading="lazy" /><figcaption>Реплей сделки на свечном графике</figcaption></figure>
-        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Экран расследования убыточных паттернов Karl-Nikolai I" loading="lazy" /><figcaption>Детектив привычек Karl-Nikolai I</figcaption></figure>
-        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Карта стратегии Genesis Matrix с узлами условий в JORU" loading="lazy" /><figcaption>Матрица стратегии Genesis</figcaption></figure>
+        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="Кривая капитала в торговом журнале JORU" loading="lazy" /><figcaption>Рис. 1 — Кривая капитала (Equity Curve)</figcaption></figure>
+        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Отчёт по риску и исполнению в JORU" loading="lazy" /><figcaption>Рис. 2 — Отчёт по риску и исполнению (Risk &amp; Execution Report)</figcaption></figure>
+        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Отчёт по прибыли и убыткам в JORU" loading="lazy" /><figcaption>Рис. 3 — Отчёт по прибыли и убыткам (Profits &amp; Losses Report)</figcaption></figure>
+        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Отчёт по сценариям и условиям в JORU" loading="lazy" /><figcaption>Рис. 4 — Отчёт по сценариям и условиям (Scenarios &amp; Conditions Report)</figcaption></figure>
+        <figure><img src="/dev/demo/5.png" width="1440" height="900" alt="Внутрисделочные метрики в JORU" loading="lazy" /><figcaption>Рис. 5 — Внутрисделочные метрики (In-Trade Metrics)</figcaption></figure>
+        <figure><img src="/dev/demo/6.png" width="1440" height="900" alt="Исполнение стратегии в JORU" loading="lazy" /><figcaption>Рис. 6 — Исполнение стратегии (Strategy Execution)</figcaption></figure>
+        <figure><img src="/dev/demo/7.png" width="1440" height="900" alt="Рентген-анализ капитала X-Ray в JORU" loading="lazy" /><figcaption>Рис. 7 — Рентген-анализ капитала (X-Ray Equity Analysis)</figcaption></figure>
       </div>
     </section>
     <section>
@@ -421,12 +424,15 @@ const downloadBody = (locale) => {
     </div>
     <section>
       <h2>Inside the Application Interface</h2>
-      <p>Explore preview screenshots of JORU's core workspaces: trade log, candlestick replay, Karl-Nikolai pattern detection, Genesis Matrix, and risk metrics.</p>
+      <p>Explore preview screenshots of JORU's core analytical modules: equity curves, risk &amp; execution reports, P&amp;L distribution, in-trade metrics, and X-Ray analysis.</p>
       <div class="feature-grid">
-        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="JORU trade journal list view with performance overview" loading="lazy" /><figcaption>Trade Log &amp; Execution Review</figcaption></figure>
-        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Candlestick chart replay with execution annotations in JORU" loading="lazy" /><figcaption>Candlestick Chart Replay</figcaption></figure>
-        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Karl-Nikolai I pattern investigation screen in JORU" loading="lazy" /><figcaption>Karl-Nikolai I Pattern Detector</figcaption></figure>
-        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Genesis Matrix visual strategy node graph in JORU" loading="lazy" /><figcaption>Genesis Matrix Strategy Modeling</figcaption></figure>
+        <figure><img src="/dev/demo/1.png" width="1440" height="900" alt="Equity curve in JORU trading journal" loading="lazy" /><figcaption>Fig. 1 — Equity Curve</figcaption></figure>
+        <figure><img src="/dev/demo/2.png" width="1440" height="900" alt="Risk &amp; execution report in JORU" loading="lazy" /><figcaption>Fig. 2 — Risk &amp; Execution Report</figcaption></figure>
+        <figure><img src="/dev/demo/3.png" width="1440" height="900" alt="Profits &amp; losses report in JORU" loading="lazy" /><figcaption>Fig. 3 — Profits &amp; Losses Report</figcaption></figure>
+        <figure><img src="/dev/demo/4.png" width="1440" height="900" alt="Scenarios &amp; conditions report in JORU" loading="lazy" /><figcaption>Fig. 4 — Scenarios &amp; Conditions Report</figcaption></figure>
+        <figure><img src="/dev/demo/5.png" width="1440" height="900" alt="In-trade metrics in JORU" loading="lazy" /><figcaption>Fig. 5 — In-Trade Metrics</figcaption></figure>
+        <figure><img src="/dev/demo/6.png" width="1440" height="900" alt="Strategy execution in JORU" loading="lazy" /><figcaption>Fig. 6 — Strategy Execution</figcaption></figure>
+        <figure><img src="/dev/demo/7.png" width="1440" height="900" alt="X-Ray equity analysis in JORU" loading="lazy" /><figcaption>Fig. 7 — X-Ray Equity Analysis</figcaption></figure>
       </div>
     </section>
     <section>

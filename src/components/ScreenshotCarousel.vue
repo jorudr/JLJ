@@ -65,78 +65,78 @@ const slides = [
   {
     src: '/dev/demo/1.png',
     title: {
-      en: 'Trade Log & Execution Review',
-      ru: 'Журнал сделок и разбор исполнений',
+      en: 'Equity Curve',
+      ru: 'Кривая капитала',
     },
     alt: {
-      en: 'JORU trade journal list view with performance overview',
-      ru: 'Журнал сделок JORU: список ордеров и сводка результатов',
+      en: 'Equity curve in JORU trading journal',
+      ru: 'Кривая капитала в торговом журнале JORU',
     },
   },
   {
     src: '/dev/demo/2.png',
     title: {
-      en: 'Candlestick Chart Replay',
-      ru: 'Реплей сделки на свечном графике',
+      en: 'Risk & Execution Report',
+      ru: 'Отчёт по риску и исполнению',
     },
     alt: {
-      en: 'Candlestick chart replay with execution annotations in JORU',
-      ru: 'Свечной график цен с точками входа и выхода в JORU',
+      en: 'Risk & execution report in JORU',
+      ru: 'Отчёт по риску и исполнению в JORU',
     },
   },
   {
     src: '/dev/demo/3.png',
     title: {
-      en: 'Karl-Nikolai I Pattern Detector',
-      ru: 'Детектив привычек Karl-Nikolai I',
+      en: 'Profits & Losses Report',
+      ru: 'Отчёт по прибыли и убыткам',
     },
     alt: {
-      en: 'Karl-Nikolai I pattern investigation screen in JORU',
-      ru: 'Экран расследования убыточных паттернов Karl-Nikolai I',
+      en: 'Profits & losses report in JORU',
+      ru: 'Отчёт по прибыли и убыткам в JORU',
     },
   },
   {
     src: '/dev/demo/4.png',
     title: {
-      en: 'Genesis Matrix Strategy Modeling',
-      ru: 'Матрица стратегии Genesis',
+      en: 'Scenarios & Conditions Report',
+      ru: 'Отчёт по сценариям и условиям',
     },
     alt: {
-      en: 'Genesis Matrix visual strategy node graph in JORU',
-      ru: 'Карта стратегии Genesis Matrix с узлами условий в JORU',
+      en: 'Scenarios & conditions report in JORU',
+      ru: 'Отчёт по сценариям и условиям в JORU',
     },
   },
   {
     src: '/dev/demo/5.png',
     title: {
-      en: 'Monte Carlo Risk Simulation',
-      ru: 'Симуляция риска методом Монте-Карло',
+      en: 'In-Trade Metrics',
+      ru: 'Внутрисделочные метрики',
     },
     alt: {
-      en: 'Monte Carlo simulation equity curves in JORU',
-      ru: 'Симуляция Монте-Карло с путями капитала в JORU',
+      en: 'In-trade metrics in JORU',
+      ru: 'Внутрисделочные метрики в JORU',
     },
   },
   {
     src: '/dev/demo/6.png',
     title: {
-      en: '31 Performance & Behavior Metrics',
-      ru: '31 глубокая метрика торговли',
+      en: 'Strategy Execution',
+      ru: 'Исполнение стратегии',
     },
     alt: {
-      en: 'Detailed performance metrics grid in JORU',
-      ru: 'Сетка подробных показателей и метрик торговли в JORU',
+      en: 'Strategy execution in JORU',
+      ru: 'Исполнение стратегии в JORU',
     },
   },
   {
     src: '/dev/demo/7.png',
     title: {
-      en: 'Comprehensive Trading Reports',
-      ru: 'Комплексные торговые отчёты',
+      en: 'X-Ray Equity Analysis',
+      ru: 'Рентген-анализ капитала X-Ray',
     },
     alt: {
-      en: 'Comprehensive trading report analytics in JORU',
-      ru: 'Комплексная аналитика и отчёты по сделкам в JORU',
+      en: 'X-Ray equity analysis in JORU',
+      ru: 'Рентген-анализ капитала X-Ray в JORU',
     },
   },
 ]
