@@ -7,7 +7,7 @@
     </router-link>
 
     <nav class="bar__nav" aria-label="Main">
-      <router-link :to="isRu ? '/ru/#chart' : '/#chart'">{{ copy.nav.whatItDoes }}</router-link>
+      <router-link :to="isRu ? '/ru/#chart' : '/#chart'" @click="handleWhatItDoes">{{ copy.nav.whatItDoes }}</router-link>
       <router-link :to="isRu ? '/ru/about' : '/about'">{{ copy.nav.about }}</router-link>
       <router-link :to="isRu ? '/ru/pricing' : '/pricing'">{{ copy.nav.pricing }}</router-link>
       <router-link :to="isRu ? '/ru/download' : '/download'">{{ copy.nav.download }}</router-link>
@@ -40,7 +40,7 @@
           <router-link
             :to="isRu ? '/ru/#chart' : '/#chart'"
             class="mobile-drawer__link"
-            @click="closeMobileMenu"
+            @click="handleWhatItDoes"
           >
             <span>{{ copy.nav.whatItDoes }}</span>
             <span class="mono mobile-drawer__link-arrow" aria-hidden="true">→</span>
@@ -110,6 +110,28 @@ const toggleMobileMenu = () => {
 }
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
+}
+
+const handleWhatItDoes = (e) => {
+  const isHomePage = route.path === '/' || route.path === '/ru' || route.path === '/ru/' || route.path === '/dev1'
+  if (isHomePage) {
+    e.preventDefault()
+    closeMobileMenu()
+    const chartEl = document.getElementById('chart')
+    const target = (chartEl && getComputedStyle(chartEl).display !== 'none')
+      ? chartEl
+      : document.getElementById('karl-nikolai')
+    if (target) {
+      const headerOffset = 46
+      const top = target.getBoundingClientRect().top + window.scrollY - headerOffset
+      window.scrollTo({ top, behavior: 'smooth' })
+      if (window.history.pushState) {
+        window.history.pushState(null, '', isRu.value ? '/ru/#chart' : '/#chart')
+      }
+    }
+  } else {
+    closeMobileMenu()
+  }
 }
 
 watch(isMobileMenuOpen, (open) => {

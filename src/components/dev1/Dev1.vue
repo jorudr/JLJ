@@ -284,13 +284,19 @@ const slideKey = (event) => {
 }
 
 const handleSeeHowItWorks = (e) => {
-  const chartEl = document.getElementById('chart')
-  if (chartEl && getComputedStyle(chartEl).display !== 'none') {
-    return
-  }
   e.preventDefault()
-  const fallback = document.getElementById('karl-nikolai')
-  fallback?.scrollIntoView({ behavior: 'smooth' })
+  const chartEl = document.getElementById('chart')
+  const target = (chartEl && getComputedStyle(chartEl).display !== 'none')
+    ? chartEl
+    : document.getElementById('karl-nikolai')
+  if (target) {
+    const headerOffset = 46
+    const top = target.getBoundingClientRect().top + window.scrollY - headerOffset
+    window.scrollTo({ top, behavior: 'smooth' })
+    if (window.history.pushState) {
+      window.history.pushState(null, '', '#chart')
+    }
+  }
 }
 
 /* Report: pull every chart panel (with the small label that sits above it) out of the report page into one grid. */
