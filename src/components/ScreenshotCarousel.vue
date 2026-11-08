@@ -203,14 +203,14 @@ onBeforeUnmount(() => {
 
 .carousel-strip__header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   padding: 0 var(--edge) clamp(16px, 2cqw, 24px);
 }
 
 .carousel-strip__nav {
   display: inline-flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .btn-arrow {
