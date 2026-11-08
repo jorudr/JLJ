@@ -38,7 +38,6 @@
     <section class="chart" aria-labelledby="chart-title">
       <div class="chart__head">
         <h2 id="chart-title" class="chart__title">{{ copy.dev1.chart.title }}</h2>
-        <span class="chart__drag mono">{{ copy.dev1.chart.drag }}</span>
       </div>
       <div ref="cmp" class="cmp" :style="{ '--x': `${split}%` }">
         <div class="cmp__layer"><UiFrame src="/ui/6.html" title="Price chart, candles only" :design="[1440, 560]" ink :patch="cleanPatch" css="main{inset:2% 3% 24px!important}.condition-layer{visibility:hidden}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
@@ -737,13 +736,8 @@ onBeforeUnmount(() => {
 /* ── Chart compare ─────────────────────────────────── */
 .chart { border-bottom: 2px solid #000; }
 .chart__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 24px;
   padding: clamp(24px, 3.6cqw, 48px) var(--edge) clamp(20px, 2.8cqw, 36px);
   border-bottom: 2px solid #000;
-  flex-wrap: wrap;
 }
 .chart__title {
   margin: 0;
@@ -753,17 +747,7 @@ onBeforeUnmount(() => {
   line-height: 1;
   font-size: clamp(30px, 4.4cqw, 64px);
   color: #000;
-  max-width: 24ch;
-}
-.chart__drag {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.65;
-  white-space: nowrap;
+  max-width: 28ch;
 }
 .cmp { position: relative; user-select: none; touch-action: pan-y; }
 .cmp__layer { display: block; pointer-events: none; }
