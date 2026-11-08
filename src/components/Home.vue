@@ -37,9 +37,6 @@
               <div class="hero-window__dots">
                 <span></span><span></span><span></span>
               </div>
-              <div class="hero-window__title mono">
-                <span>{{ isRu ? 'ЖУРНАЛ СДЕЛОК · JORU' : 'TRADE DIARY · JORU' }}</span>
-              </div>
             </div>
             <img
               src="/dev/log.png"
@@ -863,10 +860,9 @@ onBeforeUnmount(() => {
 .hero-window__bar {
   background: #0a0a0a;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 14px;
+  padding: 11px 14px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   user-select: none;
 }
 
@@ -881,14 +877,6 @@ onBeforeUnmount(() => {
   height: 9px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.28);
-}
-
-.hero-window__title {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .hero-window__img {
