@@ -734,10 +734,6 @@ onBeforeUnmount(() => {
   line-height: 0.86;
 }
 
-.bx-hero__title--ru {
-  row-gap: 2px;
-}
-
 .bx-hero__word {
   display: block;
   font-family: 'Inter Tight', var(--wide, var(--sans));
