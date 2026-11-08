@@ -43,7 +43,7 @@
       <div class="chart__head">
         <h2 id="chart-title" class="chart__title">{{ copy.dev1.chart.title }}</h2>
       </div>
-      <div ref="cmp" class="cmp" :style="{ '--x': `${split}%` }">
+      <div ref="cmp" class="cmp" :class="{ 'is-hinting': isHinting }" :style="{ '--x': `${split}%` }">
         <div class="cmp__layer"><UiFrame src="/ui/6.html" title="Price chart, candles only" :design="[1440, 560]" ink :patch="cleanPatch" css="main{inset:2% 3% 24px!important}.condition-layer{visibility:hidden}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
         <div class="cmp__layer cmp__layer--top" aria-hidden="true"><UiFrame src="/ui/6.html" title="" :design="[1440, 560]" ink css="main{inset:2% 3% 24px!important}.condition-label{color:rgba(255,255,255,.85)!important}" /></div>
         <div
@@ -266,16 +266,62 @@ const cleanPatch = [
 
 const cmp = ref(null)
 const split = ref(35)
+const isHinting = ref(false)
 let dragging = false
+let hasInteracted = false
+let hintTimeouts = []
+
+const stopBounceHint = () => {
+  hasInteracted = true
+  isHinting.value = false
+  hintTimeouts.forEach(clearTimeout)
+  hintTimeouts = []
+}
+
+const runBounceHint = () => {
+  if (hasInteracted || reducedMotion) return
+  isHinting.value = true
+
+  // Step 1: glide right to 52%
+  hintTimeouts.push(setTimeout(() => {
+    if (hasInteracted) return
+    split.value = 52
+
+    // Step 2: glide left to 24%
+    hintTimeouts.push(setTimeout(() => {
+      if (hasInteracted) return
+      split.value = 24
+
+      // Step 3: glide back to center at 35%
+      hintTimeouts.push(setTimeout(() => {
+        if (hasInteracted) return
+        split.value = 35
+
+        // Settle & release transition
+        hintTimeouts.push(setTimeout(() => {
+          isHinting.value = false
+          hasInteracted = true
+        }, 550))
+      }, 550))
+    }, 550))
+  }, 350))
+}
+
 const setFrom = (event) => {
   if (!cmp.value) return
   const rect = cmp.value.getBoundingClientRect()
   split.value = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100))
 }
-const dragStart = (event) => { dragging = true; event.currentTarget.setPointerCapture(event.pointerId); setFrom(event) }
+const dragStart = (event) => {
+  stopBounceHint()
+  dragging = true
+  event.currentTarget.setPointerCapture(event.pointerId)
+  setFrom(event)
+}
 const dragMove = (event) => { if (dragging) setFrom(event) }
 const dragEnd = () => { dragging = false }
 const slideKey = (event) => {
+  stopBounceHint()
   const step = event.shiftKey ? 10 : 2
   if (event.key === 'ArrowLeft') split.value = Math.max(0, split.value - step)
   else if (event.key === 'ArrowRight') split.value = Math.min(100, split.value + step)
@@ -567,6 +613,18 @@ onMounted(() => {
       importObserver.observe(importEl.value)
     }
   }
+
+  if (cmp.value && !reducedMotion) {
+    chartObserver = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting)) {
+        runBounceHint()
+        chartObserver?.disconnect()
+        chartObserver = null
+      }
+    }, { threshold: 0.35 })
+    chartObserver.observe(cmp.value)
+  }
+
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
   window.addEventListener('resize', onWindowResize)
@@ -574,6 +632,8 @@ onMounted(() => {
   onScroll()
 })
 onBeforeUnmount(() => {
+  stopBounceHint()
+  chartObserver?.disconnect()
   importObserver?.disconnect()
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onScroll)
@@ -763,6 +823,10 @@ onBeforeUnmount(() => {
   max-width: 28ch;
 }
 .cmp { position: relative; user-select: none; touch-action: pan-y; }
+.cmp.is-hinting .cmp__layer--top,
+.cmp.is-hinting .cmp__handle {
+  transition: clip-path 0.55s cubic-bezier(0.22, 1, 0.36, 1), left 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
 .cmp__layer { display: block; pointer-events: none; }
 .cmp__layer--top { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--x)); }
 .cmp__handle { position: absolute; top: 0; bottom: 0; left: var(--x); width: 44px; margin-left: -22px; cursor: ew-resize; display: flex; align-items: center; justify-content: center; touch-action: none; }
