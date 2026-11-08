@@ -728,12 +728,12 @@ onBeforeUnmount(() => {
   -webkit-backface-visibility: hidden;
   clip-path: inset(0 100% 0 0);
   filter: grayscale(1) contrast(1.15);
-  transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1), filter 1.2s 0.5s;
-  will-change: transform, clip-path, filter;
+  transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1);
+  will-change: transform, clip-path;
 }
 .bx-hero__shot.is-in img {
   clip-path: inset(0 0 0 0);
-  filter: grayscale(0) contrast(1.05);
+  filter: grayscale(1) contrast(1.15);
 }
 .bx-hero__shot figcaption {
   margin-top: 12px;
@@ -869,7 +869,7 @@ onBeforeUnmount(() => {
 .import-sec__item:hover .import-sec__arrow { color: #e10600; }
 @media (prefers-reduced-motion: reduce) {
   .import-sec__item { transform: none !important; opacity: 1 !important; transition: none !important; }
-  .bx-hero__shot img { transform: none !important; clip-path: none !important; filter: none !important; transition: none !important; }
+  .bx-hero__shot img { transform: none !important; clip-path: none !important; filter: grayscale(1) contrast(1.15) !important; transition: none !important; }
 }
 @media (max-width: 900px) {
   .import-sec__arrow { display: none; }
