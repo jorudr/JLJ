@@ -33,6 +33,11 @@
       </div>
     </section>
 
+    <!-- FACTS -->
+    <section class="facts" aria-label="Key facts">
+      <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
+    </section>
+
     <!-- THE CHART: left half is the bare price chart, right half the same trade with everything the journal adds -->
     <section class="chart" aria-labelledby="chart-title">
       <div class="chart__head">
@@ -48,11 +53,6 @@
         ><span class="cmp__grip" aria-hidden="true">◀ ▶</span></div>
       </div>
       <p class="chart__text">{{ copy.dev1.chart.text }}</p>
-    </section>
-
-    <!-- FACTS -->
-    <section class="facts" aria-label="Key facts">
-      <div v-for="fact in copy.dev1.facts" :key="fact[0]"><strong>{{ fact[0] }}</strong><span>{{ fact[1] }}</span></div>
     </section>
 
     <!-- KARL-NIKOLAI I: scroll-driven investigation (problem → pattern → rule) -->
