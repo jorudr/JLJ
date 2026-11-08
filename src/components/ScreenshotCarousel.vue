@@ -1,26 +1,5 @@
 <template>
   <section ref="carouselEl" class="carousel-strip" aria-label="Application screenshots">
-    <div class="carousel-strip__header">
-      <div class="carousel-strip__nav">
-        <button
-          type="button"
-          class="btn-arrow"
-          :aria-label="isRu ? 'Предыдущий скриншот' : 'Previous screenshot'"
-          @click="scrollPrev"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
-        <button
-          type="button"
-          class="btn-arrow"
-          :aria-label="isRu ? 'Следующий скриншот' : 'Next screenshot'"
-          @click="scrollNext"
-        >
-          <span aria-hidden="true">→</span>
-        </button>
-      </div>
-    </div>
-
     <!-- Multi-screenshot horizontal track -->
     <div ref="trackEl" class="carousel-track">
       <figure
@@ -47,6 +26,28 @@
           <span class="shot-card__title">{{ isRu ? slide.title.ru : slide.title.en }}</span>
         </figcaption>
       </figure>
+    </div>
+
+    <!-- Centered navigation buttons below screenshots -->
+    <div class="carousel-strip__footer">
+      <div class="carousel-strip__nav">
+        <button
+          type="button"
+          class="btn-arrow"
+          :aria-label="isRu ? 'Предыдущий скриншот' : 'Previous screenshot'"
+          @click="scrollPrev"
+        >
+          <span aria-hidden="true">←</span>
+        </button>
+        <button
+          type="button"
+          class="btn-arrow"
+          :aria-label="isRu ? 'Следующий скриншот' : 'Next screenshot'"
+          @click="scrollNext"
+        >
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
     </div>
   </section>
 </template>
@@ -196,16 +197,17 @@ onBeforeUnmount(() => {
   border-bottom: 2px solid #000;
   background: #fff;
   color: #000;
-  padding-top: clamp(20px, 3cqw, 40px);
+  padding-top: clamp(28px, 4cqw, 56px);
+  padding-bottom: clamp(24px, 3.5cqw, 44px);
   position: relative;
   overflow: hidden;
 }
 
-.carousel-strip__header {
+.carousel-strip__footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 var(--edge) clamp(16px, 2cqw, 24px);
+  padding: clamp(8px, 1.2cqw, 16px) var(--edge) 0;
 }
 
 .carousel-strip__nav {
