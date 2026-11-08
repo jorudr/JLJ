@@ -25,6 +25,11 @@
               </a>
             </div>
           </div>
+
+          <!-- Bottom description aligned with the bottom edge of log image -->
+          <p class="bx-hero__desc">
+            {{ isRu ? 'ФИКСИРУЙТЕ КАЖДУЮ СДЕЛКУ В КОНТЕКСТЕ РЫНКА. JORU АНАЛИЗИРУЕТ ИСТОРИЮ, ПОКАЗЫВАЕТ, КАКИЕ УСЛОВИЯ ОТНИМАЮТ ДЕНЬГИ, И СЛЕДИТ, ЧТОБЫ ВЫ ПЕРЕСТАЛИ ИХ ПОВТОРЯТЬ.' : 'RECORD EVERY TRADE WITH ITS CONTEXT. JORU ANALYSES YOUR HISTORY, SHOWS WHICH CONDITIONS LOSE YOU MONEY, AND CHECKS THAT YOU STOP REPEATING THEM.' }}
+          </p>
         </div>
 
         <!-- Right: Single window with topbar and /dev/log.png -->
@@ -46,11 +51,6 @@
           </figure>
         </div>
       </div>
-
-      <!-- Bottom description below both columns (under screenshot) -->
-      <p class="bx-hero__desc">
-        {{ isRu ? 'ФИКСИРУЙТЕ КАЖДУЮ СДЕЛКУ В КОНТЕКСТЕ РЫНКА. JORU АНАЛИЗИРУЕТ ИСТОРИЮ, ПОКАЗЫВАЕТ, КАКИЕ УСЛОВИЯ ОТНИМАЮТ ДЕНЬГИ, И СЛЕДИТ, ЧТОБЫ ВЫ ПЕРЕСТАЛИ ИХ ПОВТОРЯТЬ.' : 'RECORD EVERY TRADE WITH ITS CONTEXT. JORU ANALYSES YOUR HISTORY, SHOWS WHICH CONDITIONS LOSE YOU MONEY, AND CHECKS THAT YOU STOP REPEATING THEM.' }}
-      </p>
     </section>
 
     <!-- FACTS -->
@@ -713,7 +713,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.22fr);
   gap: clamp(28px, 3.5cqw, 56px);
-  align-items: start;
+  align-items: stretch;
   width: 100%;
 }
 
@@ -721,6 +721,8 @@ onBeforeUnmount(() => {
 .bx-hero__left {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   padding: 0;
 }
 
@@ -824,7 +826,8 @@ onBeforeUnmount(() => {
 }
 
 .bx-hero__desc {
-  margin: clamp(24px, 3.2vw, 44px) 0 0;
+  margin: auto 0 0 0;
+  padding-top: clamp(20px, 2.5vw, 36px);
   font-family: 'Inter Tight', var(--sans);
   font-size: clamp(12.5px, 1.05cqw, 15px);
   font-weight: 700;
@@ -832,14 +835,14 @@ onBeforeUnmount(() => {
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: rgba(0, 0, 0, 0.88);
-  max-width: 60ch;
+  max-width: 52ch;
 }
 
 /* Right column - Single screenshot window with topbar */
 .bx-hero__right {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
 }
 
@@ -895,8 +898,12 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr;
     gap: 36px;
   }
+  .bx-hero__left {
+    height: auto;
+  }
   .bx-hero__desc {
     margin: 28px 0 0;
+    padding-top: 0;
   }
   .bx-hero__word {
     white-space: normal;
