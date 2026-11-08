@@ -3,33 +3,54 @@
     <!-- BAR -->
     <BarHeader />
 
-    <!-- HERO from /dev -->
+    <!-- HERO (rebuilt to match design mockup) -->
     <section ref="coverEl" class="bx-hero" aria-labelledby="hero-title">
-      <p class="bx-hero__eyebrow">
-        <span>{{ isRu ? 'Для ручной и системной торговли' : 'For discretionary and systematic traders' }}</span>
-      </p>
-      <h1 id="hero-title" class="bx-hero__title" :class="{ 'bx-hero__title--ru': isRu }">
-        <span class="bx-wide" :class="{ 'bx-wide--ru': isRu }">{{ isRu ? 'Дневник трейдера' : 'Trading journal' }}</span>
-        <span class="bx-hero__sub">{{ isRu ? 'который находит привычки, отнимающие ваши деньги.' : 'that finds the habits costing you money.' }}</span>
-      </h1>
       <div class="bx-hero__grid">
-        <div class="bx-hero__copy">
-          <p class="bx-hero__lead">
-            {{ isRu ? 'Фиксируйте каждую сделку в контексте рынка. JORU анализирует историю, показывает, какие условия отнимают деньги, и следит, чтобы вы перестали их повторять.' : 'Record every trade with its context. JORU analyses your history, shows which conditions lose you money, and checks that you stop repeating them.' }}
-          </p>
-          <div class="bx-hero__actions">
-            <router-link :to="isRu ? '/ru/download' : '/download'" class="btn">{{ isRu ? 'Скачать бесплатно ↓' : 'Download free ↓' }}</router-link>
-            <a href="#chart" class="btn btn--line" @click="handleSeeHowItWorks">{{ isRu ? 'Как это работает ↓' : 'See how it works ↓' }}</a>
+        <!-- Left: Typography, actions, and bottom description -->
+        <div class="bx-hero__left">
+          <div class="bx-hero__primary">
+            <h1 id="hero-title" class="bx-hero__title" :class="{ 'bx-hero__title--ru': isRu }">
+              <span class="bx-hero__word">{{ isRu ? 'ДНЕВНИК' : 'TRADING' }}</span>
+              <span class="bx-hero__word">{{ isRu ? 'ТРЕЙДЕРА' : 'JOURNAL' }}</span>
+            </h1>
+            <p class="bx-hero__sub">
+              {{ isRu ? 'КОТОРЫЙ НАХОДИТ ПРИВЫЧКИ, ОТНИМАЮЩИЕ ВАШИ ДЕНЬГИ.' : 'THAT FINDS THE HABITS COSTING YOU MONEY.' }}
+            </p>
+            <div class="bx-hero__actions">
+              <router-link :to="isRu ? '/ru/download' : '/download'" class="hero-btn hero-btn--primary">
+                {{ isRu ? 'Скачать бесплатно' : 'Download free' }}
+              </router-link>
+              <a href="#chart" class="hero-btn hero-btn--secondary" @click="handleSeeHowItWorks">
+                {{ isRu ? 'Как это работает' : 'See how it works' }}
+              </a>
+            </div>
           </div>
-          <ul class="bx-hero__facts">
-            <li><strong>$0</strong> <span>{{ isRu ? 'Бесплатный дневник без ограничения по времени' : 'Free journal, no time limit' }}</span></li>
-            <li><strong>100%</strong> <span>{{ isRu ? 'Сделки и API-ключи остаются только на вашем компьютере' : 'Trades and API keys stay on your computer' }}</span></li>
-          </ul>
+          <p class="bx-hero__desc">
+            {{ isRu ? 'ФИКСИРУЙТЕ КАЖДУЮ СДЕЛКУ В КОНТЕКСТЕ РЫНКА. JORU АНАЛИЗИРУЕТ ИСТОРИЮ, ПОКАЗЫВАЕТ, КАКИЕ УСЛОВИЯ ОТНИМАЮТ ДЕНЬГИ, И СЛЕДИТ, ЧТОБЫ ВЫ ПЕРЕСТАЛИ ИХ ПОВТОРЯТЬ.' : 'RECORD EVERY TRADE WITH ITS CONTEXT. JORU ANALYSES YOUR HISTORY, SHOWS WHICH CONDITIONS LOSE YOU MONEY, AND CHECKS THAT YOU STOP REPEATING THEM.' }}
+          </p>
         </div>
-        <figure class="bx-hero__shot" :class="{ 'is-in': isHeroRevealed }" :style="{ '--tilt': coverProgress, '--rot': `${Math.max(0, 14 - coverProgress * 50)}deg` }">
-          <img src="/dev/log.png" :alt="isRu ? 'Торговый журнал JORU: сделки, P/L и винрейт' : 'JORU trading journal: trades, P/L, win rate and the list of trades'" width="1440" height="900" fetchpriority="high" />
-          <figcaption>{{ isRu ? 'Рис. 0 — Журнал: сделки, P/L и винрейт с первого взгляда.' : 'Fig. 0 — The journal: trades, P/L and win rate at a glance.' }}</figcaption>
-        </figure>
+
+        <!-- Right: Single window with topbar and /dev/log.png -->
+        <div class="bx-hero__right">
+          <figure class="hero-window" :class="{ 'is-in': isHeroRevealed }">
+            <div class="hero-window__bar" aria-hidden="true">
+              <div class="hero-window__dots">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="hero-window__title mono">
+                <span>{{ isRu ? 'ЖУРНАЛ СДЕЛОК · JORU' : 'TRADE DIARY · JORU' }}</span>
+              </div>
+            </div>
+            <img
+              src="/dev/log.png"
+              :alt="isRu ? 'Торговый журнал JORU: сделки, P/L и винрейт' : 'JORU trading journal: trades, P/L, win rate and trade table'"
+              width="1440"
+              height="900"
+              fetchpriority="high"
+              class="hero-window__img"
+            />
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -677,144 +698,218 @@ onBeforeUnmount(() => {
 .d a.btn--paper { background: #fff; color: #000; border-color: #fff; }
 .d a.btn--paper:hover { background: #000; color: #fff; }
 
-/* ── Hero from /dev (light theme for /) ── */
+/* ── Hero section (aligned to new mockup) ── */
 .bx-hero {
   position: relative;
-  min-height: calc(100svh - 60px);
-  padding: clamp(32px, 5vh, 56px) var(--edge) clamp(40px, 6vh, 64px);
+  min-height: calc(100svh - 48px);
+  padding: clamp(28px, 4.5vh, 48px) var(--edge) clamp(32px, 5.5vh, 56px);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  border-bottom: 2px solid #000000;
+  background: #ffffff;
+  color: #000000;
   overflow: visible;
-  border-bottom: 2px solid #000;
-  background: #fff;
-  color: #000;
 }
-.bx-hero__eyebrow {
+
+.bx-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.22fr);
+  gap: clamp(32px, 4.5cqw, 72px);
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Left column */
+.bx-hero__left {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  margin: 0 0 clamp(16px, 2.4vh, 24px);
-  font-size: 13px;
-  font-family: var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-  padding-bottom: 12px;
+  padding: 4px 0;
 }
-.bx-hero__eyebrow span:first-child {
-  color: #000;
-  font-weight: 600;
+
+.bx-hero__primary {
+  display: flex;
+  flex-direction: column;
 }
+
 .bx-hero__title {
   margin: 0;
-}
-.bx-hero__title .bx-wide {
-  display: block;
-  font-family: var(--wide, var(--sans));
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: clamp(54px, 9.4cqw, 138px);
-  line-height: 0.86;
-  letter-spacing: -0.04em;
-  white-space: nowrap;
-  margin-left: -0.04em;
-  color: #000;
-}
-.bx-hero__title .bx-wide.bx-wide--ru,
-:lang(ru) .bx-hero__title .bx-wide {
-  font-family: 'Inter Tight', var(--wide, var(--sans));
-  font-size: clamp(46px, 9.0cqw, 130px);
-  letter-spacing: -0.04em;
-  line-height: 0.86;
-  margin-left: -0.02em;
-}
-.bx-hero__sub {
-  display: block;
-  margin-top: 0.32em;
-  font-weight: 400;
-  font-size: clamp(24px, 3.4vw, 54px);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: rgba(0, 0, 0, 0.72);
-}
-.bx-hero__grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(300px, 0.85fr) 1.5fr;
-  gap: clamp(24px, 3.6vw, 56px);
-  margin-top: clamp(28px, 4vh, 48px);
-  align-items: start;
-}
-.bx-hero__copy {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  line-height: 0.86;
 }
-.bx-hero__lead {
-  margin: 0;
-  font-size: clamp(16px, 1.25vw, 20px);
-  line-height: 1.45;
-  color: rgba(0, 0, 0, 0.78);
-  max-width: 36ch;
+
+.bx-hero__word {
+  display: block;
+  font-family: 'Inter Tight', var(--wide, var(--sans));
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(54px, 7.5cqw, 114px);
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  color: #000000;
+  white-space: nowrap;
 }
+
+.bx-hero__title--ru .bx-hero__word {
+  font-size: clamp(48px, 6.9cqw, 102px);
+  letter-spacing: -0.035em;
+}
+
+.bx-hero__sub {
+  margin: clamp(14px, 2vh, 22px) 0 0;
+  font-family: 'Inter Tight', var(--sans);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(15px, 1.6cqw, 24px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #000000;
+  max-width: 32ch;
+}
+
 .bx-hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: clamp(20px, 2.8vh, 32px);
 }
-.bx-hero__facts {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+
+.d a.hero-btn,
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  font-family: 'Inter Tight', var(--sans);
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: none !important;
+  line-height: 1;
+  border-radius: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
-.bx-hero__facts li {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  align-items: baseline;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.75);
-  line-height: 1.35;
+
+.d a.hero-btn--primary,
+.hero-btn--primary {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
 }
-.bx-hero__facts strong {
-  font-family: var(--mono);
+
+.d a.hero-btn--primary:hover,
+.hero-btn--primary:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.d a.hero-btn--secondary,
+.hero-btn--secondary {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+.d a.hero-btn--secondary:hover,
+.hero-btn--secondary:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.bx-hero__desc {
+  margin: clamp(32px, 4.5vh, 48px) 0 0;
+  font-family: 'Inter Tight', var(--sans);
+  font-size: clamp(12px, 1.05cqw, 14.5px);
   font-weight: 700;
-  font-size: 17px;
-  color: #000;
+  text-transform: uppercase;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: rgba(0, 0, 0, 0.88);
+  max-width: 44ch;
 }
-.bx-hero__shot {
-  margin: 0;
-  perspective: 1600px;
+
+/* Right column - Single screenshot window with topbar */
+.bx-hero__right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   position: relative;
-  padding-right: clamp(32px, 4.5cqw, 64px);
-  padding-bottom: clamp(16px, 2cqw, 32px);
 }
-.bx-hero__shot img {
+
+.hero-window {
+  margin: 0;
+  position: relative;
+  background: #000000;
+  border: 2px solid #000000;
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-window.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-window__bar {
+  background: #0a0a0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.hero-window__dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.hero-window__dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.hero-window__title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-window__img {
   display: block;
   width: 100%;
   height: auto;
-  border: 2px solid #000;
-  transform-origin: 50% 0;
-  transform: rotateX(var(--rot, max(0deg, calc(14deg - var(--tilt) * 50deg))));
-  box-shadow: 0 35px 70px -25px rgba(0, 0, 0, 0.22), 0 10px 20px -10px rgba(0, 0, 0, 0.1);
-  background: #000;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.9s cubic-bezier(0.7, 0, 0.2, 1);
-  will-change: transform, clip-path;
+  object-fit: cover;
+  object-position: top center;
 }
-.bx-hero__shot.is-in img {
-  clip-path: inset(0 0 0 0);
-}
-.bx-hero__shot figcaption {
-  margin-top: 12px;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+
+@media (max-width: 960px) {
+  .bx-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .bx-hero__desc {
+    margin: 28px 0 0;
+  }
+  .bx-hero__word {
+    white-space: normal;
+  }
 }
 
 /* ── Chart compare ─────────────────────────────────── */
