@@ -723,10 +723,10 @@ onBeforeUnmount(() => {
 .bx-hero__title .bx-wide.bx-wide--ru,
 :lang(ru) .bx-hero__title .bx-wide {
   font-family: 'Inter Tight', var(--wide, var(--sans));
-  font-size: clamp(38px, 6.9cqw, 104px);
-  letter-spacing: -0.035em;
-  line-height: 0.9;
-  margin-left: 0;
+  font-size: clamp(46px, 9.0cqw, 130px);
+  letter-spacing: -0.04em;
+  line-height: 0.86;
+  margin-left: -0.02em;
 }
 .bx-hero__sub {
   display: block;
@@ -1080,9 +1080,9 @@ onBeforeUnmount(() => {
   }
   .bx-hero__title .bx-wide.bx-wide--ru,
   :lang(ru) .bx-hero__title .bx-wide {
-    font-size: clamp(32px, 11vw, 62px);
+    font-size: clamp(38px, 13vw, 72px);
     white-space: normal;
-    line-height: 0.94;
+    line-height: 0.9;
     word-break: normal;
     overflow-wrap: break-word;
   }
